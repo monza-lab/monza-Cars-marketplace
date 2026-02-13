@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Public_Sans } from "next/font/google";
 import "./globals.css";
+import { routing } from "@/i18n/routing";
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -23,13 +24,22 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale?: string }>;
 }) {
+  const { locale } = await params;
+  const lang = routing.locales.includes(
+    locale as (typeof routing.locales)[number]
+  )
+    ? locale
+    : routing.defaultLocale;
+
   return (
-    <html className="dark">
+    <html lang={lang} className="dark">
       <body
         className={`${publicSans.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
       >

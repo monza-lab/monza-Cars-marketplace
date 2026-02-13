@@ -852,7 +852,7 @@ export const CURATED_CARS: CollectorCar[] = [
 
   // ─── 23. LAMBORGHINI DIABLO SV ───
   {
-    id: "curated-diablo-sv",
+    id: "curated-diablo-sv-1998-bat",
     title: "1998 Lamborghini Diablo SV",
     year: 1998,
     make: "Lamborghini",
@@ -2220,7 +2220,7 @@ export const CURATED_CARS: CollectorCar[] = [
 
   // ─── 61. LAMBORGHINI DIABLO SV ───
   {
-    id: "curated-diablo-sv",
+    id: "curated-diablo-sv-1999-bat",
     title: "1999 Lamborghini Diablo SV",
     year: 1999,
     make: "Lamborghini",
@@ -17284,7 +17284,7 @@ export const CURATED_CARS: CollectorCar[] = [
 
   // ─── 478. LAMBORGHINI DIABLO SV ───
   {
-    id: "curated-diablo-sv",
+    id: "curated-diablo-sv-1999-gooding",
     title: "1999 Lamborghini Diablo SV",
     year: 1999,
     make: "Lamborghini",
