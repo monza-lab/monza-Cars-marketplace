@@ -4,7 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "bringatrailer.com" },
@@ -29,10 +29,11 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingExcludes: {
     "*": [
-      "node_modules/typescript",
-      "node_modules/@types/node",
-      "node_modules/@types/react",
-      "node_modules/@types/react-dom"
+      "**/node_modules/typescript/**",
+      "**/node_modules/prisma/**",
+      "**/node_modules/@types/**",
+      "**/node_modules/@playwright/**",
+      "**/node_modules/playwright/**"
     ],
   },
   experimental: {
