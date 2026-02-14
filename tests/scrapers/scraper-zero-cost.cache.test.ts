@@ -43,7 +43,7 @@ describe('cleanCache', () => {
     // Fast-forward time past the 24h TTL
     const now = Date.now();
     vi.spyOn(Date, 'now').mockReturnValue(now + 25 * 60 * 60 * 1000);
-    vi.spyOn(global, 'Date').mockImplementation((...args) => {
+    vi.spyOn(global, 'Date').mockImplementation((...args: any[]) => {
       if (args.length === 0) return new (vi.mocked(Date) as any).__proto__.constructor(now + 25 * 60 * 60 * 1000);
       return new (vi.mocked(Date) as any).__proto__.constructor(...args);
     });

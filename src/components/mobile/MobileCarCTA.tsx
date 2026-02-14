@@ -67,7 +67,7 @@ function MobileCarOracleOverlay({
 
   if (isAboutCurrentCar || query.length < 10) {
     // Answer about current car
-    const currentCar = CURATED_CARS.find(c => c.title === carContext.title)
+    const currentCar = CURATED_CARS.find(c => c.make !== "Ferrari" && c.title === carContext.title)
     if (currentCar) {
       const fv = currentCar.fairValueByRegion
       response = {

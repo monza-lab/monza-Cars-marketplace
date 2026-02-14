@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { CURATED_CARS } from "@/lib/curatedCars"
+import { fetchLiveListingById, fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
 import { CarDetailClient } from "./CarDetailClient"
 
 interface CarDetailPageProps {
@@ -10,7 +11,13 @@ interface CarDetailPageProps {
 export async function generateMetadata({ params }: CarDetailPageProps) {
   const { id } = await params
 
-  const car = CURATED_CARS.find(c => c.id === id)
+  // Try curated first (non-Ferrari)
+  let car = CURATED_CARS.find(c => c.id === id && c.make !== "Ferrari") ?? null
+
+  // Try live Supabase listing
+  if (!car && id.startsWith("live-")) {
+    car = await fetchLiveListingById(id)
+  }
 
   if (!car) {
     return { title: "Not Found | Monza Lab" }
@@ -28,7 +35,7 @@ export async function generateMetadata({ params }: CarDetailPageProps) {
 }
 
 export async function generateStaticParams() {
-  return CURATED_CARS.map(car => ({
+  return CURATED_CARS.filter(c => c.make !== "Ferrari").map(car => ({
     make: car.make.toLowerCase().replace(/\s+/g, "-"),
     id: car.id,
   }))
@@ -37,16 +44,31 @@ export async function generateStaticParams() {
 export default async function CarDetailPage({ params }: CarDetailPageProps) {
   const { id } = await params
 
-  const car = CURATED_CARS.find(c => c.id === id)
+  // Try curated first (non-Ferrari)
+  let car = CURATED_CARS.find(c => c.id === id && c.make !== "Ferrari") ?? null
+
+  // Try live Supabase listing
+  if (!car && id.startsWith("live-")) {
+    car = await fetchLiveListingById(id)
+  }
 
   if (!car) {
     notFound()
   }
 
-  // Find similar cars (same category or same make)
-  const similarCars = CURATED_CARS.filter(
-    c => c.id !== car.id && (c.category === car.category || c.make === car.make)
+  // Find similar cars: curated (same category/make, non-Ferrari) + live
+  const curatedSimilar = CURATED_CARS.filter(
+    c => c.make !== "Ferrari" && c.id !== car.id && (c.category === car.category || c.make === car.make)
   ).slice(0, 4)
+
+  let similarCars = curatedSimilar
+  if (similarCars.length < 4 && car.id.startsWith("live-")) {
+    const live = await fetchLiveListingsAsCollectorCars()
+    const liveSimilar = live.filter(
+      c => c.id !== car.id && c.make === car.make
+    ).slice(0, 4 - similarCars.length)
+    similarCars = [...similarCars, ...liveSimilar]
+  }
 
   return (
     <Suspense

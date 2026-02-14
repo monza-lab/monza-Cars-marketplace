@@ -354,10 +354,15 @@ function aggregateBrands(auctions: Auction[]): Brand[] {
     const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
     const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
 
-    // Get representative image - prefer verified brand image, fallback to car image
-    const carWithImage = cars.find(c => c.images[0]) || cars[0]
+    // Get the MOST EXPENSIVE car for the representative image
+    const mostExpensiveCar = cars.reduce((max, car) => 
+      car.currentBid > max.currentBid ? car : max
+    , cars[0])
+    
+    // Use the actual car's image from database, fall back to static brand image only if needed
+    const carImage = mostExpensiveCar.images?.[0]
     const verifiedBrandImage = getBrandImage(name)
-    const representativeImage = verifiedBrandImage || carWithImage.images[0] || ""
+    const representativeImage = carImage || verifiedBrandImage || ""
 
     brands.push({
       name,
@@ -368,13 +373,17 @@ function aggregateBrands(auctions: Auction[]): Brand[] {
       avgTrend: mockAnalysis[name]?.trend || mockAnalysis["default"].trend,
       topGrade,
       representativeImage,
-      representativeCar: `${carWithImage.year} ${carWithImage.make} ${carWithImage.model}`,
+      representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],
     })
   })
 
-  // Sort by max price (most expensive first)
-  return brands.sort((a, b) => b.priceMax - a.priceMax)
+  // Sort: Ferrari first (live data showcase), then by max price descending
+  return brands.sort((a, b) => {
+    if (a.name === "Ferrari" && b.name !== "Ferrari") return -1
+    if (b.name === "Ferrari" && a.name !== "Ferrari") return 1
+    return b.priceMax - a.priceMax
+  })
 }
 
 function formatPriceShort(n: number) {

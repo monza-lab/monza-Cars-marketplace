@@ -161,10 +161,17 @@ export function parseTitleComponents(title: string): {
   make: string;
   model: string;
 } {
-  const yearMatch = title.match(/^(\d{4})\s+/);
+  // Try year at start first, then anywhere in title (handles prefixes like "No Reserve: 2003 ...")
+  const yearMatch = title.match(/^(\d{4})\s+/) || title.match(/\b((?:19|20)\d{2})\b/);
   const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
 
-  const rest = title.replace(/^\d{4}\s+/, '').trim();
+  // Remove everything up to and including the year, or just the leading year
+  let rest: string;
+  if (yearMatch && yearMatch.index !== undefined && yearMatch.index > 0) {
+    rest = title.slice(yearMatch.index + yearMatch[0].length).trim();
+  } else {
+    rest = title.replace(/^\d{4}\s+/, '').trim();
+  }
 
   const knownMakes = [
     'Porsche', 'BMW', 'Mercedes-Benz', 'Mercedes', 'Audi', 'Volkswagen', 'VW',

@@ -12,6 +12,138 @@ function mapStatus(raw: string | undefined): 'ACTIVE' | 'ENDED' {
   return 'ACTIVE'
 }
 
+function mapSourceKey(platform: string): string {
+  switch (platform) {
+    case 'BRING_A_TRAILER': return 'BaT'
+    case 'CARS_AND_BIDS': return 'CarsAndBids'
+    case 'COLLECTING_CARS': return 'CollectingCars'
+    default: return platform
+  }
+}
+
+function mapSupabaseStatus(raw: string | undefined): string {
+  if (!raw) return 'active'
+  const upper = raw.toUpperCase()
+  if (upper === 'SOLD') return 'sold'
+  if (upper === 'ENDED' || upper === 'NO_SALE') return 'unsold'
+  return 'active'
+}
+
+function mapAuctionHouse(platform: string): string {
+  switch (platform) {
+    case 'BRING_A_TRAILER': return 'Bring a Trailer'
+    case 'CARS_AND_BIDS': return 'Cars & Bids'
+    case 'COLLECTING_CARS': return 'Collecting Cars'
+    default: return platform
+  }
+}
+
+async function upsertToSupabase(auction: ScrapedAuction): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return
+
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const status = mapSupabaseStatus(auction.status)
+  const hammerPrice = status === 'sold' ? auction.currentBid : null
+  const saleDate = auction.endTime
+    ? new Date(auction.endTime).toISOString().slice(0, 10)
+    : new Date().toISOString().slice(0, 10)
+
+  const row = {
+    source: mapSourceKey(auction.platform),
+    source_id: auction.externalId,
+    source_url: auction.url,
+    year: auction.year,
+    make: auction.make,
+    model: auction.model,
+    trim: null,
+    body_style: null,
+    color_exterior: auction.exteriorColor ?? null,
+    color_interior: auction.interiorColor ?? null,
+    mileage: auction.mileage ?? null,
+    mileage_unit: auction.mileageUnit ?? 'miles',
+    vin: auction.vin ?? null,
+    hammer_price: hammerPrice,
+    original_currency: 'USD',
+    country: 'USA',
+    region: null,
+    city: auction.location ?? null,
+    auction_house: mapAuctionHouse(auction.platform),
+    auction_date: saleDate,
+    sale_date: saleDate,
+    status,
+    photos_count: auction.images?.length ?? 0,
+    description_text: auction.description ?? null,
+    scrape_timestamp: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from('listings')
+    .upsert(row, { onConflict: 'source,source_id' })
+    .select('id')
+    .limit(1)
+
+  if (error) {
+    console.error(`[cron] Supabase upsert failed for ${auction.externalId}:`, error.message)
+    return
+  }
+
+  const listingId = (data as Array<{ id: string }> | null)?.[0]?.id
+  if (!listingId) return
+
+  // Upsert photos
+  const photos = auction.images?.length
+    ? auction.images
+    : auction.imageUrl
+      ? [auction.imageUrl]
+      : []
+
+  if (photos.length > 0) {
+    const existing = await supabase
+      .from('photos_media')
+      .select('photo_url')
+      .eq('listing_id', listingId)
+    const existingSet = new Set((existing.data ?? []).map((r: { photo_url: string }) => r.photo_url))
+
+    const toInsert = photos
+      .filter((p) => p && !existingSet.has(p))
+      .map((p, idx) => ({
+        listing_id: listingId,
+        photo_url: p,
+        photo_order: idx,
+      }))
+
+    if (toInsert.length > 0) {
+      await supabase.from('photos_media').insert(toInsert)
+    }
+  }
+
+  // Insert price history snapshot
+  if (auction.currentBid != null && auction.currentBid > 0) {
+    const time = new Date().toISOString().replace(/:\d{2}\.\d{3}Z$/, ':00:00.000Z')
+    const exists = await supabase
+      .from('price_history')
+      .select('time')
+      .eq('listing_id', listingId)
+      .eq('time', time)
+      .limit(1)
+
+    if (!exists.data?.length) {
+      await supabase.from('price_history').insert({
+        time,
+        listing_id: listingId,
+        status,
+        price_usd: auction.currentBid,
+      })
+    }
+  }
+}
+
 export async function GET(request: Request) {
   const startTime = Date.now()
 
@@ -102,6 +234,15 @@ export async function GET(request: Request) {
             },
           })
           auctionsUpdated++
+
+          // Parallel write to Supabase (non-blocking — Prisma is still the primary for this route)
+          try {
+            await upsertToSupabase(auction)
+          } catch (supaErr) {
+            // Non-critical: Supabase write failure should not block the cron
+            const msg = supaErr instanceof Error ? supaErr.message : 'Unknown Supabase error'
+            errors.push(`Supabase write failed for ${auction.externalId}: ${msg}`)
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown DB error'
           errors.push(`Upsert failed for ${auction.externalId}: ${message}`)

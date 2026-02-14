@@ -1,0 +1,10 @@
+.next/
+node_modules/
+.git/
+curated_cars.json
+BASE_DATOS_COMPLETA_TODOS_LUJO.md
+restored_generateCars.ts
+architecture.md
+development_overview.md
+*.tsbuildinfo
+coverage/

@@ -77,7 +77,7 @@ function HomeContent({
   useEffect(() => {
     async function fetchAuctions() {
       try {
-        const response = await fetch(`/api/mock-auctions?limit=50`);
+        const response = await fetch(`/api/mock-auctions?limit=1000`);
         const data = await response.json();
         // Transform API response to match Auction type
         const transformed = data.auctions.map((a: any) => ({
