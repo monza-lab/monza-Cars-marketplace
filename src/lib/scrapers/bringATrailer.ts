@@ -106,6 +106,48 @@ export function parsePrice(text: string | undefined): number | null {
 }
 
 /**
+ * Detect auction status (SOLD vs ACTIVE) from HTML element.
+ * Evidence-based detection using multiple signals.
+ */
+export function detectStatusFromHtml(
+  $: cheerio.CheerioAPI,
+  el: cheerio.Element,
+): 'active' | 'sold' {
+  const $el = $(el);
+
+  // Evidence-based detection - check multiple signals
+  const soldSelectors = [
+    '.sold-badge',
+    '.winner-badge',
+    '[class*="sold"]',
+    '[class*="winner"]',
+    '.auction-sold',
+    '.listing-sold',
+  ];
+
+  const hasSoldBadge = soldSelectors.some((selector) => $el.find(selector).length > 0);
+
+  const textContent = $el.text().toLowerCase();
+  const soldTextPatterns = [
+    /sold\s+for\s+\$/,
+    /winning\s+bid/,
+    /final\s+price/,
+    /auction\s+ended/,
+    /reserve\s+met\s+.*sold/,
+  ];
+  const hasSoldText = soldTextPatterns.some((pattern) => pattern.test(textContent));
+
+  const bidStatus = $el.find('[class*="bid-status"], [class*="status"]').text().toLowerCase();
+  const hasEndedStatus = bidStatus.includes('ended') || bidStatus.includes('sold');
+
+  if (hasSoldBadge || hasSoldText || hasEndedStatus) {
+    return 'sold';
+  }
+
+  return 'active';
+}
+
+/**
  * Parse a mileage string like "45,230 Miles" into a number.
  */
 export function parseMileage(text: string | undefined): number | null {
@@ -311,6 +353,9 @@ export function parseAuctionCard(
     if (!isNaN(parsed.getTime())) endTime = parsed;
   }
 
+  // Detect status from HTML evidence
+  const status = detectStatusFromHtml($, el);
+
   return {
     externalId,
     platform: 'BRING_A_TRAILER',
@@ -332,7 +377,7 @@ export function parseAuctionCard(
     imageUrl,
     description: null,
     sellerNotes: null,
-    status: 'active',
+    status,
     vin: null,
     images: imageUrl ? [imageUrl] : [],
   };

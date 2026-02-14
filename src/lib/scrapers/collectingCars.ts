@@ -110,6 +110,51 @@ export function parseMileage(text: string | undefined): number | null {
 }
 
 /**
+ * Detect auction status (SOLD vs ACTIVE) from HTML element.
+ * Evidence-based detection using multiple signals.
+ */
+export function detectStatusFromHtml(
+  $: cheerio.CheerioAPI,
+  el: cheerio.Element,
+): 'active' | 'sold' {
+  const $el = $(el);
+
+  // Evidence-based detection - check multiple signals
+  const soldSelectors = [
+    '.sold-badge',
+    '.winner-badge',
+    '[class*="sold"]',
+    '[class*="winner"]',
+    '.auction-sold',
+    '.listing-sold',
+    '.sale-completed',
+    '.ended',
+  ];
+
+  const hasSoldBadge = soldSelectors.some((selector) => $el.find(selector).length > 0);
+
+  const textContent = $el.text().toLowerCase();
+  const soldTextPatterns = [
+    /sold\s+for/,
+    /winning\s+bid/,
+    /final\s+price/,
+    /auction\s+ended/,
+    /sale\s+completed/,
+    /reserve\s+met\s+.*sold/,
+  ];
+  const hasSoldText = soldTextPatterns.some((pattern) => pattern.test(textContent));
+
+  const bidStatus = $el.find('[class*="bid-status"], [class*="status"]').text().toLowerCase();
+  const hasEndedStatus = bidStatus.includes('ended') || bidStatus.includes('sold') || bidStatus.includes('completed');
+
+  if (hasSoldBadge || hasSoldText || hasEndedStatus) {
+    return 'sold';
+  }
+
+  return 'active';
+}
+
+/**
  * Parse Collecting Cars title for year, make, model.
  * CC titles vary: "1992 Porsche 964 Carrera RS" or "Porsche 911 (993) Turbo - 1996"
  */
@@ -335,6 +380,9 @@ export function parseAuctionCard(
     .trim();
   const location = locationText || null;
 
+  // Detect status from HTML evidence
+  const status = detectStatusFromHtml($, el);
+
   return {
     externalId,
     platform: 'COLLECTING_CARS',
@@ -356,7 +404,7 @@ export function parseAuctionCard(
     imageUrl,
     description: null,
     sellerNotes: null,
-    status: 'active',
+    status,
     vin: null,
     images: imageUrl ? [imageUrl] : [],
   };

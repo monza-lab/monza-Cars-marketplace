@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
-import { scrapeAll, type ScrapedAuction } from '@/lib/scrapers'
-import { createClient } from '@supabase/supabase-js'
+import { scrapeAllWithBackfill } from '@/lib/scrapers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -165,11 +164,19 @@ export async function GET(request: Request) {
     let auctionsFound = 0
     let auctionsUpdated = 0
 
+    let historicalBackfillResult = { modelsProcessed: 0, totalAuctionsAdded: 0 };
+
     try {
-      const scrapeResult = await scrapeAll()
+      const scrapeResult = await scrapeAllWithBackfill()
       const scrapedAuctions = scrapeResult.auctions
       errors.push(...scrapeResult.errors)
       auctionsFound = scrapedAuctions.length
+
+      // Capture historical backfill results if available
+      if (scrapeResult.historicalBackfill) {
+        historicalBackfillResult = scrapeResult.historicalBackfill
+        errors.push(...scrapeResult.historicalBackfill.errors)
+      }
 
       for (const auction of scrapedAuctions) {
         try {
@@ -336,6 +343,7 @@ export async function GET(request: Request) {
       success: true,
       data: {
         scrapingResults: { auctionsFound, auctionsUpdated, errors },
+        historicalBackfill: historicalBackfillResult,
         marketDataUpdate: { aggregationsUpdated },
         duration: `${duration}ms`,
       },
