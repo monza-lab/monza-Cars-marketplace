@@ -525,6 +525,21 @@ export function CarDetailClient({ car, similarCars }: { car: CollectorCar; simil
                 <StatCard label={tAuction("specs.location")} value={car.location} icon={<MapPin className="size-4" />} />
               </div>
 
+              {/* Additional Specs — only shown when data exists */}
+              {(car.exteriorColor || car.interiorColor || car.vin) && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {car.exteriorColor && (
+                    <StatCard label="Exterior" value={car.exteriorColor} icon={<Car className="size-4" />} />
+                  )}
+                  {car.interiorColor && (
+                    <StatCard label="Interior" value={car.interiorColor} icon={<Car className="size-4" />} />
+                  )}
+                  {car.vin && (
+                    <StatCard label="VIN" value={car.vin} icon={<Shield className="size-4" />} />
+                  )}
+                </div>
+              )}
+
               {/* Provenance */}
               <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
                 <p className="text-[13px] text-[#9CA3AF] leading-relaxed">{car.history}</p>

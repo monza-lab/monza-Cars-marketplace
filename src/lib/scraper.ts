@@ -133,15 +133,96 @@ function parseBringATrailer($: cheerio.CheerioAPI): Partial<ScrapedAuctionData> 
   title = $("h1.post-title, .listing-title, h1.listing-post-title").first().text().trim() || null;
 
   // End time (if available)
-  const timeEl = $(".listing-available-info-time, .auction-end-time, [data-end-time]").first();
+  const timeEl = $(
+    ".listing-available-info-time, .auction-end-time, time[datetime], [data-end-time], [data-endtime], [data-auction-end]",
+  ).first();
   if (timeEl.length) {
-    const timeAttr = timeEl.attr("data-end-time") || timeEl.attr("datetime");
-    if (timeAttr) {
-      endTime = new Date(timeAttr);
+    const timeAttr =
+      timeEl.attr("data-end-time") ||
+      timeEl.attr("data-endtime") ||
+      timeEl.attr("data-auction-end") ||
+      timeEl.attr("datetime");
+    const timeText = timeAttr || timeEl.text().trim();
+    if (timeText) {
+      const parsed = new Date(timeText);
+      if (!isNaN(parsed.getTime())) endTime = parsed;
+    }
+  }
+
+  // Fallback 1: JSON-LD often contains endDate/startDate
+  if (!endTime) {
+    endTime = extractEndDateFromJsonLd($);
+  }
+
+  // Fallback 2: scan for human-readable close/ended date
+  if (!endTime) {
+    const bodyText = $("body").text();
+    const endedMatch = bodyText.match(
+      /(auction\s+(?:ended|ends|ended\s+on|ends\s+on|closes|closed)\s+)([A-Za-z]+\s+\d{1,2},\s+\d{4})/i,
+    );
+    if (endedMatch?.[2]) {
+      endTime = parseMonthNameDateToUtcNoon(endedMatch[2]);
     }
   }
 
   return { currentBid, bidCount, status, title, rawPriceText, endTime };
+}
+
+function extractEndDateFromJsonLd($: cheerio.CheerioAPI): Date | null {
+  const scripts = $("script[type='application/ld+json']")
+    .map((_i, el) => $(el).text())
+    .get()
+    .filter(Boolean);
+
+  for (const raw of scripts) {
+    try {
+      const parsed = JSON.parse(raw) as any;
+      const candidates: any[] = Array.isArray(parsed) ? parsed : [parsed];
+
+      for (const obj of candidates) {
+        if (!obj || typeof obj !== "object") continue;
+
+        const endDate = obj.endDate ?? obj?.auction?.endDate ?? obj?.offers?.endDate;
+        if (typeof endDate === "string") {
+          const d = new Date(endDate);
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+    } catch {
+      // ignore invalid JSON-LD
+    }
+  }
+  return null;
+}
+
+function parseMonthNameDateToUtcNoon(text: string): Date | null {
+  const m = text.trim().match(/^([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})$/);
+  if (!m) return null;
+  const monthName = m[1].toLowerCase();
+  const day = Number(m[2]);
+  const year = Number(m[3]);
+  if (!Number.isFinite(day) || !Number.isFinite(year)) return null;
+
+  const months: Record<string, number> = {
+    january: 0,
+    february: 1,
+    march: 2,
+    april: 3,
+    may: 4,
+    june: 5,
+    july: 6,
+    august: 7,
+    september: 8,
+    sept: 8,
+    october: 9,
+    november: 10,
+    december: 11,
+  };
+  const month = months[monthName];
+  if (month === undefined) return null;
+  const ts = Date.UTC(year, month, day, 12, 0, 0);
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 // ─── RM SOTHEBY'S ───
@@ -193,6 +274,7 @@ function parseCarsAndBids($: cheerio.CheerioAPI): Partial<ScrapedAuctionData> {
   let bidCount: number | null = null;
   let status: ScrapedAuctionData["status"] = null;
   let title: string | null = null;
+  let endTime: Date | null = null;
 
   // C&B selectors
   const priceSelectors = [
@@ -228,7 +310,20 @@ function parseCarsAndBids($: cheerio.CheerioAPI): Partial<ScrapedAuctionData> {
   // Title
   title = $("h1.auction-title, .vehicle-title, h1").first().text().trim() || null;
 
-  return { currentBid, bidCount, status, title, rawPriceText, endTime: null };
+  // End time (best-effort)
+  const timeEl = $(
+    "time[datetime], .auction-end-time, .time-left time, .time-left, [data-end-time], [data-endtime], [data-auction-end]",
+  ).first();
+  if (timeEl.length) {
+    const timeAttr = timeEl.attr("data-end-time") || timeEl.attr("data-endtime") || timeEl.attr("data-auction-end") || timeEl.attr("datetime");
+    const timeText = timeAttr || timeEl.text().trim();
+    if (timeText) {
+      const parsed = new Date(timeText);
+      if (!isNaN(parsed.getTime())) endTime = parsed;
+    }
+  }
+
+  return { currentBid, bidCount, status, title, rawPriceText, endTime };
 }
 
 // ─── COLLECTING CARS ───
@@ -238,6 +333,7 @@ function parseCollectingCars($: cheerio.CheerioAPI): Partial<ScrapedAuctionData>
   let bidCount: number | null = null;
   let status: ScrapedAuctionData["status"] = null;
   let title: string | null = null;
+  let endTime: Date | null = null;
 
   // Collecting Cars selectors
   const priceSelectors = [
@@ -266,7 +362,20 @@ function parseCollectingCars($: cheerio.CheerioAPI): Partial<ScrapedAuctionData>
   // Title
   title = $("h1.lot-title, h1.vehicle-name, h1").first().text().trim() || null;
 
-  return { currentBid, bidCount, status, title, rawPriceText, endTime: null };
+  // End time (best-effort)
+  const timeEl = $(
+    "time[datetime], .auction-end-time, .countdown time, .countdown, [data-end-time], [data-endtime], [data-auction-end]",
+  ).first();
+  if (timeEl.length) {
+    const timeAttr = timeEl.attr("data-end-time") || timeEl.attr("data-endtime") || timeEl.attr("data-auction-end") || timeEl.attr("datetime");
+    const timeText = timeAttr || timeEl.text().trim();
+    if (timeText) {
+      const parsed = new Date(timeText);
+      if (!isNaN(parsed.getTime())) endTime = parsed;
+    }
+  }
+
+  return { currentBid, bidCount, status, title, rawPriceText, endTime };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -50,6 +50,11 @@ export interface CollectorCar {
   bidCount: number;
   endTime: Date;
   category: string;
+  sourceUrl?: string;
+  vin?: string | null;
+  exteriorColor?: string | null;
+  interiorColor?: string | null;
+  description?: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

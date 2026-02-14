@@ -10,6 +10,7 @@ import {
   type CollectorCar,
   type InvestmentGrade
 } from "@/lib/curatedCars";
+import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -27,19 +28,31 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "24");
 
-  let results: CollectorCar[] = [...CURATED_CARS];
+  const live = await fetchLiveListingsAsCollectorCars();
+
+  // STRICT REQUIREMENT: "remove all the cars from the ui that are not the ferraris coming from the supabase database"
+  // 1. We ONLY use `live` (Supabase) data.
+  // 2. We FILTER `live` to only include Ferraris.
+  let results: CollectorCar[] = live.filter(car => car.make.toLowerCase() === "ferrari");
 
   // Apply filters
   if (query) {
-    results = searchCars(query);
+    const lowerQuery = query.toLowerCase();
+    results = results.filter(car =>
+      car.title.toLowerCase().includes(lowerQuery) ||
+      car.make.toLowerCase().includes(lowerQuery) ||
+      car.model.toLowerCase().includes(lowerQuery)
+    );
   }
 
+  // Note: The 'filter' param (top-picks, live, ending-soon) logic below is simplified 
+  // because we are now restricted to ONLY Supabase Ferraris.
   if (filter === "top-picks") {
-    results = getTopPicks();
+    results = results.filter(car => car.investmentGrade === "AAA");
   } else if (filter === "live") {
-    results = getLiveAuctions();
+    results = results.filter(car => car.status === "ACTIVE" || car.status === "ENDING_SOON");
   } else if (filter === "ending-soon") {
-    results = getEndingSoon();
+    results = results.filter(car => car.status === "ENDING_SOON");
   }
 
   if (make && make !== "All Makes") {
@@ -123,7 +136,7 @@ export async function GET(request: NextRequest) {
     bidCount: car.bidCount,
     endTime: car.endTime.toISOString(),
     images: car.images,
-    sourceUrl: `https://example.com/auction/${car.id}`,
+    sourceUrl: car.sourceUrl ?? `https://example.com/auction/${car.id}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     // Extended fields

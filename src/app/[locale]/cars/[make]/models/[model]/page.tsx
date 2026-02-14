@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { CURATED_CARS } from "@/lib/curatedCars"
+import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
 import { ModelPageClient } from "./ModelPageClient"
 
 interface ModelPageProps {
@@ -11,12 +12,19 @@ export async function generateMetadata({ params }: ModelPageProps) {
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
   const decodedModel = decodeURIComponent(model).replace(/-/g, " ")
 
-  // Find cars matching this make and model (case-insensitive)
-  const cars = CURATED_CARS.filter(
+  const curated = CURATED_CARS.filter(
+    car =>
+      car.make !== "Ferrari" &&
+      car.make.toLowerCase() === decodedMake.toLowerCase() &&
+      car.model.toLowerCase() === decodedModel.toLowerCase()
+  )
+  const live = await fetchLiveListingsAsCollectorCars()
+  const liveModel = live.filter(
     car =>
       car.make.toLowerCase() === decodedMake.toLowerCase() &&
       car.model.toLowerCase() === decodedModel.toLowerCase()
   )
+  const cars = [...curated, ...liveModel]
 
   if (cars.length === 0) {
     return { title: "Not Found | Monza Lab" }
@@ -34,10 +42,9 @@ export async function generateMetadata({ params }: ModelPageProps) {
 }
 
 export async function generateStaticParams() {
-  // Get unique make + model combinations
   const combinations = new Map<string, { make: string; model: string }>()
 
-  CURATED_CARS.forEach(car => {
+  CURATED_CARS.filter(c => c.make !== "Ferrari").forEach(car => {
     const key = `${car.make}|${car.model}`
     if (!combinations.has(key)) {
       combinations.set(key, {
@@ -55,12 +62,19 @@ export default async function ModelPage({ params }: ModelPageProps) {
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
   const decodedModel = decodeURIComponent(model).replace(/-/g, " ")
 
-  // Find cars matching this make and model (case-insensitive)
-  const cars = CURATED_CARS.filter(
+  const curated = CURATED_CARS.filter(
+    car =>
+      car.make !== "Ferrari" &&
+      car.make.toLowerCase() === decodedMake.toLowerCase() &&
+      car.model.toLowerCase() === decodedModel.toLowerCase()
+  )
+  const live = await fetchLiveListingsAsCollectorCars()
+  const liveModel = live.filter(
     car =>
       car.make.toLowerCase() === decodedMake.toLowerCase() &&
       car.model.toLowerCase() === decodedModel.toLowerCase()
   )
+  const cars = [...curated, ...liveModel]
 
   if (cars.length === 0) {
     notFound()

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { Link, useRouter } from "@/i18n/navigation"
 import Image from "next/image"
@@ -38,6 +38,8 @@ import {
   Palette,
   BadgeCheck,
 } from "lucide-react"
+import { PriceChart } from "@/components/auction/PriceChart"
+import type { PriceHistoryEntry } from "@/types/auction"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -856,6 +858,7 @@ export default function AuctionDetailClient() {
 
   const [auction, setAuction] = useState<AuctionDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [priceHistory, setPriceHistory] = useState<PriceHistoryEntry[]>([])
   const [error, setError] = useState<
     | null
     | { code: "not_found" }
@@ -963,6 +966,24 @@ export default function AuctionDetailClient() {
     fetchAuction()
   }, [auctionId])
 
+  // Fetch Supabase price history for live listings
+  useEffect(() => {
+    if (!auctionId || !auctionId.startsWith("live-")) return
+
+    async function fetchPriceHistory() {
+      try {
+        const res = await fetch(`/api/listings/${auctionId}/price-history`)
+        if (!res.ok) return
+        const json = await res.json()
+        setPriceHistory(json.data ?? [])
+      } catch {
+        // Non-critical; price chart just won't show
+      }
+    }
+
+    fetchPriceHistory()
+  }, [auctionId])
+
   if (loading) return <DetailSkeleton />
 
   if (error || !auction) {
@@ -1025,6 +1046,19 @@ export default function AuctionDetailClient() {
           <div className="h-[calc(100vh-180px)] overflow-y-auto no-scrollbar pr-2">
             {/* MODULE A: Executive Summary */}
             <ExecutiveSummary auction={auction} t={t} locale={locale} />
+
+            {/* Price History Chart (live listings from Supabase) */}
+            {priceHistory.length > 0 && (
+              <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="size-4 text-[#F8B4D9]" />
+                  <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+                    {t("modules.comparableSales") ?? "Price History"}
+                  </h2>
+                </div>
+                <PriceChart priceHistory={priceHistory} />
+              </div>
+            )}
 
             {/* MODULE F: Registry Intelligence */}
             <RegistryIntelligenceModule auction={auction} t={t} locale={locale} />

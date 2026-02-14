@@ -236,7 +236,7 @@ export function FeaturedAuctionsSection() {
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5">
-          {featuredAuctions.map((auction, i) => (
+          {featuredAuctions.filter(a => a.make !== "Ferrari").map((auction, i) => (
             <FeaturedCard
               key={auction.id}
               auction={auction}

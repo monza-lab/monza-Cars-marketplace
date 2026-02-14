@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { CURATED_CARS } from "@/lib/curatedCars"
+import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
 import { MakePageClient } from "./MakePageClient"
 
 interface MakePageProps {
@@ -10,10 +11,13 @@ export async function generateMetadata({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
-  // Find cars matching this make (case-insensitive)
-  const cars = CURATED_CARS.filter(
-    car => car.make.toLowerCase() === decodedMake.toLowerCase()
+  // Curated (non-Ferrari) + live Supabase listings
+  const curated = CURATED_CARS.filter(
+    car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
+  const live = await fetchLiveListingsAsCollectorCars()
+  const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
+  const cars = [...curated, ...liveMake]
 
   if (cars.length === 0) {
     return { title: "Not Found | Monza Lab" }
@@ -30,8 +34,7 @@ export async function generateMetadata({ params }: MakePageProps) {
 }
 
 export async function generateStaticParams() {
-  // Get unique makes from curated cars
-  const makes = Array.from(new Set(CURATED_CARS.map(car => car.make)))
+  const makes = Array.from(new Set(CURATED_CARS.filter(c => c.make !== "Ferrari").map(car => car.make)))
   return makes.map(make => ({
     make: make.toLowerCase().replace(/\s+/g, "-"),
   }))
@@ -41,10 +44,13 @@ export default async function MakePage({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
-  // Find cars matching this make (case-insensitive)
-  const cars = CURATED_CARS.filter(
-    car => car.make.toLowerCase() === decodedMake.toLowerCase()
+  // Curated (non-Ferrari) + live Supabase listings for this make
+  const curated = CURATED_CARS.filter(
+    car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
+  const live = await fetchLiveListingsAsCollectorCars()
+  const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
+  const cars = [...curated, ...liveMake]
 
   if (cars.length === 0) {
     notFound()

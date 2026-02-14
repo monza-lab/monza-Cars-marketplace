@@ -132,6 +132,13 @@ export function parseTitleComponents(title: string): {
     if (yearMatch) {
       year = parseInt(yearMatch[1], 10);
       rest = title.replace(/[-\s]+\d{4}$/, '').trim();
+    } else {
+      // Check for year anywhere in title (handles prefixes)
+      yearMatch = title.match(/\b((?:19|20)\d{2})\b/);
+      if (yearMatch && yearMatch.index !== undefined) {
+        year = parseInt(yearMatch[1], 10);
+        rest = title.slice(yearMatch.index + yearMatch[0].length).trim();
+      }
     }
   }
 
