@@ -38,7 +38,17 @@ import {
   Palette,
   BadgeCheck,
 } from "lucide-react"
-import { PriceChart } from "@/components/auction/PriceChart"
+import dynamic from "next/dynamic"
+
+const PriceChart = dynamic(
+  () => import("@/components/auction/PriceChart").then(mod => mod.PriceChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full rounded-xl bg-[rgba(15,14,22,0.6)] animate-pulse" />
+    ),
+  }
+)
 import type { PriceHistoryEntry } from "@/types/auction"
 
 // ---------------------------------------------------------------------------
@@ -221,7 +231,6 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
           sizes="50vw"
           priority
           referrerPolicy="no-referrer"
-          unoptimized
         />
 
         {/* Navigation */}
@@ -261,7 +270,7 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
                   : "border-[rgba(248,180,217,0.1)] opacity-60 hover:opacity-100"
               }`}
             >
-              <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" sizes="96px" referrerPolicy="no-referrer" unoptimized />
+              <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" sizes="96px" referrerPolicy="no-referrer" />
             </button>
           ))}
           {images.length > 6 && (

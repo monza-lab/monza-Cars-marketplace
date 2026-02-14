@@ -437,7 +437,6 @@ function BrandCard({ brand }: { brand: Brand }) {
               sizes="50vw"
               priority
               referrerPolicy="no-referrer"
-              unoptimized
             />
           ) : (
             <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
@@ -565,7 +564,6 @@ function MobileBrandView({ brand }: { brand: Brand }) {
             sizes="100vw"
             priority
             referrerPolicy="no-referrer"
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
@@ -964,7 +962,6 @@ function LiveAuctionsSidebar({
                         className="object-cover"
                         sizes="64px"
                         referrerPolicy="no-referrer"
-                        unoptimized
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -1056,7 +1053,6 @@ function AssetCard({ auction }: { auction: Auction }) {
               sizes="50vw"
               priority
               referrerPolicy="no-referrer"
-              unoptimized
             />
           ) : (
             <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
@@ -1227,7 +1223,6 @@ function MobileAssetView({ auction }: { auction: Auction }) {
             sizes="100vw"
             priority
             referrerPolicy="no-referrer"
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">

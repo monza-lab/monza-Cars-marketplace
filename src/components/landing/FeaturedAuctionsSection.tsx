@@ -80,7 +80,6 @@ function FeaturedCard({
           sizes={isHero ? "(max-width: 1024px) 100vw, 66vw" : "(max-width: 1024px) 100vw, 33vw"}
           priority={index < 2}
           referrerPolicy="no-referrer"
-          unoptimized
         />
 
         {/* Gradient overlay */}

@@ -6,6 +6,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 2592000, // 30 days
     remotePatterns: [
       { protocol: "https", hostname: "bringatrailer.com" },
       { protocol: "https", hostname: "**.bringatrailer.com" },

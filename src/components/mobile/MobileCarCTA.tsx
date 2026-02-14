@@ -12,7 +12,19 @@ import {
   TrendingUp,
   MessageCircle,
 } from "lucide-react"
-import { searchCars, CURATED_CARS } from "@/lib/curatedCars"
+// Search result type from API
+type SearchResultItem = {
+  id: string
+  title: string
+  make: string
+  model: string
+  year: number
+  currentBid: number
+  image: string
+  status: string
+  platform: string
+  sourceUrl: string
+}
 import { useTranslations } from "next-intl"
 
 // ─── FORMAT PRICE ───
@@ -42,121 +54,107 @@ function MobileCarOracleOverlay({
   type ChipId = "view_details" | "view_similar" | "view_collection"
   type Chip = { id: ChipId; label: string }
   const [chips, setChips] = useState<Chip[]>([])
+  const [response, setResponse] = useState<{
+    answer: string
+    chips: Chip[]
+    carContext: { id: string; make: string } | null
+  }>({ answer: "", chips: [], carContext: null })
 
-  // Get response based on query and car context
-  const matchingCars = searchCars(query)
-
-  // Determine if query is about the current car or something else
-  const isAboutCurrentCar = query.toLowerCase().includes(carContext.make.toLowerCase()) ||
-    query.toLowerCase().includes("este") ||
-    query.toLowerCase().includes("this") ||
-    query.toLowerCase().includes("carro") ||
-    query.toLowerCase().includes("car") ||
-    query.toLowerCase().includes("precio") ||
-    query.toLowerCase().includes("price") ||
-    query.toLowerCase().includes("valor") ||
-    query.toLowerCase().includes("value") ||
-    query.toLowerCase().includes("inversión") ||
-    query.toLowerCase().includes("investment")
-
-  let response = {
-    answer: "",
-    chips: [] as Chip[],
-    carContext: null as { id: string; make: string } | null,
-  }
-
-  if (isAboutCurrentCar || query.length < 10) {
-    // Answer about current car
-    const currentCar = CURATED_CARS.find(c => c.make !== "Ferrari" && c.title === carContext.title)
-    if (currentCar) {
-      const fv = currentCar.fairValueByRegion
-      response = {
-        answer: t("oracle.responses.currentCar", {
-          title: carContext.title,
-          grade: currentCar.investmentGrade,
-          trend: currentCar.trend,
-          usLow: formatPrice(fv.US.low),
-          usHigh: formatPrice(fv.US.high),
-          euLow: formatPrice(fv.EU.low),
-          euHigh: formatPrice(fv.EU.high),
-          ukLow: formatPrice(fv.UK.low),
-          ukHigh: formatPrice(fv.UK.high),
-          thesis: currentCar.thesis,
-        }),
-        chips: [
-          { id: "view_similar", label: t("oracle.viewSimilar") },
-          { id: "view_collection", label: t("oracle.viewCollection") },
-        ],
-        carContext: { id: currentCar.id, make: currentCar.make },
-      }
-    } else {
-      response = {
-        answer: t("oracle.responses.currentCarFallback", {
-          title: carContext.title,
-          price: carContext.price,
-        }),
-        chips: [
-          { id: "view_collection", label: t("oracle.viewCollection") },
-        ],
-        carContext: null,
-      }
-    }
-  } else if (matchingCars.length === 1) {
-    const car = matchingCars[0]
-    response = {
-      answer: t("oracle.responses.singleCar", {
-        title: car.title,
-        thesis: car.thesis,
-        fairLow: formatPrice(car.fairValueByRegion.US.low),
-        fairHigh: formatPrice(car.fairValueByRegion.US.high),
-        grade: car.investmentGrade,
-        trend: car.trend,
-      }),
-      chips: [
-        { id: "view_details", label: t("oracle.viewDetails") },
-        { id: "view_similar", label: t("oracle.viewSimilar") },
-      ],
-      carContext: { id: car.id, make: car.make },
-    }
-  } else if (matchingCars.length > 1) {
-    const carList = matchingCars.slice(0, 4).map(car =>
-      `• **${car.year} ${car.make} ${car.model}** — ${formatPrice(car.currentBid)}`
-    ).join("\n")
-    response = {
-      answer: `${t("oracle.responses.multipleFound", { count: matchingCars.length })}\n\n${carList}`,
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  } else {
-    response = {
-      answer: t("oracle.responses.noMatchForQuery", {
-        query,
-        title: carContext.title,
-      }),
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  }
-
-  // Loading effect
+  // Fetch search results and generate response
   useEffect(() => {
     if (!isOpen) {
       setDisplayedText("")
       setIsLoading(true)
       setChips([])
+      setResponse({ answer: "", chips: [], carContext: null })
       return
     }
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [isOpen])
+
+    let cancelled = false
+    setIsLoading(true)
+
+    // Determine if query is about the current car
+    const lowerQuery = query.toLowerCase()
+    const isAboutCurrentCar = lowerQuery.includes(carContext.make.toLowerCase()) ||
+      lowerQuery.includes("this") || lowerQuery.includes("este") ||
+      lowerQuery.includes("car") || lowerQuery.includes("carro") ||
+      lowerQuery.includes("price") || lowerQuery.includes("precio") ||
+      lowerQuery.includes("value") || lowerQuery.includes("valor") ||
+      lowerQuery.includes("investment") || lowerQuery.includes("inversión")
+
+    if (isAboutCurrentCar || query.length < 10) {
+      // Answer about the current car using context we already have
+      const newResponse = {
+        answer: `**${carContext.title}**\n\n• Current price: **${carContext.price}**\n• Make: ${carContext.make}\n\nThis vehicle is currently listed on our platform. Check the auction details above for full specifications and bidding information.`,
+        chips: [
+          { id: "view_collection" as ChipId, label: t("oracle.viewCollection") },
+        ],
+        carContext: null,
+      }
+      setTimeout(() => {
+        if (cancelled) return
+        setResponse(newResponse)
+        setIsLoading(false)
+      }, 400)
+    } else {
+      fetch(`/api/search?q=${encodeURIComponent(query)}&limit=8`)
+        .then(res => res.json())
+        .then(data => {
+          if (cancelled) return
+          const matchingCars: SearchResultItem[] = data.results ?? []
+
+          let newResponse: typeof response
+          if (matchingCars.length === 1) {
+            const car = matchingCars[0]
+            newResponse = {
+              answer: `**${car.title}**\n\n• Price: **${formatPrice(car.currentBid)}**\n• Platform: ${car.platform}\n• Status: ${car.status}`,
+              chips: [
+                { id: "view_details" as ChipId, label: t("oracle.viewDetails") },
+                { id: "view_similar" as ChipId, label: t("oracle.viewSimilar") },
+              ],
+              carContext: { id: car.id, make: car.make },
+            }
+          } else if (matchingCars.length > 1) {
+            const carList = matchingCars.slice(0, 4).map(car =>
+              `• **${car.year} ${car.make} ${car.model}** — ${formatPrice(car.currentBid)}`
+            ).join("\n")
+            newResponse = {
+              answer: `Found ${matchingCars.length} matching vehicles:\n\n${carList}`,
+              chips: [
+                { id: "view_collection" as ChipId, label: t("oracle.viewCollection") },
+              ],
+              carContext: null,
+            }
+          } else {
+            newResponse = {
+              answer: `No matches found for "${query}". Try searching for a make or model.`,
+              chips: [
+                { id: "view_collection" as ChipId, label: t("oracle.viewCollection") },
+              ],
+              carContext: null,
+            }
+          }
+
+          setResponse(newResponse)
+          setIsLoading(false)
+        })
+        .catch(() => {
+          if (cancelled) return
+          setResponse({
+            answer: `Search temporarily unavailable. Please try again.`,
+            chips: [],
+            carContext: null,
+          })
+          setIsLoading(false)
+        })
+    }
+
+    return () => { cancelled = true }
+  }, [isOpen, query, carContext, t])
 
   // Typewriter effect
   useEffect(() => {
-    if (isLoading || !isOpen) return
+    if (isLoading || !isOpen || !response.answer) return
 
     const fullText = response.answer
     let charIndex = 0

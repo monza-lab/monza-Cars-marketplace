@@ -1,8 +1,6 @@
-"use client";
-
-import { useEffect, useState, Suspense } from "react";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
-import { useTranslations } from "next-intl";
+import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
 
 type RegionalPricing = {
   currency: "$" | "€" | "£" | "¥";
@@ -53,83 +51,64 @@ type Auction = {
   category?: string;
 };
 
-function LoadingSpinner({ label }: { label: string }) {
-  return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-2 border-[#F8B4D9] border-t-transparent rounded-full animate-spin" />
-        <span className="text-[#9CA3AF] text-sm tracking-wide">{label}</span>
-      </div>
-    </div>
-  );
-}
-
-function HomeContent({
-  loadingLabel,
-  emptyLabel,
+export default async function Home({
+  params,
 }: {
-  loadingLabel: string;
-  emptyLabel: string;
+  params: Promise<{ locale: string }>;
 }) {
-  const [auctions, setAuctions] = useState<Auction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { locale } = await params;
+  setRequestLocale(locale);
 
-  useEffect(() => {
-    async function fetchAuctions() {
-      try {
-        const response = await fetch(`/api/mock-auctions?limit=1000`);
-        const data = await response.json();
-        // Transform API response to match Auction type
-        const transformed = data.auctions.map((a: any) => ({
-          ...a,
-          viewCount: 0,
-          watchCount: 0,
-          exteriorColor: null,
-          description: null,
-          analysis: a.investmentGrade ? {
-            bidTargetLow: null,
-            bidTargetHigh: null,
-            confidence: null,
-            investmentGrade: a.investmentGrade,
-            appreciationPotential: a.trend,
-            keyStrengths: [],
-            redFlags: [],
-          } : null,
-          priceHistory: [],
-          fairValueByRegion: a.fairValueByRegion,
-          category: a.category,
-        }));
-        setAuctions(transformed);
-      } catch (error) {
-        console.error("Failed to fetch auctions:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAuctions();
-  }, []);
+  const t = await getTranslations("home");
 
-  if (loading) {
-    return <LoadingSpinner label={loadingLabel} />;
-  }
+  // Fetch data server-side — no client-side waterfall
+  const live = await fetchLiveListingsAsCollectorCars();
+  const ferraris = live.filter(car => car.make.toLowerCase() === "ferrari");
+
+  // Transform to match the Auction type expected by DashboardClient
+  const auctions: Auction[] = ferraris.map(car => ({
+    id: car.id,
+    title: car.title,
+    make: car.make,
+    model: car.model,
+    year: car.year,
+    trim: car.trim,
+    currentBid: car.currentBid,
+    bidCount: car.bidCount,
+    viewCount: 0,
+    watchCount: 0,
+    status: car.status,
+    endTime: car.endTime.toISOString(),
+    platform: car.platform,
+    engine: car.engine,
+    transmission: car.transmission,
+    exteriorColor: null,
+    mileage: car.mileage,
+    mileageUnit: car.mileageUnit,
+    location: car.location,
+    description: null,
+    images: car.images,
+    analysis: car.investmentGrade ? {
+      bidTargetLow: null,
+      bidTargetHigh: null,
+      confidence: null,
+      investmentGrade: car.investmentGrade,
+      appreciationPotential: car.trend,
+      keyStrengths: [],
+      redFlags: [],
+    } : null,
+    priceHistory: [],
+    fairValueByRegion: car.fairValueByRegion,
+    category: car.category,
+  }));
 
   if (auctions.length === 0) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-[#050505]">
-        <span className="text-[#9CA3AF] text-sm">{emptyLabel}</span>
+        <span className="text-[#9CA3AF] text-sm">{t("noAuctionsFound")}</span>
       </div>
     );
   }
 
   return <DashboardClient auctions={auctions} />;
-}
-
-export default function Home() {
-  const t = useTranslations("home");
-
-  return (
-    <Suspense fallback={<LoadingSpinner label={t("loadingAssets")} />}>
-      <HomeContent loadingLabel={t("loadingAssets")} emptyLabel={t("noAuctionsFound")} />
-    </Suspense>
-  );
 }

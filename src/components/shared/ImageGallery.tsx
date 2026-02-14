@@ -106,7 +106,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 priority={selectedIndex === 0}
                 onLoad={() => setMainLoaded(true)}
                 referrerPolicy="no-referrer"
-                unoptimized
               />
             </motion.div>
           </AnimatePresence>
@@ -193,7 +192,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     setThumbnailsLoaded((prev) => ({ ...prev, [index]: true }))
                   }
                   referrerPolicy="no-referrer"
-                  unoptimized
                 />
               </div>
 
@@ -245,7 +243,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     sizes="90vw"
                     priority
                     referrerPolicy="no-referrer"
-                    unoptimized
                   />
                 </motion.div>
               </AnimatePresence>

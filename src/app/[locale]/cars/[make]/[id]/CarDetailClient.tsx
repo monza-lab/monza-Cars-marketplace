@@ -28,7 +28,12 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { AdvisorChat } from "@/components/advisor/AdvisorChat"
+import dynamic from "next/dynamic"
+
+const AdvisorChat = dynamic(
+  () => import("@/components/advisor/AdvisorChat").then(mod => mod.AdvisorChat),
+  { ssr: false }
+)
 import { MobileCarCTA } from "@/components/mobile"
 
 // ─── TABS ───

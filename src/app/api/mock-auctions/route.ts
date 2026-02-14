@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  CURATED_CARS,
-  searchCars,
-  getTopPicks,
-  getLiveAuctions,
-  getEndingSoon,
-  getCarsByMake,
-  getCarsByGrade,
   type CollectorCar,
   type InvestmentGrade
 } from "@/lib/curatedCars";
@@ -156,5 +149,9 @@ export async function GET(request: NextRequest) {
     page,
     limit,
     totalPages: Math.ceil(total / limit)
+  }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+    },
   });
 }

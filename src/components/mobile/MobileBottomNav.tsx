@@ -17,34 +17,24 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react"
-import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars"
+import type { CollectorCar } from "@/lib/curatedCars"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { useTranslations } from "next-intl"
 import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 
-// ─── GET UNIQUE MAKES WITH COUNTS ───
-function getMakesWithCounts() {
-  const makeCounts: Record<string, { count: number; topCar: CollectorCar }> = {}
-
-  CURATED_CARS.filter(c => c.make !== "Ferrari").forEach((car) => {
-    if (!makeCounts[car.make]) {
-      makeCounts[car.make] = { count: 0, topCar: car }
-    }
-    makeCounts[car.make].count++
-    // Keep the most valuable car as the representative
-    if (car.currentBid > makeCounts[car.make].topCar.currentBid) {
-      makeCounts[car.make].topCar = car
-    }
-  })
-
-  return Object.entries(makeCounts)
-    .map(([make, data]) => ({
-      make,
-      count: data.count,
-      topCar: data.topCar,
-    }))
-    .sort((a, b) => b.count - a.count)
+// ─── Search result type from API ───
+type SearchResultItem = {
+  id: string
+  title: string
+  make: string
+  model: string
+  year: number
+  currentBid: number
+  image: string
+  status: string
+  platform: string
+  sourceUrl: string
 }
 
 // ─── FORMAT PRICE ───
@@ -54,49 +44,11 @@ function formatPrice(value: number): string {
   return `$${value.toLocaleString()}`
 }
 
-// ─── BRAND CARD ───
-function BrandCard({ make, count, topCar }: { make: string; count: number; topCar: CollectorCar }) {
-  const t = useTranslations("mobile")
-  const makePath = make.toLowerCase().replace(/\s+/g, "-")
-
-  return (
-    <Link
-      href={`/cars/${makePath}`}
-      className="group relative flex flex-col rounded-2xl bg-[#0F1012] border border-white/5 overflow-hidden active:scale-[0.98] transition-transform"
-    >
-      {/* Image */}
-      <div className="relative h-28 w-full">
-        <Image
-          src={topCar.image}
-          alt={make}
-          fill
-          className="object-cover"
-          sizes="50vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent" />
-      </div>
-
-      {/* Content */}
-      <div className="p-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[14px] font-semibold text-[#F2F0E9]">{make}</h3>
-          <ChevronRight className="size-4 text-[#4B5563] group-active:text-[#F8B4D9] transition-colors" />
-        </div>
-        <p className="text-[11px] text-[#4B5563] mt-0.5">
-          {count > 1 ? t("vehicles", { count }) : t("vehicle", { count })}
-        </p>
-      </div>
-    </Link>
-  )
-}
-
 // ─── SEARCH RESULT CARD ───
-function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () => void }) {
-  const makePath = car.make.toLowerCase().replace(/\s+/g, "-")
-
+function SearchResultCard({ car, onSelect }: { car: SearchResultItem; onSelect: () => void }) {
   return (
     <Link
-      href={`/cars/${makePath}/${car.id}`}
+      href={`/auctions`}
       onClick={onSelect}
       className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 active:bg-white/[0.05] transition-colors"
     >
@@ -113,7 +65,6 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
         <p className="text-[13px] font-medium text-[#F2F0E9] truncate">{car.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPrice(car.currentBid)}</span>
-          <span className="text-[10px] text-emerald-400">{car.trend}</span>
         </div>
       </div>
       <ChevronRight className="size-4 text-[#4B5563] shrink-0" />
@@ -140,76 +91,82 @@ function MobileOracleOverlay({
   type Chip = { id: ChipId; label: string }
 
   const [chips, setChips] = useState<Chip[]>([])
+  const [response, setResponse] = useState<{
+    answer: string
+    chips: Chip[]
+    carContext: { id: string; make: string } | null
+  }>({ answer: "", chips: [], carContext: null })
 
-  // Get intelligent response
-  const matchingCars = searchCars(query)
-
-  // Generate response
-  let response = {
-    answer: "",
-    chips: [] as Chip[],
-    carContext: null as { id: string; make: string } | null,
-  }
-
-  if (matchingCars.length === 1) {
-    const car = matchingCars[0]
-    response = {
-      answer: t("oracle.responses.singleCar", {
-        title: car.title,
-        thesis: car.thesis,
-        fairLow: formatPrice(car.fairValueByRegion.US.low),
-        fairHigh: formatPrice(car.fairValueByRegion.US.high),
-        grade: car.investmentGrade,
-        trend: car.trend,
-      }),
-      chips: [
-        { id: "view_details", label: t("oracle.chips.viewCarDetails") },
-        { id: "view_similar", label: t("oracle.chips.similarCars") },
-      ],
-      carContext: { id: car.id, make: car.make },
-    }
-  } else if (matchingCars.length > 1) {
-    const carList = matchingCars.slice(0, 5).map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)}`
-    ).join("\n")
-    response = {
-      answer: `${t("oracle.responses.multipleFound", { count: matchingCars.length })}\n\n${carList}`,
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  } else {
-    const nonFerrari = CURATED_CARS.filter(c => c.make !== "Ferrari")
-    const totalCars = nonFerrari.length
-    const avgAppreciation = nonFerrari.reduce((sum, c) => sum + c.trendValue, 0) / totalCars
-    response = {
-      answer: t("oracle.responses.noMatch", {
-        totalCars,
-        avgAppreciation: avgAppreciation.toFixed(0),
-      }),
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  }
-
-  // Loading effect
+  // Fetch search results and generate response
   useEffect(() => {
     if (!isOpen) {
       setDisplayedText("")
       setIsLoading(true)
       setChips([])
+      setResponse({ answer: "", chips: [], carContext: null })
       return
     }
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [isOpen])
+
+    let cancelled = false
+    setIsLoading(true)
+
+    fetch(`/api/search?q=${encodeURIComponent(query)}&limit=8`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        const matchingCars: SearchResultItem[] = data.results ?? []
+
+        let newResponse: typeof response
+        if (matchingCars.length === 1) {
+          const car = matchingCars[0]
+          newResponse = {
+            answer: `**${car.title}**\n\n• Price: **${formatPrice(car.currentBid)}**\n• Platform: ${car.platform}\n• Status: ${car.status}`,
+            chips: [
+              { id: "view_details" as ChipId, label: t("oracle.chips.viewCarDetails") },
+              { id: "view_similar" as ChipId, label: t("oracle.chips.similarCars") },
+            ],
+            carContext: { id: car.id, make: car.make },
+          }
+        } else if (matchingCars.length > 1) {
+          const carList = matchingCars.slice(0, 5).map(car =>
+            `• **${car.title}** — ${formatPrice(car.currentBid)}`
+          ).join("\n")
+          newResponse = {
+            answer: `${t("oracle.responses.multipleFound", { count: matchingCars.length })}\n\n${carList}`,
+            chips: [
+              { id: "view_collection" as ChipId, label: t("oracle.viewCollection") },
+            ],
+            carContext: null,
+          }
+        } else {
+          newResponse = {
+            answer: `No matches found for "${query}". Try searching for a make or model like "Ferrari" or "911".`,
+            chips: [
+              { id: "view_collection" as ChipId, label: t("oracle.viewCollection") },
+            ],
+            carContext: null,
+          }
+        }
+
+        setResponse(newResponse)
+        setIsLoading(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setResponse({
+          answer: `Search temporarily unavailable. Please try again.`,
+          chips: [],
+          carContext: null,
+        })
+        setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [isOpen, query, t])
 
   // Typewriter effect
   useEffect(() => {
-    if (isLoading || !isOpen) return
+    if (isLoading || !isOpen || !response.answer) return
 
     const fullText = response.answer
     let charIndex = 0
@@ -339,26 +296,49 @@ function MobileOracleOverlay({
 function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const t = useTranslations("mobile")
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeSection, setActiveSection] = useState<"brands" | "search">("brands")
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
-  const makes = getMakesWithCounts()
-  const searchResults = searchQuery.length > 0 ? searchCars(searchQuery) : []
-
-  // Focus input when opening search
+  // Focus input when opening
   useEffect(() => {
-    if (isOpen && activeSection === "search" && inputRef.current) {
+    if (isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
-  }, [isOpen, activeSection])
+  }, [isOpen])
 
   // Reset on close
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("")
-      setActiveSection("brands")
+      setSearchResults([])
     }
   }, [isOpen])
+
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+    setIsSearching(true)
+    debounceRef.current = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=20`)
+        .then(res => res.json())
+        .then(data => {
+          setSearchResults(data.results ?? [])
+          setIsSearching(false)
+        })
+        .catch(() => {
+          setSearchResults([])
+          setIsSearching(false)
+        })
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchQuery])
 
   return (
     <AnimatePresence>
@@ -374,7 +354,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           <div className="sticky top-0 z-10 bg-[#050505]/95 backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center justify-between px-5 py-4">
               <h2 className="text-[16px] font-semibold text-[#F2F0E9]">
-                {activeSection === "brands" ? t("exploreBrands") : t("search")}
+                {t("search")}
               </h2>
               <button
                 onClick={onClose}
@@ -384,101 +364,65 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
               </button>
             </div>
 
-            {/* Section Tabs */}
-            <div className="flex gap-2 px-5 pb-4">
-              <button
-                onClick={() => setActiveSection("brands")}
-                className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
-                  activeSection === "brands"
-                    ? "bg-[#F8B4D9] text-[#050505]"
-                    : "bg-white/5 text-[#9CA3AF]"
-                }`}
-              >
-                <Car className="size-4 inline mr-2" />
-                {t("brands")}
-              </button>
-              <button
-                onClick={() => setActiveSection("search")}
-                className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
-                  activeSection === "search"
-                    ? "bg-[#F8B4D9] text-[#050505]"
-                    : "bg-white/5 text-[#9CA3AF]"
-                }`}
-              >
-                <Search className="size-4 inline mr-2" />
-                {t("search")}
-              </button>
-            </div>
-
-            {/* Search Input (only in search mode) */}
-            {activeSection === "search" && (
-              <div className="px-5 pb-4">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-[#4B5563]" />
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("searchPlaceholder")}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-[15px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/30"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-white/10 text-[#9CA3AF]"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
-                </div>
+            {/* Search Input */}
+            <div className="px-5 pb-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-[#4B5563]" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-[15px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/30"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-white/10 text-[#9CA3AF]"
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Content */}
           <div className="overflow-y-auto pb-24" style={{ height: "calc(100vh - 180px)" }}>
-            {activeSection === "brands" ? (
-              // Brands Grid
-              <div className="grid grid-cols-2 gap-3 p-5">
-                {makes.map(({ make, count, topCar }) => (
-                  <div key={make} onClick={onClose}>
-                    <BrandCard make={make} count={count} topCar={topCar} />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Search Results
-              <div className="px-5 py-4">
-                {searchQuery.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Search className="size-12 text-[#4B5563] mx-auto mb-4" />
-                    <p className="text-[#9CA3AF] text-[14px]">
-                      {t("vehicles", { count: CURATED_CARS.filter(c => c.make !== "Ferrari").length })}
-                    </p>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Car className="size-12 text-[#4B5563] mx-auto mb-4" />
-                    <p className="text-[#9CA3AF] text-[14px]">
-                      {t("noResults", { query: searchQuery })}
-                    </p>
-                    <p className="text-[#4B5563] text-[12px] mt-2">
-                      {t("tryAnother")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-[11px] text-[#4B5563] uppercase tracking-wider mb-4">
-                      {searchResults.length > 1 ? t("results", { count: searchResults.length }) : t("result", { count: searchResults.length })}
-                    </p>
-                    {searchResults.slice(0, 20).map((car) => (
-                      <SearchResultCard key={car.id} car={car} onSelect={onClose} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="px-5 py-4">
+              {searchQuery.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="size-12 text-[#4B5563] mx-auto mb-4" />
+                  <p className="text-[#9CA3AF] text-[14px]">
+                    {t("searchPlaceholder")}
+                  </p>
+                </div>
+              ) : isSearching ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="size-6 border-2 border-[#F8B4D9] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="text-center py-12">
+                  <Car className="size-12 text-[#4B5563] mx-auto mb-4" />
+                  <p className="text-[#9CA3AF] text-[14px]">
+                    {t("noResults", { query: searchQuery })}
+                  </p>
+                  <p className="text-[#4B5563] text-[12px] mt-2">
+                    {t("tryAnother")}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-[11px] text-[#4B5563] uppercase tracking-wider mb-4">
+                    {searchResults.length > 1 ? t("results", { count: searchResults.length }) : t("result", { count: searchResults.length })}
+                  </p>
+                  {searchResults.map((car) => (
+                    <SearchResultCard key={car.id} car={car} onSelect={onClose} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       )}

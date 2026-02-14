@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
-import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars";
+import type { CollectorCar } from "@/lib/curatedCars";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useTranslations } from "next-intl";
@@ -69,150 +69,64 @@ type OracleChip = {
   id: OracleChipId;
 };
 
-// Generate intelligent response based on query and car data
+// Search results type from the API
+type SearchResult = {
+  id: string;
+  title: string;
+  make: string;
+  model: string;
+  year: number;
+  currentBid: number;
+  image: string;
+  status: string;
+  platform: string;
+  sourceUrl: string;
+};
+
+// Fetch search results from the API
+async function fetchSearchResults(query: string): Promise<SearchResult[]> {
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=8`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// Generate intelligent response based on query and search results
 function getResponseForQuery(
   query: string,
+  matchingCars: SearchResult[],
   t: (key: string, values?: any) => string
 ): OracleResponse {
-  const lowerQuery = query.toLowerCase();
-
-  // Search for matching cars
-  const matchingCars = searchCars(query);
-
-  // Check for specific query types
-  const isFairValueQuery = lowerQuery.includes("fair value") || lowerQuery.includes("worth") || lowerQuery.includes("price") || lowerQuery.includes("value");
-  const isBudgetQuery = lowerQuery.includes("under") || lowerQuery.includes("below") || lowerQuery.includes("less than") || lowerQuery.includes("budget");
-  const isTrendQuery = lowerQuery.includes("trend") || lowerQuery.includes("appreciation") || lowerQuery.includes("appreciating") || lowerQuery.includes("growing");
-  const isBestQuery = lowerQuery.includes("best") || lowerQuery.includes("top") || lowerQuery.includes("recommend");
-  const isCompareQuery = lowerQuery.includes("compare") || lowerQuery.includes("vs") || lowerQuery.includes("versus") || lowerQuery.includes("difference");
-
-  // Extract budget amount if present
-  const budgetMatch = lowerQuery.match(/(\d+)k|(\d+),?000|(\d+)m/i);
-  let budgetAmount = 0;
-  if (budgetMatch) {
-    if (budgetMatch[1]) budgetAmount = parseInt(budgetMatch[1]) * 1000;
-    else if (budgetMatch[2]) budgetAmount = parseInt(budgetMatch[2].replace(",", "")) * 1000;
-    else if (budgetMatch[3]) budgetAmount = parseInt(budgetMatch[3]) * 1000000;
-  }
-
-  // If specific car(s) found and it's a value/price query
-  if (matchingCars.length === 1 && isFairValueQuery) {
-    const car = matchingCars[0];
-    return {
-      answer: `**${car.title}**
-
-**Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
-• Platform: ${car.platform.replace(/_/g, " ")}
-• Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
-• Location: ${car.location}
-
-**Vehicle Specs:**
-• Engine: ${car.engine}
-• Transmission: ${car.transmission}
-• Year: ${car.year}
-
-**About this Vehicle** _(Editorial)_
-${car.thesis}
-
-_Note: Price data from real auction results. No value estimates._`,
-      chips: [{ id: "viewCarDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
-      carContext: { id: car.id, make: car.make },
-    };
-  }
-
-  // If looking for cars under a budget
-  if (isBudgetQuery && budgetAmount > 0) {
-    const affordableCars = CURATED_CARS.filter(car => car.make !== "Ferrari" && car.currentBid <= budgetAmount)
-      .sort((a, b) => b.trendValue - a.trendValue)
-      .slice(0, 5);
-
-    if (affordableCars.length > 0) {
-      const carList = affordableCars.map(car =>
-        `• **${car.year} ${car.make} ${car.model}** — ${formatPrice(car.currentBid)} (${car.trend})`
-      ).join("\n");
-
-      return {
-        answer: `**Collector Cars Under ${formatPrice(budgetAmount)}**
-
-Based on your budget, here are the top appreciating assets:
-
-${carList}
-
-**Investment Insight:** At this price point, focus on ${affordableCars[0].category} vehicles. The ${affordableCars[0].title} offers the strongest appreciation potential at ${affordableCars[0].trend}.
-
-**Key Considerations:**
-• Prioritize documented history and matching numbers
-• JDM vehicles continue to surge with 25-year import eligibility
-• Manual transmissions command 15-20% premiums over automatics`,
-        chips: [{ id: "viewAllUnderBudget" }, { id: "bestRoiCars" }, { id: "setPriceAlert" }],
-        carContext: null,
-      };
-    }
-  }
-
-  // If asking about trends or appreciation
-  if (isTrendQuery) {
-    const liveCars = CURATED_CARS.filter(c => c.make !== "Ferrari" && (c.status === "ACTIVE" || c.status === "ENDING_SOON"));
-    const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount).slice(0, 5);
-
-    const carList = topBidActivity.map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)} (${car.bidCount} bids)`
-    ).join("\n");
-
-    return {
-      answer: `**Most Active Auctions Right Now**
-
-${carList}
-
-**Market Activity:**
-• ${liveCars.length} live auctions being tracked
-• Total collection: ${CURATED_CARS.filter(c => c.make !== "Ferrari").length} vehicles
-• Platforms: Bring a Trailer, Cars & Bids, Collecting Cars
-
-**What's Hot** _(Editorial)_
-JDM vehicles and analog supercars continue to attract strong bidding activity. Manual transmission examples consistently generate more competition.
-
-_Note: Data from real auction results. Past performance not indicative of future results._`,
-      chips: [{ id: "viewLiveAuctions" }, { id: "setAlerts" }, { id: "browseAll" }],
-      carContext: null,
-    };
-  }
-
   // If multiple cars match (brand/category search)
   if (matchingCars.length > 1) {
-    const sortedCars = matchingCars.sort((a, b) => b.currentBid - a.currentBid).slice(0, 5);
+    const sortedCars = [...matchingCars].sort((a, b) => b.currentBid - a.currentBid).slice(0, 5);
     const brandOrCategory = sortedCars[0].make;
-    const liveCars = matchingCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
 
     const carList = sortedCars.map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)} ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "(Live)" : "(Sold)"}`
+      `• **${car.title}** — ${formatPrice(car.currentBid)}`
     ).join("\n");
 
     return {
       answer: `**${brandOrCategory} Collection**
 
-We're tracking ${matchingCars.length} ${brandOrCategory} vehicles:
+We found ${matchingCars.length} matching vehicles:
 
 ${carList}
 
-**Market Data:**
-• Live auctions: **${liveCars.length}**
-• Price range: ${formatPrice(Math.min(...sortedCars.map(c => c.currentBid)))}–${formatPrice(Math.max(...sortedCars.map(c => c.currentBid)))}
-• Platforms: ${[...new Set(sortedCars.map(c => c.platform.replace(/_/g, " ")))].slice(0, 3).join(", ")}
-
-**About ${brandOrCategory}** _(Editorial)_
-${sortedCars[0].thesis}
+**Platforms Tracked:**
+• Bring a Trailer • Cars & Bids • Collecting Cars
 
 _Data from real auction results._`,
-      chips: [{ id: "viewAllBrand" }, { id: "compareModels" }, { id: "setAlerts" }],
+      chips: [{ id: "viewAllBrand" }, { id: "viewLiveAuctions" }, { id: "setAlerts" }],
       brandContext: brandOrCategory,
     };
   }
 
-  // Single car match but general question
+  // Single car match
   if (matchingCars.length === 1) {
     const car = matchingCars[0];
 
@@ -220,52 +134,26 @@ _Data from real auction results._`,
       answer: `**${car.title}**
 
 **Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
+• Price: **${formatPrice(car.currentBid)}**
 • Platform: ${car.platform.replace(/_/g, " ")}
-• Location: ${car.location}
-
-**Vehicle Specs:**
-• Engine: ${car.engine}
-• Transmission: ${car.transmission}
-• Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
-
-**Seller's Notes:** ${car.history}
-
-**About this Model** _(Editorial)_
-${car.thesis}`,
-      chips: [{ id: "viewFullDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
+• Status: ${car.status}`,
+      chips: [{ id: "viewCarDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
       carContext: { id: car.id, make: car.make },
     };
   }
 
-  // Default: Market overview with real data (excluding curated Ferraris)
-  const nonFerrariCurated = CURATED_CARS.filter(c => c.make !== "Ferrari");
-  const totalCars = nonFerrariCurated.length;
-  const liveCars = nonFerrariCurated.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
-  const totalValue = nonFerrariCurated.reduce((sum, c) => sum + c.currentBid, 0);
-  const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount)[0];
-
+  // Default: no results
   return {
     answer: `**Monza Lab Market Overview**
 
-We're tracking ${totalCars} collector vehicles across multiple auction platforms.
+No exact matches found for "${query}".
 
-**Current Activity:**
-• **${liveCars.length}** live auctions
-• **${totalCars - liveCars.length}** completed sales
-• Total tracked value: **${formatPrice(totalValue)}**
-
-${topBidActivity ? `**Most Active:** ${topBidActivity.title} — ${formatPrice(topBidActivity.currentBid)} with ${topBidActivity.bidCount} bids` : ""}
+**Try Asking:**
+• A specific make like "Ferrari" or "Porsche"
+• A model like "911" or "F40"
 
 **Platforms Tracked:**
 • Bring a Trailer • Cars & Bids • Collecting Cars
-
-**Try Asking:**
-• "Show me Porsche under $200K"
-• "What's the price of a Toyota Supra?"
-• "Browse Ferrari collection"
 
 _All prices from real auction results._`,
     chips: [{ id: "viewLiveAuctions" }, { id: "browseByBrand" }, { id: "setAlerts" }],
@@ -396,7 +284,7 @@ function OracleOverlay({
 
   const handleToastClose = useCallback(() => setShowToast(false), []);
 
-  // Simple effect: when opens, load after delay
+  // Fetch search results and generate response
   useEffect(() => {
     if (!isOpen) {
       setPhase("loading");
@@ -404,14 +292,17 @@ function OracleOverlay({
       return;
     }
 
-    // Calculate response and show after brief delay
-    const result = getResponseForQuery(query, t);
-    const timer = setTimeout(() => {
+    let cancelled = false;
+    setPhase("loading");
+
+    fetchSearchResults(query).then((results) => {
+      if (cancelled) return;
+      const result = getResponseForQuery(query, results, t);
       setResponse(result);
       setPhase("ready");
-    }, 600);
+    });
 
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; };
   }, [isOpen, query, t]);
 
   // Close on ESC
