@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getUserCredits } from '@/lib/credits'
+import { getOrCreateUser, getUserCredits } from '@/lib/credits'
 
 export async function GET() {
   try {
@@ -14,12 +14,12 @@ export async function GET() {
       )
     }
 
-    const profile = await getUserCredits(user.id)
-
+    let profile = await getUserCredits(user.id)
     if (!profile) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
+      profile = await getOrCreateUser(
+        user.id,
+        user.email!,
+        user.user_metadata?.full_name
       )
     }
 

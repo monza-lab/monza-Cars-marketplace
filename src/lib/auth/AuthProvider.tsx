@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -30,33 +30,67 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+type ProfileFetchResult = {
+  ok: boolean
+  status: number | null
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const creatingUserRef = useRef(false)
 
-  const fetchProfile = useCallback(async (supabaseUser: User): Promise<boolean> => {
+  const fetchProfile = useCallback(async (): Promise<ProfileFetchResult> => {
     try {
       const response = await fetch('/api/user/profile')
       if (response.ok) {
         const data = await response.json()
         setProfile(data.profile)
-        return true
+        return { ok: true, status: response.status }
       }
-      return false
+      return { ok: false, status: response.status }
     } catch (error) {
       console.error('Error fetching profile:', error)
-      return false
+      return { ok: false, status: null }
     }
   }, [])
 
+  const createUserProfile = useCallback(async (supabaseUser: User): Promise<ProfileFetchResult> => {
+    if (creatingUserRef.current) {
+      return { ok: false, status: null }
+    }
+
+    creatingUserRef.current = true
+    try {
+      const res = await fetch('/api/user/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: supabaseUser.email,
+          name: supabaseUser.user_metadata?.full_name,
+        }),
+      })
+
+      if (!res.ok) {
+        return { ok: false, status: res.status }
+      }
+
+      return await fetchProfile()
+    } catch (error) {
+      console.error('Error creating user profile:', error)
+      return { ok: false, status: null }
+    } finally {
+      creatingUserRef.current = false
+    }
+  }, [fetchProfile])
+
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user)
+      await fetchProfile()
     }
   }, [user, fetchProfile])
 
@@ -68,9 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (session?.user) {
-          const ok = await fetchProfile(session.user)
-          if (!ok) {
-            // Stale session — user was deleted server-side, clear local state
+          let profileResult = await fetchProfile()
+
+          // Email confirmation path can establish auth session before the app profile
+          // row exists in Prisma; create it immediately instead of waiting for timing.
+          if (!profileResult.ok && profileResult.status === 404) {
+            profileResult = await createUserProfile(session.user)
+          }
+
+          // Only force sign-out on auth rejection. Other failures (e.g. DB 500)
+          // should not destroy a valid auth session.
+          if (!profileResult.ok && (profileResult.status === 401 || profileResult.status === 403)) {
             await supabase.auth.signOut()
             setSession(null)
             setUser(null)
@@ -92,23 +134,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (event === 'SIGNED_IN' && session?.user) {
-          if (!creatingUserRef.current) {
-            creatingUserRef.current = true
-            try {
-              const res = await fetch('/api/user/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  email: session.user.email,
-                  name: session.user.user_metadata?.full_name,
-                }),
-              })
-              if (res.ok) {
-                await fetchProfile(session.user)
-              }
-            } finally {
-              creatingUserRef.current = false
-            }
+          const createResult = await createUserProfile(session.user)
+          if (!createResult.ok && (createResult.status === 401 || createResult.status === 403)) {
+            await supabase.auth.signOut()
+            setSession(null)
+            setUser(null)
+            setProfile(null)
           }
         } else if (event === 'SIGNED_OUT') {
           setProfile(null)
@@ -119,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase.auth, fetchProfile])
+  }, [supabase, fetchProfile, createUserProfile])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
