@@ -77,6 +77,7 @@ type Auction = {
   mileage: number | null
   mileageUnit: string | null
   location: string | null
+  region?: string | null
   description: string | null
   images: string[]
   analysis: {
@@ -742,8 +743,8 @@ function BrandNavigationPanel({
   )
 }
 
-// ─── COLUMN A: LIVE AUCTIONS SIDEBAR (NEW) ───
-function LiveAuctionsSidebar({
+// ─── COLUMN A: DISCOVERY SIDEBAR ───
+function DiscoverySidebar({
   auctions,
   brands,
   onSelectBrand,
@@ -755,270 +756,234 @@ function LiveAuctionsSidebar({
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
 
-  const [filterMode, setFilterMode] = useState<"live" | "price" | "brand">("live")
-  const [selectedPriceRange, setSelectedPriceRange] = useState(0)
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [showBrandDropdown, setShowBrandDropdown] = useState(false)
+  const [showLive, setShowLive] = useState(false)
 
-  // Filter and sort auctions
-  const filteredAuctions = useMemo(() => {
-    let filtered = [...auctions]
+  const regions = [
+    { id: "all", label: t("sidebar.allRegions"), flag: "\u{1F30D}" },
+    { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
+    { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
+    { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
+    { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+  ]
 
-    // Filter by status (live auctions)
+  const regionLabel = selectedRegion
+    ? regions.find(r => r.id === selectedRegion)?.flag + " " + selectedRegion
+    : "\u{1F30D}"
+
+  // All cars filtered by region
+  const regionFiltered = useMemo(() => {
+    if (!selectedRegion) return auctions
+    return auctions.filter(a => a.region === selectedRegion)
+  }, [auctions, selectedRegion])
+
+  // Search results
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return regionFiltered
+    const query = searchQuery.toLowerCase()
+    return regionFiltered.filter(a =>
+      a.make.toLowerCase().includes(query) ||
+      a.model.toLowerCase().includes(query) ||
+      a.title.toLowerCase().includes(query)
+    )
+  }, [regionFiltered, searchQuery])
+
+  // Popular makes for this region (top 6 by count)
+  const popularMakes = useMemo(() => {
+    const counts = new Map<string, number>()
+    regionFiltered.forEach(a => counts.set(a.make, (counts.get(a.make) || 0) + 1))
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([make]) => make)
+  }, [regionFiltered])
+
+  // Live auctions (filtered by region too)
+  const liveAuctions = useMemo(() => {
     const liveStatuses = ["ACTIVE", "ENDING_SOON", "LIVE"]
-    filtered = filtered.filter(a => liveStatuses.includes(a.status))
+    return regionFiltered
+      .filter(a => liveStatuses.includes(a.status))
+      .sort((a, b) => b.currentBid - a.currentBid)
+  }, [regionFiltered])
 
-    // Filter by price range
-    if (filterMode === "price" && selectedPriceRange > 0) {
-      const range = priceRanges[selectedPriceRange]
-      filtered = filtered.filter(a => a.currentBid >= range.min && a.currentBid < range.max)
+  // Grade badge color
+  const gradeColor = (grade: string | null | undefined) => {
+    switch (grade) {
+      case "AAA": case "EXCELLENT": return "bg-emerald-500/20 text-emerald-400"
+      case "AA": case "GOOD": return "bg-blue-500/20 text-blue-400"
+      case "A": case "FAIR": return "bg-amber-500/20 text-amber-400"
+      default: return "bg-white/5 text-[#6B7280]"
     }
-
-    // Filter by brand
-    if (filterMode === "brand" && selectedBrand) {
-      filtered = filtered.filter(a => a.make === selectedBrand)
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(a =>
-        a.make.toLowerCase().includes(query) ||
-        a.model.toLowerCase().includes(query) ||
-        a.title.toLowerCase().includes(query)
-      )
-    }
-
-    // Sort by price (highest first)
-    return filtered.sort((a, b) => b.currentBid - a.currentBid)
-  }, [auctions, filterMode, selectedPriceRange, selectedBrand, searchQuery])
-
-  // Live auction count
-  const liveCount = auctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status)).length
+  }
 
   return (
     <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
-      {/* Header with search */}
+      {/* ── REGION SELECTOR (top) ── */}
       <div className="shrink-0 px-4 py-3 border-b border-white/5">
-        <div className="flex items-center gap-2 mb-3">
-          <Flame className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#9CA3AF]">
-            {t("liveAuctions.title")}
-            </span>
-          <span className="ml-auto text-[11px] font-mono text-[#F8B4D9]">
-            {liveCount}
-          </span>
+        <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#6B7280] mb-2 block">
+          {t("sidebar.market")}
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {regions.map((region) => (
+            <button
+              key={region.id}
+              onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
+              className={`px-3 py-1.5 rounded-full text-[10px] font-medium transition-all ${
+                (region.id === "all" && !selectedRegion) || selectedRegion === region.id
+                  ? "bg-[#F8B4D9] text-[#050505]"
+                  : "bg-white/[0.05] text-[#9CA3AF] hover:bg-white/[0.08]"
+              }`}
+            >
+              {region.flag} {region.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Search bar */}
+      {/* ── SEARCH INPUT ── */}
+      <div className="shrink-0 px-4 py-3 border-b border-white/5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#6B7280]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("liveAuctions.searchPlaceholder")}
-              className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-9 pr-3 py-2 text-[12px] text-[#F2F0E9] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
-            />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("sidebar.findYourCar")}
+            className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-[13px] text-[#F2F0E9] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
+          />
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="shrink-0 px-4 py-2 border-b border-white/5 flex gap-1">
-        <button
-          onClick={() => setFilterMode("live")}
-          className={`flex-1 py-1.5 rounded-md text-[10px] font-medium tracking-wide transition-all ${
-            filterMode === "live"
-              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]"
-              : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.02]"
-          }`}
-        >
-          {t("liveAuctions.tabs.allLive")}
-        </button>
-        <button
-          onClick={() => setFilterMode("price")}
-          className={`flex-1 py-1.5 rounded-md text-[10px] font-medium tracking-wide transition-all ${
-            filterMode === "price"
-              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]"
-              : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.02]"
-          }`}
-        >
-          {t("liveAuctions.tabs.byPrice")}
-        </button>
-        <button
-          onClick={() => setFilterMode("brand")}
-          className={`flex-1 py-1.5 rounded-md text-[10px] font-medium tracking-wide transition-all ${
-            filterMode === "brand"
-              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]"
-              : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.02]"
-          }`}
-        >
-          {t("liveAuctions.tabs.byBrand")}
-        </button>
-      </div>
-
-      {/* Price range selector (only when filterMode === "price") */}
-      {filterMode === "price" && (
-        <div className="shrink-0 px-4 py-2 border-b border-white/5 bg-[rgba(248,180,217,0.02)]">
+      {/* ── POPULAR MAKES (only when no search query) ── */}
+      {!searchQuery.trim() && (
+        <div className="shrink-0 px-4 py-2.5 border-b border-white/5 bg-[rgba(248,180,217,0.02)]">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280] mb-2 block">
+            {selectedRegion
+              ? t("sidebar.popularIn", { region: regionLabel })
+              : t("sidebar.popular")
+            }
+          </span>
           <div className="flex flex-wrap gap-1.5">
-            {priceRanges.map((range, idx) => (
+            {popularMakes.map((make) => (
               <button
-                key={range.label}
-                onClick={() => setSelectedPriceRange(idx)}
-                className={`px-2.5 py-1 rounded-full text-[9px] font-medium transition-all ${
-                  selectedPriceRange === idx
-                    ? "bg-[#F8B4D9] text-[#050505]"
-                    : "bg-white/[0.05] text-[#9CA3AF] hover:bg-white/[0.08]"
-                }`}
+                key={make}
+                onClick={() => setSearchQuery(make)}
+                className="px-2.5 py-1 rounded-full bg-white/[0.03] text-[10px] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.1)] hover:text-[#F8B4D9] transition-all"
               >
-                {range.label}
+                {make}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Brand selector (only when filterMode === "brand") */}
-      {filterMode === "brand" && (
-        <div className="shrink-0 px-4 py-2 border-b border-white/5 bg-[rgba(248,180,217,0.02)]">
-          <div className="relative">
-            <button
-              onClick={() => setShowBrandDropdown(!showBrandDropdown)}
-              className="w-full flex items-center justify-between bg-white/[0.03] border border-white/5 rounded-lg px-3 py-2 text-[12px] text-[#F2F0E9] hover:border-[rgba(248,180,217,0.2)] transition-colors"
-            >
-              <span className={selectedBrand ? "text-[#F2F0E9]" : "text-[#6B7280]"}>
-                {selectedBrand || t("liveAuctions.selectBrand")}
-              </span>
-              <ChevronDown className={`size-4 text-[#6B7280] transition-transform ${showBrandDropdown ? "rotate-180" : ""}`} />
-            </button>
-
-            {showBrandDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-[#0F1012] border border-white/10 rounded-lg shadow-xl z-20 max-h-[200px] overflow-y-auto no-scrollbar">
-                <button
-                  onClick={() => { setSelectedBrand(null); setShowBrandDropdown(false) }}
-                  className="w-full text-left px-3 py-2 text-[11px] text-[#9CA3AF] hover:bg-white/[0.05] transition-colors"
-                >
-                  {t("liveAuctions.allBrands")}
-                </button>
-                {brands.map(b => (
-                  <button
-                    key={b.slug}
-                    onClick={() => { setSelectedBrand(b.name); setShowBrandDropdown(false) }}
-                    className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/[0.05] transition-colors flex items-center justify-between ${
-                      selectedBrand === b.name ? "text-[#F8B4D9]" : "text-[#F2F0E9]"
-                    }`}
-                  >
-                    <span>{b.name}</span>
-                    <span className="text-[10px] text-[#6B7280]">{b.carCount}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Results count */}
+      {/* ── RESULTS COUNT ── */}
       <div className="shrink-0 px-4 py-2 bg-[rgba(5,5,5,0.5)]">
         <span className="text-[10px] text-[#6B7280]">
-          {t("liveAuctions.resultSummary", { count: filteredAuctions.length })}
+          {t("sidebar.results", { count: searchResults.length })}
         </span>
       </div>
 
-      {/* Auction list */}
+      {/* ── CAR RESULTS LIST (scrollable) ── */}
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-        {filteredAuctions.length === 0 ? (
+        {searchResults.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center px-4">
             <Search className="size-6 text-[#6B7280] mb-2" />
-            <p className="text-[12px] text-[#6B7280]">{t("liveAuctions.empty.title")}</p>
-            <p className="text-[10px] text-[#4B5563] mt-1">{t("liveAuctions.empty.subtitle")}</p>
+            <p className="text-[12px] text-[#6B7280]">{t("sidebar.noResults")}</p>
+            <p className="text-[10px] text-[#4B5563] mt-1">{t("sidebar.noResultsHint")}</p>
           </div>
         ) : (
-          filteredAuctions.map((auction) => {
-            const isEndingSoon = auction.status === "ENDING_SOON"
-
-            return (
-              <Link
-                key={auction.id}
-                href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-                className="group relative block px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
-              >
-                <div className="flex gap-3">
-                  {/* Thumbnail */}
-                  <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
-                    {auction.images[0] ? (
-                      <Image
-                        src={auction.images[0]}
-                        alt={auction.title}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                        referrerPolicy="no-referrer"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Car className="size-4 text-[#6B7280]" />
-                      </div>
-                    )}
-
-                    {/* Ending soon badge */}
-                    {isEndingSoon && (
-                      <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-[#FB923C] animate-pulse" />
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
-                      {auction.year} {auction.make} {auction.model}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[13px] font-mono font-bold text-[#F8B4D9]">
-                        {formatPriceShort(auction.currentBid)}
-                      </span>
-                      {auction.bidCount > 0 && (
-                        <span className="text-[9px] text-[#6B7280]">
-                          {tAuction("bids.count", { count: auction.bidCount })}
-                        </span>
-                      )}
+          searchResults.map((auction) => (
+            <Link
+              key={auction.id}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              className="group relative block px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+            >
+              <div className="flex gap-3">
+                {/* Thumbnail */}
+                <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                  {auction.images[0] ? (
+                    <Image
+                      src={auction.images[0]}
+                      alt={auction.title}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                      referrerPolicy="no-referrer"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Car className="size-4 text-[#6B7280]" />
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <Clock className="size-3 text-[#6B7280]" />
-                      <span className={`text-[10px] ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`}>
-                        {timeLeft(auction.endTime, {
-                          ended: tAuction("time.ended"),
-                          day: tAuction("time.units.day"),
-                          hour: tAuction("time.units.hour"),
-                          minute: tAuction("time.units.minute"),
-                        })}
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
+                    {auction.year} {auction.make} {auction.model}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[13px] font-mono font-bold text-[#F8B4D9]">
+                      {formatPriceShort(auction.currentBid)}
+                    </span>
+                    {auction.analysis?.investmentGrade && (
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${gradeColor(auction.analysis.investmentGrade)}`}>
+                        {auction.analysis.investmentGrade}
                       </span>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </Link>
-            )
-          })
+              </div>
+            </Link>
+          ))
         )}
       </div>
 
-      {/* Quick brand access */}
-      <div className="shrink-0 px-4 py-3 border-t border-white/5 bg-[rgba(15,14,22,0.5)]">
-        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280] mb-2 block">
-          {t("liveAuctions.quickAccess")}
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {brands.slice(0, 5).map((brand) => (
-            <button
-              key={brand.slug}
-              onClick={() => onSelectBrand(brand.slug)}
-              className="px-2.5 py-1 rounded-full bg-white/[0.03] text-[10px] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.1)] hover:text-[#F8B4D9] transition-all"
-            >
-              {brand.name}
-            </button>
-          ))}
-        </div>
+      {/* ── LIVE NOW (compact, collapsible, pinned bottom) ── */}
+      <div className="shrink-0 border-t border-white/5 bg-[rgba(15,14,22,0.5)]">
+        <button
+          onClick={() => setShowLive(!showLive)}
+          className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+        >
+          <Flame className="size-3.5 text-[#F8B4D9]" />
+          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+            {t("sidebar.liveNow")}
+          </span>
+          <span className="text-[10px] font-mono text-[#F8B4D9] ml-1">
+            {liveAuctions.length}
+          </span>
+          <ChevronDown className={`size-3.5 text-[#6B7280] ml-auto transition-transform ${showLive ? "rotate-180" : ""}`} />
+        </button>
+
+        {showLive && (
+          <div className="px-4 pb-3">
+            {liveAuctions.slice(0, 4).map((auction) => {
+              const isEndingSoon = auction.status === "ENDING_SOON"
+              return (
+                <Link
+                  key={auction.id}
+                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+                  className="group flex items-center justify-between py-1.5 hover:bg-white/[0.02] transition-colors rounded px-1 -mx-1"
+                >
+                  <span className="text-[11px] text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
+                    {auction.year} {auction.make} {auction.model}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="text-[11px] font-mono text-[#F8B4D9]">
+                      {formatPriceShort(auction.currentBid)}
+                    </span>
+                    {isEndingSoon && (
+                      <div className="size-1.5 rounded-full bg-[#FB923C] animate-pulse" />
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1848,8 +1813,8 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
       <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#050505] overflow-hidden pt-[80px]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 grid grid-cols-[22%_1fr_28%] overflow-hidden">
-          {/* COLUMN A: LIVE AUCTIONS SIDEBAR (22%) */}
-          <LiveAuctionsSidebar
+          {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
+          <DiscoverySidebar
             auctions={auctions}
             brands={brands}
             onSelectBrand={scrollToBrand}

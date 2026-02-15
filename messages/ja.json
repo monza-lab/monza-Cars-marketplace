@@ -714,10 +714,11 @@
       "title": "ライブオークション",
       "searchPlaceholder": "車を検索...",
       "tabs": {
-        "allLive": "すべて",
+        "byRegion": "地域別",
         "byPrice": "価格順",
         "byBrand": "メーカー別"
       },
+      "allRegions": "すべて",
       "selectBrand": "メーカーを選択...",
       "allBrands": "すべてのメーカー",
       "resultSummary": "{count, plural, one {# 件} other {# 件}} ・価格順",
@@ -726,6 +727,17 @@
         "subtitle": "フィルターを調整してください"
       },
       "quickAccess": "クイックアクセス"
+    },
+    "sidebar": {
+      "market": "マーケット",
+      "allRegions": "すべて",
+      "findYourCar": "Ferrari GTO, Porsche 911, Mercedes 300SL...",
+      "popularIn": "{region} で人気",
+      "popular": "人気",
+      "results": "{count, plural, one {# 台} other {# 台}}",
+      "liveNow": "ライブ",
+      "noResults": "車が見つかりません",
+      "noResultsHint": "別の検索や地域をお試しください"
     },
     "brandNav": {
       "title": "メーカーを探す",

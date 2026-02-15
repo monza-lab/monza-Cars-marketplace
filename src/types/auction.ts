@@ -20,6 +20,7 @@ export interface Auction {
   exteriorColor?: string | null;
   interiorColor?: string | null;
   location?: string | null;
+  region?: string | null;
   currentBid?: number | null;
   reserveStatus?: ReserveStatus | null;
   bidCount: number;

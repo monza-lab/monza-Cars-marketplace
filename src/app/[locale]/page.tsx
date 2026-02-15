@@ -37,6 +37,7 @@ type Auction = {
   mileage: number | null;
   mileageUnit: string | null;
   location: string | null;
+  region?: string | null;
   description: string | null;
   images: string[];
   analysis: {
@@ -77,7 +78,7 @@ function HomeContent({
   useEffect(() => {
     async function fetchAuctions() {
       try {
-        const response = await fetch(`/api/mock-auctions?limit=50`);
+        const response = await fetch(`/api/mock-auctions?limit=1000`);
         const data = await response.json();
         // Transform API response to match Auction type
         const transformed = data.auctions.map((a: any) => ({
@@ -98,6 +99,7 @@ function HomeContent({
           priceHistory: [],
           fairValueByRegion: a.fairValueByRegion,
           category: a.category,
+          region: a.region,
         }));
         setAuctions(transformed);
       } catch (error) {

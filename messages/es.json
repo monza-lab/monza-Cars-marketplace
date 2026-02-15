@@ -714,10 +714,11 @@
       "title": "Subastas en vivo",
       "searchPlaceholder": "Buscar autos...",
       "tabs": {
-        "allLive": "En vivo",
+        "byRegion": "Por region",
         "byPrice": "Por precio",
         "byBrand": "Por marca"
       },
+      "allRegions": "Todas",
       "selectBrand": "Selecciona una marca...",
       "allBrands": "Todas las marcas",
       "resultSummary": "{count, plural, one {# subasta} other {# subastas}} • Ordenado por precio",
@@ -726,6 +727,17 @@
         "subtitle": "Prueba ajustar tus filtros"
       },
       "quickAccess": "Acceso rápido"
+    },
+    "sidebar": {
+      "market": "Mercado",
+      "allRegions": "Todos",
+      "findYourCar": "Ferrari GTO, Porsche 911, Mercedes 300SL...",
+      "popularIn": "Popular en {region}",
+      "popular": "Popular",
+      "results": "{count, plural, one {# auto} other {# autos}}",
+      "liveNow": "En vivo",
+      "noResults": "No se encontraron autos",
+      "noResultsHint": "Prueba otra busqueda o region"
     },
     "brandNav": {
       "title": "Explorar marcas",

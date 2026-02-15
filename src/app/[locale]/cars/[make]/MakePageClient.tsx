@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -21,6 +21,7 @@ import {
   Filter,
   Check,
   Info,
+  Award,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
@@ -632,19 +633,357 @@ function MobileFilterSheet({
   )
 }
 
+// ─── MODEL NAV SIDEBAR (Left column) ───
+function ModelNavSidebar({
+  make,
+  cars,
+  models,
+  currentModelIndex,
+  onSelectModel,
+  searchQuery,
+  setSearchQuery,
+}: {
+  make: string
+  cars: CollectorCar[]
+  models: Model[]
+  currentModelIndex: number
+  onSelectModel: (index: number) => void
+  searchQuery: string
+  setSearchQuery: (q: string) => void
+}) {
+  const t = useTranslations("makePage")
+  const minPrice = Math.min(...cars.map(c => c.currentBid))
+  const maxPrice = Math.max(...cars.map(c => c.currentBid))
+  const liveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+
+  return (
+    <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+      {/* Back + Brand header */}
+      <div className="shrink-0 px-4 py-3 border-b border-white/5">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors mb-3"
+        >
+          <ArrowLeft className="size-3" />
+          {t("hero.backToCollection")}
+        </Link>
+        <h1 className="text-2xl font-bold text-[#F2F0E9] tracking-tight">{make}</h1>
+        <div className="flex items-center gap-3 mt-1.5">
+          <span className="text-[11px] text-[#6B7280]">{cars.length} cars</span>
+          <span className="text-[11px] font-mono text-[#F8B4D9]">
+            {formatPrice(minPrice)}–{formatPrice(maxPrice)}
+          </span>
+          {liveCount > 0 && (
+            <span className="flex items-center gap-1">
+              <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] text-emerald-400">{liveCount} live</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="shrink-0 px-4 py-3 border-b border-white/5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("filters.searchModelsPlaceholder", { make })}
+            className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-[13px] text-[#F2F0E9] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Results count */}
+      <div className="shrink-0 px-4 py-2 bg-[rgba(5,5,5,0.5)]">
+        <span className="text-[10px] text-[#6B7280]">
+          {t("results.summary", { filtered: models.length, totalModels: models.length, totalVehicles: cars.length })}
+        </span>
+      </div>
+
+      {/* Model list (scrollable) */}
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        {models.map((model, index) => (
+          <button
+            key={model.slug}
+            onClick={() => onSelectModel(index)}
+            className={`w-full text-left px-4 py-3 border-b border-white/[0.03] transition-all ${
+              index === currentModelIndex
+                ? "bg-[rgba(248,180,217,0.08)] border-l-2 border-l-[#F8B4D9]"
+                : "hover:bg-white/[0.02]"
+            }`}
+          >
+            <p className={`text-[12px] font-semibold truncate ${
+              index === currentModelIndex ? "text-[#F8B4D9]" : "text-[#F2F0E9]"
+            }`}>
+              {model.name}
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-[#6B7280]">{model.years}</span>
+              <span className="text-[10px] text-[#6B7280]">{model.carCount} cars</span>
+              <span className="text-[10px] font-mono text-[#F8B4D9]">{formatPrice(model.priceMax)}</span>
+            </div>
+            {model.liveCount > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[9px] text-emerald-400">{model.liveCount} live</span>
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── MODEL FEED CARD (Full-height card for center column) ───
+function ModelFeedCard({ model, make }: { model: Model; make: string }) {
+  const t = useTranslations("makePage")
+
+  // Investment grade from representative car
+  const grade = model.representativeCar.investmentGrade
+
+  const gradeColor = (g: string) => {
+    switch (g) {
+      case "AAA": return "bg-emerald-500/20 text-emerald-400"
+      case "AA": return "bg-blue-500/20 text-blue-400"
+      case "A": return "bg-amber-500/20 text-amber-400"
+      default: return "bg-white/5 text-[#6B7280]"
+    }
+  }
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Background image */}
+      <Image
+        src={model.representativeImage}
+        alt={`${make} ${model.name}`}
+        fill
+        className="object-cover"
+        sizes="50vw"
+        priority
+      />
+      {/* Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/30 to-transparent" />
+
+      {/* Top badges */}
+      <div className="absolute top-6 left-6 right-6 flex items-start justify-between">
+        {model.liveCount > 0 && (
+          <div className="flex items-center gap-2 rounded-full bg-[#0b0b10]/80 backdrop-blur-md px-3 py-1.5">
+            <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] font-semibold text-emerald-400">{model.liveCount} LIVE</span>
+          </div>
+        )}
+        <div className="rounded-full px-3 py-1.5 text-[11px] font-medium bg-white/10 backdrop-blur-md text-white/70 border border-white/20 ml-auto">
+          {model.carCount} listed
+        </div>
+      </div>
+
+      {/* Bottom content */}
+      <div className="absolute bottom-0 left-0 right-0 p-8">
+        {/* Categories */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {model.categories.slice(0, 3).map(cat => (
+            <span key={cat} className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] text-white/70">
+              {cat}
+            </span>
+          ))}
+        </div>
+
+        {/* Model name */}
+        <h2 className="text-4xl font-bold text-[#F2F0E9] tracking-tight">
+          {make} {model.name}
+        </h2>
+        <p className="text-[14px] text-[#9CA3AF] mt-1">{model.years}</p>
+
+        {/* Price + Grade */}
+        <div className="flex items-end gap-4 mt-5 pt-5 border-t border-white/10">
+          <div>
+            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">
+              {t("model.priceRange")}
+            </p>
+            <p className="text-3xl font-bold font-mono text-[#F8B4D9] mt-1">
+              {formatPrice(model.priceMin)} <span className="text-[#6B7280] text-xl">—</span> {formatPrice(model.priceMax)}
+            </p>
+          </div>
+          <span className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${gradeColor(grade)}`}>
+            {grade}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── MODEL CONTEXT PANEL (Right column) ───
+function ModelContextPanel({
+  model,
+  make,
+  cars,
+  costs,
+  thesis,
+  onOpenAdvisor,
+}: {
+  model: Model
+  make: string
+  cars: CollectorCar[]
+  costs: { insurance: number; storage: number; maintenance: number }
+  thesis: string
+  onOpenAdvisor: () => void
+}) {
+  const t = useTranslations("makePage")
+  const tAuction = useTranslations("auctionDetail")
+  const locale = useLocale()
+
+  // Cars belonging to this model
+  const modelCars = cars
+    .filter(c => c.model === model.name)
+    .sort((a, b) => b.currentBid - a.currentBid)
+
+  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Model Overview */}
+      <div className="shrink-0 px-5 py-4 border-b border-white/5">
+        <h2 className="text-lg font-bold text-[#F2F0E9]">{make} {model.name}</h2>
+        <p className="text-[12px] text-[#6B7280] mt-1">{model.years} · {model.categories.slice(0, 2).join(", ")}</p>
+      </div>
+
+      {/* Price Stats */}
+      <div className="shrink-0 px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("hero.priceRange")}</span>
+            <p className="text-[14px] font-mono font-bold text-[#F8B4D9]">{formatPrice(model.priceMin)}–{formatPrice(model.priceMax)}</p>
+          </div>
+          <div>
+            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("hero.listings")}</span>
+            <p className="text-[14px] font-bold text-[#F2F0E9]">{model.carCount}</p>
+          </div>
+          <div>
+            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">Avg Price</span>
+            <p className="text-[14px] font-mono text-[#F2F0E9]">{formatPrice(model.avgPrice)}</p>
+          </div>
+          <div>
+            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">Grade</span>
+            <p className={`text-[14px] font-bold ${
+              model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"
+            }`}>{model.representativeCar.investmentGrade}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Cars in this model (scrollable) */}
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        <div className="px-5 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Car className="size-3.5 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+              {t("hero.listings")}
+            </span>
+          </div>
+        </div>
+
+        {modelCars.map((car) => {
+          const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
+          return (
+            <Link
+              key={car.id}
+              href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+              className="group flex gap-3 px-5 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+            >
+              {/* Thumbnail */}
+              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                <Image
+                  src={car.image}
+                  alt={car.title}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                />
+                {isLive && (
+                  <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+              </div>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
+                  {car.title}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                    {formatPrice(car.currentBid)}
+                  </span>
+                  <span className="text-[9px] text-[#6B7280]">
+                    {car.mileage?.toLocaleString(locale)} {car.mileageUnit}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Ownership Costs */}
+      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+        <div className="flex items-center gap-2 mb-2">
+          <Wrench className="size-3.5 text-[#F8B4D9]" />
+          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+            {t("sidebar.estimatedAnnualCosts")}
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex justify-between">
+            <span className="text-[10px] text-[#6B7280]">{t("sidebar.insurance")}</span>
+            <span className="text-[10px] font-mono text-[#F2F0E9]">{formatPrice(costs.insurance)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[10px] text-[#6B7280]">{t("sidebar.storage")}</span>
+            <span className="text-[10px] font-mono text-[#F2F0E9]">{formatPrice(costs.storage)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[10px] text-[#6B7280]">{t("sidebar.service")}</span>
+            <span className="text-[10px] font-mono text-[#F2F0E9]">{formatPrice(costs.maintenance)}</span>
+          </div>
+          <div className="pt-1.5 border-t border-white/5 flex justify-between">
+            <span className="text-[10px] font-medium text-[#9CA3AF]">{t("sidebar.total")}</span>
+            <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPrice(totalAnnualCost)}{t("sidebar.perYear")}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="shrink-0 px-5 py-4 border-t border-white/5">
+        <button
+          onClick={onOpenAdvisor}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-all"
+        >
+          <MessageCircle className="size-4" />
+          {t("sidebar.speakWithAdvisor")}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN COMPONENT ───
 export function MakePageClient({ make, cars }: { make: string; cars: CollectorCar[] }) {
   const locale = useLocale()
   const t = useTranslations("makePage")
   const tStatus = useTranslations("status")
 
-  // Filter states
+  const [currentModelIndex, setCurrentModelIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedPriceRange, setSelectedPriceRange] = useState(0)
   const [selectedStatus, setSelectedStatus] = useState("All")
   const [sortBy, setSortBy] = useState("price-desc")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
+  const feedRef = useRef<HTMLDivElement>(null)
 
   // Aggregate cars into models
   const allModels = useMemo(() => aggregateModels(cars), [cars])
@@ -653,7 +992,6 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
   const filteredModels = useMemo(() => {
     let result = [...allModels]
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter(model =>
@@ -663,7 +1001,6 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
       )
     }
 
-    // Price range filter
     const priceRange = priceRanges[selectedPriceRange]
     if (priceRange.min > 0 || priceRange.max < Infinity) {
       result = result.filter(model =>
@@ -671,56 +1008,63 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
       )
     }
 
-    // Status filter
     if (selectedStatus === "Live") {
       result = result.filter(model => model.liveCount > 0)
     } else if (selectedStatus === "Ended") {
       result = result.filter(model => model.liveCount === 0)
     }
 
-    // Sort
     switch (sortBy) {
-      case "price-desc":
-        result.sort((a, b) => b.priceMax - a.priceMax)
-        break
-      case "price-asc":
-        result.sort((a, b) => a.priceMin - b.priceMin)
-        break
-      case "year-desc":
-        result.sort((a, b) => parseInt(b.years.split("–")[0]) - parseInt(a.years.split("–")[0]))
-        break
-      case "year-asc":
-        result.sort((a, b) => parseInt(a.years.split("–")[0]) - parseInt(b.years.split("–")[0]))
-        break
-      case "count-desc":
-        result.sort((a, b) => b.carCount - a.carCount)
-        break
+      case "price-desc": result.sort((a, b) => b.priceMax - a.priceMax); break
+      case "price-asc": result.sort((a, b) => a.priceMin - b.priceMin); break
+      case "year-desc": result.sort((a, b) => parseInt(b.years.split("–")[0]) - parseInt(a.years.split("–")[0])); break
+      case "year-asc": result.sort((a, b) => parseInt(a.years.split("–")[0]) - parseInt(b.years.split("–")[0])); break
+      case "count-desc": result.sort((a, b) => b.carCount - a.carCount); break
     }
 
     return result
   }, [allModels, searchQuery, selectedPriceRange, selectedStatus, sortBy])
 
-  // Count active filters
-  const activeFilterCount = useMemo(() => {
-    let count = 0
-    if (selectedPriceRange !== 0) count++
-    if (selectedStatus !== "All") count++
-    return count
-  }, [selectedPriceRange, selectedStatus])
+  const selectedModel = filteredModels[currentModelIndex] || filteredModels[0]
 
-  // Real aggregate data from actual listings
-  const totalValue = cars.reduce((sum, c) => sum + c.currentBid, 0)
+  // Scroll sync for center feed
+  const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
+
+  useEffect(() => {
+    const container = feedRef.current
+    if (!container) return
+    const handleScroll = () => {
+      const newIndex = Math.round(container.scrollTop / getCardHeight())
+      if (newIndex !== currentModelIndex && newIndex >= 0 && newIndex < filteredModels.length) {
+        setCurrentModelIndex(newIndex)
+      }
+    }
+    container.addEventListener("scroll", handleScroll, { passive: true })
+    return () => container.removeEventListener("scroll", handleScroll)
+  }, [currentModelIndex, filteredModels.length])
+
+  const scrollToModel = (index: number) => {
+    const container = feedRef.current
+    if (!container) return
+    container.scrollTo({ top: getCardHeight() * index, behavior: "smooth" })
+    setCurrentModelIndex(index)
+  }
+
+  // Reset index when filters change
+  useEffect(() => {
+    setCurrentModelIndex(0)
+    feedRef.current?.scrollTo({ top: 0 })
+  }, [searchQuery, selectedPriceRange, selectedStatus])
+
+  // Brand data
+  const thesis = brandThesis[make] || brandThesis.default
+  const costs = ownershipCosts[make] || ownershipCosts.default
   const liveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
   const soldCount = cars.filter(c => c.status === "ENDED").length
   const minPrice = Math.min(...cars.map(c => c.currentBid))
   const maxPrice = Math.max(...cars.map(c => c.currentBid))
+  const activeFilterCount = (selectedPriceRange !== 0 ? 1 : 0) + (selectedStatus !== "All" ? 1 : 0)
 
-  // Get brand data (editorial - to be labeled)
-  const thesis = brandThesis[make] || brandThesis.default
-  const costs = ownershipCosts[make] || ownershipCosts.default
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
-
-  // Clear all filters
   const clearFilters = () => {
     setSearchQuery("")
     setSelectedPriceRange(0)
@@ -729,127 +1073,36 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
   }
 
   return (
-    <div className="min-h-screen bg-[#050505]">
-      {/* Hero Section */}
-      <div className="relative h-[45vh] min-h-[360px] overflow-hidden">
-        <Image
-          src={cars[0].image}
-          alt={make}
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/80 to-transparent" />
-
-        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
-          <Link
-            href="/"
-            className="absolute top-24 left-6 md:left-12 flex items-center gap-2 text-[12px] text-[rgba(255,252,247,0.5)] hover:text-[#F8B4D9] transition-colors"
-          >
-            <ArrowLeft className="size-4" />
-            {t("hero.backToCollection")}
-          </Link>
-
-          <div className="max-w-4xl">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
-                {t("hero.brandCollection")}
-              </span>
-              {liveCount > 0 && (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1">
-                  <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-medium text-emerald-400">{t("hero.liveCount", { count: liveCount })}</span>
-                </span>
-              )}
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-[#F2F0E9] tracking-tight">
-              {make}
-            </h1>
-            <p className="mt-3 text-[14px] leading-relaxed text-[rgba(255,252,247,0.6)] max-w-xl hidden md:block">
-              {thesis.slice(0, 150)}...
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-4 md:gap-6">
+    <>
+      {/* ═══ MOBILE LAYOUT ═══ */}
+      <div className="md:hidden min-h-screen bg-[#050505]">
+        {/* Mobile Hero */}
+        <div className="relative h-[40vh] min-h-[300px] overflow-hidden">
+          <Image src={cars[0].image} alt={make} fill className="object-cover" priority />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-6">
+            <Link href="/" className="absolute top-24 left-6 flex items-center gap-2 text-[12px] text-[rgba(255,252,247,0.5)] hover:text-[#F8B4D9] transition-colors">
+              <ArrowLeft className="size-4" />
+              {t("hero.backToCollection")}
+            </Link>
+            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9] mb-2">{t("hero.brandCollection")}</span>
+            <h1 className="text-4xl font-bold text-[#F2F0E9]">{make}</h1>
+            <div className="flex gap-4 mt-4">
               <div>
-                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
-                  {t("hero.priceRange")}
-                </p>
-                <p className="text-2xl md:text-3xl font-bold font-mono text-[#F8B4D9]">
-                  {formatPrice(minPrice)} – {formatPrice(maxPrice)}
-                </p>
+                <p className="text-[9px] uppercase text-[#4B5563]">{t("hero.priceRange")}</p>
+                <p className="text-xl font-bold font-mono text-[#F8B4D9]">{formatPrice(minPrice)}–{formatPrice(maxPrice)}</p>
               </div>
               <div>
-                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
-                  {t("hero.listings")}
-                </p>
-                <p className="text-2xl md:text-3xl font-bold font-mono text-[#F2F0E9]">
-                  {cars.length.toLocaleString(locale)}
-                </p>
-              </div>
-              <div className="hidden md:block">
-                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
-                  {t("hero.sold")}
-                </p>
-                <p className="text-2xl md:text-3xl font-bold font-mono text-[#9CA3AF]">
-                  {soldCount.toLocaleString(locale)}
-                </p>
+                <p className="text-[9px] uppercase text-[#4B5563]">{t("hero.listings")}</p>
+                <p className="text-xl font-bold font-mono text-[#F2F0E9]">{cars.length}</p>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Filter Bar - Sticky */}
-      <div className="sticky top-16 z-30 bg-[#050505]/95 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 md:px-12 py-4">
-          {/* Desktop Filters */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Search */}
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#4B5563]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("filters.searchModelsPlaceholder", { make })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-[13px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
-              />
-            </div>
-
-            {/* Price Range Dropdown */}
-            <DropdownSelect
-              label={t("filters.price")}
-              value={selectedPriceRange.toString()}
-              options={priceRanges.map((r, i) => ({ label: r.label, value: i.toString() }))}
-              onChange={(v) => setSelectedPriceRange(parseInt(v))}
-              icon={DollarSign}
-            />
-
-            {/* Sort Dropdown */}
-            <DropdownSelect
-              label={t("filters.sort")}
-              value={sortBy}
-              options={sortOptions.map((o) => ({ label: t(`sort.${o.key}`), value: o.value }))}
-              onChange={setSortBy}
-              icon={ArrowUpDown}
-            />
-
-            {/* Clear Filters */}
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-[#F8B4D9] hover:text-[#fce4ec] transition-colors"
-              >
-                <X className="size-4" />
-                {t("filters.clearWithCount", { count: activeFilterCount })}
-              </button>
-            )}
-          </div>
-
-          {/* Mobile Filter Bar */}
-          <div className="flex md:hidden items-center gap-3">
-            {/* Search */}
+        {/* Mobile Filter Bar */}
+        <div className="sticky top-16 z-30 bg-[#050505]/95 backdrop-blur-xl border-b border-white/5 px-4 py-4">
+          <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#4B5563]" />
               <input
@@ -860,14 +1113,11 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-[13px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
               />
             </div>
-
-            {/* Filter Button */}
             <button
               onClick={() => setShowMobileFilters(true)}
               className="relative flex items-center gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[12px] font-medium text-[#9CA3AF]"
             >
               <SlidersHorizontal className="size-4" />
-              {t("filters.filters")}
               {activeFilterCount > 0 && (
                 <span className="absolute -top-1 -right-1 size-5 flex items-center justify-center rounded-full bg-[#F8B4D9] text-[10px] font-bold text-[#050505]">
                   {activeFilterCount}
@@ -876,146 +1126,91 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
             </button>
           </div>
         </div>
+
+        {/* Mobile Model Grid */}
+        <div className="px-4 py-6">
+          <div className="grid grid-cols-1 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredModels.map((model, index) => (
+                <ModelCard key={model.slug} model={model} make={make} index={index} />
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <MobileFilterSheet
+          open={showMobileFilters}
+          onClose={() => setShowMobileFilters(false)}
+          models={[]}
+          selectedModel=""
+          setSelectedModel={() => {}}
+          selectedPriceRange={selectedPriceRange}
+          setSelectedPriceRange={setSelectedPriceRange}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          cars={cars}
+          filteredCount={filteredModels.length}
+        />
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Sidebar - Desktop Analytics */}
-          <div className="hidden lg:block lg:col-span-1 space-y-6">
-            {/* Data Source Notice */}
-            <div className="flex items-start gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-              <Info className="size-4 text-[#4B5563] mt-0.5 shrink-0" />
-              <p className="text-[11px] text-[#9CA3AF]">
-                {t("sidebar.dataSource", { count: cars.length })}
-              </p>
-            </div>
+      {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#050505] overflow-hidden pt-[80px]">
+        <div className="flex-1 grid grid-cols-[22%_1fr_28%] overflow-hidden">
+          {/* COLUMN A: MODEL NAV SIDEBAR */}
+          <ModelNavSidebar
+            make={make}
+            cars={cars}
+            models={filteredModels}
+            currentModelIndex={currentModelIndex}
+            onSelectModel={scrollToModel}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
 
-            {/* About This Brand - Editorial */}
-            <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.08)] p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                  {t("sidebar.about", { make })}
-                </h2>
-                <span className="rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-[9px] font-medium text-[#4B5563]">
-                  {t("sidebar.editorial")}
-                </span>
-              </div>
-              <p className="text-[12px] leading-relaxed text-[rgba(255,252,247,0.7)]">
-                {thesis.slice(0, 300)}...
-              </p>
-            </div>
-
-            {/* Estimated Ownership Costs */}
-            <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.08)] p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <Wrench className="size-4 text-[#F8B4D9]" />
-                    <h2 className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                      {t("sidebar.estimatedAnnualCosts")}
-                    </h2>
-                  </div>
-                  <span className="rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-[9px] font-medium text-[#4B5563]">
-                    {t("sidebar.estimates")}
-                  </span>
-                </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#9CA3AF]">{t("sidebar.insurance")}</span>
-                  <span className="text-[11px] font-mono text-[#F2F0E9]">{formatPrice(costs.insurance)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#9CA3AF]">{t("sidebar.storage")}</span>
-                  <span className="text-[11px] font-mono text-[#F2F0E9]">{formatPrice(costs.storage)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#9CA3AF]">{t("sidebar.service")}</span>
-                  <span className="text-[11px] font-mono text-[#F2F0E9]">{formatPrice(costs.maintenance)}</span>
-                </div>
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-[#9CA3AF]">{t("sidebar.total")}</span>
-                  <span className="text-[14px] font-mono font-bold text-[#F8B4D9]">{formatPrice(totalAnnualCost)}{t("sidebar.perYear")}</span>
-                </div>
-              </div>
-              <p className="mt-3 text-[10px] text-[#4B5563]">
-                {t("sidebar.costsNote")}
-              </p>
-            </div>
-
-            {/* CTA */}
-            <button
-              onClick={() => setShowAdvisorChat(true)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-3.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-colors w-full"
-            >
-              <MessageCircle className="size-4" />
-              {t("sidebar.speakWithAdvisor")}
-            </button>
-          </div>
-
-          {/* Model Grid */}
-          <div className="lg:col-span-3">
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-[13px] font-semibold tracking-[0.1em] uppercase text-[#9CA3AF]">
-                  {t("results.modelsTitle", { make })}
-                </h2>
-                <p className="text-[11px] text-[#4B5563] mt-1">
-                  {t("results.summary", {
-                    filtered: filteredModels.length,
-                    totalModels: allModels.length,
-                    totalVehicles: cars.length,
-                  })}
-                </p>
-              </div>
-            </div>
-
-            {/* No Results */}
+          {/* COLUMN B: MODEL FEED (snap scroll) */}
+          <div
+            ref={feedRef}
+            className="h-full overflow-y-auto snap-y snap-mandatory no-scrollbar scroll-smooth"
+          >
             {filteredModels.length === 0 ? (
-              <div className="text-center py-16">
-                <Car className="size-12 text-[#4B5563] mx-auto mb-4" />
-                <h3 className="text-[15px] font-semibold text-[#F2F0E9] mb-2">
-                  {t("empty.title")}
-                </h3>
-                <p className="text-[13px] text-[#4B5563] mb-6">
-                  {t("empty.subtitle")}
-                </p>
-                <button
-                  onClick={clearFilters}
-                  className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#050505] text-[12px] font-semibold"
-                >
+              <div className="h-full flex flex-col items-center justify-center text-center px-8">
+                <Car className="size-12 text-[#4B5563] mb-4" />
+                <h3 className="text-[15px] font-semibold text-[#F2F0E9] mb-2">{t("empty.title")}</h3>
+                <p className="text-[13px] text-[#4B5563] mb-6">{t("empty.subtitle")}</p>
+                <button onClick={clearFilters} className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#050505] text-[12px] font-semibold">
                   {t("empty.clearAll")}
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {filteredModels.map((model, index) => (
-                    <ModelCard key={model.slug} model={model} make={make} index={index} />
-                  ))}
-                </AnimatePresence>
-              </div>
+              filteredModels.map((model) => (
+                <div
+                  key={model.slug}
+                  className="snap-start"
+                  style={{ height: `calc(100dvh - 80px)` }}
+                >
+                  <ModelFeedCard model={model} make={make} />
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* COLUMN C: MODEL CONTEXT PANEL */}
+          <div className="h-full border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
+            {selectedModel && (
+              <ModelContextPanel
+                model={selectedModel}
+                make={make}
+                cars={cars}
+                costs={costs}
+                thesis={thesis}
+                onOpenAdvisor={() => setShowAdvisorChat(true)}
+              />
             )}
           </div>
         </div>
       </div>
-
-      {/* Mobile Filter Sheet */}
-      <MobileFilterSheet
-        open={showMobileFilters}
-        onClose={() => setShowMobileFilters(false)}
-        models={[]}
-        selectedModel=""
-        setSelectedModel={() => {}}
-        selectedPriceRange={selectedPriceRange}
-        setSelectedPriceRange={setSelectedPriceRange}
-        selectedStatus={selectedStatus}
-        setSelectedStatus={setSelectedStatus}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        cars={cars}
-        filteredCount={filteredModels.length}
-      />
 
       {/* Advisor Chat */}
       <AdvisorChat
@@ -1023,6 +1218,6 @@ export function MakePageClient({ make, cars }: { make: string; cars: CollectorCa
         onOpenChange={setShowAdvisorChat}
         initialContext={{ make }}
       />
-    </div>
+    </>
   )
 }

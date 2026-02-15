@@ -714,10 +714,11 @@
       "title": "Live Auctions",
       "searchPlaceholder": "Search cars...",
       "tabs": {
-        "allLive": "All Live",
+        "byRegion": "By Region",
         "byPrice": "By Price",
         "byBrand": "By Brand"
       },
+      "allRegions": "All",
       "selectBrand": "Select brand...",
       "allBrands": "All Brands",
       "resultSummary": "{count, plural, one {# auction} other {# auctions}} • Sorted by price",
@@ -726,6 +727,17 @@
         "subtitle": "Try adjusting your filters"
       },
       "quickAccess": "Quick Access"
+    },
+    "sidebar": {
+      "market": "Market",
+      "allRegions": "All",
+      "findYourCar": "Ferrari GTO, Porsche 911, Mercedes 300SL...",
+      "popularIn": "Popular in {region}",
+      "popular": "Popular",
+      "results": "{count, plural, one {# car} other {# cars}}",
+      "liveNow": "Live Now",
+      "noResults": "No cars found",
+      "noResultsHint": "Try a different search or region"
     },
     "brandNav": {
       "title": "Explore Brands",
