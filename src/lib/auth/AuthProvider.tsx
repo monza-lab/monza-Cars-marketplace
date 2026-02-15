@@ -44,9 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createClient(), [])
   const creatingUserRef = useRef(false)
 
-  const fetchProfile = useCallback(async (): Promise<ProfileFetchResult> => {
+  const fetchProfile = useCallback(async (accessToken?: string): Promise<ProfileFetchResult> => {
     try {
-      const response = await fetch('/api/user/profile')
+      const response = await fetch('/api/user/profile', {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      })
       if (response.ok) {
         const data = await response.json()
         setProfile(data.profile)
@@ -59,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const createUserProfile = useCallback(async (supabaseUser: User): Promise<ProfileFetchResult> => {
+  const createUserProfile = useCallback(async (supabaseUser: User, accessToken?: string): Promise<ProfileFetchResult> => {
     if (creatingUserRef.current) {
       return { ok: false, status: null }
     }
@@ -68,7 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch('/api/user/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({
           email: supabaseUser.email,
           name: supabaseUser.user_metadata?.full_name,
@@ -79,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { ok: false, status: res.status }
       }
 
-      return await fetchProfile()
+      return await fetchProfile(accessToken)
     } catch (error) {
       console.error('Error creating user profile:', error)
       return { ok: false, status: null }
@@ -102,12 +107,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (session?.user) {
-          let profileResult = await fetchProfile()
+          let profileResult = await fetchProfile(session.access_token)
 
           // Email confirmation path can establish auth session before the app profile
           // row exists in Prisma; create it immediately instead of waiting for timing.
           if (!profileResult.ok && profileResult.status === 404) {
-            profileResult = await createUserProfile(session.user)
+            profileResult = await createUserProfile(session.user, session.access_token)
           }
 
           // Only force sign-out on auth rejection. Other failures (e.g. DB 500)
@@ -134,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (event === 'SIGNED_IN' && session?.user) {
-          const createResult = await createUserProfile(session.user)
+          const createResult = await createUserProfile(session.user, session.access_token)
           if (!createResult.ok && (createResult.status === 401 || createResult.status === 403)) {
             await supabase.auth.signOut()
             setSession(null)
