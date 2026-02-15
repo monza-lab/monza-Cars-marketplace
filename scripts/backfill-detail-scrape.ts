@@ -32,7 +32,7 @@ async function main() {
   // Fetch all BaT listings
   const { data: rows, error } = await supabase
     .from("listings")
-    .select("id,source_url,title,year,make,model,mileage,color_exterior,color_interior,reserve_status,seller_notes,body_style,trim,images")
+    .select("id,source_url,title,year,make,model,mileage,color_exterior,color_interior,reserve_status,seller_notes,body_style,trim,images,transmission")
     .eq("source", "BaT")
     .order("created_at", { ascending: true });
 
@@ -124,6 +124,30 @@ async function main() {
       if (detail.vin) updates.vin = detail.vin;
       if (detail.location) updates.location = detail.location;
       if (detail.description) updates.description_text = detail.description;
+
+      // Detect and fix misparsed transmissions (e.g. "17k Miles Shown on Replacement Speedometer")
+      if (row.transmission && /\b(miles?|km|speedometer|odometer)\b/i.test(row.transmission)) {
+        // Rescue mileage from the misparsed transmission value
+        if (row.mileage == null && !updates.mileage) {
+          const rescueMatch = row.transmission.match(/\b([\d,]+k?)\s*(miles?|kilometers?|km)\b/i);
+          if (rescueMatch) {
+            let raw = rescueMatch[1].replace(/,/g, '');
+            let rescued: number;
+            if (raw.toLowerCase().endsWith('k')) {
+              rescued = parseFloat(raw.slice(0, -1)) * 1000;
+            } else {
+              rescued = parseInt(raw, 10);
+            }
+            if (!isNaN(rescued) && rescued > 0) {
+              const isKm = /km|kilometer/i.test(rescueMatch[2]);
+              updates.mileage = isKm ? rescued : Math.round(rescued * 1.609344);
+              updates.mileage_unit = 'km';
+            }
+          }
+        }
+        // Replace with the re-scraped (guarded) transmission
+        updates.transmission = detail.transmission;
+      }
 
       if (Object.keys(updates).length === 0) {
         console.log(`${progress} SKIP ${row.source_url} — no new data`);

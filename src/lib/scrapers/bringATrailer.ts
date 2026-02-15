@@ -219,6 +219,63 @@ export function parseTitleComponents(title: string): {
 }
 
 /**
+ * Extract mileage from a BaT title like "10k-Mile 2003 Ferrari 360"
+ * or "33,000-Mile 2001 Ferrari 550 Maranello".
+ */
+export function parseMileageFromTitle(title: string): { mileage: number; unit: string } | null {
+  const m = title.match(/\b([\d,]+k?)\s*-\s*(miles?|kilometers?|km)\b/i);
+  if (!m) return null;
+  let raw = m[1].replace(/,/g, '');
+  let mileage: number;
+  if (raw.toLowerCase().endsWith('k')) {
+    mileage = parseFloat(raw.slice(0, -1)) * 1000;
+  } else {
+    mileage = parseInt(raw, 10);
+  }
+  if (isNaN(mileage) || mileage <= 0) return null;
+  const unit = /km|kilometer/i.test(m[2]) ? 'km' : 'miles';
+  return { mileage, unit };
+}
+
+/**
+ * Extract mileage from a BaT description using context-aware patterns.
+ * Requires surrounding context words to avoid false positives on incidental
+ * mentions like "drove 500 miles to dealer".
+ */
+export function parseMileageFromDescription(description: string): { mileage: number; unit: string } | null {
+  if (!description) return null;
+  const patterns: RegExp[] = [
+    /(?:showing|indicates?|reads?|odometer)\s+~?\s*([\d,]+k?)\s*(miles?|kilometers?|km)/i,
+    /(?:with|has|at)\s+~?\s*([\d,]+k?)\s*(miles?|kilometers?|km)\s+(?:shown|indicated|on\s+the)/i,
+    /([\d,]+k?)\s*(miles?|kilometers?|km)\s+(?:shown|indicated|on\s+the\s+odometer)/i,
+  ];
+  for (const pattern of patterns) {
+    const m = description.match(pattern);
+    if (m) {
+      let raw = m[1].replace(/,/g, '');
+      let mileage: number;
+      if (raw.toLowerCase().endsWith('k')) {
+        mileage = parseFloat(raw.slice(0, -1)) * 1000;
+      } else {
+        mileage = parseInt(raw, 10);
+      }
+      if (isNaN(mileage) || mileage <= 0) continue;
+      const unit = /km|kilometer/i.test(m[2]) ? 'km' : 'miles';
+      return { mileage, unit };
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract body style from a BaT title by matching known body type keywords.
+ */
+export function parseBodyStyleFromTitle(title: string): string | null {
+  const m = title.match(/\b(coupe|coupé|spider|spyder|berlinetta|targa|roadster|cabriolet|convertible|GTB|GTS|GTC|GT4)\b/i);
+  return m ? m[1] : null;
+}
+
+/**
  * Generate a deterministic external ID from a BaT auction URL.
  */
 export function extractExternalId(url: string): string {
@@ -502,6 +559,24 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       }
     }
 
+    // Pass 3: Title fallback — "10k-Mile 2003 Ferrari 360"
+    if (mileage === null) {
+      const titleMileage = parseMileageFromTitle(auction.title);
+      if (titleMileage) {
+        mileage = titleMileage.mileage;
+        mileageUnit = titleMileage.unit;
+      }
+    }
+
+    // Pass 4: Description fallback — "showing 10,000 miles on the odometer"
+    if (mileage === null && description) {
+      const descMileage = parseMileageFromDescription(description);
+      if (descMileage) {
+        mileage = descMileage.mileage;
+        mileageUnit = descMileage.unit;
+      }
+    }
+
     // Engine — match patterns containing liter/L, V-config, cylinder count, etc.
     let engine: string | null = null;
     for (const text of essentialTexts) {
@@ -517,9 +592,27 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
 
     // Transmission — match patterns with speed/manual/automatic/clutch/transaxle/PDK
     // Note: \bF1\b avoids matching "F140" engine codes
+    // Guard: skip items that are actually mileage descriptions (e.g. "17k Miles Shown on Replacement Speedometer")
     let transmission: string | null = null;
     for (const text of essentialTexts) {
       if (/speed|manual|automatic|dual[\s-]?clutch|transaxle|\bPDK\b|tiptronic|sequential|\bF1\b|SMG|gearbox|CVT/i.test(text)) {
+        // Transmission guard: if text contains mileage/odometer words, it's not a transmission
+        if (/\b(miles?|km|kilometers?|speedometer|odometer)\b/i.test(text)) {
+          // Rescue mileage from this text if we still need it
+          if (mileage === null) {
+            const rescueMatch = text.match(/\b([\d,]+k?)\s*(miles?|kilometers?|km)\b/i);
+            if (rescueMatch) {
+              let raw = rescueMatch[1].replace(/,/g, '');
+              if (raw.toLowerCase().endsWith('k')) {
+                mileage = parseFloat(raw.slice(0, -1)) * 1000;
+              } else {
+                mileage = parseInt(raw, 10);
+              }
+              mileageUnit = /km|kilometer/i.test(rescueMatch[2]) ? 'km' : 'miles';
+            }
+          }
+          continue; // Skip — not a real transmission
+        }
         transmission = text;
         break;
       }
@@ -599,30 +692,30 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       if ((!isContentImage && !isGalleryImage) || !/\.(jpg|jpeg|png|webp)/i.test(src)) {
         return;
       }
-      
+
       // Skip tiny thumbnails and icons
       if (src.includes('resize=235') || src.includes('resize=144') || src.includes('icon')) {
         return;
       }
-      
+
       // Check if this image is inside a related listings section
       const $parent = $(el).closest('.related-listings, .recent-listings, .sidebar, .footer, [class*="related"]');
       if ($parent.length > 0) {
         return; // Skip images in related sections
       }
-      
+
       // Check if image dimensions suggest it's a gallery photo (larger images)
       const width = $(el).attr('width');
       const height = $(el).attr('height');
       if (width && parseInt(width) < 300) {
         return; // Skip small images
       }
-      
+
       if (images.indexOf(src) === -1) {
         images.push(src);
       }
     });
-    
+
     // No artificial cap — related-section filtering above is sufficient
     const finalImages = images;
 
@@ -660,6 +753,10 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         bodyStyle = bodyMatch[1];
         break;
       }
+    }
+    // Body style title fallback — "2003 Ferrari 360 Spider"
+    if (!bodyStyle) {
+      bodyStyle = parseBodyStyleFromTitle(auction.title);
     }
 
     // Current bid — from ".current-bid-value" or ".current-bid"
