@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
-import { Header } from "@/components/layout/Header";
+import { ClientHeader } from "@/components/layout/ClientHeader";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { RegionProvider } from "@/lib/RegionContext";
 import { MobileBottomNav } from "@/components/mobile";
@@ -65,7 +65,7 @@ export default async function LocaleLayout({
     <NextIntlClientProvider messages={messages}>
       <AuthProvider>
         <RegionProvider>
-          <Header />
+          <ClientHeader />
           <main>{children}</main>
           <MobileBottomNav />
           <OnboardingModal />

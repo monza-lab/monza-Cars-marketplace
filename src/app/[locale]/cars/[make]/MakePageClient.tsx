@@ -219,9 +219,12 @@ function aggregateModels(cars: CollectorCar[]): Model[] {
     const repCar = modelCars.sort((a, b) => b.currentBid - a.currentBid)[0]
     const make = repCar.make
 
-    // Get verified image, fallback to car's image
-    const verifiedImage = getModelImage(make, modelName)
-    const representativeImage = verifiedImage || repCar.image
+    // Prefer the actual car's scraped image; fall back to static model image
+    const carImage = repCar.images?.[0] || repCar.image
+    const isPlaceholder = !carImage || carImage.includes("placeholder")
+    const representativeImage = isPlaceholder
+      ? (getModelImage(make, modelName) || carImage || "")
+      : carImage
 
     // Year range
     const minYear = Math.min(...years)

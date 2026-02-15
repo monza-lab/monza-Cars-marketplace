@@ -81,6 +81,7 @@ describe('BaT: scrapeDetail with HTML fixture', () => {
       endTime: null, url: 'https://bringatrailer.com/listing/1990-porsche-911-carrera-4-cabriolet/',
       imageUrl: null, description: null, sellerNotes: null,
       status: 'active', vin: null, images: [],
+      reserveStatus: null, bodyStyle: null,
     };
 
     const detailPromise = scrapeDetail(baseAuction);
@@ -118,6 +119,7 @@ describe('BaT: scrapeDetail with HTML fixture', () => {
       imageUrl: 'https://img.test/1.jpg', description: 'Orig desc',
       sellerNotes: 'Orig notes', status: 'active', vin: 'ABC123',
       images: ['https://img.test/1.jpg'],
+      reserveStatus: null, bodyStyle: null,
     };
 
     const detailPromise = scrapeDetail(base);
@@ -146,6 +148,7 @@ describe('BaT: scrapeDetail with HTML fixture', () => {
       endTime: null, url: 'https://bringatrailer.com/listing/1973-rs/',
       imageUrl: null, description: null, sellerNotes: null,
       status: 'active', vin: null, images: [],
+      reserveStatus: null, bodyStyle: null,
     };
 
     const detailPromise = scrapeDetail(base);
@@ -179,6 +182,7 @@ describe('BaT: scrapeDetail with HTML fixture', () => {
       endTime: null, url: 'https://bringatrailer.com/listing/error-test/',
       imageUrl: 'img.jpg', description: 'Orig', sellerNotes: 'Notes',
       status: 'active', vin: 'VIN123', images: ['img.jpg'],
+      reserveStatus: null, bodyStyle: null,
     };
 
     const detailPromise = scrapeDetail(base);

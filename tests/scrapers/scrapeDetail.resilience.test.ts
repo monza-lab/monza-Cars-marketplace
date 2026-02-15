@@ -23,6 +23,7 @@ function makeBaTAuction(overrides: Partial<BaTAuction> = {}): BaTAuction {
     imageUrl: 'https://img.test/bat.jpg', description: 'Original desc',
     sellerNotes: 'Original notes', status: 'active',
     vin: 'WP0CB2961LS451234', images: ['https://img.test/bat.jpg'],
+    reserveStatus: null, bodyStyle: null,
     ...overrides,
   };
 }

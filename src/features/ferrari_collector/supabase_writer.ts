@@ -1,7 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import type { NormalizedListing, NormalizedListingStatus, ScrapeMeta } from "./types";
-import { sha256Hex } from "./normalize";
+import type { NormalizedListing, ScrapeMeta } from "./types";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -39,18 +38,7 @@ export function createSupabaseWriter(): SupabaseWriter {
     upsertAll: async (listing, meta, dryRun) => {
       if (dryRun) return { listingId: "dry_run", wrote: false };
       const listingId = await upsertListing(client, listing, meta);
-
-      await Promise.allSettled([
-        upsertPricing(client, listingId, listing, meta),
-        upsertAuctionInfo(client, listingId, listing, meta),
-        upsertLocationData(client, listingId, listing, meta),
-        upsertVehicleSpecs(client, listingId, listing, meta),
-        upsertProvenanceData(client, listingId, listing, meta),
-      ]);
-
-      await upsertPhotos(client, listingId, listing);
       await insertPriceHistorySnapshot(client, listingId, listing, meta);
-
       return { listingId, wrote: true };
     },
   };
@@ -115,120 +103,21 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     scrape_timestamp: meta.scrapeTimestamp,
     updated_at: meta.scrapeTimestamp,
     data_quality_score: listing.dataQualityScore,
+    // New Auction-model aligned columns
+    title: listing.title,
+    platform: listing.platform,
+    current_bid: listing.pricing.currentBid,
+    bid_count: listing.pricing.bidCount ?? 0,
+    reserve_status: listing.reserveStatus,
+    seller_notes: listing.sellerNotes,
+    images: listing.photos,
+    engine: listing.engine,
+    transmission: listing.transmission,
+    end_time: listing.endTime?.toISOString() ?? null,
+    start_time: listing.startTime?.toISOString() ?? null,
+    final_price: listing.finalPrice,
+    location: listing.locationString,
   };
-}
-
-async function upsertPricing(client: SupabaseClient, listingId: string, listing: NormalizedListing, meta: ScrapeMeta): Promise<void> {
-  const hammer = listing.pricing.hammerPrice;
-  const currency = listing.pricing.originalCurrency;
-  if (hammer === null && currency === null) return;
-
-  const row = {
-    listing_id: listingId,
-    hammer_price_original: hammer,
-    original_currency: currency,
-    buyers_premium_percent: null,
-    updated_at: meta.scrapeTimestamp,
-  };
-
-  const { error } = await client.from("pricing").upsert(row, { onConflict: "listing_id" });
-  if (error) throw new Error(`Supabase pricing upsert failed: ${error.message}`);
-}
-
-async function upsertAuctionInfo(client: SupabaseClient, listingId: string, listing: NormalizedListing, _meta: ScrapeMeta): Promise<void> {
-  const row = {
-    listing_id: listingId,
-    auction_house: listing.auctionHouse,
-    auction_date: listing.auctionDate,
-    lot_number: listing.sourceId,
-    reserve_met: listing.reserveMet,
-    hammer_price: listing.pricing.hammerPrice,
-    status: mapAuctionInfoStatus(listing.status),
-    number_of_bids: listing.pricing.bidCount,
-  };
-
-  const { error } = await client.from("auction_info").upsert(row, { onConflict: "listing_id" });
-  if (error) throw new Error(`Supabase auction_info upsert failed: ${error.message}`);
-}
-
-function mapAuctionInfoStatus(status: NormalizedListingStatus): string | null {
-  if (status === "sold") return "sold";
-  if (status === "unsold") return "unsold";
-  if (status === "delisted") return "withdrawn";
-  return null;
-}
-
-async function upsertLocationData(client: SupabaseClient, listingId: string, listing: NormalizedListing, meta: ScrapeMeta): Promise<void> {
-  const row = {
-    listing_id: listingId,
-    country: listing.location.country,
-    region: listing.location.region,
-    city: listing.location.city,
-    postal_code: listing.location.postalCode,
-  };
-  const { error } = await client.from("location_data").upsert(row, { onConflict: "listing_id" });
-  if (error) throw new Error(`Supabase location_data upsert failed: ${error.message}`);
-}
-
-async function upsertVehicleSpecs(
-  client: SupabaseClient,
-  listingId: string,
-  listing: NormalizedListing,
-  _meta: ScrapeMeta,
-): Promise<void> {
-  const row: Record<string, unknown> = {
-    listing_id: listingId,
-    transmission: listing.transmission ?? null,
-    engine: listing.engine ?? null,
-    body_style: listing.bodyStyle ?? null,
-  };
-
-  const { error } = await client.from("vehicle_specs").upsert(row, { onConflict: "listing_id" });
-  if (error) {
-    console.warn(`[ferrari_collector] vehicle_specs upsert failed (non-fatal): ${error.message}`);
-  }
-}
-
-async function upsertProvenanceData(
-  client: SupabaseClient,
-  listingId: string,
-  _listing: NormalizedListing,
-  _meta: ScrapeMeta,
-): Promise<void> {
-  // Minimal placeholder row to keep 1:1 table aligned; avoid guessing provenance.
-  const row: Record<string, unknown> = {
-    listing_id: listingId,
-  };
-
-  const { error } = await client.from("provenance_data").upsert(row, { onConflict: "listing_id" });
-  if (error) throw new Error(`Supabase provenance_data upsert failed: ${error.message}`);
-}
-
-async function upsertPhotos(client: SupabaseClient, listingId: string, listing: NormalizedListing): Promise<void> {
-  if (!listing.photos || listing.photos.length === 0) return;
-
-  const existing = await client
-    .from("photos_media")
-    .select("photo_url")
-    .eq("listing_id", listingId);
-  if (existing.error) {
-    throw new Error(`Supabase photos_media select failed: ${existing.error.message}`);
-  }
-  const existingSet = new Set((existing.data ?? []).map((r: { photo_url: string }) => r.photo_url));
-
-  const toInsert = listing.photos
-    .map((url, idx) => ({ url, idx }))
-    .filter(({ url }) => url && !existingSet.has(url))
-    .map(({ url, idx }) => ({
-      listing_id: listingId,
-      photo_url: url,
-      photo_order: idx,
-      photo_hash: sha256Hex(url),
-    }));
-
-  if (toInsert.length === 0) return;
-  const { error } = await client.from("photos_media").insert(toInsert);
-  if (error) throw new Error(`Supabase photos_media insert failed: ${error.message}`);
 }
 
 async function insertPriceHistorySnapshot(
@@ -262,6 +151,92 @@ async function insertPriceHistorySnapshot(
   };
   const { error } = await client.from("price_history").insert(row);
   if (error) throw new Error(`Supabase price_history insert failed: ${error.message}`);
+}
+
+// ─── Active listing status refresh ───
+
+export interface RefreshResult {
+  checked: number;
+  updated: number;
+  errors: string[];
+}
+
+/**
+ * Re-scrapes every listing with `status = 'active'` and updates the DB
+ * when the auction has ended (sold / unsold / delisted).
+ */
+export async function refreshActiveListings(): Promise<RefreshResult> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
+
+  const { fetchAuctionData } = await import("@/lib/scraper");
+  const { mapAuctionStatus } = await import("./normalize");
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: activeRows, error: fetchErr } = await client
+    .from("listings")
+    .select("id,source_url,hammer_price,sale_date")
+    .eq("status", "active");
+
+  if (fetchErr || !activeRows) {
+    return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
+  }
+
+  const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+
+  for (const row of activeRows) {
+    try {
+      const scraped = await fetchAuctionData(row.source_url, true);
+
+      const newStatus = mapAuctionStatus({
+        sourceStatus: scraped.status,
+        rawPriceText: scraped.rawPriceText,
+        currentBid: scraped.currentBid,
+        endTime: scraped.endTime,
+        now: new Date(),
+      });
+
+      // Still active — nothing to update
+      if (newStatus === "active") continue;
+
+      const updates: Record<string, unknown> = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (newStatus === "sold" && scraped.currentBid != null && scraped.currentBid > 0) {
+        updates.hammer_price = scraped.currentBid;
+        updates.final_price = scraped.currentBid;
+        updates.current_bid = scraped.currentBid;
+      }
+
+      if (scraped.endTime && !isNaN(scraped.endTime.getTime())) {
+        const d = scraped.endTime;
+        updates.sale_date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+        updates.end_time = scraped.endTime.toISOString();
+      }
+
+      const { error: updateErr } = await client
+        .from("listings")
+        .update(updates)
+        .eq("id", row.id);
+
+      if (updateErr) {
+        result.errors.push(`Update failed for ${row.id}: ${updateErr.message}`);
+      } else {
+        result.updated++;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
+    }
+  }
+
+  return result;
 }
 
 function truncateIsoToHour(iso: string): string {

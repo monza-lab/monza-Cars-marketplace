@@ -38,6 +38,8 @@ export interface BaTAuction {
   status: string;
   vin: string | null;
   images: string[];
+  reserveStatus: string | null;  // "NO_RESERVE" | "RESERVE_MET" | "RESERVE_NOT_MET"
+  bodyStyle: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -380,6 +382,8 @@ export function parseAuctionCard(
     status,
     vin: null,
     images: imageUrl ? [imageUrl] : [],
+    reserveStatus: null,
+    bodyStyle: null,
   };
 }
 
@@ -402,9 +406,27 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         .text()
         .trim() || null;
 
-    // Seller notes
-    const sellerNotes =
-      $('[class*="seller-note"], [class*="seller_note"]').first().text().trim() || null;
+    // Seller notes — BaT has no CSS class; look for headings containing "seller"
+    let sellerNotes: string | null = null;
+    $('.post-content h3, .post-content strong, .post-content h2').each((_i, el) => {
+      if (sellerNotes) return; // already found
+      const heading = $(el).text().trim();
+      if (/\bseller\b/i.test(heading)) {
+        // Grab the next sibling paragraph(s) as the seller note text
+        const next = $(el).nextAll('p').first().text().trim();
+        if (next) {
+          sellerNotes = next;
+        } else {
+          // Try parent's next sibling
+          const parentNext = $(el).parent().next('p').text().trim();
+          if (parentNext) sellerNotes = parentNext;
+        }
+      }
+    });
+    // Fallback: try legacy selectors just in case
+    if (!sellerNotes) {
+      sellerNotes = $('[class*="seller-note"], [class*="seller_note"], .seller-description, .seller-story').first().text().trim() || null;
+    }
 
     // ── BaT Essentials Section ──
     // BaT essentials are <li> items inside div.essentials.
@@ -416,27 +438,44 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     const essentialTexts: string[] = [];
     const essentialsKeyed = new Map<string, string>();
 
+    // Parse <li> items inside .essentials
     $('.essentials li').each((_i, el) => {
       const text = $(el).text().trim();
       if (!text) return;
-      essentialTexts.push(text);
       const colonIdx = text.indexOf(':');
       if (colonIdx > 0 && colonIdx < 30) {
-        essentialsKeyed.set(
-          text.slice(0, colonIdx).trim().toLowerCase(),
-          text.slice(colonIdx + 1).trim(),
-        );
+        const key = text.slice(0, colonIdx).trim().toLowerCase();
+        const val = text.slice(colonIdx + 1).trim();
+        essentialsKeyed.set(key, val);
+        // Push only the value so regex patterns match cleanly
+        if (val) essentialTexts.push(val);
+      } else {
+        essentialTexts.push(text);
+      }
+    });
+
+    // Also parse <table class="essentials"> rows (alternate BaT layout)
+    $('table.essentials tr, .essentials table tr').each((_i, el) => {
+      const cells = $(el).find('td');
+      if (cells.length >= 2) {
+        const key = $(cells[0]).text().trim().toLowerCase();
+        const val = $(cells[1]).text().trim();
+        if (key && val) {
+          essentialsKeyed.set(key, val);
+          // Push plain value to essentialTexts so regex patterns can match
+          essentialTexts.push(val);
+        }
       }
     });
 
     // VIN — from "Chassis: ..." keyed item
     const vin = essentialsKeyed.get('chassis') || essentialsKeyed.get('vin') || null;
 
-    // Mileage — match patterns like "33k Miles", "12,345 Miles", "8k Kilometers"
+    // Mileage — match patterns like "33k Miles", "~12,345 Miles", "Showing 8k Kilometers"
     let mileage: number | null = null;
     let mileageUnit = 'miles';
     for (const text of essentialTexts) {
-      const mileageMatch = text.match(/^([\d,]+k?)\s*(miles?|kilometers?|km)$/i);
+      const mileageMatch = text.match(/^~?\s*(?:showing\s+|indicated\s+)?([\d,]+k?)\s*(miles?|kilometers?|km)\b/i);
       if (mileageMatch) {
         let raw = mileageMatch[1].replace(/,/g, '');
         if (raw.toLowerCase().endsWith('k')) {
@@ -448,6 +487,20 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         break;
       }
     }
+    // Fallback: keyed format "Miles: 45,230" or "Kilometers: 8,000"
+    if (mileage === null) {
+      const keyedMiles = essentialsKeyed.get('miles') || essentialsKeyed.get('mileage');
+      const keyedKm = essentialsKeyed.get('kilometers') || essentialsKeyed.get('km');
+      const keyedVal = keyedMiles || keyedKm;
+      if (keyedVal) {
+        const cleaned = keyedVal.replace(/[^0-9]/g, '');
+        const num = parseInt(cleaned, 10);
+        if (!isNaN(num)) {
+          mileage = num;
+          mileageUnit = keyedKm ? 'km' : 'miles';
+        }
+      }
+    }
 
     // Engine — match patterns containing liter/L, V-config, cylinder count, etc.
     let engine: string | null = null;
@@ -456,6 +509,10 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         engine = text;
         break;
       }
+    }
+    // Fallback: keyed "Engine: 3.6L Flat-6"
+    if (!engine) {
+      engine = essentialsKeyed.get('engine') || null;
     }
 
     // Transmission — match patterns with speed/manual/automatic/clutch/transaxle/PDK
@@ -467,23 +524,48 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         break;
       }
     }
+    // Fallback: keyed "Transmission: 5-Speed Manual"
+    if (!transmission) {
+      transmission = essentialsKeyed.get('transmission') || null;
+    }
 
-    // Exterior color — items ending with "Paint" or containing metallic/color terms
+    // Exterior color — items ending with "Paint", containing metallic/pearl, or Italian color names
+    const INTERIOR_KEYWORDS = /\b(leather|upholstery|alcantara|interior|cloth|suede|nappa)\b/i;
     let exteriorColor: string | null = null;
     for (const text of essentialTexts) {
+      // Skip items that look like interior descriptions
+      if (INTERIOR_KEYWORDS.test(text)) continue;
       if (/paint$/i.test(text) || /\b(metallic|micalizzato|pearl)\b/i.test(text)) {
         exteriorColor = text.replace(/\s*paint$/i, '').trim();
         break;
       }
+      // Match Italian/common Ferrari color names (standalone, not inside engine/transmission text)
+      if (/\b(rosso|nero|grigio|bianco|giallo|blu|azzurro|argento|verde|marrone|avorio|crema|nocciola)\b/i.test(text)) {
+        // Guard: skip if this looks like an engine, transmission, or mileage item
+        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK|miles?|km/i.test(text)) continue;
+        exteriorColor = text.trim();
+        break;
+      }
     }
 
-    // Interior color — items containing "Upholstery", "Leather", "Interior"
+    // Fallback: keyed "Exterior Color: Guards Red"
+    if (!exteriorColor) {
+      exteriorColor = essentialsKeyed.get('exterior color') || essentialsKeyed.get('color') || null;
+    }
+
+    // Interior color — items containing upholstery, leather, alcantara, suede, nappa, etc.
     let interiorColor: string | null = null;
     for (const text of essentialTexts) {
-      if (/upholstery|leather interior|alcantara|cloth interior/i.test(text)) {
+      if (/\b(upholstery|leather|alcantara|cloth|suede|nappa|interior)\b/i.test(text)) {
+        // Guard: skip if this looks like an engine, transmission, or mileage item
+        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK|miles?|km/i.test(text)) continue;
         interiorColor = text.replace(/\s*upholstery$/i, '').trim();
         break;
       }
+    }
+    // Fallback: keyed "Interior Color: Black Leather"
+    if (!interiorColor) {
+      interiorColor = essentialsKeyed.get('interior color') || essentialsKeyed.get('interior') || null;
     }
 
     // Location — BaT has: <strong>Location</strong> <a>City, State ZIP</a>
@@ -497,17 +579,24 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
         }
       }
     });
+    // Fallback: keyed "Location: San Francisco, CA"
+    if (!location) {
+      location = essentialsKeyed.get('location') || null;
+    }
 
-    // Images — BaT photos are img tags with wp-content/uploads URLs
+    // Images — BaT photos are img tags with wp-content/uploads or CDN URLs
+    // Also collect images inside .gallery containers
     // Filter to main content only, avoid related listings at bottom
     const images: string[] = [];
-    
+
     // Get all images but filter out those in related sections
     $('img').each((_i, el) => {
       const src = $(el).attr('src') || $(el).attr('data-src') || '';
-      
-      // Must be a wp-content/uploads image
-      if (!src.includes('wp-content/uploads') || !/\.(jpg|jpeg|png|webp)/i.test(src)) {
+
+      // Accept content images from BaT domains, or images inside .gallery
+      const isContentImage = src.includes('wp-content/uploads') || src.includes('cdn.bringatrailer.com');
+      const isGalleryImage = $(el).closest('.gallery, .carousel, [class*="gallery"]').length > 0;
+      if ((!isContentImage && !isGalleryImage) || !/\.(jpg|jpeg|png|webp)/i.test(src)) {
         return;
       }
       
@@ -534,12 +623,49 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       }
     });
     
-    // Limit to first 10 images to avoid related listings at bottom
-    const finalImages = images.slice(0, 10);
+    // No artificial cap — related-section filtering above is sufficient
+    const finalImages = images;
 
-    // Current bid — from ".current-bid-value" which contains "USD $129,666 ..."
+    // Reserve status — check essentials, badges, and listing info area
+    let reserveStatus: string | null = null;
+    for (const text of essentialTexts) {
+      if (/^no\s+reserve$/i.test(text)) {
+        reserveStatus = 'NO_RESERVE';
+        break;
+      }
+    }
+    if (!reserveStatus) {
+      // Check for reserve badges/labels in the page
+      const reserveBadge = $('.no-reserve, [class*="reserve"]').first().text().trim();
+      if (/no\s+reserve/i.test(reserveBadge)) {
+        reserveStatus = 'NO_RESERVE';
+      }
+    }
+    if (!reserveStatus) {
+      const listingInfo = $('.listing-available-info, .auction-status, [class*="reserve-status"]').text().trim();
+      if (/reserve\s+not\s+met/i.test(listingInfo)) {
+        reserveStatus = 'RESERVE_NOT_MET';
+      } else if (/reserve\s+met/i.test(listingInfo)) {
+        reserveStatus = 'RESERVE_MET';
+      }
+    }
+
+    // Body style — check essentials for known body type keywords
+    let bodyStyle: string | null = null;
+    for (const text of essentialTexts) {
+      const bodyMatch = text.match(/\b(coupe|coupé|spider|spyder|convertible|berlinetta|targa|roadster|cabriolet|sedan|wagon|hatchback|SUV)\b/i);
+      if (bodyMatch) {
+        // Skip if this item is clearly about engine or transmission
+        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK/i.test(text)) continue;
+        bodyStyle = bodyMatch[1];
+        break;
+      }
+    }
+
+    // Current bid — from ".current-bid-value" or ".current-bid"
     let detailBid: number | null = null;
-    const bidValueText = $('.current-bid-value').first().text().trim();
+    const bidValueText = ($('.current-bid-value').first().text().trim()
+      || $('.current-bid').first().text().trim());
     if (bidValueText) {
       const priceMatch = bidValueText.match(/\$[\d,]+/);
       if (priceMatch) {
@@ -547,8 +673,9 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       }
     }
 
-    // Bid count — from ".number-bids-value"
-    const bidCountText = $('.number-bids-value').first().text().trim();
+    // Bid count — from ".number-bids-value" or ".bid-count"
+    const bidCountText = ($('.number-bids-value').first().text().trim()
+      || $('.bid-count').first().text().trim());
     const bidCountMatch = bidCountText.match(/(\d+)/);
     const detailBidCount = bidCountMatch
       ? parseInt(bidCountMatch[1], 10)
@@ -569,6 +696,8 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       sellerNotes: sellerNotes ?? auction.sellerNotes,
       vin: vin ?? auction.vin,
       images: finalImages.length > 0 ? finalImages : auction.images,
+      reserveStatus: reserveStatus ?? auction.reserveStatus,
+      bodyStyle: bodyStyle ?? auction.bodyStyle,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

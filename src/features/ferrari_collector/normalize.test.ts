@@ -1,17 +1,22 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  buildLocationString,
   isFerrariListing,
+  mapAuctionStatus,
+  mapReserveStatus,
+  mapReserveStatusFromString,
+  mapSourceToPlatform,
   normalizeMileageToKm,
   parseCurrencyFromText,
-  mapAuctionStatus,
   parseLocation,
 } from "./normalize";
 
 describe("ferrari_collector normalize", () => {
-  it("detects Ferrari listings and rejects Dino/replicas", () => {
+  it("detects Ferrari listings and rejects replicas", () => {
     expect(isFerrariListing({ title: "2003 Ferrari 360 Modena" })).toBe(true);
-    expect(isFerrariListing({ title: "1973 Ferrari Dino 246 GTS" })).toBe(false);
+    // Dino is a genuine Ferrari (246 GT/GTS, 308 GT4) — accepted
+    expect(isFerrariListing({ title: "1973 Ferrari Dino 246 GTS" })).toBe(true);
     expect(isFerrariListing({ title: "Ferrari 458 replica" })).toBe(false);
     expect(isFerrariListing({ title: "Ferrari-powered track car" })).toBe(false);
   });
@@ -59,5 +64,53 @@ describe("ferrari_collector normalize", () => {
     expect(parseLocation("London, UK").country).toBe("UK");
     expect(parseLocation("Paris, France").country).toBe("France");
     expect(parseLocation(null).country).toBe("Unknown");
+  });
+
+  it("maps source to platform enum", () => {
+    expect(mapSourceToPlatform("BaT")).toBe("BRING_A_TRAILER");
+    expect(mapSourceToPlatform("CarsAndBids")).toBe("CARS_AND_BIDS");
+    expect(mapSourceToPlatform("CollectingCars")).toBe("COLLECTING_CARS");
+  });
+
+  it("maps reserve status from boolean", () => {
+    expect(mapReserveStatus(true)).toBe("RESERVE_MET");
+    expect(mapReserveStatus(false)).toBe("RESERVE_NOT_MET");
+    expect(mapReserveStatus(null)).toBeNull();
+  });
+
+  it("maps reserve status from string", () => {
+    expect(mapReserveStatusFromString("NO_RESERVE")).toBe("NO_RESERVE");
+    expect(mapReserveStatusFromString("RESERVE_MET")).toBe("RESERVE_MET");
+    expect(mapReserveStatusFromString("RESERVE_NOT_MET")).toBe("RESERVE_NOT_MET");
+    expect(mapReserveStatusFromString("RESERVE NOT MET")).toBe("RESERVE_NOT_MET");
+    expect(mapReserveStatusFromString("no-reserve")).toBe("NO_RESERVE");
+    expect(mapReserveStatusFromString(null)).toBeNull();
+    expect(mapReserveStatusFromString("unknown")).toBeNull();
+  });
+
+  it("builds location string from NormalizedLocation", () => {
+    expect(buildLocationString({
+      locationRaw: "Austin, TX",
+      country: "USA",
+      region: "TX",
+      city: "Austin",
+      postalCode: null,
+    })).toBe("Austin, TX, USA");
+
+    expect(buildLocationString({
+      locationRaw: null,
+      country: "Unknown",
+      region: null,
+      city: null,
+      postalCode: null,
+    })).toBeNull();
+
+    expect(buildLocationString({
+      locationRaw: "Paris, France",
+      country: "France",
+      region: null,
+      city: "Paris",
+      postalCode: null,
+    })).toBe("Paris, France");
   });
 });

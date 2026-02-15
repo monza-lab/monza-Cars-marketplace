@@ -32,8 +32,21 @@ type ListingRow = {
   color_interior: string | null;
   description_text: string | null;
   body_style: string | null;
-  // Joined tables (vehicle_specs is 1:1, returns object; photos_media is 1:many, returns array)
-  vehicle_specs?: { engine: string | null; transmission: string | null; body_style: string | null } | Array<{ engine: string | null; transmission: string | null; body_style: string | null }>;
+  // New Auction-model aligned columns (direct on listings)
+  title: string | null;
+  platform: string | null;
+  current_bid: number | null;
+  bid_count: number | null;
+  reserve_status: string | null;
+  seller_notes: string | null;
+  images: string[] | null;
+  engine: string | null;
+  transmission: string | null;
+  end_time: string | null;
+  start_time: string | null;
+  final_price: number | null;
+  location: string | null;
+  // Joined table (photos_media is 1:many, returns array — fallback for legacy rows without images column)
   photos_media?: Array<{ photo_url: string | null }>;
 };
 
@@ -45,13 +58,13 @@ type PriceHistoryRow = {
   time: string;
 };
 
-// ─── Broad select (with vehicle_specs join) ───
+// ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,vehicle_specs(engine,transmission,body_style),photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
 
-// ─── Narrow select (without vehicle_specs join — fallback) ───
+// ─── Narrow select (without joins — fallback if photos_media join fails) ───
 const SELECT_NARROW =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
 
 // ─── Mappers ───
 
@@ -125,18 +138,24 @@ function auctionHouseLabel(source: string): string {
 // ─── Row → CollectorCar ───
 
 function rowToCollectorCar(row: ListingRow): CollectorCar {
-  const price = row.hammer_price != null ? Number(row.hammer_price) || 0 : 0;
-  const photos = (row.photos_media ?? [])
+  const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
+
+  // Prefer direct images column; fall back to photos_media join
+  const directImages = (row.images ?? []).filter(
+    (u): u is string => typeof u === "string" && u.length > 0,
+  );
+  const joinedPhotos = (row.photos_media ?? [])
     .map((p) => p.photo_url)
     .filter((u): u is string => typeof u === "string" && u.length > 0);
-  const location = [row.city, row.region, row.country].filter(Boolean).join(", ");
+  const photos = directImages.length > 0 ? directImages : joinedPhotos;
+
+  // Prefer direct location column; fall back to city/region/country parts
+  const location = row.location
+    ?? [row.city, row.region, row.country].filter(Boolean).join(", ");
   const label = auctionHouseLabel(row.source);
 
-  // Vehicle specs from joined table (PostgREST returns object for 1:1, array for 1:many)
-  const rawSpecs = row.vehicle_specs;
-  const specs = Array.isArray(rawSpecs) ? rawSpecs[0] : rawSpecs;
-  const engine = specs?.engine ?? "\u2014";
-  const transmission = specs?.transmission ?? "\u2014";
+  const engine = row.engine ?? "\u2014";
+  const transmission = row.transmission ?? "\u2014";
 
   // Mileage: stored in km in DB, convert to miles for display
   let displayMileage = 0;
@@ -153,9 +172,23 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     : `Live auction listing from ${label}`;
   const history = desc ?? `Sourced from ${label}`;
 
+  // Prefer direct platform column; fall back to source mapping
+  const platform = (row.platform as Platform | null) ?? mapPlatform(row.source);
+
+  // Prefer direct end_time; fall back to sale_date
+  const endTime = row.end_time
+    ? new Date(row.end_time)
+    : row.sale_date
+      ? new Date(row.sale_date)
+      : new Date();
+
+  // Prefer direct current_bid column; fall back to price
+  const currentBid = row.current_bid ?? price;
+  const bidCount = row.bid_count ?? 0;
+
   return {
     id: `live-${row.id}`,
-    title: `${row.year} ${row.make} ${row.model}${row.trim ? ` ${row.trim}` : ""}`,
+    title: row.title ?? `${row.year} ${row.make} ${row.model}${row.trim ? ` ${row.trim}` : ""}`,
     year: row.year,
     make: row.make,
     model: row.model,
@@ -175,11 +208,11 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     region: mapRegion(row.country),
     fairValueByRegion: buildFairValue(price),
     history,
-    platform: mapPlatform(row.source),
+    platform,
     status: mapStatus(row.status),
-    currentBid: price,
-    bidCount: 0,
-    endTime: row.sale_date ? new Date(row.sale_date) : new Date(),
+    currentBid,
+    bidCount,
+    endTime,
     category: "Live Auctions",
     sourceUrl: row.source_url,
     // New optional fields
@@ -187,6 +220,7 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     exteriorColor: row.color_exterior ?? null,
     interiorColor: row.color_interior ?? null,
     description: desc,
+    sellerNotes: row.seller_notes ?? null,
   };
 }
 
@@ -219,22 +253,35 @@ function computeTrend(
 
 async function queryListingsMany(
   supabase: SupabaseClient,
-  limit: number
+  limit: number,
+  statusFilter?: string
 ): Promise<ListingRow[]> {
-  // Try broad query (with vehicle_specs join)
-  const broad = await supabase
+  // Try broad query (with photos_media join)
+  let broadQuery = supabase
     .from("listings")
-    .select(SELECT_BROAD)
+    .select(SELECT_BROAD);
+
+  if (statusFilter) {
+    broadQuery = broadQuery.eq("status", statusFilter);
+  }
+
+  const broad = await broadQuery
     .order("sale_date", { ascending: false })
     .limit(limit);
 
   if (!broad.error) return (broad.data ?? []) as ListingRow[];
 
-  // Fallback without vehicle_specs join
-  console.warn("[supabaseLiveListings] vehicle_specs join failed, using fallback:", broad.error.message);
-  const narrow = await supabase
+  // Fallback without photos_media join
+  console.warn("[supabaseLiveListings] photos_media join failed, using fallback:", broad.error.message);
+  let narrowQuery = supabase
     .from("listings")
-    .select(SELECT_NARROW)
+    .select(SELECT_NARROW);
+
+  if (statusFilter) {
+    narrowQuery = narrowQuery.eq("status", statusFilter);
+  }
+
+  const narrow = await narrowQuery
     .order("sale_date", { ascending: false })
     .limit(limit);
 
@@ -249,7 +296,7 @@ async function queryListingSingle(
   supabase: SupabaseClient,
   id: string
 ): Promise<ListingRow | null> {
-  // Try broad query (with vehicle_specs join)
+  // Try broad query (with photos_media join)
   const broad = await supabase
     .from("listings")
     .select(SELECT_BROAD)
@@ -258,8 +305,8 @@ async function queryListingSingle(
 
   if (!broad.error) return (broad.data as ListingRow) ?? null;
 
-  // Fallback without vehicle_specs join
-  console.warn("[supabaseLiveListings] vehicle_specs join failed, using fallback:", broad.error.message);
+  // Fallback without photos_media join
+  console.warn("[supabaseLiveListings] photos_media join failed, using fallback:", broad.error.message);
   const narrow = await supabase
     .from("listings")
     .select(SELECT_NARROW)
@@ -308,7 +355,8 @@ export async function fetchLiveListingsAsCollectorCars(): Promise<CollectorCar[]
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const rows = await queryListingsMany(supabase, 200);
+    // Only fetch active (live) listings — sold/unsold/delisted are historical data
+    const rows = await queryListingsMany(supabase, 200, "active");
     if (rows.length === 0) return [];
 
     // Fetch price history for trend computation

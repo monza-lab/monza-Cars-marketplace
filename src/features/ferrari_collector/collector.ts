@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import { createClient } from "@supabase/supabase-js";
 import { fetchAuctionData, type ScrapedAuctionData } from "@/lib/scraper";
 import { scrapeBringATrailer } from "@/lib/scrapers/bringATrailer";
 import { scrapeCarsAndBids } from "@/lib/scrapers/carsAndBids";
@@ -11,9 +12,13 @@ import { canonicalizeUrl, deriveSourceId } from "./id";
 import { logEvent } from "./logging";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
 import {
+  buildLocationString,
   isFerrariListing,
   isLuxuryCarListing,
   mapAuctionStatus,
+  mapReserveStatus,
+  mapReserveStatusFromString,
+  mapSourceToPlatform,
   normalizeMileageToKm,
   normalizeSourceAuctionHouse,
   parseCurrencyFromText,
@@ -49,6 +54,32 @@ export interface CollectorResult {
   runId: string;
   sourceCounts: Record<string, SourceScrapeCounts>;
   errors: string[];
+}
+
+const TERMINAL_STATUSES = new Set(["sold", "unsold", "delisted"]);
+
+/**
+ * Checks if a listing already exists in Supabase with a terminal status
+ * (sold/unsold/delisted). Prevents the collector from reverting a corrected
+ * status back to "active" when the BaT scraper mis-detects an ended auction.
+ */
+async function hasTerminalStatus(sourceId: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return false;
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data } = await client
+    .from("listings")
+    .select("status")
+    .eq("source_id", sourceId)
+    .limit(1);
+
+  const existing = data?.[0]?.status;
+  return typeof existing === "string" && TERMINAL_STATUSES.has(existing);
 }
 
 export async function runFerrariCollector(config: CollectorRunConfig): Promise<CollectorResult> {
@@ -191,6 +222,12 @@ async function runSource(input: {
           continue;
         }
 
+        // Never revert a listing that was already marked as sold/unsold/delisted
+        if (await hasTerminalStatus(normalized.sourceId)) {
+          logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url: a.url, sourceId: normalized.sourceId });
+          continue;
+        }
+
         await writer.upsertAll(normalized, meta, config.dryRun);
         counts.written++;
       } catch (err) {
@@ -252,18 +289,23 @@ async function runSource(input: {
       const isActive = normalized.status === "active";
 
       // Discovery queries can return a mix of active + ended listings.
-      // - backfill mode should only write ended listings within the requested date range.
-      // - daily mode should write:
-      //    * active listings (even if their end date is in the future)
-      //    * ended listings within the ended window
+      // - backfill mode: only write ended listings within the requested date range.
+      // - daily mode: only write ACTIVE listings. Ended/sold listings belong in
+      //   backfill runs and should not pollute the live feed.
       if (config.mode === "backfill") {
         if (!withinEndedRange) continue;
         if (isActive) continue;
       } else {
-        if (!isActive && !withinEndedRange) continue;
+        if (!isActive) continue;
       }
 
       if (!isLuxuryCarListing({ make: config.make, title: normalized.title, targetMake: config.make })) continue;
+
+      // Never revert a listing that was already marked as sold/unsold/delisted
+      if (isActive && await hasTerminalStatus(normalized.sourceId)) {
+        logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url, sourceId: normalized.sourceId });
+        continue;
+      }
 
       counts.ferrariKept++;
       await writer.upsertAll(normalized, meta, config.dryRun);
@@ -430,16 +472,29 @@ async function normalizeFromBaseAndUrl(input: {
     hasPrice,
   });
 
+  const sellerNotes = enriched?.sellerNotes ?? null;
+
+  const endTimeDate = endTime && !isNaN(endTime.getTime()) ? endTime : null;
+  const startTimeDate = listDate ? new Date(listDate + "T00:00:00Z") : null;
+  const validStartTime = startTimeDate && !isNaN(startTimeDate.getTime()) ? startTimeDate : null;
+
   const normalized: NormalizedListing = {
     source,
     sourceId: deriveSourceId({ source, sourceId: input.base?.externalId ?? null, sourceUrl: url }),
     sourceUrl: url,
     title,
+    platform: mapSourceToPlatform(source),
+    sellerNotes,
+    endTime: endTimeDate,
+    startTime: validStartTime,
+    reserveStatus: mapReserveStatusFromString(enriched?.reserveStatus ?? null) ?? mapReserveStatus(null),
+    finalPrice: hammerPrice,
+    locationString: buildLocationString(location),
     year,
     make: input.make,
     model: vehicle.model,
     trim: vehicle.trim,
-    bodyStyle: null,
+    bodyStyle: enriched?.bodyStyle ?? null,
     engine: enriched?.engine ?? null,
     transmission: enriched?.transmission ?? null,
     exteriorColor: enriched?.exteriorColor ?? null,
@@ -537,8 +592,11 @@ function parseModelTrimFromTitle(title: string, make: string): { model: string; 
   const modelAndMaybeTrim = parts[0] ?? after;
 
   const tokens = modelAndMaybeTrim.split(/\s+/).filter(Boolean);
-  const model = tokens.slice(0, Math.min(tokens.length, 2)).join(" ");
-  const trim = tokens.length > 2 ? tokens.slice(2).join(" ") : null;
+
+  // First token is the model number/name (e.g. "488", "Testarossa", "SF90")
+  // All remaining tokens before separator are trim (e.g. "GTB", "Spider", "Stradale")
+  const model = tokens[0] ?? after;
+  const trim = tokens.length > 1 ? tokens.slice(1).join(" ") : null;
   return { model: model || after, trim };
 }
 
@@ -578,6 +636,8 @@ async function fetchDetailViaExistingScraper(input: {
       status: "unknown",
       vin: null,
       images: [],
+      reserveStatus: null,
+      bodyStyle: null,
     });
   }
 
