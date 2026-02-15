@@ -101,6 +101,50 @@ export function parsePrice(text: string | undefined): number | null {
   return isNaN(num) ? null : num;
 }
 
+/**
+ * Detect auction status (SOLD vs ACTIVE) from HTML element.
+ * Evidence-based detection using multiple signals.
+ */
+export function detectStatusFromHtml(
+  $: cheerio.CheerioAPI,
+  el: cheerio.Element,
+): 'active' | 'sold' {
+  const $el = $(el);
+
+  // Evidence-based detection - check multiple signals
+  const soldSelectors = [
+    '.sold-badge',
+    '.winner-badge',
+    '[class*="sold"]',
+    '[class*="winner"]',
+    '.auction-sold',
+    '.listing-sold',
+    '.sale-completed',
+  ];
+
+  const hasSoldBadge = soldSelectors.some((selector) => $el.find(selector).length > 0);
+
+  const textContent = $el.text().toLowerCase();
+  const soldTextPatterns = [
+    /sold\s+for\s+\$/,
+    /winning\s+bid/,
+    /final\s+price/,
+    /auction\s+ended/,
+    /sale\s+price/,
+    /sold\s+at\s+/,
+  ];
+  const hasSoldText = soldTextPatterns.some((pattern) => pattern.test(textContent));
+
+  const bidStatus = $el.find('[class*="bid-status"], [class*="status"]').text().toLowerCase();
+  const hasEndedStatus = bidStatus.includes('ended') || bidStatus.includes('sold') || bidStatus.includes('completed');
+
+  if (hasSoldBadge || hasSoldText || hasEndedStatus) {
+    return 'sold';
+  }
+
+  return 'active';
+}
+
 export function parseMileage(text: string | undefined): number | null {
   if (!text) return null;
   const cleaned = text.replace(/[^0-9]/g, '');
@@ -117,10 +161,17 @@ export function parseTitleComponents(title: string): {
   make: string;
   model: string;
 } {
-  const yearMatch = title.match(/^(\d{4})\s+/);
+  // Try year at start first, then anywhere in title (handles prefixes like "No Reserve: 2003 ...")
+  const yearMatch = title.match(/^(\d{4})\s+/) || title.match(/\b((?:19|20)\d{2})\b/);
   const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
 
-  const rest = title.replace(/^\d{4}\s+/, '').trim();
+  // Remove everything up to and including the year, or just the leading year
+  let rest: string;
+  if (yearMatch && yearMatch.index !== undefined && yearMatch.index > 0) {
+    rest = title.slice(yearMatch.index + yearMatch[0].length).trim();
+  } else {
+    rest = title.replace(/^\d{4}\s+/, '').trim();
+  }
 
   const knownMakes = [
     'Porsche', 'BMW', 'Mercedes-Benz', 'Mercedes', 'Audi', 'Volkswagen', 'VW',
@@ -309,6 +360,9 @@ export function parseAuctionCard(
   const mileageUnit =
     mileageMatch && /km/i.test(mileageMatch[2]) ? 'km' : 'miles';
 
+  // Detect status from HTML evidence
+  const status = detectStatusFromHtml($, el);
+
   return {
     externalId,
     platform: 'CARS_AND_BIDS',
@@ -330,7 +384,7 @@ export function parseAuctionCard(
     imageUrl,
     description: null,
     sellerNotes: null,
-    status: 'active',
+    status,
     vin: null,
     images: imageUrl ? [imageUrl] : [],
   };

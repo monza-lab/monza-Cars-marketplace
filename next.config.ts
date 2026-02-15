@@ -4,6 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  output: process.env.NODE_ENV === "production" ? "standalone" : undefined,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "bringatrailer.com" },
@@ -24,6 +25,15 @@ const nextConfig: NextConfig = {
       // RM Sotheby's CDN for auction images
       { protocol: "https", hostname: "cdn.rmsothebys.com" },
       { protocol: "https", hostname: "**.rmsothebys.com" },
+    ],
+  },
+  outputFileTracingExcludes: {
+    "*": [
+      "**/node_modules/typescript/**",
+      "**/node_modules/prisma/**",
+      "**/node_modules/@types/**",
+      "**/node_modules/@playwright/**",
+      "**/node_modules/playwright/**"
     ],
   },
   experimental: {

@@ -216,3 +216,28 @@ enum MarketTrend {
   STABLE
   DECLINING
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HISTORICAL BACKFILL TRACKING
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ModelBackfillState {
+  id            String   @id @default(cuid())
+  make          String
+  model         String
+  status        BackfillStatus @default(PENDING)
+  backfilledAt  DateTime?
+  auctionCount  Int      @default(0)
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([make, model])
+  @@index([status])
+}
+
+enum BackfillStatus {
+  PENDING
+  BACKFILLED
+  FAILED
+}

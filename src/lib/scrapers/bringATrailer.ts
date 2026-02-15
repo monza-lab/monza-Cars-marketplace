@@ -106,6 +106,48 @@ export function parsePrice(text: string | undefined): number | null {
 }
 
 /**
+ * Detect auction status (SOLD vs ACTIVE) from HTML element.
+ * Evidence-based detection using multiple signals.
+ */
+export function detectStatusFromHtml(
+  $: cheerio.CheerioAPI,
+  el: cheerio.Element,
+): 'active' | 'sold' {
+  const $el = $(el);
+
+  // Evidence-based detection - check multiple signals
+  const soldSelectors = [
+    '.sold-badge',
+    '.winner-badge',
+    '[class*="sold"]',
+    '[class*="winner"]',
+    '.auction-sold',
+    '.listing-sold',
+  ];
+
+  const hasSoldBadge = soldSelectors.some((selector) => $el.find(selector).length > 0);
+
+  const textContent = $el.text().toLowerCase();
+  const soldTextPatterns = [
+    /sold\s+for\s+\$/,
+    /winning\s+bid/,
+    /final\s+price/,
+    /auction\s+ended/,
+    /reserve\s+met\s+.*sold/,
+  ];
+  const hasSoldText = soldTextPatterns.some((pattern) => pattern.test(textContent));
+
+  const bidStatus = $el.find('[class*="bid-status"], [class*="status"]').text().toLowerCase();
+  const hasEndedStatus = bidStatus.includes('ended') || bidStatus.includes('sold');
+
+  if (hasSoldBadge || hasSoldText || hasEndedStatus) {
+    return 'sold';
+  }
+
+  return 'active';
+}
+
+/**
  * Parse a mileage string like "45,230 Miles" into a number.
  */
 export function parseMileage(text: string | undefined): number | null {
@@ -124,11 +166,18 @@ export function parseTitleComponents(title: string): {
   make: string;
   model: string;
 } {
-  const yearMatch = title.match(/^(\d{4})\s+/);
+  // Try year at start first, then anywhere in title (handles prefixes like "19k-Mile 2001 ...")
+  const yearMatch = title.match(/^(\d{4})\s+/) || title.match(/\b((?:19|20)\d{2})\b/);
   const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
 
-  // Remove the year prefix and any trailing descriptors
-  const rest = title.replace(/^\d{4}\s+/, '').trim();
+  // Remove everything up to and including the year, or just the leading year
+  let rest: string;
+  if (yearMatch && yearMatch.index !== undefined && yearMatch.index > 0) {
+    // Year was found mid-string; strip prefix + year
+    rest = title.slice(yearMatch.index + yearMatch[0].length).trim();
+  } else {
+    rest = title.replace(/^\d{4}\s+/, '').trim();
+  }
 
   // Common makes to match against
   const knownMakes = [
@@ -304,6 +353,9 @@ export function parseAuctionCard(
     if (!isNaN(parsed.getTime())) endTime = parsed;
   }
 
+  // Detect status from HTML evidence
+  const status = detectStatusFromHtml($, el);
+
   return {
     externalId,
     platform: 'BRING_A_TRAILER',
@@ -325,7 +377,7 @@ export function parseAuctionCard(
     imageUrl,
     description: null,
     sellerNotes: null,
-    status: 'active',
+    status,
     vin: null,
     images: imageUrl ? [imageUrl] : [],
   };
@@ -354,94 +406,152 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     const sellerNotes =
       $('[class*="seller-note"], [class*="seller_note"]').first().text().trim() || null;
 
-    // Vehicle essentials - BaT typically has a specs/essentials section
-    const essentials = new Map<string, string>();
-    $('.essentials li, .listing-essentials li, .vehicle-details dt, .specs-list li').each(
-      (_i, el) => {
-        const text = $(el).text().trim();
-        const [key, ...valueParts] = text.split(':');
-        if (key && valueParts.length > 0) {
-          essentials.set(key.trim().toLowerCase(), valueParts.join(':').trim());
-        }
-      },
-    );
+    // ── BaT Essentials Section ──
+    // BaT essentials are <li> items inside div.essentials.
+    // Most items have NO key:value format — they're plain text like:
+    //   "33k Miles", "6.3-Liter F140 V12", "Seven-Speed Dual-Clutch Transaxle",
+    //   "Rubino Micalizzato Paint", "Tan Leather and Alcantara Upholstery"
+    // Only a few have colons: "Chassis: ZFF73SKAXD0194941"
 
-    // Also try key-value table rows
-    $('table.essentials tr, .listing-essentials-table tr').each((_i, el) => {
-      const key = $(el).find('td:first-child, th').text().trim().toLowerCase();
-      const value = $(el).find('td:last-child').text().trim();
-      if (key && value) essentials.set(key, value);
-    });
+    const essentialTexts: string[] = [];
+    const essentialsKeyed = new Map<string, string>();
 
-    // Parse mileage from essentials or from the page
-    const mileageStr =
-      essentials.get('miles') ||
-      essentials.get('mileage') ||
-      essentials.get('odometer') ||
-      essentials.get('kilometers');
-    const mileage = parseMileage(mileageStr);
-    const mileageUnit =
-      mileageStr && /km|kilometer/i.test(mileageStr) ? 'km' : 'miles';
-
-    // Transmission
-    const transmission =
-      essentials.get('transmission') ||
-      essentials.get('gearbox') ||
-      null;
-
-    // Engine
-    const engine =
-      essentials.get('engine') ||
-      essentials.get('motor') ||
-      essentials.get('powertrain') ||
-      null;
-
-    // Colors
-    const exteriorColor =
-      essentials.get('exterior color') ||
-      essentials.get('exterior') ||
-      essentials.get('color') ||
-      null;
-
-    const interiorColor =
-      essentials.get('interior color') ||
-      essentials.get('interior') ||
-      null;
-
-    // Location
-    const location =
-      essentials.get('location') ||
-      essentials.get('seller location') ||
-      null;
-
-    // VIN
-    const vin =
-      essentials.get('vin') ||
-      essentials.get('chassis') ||
-      null;
-
-    // Images
-    const images: string[] = [];
-    $(
-      '.gallery img, .carousel img, .listing-gallery img, .post-image img, .image-gallery img',
-    ).each((_i, el) => {
-      const src = $(el).attr('src') || $(el).attr('data-src');
-      if (src && !images.includes(src)) {
-        images.push(src);
+    $('.essentials li').each((_i, el) => {
+      const text = $(el).text().trim();
+      if (!text) return;
+      essentialTexts.push(text);
+      const colonIdx = text.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 30) {
+        essentialsKeyed.set(
+          text.slice(0, colonIdx).trim().toLowerCase(),
+          text.slice(colonIdx + 1).trim(),
+        );
       }
     });
 
-    // Current bid from detail page (may be more up-to-date)
-    const detailBidText =
-      $('.current-bid, .auction-bid-value, [class*="current-bid"]').first().text().trim();
-    const detailBid = parsePrice(detailBidText);
+    // VIN — from "Chassis: ..." keyed item
+    const vin = essentialsKeyed.get('chassis') || essentialsKeyed.get('vin') || null;
 
-    // Bid count from detail page
-    const detailBidCountText =
-      $('.bid-count, .total-bids, [class*="bid-count"]').first().text().trim();
-    const detailBidCountMatch = detailBidCountText.match(/(\d+)/);
-    const detailBidCount = detailBidCountMatch
-      ? parseInt(detailBidCountMatch[1], 10)
+    // Mileage — match patterns like "33k Miles", "12,345 Miles", "8k Kilometers"
+    let mileage: number | null = null;
+    let mileageUnit = 'miles';
+    for (const text of essentialTexts) {
+      const mileageMatch = text.match(/^([\d,]+k?)\s*(miles?|kilometers?|km)$/i);
+      if (mileageMatch) {
+        let raw = mileageMatch[1].replace(/,/g, '');
+        if (raw.toLowerCase().endsWith('k')) {
+          mileage = parseFloat(raw.slice(0, -1)) * 1000;
+        } else {
+          mileage = parseInt(raw, 10);
+        }
+        mileageUnit = /km|kilometer/i.test(mileageMatch[2]) ? 'km' : 'miles';
+        break;
+      }
+    }
+
+    // Engine — match patterns containing liter/L, V-config, cylinder count, etc.
+    let engine: string | null = null;
+    for (const text of essentialTexts) {
+      if (/\d[\d.]*[\s-]?liter|[vV]\d{1,2}\b|flat[\s-]?\d|inline[\s-]?\d|twin[\s-]?turbo|turbo(charged)?|supercharged|boxer|rotary/i.test(text)) {
+        engine = text;
+        break;
+      }
+    }
+
+    // Transmission — match patterns with speed/manual/automatic/clutch/transaxle/PDK
+    // Note: \bF1\b avoids matching "F140" engine codes
+    let transmission: string | null = null;
+    for (const text of essentialTexts) {
+      if (/speed|manual|automatic|dual[\s-]?clutch|transaxle|\bPDK\b|tiptronic|sequential|\bF1\b|SMG|gearbox|CVT/i.test(text)) {
+        transmission = text;
+        break;
+      }
+    }
+
+    // Exterior color — items ending with "Paint" or containing metallic/color terms
+    let exteriorColor: string | null = null;
+    for (const text of essentialTexts) {
+      if (/paint$/i.test(text) || /\b(metallic|micalizzato|pearl)\b/i.test(text)) {
+        exteriorColor = text.replace(/\s*paint$/i, '').trim();
+        break;
+      }
+    }
+
+    // Interior color — items containing "Upholstery", "Leather", "Interior"
+    let interiorColor: string | null = null;
+    for (const text of essentialTexts) {
+      if (/upholstery|leather interior|alcantara|cloth interior/i.test(text)) {
+        interiorColor = text.replace(/\s*upholstery$/i, '').trim();
+        break;
+      }
+    }
+
+    // Location — BaT has: <strong>Location</strong> <a>City, State ZIP</a>
+    // The <strong> is a direct child of .essentials, followed by a sibling <a>
+    let location: string | null = null;
+    $('.essentials strong').each((_i, el) => {
+      if ($(el).text().trim().toLowerCase() === 'location') {
+        const link = $(el).next('a');
+        if (link.length > 0) {
+          location = link.text().trim() || null;
+        }
+      }
+    });
+
+    // Images — BaT photos are img tags with wp-content/uploads URLs
+    // Filter to main content only, avoid related listings at bottom
+    const images: string[] = [];
+    
+    // Get all images but filter out those in related sections
+    $('img').each((_i, el) => {
+      const src = $(el).attr('src') || $(el).attr('data-src') || '';
+      
+      // Must be a wp-content/uploads image
+      if (!src.includes('wp-content/uploads') || !/\.(jpg|jpeg|png|webp)/i.test(src)) {
+        return;
+      }
+      
+      // Skip tiny thumbnails and icons
+      if (src.includes('resize=235') || src.includes('resize=144') || src.includes('icon')) {
+        return;
+      }
+      
+      // Check if this image is inside a related listings section
+      const $parent = $(el).closest('.related-listings, .recent-listings, .sidebar, .footer, [class*="related"]');
+      if ($parent.length > 0) {
+        return; // Skip images in related sections
+      }
+      
+      // Check if image dimensions suggest it's a gallery photo (larger images)
+      const width = $(el).attr('width');
+      const height = $(el).attr('height');
+      if (width && parseInt(width) < 300) {
+        return; // Skip small images
+      }
+      
+      if (images.indexOf(src) === -1) {
+        images.push(src);
+      }
+    });
+    
+    // Limit to first 10 images to avoid related listings at bottom
+    const finalImages = images.slice(0, 10);
+
+    // Current bid — from ".current-bid-value" which contains "USD $129,666 ..."
+    let detailBid: number | null = null;
+    const bidValueText = $('.current-bid-value').first().text().trim();
+    if (bidValueText) {
+      const priceMatch = bidValueText.match(/\$[\d,]+/);
+      if (priceMatch) {
+        detailBid = parsePrice(priceMatch[0]);
+      }
+    }
+
+    // Bid count — from ".number-bids-value"
+    const bidCountText = $('.number-bids-value').first().text().trim();
+    const bidCountMatch = bidCountText.match(/(\d+)/);
+    const detailBidCount = bidCountMatch
+      ? parseInt(bidCountMatch[1], 10)
       : auction.bidCount;
 
     return {
@@ -458,7 +568,7 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       description: description ?? auction.description,
       sellerNotes: sellerNotes ?? auction.sellerNotes,
       vin: vin ?? auction.vin,
-      images: images.length > 0 ? images : auction.images,
+      images: finalImages.length > 0 ? finalImages : auction.images,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

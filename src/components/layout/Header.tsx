@@ -129,7 +129,7 @@ _Note: Price data from real auction results. No value estimates._`,
 
   // If looking for cars under a budget
   if (isBudgetQuery && budgetAmount > 0) {
-    const affordableCars = CURATED_CARS.filter(car => car.currentBid <= budgetAmount)
+    const affordableCars = CURATED_CARS.filter(car => car.make !== "Ferrari" && car.currentBid <= budgetAmount)
       .sort((a, b) => b.trendValue - a.trendValue)
       .slice(0, 5);
 
@@ -159,7 +159,7 @@ ${carList}
 
   // If asking about trends or appreciation
   if (isTrendQuery) {
-    const liveCars = CURATED_CARS.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
+    const liveCars = CURATED_CARS.filter(c => c.make !== "Ferrari" && (c.status === "ACTIVE" || c.status === "ENDING_SOON"));
     const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount).slice(0, 5);
 
     const carList = topBidActivity.map(car =>
@@ -173,7 +173,7 @@ ${carList}
 
 **Market Activity:**
 • ${liveCars.length} live auctions being tracked
-• Total collection: ${CURATED_CARS.length} vehicles
+• Total collection: ${CURATED_CARS.filter(c => c.make !== "Ferrari").length} vehicles
 • Platforms: Bring a Trailer, Cars & Bids, Collecting Cars
 
 **What's Hot** _(Editorial)_
@@ -244,10 +244,11 @@ ${car.thesis}`,
     };
   }
 
-  // Default: Market overview with real data
-  const totalCars = CURATED_CARS.length;
-  const liveCars = CURATED_CARS.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
-  const totalValue = CURATED_CARS.reduce((sum, c) => sum + c.currentBid, 0);
+  // Default: Market overview with real data (excluding curated Ferraris)
+  const nonFerrariCurated = CURATED_CARS.filter(c => c.make !== "Ferrari");
+  const totalCars = nonFerrariCurated.length;
+  const liveCars = nonFerrariCurated.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
+  const totalValue = nonFerrariCurated.reduce((sum, c) => sum + c.currentBid, 0);
   const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount)[0];
 
   return {

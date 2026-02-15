@@ -28,7 +28,7 @@ import { saveSearchQuery } from "@/lib/searchHistory"
 function getMakesWithCounts() {
   const makeCounts: Record<string, { count: number; topCar: CollectorCar }> = {}
 
-  CURATED_CARS.forEach((car) => {
+  CURATED_CARS.filter(c => c.make !== "Ferrari").forEach((car) => {
     if (!makeCounts[car.make]) {
       makeCounts[car.make] = { count: 0, topCar: car }
     }
@@ -181,8 +181,9 @@ function MobileOracleOverlay({
       carContext: null,
     }
   } else {
-    const totalCars = CURATED_CARS.length
-    const avgAppreciation = CURATED_CARS.reduce((sum, c) => sum + c.trendValue, 0) / totalCars
+    const nonFerrari = CURATED_CARS.filter(c => c.make !== "Ferrari")
+    const totalCars = nonFerrari.length
+    const avgAppreciation = nonFerrari.reduce((sum, c) => sum + c.trendValue, 0) / totalCars
     response = {
       answer: t("oracle.responses.noMatch", {
         totalCars,
@@ -454,7 +455,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                   <div className="text-center py-12">
                     <Search className="size-12 text-[#4B5563] mx-auto mb-4" />
                     <p className="text-[#9CA3AF] text-[14px]">
-                      {t("vehicles", { count: CURATED_CARS.length })}
+                      {t("vehicles", { count: CURATED_CARS.filter(c => c.make !== "Ferrari").length })}
                     </p>
                   </div>
                 ) : searchResults.length === 0 ? (

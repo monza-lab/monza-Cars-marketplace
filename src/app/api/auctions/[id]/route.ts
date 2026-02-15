@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
+import { fetchLiveListingById } from '@/lib/supabaseLiveListings'
 
 export async function GET(
   request: Request,
@@ -10,8 +11,55 @@ export async function GET(
   try {
     const { id } = await params
 
-    // Check if this is a curated car (20 investment-grade vehicles)
-    const curatedCar = CURATED_CARS.find(car => car.id === id)
+    // Check if this is a live listing from Supabase (id starts with "live-")
+    if (id.startsWith("live-")) {
+      const liveCar = await fetchLiveListingById(id)
+      if (liveCar) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            id: liveCar.id,
+            externalId: liveCar.id,
+            platform: liveCar.platform,
+            url: liveCar.sourceUrl ?? "",
+            title: liveCar.title,
+            make: liveCar.make,
+            model: liveCar.model,
+            year: liveCar.year,
+            trim: liveCar.trim,
+            vin: liveCar.vin ?? null,
+            mileage: liveCar.mileage || null,
+            mileageUnit: liveCar.mileageUnit,
+            transmission: liveCar.transmission !== "\u2014" ? liveCar.transmission : null,
+            engine: liveCar.engine !== "\u2014" ? liveCar.engine : null,
+            exteriorColor: liveCar.exteriorColor ?? null,
+            interiorColor: liveCar.interiorColor ?? null,
+            location: liveCar.location,
+            currentBid: liveCar.currentBid,
+            reserveStatus: null,
+            bidCount: liveCar.bidCount,
+            viewCount: 0,
+            watchCount: 0,
+            startTime: null,
+            endTime: liveCar.endTime.toISOString(),
+            status: liveCar.status,
+            finalPrice: liveCar.status === "ENDED" ? liveCar.currentBid : null,
+            description: liveCar.description ?? liveCar.thesis,
+            sellerNotes: liveCar.history,
+            images: liveCar.images,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            scrapedAt: new Date().toISOString(),
+            analysis: null,
+            comparables: [],
+            priceHistory: [],
+          },
+        })
+      }
+    }
+
+    // Check if this is a curated car — exclude curated Ferraris (only real DB data for Ferrari)
+    const curatedCar = CURATED_CARS.find(car => car.id === id && car.make !== "Ferrari")
     if (curatedCar) {
       return NextResponse.json({
         success: true,
@@ -72,8 +120,8 @@ export async function GET(
       })
     }
 
-    // Check if this is a featured auction (real BaT/RM data)
-    const featuredAuction = featuredAuctions.find(fa => fa.id === id)
+    // Check if this is a featured auction — exclude featured Ferraris (only real DB data)
+    const featuredAuction = featuredAuctions.find(fa => fa.id === id && fa.make !== "Ferrari")
     if (featuredAuction) {
       // Transform featured auction to match DB auction format
       return NextResponse.json({
