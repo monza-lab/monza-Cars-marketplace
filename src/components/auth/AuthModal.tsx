@@ -29,7 +29,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const { signIn, signUp, signInWithGoogle } = useAuth()
+  const { signIn, signUp, resendConfirmationEmail, signInWithGoogle } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,6 +68,28 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
       const { error } = await signInWithGoogle()
       if (error) {
         setError(error.message)
+      }
+    } catch {
+      setError(t('unexpectedError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError(t('emailRequired'))
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const { error } = await resendConfirmationEmail(email)
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess(t('confirmEmail'))
       }
     } catch {
       setError(t('unexpectedError'))
@@ -140,7 +162,19 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           )}
 
           {success && (
-            <p className="text-sm text-[#34D399]">{success}</p>
+            <div className="space-y-2">
+              <p className="text-sm text-[#34D399]">{success}</p>
+              {mode === 'signup' && (
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={loading}
+                  className="text-xs text-[#9CA3AF] hover:text-[#F8B4D9] transition-colors underline underline-offset-2"
+                >
+                  {t('resendConfirmation')}
+                </button>
+              )}
+            </div>
           )}
 
           <Button
