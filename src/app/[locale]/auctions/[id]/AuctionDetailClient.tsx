@@ -347,7 +347,7 @@ function ExecutiveSummary({
         {/* Action Buttons */}
         <div className="flex gap-3 mt-5">
           {isLive && (
-            <button className="flex-1 rounded-full bg-[#F8B4D9] py-3.5 text-[13px] font-semibold tracking-[0.05em] uppercase text-[#0b0b10] hover:bg-[#fce4ec] transition-colors">
+            <button className="flex-1 rounded-full bg-[#F8B4D9] py-3.5 text-[13px] font-semibold tracking-[0.05em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors">
               {t("actions.placeBid")}
             </button>
           )}
@@ -364,7 +364,7 @@ function ExecutiveSummary({
 
         {/* WhatsApp Concierge */}
         <a
-          href={`https://wa.me/491726690998?text=${encodeURIComponent(
+          href={`https://wa.me/573208492641?text=${encodeURIComponent(
             t("whatsapp.prefill", {
               year: auction.year,
               make: auction.make,
@@ -590,7 +590,7 @@ function RiskModule({
       {/* Seller Questions Toggle */}
       <button
         onClick={() => setShowQuestions(!showQuestions)}
-        className="mt-4 flex items-center gap-2 text-[12px] font-medium text-[#F8B4D9] hover:text-[#fce4ec] transition-colors"
+        className="mt-4 flex items-center gap-2 text-[12px] font-medium text-[#F8B4D9] hover:text-[#f4cbde] transition-colors"
       >
         <HelpCircle className="size-4" />
         {showQuestions ? t("actions.hide") : t("actions.show")} {t("labels.sellerQuestions", { count: questions.length })}
@@ -702,7 +702,7 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Chassis Identity - Terminal Style */}
-      <div className="rounded-lg bg-[#0a0a0f] border border-[rgba(255,255,255,0.06)] p-4 mb-4">
+      <div className="rounded-lg bg-[#0b0b10] border border-[rgba(255,255,255,0.06)] p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
           <Fingerprint className="size-3.5 text-[rgba(255,252,247,0.4)]" />
           <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
@@ -982,7 +982,7 @@ export default function AuctionDetailClient() {
           <h2 className="text-lg font-semibold text-[#FFFCF7]">{title}</h2>
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-[13px] text-[#F8B4D9] hover:text-[#fce4ec] transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] text-[#F8B4D9] hover:text-[#f4cbde] transition-colors"
           >
             <ArrowLeft className="size-4" />
             {t("actions.goBack")}

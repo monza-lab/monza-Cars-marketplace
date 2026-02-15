@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { useTranslations } from "next-intl"
 import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
+import { saveSearchQuery } from "@/lib/searchHistory"
 
 // ─── GET UNIQUE MAKES WITH COUNTS ───
 function getMakesWithCounts() {
@@ -79,7 +80,7 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
       {/* Content */}
       <div className="p-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[14px] font-semibold text-[#F2F0E9]">{make}</h3>
+          <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{make}</h3>
           <ChevronRight className="size-4 text-[#4B5563] group-active:text-[#F8B4D9] transition-colors" />
         </div>
         <p className="text-[11px] text-[#4B5563] mt-0.5">
@@ -110,7 +111,7 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-[#F2F0E9] truncate">{car.title}</p>
+        <p className="text-[13px] font-medium text-[#FFFCF7] truncate">{car.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPrice(car.currentBid)}</span>
           <span className="text-[10px] text-emerald-400">{car.trend}</span>
@@ -246,7 +247,7 @@ function MobileOracleOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-[#050505]/98 backdrop-blur-xl"
+          className="fixed inset-0 z-[60] bg-[#0b0b10]/98 backdrop-blur-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
@@ -267,7 +268,7 @@ function MobileOracleOverlay({
           {/* Query */}
           <div className="px-5 pt-4 pb-2">
             <p className="text-[12px] text-[#4B5563]">
-              {t("oracle.youAsked")} <span className="text-[#F2F0E9]">"{query}"</span>
+              {t("oracle.youAsked")} <span className="text-[#FFFCF7]">"{query}"</span>
             </p>
           </div>
 
@@ -286,7 +287,7 @@ function MobileOracleOverlay({
                 </div>
               </div>
             ) : (
-              <div className="text-[15px] leading-relaxed text-[#F2F0E9] whitespace-pre-wrap">
+              <div className="text-[15px] leading-relaxed text-[#FFFCF7] whitespace-pre-wrap">
                 {displayedText.split("\n").map((line, i) => {
                   const parts = line.split(/(\*\*[^*]+\*\*)/g)
                   return (
@@ -310,7 +311,7 @@ function MobileOracleOverlay({
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent pt-16"
+                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10] to-transparent pt-16"
               >
                 <div className="flex flex-wrap gap-2">
                   {chips.map((chip, i) => (
@@ -367,12 +368,12 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-[60] bg-[#050505]"
+          className="fixed inset-0 z-[60] bg-[#0b0b10]"
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-[#050505]/95 backdrop-blur-xl border-b border-white/5">
+          <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center justify-between px-5 py-4">
-              <h2 className="text-[16px] font-semibold text-[#F2F0E9]">
+              <h2 className="text-[16px] font-semibold text-[#FFFCF7]">
                 {activeSection === "brands" ? t("exploreBrands") : t("search")}
               </h2>
               <button
@@ -389,7 +390,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 onClick={() => setActiveSection("brands")}
                 className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
                   activeSection === "brands"
-                    ? "bg-[#F8B4D9] text-[#050505]"
+                    ? "bg-[#F8B4D9] text-[#0b0b10]"
                     : "bg-white/5 text-[#9CA3AF]"
                 }`}
               >
@@ -400,7 +401,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 onClick={() => setActiveSection("search")}
                 className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
                   activeSection === "search"
-                    ? "bg-[#F8B4D9] text-[#050505]"
+                    ? "bg-[#F8B4D9] text-[#0b0b10]"
                     : "bg-white/5 text-[#9CA3AF]"
                 }`}
               >
@@ -420,7 +421,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("searchPlaceholder")}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-[15px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/30"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-[15px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/30"
                   />
                   {searchQuery && (
                     <button
@@ -518,7 +519,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 pb-4">
-              <h2 className="text-[16px] font-semibold text-[#F2F0E9]">{t("mobile.account")}</h2>
+              <h2 className="text-[16px] font-semibold text-[#FFFCF7]">{t("mobile.account")}</h2>
               <button
                 onClick={onClose}
                 className="size-10 flex items-center justify-center rounded-full bg-white/5 text-[#9CA3AF]"
@@ -541,7 +542,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       <User className="size-7 text-[#F8B4D9]" />
                     </div>
                     <div>
-                      <p className="text-[15px] font-semibold text-[#F2F0E9]">
+                      <p className="text-[15px] font-semibold text-[#FFFCF7]">
                         {profile?.name || "User"}
                       </p>
                       <p className="text-[12px] text-[#4B5563]">{user.email}</p>
@@ -559,7 +560,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                           {creditsRemaining}
                         </p>
                       </div>
-                      <button className="px-5 py-2.5 rounded-full bg-[#F8B4D9] text-[#050505] text-[12px] font-semibold">
+                      <button className="px-5 py-2.5 rounded-full bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold">
                         {t("auth.buy")}
                       </button>
                     </div>
@@ -591,7 +592,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     <div className="size-20 rounded-full bg-[rgba(248,180,217,0.1)] flex items-center justify-center mx-auto mb-4">
                       <Sparkles className="size-10 text-[#F8B4D9]" />
                     </div>
-                    <h3 className="text-[18px] font-semibold text-[#F2F0E9]">
+                    <h3 className="text-[18px] font-semibold text-[#FFFCF7]">
                       {t("auth.welcomeBack")}
                     </h3>
                     <p className="text-[14px] text-[#9CA3AF] mt-2">
@@ -604,7 +605,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       onClose()
                       setTimeout(() => setShowAuthModal(true), 300)
                     }}
-                    className="w-full py-4 rounded-xl bg-[#F8B4D9] text-[#050505] text-[15px] font-semibold active:scale-[0.98] transition-transform"
+                    className="w-full py-4 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[15px] font-semibold active:scale-[0.98] transition-transform"
                   >
                     {t("auth.createAccount")}
                   </button>
@@ -663,6 +664,7 @@ export function MobileBottomNav() {
   const handleOracleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (oracleQuery.trim()) {
+      saveSearchQuery(oracleQuery.trim())
       setShowOracleInput(false)
       setShowOracle(true)
     }
@@ -697,12 +699,12 @@ export function MobileBottomNav() {
                   value={oracleQuery}
                   onChange={(e) => setOracleQuery(e.target.value)}
                   placeholder={t("askAnything")}
-                  className="w-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] rounded-2xl pl-5 pr-14 py-4 text-[15px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
+                  className="w-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] rounded-2xl pl-5 pr-14 py-4 text-[15px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
                 />
                 <button
                   type="submit"
                   disabled={!oracleQuery.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-[#F8B4D9] text-[#050505] disabled:opacity-50 disabled:bg-white/10 disabled:text-[#4B5563]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-[#F8B4D9] text-[#0b0b10] disabled:opacity-50 disabled:bg-white/10 disabled:text-[#4B5563]"
                 >
                   <ArrowRight className="size-5" />
                 </button>
@@ -712,7 +714,7 @@ export function MobileBottomNav() {
         </AnimatePresence>
 
         {/* Nav Bar */}
-        <div className="bg-[#0a0a0f]/95 backdrop-blur-xl border-t border-white/5 px-6 py-3 pb-safe">
+        <div className="bg-[#0b0b10]/95 backdrop-blur-xl border-t border-white/5 px-6 py-3 pb-safe">
           <div className="flex items-center justify-around">
             {/* AI Oracle Button */}
             <button
@@ -722,7 +724,7 @@ export function MobileBottomNav() {
               }`}
             >
               <div className={`size-11 rounded-full flex items-center justify-center transition-colors ${
-                showOracleInput ? "bg-[#F8B4D9] text-[#050505]" : "bg-white/5"
+                showOracleInput ? "bg-[#F8B4D9] text-[#0b0b10]" : "bg-white/5"
               }`}>
                 <Sparkles className="size-5" />
               </div>

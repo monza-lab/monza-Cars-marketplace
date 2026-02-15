@@ -159,7 +159,7 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
           </div>
           <button
             type="submit"
-            className="m-2 flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#F8B4D9] px-6 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] transition-all hover:bg-[#fce4ec] hover:shadow-lg hover:shadow-[rgba(248,180,217,0.2)]"
+            className="m-2 flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#F8B4D9] px-6 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] transition-all hover:bg-[#f4cbde] hover:shadow-lg hover:shadow-[rgba(248,180,217,0.2)]"
           >
             {t("search")}
           </button>

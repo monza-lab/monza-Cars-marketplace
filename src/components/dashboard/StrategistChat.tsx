@@ -425,7 +425,7 @@ export function StrategistChat({ auction, className = "" }: StrategistChatProps)
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className="shrink-0 size-10 rounded-xl bg-[#F8B4D9] flex items-center justify-center text-[#0b0b10] hover:bg-[#fce4ec] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="shrink-0 size-10 rounded-xl bg-[#F8B4D9] flex items-center justify-center text-[#0b0b10] hover:bg-[#f4cbde] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <Send className="size-4" />
           </button>
@@ -448,7 +448,7 @@ export function MobileChatDrawer({ auction }: MobileChatDrawerProps) {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#F8B4D9] rounded-full px-5 py-3 shadow-xl shadow-[rgba(248,180,217,0.3)] hover:bg-[#fce4ec] transition-all md:hidden"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#F8B4D9] rounded-full px-5 py-3 shadow-xl shadow-[rgba(248,180,217,0.3)] hover:bg-[#f4cbde] transition-all md:hidden"
       >
         <Sparkles className="size-4 text-[#0b0b10]" />
         <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">

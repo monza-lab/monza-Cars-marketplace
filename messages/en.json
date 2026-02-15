@@ -4,7 +4,8 @@
     "marketSearch": "Market Search",
     "priceHistory": "Price History",
     "about": "About",
-    "menu": "Menu"
+    "menu": "Menu",
+    "searchHistory": "History"
   },
   "mobile": {
     "aiOracle": "AI Oracle",
@@ -144,7 +145,246 @@
       "insurance": "Insurance (Agreed Value)",
       "storage": "Climate-Controlled Storage",
       "service": "Service & Maintenance"
-    }
+    },
+    "investmentPassport": {
+      "title": "Investment Passport",
+      "grade": "Grade",
+      "marketPosition": "Market Position",
+      "fiveYearReturn": "5yr Return",
+      "annualCost": "Annual Cost",
+      "belowMarket": "Below market",
+      "aboveMarket": "Above market"
+    },
+    "regionalValuation": "Regional Valuation",
+    "fiveYearReturnComparison": "5-Year Return Comparison",
+    "priceTrend": "5-Year Price Trend",
+    "keyInspectionPoints": "Key Inspection Points",
+    "questionsToAsk": "Questions to Ask the Seller",
+    "prePurchaseInspection": "Pre-Purchase Inspection",
+    "comparableSales": "Recent Comparable Sales",
+    "ownershipAndShipping": "Ownership Cost & Shipping",
+    "eventsAndCommunity": "Events, Shows & Community",
+    "domestic": "Domestic (Enclosed)",
+    "euImport": "EU Import (incl. duties)",
+    "ukImport": "UK Import (incl. duties)",
+    "totalAnnual": "Total Annual",
+    "vehicleSpecs": "Vehicle Specs",
+    "sampleData": "Sample Data"
+  },
+  "investmentReport": {
+    "title": "Investment Dossier",
+    "subtitle": "Comprehensive analysis & valuation",
+    "backToVehicle": "Back to Vehicle",
+    "generatedFor": "Generated for",
+    "reportId": "Report ID",
+    "confidential": "Confidential",
+    "unlockReport": "Unlock Full Report",
+    "unlockDesc": "Get access to the complete investment dossier with detailed valuation, risk analysis, and actionable recommendations.",
+    "unlockCost": "1,000 tokens",
+    "freePreview": "Free Preview",
+    "sections": {
+      "summary": "Executive Summary",
+      "identity": "Vehicle Identity",
+      "production": "Production & Heritage",
+      "valuation": "Market Valuation",
+      "performance": "Investment Performance",
+      "technical": "Technical Deep-Dive",
+      "risk": "Risk Assessment",
+      "condition": "Condition Guide",
+      "dueDiligence": "Due Diligence",
+      "ownership": "Ownership Economics",
+      "marketContext": "Market Context",
+      "similar": "Similar Vehicles",
+      "verdict": "Investment Verdict"
+    },
+    "summary": {
+      "investmentGrade": "Investment Grade",
+      "currentPrice": "Current Price",
+      "fairValue": "Fair Value Range",
+      "fiveYearReturn": "5-Year Return",
+      "annualCost": "Annual Cost",
+      "marketPosition": "Market Position",
+      "riskScore": "Risk Score",
+      "verdict": "Verdict"
+    },
+    "identity": {
+      "specifications": "Specifications",
+      "engine": "Engine",
+      "transmission": "Transmission",
+      "mileage": "Mileage",
+      "location": "Location",
+      "category": "Category",
+      "provenance": "Provenance & History",
+      "platformData": "Platform Data",
+      "platform": "Platform",
+      "currentBid": "Current Bid",
+      "bidCount": "Bids",
+      "status": "Status",
+      "timeRemaining": "Time Remaining"
+    },
+    "production": {
+      "yearsProduced": "Years Produced",
+      "totalBuilt": "Total Built",
+      "steering": "LHD / RHD Split",
+      "variants": "Variant Breakdown & Pricing"
+    },
+    "valuation": {
+      "regionalBreakdown": "Regional Price Breakdown",
+      "bestBuy": "Best Buy",
+      "yourMarket": "Your Market",
+      "marketPositionGauge": "Market Position Gauge",
+      "belowFair": "Below Fair Value",
+      "aboveFair": "Above Fair Value",
+      "atFair": "At Fair Value",
+      "arbitrageAlert": "Arbitrage Opportunity",
+      "arbitrageDesc": "This vehicle is priced significantly below fair value in {region}. Potential savings of {amount} vs highest regional average.",
+      "comparables": "Recent Comparable Sales"
+    },
+    "performance": {
+      "brandReturn": "{make} 5-Year Return",
+      "vsBenchmarks": "vs. Market Benchmarks",
+      "priceTrend": "Price Trend (5 Years)",
+      "cagr": "CAGR",
+      "totalReturn": "Total Return",
+      "outperforms": "Outperforms {benchmark}",
+      "similarComparison": "Price Comparison — Similar Vehicles",
+      "similarComparisonDesc": "How this vehicle's current bid compares to similar listings in the market",
+      "avgPrice": "Avg. Price",
+      "priceRank": "Price Rank",
+      "vsMkt": "vs. Market"
+    },
+    "technical": {
+      "engineSpecs": "Engine & Powertrain Specifications",
+      "knownIssues": "Known Mechanical Vulnerabilities",
+      "estRepair": "Est. repair",
+      "critical": "Critical",
+      "moderate": "Moderate",
+      "minor": "Minor",
+      "serviceSchedule": "Service Schedule & Costs"
+    },
+    "risk": {
+      "overallScore": "Overall Risk Score",
+      "low": "Low Risk",
+      "moderate": "Moderate Risk",
+      "high": "High Risk",
+      "knownIssues": "Known Issues & Red Flags",
+      "critical": "Critical",
+      "monitor": "Monitor",
+      "mitigationSteps": "Mitigation Steps"
+    },
+    "condition": {
+      "rustAreas": "Bodywork & Corrosion Risk Areas",
+      "interiorIssues": "Interior Condition Concerns",
+      "inspectionPriorities": "Model-Specific Inspection Priorities",
+      "high": "High Risk",
+      "medium": "Medium",
+      "low": "Low",
+      "parts_rare": "Parts: Rare",
+      "parts_moderate": "Parts: Limited",
+      "parts_easy": "Parts: Available"
+    },
+    "dueDiligence": {
+      "questionsToAsk": "Questions to Ask the Seller",
+      "copyAll": "Copy All",
+      "copied": "Copied!",
+      "inspectionChecklist": "Pre-Purchase Inspection Checklist",
+      "required": "Critical",
+      "recommended": "Recommended"
+    },
+    "ownership": {
+      "annualCosts": "Estimated Annual Costs",
+      "insurance": "Insurance (Agreed Value)",
+      "storage": "Climate-Controlled Storage",
+      "maintenance": "Service & Maintenance",
+      "totalAnnual": "Total Annual",
+      "fiveYearProjection": "5-Year Cost Projection",
+      "shippingEstimates": "Shipping Estimates",
+      "domestic": "Domestic (Enclosed)",
+      "euImport": "EU Import (incl. duties)",
+      "ukImport": "UK Import (incl. duties)"
+    },
+    "marketContext": {
+      "brandThesis": "Brand Thesis",
+      "marketEvents": "Market Events & Catalysts",
+      "valuePositive": "Value +",
+      "valueNegative": "Value -",
+      "neutral": "Neutral"
+    },
+    "similar": {
+      "title": "Similar Vehicles on Market",
+      "compareNote": "Vehicles in same category or make for comparison"
+    },
+    "verdict": {
+      "title": "Investment Verdict",
+      "recommendation": "Recommendation",
+      "buy": "BUY",
+      "hold": "HOLD",
+      "watch": "WATCH",
+      "pass": "PASS",
+      "strategyTitle": "Investment Strategy",
+      "buyStrategy": "Current pricing represents strong value. Recommended entry point for long-term portfolio allocation.",
+      "holdStrategy": "Fair market pricing. Hold if owned, no urgency to acquire at current levels.",
+      "watchStrategy": "Monitor for 10-15% correction before entry. Set price alerts.",
+      "keyTakeaways": "Key Takeaways",
+      "disclaimer": "This report is for informational purposes only and does not constitute financial advice. Past performance is not indicative of future results. Always conduct your own due diligence before making investment decisions."
+    },
+    "downloadButton": "Download Report",
+    "downloadPdf": "Download PDF",
+    "downloadPdfDesc": "Full visual report",
+    "downloadExcel": "Export Excel",
+    "downloadExcelDesc": "Raw data tables",
+    "downloadGenerating": "Generating...",
+    "downloadCoverTitle": "Investment Dossier",
+    "downloadCoverConfidential": "Confidential",
+    "downloadCoverGenerated": "Generated"
+  },
+  "pricing": {
+    "title": "Choose Your Plan",
+    "subtitle": "Unlock comprehensive investment analysis for smarter buying decisions",
+    "single": {
+      "name": "Single Report",
+      "price": "$29",
+      "period": "one-time",
+      "desc": "Perfect for evaluating a specific vehicle",
+      "cta": "Get This Report",
+      "reports": "1 report",
+      "feature1": "Full 10-section dossier",
+      "feature2": "Regional arbitrage alerts",
+      "feature3": "Risk assessment & scoring",
+      "feature4": "Comparable sales data"
+    },
+    "explorer": {
+      "name": "Explorer Pack",
+      "price": "$59",
+      "period": "5 reports",
+      "desc": "Compare multiple vehicles before deciding",
+      "cta": "Get 5 Reports",
+      "badge": "Best Value",
+      "reports": "5 reports",
+      "perReport": "$11.80/report",
+      "feature1": "Everything in Single",
+      "feature2": "5 reports (save 60%)",
+      "feature3": "Side-by-side comparison",
+      "feature4": "Priority support"
+    },
+    "unlimited": {
+      "name": "Unlimited",
+      "price": "$149",
+      "period": "/month",
+      "desc": "For dealers, advisors & serious collectors",
+      "cta": "Go Unlimited",
+      "reports": "Unlimited",
+      "feature1": "Unlimited reports",
+      "feature2": "Everything in Explorer",
+      "feature3": "Early access to new data",
+      "feature4": "Dedicated advisor line"
+    },
+    "guarantee": "30-day money-back guarantee. Cancel anytime.",
+    "currentBalance": "Current balance",
+    "tokens": "tokens",
+    "successTitle": "Report Unlocked!",
+    "successDesc": "You now have full access to this investment dossier.",
+    "processing": "Processing..."
   },
   "auctionDetail": {
     "actions": {
@@ -759,6 +999,17 @@
       "collectorVehicles": "{count, plural, one {# collector vehicle} other {# collector vehicles}}",
       "explore": "Explore {brand}"
     },
+    "mobileFeed": {
+      "liveAuctions": "Live Auctions",
+      "trending": "Trending",
+      "exploreAll": "Explore All",
+      "brands": "Brands",
+      "viewCollection": "View Collection",
+      "ending": "Ending",
+      "vehicles": "{count, plural, one {# vehicle} other {# vehicles}}",
+      "noBrands": "No brands in this region",
+      "noAuctions": "No live auctions right now"
+    },
     "context": {
       "investmentThesis": "Investment Thesis",
       "fiveYearAppreciation": "5-Year Appreciation",
@@ -777,6 +1028,10 @@
     "asset": {
       "noImage": "No Image",
       "fullAnalysis": "Full Analysis",
+      "ended": "Ended",
+      "timeDay": "d",
+      "timeHour": "h",
+      "timeMin": "m",
       "metrics": {
         "grade": "Grade",
         "trend": "Trend",
@@ -840,7 +1095,15 @@
       "total": "Total",
       "perYear": "/yr",
       "costsNote": "Based on industry averages. Actual costs vary.",
-      "speakWithAdvisor": "Speak with Advisor"
+      "speakWithAdvisor": "Speak with Advisor",
+      "region": "Region",
+      "browseByEra": "Browse by Era",
+      "priceTier": "Price Tier",
+      "category": "Category",
+      "regionalPricing": "Fair Value by Region",
+      "regionalNote": "Fair value ranges based on recent auction results and regional market conditions.",
+      "avgPrice": "Avg Price",
+      "grade": "Grade"
     },
     "results": {
       "modelsTitle": "{make} Models",
@@ -859,6 +1122,31 @@
       "title": "Filters",
       "showResults": "Show {count} Results"
     },
+    "mobileContext": {
+      "investmentThesis": "Investment Thesis",
+      "valuationByMarket": "Valuation by Market",
+      "yourMarket": "YOUR MARKET",
+      "best": "BEST",
+      "returnComparison": "5-Year Return",
+      "priceTrend": "Price Trend",
+      "recentSales": "Recent Sales",
+      "marketDepth": "Market Depth",
+      "auctionsPerYear": "Auctions/Year",
+      "avgDaysToSell": "Avg Days to Sell",
+      "sellThroughRate": "Sell-Through",
+      "demandScore": "Demand Score",
+      "ownershipCost": "Annual Ownership",
+      "insurance": "Insurance",
+      "storage": "Storage",
+      "maintenance": "Maintenance",
+      "total": "Total",
+      "perYear": "/yr",
+      "otherModels": "Other Models",
+      "liveAuctions": "Live Auctions",
+      "models": "Models",
+      "noModels": "No models in this region",
+      "viewDetails": "View Details"
+    },
     "card": {
       "currentBid": "Current Bid",
       "soldFor": "Sold For"
@@ -867,5 +1155,40 @@
   "metadata": {
     "title": "Monza Lab | Investment-Grade Automotive Assets",
     "description": "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions."
+  },
+  "searchHistory": {
+    "title": "Search History",
+    "kicker": "Your Searches",
+    "empty": "No searches yet",
+    "emptyHint": "Use the search bar to ask about any car or market trend",
+    "clearAll": "Clear All",
+    "remove": "Remove",
+    "signInRequired": "Sign in to view your search history",
+    "signIn": "Sign In",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "older": "Older",
+    "justNow": "Just now"
+  },
+  "onboarding": {
+    "step": "Step",
+    "regionTitle": "Where do you collect?",
+    "regionDesc": "We'll tailor prices and availability to your market",
+    "other": "Other",
+    "brandsTitle": "Brands you follow",
+    "brandsDesc": "Select one or more to personalize your feed",
+    "intentTitle": "What brings you here?",
+    "intentDesc": "This helps us tailor your experience",
+    "buyTitle": "Buy",
+    "buyDesc": "I'm actively looking to acquire",
+    "trackTitle": "Track",
+    "trackDesc": "I want to monitor values and trends",
+    "learnTitle": "Learn",
+    "learnDesc": "I'm exploring the collector market",
+    "next": "Continue",
+    "back": "Back",
+    "skip": "Skip for now",
+    "finish": "Get Started"
   }
 }

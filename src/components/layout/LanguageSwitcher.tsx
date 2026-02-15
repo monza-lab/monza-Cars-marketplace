@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#F2F0E9] transition-colors">
+        <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] transition-colors">
           <Globe className="size-4" />
           <span className="hidden md:inline">{localeFlags[locale]}</span>
         </button>
@@ -50,7 +50,7 @@ export function LanguageSwitcher() {
             className={`flex items-center gap-3 text-[13px] cursor-pointer ${
               loc === locale
                 ? "text-[#F8B4D9] bg-[rgba(248,180,217,0.08)]"
-                : "text-[#9CA3AF] hover:text-[#F2F0E9]"
+                : "text-[#9CA3AF] hover:text-[#FFFCF7]"
             }`}
           >
             <span>{localeFlags[loc]}</span>

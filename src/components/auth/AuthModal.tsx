@@ -80,7 +80,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[#0F1012] border-white/10 sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle className="text-[#F2F0E9] text-xl font-semibold">
+          <DialogTitle className="text-[#FFFCF7] text-xl font-semibold">
             {mode === 'signin' ? t('welcomeBack') : t('createAccountTitle')}
           </DialogTitle>
           <DialogDescription className="text-[#9CA3AF]">
@@ -101,7 +101,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                 placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-[#050505] border-white/10 text-[#F2F0E9] placeholder:text-[#4B5563]"
+                className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
               />
             </div>
           )}
@@ -116,7 +116,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-[#050505] border-white/10 text-[#F2F0E9] placeholder:text-[#4B5563]"
+              className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
             />
           </div>
 
@@ -131,7 +131,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="bg-[#050505] border-white/10 text-[#F2F0E9] placeholder:text-[#4B5563]"
+              className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
             />
           </div>
 
@@ -146,7 +146,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#F8B4D9] text-[#050505] hover:bg-[#F8B4D9]/90 font-semibold"
+            className="w-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#F8B4D9]/90 font-semibold"
           >
             {loading
               ? t('loading')
@@ -172,7 +172,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           variant="outline"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full border-white/10 text-[#F2F0E9] hover:bg-white/5"
+          className="w-full border-white/10 text-[#FFFCF7] hover:bg-white/5"
         >
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path

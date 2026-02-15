@@ -50,7 +50,7 @@ export function MarketTrendsClient({ initialTrends }: { initialTrends: Trend[] }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <h2 className="text-lg font-semibold text-[#F2F0E9] mb-6">{t("topPerformers")}</h2>
+      <h2 className="text-lg font-semibold text-[#FFFCF7] mb-6">{t("topPerformers")}</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {initialTrends.map((trend, i) => (
           <div
@@ -59,7 +59,7 @@ export function MarketTrendsClient({ initialTrends }: { initialTrends: Trend[] }
           >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-[15px] font-semibold text-[#F2F0E9]">
+                <h3 className="text-[15px] font-semibold text-[#FFFCF7]">
                   {trend.make} {trend.model}
                 </h3>
                 <p className="text-[12px] text-[#6B7280] mt-1">

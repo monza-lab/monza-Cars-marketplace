@@ -136,7 +136,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
 
           {/* Body - Real data only */}
           <div className="p-4">
-            <h3 className="text-sm font-medium text-[#F2F0E9] group-hover:text-[#F8B4D9] transition-colors line-clamp-1">
+            <h3 className="text-sm font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors line-clamp-1">
               {car.title}
             </h3>
 
@@ -214,7 +214,7 @@ function PlatformSection({
             </span>
           </div>
           <div>
-            <h3 className="text-lg font-medium text-[#F2F0E9]">
+            <h3 className="text-lg font-medium text-[#FFFCF7]">
               {cfg.label}
             </h3>
             <p className="text-[11px] text-[#4B5563]">
@@ -228,7 +228,7 @@ function PlatformSection({
           <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#4B5563]">
             Price Range
           </span>
-          <p className="text-sm text-[#F2F0E9]">
+          <p className="text-sm text-[#FFFCF7]">
             {formatCurrency(minPrice)} – {formatCurrency(maxPrice)}
           </p>
         </div>
@@ -296,7 +296,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-[#0b0b10]">
       {/* ═══════════════════════════════════════════════════════════════════
           HERO SECTION - Clean, factual
           ═══════════════════════════════════════════════════════════════════ */}
@@ -310,7 +310,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/70 to-[#050505]/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/70 to-[#0b0b10]/30" />
         </div>
 
         {/* Content */}
@@ -334,11 +334,11 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
                 {make}
               </Link>
               <ChevronRight className="size-3" />
-              <span className="text-[#F2F0E9]">{model}</span>
+              <span className="text-[#FFFCF7]">{model}</span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-[#F2F0E9]">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-[#FFFCF7]">
               {make}{" "}
               <span className="text-gradient font-normal">{model}</span>
             </h1>
@@ -349,7 +349,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
                 <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
                   Sales Tracked
                 </span>
-                <p className="text-2xl font-light text-[#F2F0E9]">
+                <p className="text-2xl font-light text-[#FFFCF7]">
                   {stats.totalSales}
                 </p>
               </div>
@@ -367,7 +367,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
                 <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
                   Platforms
                 </span>
-                <p className="text-2xl font-light text-[#F2F0E9]">
+                <p className="text-2xl font-light text-[#FFFCF7]">
                   {stats.platforms}
                 </p>
               </div>
@@ -397,7 +397,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="px-6 py-8 md:px-12 lg:px-20 pb-24">
         <div className="mb-8">
-          <h2 className="text-2xl font-light text-[#F2F0E9]">
+          <h2 className="text-2xl font-light text-[#FFFCF7]">
             Market Activity
           </h2>
           <p className="mt-1 text-[13px] text-[#9CA3AF]">

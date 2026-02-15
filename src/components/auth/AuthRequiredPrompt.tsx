@@ -25,7 +25,7 @@ export function AuthRequiredPrompt({
         <div className="w-12 h-12 rounded-full bg-[#F8B4D9]/10 flex items-center justify-center mb-4">
           <Lock className="w-6 h-6 text-[#F8B4D9]" />
         </div>
-        <h3 className="text-lg font-semibold text-[#F2F0E9] mb-2">
+        <h3 className="text-lg font-semibold text-[#FFFCF7] mb-2">
           {t('analysisRequiresSignInTitle')}
         </h3>
         <p className="text-[#9CA3AF] text-center mb-6 max-w-sm">
@@ -34,14 +34,14 @@ export function AuthRequiredPrompt({
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={() => setShowAuthModal(true)}
-            className="bg-[#F8B4D9] text-[#050505] hover:bg-[#F8B4D9]/90 font-semibold"
+            className="bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#F8B4D9]/90 font-semibold"
           >
             {t('signIn')}
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowAuthModal(true)}
-            className="border-white/10 text-[#F2F0E9] hover:bg-white/5"
+            className="border-white/10 text-[#FFFCF7] hover:bg-white/5"
           >
             {t('createAccountTitle')}
           </Button>

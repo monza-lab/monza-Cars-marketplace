@@ -485,7 +485,7 @@ How may I help you today?`,
                     <Sparkles className="w-5 h-5 text-[#F8B4D9]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#F2F0E9]">Private Advisor</h3>
+                    <h3 className="text-sm font-semibold text-[#FFFCF7]">Private Advisor</h3>
                     <p className="text-[10px] text-[#34D399] flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-[#34D399] rounded-full animate-pulse" />
                       At your service
@@ -494,7 +494,7 @@ How may I help you today?`,
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center text-[#9CA3AF] hover:text-[#F2F0E9] transition-colors"
+                  className="w-8 h-8 rounded-full hover:bg-white/5 flex items-center justify-center text-[#9CA3AF] hover:text-[#FFFCF7] transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -523,8 +523,8 @@ How may I help you today?`,
                     <div
                       className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                         message.role === 'user'
-                          ? 'bg-[#F8B4D9] text-[#050505]'
-                          : 'bg-white/5 text-[#F2F0E9]'
+                          ? 'bg-[#F8B4D9] text-[#0b0b10]'
+                          : 'bg-white/5 text-[#FFFCF7]'
                       }`}
                     >
                       <div className="text-[13px] leading-relaxed whitespace-pre-wrap">
@@ -570,12 +570,12 @@ How may I help you today?`,
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything..."
-                    className="flex-1 bg-[#050505] border-white/10 text-[#F2F0E9] placeholder:text-[#4B5563] focus:border-[#F8B4D9]/50"
+                    className="flex-1 bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563] focus:border-[#F8B4D9]/50"
                   />
                   <Button
                     onClick={handleSend}
                     disabled={!input.trim() || isTyping}
-                    className="bg-[#F8B4D9] text-[#050505] hover:bg-[#fce4ec] disabled:opacity-50"
+                    className="bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] disabled:opacity-50"
                   >
                     <Send className="w-4 h-4" />
                   </Button>

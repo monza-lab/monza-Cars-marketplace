@@ -18,7 +18,7 @@ export async function generateMetadata({
 
 export default function SearchPage() {
   return (
-    <div className="flex flex-col h-screen pt-[100px] bg-[#050505]">
+    <div className="flex flex-col h-screen pt-[100px] bg-[#0b0b10]">
       <SearchClient />
     </div>
   );

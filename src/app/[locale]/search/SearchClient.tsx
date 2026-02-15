@@ -194,7 +194,7 @@ export function SearchClient() {
         <div className="flex items-center gap-6">
           {/* Title */}
           <div className="shrink-0">
-            <h1 className="text-xl font-semibold text-[#F2F0E9] tracking-tight">
+            <h1 className="text-xl font-semibold text-[#FFFCF7] tracking-tight">
               {t("header.title")} <span className="text-gradient">{t("header.titleAccent")}</span>
             </h1>
           </div>
@@ -207,10 +207,10 @@ export function SearchClient() {
               placeholder={t("header.searchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10 rounded-full border-white/5 bg-[#0F1012] pl-10 pr-10 text-sm text-[#F2F0E9] placeholder:text-[#4B5563] focus-visible:border-[rgba(248,180,217,0.25)] focus-visible:ring-[rgba(248,180,217,0.1)] backdrop-blur-xl"
+              className="h-10 rounded-full border-white/5 bg-[#0F1012] pl-10 pr-10 text-sm text-[#FFFCF7] placeholder:text-[#4B5563] focus-visible:border-[rgba(248,180,217,0.25)] focus-visible:ring-[rgba(248,180,217,0.1)] backdrop-blur-xl"
             />
             {query && (
-              <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B5563] hover:text-[#F2F0E9]">
+              <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B5563] hover:text-[#FFFCF7]">
                 <X className="size-4" />
               </button>
             )}
@@ -247,7 +247,7 @@ export function SearchClient() {
             variant="outline"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 rounded-full border-white/5 text-[10px] tracking-[0.05em] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.06)] hover:text-[#F2F0E9]",
+              "h-7 gap-1.5 rounded-full border-white/5 text-[10px] tracking-[0.05em] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.06)] hover:text-[#FFFCF7]",
               filtersOpen && "border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] text-[#F8B4D9]"
             )}
             onClick={() => setFiltersOpen(!filtersOpen)}
@@ -255,7 +255,7 @@ export function SearchClient() {
             <SlidersHorizontal className="size-3" />
             {t("filters.button")}
             {activeFilterCount > 0 && (
-              <Badge className="ml-1 size-4 items-center justify-center rounded-full bg-[#F8B4D9] p-0 text-[9px] text-[#050505]">
+              <Badge className="ml-1 size-4 items-center justify-center rounded-full bg-[#F8B4D9] p-0 text-[9px] text-[#0b0b10]">
                 {activeFilterCount}
               </Badge>
             )}
@@ -270,8 +270,8 @@ export function SearchClient() {
               className={cn(
                 "h-7 px-3 rounded-full text-[10px] font-medium tracking-[0.05em] transition-all border",
                 selectedStatus === status.value
-                  ? "bg-[#F8B4D9] text-[#050505] border-transparent"
-                  : "bg-transparent text-[#9CA3AF] border-white/5 hover:border-[rgba(248,180,217,0.2)] hover:text-[#F2F0E9]"
+                  ? "bg-[#F8B4D9] text-[#0b0b10] border-transparent"
+                  : "bg-transparent text-[#9CA3AF] border-white/5 hover:border-[rgba(248,180,217,0.2)] hover:text-[#FFFCF7]"
               )}
             >
               {t(`statuses.${status.key}`)}
@@ -313,7 +313,7 @@ export function SearchClient() {
           {activeFilterCount > 0 && (
             <button
               onClick={clearFilters}
-              className="h-7 px-3 text-[10px] text-[#4B5563] hover:text-[#F2F0E9] transition-colors"
+              className="h-7 px-3 text-[10px] text-[#4B5563] hover:text-[#FFFCF7] transition-colors"
             >
               {t("filters.clearAll")}
             </button>
@@ -428,7 +428,7 @@ function InvestmentCard({
             className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-[#050505]">
+          <div className="flex h-full items-center justify-center bg-[#0b0b10]">
             <Car className="size-12 text-[#4B5563]/30" />
           </div>
         )}
@@ -457,7 +457,7 @@ function InvestmentCard({
           </span>
 
           {/* Platform Badge */}
-          <span className="rounded-full bg-[rgba(0,0,0,0.5)] backdrop-blur-md px-2.5 py-1 text-[10px] font-medium tracking-[0.08em] uppercase text-[#F2F0E9]">
+          <span className="rounded-full bg-[rgba(0,0,0,0.5)] backdrop-blur-md px-2.5 py-1 text-[10px] font-medium tracking-[0.08em] uppercase text-[#FFFCF7]">
             {PLATFORM_SHORT[result.platform] ?? result.platform}
           </span>
         </div>
@@ -465,7 +465,7 @@ function InvestmentCard({
         {/* Bottom overlay content */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           {/* Title */}
-          <h3 className="text-[15px] font-semibold text-[#F2F0E9] leading-tight line-clamp-2 group-hover:text-[#F8B4D9] transition-colors">
+          <h3 className="text-[15px] font-semibold text-[#FFFCF7] leading-tight line-clamp-2 group-hover:text-[#F8B4D9] transition-colors">
             {result.year} {result.make} {result.model}
           </h3>
 
@@ -482,7 +482,7 @@ function InvestmentCard({
 
             <div className="text-right">
               {isLive && result.endTime && (
-                <div className="flex items-center gap-1 text-[#F2F0E9]">
+                <div className="flex items-center gap-1 text-[#FFFCF7]">
                   <Clock className="size-3" />
                   <span className="text-[12px] font-mono font-medium tabular-nums">
                     {timeLeft(result.endTime, {

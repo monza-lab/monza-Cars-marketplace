@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Header } from "@/components/layout/Header";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { RegionProvider } from "@/lib/RegionContext";
 import { MobileBottomNav } from "@/components/mobile";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -62,9 +64,12 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <AuthProvider>
-        <Header />
-        <main>{children}</main>
-        <MobileBottomNav />
+        <RegionProvider>
+          <Header />
+          <main>{children}</main>
+          <MobileBottomNav />
+          <OnboardingModal />
+        </RegionProvider>
       </AuthProvider>
     </NextIntlClientProvider>
   );

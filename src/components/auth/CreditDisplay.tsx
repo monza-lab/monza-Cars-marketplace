@@ -31,7 +31,7 @@ export function CreditDisplay({ onClick }: CreditDisplayProps) {
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
     >
       <Zap className={`w-3.5 h-3.5 ${credits > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
-      <span className="text-sm font-medium text-[#F2F0E9]">
+      <span className="text-sm font-medium text-[#FFFCF7]">
         {credits}
       </span>
       <span className="text-xs text-[#4B5563] hidden sm:inline">

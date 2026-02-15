@@ -4,7 +4,8 @@
     "marketSearch": "マーケット検索",
     "priceHistory": "価格履歴",
     "about": "概要",
-    "menu": "メニュー"
+    "menu": "メニュー",
+    "searchHistory": "履歴"
   },
   "mobile": {
     "aiOracle": "AIオラクル",
@@ -144,7 +145,246 @@
       "insurance": "保険(合意価格)",
       "storage": "空調保管",
       "service": "整備・メンテナンス"
-    }
+    },
+    "investmentPassport": {
+      "title": "投資パスポート",
+      "grade": "グレード",
+      "marketPosition": "市場ポジション",
+      "fiveYearReturn": "5年リターン",
+      "annualCost": "年間コスト",
+      "belowMarket": "市場以下",
+      "aboveMarket": "市場以上"
+    },
+    "regionalValuation": "地域別評価",
+    "fiveYearReturnComparison": "5年リターン比較",
+    "priceTrend": "5年価格推移",
+    "keyInspectionPoints": "重要検査ポイント",
+    "questionsToAsk": "売り手への質問",
+    "prePurchaseInspection": "購入前検査",
+    "comparableSales": "最近の類似販売",
+    "ownershipAndShipping": "所有コスト・輸送費",
+    "eventsAndCommunity": "イベント＆コミュニティ",
+    "domestic": "国内（密閉輸送）",
+    "euImport": "EU輸入（関税込）",
+    "ukImport": "UK輸入（関税込）",
+    "totalAnnual": "年間合計",
+    "vehicleSpecs": "車両スペック",
+    "sampleData": "サンプルデータ"
+  },
+  "investmentReport": {
+    "title": "投資ドシエ",
+    "subtitle": "包括的な分析と評価",
+    "backToVehicle": "車両に戻る",
+    "generatedFor": "生成先",
+    "reportId": "レポートID",
+    "confidential": "機密",
+    "unlockReport": "フルレポートを解除",
+    "unlockDesc": "詳細な評価、リスク分析、実行可能な推奨事項を含む完全な投資ドシエにアクセスできます。",
+    "unlockCost": "1,000トークン",
+    "freePreview": "無料プレビュー",
+    "sections": {
+      "summary": "エグゼクティブサマリー",
+      "identity": "車両アイデンティティ",
+      "valuation": "市場評価",
+      "performance": "投資パフォーマンス",
+      "risk": "リスク評価",
+      "dueDiligence": "デューデリジェンス",
+      "ownership": "所有コスト",
+      "marketContext": "市場コンテキスト",
+      "similar": "類似車両",
+      "verdict": "投資判定",
+      "production": "生産と歴史",
+      "technical": "技術分析",
+      "condition": "コンディションガイド"
+    },
+    "summary": {
+      "investmentGrade": "投資グレード",
+      "currentPrice": "現在価格",
+      "fairValue": "適正価格範囲",
+      "fiveYearReturn": "5年リターン",
+      "annualCost": "年間コスト",
+      "marketPosition": "市場ポジション",
+      "riskScore": "リスクスコア",
+      "verdict": "判定"
+    },
+    "identity": {
+      "specifications": "仕様",
+      "engine": "エンジン",
+      "transmission": "トランスミッション",
+      "mileage": "走行距離",
+      "location": "所在地",
+      "category": "カテゴリ",
+      "provenance": "来歴と履歴",
+      "platformData": "プラットフォームデータ",
+      "platform": "プラットフォーム",
+      "currentBid": "現在の入札",
+      "bidCount": "入札数",
+      "status": "ステータス",
+      "timeRemaining": "残り時間"
+    },
+    "production": {
+      "yearsProduced": "生産年",
+      "totalBuilt": "総生産台数",
+      "steering": "左ハンドル / 右ハンドル",
+      "variants": "バリエーションと価格"
+    },
+    "valuation": {
+      "regionalBreakdown": "地域別価格内訳",
+      "bestBuy": "ベストバイ",
+      "yourMarket": "あなたの市場",
+      "marketPositionGauge": "市場ポジションゲージ",
+      "belowFair": "適正価格以下",
+      "aboveFair": "適正価格以上",
+      "atFair": "適正価格",
+      "arbitrageAlert": "裁定取引の機会",
+      "arbitrageDesc": "{region}でこの車両は適正価格を大幅に下回っています。最高地域平均と比較して{amount}の潜在的節約。",
+      "comparables": "最近の比較販売"
+    },
+    "performance": {
+      "brandReturn": "{make} 5年リターン",
+      "vsBenchmarks": "vs. 市場ベンチマーク",
+      "priceTrend": "価格トレンド（5年）",
+      "cagr": "CAGR",
+      "totalReturn": "トータルリターン",
+      "outperforms": "{benchmark}を上回る",
+      "similarComparison": "価格比較 — 類似車両",
+      "similarComparisonDesc": "この車両の現在の入札額が市場の類似リスティングとどう比較されるか",
+      "avgPrice": "平均価格",
+      "priceRank": "順位",
+      "vsMkt": "対市場"
+    },
+    "technical": {
+      "engineSpecs": "エンジン＆パワートレイン仕様",
+      "knownIssues": "既知の機械的脆弱性",
+      "estRepair": "修理費目安",
+      "critical": "重大",
+      "moderate": "中程度",
+      "minor": "軽微",
+      "serviceSchedule": "メンテナンススケジュールと費用"
+    },
+    "risk": {
+      "overallScore": "総合リスクスコア",
+      "low": "低リスク",
+      "moderate": "中リスク",
+      "high": "高リスク",
+      "knownIssues": "既知の問題とレッドフラグ",
+      "critical": "重大",
+      "monitor": "監視",
+      "mitigationSteps": "リスク軽減策"
+    },
+    "condition": {
+      "rustAreas": "ボディワークと腐食リスク部位",
+      "interiorIssues": "インテリアの状態に関する懸念",
+      "inspectionPriorities": "モデル別検査優先事項",
+      "high": "高リスク",
+      "medium": "中程度",
+      "low": "低い",
+      "parts_rare": "部品：希少",
+      "parts_moderate": "部品：限定的",
+      "parts_easy": "部品：入手可能"
+    },
+    "dueDiligence": {
+      "questionsToAsk": "売主への質問",
+      "copyAll": "すべてコピー",
+      "copied": "コピーしました！",
+      "inspectionChecklist": "購入前検査チェックリスト",
+      "required": "必須",
+      "recommended": "推奨"
+    },
+    "ownership": {
+      "annualCosts": "推定年間コスト",
+      "insurance": "保険（合意価額）",
+      "storage": "空調管理保管",
+      "maintenance": "サービス＆メンテナンス",
+      "totalAnnual": "年間合計",
+      "fiveYearProjection": "5年コスト予測",
+      "shippingEstimates": "配送見積もり",
+      "domestic": "国内（密閉型）",
+      "euImport": "EU輸入（関税込み）",
+      "ukImport": "UK輸入（関税込み）"
+    },
+    "marketContext": {
+      "brandThesis": "ブランドテーゼ",
+      "marketEvents": "市場イベントとカタリスト",
+      "valuePositive": "価値 +",
+      "valueNegative": "価値 -",
+      "neutral": "中立"
+    },
+    "similar": {
+      "title": "市場の類似車両",
+      "compareNote": "比較用の同カテゴリまたは同メーカーの車両"
+    },
+    "verdict": {
+      "title": "投資判定",
+      "recommendation": "推奨",
+      "buy": "買い",
+      "hold": "保持",
+      "watch": "ウォッチ",
+      "pass": "見送り",
+      "strategyTitle": "投資戦略",
+      "buyStrategy": "現在の価格設定は強い価値を示しています。長期ポートフォリオ配分の推奨エントリーポイント。",
+      "holdStrategy": "適正な市場価格設定。所有している場合は保持、現在のレベルでの取得に緊急性なし。",
+      "watchStrategy": "エントリー前に10-15%の修正を監視。価格アラートを設定。",
+      "keyTakeaways": "主要ポイント",
+      "disclaimer": "このレポートは情報提供のみを目的としており、金融アドバイスを構成するものではありません。過去のパフォーマンスは将来の結果を示すものではありません。投資決定を行う前に、常にご自身のデューデリジェンスを行ってください。"
+    },
+    "downloadButton": "レポートをダウンロード",
+    "downloadPdf": "PDFダウンロード",
+    "downloadPdfDesc": "完全なビジュアルレポート",
+    "downloadExcel": "Excelエクスポート",
+    "downloadExcelDesc": "生データテーブル",
+    "downloadGenerating": "生成中...",
+    "downloadCoverTitle": "投資ドシエ",
+    "downloadCoverConfidential": "機密",
+    "downloadCoverGenerated": "生成日"
+  },
+  "pricing": {
+    "title": "プランを選択",
+    "subtitle": "より賢い購入判断のための包括的な投資分析をアンロック",
+    "single": {
+      "name": "シングルレポート",
+      "price": "$29",
+      "period": "1回払い",
+      "desc": "特定の車両を評価するのに最適",
+      "cta": "このレポートを取得",
+      "reports": "1レポート",
+      "feature1": "全10セクションのドシエ",
+      "feature2": "地域アービトラージアラート",
+      "feature3": "リスク評価とスコアリング",
+      "feature4": "比較販売データ"
+    },
+    "explorer": {
+      "name": "エクスプローラーパック",
+      "price": "$59",
+      "period": "5レポート",
+      "desc": "決定前に複数の車両を比較",
+      "cta": "5レポートを取得",
+      "badge": "ベストバリュー",
+      "reports": "5レポート",
+      "perReport": "$11.80/レポート",
+      "feature1": "シングルの全機能",
+      "feature2": "5レポート（60%割引）",
+      "feature3": "並べて比較",
+      "feature4": "優先サポート"
+    },
+    "unlimited": {
+      "name": "アンリミテッド",
+      "price": "$149",
+      "period": "/月",
+      "desc": "ディーラー、アドバイザー、本格コレクター向け",
+      "cta": "アンリミテッドへ",
+      "reports": "無制限",
+      "feature1": "無制限レポート",
+      "feature2": "エクスプローラーの全機能",
+      "feature3": "新データへの早期アクセス",
+      "feature4": "専用アドバイザーライン"
+    },
+    "guarantee": "30日間返金保証。いつでもキャンセル可能。",
+    "currentBalance": "現在の残高",
+    "tokens": "トークン",
+    "successTitle": "レポートがアンロックされました！",
+    "successDesc": "この投資ドシエへの完全なアクセスが可能になりました。",
+    "processing": "処理中..."
   },
   "auctionDetail": {
     "actions": {
@@ -759,6 +999,17 @@
       "collectorVehicles": "{count, plural, one {# 台} other {# 台}}",
       "explore": "{brand}を探す"
     },
+    "mobileFeed": {
+      "liveAuctions": "ライブオークション",
+      "trending": "トレンド",
+      "exploreAll": "すべて見る",
+      "brands": "ブランド",
+      "viewCollection": "コレクションを見る",
+      "ending": "終了",
+      "vehicles": "{count, plural, one {# 台} other {# 台}}",
+      "noBrands": "この地域にブランドはありません",
+      "noAuctions": "現在ライブオークションはありません"
+    },
     "context": {
       "investmentThesis": "投資ポイント",
       "fiveYearAppreciation": "5年の推移",
@@ -777,6 +1028,10 @@
     "asset": {
       "noImage": "画像なし",
       "fullAnalysis": "詳細分析",
+      "ended": "終了",
+      "timeDay": "日",
+      "timeHour": "時",
+      "timeMin": "分",
       "metrics": {
         "grade": "グレード",
         "trend": "トレンド",
@@ -840,7 +1095,15 @@
       "total": "合計",
       "perYear": "/年",
       "costsNote": "業界平均に基づく推定です。実際の費用は変動します。",
-      "speakWithAdvisor": "アドバイザーに相談"
+      "speakWithAdvisor": "アドバイザーに相談",
+      "region": "地域",
+      "browseByEra": "年代で探す",
+      "priceTier": "価格帯",
+      "category": "カテゴリー",
+      "regionalPricing": "地域別適正価格",
+      "regionalNote": "最近のオークション結果と地域の市場状況に基づく適正価格帯。",
+      "avgPrice": "平均価格",
+      "grade": "評価"
     },
     "results": {
       "modelsTitle": "{make} モデル",
@@ -859,6 +1122,31 @@
       "title": "フィルター",
       "showResults": "{count}件を表示"
     },
+    "mobileContext": {
+      "investmentThesis": "投資ポイント",
+      "valuationByMarket": "地域別評価",
+      "yourMarket": "あなたの市場",
+      "best": "最安",
+      "returnComparison": "5年リターン",
+      "priceTrend": "価格トレンド",
+      "recentSales": "最近の販売",
+      "marketDepth": "市場深度",
+      "auctionsPerYear": "年間オークション",
+      "avgDaysToSell": "平均販売日数",
+      "sellThroughRate": "販売率",
+      "demandScore": "需要スコア",
+      "ownershipCost": "年間所有コスト",
+      "insurance": "保険",
+      "storage": "保管",
+      "maintenance": "整備",
+      "total": "合計",
+      "perYear": "/年",
+      "otherModels": "他のモデル",
+      "liveAuctions": "ライブオークション",
+      "models": "モデル",
+      "noModels": "この地域にモデルはありません",
+      "viewDetails": "詳細を見る"
+    },
     "card": {
       "currentBid": "現在価格",
       "soldFor": "落札価格"
@@ -867,5 +1155,40 @@
   "metadata": {
     "title": "Monza Lab | 投資級自動車資産",
     "description": "コレクター車両の取得と分析のためのインテリジェントターミナル。よりスマートな取得のためのAI駆動インサイト。"
+  },
+  "searchHistory": {
+    "title": "検索履歴",
+    "kicker": "あなたの検索",
+    "empty": "まだ検索がありません",
+    "emptyHint": "検索バーを使って車やマーケットトレンドについて質問してください",
+    "clearAll": "すべて削除",
+    "remove": "削除",
+    "signInRequired": "検索履歴を表示するにはサインインしてください",
+    "signIn": "サインイン",
+    "today": "今日",
+    "yesterday": "昨日",
+    "thisWeek": "今週",
+    "older": "それ以前",
+    "justNow": "たった今"
+  },
+  "onboarding": {
+    "step": "ステップ",
+    "regionTitle": "どこでコレクションしていますか？",
+    "regionDesc": "お住まいの市場に合わせて価格と在庫を調整します",
+    "other": "その他",
+    "brandsTitle": "フォローするブランド",
+    "brandsDesc": "フィードをパーソナライズするために1つ以上選択してください",
+    "intentTitle": "ここに来た理由は？",
+    "intentDesc": "あなたの体験をカスタマイズするのに役立ちます",
+    "buyTitle": "購入",
+    "buyDesc": "積極的に購入を検討しています",
+    "trackTitle": "追跡",
+    "trackDesc": "価値やトレンドを監視したい",
+    "learnTitle": "学ぶ",
+    "learnDesc": "コレクター市場を探索しています",
+    "next": "続ける",
+    "back": "戻る",
+    "skip": "今はスキップ",
+    "finish": "始める"
   }
 }

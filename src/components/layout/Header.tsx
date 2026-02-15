@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, Sparkles, X, TrendingUp, BarChart3, Car, LogOut, Zap } from "lucide-react";
+import { ArrowRight, Menu, User, Sparkles, X, TrendingUp, BarChart3, Car, LogOut, Zap, Star, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe } from "lucide-react";
 import {
   Sheet,
   SheetTrigger,
@@ -11,12 +11,23 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
+import Image from "next/image";
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
-import { LanguageSwitcher, MobileLanguageSwitcher } from "./LanguageSwitcher";
+import { useRegion } from "@/lib/RegionContext";
+import { useTranslations, useLocale } from "next-intl";
+import { Link, useRouter, usePathname } from "@/i18n/navigation";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { saveSearchQuery } from "@/lib/searchHistory";
+
+const REGIONS = [
+  { id: "all", label: "All", flag: "\u{1F30D}" },
+  { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
+  { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
+  { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
+  { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+];
 
 // Menu links - labels will be translated in the component
 const menuLinkKeys = [
@@ -26,13 +37,6 @@ const menuLinkKeys = [
   { href: "/about", key: "about" },
 ] as const;
 
-
-const placeholderKeys = [
-  "placeholders.askAnything",
-  "placeholders.fairValue",
-  "placeholders.appreciating",
-  "placeholders.jdmTrending",
-] as const;
 
 // Format USD price
 function formatPrice(value: number): string {
@@ -355,7 +359,7 @@ function OracleToast({
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl"
         >
           <Sparkles className="size-4 text-[#F8B4D9]" />
-          <span className="text-[13px] font-medium text-[#F2F0E9]">{message}</span>
+          <span className="text-[13px] font-medium text-[#FFFCF7]">{message}</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -560,18 +564,47 @@ function OracleOverlay({
   );
 }
 
+// ─── INLINE LANGUAGE SWITCHER (for hamburger menu) ───
+const LOCALE_LABELS: Record<string, string> = { en: "EN", es: "ES", de: "DE", ja: "JA" }
+
+function InlineLanguageSwitcher() {
+  const locale = useLocale()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const handleChange = (newLocale: string) => {
+    const query = typeof window !== "undefined" ? window.location.search : ""
+    const href = query ? `${pathname}${query}` : pathname
+    router.replace(href, { locale: newLocale })
+  }
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {["en", "es", "de", "ja"].map((loc, i) => (
+        <div key={loc} className="flex items-center">
+          {i > 0 && <div className="w-px h-3 bg-white/10 mx-0.5" />}
+          <button
+            onClick={() => handleChange(loc)}
+            className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+              loc === locale
+                ? "bg-[#F8B4D9]/15 text-[#F8B4D9]"
+                : "text-[#4B5563] hover:text-[#9CA3AF]"
+            }`}
+          >
+            {LOCALE_LABELS[loc]}
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── MAIN HEADER COMPONENT ───
 export function Header() {
   const t = useTranslations();
-  const placeholderTexts = useMemo(
-    () => placeholderKeys.map((key) => t(key)),
-    [t]
-  );
+  const { selectedRegion, setSelectedRegion } = useRegion();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -588,37 +621,10 @@ export function Header() {
     label: t(`nav.${link.key}`),
   }));
 
-  // Typing effect for placeholder - with proper cleanup
-  useEffect(() => {
-    if (isFocused || isOracleOpen) return;
-
-    const currentText = placeholderTexts[placeholderIndex];
-    let charIndex = 0;
-    let timeoutId: NodeJS.Timeout | null = null;
-    setIsTyping(true);
-
-    const typeInterval = setInterval(() => {
-      if (charIndex <= currentText.length) {
-        setDisplayedPlaceholder(currentText.slice(0, charIndex));
-        charIndex++;
-      } else {
-        clearInterval(typeInterval);
-        setIsTyping(false);
-        timeoutId = setTimeout(() => {
-          setPlaceholderIndex((prev) => (prev + 1) % placeholderTexts.length);
-        }, 3000);
-      }
-    }, 50);
-
-    return () => {
-      clearInterval(typeInterval);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [placeholderIndex, isFocused, isOracleOpen, placeholderTexts]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      saveSearchQuery(query.trim());
       setSubmittedQuery(query);
       setIsOracleOpen(true);
       inputRef.current?.blur();
@@ -634,18 +640,17 @@ export function Header() {
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         {/* Glass background — Obsidian */}
-        <div className="absolute inset-0 h-full bg-[rgba(5,5,5,0.85)] backdrop-blur-xl border-b border-white/5" />
+        <div className="absolute inset-0 h-full bg-[rgba(11,11,16,0.85)] backdrop-blur-xl border-b border-white/5" />
 
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
-          <Link href="/" className="shrink-0 flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-            <span className="text-[18px] font-bold tracking-tight text-[#F2F0E9]">MONZA</span>
-            <span className="text-[18px] font-light tracking-tight text-[#F8B4D9]">LAB</span>
+          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
+            <Image src="/logo-crema.png" alt="Monza Lab" width={992} height={260} className="h-7 md:h-8 w-auto" priority />
           </Link>
 
-          {/* Center: Search Input (hidden on mobile - chat is at bottom) */}
-          <form onSubmit={handleSubmit} className="hidden md:block flex-1 max-w-2xl">
+          {/* Center: Search Input (hidden on mobile) */}
+          <form onSubmit={handleSubmit} className="hidden md:block flex-1 max-w-xl">
             <div className="relative flex items-center">
               <input
                 ref={inputRef}
@@ -654,40 +659,13 @@ export function Header() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder=""
-                className="w-full bg-transparent text-lg font-light text-[#F2F0E9] placeholder:text-transparent focus:outline-none tracking-tight"
+                placeholder="Ask Anything About The Automotive Market"
+                className="w-full bg-transparent text-[15px] font-light text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none tracking-tight"
               />
-
-              {/* Custom placeholder with typing effect */}
-              {!query && !isFocused && (
-                <div className="absolute inset-0 flex items-center pointer-events-none">
-                  <span className="text-lg font-light text-[#9CA3AF] tracking-tight">
-                    {displayedPlaceholder}
-                  </span>
-                  <motion.span
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="text-lg font-light text-[#F8B4D9] ml-0.5"
-                  >
-                    |
-                  </motion.span>
-                </div>
-              )}
-
-              {/* Focused placeholder */}
-                {!query && isFocused && (
-                  <div className="absolute inset-0 flex items-center pointer-events-none">
-                    <span className="text-lg font-light text-[#4B5563] tracking-tight">
-                      {t("placeholders.askAnything")}
-                    </span>
-                  </div>
-                )}
-
-              {/* Submit button */}
               {query.trim() && (
                 <button
                   type="submit"
-                  className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-[#F8B4D9] text-[#050505] hover:bg-[#fce4ec] transition-colors"
+                  className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
                 >
                   <ArrowRight className="size-4" />
                 </button>
@@ -695,13 +673,38 @@ export function Header() {
             </div>
           </form>
 
+          {/* Region Filter — with pink separators */}
+          <div className="hidden md:flex items-center shrink-0">
+            {REGIONS.map((region, i) => {
+              const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
+              return (
+                <div key={region.id} className="flex items-center">
+                  {i > 0 && (
+                    <div className="w-px h-3.5 bg-[#F8B4D9]/20 mx-0.5" />
+                  )}
+                  <button
+                    onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                      isActive
+                        ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
+                        : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.03]"
+                    }`}
+                  >
+                    <span className="text-[12px] leading-none">{region.flag}</span>
+                    <span>{region.label}</span>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
             {/* Credits - only show when authenticated */}
             {isAuthenticated && (
               <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
                 <Zap className={`size-3 ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
-                <span className="text-[12px] font-medium tabular-nums text-[#F2F0E9]">{creditsRemaining}</span>
+                <span className="text-[12px] font-medium tabular-nums text-[#FFFCF7]">{creditsRemaining}</span>
                 <span className="text-[10px] text-[#4B5563]">{t('auth.credits')}</span>
               </div>
             )}
@@ -714,7 +717,7 @@ export function Header() {
             ) : isAuthenticated ? (
                 <button
                   onClick={() => signOut()}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-[#9CA3AF] hover:text-[#F2F0E9] hover:bg-white/5 transition-colors"
+                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-[#9CA3AF] hover:text-[#FFFCF7] hover:bg-white/5 transition-colors"
                   title={t("auth.signOut")}
                 >
                   <User className="size-4" />
@@ -725,7 +728,7 @@ export function Header() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F8B4D9] text-[#050505] hover:bg-[#fce4ec] transition-colors text-[11px] font-semibold tracking-wide"
+                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors text-[11px] font-semibold tracking-wide"
               >
                 {t('auth.signIn')}
               </button>
@@ -737,63 +740,204 @@ export function Header() {
             {/* Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#F2F0E9] transition-colors">
+                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] transition-colors">
                   <Menu className="size-4" />
                   <span className="hidden md:inline">{t('nav.menu')}</span>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="border-white/5 bg-[#050505] w-80">
-                <SheetHeader>
-                  <SheetTitle className="text-left flex items-center gap-1">
-                    <span className="text-[14px] font-bold tracking-tight text-[#F2F0E9]">MONZA</span>
-                    <span className="text-[14px] font-light tracking-tight text-[#F8B4D9]">LAB</span>
-                  </SheetTitle>
+              <SheetContent side="right" className="border-l border-[rgba(248,180,217,0.08)] bg-[#0b0b10] w-[340px] p-0 flex flex-col overflow-hidden">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
-                <nav className="mt-8 flex flex-col gap-1">
-                  {menuLinks.map((link) => (
-                    <SheetClose asChild key={link.href}>
-                      <Link href={link.href} className="flex items-center py-3 text-[14px] font-light text-[#9CA3AF] hover:text-[#F2F0E9] transition-colors">
-                        {link.label}
-                      </Link>
-                    </SheetClose>
-                  ))}
-                </nav>
-                <div className="mt-10">
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto no-scrollbar">
+
+                  {/* ── Profile Card ── */}
                   {isAuthenticated ? (
-                    <>
-                      <div className="flex items-center justify-between py-4 border-t border-white/5">
-                        <div>
-                          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">{t('auth.credits')}</span>
-                          <p className={`text-xl font-light ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`}>{creditsRemaining}</p>
+                    <div className="px-6 pt-6 pb-5">
+                      <div className="flex items-center gap-3.5">
+                        <div className="size-11 rounded-full bg-gradient-to-br from-[#F8B4D9]/30 to-[#F8B4D9]/10 border border-[#F8B4D9]/20 flex items-center justify-center">
+                          <User className="size-5 text-[#F8B4D9]" />
                         </div>
-                        <button className="rounded-full bg-[#F8B4D9] px-5 py-2 text-[10px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-colors">
-                          {t('auth.buyCredits')}
-                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
+                            {profile?.name || "Collector"}
+                          </p>
+                          <p className="text-[11px] text-[#6B7280] truncate">
+                            {user?.email || "member@monza.com"}
+                          </p>
+                        </div>
                       </div>
-                      <SheetClose asChild>
-                        <button
-                          onClick={() => signOut()}
-                          className="flex items-center gap-2 w-full py-3 text-[14px] font-light text-[#9CA3AF] hover:text-[#FB923C] transition-colors border-t border-white/5"
-                        >
-                          <LogOut className="size-4" />
-                          {t('auth.signOut')}
-                        </button>
-                      </SheetClose>
-                    </>
+                    </div>
                   ) : (
-                    <div className="py-4 border-t border-white/5">
-                      <p className="text-[11px] text-[#9CA3AF] mb-3">{t('auth.freeCredits')}</p>
-                      <SheetClose asChild>
-                        <button
-                          onClick={() => setShowAuthModal(true)}
-                          className="w-full rounded-full bg-[#F8B4D9] px-5 py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-colors"
-                        >
-                          {t('auth.signIn')}
-                        </button>
-                      </SheetClose>
+                    <div className="px-6 pt-6 pb-5">
+                      <div className="flex items-center gap-3.5">
+                        <div className="size-11 rounded-full bg-white/[0.04] border border-white/5 flex items-center justify-center">
+                          <User className="size-5 text-[#4B5563]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-[#FFFCF7]">Welcome</p>
+                          <p className="text-[11px] text-[#6B7280]">Sign in to track your portfolio</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowAuthModal(true)}
+                        className="mt-4 w-full rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                      >
+                        {t('auth.signIn')}
+                      </button>
                     </div>
                   )}
+
+                  {/* ── Credits ── */}
+                  <div className="mx-5 rounded-xl bg-[rgba(248,180,217,0.04)] border border-[rgba(248,180,217,0.08)] p-4">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Zap className={`size-3.5 ${creditsRemaining > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"}`} />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Credits</span>
+                      </div>
+                      <span className="text-[14px] font-mono font-bold text-[#FFFCF7]">
+                        {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
+                        <span className="text-[10px] font-normal text-[#4B5563] ml-1">/ 3,000</span>
+                      </span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="h-[5px] rounded-full bg-white/[0.04] overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70 transition-all duration-500"
+                        style={{ width: `${Math.min((creditsRemaining / 3000) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-2.5">
+                      <span className="text-[10px] text-[#4B5563]">1 report = 1,000 credits</span>
+                      <button className="text-[10px] font-semibold text-[#F8B4D9] hover:text-[#f4cbde] transition-colors">
+                        {t('auth.buyCredits')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ── Watchlist ── */}
+                  <div className="px-5 pt-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="size-3.5 text-[#F8B4D9]" />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Watchlist</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#4B5563]">3 cars</span>
+                    </div>
+                    <div className="space-y-1">
+                      {[
+                        { name: "Ferrari F40", price: "$1.35M", trend: "+12%", grade: "AAA" },
+                        { name: "Porsche 959", price: "$890K", trend: "+8%", grade: "AA" },
+                        { name: "Toyota Supra MK4", price: "$185K", trend: "+22%", grade: "A" },
+                      ].map((car) => (
+                        <div key={car.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/[0.02] transition-colors cursor-pointer group">
+                          <Star className="size-3 text-[#F8B4D9]/40 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{car.name}</p>
+                          </div>
+                          <span className="text-[11px] font-mono text-[#FFFCF7] shrink-0">{car.price}</span>
+                          <span className="text-[9px] font-mono text-emerald-400 shrink-0 w-8 text-right">{car.trend}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Recent Analyses ── */}
+                  <div className="px-5 pt-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="size-3.5 text-[#F8B4D9]" />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Recent Analyses</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      {[
+                        { name: "Ferrari 250 GTO", time: "2d ago", cost: "1,000 cr" },
+                        { name: "McLaren F1", time: "5d ago", cost: "1,000 cr" },
+                        { name: "Porsche 911 GT1", time: "1w ago", cost: "1,000 cr" },
+                      ].map((report) => (
+                        <div key={report.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/[0.02] transition-colors cursor-pointer group">
+                          <div className="size-7 rounded-lg bg-[rgba(248,180,217,0.06)] flex items-center justify-center shrink-0">
+                            <BarChart3 className="size-3 text-[#F8B4D9]/60" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{report.name}</p>
+                            <p className="text-[10px] text-[#4B5563]">{report.cost}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Clock className="size-2.5 text-[#4B5563]" />
+                            <span className="text-[10px] text-[#4B5563]">{report.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Quick Links ── */}
+                  <div className="px-5 pt-6 pb-2">
+                    <div className="h-px bg-white/5 mb-4" />
+
+                    {/* Search History — only for logged-in users */}
+                    {isAuthenticated && (
+                      <SheetClose asChild>
+                        <Link
+                          href="/search-history"
+                          className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-white/[0.02] transition-colors group"
+                        >
+                          <Clock className="size-4 text-[#4B5563] group-hover:text-[#9CA3AF] transition-colors" />
+                          <span className="flex-1 text-left text-[13px] text-[#9CA3AF] group-hover:text-[#FFFCF7] transition-colors">
+                            {t("nav.searchHistory")}
+                          </span>
+                          <ChevronRight className="size-3.5 text-[#4B5563] group-hover:text-[#6B7280] transition-colors" />
+                        </Link>
+                      </SheetClose>
+                    )}
+
+                    {[
+                      { icon: Bell, label: "Notifications", badge: "3" },
+                      { icon: Phone, label: "Contact Advisor", badge: null },
+                      { icon: Settings, label: "Settings", badge: null },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-white/[0.02] transition-colors group"
+                      >
+                        <item.icon className="size-4 text-[#4B5563] group-hover:text-[#9CA3AF] transition-colors" />
+                        <span className="flex-1 text-left text-[13px] text-[#9CA3AF] group-hover:text-[#FFFCF7] transition-colors">{item.label}</span>
+                        {item.badge && (
+                          <span className="size-4.5 flex items-center justify-center rounded-full bg-[#F8B4D9] text-[9px] font-bold text-[#0b0b10] leading-none px-1.5 py-0.5">
+                            {item.badge}
+                          </span>
+                        )}
+                        <ChevronRight className="size-3.5 text-[#4B5563] group-hover:text-[#6B7280] transition-colors" />
+                      </button>
+                    ))}
+
+                    {/* Language in quick links */}
+                    <div className="flex items-center gap-3 w-full py-2.5 px-2">
+                      <Globe className="size-4 text-[#4B5563]" />
+                      <span className="flex-1 text-left text-[13px] text-[#9CA3AF]">Language</span>
+                      <InlineLanguageSwitcher />
+                    </div>
+                  </div>
                 </div>
+
+                {/* ── Footer: Sign Out (pinned) ── */}
+                {isAuthenticated && (
+                  <div className="shrink-0 px-5 py-4 border-t border-white/5">
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => signOut()}
+                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-[#6B7280] hover:text-[#FB923C] hover:bg-white/[0.02] transition-colors"
+                      >
+                        <LogOut className="size-4" />
+                        {t('auth.signOut')}
+                      </button>
+                    </SheetClose>
+                  </div>
+                )}
               </SheetContent>
             </Sheet>
           </div>

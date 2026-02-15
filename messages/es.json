@@ -4,7 +4,8 @@
     "marketSearch": "Búsqueda de Mercado",
     "priceHistory": "Historial de Precios",
     "about": "Acerca de",
-    "menu": "Menú"
+    "menu": "Menú",
+    "searchHistory": "Historial"
   },
   "mobile": {
     "aiOracle": "AI Oracle",
@@ -144,7 +145,246 @@
       "insurance": "Seguro (valor acordado)",
       "storage": "Almacenamiento con control climático",
       "service": "Servicio y mantenimiento"
-    }
+    },
+    "investmentPassport": {
+      "title": "Pasaporte de Inversión",
+      "grade": "Grado",
+      "marketPosition": "Posición de Mercado",
+      "fiveYearReturn": "Retorno 5 años",
+      "annualCost": "Costo Anual",
+      "belowMarket": "Bajo mercado",
+      "aboveMarket": "Sobre mercado"
+    },
+    "regionalValuation": "Valoración Regional",
+    "fiveYearReturnComparison": "Retorno a 5 Años",
+    "priceTrend": "Tendencia de Precio a 5 Años",
+    "keyInspectionPoints": "Puntos Clave de Inspección",
+    "questionsToAsk": "Preguntas para el Vendedor",
+    "prePurchaseInspection": "Inspección Pre-Compra",
+    "comparableSales": "Ventas Comparables Recientes",
+    "ownershipAndShipping": "Costos de Propiedad y Envío",
+    "eventsAndCommunity": "Eventos, Shows y Comunidad",
+    "domestic": "Nacional (Cerrado)",
+    "euImport": "Importación UE (incl. impuestos)",
+    "ukImport": "Importación UK (incl. impuestos)",
+    "totalAnnual": "Total Anual",
+    "vehicleSpecs": "Especificaciones",
+    "sampleData": "Datos de Muestra"
+  },
+  "investmentReport": {
+    "title": "Dossier de Inversión",
+    "subtitle": "Análisis y valoración integral",
+    "backToVehicle": "Volver al Vehículo",
+    "generatedFor": "Generado para",
+    "reportId": "ID del Reporte",
+    "confidential": "Confidencial",
+    "unlockReport": "Desbloquear Reporte Completo",
+    "unlockDesc": "Obtén acceso al dossier de inversión completo con valoración detallada, análisis de riesgo y recomendaciones accionables.",
+    "unlockCost": "1.000 tokens",
+    "freePreview": "Vista Previa Gratuita",
+    "sections": {
+      "summary": "Resumen Ejecutivo",
+      "identity": "Identidad del Vehículo",
+      "valuation": "Valoración de Mercado",
+      "performance": "Rendimiento de Inversión",
+      "risk": "Evaluación de Riesgo",
+      "dueDiligence": "Due Diligence",
+      "ownership": "Economía de Propiedad",
+      "marketContext": "Contexto de Mercado",
+      "similar": "Vehículos Similares",
+      "verdict": "Veredicto de Inversión",
+      "production": "Producción y Patrimonio",
+      "technical": "Análisis Técnico",
+      "condition": "Guía de Condición"
+    },
+    "summary": {
+      "investmentGrade": "Grado de Inversión",
+      "currentPrice": "Precio Actual",
+      "fairValue": "Rango de Valor Justo",
+      "fiveYearReturn": "Retorno a 5 Años",
+      "annualCost": "Costo Anual",
+      "marketPosition": "Posición de Mercado",
+      "riskScore": "Puntuación de Riesgo",
+      "verdict": "Veredicto"
+    },
+    "identity": {
+      "specifications": "Especificaciones",
+      "engine": "Motor",
+      "transmission": "Transmisión",
+      "mileage": "Kilometraje",
+      "location": "Ubicación",
+      "category": "Categoría",
+      "provenance": "Procedencia e Historia",
+      "platformData": "Datos de Plataforma",
+      "platform": "Plataforma",
+      "currentBid": "Oferta Actual",
+      "bidCount": "Ofertas",
+      "status": "Estado",
+      "timeRemaining": "Tiempo Restante"
+    },
+    "production": {
+      "yearsProduced": "Años de Producción",
+      "totalBuilt": "Total Fabricados",
+      "steering": "Volante Izq / Der",
+      "variants": "Variantes y Precios"
+    },
+    "valuation": {
+      "regionalBreakdown": "Desglose Regional de Precios",
+      "bestBuy": "Mejor Compra",
+      "yourMarket": "Tu Mercado",
+      "marketPositionGauge": "Indicador de Posición de Mercado",
+      "belowFair": "Por Debajo del Valor Justo",
+      "aboveFair": "Por Encima del Valor Justo",
+      "atFair": "En Valor Justo",
+      "arbitrageAlert": "Oportunidad de Arbitraje",
+      "arbitrageDesc": "Este vehículo tiene un precio significativamente inferior al valor justo en {region}. Ahorro potencial de {amount} vs el promedio regional más alto.",
+      "comparables": "Ventas Comparables Recientes"
+    },
+    "performance": {
+      "brandReturn": "Retorno de {make} a 5 Años",
+      "vsBenchmarks": "vs. Benchmarks de Mercado",
+      "priceTrend": "Tendencia de Precios (5 Años)",
+      "cagr": "CAGR",
+      "totalReturn": "Retorno Total",
+      "outperforms": "Supera a {benchmark}",
+      "similarComparison": "Comparativa de Precios — Vehículos Similares",
+      "similarComparisonDesc": "Cómo se compara la oferta actual de este vehículo con listados similares en el mercado",
+      "avgPrice": "Precio Prom.",
+      "priceRank": "Ranking",
+      "vsMkt": "vs. Mercado"
+    },
+    "technical": {
+      "engineSpecs": "Especificaciones del Motor y Tren Motriz",
+      "knownIssues": "Vulnerabilidades Mecánicas Conocidas",
+      "estRepair": "Reparación est.",
+      "critical": "Crítico",
+      "moderate": "Moderado",
+      "minor": "Menor",
+      "serviceSchedule": "Programa de Servicio y Costos"
+    },
+    "risk": {
+      "overallScore": "Puntuación de Riesgo General",
+      "low": "Riesgo Bajo",
+      "moderate": "Riesgo Moderado",
+      "high": "Riesgo Alto",
+      "knownIssues": "Problemas Conocidos y Alertas",
+      "critical": "Crítico",
+      "monitor": "Monitorear",
+      "mitigationSteps": "Pasos de Mitigación"
+    },
+    "condition": {
+      "rustAreas": "Carrocería y Áreas de Riesgo de Corrosión",
+      "interiorIssues": "Problemas de Condición Interior",
+      "inspectionPriorities": "Prioridades de Inspección del Modelo",
+      "high": "Alto Riesgo",
+      "medium": "Medio",
+      "low": "Bajo",
+      "parts_rare": "Repuestos: Raros",
+      "parts_moderate": "Repuestos: Limitados",
+      "parts_easy": "Repuestos: Disponibles"
+    },
+    "dueDiligence": {
+      "questionsToAsk": "Preguntas para el Vendedor",
+      "copyAll": "Copiar Todo",
+      "copied": "¡Copiado!",
+      "inspectionChecklist": "Lista de Inspección Pre-Compra",
+      "required": "Crítico",
+      "recommended": "Recomendado"
+    },
+    "ownership": {
+      "annualCosts": "Costos Anuales Estimados",
+      "insurance": "Seguro (Valor Acordado)",
+      "storage": "Almacenamiento Climatizado",
+      "maintenance": "Servicio y Mantenimiento",
+      "totalAnnual": "Total Anual",
+      "fiveYearProjection": "Proyección a 5 Años",
+      "shippingEstimates": "Estimados de Envío",
+      "domestic": "Nacional (Cerrado)",
+      "euImport": "Importación UE (incl. aranceles)",
+      "ukImport": "Importación UK (incl. aranceles)"
+    },
+    "marketContext": {
+      "brandThesis": "Tesis de Marca",
+      "marketEvents": "Eventos y Catalizadores de Mercado",
+      "valuePositive": "Valor +",
+      "valueNegative": "Valor -",
+      "neutral": "Neutral"
+    },
+    "similar": {
+      "title": "Vehículos Similares en el Mercado",
+      "compareNote": "Vehículos en la misma categoría o marca para comparación"
+    },
+    "verdict": {
+      "title": "Veredicto de Inversión",
+      "recommendation": "Recomendación",
+      "buy": "COMPRAR",
+      "hold": "MANTENER",
+      "watch": "OBSERVAR",
+      "pass": "PASAR",
+      "strategyTitle": "Estrategia de Inversión",
+      "buyStrategy": "El precio actual representa un valor sólido. Punto de entrada recomendado para asignación de portafolio a largo plazo.",
+      "holdStrategy": "Precio de mercado justo. Mantener si se posee, sin urgencia de adquirir a niveles actuales.",
+      "watchStrategy": "Monitorear para corrección del 10-15% antes de entrar. Configurar alertas de precio.",
+      "keyTakeaways": "Conclusiones Clave",
+      "disclaimer": "Este reporte es solo para fines informativos y no constituye asesoría financiera. El rendimiento pasado no es indicativo de resultados futuros. Siempre realice su propia diligencia debida antes de tomar decisiones de inversión."
+    },
+    "downloadButton": "Descargar Reporte",
+    "downloadPdf": "Descargar PDF",
+    "downloadPdfDesc": "Reporte visual completo",
+    "downloadExcel": "Exportar Excel",
+    "downloadExcelDesc": "Tablas de datos",
+    "downloadGenerating": "Generando...",
+    "downloadCoverTitle": "Dossier de Inversión",
+    "downloadCoverConfidential": "Confidencial",
+    "downloadCoverGenerated": "Generado"
+  },
+  "pricing": {
+    "title": "Elige Tu Plan",
+    "subtitle": "Desbloquea análisis de inversión integral para decisiones más inteligentes",
+    "single": {
+      "name": "Reporte Individual",
+      "price": "$29",
+      "period": "único pago",
+      "desc": "Perfecto para evaluar un vehículo específico",
+      "cta": "Obtener Este Reporte",
+      "reports": "1 reporte",
+      "feature1": "Dossier completo de 10 secciones",
+      "feature2": "Alertas de arbitraje regional",
+      "feature3": "Evaluación y puntuación de riesgo",
+      "feature4": "Datos de ventas comparables"
+    },
+    "explorer": {
+      "name": "Pack Explorador",
+      "price": "$59",
+      "period": "5 reportes",
+      "desc": "Compara múltiples vehículos antes de decidir",
+      "cta": "Obtener 5 Reportes",
+      "badge": "Mejor Valor",
+      "reports": "5 reportes",
+      "perReport": "$11.80/reporte",
+      "feature1": "Todo lo del Individual",
+      "feature2": "5 reportes (ahorra 60%)",
+      "feature3": "Comparación lado a lado",
+      "feature4": "Soporte prioritario"
+    },
+    "unlimited": {
+      "name": "Ilimitado",
+      "price": "$149",
+      "period": "/mes",
+      "desc": "Para dealers, asesores y coleccionistas serios",
+      "cta": "Ir Ilimitado",
+      "reports": "Ilimitado",
+      "feature1": "Reportes ilimitados",
+      "feature2": "Todo lo del Explorador",
+      "feature3": "Acceso anticipado a nuevos datos",
+      "feature4": "Línea de asesor dedicada"
+    },
+    "guarantee": "Garantía de devolución de 30 días. Cancela cuando quieras.",
+    "currentBalance": "Saldo actual",
+    "tokens": "tokens",
+    "successTitle": "¡Reporte Desbloqueado!",
+    "successDesc": "Ahora tienes acceso completo a este dossier de inversión.",
+    "processing": "Procesando..."
   },
   "auctionDetail": {
     "actions": {
@@ -759,6 +999,17 @@
       "collectorVehicles": "{count, plural, one {# vehículo de colección} other {# vehículos de colección}}",
       "explore": "Explorar {brand}"
     },
+    "mobileFeed": {
+      "liveAuctions": "Subastas en vivo",
+      "trending": "Tendencia",
+      "exploreAll": "Explorar todo",
+      "brands": "Marcas",
+      "viewCollection": "Ver colección",
+      "ending": "Termina",
+      "vehicles": "{count, plural, one {# vehículo} other {# vehículos}}",
+      "noBrands": "Sin marcas en esta región",
+      "noAuctions": "Sin subastas en vivo ahora"
+    },
     "context": {
       "investmentThesis": "Tesis de inversión",
       "fiveYearAppreciation": "Apreciación a 5 años",
@@ -777,6 +1028,10 @@
     "asset": {
       "noImage": "Sin imagen",
       "fullAnalysis": "Análisis completo",
+      "ended": "Finalizada",
+      "timeDay": "d",
+      "timeHour": "h",
+      "timeMin": "m",
       "metrics": {
         "grade": "Grado",
         "trend": "Tendencia",
@@ -840,7 +1095,15 @@
       "total": "Total",
       "perYear": "/año",
       "costsNote": "Basado en promedios de la industria. Los costos reales varían.",
-      "speakWithAdvisor": "Hablar con un asesor"
+      "speakWithAdvisor": "Hablar con un asesor",
+      "region": "Región",
+      "browseByEra": "Por época",
+      "priceTier": "Rango de precio",
+      "category": "Categoría",
+      "regionalPricing": "Valor justo por región",
+      "regionalNote": "Rangos de valor justo basados en resultados recientes de subastas y condiciones regionales del mercado.",
+      "avgPrice": "Precio prom.",
+      "grade": "Grado"
     },
     "results": {
       "modelsTitle": "Modelos de {make}",
@@ -859,6 +1122,31 @@
       "title": "Filtros",
       "showResults": "Mostrar {count} resultados"
     },
+    "mobileContext": {
+      "investmentThesis": "Tesis de inversión",
+      "valuationByMarket": "Valuación por mercado",
+      "yourMarket": "TU MERCADO",
+      "best": "MEJOR",
+      "returnComparison": "Retorno a 5 años",
+      "priceTrend": "Tendencia de precio",
+      "recentSales": "Ventas recientes",
+      "marketDepth": "Profundidad de mercado",
+      "auctionsPerYear": "Subastas/año",
+      "avgDaysToSell": "Días promedio de venta",
+      "sellThroughRate": "Tasa de venta",
+      "demandScore": "Puntuación de demanda",
+      "ownershipCost": "Costo anual",
+      "insurance": "Seguro",
+      "storage": "Almacenamiento",
+      "maintenance": "Mantenimiento",
+      "total": "Total",
+      "perYear": "/año",
+      "otherModels": "Otros modelos",
+      "liveAuctions": "Subastas en vivo",
+      "models": "Modelos",
+      "noModels": "Sin modelos en esta región",
+      "viewDetails": "Ver detalles"
+    },
     "card": {
       "currentBid": "Oferta actual",
       "soldFor": "Vendido por"
@@ -867,5 +1155,40 @@
   "metadata": {
     "title": "Monza Lab | Activos Automotrices de Inversión",
     "description": "La terminal inteligente para la adquisición y análisis de vehículos de colección. Insights impulsados por IA para adquisiciones más inteligentes."
+  },
+  "searchHistory": {
+    "title": "Historial de búsquedas",
+    "kicker": "Tus búsquedas",
+    "empty": "Aún no hay búsquedas",
+    "emptyHint": "Usa la barra de búsqueda para preguntar sobre cualquier carro o tendencia del mercado",
+    "clearAll": "Borrar todo",
+    "remove": "Eliminar",
+    "signInRequired": "Inicia sesión para ver tu historial de búsquedas",
+    "signIn": "Iniciar sesión",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "thisWeek": "Esta semana",
+    "older": "Anteriores",
+    "justNow": "Ahora"
+  },
+  "onboarding": {
+    "step": "Paso",
+    "regionTitle": "¿Dónde coleccionas?",
+    "regionDesc": "Ajustaremos precios y disponibilidad a tu mercado",
+    "other": "Otro",
+    "brandsTitle": "Marcas que sigues",
+    "brandsDesc": "Selecciona una o más para personalizar tu feed",
+    "intentTitle": "¿Qué te trae aquí?",
+    "intentDesc": "Esto nos ayuda a adaptar tu experiencia",
+    "buyTitle": "Comprar",
+    "buyDesc": "Estoy buscando adquirir activamente",
+    "trackTitle": "Rastrear",
+    "trackDesc": "Quiero monitorear valores y tendencias",
+    "learnTitle": "Aprender",
+    "learnDesc": "Estoy explorando el mercado de colección",
+    "next": "Continuar",
+    "back": "Atrás",
+    "skip": "Omitir por ahora",
+    "finish": "Comenzar"
   }
 }

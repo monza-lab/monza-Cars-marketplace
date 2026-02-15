@@ -17,7 +17,7 @@ export function NoCreditsPrompt({
       <div className="w-12 h-12 rounded-full bg-[#FB923C]/10 flex items-center justify-center mb-4">
         <Zap className="w-6 h-6 text-[#FB923C]" />
       </div>
-      <h3 className="text-lg font-semibold text-[#F2F0E9] mb-2">
+      <h3 className="text-lg font-semibold text-[#FFFCF7] mb-2">
         No Credits Remaining
       </h3>
       <p className="text-[#9CA3AF] text-center mb-6 max-w-sm">
@@ -32,7 +32,7 @@ export function NoCreditsPrompt({
 
       <Button
         onClick={onPurchase}
-        className="bg-[#F8B4D9] text-[#050505] hover:bg-[#F8B4D9]/90 font-semibold w-full max-w-sm"
+        className="bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#F8B4D9]/90 font-semibold w-full max-w-sm"
       >
         Purchase Credits
       </Button>
@@ -62,11 +62,11 @@ function CreditPackage({
       }`}
     >
       {popular && (
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#F8B4D9] text-[#050505] rounded-full font-semibold">
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#F8B4D9] text-[#0b0b10] rounded-full font-semibold">
           Best
         </span>
       )}
-      <div className="text-xl font-bold text-[#F2F0E9]">{amount}</div>
+      <div className="text-xl font-bold text-[#FFFCF7]">{amount}</div>
       <div className="text-xs text-[#9CA3AF]">credits</div>
       <div className="text-sm font-semibold text-[#34D399] mt-1">${price}</div>
     </div>

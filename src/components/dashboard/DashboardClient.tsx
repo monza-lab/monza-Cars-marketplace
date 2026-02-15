@@ -5,6 +5,8 @@ import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
+import { useRegion } from "@/lib/RegionContext"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion } from "@/lib/regionPricing"
 import {
   Clock,
   MapPin,
@@ -311,26 +313,98 @@ const mockOwnershipCost: Record<string, { insurance: number; storage: number; ma
   default: { insurance: 5000, storage: 4800, maintenance: 5000 },
 }
 
-// ─── 5-YEAR PRICE HISTORY (mock sparkline data) ───
-const mockPriceHistory: Record<string, number[]> = {
-  McLaren: [14.2, 15.8, 17.5, 19.2, 21.0],
-  Porsche: [0.95, 1.05, 1.18, 1.32, 1.45],
-  Ferrari: [2.2, 2.5, 2.8, 3.1, 3.4],
-  Lamborghini: [2.1, 2.4, 2.7, 2.9, 3.2],
-  Nissan: [0.22, 0.28, 0.35, 0.42, 0.48],
-  Toyota: [0.095, 0.12, 0.14, 0.165, 0.185],
-  BMW: [1.5, 1.7, 1.9, 2.1, 2.35],
-  Mercedes: [1.2, 1.35, 1.45, 1.55, 1.65],
-  "Aston Martin": [0.72, 0.78, 0.85, 0.92, 0.99],
-  Lexus: [0.55, 0.62, 0.72, 0.82, 0.89],
-  Ford: [0.35, 0.40, 0.45, 0.49, 0.52],
-  Acura: [0.085, 0.095, 0.11, 0.125, 0.145],
-  Jaguar: [0.18, 0.21, 0.24, 0.26, 0.285],
-  default: [0.1, 0.11, 0.12, 0.13, 0.14],
+// ─── REGIONAL VALUATION DATA (5-year start → current, in local currency millions + USD equiv) ───
+type RegionalValuation = { start: number; current: number; symbol: string; usdCurrent: number }
+const mockRegionalValuation: Record<string, Record<string, RegionalValuation>> = {
+  Ferrari:      { US: { start: 2.2, current: 3.4, symbol: "$", usdCurrent: 3.4 }, UK: { start: 1.7, current: 2.6, symbol: "£", usdCurrent: 3.3 }, EU: { start: 2.0, current: 3.1, symbol: "€", usdCurrent: 3.4 }, JP: { start: 250, current: 385, symbol: "¥", usdCurrent: 2.6 } },
+  Porsche:      { US: { start: 0.95, current: 1.45, symbol: "$", usdCurrent: 1.45 }, UK: { start: 0.75, current: 1.1, symbol: "£", usdCurrent: 1.4 }, EU: { start: 0.88, current: 1.35, symbol: "€", usdCurrent: 1.48 }, JP: { start: 105, current: 165, symbol: "¥", usdCurrent: 1.1 } },
+  McLaren:      { US: { start: 14.2, current: 21.0, symbol: "$", usdCurrent: 21.0 }, UK: { start: 11.5, current: 17.0, symbol: "£", usdCurrent: 21.5 }, EU: { start: 13.0, current: 19.5, symbol: "€", usdCurrent: 21.4 }, JP: { start: 1600, current: 2400, symbol: "¥", usdCurrent: 16.0 } },
+  Lamborghini:  { US: { start: 2.1, current: 3.2, symbol: "$", usdCurrent: 3.2 }, UK: { start: 1.7, current: 2.5, symbol: "£", usdCurrent: 3.2 }, EU: { start: 1.9, current: 2.9, symbol: "€", usdCurrent: 3.2 }, JP: { start: 240, current: 365, symbol: "¥", usdCurrent: 2.4 } },
+  Nissan:       { US: { start: 0.22, current: 0.48, symbol: "$", usdCurrent: 0.48 }, UK: { start: 0.18, current: 0.38, symbol: "£", usdCurrent: 0.48 }, EU: { start: 0.20, current: 0.42, symbol: "€", usdCurrent: 0.46 }, JP: { start: 25, current: 52, symbol: "¥", usdCurrent: 0.35 } },
+  Toyota:       { US: { start: 0.095, current: 0.185, symbol: "$", usdCurrent: 0.185 }, UK: { start: 0.075, current: 0.15, symbol: "£", usdCurrent: 0.19 }, EU: { start: 0.088, current: 0.17, symbol: "€", usdCurrent: 0.186 }, JP: { start: 10, current: 21, symbol: "¥", usdCurrent: 0.14 } },
+  BMW:          { US: { start: 1.5, current: 2.35, symbol: "$", usdCurrent: 2.35 }, UK: { start: 1.2, current: 1.9, symbol: "£", usdCurrent: 2.4 }, EU: { start: 1.4, current: 2.2, symbol: "€", usdCurrent: 2.4 }, JP: { start: 170, current: 270, symbol: "¥", usdCurrent: 1.8 } },
+  Mercedes:     { US: { start: 1.2, current: 1.65, symbol: "$", usdCurrent: 1.65 }, UK: { start: 0.95, current: 1.3, symbol: "£", usdCurrent: 1.64 }, EU: { start: 1.1, current: 1.55, symbol: "€", usdCurrent: 1.7 }, JP: { start: 135, current: 190, symbol: "¥", usdCurrent: 1.27 } },
+  "Aston Martin": { US: { start: 0.72, current: 0.99, symbol: "$", usdCurrent: 0.99 }, UK: { start: 0.58, current: 0.82, symbol: "£", usdCurrent: 1.04 }, EU: { start: 0.65, current: 0.92, symbol: "€", usdCurrent: 1.01 }, JP: { start: 82, current: 115, symbol: "¥", usdCurrent: 0.77 } },
+  Shelby:       { US: { start: 1.6, current: 2.35, symbol: "$", usdCurrent: 2.35 }, UK: { start: 1.3, current: 1.9, symbol: "£", usdCurrent: 2.4 }, EU: { start: 1.5, current: 2.2, symbol: "€", usdCurrent: 2.4 }, JP: { start: 185, current: 270, symbol: "¥", usdCurrent: 1.8 } },
+  Bugatti:      { US: { start: 2.2, current: 3.2, symbol: "$", usdCurrent: 3.2 }, UK: { start: 1.8, current: 2.6, symbol: "£", usdCurrent: 3.3 }, EU: { start: 2.0, current: 2.9, symbol: "€", usdCurrent: 3.2 }, JP: { start: 250, current: 370, symbol: "¥", usdCurrent: 2.5 } },
+  default:      { US: { start: 0.1, current: 0.14, symbol: "$", usdCurrent: 0.14 }, UK: { start: 0.08, current: 0.11, symbol: "£", usdCurrent: 0.14 }, EU: { start: 0.09, current: 0.13, symbol: "€", usdCurrent: 0.14 }, JP: { start: 11, current: 16, symbol: "¥", usdCurrent: 0.11 } },
 }
 
-function formatPrice(n: number) {
-  return `$${n.toLocaleString()}`
+const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
+const REGION_LABELS: Record<string, string> = { US: "US Market", UK: "UK Market", EU: "EU Market", JP: "Japan" }
+
+function formatRegionalVal(v: number, symbol: string) {
+  if (symbol === "¥") return `¥${v.toFixed(0)}M`
+  return v >= 1 ? `${symbol}${v.toFixed(1)}M` : `${symbol}${Math.round(v * 1000)}K`
+}
+
+function formatUsdEquiv(v: number) {
+  return v >= 1 ? `~$${v.toFixed(1)}M` : `~$${Math.round(v * 1000)}K`
+}
+
+// ─── BENCHMARK RETURNS (5-year, mock) ───
+const BENCHMARKS = [
+  { label: "S&P 500", return5y: 42 },
+  { label: "Gold", return5y: 38 },
+  { label: "Real Estate", return5y: 28 },
+]
+
+// ─── TOP MODELS PER BRAND (mock) ───
+type TopModel = { name: string; avgPrice: number; grade: string; trend: string }
+const mockTopModels: Record<string, TopModel[]> = {
+  Ferrari: [{ name: "250 GTO", avgPrice: 48_400_000, grade: "AAA", trend: "+12%" }, { name: "F40", avgPrice: 2_800_000, grade: "AAA", trend: "+10%" }, { name: "275 GTB/4", avgPrice: 3_200_000, grade: "AA", trend: "+8%" }, { name: "Testarossa", avgPrice: 380_000, grade: "A", trend: "+15%" }],
+  Porsche: [{ name: "959", avgPrice: 2_100_000, grade: "AAA", trend: "+9%" }, { name: "911 RS 2.7", avgPrice: 1_450_000, grade: "AA", trend: "+8%" }, { name: "356 Speedster", avgPrice: 680_000, grade: "AA", trend: "+6%" }, { name: "911 GT1", avgPrice: 5_200_000, grade: "AAA", trend: "+11%" }],
+  McLaren: [{ name: "F1", avgPrice: 19_800_000, grade: "AAA", trend: "+12%" }, { name: "F1 GTR", avgPrice: 12_500_000, grade: "AAA", trend: "+10%" }, { name: "F1 LM", avgPrice: 23_100_000, grade: "AAA", trend: "+14%" }],
+  Lamborghini: [{ name: "Miura SV", avgPrice: 2_650_000, grade: "AAA", trend: "+9%" }, { name: "Countach LP400", avgPrice: 1_200_000, grade: "AA", trend: "+11%" }, { name: "Diablo GT", avgPrice: 850_000, grade: "A", trend: "+14%" }],
+  BMW: [{ name: "M3 E30 Evo", avgPrice: 285_000, grade: "AA", trend: "+12%" }, { name: "M1", avgPrice: 680_000, grade: "AAA", trend: "+8%" }, { name: "M3 CSL E46", avgPrice: 225_000, grade: "AA", trend: "+10%" }],
+  Mercedes: [{ name: "300SL Gullwing", avgPrice: 1_650_000, grade: "AAA", trend: "+6%" }, { name: "300SL Roadster", avgPrice: 1_320_000, grade: "AA", trend: "+5%" }, { name: "CLK GTR", avgPrice: 4_500_000, grade: "AAA", trend: "+9%" }],
+  Nissan: [{ name: "R34 GT-R V-Spec", avgPrice: 485_000, grade: "AA", trend: "+18%" }, { name: "R34 GT-R Nur", avgPrice: 520_000, grade: "AA", trend: "+20%" }, { name: "R32 GT-R", avgPrice: 145_000, grade: "A", trend: "+15%" }],
+  Toyota: [{ name: "Supra Turbo 6-Spd", avgPrice: 185_000, grade: "A", trend: "+14%" }, { name: "2000GT", avgPrice: 1_100_000, grade: "AAA", trend: "+8%" }, { name: "Supra RZ", avgPrice: 195_000, grade: "A", trend: "+16%" }],
+  default: [{ name: "Top Variant", avgPrice: 150_000, grade: "A", trend: "+8%" }, { name: "Standard", avgPrice: 85_000, grade: "B+", trend: "+5%" }],
+}
+
+// ─── LIQUIDITY & MARKET DEPTH (mock) ───
+type MarketDepth = { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number }
+const mockMarketDepth: Record<string, MarketDepth> = {
+  Ferrari: { auctionsPerYear: 48, avgDaysToSell: 14, sellThroughRate: 92, demandScore: 9 },
+  Porsche: { auctionsPerYear: 62, avgDaysToSell: 12, sellThroughRate: 89, demandScore: 9 },
+  McLaren: { auctionsPerYear: 8, avgDaysToSell: 28, sellThroughRate: 85, demandScore: 7 },
+  Lamborghini: { auctionsPerYear: 24, avgDaysToSell: 18, sellThroughRate: 88, demandScore: 8 },
+  Nissan: { auctionsPerYear: 35, avgDaysToSell: 10, sellThroughRate: 94, demandScore: 9 },
+  Toyota: { auctionsPerYear: 28, avgDaysToSell: 8, sellThroughRate: 96, demandScore: 8 },
+  BMW: { auctionsPerYear: 32, avgDaysToSell: 15, sellThroughRate: 87, demandScore: 7 },
+  Mercedes: { auctionsPerYear: 22, avgDaysToSell: 22, sellThroughRate: 82, demandScore: 7 },
+  "Aston Martin": { auctionsPerYear: 18, avgDaysToSell: 25, sellThroughRate: 80, demandScore: 6 },
+  Shelby: { auctionsPerYear: 12, avgDaysToSell: 20, sellThroughRate: 90, demandScore: 8 },
+  Bugatti: { auctionsPerYear: 6, avgDaysToSell: 35, sellThroughRate: 78, demandScore: 7 },
+  default: { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 },
+}
+
+// ─── 6-YEAR PRICE HISTORY (year-by-year, in millions) ───
+const PRICE_YEARS = ["2021", "2022", "2023", "2024", "2025", "2026"]
+const mockPriceHistory: Record<string, number[]> = {
+  McLaren: [14.2, 15.8, 17.5, 19.2, 20.1, 21.0],
+  Porsche: [0.95, 1.05, 1.18, 1.32, 1.38, 1.45],
+  Ferrari: [2.2, 2.5, 2.8, 3.1, 3.25, 3.4],
+  Lamborghini: [2.1, 2.4, 2.7, 2.9, 3.05, 3.2],
+  Nissan: [0.22, 0.28, 0.35, 0.42, 0.45, 0.48],
+  Toyota: [0.095, 0.12, 0.14, 0.165, 0.175, 0.185],
+  BMW: [1.5, 1.7, 1.9, 2.1, 2.22, 2.35],
+  Mercedes: [1.2, 1.35, 1.45, 1.55, 1.6, 1.65],
+  "Aston Martin": [0.72, 0.78, 0.85, 0.92, 0.95, 0.99],
+  Lexus: [0.55, 0.62, 0.72, 0.82, 0.85, 0.89],
+  Ford: [0.35, 0.40, 0.45, 0.49, 0.51, 0.52],
+  Acura: [0.085, 0.095, 0.11, 0.125, 0.135, 0.145],
+  Jaguar: [0.18, 0.21, 0.24, 0.26, 0.27, 0.285],
+  Mazda: [0.065, 0.078, 0.092, 0.105, 0.118, 0.132],
+  Honda: [0.048, 0.055, 0.064, 0.072, 0.082, 0.09],
+  Shelby: [1.6, 1.75, 1.88, 2.02, 2.18, 2.35],
+  Chevrolet: [0.14, 0.155, 0.168, 0.18, 0.195, 0.21],
+  Bugatti: [2.2, 2.45, 2.65, 2.85, 3.0, 3.2],
+  Lancia: [0.42, 0.48, 0.53, 0.58, 0.64, 0.7],
+  "De Tomaso": [0.19, 0.21, 0.23, 0.25, 0.27, 0.3],
+  Alpine: [0.12, 0.135, 0.15, 0.165, 0.18, 0.2],
+  default: [0.1, 0.11, 0.12, 0.13, 0.135, 0.14],
 }
 
 // ─── AGGREGATE AUCTIONS BY BRAND ───
@@ -378,23 +452,6 @@ function aggregateBrands(auctions: Auction[]): Brand[] {
   return brands.sort((a, b) => b.priceMax - a.priceMax)
 }
 
-function formatPriceShort(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
-  return `$${n.toLocaleString()}`
-}
-
-function formatRegionalPrice(n: number, currency: string) {
-  if (currency === "¥") {
-    // Japanese Yen - show in 億 (100M) or 万 (10K) for readability
-    if (n >= 100_000_000) return `¥${(n / 100_000_000).toFixed(1)}億`
-    return `¥${(n / 10_000).toFixed(0)}万`
-  }
-  if (n >= 1_000_000) return `${currency}${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${currency}${(n / 1_000).toFixed(0)}K`
-  return `${currency}${n.toLocaleString()}`
-}
-
 function timeLeft(
   endTime: string,
   labels: { ended: string; day: string; hour: string; minute: string }
@@ -411,9 +468,10 @@ function timeLeft(
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
 function BrandCard({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
+  const { selectedRegion } = useRegion()
 
   return (
-    <div className="h-[calc(100vh-120px)] w-full flex flex-col snap-start p-4">
+    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/${brand.slug}`}
         className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
@@ -442,7 +500,7 @@ function BrandCard({ brand }: { brand: Brand }) {
 
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#F2F0E9]">
+            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
               {t("brandCard.carsCount", { count: brand.carCount })}
             </span>
           </div>
@@ -465,7 +523,7 @@ function BrandCard({ brand }: { brand: Brand }) {
         <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
           {/* Brand name */}
           <div>
-            <h2 className="text-3xl font-bold text-[#F2F0E9] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
               {brand.name}
             </h2>
             <p className="text-[13px] text-[#6B7280] mt-1">
@@ -481,8 +539,8 @@ function BrandCard({ brand }: { brand: Brand }) {
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-[#F2F0E9]">
-                {formatPriceShort(brand.priceMin)}–{formatPriceShort(brand.priceMax)}
+              <p className="text-[13px] font-mono text-[#FFFCF7]">
+                {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
               </p>
             </div>
 
@@ -501,7 +559,7 @@ function BrandCard({ brand }: { brand: Brand }) {
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
               </div>
-              <p className="text-[13px] text-[#F2F0E9]">{t("brandCard.vehiclesCount", { count: brand.carCount })}</p>
+              <p className="text-[13px] text-[#FFFCF7]">{t("brandCard.vehiclesCount", { count: brand.carCount })}</p>
             </div>
           </div>
 
@@ -537,17 +595,50 @@ function BrandCard({ brand }: { brand: Brand }) {
   )
 }
 
-// ─── MOBILE BRAND VIEW ───
-function MobileBrandView({ brand }: { brand: Brand }) {
+// ─── MOBILE: REGION PILLS (sticky) ───
+function MobileRegionPills() {
+  const { selectedRegion, setSelectedRegion } = useRegion()
+  const REGIONS = [
+    { id: "all", label: "All", flag: "\u{1F30D}" },
+    { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
+    { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
+    { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
+    { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+  ]
+  return (
+    <div className="sticky top-0 z-20 bg-[#0b0b10]/95 backdrop-blur-md border-b border-white/5 px-4 py-2.5">
+      <div className="flex items-center gap-1">
+        {REGIONS.map((region) => {
+          const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
+          return (
+            <button
+              key={region.id}
+              onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
+                isActive
+                  ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
+                  : "text-[#6B7280] hover:text-[#9CA3AF] bg-white/[0.03] border border-transparent"
+              }`}
+            >
+              <span className="text-[12px]">{region.flag}</span>
+              <span>{region.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── MOBILE: HERO BRAND (first brand) ───
+function MobileHeroBrand({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
+  const { selectedRegion } = useRegion()
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col bg-[#050505] pt-14">
-      {/* IMAGE */}
-      <Link
-        href={`/cars/${brand.slug}`}
-        className="relative h-[55dvh] w-full shrink-0 group"
-      >
+    <Link href={`/cars/${brand.slug}`} className="block relative">
+      {/* Hero image */}
+      <div className="relative h-[45dvh] w-full overflow-hidden">
         {brand.representativeImage ? (
           <Image
             src={brand.representativeImage}
@@ -565,15 +656,17 @@ function MobileBrandView({ brand }: { brand: Brand }) {
           </div>
         )}
 
-        {/* Vignette */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/30 to-transparent pointer-events-none" />
 
         {/* Grade badge */}
         <div className="absolute top-4 left-4">
           <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
             brand.topGrade === "AAA"
               ? "bg-emerald-500/30 text-emerald-300"
-              : "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
+              : brand.topGrade === "AA"
+                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
+                : "bg-white/20 text-white"
           }`}>
             {brand.topGrade}
           </span>
@@ -581,58 +674,204 @@ function MobileBrandView({ brand }: { brand: Brand }) {
 
         {/* Car count */}
         <div className="absolute top-4 right-4">
-          <span className="rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-[#F2F0E9]">
+          <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-[#FFFCF7]">
             {t("brandCard.carsCount", { count: brand.carCount })}
           </span>
         </div>
 
-        {/* Expand hint */}
-        <div className="absolute bottom-4 right-4">
-          <div className="flex items-center justify-center size-10 rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md text-[#F2F0E9]">
-            <ChevronRight className="size-5" />
+        {/* Overlaid info at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+          <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight">
+            {brand.name}
+          </h2>
+          <p className="text-[13px] text-[rgba(255,252,247,0.5)] mt-0.5">
+            {brand.representativeCar}
+          </p>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-[16px] font-bold font-mono text-[#F8B4D9]">
+              {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+            </span>
+            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+          </div>
+          {/* Categories */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {brand.categories.slice(0, 3).map((cat) => (
+              <span
+                key={cat}
+                className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-[10px] text-[#FFFCF7]/70"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+          {/* Inline CTA */}
+          <div className="flex items-center gap-1.5 mt-3 text-[#F8B4D9]">
+            <span className="text-[12px] font-semibold tracking-[0.1em] uppercase">
+              {t("mobileFeed.viewCollection")}
+            </span>
+            <ChevronRight className="size-4" />
           </div>
         </div>
-      </Link>
+      </div>
+    </Link>
+  )
+}
 
-      {/* CONTENT */}
-      <div className="flex-1 flex flex-col px-5 pt-5 pb-24">
-        <h1 className="text-3xl font-bold text-[#F2F0E9] tracking-tight">
+// ─── MOBILE: BRAND ROW (compact) ───
+function MobileBrandRow({ brand }: { brand: Brand }) {
+  const t = useTranslations("dashboard")
+  const { selectedRegion } = useRegion()
+
+  return (
+    <Link
+      href={`/cars/${brand.slug}`}
+      className="flex items-center gap-4 px-4 py-3.5 active:bg-white/[0.03] transition-colors"
+    >
+      {/* Thumbnail */}
+      <div className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-[#0F1012]">
+        {brand.representativeImage ? (
+          <Image
+            src={brand.representativeImage}
+            alt={brand.name}
+            fill
+            className="object-cover"
+            sizes="80px"
+            referrerPolicy="no-referrer"
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Car className="size-5 text-[#6B7280]" />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
           {brand.name}
-        </h1>
-        <p className="text-[14px] text-[#6B7280] mt-1">
-          {t("mobileBrand.collectorVehicles", { count: brand.carCount })}
         </p>
-
-        {/* Price range */}
-        <div className="flex items-baseline gap-3 mt-4">
-          <span className="text-xl font-bold font-mono text-[#F8B4D9]">
-            {formatPriceShort(brand.priceMin)} – {formatPriceShort(brand.priceMax)}
+        <p className="text-[11px] text-[#6B7280] mt-0.5">
+          {t("mobileFeed.vehicles", { count: brand.carCount })}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-[12px] font-mono text-[#F8B4D9]">
+            {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
           </span>
-          <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
-        </div>
-
-        {/* Categories */}
-        <div className="flex flex-wrap gap-2 mt-5">
-          {brand.categories.slice(0, 4).map((cat) => (
-            <span
-              key={cat}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-[11px] text-[#9CA3AF]"
-            >
-              {cat}
-            </span>
-          ))}
+          <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
         </div>
       </div>
 
-      {/* CTA - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
-        <Link
-          href={`/cars/${brand.slug}`}
-          className="flex items-center justify-between w-full rounded-full bg-[#F8B4D9] px-6 py-4"
-        >
-          <span className="text-[14px] font-semibold text-[#050505]">{t("mobileBrand.explore", { brand: brand.name })}</span>
-          <ChevronRight className="size-5 text-[#050505]" />
-        </Link>
+      {/* Right side */}
+      <div className="flex flex-col items-end gap-1.5 shrink-0">
+        <span className={`text-[10px] font-bold ${
+          brand.topGrade === "AAA"
+            ? "text-emerald-400"
+            : brand.topGrade === "AA"
+              ? "text-[#F8B4D9]"
+              : "text-[#6B7280]"
+        }`}>
+          {brand.topGrade}
+        </span>
+        <ChevronRight className="size-4 text-[#4B5563]" />
+      </div>
+    </Link>
+  )
+}
+
+// ─── MOBILE: LIVE AUCTIONS SECTION ───
+function MobileLiveAuctions({ auctions }: { auctions: Auction[] }) {
+  const t = useTranslations("dashboard")
+  const tAuction = useTranslations("auctionDetail")
+  const { selectedRegion } = useRegion()
+
+  const timeLabels = {
+    ended: t("asset.ended"),
+    day: t("asset.timeDay"),
+    hour: t("asset.timeHour"),
+    minute: t("asset.timeMin"),
+  }
+
+  const liveAuctions = useMemo(() => {
+    return auctions
+      .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
+      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+      .slice(0, 8)
+  }, [auctions])
+
+  if (liveAuctions.length === 0) return null
+
+  return (
+    <div className="mt-6">
+      {/* Section header */}
+      <div className="px-4 py-3 flex items-center gap-2">
+        <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+          {t("mobileFeed.liveAuctions")}
+        </span>
+        <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
+          {liveAuctions.length}
+        </span>
+      </div>
+
+      {/* Auction rows */}
+      <div className="divide-y divide-white/5">
+        {liveAuctions.map((auction) => {
+          const isEndingSoon = auction.status === "ENDING_SOON"
+          const remaining = timeLeft(auction.endTime, timeLabels)
+
+          return (
+            <Link
+              key={auction.id}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              className="flex items-center gap-3 px-4 py-3 active:bg-white/[0.03] transition-colors"
+            >
+              {/* Thumbnail */}
+              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                {auction.images[0] ? (
+                  <Image
+                    src={auction.images[0]}
+                    alt={auction.title}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                    referrerPolicy="no-referrer"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Car className="size-3.5 text-[#6B7280]" />
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[#FFFCF7] truncate">
+                  {auction.year} {auction.make} {auction.model}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                    {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                  </span>
+                  <span className="text-[10px] text-[#6B7280]">
+                    {tAuction("bids.count", { count: auction.bidCount })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-center gap-1 shrink-0">
+                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`} />
+                <span className={`text-[10px] font-mono font-medium ${
+                  isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"
+                }`}>
+                  {remaining}
+                </span>
+              </div>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
@@ -649,6 +888,7 @@ function BrandNavigationPanel({
   onSelect: (index: number) => void
 }) {
   const t = useTranslations("dashboard")
+  const { selectedRegion } = useRegion()
 
   return (
     <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
@@ -669,7 +909,7 @@ function BrandNavigationPanel({
             <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">
               {t("brandNav.totalCars")}
             </span>
-            <p className="text-[14px] font-bold text-[#F2F0E9] mt-0.5">
+            <p className="text-[14px] font-bold text-[#FFFCF7] mt-0.5">
               {brands.reduce((sum, b) => sum + b.carCount, 0).toLocaleString()}
             </p>
           </div>
@@ -710,7 +950,7 @@ function BrandNavigationPanel({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-[13px] font-semibold truncate transition-colors ${
-                    isActive ? "text-[#F2F0E9]" : "text-[#9CA3AF] group-hover:text-[#F2F0E9]"
+                    isActive ? "text-[#FFFCF7]" : "text-[#9CA3AF] group-hover:text-[#FFFCF7]"
                   }`}>
                     {brand.name}
                   </p>
@@ -721,7 +961,7 @@ function BrandNavigationPanel({
                       {t("brandNav.carsCount", { count: brand.carCount })}
                     </span>
                     <span className="text-[9px] text-[#6B7280]">
-                      {formatPriceShort(brand.priceMin)}–{formatPriceShort(brand.priceMax)}
+                      {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
                     </span>
                   </div>
                 </div>
@@ -748,242 +988,217 @@ function DiscoverySidebar({
   auctions,
   brands,
   onSelectBrand,
+  activeBrandSlug,
 }: {
   auctions: Auction[]
   brands: Brand[]
   onSelectBrand: (brandSlug: string) => void
+  activeBrandSlug?: string
 }) {
   const t = useTranslations("dashboard")
-  const tAuction = useTranslations("auctionDetail")
+  const { selectedRegion } = useRegion()
 
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [showLive, setShowLive] = useState(false)
+  const [brandSearch, setBrandSearch] = useState("")
 
-  const regions = [
-    { id: "all", label: t("sidebar.allRegions"), flag: "\u{1F30D}" },
-    { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
-    { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
-    { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
-    { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
-  ]
+  // Filter brands by search
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch.trim()) return brands
+    const q = brandSearch.toLowerCase()
+    return brands.filter(b => b.name.toLowerCase().includes(q))
+  }, [brands, brandSearch])
 
-  const regionLabel = selectedRegion
-    ? regions.find(r => r.id === selectedRegion)?.flag + " " + selectedRegion
-    : "\u{1F30D}"
-
-  // All cars filtered by region
-  const regionFiltered = useMemo(() => {
-    if (!selectedRegion) return auctions
-    return auctions.filter(a => a.region === selectedRegion)
-  }, [auctions, selectedRegion])
-
-  // Search results
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return regionFiltered
-    const query = searchQuery.toLowerCase()
-    return regionFiltered.filter(a =>
-      a.make.toLowerCase().includes(query) ||
-      a.model.toLowerCase().includes(query) ||
-      a.title.toLowerCase().includes(query)
-    )
-  }, [regionFiltered, searchQuery])
-
-  // Popular makes for this region (top 6 by count)
-  const popularMakes = useMemo(() => {
-    const counts = new Map<string, number>()
-    regionFiltered.forEach(a => counts.set(a.make, (counts.get(a.make) || 0) + 1))
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([make]) => make)
-  }, [regionFiltered])
-
-  // Live auctions (filtered by region too)
+  // Live auctions sorted by ending soonest
   const liveAuctions = useMemo(() => {
-    const liveStatuses = ["ACTIVE", "ENDING_SOON", "LIVE"]
-    return regionFiltered
-      .filter(a => liveStatuses.includes(a.status))
-      .sort((a, b) => b.currentBid - a.currentBid)
-  }, [regionFiltered])
+    return auctions
+      .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
+      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+  }, [auctions])
 
   // Grade badge color
-  const gradeColor = (grade: string | null | undefined) => {
+  const gradeColor = (grade: string) => {
     switch (grade) {
-      case "AAA": case "EXCELLENT": return "bg-emerald-500/20 text-emerald-400"
-      case "AA": case "GOOD": return "bg-blue-500/20 text-blue-400"
-      case "A": case "FAIR": return "bg-amber-500/20 text-amber-400"
-      default: return "bg-white/5 text-[#6B7280]"
+      case "AAA": case "EXCELLENT": return "text-emerald-400"
+      case "AA": case "GOOD": return "text-blue-400"
+      case "A": case "FAIR": return "text-amber-400"
+      default: return "text-[#6B7280]"
     }
+  }
+
+  const timeLabels = {
+    ended: t("asset.ended"),
+    day: t("asset.timeDay"),
+    hour: t("asset.timeHour"),
+    minute: t("asset.timeMin"),
   }
 
   return (
     <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
-      {/* ── REGION SELECTOR (top) ── */}
-      <div className="shrink-0 px-4 py-3 border-b border-white/5">
-        <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#6B7280] mb-2 block">
-          {t("sidebar.market")}
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {regions.map((region) => (
-            <button
-              key={region.id}
-              onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
-              className={`px-3 py-1.5 rounded-full text-[10px] font-medium transition-all ${
-                (region.id === "all" && !selectedRegion) || selectedRegion === region.id
-                  ? "bg-[#F8B4D9] text-[#050505]"
-                  : "bg-white/[0.05] text-[#9CA3AF] hover:bg-white/[0.08]"
-              }`}
-            >
-              {region.flag} {region.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* ── SEARCH INPUT ── */}
-      <div className="shrink-0 px-4 py-3 border-b border-white/5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t("sidebar.findYourCar")}
-            className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-[13px] text-[#F2F0E9] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
-          />
-        </div>
-      </div>
+      {/* ═══ TOP HALF: FIND YOUR CAR ═══ */}
+      <div className="flex-1 min-h-0 flex flex-col">
 
-      {/* ── POPULAR MAKES (only when no search query) ── */}
-      {!searchQuery.trim() && (
-        <div className="shrink-0 px-4 py-2.5 border-b border-white/5 bg-[rgba(248,180,217,0.02)]">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280] mb-2 block">
-            {selectedRegion
-              ? t("sidebar.popularIn", { region: regionLabel })
-              : t("sidebar.popular")
-            }
+        {/* Search brands */}
+        <div className="shrink-0 px-4 pt-3 pb-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#6B7280]" />
+            <input
+              type="text"
+              value={brandSearch}
+              onChange={(e) => setBrandSearch(e.target.value)}
+              placeholder={t("sidebar.findYourCar")}
+              className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-9 pr-3 py-2 text-[12px] text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Section header */}
+        <div className="shrink-0 flex items-center justify-between px-4 py-1.5">
+          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#6B7280]">
+            {t("sidebar.popular")}
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            {popularMakes.map((make) => (
-              <button
-                key={make}
-                onClick={() => setSearchQuery(make)}
-                className="px-2.5 py-1 rounded-full bg-white/[0.03] text-[10px] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.1)] hover:text-[#F8B4D9] transition-all"
-              >
-                {make}
-              </button>
-            ))}
-          </div>
+          <span className="text-[9px] font-mono text-[#6B7280]">
+            {filteredBrands.length} {filteredBrands.length === 1 ? "brand" : "brands"}
+          </span>
         </div>
-      )}
 
-      {/* ── RESULTS COUNT ── */}
-      <div className="shrink-0 px-4 py-2 bg-[rgba(5,5,5,0.5)]">
-        <span className="text-[10px] text-[#6B7280]">
-          {t("sidebar.results", { count: searchResults.length })}
-        </span>
-      </div>
-
-      {/* ── CAR RESULTS LIST (scrollable) ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-        {searchResults.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-center px-4">
-            <Search className="size-6 text-[#6B7280] mb-2" />
-            <p className="text-[12px] text-[#6B7280]">{t("sidebar.noResults")}</p>
-            <p className="text-[10px] text-[#4B5563] mt-1">{t("sidebar.noResultsHint")}</p>
-          </div>
-        ) : (
-          searchResults.map((auction) => (
-            <Link
-              key={auction.id}
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="group relative block px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
-            >
-              <div className="flex gap-3">
-                {/* Thumbnail */}
-                <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
-                  {auction.images[0] ? (
-                    <Image
-                      src={auction.images[0]}
-                      alt={auction.title}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                      referrerPolicy="no-referrer"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Car className="size-4 text-[#6B7280]" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
-                    {auction.year} {auction.make} {auction.model}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[13px] font-mono font-bold text-[#F8B4D9]">
-                      {formatPriceShort(auction.currentBid)}
+        {/* Brands list (scrollable) */}
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+          {filteredBrands.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-20 text-center px-4">
+              <p className="text-[11px] text-[#6B7280]">{t("sidebar.noResults")}</p>
+            </div>
+          ) : (
+            filteredBrands.map((brand) => {
+              const isActive = activeBrandSlug === brand.slug
+              return (
+                <button
+                  key={brand.slug}
+                  onClick={() => onSelectBrand(brand.slug)}
+                  className={`w-full text-left px-4 py-2.5 border-b border-white/[0.03] transition-all group ${
+                    isActive
+                      ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                      : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[12px] font-semibold transition-colors ${
+                      isActive ? "text-[#F8B4D9]" : "text-[#FFFCF7] group-hover:text-[#F8B4D9]"
+                    }`}>
+                      {brand.name}
                     </span>
-                    {auction.analysis?.investmentGrade && (
-                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${gradeColor(auction.analysis.investmentGrade)}`}>
-                        {auction.analysis.investmentGrade}
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
+                        {brand.topGrade}
                       </span>
-                    )}
+                      <span className="text-[10px] text-[#6B7280] font-mono">
+                        {brand.carCount}
+                      </span>
+                      <ChevronRight className={`size-3 transition-colors ${
+                        isActive ? "text-[#F8B4D9]" : "text-[#4B5563] group-hover:text-[#6B7280]"
+                      }`} />
+                    </div>
                   </div>
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-[10px] font-mono text-[#6B7280]">
+                      {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+                    </span>
+                    <span className="text-[9px] text-positive font-medium">
+                      {brand.avgTrend}
+                    </span>
+                  </div>
+                </button>
+              )
+            })
+          )}
+        </div>
       </div>
 
-      {/* ── LIVE NOW (compact, collapsible, pinned bottom) ── */}
-      <div className="shrink-0 border-t border-white/5 bg-[rgba(15,14,22,0.5)]">
-        <button
-          onClick={() => setShowLive(!showLive)}
-          className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
-        >
-          <Flame className="size-3.5 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+      {/* ═══ BOTTOM HALF: LIVE BIDS ═══ */}
+      <div className="flex-1 min-h-0 flex flex-col border-t border-white/5">
+
+        {/* Live header */}
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[rgba(15,14,22,0.5)]">
+          <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#9CA3AF]">
             {t("sidebar.liveNow")}
           </span>
-          <span className="text-[10px] font-mono text-[#F8B4D9] ml-1">
+          <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
             {liveAuctions.length}
           </span>
-          <ChevronDown className={`size-3.5 text-[#6B7280] ml-auto transition-transform ${showLive ? "rotate-180" : ""}`} />
-        </button>
+        </div>
 
-        {showLive && (
-          <div className="px-4 pb-3">
-            {liveAuctions.slice(0, 4).map((auction) => {
+        {/* Live auctions list (scrollable) */}
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+          {liveAuctions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-20 text-center px-4">
+              <p className="text-[11px] text-[#6B7280]">No live auctions right now</p>
+            </div>
+          ) : (
+            liveAuctions.map((auction) => {
               const isEndingSoon = auction.status === "ENDING_SOON"
+              const remaining = timeLeft(auction.endTime, timeLabels)
+
               return (
                 <Link
                   key={auction.id}
                   href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-                  className="group flex items-center justify-between py-1.5 hover:bg-white/[0.02] transition-colors rounded px-1 -mx-1"
+                  className="group relative block px-4 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
                 >
-                  <span className="text-[11px] text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
-                    {auction.year} {auction.make} {auction.model}
-                  </span>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className="text-[11px] font-mono text-[#F8B4D9]">
-                      {formatPriceShort(auction.currentBid)}
-                    </span>
-                    {isEndingSoon && (
-                      <div className="size-1.5 rounded-full bg-[#FB923C] animate-pulse" />
-                    )}
+                  <div className="flex gap-3">
+                    {/* Thumbnail */}
+                    <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                      {auction.images[0] ? (
+                        <Image
+                          src={auction.images[0]}
+                          alt={auction.title}
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                          referrerPolicy="no-referrer"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Car className="size-3.5 text-[#6B7280]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                        {auction.year} {auction.make} {auction.model}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                          {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                        </span>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`} />
+                          <span className={`text-[9px] font-mono font-medium ${
+                            isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"
+                          }`}>
+                            {remaining}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[8px] text-[#6B7280]">
+                          {platformShort[auction.platform] || auction.platform}
+                        </span>
+                        {auction.analysis?.investmentGrade && (
+                          <span className={`text-[8px] font-bold ${gradeColor(auction.analysis.investmentGrade)}`}>
+                            {auction.analysis.investmentGrade}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </Link>
               )
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </div>
     </div>
   )
@@ -994,12 +1209,13 @@ function AssetCard({ auction }: { auction: Auction }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
+  const { selectedRegion } = useRegion()
 
   const isLive = auction.status === "ACTIVE" || auction.status === "ENDING_SOON"
   const isEndingSoon = auction.status === "ENDING_SOON"
 
   return (
-    <div className="h-[calc(100vh-120px)] w-full flex flex-col snap-start p-4">
+    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
       <div className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5">
         {/* TOP: CINEMATIC IMAGE (wider aspect ratio to fit CTAs) */}
         <div className="relative aspect-[16/8] w-full shrink-0">
@@ -1041,7 +1257,7 @@ function AssetCard({ auction }: { auction: Auction }) {
 
           {/* Platform badge */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#F2F0E9]">
+            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
               {platformShort[auction.platform]}
             </span>
           </div>
@@ -1052,7 +1268,7 @@ function AssetCard({ auction }: { auction: Auction }) {
           {/* Title + Price row */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-[#F2F0E9] tracking-tight truncate">
+              <h2 className="text-2xl font-bold text-[#FFFCF7] tracking-tight truncate">
                 {auction.make} {auction.model}
               </h2>
               {auction.trim && (
@@ -1060,8 +1276,8 @@ function AssetCard({ auction }: { auction: Auction }) {
               )}
             </div>
             <div className="text-right shrink-0">
-              <p className="text-3xl font-bold text-[#F2F0E9] font-mono tabular-nums">
-                {formatPrice(auction.currentBid)}
+              <p className="text-3xl font-bold text-[#FFFCF7] font-mono tabular-nums">
+                {formatPriceForRegion(auction.currentBid, selectedRegion)}
               </p>
               <div className="flex items-center justify-end gap-3 mt-1 text-[#9CA3AF]">
                 <span className="text-[11px]">{tAuction("bids.count", { count: auction.bidCount })}</span>
@@ -1103,7 +1319,7 @@ function AssetCard({ auction }: { auction: Auction }) {
                   <p className={`text-[15px] font-bold ${
                     grade === "AAA" || grade === "EXCELLENT" ? "text-positive" :
                     grade === "AA" || grade === "A" || grade === "GOOD" ? "text-[#F8B4D9]" :
-                    "text-[#F2F0E9]"
+                    "text-[#FFFCF7]"
                   }`}>{grade}</p>
                 </div>
 
@@ -1122,8 +1338,8 @@ function AssetCard({ auction }: { auction: Auction }) {
                     <DollarSign className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.fairValue")}</span>
                   </div>
-                  <p className="text-[13px] text-[#F2F0E9] font-mono">
-                    {formatPriceShort(lowRange)}–{formatPriceShort(highRange)}
+                  <p className="text-[13px] text-[#FFFCF7] font-mono">
+                    {formatPriceForRegion(lowRange, selectedRegion)}–{formatPriceForRegion(highRange, selectedRegion)}
                   </p>
                 </div>
 
@@ -1133,7 +1349,7 @@ function AssetCard({ auction }: { auction: Auction }) {
                     <Car className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.category")}</span>
                   </div>
-                  <p className="text-[13px] text-[#F2F0E9] truncate">{auction.category || t("asset.metrics.collector")}</p>
+                  <p className="text-[13px] text-[#FFFCF7] truncate">{auction.category || t("asset.metrics.collector")}</p>
                 </div>
               </div>
             )
@@ -1142,13 +1358,13 @@ function AssetCard({ auction }: { auction: Auction }) {
           {/* CTA Row */}
           <div className="flex items-center gap-3 mt-4">
             {isLive && (
-              <button className="flex-1 rounded-full bg-[#F8B4D9] py-3 text-[12px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-colors">
+              <button className="flex-1 rounded-full bg-[#F8B4D9] py-3 text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors">
                 {tAuction("actions.placeBid")}
               </button>
             )}
             <Link
               href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="flex-1 rounded-full border border-white/10 py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] hover:text-[#F2F0E9] hover:border-[rgba(248,180,217,0.5)] transition-all"
+              className="flex-1 rounded-full border border-white/10 py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] hover:border-[rgba(248,180,217,0.5)] transition-all"
             >
               {t("asset.fullAnalysis")}
             </Link>
@@ -1159,182 +1375,48 @@ function AssetCard({ auction }: { auction: Auction }) {
   )
 }
 
-// ─── MOBILE ASSET VIEW (BTW-STYLE) ───
-function MobileAssetView({ auction }: { auction: Auction }) {
-  const locale = useLocale()
-  const t = useTranslations("dashboard")
-  const tAuction = useTranslations("auctionDetail")
-  const tStatus = useTranslations("status")
-
-  const isLive = auction.status === "ACTIVE" || auction.status === "ENDING_SOON"
-  const isEndingSoon = auction.status === "ENDING_SOON"
-  const whyBuy = mockWhyBuy[auction.make] || mockWhyBuy["default"]
-
-  return (
-    <div className="h-[100dvh] w-full flex flex-col bg-[#050505] pt-14">
-      {/* IMAGE — Full width, ~50% of remaining screen */}
-      <div className="relative h-[48dvh] w-full shrink-0">
-        {auction.images[0] ? (
-          <Image
-            src={auction.images[0]}
-            alt={auction.title}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority
-            referrerPolicy="no-referrer"
-            unoptimized
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-            <span className="text-[#6B7280] text-lg">{t("asset.noImage")}</span>
-          </div>
-        )}
-
-        {/* Vignette gradient at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
-
-        {/* Status pill overlay */}
-        <div className="absolute top-4 left-4 flex items-center gap-2">
-          {isLive && (
-            <span className={`flex items-center gap-2 rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase ${
-              isEndingSoon
-                ? "bg-red-500/30 text-red-300"
-                : "bg-emerald-500/30 text-emerald-300"
-            }`}>
-              <span className={`size-2 rounded-full ${
-                isEndingSoon ? "bg-red-400" : "bg-emerald-400"
-              } animate-pulse`} />
-              {isEndingSoon ? tStatus("endingSoon") : tStatus("live")}
-            </span>
-          )}
-        </div>
-
-        {/* Platform badge */}
-        <div className="absolute top-4 right-4">
-          <span className="rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#F2F0E9]">
-            {platformShort[auction.platform]}
-          </span>
-        </div>
-
-        {/* Expand icon */}
-        <div className="absolute bottom-4 right-4">
-          <Link
-            href={`/auctions/${auction.id}`}
-            className="flex items-center justify-center size-10 rounded-full bg-[rgba(5,5,5,0.7)] backdrop-blur-md text-[#F2F0E9]"
-          >
-            <ChevronRight className="size-5" />
-          </Link>
-        </div>
-      </div>
-
-      {/* CONTENT — Below image, scrollable */}
-      <div className="flex-1 flex flex-col overflow-y-auto px-5 pt-5 pb-24">
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-[#F2F0E9] tracking-tight">
-          {auction.make} {auction.model}
-        </h1>
-        {auction.trim && (
-          <p className="text-[14px] text-[#9CA3AF] mt-1">{auction.trim}</p>
-        )}
-
-        {/* Price + Bid info */}
-        <div className="flex items-baseline gap-3 mt-3">
-          <span className="text-2xl font-bold font-mono text-[#F8B4D9]">
-            {formatPrice(auction.currentBid)}
-          </span>
-          <span className="text-[12px] text-[#6B7280]">{tAuction("bids.count", { count: auction.bidCount })}</span>
-          {isLive && (
-            <span className="flex items-center gap-1 text-[12px] text-[#9CA3AF] font-mono">
-              <Clock className="size-3" />
-              {timeLeft(auction.endTime, {
-                ended: tAuction("time.ended"),
-                day: tAuction("time.units.day"),
-                hour: tAuction("time.units.hour"),
-                minute: tAuction("time.units.minute"),
-              })}
-            </span>
-          )}
-        </div>
-
-        {/* Investment thesis summary */}
-        <p className="mt-5 text-[14px] leading-relaxed text-[#9CA3AF]">
-          {whyBuy.slice(0, 200)}...
-        </p>
-
-        {/* Quick stats row */}
-        <div className="mt-5 flex flex-wrap gap-3">
-          {auction.engine && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-[11px] text-[#9CA3AF]">
-              <Cog className="size-3" />
-              {auction.engine}
-            </span>
-          )}
-          {auction.mileage && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-[11px] text-[#9CA3AF]">
-              <Gauge className="size-3" />
-              {auction.mileage.toLocaleString(locale)} {auction.mileageUnit || tAuction("units.miles")}
-            </span>
-          )}
-          {auction.location && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-[11px] text-[#9CA3AF]">
-              <MapPin className="size-3" />
-              {auction.location}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* AI CHAT INPUT — Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
-        <a
-          href={`https://wa.me/491726690998?text=${encodeURIComponent(
-            t("context.askWhatsAppMessage", { make: auction.make, model: auction.model })
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between w-full rounded-full bg-[#0F1012] border border-white/10 px-5 py-4"
-        >
-          <span className="text-[14px] text-[#6B7280]">Ask anything about this car</span>
-          <ChevronRight className="size-5 text-[#F8B4D9]" />
-        </a>
-      </div>
-    </div>
-  )
-}
-
-// ─── MINI SPARKLINE COMPONENT ───
-function MiniSparkline({ data, color = "#F8B4D9" }: { data: number[]; color?: string }) {
+// ─── YEAR-BY-YEAR CHART COMPONENT ───
+function YearByYearChart({ data, years = PRICE_YEARS }: { data: number[]; years?: string[] }) {
   const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
-  const width = 100
-  const height = 32
-
-  const points = data.map((value, i) => {
-    const x = (i / (data.length - 1)) * width
-    const y = height - ((value - min) / range) * (height - 4) - 2
-    return `${x},${y}`
-  }).join(" ")
+  const { selectedRegion } = useRegion()
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
-      <polyline
-        points={points}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* End dot */}
-      <circle
-        cx={(data.length - 1) / (data.length - 1) * width}
-        cy={height - ((data[data.length - 1] - min) / range) * (height - 4) - 2}
-        r="3"
-        fill={color}
-      />
-    </svg>
+    <div className="space-y-1.5">
+      {data.map((value, i) => {
+        const barWidth = max > 0 ? (value / max) * 100 : 0
+        const yoy = i > 0 ? ((value - data[i - 1]) / data[i - 1]) * 100 : null
+        const isLast = i === data.length - 1
+
+        return (
+          <div key={years[i]} className="flex items-center gap-2">
+            {/* Year label */}
+            <span className={`text-[10px] font-mono w-8 shrink-0 ${isLast ? "text-[#FFFCF7] font-semibold" : "text-[#6B7280]"}`}>
+              {years[i].slice(2)}
+            </span>
+
+            {/* Bar */}
+            <div className="flex-1 h-[14px] rounded-sm bg-white/[0.03] overflow-hidden relative">
+              <div
+                className={`h-full rounded-sm transition-all ${isLast ? "bg-[#F8B4D9]/40" : "bg-[#F8B4D9]/15"}`}
+                style={{ width: `${barWidth}%` }}
+              />
+            </div>
+
+            {/* Value */}
+            <span className={`text-[10px] font-mono w-14 text-right shrink-0 ${isLast ? "text-[#FFFCF7] font-semibold" : "text-[#9CA3AF]"}`}>
+              {formatPriceForRegion(value * 1_000_000, selectedRegion)}
+            </span>
+
+            {/* YoY change */}
+            <span className={`text-[9px] font-mono w-10 text-right shrink-0 ${
+              yoy !== null && yoy > 0 ? "text-positive" : yoy !== null && yoy < 0 ? "text-red-400" : "text-transparent"
+            }`}>
+              {yoy !== null ? `+${yoy.toFixed(0)}%` : "—"}
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -1343,6 +1425,7 @@ function MiniSparkline({ data, color = "#F8B4D9" }: { data: number[]; color?: st
 function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const tCommon = useTranslations("common")
+  const { selectedRegion, effectiveRegion } = useRegion()
 
   const whyBuy = mockWhyBuy[auction.make] || mockWhyBuy["default"]
   const marketPulse = mockMarketPulse[auction.make] || mockMarketPulse["default"]
@@ -1376,9 +1459,9 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         </p>
       </div>
 
-      {/* SECTION 2: 5-Year Price Chart */}
+      {/* SECTION 2: Year-by-Year Price History */}
       <div className="px-5 py-3 border-b border-white/5">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <BarChart3 className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
@@ -1386,18 +1469,10 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
             </span>
           </div>
           <span className="text-[11px] font-mono font-semibold text-positive">
-            +{Math.round(((priceHistory[4] - priceHistory[0]) / priceHistory[0]) * 100)}%
+            +{Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)}%
           </span>
         </div>
-        <div className="flex items-center justify-between">
-          <MiniSparkline data={priceHistory} color="#34D399" />
-          <div className="text-right ml-3">
-            <p className="text-[10px] text-[#6B7280]">2021 → 2026</p>
-            <p className="text-[12px] font-mono text-[#F2F0E9]">
-              ${priceHistory[0]}M → ${priceHistory[4]}M
-            </p>
-          </div>
-        </div>
+        <YearByYearChart data={priceHistory} />
       </div>
 
       {/* SECTION 3: Fair Value by Region */}
@@ -1411,52 +1486,28 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 
         {auction.fairValueByRegion ? (
           <div className="space-y-1.5">
-            {/* US Market */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">🇺🇸</span>
-                <span className="text-[10px] font-medium text-[#9CA3AF]">US</span>
-              </div>
-              <span className="text-[12px] font-bold font-mono text-[#F2F0E9]">
-                {formatRegionalPrice(auction.fairValueByRegion.US.low, auction.fairValueByRegion.US.currency)} — {formatRegionalPrice(auction.fairValueByRegion.US.high, auction.fairValueByRegion.US.currency)}
-              </span>
-            </div>
-            {/* EU Market */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">🇪🇺</span>
-                <span className="text-[10px] font-medium text-[#9CA3AF]">EU</span>
-              </div>
-              <span className="text-[12px] font-bold font-mono text-[#F2F0E9]">
-                {formatRegionalPrice(auction.fairValueByRegion.EU.low, auction.fairValueByRegion.EU.currency)} — {formatRegionalPrice(auction.fairValueByRegion.EU.high, auction.fairValueByRegion.EU.currency)}
-              </span>
-            </div>
-            {/* UK Market */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">🇬🇧</span>
-                <span className="text-[10px] font-medium text-[#9CA3AF]">UK</span>
-              </div>
-              <span className="text-[12px] font-bold font-mono text-[#F2F0E9]">
-                {formatRegionalPrice(auction.fairValueByRegion.UK.low, auction.fairValueByRegion.UK.currency)} — {formatRegionalPrice(auction.fairValueByRegion.UK.high, auction.fairValueByRegion.UK.currency)}
-              </span>
-            </div>
-            {/* JP Market */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">🇯🇵</span>
-                <span className="text-[10px] font-medium text-[#9CA3AF]">JP</span>
-                <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-positive">{tCommon("best")}</span>
-              </div>
-              <span className="text-[12px] font-bold font-mono text-positive">
-                {formatRegionalPrice(auction.fairValueByRegion.JP.low, auction.fairValueByRegion.JP.currency)} — {formatRegionalPrice(auction.fairValueByRegion.JP.high, auction.fairValueByRegion.JP.currency)}
-              </span>
-            </div>
+            {(["US", "EU", "UK", "JP"] as const).map(region => {
+              const rp = auction.fairValueByRegion![region]
+              const isSelected = region === effectiveRegion
+              const flags: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", UK: "🇬🇧", JP: "🇯🇵" }
+              return (
+                <div key={region} className={`flex items-center justify-between ${isSelected ? "rounded bg-[rgba(248,180,217,0.04)] -mx-1 px-1 py-0.5" : ""}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{flags[region]}</span>
+                    <span className={`text-[10px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#9CA3AF]"}`}>{region}</span>
+                    {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>}
+                  </div>
+                  <span className={`text-[12px] font-bold font-mono ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                    {fmtRegional(rp.low, rp.currency)} — {fmtRegional(rp.high, rp.currency)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-bold font-mono text-[#F8B4D9]">
-              {formatPriceShort(lowRange)} — {formatPriceShort(highRange)}
+              {formatPriceForRegion(lowRange, selectedRegion)} — {formatPriceForRegion(highRange, selectedRegion)}
             </span>
           </div>
         )}
@@ -1474,17 +1525,17 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
           <div className="text-center">
             <Shield className="size-3 text-[#6B7280] mx-auto mb-1" />
             <p className="text-[10px] text-[#6B7280]">{t("context.insurance")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#F2F0E9]">${(ownershipCost.insurance / 1000).toFixed(0)}K</p>
+            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.insurance / 1000).toFixed(0)}K</p>
           </div>
           <div className="text-center">
             <MapPin className="size-3 text-[#6B7280] mx-auto mb-1" />
             <p className="text-[10px] text-[#6B7280]">{t("context.storage")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#F2F0E9]">${(ownershipCost.storage / 1000).toFixed(1)}K</p>
+            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.storage / 1000).toFixed(1)}K</p>
           </div>
           <div className="text-center">
             <Wrench className="size-3 text-[#6B7280] mx-auto mb-1" />
             <p className="text-[10px] text-[#6B7280]">{t("context.service")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#F2F0E9]">${(ownershipCost.maintenance / 1000).toFixed(0)}K</p>
+            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.maintenance / 1000).toFixed(0)}K</p>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-white/5 flex justify-between">
@@ -1511,13 +1562,13 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                   className="flex items-center justify-between py-2 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
+                    <p className="text-[11px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
                       {car.make} {car.model}
                     </p>
                     <p className="text-[10px] text-[#6B7280]">{car.category}</p>
                   </div>
                   <span className="text-[11px] font-mono font-semibold text-[#F8B4D9] ml-2">
-                    {formatPriceShort(car.currentBid)}
+                    {formatPriceForRegion(car.currentBid, selectedRegion)}
                   </span>
                 </Link>
               ))}
@@ -1540,8 +1591,8 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                   <p className="text-[10px] text-[#9CA3AF] truncate">{sale.title}</p>
                   <p className="text-[9px] text-[#6B7280]">{sale.date}</p>
                 </div>
-                <span className="text-[11px] font-mono font-semibold text-[#F2F0E9] ml-2">
-                  {formatPriceShort(sale.price)}
+                <span className="text-[11px] font-mono font-semibold text-[#FFFCF7] ml-2">
+                  {formatPriceForRegion(sale.price, selectedRegion)}
                 </span>
               </div>
             ))}
@@ -1552,7 +1603,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       {/* Ask Button */}
       <div className="shrink-0 px-5 py-3 border-t border-white/5">
         <a
-          href={`https://wa.me/491726690998?text=${encodeURIComponent(
+          href={`https://wa.me/573208492641?text=${encodeURIComponent(
             `Hola, estoy viendo el ${auction.make} ${auction.model} en Monza Lab. Me gustaría conocer el potencial de inversión y valoración actual de este vehículo.`
           )}`}
           target="_blank"
@@ -1571,136 +1622,335 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 // ─── BRAND CONTEXT PANEL ───
 function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Brand[] }) {
   const t = useTranslations("dashboard")
+  const { selectedRegion, effectiveRegion } = useRegion()
 
   const whyBuy = mockWhyBuy[brand.name] || mockWhyBuy["default"]
   const priceHistory = mockPriceHistory[brand.name] || mockPriceHistory["default"]
+  const regionalVal = mockRegionalValuation[brand.name] || mockRegionalValuation["default"]
+  const marketPulse = mockMarketPulse[brand.name] || mockMarketPulse["default"]
+  const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
+  const topModels = mockTopModels[brand.name] || mockTopModels["default"]
+  const depth = mockMarketDepth[brand.name] || mockMarketDepth["default"]
+
+  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
+  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
 
   // Similar brands (same grade tier)
   const similarBrands = allBrands
     .filter(b => b.topGrade === brand.topGrade && b.slug !== brand.slug)
-    .slice(0, 4)
+    .slice(0, 3)
+
+  // Grade color helper
+  const gradeColor = (g: string) => {
+    switch (g) {
+      case "AAA": case "EXCELLENT": return "text-emerald-400"
+      case "AA": case "GOOD": return "text-blue-400"
+      case "A": case "FAIR": return "text-amber-400"
+      default: return "text-[#6B7280]"
+    }
+  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Investment Thesis */}
-      <div className="px-5 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="size-4 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-            {t("brandContext.overview")}
-          </span>
-        </div>
-        <p className="text-[12px] leading-relaxed text-[#9CA3AF]">
-          {whyBuy}
-        </p>
-      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
 
-      {/* 5-Year Appreciation */}
-      <div className="px-5 py-3 border-b border-white/5">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.fiveYearTrend")}
-            </span>
-          </div>
-          <span className="text-[11px] font-mono font-semibold text-positive">
-            {brand.avgTrend}
-          </span>
-        </div>
-        <MiniSparkline data={priceHistory} color="#34D399" />
-      </div>
-
-      {/* Collection Stats */}
-      <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
-        <div className="flex items-center gap-2 mb-3">
-          <Car className="size-4 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-            {t("brandContext.collectionStats")}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("brandContext.vehicles")}</span>
-            <p className="text-[18px] font-bold text-[#F2F0E9]">{brand.carCount}</p>
-          </div>
-          <div>
-            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("brandContext.topGrade")}</span>
-            <p className={`text-[18px] font-bold ${
-              brand.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
-            }`}>{brand.topGrade}</p>
-          </div>
-          <div>
-            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("brandContext.minPrice")}</span>
-            <p className="text-[14px] font-mono text-[#F2F0E9]">{formatPriceShort(brand.priceMin)}</p>
-          </div>
-          <div>
-            <span className="text-[9px] text-[#6B7280] uppercase tracking-wide">{t("brandContext.maxPrice")}</span>
-            <p className="text-[14px] font-mono text-[#F2F0E9]">{formatPriceShort(brand.priceMax)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Categories */}
-      {brand.categories.length > 0 && (
-        <div className="px-5 py-3 border-b border-white/5">
+        {/* 1. BRAND OVERVIEW */}
+        <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-2">
-            <Award className="size-4 text-[#F8B4D9]" />
+            <Shield className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.categories")}
+              {t("brandContext.overview")}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {brand.categories.map((cat) => (
-              <span
-                key={cat}
-                className="px-3 py-1.5 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]"
-              >
-                {cat}
-              </span>
+          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+            {whyBuy}
+          </p>
+        </div>
+
+        {/* 2. PRICE SUMMARY */}
+        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <p className={`text-[16px] font-bold ${
+                brand.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+              }`}>{brand.topGrade}</p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.minPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(brand.priceMin, selectedRegion)}</p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(brand.priceMax, selectedRegion)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. VALUATION BY MARKET — improved readability */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Valuation by Market
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            {(["US", "UK", "EU", "JP"] as const).map((region) => {
+              const val = regionalVal[region]
+              if (!val) return null
+              const pctChange = Math.round(((val.current - val.start) / val.start) * 100)
+              const maxCurrent = Math.max(...Object.values(regionalVal).map(v => v.current))
+              const barWidth = (val.current / maxCurrent) * 100
+              const isSelected = region === effectiveRegion
+              return (
+                <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-2 px-2 py-1.5" : ""}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px]">{REGION_FLAGS[region]}</span>
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{REGION_LABELS[region]}</span>
+                      {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>}
+                    </div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
+                        {formatRegionalVal(val.start, val.symbol)}
+                      </span>
+                      <span className="text-[9px] text-[#6B7280]">→</span>
+                      <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                        {formatRegionalVal(val.current, val.symbol)}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-positive">+{pctChange}%</span>
+                    </div>
+                  </div>
+                  {region !== effectiveRegion && (
+                    <div className="flex justify-end mb-1">
+                      <span className="text-[9px] font-mono text-[#6B7280]">
+                        {formatUsdEquiv(val.usdCurrent)} USD
+                      </span>
+                    </div>
+                  )}
+                  <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70" : "bg-gradient-to-r from-[#F8B4D9]/25 to-[#F8B4D9]/50"}`}
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 4. PERFORMANCE VS BENCHMARKS */}
+        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              5-Year Return Comparison
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            {/* Brand itself */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-semibold text-[#F8B4D9]">{brand.name}</span>
+                <span className="text-[11px] font-mono font-bold text-positive">+{brand5yReturn}%</span>
+              </div>
+              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
+              </div>
+            </div>
+            {/* Benchmarks */}
+            {BENCHMARKS.map((b) => (
+              <div key={b.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
+                  <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
+                </div>
+                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                  <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
+                </div>
+              </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Similar Brands */}
-      {similarBrands.length > 0 && (
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 py-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Globe className="size-4 text-[#F8B4D9]" />
+        {/* 5. TOP MODELS */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Car className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.similarBrands")}
+              Top Models
             </span>
           </div>
           <div className="space-y-2">
-            {similarBrands.map((b) => (
-              <Link
-                key={b.slug}
-                href={`/cars/${b.slug}`}
-                className="flex items-center justify-between py-2 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group"
-              >
+            {topModels.map((model) => (
+              <div key={model.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-[#F2F0E9] truncate group-hover:text-[#F8B4D9] transition-colors">
-                    {b.name}
-                  </p>
-                  <p className="text-[10px] text-[#6B7280]">{t("brandCard.vehiclesCount", { count: b.carCount })}</p>
+                  <span className="text-[11px] font-medium text-[#FFFCF7]">{model.name}</span>
                 </div>
-                <span className="text-[11px] font-mono font-semibold text-[#F8B4D9] ml-2">
-                  {b.topGrade}
-                </span>
-              </Link>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                    {formatPriceForRegion(model.avgPrice, selectedRegion)}
+                  </span>
+                  <span className={`text-[9px] font-bold ${gradeColor(model.grade)}`}>
+                    {model.grade}
+                  </span>
+                  <span className="text-[9px] font-mono text-positive w-8 text-right">
+                    {model.trend}
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* CTA */}
-      <div className="shrink-0 px-5 py-4 border-t border-white/5">
+        {/* 6. YEAR-BY-YEAR TREND */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.fiveYearTrend")}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono font-semibold text-positive">
+              {brand.avgTrend}
+            </span>
+          </div>
+          <YearByYearChart data={priceHistory} />
+        </div>
+
+        {/* 7. RECENT SALES */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Recent Sales
+            </span>
+          </div>
+          <div className="space-y-2">
+            {marketPulse.map((sale, i) => (
+              <div key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
+                  <p className="text-[9px] text-[#6B7280] mt-0.5">{sale.platform} · {sale.date}</p>
+                </div>
+                <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                  {formatPriceForRegion(sale.price, selectedRegion)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 8. LIQUIDITY & MARKET DEPTH */}
+        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Liquidity & Market Depth
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Auctions / Year</span>
+              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Avg Days to Sell</span>
+              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Sell-Through Rate</span>
+              <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
+            </div>
+            {/* Demand score visual */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] text-[#9CA3AF]">Demand Score</span>
+                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
+              </div>
+              <div className="flex gap-1">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-[6px] flex-1 rounded-sm ${
+                      i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 9. OWNERSHIP COST */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Annual Ownership Cost
+            </span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: "Insurance", value: ownershipCost.insurance },
+              { label: "Storage", value: ownershipCost.storage },
+              { label: "Maintenance", value: ownershipCost.maintenance },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
+                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
+              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
+              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 10. SIMILAR BRANDS */}
+        {similarBrands.length > 0 && (
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.similarBrands")}
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {similarBrands.map((b) => (
+                <Link
+                  key={b.slug}
+                  href={`/cars/${b.slug}`}
+                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors px-1 -mx-1 group"
+                >
+                  <span className="text-[11px] font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+                    {b.name}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#6B7280]">
+                      {formatPriceForRegion(b.priceMin, selectedRegion)}–{formatPriceForRegion(b.priceMax, selectedRegion)}
+                    </span>
+                    <span className={`text-[9px] font-bold ${
+                      b.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                    }`}>{b.topGrade}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CTA — pinned bottom */}
+      <div className="shrink-0 px-5 py-3 border-t border-white/5">
         <Link
           href={`/cars/${brand.slug}`}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-3 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#050505] hover:bg-[#fce4ec] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
         >
-          <Car className="size-4" />
           {t("brandContext.explore", { brand: brand.name })}
           <ChevronRight className="size-4" />
         </Link>
@@ -1712,11 +1962,24 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
 // ─── MAIN COMPONENT ───
 export function DashboardClient({ auctions }: { auctions: Auction[] }) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const { selectedRegion } = useRegion()
+  const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
-  const mobileRef = useRef<HTMLDivElement>(null)
 
-  // Aggregate auctions into brands
-  const brands = useMemo(() => aggregateBrands(auctions), [auctions])
+  // Filter auctions by region FIRST, then aggregate
+  const filteredAuctions = useMemo(() => {
+    if (!selectedRegion) return auctions
+    return auctions.filter(a => a.region === selectedRegion)
+  }, [auctions, selectedRegion])
+
+  // Aggregate filtered auctions into brands
+  const brands = useMemo(() => aggregateBrands(filteredAuctions), [filteredAuctions])
+
+  // Reset index when region changes
+  useEffect(() => {
+    setCurrentIndex(0)
+    feedRef.current?.scrollTo({ top: 0 })
+  }, [selectedRegion])
 
   const selectedBrand = brands[currentIndex] || brands[0]
 
@@ -1732,24 +1995,6 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
       const scrollTop = container.scrollTop
       const slideHeight = getCardHeight()
       const newIndex = Math.round(scrollTop / slideHeight)
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < brands.length) {
-        setCurrentIndex(newIndex)
-      }
-    }
-
-    container.addEventListener("scroll", handleScroll, { passive: true })
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [currentIndex, brands.length])
-
-  // Handle horizontal swipe scroll for mobile
-  useEffect(() => {
-    const container = mobileRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      const scrollLeft = container.scrollLeft
-      const cardWidth = container.offsetWidth
-      const newIndex = Math.round(scrollLeft / cardWidth)
       if (newIndex !== currentIndex && newIndex >= 0 && newIndex < brands.length) {
         setCurrentIndex(newIndex)
       }
@@ -1780,44 +2025,57 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
 
   return (
     <>
-      {/* ═══ MOBILE LAYOUT ═══ */}
-      <div className="md:hidden h-[100dvh] w-full overflow-hidden">
-        <div
-          ref={mobileRef}
-          className="h-full w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
-        >
-          {brands.map((brand) => (
-            <div key={brand.slug} className="w-full h-full shrink-0 snap-center">
-              <MobileBrandView brand={brand} />
-            </div>
-          ))}
-        </div>
+      {/* ═══ MOBILE LAYOUT — Vertical Scrollable Feed ═══ */}
+      <div className="md:hidden min-h-[100dvh] w-full bg-[#0b0b10] pt-14">
+        {/* Sticky region pills */}
+        <MobileRegionPills />
 
-        {/* Swipe indicator dots */}
-        <div className="fixed bottom-[88px] left-0 right-0 flex justify-center gap-1.5 z-10">
-          {brands.slice(0, 10).map((_, i) => (
-            <div
-              key={i}
-              className={`size-1.5 rounded-full transition-all duration-200 ${
-                i === currentIndex ? "bg-[#F8B4D9] w-4" : "bg-white/20"
-              }`}
-            />
-          ))}
-          {brands.length > 10 && (
-            <span className="text-[10px] text-white/30 ml-1">+{brands.length - 10}</span>
+        {/* Scrollable vertical feed */}
+        <div className="pb-24">
+          {brands.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[60dvh] px-8 text-center">
+              <Globe className="size-8 text-[#4B5563] mb-3" />
+              <p className="text-[14px] text-[#6B7280]">{t("mobileFeed.noBrands")}</p>
+            </div>
+          ) : (
+            <>
+              {/* Hero: first brand */}
+              <MobileHeroBrand brand={brands[0]} />
+
+              {/* Section: All Brands */}
+              {brands.length > 1 && (
+                <div className="mt-2">
+                  <div className="px-4 py-3 flex items-center justify-between">
+                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                      {t("mobileFeed.brands")}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#6B7280]">{brands.length}</span>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {brands.slice(1).map((brand) => (
+                      <MobileBrandRow key={brand.slug} brand={brand} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Section: Live Auctions */}
+              <MobileLiveAuctions auctions={filteredAuctions} />
+            </>
           )}
         </div>
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#050505] overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
         {/* 3-COLUMN LAYOUT */}
-        <div className="flex-1 grid grid-cols-[22%_1fr_28%] overflow-hidden">
+        <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
           <DiscoverySidebar
-            auctions={auctions}
+            auctions={filteredAuctions}
             brands={brands}
             onSelectBrand={scrollToBrand}
+            activeBrandSlug={selectedBrand?.slug}
           />
 
           {/* COLUMN B: BRAND FEED (50%) */}
@@ -1831,7 +2089,7 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
           </div>
 
           {/* COLUMN C: CONTEXT PANEL (28%) */}
-          <div className="h-full border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
+          <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
             <BrandContextPanel brand={selectedBrand} allBrands={brands} />
           </div>
         </div>

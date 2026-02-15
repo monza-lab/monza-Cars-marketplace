@@ -59,12 +59,12 @@
      ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Backgrounds */
-  --color-obsidian: #050505;
+  --color-obsidian: #0b0b10;
   --color-obsidian-card: #0F1012;
   --color-obsidian-surface: rgba(15, 16, 18, 0.9);
 
   /* Typography */
-  --color-bone: #F2F0E9;
+  --color-bone: #FFFCF7;
   --color-cool-gray: #9CA3AF;
   --color-deep-gray: #4B5563;
 
@@ -77,8 +77,8 @@
   --color-warning: #FBBF24;
 
   /* Legacy aliases for compatibility */
-  --color-monza-cream: #F2F0E9;
-  --color-monza-dark: #050505;
+  --color-monza-cream: #FFFCF7;
+  --color-monza-dark: #0b0b10;
   --color-monza-surface: rgba(15, 16, 18, 0.9);
 }
 
@@ -90,20 +90,20 @@
   --radius: 0.625rem;
 
   /* ─── BACKGROUNDS (Depth & Texture) ─── */
-  --background: #050505;
-  --foreground: #F2F0E9;
+  --background: #0b0b10;
+  --foreground: #FFFCF7;
 
   /* Cards — cool-toned charcoal */
   --card: #0F1012;
-  --card-foreground: #F2F0E9;
+  --card-foreground: #FFFCF7;
 
   /* Popovers / dropdowns */
   --popover: rgba(15, 16, 18, 0.98);
-  --popover-foreground: #F2F0E9;
+  --popover-foreground: #FFFCF7;
 
   /* ─── PRIMARY: MONZA PINK ─── */
   --primary: #F8B4D9;
-  --primary-foreground: #050505;
+  --primary-foreground: #0b0b10;
 
   /* ─── SECONDARY ─── */
   --secondary: rgba(248, 180, 217, 0.06);
@@ -115,7 +115,7 @@
 
   /* ─── ACCENT ─── */
   --accent: rgba(248, 180, 217, 0.08);
-  --accent-foreground: #F2F0E9;
+  --accent-foreground: #FFFCF7;
 
   /* ─── DESTRUCTIVE ─── */
   --destructive: #FB923C;
@@ -134,27 +134,27 @@
 
   /* ─── SIDEBAR ─── */
   --sidebar: #0A0A0C;
-  --sidebar-foreground: #F2F0E9;
+  --sidebar-foreground: #FFFCF7;
   --sidebar-primary: #F8B4D9;
-  --sidebar-primary-foreground: #050505;
+  --sidebar-primary-foreground: #0b0b10;
   --sidebar-accent: rgba(248, 180, 217, 0.08);
-  --sidebar-accent-foreground: #F2F0E9;
+  --sidebar-accent-foreground: #FFFCF7;
   --sidebar-border: rgba(255, 255, 255, 0.05);
   --sidebar-ring: rgba(248, 180, 217, 0.3);
 }
 
 .dark {
   /* ─── BACKGROUNDS ─── */
-  --background: #050505;
-  --foreground: #F2F0E9;
+  --background: #0b0b10;
+  --foreground: #FFFCF7;
   --card: #0F1012;
-  --card-foreground: #F2F0E9;
+  --card-foreground: #FFFCF7;
   --popover: rgba(15, 16, 18, 0.98);
-  --popover-foreground: #F2F0E9;
+  --popover-foreground: #FFFCF7;
 
   /* ─── PRIMARY ─── */
   --primary: #F8B4D9;
-  --primary-foreground: #050505;
+  --primary-foreground: #0b0b10;
 
   /* ─── SECONDARY ─── */
   --secondary: rgba(248, 180, 217, 0.06);
@@ -166,7 +166,7 @@
 
   /* ─── ACCENT ─── */
   --accent: rgba(248, 180, 217, 0.08);
-  --accent-foreground: #F2F0E9;
+  --accent-foreground: #FFFCF7;
 
   /* ─── DESTRUCTIVE ─── */
   --destructive: #FB923C;
@@ -185,11 +185,11 @@
 
   /* ─── SIDEBAR ─── */
   --sidebar: #0A0A0C;
-  --sidebar-foreground: #F2F0E9;
+  --sidebar-foreground: #FFFCF7;
   --sidebar-primary: #F8B4D9;
-  --sidebar-primary-foreground: #050505;
+  --sidebar-primary-foreground: #0b0b10;
   --sidebar-accent: rgba(248, 180, 217, 0.08);
-  --sidebar-accent-foreground: #F2F0E9;
+  --sidebar-accent-foreground: #FFFCF7;
   --sidebar-border: rgba(255, 255, 255, 0.05);
   --sidebar-ring: rgba(248, 180, 217, 0.3);
 }
@@ -216,12 +216,12 @@
   /* Selection highlight in pink */
   ::selection {
     background: rgba(248, 180, 217, 0.3);
-    color: #F2F0E9;
+    color: #FFFCF7;
   }
 
   ::-moz-selection {
     background: rgba(248, 180, 217, 0.3);
-    color: #F2F0E9;
+    color: #FFFCF7;
   }
 
   /* Custom scrollbar — thin, dark */
@@ -259,7 +259,7 @@
 
   /* Primary text — Bone (for headings) */
   .text-bone {
-    color: #F2F0E9;
+    color: #FFFCF7;
   }
 
   /* Secondary text — Cool Gray (for body) */
@@ -319,7 +319,7 @@
     background: linear-gradient(
       90deg,
       #F8B4D9 0%,
-      #fce4ec 30%,
+      #f4cbde 30%,
       #F8B4D9 60%,
       #e991bf 80%,
       #F8B4D9 100%
@@ -407,7 +407,7 @@
 
   /* ─── OBSIDIAN BACKGROUND UTILITIES ─── */
   .bg-obsidian {
-    background-color: #050505;
+    background-color: #0b0b10;
   }
   .bg-obsidian-card {
     background-color: #0F1012;

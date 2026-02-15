@@ -195,7 +195,7 @@ function MobileCarOracleOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] bg-[#050505]/98 backdrop-blur-xl"
+          className="fixed inset-0 z-[70] bg-[#0b0b10]/98 backdrop-blur-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
@@ -224,7 +224,7 @@ function MobileCarOracleOverlay({
           {/* Query */}
           <div className="px-5 pt-3 pb-2">
             <p className="text-[12px] text-[#4B5563]">
-              {t("oracle.youAsked")} <span className="text-[#F2F0E9]">"{query}"</span>
+              {t("oracle.youAsked")} <span className="text-[#FFFCF7]">"{query}"</span>
             </p>
           </div>
 
@@ -243,7 +243,7 @@ function MobileCarOracleOverlay({
                 </div>
               </div>
             ) : (
-              <div className="text-[15px] leading-relaxed text-[#F2F0E9] whitespace-pre-wrap">
+              <div className="text-[15px] leading-relaxed text-[#FFFCF7] whitespace-pre-wrap">
                 {displayedText.split("\n").map((line, i) => {
                   const parts = line.split(/(\*\*[^*]+\*\*)/g)
                   return (
@@ -267,7 +267,7 @@ function MobileCarOracleOverlay({
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent pt-16"
+                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10] to-transparent pt-16"
               >
                 <div className="flex flex-wrap gap-2">
                   {chips.map((chip, i) => (
@@ -343,7 +343,7 @@ export function MobileCarCTA({ carTitle, carPrice, make }: MobileCarCTAProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="bg-[#0a0a0f]/98 backdrop-blur-xl border-t border-white/10 p-4 pb-safe"
+              className="bg-[#0b0b10]/98 backdrop-blur-xl border-t border-white/10 p-4 pb-safe"
             >
               {/* Quick Prompts */}
               <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 -mx-1 px-1">
@@ -370,12 +370,12 @@ export function MobileCarCTA({ carTitle, carPrice, make }: MobileCarCTAProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("carDetail.askAbout", { make })}
-                  className="w-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] rounded-2xl pl-5 pr-14 py-4 text-[15px] text-[#F2F0E9] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
+                  className="w-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] rounded-2xl pl-5 pr-14 py-4 text-[15px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
                 />
                 <button
                   type="submit"
                   disabled={!query.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-[#F8B4D9] text-[#050505] disabled:opacity-50 disabled:bg-white/10 disabled:text-[#4B5563]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-[#F8B4D9] text-[#0b0b10] disabled:opacity-50 disabled:bg-white/10 disabled:text-[#4B5563]"
                 >
                   <ArrowRight className="size-5" />
                 </button>
@@ -393,11 +393,11 @@ export function MobileCarCTA({ carTitle, carPrice, make }: MobileCarCTAProps) {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 pb-safe bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent"
+              className="p-4 pb-safe bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/95 to-transparent"
             >
               <button
                 onClick={() => setShowInput(true)}
-                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#F8B4D9] text-[#050505] font-semibold text-[14px] shadow-lg shadow-[#F8B4D9]/20 active:scale-[0.98] transition-transform"
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[14px] shadow-lg shadow-[#F8B4D9]/20 active:scale-[0.98] transition-transform"
               >
                 <Sparkles className="size-5" />
                 {t("carDetail.askAnything")}
