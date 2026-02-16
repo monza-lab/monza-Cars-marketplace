@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { CURATED_CARS } from "@/lib/curatedCars"
-import { fetchLiveListingById, fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
+import { fetchLiveListingById, fetchLiveListingsAsCollectorCars, fetchSoldListingsForMake } from "@/lib/supabaseLiveListings"
 import { getMarketDataForModel, getMarketDataForMake, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { ReportClient } from "./ReportClient"
 
@@ -62,15 +62,18 @@ export default async function ReportPage({ params }: ReportPageProps) {
     similarCars = [...similarCars, ...liveSimilar]
   }
 
-  // Fetch real data from Prisma in parallel
-  const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, dbSoldHistory, dbAnalyses] = await Promise.all([
+  // Fetch real data in parallel (Supabase for sold history, Prisma for analysis)
+  const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, prismaSoldHistory, dbAnalyses, supabaseSoldHistory] = await Promise.all([
     getMarketDataForModel(car.make, car.model),
     getMarketDataForMake(car.make),
     getComparablesForModel(car.make, car.model),
     getAnalysisForCar(car.make, car.model, car.year),
     getSoldAuctionsForMake(car.make),
     getAnalysesForMake(car.make),
+    fetchSoldListingsForMake(car.make),
   ])
+
+  const dbSoldHistory = supabaseSoldHistory.length > 0 ? supabaseSoldHistory : prismaSoldHistory
 
   return (
     <Suspense

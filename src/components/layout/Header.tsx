@@ -600,6 +600,16 @@ function InlineLanguageSwitcher() {
   )
 }
 
+// ─── TYPING PLACEHOLDER PHRASES ───
+const TYPING_PHRASES = [
+  "Ask Anything About The Automotive Market",
+  "What's a 1995 Porsche 993 worth?",
+  "Show me JDM cars under $100K",
+  "Ferrari F40 investment outlook",
+  "Best appreciating classics right now",
+  "Compare GT3 RS vs GT2 RS",
+]
+
 // ─── MAIN HEADER COMPONENT ───
 export function Header() {
   const t = useTranslations();
@@ -610,6 +620,44 @@ export function Header() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Typing animation for placeholder
+  const [typedPlaceholder, setTypedPlaceholder] = useState("")
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [charIndex, setCharIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    // Don't animate if user is focused or typing
+    if (isFocused || query) return
+
+    const currentPhrase = TYPING_PHRASES[phraseIndex]
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing forward
+        if (charIndex < currentPhrase.length) {
+          setTypedPlaceholder(currentPhrase.slice(0, charIndex + 1))
+          setCharIndex(charIndex + 1)
+        } else {
+          // Pause at end, then start deleting
+          setTimeout(() => setIsDeleting(true), 2000)
+        }
+      } else {
+        // Deleting
+        if (charIndex > 0) {
+          setTypedPlaceholder(currentPhrase.slice(0, charIndex - 1))
+          setCharIndex(charIndex - 1)
+        } else {
+          // Move to next phrase
+          setIsDeleting(false)
+          setPhraseIndex((phraseIndex + 1) % TYPING_PHRASES.length)
+        }
+      }
+    }, isDeleting ? 25 : 55)
+
+    return () => clearTimeout(timeout)
+  }, [charIndex, isDeleting, phraseIndex, isFocused, query])
 
   // Auth state
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -653,6 +701,18 @@ export function Header() {
           {/* Center: Search Input (hidden on mobile) */}
           <form onSubmit={handleSubmit} className="hidden md:block flex-1 max-w-xl">
             <div className="relative flex items-center">
+              {/* Typing overlay when not focused and no query */}
+              {!isFocused && !query && (
+                <div
+                  className="absolute inset-0 flex items-center pointer-events-none select-none"
+                  onClick={() => inputRef.current?.focus()}
+                >
+                  <span className="text-[15px] font-light text-[#6B7280] tracking-tight">
+                    {typedPlaceholder}
+                  </span>
+                  <span className="inline-block w-[2px] h-[18px] bg-[#F8B4D9] ml-[1px] animate-blink" />
+                </div>
+              )}
               <input
                 ref={inputRef}
                 type="text"
@@ -660,7 +720,7 @@ export function Header() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder="Ask Anything About The Automotive Market"
+                placeholder={isFocused ? "Ask Anything About The Automotive Market" : ""}
                 className="w-full bg-transparent text-[15px] font-light text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none tracking-tight"
               />
               {query.trim() && (

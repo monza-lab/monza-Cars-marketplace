@@ -7,6 +7,19 @@ import { routing } from './i18n/routing'
 const intlMiddleware = createIntlMiddleware(routing)
 
 export async function proxy(request: NextRequest) {
+  // Skip intl middleware for auth callback routes
+  const { pathname } = request.nextUrl
+  if (pathname.includes('/auth/callback')) {
+    // Strip locale prefix so /es/auth/callback → /auth/callback
+    const localeMatch = pathname.match(/^\/(en|es|de|ja)(\/auth\/callback.*)$/)
+    if (localeMatch) {
+      const url = request.nextUrl.clone()
+      url.pathname = localeMatch[2]
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   // First, handle i18n routing
   const intlResponse = intlMiddleware(request)
 
