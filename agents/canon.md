@@ -1,505 +1,328 @@
-# Project Canon: Historical Data Collection & Status Detection
+# Project Canon: Ferrari Historical Sold Listings (12-Month) Integration
 
 ## Prime Directive
+`agents/canon.md` is the sole source of truth for implementing Ferrari sold-history integration from Supabase `listings` into current live Ferrari pricing flows with zero UI redesign.
 
-This file (`agents/canon.md`) is the **sole source of truth** for the historical data collection and status detection feature. All implementation decisions, data contracts, and architectural constraints are documented here.
+## Non-Generic Engineering Position (Final)
+Rejected generic option: adding a new parallel UI page and a new client-side Supabase fetch path.
 
----
+Chosen architecture: preserve the existing auction detail rendering path and inject Ferrari historical sold series behind server-owned API boundaries already in use by the UI (`/api/auctions/[id]` and `/api/listings/[id]/price-history`). This minimizes file spread, preserves visual behavior, and keeps historical logic localized in one feature slice.
 
-## Project Summary
+## Grounded Review of Existing Code (Binding Context)
+- `PriceChart` already expects `PriceHistoryEntry[]` (`id`, `bid`, `timestamp`) and gracefully handles empty arrays: `src/components/auction/PriceChart.tsx`.
+- `AuctionDetailClient` currently fetches detail data from `/api/auctions/[id]`, then performs a second fetch for live IDs to `/api/listings/[id]/price-history`: `src/app/[locale]/auctions/[id]/AuctionDetailClient.tsx`.
+- Live Ferrari detail records are sourced from Supabase via `fetchLiveListingById`: `src/app/api/auctions/[id]/route.ts`, `src/lib/supabaseLiveListings.ts`.
+- Current Supabase listing status vocabulary in active flows is `active`, `sold`, `unsold`, `delisted`; this is the authoritative filter basis.
+- `ComparableSales` exists but is not currently mounted directly; comparable display currently comes from `analysis.comparableSales` in auction detail modules.
 
-Extend the existing auction scraper system to:
-1. **Detect auction status** (SOLD vs ACTIVE) from HTML during live scraping
-2. **Automatically backfill historical sales data** when new make/model combinations are discovered
-3. Enable comparative market analysis by building historical price baselines
+## Locality Budget (Hard Envelope)
+Implementation envelope: `{files: 7, LOC/file: 40-220, deps: [zod]}`
 
-**Anti-Generic Stance:** This is not a generic web scraper. It is a specialized automotive market intelligence tool with domain-specific status detection (sold badges, winning bid patterns) and intelligent historical backfill that respects rate limits while maximizing data coverage.
+- Max touched files: 7
+- Max LOC per touched file: 220 target, 300 hard cap
+- New dependency budget: `zod` only
+- No UI markup/styling redesign
 
----
+## SECTION A: LOGIC AND BEHAVIOR
 
-## Architecture Overview
+### A1. Authentication and Authorization Schema
+- Auth method: none for end-user read; server-owned Supabase key for backend query.
+- User model file location: existing auth profile remains `src/lib/auth/AuthProvider.tsx` (unchanged).
+- Permission enforcement point: inline route guard + schema validator in feature service.
+- Permission check pattern:
 
-### Vertical Slice Organization
+```ts
+if (normalizedMake !== "ferrari") {
+  return { status: 200, data: [] };
+}
 
-```
-src/lib/scrapers/
-├── bringATrailer.ts          # Modified: Status detection added
-├── carsAndBids.ts            # Modified: Status detection added  
-├── collectingCars.ts         # Modified: Status detection added
-├── index.ts                  # Modified: Historical trigger integration
-└── historical/               # NEW: Historical scraping vertical slice
-    ├── baHistorical.ts       # NEW: Historical BaT scraper (~180 LOC)
-    └── modelTracker.ts       # NEW: Model backfill state management (~100 LOC)
-
-src/app/api/cron/route.ts     # Modified: Historical backfill trigger
-```
-
-### Data Flow
-
-```
-Cron Trigger
-    │
-    ▼
-┌─────────────────────┐
-│  scrapeAll()        │  (Existing - Live scraping)
-│  - Detect status    │  (NEW: Dynamic SOLD/ACTIVE)
-│  - Identify new     │  (NEW: Model tracking)
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│  triggerHistorical  │  (NEW)
-│  - Queue new models │
-│  - Respect delays   │
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐
-│  baHistorical.ts    │  (NEW)
-│  - Search BaT sold  │
-│  - Parse 12 months  │
-│  - Store historical │
-└─────────┬───────────┘
-          │
-          ▼
-     Database
-  (Auction + PriceHistory)
-```
-
----
-
-## Locality Budget
-
-| Metric | Budget | Rationale |
-|--------|--------|-----------|
-| **Total new files** | 2 | Feature-local vertical slice |
-| **Modified files** | 3 | Minimal touch points to existing code |
-| **Max LOC per file** | 200 | Single-purpose, focused modules |
-| **New dependencies** | 0 | Use existing Cheerio, Prisma, fetch |
-| **Total new LOC** | ~350 | Concise, explicit implementation |
-
----
-
-## SECTION A: LOGIC & BEHAVIOR (Runtime Decisions)
-
-### A1. Request Flow & State Management
-
-**Entry Point:**
-- Cron job at `GET /api/cron` triggered by scheduler
-- Invokes `scrapeAll()` followed by `triggerHistoricalBackfill()`
-
-**Request Lifecycle:**
-```
-1. Auth check (CRON_SECRET validation)
-2. Live scrape: validate-input → fetch-HTML → detect-status → normalize → store
-3. Model tracking: identify-new-make/model combinations
-4. Historical backfill: build-search-URL → paginate → parse-sold → store-historical
-5. Aggregation: update-market-data statistics
-```
-
-**State Storage:**
-- **Make/Model backfill tracking:** Database table `ModelBackfillState` (see Data Contracts)
-- **Auction records:** Existing `Auction` table
-- **Price history:** Existing `PriceHistory` table
-- **No in-memory state:** All state persisted to PostgreSQL
-
-**Transaction Boundaries:**
-- Per-auction upserts: Individual, non-blocking (continue on error)
-- Historical batch: Per-model, wrapped in try/catch with partial failure tolerance
-
-### A2. Error Handling & Recovery
-
-**Error Envelope Format:**
-```typescript
-interface ScraperError {
-  stage: 'live_scrape' | 'historical_scrape' | 'status_detection' | 'model_tracking' | 'database';
-  action: 'start' | 'fetch' | 'parse' | 'store' | 'complete' | 'error';
-  context?: {
-    url?: string;
-    make?: string;
-    model?: string;
-    externalId?: string;
+if (!requestInput.success) {
+  return {
+    status: 400,
+    code: "INVALID_INPUT",
+    message: "Invalid Ferrari historical query",
   };
-  error: string;
-  timestamp: string; // ISO8601
-  retryable: boolean;
 }
 ```
 
-**Validation:**
-- Location: Boundary validation at scraper entry points
-- Library: TypeScript types + runtime checks (no new validation library)
-- Pattern: Explicit null checks and type guards
+### A2. Request Flow and State Management
+- Entry points:
+  - `GET /api/listings/[id]/price-history` for chart feed.
+  - `GET /api/auctions/[id]` for detail payload enrichment.
+- Request lifecycle order:
+  `parse route params -> resolve listing/make/model -> zod validate input -> query listings sold-only window -> zod validate rows -> table-state checks -> map to UI contracts -> respond`.
+- State storage: Supabase Postgres `public.listings`.
+- State location: `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` server-side.
+- Transaction boundaries: none (single bounded read per request).
 
-**Retry Strategy:**
-- Network errors: 3 attempts with exponential backoff (2^attempt * 1000ms)
-- Rate limit (429): Wait 60s, retry once, then abort batch
-- Parse errors: No retry, log and skip
+### A3. Error Handling and Recovery
+- Error envelope format:
 
-**Fallback Behavior:**
-- Critical failure (DB connection): Log error, continue with next auction
-- Partial historical failure: Log, mark model as failed (not backfilled), continue
-- Complete failure: Return error summary in cron response, don't crash
+```ts
+export type ErrorResponse = {
+  status: number;
+  code: "INVALID_INPUT" | "UPSTREAM_ERROR" | "INTERNAL_ERROR";
+  message: string;
+  details?: Record<string, unknown>;
+  requestId?: string;
+};
+```
 
-### A3. Data Contracts & Schemas
+- Validation library: `zod`.
+- Validation location: both boundary and output shaping.
+- Retry strategy: none in request path; fail-fast and return safe empty payload.
+- Fallback behavior on critical failure: return `200` with empty historical series so live auction view does not break.
 
-**Schema Definition Tool:** TypeScript interfaces (co-located with feature code)
+### A4. Data Contracts and Schemas
+- Schema definition tool: Zod.
+- Schema files location: `src/features/ferrari_history/contracts.ts` (feature-local).
+- Contract testing approach: schema tests + route integration tests.
+- Main schema examples:
 
-**HistoricalAuctionRecord Interface:**
-```typescript
-// src/lib/scrapers/historical/baHistorical.ts
-export interface HistoricalAuctionRecord {
-  externalId: string;           // BaT auction ID: "bat-{slug}"
-  source: 'bring_a_trailer';
-  status: 'SOLD';               // Historical are always sold
-  make: string;                 // Normalized
-  model: string;                // Normalized
-  variant: string | null;       // Normalized
-  year: number | null;
-  price: number | null;         // Final sold price
-  currency: string;             // Default 'USD'
-  mileage: number | null;
-  mileageUnit: string | null;
-  url: string;                  // Original BaT URL
-  imageUrl: string | null;
-  auctionDate: Date | null;     // When it sold
-  scrapedAt: Date;              // When we collected it
+```ts
+import { z } from "zod";
+
+export const FerrariHistoryInputSchema = z.object({
+  make: z.literal("ferrari"),
+  model: z.string().trim().min(1).max(80).regex(/^[A-Za-z0-9 .\-/]+$/),
+  months: z.literal(12).default(12),
+  limit: z.number().int().min(50).max(200).default(120),
+});
+
+export const FerrariSoldListingRowSchema = z.object({
+  id: z.string().min(1),
+  make: z.string().min(1),
+  model: z.string().min(1),
+  status: z.string(),
+  final_price: z.number().nullable(),
+  hammer_price: z.union([z.number(), z.string(), z.null()]),
+  end_time: z.string().nullable(),
+  sale_date: z.string().nullable(),
+  original_currency: z.string().nullable(),
+  source: z.string().nullable(),
+  year: z.number().nullable(),
+  mileage: z.number().nullable(),
+  location: z.string().nullable(),
+  source_url: z.string().nullable(),
+});
+```
+
+### A5. Critical User Journeys
+- Primary happy path:
+  `GET /api/auctions/live-<id> -> fetchLiveListingById() -> Ferrari history service(query listings sold-only 12m) -> response contains enriched priceHistory/comparables -> AuctionDetailClient renders existing PriceChart and comparables modules`.
+- First decision point:
+  branch at make check in server boundary (`make !== Ferrari` skips Ferrari history; `make === Ferrari` executes history query).
+- Failure recovery example:
+  on Supabase error or schema mismatch, respond with empty historical payload while preserving auction detail data.
+
+## Prioritized Table-State Checks (Mandatory, in order)
+1. Sold-state correctness: include definitive sold only (`status = sold` case-normalized), exclude active/in-progress states.
+2. Sold timestamp validity: `sold_at = end_time || sale_date`; discard rows with invalid/null sold timestamp.
+3. Sold price validity: `sold_price = final_price || hammer_price`; discard `<= 0`.
+4. Currency normalization: use `original_currency` when present, default to `USD`.
+5. Duplicate handling: dedupe by `id`, stable order by `sold_at asc`, tie-break `id asc`.
+6. Model normalization: exact normalized match; no fuzzy matching.
+
+## SECTION B: INTERFACE AND DESIGN
+
+### B1. Design System Foundation
+- Base system: existing Tailwind + current component library.
+- Why: feature is data integration only; UI redesign is explicitly out of scope.
+- Style file location: unchanged (`src/app/globals.css` + existing component classes).
+- Design tokens: unchanged.
+
+### B2. Distinctive Visual Language
+- Typography, palette, spacing, radius, and motion remain unchanged.
+- Canonical token snippet retained:
+
+```css
+:root {
+  --background: #0b0b10;
+  --foreground: #fffcf7;
 }
 ```
 
-**ModelBackfillState Interface:**
-```typescript
-// src/lib/scrapers/historical/modelTracker.ts
-export interface ModelBackfillState {
-  id: string;                   // CUID
-  make: string;
-  model: string;
-  status: 'pending' | 'backfilled' | 'failed';
-  backfilledAt: Date | null;
-  auctionCount: number;         // How many historical auctions collected
-  errorMessage: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+### B3. Component Architecture
+- Pattern: existing feature pages + component composition.
+- Existing component path references:
+  - `src/components/auction/PriceChart.tsx`
+  - `src/components/analysis/ComparableSales.tsx`
+  - `src/components/auction/AuctionCard.tsx`
+  - `src/components/layout/LiveTicker.tsx`
+  - `src/components/mobile/MobileCarCTA.tsx`
+  - `src/components/mobile/MobileBottomNav.tsx`
+- Prop validation: TypeScript in UI, Zod at server boundaries.
+- State management: existing `useState/useEffect` in `AuctionDetailClient` remains primary client state surface.
 
-**Status Detection Contract:**
-```typescript
-// Evidence-based status detection
-type AuctionStatus = 'ACTIVE' | 'SOLD';
+### B4. Responsive Strategy
+- Breakpoints: existing Tailwind breakpoints.
+- Layout approach: existing grid/flex composition.
+- Strategy: existing mobile-first behavior is preserved.
+- Minimum target size: preserve current touch target system (no UI edits in scope).
 
-interface StatusEvidence {
-  source: 'badge' | 'text' | 'bid_status';
-  selector: string;
-  content: string;
-}
-```
+### B5. Accessibility Baseline
+- Focus indicator style: keep existing `focus-visible` rules unchanged.
+- ARIA pattern: semantic-first, no additional ARIA inflation.
+- Keyboard navigation: all existing interactives remain keyboard-reachable.
+- Contrast target: maintain existing AA baseline.
 
-### A4. Critical User Journeys
+## SECTION C: ARCHITECTURE AND OPERATIONS
 
-**Primary Happy Path (Historical Backfill):**
-```
-1. GET /api/cron
-   → validate CRON_SECRET
-2. scrapeAll() completes
-   → 3 new Porsche 911 auctions found
-3. modelTracker.identifyNewModels()
-   → "Porsche/911" marked as new (not seen before)
-4. triggerHistoricalBackfill()
-   → fetch 12 months of sold Porsche 911s from BaT
-5. baHistorical.fetchHistoricalAuctions('Porsche', '911', 12)
-   → 47 historical auctions found
-6. For each: normalize → store in Auction (status='SOLD') → PriceHistory entry
-7. modelTracker.markBackfilled('Porsche', '911')
-   → Status updated, auctionCount=47
-8. Return: { success: true, historical: { modelsProcessed: 1, auctionsAdded: 47 } }
-```
+### C1. Environment and Configuration
+- Required env files:
+  - `.env.example`
+  - `.env.local`
+  - `.env.test`
+- Config loading: native `process.env`.
+- Config validation: Zod schema at feature boundary.
+- Example `.env.example`:
 
-**First Decision Point (Status Detection):**
-- Location: `parseAuctionCard()` in each scraper
-- Branch 1: SOLD indicators found → status = 'SOLD'
-- Branch 2: No SOLD indicators → status = 'ACTIVE'
-- Evidence logged for debugging
-
-**Failure Recovery Example:**
-- Scenario: BaT rate limits during historical scrape
-- Detection: HTTP 429 response
-- Action: Wait 60s, retry once
-- If still failing: Log error, mark model as 'failed', continue to next model
-- No data loss: Partial results preserved, retry on next cron run
-
----
-
-## SECTION B: INTERFACE & DESIGN
-
-This feature is backend-only (no UI). No design decisions required.
-
----
-
-## SECTION C: ARCHITECTURE & OPERATIONS
-
-### C1. Environment & Configuration
-
-**Environment Variables (existing):**
 ```bash
-# .env.example (no changes required)
-DATABASE_URL=postgresql://...
-CRON_SECRET=your-secret-here
-```
-
-**No new config required** - all settings hardcoded as constants:
-```typescript
-// src/lib/scrapers/historical/baHistorical.ts
-const HISTORICAL_MONTHS = 12;
-const REQUEST_DELAY_MS = 2500;
-const MAX_RETRIES = 3;
-const BACKFILL_BATCH_SIZE = 50; // Max auctions per model
+NODE_ENV=development
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon>
+SUPABASE_SERVICE_ROLE_KEY=<service-role>
+LOG_LEVEL=info
 ```
 
 ### C2. Repository Structure
+- Top-level structure (relevant):
 
-**Target Structure:**
-```
-src/lib/scrapers/
-├── bringATrailer.ts          # ~540 LOC after changes (+30)
-├── carsAndBids.ts            # ~520 LOC after changes (+30)
-├── collectingCars.ts         # Similar pattern (+30)
-├── index.ts                  # ~200 LOC after changes (+40)
-├── middleware/               # Existing
-└── historical/               # NEW directory
-    ├── baHistorical.ts       # ~180 LOC (NEW)
-    ├── modelTracker.ts       # ~100 LOC (NEW)
-    └── index.ts              # Re-exports (NEW, ~10 LOC)
-
-src/app/api/cron/route.ts     # ~230 LOC after changes (+20)
+```text
+/
+|- src/
+|  |- app/
+|  |- components/
+|  |- features/
+|  |  |- ferrari_collector/
+|  |  |- ferrari_history/        # new feature slice
+|  |- lib/
+|- tests/
+|- agents/
 ```
 
-**File Size Limits:**
-- Soft limit: 300 LOC
-- Hard limit: 500 LOC (split if exceeded)
-- Current files within limits
+- File size limit: 220 LOC target, 300 hard.
+- Max nesting depth: 4.
 
 ### C3. Dependency Management
+- Package manager: npm.
+- Lockfile: `package-lock.json`.
+- Dependency budget: add only `zod`.
+- Vanilla-first exception: Zod is justified for boundary contract enforcement.
 
-**Zero new dependencies.** Existing stack:
-- `cheerio` - HTML parsing (already installed)
-- `@prisma/client` - Database access (already installed)
-- Native `fetch` - HTTP requests (built-in)
-
-**Justification for zero additions:**
-- All requirements met by existing dependencies
-- No HTTP client needed (native fetch sufficient)
-- No additional parsing needed (Cheerio handles all HTML)
-- No date library needed (native Date sufficient for 12-month window)
-
-### C4. Build & Development
-
-**Existing commands (unchanged):**
-```bash
-npm install      # Installs deps
-npm run dev      # Starts dev server (port 3000)
-npm run build    # Production build
-npm test         # Runs vitest
-npm start        # Production server
-```
-
-**Dev server:** Port 3000 (Next.js default)
+### C4. Build and Development
+- Commands:
+  - `npm install`
+  - `npm run dev`
+  - `npm run build`
+  - `npm test`
+  - `npm run start`
+- Dev port: 3000.
+- Hot reload: yes.
+- Build tool: Next.js build pipeline.
+- Output dir: `.next`.
 
 ### C5. Testing Infrastructure
+- Framework: Vitest.
+- Test file pattern: `tests/schema/*.test.ts`, `tests/integration/*.test.ts`.
+- DB approach: mocked Supabase client for schema/unit + integration with deterministic fixtures.
+- Required test types:
+  - Smoke: yes
+  - Unit: yes
+  - Integration: yes
+  - E2E: no new browser E2E required for this slice
+- Coverage target: >= 90% over new ferrari-history files.
 
-**Test Framework:** vitest (already configured)
+### C6. Logging and Observability
+- Logging library: console (existing standard).
+- Format: structured JSON-like logs.
+- Levels: `error`, `warn`, `info`.
+- Correlation ID: `x-request-id` header or generated UUID.
+- Example line:
 
-**Test File Pattern:** Co-located or in `/tests/scrapers/`
-
-**New Test Files Required:**
-1. `tests/scrapers/historical/baHistorical.test.ts` - Unit tests for parsing
-2. `tests/scrapers/historical/modelTracker.test.ts` - Unit tests for state management
-3. Integration test updates in `tests/integration/cron-pipeline.test.ts`
-
-**Required Test Types:**
-- **Unit:** Status detection logic, HTML parsing functions
-- **Integration:** Full cron pipeline with historical backfill
-- **Contract:** Database schema alignment verification
-
-### C6. Logging & Observability
-
-**Logging Library:** `console.*` with structured prefixes (existing pattern)
-
-**Log Format:**
-```typescript
-// Structured logging at each stage
-console.log('[Historical] Starting backfill for Porsche/911');
-console.log('[Historical] Fetched page 1: 24 auctions found');
-console.error('[Historical] Parse error for bat-1990-911: Invalid price format');
-console.log('[Historical] Backfill complete: 47 auctions stored');
+```json
+{"level":"info","feature":"ferrari_history","reqId":"b52a7d6c","model":"F40","rows":38,"msg":"sold series loaded"}
 ```
-
-**Log Levels Used:**
-- `log`: Progress milestones
-- `error`: Parse failures, network errors, DB errors
-- No `warn` (use error with retryable flag)
-
-**Correlation ID:** Request-level logging via cron job timestamp
 
 ### C7. Security Baseline
+- Secrets: env vars only.
+- Input sanitization: Zod at API boundary.
+- Injection prevention: Supabase query builder with explicit filters and column projection.
+- XSS prevention: React auto-escaping; no unsafe HTML insertion.
+- CORS: default same-origin Next API behavior.
+- Rate limiting: endpoint-level bounded `limit` and optional per-IP soft limiter in API route.
 
-**Secrets Management:**
-- CRON_SECRET from env vars (existing)
-- No new secrets required
+### C8. Git and Version Control
+- `.gitignore` baseline:
 
-**Input Sanitization:**
-- All HTML parsed through Cheerio (escapes by default)
-- URL construction uses URLSearchParams
-- No user-provided input in SQL (Prisma parameterized queries)
-
-**Rate Limiting & Ethics:**
-- 2.5s delay between requests (configurable)
-- Exponential backoff on errors
-- Max 12 months historical data (respectful scope)
-- User-Agent header identifies scraper
-
-### C8. Database Schema (Minimal Migration)
-
-**Required Prisma Addition:**
-```prisma
-// Add to schema.prisma
-model ModelBackfillState {
-  id            String   @id @default(cuid())
-  make          String
-  model         String
-  status        BackfillStatus @default(PENDING)
-  backfilledAt  DateTime?
-  auctionCount  Int      @default(0)
-  errorMessage  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@unique([make, model])
-  @@index([status])
-}
-
-enum BackfillStatus {
-  PENDING
-  BACKFILLED
-  FAILED
-}
+```gitignore
+node_modules/
+dist/
+build/
+.env.local
+.env.*.local
+*.log
+.DS_Store
+coverage/
 ```
 
-**Note:** Migration required for ModelBackfillState table only.
+- Branch strategy: trunk-based.
+- Commit format: conventional commits.
 
-### C9. Rollback Safety
+### C9. Deployment and Infrastructure
+- Deployment target: Vercel-compatible Next runtime.
+- Trigger: push-driven pipeline.
+- Parity: dev/prod equivalent API contract behavior.
+- IaC: none required for this feature.
+- Runtime snippet:
 
-**Feature Flags (implicit):**
-- Can disable by commenting out `triggerHistoricalBackfill()` call
-- Historical data distinguishable via `metadata` (not yet implemented - use `scrapedAt` vs `endTime` comparison)
-- No destructive operations to existing tables
+```bash
+npm ci
+npm run build
+npm run start
+```
 
-**Recovery Procedures:**
-- Delete `ModelBackfillState` records to re-trigger backfill
-- Historical auctions can be deleted by `externalId` pattern if needed
+### C10. CI/CD Pipeline
+- CI tool: currently none committed.
+- Required stages when added: `install -> lint -> test -> build`.
+- CI test execution: all ferrari-history schema + integration suites.
+- Deployment approval: manual for production.
+- Example workflow:
 
----
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+```
 
-## Implementation Constraints
+## Implementation Slice (Definitive Files)
+1. `src/features/ferrari_history/contracts.ts`
+2. `src/features/ferrari_history/service.ts`
+3. `src/features/ferrari_history/adapters.ts`
+4. `src/app/api/listings/[id]/price-history/route.ts`
+5. `src/app/api/auctions/[id]/route.ts`
+6. `src/app/[locale]/auctions/[id]/AuctionDetailClient.tsx`
+7. `tests/integration/ferrari_history.boundary.test.ts`
 
-### Technical Constraints
-- **Zero new dependencies** (mandatory)
-- **Use existing patterns** (delay, error handling, fetch wrappers)
-- **12-month historical window** (configurable constant)
-- **Rate limiting: 2-3s delays** (non-negotiable)
-
-### Quality Constraints
-- All files < 200 LOC
-- Explicit TypeScript types for all functions
-- Error handling at every boundary
-- Structured logging at each stage
-
-### Non-Goals (Out of Scope)
-1. Historical data from C&B or CC (BaT only)
-2. Admin dashboard for manual triggers
-3. Real-time price alerts
-4. Data visualization
-5. Image downloads (URLs only)
-6. Bid history tracking
-7. Seller/buyer information
-8. IP rotation or proxy support
-
----
-
-## Code Constitution
-
-### LLM-Friendly Principles Applied
-
-**1. Locality Over Abstraction**
-- Historical scraping logic co-located in `historical/` directory
-- Model tracking state adjacent to historical scraper
-- Status detection functions inline in scraper files (not extracted prematurely)
-
-**2. Feature-Based Vertical Slices**
-- `baHistorical.ts`: Contains fetch, parse, normalize, store for historical data
-- `modelTracker.ts`: State management for backfill tracking
-- Each file is a complete feature slice with minimal external dependencies
-
-**3. Vanilla-First Mandate**
-- No new HTTP libraries (native fetch)
-- No new parsing libraries (existing Cheerio)
-- No date libraries (native Date for 12-month calculations)
-- No validation libraries (TypeScript + runtime guards)
-
-**4. Explicit Contracts**
-- TypeScript interfaces at file top
-- Function signatures with explicit return types
-- Error envelopes with structured context
-
-**5. Stateless Where Possible**
-- `baHistorical.ts`: Stateless functions, database as single source of truth
-- `modelTracker.ts`: Database-backed state (no in-memory caches)
-- Cron job: Stateless request handler
-
-**6. Rule of Three**
-- Status detection: Initially inline in each scraper
-- If pattern stabilizes after 3 platforms, consider extraction to shared utility
-- Historical scraping: BaT-specific, no premature abstraction for C&B/CC
-
-**7. Thin Adapters**
-- Cheerio wrapper: Existing pattern in scrapers
-- Prisma client: Existing singleton in `lib/db/prisma.ts`
-
-**8. Deterministic Builds**
-- No new dependencies to install
-- Existing package-lock.json unchanged
-- No build configuration changes
+## Constitution (Project-Specific Locality and Debugging)
+1. Keep Ferrari historical logic in one vertical slice (`src/features/ferrari_history/*`).
+2. Do not create client-side direct Supabase reads for historical sold data.
+3. Validate every input and output boundary with Zod before crossing route boundaries.
+4. Preserve existing UI contracts; adapt data at server edge, not by redesigning components.
+5. Re-run prior phase testscripts at each new phase to catch regressions.
+6. Debug one hypothesis at a time with minimal local changes.
+7. If two debug turns fail for a testscript, stop and generate `agents/testscripts/failure_report.md`.
+8. Keep artifacts reproducible and secrets redacted.
 
 ---
 
-## Success Metrics
-
-**Functional:**
-- [ ] BaT scraper correctly detects SOLD vs ACTIVE status
-- [ ] New make/model triggers historical backfill
-- [ ] 12 months of historical data collected for new models
-- [ ] Rate limiting enforced (2-3s gaps in logs)
-- [ ] Errors logged but pipeline continues
-
-**Quality:**
-- [ ] All new files < 200 LOC
-- [ ] Zero new dependencies
-- [ ] Existing tests still pass
-- [ ] TypeScript compiles without errors
-
-**Observability:**
-- [ ] Logs show status detection decisions
-- [ ] Logs show historical backfill progress
-- [ ] Cron response includes historical metrics
-
----
-
-## Change Log
-
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-02-14 | 1.0 | Initial canonical architecture definition |
-
----
-
-*End of Canon*
+Version: 3.0
+Date: 2026-02-16

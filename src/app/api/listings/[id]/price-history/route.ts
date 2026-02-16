@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { fetchFerrariHistoricalByListingId } from "@/features/ferrari_history/service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
 
   // Strip the "live-" prefix to get the Supabase listing ID
   const listingId = id.startsWith("live-") ? id.slice(5) : id;
@@ -21,6 +23,11 @@ export async function GET(
   }
 
   try {
+    const ferrariHistory = await fetchFerrariHistoricalByListingId(id, { requestId });
+    if (ferrariHistory.isFerrariContext) {
+      return NextResponse.json({ success: true, data: ferrariHistory.priceHistory });
+    }
+
     const supabase = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
