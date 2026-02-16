@@ -1,10 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
+import { setDefaultResultOrder } from 'node:dns'
+
+setDefaultResultOrder('ipv4first')
 
 function createPgPool(connectionString: string, sslDisabled: boolean) {
   return new Pool({
     connectionString,
+    // Avoid IPv6-only route selection on environments without IPv6 egress.
+    family: 4,
     max: 1,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,

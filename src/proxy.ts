@@ -9,6 +9,7 @@ const intlMiddleware = createIntlMiddleware(routing)
 export async function proxy(request: NextRequest) {
   // Skip intl middleware for auth callback routes
   const { pathname } = request.nextUrl
+
   if (pathname.includes('/auth/callback')) {
     // Strip locale prefix so /es/auth/callback → /auth/callback
     const localeMatch = pathname.match(/^\/(en|es|de|ja)(\/auth\/callback.*)$/)
@@ -20,11 +21,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // First, handle i18n routing
-  const intlResponse = intlMiddleware(request)
-
-  // Skip intl middleware for API routes — they don't need locale routing
+  // Handle i18n routing
+  const isApiRoute = pathname.startsWith('/api')
   let intlResponse: NextResponse | null = null
+
   if (!isApiRoute) {
     intlResponse = intlMiddleware(request)
     // If intl middleware returned a redirect, return it

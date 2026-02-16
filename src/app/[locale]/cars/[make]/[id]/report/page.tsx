@@ -55,25 +55,28 @@ export default async function ReportPage({ params }: ReportPageProps) {
 
   let similarCars = curatedSimilar
   if (similarCars.length < 6 && car.id.startsWith("live-")) {
-    const live = await fetchLiveListingsAsCollectorCars()
+    const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
     const liveSimilar = live.filter(
       c => c.id !== car.id && c.make === car.make
     ).slice(0, 6 - similarCars.length)
     similarCars = [...similarCars, ...liveSimilar]
   }
 
-  // Fetch real data in parallel (Supabase for sold history, Prisma for analysis)
-  const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, prismaSoldHistory, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    getMarketDataForModel(car.make, car.model),
-    getMarketDataForMake(car.make),
-    getComparablesForModel(car.make, car.model),
-    getAnalysisForCar(car.make, car.model, car.year),
-    getSoldAuctionsForMake(car.make),
-    getAnalysesForMake(car.make),
+  const shouldQueryPrisma = !car.id.startsWith("live-")
+
+  // Use Supabase-first for live routes and only hit Prisma when needed.
+  const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, dbAnalyses, supabaseSoldHistory] = await Promise.all([
+    shouldQueryPrisma ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
+    shouldQueryPrisma ? getMarketDataForMake(car.make) : Promise.resolve([]),
+    shouldQueryPrisma ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
+    shouldQueryPrisma ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
+    shouldQueryPrisma ? getAnalysesForMake(car.make) : Promise.resolve([]),
     fetchSoldListingsForMake(car.make),
   ])
 
-  const dbSoldHistory = supabaseSoldHistory.length > 0 ? supabaseSoldHistory : prismaSoldHistory
+  const dbSoldHistory = supabaseSoldHistory.length > 0
+    ? supabaseSoldHistory
+    : await getSoldAuctionsForMake(car.make)
 
   return (
     <Suspense

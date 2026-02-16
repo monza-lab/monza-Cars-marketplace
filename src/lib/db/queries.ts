@@ -5,6 +5,99 @@ import type {
   Prisma,
 } from '@prisma/client'
 
+const DB_QUERY_TIMEOUT_MS = 2_500
+const DB_UNREACHABLE_COOLDOWN_MS = 30_000
+const DB_CIRCUIT_OPEN_CODE = 'DB_CIRCUIT_OPEN'
+
+let dbUnavailableUntil = 0
+
+class DbCircuitOpenError extends Error {
+  code = DB_CIRCUIT_OPEN_CODE
+}
+
+function getErrorCode(error: unknown): string {
+  if (!error || typeof error !== 'object') return ''
+  const maybeCode = (error as { code?: unknown }).code
+  return typeof maybeCode === 'string' ? maybeCode.toUpperCase() : ''
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
+function isDbReachabilityError(error: unknown): boolean {
+  const code = getErrorCode(error)
+  const message = getErrorMessage(error).toUpperCase()
+
+  if (code === DB_CIRCUIT_OPEN_CODE) return false
+
+  return (
+    code === 'EHOSTUNREACH' ||
+    code === 'ECONNREFUSED' ||
+    code === 'ENOTFOUND' ||
+    code === 'ETIMEDOUT' ||
+    code === 'P1001' ||
+    message.includes('EHOSTUNREACH') ||
+    message.includes('ECONNREFUSED') ||
+    message.includes('ENOTFOUND') ||
+    message.includes('ETIMEDOUT') ||
+    message.includes("CAN'T REACH DATABASE SERVER") ||
+    message.includes('DB TIMEOUT')
+  )
+}
+
+function shouldSkipDbQueries(): boolean {
+  return Date.now() < dbUnavailableUntil
+}
+
+function markDbUnavailable(error: unknown, label: string) {
+  const now = Date.now()
+  const wasOpen = now < dbUnavailableUntil
+  dbUnavailableUntil = now + DB_UNREACHABLE_COOLDOWN_MS
+
+  if (!wasOpen) {
+    console.warn(`[queries] DB circuit opened for ${DB_UNREACHABLE_COOLDOWN_MS}ms after ${label}:`, getErrorMessage(error))
+  }
+}
+
+function shouldLogDbError(error: unknown): boolean {
+  return getErrorCode(error) !== DB_CIRCUIT_OPEN_CODE
+}
+
+function withDbTimeout<T>(operation: () => PromiseLike<T>, label: string): Promise<T> {
+  if (shouldSkipDbQueries()) {
+    return Promise.reject(new DbCircuitOpenError(`DB circuit open, skipped ${label}`))
+  }
+
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`DB timeout in ${label} after ${DB_QUERY_TIMEOUT_MS}ms`))
+    }, DB_QUERY_TIMEOUT_MS)
+  })
+
+  return Promise.race([operation(), timeoutPromise])
+    .catch((error) => {
+      if (isDbReachabilityError(error)) {
+        markDbUnavailable(error, label)
+      }
+      throw error
+    })
+    .finally(() => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle)
+      }
+    })
+}
+
+function logDbQueryError(label: string, error: unknown) {
+  if (shouldLogDbError(error)) {
+    console.error(`[queries] ${label}:`, error)
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Auction queries
 // ---------------------------------------------------------------------------
@@ -227,10 +320,13 @@ export interface DbSoldRecord {
 
 export async function getMarketDataForMake(make: string): Promise<DbMarketDataRow[]> {
   try {
-    const rows = await prisma.marketData.findMany({
-      where: { make: { equals: make, mode: "insensitive" } },
-      orderBy: { lastUpdated: "desc" },
-    })
+    const rows = await withDbTimeout(
+      () => prisma.marketData.findMany({
+        where: { make: { equals: make, mode: "insensitive" } },
+        orderBy: { lastUpdated: "desc" },
+      }),
+      'getMarketDataForMake'
+    )
     return rows.map(r => ({
       make: r.make,
       model: r.model,
@@ -242,7 +338,7 @@ export async function getMarketDataForMake(make: string): Promise<DbMarketDataRo
       trend: r.trend,
     }))
   } catch (e) {
-    console.error("[queries] getMarketDataForMake:", e)
+    logDbQueryError('getMarketDataForMake', e)
     return []
   }
 }
@@ -251,13 +347,16 @@ export async function getMarketDataForMake(make: string): Promise<DbMarketDataRo
 
 export async function getMarketDataForModel(make: string, model: string): Promise<DbMarketDataRow | null> {
   try {
-    const r = await prisma.marketData.findFirst({
-      where: {
-        make: { equals: make, mode: "insensitive" },
-        model: { equals: model, mode: "insensitive" },
-      },
-      orderBy: { lastUpdated: "desc" },
-    })
+    const r = await withDbTimeout(
+      () => prisma.marketData.findFirst({
+        where: {
+          make: { equals: make, mode: "insensitive" },
+          model: { equals: model, mode: "insensitive" },
+        },
+        orderBy: { lastUpdated: "desc" },
+      }),
+      'getMarketDataForModel'
+    )
     if (!r) return null
     return {
       make: r.make, model: r.model,
@@ -266,7 +365,7 @@ export async function getMarketDataForModel(make: string, model: string): Promis
       totalSales: r.totalSales, trend: r.trend,
     }
   } catch (e) {
-    console.error("[queries] getMarketDataForModel:", e)
+    logDbQueryError('getMarketDataForModel', e)
     return null
   }
 }
@@ -275,11 +374,14 @@ export async function getMarketDataForModel(make: string, model: string): Promis
 
 export async function getComparablesForMake(make: string, limit = 20): Promise<DbComparableRow[]> {
   try {
-    const rows = await prisma.comparable.findMany({
-      where: { auction: { make: { equals: make, mode: "insensitive" } } },
-      orderBy: { soldDate: "desc" },
-      take: limit,
-    })
+    const rows = await withDbTimeout(
+      () => prisma.comparable.findMany({
+        where: { auction: { make: { equals: make, mode: "insensitive" } } },
+        orderBy: { soldDate: "desc" },
+        take: limit,
+      }),
+      'getComparablesForMake'
+    )
     return rows.map(c => ({
       title: c.title,
       platform: c.platform,
@@ -289,7 +391,7 @@ export async function getComparablesForMake(make: string, limit = 20): Promise<D
       condition: c.condition,
     }))
   } catch (e) {
-    console.error("[queries] getComparablesForMake:", e)
+    logDbQueryError('getComparablesForMake', e)
     return []
   }
 }
@@ -298,16 +400,19 @@ export async function getComparablesForMake(make: string, limit = 20): Promise<D
 
 export async function getComparablesForModel(make: string, model: string, limit = 10): Promise<DbComparableRow[]> {
   try {
-    const rows = await prisma.comparable.findMany({
-      where: {
-        auction: {
-          make: { equals: make, mode: "insensitive" },
-          model: { contains: model, mode: "insensitive" },
+    const rows = await withDbTimeout(
+      () => prisma.comparable.findMany({
+        where: {
+          auction: {
+            make: { equals: make, mode: "insensitive" },
+            model: { contains: model, mode: "insensitive" },
+          },
         },
-      },
-      orderBy: { soldDate: "desc" },
-      take: limit,
-    })
+        orderBy: { soldDate: "desc" },
+        take: limit,
+      }),
+      'getComparablesForModel'
+    )
     return rows.map(c => ({
       title: c.title,
       platform: c.platform,
@@ -317,7 +422,7 @@ export async function getComparablesForModel(make: string, model: string, limit 
       condition: c.condition,
     }))
   } catch (e) {
-    console.error("[queries] getComparablesForModel:", e)
+    logDbQueryError('getComparablesForModel', e)
     return []
   }
 }
@@ -326,15 +431,18 @@ export async function getComparablesForModel(make: string, model: string, limit 
 
 export async function getAnalysisForCar(make: string, model: string, year: number): Promise<DbAnalysisRow | null> {
   try {
-    const auction = await prisma.auction.findFirst({
-      where: {
-        make: { equals: make, mode: "insensitive" },
-        model: { contains: model, mode: "insensitive" },
-        year,
-      },
-      include: { analysis: true },
-      orderBy: { updatedAt: "desc" },
-    })
+    const auction = await withDbTimeout(
+      () => prisma.auction.findFirst({
+        where: {
+          make: { equals: make, mode: "insensitive" },
+          model: { contains: model, mode: "insensitive" },
+          year,
+        },
+        include: { analysis: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      'getAnalysisForCar'
+    )
     if (!auction?.analysis) return null
     const a = auction.analysis
     return {
@@ -352,7 +460,7 @@ export async function getAnalysisForCar(make: string, model: string, year: numbe
       rawAnalysis: a.rawAnalysis as Record<string, unknown> | null,
     }
   } catch (e) {
-    console.error("[queries] getAnalysisForCar:", e)
+    logDbQueryError('getAnalysisForCar', e)
     return null
   }
 }
@@ -361,16 +469,19 @@ export async function getAnalysisForCar(make: string, model: string, year: numbe
 
 export async function getSoldAuctionsForMake(make: string, limit = 200): Promise<DbSoldRecord[]> {
   try {
-    const auctions = await prisma.auction.findMany({
-      where: {
-        make: { equals: make, mode: "insensitive" },
-        finalPrice: { not: null, gt: 0 },
-        status: { in: ["SOLD", "ENDED"] },
-      },
-      select: { title: true, finalPrice: true, endTime: true, model: true, year: true },
-      orderBy: { endTime: "asc" },
-      take: limit,
-    })
+    const auctions = await withDbTimeout(
+      () => prisma.auction.findMany({
+        where: {
+          make: { equals: make, mode: "insensitive" },
+          finalPrice: { not: null, gt: 0 },
+          status: { in: ["SOLD", "ENDED"] },
+        },
+        select: { title: true, finalPrice: true, endTime: true, model: true, year: true },
+        orderBy: { endTime: "asc" },
+        take: limit,
+      }),
+      'getSoldAuctionsForMake'
+    )
     return auctions
       .filter(a => a.finalPrice != null && a.endTime != null)
       .map(a => ({
@@ -381,7 +492,7 @@ export async function getSoldAuctionsForMake(make: string, limit = 200): Promise
         title: a.title,
       }))
   } catch (e) {
-    console.error("[queries] getSoldAuctionsForMake:", e)
+    logDbQueryError('getSoldAuctionsForMake', e)
     return []
   }
 }
@@ -390,11 +501,14 @@ export async function getSoldAuctionsForMake(make: string, limit = 200): Promise
 
 export async function getAnalysesForMake(make: string): Promise<DbAnalysisRow[]> {
   try {
-    const analyses = await prisma.analysis.findMany({
-      where: { auction: { make: { equals: make, mode: "insensitive" } } },
-      orderBy: { updatedAt: "desc" },
-      take: 50,
-    })
+    const analyses = await withDbTimeout(
+      () => prisma.analysis.findMany({
+        where: { auction: { make: { equals: make, mode: "insensitive" } } },
+        orderBy: { updatedAt: "desc" },
+        take: 50,
+      }),
+      'getAnalysesForMake'
+    )
     return analyses.map(a => ({
       bidTargetLow: a.bidTargetLow,
       bidTargetHigh: a.bidTargetHigh,
@@ -410,7 +524,7 @@ export async function getAnalysesForMake(make: string): Promise<DbAnalysisRow[]>
       rawAnalysis: a.rawAnalysis as Record<string, unknown> | null,
     }))
   } catch (e) {
-    console.error("[queries] getAnalysesForMake:", e)
+    logDbQueryError('getAnalysesForMake', e)
     return []
   }
 }

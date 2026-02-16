@@ -60,24 +60,26 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
 
   let similarCars = curatedSimilar
   if (similarCars.length < 4 && car.id.startsWith("live-")) {
-    const live = await fetchLiveListingsAsCollectorCars()
+    const live = await fetchLiveListingsAsCollectorCars({ limit: 40, includePriceHistory: false })
     const liveSimilar = live.filter(
       c => c.id !== car.id && c.make === car.make
     ).slice(0, 4 - similarCars.length)
     similarCars = [...similarCars, ...liveSimilar]
   }
 
-  // Fetch real data in parallel (Supabase for sold history, Prisma for analysis)
-  const [dbMarketData, dbComparables, dbAnalysis, dbSoldHistory, supabaseSoldHistory] = await Promise.all([
-    getMarketDataForModel(car.make, car.model),
-    getComparablesForModel(car.make, car.model),
-    getAnalysisForCar(car.make, car.model, car.year),
-    getSoldAuctionsForMake(car.make),
+  const shouldQueryPrisma = !car.id.startsWith("live-")
+
+  // Fetch Supabase sold history first; fallback to Prisma only when empty.
+  const [dbMarketData, dbComparables, dbAnalysis, supabaseSoldHistory] = await Promise.all([
+    shouldQueryPrisma ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
+    shouldQueryPrisma ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
+    shouldQueryPrisma ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
     fetchSoldListingsForMake(car.make),
   ])
 
-  // Prefer Supabase sold history (always available), fall back to Prisma
-  const soldHistory = supabaseSoldHistory.length > 0 ? supabaseSoldHistory : dbSoldHistory
+  const soldHistory = supabaseSoldHistory.length > 0
+    ? supabaseSoldHistory
+    : await getSoldAuctionsForMake(car.make)
 
   return (
     <Suspense

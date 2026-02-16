@@ -324,6 +324,8 @@ function SimilarCarCard({ car }: { car: CollectorCar }) {
           fill
           className="object-cover"
           sizes="80px"
+          referrerPolicy="no-referrer"
+          unoptimized
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -357,6 +359,8 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
           fill
           className="object-cover"
           sizes="56px"
+          referrerPolicy="no-referrer"
+          unoptimized
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -1074,7 +1078,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
         {/* ═══ HERO SECTION ═══ */}
         <div ref={heroRef} className="relative h-[40dvh] min-h-[340px]">
-          <Image src={car.image} alt={car.title} fill className="object-cover" priority />
+          <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0b0b10]/70 to-transparent" />
 
@@ -1572,6 +1576,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   className="object-cover"
                   priority
                   sizes="(min-width: 768px) 50vw, 100vw"
+                  referrerPolicy="no-referrer"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 {/* Overlays on hero */}

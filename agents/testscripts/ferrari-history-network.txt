@@ -1,0 +1,2 @@
+[GET] http://localhost:3000/api/auctions/live-c776c436-0502-40f6-abbe-ee3bf3242b59 => [200] OK
+[GET] http://localhost:3000/api/listings/live-c776c436-0502-40f6-abbe-ee3bf3242b59/price-history => [200] OK

@@ -26,9 +26,13 @@ export async function GET(request: NextRequest) {
   const sortBy = searchParams.get("sortBy") || "endTime";
   const sortOrder = searchParams.get("sortOrder") || "asc";
   const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "24");
+  const parsedLimit = parseInt(searchParams.get("limit") || "24", 10);
+  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 200) : 24;
 
-  const live = await fetchLiveListingsAsCollectorCars();
+  const live = await fetchLiveListingsAsCollectorCars({
+    limit,
+    includePriceHistory: false,
+  });
 
   // STRICT REQUIREMENT: "remove all the cars from the ui that are not the ferraris coming from the supabase database"
   // 1. We ONLY use `live` (Supabase) data.

@@ -58,6 +58,25 @@ type PriceHistoryRow = {
   time: string;
 };
 
+const SUPABASE_TIMEOUT_MS = 4_000;
+
+function createSupabaseClient(url: string, key: string): SupabaseClient {
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
+
+        return fetch(input, {
+          ...init,
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId));
+      },
+    },
+  });
+}
+
 // ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
   "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
@@ -299,23 +318,7 @@ async function queryListingsMany(
   limit: number,
   statusFilter?: string
 ): Promise<ListingRow[]> {
-  // Try broad query (with photos_media join)
-  let broadQuery = supabase
-    .from("listings")
-    .select(SELECT_BROAD);
-
-  if (statusFilter) {
-    broadQuery = broadQuery.eq("status", statusFilter);
-  }
-
-  const broad = await broadQuery
-    .order("sale_date", { ascending: false })
-    .limit(limit);
-
-  if (!broad.error) return (broad.data ?? []) as ListingRow[];
-
-  // Fallback without photos_media join
-  console.warn("[supabaseLiveListings] photos_media join failed, using fallback:", broad.error.message);
+  // Narrow query first to avoid fragile cross-table joins on degraded networks.
   let narrowQuery = supabase
     .from("listings")
     .select(SELECT_NARROW);
@@ -329,7 +332,7 @@ async function queryListingsMany(
     .limit(limit);
 
   if (narrow.error) {
-    console.error("[supabaseLiveListings] Fallback also failed:", narrow.error.message);
+    console.error("[supabaseLiveListings] listings query failed:", narrow.error.message);
     return [];
   }
   return (narrow.data ?? []) as ListingRow[];
@@ -339,17 +342,6 @@ async function queryListingSingle(
   supabase: SupabaseClient,
   id: string
 ): Promise<ListingRow | null> {
-  // Try broad query (with photos_media join)
-  const broad = await supabase
-    .from("listings")
-    .select(SELECT_BROAD)
-    .eq("id", id)
-    .single();
-
-  if (!broad.error) return (broad.data as ListingRow) ?? null;
-
-  // Fallback without photos_media join
-  console.warn("[supabaseLiveListings] photos_media join failed, using fallback:", broad.error.message);
   const narrow = await supabase
     .from("listings")
     .select(SELECT_NARROW)
@@ -372,9 +364,7 @@ export async function fetchLiveListingById(liveId: string): Promise<CollectorCar
   const supabaseId = liveId.startsWith("live-") ? liveId.slice(5) : liveId;
 
   try {
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = createSupabaseClient(url, key);
 
     const row = await queryListingSingle(supabase, supabaseId);
 
@@ -407,9 +397,7 @@ export async function fetchSoldListingsForMake(
   if (!url || !key) return [];
 
   try {
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = createSupabaseClient(url, key);
 
     const { data, error } = await supabase
       .from("listings")
@@ -438,21 +426,26 @@ export async function fetchSoldListingsForMake(
   }
 }
 
-export async function fetchLiveListingsAsCollectorCars(): Promise<CollectorCar[]> {
+export async function fetchLiveListingsAsCollectorCars(options?: { limit?: number; includePriceHistory?: boolean }): Promise<CollectorCar[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) return [];
 
+  const limit = options?.limit ?? 200;
+  const includePriceHistory = options?.includePriceHistory ?? true;
+
   try {
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = createSupabaseClient(url, key);
 
     // Only fetch active (live) listings — sold/unsold/delisted are historical data
-    const rows = await queryListingsMany(supabase, 200, "active");
+    const rows = await queryListingsMany(supabase, limit, "active");
     if (rows.length === 0) return [];
+
+    if (!includePriceHistory) {
+      return rows.map((row) => rowToCollectorCar(row));
+    }
 
     // Fetch price history for trend computation
     const listingIds = rows.map((r) => r.id);

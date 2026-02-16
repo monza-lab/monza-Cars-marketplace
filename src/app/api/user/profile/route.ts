@@ -1,20 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getOrCreateUser, getUserCredits } from '@/lib/credits'
-
-function isDbConnectivityError(error: unknown): boolean {
-  const e = error as { code?: string; message?: string } | null
-  const message = (e?.message ?? '').toLowerCase()
-
-  return (
-    e?.code === 'P1001' ||
-    e?.code === 'P1011' ||
-    message.includes('connection terminated unexpectedly') ||
-    message.includes('self-signed certificate') ||
-    message.includes("can't reach database server") ||
-    message.includes('tenant or user not found')
-  )
-}
+import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 
 export async function GET(request: Request) {
   try {

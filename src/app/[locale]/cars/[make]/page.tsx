@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: MakePageProps) {
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
-  const live = await fetchLiveListingsAsCollectorCars()
+  const live = await fetchLiveListingsAsCollectorCars({ limit: 120, includePriceHistory: false })
   const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
   const cars = [...curated, ...liveMake]
 
@@ -47,7 +47,7 @@ export default async function MakePage({ params }: MakePageProps) {
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
-  const live = await fetchLiveListingsAsCollectorCars()
+  const live = await fetchLiveListingsAsCollectorCars({ limit: 120, includePriceHistory: false })
   const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
   const cars = [...curated, ...liveMake]
 
@@ -57,16 +57,19 @@ export default async function MakePage({ params }: MakePageProps) {
 
   const makeName = cars[0].make
 
-  // Fetch real data in parallel (Supabase for sold history, Prisma for analysis)
-  const [dbMarketData, dbComparables, prismaSoldHistory, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    getMarketDataForMake(makeName),
-    getComparablesForMake(makeName),
-    getSoldAuctionsForMake(makeName),
-    getAnalysesForMake(makeName),
+  const shouldQueryPrisma = curated.length > 0
+
+  // Fetch Supabase sold history first; only touch Prisma fallback if needed.
+  const [dbMarketData, dbComparables, dbAnalyses, supabaseSoldHistory] = await Promise.all([
+    shouldQueryPrisma ? getMarketDataForMake(makeName) : Promise.resolve([]),
+    shouldQueryPrisma ? getComparablesForMake(makeName) : Promise.resolve([]),
+    shouldQueryPrisma ? getAnalysesForMake(makeName) : Promise.resolve([]),
     fetchSoldListingsForMake(makeName),
   ])
 
-  const dbSoldHistory = supabaseSoldHistory.length > 0 ? supabaseSoldHistory : prismaSoldHistory
+  const dbSoldHistory = supabaseSoldHistory.length > 0
+    ? supabaseSoldHistory
+    : await getSoldAuctionsForMake(makeName)
 
   return (
     <MakePageClient
