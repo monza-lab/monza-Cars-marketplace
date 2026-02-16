@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { CURATED_CARS } from "@/lib/curatedCars"
-import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
+import { fetchLiveListingsAsCollectorCars, fetchSoldListingsForMake } from "@/lib/supabaseLiveListings"
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
@@ -57,13 +57,16 @@ export default async function MakePage({ params }: MakePageProps) {
 
   const makeName = cars[0].make
 
-  // Fetch real data from Prisma in parallel
-  const [dbMarketData, dbComparables, dbSoldHistory, dbAnalyses] = await Promise.all([
+  // Fetch real data in parallel (Supabase for sold history, Prisma for analysis)
+  const [dbMarketData, dbComparables, prismaSoldHistory, dbAnalyses, supabaseSoldHistory] = await Promise.all([
     getMarketDataForMake(makeName),
     getComparablesForMake(makeName),
     getSoldAuctionsForMake(makeName),
     getAnalysesForMake(makeName),
+    fetchSoldListingsForMake(makeName),
   ])
+
+  const dbSoldHistory = supabaseSoldHistory.length > 0 ? supabaseSoldHistory : prismaSoldHistory
 
   return (
     <MakePageClient

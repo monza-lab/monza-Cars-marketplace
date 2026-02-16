@@ -693,10 +693,10 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
   )
 
   // Price history: prefer DB sold records
+  const priceHistoryYears = [0, 1, 2, 3, 4].map(i => new Date().getFullYear() - 4 + i)
   const priceHistory = (() => {
     if (dbSoldHistory.length >= 3) {
-      const now = new Date()
-      const years = [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
+      const years = priceHistoryYears
       const buckets = years.map(yr => {
         const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
         return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
@@ -1205,7 +1205,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // Labels
       priceHistory.forEach((p, i) => {
         const px = chartX + (i / (priceHistory.length - 1)) * chartW2
-        pdf.setFontSize(6); dim(); pdf.text(String(2021 + i), px, chartY + chartH2 + 4, { align: "center" })
+        pdf.setFontSize(6); dim(); pdf.text(String(priceHistoryYears[i] ?? 2022 + i), px, chartY + chartH2 + 4, { align: "center" })
         pdf.setFontSize(5.5); white(); pdf.text(formatUsd(p), px, pts[i].y - 2, { align: "center" })
       })
       y += 64
@@ -1685,7 +1685,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["5-YEAR PRICE HISTORY"],
         ["Year", "Index Value (USD)", "YoY Change"],
         ...priceHistory.map((p, i) => [
-          String(2021 + i),
+          String(priceHistoryYears[i] ?? 2022 + i),
           p,
           i === 0 ? "—" : `${(((p - priceHistory[i - 1]) / priceHistory[i - 1]) * 100).toFixed(1)}%`,
         ]),
@@ -2421,7 +2421,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     x: padL + (i / (priceHistory.length - 1)) * (chartW - padL - padR),
                     y: padT + (1 - (p - minP) / rangeP) * (chartH - padT - padB),
                     price: p,
-                    year: 2021 + i,
+                    year: priceHistoryYears[i] ?? (2022 + i),
                   }))
                   const linePath = points.map((pt, i) => `${i === 0 ? "M" : "L"} ${pt.x} ${pt.y}`).join(" ")
                   const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartH} L ${points[0].x} ${chartH} Z`
@@ -2530,7 +2530,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                           const change = ((p - prev) / prev) * 100
                           return (
                             <div key={i} className="flex-1 text-center py-1.5 rounded-lg bg-white/[0.02] border border-white/5">
-                              <span className="text-[8px] text-[#4B5563] block">{2021 + i}→{2022 + i}</span>
+                              <span className="text-[8px] text-[#4B5563] block">{priceHistoryYears[i]}→{priceHistoryYears[i + 1]}</span>
                               <span className={`text-[10px] font-mono font-semibold ${change > 0 ? "text-emerald-400" : "text-red-400"}`}>
                                 {change > 0 ? "+" : ""}{change.toFixed(0)}%
                               </span>

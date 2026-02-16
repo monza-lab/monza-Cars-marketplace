@@ -386,6 +386,58 @@ export async function fetchLiveListingById(liveId: string): Promise<CollectorCar
   }
 }
 
+// ─── Sold history from listings table (for price trend charts) ───
+
+export interface SoldListingRecord {
+  price: number;
+  date: string;
+  model: string;
+  year: number;
+  title: string;
+}
+
+export async function fetchSoldListingsForMake(
+  make: string,
+  limit = 200
+): Promise<SoldListingRecord[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data, error } = await supabase
+      .from("listings")
+      .select("id,year,make,model,trim,hammer_price,sale_date,status")
+      .ilike("make", make)
+      .eq("status", "sold")
+      .not("hammer_price", "is", null)
+      .gt("hammer_price", 0)
+      .order("sale_date", { ascending: true })
+      .limit(limit);
+
+    if (error || !data) return [];
+
+    return data
+      .filter((r: { hammer_price: string | number | null; sale_date: string | null }) => r.hammer_price != null && r.sale_date != null)
+      .map((r: { year: number; make: string; model: string; trim: string | null; hammer_price: string | number; sale_date: string }) => ({
+        price: Number(r.hammer_price),
+        date: r.sale_date,
+        model: r.model,
+        year: r.year,
+        title: `${r.year} ${r.make} ${r.model}${r.trim ? ` ${r.trim}` : ""}`,
+      }));
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchSoldListingsForMake failed:", err);
+    return [];
+  }
+}
+
 export async function fetchLiveListingsAsCollectorCars(): Promise<CollectorCar[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =

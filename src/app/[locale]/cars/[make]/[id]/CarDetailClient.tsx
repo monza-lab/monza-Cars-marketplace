@@ -42,6 +42,7 @@ import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, format
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
+import { PriceTrendChart } from "@/components/charts/PriceTrendChart"
 
 // ─── MOCK DATA ───
 const redFlags: Record<string, string[]> = {
@@ -592,11 +593,13 @@ function CarContextPanel({
   )
 
   // 5-year return data: prefer DB sold records
+  const priceHistoryYears = (() => {
+    const now = new Date()
+    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
+  })()
   const priceHistory = (() => {
     if (dbSoldHistory.length >= 3) {
-      const now = new Date()
-      const years = [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-      const buckets = years.map(yr => {
+      const buckets = priceHistoryYears.map(yr => {
         const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
         return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
       })
@@ -731,30 +734,18 @@ function CarContextPanel({
 
         {/* 4. 5-YEAR PRICE TREND */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <BarChart3 className="size-4 text-[#F8B4D9]" />
+              <TrendingUp className="size-4 text-[#F8B4D9]" />
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
                 5-Year Price Trend
               </span>
             </div>
             <span className="text-[10px] font-mono font-semibold text-emerald-400">
-              +{brand5yReturn}%
+              {brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%
             </span>
           </div>
-          <div className="flex items-end gap-1.5 h-[60px]">
-            {priceHistory.map((value, i) => {
-              const maxVal = Math.max(...priceHistory)
-              const height = (value / maxVal) * 100
-              const year = 2021 + i
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full rounded-t-sm bg-gradient-to-t from-[#F8B4D9]/30 to-[#F8B4D9]/60" style={{ height: `${height}%` }} />
-                  <span className="text-[8px] text-[#6B7280]">{year}</span>
-                </div>
-              )
-            })}
-          </div>
+          <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={100} />
         </div>
 
         {/* 5. ANNUAL OWNERSHIP COST */}
@@ -984,11 +975,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   )
 
   // Price history: prefer DB sold records, fallback to hardcoded
+  const priceHistoryYears = (() => {
+    const now = new Date()
+    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
+  })()
   const priceHistory = (() => {
     if (dbSoldHistory.length >= 3) {
-      const now = new Date()
-      const years = [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-      const buckets = years.map(yr => {
+      const buckets = priceHistoryYears.map(yr => {
         const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
         return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
       })
@@ -1317,28 +1310,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* 6. 5-Year Price Trend */}
           <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <BarChart3 className="size-4 text-[#F8B4D9]" />
+                <TrendingUp className="size-4 text-[#F8B4D9]" />
                 <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
                   {t("priceTrend")}
                 </span>
               </div>
-              <span className="text-[10px] font-mono font-semibold text-emerald-400">+{brand5yReturn}%</span>
+              <span className="text-[10px] font-mono font-semibold text-emerald-400">{brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%</span>
             </div>
-            <div className="flex items-end gap-1.5 h-[60px]">
-              {priceHistory.map((value, i) => {
-                const maxVal = Math.max(...priceHistory)
-                const height = (value / maxVal) * 100
-                const year = 2021 + i
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full rounded-t-sm bg-gradient-to-t from-[#F8B4D9]/30 to-[#F8B4D9]/60" style={{ height: `${height}%` }} />
-                    <span className="text-[8px] text-[#6B7280]">{year}</span>
-                  </div>
-                )
-              })}
-            </div>
+            <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={110} />
           </div>
 
           {/* 7. Sale Information */}
