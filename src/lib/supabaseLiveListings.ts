@@ -135,6 +135,49 @@ function auctionHouseLabel(source: string): string {
   }
 }
 
+// ─── Investment grade calculation ───
+
+function computeGrade(
+  price: number,
+  make: string,
+  year: number,
+): "AAA" | "AA" | "A" | "B+" | "B" | "C" {
+  // Premium makes with strong collector markets
+  const premiumMakes = ["Ferrari", "Porsche", "McLaren", "Lamborghini", "Aston Martin", "Mercedes-Benz"]
+  const midMakes = ["BMW", "Nissan", "Toyota", "Lexus", "Jaguar", "Ford"]
+  const isPremium = premiumMakes.some(m => m.toLowerCase() === make.toLowerCase())
+  const isMid = midMakes.some(m => m.toLowerCase() === make.toLowerCase())
+
+  // Age factor: older cars with high price = more collectible
+  const age = new Date().getFullYear() - year
+  const isVintage = age >= 30
+  const isClassic = age >= 20
+
+  // Price tier factor
+  const isHighValue = price >= 500000
+  const isMidValue = price >= 100000
+
+  let score = 0
+  if (isPremium) score += 3
+  else if (isMid) score += 2
+  else score += 1
+
+  if (isVintage) score += 3
+  else if (isClassic) score += 2
+  else if (age >= 10) score += 1
+
+  if (isHighValue) score += 3
+  else if (isMidValue) score += 2
+  else if (price > 0) score += 1
+
+  if (score >= 8) return "AAA"
+  if (score >= 7) return "AA"
+  if (score >= 5) return "A"
+  if (score >= 4) return "B+"
+  if (score >= 2) return "B"
+  return "C"
+}
+
 // ─── Row → CollectorCar ───
 
 function rowToCollectorCar(row: ListingRow): CollectorCar {
@@ -196,7 +239,7 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     price,
     trend: "Live Data",
     trendValue: 0,
-    investmentGrade: "B",
+    investmentGrade: computeGrade(price, row.make, row.year),
     thesis,
     image: photos[0] ?? "/cars/placeholder.jpg",
     images: photos.length > 0 ? photos : ["/cars/placeholder.jpg"],

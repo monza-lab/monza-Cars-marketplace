@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { CURATED_CARS } from "@/lib/curatedCars"
 import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings"
+import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
 interface MakePageProps {
@@ -11,7 +12,6 @@ export async function generateMetadata({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
-  // Curated (non-Ferrari) + live Supabase listings
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
@@ -44,7 +44,6 @@ export default async function MakePage({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
-  // Curated (non-Ferrari) + live Supabase listings for this make
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
@@ -56,5 +55,24 @@ export default async function MakePage({ params }: MakePageProps) {
     notFound()
   }
 
-  return <MakePageClient make={cars[0].make} cars={cars} />
+  const makeName = cars[0].make
+
+  // Fetch real data from Prisma in parallel
+  const [dbMarketData, dbComparables, dbSoldHistory, dbAnalyses] = await Promise.all([
+    getMarketDataForMake(makeName),
+    getComparablesForMake(makeName),
+    getSoldAuctionsForMake(makeName),
+    getAnalysesForMake(makeName),
+  ])
+
+  return (
+    <MakePageClient
+      make={makeName}
+      cars={cars}
+      dbMarketData={dbMarketData}
+      dbComparables={dbComparables}
+      dbSoldHistory={dbSoldHistory}
+      dbAnalyses={dbAnalyses}
+    />
+  )
 }

@@ -69,7 +69,7 @@ export function OnboardingModal() {
   const [direction, setDirection] = useState(1)
 
   // Selections
-  const [region, setRegion] = useState<string | null>(null)
+  const [regions, setRegions] = useState<string[]>([])
   const [brands, setBrands] = useState<string[]>([])
   const [intent, setIntent] = useState<string | null>(null)
 
@@ -82,8 +82,14 @@ export function OnboardingModal() {
     }
   }, [loading, user])
 
+  const toggleRegion = (id: string) => {
+    setRegions((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    )
+  }
+
   const canProceed = () => {
-    if (step === 0) return !!region
+    if (step === 0) return regions.length > 0
     if (step === 1) return brands.length > 0
     if (step === 2) return !!intent
     return false
@@ -106,17 +112,20 @@ export function OnboardingModal() {
   }
 
   const finish = () => {
+    // Primary region = first selected non-"other" region
+    const primaryRegion = regions.find(r => r !== "other") ?? null
     const prefs: OnboardingPreferences = {
-      region,
+      region: primaryRegion,
+      regions,
       brands,
       intent,
       completedAt: Date.now(),
     }
     saveOnboardingPreferences(prefs)
 
-    // Set global region from selection
-    if (region && region !== "other") {
-      setSelectedRegion(region)
+    // Set global region from first selection
+    if (primaryRegion) {
+      setSelectedRegion(primaryRegion)
     }
 
     setOpen(false)
@@ -125,6 +134,7 @@ export function OnboardingModal() {
   const skip = () => {
     saveOnboardingPreferences({
       region: null,
+      regions: [],
       brands: [],
       intent: null,
       completedAt: Date.now(),
@@ -185,7 +195,7 @@ export function OnboardingModal() {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="px-6 sm:px-8 py-6"
                 >
-                  {/* ─── Step 1: Region ─── */}
+                  {/* ─── Step 1: Region (multi-select) ─── */}
                   {step === 0 && (
                     <div>
                       <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
@@ -201,30 +211,38 @@ export function OnboardingModal() {
                         {t("regionDesc")}
                       </p>
                       <div className="space-y-2">
-                        {REGION_OPTIONS.map((r) => (
-                          <button
-                            key={r.id}
-                            onClick={() => setRegion(r.id)}
-                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all ${
-                              region === r.id
-                                ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
-                                : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
-                            }`}
-                          >
-                            <span className="text-xl">{r.flag}</span>
-                            <span
-                              className={`text-[14px] font-medium ${
-                                region === r.id ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                        {REGION_OPTIONS.map((r) => {
+                          const selected = regions.includes(r.id)
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => toggleRegion(r.id)}
+                              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all ${
+                                selected
+                                  ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
+                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
                               }`}
                             >
-                              {r.id === "other" ? t("other") : r.label}
-                            </span>
-                            {region === r.id && (
-                              <Check className="size-4 text-[#F8B4D9] ml-auto" />
-                            )}
-                          </button>
-                        ))}
+                              <span className="text-xl">{r.flag}</span>
+                              <span
+                                className={`text-[14px] font-medium ${
+                                  selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                }`}
+                              >
+                                {r.id === "other" ? t("other") : r.label}
+                              </span>
+                              {selected && (
+                                <Check className="size-4 text-[#F8B4D9] ml-auto" />
+                              )}
+                            </button>
+                          )
+                        })}
                       </div>
+                      {regions.length > 1 && (
+                        <p className="text-[11px] text-[#F8B4D9]/60 mt-3 text-center">
+                          {regions.length} {t("regionsSelected") ?? "regions selected"}
+                        </p>
+                      )}
                     </div>
                   )}
 

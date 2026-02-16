@@ -1174,8 +1174,9 @@
   "onboarding": {
     "step": "Paso",
     "regionTitle": "¿Dónde coleccionas?",
-    "regionDesc": "Ajustaremos precios y disponibilidad a tu mercado",
+    "regionDesc": "Selecciona uno o más mercados para ajustar precios y disponibilidad",
     "other": "Otro",
+    "regionsSelected": "regiones seleccionadas",
     "brandsTitle": "Marcas que sigues",
     "brandsDesc": "Selecciona una o más para personalizar tu feed",
     "intentTitle": "¿Qué te trae aquí?",

@@ -40,6 +40,7 @@ import {
   Search,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
+import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
 import { useTokens } from "@/hooks/useTokens"
@@ -559,7 +560,16 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function ReportClient({ car, similarCars }: { car: CollectorCar; similarCars: CollectorCar[] }) {
+export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand = [], dbComparables = [], dbAnalysis, dbSoldHistory = [], dbAnalyses = [] }: {
+  car: CollectorCar
+  similarCars: CollectorCar[]
+  dbMarketData?: DbMarketDataRow | null
+  dbMarketDataBrand?: DbMarketDataRow[]
+  dbComparables?: DbComparableRow[]
+  dbAnalysis?: DbAnalysisRow | null
+  dbSoldHistory?: DbSoldRecord[]
+  dbAnalyses?: DbAnalysisRow[]
+}) {
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const { selectedRegion, effectiveRegion } = useRegion()
@@ -628,12 +638,34 @@ export function ReportClient({ car, similarCars }: { car: CollectorCar; similarC
     }, 1500)
   }
 
-  // ─── COMPUTED DATA ───
+  // ─── COMPUTED DATA (DB-first, fallback to hardcoded) ───
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  const flags = redFlags[car.make] || redFlags.default
-  const questions = sellerQuestions[car.make] || sellerQuestions.default
-  const costs = ownershipCosts[car.make] || ownershipCosts.default
-  const comps = comparableSales[car.make] || comparableSales.default
+
+  // Red flags & questions: prefer DB analysis
+  const flags = (dbAnalysis?.redFlags?.length ?? 0) > 0
+    ? dbAnalysis!.redFlags : (redFlags[car.make] || redFlags.default)
+  const questions = (dbAnalysis?.criticalQuestions?.length ?? 0) > 0
+    ? dbAnalysis!.criticalQuestions : (sellerQuestions[car.make] || sellerQuestions.default)
+
+  // Ownership costs: prefer DB analysis
+  const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
+  const costs = {
+    insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
+    storage: fallbackCosts.storage,
+    maintenance: dbAnalysis?.yearlyMaintenance ?? fallbackCosts.maintenance,
+  }
+
+  // Comparable sales: prefer DB
+  const comps = dbComparables.length > 0
+    ? dbComparables.map(c => ({
+        title: c.title,
+        price: c.soldPrice,
+        date: c.soldDate ? new Date(c.soldDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A",
+        platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform,
+        delta: dbMarketData?.avgPrice ? Math.round(((c.soldPrice - dbMarketData.avgPrice) / dbMarketData.avgPrice) * 100) : 0,
+      }))
+    : (comparableSales[car.make] || comparableSales.default)
+
   const events = eventsData[car.make] || eventsData.default
   const shipping = shippingCosts[car.make] || shippingCosts.default
   const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
@@ -643,9 +675,10 @@ export function ReportClient({ car, similarCars }: { car: CollectorCar; similarC
   const technical = technicalData[car.make] || technicalData.default
   const condition = conditionData[car.make] || conditionData.default
 
+  // Fair value: prefer DB market data for range
   const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
-  const fairLow = regionRange.low
-  const fairHigh = regionRange.high
+  const fairLow = dbMarketData?.lowPrice ?? regionRange.low
+  const fairHigh = dbMarketData?.highPrice ?? regionRange.high
   const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
   const pricePosition = fairHigh > fairLow
     ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
@@ -659,12 +692,35 @@ export function ReportClient({ car, similarCars }: { car: CollectorCar; similarC
     )
   )
 
-  const priceHistory = mockPriceHistory[car.make] || mockPriceHistory.default
+  // Price history: prefer DB sold records
+  const priceHistory = (() => {
+    if (dbSoldHistory.length >= 3) {
+      const now = new Date()
+      const years = [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
+      const buckets = years.map(yr => {
+        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
+        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
+      })
+      const filled = [...buckets]
+      for (let i = 0; i < filled.length; i++) {
+        if (filled[i] == null) {
+          const prev = filled.slice(0, i).reverse().find(v => v != null)
+          const next = filled.slice(i + 1).find(v => v != null)
+          filled[i] = prev ?? next ?? car.currentBid
+        }
+      }
+      return filled as number[]
+    }
+    return mockPriceHistory[car.make] || mockPriceHistory.default
+  })()
   const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
   const cagr = (Math.pow(priceHistory[priceHistory.length - 1] / priceHistory[0], 1 / 5) - 1) * 100
 
-  // Risk score based on flags count + grade
-  const riskScore = car.investmentGrade === "AAA" ? 25 : car.investmentGrade === "AA" ? 35 : car.investmentGrade === "A" ? 50 : 65
+  // Risk score: prefer DB confidence, fallback to grade-based
+  const riskScore = dbAnalysis?.confidence === "HIGH" ? 25 :
+    dbAnalysis?.confidence === "MEDIUM" ? 45 :
+    dbAnalysis?.confidence === "LOW" ? 70 :
+    car.investmentGrade === "AAA" ? 25 : car.investmentGrade === "AA" ? 35 : car.investmentGrade === "A" ? 50 : 65
 
   // Verdict logic
   const verdict = isBelowFair && car.investmentGrade <= "AA" ? "buy" :

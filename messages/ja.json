@@ -1174,8 +1174,9 @@
   "onboarding": {
     "step": "ステップ",
     "regionTitle": "どこでコレクションしていますか？",
-    "regionDesc": "お住まいの市場に合わせて価格と在庫を調整します",
+    "regionDesc": "価格と在庫を調整するために1つ以上の市場を選択してください",
     "other": "その他",
+    "regionsSelected": "地域を選択済み",
     "brandsTitle": "フォローするブランド",
     "brandsDesc": "フィードをパーソナライズするために1つ以上選択してください",
     "intentTitle": "ここに来た理由は？",
