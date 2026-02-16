@@ -4,6 +4,8 @@ import type {
   CurrencyCode,
   NormalizedListingStatus,
   NormalizedLocation,
+  PlatformEnum,
+  ReserveStatusEnum,
   SourceKey,
 } from "./types";
 
@@ -172,8 +174,13 @@ export function mapAuctionStatus(input: {
     return "unsold";
   }
 
-  // Unknown: treat as active only if a current bid is present without sold/no-sale hints.
-  return "active";
+  // Unknown status and endTime not in the past.
+  // Only treat as active if there's a current bid (indicates a live auction in progress).
+  // If no bid data at all, we can't determine status — default to unsold to avoid
+  // showing stale/ended listings as live.
+  const amount = input.currentBid ?? null;
+  if (amount !== null && amount > 0) return "active";
+  return "unsold";
 }
 
 export function parseLocation(locationRaw: string | null | undefined): NormalizedLocation {
@@ -343,4 +350,37 @@ export function normalizeSourceAuctionHouse(source: SourceKey): string {
     case "CollectingCars":
       return "Collecting Cars";
   }
+}
+
+export function mapSourceToPlatform(source: SourceKey): PlatformEnum {
+  switch (source) {
+    case "BaT":
+      return "BRING_A_TRAILER";
+    case "CarsAndBids":
+      return "CARS_AND_BIDS";
+    case "CollectingCars":
+      return "COLLECTING_CARS";
+  }
+}
+
+export function mapReserveStatus(reserveMet: boolean | null): ReserveStatusEnum | null {
+  if (reserveMet === true) return "RESERVE_MET";
+  if (reserveMet === false) return "RESERVE_NOT_MET";
+  return null;
+}
+
+export function mapReserveStatusFromString(text: string | null): ReserveStatusEnum | null {
+  if (!text) return null;
+  const upper = text.toUpperCase().replace(/[\s-]+/g, "_");
+  if (upper === "NO_RESERVE") return "NO_RESERVE";
+  if (upper === "RESERVE_MET") return "RESERVE_MET";
+  if (upper === "RESERVE_NOT_MET") return "RESERVE_NOT_MET";
+  return null;
+}
+
+export function buildLocationString(loc: NormalizedLocation): string | null {
+  const parts = [loc.city, loc.region, loc.country].filter(
+    (p): p is string => typeof p === "string" && p.length > 0 && p !== "Unknown",
+  );
+  return parts.length > 0 ? parts.join(", ") : null;
 }

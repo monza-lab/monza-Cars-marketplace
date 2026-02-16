@@ -55,6 +55,7 @@ export interface CollectorCar {
   exteriorColor?: string | null;
   interiorColor?: string | null;
   description?: string | null;
+  sellerNotes?: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

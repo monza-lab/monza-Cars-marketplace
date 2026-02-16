@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
 import { fetchLiveListingById } from '@/lib/supabaseLiveListings'
+import { fetchFerrariHistoricalByModel } from '@/features/ferrari_history/service'
 
 export async function GET(
   request: Request,
@@ -15,6 +16,12 @@ export async function GET(
     if (id.startsWith("live-")) {
       const liveCar = await fetchLiveListingById(id)
       if (liveCar) {
+        const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID()
+        const ferrariHistory = await fetchFerrariHistoricalByModel(
+          { make: liveCar.make, model: liveCar.model, months: 12, limit: 120 },
+          { requestId }
+        )
+
         return NextResponse.json({
           success: true,
           data: {
@@ -51,8 +58,8 @@ export async function GET(
             updatedAt: new Date().toISOString(),
             scrapedAt: new Date().toISOString(),
             analysis: null,
-            comparables: [],
-            priceHistory: [],
+            comparables: ferrariHistory.isFerrariContext ? ferrariHistory.comparables : [],
+            priceHistory: ferrariHistory.isFerrariContext ? ferrariHistory.priceHistory : [],
           },
         })
       }

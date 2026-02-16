@@ -51,6 +51,8 @@
     "createAccountTitle": "Create Account",
     "createAccountDesc": "Get 3 free analysis credits every month",
     "confirmEmail": "Check your email to confirm your account",
+    "resendConfirmation": "Resend confirmation email",
+    "emailRequired": "Email is required",
     "unexpectedError": "An unexpected error occurred",
     "loading": "Loading...",
     "or": "or",

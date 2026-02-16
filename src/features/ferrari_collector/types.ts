@@ -2,6 +2,10 @@ export type CollectorMode = "daily" | "backfill";
 
 export type SourceKey = "BaT" | "CarsAndBids" | "CollectingCars";
 
+export type PlatformEnum = "BRING_A_TRAILER" | "CARS_AND_BIDS" | "COLLECTING_CARS";
+
+export type ReserveStatusEnum = "NO_RESERVE" | "RESERVE_NOT_MET" | "RESERVE_MET";
+
 export type NormalizedListingStatus = "active" | "sold" | "unsold" | "delisted";
 
 export type CurrencyCode = "USD" | "EUR" | "GBP" | "JPY" | "CHF";
@@ -45,6 +49,15 @@ export interface NormalizedListing {
   sourceId: string;
   sourceUrl: string;
   title: string;
+
+  // Auction-model aligned fields
+  platform: PlatformEnum;
+  sellerNotes: string | null;
+  endTime: Date | null;
+  startTime: Date | null;
+  reserveStatus: ReserveStatusEnum | null;
+  finalPrice: number | null;
+  locationString: string | null;
 
   year: number;
   make: string;

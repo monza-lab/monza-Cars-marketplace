@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import Image from "next/image"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ArrowLeft,
@@ -221,9 +221,12 @@ function aggregateModels(cars: CollectorCar[]): Model[] {
     const repCar = modelCars.sort((a, b) => b.currentBid - a.currentBid)[0]
     const make = repCar.make
 
-    // Get verified image, fallback to car's image
-    const verifiedImage = getModelImage(make, modelName)
-    const representativeImage = verifiedImage || repCar.image
+    // Prefer the actual car's scraped image; fall back to static model image
+    const carImage = repCar.images?.[0] || repCar.image
+    const isPlaceholder = !carImage || carImage.includes("placeholder")
+    const representativeImage = isPlaceholder
+      ? (getModelImage(make, modelName) || carImage || "")
+      : carImage
 
     // Year range
     const minYear = Math.min(...years)
@@ -370,11 +373,10 @@ function MakePageRegionPills({ regionCounts }: { regionCounts: Record<string, nu
             <button
               key={region.id}
               onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all shrink-0 ${
-                isActive
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all shrink-0 ${isActive
                   ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
                   : "text-[#6B7280] hover:text-[#9CA3AF] bg-white/[0.03] border border-transparent"
-              }`}
+                }`}
             >
               <span className="text-[12px]">{region.flag}</span>
               <span>{region.label}</span>
@@ -392,6 +394,7 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
   const t = useTranslations("makePage")
   const { selectedRegion } = useRegion()
+  const router = useRouter()
 
   return (
     <Link href={`/cars/${makeSlug}/${model.representativeCar.id}`} className="block relative">
@@ -408,21 +411,20 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
 
         {/* Back link */}
         <div className="absolute top-4 left-4">
-          <Link href="/" className="flex items-center gap-1.5 text-[11px] text-[rgba(255,252,247,0.5)]">
+          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-[rgba(255,252,247,0.5)] hover:text-[rgba(255,252,247,0.8)] transition-colors cursor-pointer">
             <ArrowLeft className="size-3.5" />
             {t("hero.backToCollection")}
-          </Link>
+          </button>
         </div>
 
         {/* Grade badge */}
         <div className="absolute top-4 right-4">
-          <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-            model.representativeCar.investmentGrade === "AAA"
+          <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${model.representativeCar.investmentGrade === "AAA"
               ? "bg-emerald-500/30 text-emerald-300"
               : model.representativeCar.investmentGrade === "AA"
                 ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
                 : "bg-white/20 text-white"
-          }`}>
+            }`}>
             {model.representativeCar.investmentGrade}
           </span>
         </div>
@@ -585,8 +587,8 @@ function MobileModelContext({
 
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
-        toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
-      ))
+      toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
+    ))
     : 1
 
   return (
@@ -911,8 +913,8 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
           {/* Platform badge - real data source */}
           <div className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white/70 border border-white/20">
             {car.platform === "BRING_A_TRAILER" ? "BaT" :
-             car.platform === "CARS_AND_BIDS" ? "C&B" :
-             car.platform === "COLLECTING_CARS" ? "CC" : car.platform}
+              car.platform === "CARS_AND_BIDS" ? "C&B" :
+                car.platform === "COLLECTING_CARS" ? "CC" : car.platform}
           </div>
         </div>
 
@@ -1168,11 +1170,10 @@ function SidebarPill({
   return (
     <button
       onClick={onClick}
-      className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap ${
-        active
+      className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap ${active
           ? "bg-[#F8B4D9] text-[#0b0b10]"
           : "bg-white/5 text-[#9CA3AF] hover:bg-white/10 border border-white/[0.06]"
-      }`}
+        }`}
     >
       {label}
       {count !== undefined && count > 0 && (
@@ -1332,11 +1333,10 @@ function ModelNavSidebar({
               <button
                 key={model.slug}
                 onClick={() => onSelectModel(index)}
-                className={`w-full text-left flex gap-2.5 px-3 py-2 border-b border-white/[0.03] transition-all ${
-                  index === currentModelIndex
+                className={`w-full text-left flex gap-2.5 px-3 py-2 border-b border-white/[0.03] transition-all ${index === currentModelIndex
                     ? "bg-[rgba(248,180,217,0.08)] border-l-2 border-l-[#F8B4D9]"
                     : "hover:bg-white/[0.02]"
-                }`}
+                  }`}
               >
                 {/* Mini thumbnail */}
                 <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
@@ -1354,9 +1354,8 @@ function ModelNavSidebar({
                 {/* Model info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className={`text-[12px] font-semibold truncate ${
-                      index === currentModelIndex ? "text-[#F8B4D9]" : "text-[#FFFCF7]"
-                    }`}>
+                    <p className={`text-[12px] font-semibold truncate ${index === currentModelIndex ? "text-[#F8B4D9]" : "text-[#FFFCF7]"
+                      }`}>
                       {model.name}
                     </p>
                     <span className={`text-[10px] font-bold shrink-0 ${gradeColor(model.representativeCar.investmentGrade)}`}>
@@ -1491,13 +1490,12 @@ function ModelFeedCard({ model, make }: { model: Model; make: string }) {
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              grade === "AAA"
+            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${grade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : grade === "AA"
-                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                : "bg-white/20 text-white"
-            }`}>
+                  ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
+                  : "bg-white/20 text-white"
+              }`}>
               {grade}
             </span>
           </div>
@@ -1556,12 +1554,11 @@ function ModelFeedCard({ model, make }: { model: Model; make: string }) {
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
               </div>
-              <p className={`text-[13px] font-semibold ${
-                grade === "AAA" ? "text-emerald-400"
-                : grade === "AA" ? "text-blue-400"
-                : grade === "A" ? "text-amber-400"
-                : "text-[#6B7280]"
-              }`}>{grade}</p>
+              <p className={`text-[13px] font-semibold ${grade === "AAA" ? "text-emerald-400"
+                  : grade === "AA" ? "text-blue-400"
+                    : grade === "A" ? "text-amber-400"
+                      : "text-[#6B7280]"
+                }`}>{grade}</p>
             </div>
           </div>
 
@@ -1732,8 +1729,8 @@ function ModelContextPanel({
   // Regional price bar max value for relative widths
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
-        toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
-      ))
+      toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
+    ))
     : 1
 
   return (
@@ -1758,9 +1755,8 @@ function ModelContextPanel({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("sidebar.grade")}</span>
-              <p className={`text-[16px] font-bold ${
-                model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"
-              }`}>{model.representativeCar.investmentGrade}</p>
+              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"
+                }`}>{model.representativeCar.investmentGrade}</p>
             </div>
             <div>
               <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Min Price</span>
@@ -1947,9 +1943,8 @@ function ModelContextPanel({
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`h-[6px] flex-1 rounded-sm ${
-                      i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
-                    }`}
+                    className={`h-[6px] flex-1 rounded-sm ${i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                      }`}
                   />
                 ))}
               </div>
@@ -2338,7 +2333,7 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
           onClose={() => setShowMobileFilters(false)}
           models={[]}
           selectedModel=""
-          setSelectedModel={() => {}}
+          setSelectedModel={() => { }}
           selectedPriceRange={selectedPriceRange}
           setSelectedPriceRange={setSelectedPriceRange}
           selectedStatus={selectedStatus}

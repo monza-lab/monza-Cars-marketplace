@@ -6,15 +6,26 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
 
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
+  // Handle error redirects from Supabase (e.g. user denied consent)
+  const error = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+  if (error) {
+    console.error('Auth callback error:', error, errorDescription)
+    const params = new URLSearchParams({ error })
+    if (errorDescription) params.set('error_description', errorDescription)
+    return NextResponse.redirect(`${origin}/?${params.toString()}`)
   }
 
-  // Return to home page on error
-  return NextResponse.redirect(`${origin}?error=auth_callback_error`)
+  if (code) {
+    const supabase = await createClient()
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!exchangeError) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+
+    console.error('Code exchange error:', exchangeError.message)
+  }
+
+  return NextResponse.redirect(`${origin}/?error=auth_callback_error`)
 }

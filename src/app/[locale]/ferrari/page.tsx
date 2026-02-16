@@ -59,6 +59,7 @@ export default async function FerrariDataPage({
       "id,year,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,photos_count,photos_media(photo_url)",
     )
     .eq("make", "Ferrari")
+    .eq("status", "active")
     .order("sale_date", { ascending: false })
     .limit(120);
 

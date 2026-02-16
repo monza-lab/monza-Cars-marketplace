@@ -23,26 +23,33 @@ export async function proxy(request: NextRequest) {
   // First, handle i18n routing
   const intlResponse = intlMiddleware(request)
 
-  // If intl middleware returned a redirect, return it
-  if (intlResponse.status !== 200) {
-    return intlResponse
+  // Skip intl middleware for API routes — they don't need locale routing
+  let intlResponse: NextResponse | null = null
+  if (!isApiRoute) {
+    intlResponse = intlMiddleware(request)
+    // If intl middleware returned a redirect, return it
+    if (intlResponse.status !== 200) {
+      return intlResponse
+    }
   }
 
-  // Now handle Supabase auth
+  // Now handle Supabase auth (runs for ALL routes including API)
   let supabaseResponse = NextResponse.next({
     request,
-    headers: intlResponse.headers,
+    headers: intlResponse?.headers,
   })
 
-  // Copy cookies from intl response
-  intlResponse.cookies.getAll().forEach((cookie) => {
-    supabaseResponse.cookies.set(cookie.name, cookie.value, cookie)
-  })
+  // Copy cookies from intl response (page routes only)
+  if (intlResponse) {
+    intlResponse.cookies.getAll().forEach((cookie) => {
+      supabaseResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-  // Build safety: if env vars are missing during build, provide placeholders 
+  // Build safety: if env vars are missing during build, provide placeholders
   // to avoid @supabase/ssr validation errors.
   const supabase = createServerClient(
     supabaseUrl || 'https://placeholder-url.supabase.co',
@@ -58,12 +65,14 @@ export async function proxy(request: NextRequest) {
           )
           supabaseResponse = NextResponse.next({
             request,
-            headers: intlResponse.headers,
+            headers: intlResponse?.headers,
           })
-          // Re-copy intl cookies
-          intlResponse.cookies.getAll().forEach((cookie) => {
-            supabaseResponse.cookies.set(cookie.name, cookie.value, cookie)
-          })
+          // Re-copy intl cookies (page routes only)
+          if (intlResponse) {
+            intlResponse.cookies.getAll().forEach((cookie) => {
+              supabaseResponse.cookies.set(cookie.name, cookie.value, cookie)
+            })
+          }
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -72,7 +81,7 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired - required for Server Components
+  // Refresh session if expired - required for Server Components and API routes
   await supabase.auth.getUser()
 
   return supabaseResponse
@@ -81,9 +90,9 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all pathnames except for:
-    // - API routes
+    // - Auth callback/confirm (handle their own auth)
     // - Static files
     // - Next.js internals
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!auth/callback|auth/confirm|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

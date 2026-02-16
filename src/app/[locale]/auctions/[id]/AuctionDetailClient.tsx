@@ -885,6 +885,19 @@ export default function AuctionDetailClient() {
         }
         const json = await res.json()
         const rawAuction = json.data ?? json
+        const auctionPriceHistory: PriceHistoryEntry[] = (rawAuction.priceHistory ?? [])
+          .filter((ph: { id?: string; bid?: number; timestamp?: string }) =>
+            typeof ph?.id === "string" &&
+            typeof ph?.bid === "number" &&
+            Number.isFinite(ph.bid) &&
+            ph.bid > 0 &&
+            typeof ph?.timestamp === "string"
+          )
+          .map((ph: { id: string; bid: number; timestamp: string }) => ({
+            id: ph.id,
+            bid: ph.bid,
+            timestamp: ph.timestamp,
+          }))
 
         const data: AuctionDetail = {
           id: rawAuction.id,
@@ -956,6 +969,9 @@ export default function AuctionDetailClient() {
           updatedAt: rawAuction.updatedAt,
         }
         setAuction(data)
+        if (auctionPriceHistory.length > 0) {
+          setPriceHistory(auctionPriceHistory)
+        }
       } catch {
         setError({ code: "network_error" })
       } finally {
@@ -968,7 +984,7 @@ export default function AuctionDetailClient() {
 
   // Fetch Supabase price history for live listings
   useEffect(() => {
-    if (!auctionId || !auctionId.startsWith("live-")) return
+    if (!auctionId || !auctionId.startsWith("live-") || priceHistory.length > 0) return
 
     async function fetchPriceHistory() {
       try {
@@ -982,7 +998,7 @@ export default function AuctionDetailClient() {
     }
 
     fetchPriceHistory()
-  }, [auctionId])
+  }, [auctionId, priceHistory.length])
 
   if (loading) return <DetailSkeleton />
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -23,6 +23,7 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
+  resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>
   signInWithGoogle: () => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -30,29 +31,72 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+type ProfileFetchResult = {
+  ok: boolean
+  status: number | null
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+  const creatingUserRef = useRef(false)
 
-  const fetchProfile = useCallback(async (supabaseUser: User) => {
+  const fetchProfile = useCallback(async (accessToken?: string): Promise<ProfileFetchResult> => {
     try {
-      const response = await fetch('/api/user/profile')
+      const response = await fetch('/api/user/profile', {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      })
       if (response.ok) {
         const data = await response.json()
         setProfile(data.profile)
+        return { ok: true, status: response.status }
       }
+      return { ok: false, status: response.status }
     } catch (error) {
       console.error('Error fetching profile:', error)
+      return { ok: false, status: null }
     }
   }, [])
 
+  const createUserProfile = useCallback(async (supabaseUser: User, accessToken?: string): Promise<ProfileFetchResult> => {
+    if (creatingUserRef.current) {
+      return { ok: false, status: null }
+    }
+
+    creatingUserRef.current = true
+    try {
+      const res = await fetch('/api/user/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          email: supabaseUser.email,
+          name: supabaseUser.user_metadata?.full_name,
+        }),
+      })
+
+      if (!res.ok) {
+        return { ok: false, status: res.status }
+      }
+
+      return await fetchProfile(accessToken)
+    } catch (error) {
+      console.error('Error creating user profile:', error)
+      return { ok: false, status: null }
+    } finally {
+      creatingUserRef.current = false
+    }
+  }, [fetchProfile])
+
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user)
+      await fetchProfile()
     }
   }, [user, fetchProfile])
 
@@ -64,7 +108,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (session?.user) {
-          await fetchProfile(session.user)
+          let profileResult = await fetchProfile(session.access_token)
+
+          // Email confirmation path can establish auth session before the app profile
+          // row exists in Prisma; create it immediately instead of waiting for timing.
+          if (!profileResult.ok && profileResult.status === 404) {
+            profileResult = await createUserProfile(session.user, session.access_token)
+          }
+
+          // Only force sign-out on auth rejection. Other failures (e.g. DB 500)
+          // should not destroy a valid auth session.
+          if (!profileResult.ok && (profileResult.status === 401 || profileResult.status === 403)) {
+            await supabase.auth.signOut()
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
@@ -81,16 +140,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
 
         if (event === 'SIGNED_IN' && session?.user) {
-          // Create user in database if new
-          await fetch('/api/user/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: session.user.email,
-              name: session.user.user_metadata?.full_name,
-            }),
-          })
-          await fetchProfile(session.user)
+          const createResult = await createUserProfile(session.user, session.access_token)
+          if (!createResult.ok && (createResult.status === 401 || createResult.status === 403)) {
+            await supabase.auth.signOut()
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+          }
         } else if (event === 'SIGNED_OUT') {
           setProfile(null)
         }
@@ -100,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase.auth, fetchProfile])
+  }, [supabase, fetchProfile, createUserProfile])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -111,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -119,6 +175,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           full_name: name,
         },
+      },
+    })
+
+    if (error) {
+      return { error }
+    }
+
+    // Supabase may return a user object with no identities when the email already
+    // exists (anti-enumeration behavior). Surface a clear sign-in message.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return {
+        error: new Error('Email already registered. Please sign in or reset your password.'),
+      }
+    }
+
+    return { error: null }
+  }
+
+  const resendConfirmationEmail = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },
     })
     return { error }
@@ -148,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signIn,
         signUp,
+        resendConfirmationEmail,
         signInWithGoogle,
         signOut,
         refreshProfile,

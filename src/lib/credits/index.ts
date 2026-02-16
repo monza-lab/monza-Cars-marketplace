@@ -6,11 +6,25 @@ const FREE_CREDITS_PER_MONTH = 3
  * Get or create user by Supabase ID
  */
 export async function getOrCreateUser(supabaseId: string, email: string, name?: string) {
-  let user = await prisma.user.findUnique({
-    where: { supabaseId },
-  })
+  // 1. Look up by supabaseId first
+  let user = await prisma.user.findUnique({ where: { supabaseId } })
+  if (user) return user
 
-  if (!user) {
+  // 2. Check by email (handles Supabase identity linking / provider changes)
+  user = await prisma.user.findUnique({ where: { email } })
+  if (user) {
+    // Email exists but supabaseId differs — update to new Supabase identity
+    if (user.supabaseId !== supabaseId) {
+      user = await prisma.user.update({
+        where: { email },
+        data: { supabaseId },
+      })
+    }
+    return user
+  }
+
+  // 3. Create new user
+  try {
     user = await prisma.user.create({
       data: {
         supabaseId,
@@ -28,9 +42,16 @@ export async function getOrCreateUser(supabaseId: string, email: string, name?: 
         },
       },
     })
+  } catch (e: unknown) {
+    // Race condition: another concurrent request created the user first
+    if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'P2002') {
+      user = await prisma.user.findUnique({ where: { supabaseId } })
+        ?? await prisma.user.findUnique({ where: { email } })
+    }
+    if (!user) throw e
   }
 
-  return user
+  return user!
 }
 
 /**
