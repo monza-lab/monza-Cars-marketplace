@@ -31,6 +31,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { getBrandImage } from "@/lib/modelImages"
+import { FilterSidebar } from "@/components/filters/FilterSidebar"
 
 // ─── BRAND TYPE ───
 type Brand = {
@@ -1660,9 +1661,14 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+    <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
+      {/* FILTERS SECTION - Sticky at top */}
+      <div className="sticky top-0 z-20">
+        <FilterSidebar />
+      </div>
 
+      {/* BRAND CONTEXT - Scrolls below filters */}
+      <div className="border-t border-white/5">
         {/* 1. BRAND OVERVIEW */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-2">
