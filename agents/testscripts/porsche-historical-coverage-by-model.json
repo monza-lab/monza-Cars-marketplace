@@ -1,0 +1,125 @@
+{
+  "generatedAt": "2026-02-17T00:16:43.089Z",
+  "soldCoverageByModel": [
+    {
+      "model": "Boxster",
+      "sold_rows": 24,
+      "min_date": "2026-01-29T23:00:00.000Z",
+      "max_date": "2026-02-15T23:00:00.000Z",
+      "distinct_days": 14,
+      "max_gap_days": 2
+    },
+    {
+      "model": "Cayenne",
+      "sold_rows": 24,
+      "min_date": "2026-01-31T23:00:00.000Z",
+      "max_date": "2026-02-15T23:00:00.000Z",
+      "distinct_days": 14,
+      "max_gap_days": 3
+    },
+    {
+      "model": "Cayman",
+      "sold_rows": 24,
+      "min_date": "2026-01-19T23:00:00.000Z",
+      "max_date": "2026-02-14T23:00:00.000Z",
+      "distinct_days": 19,
+      "max_gap_days": 3
+    },
+    {
+      "model": "Macan",
+      "sold_rows": 24,
+      "min_date": "2025-11-13T23:00:00.000Z",
+      "max_date": "2026-02-10T23:00:00.000Z",
+      "distinct_days": 23,
+      "max_gap_days": 8
+    },
+    {
+      "model": "Panamera",
+      "sold_rows": 24,
+      "min_date": "2025-12-16T23:00:00.000Z",
+      "max_date": "2026-02-11T23:00:00.000Z",
+      "distinct_days": 22,
+      "max_gap_days": 11
+    },
+    {
+      "model": "914",
+      "sold_rows": 22,
+      "min_date": "2025-11-22T23:00:00.000Z",
+      "max_date": "2026-02-14T23:00:00.000Z",
+      "distinct_days": 21,
+      "max_gap_days": 19
+    },
+    {
+      "model": "968",
+      "sold_rows": 22,
+      "min_date": "2025-06-13T22:00:00.000Z",
+      "max_date": "2026-02-14T23:00:00.000Z",
+      "distinct_days": 22,
+      "max_gap_days": 43
+    },
+    {
+      "model": "911SC",
+      "sold_rows": 18,
+      "min_date": "2025-12-17T23:00:00.000Z",
+      "max_date": "2026-02-12T23:00:00.000Z",
+      "distinct_days": 17,
+      "max_gap_days": 11
+    },
+    {
+      "model": "928",
+      "sold_rows": 18,
+      "min_date": "2025-11-27T23:00:00.000Z",
+      "max_date": "2026-02-13T23:00:00.000Z",
+      "distinct_days": 18,
+      "max_gap_days": 16
+    },
+    {
+      "model": "356C",
+      "sold_rows": 17,
+      "min_date": "2025-11-11T23:00:00.000Z",
+      "max_date": "2026-02-15T23:00:00.000Z",
+      "distinct_days": 17,
+      "max_gap_days": 14
+    },
+    {
+      "model": "356B",
+      "sold_rows": 16,
+      "min_date": "2025-12-05T23:00:00.000Z",
+      "max_date": "2026-02-08T23:00:00.000Z",
+      "distinct_days": 15,
+      "max_gap_days": 16
+    },
+    {
+      "model": "Turbo",
+      "sold_rows": 16,
+      "min_date": "2026-02-01T23:00:00.000Z",
+      "max_date": "2026-02-14T23:00:00.000Z",
+      "distinct_days": 12,
+      "max_gap_days": 2
+    },
+    {
+      "model": "911",
+      "sold_rows": 13,
+      "min_date": "2026-02-12T23:00:00.000Z",
+      "max_date": "2026-02-15T23:00:00.000Z",
+      "distinct_days": 4,
+      "max_gap_days": 1
+    },
+    {
+      "model": "912E",
+      "sold_rows": 12,
+      "min_date": "2025-06-24T22:00:00.000Z",
+      "max_date": "2026-02-10T23:00:00.000Z",
+      "distinct_days": 12,
+      "max_gap_days": 56
+    },
+    {
+      "model": "Gt3",
+      "sold_rows": 3,
+      "min_date": "2026-01-30T23:00:00.000Z",
+      "max_date": "2026-02-11T23:00:00.000Z",
+      "distinct_days": 3,
+      "max_gap_days": 6
+    }
+  ]
+}

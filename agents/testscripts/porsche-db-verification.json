@@ -1,0 +1,782 @@
+{
+  "generatedAt": "2026-02-17T00:14:34.646Z",
+  "listingsByStatus": [
+    {
+      "status": "active",
+      "count": 86
+    },
+    {
+      "status": "sold",
+      "count": 277
+    }
+  ],
+  "activeListingsTotal": 86,
+  "activeFillRates": [
+    {
+      "column": "source",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "source_id",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "source_url",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "year",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "make",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "model",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "trim",
+      "filled": 81,
+      "total": 86,
+      "fillRatePct": 94.19
+    },
+    {
+      "column": "body_style",
+      "filled": 47,
+      "total": 86,
+      "fillRatePct": 54.65
+    },
+    {
+      "column": "color_exterior",
+      "filled": 74,
+      "total": 86,
+      "fillRatePct": 86.05
+    },
+    {
+      "column": "color_interior",
+      "filled": 83,
+      "total": 86,
+      "fillRatePct": 96.51
+    },
+    {
+      "column": "mileage",
+      "filled": 84,
+      "total": 86,
+      "fillRatePct": 97.67
+    },
+    {
+      "column": "mileage_unit",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "vin",
+      "filled": 85,
+      "total": 86,
+      "fillRatePct": 98.84
+    },
+    {
+      "column": "hagerty_grade",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "condition_description",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "original_vs_restored",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "matching_numbers",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "estimate_low",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "estimate_high",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "hammer_price",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "original_currency",
+      "filled": 81,
+      "total": 86,
+      "fillRatePct": 94.19
+    },
+    {
+      "column": "price_usd",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "price_eur",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "price_gbp",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "buyers_premium_percent",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "country",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "region",
+      "filled": 85,
+      "total": 86,
+      "fillRatePct": 98.84
+    },
+    {
+      "column": "city",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "latitude",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "longitude",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "auction_house",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "auction_date",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "auction_location",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "sale_date",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "list_date",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "days_to_sell",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "status",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "reserve_met",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "photos_count",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "description_text",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "racing_history",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "famous_owner",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "competition_entries",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "accident_history",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "ownership_count",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "service_records_complete",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "restoration_date",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "restoration_type",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "seller_name",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "seller_contact",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "created_at",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "updated_at",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "scrape_timestamp",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "data_quality_score",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "title",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "platform",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "current_bid",
+      "filled": 81,
+      "total": 86,
+      "fillRatePct": 94.19
+    },
+    {
+      "column": "bid_count",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "reserve_status",
+      "filled": 27,
+      "total": 86,
+      "fillRatePct": 31.4
+    },
+    {
+      "column": "seller_notes",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "images",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "engine",
+      "filled": 81,
+      "total": 86,
+      "fillRatePct": 94.19
+    },
+    {
+      "column": "transmission",
+      "filled": 84,
+      "total": 86,
+      "fillRatePct": 97.67
+    },
+    {
+      "column": "end_time",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "start_time",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "final_price",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "location",
+      "filled": 86,
+      "total": 86,
+      "fillRatePct": 100
+    },
+    {
+      "column": "view_count",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "watch_count",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    }
+  ],
+  "activeWorstGaps": [
+    {
+      "column": "hagerty_grade",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "condition_description",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "matching_numbers",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "estimate_low",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "estimate_high",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "hammer_price",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "price_usd",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "price_eur",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "price_gbp",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "buyers_premium_percent",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "latitude",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "longitude",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "auction_location",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "reserve_met",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "famous_owner",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "competition_entries",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "accident_history",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "ownership_count",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "service_records_complete",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "restoration_date",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "restoration_type",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "seller_name",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "seller_contact",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "seller_notes",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    },
+    {
+      "column": "final_price",
+      "filled": 0,
+      "total": 86,
+      "fillRatePct": 0
+    }
+  ],
+  "requiredFieldNulls": {
+    "source_id": 0,
+    "source_url": 0,
+    "title": 0,
+    "make": 0,
+    "model": 0,
+    "status": 0,
+    "year": 0,
+    "sale_date": 0,
+    "auction_house": 0
+  },
+  "integrity": {
+    "duplicateSourceId": [],
+    "orphanPriceHistory": 0,
+    "nonPorschePriceHistory": 0,
+    "duplicatePriceHistoryPoints": 0
+  },
+  "priceHistory": {
+    "totalRowsPorsche": 837
+  },
+  "historyCoverageByModel": [
+    {
+      "model": "911",
+      "rows": 282,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Boxster",
+      "rows": 82,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Cayenne",
+      "rows": 77,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Cayman",
+      "rows": 51,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "914",
+      "rows": 37,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Panamera",
+      "rows": 36,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "928",
+      "rows": 33,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "968",
+      "rows": 31,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "718",
+      "rows": 30,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Macan",
+      "rows": 30,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "356C",
+      "rows": 28,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "911SC",
+      "rows": 24,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Turbo",
+      "rows": 19,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "912E",
+      "rows": 18,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "356B",
+      "rows": 16,
+      "min_ts": "2026-02-16T22:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 1,
+      "max_gap_days": "0.00"
+    },
+    {
+      "model": "930",
+      "rows": 12,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "944",
+      "rows": 12,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "356SC",
+      "rows": 6,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "911E",
+      "rows": 6,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "Boat”",
+      "rows": 6,
+      "min_ts": "2026-02-15T18:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 2,
+      "max_gap_days": "1.00"
+    },
+    {
+      "model": "911T",
+      "rows": 1,
+      "min_ts": "2026-02-16T22:00:00.000Z",
+      "max_ts": "2026-02-16T22:00:00.000Z",
+      "distinct_days": 1,
+      "max_gap_days": "0.00"
+    }
+  ],
+  "modelsWithoutPriceHistory": [
+    {
+      "model": "Gt3",
+      "listings": 3
+    },
+    {
+      "model": "Panorama",
+      "listings": 1
+    }
+  ]
+}
