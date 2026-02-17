@@ -26,13 +26,13 @@ export async function discoverListingUrls(source: SourceKey, opts: DiscoverOptio
   }
 }
 
-export async function discoverFerrariListingUrls(source: SourceKey, opts: DiscoverOptions): Promise<string[]> {
-  return discoverListingUrls(source, { ...opts, make: "Ferrari", query: opts.query || "ferrari" });
+export async function discoverPorscheListingUrls(source: SourceKey, opts: DiscoverOptions): Promise<string[]> {
+  return discoverListingUrls(source, { ...opts, make: "Porsche", query: opts.query || "porsche" });
 }
 
 function makeSlug(value: string | undefined): string {
   const raw = (value ?? "").trim().toLowerCase();
-  if (!raw) return "ferrari";
+  if (!raw) return "porsche";
   return raw.replace(/\s+/g, "-");
 }
 
@@ -41,7 +41,7 @@ async function discoverBaT(opts: DiscoverOptions): Promise<string[]> {
   const slug = makeSlug(opts.make ?? opts.query);
   // Multiple discovery paths for better coverage:
   // 1. Search results (ended + active mix)
-  // 2. Ferrari make-specific page (dedicated Ferrari listings)
+  // 2. Porsche make-specific page (dedicated Porsche listings)
   // 3. Active auctions search
   const candidates = [
     `https://bringatrailer.com/${slug}/`,

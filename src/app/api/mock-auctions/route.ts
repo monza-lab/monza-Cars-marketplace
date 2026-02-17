@@ -11,6 +11,7 @@ import {
   type InvestmentGrade
 } from "@/lib/curatedCars";
 import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
+import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -29,15 +30,27 @@ export async function GET(request: NextRequest) {
   const parsedLimit = parseInt(searchParams.get("limit") || "24", 10);
   const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 200) : 24;
 
+  const requestedMake = make && make !== "All Makes"
+    ? normalizeSupportedMake(make)
+    : resolveRequestedMake(null);
+
+  if (make && make !== "All Makes" && !requestedMake) {
+    return NextResponse.json({
+      auctions: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    });
+  }
+
   const live = await fetchLiveListingsAsCollectorCars({
     limit,
     includePriceHistory: false,
+    make: requestedMake,
   });
 
-  // STRICT REQUIREMENT: "remove all the cars from the ui that are not the ferraris coming from the supabase database"
-  // 1. We ONLY use `live` (Supabase) data.
-  // 2. We FILTER `live` to only include Ferraris.
-  let results: CollectorCar[] = live.filter(car => car.make.toLowerCase() === "ferrari");
+  let results: CollectorCar[] = live;
 
   // Apply filters
   if (query) {
@@ -49,8 +62,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Note: The 'filter' param (top-picks, live, ending-soon) logic below is simplified 
-  // because we are now restricted to ONLY Supabase Ferraris.
+  // Note: The 'filter' param (top-picks, live, ending-soon) logic below is simplified
+  // because we are now restricted to ONLY Supabase Porsches.
   if (filter === "top-picks") {
     results = results.filter(car => car.investmentGrade === "AAA");
   } else if (filter === "live") {

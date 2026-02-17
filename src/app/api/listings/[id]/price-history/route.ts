@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { fetchFerrariHistoricalByListingId } from "@/features/ferrari_history/service";
+import { isSupportedLiveMake } from "@/lib/makeProfiles";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,16 @@ export async function GET(
     const supabase = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    const { data: listingRow, error: listingError } = await supabase
+      .from("listings")
+      .select("make")
+      .eq("id", listingId)
+      .single();
+
+    if (listingError || !listingRow || !isSupportedLiveMake(listingRow.make)) {
+      return NextResponse.json({ success: true, data: [] });
+    }
 
     const { data, error } = await supabase
       .from("price_history")

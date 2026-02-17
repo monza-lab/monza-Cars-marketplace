@@ -1,9 +1,45 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { createClient } from '@supabase/supabase-js'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
 import { fetchLiveListingById } from '@/lib/supabaseLiveListings'
 import { fetchFerrariHistoricalByModel } from '@/features/ferrari_history/service'
+import { isSupportedLiveMake } from '@/lib/makeProfiles'
+
+type ListingPriceHistoryRow = {
+  time: string
+  status: string | null
+  price_usd: number | null
+  price_eur: number | null
+  price_gbp: number | null
+}
+
+async function fetchListingPriceHistory(liveId: string): Promise<Array<{ id: string; bid: number; timestamp: string; status: string | null }>> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return []
+
+  const listingId = liveId.startsWith('live-') ? liveId.slice(5) : liveId
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const { data, error } = await supabase
+    .from('price_history')
+    .select('time,status,price_usd,price_eur,price_gbp')
+    .eq('listing_id', listingId)
+    .order('time', { ascending: true })
+
+  if (error || !data) return []
+
+  return (data as ListingPriceHistoryRow[]).map((row, idx) => ({
+    id: `ph-${idx}`,
+    bid: row.price_usd ?? row.price_eur ?? row.price_gbp ?? 0,
+    timestamp: row.time,
+    status: row.status,
+  }))
+}
 
 export async function GET(
   request: Request,
@@ -15,12 +51,21 @@ export async function GET(
     // Check if this is a live listing from Supabase (id starts with "live-")
     if (id.startsWith("live-")) {
       const liveCar = await fetchLiveListingById(id)
-      if (liveCar) {
+      if (liveCar && isSupportedLiveMake(liveCar.make)) {
         const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID()
-        const ferrariHistory = await fetchFerrariHistoricalByModel(
-          { make: liveCar.make, model: liveCar.model, months: 12, limit: 120 },
-          { requestId }
-        )
+        let comparables: Array<Record<string, unknown>> = []
+        let priceHistory: Array<{ id: string; bid: number; timestamp: string; status?: string | null }> = []
+
+        if (liveCar.make.toLowerCase() === 'ferrari') {
+          const ferrariHistory = await fetchFerrariHistoricalByModel(
+            { make: liveCar.make, model: liveCar.model, months: 12, limit: 120 },
+            { requestId }
+          )
+          comparables = ferrariHistory.isFerrariContext ? ferrariHistory.comparables : []
+          priceHistory = ferrariHistory.isFerrariContext ? ferrariHistory.priceHistory : []
+        } else {
+          priceHistory = await fetchListingPriceHistory(liveCar.id)
+        }
 
         return NextResponse.json({
           success: true,
@@ -58,15 +103,15 @@ export async function GET(
             updatedAt: new Date().toISOString(),
             scrapedAt: new Date().toISOString(),
             analysis: null,
-            comparables: ferrariHistory.isFerrariContext ? ferrariHistory.comparables : [],
-            priceHistory: ferrariHistory.isFerrariContext ? ferrariHistory.priceHistory : [],
+            comparables,
+            priceHistory,
           },
         })
       }
     }
 
     // Check if this is a curated car — exclude curated Ferraris (only real DB data for Ferrari)
-    const curatedCar = CURATED_CARS.find(car => car.id === id && car.make !== "Ferrari")
+    const curatedCar = CURATED_CARS.find(car => car.id === id && car.make === "Porsche")
     if (curatedCar) {
       return NextResponse.json({
         success: true,
@@ -128,7 +173,7 @@ export async function GET(
     }
 
     // Check if this is a featured auction — exclude featured Ferraris (only real DB data)
-    const featuredAuction = featuredAuctions.find(fa => fa.id === id && fa.make !== "Ferrari")
+    const featuredAuction = featuredAuctions.find(fa => fa.id === id && fa.make === "Porsche")
     if (featuredAuction) {
       // Transform featured auction to match DB auction format
       return NextResponse.json({

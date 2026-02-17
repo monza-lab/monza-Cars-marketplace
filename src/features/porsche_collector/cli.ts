@@ -1,4 +1,4 @@
-import { runFerrariCollector } from "./collector";
+import { runPorscheCollector } from "./collector";
 import type { CollectorRunConfig, CollectorMode } from "./types";
 
 import { existsSync, readFileSync } from "node:fs";
@@ -71,17 +71,17 @@ function usage(): string {
     "Luxury Collector CLI (Porsche-first)",
     "",
     "Run (daily):",
-    "  npx tsx src/features/ferrari_collector/cli.ts --mode=daily",
+    "  npx tsx src/features/porsche_collector/cli.ts --mode=daily",
     "",
     "Run (backfill):",
-    "  npx tsx src/features/ferrari_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07",
+    "  npx tsx src/features/porsche_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07",
     "",
     "Common flags:",
-    "  --make=Porsche|Ferrari",
+    "  --make=Porsche",
     "  --endedWindowDays=90",
     "  --maxActivePages=10",
     "  --maxEndedPages=10",
-    "  --checkpointPath=var/ferrari_collector/checkpoint.json",
+    "  --checkpointPath=var/porsche_collector/checkpoint.json",
     "  --dryRun",
     "  --noDetails",
   ].join("\n");
@@ -109,11 +109,11 @@ async function main(): Promise<void> {
     maxActivePagesPerSource: readNumber(args, "maxActivePages", 10),
     maxEndedPagesPerSource: readNumber(args, "maxEndedPages", 10),
     scrapeDetails: !hasFlag(args, "noDetails"),
-    checkpointPath: readString(args, "checkpointPath") ?? "var/ferrari_collector/checkpoint.json",
+    checkpointPath: readString(args, "checkpointPath") ?? "var/porsche_collector/checkpoint.json",
     dryRun: hasFlag(args, "dryRun"),
   };
 
-  await runFerrariCollector(config);
+  await runPorscheCollector(config);
 }
 
 main().catch((err) => {

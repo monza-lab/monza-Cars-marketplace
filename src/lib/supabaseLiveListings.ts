@@ -6,6 +6,13 @@ import type {
   Region,
   FairValueByRegion,
 } from "./curatedCars";
+import { isLuxuryCarListing } from "@/features/ferrari_collector/normalize";
+import {
+  isSupportedLiveMake,
+  normalizeSupportedMake,
+  resolveRequestedMake,
+  type SupportedLiveMake,
+} from "./makeProfiles";
 
 // ─── Row types ───
 
@@ -316,7 +323,8 @@ function computeTrend(
 async function queryListingsMany(
   supabase: SupabaseClient,
   limit: number,
-  statusFilter?: string
+  targetMake: SupportedLiveMake,
+  statusFilter?: string,
 ): Promise<ListingRow[]> {
   // Narrow query first to avoid fragile cross-table joins on degraded networks.
   let narrowQuery = supabase
@@ -327,6 +335,8 @@ async function queryListingsMany(
     narrowQuery = narrowQuery.eq("status", statusFilter);
   }
 
+  narrowQuery = narrowQuery.ilike("make", targetMake);
+
   const narrow = await narrowQuery
     .order("sale_date", { ascending: false })
     .limit(limit);
@@ -335,7 +345,10 @@ async function queryListingsMany(
     console.error("[supabaseLiveListings] listings query failed:", narrow.error.message);
     return [];
   }
-  return (narrow.data ?? []) as ListingRow[];
+
+  return ((narrow.data ?? []) as ListingRow[]).filter((row) =>
+    isLuxuryCarListing({ make: row.make, title: row.title, targetMake }),
+  );
 }
 
 async function queryListingSingle(
@@ -349,7 +362,12 @@ async function queryListingSingle(
     .single();
 
   if (narrow.error) return null;
-  return (narrow.data as ListingRow) ?? null;
+  const row = (narrow.data as ListingRow) ?? null;
+  if (!row) return null;
+  if (!isSupportedLiveMake(row.make)) {
+    return null;
+  }
+  return row;
 }
 
 // ─── Public API ───
@@ -390,6 +408,11 @@ export async function fetchSoldListingsForMake(
   make: string,
   limit = 200
 ): Promise<SoldListingRecord[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) {
+    return [];
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -402,7 +425,7 @@ export async function fetchSoldListingsForMake(
     const { data, error } = await supabase
       .from("listings")
       .select("id,year,make,model,trim,hammer_price,sale_date,status")
-      .ilike("make", make)
+      .ilike("make", normalizedMake)
       .eq("status", "sold")
       .not("hammer_price", "is", null)
       .gt("hammer_price", 0)
@@ -426,7 +449,7 @@ export async function fetchSoldListingsForMake(
   }
 }
 
-export async function fetchLiveListingsAsCollectorCars(options?: { limit?: number; includePriceHistory?: boolean }): Promise<CollectorCar[]> {
+export async function fetchLiveListingsAsCollectorCars(options?: { limit?: number; includePriceHistory?: boolean; make?: string | null }): Promise<CollectorCar[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -435,12 +458,13 @@ export async function fetchLiveListingsAsCollectorCars(options?: { limit?: numbe
 
   const limit = options?.limit ?? 200;
   const includePriceHistory = options?.includePriceHistory ?? true;
+  const targetMake = resolveRequestedMake(options?.make);
 
   try {
     const supabase = createSupabaseClient(url, key);
 
     // Only fetch active (live) listings — sold/unsold/delisted are historical data
-    const rows = await queryListingsMany(supabase, limit, "active");
+    const rows = await queryListingsMany(supabase, limit, targetMake, "active");
     if (rows.length === 0) return [];
 
     if (!includePriceHistory) {

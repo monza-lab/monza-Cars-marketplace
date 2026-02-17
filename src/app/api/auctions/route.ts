@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { normalizeSupportedMake, resolveRequestedMake } from '@/lib/makeProfiles'
 
 export async function GET(request: Request) {
   try {
@@ -20,15 +21,22 @@ export async function GET(request: Request) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)))
 
-    // Build Prisma where clause
-    const where: Record<string, unknown> = {}
+    const requestedMake = normalizeSupportedMake(make)
+    if (make && !requestedMake) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        meta: { page, limit, total: 0, totalPages: 0 },
+      })
+    }
+
+    // Porsche-first default, expandable via explicit make filter.
+    const where: Record<string, unknown> = {
+      make: { equals: requestedMake ?? resolveRequestedMake(null), mode: 'insensitive' },
+    }
 
     if (platform) {
       where.platform = platform
-    }
-
-    if (make) {
-      where.make = { equals: make, mode: 'insensitive' }
     }
 
     if (model) {

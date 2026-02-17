@@ -1,0 +1,678 @@
+
+=== Historical Backfill (enriched): 31 models ===
+  Models: 33k-Mile, 356B, 356c, 356C, 356SC, 40k-Mile, 47k-Mile, 718, 911, 911E, 911SC, 911T, 912E, 914, 928, 930, 944, 968, Boat”, Boxster, Cayenne, Cayman, Dutch, Gt2, Gt3, Macan, Modified, Panamera, Panorama, Safari-Style, Turbo
+  Date range: 2025-02-16 → 2026-02-16
+
+[33k-Mile] Discovering from bringatrailer.com/porsche/33k-mile/ (auto-derived) ...
+  [discover] Fetch failed for "33k-Mile": HTTP 404 Not Found
+  Total discovered: 0
+[356B] Discovering from bringatrailer.com/porsche/356b/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "356B"
+  Total discovered: 22
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-coupe-17-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-coupe-17-2/
+  + 1960 Porsche 356B — $575,000 (2026-02-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1963-porsche-356b-cabriolet-21/
+  [detail] Scraped: https://bringatrailer.com/listing/1963-porsche-356b-cabriolet-21/
+  + 1963 Porsche 356B — $136,000 (2026-02-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1961-porsche-356b-notchback-4/
+  [detail] Scraped: https://bringatrailer.com/listing/1961-porsche-356b-notchback-4/
+  + 1961 Porsche 356B — $60,000 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1962-porsche-356b-coupe-24/
+  [detail] Scraped: https://bringatrailer.com/listing/1962-porsche-356b-coupe-24/
+  + 1962 Porsche 356B — $68,000 (2026-01-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1963-porsche-356b-coupe-33/
+  [detail] Scraped: https://bringatrailer.com/listing/1963-porsche-356b-coupe-33/
+  + 1963 Porsche 356B — $67,000 (2026-01-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1961-porsche-356b-coupe-18/
+  [detail] Scraped: https://bringatrailer.com/listing/1961-porsche-356b-coupe-18/
+  + 1961 Porsche 356B — $115,000 (2026-01-07) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-coupe-18/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-coupe-18/
+  + 1960 Porsche 356B — $68,500 (2025-12-31) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1962-porsche-356b-cabriolet-conversion/
+  [detail] Scraped: https://bringatrailer.com/listing/1962-porsche-356b-cabriolet-conversion/
+  + 1962 Porsche 356B — $146,000 (2025-12-31) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1963-porsche-356b-cabriolet-20/
+  [detail] Scraped: https://bringatrailer.com/listing/1963-porsche-356b-cabriolet-20/
+  + 1963 Porsche 356B — $161,000 (2025-12-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1963-porsche-356b-64/
+  [detail] Scraped: https://bringatrailer.com/listing/1963-porsche-356b-64/
+  + 1963 Porsche 356B — $47,606 (2025-12-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1962-porsche-356b-coupe-23/
+  [detail] Scraped: https://bringatrailer.com/listing/1962-porsche-356b-coupe-23/
+  + 1962 Porsche 356B — $99,856 (2025-12-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-coupe-16/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-coupe-16/
+  + 1960 Porsche 356B — $58,000 (2025-12-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-cabriolet-29/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-cabriolet-29/
+  + 1960 Porsche 356B — $145,000 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-roadster-38/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-roadster-38/
+  + 1960 Porsche 356B — $145,000 (2025-12-18) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1960-porsche-356b-roadster-39/
+  [detail] Scraped: https://bringatrailer.com/listing/1960-porsche-356b-roadster-39/
+  + 1960 Porsche 356B — $115,000 (2025-12-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1962-porsche-356b-cabriolet-16/
+  [detail] Scraped: https://bringatrailer.com/listing/1962-porsche-356b-cabriolet-16/
+  + 1962 Porsche 356B — $66,000 (2025-12-06) [quality: 100/100, enriched]
+[356c] Discovering from bringatrailer.com/porsche/356c/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "356c"
+  Total discovered: 21
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+  + 1964 Porsche 356c — $549,469 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-147/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-147/
+  + 1964 Porsche 356c — $115,000 (2026-02-11) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-145/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-145/
+  + 1964 Porsche 356c — $65,000 (2026-02-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-146/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-146/
+  + 1964 Porsche 356c — $165,356 (2026-01-29) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-134/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-134/
+  + 1964 Porsche 356c — $71,356 (2026-01-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe/
+  + 1964 Porsche 356c — $500,000 (2026-01-22) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-cabriolet-15/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-cabriolet-15/
+  + 1964 Porsche 356c — $145,000 (2026-01-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-143/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-143/
+  + 1964 Porsche 356c — $27,000 (2026-01-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-144/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-144/
+  + 1964 Porsche 356c — $60,777 (2026-01-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-137/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-137/
+  + 1964 Porsche 356c — $95,000 (2025-12-30) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356sc-21/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356sc-21/
+  + 1965 Porsche 356c — $122,000 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-142/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-142/
+  + 1964 Porsche 356c — $23,200 (2025-12-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-140/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-140/
+  + 1964 Porsche 356c — $64,856 (2025-12-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356c-64/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356c-64/
+  + 1965 Porsche 356c — $56,100 (2025-11-28) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-117/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-117/
+  + 1964 Porsche 356c — $105,000 (2025-11-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356c-63/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356c-63/
+  + 1965 Porsche 356c — $140,000 (2025-11-17) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-139/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-139/
+  + 1964 Porsche 356c — $110,000 (2025-11-12) [quality: 100/100, enriched]
+[356C] Discovering from bringatrailer.com/porsche/356c/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "356C"
+  Total discovered: 21
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+  + 1964 Porsche 356C — $549,469 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-147/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-147/
+  + 1964 Porsche 356C — $115,000 (2026-02-11) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-145/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-145/
+  + 1964 Porsche 356C — $65,000 (2026-02-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-146/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-146/
+  + 1964 Porsche 356C — $165,356 (2026-01-29) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-134/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-134/
+  + 1964 Porsche 356C — $71,356 (2026-01-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe/
+  + 1964 Porsche 356C — $500,000 (2026-01-22) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-cabriolet-15/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-cabriolet-15/
+  + 1964 Porsche 356C — $145,000 (2026-01-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-143/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-143/
+  + 1964 Porsche 356C — $27,000 (2026-01-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-144/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-144/
+  + 1964 Porsche 356C — $60,777 (2026-01-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-137/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-137/
+  + 1964 Porsche 356C — $95,000 (2025-12-30) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356sc-21/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356sc-21/
+  + 1965 Porsche 356C — $122,000 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-142/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-142/
+  + 1964 Porsche 356C — $23,200 (2025-12-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-140/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-140/
+  + 1964 Porsche 356C — $64,856 (2025-12-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356c-64/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356c-64/
+  + 1965 Porsche 356C — $56,100 (2025-11-28) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-117/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-117/
+  + 1964 Porsche 356C — $105,000 (2025-11-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1965-porsche-356c-63/
+  [detail] Scraped: https://bringatrailer.com/listing/1965-porsche-356c-63/
+  + 1965 Porsche 356C — $140,000 (2025-11-17) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-139/
+  [detail] Scraped: https://bringatrailer.com/listing/1964-porsche-356c-139/
+  + 1964 Porsche 356C — $110,000 (2025-11-12) [quality: 100/100, enriched]
+[356SC] Discovering from bringatrailer.com/porsche/356sc/ (auto-derived) ...
+  [discover] Fetch failed for "356SC": HTTP 404 Not Found
+  Total discovered: 0
+[40k-Mile] Discovering from bringatrailer.com/porsche/40k-mile/ (auto-derived) ...
+  [discover] Fetch failed for "40k-Mile": HTTP 404 Not Found
+  Total discovered: 0
+[47k-Mile] Discovering from bringatrailer.com/porsche/47k-mile/ (auto-derived) ...
+  [discover] Fetch failed for "47k-Mile": HTTP 404 Not Found
+  Total discovered: 0
+[718] Discovering from bringatrailer.com/porsche/718/ (auto-derived) ...
+  [discover] Fetch failed for "718": HTTP 404 Not Found
+  Total discovered: 0
+[911] Discovering from bringatrailer.com/porsche/911/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "911"
+  Total discovered: 20
+[BaT] Scraping detail: https://bringatrailer.com/listing/2011-porsche-911-carrera-4s-cabriolet-15/
+  [detail] Scraped: https://bringatrailer.com/listing/2011-porsche-911-carrera-4s-cabriolet-15/
+  + 2011 Porsche 911 — $44,000 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2012-porsche-911-997-carrera-coupe-6-2/
+  [detail] Scraped: https://bringatrailer.com/listing/2012-porsche-911-997-carrera-coupe-6-2/
+  + 2012 Porsche 911 — $86,500 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-911-carrera-s-coupe-40/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-911-carrera-s-coupe-40/
+  + 2014 Porsche 911 — $102,000 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/
+  [detail] Scraped: https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/
+  + 2025 Porsche 911 — $397,000 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-911-carrera-cabriolet-147/
+  [detail] Scraped: https://bringatrailer.com/listing/1999-porsche-911-carrera-cabriolet-147/
+  + 1999 Porsche 911 — $25,996 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-911-carrera-2-coupe-38/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-911-carrera-2-coupe-38/
+  + 1992 Porsche 911 — $116,000 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2001-porsche-911-turbo-coupe-119/
+  [detail] Scraped: https://bringatrailer.com/listing/2001-porsche-911-turbo-coupe-119/
+  + 2001 Porsche 911 — $50,000 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2011-porsche-911-carrera-cabriolet-6/
+  [detail] Scraped: https://bringatrailer.com/listing/2011-porsche-911-carrera-cabriolet-6/
+  + 2011 Porsche 911 — $38,250 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1977-porsche-911-targa-4/
+  [detail] Scraped: https://bringatrailer.com/listing/1977-porsche-911-targa-4/
+  + 1977 Porsche 911 — $76,000 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-gt3-19/
+  [detail] Scraped: https://bringatrailer.com/listing/2024-porsche-911-gt3-19/
+  + 2024 Porsche 911 — $280,000 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/
+  [detail] Scraped: https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/
+  + 2026 Porsche 911 — $360,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1986-porsche-911-carrera-targa-104/
+  [detail] Scraped: https://bringatrailer.com/listing/1986-porsche-911-carrera-targa-104/
+  + 1986 Porsche 911 — $63,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1980-porsche-911sc-136/
+  [detail] Scraped: https://bringatrailer.com/listing/1980-porsche-911sc-136/
+  + 1980 Porsche 911 — $86,500 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1997-porsche-911-carrera-4s-124/
+  [detail] Scraped: https://bringatrailer.com/listing/1997-porsche-911-carrera-4s-124/
+  + 1997 Porsche 911 — $163,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1996-porsche-911-turbo-205/
+  [detail] Scraped: https://bringatrailer.com/listing/1996-porsche-911-turbo-205/
+  + 1996 Porsche 911 — $252,993 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/
+  [detail] Scraped: https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/
+  + 2023 Porsche 911 — $632,000 (2026-02-13) [quality: 100/100, enriched]
+[911E] Discovering from bringatrailer.com/porsche/911e/ (auto-derived) ...
+  [discover] Fetch failed for "911E": HTTP 404 Not Found
+  Total discovered: 0
+[911SC] Discovering from bringatrailer.com/porsche/911sc/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "911SC"
+  Total discovered: 19
+[BaT] Scraping detail: https://bringatrailer.com/listing/1980-porsche-911sc-136/
+  [detail] Scraped: https://bringatrailer.com/listing/1980-porsche-911sc-136/
+  + 1980 Porsche 911SC — $86,500 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-88/
+  [detail] Scraped: https://bringatrailer.com/listing/1981-porsche-911sc-88/
+  + 1981 Porsche 911SC — $70,000 (2026-02-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911-sc-cabriolet-slant-nose-conversion/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911-sc-cabriolet-slant-nose-conversion/
+  + 1983 Porsche 911SC — $38,500 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911sc-159/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911sc-159/
+  + 1983 Porsche 911SC — $54,277 (2026-02-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911sc-cabriolet-96/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911sc-cabriolet-96/
+  + 1983 Porsche 911SC — $46,500 (2026-02-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-911sc-111/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-911sc-111/
+  + 1979 Porsche 911SC — $62,000 (2026-01-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1978-porsche-911sc-115/
+  [detail] Scraped: https://bringatrailer.com/listing/1978-porsche-911sc-115/
+  + 1978 Porsche 911SC — $67,000 (2026-01-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-targa-49/
+  [detail] Scraped: https://bringatrailer.com/listing/1981-porsche-911sc-targa-49/
+  + 1981 Porsche 911SC — $56,500 (2026-01-18) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911sc-158/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911sc-158/
+  + 1983 Porsche 911SC — $54,911 (2026-01-17) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1978-porsche-911sc-targa-84/
+  [detail] Scraped: https://bringatrailer.com/listing/1978-porsche-911sc-targa-84/
+  + 1978 Porsche 911SC — $45,000 (2026-01-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1980-porsche-911sc-135/
+  [detail] Scraped: https://bringatrailer.com/listing/1980-porsche-911sc-135/
+  + 1980 Porsche 911SC — $61,500 (2026-01-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-911sc-targa-65/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-911sc-targa-65/
+  + 1979 Porsche 911SC — $62,000 (2026-01-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-911sc-109/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-911sc-109/
+  + 1979 Porsche 911SC — $68,000 (2026-01-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1978-porsche-911sc-120/
+  [detail] Scraped: https://bringatrailer.com/listing/1978-porsche-911sc-120/
+  + 1978 Porsche 911SC — $22,000 (2025-12-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911sc-targa-57/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911sc-targa-57/
+  + 1983 Porsche 911SC — $59,500 (2025-12-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1983-porsche-911sc-157/
+  [detail] Scraped: https://bringatrailer.com/listing/1983-porsche-911sc-157/
+  + 1983 Porsche 911SC — $46,625 (2025-12-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1982-porsche-911sc-targa-33/
+  [detail] Scraped: https://bringatrailer.com/listing/1982-porsche-911sc-targa-33/
+  + 1982 Porsche 911SC — $48,500 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-84/
+  [detail] Scraped: https://bringatrailer.com/listing/1981-porsche-911sc-84/
+  + 1981 Porsche 911SC — $74,000 (2025-12-18) [quality: 100/100, enriched]
+[911T] Discovering from bringatrailer.com/porsche/911t/ (auto-derived) ...
+  [discover] Fetch failed for "911T": HTTP 404 Not Found
+  Total discovered: 0
+[912E] Discovering from bringatrailer.com/porsche/912e/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "912E"
+  Total discovered: 24
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-98/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-98/
+  + 1976 Porsche 912E — $41,746 (2026-02-11) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-93/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-93/
+  + 1976 Porsche 912E — $62,500 (2026-01-18) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-96/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-96/
+  + 1976 Porsche 912E — $61,000 (2026-01-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-92/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-92/
+  + 1976 Porsche 912E — $51,500 (2025-12-27) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-95/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-95/
+  + 1976 Porsche 912E — $32,250 (2025-12-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-94/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-94/
+  + 1976 Porsche 912E — $45,912 (2025-12-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-90/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-90/
+  + 1976 Porsche 912E — $37,333 (2025-12-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-89/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-89/
+  + 1976 Porsche 912E — $47,000 (2025-10-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-88/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-88/
+  + 1976 Porsche 912E — $30,500 (2025-09-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-87/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-87/
+  + 1976 Porsche 912E — $46,000 (2025-08-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-86/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-86/
+  + 1976 Porsche 912E — $63,500 (2025-07-28) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-912e-85/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-912e-85/
+  + 1976 Porsche 912E — $34,500 (2025-06-25) [quality: 100/100, enriched]
+[914] Discovering from bringatrailer.com/porsche/914/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "914"
+  Total discovered: 23
+[BaT] Scraping detail: https://bringatrailer.com/listing/1974-porsche-914-185/
+  [detail] Scraped: https://bringatrailer.com/listing/1974-porsche-914-185/
+  + 1975 Porsche 914 — $41,500 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1973-porsche-914-171/
+  [detail] Scraped: https://bringatrailer.com/listing/1973-porsche-914-171/
+  + 1973 Porsche 914 — $53,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1973-porsche-914-168/
+  [detail] Scraped: https://bringatrailer.com/listing/1973-porsche-914-168/
+  + 1973 Porsche 914 — $23,914 (2026-02-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1970-porsche-914-6-116/
+  [detail] Scraped: https://bringatrailer.com/listing/1970-porsche-914-6-116/
+  + 1970 Porsche 914 — $47,501 (2026-01-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1974-porsche-914-183/
+  [detail] Scraped: https://bringatrailer.com/listing/1974-porsche-914-183/
+  + 1974 Porsche 914 — $20,750 (2026-01-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1975-porsche-914-110/
+  [detail] Scraped: https://bringatrailer.com/listing/1975-porsche-914-110/
+  + 1975 Porsche 914 — $29,000 (2026-01-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1972-porsche-914-105/
+  [detail] Scraped: https://bringatrailer.com/listing/1972-porsche-914-105/
+  + 1972 Porsche 914 — $92,460 (2026-01-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1971-porsche-914-66/
+  [detail] Scraped: https://bringatrailer.com/listing/1971-porsche-914-66/
+  + 1971 Porsche 914 — $8,677 (2026-01-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1976-porsche-914-102/
+  [detail] Scraped: https://bringatrailer.com/listing/1976-porsche-914-102/
+  + 1976 Porsche 914 — $65,000 (2026-01-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1974-porsche-914-177/
+  [detail] Scraped: https://bringatrailer.com/listing/1974-porsche-914-177/
+  + 1974 Porsche 914 — $33,164 (2025-12-30) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1975-porsche-914-109/
+  [detail] Scraped: https://bringatrailer.com/listing/1975-porsche-914-109/
+  + 1975 Porsche 914 — $17,500 (2025-12-28) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1973-porsche-914-167/
+  [detail] Scraped: https://bringatrailer.com/listing/1973-porsche-914-167/
+  + 1973 Porsche 914 — $65,000 (2025-12-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1973-porsche-914-169/
+  [detail] Scraped: https://bringatrailer.com/listing/1973-porsche-914-169/
+  + 1973 Porsche 914 — $15,000 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1972-porsche-914-104/
+  [detail] Scraped: https://bringatrailer.com/listing/1972-porsche-914-104/
+  + 1972 Porsche 914 — $20,750 (2025-12-11) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1970-porsche-914-40-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1970-porsche-914-40-2/
+  + 1970 Porsche 914 — $34,000 (2025-12-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1970-porsche-914-6-115/
+  [detail] Scraped: https://bringatrailer.com/listing/1970-porsche-914-6-115/
+  + 1970 Porsche 914 — $80,000 (2025-12-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1975-porsche-914-107/
+  [detail] Scraped: https://bringatrailer.com/listing/1975-porsche-914-107/
+  + 1975 Porsche 914 — $18,250 (2025-12-01) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1972-porsche-914-103/
+  [detail] Scraped: https://bringatrailer.com/listing/1972-porsche-914-103/
+  + 1972 Porsche 914 — $25,914 (2025-11-29) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1975-porsche-914-108/
+  [detail] Scraped: https://bringatrailer.com/listing/1975-porsche-914-108/
+  + 1975 Porsche 914 — $63,169 (2025-11-28) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1971-porsche-914-65/
+  [detail] Scraped: https://bringatrailer.com/listing/1971-porsche-914-65/
+  + 1971 Porsche 914 — $39,914 (2025-11-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1973-porsche-914-165/
+  [detail] Scraped: https://bringatrailer.com/listing/1973-porsche-914-165/
+  + 1973 Porsche 914 — $19,888 (2025-11-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1970-porsche-914-46/
+  [detail] Scraped: https://bringatrailer.com/listing/1970-porsche-914-46/
+  + 1970 Porsche 914 — $20,000 (2025-11-23) [quality: 100/100, enriched]
+[928] Discovering from bringatrailer.com/porsche/928/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "928"
+  Total discovered: 23
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-928-85/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-928-85/
+  + 1979 Porsche 928 — $17,500 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1986-porsche-928s-135/
+  [detail] Scraped: https://bringatrailer.com/listing/1986-porsche-928s-135/
+  + 1986 Porsche 928 — $37,000 (2026-02-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-928-92/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-928-92/
+  + 1979 Porsche 928 — $12,250 (2026-02-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-928-gt-33/
+  [detail] Scraped: https://bringatrailer.com/listing/1991-porsche-928-gt-33/
+  + 1991 Porsche 928 — $53,500 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1988-porsche-928-s4-123/
+  [detail] Scraped: https://bringatrailer.com/listing/1988-porsche-928-s4-123/
+  + 1988 Porsche 928 — $38,500 (2026-01-27) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1985-porsche-928s-113/
+  [detail] Scraped: https://bringatrailer.com/listing/1985-porsche-928s-113/
+  + 1985 Porsche 928 — $19,928 (2026-01-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-928-gt-32/
+  [detail] Scraped: https://bringatrailer.com/listing/1991-porsche-928-gt-32/
+  + 1991 Porsche 928 — $107,928 (2026-01-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-928-s4-169/
+  [detail] Scraped: https://bringatrailer.com/listing/1987-porsche-928-s4-169/
+  + 1987 Porsche 928 — $35,250 (2026-01-18) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-928-s4-168/
+  [detail] Scraped: https://bringatrailer.com/listing/1987-porsche-928-s4-168/
+  + 1987 Porsche 928 — $62,500 (2026-01-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1985-porsche-928s-111/
+  [detail] Scraped: https://bringatrailer.com/listing/1985-porsche-928s-111/
+  + 1985 Porsche 928 — $8,700 (2026-01-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1985-porsche-928s-112/
+  [detail] Scraped: https://bringatrailer.com/listing/1985-porsche-928s-112/
+  + 1985 Porsche 928 — $42,161 (2026-01-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-928-51-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1981-porsche-928-51-2/
+  + 1981 Porsche 928 — $37,000 (2026-01-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-928-s4-167-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1987-porsche-928-s4-167-2/
+  + 1987 Porsche 928 — $32,500 (2026-01-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1986-porsche-928s-134/
+  [detail] Scraped: https://bringatrailer.com/listing/1986-porsche-928s-134/
+  + 1986 Porsche 928 — $27,000 (2025-12-23) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1980-porsche-928-56/
+  [detail] Scraped: https://bringatrailer.com/listing/1980-porsche-928-56/
+  + 1980 Porsche 928 — $52,250 (2025-12-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-928-s4-167/
+  [detail] Scraped: https://bringatrailer.com/listing/1987-porsche-928-s4-167/
+  + 1987 Porsche 928 — $33,550 (2025-12-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1979-porsche-928-89/
+  [detail] Scraped: https://bringatrailer.com/listing/1979-porsche-928-89/
+  + 1979 Porsche 928 — $82,500 (2025-12-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1989-porsche-928-s4-94/
+  [detail] Scraped: https://bringatrailer.com/listing/1989-porsche-928-s4-94/
+  + 1989 Porsche 928 — $25,750 (2025-11-28) [quality: 100/100, enriched]
+[930] Discovering from bringatrailer.com/porsche/930/ (auto-derived) ...
+  [discover] Fetch failed for "930": HTTP 404 Not Found
+  Total discovered: 0
+[944] Discovering from bringatrailer.com/porsche/944/ (auto-derived) ...
+  [discover] Fetch failed for "944": HTTP 404 Not Found
+  Total discovered: 0
+[968] Discovering from bringatrailer.com/porsche/968/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "968"
+  Total discovered: 23
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-59/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-59/
+  + 1992 Porsche 968 — $12,000 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-coupe-20/
+  [detail] Scraped: https://bringatrailer.com/listing/1993-porsche-968-coupe-20/
+  + 1993 Porsche 968 — $69,000 (2026-02-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-58/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-58/
+  + 1992 Porsche 968 — $26,000 (2026-01-31) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-coupe-35/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-coupe-35/
+  + 1994 Porsche 968 — $22,000 (2025-12-19) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-coupe-23/
+  [detail] Scraped: https://bringatrailer.com/listing/1993-porsche-968-coupe-23/
+  + 1993 Porsche 968 — $36,218 (2025-11-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-56/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-56/
+  + 1992 Porsche 968 — $24,000 (2025-11-21) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-coupe-21/
+  [detail] Scraped: https://bringatrailer.com/listing/1993-porsche-968-coupe-21/
+  + 1993 Porsche 968 — $15,250 (2025-11-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-57/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-57/
+  + 1992 Porsche 968 — $15,999 (2025-11-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1995-porsche-968-cabriolet-25/
+  [detail] Scraped: https://bringatrailer.com/listing/1995-porsche-968-cabriolet-25/
+  + 1995 Porsche 968 — $14,218 (2025-10-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-coupe-19/
+  [detail] Scraped: https://bringatrailer.com/listing/1993-porsche-968-coupe-19/
+  + 1993 Porsche 968 — $42,750 (2025-10-07) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-54/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-54/
+  + 1992 Porsche 968 — $26,500 (2025-09-26) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-coupe-34/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-coupe-34/
+  + 1994 Porsche 968 — $21,500 (2025-09-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-cabriolet-57/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-cabriolet-57/
+  + 1994 Porsche 968 — $16,000 (2025-09-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-coupe-14-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-coupe-14-2/
+  + 1994 Porsche 968 — $30,000 (2025-09-02) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-cabriolet-28/
+  [detail] Scraped: https://bringatrailer.com/listing/1993-porsche-968-cabriolet-28/
+  + 1993 Porsche 968 — $15,250 (2025-08-31) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1995-porsche-968-cabriolet-24/
+  [detail] Scraped: https://bringatrailer.com/listing/1995-porsche-968-cabriolet-24/
+  + 1995 Porsche 968 — $18,500 (2025-08-25) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-coupe-33/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-coupe-33/
+  + 1994 Porsche 968 — $15,500 (2025-08-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-cabriolet-23-2/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-cabriolet-23-2/
+  + 1992 Porsche 968 — $37,250 (2025-08-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-cabriolet-54/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-cabriolet-54/
+  + 1994 Porsche 968 — $26,500 (2025-07-24) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-coupe-53/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-coupe-53/
+  + 1992 Porsche 968 — $30,750 (2025-07-02) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1994-porsche-968-coupe-32/
+  [detail] Scraped: https://bringatrailer.com/listing/1994-porsche-968-coupe-32/
+  + 1994 Porsche 968 — $41,000 (2025-06-20) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1992-porsche-968-cabriolet-39/
+  [detail] Scraped: https://bringatrailer.com/listing/1992-porsche-968-cabriolet-39/
+  + 1992 Porsche 968 — $8,800 (2025-06-14) [quality: 100/100, enriched]
+[Boat”] Discovering from bringatrailer.com/porsche/boat/ (auto-derived) ...
+  [discover] Fetch failed for "Boat”": HTTP 404 Not Found
+  Total discovered: 0
+[Boxster] Discovering from bringatrailer.com/porsche/boxster/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "Boxster"
+  Total discovered: 24
+[BaT] Scraping detail: https://bringatrailer.com/listing/2000-porsche-boxster-138/
+  [detail] Scraped: https://bringatrailer.com/listing/2000-porsche-boxster-138/
+  + 2000 Porsche Boxster — $11,750 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2011-porsche-boxster-s-15/
+  [detail] Scraped: https://bringatrailer.com/listing/2011-porsche-boxster-s-15/
+  + 2011 Porsche Boxster — $32,000 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-boxster-67/
+  [detail] Scraped: https://bringatrailer.com/listing/2002-porsche-boxster-67/
+  + 2002 Porsche Boxster — $9,700 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-718-boxster-gts-4-0-6/
+  [detail] Scraped: https://bringatrailer.com/listing/2024-porsche-718-boxster-gts-4-0-6/
+  + 2024 Porsche Boxster — $99,500 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-boxster-68/
+  [detail] Scraped: https://bringatrailer.com/listing/2002-porsche-boxster-68/
+  + 2002 Porsche Boxster — $12,500 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2005-porsche-boxster-82/
+  [detail] Scraped: https://bringatrailer.com/listing/2005-porsche-boxster-82/
+  + 2005 Porsche Boxster — $17,000 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2001-porsche-boxster-87/
+  [detail] Scraped: https://bringatrailer.com/listing/2001-porsche-boxster-87/
+  + 2001 Porsche Boxster — $12,250 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2001-porsche-boxster-86/
+  [detail] Scraped: https://bringatrailer.com/listing/2001-porsche-boxster-86/
+  + 2001 Porsche Boxster — $16,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2013-porsche-boxster-s-60/
+  [detail] Scraped: https://bringatrailer.com/listing/2013-porsche-boxster-s-60/
+  + 2013 Porsche Boxster — $40,500 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2006-porsche-boxster-s-62/
+  [detail] Scraped: https://bringatrailer.com/listing/2006-porsche-boxster-s-62/
+  + 2006 Porsche Boxster — $25,000 (2026-02-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-boxster-265/
+  [detail] Scraped: https://bringatrailer.com/listing/1999-porsche-boxster-265/
+  + 1999 Porsche Boxster — $11,500 (2026-02-10) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-boxster-s-172-2/
+  [detail] Scraped: https://bringatrailer.com/listing/2002-porsche-boxster-s-172-2/
+  + 2002 Porsche Boxster — $15,000 (2026-02-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2008-porsche-boxster-rs-60-spyder-46/
+  [detail] Scraped: https://bringatrailer.com/listing/2008-porsche-boxster-rs-60-spyder-46/
+  + 2008 Porsche Boxster — $40,250 (2026-02-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2005-porsche-boxster-81/
+  [detail] Scraped: https://bringatrailer.com/listing/2005-porsche-boxster-81/
+  + 2005 Porsche Boxster — $22,611 (2026-02-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2007-porsche-boxster-42/
+  [detail] Scraped: https://bringatrailer.com/listing/2007-porsche-boxster-42/
+  + 2007 Porsche Boxster — $20,000 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-718-cayman-gts-4-0-14/
+  [detail] Scraped: https://bringatrailer.com/listing/2023-porsche-718-cayman-gts-4-0-14/
+  + 2023 Porsche Boxster — $76,500 (2026-02-04) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-boxster-66/
+  [detail] Scraped: https://bringatrailer.com/listing/2002-porsche-boxster-66/
+  + 2002 Porsche Boxster — $10,911 (2026-02-04) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-718-spyder-rs-26/
+  [detail] Scraped: https://bringatrailer.com/listing/2024-porsche-718-spyder-rs-26/
+  + 2024 Porsche Boxster — $191,000 (2026-02-04) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2005-porsche-boxster-s-78/
+  [detail] Scraped: https://bringatrailer.com/listing/2005-porsche-boxster-s-78/
+  + 2005 Porsche Boxster — $17,000 (2026-02-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2000-porsche-boxster-144/
+  [detail] Scraped: https://bringatrailer.com/listing/2000-porsche-boxster-144/
+  + 2000 Porsche Boxster — $15,000 (2026-02-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-boxster-264/
+  [detail] Scraped: https://bringatrailer.com/listing/1999-porsche-boxster-264/
+  + 1999 Porsche Boxster — $10,500 (2026-02-02) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2000-porsche-boxster-143/
+  [detail] Scraped: https://bringatrailer.com/listing/2000-porsche-boxster-143/
+  + 2000 Porsche Boxster — $21,500 (2026-02-01) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/1997-porsche-boxster-148/
+  [detail] Scraped: https://bringatrailer.com/listing/1997-porsche-boxster-148/
+  + 1997 Porsche Boxster — $9,100 (2026-01-30) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2010-porsche-boxster-s-21/
+  [detail] Scraped: https://bringatrailer.com/listing/2010-porsche-boxster-s-21/
+  + 2010 Porsche Boxster — $34,500 (2026-01-30) [quality: 100/100, enriched]
+[Cayenne] Discovering from bringatrailer.com/porsche/cayenne/ (auto-derived) ...
+  [discover] Extracted 24 embedded items for "Cayenne"
+  Total discovered: 24
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-68/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-68/
+  + 2014 Porsche Cayenne — $19,500 (2026-02-16) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-138/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-138/
+  + 2014 Porsche Cayenne — $22,000 (2026-02-15) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-69/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-69/
+  + 2014 Porsche Cayenne — $22,500 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2015-porsche-cayenne-diesel-160/
+  [detail] Scraped: https://bringatrailer.com/listing/2015-porsche-cayenne-diesel-160/
+  + 2015 Porsche Cayenne — $38,067 (2026-02-14) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-70/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-70/
+  + 2014 Porsche Cayenne — $42,000 (2026-02-13) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2008-porsche-cayenne-turbo-67/
+  [detail] Scraped: https://bringatrailer.com/listing/2008-porsche-cayenne-turbo-67/
+  + 2008 Porsche Cayenne — $10,500 (2026-02-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2015-porsche-cayenne-turbo-19/
+  [detail] Scraped: https://bringatrailer.com/listing/2015-porsche-cayenne-turbo-19/
+  + 2015 Porsche Cayenne — $27,250 (2026-02-12) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-32/
+  [detail] Scraped: https://bringatrailer.com/listing/2016-porsche-cayenne-32/
+  + 2016 Porsche Cayenne — $24,500 (2026-02-09) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2012-porsche-cayenne-s-33/
+  [detail] Scraped: https://bringatrailer.com/listing/2012-porsche-cayenne-s-33/
+  + 2012 Porsche Cayenne — $20,000 (2026-02-08) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2009-porsche-cayenne-turbo-s-64/
+  [detail] Scraped: https://bringatrailer.com/listing/2009-porsche-cayenne-turbo-s-64/
+  + 2009 Porsche Cayenne — $40,750 (2026-02-07) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2004-porsche-cayenne-turbo-56/
+  [detail] Scraped: https://bringatrailer.com/listing/2004-porsche-cayenne-turbo-56/
+  + 2004 Porsche Cayenne — $9,601 (2026-02-07) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2021-porsche-cayenne-gts-13/
+  [detail] Scraped: https://bringatrailer.com/listing/2021-porsche-cayenne-gts-13/
+  + 2021 Porsche Cayenne — $79,000 (2026-02-07) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-turbo-s-68/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-turbo-s-68/
+  + 2014 Porsche Cayenne — $38,500 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2009-porsche-cayenne-s-25/
+  [detail] Scraped: https://bringatrailer.com/listing/2009-porsche-cayenne-s-25/
+  + 2009 Porsche Cayenne — $7,400 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-129-2/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-129-2/
+  + 2014 Porsche Cayenne — $23,000 (2026-02-06) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-137/
+  [detail] Scraped: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-137/
+  + 2014 Porsche Cayenne — $9,350 (2026-02-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-cayenne-s-18/
+  [detail] Scraped: https://bringatrailer.com/listing/2017-porsche-cayenne-s-18/
+  + 2017 Porsche Cayenne — $19,000 (2026-02-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-19/
+  [detail] Scraped: https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-19/
+  + 2016 Porsche Cayenne — $30,000 (2026-02-05) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-diesel-84/
+  [detail] Scraped: https://bringatrailer.com/listing/2016-porsche-cayenne-diesel-84/
+  + 2016 Porsche Cayenne — $29,000 (2026-02-04) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-cayenne-gts-9/
+  [detail] Scraped: https://bringatrailer.com/listing/2017-porsche-cayenne-gts-9/
+  + 2017 Porsche Cayenne — $23,777 (2026-02-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2018-porsche-cayenne-s-4/
+  [detail] Scraped: https://bringatrailer.com/listing/2018-porsche-cayenne-s-4/
+  + 2018 Porsche Cayenne — $28,770 (2026-02-03) [quality: 100/100, enriched]
+[BaT] Scraping detail: https://bringatrailer.com/listing/2005-porsche-cayenne-turbo-49/

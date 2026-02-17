@@ -16,21 +16,21 @@ Notes:
 Daily incremental sync (active + ended within last 90 days):
 
 ```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily
+npx tsx src/features/porsche_collector/cli.ts --mode=daily
 ```
 
-Porsche is the default make. Use `--make=Ferrari` to run legacy Ferrari-only collection.
+Porsche is the default make. Use `--make=Porsche` to run legacy Porsche-only collection.
 
 Backfill ended listings within a date range (UTC, inclusive):
 
 ```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
+npx tsx src/features/porsche_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
 ```
 
 Useful flags:
 
 ```bash
---maxActivePages=10 --maxEndedPages=10 --endedWindowDays=90 --checkpointPath=var/ferrari_collector/checkpoint.json --dryRun --noDetails
+--maxActivePages=10 --maxEndedPages=10 --endedWindowDays=90 --checkpointPath=var/porsche_collector/checkpoint.json --dryRun --noDetails
 ```
 
 ## Smoke run
@@ -38,7 +38,7 @@ Useful flags:
 Use a small backfill window and verify rows:
 
 ```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-02 --maxEndedPages=2
+npx tsx src/features/porsche_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-02 --maxEndedPages=2
 ```
 
 Expect JSON logs with `collector.source_done` and Supabase writes.

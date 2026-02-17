@@ -13,7 +13,7 @@ import { logEvent } from "./logging";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
 import {
   buildLocationString,
-  isFerrariListing,
+  isPorscheListing,
   isLuxuryCarListing,
   mapAuctionStatus,
   mapReserveStatus,
@@ -82,7 +82,7 @@ async function hasTerminalStatus(sourceId: string): Promise<boolean> {
   return typeof existing === "string" && TERMINAL_STATUSES.has(existing);
 }
 
-export async function runFerrariCollector(config: CollectorRunConfig): Promise<CollectorResult> {
+export async function runPorscheCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
   const meta: ScrapeMeta = { runId, scrapeTimestamp };
@@ -164,11 +164,11 @@ export async function runCollector(
     maxActivePagesPerSource: overrides.maxActivePagesPerSource ?? 5,
     maxEndedPagesPerSource: overrides.maxEndedPagesPerSource ?? 5,
     scrapeDetails: overrides.scrapeDetails ?? true,
-    checkpointPath: overrides.checkpointPath ?? "/tmp/ferrari_collector/checkpoint.json",
+    checkpointPath: overrides.checkpointPath ?? "/tmp/porsche_collector/checkpoint.json",
     dryRun: overrides.dryRun ?? false,
   };
 
-  return runFerrariCollector(config);
+  return runPorscheCollector(config);
 }
 
 async function runSource(input: {
@@ -185,7 +185,7 @@ async function runSource(input: {
 
   const counts: SourceScrapeCounts = {
     discovered: 0,
-    ferrariKept: 0,
+    porscheKept: 0,
     skippedMissingRequired: 0,
     written: 0,
     errored: 0,
@@ -204,7 +204,7 @@ async function runSource(input: {
     for (const a of active) {
       const keep = isLuxuryCarListing({ make: a.make, title: a.title, targetMake: config.make });
       if (!keep) continue;
-      counts.ferrariKept++;
+      counts.porscheKept++;
 
       try {
         const normalized = await normalizeFromBaseAndUrl({
@@ -266,9 +266,11 @@ async function runSource(input: {
     } : undefined,
   });
 
-  counts.discovered += urls.length;
+  const maxDiscoveredUrls = Math.max(1, config.maxEndedPagesPerSource * 3);
+  const discoveredUrls = urls.slice(0, maxDiscoveredUrls);
+  counts.discovered += discoveredUrls.length;
 
-  for (const url of urls) {
+  for (const url of discoveredUrls) {
     try {
       const normalized = await normalizeFromBaseAndUrl({
         source,
@@ -308,7 +310,7 @@ async function runSource(input: {
         continue;
       }
 
-      counts.ferrariKept++;
+      counts.porscheKept++;
       await writer.upsertAll(normalized, meta, config.dryRun);
       counts.written++;
     } catch (err) {
