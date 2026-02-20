@@ -2744,12 +2744,24 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
       <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
-        <div className="flex-1 min-h-0 grid grid-cols-[25%_1fr_25%] grid-rows-[1fr] overflow-hidden">
+        <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: GENERATIONS + FILTERS + LIVE */}
           <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
             {/* Filters section (scrollable) */}
             {selectedModel ? (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {/* Back to families button */}
+                {viewMode === 'cars' && (
+                  <div className="shrink-0 px-4 py-2 border-b border-white/5">
+                    <button
+                      onClick={handleBackToFamilies}
+                      className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                    >
+                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="uppercase font-semibold">{make}</span>
+                    </button>
+                  </div>
+                )}
                 {/* Family search (generations only, no search bar) */}
                 <div className="shrink-0">
                   <FamilySearchAndFilters
@@ -2874,23 +2886,6 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
             {viewMode === 'cars' ? (
               // MODE: Viewing specific family's cars (feed style)
               <>
-                {/* Sticky header with back button */}
-                <div className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-3">
-                  <button
-                    onClick={handleBackToFamilies}
-                    className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
-                  >
-                    <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="uppercase font-semibold">{make}</span>
-                    <ChevronRight className="size-2.5 text-[#4B5563]" />
-                    <span className="text-[#9CA3AF]">{selectedFamilyForFeed}</span>
-                  </button>
-                  <p className="text-[10px] text-[#6B7280] mt-0.5">
-                    {filteredFeedCars.length} {filteredFeedCars.length === 1 ? "car" : "cars"}
-                  </p>
-                </div>
-
-                {/* Car feed (snap scroll) */}
                 {filteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-[#4B5563] mb-4" />
