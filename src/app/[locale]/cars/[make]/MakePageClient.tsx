@@ -1292,13 +1292,13 @@ function ModelNavSidebar({
       {/* Compact brand header */}
       <div className="shrink-0 px-3 pt-2.5 pb-2 border-b border-white/5">
         <div className="flex items-center justify-between">
-          <Link
+          <a
             href="/"
-            className="flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <ArrowLeft className="size-3" />
-          </Link>
-          <h1 className="text-[13px] font-bold text-[#FFFCF7] tracking-wide uppercase">{make}</h1>
+            <ArrowLeft className="size-3 text-[#6B7280]" />
+            <h1 className="text-[13px] font-bold text-[#FFFCF7] tracking-wide uppercase hover:text-[#F8B4D9] transition-colors">{make}</h1>
+          </a>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-mono text-[#F8B4D9]">{cars.length}</span>
             {liveCount > 0 && (

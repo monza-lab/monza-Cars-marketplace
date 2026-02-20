@@ -31,7 +31,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { getBrandImage } from "@/lib/modelImages"
-import { FilterSidebar } from "@/components/filters/FilterSidebar"
+// FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── BRAND TYPE ───
 type Brand = {
@@ -1008,14 +1008,32 @@ function DiscoverySidebar({
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
 
-  const [brandSearch, setBrandSearch] = useState("")
+  // Extract model families for the active brand (drill-down navigation)
+  const activeBrandFamilies = useMemo(() => {
+    if (!activeBrandSlug) return []
+    const brandName = brands.find(b => b.slug === activeBrandSlug)?.name
+    if (!brandName) return []
 
-  // Filter brands by search
-  const filteredBrands = useMemo(() => {
-    if (!brandSearch.trim()) return brands
-    const q = brandSearch.toLowerCase()
-    return brands.filter(b => b.name.toLowerCase().includes(q))
-  }, [brands, brandSearch])
+    const brandAuctions = auctions.filter(a => a.make === brandName)
+    const familyMap = new Map<string, { count: number; years: number[] }>()
+
+    brandAuctions.forEach(a => {
+      const family = a.model.split(/\s+/)[0] || a.model
+      const existing = familyMap.get(family) || { count: 0, years: [] }
+      existing.count++
+      existing.years.push(a.year)
+      familyMap.set(family, existing)
+    })
+
+    return Array.from(familyMap.entries())
+      .map(([name, data]) => ({
+        name,
+        count: data.count,
+        yearMin: Math.min(...data.years),
+        yearMax: Math.max(...data.years),
+      }))
+      .sort((a, b) => b.count - a.count)
+  }, [auctions, activeBrandSlug, brands])
 
   // Live auctions sorted by ending soonest
   const liveAuctions = useMemo(() => {
@@ -1047,76 +1065,95 @@ function DiscoverySidebar({
       {/* ═══ TOP HALF: FIND YOUR CAR ═══ */}
       <div className="flex-1 min-h-0 flex flex-col">
 
-        {/* Search brands */}
-        <div className="shrink-0 px-4 pt-3 pb-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#6B7280]" />
-            <input
-              type="text"
-              value={brandSearch}
-              onChange={(e) => setBrandSearch(e.target.value)}
-              placeholder={t("sidebar.findYourCar")}
-              className="w-full bg-white/[0.03] border border-white/5 rounded-lg pl-9 pr-3 py-2 text-[12px] text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
-            />
-          </div>
-        </div>
-
         {/* Section header */}
-        <div className="shrink-0 flex items-center justify-between px-4 py-1.5">
+        <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-1.5">
           <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#6B7280]">
             {t("sidebar.popular")}
           </span>
           <span className="text-[9px] font-mono text-[#6B7280]">
-            {filteredBrands.length} {filteredBrands.length === 1 ? "brand" : "brands"}
+            {brands.length} {brands.length === 1 ? "brand" : "brands"}
           </span>
         </div>
 
-        {/* Brands list (scrollable) */}
+        {/* Brands list with inline families (scrollable) */}
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-          {filteredBrands.length === 0 ? (
+          {brands.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
               <p className="text-[11px] text-[#6B7280]">{t("sidebar.noResults")}</p>
             </div>
           ) : (
-            filteredBrands.map((brand) => {
+            brands.map((brand) => {
               const isActive = activeBrandSlug === brand.slug
               return (
-                <button
-                  key={brand.slug}
-                  onClick={() => onSelectBrand(brand.slug)}
-                  className={`w-full text-left px-4 py-2.5 border-b border-white/[0.03] transition-all group ${
-                    isActive
-                      ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
-                      : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[12px] font-semibold transition-colors ${
-                      isActive ? "text-[#F8B4D9]" : "text-[#FFFCF7] group-hover:text-[#F8B4D9]"
-                    }`}>
-                      {brand.name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
-                        {brand.topGrade}
+                <div key={brand.slug}>
+                  <button
+                    onClick={() => onSelectBrand(brand.slug)}
+                    className={`w-full text-left px-4 py-2.5 border-b border-white/[0.03] transition-all group ${
+                      isActive
+                        ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                        : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[12px] font-semibold transition-colors ${
+                        isActive ? "text-[#F8B4D9]" : "text-[#FFFCF7] group-hover:text-[#F8B4D9]"
+                      }`}>
+                        {brand.name}
                       </span>
-                      <span className="text-[10px] text-[#6B7280] font-mono">
-                        {brand.carCount}
-                      </span>
-                      <ChevronRight className={`size-3 transition-colors ${
-                        isActive ? "text-[#F8B4D9]" : "text-[#4B5563] group-hover:text-[#6B7280]"
-                      }`} />
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
+                          {brand.topGrade}
+                        </span>
+                        <span className="text-[10px] text-[#6B7280] font-mono">
+                          {brand.carCount}
+                        </span>
+                        <ChevronRight className={`size-3 transition-all ${
+                          isActive ? "text-[#F8B4D9] rotate-90" : "text-[#4B5563] group-hover:text-[#6B7280]"
+                        }`} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-[10px] font-mono text-[#6B7280]">
-                      {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
-                    </span>
-                    <span className="text-[9px] text-positive font-medium">
-                      {brand.avgTrend}
-                    </span>
-                  </div>
-                </button>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-[10px] font-mono text-[#6B7280]">
+                        {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+                      </span>
+                      <span className="text-[9px] text-positive font-medium">
+                        {brand.avgTrend}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Families drill-down (shown when brand is active) */}
+                  {isActive && activeBrandFamilies.length > 0 && (
+                    <div className="bg-white/[0.02] border-b border-white/[0.03]">
+                      <div className="px-4 pl-6 py-1.5">
+                        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                          Families
+                        </span>
+                      </div>
+                      {activeBrandFamilies.map((family) => (
+                        <a
+                          key={family.name}
+                          href={`/cars/${brand.slug}`}
+                          className="flex items-center justify-between px-4 pl-7 py-2 hover:bg-white/[0.03] transition-colors group/fam"
+                        >
+                          <span className="text-[11px] font-medium text-[#D1D5DB] group-hover/fam:text-[#F8B4D9] transition-colors">
+                            {family.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-mono text-[#F8B4D9]">
+                              {family.count}
+                            </span>
+                            <span className="text-[8px] text-[#4B5563]">
+                              {family.yearMin === family.yearMax
+                                ? `${family.yearMin}`
+                                : `${family.yearMin}–${family.yearMax}`}
+                            </span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )
             })
           )}
@@ -1662,13 +1699,8 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
 
   return (
     <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
-      {/* FILTERS SECTION - Sticky at top */}
-      <div className="sticky top-0 z-20">
-        <FilterSidebar />
-      </div>
-
-      {/* BRAND CONTEXT - Scrolls below filters */}
-      <div className="border-t border-white/5">
+      {/* BRAND CONTEXT — starts directly with brand overview */}
+      <div>
         {/* 1. BRAND OVERVIEW */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-2">
