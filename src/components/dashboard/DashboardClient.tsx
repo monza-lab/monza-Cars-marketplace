@@ -332,7 +332,7 @@ const mockRegionalValuation: Record<string, Record<string, RegionalValuation>> =
 }
 
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
-const REGION_LABELS: Record<string, string> = { US: "US Market", UK: "UK Market", EU: "EU Market", JP: "Japan" }
+
 
 function formatRegionalVal(v: number, symbol: string) {
   if (symbol === "¥") return `¥${v.toFixed(0)}M`
@@ -345,9 +345,9 @@ function formatUsdEquiv(v: number) {
 
 // ─── BENCHMARK RETURNS (5-year, mock) ───
 const BENCHMARKS = [
-  { label: "S&P 500", return5y: 42 },
-  { label: "Gold", return5y: 38 },
-  { label: "Real Estate", return5y: 28 },
+  { key: "sp500", return5y: 42 },
+  { key: "gold", return5y: 38 },
+  { key: "realEstate", return5y: 28 },
 ]
 
 // ─── TOP MODELS PER BRAND (mock) ───
@@ -608,8 +608,9 @@ function BrandCard({ brand }: { brand: Brand }) {
 // ─── MOBILE: REGION PILLS (sticky) ───
 function MobileRegionPills() {
   const { selectedRegion, setSelectedRegion } = useRegion()
+  const t = useTranslations("dashboard")
   const REGIONS = [
-    { id: "all", label: "All", flag: "\u{1F30D}" },
+    { id: "all", label: t("sidebar.allRegions"), flag: "\u{1F30D}" },
     { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
     { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
     { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
@@ -1071,7 +1072,7 @@ function DiscoverySidebar({
             {t("sidebar.popular")}
           </span>
           <span className="text-[9px] font-mono text-[#6B7280]">
-            {brands.length} {brands.length === 1 ? "brand" : "brands"}
+            {t("sidebar.brandsCount", { count: brands.length })}
           </span>
         </div>
 
@@ -1127,7 +1128,7 @@ function DiscoverySidebar({
                     <div className="bg-white/[0.02] border-b border-white/[0.03]">
                       <div className="px-4 pl-6 py-1.5">
                         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
-                          Families
+                          {t("sidebar.families")}
                         </span>
                       </div>
                       {activeBrandFamilies.map((family) => (
@@ -1178,7 +1179,7 @@ function DiscoverySidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
-              <p className="text-[11px] text-[#6B7280]">No live auctions right now</p>
+              <p className="text-[11px] text-[#6B7280]">{t("sidebar.noLiveAuctions")}</p>
             </div>
           ) : (
             liveAuctions.map((auction) => {
@@ -1542,7 +1543,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{flags[region]}</span>
                     <span className={`text-[10px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#9CA3AF]"}`}>{region}</span>
-                    {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>}
+                    {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">{t("brandContext.yourMarket")}</span>}
                   </div>
                   <span className={`text-[12px] font-bold font-mono ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
                     {fmtRegional(rp.low, rp.currency)} — {fmtRegional(rp.high, rp.currency)}
@@ -1651,7 +1652,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       <div className="shrink-0 px-5 py-3 border-t border-white/5">
         <a
           href={`https://wa.me/573208492641?text=${encodeURIComponent(
-            `Hola, estoy viendo el ${auction.make} ${auction.model} en Monza Lab. Me gustaría conocer el potencial de inversión y valoración actual de este vehículo.`
+            t("context.askWhatsAppMessage", { make: auction.make, model: auction.model })
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -1718,7 +1719,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.grade")}</span>
               <p className={`text-[16px] font-bold ${
                 brand.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
               }`}>{brand.topGrade}</p>
@@ -1739,7 +1740,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-4">
             <Globe className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Valuation by Market
+              {t("brandContext.valuationByMarket")}
             </span>
           </div>
           <div className="space-y-2.5">
@@ -1755,8 +1756,8 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[12px]">{REGION_FLAGS[region]}</span>
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{REGION_LABELS[region]}</span>
-                      {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>}
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(`brandContext.region${region}` as any)}</span>
+                      {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">{t("brandContext.yourMarket")}</span>}
                     </div>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
@@ -1793,7 +1794,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              5-Year Return Comparison
+              {t("brandContext.fiveYearReturnComparison")}
             </span>
           </div>
           <div className="space-y-2.5">
@@ -1809,9 +1810,9 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
             </div>
             {/* Benchmarks */}
             {BENCHMARKS.map((b) => (
-              <div key={b.label}>
+              <div key={b.key}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
+                  <span className="text-[11px] text-[#9CA3AF]">{t(`brandContext.${b.key}` as any)}</span>
                   <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
                 </div>
                 <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
@@ -1827,7 +1828,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-3">
             <Car className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Top Models
+              {t("brandContext.topModels")}
             </span>
           </div>
           <div className="space-y-2">
@@ -1873,7 +1874,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Recent Sales
+              {t("brandContext.recentSales")}
             </span>
           </div>
           <div className="space-y-2">
@@ -1896,26 +1897,26 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Liquidity & Market Depth
+              {t("brandContext.liquidityDepth")}
             </span>
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Auctions / Year</span>
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.auctionsPerYear")}</span>
               <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Avg Days to Sell</span>
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.avgDaysToSell")}</span>
               <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Sell-Through Rate</span>
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.sellThroughRate")}</span>
               <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
             </div>
             {/* Demand score visual */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-[#9CA3AF]">Demand Score</span>
+                <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.demandScore")}</span>
                 <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
               </div>
               <div className="flex gap-1">
@@ -1937,14 +1938,14 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           <div className="flex items-center gap-2 mb-3">
             <Wrench className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Annual Ownership Cost
+              {t("brandContext.annualOwnership")}
             </span>
           </div>
           <div className="space-y-2">
             {[
-              { label: "Insurance", value: ownershipCost.insurance },
-              { label: "Storage", value: ownershipCost.storage },
-              { label: "Maintenance", value: ownershipCost.maintenance },
+              { label: t("brandContext.insurance"), value: ownershipCost.insurance },
+              { label: t("brandContext.storage"), value: ownershipCost.storage },
+              { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
@@ -1952,8 +1953,8 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+              <span className="text-[11px] font-medium text-[#FFFCF7]">{t("brandContext.total")}</span>
+              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>

@@ -977,7 +977,10 @@
       "results": "{count, plural, one {# auto} other {# autos}}",
       "liveNow": "En vivo",
       "noResults": "No se encontraron autos",
-      "noResultsHint": "Prueba otra busqueda o region"
+      "noResultsHint": "Prueba otra busqueda o region",
+      "families": "Familias",
+      "noLiveAuctions": "No hay subastas en vivo ahora",
+      "brandsCount": "{count, plural, one {# marca} other {# marcas}}"
     },
     "brandNav": {
       "title": "Explorar marcas",
@@ -1050,7 +1053,31 @@
       "maxPrice": "Precio máx.",
       "categories": "Categorías",
       "similarBrands": "Marcas similares",
-      "explore": "Explorar {brand}"
+      "explore": "Explorar {brand}",
+      "grade": "Grado",
+      "valuationByMarket": "Valoración por Mercado",
+      "yourMarket": "TU MERCADO",
+      "fiveYearReturnComparison": "Comparación de Retorno a 5 Años",
+      "topModels": "Modelos Top",
+      "recentSales": "Ventas Recientes",
+      "liquidityDepth": "Liquidez y Profundidad de Mercado",
+      "auctionsPerYear": "Subastas / Año",
+      "avgDaysToSell": "Días Promedio para Vender",
+      "sellThroughRate": "Tasa de Venta",
+      "demandScore": "Puntuación de Demanda",
+      "annualOwnership": "Costo Anual de Propiedad",
+      "insurance": "Seguro",
+      "storage": "Almacenamiento",
+      "maintenance": "Mantenimiento",
+      "total": "Total",
+      "perYear": "/año",
+      "regionUS": "Mercado EE.UU.",
+      "regionUK": "Mercado Reino Unido",
+      "regionEU": "Mercado UE",
+      "regionJP": "Japón",
+      "sp500": "S&P 500",
+      "gold": "Oro",
+      "realEstate": "Bienes Raíces"
     }
   },
   "makePage": {

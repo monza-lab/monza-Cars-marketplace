@@ -977,7 +977,10 @@
       "results": "{count, plural, one {# 台} other {# 台}}",
       "liveNow": "ライブ",
       "noResults": "車が見つかりません",
-      "noResultsHint": "別の検索や地域をお試しください"
+      "noResultsHint": "別の検索や地域をお試しください",
+      "families": "ファミリー",
+      "noLiveAuctions": "ライブオークションはありません",
+      "brandsCount": "{count, plural, one {# ブランド} other {# ブランド}}"
     },
     "brandNav": {
       "title": "メーカーを探す",
@@ -1050,7 +1053,31 @@
       "maxPrice": "最大価格",
       "categories": "カテゴリー",
       "similarBrands": "類似メーカー",
-      "explore": "{brand}を見る"
+      "explore": "{brand}を見る",
+      "grade": "グレード",
+      "valuationByMarket": "市場別評価",
+      "yourMarket": "お客様の市場",
+      "fiveYearReturnComparison": "5年間リターン比較",
+      "topModels": "トップモデル",
+      "recentSales": "最近の販売",
+      "liquidityDepth": "流動性と市場の深さ",
+      "auctionsPerYear": "年間オークション数",
+      "avgDaysToSell": "平均販売日数",
+      "sellThroughRate": "販売率",
+      "demandScore": "需要スコア",
+      "annualOwnership": "年間維持費",
+      "insurance": "保険",
+      "storage": "保管",
+      "maintenance": "メンテナンス",
+      "total": "合計",
+      "perYear": "/年",
+      "regionUS": "米国市場",
+      "regionUK": "英国市場",
+      "regionEU": "EU市場",
+      "regionJP": "日本",
+      "sp500": "S&P 500",
+      "gold": "金",
+      "realEstate": "不動産"
     }
   },
   "makePage": {

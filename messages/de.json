@@ -977,7 +977,10 @@
       "results": "{count, plural, one {# Fahrzeug} other {# Fahrzeuge}}",
       "liveNow": "Jetzt live",
       "noResults": "Keine Fahrzeuge gefunden",
-      "noResultsHint": "Versuche eine andere Suche oder Region"
+      "noResultsHint": "Versuche eine andere Suche oder Region",
+      "families": "Familien",
+      "noLiveAuctions": "Aktuell keine Live-Auktionen",
+      "brandsCount": "{count, plural, one {# Marke} other {# Marken}}"
     },
     "brandNav": {
       "title": "Marken entdecken",
@@ -1050,7 +1053,31 @@
       "maxPrice": "Max. Preis",
       "categories": "Kategorien",
       "similarBrands": "Ähnliche Marken",
-      "explore": "{brand} entdecken"
+      "explore": "{brand} entdecken",
+      "grade": "Bewertung",
+      "valuationByMarket": "Bewertung nach Markt",
+      "yourMarket": "IHR MARKT",
+      "fiveYearReturnComparison": "5-Jahres-Rendite im Vergleich",
+      "topModels": "Top-Modelle",
+      "recentSales": "Letzte Verkäufe",
+      "liquidityDepth": "Liquidität & Markttiefe",
+      "auctionsPerYear": "Auktionen / Jahr",
+      "avgDaysToSell": "Ø Tage bis Verkauf",
+      "sellThroughRate": "Verkaufsquote",
+      "demandScore": "Nachfrage-Score",
+      "annualOwnership": "Jährliche Besitzkosten",
+      "insurance": "Versicherung",
+      "storage": "Lagerung",
+      "maintenance": "Wartung",
+      "total": "Gesamt",
+      "perYear": "/Jahr",
+      "regionUS": "US-Markt",
+      "regionUK": "UK-Markt",
+      "regionEU": "EU-Markt",
+      "regionJP": "Japan",
+      "sp500": "S&P 500",
+      "gold": "Gold",
+      "realEstate": "Immobilien"
     }
   },
   "makePage": {
