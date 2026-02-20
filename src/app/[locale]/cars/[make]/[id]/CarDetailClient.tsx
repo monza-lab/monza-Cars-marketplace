@@ -417,7 +417,9 @@ function CarNavSidebar({
           className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
         >
           <ArrowLeft className="size-3" />
-          {car.make}
+          <span>{car.make.toUpperCase()}</span>
+          <ChevronRight className="size-2.5 text-[#4B5563]" />
+          <span className="text-[#9CA3AF]">{car.model}</span>
         </Link>
       </div>
 
@@ -481,19 +483,32 @@ function CarNavSidebar({
       {/* ── Live Auction block (CONDITIONAL) ── */}
       {isLive && (
         <div className="mx-3 my-3 shrink-0 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Live Auction</span>
-          </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Live Auction</span>
+            </div>
             {platform && (
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
                 {platform.short}
               </span>
             )}
+          </div>
+          <div className="flex items-center justify-between">
             <span className="text-[11px] text-[#D1D5DB]">{car.bidCount} bids</span>
             <span className="text-[11px] font-mono text-amber-400">{timeLeft(car.endTime)}</span>
           </div>
+          {car.sourceUrl && (
+            <a
+              href={car.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] py-1.5 text-[10px] text-[#D1D5DB] hover:bg-white/[0.06] transition-colors"
+            >
+              Ver en {platform?.short || car.platform.replace(/_/g, " ")}
+              <ChevronRight className="size-3" />
+            </a>
+          )}
         </div>
       )}
 
@@ -511,6 +526,17 @@ function CarNavSidebar({
             </div>
             <span className="text-[10px] font-medium text-[#6B7280]">Sold</span>
           </div>
+          {car.sourceUrl && (
+            <a
+              href={car.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] py-1.5 text-[10px] text-[#D1D5DB] hover:bg-white/[0.06] transition-colors"
+            >
+              Ver en {platform?.short || car.platform.replace(/_/g, " ")}
+              <ChevronRight className="size-3" />
+            </a>
+          )}
         </div>
       )}
 
@@ -529,6 +555,12 @@ function CarNavSidebar({
               <span className="text-[11px] text-[#D1D5DB] truncate">{spec.value}</span>
             </div>
           ))}
+          {car.vin && (
+            <div className="flex items-center gap-2">
+              <span className="text-[#6B7280]"><FileText className="size-3.5" /></span>
+              <span className="text-[11px] text-[#D1D5DB] font-mono">{car.vin}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -624,6 +656,28 @@ function CarContextPanel({
   return (
     <div className="h-full flex flex-col overflow-hidden border-l border-white/5">
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+
+        {/* 0. CAR IDENTITY HEADER */}
+        <div className="px-5 py-3 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Investment Analysis
+            </span>
+          </div>
+          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">{car.title}</h2>
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+            <span>{car.transmission}</span>
+            <span>·</span>
+            <span>{car.mileage.toLocaleString()} {car.mileageUnit}</span>
+            {car.vin && (
+              <>
+                <span>·</span>
+                <span className="font-mono">{car.vin}</span>
+              </>
+            )}
+          </div>
+        </div>
 
         {/* 1. INVESTMENT GRADE + PRICE */}
         <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
@@ -828,6 +882,25 @@ function CarContextPanel({
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Report CTA */}
+      <div className="shrink-0 px-4 pt-3">
+        <Link
+          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+          className="block rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-4 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
+              <FileText className="size-5 text-[#F8B4D9]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
+              <p className="text-[10px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; costs</p>
+            </div>
+            <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
       </div>
 
       {/* CTA pinned bottom */}
@@ -1712,26 +1785,24 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               {/* FULL REPORT CTA */}
-              {isRegistered && (
-                <Link
-                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-                  className="block rounded-xl border border-[rgba(248,180,217,0.15)] bg-[rgba(248,180,217,0.04)] p-5 hover:bg-[rgba(248,180,217,0.06)] transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.1)] flex items-center justify-center shrink-0">
-                      <FileText className="size-5 text-[#F8B4D9]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium text-[#FFFCF7]">Full Investment Report</p>
-                      <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
-                    </div>
-                    <span className="flex items-center gap-2 shrink-0 rounded-lg bg-[#F8B4D9] px-5 py-2.5 text-[12px] font-semibold text-[#0b0b10]">
-                      View Report
-                      <ChevronRight className="size-4" />
-                    </span>
+              <Link
+                href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+                className="block rounded-xl border border-[rgba(248,180,217,0.15)] bg-[rgba(248,180,217,0.04)] p-5 hover:bg-[rgba(248,180,217,0.06)] transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.1)] flex items-center justify-center shrink-0">
+                    <FileText className="size-5 text-[#F8B4D9]" />
                   </div>
-                </Link>
-              )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-[#FFFCF7]">Full Investment Report</p>
+                    <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
+                  </div>
+                  <span className="flex items-center gap-2 shrink-0 rounded-lg bg-[#F8B4D9] px-5 py-2.5 text-[12px] font-semibold text-[#0b0b10]">
+                    View Report
+                    <ChevronRight className="size-4" />
+                  </span>
+                </div>
+              </Link>
 
               {/* Bottom spacing */}
               <div className="h-8" />

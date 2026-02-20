@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import {
   DollarSign,
@@ -83,11 +83,13 @@ export function AdvancedFilters({
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [selectedGrades, setSelectedGrades] = useState<string[]>([])
+  const onFiltersChangeRef = useRef(onFiltersChange)
+  onFiltersChangeRef.current = onFiltersChange
 
   // Notify parent of filter changes
   useEffect(() => {
-    if (onFiltersChange) {
-      onFiltersChange({
+    if (onFiltersChangeRef.current) {
+      onFiltersChangeRef.current({
         priceRange: priceRange[0] === minPrice && priceRange[1] === maxPrice ? null : priceRange,
         yearRange: yearRange[0] === minYear && yearRange[1] === maxYear ? null : yearRange,
         mileageRanges: selectedMileage,
@@ -97,7 +99,7 @@ export function AdvancedFilters({
         grades: selectedGrades,
       })
     }
-  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedColors, selectedStatuses, selectedGrades, onFiltersChange, minPrice, maxPrice, minYear, maxYear])
+  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedColors, selectedStatuses, selectedGrades, minPrice, maxPrice, minYear, maxYear])
 
   const hasActiveFilters =
     priceRange[0] !== minPrice ||

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Search, X, ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -143,6 +143,8 @@ export function FamilySearchAndFilters({
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedGenerations, setSelectedGenerations] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const onFilterChangeRef = useRef(onFilterChange)
+  onFilterChangeRef.current = onFilterChange
 
   const generations = GENERATIONS_BY_FAMILY[familyName] || []
   const variants = VARIANTS_BY_FAMILY[familyName] || []
@@ -212,15 +214,15 @@ export function FamilySearchAndFilters({
 
   // Notify parent of filter changes
   useEffect(() => {
-    if (onFilterChange) {
-      onFilterChange({
+    if (onFilterChangeRef.current) {
+      onFilterChangeRef.current({
         searchQuery,
         selectedGenerations,
         yearRange: null,
         priceRange: null,
       })
     }
-  }, [searchQuery, selectedGenerations, onFilterChange])
+  }, [searchQuery, selectedGenerations])
 
   return (
     <div className="border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl">

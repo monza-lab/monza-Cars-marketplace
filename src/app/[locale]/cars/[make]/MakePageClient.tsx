@@ -27,6 +27,7 @@ import {
   Globe,
   BarChart3,
   Gauge,
+  FileText,
 } from "lucide-react"
 import type { CollectorCar, Region, FairValueByRegion } from "@/lib/curatedCars"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
@@ -1452,7 +1453,7 @@ function ModelNavSidebar({
 // ─── CAR FEED CARD (Full-height card for individual cars) ───
 function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
   const t = useTranslations("makePage")
-  const tAuction = useTranslations("auction")
+  const tAuction = useTranslations("auctionDetail")
   const { selectedRegion } = useRegion()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
 
@@ -1542,11 +1543,13 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
               </p>
             </div>
 
-            {/* Time Left */}
+            {/* Platform + Time Left */}
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-[#6B7280]">
                 <Clock className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Time Left</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">
+                  {platformLabels[car.platform]?.short || car.platform.replace(/_/g, " ")}
+                </span>
               </div>
               <p className={`text-[13px] font-medium ${isEndingSoon ? "text-orange-400" : "text-[#FFFCF7]"}`}>
                 {timeLeft(new Date(car.endTime), {
@@ -1586,11 +1589,11 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
           </div>
 
           {/* CTA */}
-          <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
-              View Details
+          <div className="mt-6 flex items-center justify-center rounded-xl bg-[#F8B4D9] py-3 group-hover:bg-[#f4cbde] transition-colors">
+            <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">
+              View Investment Report
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-4 text-[#0b0b10] ml-1" />
           </div>
         </div>
       </Link>
@@ -1911,13 +1914,21 @@ function ModelContextPanel({
 
         {/* 1. MODEL OVERVIEW */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <Shield className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {make} {model.name}
+              Investment Analysis
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">
+            {make} {model.representativeCar.model}
+          </h2>
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+            <span>{model.carCount} cars</span>
+            <span>·</span>
+            <span>{model.years}</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
             {modelThesis}
           </p>
         </div>
@@ -2181,6 +2192,25 @@ function ModelContextPanel({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Report CTA */}
+      <div className="shrink-0 px-4 pt-3">
+        <Link
+          href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${model.representativeCar.id}/report`}
+          className="block rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-4 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
+              <FileText className="size-5 text-[#F8B4D9]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
+              <p className="text-[10px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; costs</p>
+            </div>
+            <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
       </div>
 
       {/* CTA — pinned bottom */}
@@ -2845,16 +2875,18 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
               // MODE: Viewing specific family's cars (feed style)
               <>
                 {/* Sticky header with back button */}
-                <div className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+                <div className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-3">
                   <button
                     onClick={handleBackToFamilies}
-                    className="flex items-center gap-2 text-[13px] text-[#FFFCF7] hover:text-[#F8B4D9] transition-colors group"
+                    className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
                   >
-                    <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="font-semibold">{make} {selectedFamilyForFeed}</span>
+                    <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="uppercase font-semibold">{make}</span>
+                    <ChevronRight className="size-2.5 text-[#4B5563]" />
+                    <span className="text-[#9CA3AF]">{selectedFamilyForFeed}</span>
                   </button>
-                  <p className="text-[10px] text-[#6B7280] mt-1">
-                    {filteredFeedCars.length} {filteredFeedCars.length === 1 ? "carro" : "carros"}
+                  <p className="text-[10px] text-[#6B7280] mt-0.5">
+                    {filteredFeedCars.length} {filteredFeedCars.length === 1 ? "car" : "cars"}
                   </p>
                 </div>
 

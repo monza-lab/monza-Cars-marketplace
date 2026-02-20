@@ -1,5 +1,7 @@
 "use client"
 
+import { useId } from "react"
+
 interface PriceTrendChartProps {
   values: number[]
   years: number[]
@@ -21,6 +23,7 @@ export function PriceTrendChart({
   showLabels = true,
   accentColor = "#F8B4D9",
 }: PriceTrendChartProps) {
+  const uniqueId = useId()
   if (values.length === 0) return null
 
   const paddingTop = showLabels ? 18 : 6
@@ -70,8 +73,8 @@ export function PriceTrendChart({
     ? `${linePath} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
     : ""
 
-  const gradientId = `priceTrendGrad-${Math.random().toString(36).slice(2, 8)}`
-  const glowId = `priceTrendGlow-${Math.random().toString(36).slice(2, 8)}`
+  const gradientId = `priceTrendGrad-${uniqueId}`
+  const glowId = `priceTrendGlow-${uniqueId}`
 
   return (
     <div className="w-full" style={{ height }}>
