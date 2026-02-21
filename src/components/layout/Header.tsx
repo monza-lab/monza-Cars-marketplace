@@ -694,9 +694,9 @@ export function Header() {
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
-          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
+          <a href="/" className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
             <Image src="/logo-crema.png" alt="Monza Lab" width={992} height={260} className="h-7 md:h-8 w-auto" priority />
-          </Link>
+          </a>
 
           {/* Center: Search Input (hidden on mobile) */}
           <form onSubmit={handleSubmit} className="hidden md:block flex-1 max-w-xl">

@@ -27,6 +27,7 @@ import {
   Globe,
   BarChart3,
   Gauge,
+  FileText,
 } from "lucide-react"
 import type { CollectorCar, Region, FairValueByRegion } from "@/lib/curatedCars"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
@@ -276,7 +277,7 @@ function aggregateModels(cars: CollectorCar[]): Model[] {
   // Convert to Model array
   const models: Model[] = []
   familyMap.forEach((familyCars, familyName) => {
-    const prices = familyCars.map(c => c.currentBid)
+    const prices = familyCars.map(c => c.currentBid).filter(p => p > 0)
     const years = familyCars.map(c => c.year)
     const categories = [...new Set(familyCars.map(c => c.category))]
     const liveCount = familyCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
@@ -301,9 +302,9 @@ function aggregateModels(cars: CollectorCar[]): Model[] {
       name: familyName,
       slug: familyName.toLowerCase().replace(/\s+/g, "-"),
       carCount: familyCars.length,
-      priceMin: Math.min(...prices),
-      priceMax: Math.max(...prices),
-      avgPrice: prices.reduce((a, b) => a + b, 0) / prices.length,
+      priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+      priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+      avgPrice: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0,
       representativeImage,
       representativeCar: repCar,
       liveCount,
@@ -1292,13 +1293,13 @@ function ModelNavSidebar({
       {/* Compact brand header */}
       <div className="shrink-0 px-3 pt-2.5 pb-2 border-b border-white/5">
         <div className="flex items-center justify-between">
-          <Link
+          <a
             href="/"
-            className="flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <ArrowLeft className="size-3" />
-          </Link>
-          <h1 className="text-[13px] font-bold text-[#FFFCF7] tracking-wide uppercase">{make}</h1>
+            <ArrowLeft className="size-3 text-[#6B7280]" />
+            <h1 className="text-[13px] font-bold text-[#FFFCF7] tracking-wide uppercase hover:text-[#F8B4D9] transition-colors">{make}</h1>
+          </a>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-mono text-[#F8B4D9]">{cars.length}</span>
             {liveCount > 0 && (
@@ -1452,7 +1453,7 @@ function ModelNavSidebar({
 // ─── CAR FEED CARD (Full-height card for individual cars) ───
 function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
   const t = useTranslations("makePage")
-  const tAuction = useTranslations("auction")
+  const tAuction = useTranslations("auctionDetail")
   const { selectedRegion } = useRegion()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
 
@@ -1542,11 +1543,13 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
               </p>
             </div>
 
-            {/* Time Left */}
+            {/* Platform + Time Left */}
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-[#6B7280]">
                 <Clock className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Time Left</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">
+                  {platformLabels[car.platform]?.short || car.platform.replace(/_/g, " ")}
+                </span>
               </div>
               <p className={`text-[13px] font-medium ${isEndingSoon ? "text-orange-400" : "text-[#FFFCF7]"}`}>
                 {timeLeft(new Date(car.endTime), {
@@ -1586,11 +1589,11 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
           </div>
 
           {/* CTA */}
-          <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
-              View Details
+          <div className="mt-6 flex items-center justify-center rounded-xl bg-[#F8B4D9] py-3 group-hover:bg-[#f4cbde] transition-colors">
+            <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">
+              View Investment Report
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-4 text-[#0b0b10] ml-1" />
           </div>
         </div>
       </Link>
@@ -1753,16 +1756,30 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
 }
 
 function aggregateRegionalPricing(modelCars: CollectorCar[]): FairValueByRegion | null {
-  if (modelCars.length === 0) return null
+  // Filter out cars with zero pricing (live auctions without final_price)
+  const carsWithPricing = modelCars.filter(c => c.fairValueByRegion.US.high > 0)
+  if (carsWithPricing.length === 0) {
+    // Fallback: build from currentBid if available
+    const carsWithBids = modelCars.filter(c => c.currentBid > 0)
+    if (carsWithBids.length === 0) return null
+    const minBid = Math.min(...carsWithBids.map(c => c.currentBid))
+    const maxBid = Math.max(...carsWithBids.map(c => c.currentBid))
+    return {
+      US: { currency: "$", low: minBid, high: maxBid },
+      EU: { currency: "€", low: Math.round(minBid * 0.92), high: Math.round(maxBid * 0.92) },
+      UK: { currency: "£", low: Math.round(minBid * 0.79), high: Math.round(maxBid * 0.79) },
+      JP: { currency: "¥", low: Math.round(minBid * 150), high: Math.round(maxBid * 150) },
+    }
+  }
   const regions: (keyof FairValueByRegion)[] = ["US", "EU", "UK", "JP"]
   const result = {} as FairValueByRegion
   for (const region of regions) {
-    const lows = modelCars.map(c => c.fairValueByRegion[region].low)
-    const highs = modelCars.map(c => c.fairValueByRegion[region].high)
+    const lows = carsWithPricing.map(c => c.fairValueByRegion[region].low).filter(v => v > 0)
+    const highs = carsWithPricing.map(c => c.fairValueByRegion[region].high).filter(v => v > 0)
     result[region] = {
-      currency: modelCars[0].fairValueByRegion[region].currency,
-      low: Math.min(...lows),
-      high: Math.max(...highs),
+      currency: carsWithPricing[0].fairValueByRegion[region].currency,
+      low: lows.length > 0 ? Math.min(...lows) : 0,
+      high: highs.length > 0 ? Math.max(...highs) : 0,
     }
   }
   return result
@@ -1829,8 +1846,8 @@ function ModelContextPanel({
   const locale = useLocale()
   const { selectedRegion, effectiveRegion } = useRegion()
 
-  // All cars of this model (unfiltered) for regional analysis
-  const allModelCars = allCars.filter(c => c.model === model.name)
+  // All cars of this model family (unfiltered) for regional analysis
+  const allModelCars = allCars.filter(c => extractFamily(c.model) === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
 
   // Model-specific thesis (from the representative car's real data)
@@ -1897,13 +1914,21 @@ function ModelContextPanel({
 
         {/* 1. MODEL OVERVIEW */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <Shield className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {make} {model.name}
+              Investment Analysis
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">
+            {make} {model.representativeCar.model}
+          </h2>
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+            <span>{model.carCount} cars</span>
+            <span>·</span>
+            <span>{model.years}</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
             {modelThesis}
           </p>
         </div>
@@ -2169,6 +2194,25 @@ function ModelContextPanel({
         )}
       </div>
 
+      {/* Report CTA */}
+      <div className="shrink-0 px-4 pt-3">
+        <Link
+          href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${model.representativeCar.id}/report`}
+          className="block rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-4 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
+              <FileText className="size-5 text-[#F8B4D9]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
+              <p className="text-[10px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; costs</p>
+            </div>
+            <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </Link>
+      </div>
+
       {/* CTA — pinned bottom */}
       <div className="shrink-0 px-5 py-3 border-t border-white/5">
         <button
@@ -2194,6 +2238,7 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
 }) {
   const locale = useLocale()
   const t = useTranslations("makePage")
+  const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
 
   // ─── USE REAL DB DATA (with fallback to hardcoded) ───
@@ -2270,6 +2315,14 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
     if (!selectedRegion || selectedRegion === "all") return cars
     return cars.filter(c => c.region === selectedRegion)
   }, [cars, selectedRegion])
+
+  // Live auction cars (for left sidebar)
+  const liveCars = useMemo(() =>
+    regionFilteredCars
+      .filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON")
+      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()),
+    [regionFilteredCars]
+  )
 
   // Aggregate filtered cars into models
   const allModels = useMemo(() => aggregateModels(regionFilteredCars), [regionFilteredCars])
@@ -2692,14 +2745,138 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
       <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
-          {/* COLUMN A: MODEL NAV SIDEBAR */}
-          <ModelNavSidebar
-            make={make}
-            cars={regionFilteredCars}
-            models={filteredModels}
-            currentModelIndex={currentModelIndex}
-            onSelectModel={scrollToModel}
-          />
+          {/* COLUMN A: GENERATIONS + FILTERS + LIVE */}
+          <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+            {/* Filters section (scrollable) */}
+            {selectedModel ? (
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {/* Back to families button */}
+                {viewMode === 'cars' && (
+                  <div className="shrink-0 px-4 py-2 border-b border-white/5">
+                    <button
+                      onClick={handleBackToFamilies}
+                      className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                    >
+                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="uppercase font-semibold">{make}</span>
+                    </button>
+                  </div>
+                )}
+                {/* Family search (generations only, no search bar) */}
+                <div className="shrink-0">
+                  <FamilySearchAndFilters
+                    familyName={selectedModel.name}
+                    totalCars={displayCars.length}
+                    hideSearch
+                    onFilterChange={(familyFilters) => {
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        searchQuery: familyFilters.searchQuery,
+                        selectedGenerations: familyFilters.selectedGenerations,
+                        yearRange: familyFilters.yearRange || prev?.yearRange || null,
+                        priceRange: familyFilters.priceRange || prev?.priceRange || null,
+                      }))
+                    }}
+                  />
+                </div>
+                {/* Advanced filters (price, year, km, transmission) */}
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <AdvancedFilters
+                    familyName={selectedModel.name}
+                    onFiltersChange={(advFilters) => {
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        searchQuery: prev?.searchQuery || "",
+                        selectedGenerations: prev?.selectedGenerations || [],
+                        yearRange: advFilters.yearRange,
+                        priceRange: advFilters.priceRange,
+                        mileageRanges: advFilters.mileageRanges,
+                        transmissions: advFilters.transmissions,
+                        colors: advFilters.colors,
+                        statuses: advFilters.statuses,
+                        grades: advFilters.grades,
+                      }))
+                    }}
+                    minPrice={selectedModel.priceMin}
+                    maxPrice={selectedModel.priceMax}
+                    minYear={parseInt(selectedModel.years.split("–")[0]) || 1960}
+                    maxYear={parseInt(selectedModel.years.split("–")[1] || selectedModel.years) || 2026}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+
+            {/* LIVE BIDS (always at bottom) */}
+            <div className="shrink-0 max-h-[35%] flex flex-col border-t border-white/5 overflow-hidden">
+              {/* Live header */}
+              <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-[rgba(11,11,16,0.4)]">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+                </span>
+                <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
+                  LIVE NOW
+                </span>
+                {liveCars.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
+                    {liveCars.length}
+                  </span>
+                )}
+              </div>
+              {/* Scrollable live bids */}
+              <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+                {liveCars.length === 0 ? (
+                  <div className="px-4 py-6 text-center">
+                    <span className="text-[11px] text-[#4B5563]">No live auctions</span>
+                  </div>
+                ) : (
+                  liveCars.map((car) => {
+                    const isEndingSoon = car.status === "ENDING_SOON"
+                    const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
+                    return (
+                      <Link
+                        key={car.id}
+                        href={`/cars/${makeSlug}/${car.id}`}
+                        className="group flex gap-2.5 px-3 py-2 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+                      >
+                        <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                          <Image
+                            src={car.image}
+                            alt={car.title}
+                            fill
+                            className="object-cover"
+                            sizes="56px"
+                          />
+                          <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                            {car.year} {car.model}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] font-mono font-bold text-[#F8B4D9]">
+                              {formatPriceForRegion(car.currentBid, selectedRegion)}
+                            </span>
+                            <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-[#6B7280]"}`}>
+                              <Clock className="size-2.5" />
+                              {timeLeft(new Date(car.endTime), {
+                                ended: tAuction("time.ended"),
+                                day: tAuction("time.units.day"),
+                                hour: tAuction("time.units.hour"),
+                                minute: tAuction("time.units.minute"),
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* COLUMN B: MODEL FEED (snap scroll) */}
           <div
@@ -2709,21 +2886,6 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
             {viewMode === 'cars' ? (
               // MODE: Viewing specific family's cars (feed style)
               <>
-                {/* Sticky header with back button */}
-                <div className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-4">
-                  <button
-                    onClick={handleBackToFamilies}
-                    className="flex items-center gap-2 text-[13px] text-[#FFFCF7] hover:text-[#F8B4D9] transition-colors group"
-                  >
-                    <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="font-semibold">{make} {selectedFamilyForFeed}</span>
-                  </button>
-                  <p className="text-[10px] text-[#6B7280] mt-1">
-                    {filteredFeedCars.length} {filteredFeedCars.length === 1 ? "carro" : "carros"}
-                  </p>
-                </div>
-
-                {/* Car feed (snap scroll) */}
                 {filteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-[#4B5563] mb-4" />
@@ -2811,52 +2973,18 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
             )}
           </div>
 
-          {/* COLUMN C: SEARCH + CONTEXT PANEL */}
-          <div className="h-full flex flex-col overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
+          {/* COLUMN C: MARKET INTELLIGENCE */}
+          <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
             {selectedModel ? (
-              <>
-                {/* STICKY: Buscador contextual */}
-                <div className="sticky top-0 z-20">
-                  <FamilySearchAndFilters
-                    familyName={selectedModel.name}
-                    totalCars={displayCars.length}
-                    onFilterChange={(familyFilters) => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        searchQuery: familyFilters.searchQuery,
-                        selectedGenerations: familyFilters.selectedGenerations,
-                        yearRange: familyFilters.yearRange || prev?.yearRange || null,
-                        priceRange: familyFilters.priceRange || prev?.priceRange || null,
-                      }))
-                    }}
-                  />
-                </div>
-
-                {/* SCROLLABLE: Filtros avanzados */}
-                <div className="flex-1 overflow-hidden">
-                  <AdvancedFilters
-                    familyName={selectedModel.name}
-                    onFiltersChange={(advFilters) => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        searchQuery: prev?.searchQuery || "",
-                        selectedGenerations: prev?.selectedGenerations || [],
-                        yearRange: advFilters.yearRange,
-                        priceRange: advFilters.priceRange,
-                        mileageRanges: advFilters.mileageRanges,
-                        transmissions: advFilters.transmissions,
-                        colors: advFilters.colors,
-                        statuses: advFilters.statuses,
-                        grades: advFilters.grades,
-                      }))
-                    }}
-                    minPrice={selectedModel.priceMin}
-                    maxPrice={selectedModel.priceMax}
-                    minYear={parseInt(selectedModel.years.split("–")[0]) || 1960}
-                    maxYear={parseInt(selectedModel.years.split("–")[1] || selectedModel.years) || 2026}
-                  />
-                </div>
-              </>
+              <ModelContextPanel
+                model={selectedModel}
+                make={make}
+                cars={displayCars}
+                allCars={cars}
+                allModels={filteredModels}
+                onOpenAdvisor={() => setShowAdvisorChat(true)}
+                dbOwnershipCosts={realOwnershipCosts}
+              />
             ) : null}
           </div>
         </div>
