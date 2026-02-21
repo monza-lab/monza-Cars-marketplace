@@ -1,258 +1,216 @@
-# Execution Plan: Ferrari Historical Sold Listings -> Existing Live Ferrari UI
+# Plan - Porsche Multi-Source Apify -> Supabase
 
-## Plan Envelope (Binding)
-`{files: 7, LOC/file: 40-220, deps: [zod]}`
+This plan executes in one-shot feature phases and one-shot testscripts per phase, aligned to `LLM_FRIENDLY_PLAN_TEST_DEBUG`.
 
-- Files: 7 maximum, feature-local and route-local only.
-- LOC/file: target 40-220, hard cap 300.
-- Dependencies: add exactly `zod`.
+## Scope
 
-## Phase 0: Environment and Baseline Capture
+- Goal: scrape all Porsche-relevant data for all models from Apify scrapers (Bring a Trailer, Cars & Bids, AutoScout24, ClassicCars) and upload to existing Supabase DB (`xgtlnyemulgdebyweqlf`).
+- Existing DB state (audited): `public.listings` populated with `363` Porsche BaT rows; other target enrichment tables mostly empty; RLS/security and index/perf findings present.
+- Delivery style: vertical slices, locality-first, deterministic runs, replayable artifacts.
 
-### Objective
-Capture runtime matrix and current behavior before code changes.
-
-### Dependencies
-None.
+## Phase 0 - Environment Matrix + DB Contract Freeze
 
 ### Deliverables
-- Environment matrix artifact.
-- Baseline responses for live Ferrari detail and price-history endpoints.
 
-### Testscript TS-P0-ENV
-- Identifier: `TS-P0-ENV`
-- Objective: verify deterministic local runtime and baseline API behavior.
-- Prerequisites: repo installed.
-- Setup:
-  1. Ensure `.env.local` has Supabase URL/keys.
-  2. Start dev server.
-- Run commands:
-  - `node -v`
-  - `npm -v`
-  - `npm run dev`
-  - `curl -sS http://localhost:3000/api/auctions/live-<knownFerrariId>`
-  - `curl -sS http://localhost:3000/api/listings/live-<knownFerrariId>/price-history`
-- Expected observations:
-  - Runtime versions captured.
-  - Existing endpoints return valid JSON.
-- Artifact capture:
-  - `agents/testscripts/TS-P0-ENV.env.txt`
-  - `agents/testscripts/TS-P0-ENV.auction.json`
-  - `agents/testscripts/TS-P0-ENV.price-history.json`
+- Environment matrix artifact: `agents/testscripts/artifacts/env-matrix.md`.
+- DB audit artifact: `agents/testscripts/artifacts/db-audit-<timestamp>.md`.
+- Contract freeze doc: accepted target columns and source-field mapping table.
+
+### Pass/Fail
+
+- Pass: Supabase connectivity, table inventory, enum constraints, PK/FK set, existing row counts, advisor findings captured.
+- Fail: any unknown required column/type mismatch remains unresolved.
+
+### Testscript TS-P0-DB-AUDIT
+
+- Objective: verify exact runtime and DB baseline before coding.
+- Prerequisites: `.env.local` with Supabase and Apify vars present.
+- RUN:
+  - `node -v && npm -v`
+  - `npm run -s env:check` (or equivalent validation command created in Phase 1)
+  - `npm run -s db:audit:porsche`
+- OBSERVE:
+  - Runtime versions, DB project ref, table counts, advisor issues, source distribution.
+- COLLECT:
+  - `agents/testscripts/artifacts/env-matrix.md`
+  - `agents/testscripts/artifacts/db-audit-<timestamp>.json`
+- REPORT:
+  - Record observed vs expected and list blocking mismatches.
+- Cleanup: none.
+- Known limitations: row counts in `pg_stat_user_tables` are estimated.
+
+## Phase 1 - Core Ingestion Slice (Canonical Contracts + Supabase Writer)
+
+### Deliverables
+
+- `src/features/porsche_ingest/contracts/*` (zod contracts).
+- `src/features/porsche_ingest/repository/supabase_writer.ts` (idempotent upserts).
+- `src/features/porsche_ingest/services/{normalize,dedupe}.ts`.
+- `scripts/ingest-porsche.ts` CLI entrypoint.
+
+### Pass/Fail
+
+- Pass: one canonical sample listing writes to `public.listings` and correct child table rows.
+- Fail: duplicate insertions, contract drift, or missing required fields.
+
+### Testscript TS-P1-INGEST-CORE
+
+- Objective: verify canonical upsert semantics.
+- Prerequisites: Phase 0 pass.
+- RUN:
+  - `npm run test -- src/features/porsche_ingest/contracts`
+  - `npm run ingest:porsche -- --source=bat --mode=sample --limit=5 --dry-run`
+  - `npm run ingest:porsche -- --source=bat --mode=sample --limit=5`
+- OBSERVE:
+  - Dry-run emits valid mapping summary.
+  - Real-run inserts/updates deterministic row counts.
+  - Re-run same batch produces updates, not duplicates.
+- COLLECT:
+  - `var/runs/porsche-ingest/<run-id>.json`
+  - SQL snapshot of affected rows.
+- REPORT:
+  - Upsert stats (`inserted`, `updated`, `rejected`, `retried`).
 - Cleanup:
-  - Stop dev server.
-- Pass/Fail:
-  - PASS if all commands run and artifacts are captured.
-  - FAIL if runtime mismatch or endpoint fails.
+  - delete test rows by run tag if needed.
+- Known limitations:
+  - sample mode cannot prove full-rate stability.
 
-## Phase 1: Ferrari History Feature Slice (Contracts + Service + Adapters)
+## Phase 2 - Source Adapters (BaT, Cars & Bids, AutoScout24, ClassicCars)
 
-### Objective
-Create server-owned Ferrari sold-history query boundary with strict Zod input/output validation and table-state checks.
+### Deliverables
 
-### Dependencies
-Phase 0 pass.
+- `src/features/porsche_ingest/adapters/bat.ts`
+- `src/features/porsche_ingest/adapters/carsandbids.ts`
+- `src/features/porsche_ingest/adapters/autoscout24.ts`
+- `src/features/porsche_ingest/adapters/classiccars.ts`
+- Source fixture contracts and mapping tests.
 
-### Files
-1. `src/features/ferrari_history/contracts.ts`
-2. `src/features/ferrari_history/service.ts`
-3. `src/features/ferrari_history/adapters.ts`
+### Pass/Fail
 
-### Implementation Scope
-- Input contract: make/model/months/limit validation.
-- Output contract: sold rows with normalized `sold_price`, `sold_at`, `currency`.
-- Table-state checks in priority order:
-  1. sold-state correctness
-  2. valid sold timestamp
-  3. valid sold price
-  4. currency normalization
-  5. duplicate suppression
-  6. model normalization
-- Query constraints:
-  - `make = Ferrari` (case-normalized)
-  - exact normalized `model`
-  - sold-only rows
-  - last 12 months
-  - bounded limit (50-200)
-  - projected columns only
+- Pass: each source maps to canonical schema with >=95% parse success on fixture set.
+- Fail: unbounded field loss or source-specific crashes.
 
-### Testscript TS-P1-CONTRACTS
-- Identifier: `TS-P1-CONTRACTS`
-- Objective: validate feature contracts and filtering logic in isolation.
-- Prerequisites: Phase 0 artifacts, dependency installed (`zod`).
-- Setup:
-  1. Prepare fixtures with mixed statuses, invalid dates, invalid prices.
-  2. Mock Supabase response set.
-- Run commands:
-  - `npm test -- tests/integration/ferrari_history.boundary.test.ts -t "contracts"`
-- Expected observations:
-  - Invalid input rejected with stable 400 envelope.
-  - Non-sold rows excluded.
-  - Rows sorted by sold_at asc then id asc.
-- Artifact capture:
-  - `agents/testscripts/TS-P1-CONTRACTS.output.txt`
-  - `agents/testscripts/TS-P1-CONTRACTS.filtered.json`
-- Cleanup:
-  - Remove temporary fixtures.
-- Pass/Fail:
-  - PASS if all table-state assertions pass.
-  - FAIL on any schema/filtering mismatch.
+### Testscript TS-P2-SOURCE-CONTRACTS
 
-## Phase 2: Integrate Server Boundary into Existing Endpoints
-
-### Objective
-Wire Ferrari historical service into existing live detail routes without changing UI contract shapes.
-
-### Dependencies
-Phase 1 pass.
-
-### Files
-4. `src/app/api/listings/[id]/price-history/route.ts`
-5. `src/app/api/auctions/[id]/route.ts`
-
-### Implementation Scope
-- `GET /api/listings/[id]/price-history`:
-  - For Ferrari live listing IDs, return 12-month sold historical points mapped to `PriceHistoryEntry[]`.
-  - For non-Ferrari IDs, preserve current `price_history` behavior.
-- `GET /api/auctions/[id]`:
-  - For live Ferraris, enrich response with historical `priceHistory` and comparables payload from same service.
-  - Keep non-Ferrari and DB-backed behavior unchanged.
-- Security/scalability boundary:
-  - server-owned Supabase access only
-  - projection + bounded result size
-  - request correlation ID logging
-
-### Testscript TS-P2-BOUNDARY
-- Identifier: `TS-P2-BOUNDARY`
-- Objective: validate endpoint-level Ferrari history behavior and non-Ferrari preservation.
+- Objective: validate source-specific parsing and normalization.
 - Prerequisites: Phase 1 pass.
-- Setup:
-  1. Seed or identify one Ferrari live ID and one non-Ferrari live ID.
-  2. Start app.
-- Run commands:
-  - `curl -sS http://localhost:3000/api/listings/live-<ferrariId>/price-history`
-  - `curl -sS http://localhost:3000/api/listings/live-<nonFerrariId>/price-history`
-  - `curl -sS http://localhost:3000/api/auctions/live-<ferrariId>`
-- Expected observations:
-  - Ferrari response contains sold-only 12-month series.
-  - Non-Ferrari response remains previous behavior.
-  - Auction detail includes enriched historical fields without shape break.
-- Artifact capture:
-  - `agents/testscripts/TS-P2-BOUNDARY.ferrari-history.json`
-  - `agents/testscripts/TS-P2-BOUNDARY.non-ferrari-history.json`
-  - `agents/testscripts/TS-P2-BOUNDARY.auction.json`
-- Cleanup:
-  - Stop app.
-- Pass/Fail:
-  - PASS if Ferrari and non-Ferrari paths both satisfy expected contracts.
-  - FAIL on response-shape regression or filtering breach.
+- RUN:
+  - `npm run test -- src/features/porsche_ingest/adapters`
+  - `npm run ingest:porsche -- --source=carsandbids --mode=sample --limit=20 --dry-run`
+  - `npm run ingest:porsche -- --source=autoscout24 --mode=sample --limit=20 --dry-run`
+  - `npm run ingest:porsche -- --source=classiccars --mode=sample --limit=20 --dry-run`
+- OBSERVE:
+  - Porsche-only filter enforced.
+  - Price/date/mileage normalization succeeds.
+  - Rejected records include explicit reason codes.
+- COLLECT:
+  - Source parse reports JSON.
+  - Rejects JSONL.
+- REPORT:
+  - Parse success %, top rejection reasons, model coverage.
+- Cleanup: remove sample run tags.
+- Known limitations: source payload shape may drift.
 
-## Phase 3: Client Composition Point Integration
+## Phase 3 - Incremental + Backfill Execution Strategy
 
-### Objective
-Use enriched server payload in current auction detail flow while preserving visuals and interaction.
+### Deliverables
 
-### Dependencies
-Phase 2 pass.
+- Checkpointing (`last_cursor`, `last_seen_at`, `run_id`) in `ModelBackfillState` or dedicated ingest-state table.
+- Two modes: `incremental` (daily) and `backfill` (historical all models).
+- Concurrency guard + rate pacing.
 
-### File
-6. `src/app/[locale]/auctions/[id]/AuctionDetailClient.tsx`
+### Pass/Fail
 
-### Implementation Scope
-- Keep existing rendering and component tree.
-- Use `priceHistory` from auction payload as primary source.
-- Retain existing fallback fetch call only as resilience path.
-- Do not modify styles, layout, or component signatures.
+- Pass: resumed runs continue from checkpoint without replay floods.
+- Fail: missed windows, duplicate storms, or checkpoint corruption.
 
-### Testscript TS-P3-COMPOSITION
-- Identifier: `TS-P3-COMPOSITION`
-- Objective: verify chart/comparable sections render from new data source without UI redesign.
+### Testscript TS-P3-RESUME-AND-BACKFILL
+
+- Objective: prove resumability and full model coverage.
 - Prerequisites: Phase 2 pass.
-- Setup:
-  1. Run app locally.
-  2. Open Ferrari live auction detail page.
-- Run commands:
-  - `npm run dev`
-  - manual browser verification on `/auctions/live-<ferrariId>`
-- Expected observations:
-  - Existing `PriceChart` renders with historical sold series.
-  - Existing modules remain visually unchanged.
-  - No client runtime errors.
-- Artifact capture:
-  - `agents/testscripts/TS-P3-COMPOSITION.console.txt`
-  - `agents/testscripts/TS-P3-COMPOSITION.screenshot.png`
-- Cleanup:
-  - Close browser/dev server.
-- Pass/Fail:
-  - PASS if chart appears and layout is unchanged.
-  - FAIL on visual drift or runtime error.
+- RUN:
+  - `npm run ingest:porsche -- --source=bat --mode=incremental --since=24h`
+  - `npm run ingest:porsche -- --source=all --mode=backfill --from=2000-01-01 --limit=500`
+  - Interrupt run and resume: `npm run ingest:porsche -- --resume=<run-id>`
+- OBSERVE:
+  - checkpoint advances monotonically.
+  - resumed run skips already committed rows.
+  - model distribution broadens beyond existing BaT subset.
+- COLLECT:
+  - checkpoint table snapshot.
+  - run report before/after resume.
+- REPORT:
+  - recovery proof with exact counts.
+- Cleanup: clear test-only checkpoint rows.
+- Known limitations: historical availability differs by marketplace.
 
-## Phase 4: Regression and Hardening
+## Phase 4 - Data Quality, Security, and Regression Gate
 
-### Objective
-Run targeted regressions across existing Ferrari/live flows and enforce rerun policy.
+### Deliverables
 
-### Dependencies
-Phases 0-3 pass.
+- Quality rules (missing price, invalid year, malformed VIN, non-Porsche contamination).
+- Security tasks queued: enable RLS policy rollout plan and restricted service-role usage.
+- Regression testscript pack.
 
-### File
-7. `tests/integration/ferrari_history.boundary.test.ts`
+### Pass/Fail
 
-### Implementation Scope
-- Add/extend integration test for:
-  - sold-only exclusion of active listings
-  - 12-month window enforcement
-  - sorted output stability
-  - invalid input 400 envelope
-  - non-Ferrari route invariance
+- Pass: all critical testscripts green; non-Porsche contamination rate is 0%; no secret leaks.
+- Fail: unresolved critical lints, flaky runs, or repeated failures.
 
-### Testscript TS-P4-REGRESSION
-- Identifier: `TS-P4-REGRESSION`
-- Objective: verify no regressions and validate full acceptance criteria.
-- Prerequisites: all prior phases complete.
-- Setup:
-  1. Ensure tests and app environment are ready.
-- Run commands:
-  - `npm test -- tests/integration/ferrari_history.boundary.test.ts`
-  - `npm test -- tests/integration/cron-pipeline.test.ts`
-  - `npm test -- tests/quality/data-quality.test.ts`
-- Expected observations:
-  - New boundary tests pass.
-  - Existing integration/quality tests still pass.
-- Artifact capture:
-  - `agents/testscripts/TS-P4-REGRESSION.output.txt`
-- Cleanup:
-  - Remove temporary logs if any.
-- Pass/Fail:
-  - PASS if all tests pass and no Ferrari/live regression appears.
-  - FAIL if any previous testscript regresses.
+### Testscript TS-P4-PROD-READINESS
 
-## Feature-Phase Sequencing and Re-Run Policy
-- Execution order: `Phase 0 -> Phase 1 -> Phase 2 -> Phase 3 -> Phase 4`.
-- Dependency rule: each phase blocks on prior phase PASS.
-- Re-run rule (mandatory): at each phase, re-run all prior phase testscripts before advancing.
-  - At Phase 2, run `TS-P0-ENV + TS-P1-CONTRACTS + TS-P2-BOUNDARY`.
-  - At Phase 3, run prior scripts plus `TS-P3-COMPOSITION`.
-  - At Phase 4, run all scripts including regression suite.
+- Objective: certify production readiness.
+- Prerequisites: Phases 0-3 pass.
+- RUN:
+  - `npm run test -- src/features/porsche_ingest`
+  - `npm run ingest:porsche -- --source=all --mode=incremental --limit=200`
+  - `npm run db:quality:porsche`
+  - `npm run db:security:advisors`
+- OBSERVE:
+  - stable throughput, deterministic errors, explicit diagnostics.
+  - no non-Porsche rows introduced.
+  - quality scores and missing-field rates within threshold.
+- COLLECT:
+  - final readiness report + advisor snapshots + run metrics.
+- REPORT:
+  - go/no-go decision with rationale.
+- Cleanup: archive artifacts under `agents/testscripts/artifacts/final/`.
+- Known limitations: marketplace anti-bot changes can impact source availability.
 
-## Failure and Debug Protocol (Binding)
-- Debug loop: one hypothesis, one variable change per attempt.
-- If a testscript still fails after two debug turns, stop and create:
-  - `agents/testscripts/failure_report.md`
-- `failure_report.md` must include:
-  - title, severity, frequency, phase, script identifier
-  - environment matrix and build/commit
-  - reproduction steps
-  - observed vs expected behavior
-  - artifact references
-  - suspected boundary
-  - initial hypothesis and attempted fixes
-  - workaround (if any) and regression-test status
+## One-Shot Execution Guidance (Feature Phases + Testscripts)
 
-## Acceptance Criteria Mapping
-- Ferrari historical sold listings are fetched from `listings` via server-owned boundaries only.
-- Active listings are excluded from historical payload.
-- Input/output are validated with Zod.
-- Existing UI components consume data through current props/state paths with no redesign.
-- Table-state checks execute in defined priority order.
-- Regression scripts pass after each phase and at final gate.
+1. Execute Phase 0 -> 4 sequentially in one implementation cycle.
+2. At each phase, run its testscript immediately after implementation.
+3. Re-run all prior phase testscripts before advancing (regression lock).
+4. Use one-hypothesis/one-variable debug iterations when failing.
+5. If any test still fails after two debug turns, stop and generate `agents/testscripts/failure_report.md` with required defect fields.
+
+## Failure Report Mandate
+
+If after trying to debug for two turns or more tests still fail, generate `agents/testscripts/failure_report.md` containing:
+
+- title, severity, frequency, phase, script-identifier
+- environment matrix, build/commit
+- exact reproduction steps
+- observed vs expected behavior
+- artifact references
+- suspected boundary and hypothesis
+- workaround (if any)
+- regression status and owner
+
+## Operator Command Checklist (Exact)
+
+```bash
+npm install
+npm run test
+npm run ingest:porsche -- --source=bat --mode=sample --limit=20 --dry-run
+npm run ingest:porsche -- --source=all --mode=incremental --limit=200
+npm run ingest:porsche -- --source=all --mode=backfill --from=2000-01-01
+npm run db:quality:porsche
+```
+
+## Locality Budget (Execution Guardrail)
+
+- Files: <= 16 files touched for ingestion feature rollout.
+- LOC/file: target <= 700, hard max 1000.
+- Dependencies: max +3 production (`@supabase/supabase-js`, `zod`, `p-limit`), max +2 dev.

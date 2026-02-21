@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-02-21T16:26:29.941Z",
+  "project_url": "https://xgtlnyemulgdebyweqlf.supabase.co",
+  "listings_count": 363,
+  "source_status_sample": [
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "active"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    },
+    {
+      "source": "BaT",
+      "status": "sold"
+    }
+  ],
+  "child_table_counts": {
+    "pricing": 0,
+    "vehicle_specs": 0,
+    "auction_info": 0,
+    "location_data": 16,
+    "photos_media": 0,
+    "provenance_data": 0,
+    "price_history": 853
+  }
+}

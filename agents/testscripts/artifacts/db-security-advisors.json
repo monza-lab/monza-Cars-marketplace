@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-02-21T12:47:23.559Z",
+  "note": "Uses service-role vs anon read probes per public table; infers exposure without custom RPC.",
+  "has_service_role": true,
+  "has_anon_key": true,
+  "table_checks": [
+    {
+      "table": "listings",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "pricing",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "vehicle_specs",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "auction_info",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "location_data",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "photos_media",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "provenance_data",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    },
+    {
+      "table": "price_history",
+      "service_role_read_ok": true,
+      "service_role_error": null,
+      "anon_read_ok": true,
+      "anon_error": null,
+      "inferred_exposure": "public-readable-or-rls-disabled"
+    }
+  ]
+}
