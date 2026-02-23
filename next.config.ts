@@ -58,6 +58,18 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: '/:locale(en|es|de|ja)/api/:path*',
+        destination: '/api/:path*',
+      },
+      {
+        source: '/:locale(en|es|de|ja)/trpc/:path*',
+        destination: '/trpc/:path*',
+      },
+    ]
+  },
 };
 
 export default withNextIntl(nextConfig);

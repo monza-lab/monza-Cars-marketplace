@@ -36,29 +36,6 @@ type ProfileFetchResult = {
   status: number | null
 }
 
-const SUPPORTED_LOCALES = new Set(['en', 'es', 'de', 'ja'])
-
-function getLocalePrefixFromPathname(pathname: string): string {
-  const firstSegment = pathname.split('/').filter(Boolean)[0]
-  if (!firstSegment || !SUPPORTED_LOCALES.has(firstSegment)) {
-    return ''
-  }
-  return `/${firstSegment}`
-}
-
-function getApiCandidates(path: string): string[] {
-  if (typeof window === 'undefined') {
-    return [path]
-  }
-
-  const localePrefix = getLocalePrefixFromPathname(window.location.pathname)
-  if (!localePrefix) {
-    return [path]
-  }
-
-  return [`${localePrefix}${path}`, path]
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -69,26 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const creatingUserRef = useRef(false)
 
   const fetchProfile = useCallback(async (accessToken?: string): Promise<ProfileFetchResult> => {
-    for (const endpoint of getApiCandidates('/api/user/profile')) {
-      try {
-        const response = await fetch(endpoint, {
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setProfile(data.profile)
-          return { ok: true, status: response.status }
-        }
-
-        if (response.status !== 404) {
-          return { ok: false, status: response.status }
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error)
+    try {
+      const response = await fetch('/api/user/profile', {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data.profile)
+        return { ok: true, status: response.status }
       }
+      return { ok: false, status: response.status }
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      return { ok: false, status: null }
     }
-
-    return { ok: false, status: 404 }
   }, [])
 
   const createUserProfile = useCallback(async (supabaseUser: User, accessToken?: string): Promise<ProfileFetchResult> => {
@@ -98,29 +69,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     creatingUserRef.current = true
     try {
-      for (const endpoint of getApiCandidates('/api/user/create')) {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-          body: JSON.stringify({
-            email: supabaseUser.email,
-            name: supabaseUser.user_metadata?.full_name,
-          }),
-        })
+      const res = await fetch('/api/user/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          email: supabaseUser.email,
+          name: supabaseUser.user_metadata?.full_name,
+        }),
+      })
 
-        if (res.ok) {
-          return await fetchProfile(accessToken)
-        }
-
-        if (res.status !== 404) {
-          return { ok: false, status: res.status }
-        }
+      if (res.ok) {
+        return await fetchProfile(accessToken)
       }
 
-      return { ok: false, status: 404 }
+      return { ok: false, status: res.status }
     } catch (error) {
       console.error('Error creating user profile:', error)
       return { ok: false, status: null }

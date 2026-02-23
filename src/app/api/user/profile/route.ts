@@ -3,6 +3,24 @@ import { createClient } from '@/lib/supabase/server'
 import { getOrCreateUser, getUserCredits } from '@/lib/credits'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 
+const PROFILE_DB_TIMEOUT_MS = 2_500
+
+function withDbTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`ETIMEDOUT ${label} after ${PROFILE_DB_TIMEOUT_MS}ms`))
+    }, PROFILE_DB_TIMEOUT_MS)
+  })
+
+  return Promise.race([operation, timeoutPromise]).finally(() => {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle)
+    }
+  })
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient()
@@ -24,12 +42,15 @@ export async function GET(request: Request) {
 
     let profile
     try {
-      profile = await getUserCredits(user.id)
+      profile = await withDbTimeout(getUserCredits(user.id), '/api/user/profile getUserCredits')
       if (!profile) {
-        profile = await getOrCreateUser(
-          user.id,
-          user.email!,
-          user.user_metadata?.full_name
+        profile = await withDbTimeout(
+          getOrCreateUser(
+            user.id,
+            user.email!,
+            user.user_metadata?.full_name
+          ),
+          '/api/user/profile getOrCreateUser'
         )
       }
     } catch (dbError) {

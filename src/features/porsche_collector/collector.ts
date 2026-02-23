@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
 import { fetchAuctionData, type ScrapedAuctionData } from "@/lib/scraper";
-import { scrapeBringATrailer } from "@/lib/scrapers/bringATrailer";
 import { scrapeCarsAndBids } from "@/lib/scrapers/carsAndBids";
 import { scrapeCollectingCars } from "@/lib/scrapers/collectingCars";
 
@@ -447,7 +446,7 @@ async function normalizeFromBaseAndUrl(input: {
   let currentBid = auctionData.currentBid ?? null;
   let bidCount = auctionData.bidCount ?? null;
 
-  const enriched = input.scrapeDetails
+  let enriched = input.scrapeDetails
     ? await fetchDetailViaExistingScraper({
         source,
         url,
@@ -457,6 +456,19 @@ async function normalizeFromBaseAndUrl(input: {
         make: input.make,
       })
     : null;
+
+  const initialPhotos = extractPhotoUrls(enriched);
+  if (status === "active" && initialPhotos.length === 0) {
+    const fallbackEnriched = await fetchDetailViaExistingScraper({
+      source,
+      url,
+      title,
+      year,
+      model: vehicle.model,
+      make: input.make,
+    });
+    if (fallbackEnriched) enriched = fallbackEnriched;
+  }
 
   // Use enriched bid data from detail page when available
   if (enriched?.currentBid != null && enriched.currentBid > 0) {
@@ -480,10 +492,19 @@ async function normalizeFromBaseAndUrl(input: {
   const locationRaw = enriched?.location ?? null;
   const location = parseLocation(locationRaw);
 
-  const photos = ((enriched?.images ?? []) as unknown[]).filter(
-    (p: unknown) => typeof p === "string" && p.length > 0,
-  ) as string[];
+  const photos = extractPhotoUrls(enriched);
   const photosCount = photos.length;
+  if (status === "active" && photosCount === 0) {
+    logEvent({
+      level: "warn",
+      event: "collector.reject_missing_images",
+      runId,
+      source,
+      url,
+      reason: "missing_images_active",
+    });
+    return null;
+  }
   const descriptionText = enriched?.description ?? null;
   const vin = enriched?.vin ?? null;
 
@@ -625,6 +646,32 @@ function parseModelTrimFromTitle(title: string, make: string): { model: string; 
   const model = tokens[0] ?? after;
   const trim = tokens.length > 1 ? tokens.slice(1).join(" ") : null;
   return { model: model || after, trim };
+}
+
+export function extractPhotoUrls(enriched: unknown): string[] {
+  if (!enriched || typeof enriched !== "object") return [];
+  const src = enriched as Record<string, unknown>;
+  const out: string[] = [];
+
+  const add = (value: unknown): void => {
+    if (typeof value !== "string") return;
+    const v = value.trim();
+    if (!v) return;
+    if (!/^https?:\/\//i.test(v)) return;
+    if (!out.includes(v)) out.push(v);
+  };
+
+  if (Array.isArray(src.images)) {
+    for (const value of src.images) add(value);
+  }
+
+  add(src.imageUrl);
+  add(src.image);
+  add(src.thumbnail_url);
+  add(src.thumbnailUrl);
+  add(src.featured_image);
+
+  return out;
 }
 
 async function fetchDetailViaExistingScraper(input: {

@@ -1,0 +1,17 @@
+
+> garage-advisory@0.1.0 dev
+> next dev --webpack --port 3200
+
+▲ Next.js 16.1.6 (webpack)
+- Local:         http://localhost:3200
+- Network:       http://192.168.0.159:3200
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+✓ Ready in 6.8s
+○ Compiling /api/mock-auctions ...
+ GET /api/mock-auctions?limit=12 200 in 21.1s (compile: 16.0s, render: 5.1s)
+ GET /api/mock-auctions?limit=12&make=Porsche 200 in 1259ms (compile: 103ms, render: 1156ms)
+[?25h

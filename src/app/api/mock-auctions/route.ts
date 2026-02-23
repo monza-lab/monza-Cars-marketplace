@@ -10,7 +10,7 @@ import {
   type CollectorCar,
   type InvestmentGrade
 } from "@/lib/curatedCars";
-import { fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
+import { fetchLiveListingAggregateCounts, fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
 
 export async function GET(request: NextRequest) {
@@ -44,11 +44,14 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const live = await fetchLiveListingsAsCollectorCars({
-    limit,
-    includePriceHistory: false,
-    make: requestedMake,
-  });
+  const [live, aggregates] = await Promise.all([
+    fetchLiveListingsAsCollectorCars({
+      limit,
+      includePriceHistory: false,
+      make: requestedMake,
+    }),
+    fetchLiveListingAggregateCounts({ make: requestedMake }),
+  ]);
 
   let results: CollectorCar[] = live;
 
@@ -172,6 +175,10 @@ export async function GET(request: NextRequest) {
     total,
     page,
     limit,
-    totalPages: Math.ceil(total / limit)
+    totalPages: Math.ceil(total / limit),
+    aggregates: {
+      liveNow: aggregates.liveNow,
+      regionTotals: aggregates.regionTotalsByPlatform,
+    },
   });
 }

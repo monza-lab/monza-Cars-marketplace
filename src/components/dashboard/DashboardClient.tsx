@@ -31,6 +31,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { getBrandImage } from "@/lib/modelImages"
+import { filterAuctionsForRegion } from "./platformMapping"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── BRAND TYPE ───
@@ -97,21 +98,12 @@ type Auction = {
   category?: string
 }
 
-function normalizeAuctionPlatform(platform: string | null | undefined): string | null {
-  if (!platform) return null
-  const normalized = platform.toUpperCase().replace(/[^A-Z0-9]/g, "")
-
-  if (normalized === "BRINGATRAILER" || normalized === "BAT") return "BRING_A_TRAILER"
-  if (normalized === "AUTOSCOUT24") return "AUTO_SCOUT_24"
-  if (normalized === "CARSANDBIDS") return "CARS_AND_BIDS"
-  if (normalized === "COLLECTINGCARS") return "COLLECTING_CARS"
-
-  return platform.toUpperCase()
-}
-
-const REGION_TO_PLATFORM: Record<string, string> = {
-  US: "BRING_A_TRAILER",
-  EU: "AUTO_SCOUT_24",
+type LiveRegionTotals = {
+  all: number
+  US: number
+  UK: number
+  EU: number
+  JP: number
 }
 
 const platformShort: Record<string, string> = {
@@ -350,6 +342,19 @@ const mockRegionalValuation: Record<string, Record<string, RegionalValuation>> =
 }
 
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
+
+const REGION_LABEL_KEYS = {
+  US: "brandContext.regionUS",
+  UK: "brandContext.regionUK",
+  EU: "brandContext.regionEU",
+  JP: "brandContext.regionJP",
+} as const
+
+const BENCHMARK_LABEL_KEYS = {
+  sp500: "brandContext.sp500",
+  gold: "brandContext.gold",
+  realEstate: "brandContext.realEstate",
+} as const
 
 
 function formatRegionalVal(v: number, symbol: string) {
@@ -809,7 +814,7 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
 }
 
 // ─── MOBILE: LIVE AUCTIONS SECTION ───
-function MobileLiveAuctions({ auctions }: { auctions: Auction[] }) {
+function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const { selectedRegion } = useRegion()
@@ -839,7 +844,7 @@ function MobileLiveAuctions({ auctions }: { auctions: Auction[] }) {
           {t("mobileFeed.liveAuctions")}
         </span>
         <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
-          {liveAuctions.length}
+          {totalLiveCount}
         </span>
       </div>
 
@@ -1018,11 +1023,13 @@ function DiscoverySidebar({
   brands,
   onSelectBrand,
   activeBrandSlug,
+  liveNowCount,
 }: {
   auctions: Auction[]
   brands: Brand[]
   onSelectBrand: (brandSlug: string) => void
   activeBrandSlug?: string
+  liveNowCount: number
 }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
@@ -1189,7 +1196,7 @@ function DiscoverySidebar({
             {t("sidebar.liveNow")}
           </span>
           <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
-            {liveAuctions.length}
+            {liveNowCount}
           </span>
         </div>
 
@@ -1774,7 +1781,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[12px]">{REGION_FLAGS[region]}</span>
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(`brandContext.region${region}` as any)}</span>
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
                       {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">{t("brandContext.yourMarket")}</span>}
                     </div>
                     <div className="flex items-baseline gap-1.5">
@@ -1830,7 +1837,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
             {BENCHMARKS.map((b) => (
               <div key={b.key}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{t(`brandContext.${b.key}` as any)}</span>
+                  <span className="text-[11px] text-[#9CA3AF]">{t(BENCHMARK_LABEL_KEYS[b.key as keyof typeof BENCHMARK_LABEL_KEYS])}</span>
                   <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
                 </div>
                 <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
@@ -2026,7 +2033,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
 }
 
 // ─── MAIN COMPONENT ───
-export function DashboardClient({ auctions }: { auctions: Auction[] }) {
+export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auction[]; liveRegionTotals?: LiveRegionTotals }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
   const t = useTranslations("dashboard")
@@ -2034,22 +2041,31 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
-    if (!selectedRegion) return auctions
-    const targetPlatform = REGION_TO_PLATFORM[selectedRegion]
-    if (!targetPlatform) return auctions // Unknown region → show all
-    return auctions.filter((auction) => normalizeAuctionPlatform(auction.platform) === targetPlatform)
+    return filterAuctionsForRegion(auctions, selectedRegion)
   }, [auctions, selectedRegion])
+
+  const liveNowCount = useMemo(() => {
+    if (!liveRegionTotals) {
+      return filteredAuctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status)).length
+    }
+
+    if (!selectedRegion) {
+      return liveRegionTotals.all
+    }
+
+    return liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all
+  }, [filteredAuctions, liveRegionTotals, selectedRegion])
 
   // Aggregate filtered auctions into brands
   const brands = useMemo(() => aggregateBrands(filteredAuctions), [filteredAuctions])
 
-  // Reset index when region changes
+  // Reset scroll position when region changes
   useEffect(() => {
-    setCurrentIndex(0)
     feedRef.current?.scrollTo({ top: 0 })
   }, [selectedRegion])
 
-  const selectedBrand = brands[currentIndex] || brands[0]
+  const safeCurrentIndex = currentIndex >= 0 && currentIndex < brands.length ? currentIndex : 0
+  const selectedBrand = brands[safeCurrentIndex] || brands[0]
 
   // Card height = 100vh - 80px
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
@@ -2063,14 +2079,14 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
       const scrollTop = container.scrollTop
       const slideHeight = getCardHeight()
       const newIndex = Math.round(scrollTop / slideHeight)
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < brands.length) {
+      if (newIndex !== safeCurrentIndex && newIndex >= 0 && newIndex < brands.length) {
         setCurrentIndex(newIndex)
       }
     }
 
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
-  }, [currentIndex, brands.length])
+  }, [brands.length, safeCurrentIndex])
 
   // Scroll to index when nav is clicked
   const scrollToIndex = (index: number) => {
@@ -2128,7 +2144,7 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
               )}
 
               {/* Section: Live Auctions */}
-              <MobileLiveAuctions auctions={filteredAuctions} />
+              <MobileLiveAuctions auctions={filteredAuctions} totalLiveCount={liveNowCount} />
             </>
           )}
         </div>
@@ -2139,12 +2155,13 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
-          <DiscoverySidebar
-            auctions={filteredAuctions}
-            brands={brands}
-            onSelectBrand={scrollToBrand}
-            activeBrandSlug={selectedBrand?.slug}
-          />
+            <DiscoverySidebar
+              auctions={filteredAuctions}
+              brands={brands}
+              onSelectBrand={scrollToBrand}
+              activeBrandSlug={selectedBrand?.slug}
+              liveNowCount={liveNowCount}
+            />
 
           {/* COLUMN B: BRAND FEED (50%) */}
           <div

@@ -1,11 +1,26 @@
 import createMiddleware from 'next-intl/middleware'
+import { NextRequest, NextResponse } from 'next/server'
 import { routing } from './i18n/routing'
 
-export default createMiddleware(routing)
+const handleI18nRouting = createMiddleware(routing)
+const localeInternalPrefix = new RegExp(
+  `^/(${routing.locales.join("|")})/(api|trpc|_next|_vercel)(?:/|$)`
+)
+
+export default function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl
+
+  if (localeInternalPrefix.test(pathname)) {
+    const strippedPath = pathname.replace(/^\/[^/]+/, '')
+    return NextResponse.rewrite(new URL(`${strippedPath}${search}`, request.url))
+  }
+
+  return handleI18nRouting(request)
+}
 
 export const config = {
-  // Match all pathnames except for
-  // - … if they start with `/api`, `/trpc`, `/_next` or `/_vercel`
-  // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: '/((?!api|trpc|_next|_vercel|.*\\..*).*)'
+  matcher: [
+    '/((?!api|trpc|_next|_vercel|.*\\..*).*)',
+    '/:locale(en|es|de|ja)/:path*'
+  ]
 }

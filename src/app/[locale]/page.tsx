@@ -14,14 +14,32 @@ function getLocalePrefixFromPathname(pathname: string): string {
   return `/${firstSegment}`;
 }
 
-function normalizeAuctionPayload(payload: any): Auction[] {
+type LiveRegionTotals = {
+  all: number;
+  US: number;
+  UK: number;
+  EU: number;
+  JP: number;
+};
+
+type HomeAggregates = {
+  liveNow: number;
+  regionTotals: LiveRegionTotals;
+};
+
+type HomeAuctionPayload = {
+  auctions: Auction[];
+  aggregates?: HomeAggregates;
+};
+
+function normalizeAuctionPayload(payload: any): HomeAuctionPayload {
   const rows = Array.isArray(payload?.auctions)
     ? payload.auctions
     : Array.isArray(payload?.data)
       ? payload.data
       : [];
 
-  return rows.map((a: any) => ({
+  const auctions = rows.map((a: any) => ({
     ...a,
     viewCount: typeof a.viewCount === "number" ? a.viewCount : 0,
     watchCount: typeof a.watchCount === "number" ? a.watchCount : 0,
@@ -43,9 +61,25 @@ function normalizeAuctionPayload(payload: any): Auction[] {
     category: a.category,
     region: a.region,
   }));
+
+  const aggregatePayload = payload?.aggregates;
+  const aggregates = aggregatePayload
+    ? {
+        liveNow: typeof aggregatePayload.liveNow === "number" ? aggregatePayload.liveNow : auctions.length,
+        regionTotals: {
+          all: Number(aggregatePayload?.regionTotals?.all ?? auctions.length),
+          US: Number(aggregatePayload?.regionTotals?.US ?? 0),
+          UK: Number(aggregatePayload?.regionTotals?.UK ?? auctions.length),
+          EU: Number(aggregatePayload?.regionTotals?.EU ?? 0),
+          JP: Number(aggregatePayload?.regionTotals?.JP ?? auctions.length),
+        },
+      }
+    : undefined;
+
+  return { auctions, aggregates };
 }
 
-async function fetchAuctionsWithFallback(): Promise<Auction[]> {
+async function fetchAuctionsWithFallback(): Promise<HomeAuctionPayload> {
   const localePrefix = typeof window === "undefined"
     ? ""
     : getLocalePrefixFromPathname(window.location.pathname);
@@ -65,7 +99,7 @@ async function fetchAuctionsWithFallback(): Promise<Auction[]> {
       }
       const payload = await response.json();
       const normalized = normalizeAuctionPayload(payload);
-      if (normalized.length > 0) {
+      if (normalized.auctions.length > 0) {
         return normalized;
       }
     } catch {
@@ -73,7 +107,7 @@ async function fetchAuctionsWithFallback(): Promise<Auction[]> {
     }
   }
 
-  return [];
+  return { auctions: [] };
 }
 
 type RegionalPricing = {
@@ -145,13 +179,15 @@ function HomeContent({
   emptyLabel: string;
 }) {
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [aggregates, setAggregates] = useState<HomeAggregates | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAuctions() {
       try {
         const fetched = await fetchAuctionsWithFallback();
-        setAuctions(fetched);
+        setAuctions(fetched.auctions);
+        setAggregates(fetched.aggregates);
       } catch (error) {
         console.error("Failed to fetch auctions:", error);
       } finally {
@@ -173,7 +209,7 @@ function HomeContent({
     );
   }
 
-  return <DashboardClient auctions={auctions} />;
+  return <DashboardClient auctions={auctions} liveRegionTotals={aggregates?.regionTotals} />;
 }
 
 export default function Home() {

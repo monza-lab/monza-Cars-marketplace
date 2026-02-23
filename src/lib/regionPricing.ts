@@ -24,6 +24,10 @@ export const FROM_USD_RATE: Record<string, number> = {
   "¥": 1 / 0.0067,
 }
 
+const INTEGER_FORMATTER = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+})
+
 /** Resolve null/"all" to "US" default */
 export function resolveRegion(selected: string | null): Region {
   if (!selected || selected === "all" || selected === "All") return "US"
@@ -47,15 +51,18 @@ export function toUsd(value: number, currency: string): number {
 
 /** Format a price in any currency with appropriate abbreviations */
 export function formatRegionalPrice(value: number, currency: string): string {
+  const normalized = Number.isFinite(value) ? value : Number(value)
+  const safeValue = Number.isFinite(normalized) ? normalized : 0
+
   if (currency === "¥") {
-    if (value >= 100_000_000) return `¥${(value / 100_000_000).toFixed(1)}億`
-    if (value >= 10_000_000) return `¥${(value / 10_000_000).toFixed(1)}千万`
-    return `¥${value.toLocaleString()}`
+    if (safeValue >= 100_000_000) return `¥${(safeValue / 100_000_000).toFixed(1)}億`
+    if (safeValue >= 10_000_000) return `¥${(safeValue / 10_000_000).toFixed(1)}千万`
+    return `¥${INTEGER_FORMATTER.format(Math.round(safeValue))}`
   }
   const sym = currency
-  if (value >= 1_000_000) return `${sym}${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `${sym}${(value / 1_000).toFixed(0)}K`
-  return `${sym}${value.toLocaleString()}`
+  if (safeValue >= 1_000_000) return `${sym}${(safeValue / 1_000_000).toFixed(1)}M`
+  if (safeValue >= 1_000) return `${sym}${(safeValue / 1_000).toFixed(0)}K`
+  return `${sym}${INTEGER_FORMATTER.format(Math.round(safeValue))}`
 }
 
 /** One-liner: convert USD → target region, then format */
@@ -76,7 +83,10 @@ export function getFairValueForRegion(
 
 /** Format a USD amount as USD string (for comparison display) */
 export function formatUsd(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
-  return `$${value.toLocaleString()}`
+  const normalized = Number.isFinite(value) ? value : Number(value)
+  const safeValue = Number.isFinite(normalized) ? normalized : 0
+
+  if (safeValue >= 1_000_000) return `$${(safeValue / 1_000_000).toFixed(1)}M`
+  if (safeValue >= 1_000) return `$${(safeValue / 1_000).toFixed(0)}K`
+  return `$${INTEGER_FORMATTER.format(Math.round(safeValue))}`
 }

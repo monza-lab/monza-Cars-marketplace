@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation"
 import { CURATED_CARS } from "@/lib/curatedCars"
-import { fetchLiveListingsAsCollectorCars, fetchSoldListingsForMake } from "@/lib/supabaseLiveListings"
+import {
+  fetchLiveListingAggregateCounts,
+  fetchLiveListingsAsCollectorCars,
+  fetchSoldListingsForMake,
+} from "@/lib/supabaseLiveListings"
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
@@ -15,7 +19,13 @@ export async function generateMetadata({ params }: MakePageProps) {
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
-  const live = await fetchLiveListingsAsCollectorCars({ limit: 120, includePriceHistory: false })
+  const live = await fetchLiveListingsAsCollectorCars({
+    limit: 0,
+    includePriceHistory: false,
+    make: decodedMake,
+    status: "all",
+    includeAllSources: true,
+  })
   const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
   const cars = [...curated, ...liveMake]
 
@@ -47,7 +57,13 @@ export default async function MakePage({ params }: MakePageProps) {
   const curated = CURATED_CARS.filter(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
-  const live = await fetchLiveListingsAsCollectorCars({ limit: 120, includePriceHistory: false })
+  const live = await fetchLiveListingsAsCollectorCars({
+    limit: 0,
+    includePriceHistory: false,
+    make: decodedMake,
+    status: "all",
+    includeAllSources: true,
+  })
   const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
   const cars = [...curated, ...liveMake]
 
@@ -71,10 +87,14 @@ export default async function MakePage({ params }: MakePageProps) {
     ? supabaseSoldHistory
     : await getSoldAuctionsForMake(makeName)
 
+  const liveCounts = await fetchLiveListingAggregateCounts({ make: makeName })
+
   return (
     <MakePageClient
       make={makeName}
       cars={cars}
+      liveRegionTotals={liveCounts.regionTotalsByLocation}
+      liveNowCount={liveCounts.liveNow}
       dbMarketData={dbMarketData}
       dbComparables={dbComparables}
       dbSoldHistory={dbSoldHistory}

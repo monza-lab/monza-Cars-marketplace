@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { normalizeSupportedMake, resolveRequestedMake } from '@/lib/makeProfiles'
+
+const AUCTIONS_QUERY_TIMEOUT_MS = 3_000
+
+function withRouteTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`ETIMEDOUT ${label} after ${AUCTIONS_QUERY_TIMEOUT_MS}ms`))
+    }, AUCTIONS_QUERY_TIMEOUT_MS)
+  })
+
+  return Promise.race([operation, timeoutPromise]).finally(() => {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle)
+    }
+  })
+}
 
 export async function GET(request: Request) {
   try {
@@ -91,15 +110,18 @@ export async function GET(request: Request) {
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt'
 
     // Execute count and data queries in parallel
-    const [total, auctions] = await Promise.all([
-      prisma.auction.count({ where }),
-      prisma.auction.findMany({
-        where,
-        orderBy: { [safeSortBy]: sortOrder },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-    ])
+    const [total, auctions] = await withRouteTimeout(
+      Promise.all([
+        prisma.auction.count({ where }),
+        prisma.auction.findMany({
+          where,
+          orderBy: { [safeSortBy]: sortOrder },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]),
+      '/api/auctions'
+    )
 
     const totalPages = Math.ceil(total / limit)
 
@@ -115,6 +137,21 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Error fetching auctions:', error)
+
+    if (isDbConnectivityError(error)) {
+      return NextResponse.json({
+        success: true,
+        degraded: true,
+        data: [],
+        meta: {
+          page: 1,
+          limit: 0,
+          total: 0,
+          totalPages: 0,
+        },
+      })
+    }
+
     return NextResponse.json(
       {
         success: false,

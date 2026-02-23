@@ -30,6 +30,7 @@ import {
   FileText,
 } from "lucide-react"
 import type { CollectorCar, Region, FairValueByRegion } from "@/lib/curatedCars"
+import type { LiveListingRegionTotals } from "@/lib/supabaseLiveListings"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd } from "@/lib/regionPricing"
@@ -866,7 +867,7 @@ function MobileModelContextSheet({
 }
 
 // ─── MOBILE: LIVE AUCTIONS FOR MAKE PAGE ───
-function MobileMakeLiveAuctions({ cars }: { cars: CollectorCar[] }) {
+function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: CollectorCar[]; totalLiveCount: number }) {
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
   const { selectedRegion } = useRegion()
@@ -894,7 +895,7 @@ function MobileMakeLiveAuctions({ cars }: { cars: CollectorCar[] }) {
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
           {t("mobileContext.liveAuctions")}
         </span>
-        <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">{liveAuctions.length}</span>
+        <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">{totalLiveCount}</span>
       </div>
       <div className="divide-y divide-white/5">
         {liveAuctions.map((car) => {
@@ -1387,9 +1388,9 @@ function ModelNavSidebar({
             <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
               LIVE NOW
             </span>
-            {liveCars.length > 0 && (
+            {liveCount > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
-                {liveCars.length}
+                {liveCount}
               </span>
             )}
           </div>
@@ -2230,9 +2231,11 @@ function ModelContextPanel({
 }
 
 // ─── MAIN COMPONENT ───
-export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [] }: {
+export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [] }: {
   make: string
   cars: CollectorCar[]
+  liveRegionTotals?: LiveListingRegionTotals
+  liveNowCount?: number
   dbMarketData?: DbMarketDataRow[]
   dbComparables?: DbComparableRow[]
   dbSoldHistory?: DbSoldRecord[]
@@ -2602,20 +2605,47 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
   }, [searchQuery, selectedPriceRange, selectedPriceTier, selectedStatus, selectedRegion, selectedEra])
 
   // Brand data
-  const liveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+  const sampledLiveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+  const liveCount = liveNowCount ?? sampledLiveCount
   const soldCount = cars.filter(c => c.status === "ENDED").length
   const minPrice = Math.min(...cars.map(c => c.currentBid))
   const maxPrice = Math.max(...cars.map(c => c.currentBid))
   const activeFilterCount = (selectedPriceRange !== 0 ? 1 : 0) + (selectedStatus !== "All" ? 1 : 0)
 
   // Region counts for pills
-  const regionCounts = useMemo(() => ({
-    All: cars.length,
-    US: cars.filter(c => c.region === "US").length,
-    EU: cars.filter(c => c.region === "EU").length,
-    UK: cars.filter(c => c.region === "UK").length,
-    JP: cars.filter(c => c.region === "JP").length,
-  }), [cars])
+  const regionCounts = useMemo(() => {
+    if (liveRegionTotals) {
+      return {
+        All: liveRegionTotals.all,
+        US: liveRegionTotals.US,
+        EU: liveRegionTotals.EU,
+        UK: liveRegionTotals.UK,
+        JP: liveRegionTotals.JP,
+      }
+    }
+
+    return {
+      All: cars.length,
+      US: cars.filter(c => c.region === "US").length,
+      EU: cars.filter(c => c.region === "EU").length,
+      UK: cars.filter(c => c.region === "UK").length,
+      JP: cars.filter(c => c.region === "JP").length,
+    }
+  }, [cars, liveRegionTotals])
+
+  const selectedRegionLiveCount = useMemo(() => {
+    if (!selectedRegion || selectedRegion === "all") {
+      return liveCount
+    }
+
+    const key = selectedRegion as keyof typeof regionCounts
+    const counted = regionCounts[key]
+    if (typeof counted === "number") {
+      return counted
+    }
+
+    return liveCount
+  }, [liveCount, regionCounts, selectedRegion])
 
   const clearFilters = () => {
     setSearchQuery("")
@@ -2711,7 +2741,7 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
               )}
 
               {/* Section: Live Auctions */}
-              <MobileMakeLiveAuctions cars={regionFilteredCars} />
+              <MobileMakeLiveAuctions cars={regionFilteredCars} totalLiveCount={selectedRegionLiveCount} />
             </>
           )}
         </div>
@@ -2821,9 +2851,9 @@ export function MakePageClient({ make, cars, dbMarketData = [], dbComparables = 
                 <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
                   LIVE NOW
                 </span>
-                {liveCars.length > 0 && (
+                {selectedRegionLiveCount > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
-                    {liveCars.length}
+                    {selectedRegionLiveCount}
                   </span>
                 )}
               </div>

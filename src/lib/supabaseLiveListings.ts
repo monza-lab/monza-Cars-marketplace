@@ -13,6 +13,7 @@ import {
   resolveRequestedMake,
   type SupportedLiveMake,
 } from "./makeProfiles";
+import { getModelImage } from "./modelImages";
 
 // ─── Row types ───
 
@@ -65,7 +66,7 @@ type PriceHistoryRow = {
   time: string;
 };
 
-const SUPABASE_TIMEOUT_MS = 4_000;
+const SUPABASE_TIMEOUT_MS = 12_000;
 
 function createSupabaseClient(url: string, key: string): SupabaseClient {
   return createClient(url, key, {
@@ -94,8 +95,54 @@ const SELECT_NARROW =
 
 // ─── Mappers ───
 
-function mapPlatform(source: string): Platform {
-  switch (source) {
+const SOURCE_ALIASES = {
+  BaT: ["BaT", "BAT", "bat", "BringATrailer", "BRING_A_TRAILER", "bringatrailer"],
+  AutoScout24: ["AutoScout24", "AUTOSCOUT24", "autoscout24", "AUTO_SCOUT_24", "AutoScout"],
+  CarsAndBids: ["CarsAndBids", "CARS_AND_BIDS", "carsandbids"],
+  CollectingCars: ["CollectingCars", "COLLECTING_CARS", "collectingcars"],
+} as const;
+
+const PLATFORM_ALIASES = {
+  BaT: ["BRING_A_TRAILER", "BRINGATRAILER", "BAT"],
+  AutoScout24: ["AUTO_SCOUT_24", "AUTOSCOUT24", "AUTOSCOUT"],
+} as const;
+
+const LIVE_STATUS_ALIASES = [
+  "active",
+  "ACTIVE",
+  "live",
+  "LIVE",
+  "ending_soon",
+  "ENDING_SOON",
+] as const;
+
+export const LIVE_DB_STATUS_VALUES = ["active"] as const;
+
+type CanonicalSource = "BaT" | "AutoScout24" | "CarsAndBids" | "CollectingCars";
+
+function normalizeToken(value: string | null | undefined): string {
+  return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export function resolveCanonicalSource(source: string | null | undefined, platform: string | null | undefined): CanonicalSource | null {
+  const normalizedSource = normalizeToken(source);
+  const normalizedPlatform = normalizeToken(platform);
+
+  if (SOURCE_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "BaT";
+  if (SOURCE_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "AutoScout24";
+  if (SOURCE_ALIASES.CarsAndBids.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CarsAndBids";
+  if (SOURCE_ALIASES.CollectingCars.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CollectingCars";
+
+  if (PLATFORM_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BaT";
+  if (PLATFORM_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoScout24";
+
+  return null;
+}
+
+function mapPlatform(source: string, platform: string | null): Platform {
+  const canonical = resolveCanonicalSource(source, platform);
+
+  switch (canonical) {
     case "BaT":
       return "BRING_A_TRAILER";
     case "CarsAndBids":
@@ -107,6 +154,11 @@ function mapPlatform(source: string): Platform {
     default:
       return "BRING_A_TRAILER";
   }
+}
+
+export function isLiveListingStatus(status: string | null | undefined): boolean {
+  const normalized = normalizeToken(status);
+  return LIVE_STATUS_ALIASES.some((candidate) => normalizeToken(candidate) === normalized);
 }
 
 function mapStatus(status: string): AuctionStatus {
@@ -151,7 +203,8 @@ function buildFairValue(price: number): FairValueByRegion {
 }
 
 function auctionHouseLabel(source: string): string {
-  switch (source) {
+  const canonical = resolveCanonicalSource(source, null);
+  switch (canonical) {
     case "BaT":
       return "Bring a Trailer";
     case "CarsAndBids":
@@ -227,6 +280,8 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     .map(formatImageUrl)
     .filter((u): u is string => u !== null);
   const photos = directImages.length > 0 ? directImages : joinedPhotos;
+  const modelFallbackImage = getModelImage(row.make, row.model) ?? "/cars/placeholder.svg";
+  const resolvedImages = photos.length > 0 ? photos : [modelFallbackImage];
 
   // Prefer direct location column; fall back to city/region/country parts
   const location = row.location
@@ -252,7 +307,16 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
   const history = desc ?? `Sourced from ${label}`;
 
   // Prefer direct platform column; fall back to source mapping
-  const platform = (row.platform as Platform | null) ?? mapPlatform(row.source);
+  const normalizedPlatform = normalizeToken(row.platform);
+  const platform = normalizedPlatform === "BRINGATRAILER"
+    ? "BRING_A_TRAILER"
+    : normalizedPlatform === "AUTOSCOUT24"
+      ? "AUTO_SCOUT_24"
+      : normalizedPlatform === "CARSANDBIDS"
+        ? "CARS_AND_BIDS"
+        : normalizedPlatform === "COLLECTINGCARS"
+          ? "COLLECTING_CARS"
+          : mapPlatform(row.source, row.platform);
 
   // Prefer direct end_time; fall back to sale_date
   const endTime = row.end_time
@@ -277,8 +341,8 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     trendValue: 0,
     investmentGrade: computeGrade(price, row.make, row.year),
     thesis,
-    image: photos[0] ?? "/cars/placeholder.svg",
-    images: photos.length > 0 ? photos : ["/cars/placeholder.svg"],
+    image: resolvedImages[0],
+    images: resolvedImages,
     engine,
     transmission,
     mileage: displayMileage,
@@ -330,8 +394,161 @@ function computeTrend(
 
 // ─── Query helper with fallback ───
 
-// Sources to fetch from (ensures platform diversity in results)
-const ACTIVE_SOURCES = ["BaT", "AutoScout24"] as const;
+// Default sources for lightweight live listing views.
+const DEFAULT_QUERY_SOURCES = ["BaT", "AutoScout24"] as const;
+const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "CarsAndBids", "CollectingCars"] as const;
+
+export type LiveListingRegionTotals = {
+  all: number;
+  US: number;
+  UK: number;
+  EU: number;
+  JP: number;
+};
+
+export type LiveListingAggregateCounts = {
+  liveNow: number;
+  regionTotalsByPlatform: LiveListingRegionTotals;
+  regionTotalsByLocation: LiveListingRegionTotals;
+};
+
+function encodePostgrestInValues(values: readonly string[]): string {
+  return values
+    .map((value) => value.replace(/"/g, "\\\""))
+    .map((value) => `"${value}"`)
+    .join(",");
+}
+
+async function countListingsByQuery(query: PromiseLike<{ count: number | null; error: { message: string } | null }>): Promise<number> {
+  try {
+    const result = await query;
+    if (result.error) {
+      console.error("[supabaseLiveListings] count query failed:", result.error.message);
+      return 0;
+    }
+    return result.count ?? 0;
+  } catch (error) {
+    console.error("[supabaseLiveListings] count query threw:", error);
+    return 0;
+  }
+}
+
+async function countLiveListingsForCanonicalSource(
+  supabase: SupabaseClient,
+  source: (typeof DEFAULT_QUERY_SOURCES)[number],
+  targetMake: SupportedLiveMake,
+): Promise<number> {
+  const sourceAliases = SOURCE_ALIASES[source] ?? [source];
+  const platformAliases = PLATFORM_ALIASES[source] ?? [];
+
+  let query = supabase
+    .from("listings")
+    .select("id", { count: "exact", head: true })
+    .ilike("make", targetMake)
+    .eq("status", LIVE_DB_STATUS_VALUES[0]);
+
+  if (platformAliases.length > 0) {
+    query = query.or(
+      `source.in.(${encodePostgrestInValues(sourceAliases)}),platform.in.(${encodePostgrestInValues(platformAliases)})`
+    );
+  } else {
+    query = query.in("source", [...sourceAliases]);
+  }
+
+  return countListingsByQuery(query);
+}
+
+export async function fetchLiveListingAggregateCounts(options?: { make?: string | null }): Promise<LiveListingAggregateCounts> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return {
+      liveNow: 0,
+      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+    };
+  }
+
+  const targetMake = resolveRequestedMake(options?.make);
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+
+    const totalPromise = countListingsByQuery(
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .ilike("make", targetMake)
+        .eq("status", LIVE_DB_STATUS_VALUES[0])
+    );
+
+    const usPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
+    const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
+
+    const locationUsPromise = countListingsByQuery(
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .ilike("make", targetMake)
+        .eq("status", LIVE_DB_STATUS_VALUES[0])
+        .or(`country.is.null,country.in.(${encodePostgrestInValues(["USA", "US", "UNITED STATES"])})`)
+    );
+    const locationUkPromise = countListingsByQuery(
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .ilike("make", targetMake)
+        .eq("status", LIVE_DB_STATUS_VALUES[0])
+        .in("country", ["UK", "UNITED KINGDOM"])
+    );
+    const locationJpPromise = countListingsByQuery(
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .ilike("make", targetMake)
+        .eq("status", LIVE_DB_STATUS_VALUES[0])
+        .in("country", ["JAPAN"])
+    );
+
+    const [total, us, eu, locationUs, locationUk, locationJp] = await Promise.all([
+      totalPromise,
+      usPromise,
+      euPromise,
+      locationUsPromise,
+      locationUkPromise,
+      locationJpPromise,
+    ]);
+
+    const locationEu = Math.max(0, total - locationUs - locationUk - locationJp);
+
+    return {
+      liveNow: total,
+      regionTotalsByPlatform: {
+        all: total,
+        US: us,
+        EU: eu,
+        // Keep aligned with current region-tab fallback behavior in UI mapping.
+        UK: total,
+        JP: total,
+      },
+      regionTotalsByLocation: {
+        all: total,
+        US: locationUs,
+        UK: locationUk,
+        JP: locationJp,
+        EU: locationEu,
+      },
+    };
+  } catch (error) {
+    console.error("[supabaseLiveListings] fetchLiveListingAggregateCounts failed:", error);
+    return {
+      liveNow: 0,
+      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+    };
+  }
+}
 
 export function interleaveResultsBySource<T>(resultsBySource: T[][], limit: number): T[] {
   const interleaved: T[] = [];
@@ -353,54 +570,157 @@ async function queryListingsMany(
   limit: number,
   targetMake: SupportedLiveMake,
   statusFilter?: string,
+  sources: readonly CanonicalSource[] = DEFAULT_QUERY_SOURCES,
 ): Promise<ListingRow[]> {
-  // Fetch from each source separately to ensure platform diversity while
-  // still allowing one source to fill the requested result set if another
-  // source has sparse/no listings.
-  const sourceQueryLimit = limit;
+  const hasLimit = limit > 0;
+  const sourceQueryLimit = hasLimit ? limit : 500;
+  const maxRowsPerSource = hasLimit ? sourceQueryLimit : 5000;
 
-  const queries = ACTIVE_SOURCES.map(async (source) => {
+  const buildBaseQuery = () => {
     let query = supabase
       .from("listings")
       .select(SELECT_NARROW)
-      .ilike("make", targetMake)
-      .eq("source", source);
+      .ilike("make", targetMake);
 
-    if (statusFilter) {
+    if (statusFilter && statusFilter.toLowerCase() === "active") {
+      query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+    } else if (statusFilter) {
       query = query.eq("status", statusFilter);
     }
 
-    const result = await query
-      .order("sale_date", { ascending: false })
-      .limit(sourceQueryLimit);
+    return query;
+  };
 
-    if (result.error) {
-      console.error(`[supabaseLiveListings] ${source} query failed:`, result.error.message);
-      return [];
-    }
+  const querySourceBucket = async (source: CanonicalSource) => {
+    const sourceAliases = SOURCE_ALIASES[source] ?? [source];
+    const platformAliases = source in PLATFORM_ALIASES
+      ? PLATFORM_ALIASES[source as keyof typeof PLATFORM_ALIASES]
+      : [];
 
-    return ((result.data ?? []) as ListingRow[]).filter((row) =>
-      isLuxuryCarListing({ make: row.make, title: row.title, targetMake }),
+    const runBucketQuery = async (label: "source" | "platform", builder: () => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>) => {
+      try {
+        const result = await builder();
+        if (result.error) {
+          console.error(`[supabaseLiveListings] ${source} ${label} query failed:`, result.error.message);
+          return [] as ListingRow[];
+        }
+        return (result.data ?? []) as ListingRow[];
+      } catch (error) {
+        console.error(`[supabaseLiveListings] ${source} ${label} query threw:`, error);
+        return [] as ListingRow[];
+      }
+    };
+
+    const fetchBucketRows = async (
+      label: "source" | "platform",
+      build: (from: number, to: number) => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>
+    ) => {
+      if (hasLimit) {
+        return runBucketQuery(label, () => build(0, sourceQueryLimit - 1));
+      }
+
+      const rows: ListingRow[] = [];
+      const pageSize = sourceQueryLimit;
+      let from = 0;
+
+      while (rows.length < maxRowsPerSource) {
+        const pageRows = await runBucketQuery(label, () => build(from, from + pageSize - 1));
+        if (pageRows.length === 0) break;
+        rows.push(...pageRows);
+        if (pageRows.length < pageSize) break;
+        from += pageSize;
+      }
+
+      return rows;
+    };
+
+    const sourceRows = await fetchBucketRows("source", (from, to) =>
+      buildBaseQuery()
+        .in("source", [...sourceAliases])
+        .order("sale_date", { ascending: false, nullsFirst: false })
+        .order("end_time", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
+        .range(from, to)
     );
+
+    const platformRows = platformAliases.length > 0
+      ? await fetchBucketRows("platform", (from, to) =>
+          buildBaseQuery()
+            .in("platform", [...platformAliases])
+            .order("sale_date", { ascending: false, nullsFirst: false })
+            .order("end_time", { ascending: false, nullsFirst: false })
+            .order("id", { ascending: false })
+            .range(from, to)
+        )
+      : [];
+
+    const merged = [...sourceRows, ...platformRows].sort((a, b) => {
+      const aPrimary = a.sale_date ?? a.end_time ?? "";
+      const bPrimary = b.sale_date ?? b.end_time ?? "";
+      if (aPrimary !== bPrimary) return bPrimary.localeCompare(aPrimary);
+      const aSecondary = a.end_time ?? "";
+      const bSecondary = b.end_time ?? "";
+      if (aSecondary !== bSecondary) return bSecondary.localeCompare(aSecondary);
+      return b.id.localeCompare(a.id);
+    });
+    const byId = new Map<string, ListingRow>();
+      for (const row of merged) {
+        const canonicalSource = resolveCanonicalSource(row.source, row.platform);
+        if (canonicalSource !== source) continue;
+        if (!isLuxuryCarListing({ make: row.make, title: row.title, targetMake })) continue;
+        if (statusFilter && statusFilter.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
+        byId.set(row.id, row);
+      }
+
+    return Array.from(byId.values());
+  };
+
+  const queries = sources.map((source) => querySourceBucket(source));
+  const settledResults = await Promise.allSettled(queries);
+  const resultsBySource = settledResults.map((result, index) => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    }
+    console.error(`[supabaseLiveListings] ${sources[index]} bucket failed:`, result.reason);
+    return [] as ListingRow[];
   });
 
-  const resultsBySource = await Promise.all(queries);
-
-  return interleaveResultsBySource(resultsBySource, limit);
+  // Treat `limit` as per-source retrieval budget so tab-level source views
+  // (US=BaT, EU=AutoScout24) are not truncated by cross-source mixing.
+  const interleaveLimit = hasLimit ? limit * sources.length : Number.MAX_SAFE_INTEGER;
+  return interleaveResultsBySource(resultsBySource, interleaveLimit);
 }
 
 async function queryListingSingle(
   supabase: SupabaseClient,
   id: string
 ): Promise<ListingRow | null> {
-  const narrow = await supabase
+  const isNotFoundError = (error: { code?: string | null; message?: string | null } | null | undefined) => {
+    if (!error) return false;
+    return error.code === "PGRST116" || (error.message ?? "").toLowerCase().includes("0 rows");
+  };
+
+  let result = await supabase
     .from("listings")
-    .select(SELECT_NARROW)
+    .select(SELECT_BROAD)
     .eq("id", id)
     .single();
 
-  if (narrow.error) return null;
-  const row = (narrow.data as ListingRow) ?? null;
+  if (result.error) {
+    result = await supabase
+      .from("listings")
+      .select(SELECT_NARROW)
+      .eq("id", id)
+      .single();
+  }
+
+  if (result.error) {
+    if (isNotFoundError(result.error)) {
+      return null;
+    }
+    throw new Error(`[supabaseLiveListings] listing lookup failed for ${id}: ${result.error.message}`);
+  }
+  const row = (result.data as ListingRow) ?? null;
   if (!row) return null;
   if (!isSupportedLiveMake(row.make)) {
     return null;
@@ -429,6 +749,36 @@ export async function fetchLiveListingById(liveId: string): Promise<CollectorCar
     return rowToCollectorCar(row);
   } catch {
     return null;
+  }
+}
+
+export type LiveListingLookupResult = {
+  car: CollectorCar | null;
+  transientError: boolean;
+};
+
+export async function fetchLiveListingByIdWithStatus(liveId: string): Promise<LiveListingLookupResult> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return { car: null, transientError: false };
+  }
+
+  const supabaseId = liveId.startsWith("live-") ? liveId.slice(5) : liveId;
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+    const row = await queryListingSingle(supabase, supabaseId);
+
+    if (!row) {
+      return { car: null, transientError: false };
+    }
+
+    return { car: rowToCollectorCar(row), transientError: false };
+  } catch (error) {
+    console.error("[supabaseLiveListings] fetchLiveListingByIdWithStatus failed:", error);
+    return { car: null, transientError: true };
   }
 }
 
@@ -487,7 +837,13 @@ export async function fetchSoldListingsForMake(
   }
 }
 
-export async function fetchLiveListingsAsCollectorCars(options?: { limit?: number; includePriceHistory?: boolean; make?: string | null }): Promise<CollectorCar[]> {
+export async function fetchLiveListingsAsCollectorCars(options?: {
+  limit?: number;
+  includePriceHistory?: boolean;
+  make?: string | null;
+  status?: "active" | "all";
+  includeAllSources?: boolean;
+}): Promise<CollectorCar[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -497,12 +853,14 @@ export async function fetchLiveListingsAsCollectorCars(options?: { limit?: numbe
   const limit = options?.limit ?? 200;
   const includePriceHistory = options?.includePriceHistory ?? true;
   const targetMake = resolveRequestedMake(options?.make);
+  const statusFilter = options?.status === "all" ? undefined : "active";
+  const sources = options?.includeAllSources ? ALL_QUERY_SOURCES : DEFAULT_QUERY_SOURCES;
 
   try {
     const supabase = createSupabaseClient(url, key);
 
     // Only fetch active (live) listings — sold/unsold/delisted are historical data
-    const rows = await queryListingsMany(supabase, limit, targetMake, "active");
+    const rows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
     if (rows.length === 0) return [];
 
     if (!includePriceHistory) {

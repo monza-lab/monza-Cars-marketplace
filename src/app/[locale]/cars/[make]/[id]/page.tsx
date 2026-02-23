@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { CURATED_CARS } from "@/lib/curatedCars"
-import { fetchLiveListingById, fetchLiveListingsAsCollectorCars, fetchSoldListingsForMake } from "@/lib/supabaseLiveListings"
+import {
+  fetchLiveListingById,
+  fetchLiveListingByIdWithStatus,
+  fetchLiveListingsAsCollectorCars,
+  fetchSoldListingsForMake,
+} from "@/lib/supabaseLiveListings"
 import { getMarketDataForModel, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake } from "@/lib/db/queries"
 import { CarDetailClient } from "./CarDetailClient"
 
@@ -42,14 +47,30 @@ export async function generateStaticParams() {
 
 export default async function CarDetailPage({ params }: CarDetailPageProps) {
   const { id } = await params
+  const isLiveId = id.startsWith("live-")
 
   let car = CURATED_CARS.find(c => c.id === id && c.make !== "Ferrari") ?? null
+  let liveLookupTransientError = false
 
-  if (!car && id.startsWith("live-")) {
-    car = await fetchLiveListingById(id)
+  if (!car && isLiveId) {
+    const liveLookup = await fetchLiveListingByIdWithStatus(id)
+    car = liveLookup.car
+    liveLookupTransientError = liveLookup.transientError
   }
 
   if (!car) {
+    if (isLiveId && liveLookupTransientError) {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center px-6 text-center">
+          <div className="max-w-xl space-y-4">
+            <h1 className="text-2xl font-semibold text-white">Live listing temporarily unavailable</h1>
+            <p className="text-zinc-400">
+              We could not reach the live listing data source right now. Please retry in a moment.
+            </p>
+          </div>
+        </div>
+      )
+    }
     notFound()
   }
 

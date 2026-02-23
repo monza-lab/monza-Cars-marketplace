@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db/prisma'
 import { createClient } from '@supabase/supabase-js'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
-import { fetchLiveListingById } from '@/lib/supabaseLiveListings'
+import { fetchLiveListingByIdWithStatus } from '@/lib/supabaseLiveListings'
 import { fetchFerrariHistoricalByModel } from '@/features/ferrari_history/service'
 import { isSupportedLiveMake } from '@/lib/makeProfiles'
 
@@ -50,7 +50,8 @@ export async function GET(
 
     // Check if this is a live listing from Supabase (id starts with "live-")
     if (id.startsWith("live-")) {
-      const liveCar = await fetchLiveListingById(id)
+      const liveLookup = await fetchLiveListingByIdWithStatus(id)
+      const liveCar = liveLookup.car
       if (liveCar && isSupportedLiveMake(liveCar.make)) {
         const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID()
         let comparables: Array<Record<string, unknown>> = []
@@ -107,6 +108,17 @@ export async function GET(
             priceHistory,
           },
         })
+      }
+
+      if (liveLookup.transientError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Live listing datasource temporarily unavailable',
+            degraded: true,
+          },
+          { status: 503 }
+        )
       }
     }
 
