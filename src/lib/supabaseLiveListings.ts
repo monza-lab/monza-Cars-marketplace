@@ -102,6 +102,8 @@ function mapPlatform(source: string): Platform {
       return "CARS_AND_BIDS";
     case "CollectingCars":
       return "COLLECTING_CARS";
+    case "AutoScout24":
+      return "AUTO_SCOUT_24";
     default:
       return "BRING_A_TRAILER";
   }
@@ -210,12 +212,20 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
   const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
 
   // Prefer direct images column; fall back to photos_media join
-  const directImages = (row.images ?? []).filter(
-    (u): u is string => typeof u === "string" && u.length > 0,
-  );
+  const formatImageUrl = (u: unknown): string | null => {
+    if (typeof u !== "string" || u.length === 0) return null;
+    let cleanUrl = u.trim();
+    if (cleanUrl.startsWith("//")) cleanUrl = `https:${cleanUrl}`;
+    else if (cleanUrl.startsWith("http://")) cleanUrl = cleanUrl.replace("http://", "https://");
+    else if (!cleanUrl.startsWith("https://")) cleanUrl = `https://${cleanUrl}`;
+    return cleanUrl;
+  };
+
+  const directImages = (row.images ?? []).map(formatImageUrl).filter((u): u is string => u !== null);
   const joinedPhotos = (row.photos_media ?? [])
     .map((p) => p.photo_url)
-    .filter((u): u is string => typeof u === "string" && u.length > 0);
+    .map(formatImageUrl)
+    .filter((u): u is string => u !== null);
   const photos = directImages.length > 0 ? directImages : joinedPhotos;
 
   // Prefer direct location column; fall back to city/region/country parts
@@ -267,8 +277,8 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     trendValue: 0,
     investmentGrade: computeGrade(price, row.make, row.year),
     thesis,
-    image: photos[0] ?? "/cars/placeholder.jpg",
-    images: photos.length > 0 ? photos : ["/cars/placeholder.jpg"],
+    image: photos[0] ?? "/cars/placeholder.svg",
+    images: photos.length > 0 ? photos : ["/cars/placeholder.svg"],
     engine,
     transmission,
     mileage: displayMileage,
@@ -320,35 +330,63 @@ function computeTrend(
 
 // ─── Query helper with fallback ───
 
+// Sources to fetch from (ensures platform diversity in results)
+const ACTIVE_SOURCES = ["BaT", "AutoScout24"] as const;
+
+export function interleaveResultsBySource<T>(resultsBySource: T[][], limit: number): T[] {
+  const interleaved: T[] = [];
+  const maxLen = Math.max(0, ...resultsBySource.map((arr) => arr.length));
+
+  for (let i = 0; i < maxLen && interleaved.length < limit; i++) {
+    for (const sourceResults of resultsBySource) {
+      if (i < sourceResults.length && interleaved.length < limit) {
+        interleaved.push(sourceResults[i]);
+      }
+    }
+  }
+
+  return interleaved;
+}
+
 async function queryListingsMany(
   supabase: SupabaseClient,
   limit: number,
   targetMake: SupportedLiveMake,
   statusFilter?: string,
 ): Promise<ListingRow[]> {
-  // Narrow query first to avoid fragile cross-table joins on degraded networks.
-  let narrowQuery = supabase
-    .from("listings")
-    .select(SELECT_NARROW);
+  // Fetch from each source separately to ensure platform diversity while
+  // still allowing one source to fill the requested result set if another
+  // source has sparse/no listings.
+  const sourceQueryLimit = limit;
 
-  if (statusFilter) {
-    narrowQuery = narrowQuery.eq("status", statusFilter);
-  }
+  const queries = ACTIVE_SOURCES.map(async (source) => {
+    let query = supabase
+      .from("listings")
+      .select(SELECT_NARROW)
+      .ilike("make", targetMake)
+      .eq("source", source);
 
-  narrowQuery = narrowQuery.ilike("make", targetMake);
+    if (statusFilter) {
+      query = query.eq("status", statusFilter);
+    }
 
-  const narrow = await narrowQuery
-    .order("sale_date", { ascending: false })
-    .limit(limit);
+    const result = await query
+      .order("sale_date", { ascending: false })
+      .limit(sourceQueryLimit);
 
-  if (narrow.error) {
-    console.error("[supabaseLiveListings] listings query failed:", narrow.error.message);
-    return [];
-  }
+    if (result.error) {
+      console.error(`[supabaseLiveListings] ${source} query failed:`, result.error.message);
+      return [];
+    }
 
-  return ((narrow.data ?? []) as ListingRow[]).filter((row) =>
-    isLuxuryCarListing({ make: row.make, title: row.title, targetMake }),
-  );
+    return ((result.data ?? []) as ListingRow[]).filter((row) =>
+      isLuxuryCarListing({ make: row.make, title: row.title, targetMake }),
+    );
+  });
+
+  const resultsBySource = await Promise.all(queries);
+
+  return interleaveResultsBySource(resultsBySource, limit);
 }
 
 async function queryListingSingle(

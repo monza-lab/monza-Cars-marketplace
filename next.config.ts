@@ -9,11 +9,13 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "bringatrailer.com" },
       { protocol: "https", hostname: "**.bringatrailer.com" },
+      { protocol: "https", hostname: "cdn.bringatrailer.com" },
+      { protocol: "https", hostname: "wp.com" },
+      { protocol: "https", hostname: "**.wp.com" },
       { protocol: "https", hostname: "carsandbids.com" },
       { protocol: "https", hostname: "**.carsandbids.com" },
       { protocol: "https", hostname: "collectingcars.com" },
       { protocol: "https", hostname: "**.collectingcars.com" },
-      { protocol: "https", hostname: "cdn.bringatrailer.com" },
       { protocol: "https", hostname: "media.carsandbids.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "source.unsplash.com" },
@@ -25,6 +27,21 @@ const nextConfig: NextConfig = {
       // RM Sotheby's CDN for auction images
       { protocol: "https", hostname: "cdn.rmsothebys.com" },
       { protocol: "https", hostname: "**.rmsothebys.com" },
+      // AutoScout24 CDN for listing images
+      { protocol: "https", hostname: "autoscout24.net" },
+      { protocol: "https", hostname: "**.autoscout24.net" },
+      { protocol: "https", hostname: "autoscout24.com" },
+      { protocol: "https", hostname: "**.autoscout24.com" },
+      { protocol: "https", hostname: "**.autoscout24.de" },
+      { protocol: "https", hostname: "**.autoscout24.ch" },
+      { protocol: "https", hostname: "**.autoscout24.it" },
+      { protocol: "https", hostname: "**.autoscout24.fr" },
+      { protocol: "https", hostname: "**.autoscout24.nl" },
+      { protocol: "https", hostname: "**.autoscout24.es" },
+      { protocol: "https", hostname: "**.autoscout24.at" },
+      { protocol: "https", hostname: "**.autoscout24.be" },
+      // Other platforms
+      { protocol: "https", hostname: "image-cdn.beforward.jp" },
     ],
   },
   outputFileTracingExcludes: {
