@@ -487,6 +487,7 @@ const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
+  AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
   GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
@@ -661,7 +662,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         title: c.title,
         price: c.soldPrice,
         date: c.soldDate ? new Date(c.soldDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A",
-        platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform,
+        platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform === "AUTO_SCOUT_24" ? "AS24" : c.platform,
         delta: dbMarketData?.avgPrice ? Math.round(((c.soldPrice - dbMarketData.avgPrice) / dbMarketData.avgPrice) * 100) : 0,
       }))
     : (comparableSales[car.make] || comparableSales.default)

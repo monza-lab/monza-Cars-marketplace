@@ -1,104 +1,79 @@
 # 1) Goal
-Integrate Supabase `listings` historical sold Ferrari model data into existing price-relevant frontend components (no visual/UI changes), with secure and scalable server-owned data access and validated contracts.
+Implement AutoScout24 live ingest for pan-European Porsche-only listings using Apify actor `3x1t/autoscout24-scraper-ppr`, while minimizing token usage and operational overhead by reusing the existing Porsche ingest pipeline.
 
 # 2) Primary User / Actor
-- Primary actor: frontend/backend architecture agent implementing data integration.
-- User moment: when viewing a Ferrari model context where price/history components already render live auction pricing.
+- Primary actor: data ingestion operator running `scripts/ingest-porsche.ts`.
+- User moment: scheduled or manual ingest runs for live Porsche inventory updates across Europe.
 
 # 3) Inputs
 Required inputs
-- Supabase project with `listings` table as source of truth.
-- Existing frontend components under `src/components/`, especially price-related components.
-- Target model identifier inputs (`make`, `model`, optional `generation`/`series` if already present in UI context).
+- `APIFY_TOKEN`.
+- `APIFY_AUTOSCOUT24_ACTOR_ID=3x1t/autoscout24-scraper-ppr`.
+- Supabase env (`NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for writes).
+- Existing entrypoint `scripts/ingest-porsche.ts` invoking `runIngest(process.argv.slice(2))`.
 
 Optional inputs
-- Existing server utilities for Supabase client creation.
-- Existing formatting helpers for currency/date used by current live auction UI.
+- CLI flags: `--source=autoscout24`, `--mode=incremental`, `--limit=<n>`, `--dry-run`, `--fail-fast`, `--resume=<run_id>`.
+- Cursor/time filters supported by current pipeline (`--since`, `--from`) when available.
 
 # 4) Outputs / Deliverables
-- A concrete integration plan and implementation-ready contracts for historical sold Ferrari model prices.
-- Server-side fetch boundary that returns validated historical series (12-month sold-only window).
-- Mapping guidance to feed existing UI components without changing styles/markup.
-- Verification checklist and acceptance criteria.
+- Updated AutoScout24 source adapter input contract aligned to actor `3x1t/autoscout24-scraper-ppr` for pan-European Porsche-only fetches.
+- Ingest behavior that writes into the existing single `listings` table, differentiated by source fields (`source`, `source_id`, `source_url`).
+- Deterministic dedupe behavior: primary key `source+source_id`, fallback `source_url`, fallback fingerprint.
+- Run artifacts/reports emitted by existing ingest observability path.
 
-Plan envelope: `{files: 5-7, LOC/file: 40-220, deps: [zod]}`.
+Implementation budget: `{files: 3-4, LOC/file: 20-140, deps: 0}`.
 
 # 5) Core Pipeline
-1. Component review pass (no UI edits):
-   - Inspect `src/components/auction/PriceChart.tsx` for current series shape, axis expectations, and fallback states.
-   - Inspect `src/components/analysis/ComparableSales.tsx` for sold-comparable rendering and required fields.
-   - Inspect `src/components/auction/AuctionCard.tsx` for price badges/status assumptions.
-   - Inspect `src/components/layout/LiveTicker.tsx` for any shared price formatting/stream assumptions.
-   - Inspect `src/components/mobile/MobileCarCTA.tsx` and `src/components/mobile/MobileBottomNav.tsx` for price context usage on mobile.
-   - Inspect parent composition points that pass data into these components and identify exact insertion points for historical series.
-2. Define historical data contract from `listings` (Ferrari model sold-only).
-3. Implement server-owned query boundary (API route or server action), never direct client table reads for this feature.
-4. Validate request params (`zod`) and response payload (`zod`) before returning to UI.
-5. Map validated payload to existing component props/state adapters; preserve existing rendering and appearance.
-6. Add prioritized table-state checks and fail-safe responses.
-7. Verify with targeted test/QA passes and acceptance checklist.
+1. Invoke `scripts/ingest-porsche.ts` with AutoScout24 source (`--source=autoscout24`) and incremental mode.
+2. Build actor input for `3x1t/autoscout24-scraper-ppr` with constraints: pan-European scope, Porsche make filter, all Porsche models.
+3. Fetch raw dataset items through existing Apify adapter (`src/features/porsche_ingest/adapters/apify.ts`).
+4. Normalize to canonical listing contract (`normalizeRawListing`) and reject non-conforming/non-Porsche payloads.
+5. Apply dedupe in this order:
+   - primary: `source + source_id`
+   - fallback: normalized `source_url`
+   - fallback: deterministic fingerprint over stable fields (`year|model|vin|mileage|price|city`).
+6. Upsert into existing `listings`-centric persistence flow and child tables via current writer.
+7. Emit run report and checkpoint updates through existing observability/checkpoint services.
 
 # 6) Data / Evidence Contracts
-Historical series contract (from `listings`)
-- Filter rules:
-  - `make = 'Ferrari'` (case-normalized comparison).
-  - `model = <requested model>` (normalized exact match; no fuzzy default).
-  - Sold-only: include rows where listing is definitively sold; exclude active/in-progress states.
-  - Time window: last 12 months from request execution time.
-- Sort:
-  - Primary: sale timestamp ascending for chart series.
-  - Secondary stable tie-breaker: `id` ascending.
-- Required output fields:
-  - `id`
-  - `make`
-  - `model`
-  - `sold_price` (numeric)
-  - `sold_at` (ISO timestamp/date)
-  - `currency` (default USD if table contract already enforces)
-  - `source_platform` (if available)
-- Optional passthrough fields (only if already consumed by existing components):
-  - `year`, `mileage`, `location`, `listing_url`
+Canonical ingest contract
+- Must satisfy existing `CanonicalListingSchema` in `src/features/porsche_ingest/contracts/listing.ts`.
+- `make` must be `Porsche` (hard gate).
+- `source` must be `AutoScout24` for this ingest path.
 
-Validation gates (must-pass)
-- Input schema (`zod`): enforce non-empty model string, max length, sanitized charset, optional pagination/limit bounds.
-- Output schema (`zod`): enforce sold price positive number, valid sold date, required keys present.
-- Reject/empty behavior:
-  - Invalid input -> 400 with stable error envelope.
-  - Valid input + no sold rows -> 200 with empty series and metadata.
+Differentiation contract across marketplaces
+- `source` distinguishes marketplace (`AutoScout24` vs `BaT`, etc.).
+- `source_id` remains source-scoped; uniqueness is enforced with `source` pair.
+- `source_url` preserves original marketplace URL and serves as secondary identity.
+- Run metadata/report retains per-source traceability (totals/errors/rejections).
+
+Token-efficiency contract
+- Persist only fields required by existing `listings`/child-table write path.
+- Keep `raw_payload` trimmed to fields needed for debugging/replay, avoiding unbounded blobs.
 
 # 7) Constraints
-- No UI redesign: do not alter component visuals, CSS, layout, or interaction patterns.
-- Source of truth must remain Supabase `listings`.
-- Security/scalability:
-  - Server-side ownership for Supabase reads.
-  - Parameterized/typed query path only.
-  - Rate-limit and bounded result size (default limit 50-200, tuned to chart needs).
-  - Favor projection of only needed columns.
-  - Add/verify indexing guidance: composite index for `(make, model, sold_state, sold_at)` or equivalent status/date strategy.
-- Table-state checks (prioritized by impact):
-  1. Sold-state correctness (exclude active listings).
-  2. Presence/validity of `sold_at`.
-  3. Presence/validity of `sold_price`.
-  4. Currency consistency/normalization.
-  5. Duplicate sale rows handling.
-  6. Null/unknown model normalization.
-- Keep dependency scope to selected option B: add only `zod`.
+- Reuse existing architecture centered on `scripts/ingest-porsche.ts` and `runIngest`; no parallel ingest framework.
+- Keep a single `listings` table (no per-marketplace listing tables).
+- No new dependencies (0-deps path).
+- Scope fixed to pan-European AutoScout24 and Porsche-only (all Porsche models).
+- Prefer incremental mode as default to minimize data volume, tokens, and operational cost.
 
 # 8) Non-Goals / Backlog
-- No changes to existing UI appearance/components.
-- No migration to redesign chart/comparable UX.
-- No ML valuation, forecasting, or pricing recommendation engine.
-- No expansion beyond Ferrari historical sold-model integration in this phase.
-- No broad schema refactor unless required for correctness of sold-state filtering.
+- No schema split into marketplace-specific listing tables.
+- No frontend/UI changes.
+- No multi-make ingest expansion in this phase.
+- No actor-framework migration or new queue/orchestrator introduction.
+- No backfill redesign beyond current pipeline capabilities.
 
 # 9) Definition of Done
-- Historical Ferrari sold-model data (12-month window) is fetched from `listings` via server-owned boundary only.
-- Active listings are excluded; sold-state filtering is verifiably correct.
-- Input and output are validated with `zod`; invalid requests fail with stable 4xx envelope.
-- Existing price-relevant components receive and render historical data through current props/state paths with no UI changes.
-- Empty-state and partial-data-state behaviors are graceful and do not break live auction price flows.
-- Query is bounded, projected, and index-aware for scale.
-- Verification plan completed:
-  - Contract tests for schema validation and sold-only filtering.
-  - Integration test for Ferrari model request returning sorted 12-month series.
-  - Regression check confirming live auction price UI remains unchanged.
+- AutoScout24 ingest runs through existing `scripts/ingest-porsche.ts` -> `runIngest` flow using actor `3x1t/autoscout24-scraper-ppr`.
+- Only Porsche listings are accepted; non-Porsche records are rejected with explicit reasons.
+- Records are written to the existing single `listings` table and are distinguishable by `source` metadata.
+- Dedupe order is implemented and verified: `source+source_id` -> `source_url` -> deterministic fingerprint.
+- No new package dependencies are added.
+- Budget respected: `{files: 3-4, LOC/file: 20-140, deps: 0}`.
+- Run/verify commands (placeholders aligned to repo):
+  - `npx tsx scripts/ingest-porsche.ts --source=autoscout24 --mode=incremental --limit=50 --dry-run`
+  - `npx tsx scripts/ingest-porsche.ts --source=autoscout24 --mode=incremental --limit=200`
+  - `npm test -- src/features/porsche_ingest`

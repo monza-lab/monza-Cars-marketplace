@@ -198,12 +198,16 @@ async function runSource(input: {
 
   // 1) Active listings (daily only)
   if (config.mode === "daily") {
-    const active = await scrapeActiveListings(source, config.maxActivePagesPerSource);
+    const active = await scrapeActiveListings(source, config.maxActivePagesPerSource, {
+      make: config.make,
+      limiter,
+      runId,
+    });
     counts.discovered += active.length;
 
     for (const a of active) {
-      const keep = isLuxuryCarListing({ make: a.make, title: a.title, targetMake: config.make });
-      if (!keep) continue;
+      // Skip early filter since discovery returns URLs without title/make
+      // Filtering happens during normalization (isLuxuryCarListing check)
       counts.porscheKept++;
 
       try {
@@ -329,20 +333,40 @@ async function runSource(input: {
   return counts;
 }
 
-async function scrapeActiveListings(source: SourceKey, maxPages: number): Promise<ActiveAuctionBase[]> {
+async function scrapeActiveListings(
+  source: SourceKey,
+  maxPages: number,
+  opts?: { make?: string; limiter?: PerDomainRateLimiter; runId?: string },
+): Promise<ActiveAuctionBase[]> {
+  // Use discovery approach instead of broken scraper for BaT
+  // The scraper uses outdated CSS selectors that don't match BaT's current page structure
   if (source === "BaT") {
-    const { auctions } = await scrapeBringATrailer({ maxPages, scrapeDetails: false });
-    return auctions.map((a: any) => ({
+    const limiter = opts?.limiter ?? new PerDomainRateLimiter(1000);
+    const runId = opts?.runId ?? "unknown";
+    const make = opts?.make ?? "Porsche";
+
+    // Use discovery to find listing URLs from active auction pages
+    const urls = await discoverListingUrls(source, {
+      runId,
+      limiter,
+      maxPages,
+      timeoutMs: 15000,
+      query: make.toLowerCase(),
+      make,
+    });
+
+    // Return URLs as ActiveAuctionBase objects (details fetched during normalization)
+    return urls.map((url) => ({
       source,
-      url: a.url,
-      externalId: a.externalId ?? null,
-      title: a.title,
-      make: a.make ?? null,
-      model: a.model ?? null,
-      year: typeof a.year === "number" ? a.year : null,
-      mileage: typeof a.mileage === "number" ? a.mileage : null,
-      mileageUnit: a.mileageUnit ?? null,
-      endTime: a.endTime ? new Date(a.endTime) : null,
+      url,
+      externalId: null,
+      title: "", // Will be fetched during normalization
+      make: null,
+      model: null,
+      year: null,
+      mileage: null,
+      mileageUnit: null,
+      endTime: null,
     }));
   }
   if (source === "CarsAndBids") {

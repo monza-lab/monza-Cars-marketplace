@@ -979,7 +979,8 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
           <div className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white/70 border border-white/20">
             {car.platform === "BRING_A_TRAILER" ? "BaT" :
               car.platform === "CARS_AND_BIDS" ? "C&B" :
-                car.platform === "COLLECTING_CARS" ? "CC" : car.platform}
+                car.platform === "COLLECTING_CARS" ? "CC" :
+                  car.platform === "AUTO_SCOUT_24" ? "AS24" : car.platform}
           </div>
         </div>
 
@@ -1207,6 +1208,7 @@ const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
+  AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
   GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },

@@ -53,6 +53,27 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
     .select("id")
     .limit(1);
 
+  if (error && /listings_source_url_unique/i.test(error.message)) {
+    const byUrl = await client
+      .from("listings")
+      .select("id")
+      .eq("source_url", listing.sourceUrl)
+      .limit(1);
+    if (byUrl.error) throw new Error(`Supabase listings source_url lookup failed: ${byUrl.error.message}`);
+    const byUrlId = (byUrl.data as Array<{ id: string }> | null)?.[0]?.id;
+    if (!byUrlId) throw new Error(`Supabase listings upsert failed: ${error.message}`);
+
+    const patched = await client
+      .from("listings")
+      .update(row)
+      .eq("id", byUrlId)
+      .select("id")
+      .limit(1);
+    if (patched.error) throw new Error(`Supabase listings update by source_url failed: ${patched.error.message}`);
+    const patchedId = (patched.data as Array<{ id: string }> | null)?.[0]?.id ?? byUrlId;
+    return patchedId;
+  }
+
   if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
   const id = (data as Array<{ id: string }> | null)?.[0]?.id;
   if (!id) {

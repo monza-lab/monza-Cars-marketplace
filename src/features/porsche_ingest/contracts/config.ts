@@ -8,13 +8,18 @@ export const CliConfigSchema = z.object({
   mode: ModeArgSchema.default("incremental"),
   limit: z.number().int().positive().max(5000).default(100),
   dryRun: z.boolean().default(false),
+  listingsOnly: z.boolean().default(false),
   failFast: z.boolean().default(false),
   soldOnly: z.boolean().default(false),
   soldWithinMonths: z.number().int().positive().max(120).optional(),
   activeOnly: z.boolean().default(false),
+  strictSaleDate: z.boolean().default(false),
+  batStartUrl: z.string().url().optional(),
+  batMaxItems: z.number().int().positive().max(20000).optional(),
   since: z.string().optional(),
   from: z.string().optional(),
   resume: z.string().optional(),
+  autoscoutCountry: z.string().regex(/^[A-Z]{1,3}$/).optional(),
 });
 
 export const EnvSchema = z.object({

@@ -1,4 +1,4 @@
-export type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS';
+export type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS' | 'AUTO_SCOUT_24';
 export type AuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE';
 export type ReserveStatus = 'NO_RESERVE' | 'RESERVE_NOT_MET' | 'RESERVE_MET';
 

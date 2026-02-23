@@ -61,6 +61,12 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
     color: "#67e8f9",
     market: "EU/UK"
   },
+  AUTO_SCOUT_24: {
+    label: "AutoScout24",
+    shortLabel: "AS24",
+    color: "#22c55e",
+    market: "EU"
+  },
   RM_SOTHEBYS: {
     label: "RM Sotheby's",
     shortLabel: "RM",
@@ -279,7 +285,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
       platforms: Object.keys(carsByPlatform).length,
-      heroImage: cars[0]?.image || "/cars/placeholder.jpg",
+      heroImage: cars[0]?.image || "/cars/placeholder.svg",
       // Date range of data
       oldestSale: new Date(Math.min(...cars.map(c => new Date(c.endTime).getTime()))),
       newestSale: new Date(Math.max(...cars.map(c => new Date(c.endTime).getTime()))),

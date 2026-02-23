@@ -4,6 +4,78 @@ import { useEffect, useState, Suspense } from "react";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { useTranslations } from "next-intl";
 
+const SUPPORTED_LOCALES = new Set(["en", "es", "de", "ja"]);
+
+function getLocalePrefixFromPathname(pathname: string): string {
+  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  if (!firstSegment || !SUPPORTED_LOCALES.has(firstSegment)) {
+    return "";
+  }
+  return `/${firstSegment}`;
+}
+
+function normalizeAuctionPayload(payload: any): Auction[] {
+  const rows = Array.isArray(payload?.auctions)
+    ? payload.auctions
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : [];
+
+  return rows.map((a: any) => ({
+    ...a,
+    viewCount: typeof a.viewCount === "number" ? a.viewCount : 0,
+    watchCount: typeof a.watchCount === "number" ? a.watchCount : 0,
+    exteriorColor: a.exteriorColor ?? null,
+    description: a.description ?? null,
+    analysis: a.investmentGrade
+      ? {
+          bidTargetLow: null,
+          bidTargetHigh: null,
+          confidence: null,
+          investmentGrade: a.investmentGrade,
+          appreciationPotential: a.trend,
+          keyStrengths: [],
+          redFlags: [],
+        }
+      : null,
+    priceHistory: Array.isArray(a.priceHistory) ? a.priceHistory : [],
+    fairValueByRegion: a.fairValueByRegion,
+    category: a.category,
+    region: a.region,
+  }));
+}
+
+async function fetchAuctionsWithFallback(): Promise<Auction[]> {
+  const localePrefix = typeof window === "undefined"
+    ? ""
+    : getLocalePrefixFromPathname(window.location.pathname);
+
+  const candidates = [
+    `${localePrefix}/api/mock-auctions?limit=2000`,
+    "/api/mock-auctions?limit=2000",
+    `${localePrefix}/api/auctions?limit=2000`,
+    "/api/auctions?limit=2000",
+  ];
+
+  for (const endpoint of candidates) {
+    try {
+      const response = await fetch(endpoint, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+      const payload = await response.json();
+      const normalized = normalizeAuctionPayload(payload);
+      if (normalized.length > 0) {
+        return normalized;
+      }
+    } catch {
+      // Try next endpoint.
+    }
+  }
+
+  return [];
+}
+
 type RegionalPricing = {
   currency: "$" | "€" | "£" | "¥";
   low: number;
@@ -78,30 +150,8 @@ function HomeContent({
   useEffect(() => {
     async function fetchAuctions() {
       try {
-        const response = await fetch(`/api/mock-auctions?limit=120`);
-        const data = await response.json();
-        // Transform API response to match Auction type
-        const transformed = data.auctions.map((a: any) => ({
-          ...a,
-          viewCount: 0,
-          watchCount: 0,
-          exteriorColor: null,
-          description: null,
-          analysis: a.investmentGrade ? {
-            bidTargetLow: null,
-            bidTargetHigh: null,
-            confidence: null,
-            investmentGrade: a.investmentGrade,
-            appreciationPotential: a.trend,
-            keyStrengths: [],
-            redFlags: [],
-          } : null,
-          priceHistory: [],
-          fairValueByRegion: a.fairValueByRegion,
-          category: a.category,
-          region: a.region,
-        }));
-        setAuctions(transformed);
+        const fetched = await fetchAuctionsWithFallback();
+        setAuctions(fetched);
       } catch (error) {
         console.error("Failed to fetch auctions:", error);
       } finally {

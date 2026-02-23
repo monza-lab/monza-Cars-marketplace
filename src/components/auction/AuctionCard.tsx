@@ -45,6 +45,10 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; className: string }> = 
     label: "CC",
     className: "bg-[rgba(103,232,249,0.15)] text-[#67e8f9] border-[rgba(103,232,249,0.2)]",
   },
+  AUTO_SCOUT_24: {
+    label: "AS24",
+    className: "bg-[rgba(34,197,94,0.15)] text-[#22c55e] border-[rgba(34,197,94,0.2)]",
+  },
 };
 
 const STATUS_CONFIG: Record<AuctionStatus, { label: string; className: string }> = {

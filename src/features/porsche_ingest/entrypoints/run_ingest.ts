@@ -9,6 +9,7 @@ import { writeRunArtifacts, type RunReport } from "../observability/run_report";
 import { upsertCanonicalListing } from "../repository/supabase_writer";
 import { loadCheckpoint, updateCheckpoint } from "../services/checkpoint";
 import { dedupeListings } from "../services/dedupe";
+import { deriveSaleDate } from "../services/sale_date_derivation";
 import { normalizeRawListing } from "../services/normalize";
 import { evaluateSoldWindow } from "../services/sold_filter";
 
@@ -52,13 +53,18 @@ function parseCli(argv: string[]): CliConfig {
     mode: typeof args.mode === "string" ? args.mode : "incremental",
     limit: typeof args.limit === "string" ? Number(args.limit) : 100,
     dryRun: args["dry-run"] === true,
+    listingsOnly: args["listings-only"] === true,
     failFast: args["fail-fast"] === true,
     soldOnly: args["sold-only"] === true,
     soldWithinMonths: typeof args["sold-within-months"] === "string" ? Number(args["sold-within-months"]) : undefined,
     activeOnly: args["active-only"] === true,
+    strictSaleDate: args["strict-sale-date"] === true,
+    batStartUrl: typeof args["bat-start-url"] === "string" ? args["bat-start-url"] : undefined,
+    batMaxItems: typeof args["bat-max-items"] === "string" ? Number(args["bat-max-items"]) : undefined,
     since: typeof args.since === "string" ? args.since : undefined,
     from: typeof args.from === "string" ? args.from : undefined,
     resume: typeof args.resume === "string" ? args.resume : undefined,
+    autoscoutCountry: typeof args["autoscout-country"] === "string" ? args["autoscout-country"].toUpperCase() : undefined,
   });
 }
 
@@ -94,6 +100,7 @@ export async function runIngest(argv: string[]): Promise<RunReport> {
   const errors: string[] = [];
   const checkpointPath = "var/runs/porsche-ingest/checkpoints.json";
   await loadCheckpoint(checkpointPath);
+  const saleDateCache = new Map<string, string | null>();
 
   for (const source of resolveSources(config.source)) {
     try {
@@ -103,8 +110,11 @@ export async function runIngest(argv: string[]): Promise<RunReport> {
         limit: config.limit,
         activeOnly: config.activeOnly,
         soldOnly: config.soldOnly,
+        batStartUrl: config.batStartUrl,
+        batMaxItems: config.batMaxItems,
         since: config.since,
         from: config.from,
+        autoscoutCountry: config.autoscoutCountry,
       });
       totals.fetched += rawItems.length;
 
@@ -119,7 +129,17 @@ export async function runIngest(argv: string[]): Promise<RunReport> {
       rejects.push(...sourceRejects);
 
       const deduped = dedupeListings(okListings);
-      const filtered = deduped.filter((listing) => {
+      const enriched: typeof deduped = [];
+      for (const listing of deduped) {
+        const derivedSaleDate = await deriveSaleDate(listing, {
+          strictMode: config.strictSaleDate,
+          soldOnly: config.soldOnly,
+          cache: saleDateCache,
+        });
+        enriched.push({ ...listing, sale_date: derivedSaleDate });
+      }
+
+      const filtered = enriched.filter((listing) => {
         if (config.activeOnly && listing.status !== "active") {
           totals.rejected += 1;
           rejectionReasons.not_active = (rejectionReasons.not_active ?? 0) + 1;
@@ -135,6 +155,7 @@ export async function runIngest(argv: string[]): Promise<RunReport> {
         const sold = evaluateSoldWindow(listing, {
           soldOnly: config.soldOnly,
           soldWithinMonths: config.soldWithinMonths,
+          strictSaleDate: config.strictSaleDate,
         });
         if (sold.keep) return true;
         totals.rejected += 1;
@@ -150,7 +171,21 @@ export async function runIngest(argv: string[]): Promise<RunReport> {
       totals.deduped += filtered.length;
 
       for (const listing of filtered) {
-        const write = await upsertCanonicalListing(listing, config.dryRun);
+        if (listing.make !== "Porsche") {
+          totals.rejected += 1;
+          rejectionReasons.non_porsche = (rejectionReasons.non_porsche ?? 0) + 1;
+          rejects.push({
+            source: listing.source,
+            reason: "non_porsche",
+            raw: listing.raw_payload,
+            details: { make: listing.make },
+          });
+          continue;
+        }
+        const write = await upsertCanonicalListing(listing, config.dryRun, {
+          strictSaleDate: config.strictSaleDate,
+          listingsOnly: config.listingsOnly,
+        });
         totals.inserted += write.inserted;
         totals.updated += write.updated;
         if (write.warnings.length) {

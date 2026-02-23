@@ -1,8 +1,22 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { CanonicalListing } from "../contracts/listing";
+import { buildListingFingerprint } from "../services/dedupe";
 
 export type WriteResult = { inserted: number; updated: number; warnings: string[] };
+type WriteOptions = { strictSaleDate?: boolean; listingsOnly?: boolean };
+
+type ListingIdentityRow = {
+  id: string;
+  year: number;
+  model: string;
+  vin: string | null;
+  mileage: number | null;
+  final_price: number | null;
+  hammer_price: number | null;
+  current_bid: number | null;
+  city: string | null;
+};
 
 function createSupabase(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -13,7 +27,14 @@ function createSupabase(): SupabaseClient {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-async function listingIdAfterUpsert(client: SupabaseClient, listing: CanonicalListing): Promise<{ id: string; inserted: boolean }> {
+async function listingIdAfterUpsert(
+  client: SupabaseClient,
+  listing: CanonicalListing,
+  options: WriteOptions,
+): Promise<{ id: string; inserted: boolean }> {
+  if (options.strictSaleDate && !listing.sale_date) {
+    throw new Error("strict_sale_date requires sale_date for writes");
+  }
   const row = {
     source: listing.source,
     source_id: listing.source_id,
@@ -23,7 +44,7 @@ async function listingIdAfterUpsert(client: SupabaseClient, listing: CanonicalLi
     model: listing.model,
     year: listing.year,
     status: listing.status,
-    sale_date: listing.sale_date ?? new Date().toISOString().slice(0, 10),
+    sale_date: listing.sale_date ?? null,
     hammer_price: listing.hammer_price ?? null,
     current_bid: listing.current_bid ?? null,
     bid_count: listing.bid_count ?? 0,
@@ -71,6 +92,22 @@ async function listingIdAfterUpsert(client: SupabaseClient, listing: CanonicalLi
       const id = (updated.data as Array<{ id: string }> | null)?.[0]?.id ?? byUrlId;
       return { id, inserted: false };
     }
+
+    const fingerprint = buildListingFingerprint(listing);
+    if (fingerprint) {
+      const fingerprintId = await findByFingerprint(client, listing, fingerprint);
+      if (fingerprintId) {
+        const updated = await client
+          .from("listings")
+          .update(row)
+          .eq("id", fingerprintId)
+          .select("id")
+          .limit(1);
+        if (updated.error) throw new Error(`listings update by fingerprint failed: ${updated.error.message}`);
+        const id = (updated.data as Array<{ id: string }> | null)?.[0]?.id ?? fingerprintId;
+        return { id, inserted: false };
+      }
+    }
   }
 
   const upsert = await client
@@ -84,6 +121,46 @@ async function listingIdAfterUpsert(client: SupabaseClient, listing: CanonicalLi
   if (!id) throw new Error("listings upsert returned no id");
 
   return { id, inserted: !existed };
+}
+
+async function findByFingerprint(
+  client: SupabaseClient,
+  listing: CanonicalListing,
+  expectedFingerprint: string,
+): Promise<string | null> {
+  let query = client
+    .from("listings")
+    .select("id,year,model,vin,mileage,final_price,hammer_price,current_bid,city")
+    .eq("source", listing.source)
+    .eq("year", listing.year)
+    .eq("model", listing.model)
+    .limit(25);
+
+  if (listing.vin) {
+    query = query.eq("vin", listing.vin);
+  } else if (listing.city) {
+    query = query.eq("city", listing.city);
+  }
+
+  const result = await query;
+  if (result.error) throw new Error(`listings fingerprint check failed: ${result.error.message}`);
+  const rows = (result.data as ListingIdentityRow[] | null) ?? [];
+
+  for (const row of rows) {
+    const fingerprint = buildListingFingerprint({
+      year: row.year,
+      model: row.model,
+      vin: row.vin,
+      mileage: row.mileage,
+      final_price: row.final_price,
+      hammer_price: row.hammer_price,
+      current_bid: row.current_bid,
+      city: row.city,
+    });
+    if (fingerprint === expectedFingerprint) return row.id;
+  }
+
+  return null;
 }
 
 async function safeUpsert(
@@ -156,13 +233,15 @@ async function upsertChildTables(client: SupabaseClient, listingId: string, list
   await safeUpsert(client, "price_history", point, warnings, "listing_id,time");
 }
 
-export async function upsertCanonicalListing(listing: CanonicalListing, dryRun: boolean): Promise<WriteResult> {
+export async function upsertCanonicalListing(listing: CanonicalListing, dryRun: boolean, options: WriteOptions = {}): Promise<WriteResult> {
   if (dryRun) return { inserted: 0, updated: 0, warnings: [] };
   const client = createSupabase();
   const warnings: string[] = [];
 
-  const upserted = await listingIdAfterUpsert(client, listing);
-  await upsertChildTables(client, upserted.id, listing, warnings);
+  const upserted = await listingIdAfterUpsert(client, listing, options);
+  if (!options.listingsOnly) {
+    await upsertChildTables(client, upserted.id, listing, warnings);
+  }
 
   return {
     inserted: upserted.inserted ? 1 : 0,

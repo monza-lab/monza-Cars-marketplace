@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CanonicalListingSchema } from "./contracts/listing";
-import { dedupeListings } from "./services/dedupe";
+import { buildListingFingerprint, dedupeListings } from "./services/dedupe";
 import { normalizeRawListing } from "./services/normalize";
 
 describe("porsche_ingest normalize + dedupe", () => {
@@ -75,5 +75,58 @@ describe("porsche_ingest normalize + dedupe", () => {
     });
     const deduped = dedupeListings([a, a]);
     expect(deduped).toHaveLength(1);
+  });
+
+  it("maps AutoScout24 nested pricing and location fields", () => {
+    const out = normalizeRawListing({
+      source: "AutoScout24",
+      raw: {
+        id: "as24_1",
+        url: "https://www.autoscout24.com/offers/porsche-911-as24-1",
+        title: "2018 Porsche 911 Carrera",
+        brand: "Porsche",
+        model: "911",
+        attributes: {
+          Mileage: "54,300 km",
+          "First Registration": "01/2018",
+        },
+        price: {
+          total: {
+            amount: 102900,
+            currency: "EUR",
+          },
+        },
+        dealerDetails: {
+          addressStructured: {
+            countryCode: "DE",
+            city: "Berlin",
+          },
+        },
+        images: ["https://images.example.com/porsche.jpg"],
+      },
+    });
+
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.value.status).toBe("active");
+    expect(out.value.final_price).toBe(102900);
+    expect(out.value.currency).toBe("EUR");
+    expect(out.value.year).toBe(2018);
+    expect(out.value.country).toBe("DE");
+    expect(out.value.city).toBe("Berlin");
+  });
+
+  it("builds deterministic fallback fingerprint", () => {
+    const fingerprint = buildListingFingerprint({
+      year: 2017,
+      model: "911",
+      vin: null,
+      mileage: 50000,
+      final_price: 88000,
+      hammer_price: null,
+      current_bid: null,
+      city: "Munich",
+    });
+    expect(fingerprint).toBe("2017|911|50000|88000|munich");
   });
 });

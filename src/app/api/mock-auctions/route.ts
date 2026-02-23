@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   const sortOrder = searchParams.get("sortOrder") || "asc";
   const page = parseInt(searchParams.get("page") || "1");
   const parsedLimit = parseInt(searchParams.get("limit") || "24", 10);
-  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 200) : 24;
+  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 2000) : 24;
 
   const requestedMake = make && make !== "All Makes"
     ? normalizeSupportedMake(make)

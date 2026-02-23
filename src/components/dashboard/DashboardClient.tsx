@@ -97,6 +97,23 @@ type Auction = {
   category?: string
 }
 
+function normalizeAuctionPlatform(platform: string | null | undefined): string | null {
+  if (!platform) return null
+  const normalized = platform.toUpperCase().replace(/[^A-Z0-9]/g, "")
+
+  if (normalized === "BRINGATRAILER" || normalized === "BAT") return "BRING_A_TRAILER"
+  if (normalized === "AUTOSCOUT24") return "AUTO_SCOUT_24"
+  if (normalized === "CARSANDBIDS") return "CARS_AND_BIDS"
+  if (normalized === "COLLECTINGCARS") return "COLLECTING_CARS"
+
+  return platform.toUpperCase()
+}
+
+const REGION_TO_PLATFORM: Record<string, string> = {
+  US: "BRING_A_TRAILER",
+  EU: "AUTO_SCOUT_24",
+}
+
 const platformShort: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
   RM_SOTHEBYS: "RM",
@@ -104,6 +121,7 @@ const platformShort: Record<string, string> = {
   BONHAMS: "BON",
   CARS_AND_BIDS: "C&B",
   COLLECTING_CARS: "CC",
+  AUTO_SCOUT_24: "AS24",
 }
 
 // ─── UNIVERSAL MOCK DATA ───
@@ -2014,10 +2032,12 @@ export function DashboardClient({ auctions }: { auctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
 
-  // Filter auctions by region FIRST, then aggregate
+  // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
     if (!selectedRegion) return auctions
-    return auctions.filter(a => a.region === selectedRegion)
+    const targetPlatform = REGION_TO_PLATFORM[selectedRegion]
+    if (!targetPlatform) return auctions // Unknown region → show all
+    return auctions.filter((auction) => normalizeAuctionPlatform(auction.platform) === targetPlatform)
   }, [auctions, selectedRegion])
 
   // Aggregate filtered auctions into brands

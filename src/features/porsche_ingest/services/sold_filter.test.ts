@@ -44,4 +44,14 @@ describe("sold window filter", () => {
     const result = evaluateSoldWindow(listing, { soldOnly: true, soldWithinMonths: 12 });
     expect(result).toEqual({ keep: true });
   });
+
+  it("rejects missing explicit sale date in strict mode", () => {
+    const listing = {
+      ...baseListing(),
+      sale_date: null,
+      raw_payload: { auctionStatus: "ended", scrapedTimestamp: new Date().toISOString() },
+    };
+    const result = evaluateSoldWindow(listing, { soldOnly: true, soldWithinMonths: 12, strictSaleDate: true });
+    expect(result).toEqual({ keep: false, reason: "missing_sale_date" });
+  });
 });

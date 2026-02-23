@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)))
+    const limit = Math.min(2000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)))
 
     const requestedMake = normalizeSupportedMake(make)
     if (make && !requestedMake) {

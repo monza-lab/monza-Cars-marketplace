@@ -3,6 +3,7 @@ import type { CanonicalListing } from "../contracts/listing";
 type SoldWindowFilter = {
   soldOnly: boolean;
   soldWithinMonths?: number;
+  strictSaleDate?: boolean;
 };
 
 type SoldWindowResult =
@@ -35,6 +36,24 @@ function resolveSoldDate(listing: CanonicalListing): Date | null {
   return null;
 }
 
+function resolveExplicitSoldDate(listing: CanonicalListing): Date | null {
+  const raw = listing.raw_payload;
+  const candidates: unknown[] = [
+    listing.sale_date,
+    raw.sale_date,
+    raw.saleDate,
+    raw.endedAt,
+    raw.ended_at,
+    raw.soldAt,
+    raw.sold_at,
+  ];
+  for (const candidate of candidates) {
+    const parsed = parseDate(candidate);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 function isSoldOrEnded(listing: CanonicalListing): boolean {
   if (listing.status === "sold") return true;
   const rawStatus = String(
@@ -51,7 +70,7 @@ export function evaluateSoldWindow(listing: CanonicalListing, filter: SoldWindow
   }
 
   if (!filter.soldWithinMonths) return { keep: true };
-  const soldAt = resolveSoldDate(listing);
+  const soldAt = filter.strictSaleDate ? resolveExplicitSoldDate(listing) : resolveSoldDate(listing);
   if (!soldAt) return { keep: false, reason: "missing_sale_date" };
 
   const cutoff = new Date();
