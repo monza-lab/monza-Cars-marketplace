@@ -85,10 +85,10 @@ async function fetchAuctionsWithFallback(): Promise<HomeAuctionPayload> {
     : getLocalePrefixFromPathname(window.location.pathname);
 
   const candidates = [
-    `${localePrefix}/api/mock-auctions?limit=2000`,
-    "/api/mock-auctions?limit=2000",
-    `${localePrefix}/api/auctions?limit=2000`,
-    "/api/auctions?limit=2000",
+    `${localePrefix}/api/mock-auctions?limit=400`,
+    "/api/mock-auctions?limit=400",
+    `${localePrefix}/api/auctions?limit=400`,
+    "/api/auctions?limit=400",
   ];
 
   for (const endpoint of candidates) {

@@ -8,7 +8,14 @@ import {
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
-const MAKE_PAGE_LIVE_LIMIT = 600
+const MAKE_PAGE_GLOBAL_LIVE_LIMIT = 120
+const MAKE_PAGE_SOURCE_COUNT = 6
+
+function derivePerSourceLimit(globalLimit: number, sourceCount = MAKE_PAGE_SOURCE_COUNT): number {
+  const safeGlobalLimit = Number.isFinite(globalLimit) ? Math.max(1, Math.floor(globalLimit)) : 24
+  const safeSourceCount = Number.isFinite(sourceCount) ? Math.max(1, Math.floor(sourceCount)) : MAKE_PAGE_SOURCE_COUNT
+  return Math.max(1, Math.ceil(safeGlobalLimit / safeSourceCount))
+}
 
 interface MakePageProps {
   params: Promise<{ make: string }>
@@ -43,10 +50,12 @@ export default async function MakePage({ params }: MakePageProps) {
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
   const live = await fetchLiveListingsAsCollectorCars({
-    limit: MAKE_PAGE_LIVE_LIMIT,
+    // supabaseLiveListings treats `limit` as per-source budget when includeAllSources=true.
+    // Keep a global cap here to avoid oversized RSC payloads in production.
+    limit: derivePerSourceLimit(MAKE_PAGE_GLOBAL_LIVE_LIMIT),
     includePriceHistory: false,
     make: decodedMake,
-    status: "all",
+    status: "active",
     includeAllSources: true,
   })
   const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
