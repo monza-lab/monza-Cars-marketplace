@@ -1,0 +1,40 @@
+import { z } from "zod";
+
+export const CollectorModeSchema = z.enum(["daily", "backfill"] as const);
+export const SourceKeySchema = z.enum(["autotrader"] as const);
+
+export type CollectorMode = z.infer<typeof CollectorModeSchema>;
+export type SourceKey = z.infer<typeof SourceKeySchema>;
+
+export const CollectorConfigSchema = z.object({
+  checkpointPath: z.string().url(),
+  mode: CollectorModeSchema,
+  autoTrader: z.object({
+    baseUrl: z.string().url(),
+    searchParams: z.record(z.string()),
+    headers: z.record(z.string()),
+  }),
+  supabase: z.object({
+    connectionString: z.string(),
+    table: z.string(),
+  }),
+});
+
+export type CollectorConfig = z.infer<typeof CollectorConfigSchema>;
+
+export const AutoTraderListingSchema = z.object({
+  id: z.string(),
+  url: z.string().url(),
+  title: z.string(),
+  make: z.string(),
+  model: z.string(),
+  year: z.number().int(),
+  price: z.number().nonnegative(),
+  mileage: z.number().int().nonnegative(),
+  location: z.string(),
+  description: z.string().nullable(),
+  images: z.array(z.string().url()),
+  listedAt: z.string().datetime(),
+});
+
+export type AutoTraderListing = z.infer<typeof AutoTraderListingSchema>;

@@ -42,6 +42,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.autoscout24.be" },
       // Other platforms
       { protocol: "https", hostname: "image-cdn.beforward.jp" },
+      { protocol: "https", hostname: "m.atcdn.co.uk" },
     ],
   },
   outputFileTracingExcludes: {

@@ -8,6 +8,8 @@ import {
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
+const MAKE_PAGE_LIVE_LIMIT = 600
+
 interface MakePageProps {
   params: Promise<{ make: string }>
 }
@@ -15,31 +17,14 @@ interface MakePageProps {
 export async function generateMetadata({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
-
-  const curated = CURATED_CARS.filter(
+  const curated = CURATED_CARS.find(
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
-  const live = await fetchLiveListingsAsCollectorCars({
-    limit: 0,
-    includePriceHistory: false,
-    make: decodedMake,
-    status: "all",
-    includeAllSources: true,
-  })
-  const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
-  const cars = [...curated, ...liveMake]
-
-  if (cars.length === 0) {
-    return { title: "Not Found | Monza Lab" }
-  }
-
-  const makeName = cars[0].make
-  const totalValue = cars.reduce((sum, c) => sum + c.currentBid, 0)
-  const avgAppreciation = cars.reduce((sum, c) => sum + c.trendValue, 0) / cars.length
+  const makeName = curated?.make ?? decodedMake
 
   return {
     title: `${makeName} Collection | Monza Lab`,
-    description: `Explore ${cars.length} investment-grade ${makeName} vehicles. Total market value $${(totalValue / 1_000_000).toFixed(1)}M with +${avgAppreciation.toFixed(0)}% average annual appreciation.`,
+    description: `Explore investment-grade ${makeName} vehicles with live and historical collector-market insights.`,
   }
 }
 
@@ -58,7 +43,7 @@ export default async function MakePage({ params }: MakePageProps) {
     car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
   )
   const live = await fetchLiveListingsAsCollectorCars({
-    limit: 0,
+    limit: MAKE_PAGE_LIVE_LIMIT,
     includePriceHistory: false,
     make: decodedMake,
     status: "all",

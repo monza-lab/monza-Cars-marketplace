@@ -13,6 +13,14 @@ import {
 import { fetchLiveListingAggregateCounts, fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
 
+const CANONICAL_SOURCE_COUNT = 6;
+
+export function derivePerSourceLimit(globalLimit: number, sourceCount = CANONICAL_SOURCE_COUNT): number {
+  const safeGlobalLimit = Number.isFinite(globalLimit) ? Math.max(1, Math.floor(globalLimit)) : 24;
+  const safeSourceCount = Number.isFinite(sourceCount) ? Math.max(1, Math.floor(sourceCount)) : CANONICAL_SOURCE_COUNT;
+  return Math.max(1, Math.ceil(safeGlobalLimit / safeSourceCount));
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
@@ -29,6 +37,7 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const parsedLimit = parseInt(searchParams.get("limit") || "24", 10);
   const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 2000) : 24;
+  const perSourceLimit = derivePerSourceLimit(limit);
 
   const requestedMake = make && make !== "All Makes"
     ? normalizeSupportedMake(make)
@@ -46,9 +55,10 @@ export async function GET(request: NextRequest) {
 
   const [live, aggregates] = await Promise.all([
     fetchLiveListingsAsCollectorCars({
-      limit,
+      limit: perSourceLimit,
       includePriceHistory: false,
       make: requestedMake,
+      includeAllSources: true,
     }),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
   ]);

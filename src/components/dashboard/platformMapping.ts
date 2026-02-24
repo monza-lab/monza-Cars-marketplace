@@ -4,6 +4,8 @@ export function normalizeAuctionPlatform(platform: string | null | undefined): s
 
   if (normalized === "BRINGATRAILER" || normalized === "BAT") return "BRING_A_TRAILER";
   if (normalized === "AUTOSCOUT24") return "AUTO_SCOUT_24";
+  if (normalized === "AUTOTRADER") return "AUTO_TRADER";
+  if (normalized === "BEFORWARD") return "BE_FORWARD";
   if (normalized === "CARSANDBIDS") return "CARS_AND_BIDS";
   if (normalized === "COLLECTINGCARS") return "COLLECTING_CARS";
 
@@ -13,6 +15,8 @@ export function normalizeAuctionPlatform(platform: string | null | undefined): s
 export const REGION_TO_PLATFORM: Record<string, string> = {
   US: "BRING_A_TRAILER",
   EU: "AUTO_SCOUT_24",
+  UK: "AUTO_TRADER",
+  JP: "BE_FORWARD",
 };
 
 export function filterAuctionsForRegion<T extends { platform: string | null | undefined }>(
@@ -24,10 +28,5 @@ export function filterAuctionsForRegion<T extends { platform: string | null | un
   const targetPlatform = REGION_TO_PLATFORM[selectedRegion];
   if (!targetPlatform) return auctions;
 
-  const regionAuctions = auctions.filter((auction) => normalizeAuctionPlatform(auction.platform) === targetPlatform);
-  if (regionAuctions.length === 0 && auctions.length > 0) {
-    return auctions;
-  }
-
-  return regionAuctions;
+  return auctions.filter((auction) => normalizeAuctionPlatform(auction.platform) === targetPlatform);
 }

@@ -114,6 +114,8 @@ const platformShort: Record<string, string> = {
   CARS_AND_BIDS: "C&B",
   COLLECTING_CARS: "CC",
   AUTO_SCOUT_24: "AS24",
+  AUTO_TRADER: "AT",
+  BE_FORWARD: "BF",
 }
 
 // ─── UNIVERSAL MOCK DATA ───

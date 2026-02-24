@@ -13,7 +13,6 @@ import {
   resolveRequestedMake,
   type SupportedLiveMake,
 } from "./makeProfiles";
-import { getModelImage } from "./modelImages";
 
 // ─── Row types ───
 
@@ -98,6 +97,8 @@ const SELECT_NARROW =
 const SOURCE_ALIASES = {
   BaT: ["BaT", "BAT", "bat", "BringATrailer", "BRING_A_TRAILER", "bringatrailer"],
   AutoScout24: ["AutoScout24", "AUTOSCOUT24", "autoscout24", "AUTO_SCOUT_24", "AutoScout"],
+  AutoTrader: ["AutoTrader", "AUTOTRADER", "auto_trader", "AUTO_TRADER"],
+  BeForward: ["BeForward", "BEFORWARD", "be_forward", "BE_FORWARD"],
   CarsAndBids: ["CarsAndBids", "CARS_AND_BIDS", "carsandbids"],
   CollectingCars: ["CollectingCars", "COLLECTING_CARS", "collectingcars"],
 } as const;
@@ -105,6 +106,8 @@ const SOURCE_ALIASES = {
 const PLATFORM_ALIASES = {
   BaT: ["BRING_A_TRAILER", "BRINGATRAILER", "BAT"],
   AutoScout24: ["AUTO_SCOUT_24", "AUTOSCOUT24", "AUTOSCOUT"],
+  AutoTrader: ["AUTO_TRADER", "AUTOTRADER"],
+  BeForward: ["BE_FORWARD", "BEFORWARD"],
 } as const;
 
 const LIVE_STATUS_ALIASES = [
@@ -118,7 +121,109 @@ const LIVE_STATUS_ALIASES = [
 
 export const LIVE_DB_STATUS_VALUES = ["active"] as const;
 
-type CanonicalSource = "BaT" | "AutoScout24" | "CarsAndBids" | "CollectingCars";
+type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars";
+
+const ALLOWED_IMAGE_HOSTS = [
+  "bringatrailer.com",
+  "wp.com",
+  "carsandbids.com",
+  "collectingcars.com",
+  "media.carsandbids.com",
+  "images.unsplash.com",
+  "source.unsplash.com",
+  "upload.wikimedia.org",
+  "wikimedia.org",
+  "commons.wikimedia.org",
+  "picsum.photos",
+  "fastly.picsum.photos",
+  "rmsothebys.com",
+  "autoscout24.net",
+  "autoscout24.com",
+  "autoscout24.de",
+  "autoscout24.ch",
+  "autoscout24.it",
+  "autoscout24.fr",
+  "autoscout24.nl",
+  "autoscout24.es",
+  "autoscout24.at",
+  "autoscout24.be",
+  "image-cdn.beforward.jp",
+  "m.atcdn.co.uk",
+] as const;
+
+function isAllowedImageHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return ALLOWED_IMAGE_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
+
+function isAutoTraderCdnHost(hostname: string): boolean {
+  return hostname.toLowerCase().endsWith("atcdn.co.uk");
+}
+
+function decodeForTokenScan(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function normalizeAutoTraderResizePathname(pathname: string): string {
+  return pathname
+    .replace(/\/(?:\{resize\}|%7Bresize%7D)(?=\/|$)/gi, "")
+    .replace(/\/+/g, "/");
+}
+
+export function normalizeListingImageUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+
+  let candidate = trimmed;
+  if (candidate.startsWith("//")) candidate = `https:${candidate}`;
+  else if (candidate.startsWith("http://")) candidate = `https://${candidate.slice("http://".length)}`;
+  else if (!candidate.startsWith("https://")) candidate = `https://${candidate}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== "https:") return null;
+  if (!isAllowedImageHost(parsed.hostname)) return null;
+
+  const decodedBeforeNormalization = decodeForTokenScan(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+  if (decodedBeforeNormalization.includes("{") || decodedBeforeNormalization.includes("}")) {
+    if (!isAutoTraderCdnHost(parsed.hostname)) return null;
+
+    const tokens = decodedBeforeNormalization.match(/\{[^}]*\}/g) ?? [];
+    if (tokens.length === 0 || tokens.some((token) => token.toLowerCase() !== "{resize}")) {
+      return null;
+    }
+
+    parsed.pathname = normalizeAutoTraderResizePathname(parsed.pathname);
+
+    const decodedAfterNormalization = decodeForTokenScan(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+    if (decodedAfterNormalization.includes("{") || decodedAfterNormalization.includes("}")) {
+      return null;
+    }
+  }
+
+  return parsed.toString();
+}
+
+export const LISTING_IMAGE_PLACEHOLDER = "/cars/placeholder.svg";
+
+export function resolveListingImages(images: readonly unknown[] | null | undefined): string[] {
+  const normalized = (images ?? [])
+    .map(normalizeListingImageUrl)
+    .filter((url): url is string => url !== null);
+
+  return normalized.length > 0 ? normalized : [LISTING_IMAGE_PLACEHOLDER];
+}
 
 function normalizeToken(value: string | null | undefined): string {
   return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -130,11 +235,15 @@ export function resolveCanonicalSource(source: string | null | undefined, platfo
 
   if (SOURCE_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "BaT";
   if (SOURCE_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "AutoScout24";
+  if (SOURCE_ALIASES.AutoTrader.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "AutoTrader";
+  if (SOURCE_ALIASES.BeForward.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "BeForward";
   if (SOURCE_ALIASES.CarsAndBids.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CarsAndBids";
   if (SOURCE_ALIASES.CollectingCars.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CollectingCars";
 
   if (PLATFORM_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BaT";
   if (PLATFORM_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoScout24";
+  if (PLATFORM_ALIASES.AutoTrader.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoTrader";
+  if (PLATFORM_ALIASES.BeForward.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BeForward";
 
   return null;
 }
@@ -151,6 +260,10 @@ function mapPlatform(source: string, platform: string | null): Platform {
       return "COLLECTING_CARS";
     case "AutoScout24":
       return "AUTO_SCOUT_24";
+    case "AutoTrader":
+      return "AUTO_TRADER";
+    case "BeForward":
+      return "BE_FORWARD";
     default:
       return "BRING_A_TRAILER";
   }
@@ -211,6 +324,10 @@ function auctionHouseLabel(source: string): string {
       return "Cars & Bids";
     case "CollectingCars":
       return "Collecting Cars";
+    case "AutoTrader":
+      return "Auto Trader";
+    case "BeForward":
+      return "Be Forward";
     default:
       return source;
   }
@@ -265,23 +382,13 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
   const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
 
   // Prefer direct images column; fall back to photos_media join
-  const formatImageUrl = (u: unknown): string | null => {
-    if (typeof u !== "string" || u.length === 0) return null;
-    let cleanUrl = u.trim();
-    if (cleanUrl.startsWith("//")) cleanUrl = `https:${cleanUrl}`;
-    else if (cleanUrl.startsWith("http://")) cleanUrl = cleanUrl.replace("http://", "https://");
-    else if (!cleanUrl.startsWith("https://")) cleanUrl = `https://${cleanUrl}`;
-    return cleanUrl;
-  };
-
-  const directImages = (row.images ?? []).map(formatImageUrl).filter((u): u is string => u !== null);
+  const directImages = (row.images ?? []).map(normalizeListingImageUrl).filter((u): u is string => u !== null);
   const joinedPhotos = (row.photos_media ?? [])
     .map((p) => p.photo_url)
-    .map(formatImageUrl)
+    .map(normalizeListingImageUrl)
     .filter((u): u is string => u !== null);
   const photos = directImages.length > 0 ? directImages : joinedPhotos;
-  const modelFallbackImage = getModelImage(row.make, row.model) ?? "/cars/placeholder.svg";
-  const resolvedImages = photos.length > 0 ? photos : [modelFallbackImage];
+  const resolvedImages = resolveListingImages(photos);
 
   // Prefer direct location column; fall back to city/region/country parts
   const location = row.location
@@ -312,6 +419,10 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     ? "BRING_A_TRAILER"
     : normalizedPlatform === "AUTOSCOUT24"
       ? "AUTO_SCOUT_24"
+      : normalizedPlatform === "AUTOTRADER"
+        ? "AUTO_TRADER"
+        : normalizedPlatform === "BEFORWARD"
+          ? "BE_FORWARD"
       : normalizedPlatform === "CARSANDBIDS"
         ? "CARS_AND_BIDS"
         : normalizedPlatform === "COLLECTINGCARS"
@@ -396,7 +507,7 @@ function computeTrend(
 
 // Default sources for lightweight live listing views.
 const DEFAULT_QUERY_SOURCES = ["BaT", "AutoScout24"] as const;
-const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "CarsAndBids", "CollectingCars"] as const;
+const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "AutoTrader", "BeForward", "CarsAndBids", "CollectingCars"] as const;
 
 export type LiveListingRegionTotals = {
   all: number;
@@ -435,11 +546,13 @@ async function countListingsByQuery(query: PromiseLike<{ count: number | null; e
 
 async function countLiveListingsForCanonicalSource(
   supabase: SupabaseClient,
-  source: (typeof DEFAULT_QUERY_SOURCES)[number],
+  source: CanonicalSource,
   targetMake: SupportedLiveMake,
 ): Promise<number> {
   const sourceAliases = SOURCE_ALIASES[source] ?? [source];
-  const platformAliases = PLATFORM_ALIASES[source] ?? [];
+  const platformAliases = source in PLATFORM_ALIASES
+    ? PLATFORM_ALIASES[source as keyof typeof PLATFORM_ALIASES]
+    : [];
 
   let query = supabase
     .from("listings")
@@ -485,6 +598,8 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
 
     const usPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
     const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
+    const ukPromise = countLiveListingsForCanonicalSource(supabase, "AutoTrader", targetMake);
+    const jpPromise = countLiveListingsForCanonicalSource(supabase, "BeForward", targetMake);
 
     const locationUsPromise = countListingsByQuery(
       supabase
@@ -511,10 +626,12 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
         .in("country", ["JAPAN"])
     );
 
-    const [total, us, eu, locationUs, locationUk, locationJp] = await Promise.all([
+    const [total, us, eu, uk, jp, locationUs, locationUk, locationJp] = await Promise.all([
       totalPromise,
       usPromise,
       euPromise,
+      ukPromise,
+      jpPromise,
       locationUsPromise,
       locationUkPromise,
       locationJpPromise,
@@ -528,9 +645,8 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
         all: total,
         US: us,
         EU: eu,
-        // Keep aligned with current region-tab fallback behavior in UI mapping.
-        UK: total,
-        JP: total,
+        UK: uk,
+        JP: jp,
       },
       regionTotalsByLocation: {
         all: total,
