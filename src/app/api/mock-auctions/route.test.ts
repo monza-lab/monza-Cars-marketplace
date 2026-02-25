@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { derivePerSourceLimit } from "./route";
+import { derivePerSourceLimit } from "./limits";
 
 describe("mock-auctions derivePerSourceLimit", () => {
   it("splits a global limit across all canonical sources", () => {

@@ -67,6 +67,18 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
     color: "#22c55e",
     market: "EU"
   },
+  AUTO_TRADER: {
+    label: "Auto Trader",
+    shortLabel: "AT",
+    color: "#38bdf8",
+    market: "UK"
+  },
+  BE_FORWARD: {
+    label: "Be Forward",
+    shortLabel: "BF",
+    color: "#f97316",
+    market: "JP"
+  },
   RM_SOTHEBYS: {
     label: "RM Sotheby's",
     shortLabel: "RM",
@@ -294,6 +306,9 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
 
   const platformOrder: Platform[] = [
     "BRING_A_TRAILER",
+    "AUTO_TRADER",
+    "BE_FORWARD",
+    "AUTO_SCOUT_24",
     "CARS_AND_BIDS",
     "COLLECTING_CARS",
     "RM_SOTHEBYS",
