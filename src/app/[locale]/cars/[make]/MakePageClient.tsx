@@ -38,7 +38,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { getModelImage } from "@/lib/modelImages"
 import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
-import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant } from "@/lib/brandConfig"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -2723,6 +2723,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const [viewMode, setViewMode] = useState<'families' | 'generations' | 'cars'>(initialFamily ? 'cars' : 'families')
   const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(initialFamily || null)
   const [selectedGeneration, setSelectedGeneration] = useState<string | null>(initialGen || null)
+  const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(null)
   const feedRef = useRef<HTMLDivElement>(null)
 
   // Filter cars by region first, then aggregate into models
@@ -2852,6 +2853,13 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       })
     }
 
+    if (activeFilters.bodyTypes && activeFilters.bodyTypes.length > 0) {
+      result = result.filter(car => {
+        const bt = deriveBodyType(car.model, car.trim, car.category, car.make, car.year)
+        return activeFilters.bodyTypes!.includes(bt)
+      })
+    }
+
     if (activeFilters.colors && activeFilters.colors.length > 0) {
       result = result.filter(car => {
         if (!car.exteriorColor) return false
@@ -2886,6 +2894,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const handleFamilyClick = (familyName: string) => {
     setSelectedFamilyForFeed(familyName)
     setSelectedGeneration(null)
+    setSelectedVariantChip(null)
     setViewMode('generations')
     setActiveFilters(null)
     setActiveGenIndex(0)
@@ -2898,6 +2907,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   // Handler: Click en generación → Mostrar carros de esa generación
   const handleGenerationClick = (genId: string) => {
     setSelectedGeneration(genId)
+    setSelectedVariantChip(null)
     setViewMode('cars')
     setActiveFilters(null)
     setActiveCarIndex(0)
@@ -2914,6 +2924,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       return
     }
     setSelectedGeneration(null)
+    setSelectedVariantChip(null)
     setViewMode('generations')
     setActiveFilters(null)
     setActiveGenIndex(0)
@@ -3198,6 +3209,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       })
     }
 
+    // Body type filter
+    if (activeFilters.bodyTypes && activeFilters.bodyTypes.length > 0) {
+      result = result.filter(car => {
+        const bt = deriveBodyType(car.model, car.trim, car.category, car.make, car.year)
+        return activeFilters.bodyTypes!.includes(bt)
+      })
+    }
+
     // Color filter
     if (activeFilters.colors && activeFilters.colors.length > 0) {
       result = result.filter(car => {
@@ -3225,6 +3244,32 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     return result
   }, [familyCarsForFeed, activeFilters])
 
+  // Variant chips — compute available variants with counts from filteredFeedCars
+  const availableVariants = useMemo(() => {
+    if (!selectedGeneration && !selectedFamilyForFeed) return []
+    const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+    const variants = getSeriesVariants(seriesId.toLowerCase(), make)
+    if (variants.length === 0) return []
+    const counts = new Map<string, number>()
+    for (const car of filteredFeedCars) {
+      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+      if (vid) counts.set(vid, (counts.get(vid) || 0) + 1)
+    }
+    return variants
+      .map(v => ({ id: v.id, label: v.label, count: counts.get(v.id) || 0 }))
+      .filter(v => v.count > 0)
+  }, [filteredFeedCars, selectedGeneration, selectedFamilyForFeed, make])
+
+  // Apply variant chip filter on top of filteredFeedCars
+  const variantFilteredFeedCars = useMemo(() => {
+    if (!selectedVariantChip) return filteredFeedCars
+    const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+    return filteredFeedCars.filter(car => {
+      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+      return vid === selectedVariantChip
+    })
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make])
+
   // Scroll sync for center feed — tracks position in whichever list is showing
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
   const [activeGenIndex, setActiveGenIndex] = useState(0)
@@ -3244,14 +3289,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
           setActiveGenIndex(newIndex)
         }
       } else if (viewMode === 'cars') {
-        if (newIndex !== activeCarIndex && newIndex >= 0 && newIndex < filteredFeedCars.length) {
+        if (newIndex !== activeCarIndex && newIndex >= 0 && newIndex < variantFilteredFeedCars.length) {
           setActiveCarIndex(newIndex)
         }
       }
     }
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
-  }, [viewMode, currentModelIndex, filteredModels.length, activeGenIndex, familyGenerations.length, activeCarIndex, filteredFeedCars.length])
+  }, [viewMode, currentModelIndex, filteredModels.length, activeGenIndex, familyGenerations.length, activeCarIndex, variantFilteredFeedCars.length])
 
   const scrollToModel = (index: number) => {
     const container = feedRef.current
@@ -3503,6 +3548,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                         priceRange: advFilters.priceRange,
                         mileageRanges: advFilters.mileageRanges,
                         transmissions: advFilters.transmissions,
+                        bodyTypes: advFilters.bodyTypes,
                         colors: advFilters.colors,
                         statuses: advFilters.statuses,
                         grades: advFilters.grades,
@@ -3597,7 +3643,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {viewMode === 'cars' ? (
               // MODE: Viewing specific generation's cars (feed style)
               <>
-                {/* Back navigation */}
+                {/* Back navigation + variant chips */}
                 <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-3">
                   <button
                     onClick={handleBackToGenerations}
@@ -3608,8 +3654,35 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                       {selectedFamilyForFeed} {selectedGeneration ? `/ ${selectedGeneration.toUpperCase()}` : ""}
                     </span>
                   </button>
+                  {availableVariants.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <button
+                        onClick={() => setSelectedVariantChip(null)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${
+                          !selectedVariantChip
+                            ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        All ({filteredFeedCars.length})
+                      </button>
+                      {availableVariants.map(v => (
+                        <button
+                          key={v.id}
+                          onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
+                          className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${
+                            selectedVariantChip === v.id
+                              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                              : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                          }`}
+                        >
+                          {v.label} ({v.count})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {filteredFeedCars.length === 0 ? (
+                {variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-[#4B5563] mb-4" />
                     <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No hay carros</h3>
@@ -3624,7 +3697,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </button>
                   </div>
                 ) : (
-                  filteredFeedCars.map((car) => (
+                  variantFilteredFeedCars.map((car) => (
                     <CarFeedCard key={car.id} car={car} make={make} />
                   ))
                 )}
@@ -3736,10 +3809,10 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 familyCars={regionFilteredCars.filter(car => extractFamily(car.model, car.year, make) === selectedFamilyForFeed)}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
               />
-            ) : viewMode === 'cars' && filteredFeedCars[activeCarIndex] ? (
+            ) : viewMode === 'cars' && variantFilteredFeedCars[activeCarIndex] ? (
               <CarContextPanel
-                key={filteredFeedCars[activeCarIndex].id}
-                car={filteredFeedCars[activeCarIndex]}
+                key={variantFilteredFeedCars[activeCarIndex].id}
+                car={variantFilteredFeedCars[activeCarIndex]}
                 make={make}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
               />

@@ -5,6 +5,24 @@
 
 // ─── TYPES ───
 
+export interface VariantConfig {
+  id: string
+  label: string
+  keywords: string[]
+}
+
+export type BodyType = "Coupe" | "Convertible" | "Targa" | "Speedster" | "SUV" | "Sedan" | "Wagon" | "Unknown"
+
+export const BODY_TYPE_OPTIONS: { id: BodyType; label: string }[] = [
+  { id: "Coupe",       label: "Coupe" },
+  { id: "Convertible", label: "Convertible" },
+  { id: "Targa",       label: "Targa" },
+  { id: "Speedster",   label: "Speedster" },
+  { id: "SUV",         label: "SUV" },
+  { id: "Sedan",       label: "Sedan" },
+  { id: "Wagon",       label: "Sport Turismo" },
+]
+
 export interface SeriesConfig {
   id: string
   label: string
@@ -15,6 +33,7 @@ export interface SeriesConfig {
   yearFallback?: [number, number] // for ambiguous models (e.g. "911 Carrera"), use year to match
   turboOnly?: boolean      // only match if model also contains "turbo" (for 930)
   thesis: string
+  variants?: VariantConfig[]
 }
 
 export interface FamilyGroup {
@@ -47,6 +66,20 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["992"],
     yearFallback: [2019, 2026],
     thesis: "The 992 is the current-generation 911. GT3 and GT3 RS are instant collectibles. Turbo S offers hypercar performance. Sport Classic and S/T are limited-edition highlights commanding strong premiums.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
+      { id: "4s", label: "4S", keywords: ["4s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "turbo-s", label: "Turbo S", keywords: ["turbo s"] },
+      { id: "gt3", label: "GT3", keywords: ["gt3"] },
+      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs", "gt3rs"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+      { id: "sport-classic", label: "Sport Classic", keywords: ["sport classic"] },
+      { id: "st", label: "S/T", keywords: ["s/t"] },
+      { id: "dakar", label: "Dakar", keywords: ["dakar"] },
+    ],
   },
   {
     id: "991",
@@ -57,6 +90,19 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["991"],
     yearFallback: [2012, 2019],
     thesis: "The 991 introduced turbocharging to the base 911. GT3 RS (4.0L NA flat-six) and 911 R are the collector standouts. 991.1 GT3 manuals are particularly prized. The last generation before full digital dash.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "turbo-s", label: "Turbo S", keywords: ["turbo s"] },
+      { id: "gt3", label: "GT3", keywords: ["gt3"] },
+      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs"] },
+      { id: "gt2-rs", label: "GT2 RS", keywords: ["gt2 rs"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
+      { id: "911-r", label: "911 R", keywords: ["911 r", "911r"] },
+    ],
   },
   {
     id: "997",
@@ -67,6 +113,17 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["997"],
     yearFallback: [2005, 2012],
     thesis: "The 997 returned to round headlights and refined the 911 formula. GT3 RS 4.0 is the crown jewel. GT2 RS is the most powerful. 997.2 models benefit from the improved DFI engine. Strong collector demand across all variants.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "gt3", label: "GT3", keywords: ["gt3"] },
+      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs"] },
+      { id: "gt2", label: "GT2", keywords: ["gt2"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
+    ],
   },
   {
     id: "996",
@@ -77,6 +134,14 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["996"],
     yearFallback: [1998, 2005],
     thesis: "The 996 was the first water-cooled 911 — controversial but undervalued. GT3 and GT2 variants are highly collectible. Turbo models offer incredible value. The 996 is the entry point for modern 911 collecting.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "gt3", label: "GT3", keywords: ["gt3"] },
+      { id: "gt2", label: "GT2", keywords: ["gt2"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+      { id: "4s", label: "4S", keywords: ["4s"] },
+    ],
   },
   {
     id: "993",
@@ -87,6 +152,15 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["993"],
     yearFallback: [1994, 1998],
     thesis: "The 993 is the last air-cooled 911 and the most sought-after modern Porsche. Turbo, GT2, and RS models command top dollar. Carrera S and 4S are strong performers. Every variant is collectible.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
+      { id: "4s", label: "4S", keywords: ["4s"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "gt2", label: "GT2", keywords: ["gt2"] },
+      { id: "rs", label: "RS", keywords: [" rs"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+    ],
   },
   {
     id: "964",
@@ -97,6 +171,14 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["964"],
     yearFallback: [1989, 1994],
     thesis: "The 964 modernized the 911 with coil springs and ABS while retaining air-cooled character. RS and RS America are trophy assets. Turbo 3.6 is a powerhouse. Clean Carrera 4 and Carrera 2 examples are rising fast.",
+    variants: [
+      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "rs", label: "RS", keywords: [" rs"] },
+      { id: "rs-america", label: "RS America", keywords: ["rs america"] },
+      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
+      { id: "targa", label: "Targa", keywords: ["targa"] },
+    ],
   },
   {
     id: "930",
@@ -176,6 +258,13 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 14,
     keywords: ["718 cayman"],
     thesis: "Modern mid-engine Porsche carrying the historic 718 name. GT4 RS is the standout collector variant with the 4.0L GT3 engine. Base four-cylinder turbos are driver-focused but less collectible.",
+    variants: [
+      { id: "base", label: "Base", keywords: ["cayman"] },
+      { id: "s", label: "S", keywords: ["cayman s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "gt4", label: "GT4", keywords: ["gt4"] },
+      { id: "gt4-rs", label: "GT4 RS", keywords: ["gt4 rs"] },
+    ],
   },
   {
     id: "718-boxster",
@@ -185,6 +274,12 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 15,
     keywords: ["718 boxster"],
     thesis: "The 718 Boxster Spyder with the 4.0L flat-six is the collector pick. GTS 4.0 offers similar thrills at a lower price. The flat-four base models are focused on driving experience.",
+    variants: [
+      { id: "base", label: "Base", keywords: ["boxster"] },
+      { id: "s", label: "S", keywords: ["boxster s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "spyder", label: "Spyder", keywords: ["spyder"] },
+    ],
   },
   {
     id: "cayman",
@@ -272,6 +367,15 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 24,
     keywords: ["cayenne"],
     thesis: "The Cayenne saved Porsche financially and became the benchmark performance SUV. Turbo GT variants push supercar performance. High liquidity and broad appeal.",
+    variants: [
+      { id: "base", label: "Base", keywords: ["cayenne"] },
+      { id: "s", label: "S", keywords: ["cayenne s"] },
+      { id: "gts", label: "GTS", keywords: ["gts"] },
+      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
+      { id: "turbo-gt", label: "Turbo GT", keywords: ["turbo gt"] },
+      { id: "coupe", label: "Coupe", keywords: ["coupe", "coupé"] },
+      { id: "e-hybrid", label: "E-Hybrid", keywords: ["e-hybrid", "hybrid"] },
+    ],
   },
   {
     id: "macan",
@@ -470,4 +574,77 @@ export function getOwnershipCosts(make: string, scaleFactor = 1): { insurance: n
 export function getMarketDepth(make: string) {
   const config = getBrandConfig(make)
   return config?.marketDepth || { auctionsPerYear: 80, avgDaysToSell: 20, sellThroughRate: 78, demandScore: 7 }
+}
+
+// ─── BODY TYPE DERIVATION ───
+
+const BODY_TYPE_RULES: { type: BodyType; keywords: string[] }[] = [
+  { type: "Targa",       keywords: ["targa"] },
+  { type: "Speedster",   keywords: ["speedster", "spyder"] },
+  { type: "Convertible", keywords: ["cabriolet", "convertible", "cabrio", "roadster", "drop top"] },
+  { type: "Wagon",       keywords: ["sport turismo", "cross turismo", "shooting brake", "wagon"] },
+  { type: "SUV",         keywords: ["cayenne", "macan"] },
+  { type: "Sedan",       keywords: ["panamera", "taycan"] },
+  { type: "Coupe",       keywords: ["coupe", "coupé"] },
+]
+
+/**
+ * Derive body type from model/trim/category strings.
+ * Priority: keyword match → series family fallback → Unknown.
+ */
+export function deriveBodyType(model: string, trim: string | null, category: string | undefined, make: string, year?: number): BodyType {
+  const searchText = [model, trim, category].filter(Boolean).join(" ").toLowerCase()
+
+  for (const rule of BODY_TYPE_RULES) {
+    if (rule.keywords.some(kw => searchText.includes(kw))) {
+      return rule.type
+    }
+  }
+
+  // Fallback: infer from series family
+  const seriesId = extractSeries(model, year || 0, make)
+  const config = getBrandConfig(make)
+  if (config) {
+    const series = config.series.find(s => s.id === seriesId)
+    if (series) {
+      if (["cayenne", "macan"].includes(series.id)) return "SUV"
+      if (["panamera", "taycan"].includes(series.id)) return "Sedan"
+      if (series.id.includes("boxster")) return "Convertible"
+      if (["911 Family", "Transaxle Classics", "GT & Hypercars", "Heritage", "Mid-Engine"].includes(series.family)) return "Coupe"
+    }
+  }
+  return "Unknown"
+}
+
+// ─── VARIANT HELPERS ───
+
+/**
+ * Get variants for a given series.
+ */
+export function getSeriesVariants(seriesId: string, make: string): VariantConfig[] {
+  const series = getSeriesConfig(seriesId, make)
+  return series?.variants || []
+}
+
+/**
+ * Match a car to a variant within its series.
+ * Returns the variant ID, or null if no match.
+ */
+export function matchVariant(model: string, trim: string | null, seriesId: string, make: string): string | null {
+  const variants = getSeriesVariants(seriesId, make)
+  if (variants.length === 0) return null
+
+  const searchText = [model, trim].filter(Boolean).join(" ").toLowerCase()
+
+  // Sort by longest keyword first (most specific match wins)
+  const sorted = [...variants].sort(
+    (a, b) => Math.max(...b.keywords.map(k => k.length)) - Math.max(...a.keywords.map(k => k.length))
+  )
+
+  for (const variant of sorted) {
+    if (variant.keywords.some(kw => searchText.includes(kw.toLowerCase()))) {
+      return variant.id
+    }
+  }
+  return null
 }

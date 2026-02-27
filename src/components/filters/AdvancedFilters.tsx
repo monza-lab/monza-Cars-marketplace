@@ -9,15 +9,18 @@ import {
   Cog,
   Palette,
   Award,
+  Car,
   X,
   ChevronDown,
 } from "lucide-react"
+import { BODY_TYPE_OPTIONS } from "@/lib/brandConfig"
 
 export type AdvancedFilterValues = {
   priceRange: [number, number] | null
   yearRange: [number, number] | null
   mileageRanges: string[] // ["0-10k", "10k-50k", "50k-100k", "100k+"]
   transmissions: string[] // ["Manual", "Automatic"]
+  bodyTypes: string[]     // ["Coupe", "Convertible", "Targa", etc.]
   colors: string[]
   statuses: string[] // ["ACTIVE", "ENDING_SOON", "ENDED"]
   grades: string[] // ["AAA", "AA", "A"]
@@ -82,6 +85,7 @@ export function AdvancedFilters({
   const [selectedTransmissions, setSelectedTransmissions] = useState<string[]>([])
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+  const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([])
   const [selectedGrades, setSelectedGrades] = useState<string[]>([])
   const onFiltersChangeRef = useRef(onFiltersChange)
   onFiltersChangeRef.current = onFiltersChange
@@ -94,12 +98,13 @@ export function AdvancedFilters({
         yearRange: yearRange[0] === minYear && yearRange[1] === maxYear ? null : yearRange,
         mileageRanges: selectedMileage,
         transmissions: selectedTransmissions,
+        bodyTypes: selectedBodyTypes,
         colors: selectedColors,
         statuses: selectedStatuses,
         grades: selectedGrades,
       })
     }
-  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedColors, selectedStatuses, selectedGrades, minPrice, maxPrice, minYear, maxYear])
+  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedBodyTypes, selectedColors, selectedStatuses, selectedGrades, minPrice, maxPrice, minYear, maxYear])
 
   const hasActiveFilters =
     priceRange[0] !== minPrice ||
@@ -108,6 +113,7 @@ export function AdvancedFilters({
     yearRange[1] !== maxYear ||
     selectedMileage.length > 0 ||
     selectedTransmissions.length > 0 ||
+    selectedBodyTypes.length > 0 ||
     selectedColors.length > 0 ||
     selectedStatuses.length > 0 ||
     selectedGrades.length > 0
@@ -117,6 +123,7 @@ export function AdvancedFilters({
     setYearRange([minYear, maxYear])
     setSelectedMileage([])
     setSelectedTransmissions([])
+    setSelectedBodyTypes([])
     setSelectedColors([])
     setSelectedStatuses([])
     setSelectedGrades([])
@@ -214,6 +221,25 @@ export function AdvancedFilters({
                 checked={selectedTransmissions.includes(option.id)}
                 onChange={() => toggleItem(option.id, selectedTransmissions, setSelectedTransmissions)}
               />
+            ))}
+          </div>
+        </FilterSection>
+
+        {/* Body Type */}
+        <FilterSection icon={Car} title="Carrocería">
+          <div className="flex flex-wrap gap-2">
+            {BODY_TYPE_OPTIONS.map((bt) => (
+              <button
+                key={bt.id}
+                onClick={() => toggleItem(bt.id, selectedBodyTypes, setSelectedBodyTypes)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                  selectedBodyTypes.includes(bt.id)
+                    ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                    : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                }`}
+              >
+                {bt.label}
+              </button>
             ))}
           </div>
         </FilterSection>

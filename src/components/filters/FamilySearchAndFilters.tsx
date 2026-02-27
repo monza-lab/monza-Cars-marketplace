@@ -19,6 +19,7 @@ export type FamilyFilters = {
   priceRange: [number, number] | null
   mileageRanges?: string[]
   transmissions?: string[]
+  bodyTypes?: string[]
   colors?: string[]
   statuses?: string[]
   grades?: string[]
