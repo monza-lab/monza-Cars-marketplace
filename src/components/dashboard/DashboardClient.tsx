@@ -6,12 +6,13 @@ import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY } from "@/lib/regionPricing"
 import {
   Clock,
   MapPin,
   Gauge,
   Cog,
+  Gavel,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -30,7 +31,8 @@ import {
   Flame,
   ChevronDown,
 } from "lucide-react"
-import { getBrandImage } from "@/lib/modelImages"
+import { getBrandImage, getModelImage } from "@/lib/modelImages"
+import { extractSeries, getSeriesConfig, getSeriesThesis } from "@/lib/brandConfig"
 import { filterAuctionsForRegion } from "./platformMapping"
 // FilterSidebar removed — filters now live only on brand detail pages
 
@@ -96,6 +98,20 @@ type Auction = {
   priceHistory: { price: number; timestamp: string }[]
   fairValueByRegion?: FairValueByRegion
   category?: string
+}
+
+// ─── PORSCHE FAMILY TYPE (for family-based landing scroll) ───
+type PorscheFamily = {
+  name: string
+  slug: string
+  carCount: number
+  priceMin: number
+  priceMax: number
+  yearMin: number
+  yearMax: number
+  representativeImage: string
+  representativeCar: string
+  topGrade: string
 }
 
 type LiveRegionTotals = {
@@ -352,28 +368,23 @@ const REGION_LABEL_KEYS = {
   JP: "brandContext.regionJP",
 } as const
 
-const BENCHMARK_LABEL_KEYS = {
-  sp500: "brandContext.sp500",
-  gold: "brandContext.gold",
-  realEstate: "brandContext.realEstate",
-} as const
-
-
 function formatRegionalVal(v: number, symbol: string) {
-  if (symbol === "¥") return `¥${v.toFixed(0)}M`
-  return v >= 1 ? `${symbol}${v.toFixed(1)}M` : `${symbol}${Math.round(v * 1000)}K`
+  if (symbol === "¥") return `¥${Math.round(v)}M`
+  if (v >= 1) {
+    const s = v.toFixed(1)
+    return s.endsWith(".0") ? `${symbol}${v.toFixed(0)}M` : `${symbol}${s}M`
+  }
+  const k = Math.round(v * 1000)
+  return `${symbol}${k.toLocaleString()}K`
 }
 
 function formatUsdEquiv(v: number) {
-  return v >= 1 ? `~$${v.toFixed(1)}M` : `~$${Math.round(v * 1000)}K`
+  if (v >= 1) {
+    const s = v.toFixed(1)
+    return s.endsWith(".0") ? `$${v.toFixed(0)}M` : `$${s}M`
+  }
+  return `$${Math.round(v * 1000).toLocaleString()}K`
 }
-
-// ─── BENCHMARK RETURNS (5-year, mock) ───
-const BENCHMARKS = [
-  { key: "sp500", return5y: 42 },
-  { key: "gold", return5y: 38 },
-  { key: "realEstate", return5y: 28 },
-]
 
 // ─── TOP MODELS PER BRAND (mock) ───
 type TopModel = { name: string; avgPrice: number; grade: string; trend: string }
@@ -404,33 +415,6 @@ const mockMarketDepth: Record<string, MarketDepth> = {
   Shelby: { auctionsPerYear: 12, avgDaysToSell: 20, sellThroughRate: 90, demandScore: 8 },
   Bugatti: { auctionsPerYear: 6, avgDaysToSell: 35, sellThroughRate: 78, demandScore: 7 },
   default: { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 },
-}
-
-// ─── 6-YEAR PRICE HISTORY (year-by-year, in millions) ───
-const PRICE_YEARS = ["2021", "2022", "2023", "2024", "2025", "2026"]
-const mockPriceHistory: Record<string, number[]> = {
-  McLaren: [14.2, 15.8, 17.5, 19.2, 20.1, 21.0],
-  Porsche: [0.95, 1.05, 1.18, 1.32, 1.38, 1.45],
-  Ferrari: [2.2, 2.5, 2.8, 3.1, 3.25, 3.4],
-  Lamborghini: [2.1, 2.4, 2.7, 2.9, 3.05, 3.2],
-  Nissan: [0.22, 0.28, 0.35, 0.42, 0.45, 0.48],
-  Toyota: [0.095, 0.12, 0.14, 0.165, 0.175, 0.185],
-  BMW: [1.5, 1.7, 1.9, 2.1, 2.22, 2.35],
-  Mercedes: [1.2, 1.35, 1.45, 1.55, 1.6, 1.65],
-  "Aston Martin": [0.72, 0.78, 0.85, 0.92, 0.95, 0.99],
-  Lexus: [0.55, 0.62, 0.72, 0.82, 0.85, 0.89],
-  Ford: [0.35, 0.40, 0.45, 0.49, 0.51, 0.52],
-  Acura: [0.085, 0.095, 0.11, 0.125, 0.135, 0.145],
-  Jaguar: [0.18, 0.21, 0.24, 0.26, 0.27, 0.285],
-  Mazda: [0.065, 0.078, 0.092, 0.105, 0.118, 0.132],
-  Honda: [0.048, 0.055, 0.064, 0.072, 0.082, 0.09],
-  Shelby: [1.6, 1.75, 1.88, 2.02, 2.18, 2.35],
-  Chevrolet: [0.14, 0.155, 0.168, 0.18, 0.195, 0.21],
-  Bugatti: [2.2, 2.45, 2.65, 2.85, 3.0, 3.2],
-  Lancia: [0.42, 0.48, 0.53, 0.58, 0.64, 0.7],
-  "De Tomaso": [0.19, 0.21, 0.23, 0.25, 0.27, 0.3],
-  Alpine: [0.12, 0.135, 0.15, 0.165, 0.18, 0.2],
-  default: [0.1, 0.11, 0.12, 0.13, 0.135, 0.14],
 }
 
 // ─── AGGREGATE AUCTIONS BY BRAND ───
@@ -484,6 +468,62 @@ function aggregateBrands(auctions: Auction[]): Brand[] {
     if (a.name === "Ferrari" && b.name !== "Ferrari") return -1
     if (b.name === "Ferrari" && a.name !== "Ferrari") return 1
     return b.priceMax - a.priceMax
+  })
+}
+
+// ─── AGGREGATE AUCTIONS BY PORSCHE FAMILY (for family-based landing) ───
+function getFamilyPrestigeOrder(familyKey: string): number {
+  const config = getSeriesConfig(familyKey.toLowerCase(), "Porsche")
+  return config?.order ?? 99
+}
+
+function getFamilyDisplayName(familyKey: string): string {
+  const config = getSeriesConfig(familyKey.toLowerCase(), "Porsche")
+  return config?.label || familyKey
+}
+
+function aggregateFamilies(auctions: Auction[]): PorscheFamily[] {
+  const familyMap = new Map<string, Auction[]>()
+
+  auctions.forEach(auction => {
+    const family = extractSeries(auction.model, auction.year, auction.make || "Porsche")
+    const existing = familyMap.get(family) || []
+    existing.push(auction)
+    familyMap.set(family, existing)
+  })
+
+  const families: PorscheFamily[] = []
+  familyMap.forEach((cars, familyKey) => {
+    const prices = cars.map(c => c.currentBid).filter(p => p > 0)
+    const years = cars.map(c => c.year)
+    const grades = cars.map(c => c.analysis?.investmentGrade || "B+")
+    const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
+    const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
+
+    const bestCar = cars.reduce((max, car) => car.currentBid > max.currentBid ? car : max, cars[0])
+    const carImage = bestCar.images?.[0]
+    const modelImage = getModelImage("Porsche", bestCar.model)
+    const fallbackImage = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
+
+    families.push({
+      name: getFamilyDisplayName(familyKey),
+      slug: familyKey.toLowerCase(),
+      carCount: cars.length,
+      priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+      priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+      yearMin: Math.min(...years),
+      yearMax: Math.max(...years),
+      representativeImage: carImage || modelImage || fallbackImage,
+      representativeCar: `${bestCar.year} Porsche ${bestCar.model}`,
+      topGrade,
+    })
+  })
+
+  return families.sort((a, b) => {
+    const orderA = getFamilyPrestigeOrder(a.slug)
+    const orderB = getFamilyPrestigeOrder(b.slug)
+    if (orderA !== orderB) return orderA - orderB
+    return b.carCount - a.carCount
   })
 }
 
@@ -621,6 +661,120 @@ function BrandCard({ brand }: { brand: Brand }) {
           <div className="mt-6 flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
               {t("brandCard.exploreCollection")}
+            </span>
+            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+          </div>
+        </div>
+      </Link>
+    </div>
+  )
+}
+
+// ─── FAMILY CARD (full-screen scroll card for Porsche families) ───
+function FamilyCard({ family }: { family: PorscheFamily }) {
+  const t = useTranslations("dashboard")
+  const { selectedRegion } = useRegion()
+
+  const yearLabel = family.yearMin === family.yearMax
+    ? `${family.yearMin}`
+    : `${family.yearMin}–${family.yearMax}`
+
+  return (
+    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
+      <Link
+        href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+      >
+        {/* TOP: CINEMATIC IMAGE */}
+        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+          {family.representativeImage ? (
+            <Image
+              src={family.representativeImage}
+              alt={family.name}
+              fill
+              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              sizes="50vw"
+              priority
+              referrerPolicy="no-referrer"
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
+              <span className="text-[#6B7280] text-lg">{family.name}</span>
+            </div>
+          )}
+
+          {/* Vignette */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+
+          {/* Car count badge */}
+          <div className="absolute top-4 right-4">
+            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+              {family.carCount} {family.carCount === 1 ? "car" : "cars"}
+            </span>
+          </div>
+
+          {/* Grade badge */}
+          <div className="absolute top-4 left-4">
+            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
+              family.topGrade === "AAA"
+                ? "bg-emerald-500/30 text-emerald-300"
+                : family.topGrade === "AA"
+                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
+                : "bg-white/20 text-white"
+            }`}>
+              {family.topGrade}
+            </span>
+          </div>
+        </div>
+
+        {/* BOTTOM: FAMILY INFO */}
+        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+              Porsche
+            </p>
+            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+              {family.name}
+            </h2>
+            <p className="text-[13px] text-[#6B7280] mt-1">
+              {family.representativeCar}
+            </p>
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <DollarSign className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
+              </div>
+              <p className="text-[13px] font-mono text-[#FFFCF7]">
+                {formatPriceForRegion(family.priceMin, selectedRegion)}–{formatPriceForRegion(family.priceMax, selectedRegion)}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <Calendar className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Years</span>
+              </div>
+              <p className="text-[13px] font-mono text-[#FFFCF7]">{yearLabel}</p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <Car className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
+              </div>
+              <p className="text-[13px] text-[#FFFCF7]">{family.carCount} listings</p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-6 flex items-center justify-between">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+              Explore {family.name}
             </span>
             <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
           </div>
@@ -1024,14 +1178,16 @@ function DiscoverySidebar({
   auctions,
   brands,
   onSelectBrand,
+  onSelectFamily,
   activeBrandSlug,
-  liveNowCount,
+  activeFamilyName,
 }: {
   auctions: Auction[]
   brands: Brand[]
   onSelectBrand: (brandSlug: string) => void
+  onSelectFamily?: (familyName: string) => void
   activeBrandSlug?: string
-  liveNowCount: number
+  activeFamilyName?: string
 }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
@@ -1046,29 +1202,41 @@ function DiscoverySidebar({
     const familyMap = new Map<string, { count: number; years: number[] }>()
 
     brandAuctions.forEach(a => {
-      const family = a.model.split(/\s+/)[0] || a.model
-      const existing = familyMap.get(family) || { count: 0, years: [] }
+      const series = extractSeries(a.model, a.year, a.make || brandName)
+      const existing = familyMap.get(series) || { count: 0, years: [] }
       existing.count++
       existing.years.push(a.year)
-      familyMap.set(family, existing)
+      familyMap.set(series, existing)
     })
 
     return Array.from(familyMap.entries())
-      .map(([name, data]) => ({
-        name,
+      .map(([seriesId, data]) => ({
+        name: getSeriesConfig(seriesId.toLowerCase(), brandName)?.label || seriesId,
+        slug: seriesId.toLowerCase(),
         count: data.count,
         yearMin: Math.min(...data.years),
         yearMax: Math.max(...data.years),
       }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => {
+        const orderA = getSeriesConfig(a.slug, brandName)?.order ?? 99
+        const orderB = getSeriesConfig(b.slug, brandName)?.order ?? 99
+        if (orderA !== orderB) return orderA - orderB
+        return b.count - a.count
+      })
   }, [auctions, activeBrandSlug, brands])
 
-  // Live auctions sorted by ending soonest
+  // Live auctions sorted by ending soonest — filtered by active family when scrolling
   const liveAuctions = useMemo(() => {
-    return auctions
-      .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
-  }, [auctions])
+    let filtered = auctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
+    if (activeFamilyName) {
+      const familySlug = activeFamilyName.toLowerCase()
+      filtered = filtered.filter(a => {
+        const series = extractSeries(a.model, a.year, a.make || "Porsche").toLowerCase()
+        return series === familySlug
+      })
+    }
+    return filtered.sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+  }, [auctions, activeFamilyName])
 
   // Grade badge color
   const gradeColor = (grade: string) => {
@@ -1158,13 +1326,22 @@ function DiscoverySidebar({
                           {t("sidebar.families")}
                         </span>
                       </div>
-                      {activeBrandFamilies.map((family) => (
-                        <a
+                      {activeBrandFamilies.map((family) => {
+                        const familySlug = family.name.toLowerCase()
+                        const isFamilyActive = activeFamilyName === family.name || activeFamilyName?.toLowerCase().startsWith(familySlug)
+                        return (
+                        <button
                           key={family.name}
-                          href={`/cars/${brand.slug}`}
-                          className="flex items-center justify-between px-4 pl-7 py-2 hover:bg-white/[0.03] transition-colors group/fam"
+                          onClick={() => onSelectFamily?.(family.name)}
+                          className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
+                            isFamilyActive
+                              ? "bg-[rgba(248,180,217,0.08)] border-l-2 border-l-[#F8B4D9]"
+                              : "hover:bg-white/[0.03] border-l-2 border-l-transparent"
+                          }`}
                         >
-                          <span className="text-[11px] font-medium text-[#D1D5DB] group-hover/fam:text-[#F8B4D9] transition-colors">
+                          <span className={`text-[11px] font-medium transition-colors ${
+                            isFamilyActive ? "text-[#F8B4D9]" : "text-[#D1D5DB] group-hover/fam:text-[#F8B4D9]"
+                          }`}>
                             {family.name}
                           </span>
                           <div className="flex items-center gap-2">
@@ -1177,8 +1354,9 @@ function DiscoverySidebar({
                                 : `${family.yearMin}–${family.yearMax}`}
                             </span>
                           </div>
-                        </a>
-                      ))}
+                        </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -1198,7 +1376,7 @@ function DiscoverySidebar({
             {t("sidebar.liveNow")}
           </span>
           <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
-            {liveNowCount}
+            {liveAuctions.length}
           </span>
         </div>
 
@@ -1450,51 +1628,6 @@ function AssetCard({ auction }: { auction: Auction }) {
   )
 }
 
-// ─── YEAR-BY-YEAR CHART COMPONENT ───
-function YearByYearChart({ data, years = PRICE_YEARS }: { data: number[]; years?: string[] }) {
-  const max = Math.max(...data)
-  const { selectedRegion } = useRegion()
-
-  return (
-    <div className="space-y-1.5">
-      {data.map((value, i) => {
-        const barWidth = max > 0 ? (value / max) * 100 : 0
-        const yoy = i > 0 ? ((value - data[i - 1]) / data[i - 1]) * 100 : null
-        const isLast = i === data.length - 1
-
-        return (
-          <div key={years[i]} className="flex items-center gap-2">
-            {/* Year label */}
-            <span className={`text-[10px] font-mono w-8 shrink-0 ${isLast ? "text-[#FFFCF7] font-semibold" : "text-[#6B7280]"}`}>
-              {years[i].slice(2)}
-            </span>
-
-            {/* Bar */}
-            <div className="flex-1 h-[14px] rounded-sm bg-white/[0.03] overflow-hidden relative">
-              <div
-                className={`h-full rounded-sm transition-all ${isLast ? "bg-[#F8B4D9]/40" : "bg-[#F8B4D9]/15"}`}
-                style={{ width: `${barWidth}%` }}
-              />
-            </div>
-
-            {/* Value */}
-            <span className={`text-[10px] font-mono w-14 text-right shrink-0 ${isLast ? "text-[#FFFCF7] font-semibold" : "text-[#9CA3AF]"}`}>
-              {formatPriceForRegion(value * 1_000_000, selectedRegion)}
-            </span>
-
-            {/* YoY change */}
-            <span className={`text-[9px] font-mono w-10 text-right shrink-0 ${
-              yoy !== null && yoy > 0 ? "text-positive" : yoy !== null && yoy < 0 ? "text-red-400" : "text-transparent"
-            }`}>
-              {yoy !== null ? `+${yoy.toFixed(0)}%` : "—"}
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 // ─── COLUMN C: THE CONTEXT PANEL ───
 // Enhanced with price chart, ownership cost, and similar cars
 function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions: Auction[] }) {
@@ -1505,7 +1638,6 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const whyBuy = mockWhyBuy[auction.make] || mockWhyBuy["default"]
   const marketPulse = mockMarketPulse[auction.make] || mockMarketPulse["default"]
   const ownershipCost = mockOwnershipCost[auction.make] || mockOwnershipCost["default"]
-  const priceHistory = mockPriceHistory[auction.make] || mockPriceHistory["default"]
   const fallbackAnalysis = mockAnalysis[auction.make] || mockAnalysis["default"]
 
   // Fair value range for fallback display
@@ -1534,23 +1666,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         </p>
       </div>
 
-      {/* SECTION 2: Year-by-Year Price History */}
-      <div className="px-5 py-3 border-b border-white/5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("context.fiveYearAppreciation")}
-            </span>
-          </div>
-          <span className="text-[11px] font-mono font-semibold text-positive">
-            +{Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)}%
-          </span>
-        </div>
-        <YearByYearChart data={priceHistory} />
-      </div>
-
-      {/* SECTION 3: Fair Value by Region */}
+      {/* SECTION 2: Fair Value by Region */}
       <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
         <div className="flex items-center gap-2 mb-2">
           <Globe className="size-4 text-[#F8B4D9]" />
@@ -1588,7 +1704,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         )}
       </div>
 
-      {/* SECTION 4: Ownership Cost */}
+      {/* SECTION 3: Ownership Cost */}
       <div className="px-5 py-3 border-b border-white/5">
         <div className="flex items-center gap-2 mb-2">
           <Wrench className="size-4 text-[#F8B4D9]" />
@@ -1619,7 +1735,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         </div>
       </div>
 
-      {/* SECTION 5: Similar Cars (Scrollable) */}
+      {/* SECTION 4: Similar Cars (Scrollable) */}
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 py-3">
         {similarCars.length > 0 && (
           <>
@@ -1694,13 +1810,367 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   )
 }
 
+// ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
+function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
+  const t = useTranslations("dashboard")
+  const { selectedRegion, effectiveRegion } = useRegion()
+
+  const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
+
+  // Use brand-level mock data (Porsche) for sections that need it
+  const regionalVal = mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
+  const ownershipCost = mockOwnershipCost["Porsche"] || mockOwnershipCost["default"]
+  const depth = mockMarketDepth["Porsche"] || mockMarketDepth["default"]
+
+  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
+
+  // Get auctions for this family to derive top variants
+  const familyAuctions = useMemo(() => {
+    const familyKey = family.slug
+    return auctions.filter(a => {
+      const series = extractSeries(a.model, a.year, a.make || "Porsche").toLowerCase()
+      return series === familyKey
+    })
+  }, [auctions, family.slug])
+
+  // Top variants: group by model variant name, sorted by avg price
+  const topVariants = useMemo(() => {
+    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    familyAuctions.forEach(a => {
+      const variant = a.model
+      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      existing.count++
+      if (a.currentBid > 0) existing.prices.push(a.currentBid)
+      const g = a.analysis?.investmentGrade || "B"
+      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
+        existing.grade = g
+      }
+      variantMap.set(variant, existing)
+    })
+
+    return Array.from(variantMap.entries())
+      .filter(([, data]) => data.prices.length > 0)
+      .map(([name, data]) => ({
+        name,
+        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
+        count: data.count,
+        grade: data.grade,
+      }))
+      .sort((a, b) => b.avgPrice - a.avgPrice)
+      .slice(0, 5)
+  }, [familyAuctions])
+
+  // Recent sales from this family
+  const recentSales = useMemo(() => {
+    return familyAuctions
+      .filter(a => a.currentBid > 0)
+      .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
+      .slice(0, 5)
+      .map(a => ({
+        title: `${a.year} ${a.model}`,
+        price: a.currentBid,
+        platform: a.platform?.replace(/_/g, " ") || "Auction",
+        date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      }))
+  }, [familyAuctions])
+
+  // Similar families (nearby in prestige order)
+  const similarFamilies = allFamilies
+    .filter(f => f.slug !== family.slug)
+    .slice(0, 3)
+
+  const gradeColor = (g: string) => {
+    switch (g) {
+      case "AAA": case "EXCELLENT": return "text-emerald-400"
+      case "AA": case "GOOD": return "text-blue-400"
+      case "A": case "FAIR": return "text-amber-400"
+      default: return "text-[#6B7280]"
+    }
+  }
+
+  const yearLabel = family.yearMin === family.yearMax
+    ? `${family.yearMin}`
+    : `${family.yearMin}–${family.yearMax}`
+
+  return (
+    <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
+      <div>
+        {/* 1. FAMILY OVERVIEW */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              {t("brandContext.overview")}
+            </span>
+          </div>
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+            Porsche
+          </p>
+          <h3 className="text-[18px] font-bold text-[#FFFCF7] tracking-tight mb-2">
+            {family.name}
+          </h3>
+          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+            {thesis}
+          </p>
+        </div>
+
+        {/* 2. KEY METRICS */}
+        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.grade")}</span>
+              <p className={`text-[16px] font-bold ${
+                family.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+              }`}>{family.topGrade}</p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.minPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(family.priceMin, selectedRegion)}</p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(family.priceMax, selectedRegion)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              {t("brandContext.valuationByMarket")}
+            </span>
+          </div>
+          <div className="space-y-1">
+            {(["US", "UK", "EU", "JP"] as const).map((region) => {
+              const val = regionalVal[region]
+              if (!val) return null
+              const pctChange = Math.round(((val.current - val.start) / val.start) * 100)
+              const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
+              const usdStart = val.usdCurrent * (val.start / val.current)
+              const localStart = convertFromUsd(usdStart * 1_000_000, userCurrency) / 1_000_000
+              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
+              const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
+              const barWidth = (val.usdCurrent / maxUsdCurrent) * 100
+              const isSelected = region === effectiveRegion
+              return (
+                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[13px]">{REGION_FLAGS[region]}</span>
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
+                    {isSelected && (
+                      <span className="text-[7px] font-bold text-[#F8B4D9] bg-[#F8B4D9]/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                        {t("brandContext.yourMarket")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[11px] font-mono text-[#6B7280]">
+                        {formatRegionalVal(localStart, userCurrency)}
+                      </span>
+                      <span className="text-[9px] text-[#4B5563]">→</span>
+                      <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                        {formatRegionalVal(localCurrent, userCurrency)}
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
+                      +{pctChange}%
+                    </span>
+                  </div>
+                  <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
+                    <div
+                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/50 to-[#F8B4D9]/80" : "bg-gradient-to-r from-[#F8B4D9]/20 to-[#F8B4D9]/45"}`}
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <span className="text-[8px] font-mono text-[#4B5563]">
+                      {formatUsdEquiv(val.usdCurrent)} USD
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 4. TOP VARIANTS */}
+        {topVariants.length > 0 && (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Car className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.topModels")}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {topVariants.map((variant) => (
+                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-medium text-[#FFFCF7] truncate block">{variant.name}</span>
+                    <span className="text-[9px] text-[#6B7280]">{variant.count} listings</span>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                      {formatPriceForRegion(variant.avgPrice, selectedRegion)}
+                    </span>
+                    <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
+                      {variant.grade}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 5. RECENT SALES */}
+        {recentSales.length > 0 && (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.recentSales")}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {recentSales.map((sale, i) => (
+                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
+                    <p className="text-[9px] text-[#6B7280] mt-0.5">{sale.platform} · {sale.date}</p>
+                  </div>
+                  <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                    {formatPriceForRegion(sale.price, selectedRegion)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 6. LIQUIDITY & MARKET DEPTH */}
+        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              {t("brandContext.liquidityDepth")}
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.auctionsPerYear")}</span>
+              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.avgDaysToSell")}</span>
+              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.sellThroughRate")}</span>
+              <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.demandScore")}</span>
+                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
+              </div>
+              <div className="flex gap-1">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-[6px] flex-1 rounded-sm ${
+                      i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 7. OWNERSHIP COST */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              {t("brandContext.annualOwnership")}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: t("brandContext.insurance"), value: ownershipCost.insurance },
+              { label: t("brandContext.storage"), value: ownershipCost.storage },
+              { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
+                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
+              <span className="text-[11px] font-medium text-[#FFFCF7]">{t("brandContext.total")}</span>
+              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 8. OTHER FAMILIES */}
+        {similarFamilies.length > 0 && (
+          <div className="px-5 py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                Other Families
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {similarFamilies.map((f) => (
+                <Link
+                  key={f.slug}
+                  href={`/cars/porsche?family=${encodeURIComponent(f.name)}`}
+                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors px-1 -mx-1 group"
+                >
+                  <span className="text-[11px] font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+                    {f.name}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#6B7280]">
+                      {formatPriceForRegion(f.priceMin, selectedRegion)}–{formatPriceForRegion(f.priceMax, selectedRegion)}
+                    </span>
+                    <span className={`text-[9px] font-bold ${
+                      f.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                    }`}>{f.topGrade}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CTA — pinned bottom */}
+      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+        <Link
+          href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+        >
+          Explore {family.name} Collection
+          <ChevronRight className="size-4" />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ─── BRAND CONTEXT PANEL ───
 function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Brand[] }) {
   const t = useTranslations("dashboard")
   const { selectedRegion, effectiveRegion } = useRegion()
 
   const whyBuy = mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  const priceHistory = mockPriceHistory[brand.name] || mockPriceHistory["default"]
   const regionalVal = mockRegionalValuation[brand.name] || mockRegionalValuation["default"]
   const marketPulse = mockMarketPulse[brand.name] || mockMarketPulse["default"]
   const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
@@ -1708,7 +2178,6 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
   const depth = mockMarketDepth[brand.name] || mockMarketDepth["default"]
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
 
   // Similar brands (same grade tier)
   const similarBrands = allBrands
@@ -1762,7 +2231,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 3. VALUATION BY MARKET — improved readability */}
+        {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-4">
             <Globe className="size-4 text-[#F8B4D9]" />
@@ -1770,45 +2239,53 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
               {t("brandContext.valuationByMarket")}
             </span>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
               if (!val) return null
               const pctChange = Math.round(((val.current - val.start) / val.start) * 100)
-              const maxCurrent = Math.max(...Object.values(regionalVal).map(v => v.current))
-              const barWidth = (val.current / maxCurrent) * 100
+              const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
+              const usdStart = val.usdCurrent * (val.start / val.current)
+              const localStart = convertFromUsd(usdStart * 1_000_000, userCurrency) / 1_000_000
+              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
+              const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
+              const barWidth = (val.usdCurrent / maxUsdCurrent) * 100
               const isSelected = region === effectiveRegion
               return (
-                <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-2 px-2 py-1.5" : ""}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12px]">{REGION_FLAGS[region]}</span>
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
-                      {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">{t("brandContext.yourMarket")}</span>}
-                    </div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
-                        {formatRegionalVal(val.start, val.symbol)}
+                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[13px]">{REGION_FLAGS[region]}</span>
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
+                    {isSelected && (
+                      <span className="text-[7px] font-bold text-[#F8B4D9] bg-[#F8B4D9]/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                        {t("brandContext.yourMarket")}
                       </span>
-                      <span className="text-[9px] text-[#6B7280]">→</span>
-                      <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
-                        {formatRegionalVal(val.current, val.symbol)}
-                      </span>
-                      <span className="text-[10px] font-mono font-bold text-positive">+{pctChange}%</span>
-                    </div>
+                    )}
                   </div>
-                  {region !== effectiveRegion && (
-                    <div className="flex justify-end mb-1">
-                      <span className="text-[9px] font-mono text-[#6B7280]">
-                        {formatUsdEquiv(val.usdCurrent)} USD
+                  <div className="flex items-baseline justify-between mb-1.5">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[11px] font-mono text-[#6B7280]">
+                        {formatRegionalVal(localStart, userCurrency)}
+                      </span>
+                      <span className="text-[9px] text-[#4B5563]">→</span>
+                      <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                        {formatRegionalVal(localCurrent, userCurrency)}
                       </span>
                     </div>
-                  )}
-                  <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
+                      +{pctChange}%
+                    </span>
+                  </div>
+                  <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
                     <div
-                      className={`h-full rounded-full ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70" : "bg-gradient-to-r from-[#F8B4D9]/25 to-[#F8B4D9]/50"}`}
+                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/50 to-[#F8B4D9]/80" : "bg-gradient-to-r from-[#F8B4D9]/20 to-[#F8B4D9]/45"}`}
                       style={{ width: `${barWidth}%` }}
                     />
+                  </div>
+                  <div className="flex justify-end">
+                    <span className="text-[8px] font-mono text-[#4B5563]">
+                      {formatUsdEquiv(val.usdCurrent)} USD
+                    </span>
                   </div>
                 </div>
               )
@@ -1816,41 +2293,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 4. PERFORMANCE VS BENCHMARKS */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.fiveYearReturnComparison")}
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {/* Brand itself */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-[#F8B4D9]">{brand.name}</span>
-                <span className="text-[11px] font-mono font-bold text-positive">+{brand5yReturn}%</span>
-              </div>
-              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-              </div>
-            </div>
-            {/* Benchmarks */}
-            {BENCHMARKS.map((b) => (
-              <div key={b.key}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{t(BENCHMARK_LABEL_KEYS[b.key as keyof typeof BENCHMARK_LABEL_KEYS])}</span>
-                  <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 5. TOP MODELS */}
+        {/* 4. TOP MODELS */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-3">
             <Car className="size-4 text-[#F8B4D9]" />
@@ -1880,23 +2323,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 6. YEAR-BY-YEAR TREND */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                {t("brandContext.fiveYearTrend")}
-              </span>
-            </div>
-            <span className="text-[10px] font-mono font-semibold text-positive">
-              {brand.avgTrend}
-            </span>
-          </div>
-          <YearByYearChart data={priceHistory} />
-        </div>
-
-        {/* 7. RECENT SALES */}
+        {/* 5. RECENT SALES */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="size-4 text-[#F8B4D9]" />
@@ -1919,7 +2346,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 8. LIQUIDITY & MARKET DEPTH */}
+        {/* 6. LIQUIDITY & MARKET DEPTH */}
         <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="size-4 text-[#F8B4D9]" />
@@ -1960,7 +2387,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 9. OWNERSHIP COST */}
+        {/* 7. OWNERSHIP COST */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-3">
             <Wrench className="size-4 text-[#F8B4D9]" />
@@ -1986,7 +2413,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
           </div>
         </div>
 
-        {/* 10. SIMILAR BRANDS */}
+        {/* 8. SIMILAR BRANDS */}
         {similarBrands.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
@@ -2061,6 +2488,9 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
   // Aggregate filtered auctions into brands
   const brands = useMemo(() => aggregateBrands(filteredAuctions), [filteredAuctions])
 
+  // Aggregate into Porsche families for the family-based landing scroll
+  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions), [filteredAuctions])
+
   // Reset scroll position when region changes
   useEffect(() => {
     feedRef.current?.scrollTo({ top: 0 })
@@ -2068,11 +2498,15 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
 
   const safeCurrentIndex = currentIndex >= 0 && currentIndex < brands.length ? currentIndex : 0
   const selectedBrand = brands[safeCurrentIndex] || brands[0]
+  // Family-level index for the scroll (bounded to porscheFamilies array)
+  const safeFamilyIndex = currentIndex >= 0 && currentIndex < porscheFamilies.length ? currentIndex : 0
+  const activeFamily = porscheFamilies[safeFamilyIndex]
+  const activeFamilyName = activeFamily?.name
 
   // Card height = 100vh - 80px
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
 
-  // Handle scroll snap to update current index (Desktop)
+  // Handle scroll snap to update current index (Desktop) — synced with family cards
   useEffect(() => {
     const container = feedRef.current
     if (!container) return
@@ -2081,14 +2515,14 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
       const scrollTop = container.scrollTop
       const slideHeight = getCardHeight()
       const newIndex = Math.round(scrollTop / slideHeight)
-      if (newIndex !== safeCurrentIndex && newIndex >= 0 && newIndex < brands.length) {
+      if (newIndex !== safeFamilyIndex && newIndex >= 0 && newIndex < porscheFamilies.length) {
         setCurrentIndex(newIndex)
       }
     }
 
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
-  }, [brands.length, safeCurrentIndex])
+  }, [porscheFamilies.length, safeFamilyIndex])
 
   // Scroll to index when nav is clicked
   const scrollToIndex = (index: number) => {
@@ -2102,6 +2536,17 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
   // Scroll to brand by slug (from quick access)
   const scrollToBrand = (brandSlug: string) => {
     const index = brands.findIndex(b => b.slug === brandSlug)
+    if (index >= 0) {
+      scrollToIndex(index)
+    }
+  }
+
+  // Scroll to family by name (from sidebar family drill-down)
+  // Sidebar uses raw keys like "718", but porscheFamilies uses display names like "718 Cayman/Boxster"
+  // Match by slug (raw key, lowercased) or by name as fallback
+  const scrollToFamily = (familyName: string) => {
+    const slug = familyName.toLowerCase()
+    const index = porscheFamilies.findIndex(f => f.slug === slug || f.name === familyName)
     if (index >= 0) {
       scrollToIndex(index)
     }
@@ -2161,23 +2606,33 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
               auctions={filteredAuctions}
               brands={brands}
               onSelectBrand={scrollToBrand}
+              onSelectFamily={scrollToFamily}
               activeBrandSlug={selectedBrand?.slug}
-              liveNowCount={liveNowCount}
+              activeFamilyName={activeFamilyName}
             />
 
-          {/* COLUMN B: BRAND FEED (50%) */}
+          {/* COLUMN B: FAMILY FEED (50%) — scroll through Porsche families */}
           <div
             ref={feedRef}
             className="h-full overflow-y-auto snap-y snap-mandatory no-scrollbar scroll-smooth"
           >
-            {brands.map((brand) => (
-              <BrandCard key={brand.slug} brand={brand} />
+            {porscheFamilies.map((family) => (
+              <FamilyCard key={family.slug} family={family} />
             ))}
           </div>
 
-          {/* COLUMN C: CONTEXT PANEL (28%) */}
+          {/* COLUMN C: CONTEXT PANEL (28%) — synced with active family in scroll */}
           <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
-            <BrandContextPanel brand={selectedBrand} allBrands={brands} />
+            {activeFamily ? (
+              <FamilyContextPanel
+                key={activeFamily.slug}
+                family={activeFamily}
+                auctions={filteredAuctions}
+                allFamilies={porscheFamilies}
+              />
+            ) : (
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} />
+            )}
           </div>
         </div>
       </div>
