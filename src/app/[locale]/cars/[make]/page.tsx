@@ -19,6 +19,7 @@ function derivePerSourceLimit(globalLimit: number, sourceCount = MAKE_PAGE_SOURC
 
 interface MakePageProps {
   params: Promise<{ make: string }>
+  searchParams: Promise<{ family?: string; gen?: string }>
 }
 
 export async function generateMetadata({ params }: MakePageProps) {
@@ -42,8 +43,9 @@ export async function generateStaticParams() {
   }))
 }
 
-export default async function MakePage({ params }: MakePageProps) {
+export default async function MakePage({ params, searchParams }: MakePageProps) {
   const { make } = await params
+  const { family: initialFamily, gen: initialGen } = await searchParams
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
   const curated = CURATED_CARS.filter(
@@ -93,6 +95,8 @@ export default async function MakePage({ params }: MakePageProps) {
       dbComparables={dbComparables}
       dbSoldHistory={dbSoldHistory}
       dbAnalyses={dbAnalyses}
+      initialFamily={initialFamily}
+      initialGen={initialGen}
     />
   )
 }

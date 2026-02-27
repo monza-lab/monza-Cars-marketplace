@@ -22,7 +22,6 @@ import {
   Check,
   Info,
   Award,
-  TrendingUp,
   Shield,
   Globe,
   BarChart3,
@@ -33,13 +32,13 @@ import type { CollectorCar, Region, FairValueByRegion } from "@/lib/curatedCars"
 import type { LiveListingRegionTotals } from "@/lib/supabaseLiveListings"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useLocale, useTranslations } from "next-intl"
 import { getModelImage } from "@/lib/modelImages"
-import { PriceTrendChart } from "@/components/charts/PriceTrendChart"
 import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
+import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -102,13 +101,6 @@ const ownershipCosts: Record<string, { insurance: number; storage: number; maint
   default: { insurance: 5000, storage: 4800, maintenance: 5000 },
 }
 
-// ─── BENCHMARKS (for 5-year return comparison) ───
-const BENCHMARKS = [
-  { label: "S&P 500", return5y: 42 },
-  { label: "Gold", return5y: 28 },
-  { label: "Real Estate", return5y: 18 },
-]
-
 // ─── MOCK MARKET DEPTH (per brand) ───
 const mockMarketDepth: Record<string, { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number }> = {
   Porsche: { auctionsPerYear: 340, avgDaysToSell: 12, sellThroughRate: 89, demandScore: 9 },
@@ -125,24 +117,6 @@ const mockMarketDepth: Record<string, { auctionsPerYear: number; avgDaysToSell: 
   Acura: { auctionsPerYear: 35, avgDaysToSell: 10, sellThroughRate: 90, demandScore: 8 },
   Jaguar: { auctionsPerYear: 70, avgDaysToSell: 25, sellThroughRate: 76, demandScore: 6 },
   default: { auctionsPerYear: 80, avgDaysToSell: 20, sellThroughRate: 78, demandScore: 7 },
-}
-
-// ─── MOCK 5-YEAR PRICE HISTORY (per brand) ───
-const mockPriceHistory: Record<string, number[]> = {
-  Porsche: [180000, 210000, 245000, 290000, 320000],
-  Ferrari: [450000, 520000, 580000, 640000, 720000],
-  McLaren: [12000000, 13500000, 15000000, 17000000, 19500000],
-  Lamborghini: [280000, 310000, 350000, 400000, 460000],
-  BMW: [65000, 78000, 92000, 108000, 125000],
-  Nissan: [85000, 110000, 145000, 180000, 220000],
-  Toyota: [75000, 95000, 120000, 145000, 175000],
-  "Mercedes-Benz": [320000, 350000, 380000, 420000, 470000],
-  "Aston Martin": [400000, 440000, 480000, 520000, 580000],
-  Lexus: [350000, 380000, 410000, 440000, 490000],
-  Ford: [280000, 310000, 340000, 380000, 420000],
-  Acura: [100000, 115000, 135000, 155000, 180000],
-  Jaguar: [120000, 130000, 145000, 160000, 180000],
-  default: [150000, 170000, 195000, 220000, 250000],
 }
 
 // ─── PRICE RANGE OPTIONS ───
@@ -165,6 +139,22 @@ const sortOptions = [
   { key: "mostListed" as const, value: "count-desc" },
 ]
 
+// Sort options for individual car feed (no "most listed")
+const carSortOptions = [
+  { key: "priceHighToLow" as const, value: "price-desc" },
+  { key: "priceLowToHigh" as const, value: "price-asc" },
+  { key: "yearNewestFirst" as const, value: "year-desc" },
+  { key: "yearOldestFirst" as const, value: "year-asc" },
+]
+
+const SORT_LABELS: Record<string, string> = {
+  "price-desc": "Precio ↓",
+  "price-asc": "Precio ↑",
+  "year-desc": "Año ↓",
+  "year-asc": "Año ↑",
+  "count-desc": "Cantidad",
+}
+
 // ─── HELPERS ───
 
 function timeLeft(
@@ -181,95 +171,26 @@ function timeLeft(
 }
 
 // ─── EXTRACT FAMILY FROM MODEL NAME ───
-function extractFamily(modelName: string): string {
-  // Extract family name from model string
-  // Examples: "911 Carrera" → "911", "Cayenne S" → "Cayenne", "718 Boxster" → "718"
-  // Remove "Porsche" prefix if present
-  const cleanModel = modelName.replace(/^Porsche\s+/i, "").trim()
-  const lowerModel = cleanModel.toLowerCase()
-
-  // Check for 911 and its internal codes (930, 964, 993, 996, 997, 991, 992)
-  if (
-    lowerModel.includes("911") ||
-    lowerModel.includes("930") ||  // 911 Turbo (1975-1989)
-    lowerModel.includes("964") ||  // 911 (1989-1994)
-    lowerModel.includes("993") ||  // 911 (1994-1998)
-    lowerModel.includes("996") ||  // 911 (1999-2005)
-    lowerModel.includes("997") ||  // 911 (2005-2012)
-    lowerModel.includes("991") ||  // 911 (2012-2019)
-    lowerModel.includes("992")     // 911 (2019-present)
-  ) return "911"
-
-  // Check for other modern Porsche families
-  if (lowerModel.includes("cayenne")) return "Cayenne"
-  if (lowerModel.includes("macan")) return "Macan"
-  if (lowerModel.includes("taycan")) return "Taycan"
-  if (lowerModel.includes("panamera")) return "Panamera"
-
-  // Separate Boxster and Cayman into distinct families (both include 718 variants)
-  if (lowerModel.includes("boxster")) return "Boxster"
-  if (lowerModel.includes("cayman")) return "Cayman"
-
-  // Check for special hypercars/supercars
-  if (lowerModel.includes("carrera gt")) return "Carrera GT"
-  if (lowerModel.includes("918")) return "918 Spyder"
-
-  // Check for classic Porsche models (356, 928, 944, 968, 914, 550, etc.)
-  // Extract base number without variant letters (356C → 356, 928 S → 928)
-  const classicMatch = cleanModel.match(/^(\d{3,4})[A-Z\s]?/)
-  if (classicMatch) {
-    return classicMatch[1] // Return just the number (356, 928, 944, etc.)
-  }
-
-  // For unknown, use first word (after removing Porsche)
-  const firstWord = cleanModel.split(" ")[0]
-  return firstWord
+// Now delegates to centralized brandConfig.extractSeries for series-level taxonomy
+function extractFamily(modelName: string, year?: number, makeName?: string): string {
+  return extractSeries(modelName, year || 0, makeName || "Porsche")
 }
 
 // ─── EXTRACT GENERATION FROM MODEL NAME ───
 function extractGenerationFromModel(modelName: string, year?: number): string | null {
-  const cleanModel = modelName.replace(/^Porsche\s+/i, "").trim().toLowerCase()
-
-  // Check for 911 generation codes in the model name
-  if (cleanModel.includes("992")) return "992"
-  if (cleanModel.includes("991")) return "991"
-  if (cleanModel.includes("997")) return "997"
-  if (cleanModel.includes("996")) return "996"
-  if (cleanModel.includes("993")) return "993"
-  if (cleanModel.includes("964")) return "964"
-  if (cleanModel.includes("930")) return "930"
-
-  // Fallback: infer from year for 911 models
-  if (cleanModel.includes("911") && year) {
-    if (year >= 2020) return "992"
-    if (year >= 2012) return "991"
-    if (year >= 2005) return "997"
-    if (year >= 1999) return "996"
-    if (year >= 1995) return "993"
-    if (year >= 1989) return "964"
-    if (year >= 1975) return "930"
-  }
-
-  // Cayenne generations (based on year)
-  if (cleanModel.includes("cayenne") && year) {
-    if (year >= 2019) return "e3"
-    if (year >= 2011) return "e2"
-    if (year >= 2003) return "e1"
-  }
-
-  // Taycan (only J1 generation for now)
-  if (cleanModel.includes("taycan")) return "j1"
-
+  // With series-level taxonomy, the series IS the generation
+  // This function is kept for backward compatibility but returns null
+  // since generation drill-down is handled at the series level
   return null
 }
 
 // ─── AGGREGATE CARS INTO FAMILIES ───
-function aggregateModels(cars: CollectorCar[]): Model[] {
+function aggregateModels(cars: CollectorCar[], make: string): Model[] {
   const familyMap = new Map<string, CollectorCar[]>()
 
   // Group by FAMILY (not specific model)
   cars.forEach(car => {
-    const family = extractFamily(car.model)
+    const family = extractFamily(car.model, car.year, make)
     const existing = familyMap.get(family) || []
     existing.push(car)
     familyMap.set(family, existing)
@@ -314,8 +235,13 @@ function aggregateModels(cars: CollectorCar[]): Model[] {
     })
   })
 
-  // Sort by avgPrice (most exclusive first - ordered by exclusivity)
-  return models.sort((a, b) => b.avgPrice - a.avgPrice)
+  // Sort by brandConfig order (series display priority), fallback to avgPrice
+  return models.sort((a, b) => {
+    const orderA = getSeriesConfig(a.slug, make)?.order ?? 99
+    const orderB = getSeriesConfig(b.slug, make)?.order ?? 99
+    if (orderA !== orderB) return orderA - orderB
+    return b.avgPrice - a.avgPrice
+  })
 }
 
 // ─── FILTER CHIP ───
@@ -348,6 +274,66 @@ function FilterChip({
         </span>
       )}
     </button>
+  )
+}
+
+// ─── SORT SELECTOR (compact inline for Column B) ───
+function SortSelector({
+  sortBy,
+  setSortBy,
+  options,
+}: {
+  sortBy: string
+  setSortBy: (v: string) => void
+  options: { key: string; value: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#FFFCF7] transition-colors"
+      >
+        <ArrowUpDown className="size-3" />
+        <span className="font-medium">{SORT_LABELS[sortBy] || "Ordenar"}</span>
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-1.5 w-40 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { setSortBy(opt.value); setOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-[11px] transition-colors ${
+                  sortBy === opt.value
+                    ? "text-[#F8B4D9] bg-[rgba(248,180,217,0.08)]"
+                    : "text-[#9CA3AF] hover:text-[#FFFCF7] hover:bg-white/5"
+                }`}
+              >
+                {SORT_LABELS[opt.value]}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -509,7 +495,7 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
             {t("hero.brandCollection")}
           </span>
           <h1 className="text-3xl font-bold text-[#FFFCF7] mt-1">
-            {make} {model.name}
+            {make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
           </h1>
           <p className="text-[12px] text-[rgba(255,252,247,0.5)] mt-0.5">
             {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
@@ -582,7 +568,7 @@ function MobileModelRow({
         className="flex-1 min-w-0"
       >
         <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
-          {model.name}
+          {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
         </p>
         <p className="text-[11px] text-[#6B7280] mt-0.5">
           {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
@@ -632,8 +618,6 @@ function MobileModelContext({
   const allModelCars = allCars.filter(c => c.model === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
   const bestRegion = regionalPricing ? findBestRegion(regionalPricing) : null
-  const priceHistory = generateModelPriceHistory(model.avgPrice, model.representativeCar.trendValue)
-  const model5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
   const depth = deriveModelDepth(allModelCars)
 
   const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
@@ -705,41 +689,7 @@ function MobileModelContext({
         </div>
       )}
 
-      {/* Panel 2: 5-Year Return Comparison */}
-      <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="size-3.5 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
-            {t("mobileContext.returnComparison")}
-          </span>
-          <span className="text-[10px] font-mono font-bold text-emerald-400 ml-auto">+{model5yReturn}%</span>
-        </div>
-        <div className="space-y-2">
-          {/* Model bar */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold text-[#F8B4D9] truncate">{model.name}</span>
-              <span className="text-[10px] font-mono text-emerald-400">+{model5yReturn}%</span>
-            </div>
-            <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
-              <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((model5yReturn / Math.max(model5yReturn, 50)) * 100, 100)}%` }} />
-            </div>
-          </div>
-          {BENCHMARKS.map((b) => (
-            <div key={b.label}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-[#9CA3AF]">{b.label}</span>
-                <span className="text-[10px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-              </div>
-              <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
-                <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(model5yReturn, 50)) * 100, 100)}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Panel 3: Market Depth — 2x2 grid */}
+      {/* Panel 2: Market Depth — 2x2 grid */}
       <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Gauge className="size-3.5 text-[#F8B4D9]" />
@@ -837,7 +787,7 @@ function MobileModelContextSheet({
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
               <div>
-                <p className="text-[14px] font-semibold text-[#FFFCF7]">{make} {model.name}</p>
+                <p className="text-[14px] font-semibold text-[#FFFCF7]">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</p>
                 <p className="text-[11px] text-[#6B7280] mt-0.5">{model.years} · {model.carCount} cars</p>
               </div>
               <button
@@ -1358,7 +1308,7 @@ function ModelNavSidebar({
                   <div className="flex items-center gap-1.5">
                     <p className={`text-[12px] font-semibold truncate ${index === currentModelIndex ? "text-[#F8B4D9]" : "text-[#FFFCF7]"
                       }`}>
-                      {model.name}
+                      {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
                     </p>
                     <span className={`text-[10px] font-bold shrink-0 ${gradeColor(model.representativeCar.investmentGrade)}`}>
                       {model.representativeCar.investmentGrade}
@@ -1604,6 +1554,133 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
   )
 }
 
+// ─── GENERATION FEED CARD (Full-height card for generation drill-down) ───
+type GenerationAggregate = {
+  id: string
+  label: string
+  carCount: number
+  priceMin: number
+  priceMax: number
+  yearMin: number
+  yearMax: number
+  representativeImage: string
+  representativeCar: string
+  topGrade: string
+}
+
+function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: GenerationAggregate; familyName: string; make: string; onClick: () => void }) {
+  const { selectedRegion } = useRegion()
+
+  return (
+    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
+      <button
+        onClick={onClick}
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300 text-left"
+      >
+        {/* TOP: CINEMATIC IMAGE */}
+        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+          {gen.representativeImage ? (
+            <Image
+              src={gen.representativeImage}
+              alt={`${make} ${familyName} ${gen.label}`}
+              fill
+              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              sizes="50vw"
+              priority
+              referrerPolicy="no-referrer"
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
+              <span className="text-[#6B7280] text-lg">{familyName} {gen.label}</span>
+            </div>
+          )}
+
+          {/* Vignette gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+
+          {/* Grade badge — top left */}
+          <div className="absolute top-4 left-4">
+            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
+              gen.topGrade === "AAA"
+                ? "bg-emerald-500/30 text-emerald-300"
+                : gen.topGrade === "AA"
+                  ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
+                  : "bg-white/20 text-white"
+            }`}>
+              {gen.topGrade}
+            </span>
+          </div>
+
+          {/* Car count badge — top right */}
+          <div className="absolute top-4 right-4">
+            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+              {gen.carCount} {gen.carCount === 1 ? "car" : "cars"}
+            </span>
+          </div>
+        </div>
+
+        {/* BOTTOM: GENERATION INFO */}
+        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+              {make} {familyName}
+            </p>
+            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+              {gen.label}
+            </h2>
+            <p className="text-[13px] text-[#6B7280] mt-1">
+              {gen.representativeCar}
+            </p>
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <DollarSign className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Price Range</span>
+              </div>
+              <p className="text-[13px] font-mono text-[#FFFCF7]">
+                {formatPriceForRegion(gen.priceMin, selectedRegion)}&ndash;{formatPriceForRegion(gen.priceMax, selectedRegion)}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <Car className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Listings</span>
+              </div>
+              <p className="text-[13px] text-[#FFFCF7]">{gen.carCount} vehicles</p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-[#6B7280]">
+                <Shield className="size-3" />
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Grade</span>
+              </div>
+              <p className={`text-[13px] font-semibold ${
+                gen.topGrade === "AAA" ? "text-emerald-400"
+                  : gen.topGrade === "AA" ? "text-blue-400"
+                    : gen.topGrade === "A" ? "text-amber-400"
+                      : "text-[#6B7280]"
+              }`}>{gen.topGrade}</p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-6 flex items-center justify-between">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+              View Listings
+            </span>
+            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+          </div>
+        </div>
+      </button>
+    </div>
+  )
+}
+
 // ─── MODEL FEED CARD (Full-height card for center column) ───
 function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; onClick?: () => void }) {
   const t = useTranslations("makePage")
@@ -1630,7 +1707,7 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
             />
           ) : (
             <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{make} {model.name}</span>
+              <span className="text-[#6B7280] text-lg">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</span>
             </div>
           )}
 
@@ -1668,7 +1745,7 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
           {/* Model name + subtitle */}
           <div>
             <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
-              {make} {model.name}
+              {make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
             </h2>
             <p className="text-[13px] text-[#6B7280] mt-1">
               {model.years}
@@ -1759,33 +1836,16 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
 }
 
 function aggregateRegionalPricing(modelCars: CollectorCar[]): FairValueByRegion | null {
-  // Filter out cars with zero pricing (live auctions without final_price)
-  const carsWithPricing = modelCars.filter(c => c.fairValueByRegion.US.high > 0)
-  if (carsWithPricing.length === 0) {
-    // Fallback: build from currentBid if available
-    const carsWithBids = modelCars.filter(c => c.currentBid > 0)
-    if (carsWithBids.length === 0) return null
-    const minBid = Math.min(...carsWithBids.map(c => c.currentBid))
-    const maxBid = Math.max(...carsWithBids.map(c => c.currentBid))
-    return {
-      US: { currency: "$", low: minBid, high: maxBid },
-      EU: { currency: "€", low: Math.round(minBid * 0.92), high: Math.round(maxBid * 0.92) },
-      UK: { currency: "£", low: Math.round(minBid * 0.79), high: Math.round(maxBid * 0.79) },
-      JP: { currency: "¥", low: Math.round(minBid * 150), high: Math.round(maxBid * 150) },
-    }
-  }
-  const regions: (keyof FairValueByRegion)[] = ["US", "EU", "UK", "JP"]
-  const result = {} as FairValueByRegion
-  for (const region of regions) {
-    const lows = carsWithPricing.map(c => c.fairValueByRegion[region].low).filter(v => v > 0)
-    const highs = carsWithPricing.map(c => c.fairValueByRegion[region].high).filter(v => v > 0)
-    result[region] = {
-      currency: carsWithPricing[0].fairValueByRegion[region].currency,
-      low: lows.length > 0 ? Math.min(...lows) : 0,
-      high: highs.length > 0 ? Math.max(...highs) : 0,
-    }
-  }
-  return result
+  // Always derive from USD prices to ensure proper regional differentiation
+  const usdPrices = modelCars
+    .map(c => c.fairValueByRegion.US.high > 0
+      ? (c.fairValueByRegion.US.low + c.fairValueByRegion.US.high) / 2
+      : c.currentBid > 0 ? c.currentBid : 0
+    )
+    .filter(p => p > 0)
+  if (usdPrices.length === 0) return null
+  const avgUsd = usdPrices.reduce((sum, p) => sum + p, 0) / usdPrices.length
+  return buildRegionalFairValue(avgUsd)
 }
 
 // Find the region with the lowest average USD price (= BEST value)
@@ -1804,15 +1864,6 @@ function findBestRegion(pricing: FairValueByRegion): keyof FairValueByRegion {
 }
 
 // ─── MODEL-SPECIFIC DATA HELPERS ───
-function generateModelPriceHistory(avgPrice: number, trendValue: number): number[] {
-  const annualGrowth = (trendValue / 100) / 5
-  const result: number[] = []
-  for (let i = 4; i >= 0; i--) {
-    result.push(Math.round(avgPrice / Math.pow(1 + annualGrowth, i)))
-  }
-  return result
-}
-
 function deriveModelDepth(modelCars: CollectorCar[]): { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number } {
   const total = modelCars.length
   const ended = modelCars.filter(c => c.status === "ENDED").length
@@ -1827,6 +1878,478 @@ function deriveModelDepth(modelCars: CollectorCar[]): { auctionsPerYear: number;
 }
 
 // ─── MODEL CONTEXT PANEL (Right column) ───
+// ─── GENERATION CONTEXT PANEL (right panel for generation drill-down view) ───
+function GenerationContextPanel({
+  gen,
+  familyName,
+  make,
+  familyCars,
+  onOpenAdvisor,
+}: {
+  gen: GenerationAggregate
+  familyName: string
+  make: string
+  familyCars: CollectorCar[]
+  onOpenAdvisor: () => void
+}) {
+  const { selectedRegion } = useRegion()
+
+  // Cars in this generation
+  const genCars = useMemo(() => {
+    return familyCars.filter(car => {
+      const carGen = extractGenerationFromModel(car.model, car.year)
+      return carGen === gen.id
+    })
+  }, [familyCars, gen.id])
+
+  // Top variants within this generation
+  const topVariants = useMemo(() => {
+    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    genCars.forEach(car => {
+      const variant = car.model
+      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      existing.count++
+      if (car.currentBid > 0) existing.prices.push(car.currentBid)
+      const g = car.investmentGrade || "B"
+      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
+        existing.grade = g
+      }
+      variantMap.set(variant, existing)
+    })
+    return Array.from(variantMap.entries())
+      .filter(([, data]) => data.prices.length > 0)
+      .map(([name, data]) => ({
+        name,
+        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
+        count: data.count,
+        grade: data.grade,
+      }))
+      .sort((a, b) => b.avgPrice - a.avgPrice)
+      .slice(0, 6)
+  }, [genCars])
+
+  const recentSales = useMemo(() => {
+    return genCars
+      .filter(c => c.status === "ENDED" && c.currentBid > 0)
+      .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
+      .slice(0, 4)
+  }, [genCars])
+
+  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
+  const genAvgPrice = genCars.length > 0
+    ? genCars.reduce((s, c) => s + c.currentBid, 0) / genCars.length
+    : 1
+  const brandAvgPrice = familyCars.length > 0
+    ? familyCars.reduce((s, c) => s + c.currentBid, 0) / familyCars.length
+    : 1
+  const genScaleFactor = brandAvgPrice > 0 ? genAvgPrice / brandAvgPrice : 1
+  const genOwnershipCosts = {
+    insurance: Math.round(fallbackCosts.insurance * genScaleFactor),
+    storage: Math.round(fallbackCosts.storage * genScaleFactor),
+    maintenance: Math.round(fallbackCosts.maintenance * genScaleFactor),
+  }
+
+  const gradeColor = (g: string) => {
+    switch (g) {
+      case "AAA": return "text-emerald-400"
+      case "AA": return "text-blue-400"
+      case "A": return "text-amber-400"
+      default: return "text-[#6B7280]"
+    }
+  }
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        {/* 1. GENERATION OVERVIEW */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Generation Analysis
+            </span>
+          </div>
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+            {make} {familyName}
+          </p>
+          <h2 className="text-[18px] font-bold text-[#FFFCF7] leading-tight">
+            {gen.label}
+          </h2>
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+            <span>{gen.carCount} listings</span>
+            <span>·</span>
+            <span>{gen.yearMin === gen.yearMax ? gen.yearMin : `${gen.yearMin}–${gen.yearMax}`}</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
+            {gen.representativeCar}
+          </p>
+        </div>
+
+        {/* 2. KEY METRICS */}
+        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                {gen.topGrade}
+              </p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Min Price</span>
+              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">
+                {formatPriceForRegion(gen.priceMin, selectedRegion)}
+              </p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Max Price</span>
+              <p className="text-[13px] font-mono font-semibold text-[#F8B4D9]">
+                {formatPriceForRegion(gen.priceMax, selectedRegion)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. TOP VARIANTS */}
+        {topVariants.length > 0 && (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Car className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                Variants in {gen.label}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {topVariants.map((variant) => (
+                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-medium text-[#FFFCF7] truncate block">{variant.name}</span>
+                    <span className="text-[9px] text-[#6B7280]">{variant.count} listings</span>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                      {formatPriceForRegion(variant.avgPrice, selectedRegion)}
+                    </span>
+                    <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
+                      {variant.grade}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4. MARKET DEPTH */}
+        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="flex items-center gap-2 mb-3">
+            <Gauge className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Market Depth
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Active Listings</span>
+              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{gen.carCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Avg. Price</span>
+              <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">
+                {formatPriceForRegion(
+                  gen.priceMin > 0 && gen.priceMax > 0
+                    ? Math.round((gen.priceMin + gen.priceMax) / 2)
+                    : 0,
+                  selectedRegion
+                )}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#9CA3AF]">Sell-Through Rate</span>
+              <span className="text-[12px] font-mono font-semibold text-emerald-400">{Math.min(85 + Math.floor(gen.carCount / 3), 98)}%</span>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] text-[#9CA3AF]">Demand Score</span>
+                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10)}/10</span>
+              </div>
+              <div className="flex gap-1">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-[6px] flex-1 rounded-sm ${i < Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10) ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. RECENT SALES */}
+        {recentSales.length > 0 && (
+          <div className="px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                Recent Sales
+              </span>
+            </div>
+            <div className="space-y-2">
+              {recentSales.map((sale) => (
+                <div key={sale.id} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
+                    <p className="text-[9px] text-[#6B7280] mt-0.5">
+                      {sale.platform?.replace(/_/g, " ") || "Auction"} · {sale.region}
+                    </p>
+                  </div>
+                  <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                    {formatPriceForRegion(sale.currentBid, selectedRegion)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 6. OWNERSHIP COST */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Annual Ownership Cost
+            </span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: "Insurance", value: genOwnershipCosts.insurance },
+              { label: "Storage", value: genOwnershipCosts.storage },
+              { label: "Maintenance", value: genOwnershipCosts.maintenance },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
+                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
+              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
+              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+        <button
+          onClick={onOpenAdvisor}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+        >
+          <MessageCircle className="size-4" />
+          Speak with Advisor
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── CAR CONTEXT PANEL (right panel for individual car view) ───
+function CarContextPanel({
+  car,
+  make,
+  onOpenAdvisor,
+}: {
+  car: CollectorCar
+  make: string
+  onOpenAdvisor: () => void
+}) {
+  const tAuction = useTranslations("auctionDetail")
+  const { selectedRegion } = useRegion()
+  const grade = car.investmentGrade
+  const isEndingSoon = car.status === "ENDING_SOON"
+
+  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
+  const priceRatio = car.currentBid > 0 ? Math.max(car.currentBid / 100000, 0.5) : 1
+  const carOwnershipCosts = {
+    insurance: Math.round(fallbackCosts.insurance * priceRatio),
+    storage: fallbackCosts.storage,
+    maintenance: Math.round(fallbackCosts.maintenance * priceRatio),
+  }
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+        {/* 1. CAR OVERVIEW */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Investment Analysis
+            </span>
+          </div>
+          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">
+            {car.year} {make} {car.model}
+          </h2>
+          {car.thesis && (
+            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
+              {car.thesis}
+            </p>
+          )}
+        </div>
+
+        {/* 2. KEY METRICS */}
+        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <p className={`text-[16px] font-bold ${
+                grade === "AAA" ? "text-emerald-400"
+                  : grade === "AA" ? "text-blue-400"
+                    : grade === "A" ? "text-amber-400"
+                      : "text-[#6B7280]"
+              }`}>{grade}</p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Current Bid</span>
+              <p className="text-[13px] font-mono font-semibold text-[#F8B4D9]">
+                {formatPriceForRegion(car.currentBid, selectedRegion)}
+              </p>
+            </div>
+            <div>
+              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Status</span>
+              <p className={`text-[13px] font-semibold ${
+                isEndingSoon ? "text-orange-400" : car.status === "ACTIVE" ? "text-emerald-400" : "text-[#6B7280]"
+              }`}>
+                {isEndingSoon ? "Ending Soon" : car.status === "ACTIVE" ? "Live" : car.status}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. CAR DETAILS */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Car className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Specifications
+            </span>
+          </div>
+          <div className="space-y-2">
+            {car.mileage && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Mileage</span>
+                <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{car.mileage.toLocaleString()} mi</span>
+              </div>
+            )}
+            {car.transmission && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Transmission</span>
+                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.transmission}</span>
+              </div>
+            )}
+            {car.exteriorColor && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Exterior</span>
+                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.exteriorColor}</span>
+              </div>
+            )}
+            {car.interiorColor && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Interior</span>
+                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.interiorColor}</span>
+              </div>
+            )}
+            {car.region && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Region</span>
+                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.region}</span>
+              </div>
+            )}
+            {car.endTime && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">Time Left</span>
+                <span className={`text-[12px] font-mono font-semibold ${isEndingSoon ? "text-orange-400" : "text-[#FFFCF7]"}`}>
+                  {timeLeft(new Date(car.endTime), {
+                    ended: tAuction("time.ended"),
+                    day: tAuction("time.units.day"),
+                    hour: tAuction("time.units.hour"),
+                    minute: tAuction("time.units.minute"),
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 4. PLATFORM */}
+        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+          <div className="flex items-center gap-2 mb-3">
+            <Globe className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Listing Source
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-[#9CA3AF]">Platform</span>
+            <span className="text-[12px] font-semibold text-[#FFFCF7]">
+              {car.platform?.replace(/_/g, " ") || "Auction"}
+            </span>
+          </div>
+          {car.category && (
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[11px] text-[#9CA3AF]">Category</span>
+              <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.category}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 5. OWNERSHIP COST */}
+        <div className="px-5 py-4 border-b border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="size-4 text-[#F8B4D9]" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              Annual Ownership Cost
+            </span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: "Insurance", value: carOwnershipCosts.insurance },
+              { label: "Storage", value: carOwnershipCosts.storage },
+              { label: "Maintenance", value: carOwnershipCosts.maintenance },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between">
+                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
+                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
+              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
+              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div className="shrink-0 px-5 py-3 border-t border-white/5 space-y-2">
+        <Link
+          href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+        >
+          <FileText className="size-4" />
+          View Full Report
+        </Link>
+        <button
+          onClick={onOpenAdvisor}
+          className="w-full flex items-center justify-center gap-2 rounded-xl border border-[rgba(248,180,217,0.3)] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#F8B4D9] hover:bg-[rgba(248,180,217,0.06)] transition-all"
+        >
+          <MessageCircle className="size-4" />
+          Ask Advisor
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ModelContextPanel({
   model,
   make,
@@ -1850,7 +2373,7 @@ function ModelContextPanel({
   const { selectedRegion, effectiveRegion } = useRegion()
 
   // All cars of this model family (unfiltered) for regional analysis
-  const allModelCars = allCars.filter(c => extractFamily(c.model) === model.name)
+  const allModelCars = allCars.filter(c => extractFamily(c.model, c.year, make) === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
 
   // Model-specific thesis (from the representative car's real data)
@@ -1874,10 +2397,6 @@ function ModelContextPanel({
 
   // Determine best-value region
   const bestRegion = regionalPricing ? findBestRegion(regionalPricing) : null
-
-  // Model-specific 5-year return data (derived from real trendValue)
-  const priceHistory = generateModelPriceHistory(model.avgPrice, model.representativeCar.trendValue)
-  const model5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
 
   // Market depth data
   // Model-specific liquidity (derived from real car data)
@@ -1958,11 +2477,14 @@ function ModelContextPanel({
         {/* 3. VALUATION BY MARKET — with visual bars */}
         {regionalPricing && (
           <div className="px-5 py-4 border-b border-white/5">
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                Valuation by Market
-              </span>
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="size-4 text-[#F8B4D9]" />
+                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                  Valuation by Market
+                </span>
+              </div>
+              <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair value range by region</p>
             </div>
             <div className="space-y-2.5">
               {(["US", "UK", "EU", "JP"] as const).map(region => {
@@ -2014,61 +2536,7 @@ function ModelContextPanel({
           </div>
         )}
 
-        {/* 4. 5-YEAR RETURN COMPARISON */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              5-Year Return Comparison
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {/* Model */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-[#F8B4D9] truncate mr-2">{model.name}</span>
-                <span className="text-[11px] font-mono font-bold text-emerald-400">+{model5yReturn}%</span>
-              </div>
-              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((model5yReturn / Math.max(model5yReturn, 50)) * 100, 100)}%` }} />
-              </div>
-            </div>
-            {/* Benchmarks */}
-            {BENCHMARKS.map((b) => (
-              <div key={b.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
-                  <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(model5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 5. YEAR-BY-YEAR TREND */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                5-Year Price Trend
-              </span>
-            </div>
-            <span className="text-[10px] font-mono font-semibold text-emerald-400">
-              {model5yReturn >= 0 ? "+" : ""}{model5yReturn}%
-            </span>
-          </div>
-          <PriceTrendChart
-            values={priceHistory}
-            years={[0, 1, 2, 3, 4].map(i => new Date().getFullYear() - 4 + i)}
-            height={100}
-          />
-        </div>
-
-        {/* 6. RECENT SALES */}
+        {/* 4. RECENT SALES */}
         {recentSales.length > 0 && (
           <div className="px-5 py-4 border-b border-white/5">
             <div className="flex items-center gap-2 mb-3">
@@ -2098,7 +2566,7 @@ function ModelContextPanel({
           </div>
         )}
 
-        {/* 7. LIQUIDITY & MARKET DEPTH */}
+        {/* 5. LIQUIDITY & MARKET DEPTH */}
         <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="size-4 text-[#F8B4D9]" />
@@ -2138,7 +2606,7 @@ function ModelContextPanel({
           </div>
         </div>
 
-        {/* 8. ANNUAL OWNERSHIP COST */}
+        {/* 6. ANNUAL OWNERSHIP COST */}
         <div className="px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-3">
             <Wrench className="size-4 text-[#F8B4D9]" />
@@ -2164,7 +2632,7 @@ function ModelContextPanel({
           </div>
         </div>
 
-        {/* 9. SIMILAR MODELS */}
+        {/* 7. SIMILAR MODELS */}
         {similarModels.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
@@ -2231,7 +2699,7 @@ function ModelContextPanel({
 }
 
 // ─── MAIN COMPONENT ───
-export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [] }: {
+export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [], initialFamily, initialGen }: {
   make: string
   cars: CollectorCar[]
   liveRegionTotals?: LiveListingRegionTotals
@@ -2240,8 +2708,11 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   dbComparables?: DbComparableRow[]
   dbSoldHistory?: DbSoldRecord[]
   dbAnalyses?: DbAnalysisRow[]
+  initialFamily?: string
+  initialGen?: string
 }) {
   const locale = useLocale()
+  const router = useRouter()
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
@@ -2311,9 +2782,13 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
   const [expandedModel, setExpandedModel] = useState<Model | null>(null)
   const [activeFilters, setActiveFilters] = useState<FamilyFilters | null>(null)
-  const [viewMode, setViewMode] = useState<'families' | 'cars'>('families')
-  const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'families' | 'generations' | 'cars'>(initialFamily ? 'cars' : 'families')
+  const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(initialFamily || null)
+  const [selectedGeneration, setSelectedGeneration] = useState<string | null>(initialGen || null)
+  const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(null)
+  const [feedStatusFilter, setFeedStatusFilter] = useState<"all" | "live" | "ended">("all")
   const feedRef = useRef<HTMLDivElement>(null)
+  const carIndexRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
 
   // Filter cars by region first, then aggregate into models
   const regionFilteredCars = useMemo(() => {
@@ -2321,16 +2796,17 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     return cars.filter(c => c.region === selectedRegion)
   }, [cars, selectedRegion])
 
-  // Live auction cars (for left sidebar)
-  const liveCars = useMemo(() =>
-    regionFilteredCars
-      .filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON")
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()),
-    [regionFilteredCars]
-  )
+  // Live auction cars (for left sidebar) — filtered by region + active family
+  const liveCars = useMemo(() => {
+    let filtered = regionFilteredCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON")
+    if (selectedFamilyForFeed) {
+      filtered = filtered.filter(c => extractFamily(c.model, c.year, make) === selectedFamilyForFeed)
+    }
+    return filtered.sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+  }, [regionFilteredCars, selectedFamilyForFeed])
 
   // Aggregate filtered cars into models
-  const allModels = useMemo(() => aggregateModels(regionFilteredCars), [regionFilteredCars])
+  const allModels = useMemo(() => aggregateModels(regionFilteredCars, make), [regionFilteredCars, make])
 
   // Filter and sort models
   const filteredModels = useMemo(() => {
@@ -2370,13 +2846,20 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     return result
   }, [allModels, searchQuery, selectedPriceTier, selectedPriceRange, selectedStatus, sortBy, selectedEra, regionFilteredCars])
 
-  const selectedModel = filteredModels[currentModelIndex] || filteredModels[0]
+  // When a family is selected via navigation, use that family's model; otherwise use scroll index
+  const selectedModel = useMemo(() => {
+    if (selectedFamilyForFeed) {
+      const match = filteredModels.find(m => m.name === selectedFamilyForFeed)
+      if (match) return match
+    }
+    return filteredModels[currentModelIndex] || filteredModels[0]
+  }, [filteredModels, currentModelIndex, selectedFamilyForFeed])
 
   // Get cars for the selected family
   const familyCars = useMemo(() => {
     if (!selectedModel) return []
-    return regionFilteredCars.filter(car => extractFamily(car.model) === selectedModel.name)
-  }, [regionFilteredCars, selectedModel])
+    return regionFilteredCars.filter(car => extractFamily(car.model, car.year, make) === selectedModel.name)
+  }, [regionFilteredCars, selectedModel, make])
 
   // Apply COLUMNA C filters (search + generations + advanced) to family cars
   const displayCars = useMemo(() => {
@@ -2434,6 +2917,13 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       })
     }
 
+    if (activeFilters.bodyTypes && activeFilters.bodyTypes.length > 0) {
+      result = result.filter(car => {
+        const bt = deriveBodyType(car.model, car.trim, car.category, car.make, car.year)
+        return activeFilters.bodyTypes!.includes(bt)
+      })
+    }
+
     if (activeFilters.colors && activeFilters.colors.length > 0) {
       result = result.filter(car => {
         if (!car.exteriorColor) return false
@@ -2464,32 +2954,318 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     activeFilters.selectedGenerations.length > 0
   )
 
-  // Handler: Click en familia → Cambiar a modo de carros
+  // Handler: Click en familia → Mostrar generaciones
   const handleFamilyClick = (familyName: string) => {
     setSelectedFamilyForFeed(familyName)
+    setSelectedGeneration(null)
+    setSelectedVariantChip(null)
+    setFeedStatusFilter("all")
     setViewMode('cars')
-    setActiveFilters(null) // Limpiar filtros previos
-    // Scroll to top del feed
+    setActiveFilters(null)
+    setActiveGenIndex(0)
+    setActiveCarIndex(0)
     if (feedRef.current) {
       feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
-  // Handler: Volver a vista de familias
+  // Handler: Click en generación → Mostrar carros de esa generación
+  const handleGenerationClick = (genId: string) => {
+    setSelectedGeneration(genId)
+    setSelectedVariantChip(null)
+    setFeedStatusFilter("all")
+    setViewMode('cars')
+    setActiveFilters(null)
+    setActiveCarIndex(0)
+    if (feedRef.current) {
+      feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Handler: Volver a generaciones desde carros (o al landing si venimos del dashboard)
+  const handleBackToGenerations = () => {
+    if (initialFamily) {
+      // Came from dashboard with ?family= — go back to landing
+      router.push("/")
+      return
+    }
+    setSelectedGeneration(null)
+    setSelectedVariantChip(null)
+    setViewMode('generations')
+    setActiveFilters(null)
+    setActiveGenIndex(0)
+    setActiveCarIndex(0)
+    if (feedRef.current) {
+      feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Handler: Volver a vista de familias (o al landing si venimos de allá)
   const handleBackToFamilies = () => {
+    if (initialFamily) {
+      // User arrived from the landing page with ?family= — go back to landing
+      router.push("/")
+      return
+    }
     setViewMode('families')
     setSelectedFamilyForFeed(null)
+    setSelectedGeneration(null)
     setActiveFilters(null)
+    setActiveGenIndex(0)
+    setActiveCarIndex(0)
     if (feedRef.current) {
       feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
-  // Get cars for feed mode (when viewing a specific family's cars)
+  // Handler: Switch between sibling series (same family group) in Column A nav
+  const handleSiblingClick = (seriesId: string) => {
+    if (seriesId === selectedFamilyForFeed) return
+    setSelectedFamilyForFeed(seriesId)
+    setSelectedGeneration(null)
+    setSelectedVariantChip(null)
+    setFeedStatusFilter("all")
+    setViewMode('cars')
+    setActiveFilters(null)
+    setActiveCarIndex(0)
+    if (feedRef.current) {
+      feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Get cars for the selected family
   const familyCarsForFeed = useMemo(() => {
     if (!selectedFamilyForFeed) return []
-    return regionFilteredCars.filter(car => extractFamily(car.model) === selectedFamilyForFeed)
+    let result = regionFilteredCars.filter(car => extractFamily(car.model, car.year, make) === selectedFamilyForFeed)
+    // If a generation is selected, filter further
+    if (selectedGeneration) {
+      result = result.filter(car => {
+        const gen = extractGenerationFromModel(car.model, car.year)
+        return gen === selectedGeneration
+      })
+    }
+    return result
+  }, [regionFilteredCars, selectedFamilyForFeed, selectedGeneration])
+
+  // Aggregate cars into generations for the selected family
+  const familyGenerations = useMemo((): GenerationAggregate[] => {
+    if (!selectedFamilyForFeed) return []
+    const allFamilyCars = regionFilteredCars.filter(car => extractFamily(car.model, car.year, make) === selectedFamilyForFeed)
+
+    // Get generation definitions for this family from FamilySearchAndFilters data
+    const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>> = {
+      "911": [
+        { id: "992", label: "992 (2019+)" },
+        { id: "991", label: "991 (2011-2019)" },
+        { id: "997", label: "997 (2004-2012)" },
+        { id: "996", label: "996 (1997-2005)" },
+        { id: "993", label: "993 (1993-1998)" },
+        { id: "964", label: "964 (1989-1994)" },
+        { id: "930", label: "930 Turbo (1975-1989)" },
+        { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)" },
+        { id: "f-model", label: "F-Model (1963-1973)" },
+      ],
+      "Cayenne": [
+        { id: "e3", label: "E3 (2019-2024)" },
+        { id: "e2", label: "E2 (2011-2018)" },
+        { id: "e1", label: "E1 (2003-2010)" },
+      ],
+      "Taycan": [
+        { id: "j1", label: "J1 (2020+)" },
+      ],
+      "Macan": [
+        { id: "95b-2", label: "95B.2 (2024+)" },
+        { id: "95b", label: "95B (2019-2024)" },
+        { id: "95b-1", label: "95B.1 (2014-2018)" },
+      ],
+      "Panamera": [
+        { id: "g3", label: "G3 (2024+)" },
+        { id: "g2", label: "G2 (2017-2024)" },
+        { id: "g1", label: "G1 (2010-2016)" },
+      ],
+      "Boxster": [
+        { id: "718", label: "718 (2016+)" },
+        { id: "981", label: "981 (2012-2016)" },
+        { id: "987", label: "987 (2005-2012)" },
+      ],
+      "Cayman": [
+        { id: "718", label: "718 (2016+)" },
+        { id: "981", label: "981 (2012-2016)" },
+        { id: "987", label: "987 (2005-2012)" },
+      ],
+      "356": [
+        { id: "356c", label: "356C (1963-1965)" },
+        { id: "356b", label: "356B (1959-1963)" },
+        { id: "356a", label: "356A (1955-1959)" },
+        { id: "356-pre-a", label: "Pre-A (1948-1955)" },
+      ],
+      "928": [
+        { id: "928-gts", label: "GTS (1992-1995)" },
+        { id: "928-gt", label: "GT (1989-1991)" },
+        { id: "928-s4", label: "S4 (1987-1991)" },
+        { id: "928-s2", label: "S/S2 (1980-1986)" },
+        { id: "928-base", label: "Base (1978-1982)" },
+      ],
+      "944": [
+        { id: "944-s2", label: "S2 (1989-1991)" },
+        { id: "944-turbo", label: "Turbo (1985-1991)" },
+        { id: "944-s", label: "S (1987-1988)" },
+        { id: "944-base", label: "Base (1982-1988)" },
+      ],
+      "968": [
+        { id: "968-cs", label: "Club Sport (1993-1995)" },
+        { id: "968-turbo-s", label: "Turbo S (1993-1994)" },
+        { id: "968-base", label: "Base (1992-1995)" },
+      ],
+      "914": [
+        { id: "914-2.0", label: "2.0L (1973-1976)" },
+        { id: "914-1.8", label: "1.8L (1970-1972)" },
+        { id: "914-1.7", label: "1.7L (1969-1973)" },
+      ],
+      "924": [
+        { id: "924-carrera-gt", label: "Carrera GT (1980-1981)" },
+        { id: "924-s", label: "S (1986-1988)" },
+        { id: "924-turbo", label: "Turbo (1979-1984)" },
+        { id: "924-base", label: "Base (1976-1988)" },
+      ],
+      "Carrera GT": [
+        { id: "980", label: "980 (2004-2007)" },
+      ],
+      "918 Spyder": [
+        { id: "918", label: "918 (2013-2015)" },
+      ],
+      "718": [
+        { id: "718-rsk", label: "RSK (1957-1958)" },
+        { id: "718-w-rs", label: "W-RS (1961-1962)" },
+        { id: "718-classic", label: "718/2 (1959-1960)" },
+      ],
+    }
+
+    const genDefs = GENERATIONS_BY_FAMILY[selectedFamilyForFeed] || []
+
+    // Group cars by generation
+    const genMap = new Map<string, CollectorCar[]>()
+    const unmatched: CollectorCar[] = []
+
+    allFamilyCars.forEach(car => {
+      const gen = extractGenerationFromModel(car.model, car.year)
+      if (gen) {
+        const existing = genMap.get(gen) || []
+        existing.push(car)
+        genMap.set(gen, existing)
+      } else {
+        unmatched.push(car)
+      }
+    })
+
+    // Build generation aggregates (use genDefs order for known gens)
+    const result: GenerationAggregate[] = []
+
+    for (const def of genDefs) {
+      const cars = genMap.get(def.id) || []
+      if (cars.length === 0) continue
+
+      const prices = cars.map(c => c.currentBid).filter(p => p > 0)
+      const years = cars.map(c => c.year)
+      const repCar = cars.sort((a, b) => b.currentBid - a.currentBid)[0]
+      const carImage = repCar.images?.[0] || repCar.image
+      const grades = cars.map(c => c.investmentGrade).filter(Boolean)
+      const topGrade = grades.includes("AAA") ? "AAA" : grades.includes("AA") ? "AA" : grades.includes("A") ? "A" : "B"
+
+      result.push({
+        id: def.id,
+        label: def.label,
+        carCount: cars.length,
+        priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+        priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+        yearMin: Math.min(...years),
+        yearMax: Math.max(...years),
+        representativeImage: carImage || "",
+        representativeCar: `${repCar.year} ${repCar.model}`,
+        topGrade,
+      })
+    }
+
+    // Add any generations from data not in genDefs (e.g., unknown codes)
+    genMap.forEach((cars, genId) => {
+      if (result.find(r => r.id === genId)) return
+      const prices = cars.map(c => c.currentBid).filter(p => p > 0)
+      const years = cars.map(c => c.year)
+      const repCar = cars.sort((a, b) => b.currentBid - a.currentBid)[0]
+      const carImage = repCar.images?.[0] || repCar.image
+      const grades = cars.map(c => c.investmentGrade).filter(Boolean)
+      const topGrade = grades.includes("AAA") ? "AAA" : grades.includes("AA") ? "AA" : grades.includes("A") ? "A" : "B"
+
+      result.push({
+        id: genId,
+        label: genId.toUpperCase(),
+        carCount: cars.length,
+        priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+        priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+        yearMin: Math.min(...years),
+        yearMax: Math.max(...years),
+        representativeImage: carImage || "",
+        representativeCar: `${repCar.year} ${repCar.model}`,
+        topGrade,
+      })
+    })
+
+    // If there are unmatched cars, add an "Other" bucket
+    if (unmatched.length > 0) {
+      const prices = unmatched.map(c => c.currentBid).filter(p => p > 0)
+      const years = unmatched.map(c => c.year)
+      const repCar = unmatched.sort((a, b) => b.currentBid - a.currentBid)[0]
+      const carImage = repCar.images?.[0] || repCar.image
+      result.push({
+        id: "other",
+        label: "Other",
+        carCount: unmatched.length,
+        priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+        priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+        yearMin: Math.min(...years),
+        yearMax: Math.max(...years),
+        representativeImage: carImage || "",
+        representativeCar: `${repCar.year} ${repCar.model}`,
+        topGrade: "B",
+      })
+    }
+
+    return result
   }, [regionFilteredCars, selectedFamilyForFeed])
+
+  // ─── SIBLING SERIES (same family group) for Column A nav ───
+  const siblingSeries = useMemo(() => {
+    if (!selectedFamilyForFeed) return []
+    const groups = getFamilyGroupsWithSeries(make)
+    const currentGroup = groups.find(g =>
+      g.series.some(s => s.id === selectedFamilyForFeed.toLowerCase())
+    )
+    if (!currentGroup || currentGroup.series.length <= 1) return []
+
+    // Count cars per sibling from regionFilteredCars
+    const countMap = new Map<string, number>()
+    regionFilteredCars.forEach(car => {
+      const seriesId = extractSeries(car.model, car.year || 0, make)
+      countMap.set(seriesId, (countMap.get(seriesId) || 0) + 1)
+    })
+
+    return currentGroup.series
+      .map(s => ({
+        id: s.id,
+        label: s.label,
+        carCount: countMap.get(s.id) || 0,
+      }))
+      .filter(s => s.carCount > 0)
+  }, [selectedFamilyForFeed, make, regionFilteredCars])
+
+  const currentFamilyGroupLabel = useMemo(() => {
+    if (!selectedFamilyForFeed) return ""
+    const groups = getFamilyGroupsWithSeries(make)
+    const group = groups.find(g =>
+      g.series.some(s => s.id === selectedFamilyForFeed.toLowerCase())
+    )
+    return group?.label || selectedFamilyForFeed
+  }, [selectedFamilyForFeed, make])
 
   // Apply filters to feed cars (when in cars mode)
   const filteredFeedCars = useMemo(() => {
@@ -2548,6 +3324,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       })
     }
 
+    // Body type filter
+    if (activeFilters.bodyTypes && activeFilters.bodyTypes.length > 0) {
+      result = result.filter(car => {
+        const bt = deriveBodyType(car.model, car.trim, car.category, car.make, car.year)
+        return activeFilters.bodyTypes!.includes(bt)
+      })
+    }
+
     // Color filter
     if (activeFilters.colors && activeFilters.colors.length > 0) {
       result = result.filter(car => {
@@ -2575,21 +3359,88 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     return result
   }, [familyCarsForFeed, activeFilters])
 
-  // Scroll sync for center feed
+  // Variant chips — compute available variants with counts from filteredFeedCars
+  const availableVariants = useMemo(() => {
+    if (!selectedGeneration && !selectedFamilyForFeed) return []
+    const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+    const variants = getSeriesVariants(seriesId.toLowerCase(), make)
+    if (variants.length === 0) return []
+    const counts = new Map<string, number>()
+    for (const car of filteredFeedCars) {
+      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+      if (vid) counts.set(vid, (counts.get(vid) || 0) + 1)
+    }
+    return variants
+      .map(v => ({ id: v.id, label: v.label, count: counts.get(v.id) || 0 }))
+      .filter(v => v.count > 0)
+  }, [filteredFeedCars, selectedGeneration, selectedFamilyForFeed, make])
+
+  // Apply variant chip filter + status filter + sorting on top of filteredFeedCars
+  const variantFilteredFeedCars = useMemo(() => {
+    let result = filteredFeedCars
+    if (selectedVariantChip) {
+      const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+      result = result.filter(car => {
+        const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+        return vid === selectedVariantChip
+      })
+    }
+    // Status filter
+    if (feedStatusFilter === "live") {
+      result = result.filter(car => car.status === "ACTIVE" || car.status === "ENDING_SOON")
+    } else if (feedStatusFilter === "ended") {
+      result = result.filter(car => car.status === "ENDED")
+    }
+    // Apply sorting
+    const sorted = [...result]
+    switch (sortBy) {
+      case "price-desc": sorted.sort((a, b) => b.price - a.price); break
+      case "price-asc": sorted.sort((a, b) => a.price - b.price); break
+      case "year-desc": sorted.sort((a, b) => b.year - a.year); break
+      case "year-asc": sorted.sort((a, b) => a.year - b.year); break
+    }
+    return sorted
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make, sortBy, feedStatusFilter])
+
+  // Status counts for Column B header chips (computed before status filter)
+  const feedStatusCounts = useMemo(() => {
+    let base = filteredFeedCars
+    if (selectedVariantChip) {
+      const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+      base = base.filter(car => matchVariant(car.model, car.trim, seriesId.toLowerCase(), make) === selectedVariantChip)
+    }
+    const live = base.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+    const ended = base.filter(c => c.status === "ENDED").length
+    return { all: base.length, live, ended }
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make])
+
+  // Scroll sync for center feed — tracks position in whichever list is showing
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
+  const [activeGenIndex, setActiveGenIndex] = useState(0)
+  const [activeCarIndex, setActiveCarIndex] = useState(0)
 
   useEffect(() => {
     const container = feedRef.current
     if (!container) return
     const handleScroll = () => {
       const newIndex = Math.round(container.scrollTop / getCardHeight())
-      if (newIndex !== currentModelIndex && newIndex >= 0 && newIndex < filteredModels.length) {
-        setCurrentModelIndex(newIndex)
+      if (viewMode === 'families') {
+        if (newIndex !== currentModelIndex && newIndex >= 0 && newIndex < filteredModels.length) {
+          setCurrentModelIndex(newIndex)
+        }
+      } else if (viewMode === 'generations') {
+        if (newIndex !== activeGenIndex && newIndex >= 0 && newIndex < familyGenerations.length) {
+          setActiveGenIndex(newIndex)
+        }
+      } else if (viewMode === 'cars') {
+        if (newIndex !== activeCarIndex && newIndex >= 0 && newIndex < variantFilteredFeedCars.length) {
+          setActiveCarIndex(newIndex)
+        }
       }
     }
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
-  }, [currentModelIndex, filteredModels.length])
+  }, [viewMode, currentModelIndex, filteredModels.length, activeGenIndex, familyGenerations.length, activeCarIndex, variantFilteredFeedCars.length])
 
   const scrollToModel = (index: number) => {
     const container = feedRef.current
@@ -2597,6 +3448,22 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     container.scrollTo({ top: getCardHeight() * index, behavior: "smooth" })
     setCurrentModelIndex(index)
   }
+
+  const scrollToCar = (index: number) => {
+    const container = feedRef.current
+    if (!container) return
+    container.scrollTo({ top: getCardHeight() * index, behavior: "smooth" })
+    setActiveCarIndex(index)
+  }
+
+  // Auto-scroll car index list in Column A to keep active item visible
+  useEffect(() => {
+    if (viewMode !== 'cars') return
+    const el = carIndexRefs.current.get(activeCarIndex)
+    if (el) {
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }
+  }, [activeCarIndex, viewMode])
 
   // Reset index when filters change
   useEffect(() => {
@@ -2740,8 +3607,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 </div>
               )}
 
-              {/* Section: Live Auctions */}
-              <MobileMakeLiveAuctions cars={regionFilteredCars} totalLiveCount={selectedRegionLiveCount} />
+              {/* Section: Live Auctions (filtered by family when selected) */}
+              <MobileMakeLiveAuctions
+                cars={selectedFamilyForFeed
+                  ? regionFilteredCars.filter(c => extractFamily(c.model, c.year, make) === selectedFamilyForFeed)
+                  : regionFilteredCars
+                }
+                totalLiveCount={liveCars.length}
+              />
             </>
           )}
         </div>
@@ -2782,38 +3655,111 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {/* Filters section (scrollable) */}
             {selectedModel ? (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {/* Back to families button */}
-                {viewMode === 'cars' && (
-                  <div className="shrink-0 px-4 py-2 border-b border-white/5">
-                    <button
-                      onClick={handleBackToFamilies}
-                      className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
-                    >
-                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
-                      <span className="uppercase font-semibold">{make}</span>
-                    </button>
+                {/* Back + Family Group header */}
+                <div className="shrink-0 px-4 py-2.5 border-b border-white/5">
+                  <button
+                    onClick={handleBackToFamilies}
+                    className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group mb-1"
+                  >
+                    <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="uppercase font-semibold tracking-wider">{make}</span>
+                  </button>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{currentFamilyGroupLabel}</h3>
+                    <span className="text-[10px] text-[#6B7280] font-mono">{familyCars.length} cars</span>
+                  </div>
+                </div>
+
+                {/* Sibling Series Navigation (same family group) */}
+                {siblingSeries.length > 1 && (
+                  <div className="shrink-0 border-b border-white/5">
+                    <div className="px-4 py-1.5">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                        Series
+                      </span>
+                    </div>
+                    <div className="max-h-[260px] overflow-y-auto no-scrollbar">
+                      {siblingSeries.map(s => {
+                        const isActive = selectedFamilyForFeed === s.id
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => handleSiblingClick(s.id)}
+                            className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
+                              isActive
+                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                            }`}
+                          >
+                            <span className={`text-[11px] font-medium ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
+                            }`}>
+                              {s.label}
+                            </span>
+                            <span className={`text-[9px] font-mono ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                            }`}>
+                              {s.carCount}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
-                {/* Family search (generations only, no search bar) */}
-                <div className="shrink-0">
-                  <FamilySearchAndFilters
-                    familyName={selectedModel.name}
-                    totalCars={displayCars.length}
-                    hideSearch
-                    onFilterChange={(familyFilters) => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        searchQuery: familyFilters.searchQuery,
-                        selectedGenerations: familyFilters.selectedGenerations,
-                        yearRange: familyFilters.yearRange || prev?.yearRange || null,
-                        priceRange: familyFilters.priceRange || prev?.priceRange || null,
-                      }))
-                    }}
-                  />
-                </div>
+                {/* Car Index List — synced with Column B scroll */}
+                {viewMode === 'cars' && variantFilteredFeedCars.length > 0 && (
+                  <div className="shrink-0 max-h-[40%] flex flex-col border-b border-white/5 overflow-hidden">
+                    <div className="shrink-0 px-4 py-1.5 flex items-center justify-between">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                        Cars
+                      </span>
+                      <span className="text-[9px] font-mono text-[#4B5563]">
+                        {activeCarIndex + 1}/{variantFilteredFeedCars.length}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+                      {variantFilteredFeedCars.map((car, i) => {
+                        const isActive = i === activeCarIndex
+                        return (
+                          <button
+                            key={car.id}
+                            ref={(el) => { if (el) carIndexRefs.current.set(i, el); else carIndexRefs.current.delete(i) }}
+                            onClick={() => scrollToCar(i)}
+                            className={`w-full flex items-center gap-2 px-4 py-1.5 transition-all ${
+                              isActive
+                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                            }`}
+                          >
+                            <span className={`text-[9px] font-mono w-4 shrink-0 ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                            }`}>
+                              {i + 1}
+                            </span>
+                            <span className={`text-[10px] truncate flex-1 text-left ${
+                              isActive ? "text-[#FFFCF7] font-medium" : "text-[#9CA3AF]"
+                            }`}>
+                              {car.year} {car.model?.replace(/^Porsche\s*/i, "")}
+                            </span>
+                            {car.currentBid > 0 && (
+                              <span className={`text-[9px] font-mono shrink-0 ${
+                                isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                              }`}>
+                                ${(car.currentBid / 1000).toFixed(0)}k
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Advanced filters (price, year, km, transmission) */}
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <AdvancedFilters
+                    key={selectedFamilyForFeed || selectedModel.name}
                     familyName={selectedModel.name}
                     onFiltersChange={(advFilters) => {
                       setActiveFilters(prev => ({
@@ -2824,6 +3770,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                         priceRange: advFilters.priceRange,
                         mileageRanges: advFilters.mileageRanges,
                         transmissions: advFilters.transmissions,
+                        bodyTypes: advFilters.bodyTypes,
                         colors: advFilters.colors,
                         statuses: advFilters.statuses,
                         grades: advFilters.grades,
@@ -2851,9 +3798,9 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
                   LIVE NOW
                 </span>
-                {selectedRegionLiveCount > 0 && (
+                {liveCars.length > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
-                    {selectedRegionLiveCount}
+                    {liveCars.length}
                   </span>
                 )}
               </div>
@@ -2913,17 +3860,126 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
           {/* COLUMN B: MODEL FEED (snap scroll) */}
           <div
             ref={feedRef}
-            className={`h-full overflow-y-auto no-scrollbar scroll-smooth ${viewMode === 'families' && !hasActiveFilters ? "snap-y snap-mandatory" : ""}`}
+            className={`h-full overflow-y-auto no-scrollbar scroll-smooth ${(viewMode === 'families' || viewMode === 'generations') && !hasActiveFilters ? "snap-y snap-mandatory" : ""}`}
           >
             {viewMode === 'cars' ? (
-              // MODE: Viewing specific family's cars (feed style)
+              // MODE: Viewing specific generation's cars (feed style)
               <>
-                {filteredFeedCars.length === 0 ? (
+                {/* Back navigation + sort + variant chips — compact */}
+                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-4 py-1.5">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleBackToGenerations}
+                      className="inline-flex items-center gap-1 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                    >
+                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="uppercase font-semibold tracking-wider">
+                        {selectedFamilyForFeed} {selectedGeneration ? `/ ${selectedGeneration.toUpperCase()}` : ""}
+                      </span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-[#4B5563] font-mono">{variantFilteredFeedCars.length} cars</span>
+                      <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {/* Variant chips */}
+                    {availableVariants.length > 0 && (
+                      <>
+                        <button
+                          onClick={() => setSelectedVariantChip(null)}
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                            !selectedVariantChip
+                              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                              : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {availableVariants.map(v => (
+                          <button
+                            key={v.id}
+                            onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                              selectedVariantChip === v.id
+                                ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                                : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                            }`}
+                          >
+                            {v.label}
+                          </button>
+                        ))}
+                        <span className="w-px h-3 bg-white/10 mx-0.5" />
+                      </>
+                    )}
+                    {/* Status chips */}
+                    {feedStatusCounts.live > 0 && (
+                      <button
+                        onClick={() => setFeedStatusFilter(feedStatusFilter === "live" ? "all" : "live")}
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
+                          feedStatusFilter === "live"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="size-1.5 rounded-full bg-emerald-400" />
+                        Live {feedStatusCounts.live}
+                      </button>
+                    )}
+                    {feedStatusCounts.ended > 0 && (
+                      <button
+                        onClick={() => setFeedStatusFilter(feedStatusFilter === "ended" ? "all" : "ended")}
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                          feedStatusFilter === "ended"
+                            ? "bg-[rgba(107,114,128,0.2)] text-[#9CA3AF] border border-[rgba(107,114,128,0.3)]"
+                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        Ended {feedStatusCounts.ended}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-[#4B5563] mb-4" />
                     <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No hay carros</h3>
                     <p className="text-[13px] text-[#4B7280] mb-6">
-                      No se encontraron carros para esta familia
+                      No se encontraron carros para esta generación
+                    </p>
+                    <button
+                      onClick={handleBackToGenerations}
+                      className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold"
+                    >
+                      Volver a generaciones
+                    </button>
+                  </div>
+                ) : (
+                  <AnimatePresence mode="popLayout">
+                    {variantFilteredFeedCars.map((car, i) => (
+                      <motion.div
+                        key={car.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.15) }}
+                        layout
+                      >
+                        <CarFeedCard car={car} make={make} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
+              </>
+            ) : viewMode === 'generations' ? (
+              // MODE: Viewing generations of a family (snap scroll)
+              <>
+                {familyGenerations.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center px-8">
+                    <Car className="size-12 text-[#4B5563] mb-4" />
+                    <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No generations found</h3>
+                    <p className="text-[13px] text-[#4B5563] mb-6">
+                      No se encontraron generaciones para {selectedFamilyForFeed}
                     </p>
                     <button
                       onClick={handleBackToFamilies}
@@ -2933,9 +3989,25 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </button>
                   </div>
                 ) : (
-                  filteredFeedCars.map((car) => (
-                    <CarFeedCard key={car.id} car={car} make={make} />
-                  ))
+                  <AnimatePresence mode="popLayout">
+                    {familyGenerations.map((gen, i) => (
+                      <motion.div
+                        key={gen.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
+                        layout
+                      >
+                        <GenerationFeedCard
+                          gen={gen}
+                          familyName={selectedFamilyForFeed || ""}
+                          make={make}
+                          onClick={() => handleGenerationClick(gen.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </>
             ) : hasActiveFilters ? (
@@ -2980,15 +4052,35 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
 
                   {/* Car grid */}
                   <div className="grid grid-cols-1 gap-4">
-                    {displayCars.map((car, idx) => (
-                      <CarCard key={car.id} car={car} index={idx} />
-                    ))}
+                    <AnimatePresence mode="popLayout">
+                      {displayCars.map((car, idx) => (
+                        <motion.div
+                          key={car.id}
+                          initial={{ opacity: 0, scale: 0.97 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.97 }}
+                          transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.15) }}
+                          layout
+                        >
+                          <CarCard car={car} index={idx} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )
             ) : (
               // MODE: Default - Show family feed (families with snap scroll)
-              filteredModels.length === 0 ? (
+              <>
+              {filteredModels.length > 1 && (
+                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-2.5 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                    {filteredModels.length} {filteredModels.length === 1 ? "familia" : "familias"}
+                  </span>
+                  <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={sortOptions} />
+                </div>
+              )}
+              {filteredModels.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
                   <Car className="size-12 text-[#4B5563] mb-4" />
                   <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">{t("empty.title")}</h3>
@@ -2998,16 +4090,44 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                   </button>
                 </div>
               ) : (
-                filteredModels.map((model) => (
-                  <ModelFeedCard key={model.slug} model={model} make={make} onClick={() => handleFamilyClick(model.name)} />
-                ))
-              )
+                <AnimatePresence mode="popLayout">
+                  {filteredModels.map((model, i) => (
+                    <motion.div
+                      key={model.slug}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
+                      layout
+                    >
+                      <ModelFeedCard model={model} make={make} onClick={() => handleFamilyClick(model.name)} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+              </>
             )}
           </div>
 
-          {/* COLUMN C: MARKET INTELLIGENCE */}
+          {/* COLUMN C: MARKET INTELLIGENCE — synced with center scroll */}
           <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
-            {selectedModel ? (
+            {viewMode === 'generations' && familyGenerations[activeGenIndex] ? (
+              <GenerationContextPanel
+                key={familyGenerations[activeGenIndex].id}
+                gen={familyGenerations[activeGenIndex]}
+                familyName={selectedFamilyForFeed || ""}
+                make={make}
+                familyCars={regionFilteredCars.filter(car => extractFamily(car.model, car.year, make) === selectedFamilyForFeed)}
+                onOpenAdvisor={() => setShowAdvisorChat(true)}
+              />
+            ) : viewMode === 'cars' && variantFilteredFeedCars[activeCarIndex] ? (
+              <CarContextPanel
+                key={variantFilteredFeedCars[activeCarIndex].id}
+                car={variantFilteredFeedCars[activeCarIndex]}
+                make={make}
+                onOpenAdvisor={() => setShowAdvisorChat(true)}
+              />
+            ) : selectedModel ? (
               <ModelContextPanel
                 model={selectedModel}
                 make={make}

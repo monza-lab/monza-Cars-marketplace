@@ -38,7 +38,7 @@ import {
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
@@ -620,8 +620,11 @@ function CarContextPanel({
   const shipping = shippingCosts[car.make] || shippingCosts.default
   const events = eventsData[car.make] || eventsData.default
 
-  // Regional pricing from real data
-  const pricing = car.fairValueByRegion
+  // Regional pricing — recalculate from USD to ensure proper regional differentiation
+  const usdBase = car.fairValueByRegion.US.high > 0
+    ? (car.fairValueByRegion.US.low + car.fairValueByRegion.US.high) / 2
+    : car.currentBid
+  const pricing = buildRegionalFairValue(usdBase)
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
@@ -704,11 +707,14 @@ function CarContextPanel({
 
         {/* 2. VALUATION BY MARKET */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-4">
-            <Globe className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              Valuation by Market
-            </span>
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <Globe className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                Valuation by Market
+              </span>
+            </div>
+            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair value range by region</p>
           </div>
           <div className="space-y-2.5">
             {(["US", "UK", "EU", "JP"] as const).map(region => {
@@ -1035,8 +1041,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
 
   // ─── Investment Passport computations (for mobile) ───
-  // Fair value: prefer DB market data, fallback to car's fairValueByRegion
-  const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
+  // Fair value: recalculate from USD base for proper regional differentiation
+  const mobileUsdBase = car.fairValueByRegion.US.high > 0
+    ? (car.fairValueByRegion.US.low + car.fairValueByRegion.US.high) / 2
+    : car.currentBid
+  const mobilePricing = buildRegionalFairValue(mobileUsdBase)
+  const regionRange = getFairValueForRegion(mobilePricing, selectedRegion)
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
   const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
@@ -1044,7 +1054,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
   const isBelowFair = bidInRegion < (fairLow + fairHigh) / 2
 
-  const pricing = car.fairValueByRegion
+  const pricing = mobilePricing
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...((["US", "EU", "UK", "JP"] as const).map(r =>

@@ -13,6 +13,7 @@ import {
   resolveRequestedMake,
   type SupportedLiveMake,
 } from "./makeProfiles";
+import { buildRegionalFairValue } from "./regionPricing";
 
 // ─── Row types ───
 
@@ -297,22 +298,7 @@ function mapRegion(country: string | null): Region {
 }
 
 function buildFairValue(price: number): FairValueByRegion {
-  if (price <= 0) {
-    return {
-      US: { currency: "$", low: 0, high: 0 },
-      EU: { currency: "\u20ac", low: 0, high: 0 },
-      UK: { currency: "\u00a3", low: 0, high: 0 },
-      JP: { currency: "\u00a5", low: 0, high: 0 },
-    };
-  }
-  const low = Math.round(price * 0.8);
-  const high = Math.round(price * 1.2);
-  return {
-    US: { currency: "$", low, high },
-    EU: { currency: "\u20ac", low: Math.round(low * 0.92), high: Math.round(high * 0.92) },
-    UK: { currency: "\u00a3", low: Math.round(low * 0.79), high: Math.round(high * 0.79) },
-    JP: { currency: "\u00a5", low: Math.round(low * 150), high: Math.round(high * 150) },
-  };
+  return buildRegionalFairValue(price);
 }
 
 function auctionHouseLabel(source: string): string {

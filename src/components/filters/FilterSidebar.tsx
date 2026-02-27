@@ -15,28 +15,45 @@ import {
 } from "lucide-react"
 import { SearchWithAutocomplete } from "./SearchWithAutocomplete"
 
-// ─── MODEL FAMILIES DATA (from model_family column) ───
+// ─── MODEL FAMILIES DATA (ordered by enthusiast prestige: icons → sports → cult → daily) ───
 const MODEL_FAMILIES = [
+  // Icons & Flagships
   { id: "911", label: "911", count: 200 },
+  { id: "918-spyder", label: "918 Spyder", count: 2 },
+  { id: "carrera-gt", label: "Carrera GT", count: 1 },
+  { id: "959", label: "959", count: 2 },
+  // Heritage
+  { id: "356", label: "356", count: 14 },
+  // Sports Cars
+  { id: "cayman", label: "Cayman", count: 6 },
+  { id: "boxster", label: "Boxster", count: 7 },
+  // Special Builds
+  { id: "backdates", label: "Backdates / Restomod", count: 5 },
+  // Transaxle Classics
+  { id: "928", label: "928", count: 12 },
+  { id: "944", label: "944", count: 11 },
+  { id: "968", label: "968", count: 4 },
+  { id: "924", label: "924", count: 7 },
+  { id: "914", label: "914", count: 5 },
+  // SUV & Sedan
   { id: "cayenne", label: "Cayenne", count: 42 },
   { id: "macan", label: "Macan", count: 14 },
-  { id: "taycan", label: "Taycan", count: 14 },
   { id: "panamera", label: "Panamera", count: 31 },
-  { id: "boxster", label: "Boxster", count: 7 },
-  { id: "cayman", label: "Cayman", count: 6 },
-  { id: "classics", label: "Clásicos", count: 32 },
+  { id: "taycan", label: "Taycan", count: 14 },
 ]
 
 // Generaciones por familia (contextual)
 const GENERATIONS_BY_FAMILY: Record<string, typeof GENERATIONS> = {
   "911": [
-    { id: "992", label: "992 (2020-2026)", count: 87 },
-    { id: "991", label: "991 (2012-2019)", count: 145 },
-    { id: "997", label: "997 (2005-2012)", count: 98 },
-    { id: "996", label: "996 (1999-2004)", count: 76 },
-    { id: "993", label: "993 (1995-1998)", count: 45 },
+    { id: "992", label: "992 (2019+)", count: 87 },
+    { id: "991", label: "991 (2011-2019)", count: 145 },
+    { id: "997", label: "997 (2004-2012)", count: 98 },
+    { id: "996", label: "996 (1997-2005)", count: 76 },
+    { id: "993", label: "993 (1993-1998)", count: 45 },
     { id: "964", label: "964 (1989-1994)", count: 32 },
-    { id: "f-body", label: "F-body (1964-1973)", count: 25 },
+    { id: "930", label: "930 Turbo (1975-1989)", count: 12 },
+    { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)", count: 18 },
+    { id: "f-model", label: "F-Model (1963-1973)", count: 15 },
   ],
   "cayenne": [
     { id: "e3", label: "E3 (2019-2024)", count: 20 },
@@ -101,38 +118,51 @@ const GENERATIONS_BY_FAMILY: Record<string, typeof GENERATIONS> = {
     { id: "924-turbo", label: "Turbo (1979-1984)", count: 2 },
     { id: "924-base", label: "Base (1976-1988)", count: 3 },
   ],
-  "Carrera GT": [
-    { id: "980", label: "980 (2004-2007)", count: 1 },
+  "carrera-gt": [
+    { id: "980", label: "980 (2004-2006)", count: 1 },
   ],
-  "918 Spyder": [
+  "918-spyder": [
     { id: "918", label: "918 (2013-2015)", count: 2 },
   ],
-  "718": [
-    { id: "718-rsk", label: "RSK (1957-1958)", count: 1 },
-    { id: "718-w-rs", label: "W-RS (1961-1962)", count: 1 },
-    { id: "718-classic", label: "718/2 (1959-1960)", count: 1 },
+  "959": [
+    { id: "959", label: "959 (1986-1993)", count: 2 },
   ],
-  // Más familias se pueden agregar según necesidad
+  "backdates": [
+    { id: "backdate-singer", label: "Singer", count: 2 },
+    { id: "backdate-ruf", label: "RUF", count: 1 },
+    { id: "backdate-other", label: "Other Restomod", count: 2 },
+  ],
 }
 
-// ─── GENERACIONES DATA (ALL - when no family selected) ───
+// ─── GENERACIONES DATA (ALL - when no family selected, shows 911 eras) ───
 const GENERATIONS = [
-  { id: "992", label: "992 (2020-2025)", count: 23 },
-  { id: "991", label: "991 (2012-2019)", count: 45 },
-  { id: "997", label: "997 (2005-2012)", count: 38 },
-  { id: "996", label: "996 (1999-2004)", count: 29 },
-  { id: "993", label: "993 (1995-1998)", count: 18 },
-  { id: "964", label: "964 (1989-1994)", count: 12 },
+  { id: "992", label: "992 (2019+)", count: 87 },
+  { id: "991", label: "991 (2011-2019)", count: 145 },
+  { id: "997", label: "997 (2004-2012)", count: 98 },
+  { id: "996", label: "996 (1997-2005)", count: 76 },
+  { id: "993", label: "993 (1993-1998)", count: 45 },
+  { id: "964", label: "964 (1989-1994)", count: 32 },
+  { id: "930", label: "930 Turbo (1975-1989)", count: 12 },
+  { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)", count: 18 },
+  { id: "f-model", label: "F-Model (1963-1973)", count: 15 },
 ]
 
-// ─── VARIANTES POPULARES ───
+// ─── VARIANTES POPULARES (as Porsche enthusiasts search) ───
 const POPULAR_VARIANTS = [
-  "GT3",
-  "Turbo",
   "Carrera",
-  "GTS",
-  "Targa",
+  "Carrera S",
   "4S",
+  "GTS",
+  "Turbo",
+  "Turbo S",
+  "GT3",
+  "GT3 RS",
+  "GT2 RS",
+  "Targa",
+  "Speedster",
+  "Sport Classic",
+  "R",
+  "ST",
 ]
 
 // ─── FILTER SECTION COMPONENT ───
