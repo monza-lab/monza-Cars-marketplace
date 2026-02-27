@@ -32,13 +32,13 @@ import type { CollectorCar, Region, FairValueByRegion } from "@/lib/curatedCars"
 import type { LiveListingRegionTotals } from "@/lib/supabaseLiveListings"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useLocale, useTranslations } from "next-intl"
 import { getModelImage } from "@/lib/modelImages"
 import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
-import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant } from "@/lib/brandConfig"
+import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -1836,33 +1836,16 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
 }
 
 function aggregateRegionalPricing(modelCars: CollectorCar[]): FairValueByRegion | null {
-  // Filter out cars with zero pricing (live auctions without final_price)
-  const carsWithPricing = modelCars.filter(c => c.fairValueByRegion.US.high > 0)
-  if (carsWithPricing.length === 0) {
-    // Fallback: build from currentBid if available
-    const carsWithBids = modelCars.filter(c => c.currentBid > 0)
-    if (carsWithBids.length === 0) return null
-    const minBid = Math.min(...carsWithBids.map(c => c.currentBid))
-    const maxBid = Math.max(...carsWithBids.map(c => c.currentBid))
-    return {
-      US: { currency: "$", low: minBid, high: maxBid },
-      EU: { currency: "€", low: Math.round(minBid * 0.92), high: Math.round(maxBid * 0.92) },
-      UK: { currency: "£", low: Math.round(minBid * 0.79), high: Math.round(maxBid * 0.79) },
-      JP: { currency: "¥", low: Math.round(minBid * 150), high: Math.round(maxBid * 150) },
-    }
-  }
-  const regions: (keyof FairValueByRegion)[] = ["US", "EU", "UK", "JP"]
-  const result = {} as FairValueByRegion
-  for (const region of regions) {
-    const lows = carsWithPricing.map(c => c.fairValueByRegion[region].low).filter(v => v > 0)
-    const highs = carsWithPricing.map(c => c.fairValueByRegion[region].high).filter(v => v > 0)
-    result[region] = {
-      currency: carsWithPricing[0].fairValueByRegion[region].currency,
-      low: lows.length > 0 ? Math.min(...lows) : 0,
-      high: highs.length > 0 ? Math.max(...highs) : 0,
-    }
-  }
-  return result
+  // Always derive from USD prices to ensure proper regional differentiation
+  const usdPrices = modelCars
+    .map(c => c.fairValueByRegion.US.high > 0
+      ? (c.fairValueByRegion.US.low + c.fairValueByRegion.US.high) / 2
+      : c.currentBid > 0 ? c.currentBid : 0
+    )
+    .filter(p => p > 0)
+  if (usdPrices.length === 0) return null
+  const avgUsd = usdPrices.reduce((sum, p) => sum + p, 0) / usdPrices.length
+  return buildRegionalFairValue(avgUsd)
 }
 
 // Find the region with the lowest average USD price (= BEST value)
@@ -2494,11 +2477,14 @@ function ModelContextPanel({
         {/* 3. VALUATION BY MARKET — with visual bars */}
         {regionalPricing && (
           <div className="px-5 py-4 border-b border-white/5">
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                Valuation by Market
-              </span>
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="size-4 text-[#F8B4D9]" />
+                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                  Valuation by Market
+                </span>
+              </div>
+              <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair value range by region</p>
             </div>
             <div className="space-y-2.5">
               {(["US", "UK", "EU", "JP"] as const).map(region => {
@@ -2800,7 +2786,9 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(initialFamily || null)
   const [selectedGeneration, setSelectedGeneration] = useState<string | null>(initialGen || null)
   const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(null)
+  const [feedStatusFilter, setFeedStatusFilter] = useState<"all" | "live" | "ended">("all")
   const feedRef = useRef<HTMLDivElement>(null)
+  const carIndexRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
 
   // Filter cars by region first, then aggregate into models
   const regionFilteredCars = useMemo(() => {
@@ -2971,7 +2959,8 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     setSelectedFamilyForFeed(familyName)
     setSelectedGeneration(null)
     setSelectedVariantChip(null)
-    setViewMode('generations')
+    setFeedStatusFilter("all")
+    setViewMode('cars')
     setActiveFilters(null)
     setActiveGenIndex(0)
     setActiveCarIndex(0)
@@ -2984,6 +2973,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const handleGenerationClick = (genId: string) => {
     setSelectedGeneration(genId)
     setSelectedVariantChip(null)
+    setFeedStatusFilter("all")
     setViewMode('cars')
     setActiveFilters(null)
     setActiveCarIndex(0)
@@ -3022,6 +3012,21 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     setSelectedGeneration(null)
     setActiveFilters(null)
     setActiveGenIndex(0)
+    setActiveCarIndex(0)
+    if (feedRef.current) {
+      feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Handler: Switch between sibling series (same family group) in Column A nav
+  const handleSiblingClick = (seriesId: string) => {
+    if (seriesId === selectedFamilyForFeed) return
+    setSelectedFamilyForFeed(seriesId)
+    setSelectedGeneration(null)
+    setSelectedVariantChip(null)
+    setFeedStatusFilter("all")
+    setViewMode('cars')
+    setActiveFilters(null)
     setActiveCarIndex(0)
     if (feedRef.current) {
       feedRef.current.scrollTo({ top: 0, behavior: 'smooth' })
@@ -3228,6 +3233,40 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     return result
   }, [regionFilteredCars, selectedFamilyForFeed])
 
+  // ─── SIBLING SERIES (same family group) for Column A nav ───
+  const siblingSeries = useMemo(() => {
+    if (!selectedFamilyForFeed) return []
+    const groups = getFamilyGroupsWithSeries(make)
+    const currentGroup = groups.find(g =>
+      g.series.some(s => s.id === selectedFamilyForFeed.toLowerCase())
+    )
+    if (!currentGroup || currentGroup.series.length <= 1) return []
+
+    // Count cars per sibling from regionFilteredCars
+    const countMap = new Map<string, number>()
+    regionFilteredCars.forEach(car => {
+      const seriesId = extractSeries(car.model, car.year || 0, make)
+      countMap.set(seriesId, (countMap.get(seriesId) || 0) + 1)
+    })
+
+    return currentGroup.series
+      .map(s => ({
+        id: s.id,
+        label: s.label,
+        carCount: countMap.get(s.id) || 0,
+      }))
+      .filter(s => s.carCount > 0)
+  }, [selectedFamilyForFeed, make, regionFilteredCars])
+
+  const currentFamilyGroupLabel = useMemo(() => {
+    if (!selectedFamilyForFeed) return ""
+    const groups = getFamilyGroupsWithSeries(make)
+    const group = groups.find(g =>
+      g.series.some(s => s.id === selectedFamilyForFeed.toLowerCase())
+    )
+    return group?.label || selectedFamilyForFeed
+  }, [selectedFamilyForFeed, make])
+
   // Apply filters to feed cars (when in cars mode)
   const filteredFeedCars = useMemo(() => {
     if (!activeFilters) return familyCarsForFeed
@@ -3336,7 +3375,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       .filter(v => v.count > 0)
   }, [filteredFeedCars, selectedGeneration, selectedFamilyForFeed, make])
 
-  // Apply variant chip filter + sorting on top of filteredFeedCars
+  // Apply variant chip filter + status filter + sorting on top of filteredFeedCars
   const variantFilteredFeedCars = useMemo(() => {
     let result = filteredFeedCars
     if (selectedVariantChip) {
@@ -3345,6 +3384,12 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
         const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
         return vid === selectedVariantChip
       })
+    }
+    // Status filter
+    if (feedStatusFilter === "live") {
+      result = result.filter(car => car.status === "ACTIVE" || car.status === "ENDING_SOON")
+    } else if (feedStatusFilter === "ended") {
+      result = result.filter(car => car.status === "ENDED")
     }
     // Apply sorting
     const sorted = [...result]
@@ -3355,7 +3400,19 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       case "year-asc": sorted.sort((a, b) => a.year - b.year); break
     }
     return sorted
-  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make, sortBy])
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make, sortBy, feedStatusFilter])
+
+  // Status counts for Column B header chips (computed before status filter)
+  const feedStatusCounts = useMemo(() => {
+    let base = filteredFeedCars
+    if (selectedVariantChip) {
+      const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+      base = base.filter(car => matchVariant(car.model, car.trim, seriesId.toLowerCase(), make) === selectedVariantChip)
+    }
+    const live = base.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+    const ended = base.filter(c => c.status === "ENDED").length
+    return { all: base.length, live, ended }
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make])
 
   // Scroll sync for center feed — tracks position in whichever list is showing
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
@@ -3391,6 +3448,22 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     container.scrollTo({ top: getCardHeight() * index, behavior: "smooth" })
     setCurrentModelIndex(index)
   }
+
+  const scrollToCar = (index: number) => {
+    const container = feedRef.current
+    if (!container) return
+    container.scrollTo({ top: getCardHeight() * index, behavior: "smooth" })
+    setActiveCarIndex(index)
+  }
+
+  // Auto-scroll car index list in Column A to keep active item visible
+  useEffect(() => {
+    if (viewMode !== 'cars') return
+    const el = carIndexRefs.current.get(activeCarIndex)
+    if (el) {
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }
+  }, [activeCarIndex, viewMode])
 
   // Reset index when filters change
   useEffect(() => {
@@ -3582,7 +3655,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {/* Filters section (scrollable) */}
             {selectedModel ? (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {/* Back + Family header */}
+                {/* Back + Family Group header */}
                 <div className="shrink-0 px-4 py-2.5 border-b border-white/5">
                   <button
                     onClick={handleBackToFamilies}
@@ -3592,26 +3665,26 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     <span className="uppercase font-semibold tracking-wider">{make}</span>
                   </button>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{selectedModel.name}</h3>
+                    <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{currentFamilyGroupLabel}</h3>
                     <span className="text-[10px] text-[#6B7280] font-mono">{familyCars.length} cars</span>
                   </div>
                 </div>
 
-                {/* Generation Navigation List */}
-                {familyGenerations.length > 0 && (
+                {/* Sibling Series Navigation (same family group) */}
+                {siblingSeries.length > 1 && (
                   <div className="shrink-0 border-b border-white/5">
                     <div className="px-4 py-1.5">
                       <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
-                        Generaciones
+                        Series
                       </span>
                     </div>
-                    <div className="max-h-[220px] overflow-y-auto no-scrollbar">
-                      {familyGenerations.map(gen => {
-                        const isActive = selectedGeneration === gen.id
+                    <div className="max-h-[260px] overflow-y-auto no-scrollbar">
+                      {siblingSeries.map(s => {
+                        const isActive = selectedFamilyForFeed === s.id
                         return (
                           <button
-                            key={gen.id}
-                            onClick={() => handleGenerationClick(gen.id)}
+                            key={s.id}
+                            onClick={() => handleSiblingClick(s.id)}
                             className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
                               isActive
                                 ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
@@ -3621,12 +3694,12 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                             <span className={`text-[11px] font-medium ${
                               isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
                             }`}>
-                              {gen.label}
+                              {s.label}
                             </span>
                             <span className={`text-[9px] font-mono ${
                               isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
                             }`}>
-                              {gen.carCount}
+                              {s.carCount}
                             </span>
                           </button>
                         )
@@ -3634,9 +3707,59 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </div>
                   </div>
                 )}
+                {/* Car Index List — synced with Column B scroll */}
+                {viewMode === 'cars' && variantFilteredFeedCars.length > 0 && (
+                  <div className="shrink-0 max-h-[40%] flex flex-col border-b border-white/5 overflow-hidden">
+                    <div className="shrink-0 px-4 py-1.5 flex items-center justify-between">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                        Cars
+                      </span>
+                      <span className="text-[9px] font-mono text-[#4B5563]">
+                        {activeCarIndex + 1}/{variantFilteredFeedCars.length}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+                      {variantFilteredFeedCars.map((car, i) => {
+                        const isActive = i === activeCarIndex
+                        return (
+                          <button
+                            key={car.id}
+                            ref={(el) => { if (el) carIndexRefs.current.set(i, el); else carIndexRefs.current.delete(i) }}
+                            onClick={() => scrollToCar(i)}
+                            className={`w-full flex items-center gap-2 px-4 py-1.5 transition-all ${
+                              isActive
+                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                            }`}
+                          >
+                            <span className={`text-[9px] font-mono w-4 shrink-0 ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                            }`}>
+                              {i + 1}
+                            </span>
+                            <span className={`text-[10px] truncate flex-1 text-left ${
+                              isActive ? "text-[#FFFCF7] font-medium" : "text-[#9CA3AF]"
+                            }`}>
+                              {car.year} {car.model?.replace(/^Porsche\s*/i, "")}
+                            </span>
+                            {car.currentBid > 0 && (
+                              <span className={`text-[9px] font-mono shrink-0 ${
+                                isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                              }`}>
+                                ${(car.currentBid / 1000).toFixed(0)}k
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Advanced filters (price, year, km, transmission) */}
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <AdvancedFilters
+                    key={selectedFamilyForFeed || selectedModel.name}
                     familyName={selectedModel.name}
                     onFiltersChange={(advFilters) => {
                       setActiveFilters(prev => ({
@@ -3742,47 +3865,80 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {viewMode === 'cars' ? (
               // MODE: Viewing specific generation's cars (feed style)
               <>
-                {/* Back navigation + sort + variant chips */}
-                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-3">
+                {/* Back navigation + sort + variant chips — compact */}
+                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-4 py-1.5">
                   <div className="flex items-center justify-between">
                     <button
                       onClick={handleBackToGenerations}
-                      className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                      className="inline-flex items-center gap-1 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
                     >
                       <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
                       <span className="uppercase font-semibold tracking-wider">
                         {selectedFamilyForFeed} {selectedGeneration ? `/ ${selectedGeneration.toUpperCase()}` : ""}
                       </span>
                     </button>
-                    <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-[#4B5563] font-mono">{variantFilteredFeedCars.length} cars</span>
+                      <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
+                    </div>
                   </div>
-                  {availableVariants.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      <button
-                        onClick={() => setSelectedVariantChip(null)}
-                        className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${
-                          !selectedVariantChip
-                            ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
-                        }`}
-                      >
-                        All ({filteredFeedCars.length})
-                      </button>
-                      {availableVariants.map(v => (
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {/* Variant chips */}
+                    {availableVariants.length > 0 && (
+                      <>
                         <button
-                          key={v.id}
-                          onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all ${
-                            selectedVariantChip === v.id
+                          onClick={() => setSelectedVariantChip(null)}
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                            !selectedVariantChip
                               ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
                               : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
                           }`}
                         >
-                          {v.label} ({v.count})
+                          All
                         </button>
-                      ))}
-                    </div>
-                  )}
+                        {availableVariants.map(v => (
+                          <button
+                            key={v.id}
+                            onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                              selectedVariantChip === v.id
+                                ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
+                                : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                            }`}
+                          >
+                            {v.label}
+                          </button>
+                        ))}
+                        <span className="w-px h-3 bg-white/10 mx-0.5" />
+                      </>
+                    )}
+                    {/* Status chips */}
+                    {feedStatusCounts.live > 0 && (
+                      <button
+                        onClick={() => setFeedStatusFilter(feedStatusFilter === "live" ? "all" : "live")}
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
+                          feedStatusFilter === "live"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="size-1.5 rounded-full bg-emerald-400" />
+                        Live {feedStatusCounts.live}
+                      </button>
+                    )}
+                    {feedStatusCounts.ended > 0 && (
+                      <button
+                        onClick={() => setFeedStatusFilter(feedStatusFilter === "ended" ? "all" : "ended")}
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                          feedStatusFilter === "ended"
+                            ? "bg-[rgba(107,114,128,0.2)] text-[#9CA3AF] border border-[rgba(107,114,128,0.3)]"
+                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        Ended {feedStatusCounts.ended}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">

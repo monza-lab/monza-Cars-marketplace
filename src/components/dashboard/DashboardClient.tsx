@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY, REGIONAL_MARKET_PREMIUM } from "@/lib/regionPricing"
 import {
   Clock,
   MapPin,
@@ -1831,35 +1831,30 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     const regions = ["US", "UK", "EU", "JP"] as const
     const result: Record<string, RegionalValuation> = {}
     const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
-    const jpyMultiplier = 150 // approx USD→JPY for display
+    // 5-year appreciation varies by region (collector car market dynamics)
+    const regionAppreciation: Record<string, number> = { US: 0.22, UK: 0.28, EU: 0.18, JP: 0.12 }
+
+    // Get average USD price from all family auctions with bids
+    const withBids = familyAuctions.filter(a => a.currentBid > 0)
+    if (withBids.length === 0) {
+      return mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
+    }
+    const avgUsd = withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+    const baseMillions = avgUsd / 1_000_000
 
     for (const region of regions) {
-      const withRegion = familyAuctions.filter(a => a.fairValueByRegion?.[region])
-      if (withRegion.length === 0) {
-        // Fallback: estimate from USD prices with currency conversion
-        const withBids = familyAuctions.filter(a => a.currentBid > 0)
-        if (withBids.length === 0) continue
-        const avgUsd = withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
-        const inMillions = avgUsd / 1_000_000
-        const startEstimate = inMillions * 0.85 // conservative 15% appreciation estimate
-        if (region === "JP") {
-          result[region] = { start: startEstimate * jpyMultiplier, current: inMillions * jpyMultiplier, symbol: "¥", usdCurrent: inMillions }
-        } else {
-          const conversionRate = region === "UK" ? 0.79 : region === "EU" ? 0.92 : 1
-          result[region] = { start: startEstimate * conversionRate, current: inMillions * conversionRate, symbol: symbolMap[region], usdCurrent: inMillions }
-        }
-      } else {
-        // Real data: average the high values from fairValueByRegion
-        const avgHigh = withRegion.reduce((sum, a) => sum + (a.fairValueByRegion![region]?.high || 0), 0) / withRegion.length
-        const avgLow = withRegion.reduce((sum, a) => sum + (a.fairValueByRegion![region]?.low || 0), 0) / withRegion.length
-        const inMillionsHigh = avgHigh / 1_000_000
-        const inMillionsLow = avgLow / 1_000_000
-        const avgUsd = familyAuctions.filter(a => a.currentBid > 0).reduce((sum, a) => sum + a.currentBid, 0) / (familyAuctions.filter(a => a.currentBid > 0).length || 1) / 1_000_000
-        result[region] = { start: inMillionsLow, current: inMillionsHigh, symbol: symbolMap[region], usdCurrent: avgUsd }
+      const premium = REGIONAL_MARKET_PREMIUM[region] || 1
+      const usdWithPremium = baseMillions * premium
+      const appreciation = regionAppreciation[region] || 0.15
+      const usdStart = usdWithPremium / (1 + appreciation)
+      const fxRate = region === "JP" ? (1 / 0.0067) : region === "UK" ? (1 / 1.27) : region === "EU" ? (1 / 1.08) : 1
+      result[region] = {
+        start: usdStart * fxRate,
+        current: usdWithPremium * fxRate,
+        symbol: symbolMap[region],
+        usdCurrent: usdWithPremium,
       }
     }
-    // If no data at all, fall back to brand-level mock
-    if (Object.keys(result).length === 0) return mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
     return result
   }, [familyAuctions])
 
@@ -2010,11 +2005,14 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 
         {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-4">
-            <Globe className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.valuationByMarket")}
-            </span>
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <Globe className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.valuationByMarket")}
+              </span>
+            </div>
+            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Avg. valuation & 5-year return by region</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
@@ -2050,7 +2048,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                       </span>
                     </div>
                     <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
-                      +{pctChange}%
+                      +{pctChange}% <span className="text-[7px] font-normal opacity-70">5Y</span>
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
@@ -2307,11 +2305,14 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
 
         {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
         <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-4">
-            <Globe className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              {t("brandContext.valuationByMarket")}
-            </span>
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <Globe className="size-4 text-[#F8B4D9]" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                {t("brandContext.valuationByMarket")}
+              </span>
+            </div>
+            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Avg. valuation & 5-year return by region</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
@@ -2347,7 +2348,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                       </span>
                     </div>
                     <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
-                      +{pctChange}%
+                      +{pctChange}% <span className="text-[7px] font-normal opacity-70">5Y</span>
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
