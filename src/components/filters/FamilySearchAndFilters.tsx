@@ -27,13 +27,15 @@ export type FamilyFilters = {
 // Generaciones por familia (mismo data que FilterSidebar)
 const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>> = {
   "911": [
-    { id: "992", label: "992 (2020-2026)" },
-    { id: "991", label: "991 (2012-2019)" },
-    { id: "997", label: "997 (2005-2012)" },
-    { id: "996", label: "996 (1999-2004)" },
-    { id: "993", label: "993 (1995-1998)" },
+    { id: "992", label: "992 (2019+)" },
+    { id: "991", label: "991 (2011-2019)" },
+    { id: "997", label: "997 (2004-2012)" },
+    { id: "996", label: "996 (1997-2005)" },
+    { id: "993", label: "993 (1993-1998)" },
     { id: "964", label: "964 (1989-1994)" },
-    { id: "930", label: "930 (1975-1989)" },
+    { id: "930", label: "930 Turbo (1975-1989)" },
+    { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)" },
+    { id: "f-model", label: "F-Model (1963-1973)" },
   ],
   "Cayenne": [
     { id: "e3", label: "E3 (2019-2024)" },

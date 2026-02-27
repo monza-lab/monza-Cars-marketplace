@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
+import { PorscheWheelSpinner } from "@/components/shared/PorscheWheelSpinner";
 import { useTranslations } from "next-intl";
 
 const SUPPORTED_LOCALES = new Set(["en", "es", "de", "ja"]);
@@ -160,16 +161,6 @@ type Auction = {
   category?: string;
 };
 
-function LoadingSpinner({ label }: { label: string }) {
-  return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#0b0b10]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-8 h-8 border-2 border-[#F8B4D9] border-t-transparent rounded-full animate-spin" />
-        <span className="text-[#9CA3AF] text-sm tracking-wide">{label}</span>
-      </div>
-    </div>
-  );
-}
 
 function HomeContent({
   loadingLabel,
@@ -198,7 +189,7 @@ function HomeContent({
   }, []);
 
   if (loading) {
-    return <LoadingSpinner label={loadingLabel} />;
+    return <PorscheWheelSpinner label={loadingLabel} />;
   }
 
   if (auctions.length === 0) {
@@ -216,7 +207,7 @@ export default function Home() {
   const t = useTranslations("home");
 
   return (
-    <Suspense fallback={<LoadingSpinner label={t("loadingAssets")} />}>
+    <Suspense fallback={<PorscheWheelSpinner label={t("loadingAssets")} />}>
       <HomeContent loadingLabel={t("loadingAssets")} emptyLabel={t("noAuctionsFound")} />
     </Suspense>
   );
