@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, Sparkles, X, TrendingUp, BarChart3, Car, LogOut, Zap, Star, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe } from "lucide-react";
+import { ArrowRight, Menu, User, Sparkles, X, TrendingUp, BarChart3, Car, LogOut, Zap, Star, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar } from "lucide-react";
 import {
   Sheet,
   SheetTrigger,
@@ -20,6 +20,171 @@ import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { saveSearchQuery } from "@/lib/searchHistory";
+import { getBrandConfig } from "@/lib/brandConfig";
+
+// ─── SMART SEARCH ENGINE (powered by brandConfig) ───
+
+type SearchItem = {
+  type: "family" | "series" | "variant"
+  label: string
+  subtitle: string
+  family?: string
+  seriesId?: string
+  variantId?: string
+  yearRange?: string
+  keywords: string[]
+}
+
+function buildSearchIndex(): SearchItem[] {
+  const config = getBrandConfig("porsche")
+  if (!config) return []
+
+  const items: SearchItem[] = []
+
+  for (const group of config.familyGroups) {
+    items.push({
+      type: "family",
+      label: group.label,
+      subtitle: `${group.seriesIds.length} series`,
+      keywords: [group.label.toLowerCase(), ...group.seriesIds],
+    })
+  }
+
+  for (const series of config.series) {
+    items.push({
+      type: "series",
+      label: series.label,
+      subtitle: `${series.yearRange[0]}–${series.yearRange[1]}`,
+      family: series.family,
+      seriesId: series.id,
+      yearRange: `${series.yearRange[0]}–${series.yearRange[1]}`,
+      keywords: [series.label.toLowerCase(), series.id, ...series.keywords],
+    })
+
+    if (series.variants) {
+      for (const variant of series.variants) {
+        items.push({
+          type: "variant",
+          label: `${series.label} ${variant.label}`,
+          subtitle: `${series.family} · ${series.yearRange[0]}–${series.yearRange[1]}`,
+          family: series.family,
+          seriesId: series.id,
+          variantId: variant.id,
+          keywords: [
+            variant.label.toLowerCase(),
+            `${series.label} ${variant.label}`.toLowerCase(),
+            ...variant.keywords.map(k => k.toLowerCase()),
+            series.id,
+          ],
+        })
+      }
+    }
+  }
+
+  return items
+}
+
+const SEARCH_INDEX = buildSearchIndex()
+
+// Levenshtein distance for typo tolerance
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length
+  if (m === 0) return n
+  if (n === 0) return m
+  const dp: number[] = Array.from({ length: n + 1 }, (_, i) => i)
+  for (let i = 1; i <= m; i++) {
+    let prev = i - 1
+    dp[0] = i
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j]
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j], dp[j - 1])
+      prev = tmp
+    }
+  }
+  return dp[n]
+}
+
+// Check if query is a typo-match for target (max distance scales with word length)
+function isTypoMatch(query: string, target: string): boolean {
+  if (query.length <= 2) return false
+  const maxDist = query.length <= 4 ? 1 : 2
+  // Check each word in target
+  const targetWords = target.split(/\s+/)
+  for (const word of targetWords) {
+    if (levenshtein(query, word) <= maxDist) return true
+  }
+  // Also check if query is a typo of the full target
+  if (target.length <= query.length + 3 && levenshtein(query, target) <= maxDist) return true
+  return false
+}
+
+function searchItems(query: string): SearchItem[] {
+  if (!query.trim()) return []
+
+  // Normalize: strip "porsche" and common typos of it
+  let q = query.toLowerCase().trim()
+  q = q.replace(/^(?:porsche|posrche|prsche|porshe|porche|porsch)\s+/i, "")
+  if (!q) return []
+
+  // Split multi-word query for multi-token matching
+  const tokens = q.split(/\s+/).filter(t => t.length > 0)
+
+  return SEARCH_INDEX
+    .map(item => {
+      const lowerLabel = item.label.toLowerCase()
+      let bestScore = 0
+
+      // Full query matching against label
+      if (lowerLabel === q) bestScore = 100
+      else if (lowerLabel.startsWith(q)) bestScore = Math.max(bestScore, 90)
+      else if (lowerLabel.includes(q)) bestScore = Math.max(bestScore, 70)
+
+      // Keyword matching
+      for (const kw of item.keywords) {
+        if (kw === q) { bestScore = Math.max(bestScore, 85); break }
+        if (kw.startsWith(q)) bestScore = Math.max(bestScore, 75)
+        else if (kw.includes(q)) bestScore = Math.max(bestScore, 55)
+      }
+
+      // Multi-token: all tokens must match somewhere (label or keywords)
+      if (tokens.length > 1 && bestScore < 60) {
+        const searchable = [lowerLabel, ...item.keywords, item.subtitle.toLowerCase()].join(" ")
+        const allMatch = tokens.every(t =>
+          searchable.includes(t) || isTypoMatch(t, searchable)
+        )
+        if (allMatch) bestScore = Math.max(bestScore, 65)
+      }
+
+      // Typo tolerance on single token
+      if (bestScore < 30) {
+        if (isTypoMatch(q, lowerLabel)) bestScore = Math.max(bestScore, 45)
+        for (const kw of item.keywords) {
+          if (isTypoMatch(q, kw)) { bestScore = Math.max(bestScore, 40); break }
+        }
+      }
+
+      // Fuzzy: all chars present in order (catches abbreviations)
+      if (bestScore < 20 && q.length >= 2) {
+        let qi = 0
+        for (let i = 0; i < lowerLabel.length && qi < q.length; i++) {
+          if (lowerLabel[i] === q[qi]) qi++
+        }
+        if (qi === q.length) bestScore = Math.max(bestScore, 25)
+      }
+
+      return bestScore > 0 ? { item, score: bestScore } : null
+    })
+    .filter((r): r is { item: SearchItem; score: number } => r !== null)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      const typePriority = { family: 3, series: 2, variant: 1 }
+      return (typePriority[b.item.type] || 0) - (typePriority[a.item.type] || 0)
+    })
+    .slice(0, 8)
+    .map(r => r.item)
+}
+
+const SEARCH_TYPE_ICON = { family: Award, series: Calendar, variant: Zap } as const
 
 const REGIONS = [
   { id: "all", label: "All", flag: "\u{1F30D}" },
@@ -602,12 +767,14 @@ function InlineLanguageSwitcher() {
 
 // ─── TYPING PLACEHOLDER PHRASES ───
 const TYPING_PHRASES = [
-  "Ask Anything About The Automotive Market",
+  "Search 992 GT3 RS, Turbo S, Targa...",
   "What's a 1995 Porsche 993 worth?",
-  "Show me JDM cars under $100K",
-  "Ferrari F40 investment outlook",
-  "Best appreciating classics right now",
-  "Compare GT3 RS vs GT2 RS",
+  "Find a 997 GT3 with manual gearbox",
+  "Compare 991 GT3 vs 992 GT3",
+  "Porsche 964 Carrera RS investment outlook",
+  "Search Cayenne Turbo GT, 718 Spyder...",
+  "How much is a Porsche 930 Turbo?",
+  "Best Porsche under $100K right now",
 ]
 
 // ─── MAIN HEADER COMPONENT ───
@@ -620,6 +787,13 @@ export function Header() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // Smart search autocomplete state
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Typing animation for placeholder
   const [typedPlaceholder, setTypedPlaceholder] = useState("")
@@ -670,12 +844,49 @@ export function Header() {
     label: t(`nav.${link.key}`),
   }));
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        inputRef.current && !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Navigate to result
+  const handleResultSelect = useCallback((item: SearchItem) => {
+    setShowDropdown(false)
+    setQuery("")
+    setIsFocused(false)
+    inputRef.current?.blur()
+
+    if (item.type === "family") {
+      router.push(`/cars/porsche`)
+    } else if (item.seriesId && item.variantId) {
+      router.push(`/cars/porsche?series=${item.seriesId}&variant=${item.variantId}`)
+    } else if (item.seriesId) {
+      router.push(`/cars/porsche?series=${item.seriesId}`)
+    }
+  }, [router])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // If dropdown is showing results, navigate to the active one
+    if (showDropdown && searchResults.length > 0) {
+      handleResultSelect(searchResults[activeIndex])
+      return
+    }
+    // Fallback: open Oracle overlay
     if (query.trim()) {
       saveSearchQuery(query.trim());
       setSubmittedQuery(query);
       setIsOracleOpen(true);
+      setShowDropdown(false);
       inputRef.current?.blur();
     }
   };
@@ -698,41 +909,154 @@ export function Header() {
             <Image src="/logo-crema.png" alt="Monza Lab" width={992} height={260} className="h-7 md:h-8 w-auto" priority />
           </a>
 
-          {/* Center: Search Input (hidden on mobile) */}
-          <form onSubmit={handleSubmit} className="hidden md:block flex-1 max-w-xl">
-            <div className="relative flex items-center">
-              {/* Typing overlay when not focused and no query */}
-              {!isFocused && !query && (
-                <div
-                  className="absolute inset-0 flex items-center pointer-events-none select-none"
-                  onClick={() => inputRef.current?.focus()}
+          {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
+          <div className="hidden md:block flex-1 max-w-xl relative">
+            <form onSubmit={handleSubmit}>
+              <div className="relative flex items-center">
+                {/* Typing overlay when not focused and no query */}
+                {!isFocused && !query && (
+                  <div
+                    className="absolute inset-0 flex items-center pointer-events-none select-none"
+                    onClick={() => inputRef.current?.focus()}
+                  >
+                    <span className="text-[15px] font-light text-[#6B7280] tracking-tight">
+                      {typedPlaceholder}
+                    </span>
+                    <span className="inline-block w-[2px] h-[18px] bg-[#F8B4D9] ml-[1px] animate-blink" />
+                  </div>
+                )}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setQuery(val)
+                    const results = searchItems(val)
+                    setSearchResults(results)
+                    setShowDropdown(results.length > 0 && val.trim().length > 0)
+                    setActiveIndex(0)
+                  }}
+                  onFocus={() => {
+                    setIsFocused(true)
+                    if (query.trim() && searchResults.length > 0) setShowDropdown(true)
+                  }}
+                  onBlur={() => {
+                    setIsFocused(false)
+                    // Delay to allow click on dropdown items
+                    setTimeout(() => setShowDropdown(false), 200)
+                  }}
+                  onKeyDown={(e) => {
+                    if (!showDropdown || searchResults.length === 0) return
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault()
+                      setActiveIndex(prev => (prev + 1) % searchResults.length)
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault()
+                      setActiveIndex(prev => (prev - 1 + searchResults.length) % searchResults.length)
+                    } else if (e.key === "Escape") {
+                      setShowDropdown(false)
+                    }
+                  }}
+                  placeholder={isFocused ? "Search 992, GT3, Turbo, Cayenne..." : ""}
+                  className="w-full bg-transparent text-[15px] font-light text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none tracking-tight"
+                />
+                {query.trim() && (
+                  <button
+                    type="submit"
+                    className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                  >
+                    <ArrowRight className="size-4" />
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Smart Autocomplete Dropdown */}
+            <AnimatePresence>
+              {showDropdown && searchResults.length > 0 && (
+                <motion.div
+                  ref={dropdownRef}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-[rgba(11,11,16,0.97)] backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-[60]"
                 >
-                  <span className="text-[15px] font-light text-[#6B7280] tracking-tight">
-                    {typedPlaceholder}
-                  </span>
-                  <span className="inline-block w-[2px] h-[18px] bg-[#F8B4D9] ml-[1px] animate-blink" />
-                </div>
+                  {/* Results */}
+                  <div className="py-1.5 max-h-[360px] overflow-y-auto">
+                    {searchResults.map((item, idx) => {
+                      const Icon = SEARCH_TYPE_ICON[item.type] || Zap
+                      const isActive = idx === activeIndex
+                      return (
+                        <button
+                          key={`${item.type}-${item.label}-${idx}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            handleResultSelect(item)
+                          }}
+                          onMouseEnter={() => setActiveIndex(idx)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
+                            isActive
+                              ? "bg-[#F8B4D9]/10 border-l-2 border-l-[#F8B4D9]"
+                              : "border-l-2 border-l-transparent hover:bg-white/[0.03]"
+                          }`}
+                        >
+                          <div className={`flex items-center justify-center size-7 rounded-lg ${
+                            isActive ? "bg-[#F8B4D9]/15" : "bg-white/[0.04]"
+                          }`}>
+                            <Icon className={`size-3.5 ${isActive ? "text-[#F8B4D9]" : "text-[#6B7280]"}`} />
+                          </div>
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[12px] font-medium truncate ${
+                                isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
+                              }`}>
+                                {item.label}
+                              </span>
+                              {item.yearRange && (
+                                <span className="text-[9px] font-mono text-[#6B7280] shrink-0">
+                                  {item.yearRange}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-[#6B7280] truncate block">
+                              {item.subtitle}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
+                              isActive
+                                ? "bg-[#F8B4D9]/15 text-[#F8B4D9]"
+                                : "bg-white/[0.04] text-[#6B7280]"
+                            }`}>
+                              {item.type === "family" ? "Family" : item.type === "series" ? "Series" : "Variant"}
+                            </span>
+                            <ChevronRight className={`size-3 ${isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"}`} />
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Footer hint */}
+                  <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-[9px] text-[#4B5563]">
+                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mr-1">↑↓</kbd>
+                      navigate
+                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mx-1">↵</kbd>
+                      select
+                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mx-1">esc</kbd>
+                      close
+                    </span>
+                    <span className="text-[9px] text-[#4B5563]">
+                      Powered by brandConfig
+                    </span>
+                  </div>
+                </motion.div>
               )}
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder={isFocused ? "Ask Anything About The Automotive Market" : ""}
-                className="w-full bg-transparent text-[15px] font-light text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none tracking-tight"
-              />
-              {query.trim() && (
-                <button
-                  type="submit"
-                  className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
-                >
-                  <ArrowRight className="size-4" />
-                </button>
-              )}
-            </div>
-          </form>
+            </AnimatePresence>
+          </div>
 
           {/* Region Filter — with pink separators */}
           <div className="hidden md:flex items-center shrink-0">
