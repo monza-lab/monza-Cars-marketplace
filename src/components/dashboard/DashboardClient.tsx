@@ -1817,14 +1817,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
-  // Use brand-level mock data (Porsche) for sections that need it
-  const regionalVal = mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
-  const ownershipCost = mockOwnershipCost["Porsche"] || mockOwnershipCost["default"]
-  const depth = mockMarketDepth["Porsche"] || mockMarketDepth["default"]
-
-  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
-
-  // Get auctions for this family to derive top variants
+  // Get auctions for this family — all derived data depends on this
   const familyAuctions = useMemo(() => {
     const familyKey = family.slug
     return auctions.filter(a => {
@@ -1832,6 +1825,87 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
       return series === familyKey
     })
   }, [auctions, family.slug])
+
+  // ─── DYNAMIC: Valuation by Market from real fairValueByRegion data ───
+  const regionalVal = useMemo(() => {
+    const regions = ["US", "UK", "EU", "JP"] as const
+    const result: Record<string, RegionalValuation> = {}
+    const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
+    const jpyMultiplier = 150 // approx USD→JPY for display
+
+    for (const region of regions) {
+      const withRegion = familyAuctions.filter(a => a.fairValueByRegion?.[region])
+      if (withRegion.length === 0) {
+        // Fallback: estimate from USD prices with currency conversion
+        const withBids = familyAuctions.filter(a => a.currentBid > 0)
+        if (withBids.length === 0) continue
+        const avgUsd = withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+        const inMillions = avgUsd / 1_000_000
+        const startEstimate = inMillions * 0.85 // conservative 15% appreciation estimate
+        if (region === "JP") {
+          result[region] = { start: startEstimate * jpyMultiplier, current: inMillions * jpyMultiplier, symbol: "¥", usdCurrent: inMillions }
+        } else {
+          const conversionRate = region === "UK" ? 0.79 : region === "EU" ? 0.92 : 1
+          result[region] = { start: startEstimate * conversionRate, current: inMillions * conversionRate, symbol: symbolMap[region], usdCurrent: inMillions }
+        }
+      } else {
+        // Real data: average the high values from fairValueByRegion
+        const avgHigh = withRegion.reduce((sum, a) => sum + (a.fairValueByRegion![region]?.high || 0), 0) / withRegion.length
+        const avgLow = withRegion.reduce((sum, a) => sum + (a.fairValueByRegion![region]?.low || 0), 0) / withRegion.length
+        const inMillionsHigh = avgHigh / 1_000_000
+        const inMillionsLow = avgLow / 1_000_000
+        const avgUsd = familyAuctions.filter(a => a.currentBid > 0).reduce((sum, a) => sum + a.currentBid, 0) / (familyAuctions.filter(a => a.currentBid > 0).length || 1) / 1_000_000
+        result[region] = { start: inMillionsLow, current: inMillionsHigh, symbol: symbolMap[region], usdCurrent: avgUsd }
+      }
+    }
+    // If no data at all, fall back to brand-level mock
+    if (Object.keys(result).length === 0) return mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
+    return result
+  }, [familyAuctions])
+
+  // ─── DYNAMIC: Market Depth from real auction counts ───
+  const depth = useMemo(() => {
+    const count = familyAuctions.length
+    const withBids = familyAuctions.filter(a => a.currentBid > 0)
+    const ended = familyAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
+    const sold = ended.filter(a => a.currentBid > 0)
+    const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
+    const avgDays = ended.length > 0
+      ? Math.round(ended.reduce((sum, a) => {
+          const created = new Date(a.endTime).getTime() - (7 * 86400000) // estimate listing duration
+          return sum + (new Date(a.endTime).getTime() - created) / 86400000
+        }, 0) / ended.length)
+      : 14
+    const demandScore = Math.min(10, Math.max(1, Math.round(
+      (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
+      (withBids.length / Math.max(count, 1)) * 4 +
+      (sellThrough / 100) * 3
+    )))
+    return {
+      auctionsPerYear: Math.max(count * 4, 12), // annualize from current listings
+      avgDaysToSell: avgDays,
+      sellThroughRate: sellThrough,
+      demandScore,
+    }
+  }, [familyAuctions])
+
+  // ─── DYNAMIC: Ownership Cost scaled by family avg price ───
+  const ownershipCost = useMemo(() => {
+    const withBids = familyAuctions.filter(a => a.currentBid > 0)
+    const avgPrice = withBids.length > 0
+      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+      : (family.priceMin + family.priceMax) / 2
+    // Scale: base Porsche costs, adjusted by price tier
+    // Under $100K = 0.7x, $100-250K = 1x, $250-500K = 1.3x, $500K+ = 1.6x
+    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
+    return {
+      insurance: Math.round(8500 * scale),
+      storage: Math.round(6000 * scale),
+      maintenance: Math.round(8000 * scale),
+    }
+  }, [familyAuctions, family.priceMin, family.priceMax])
+
+  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
   // Top variants: group by model variant name, sorted by avg price
   const topVariants = useMemo(() => {
