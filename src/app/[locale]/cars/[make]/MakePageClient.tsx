@@ -139,6 +139,22 @@ const sortOptions = [
   { key: "mostListed" as const, value: "count-desc" },
 ]
 
+// Sort options for individual car feed (no "most listed")
+const carSortOptions = [
+  { key: "priceHighToLow" as const, value: "price-desc" },
+  { key: "priceLowToHigh" as const, value: "price-asc" },
+  { key: "yearNewestFirst" as const, value: "year-desc" },
+  { key: "yearOldestFirst" as const, value: "year-asc" },
+]
+
+const SORT_LABELS: Record<string, string> = {
+  "price-desc": "Precio ↓",
+  "price-asc": "Precio ↑",
+  "year-desc": "Año ↓",
+  "year-asc": "Año ↑",
+  "count-desc": "Cantidad",
+}
+
 // ─── HELPERS ───
 
 function timeLeft(
@@ -258,6 +274,66 @@ function FilterChip({
         </span>
       )}
     </button>
+  )
+}
+
+// ─── SORT SELECTOR (compact inline for Column B) ───
+function SortSelector({
+  sortBy,
+  setSortBy,
+  options,
+}: {
+  sortBy: string
+  setSortBy: (v: string) => void
+  options: { key: string; value: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#FFFCF7] transition-colors"
+      >
+        <ArrowUpDown className="size-3" />
+        <span className="font-medium">{SORT_LABELS[sortBy] || "Ordenar"}</span>
+        <ChevronDown className={`size-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-1.5 w-40 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { setSortBy(opt.value); setOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-[11px] transition-colors ${
+                  sortBy === opt.value
+                    ? "text-[#F8B4D9] bg-[rgba(248,180,217,0.08)]"
+                    : "text-[#9CA3AF] hover:text-[#FFFCF7] hover:bg-white/5"
+                }`}
+              >
+                {SORT_LABELS[opt.value]}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -3260,15 +3336,26 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       .filter(v => v.count > 0)
   }, [filteredFeedCars, selectedGeneration, selectedFamilyForFeed, make])
 
-  // Apply variant chip filter on top of filteredFeedCars
+  // Apply variant chip filter + sorting on top of filteredFeedCars
   const variantFilteredFeedCars = useMemo(() => {
-    if (!selectedVariantChip) return filteredFeedCars
-    const seriesId = selectedGeneration || selectedFamilyForFeed || ""
-    return filteredFeedCars.filter(car => {
-      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
-      return vid === selectedVariantChip
-    })
-  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make])
+    let result = filteredFeedCars
+    if (selectedVariantChip) {
+      const seriesId = selectedGeneration || selectedFamilyForFeed || ""
+      result = result.filter(car => {
+        const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+        return vid === selectedVariantChip
+      })
+    }
+    // Apply sorting
+    const sorted = [...result]
+    switch (sortBy) {
+      case "price-desc": sorted.sort((a, b) => b.price - a.price); break
+      case "price-asc": sorted.sort((a, b) => a.price - b.price); break
+      case "year-desc": sorted.sort((a, b) => b.year - a.year); break
+      case "year-asc": sorted.sort((a, b) => a.year - b.year); break
+    }
+    return sorted
+  }, [filteredFeedCars, selectedVariantChip, selectedGeneration, selectedFamilyForFeed, make, sortBy])
 
   // Scroll sync for center feed — tracks position in whichever list is showing
   const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
@@ -3643,17 +3730,20 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {viewMode === 'cars' ? (
               // MODE: Viewing specific generation's cars (feed style)
               <>
-                {/* Back navigation + variant chips */}
+                {/* Back navigation + sort + variant chips */}
                 <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-3">
-                  <button
-                    onClick={handleBackToGenerations}
-                    className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
-                  >
-                    <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="uppercase font-semibold tracking-wider">
-                      {selectedFamilyForFeed} {selectedGeneration ? `/ ${selectedGeneration.toUpperCase()}` : ""}
-                    </span>
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleBackToGenerations}
+                      className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                    >
+                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                      <span className="uppercase font-semibold tracking-wider">
+                        {selectedFamilyForFeed} {selectedGeneration ? `/ ${selectedGeneration.toUpperCase()}` : ""}
+                      </span>
+                    </button>
+                    <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
+                  </div>
                   {availableVariants.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       <button
@@ -3697,9 +3787,20 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </button>
                   </div>
                 ) : (
-                  variantFilteredFeedCars.map((car) => (
-                    <CarFeedCard key={car.id} car={car} make={make} />
-                  ))
+                  <AnimatePresence mode="popLayout">
+                    {variantFilteredFeedCars.map((car, i) => (
+                      <motion.div
+                        key={car.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.15) }}
+                        layout
+                      >
+                        <CarFeedCard car={car} make={make} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </>
             ) : viewMode === 'generations' ? (
@@ -3720,15 +3821,25 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </button>
                   </div>
                 ) : (
-                  familyGenerations.map((gen) => (
-                    <GenerationFeedCard
-                      key={gen.id}
-                      gen={gen}
-                      familyName={selectedFamilyForFeed || ""}
-                      make={make}
-                      onClick={() => handleGenerationClick(gen.id)}
-                    />
-                  ))
+                  <AnimatePresence mode="popLayout">
+                    {familyGenerations.map((gen, i) => (
+                      <motion.div
+                        key={gen.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
+                        layout
+                      >
+                        <GenerationFeedCard
+                          gen={gen}
+                          familyName={selectedFamilyForFeed || ""}
+                          make={make}
+                          onClick={() => handleGenerationClick(gen.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </>
             ) : hasActiveFilters ? (
@@ -3773,15 +3884,35 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
 
                   {/* Car grid */}
                   <div className="grid grid-cols-1 gap-4">
-                    {displayCars.map((car, idx) => (
-                      <CarCard key={car.id} car={car} index={idx} />
-                    ))}
+                    <AnimatePresence mode="popLayout">
+                      {displayCars.map((car, idx) => (
+                        <motion.div
+                          key={car.id}
+                          initial={{ opacity: 0, scale: 0.97 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.97 }}
+                          transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.15) }}
+                          layout
+                        >
+                          <CarCard car={car} index={idx} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )
             ) : (
               // MODE: Default - Show family feed (families with snap scroll)
-              filteredModels.length === 0 ? (
+              <>
+              {filteredModels.length > 1 && (
+                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-2.5 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                    {filteredModels.length} {filteredModels.length === 1 ? "familia" : "familias"}
+                  </span>
+                  <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={sortOptions} />
+                </div>
+              )}
+              {filteredModels.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
                   <Car className="size-12 text-[#4B5563] mb-4" />
                   <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">{t("empty.title")}</h3>
@@ -3791,10 +3922,22 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                   </button>
                 </div>
               ) : (
-                filteredModels.map((model) => (
-                  <ModelFeedCard key={model.slug} model={model} make={make} onClick={() => handleFamilyClick(model.name)} />
-                ))
-              )
+                <AnimatePresence mode="popLayout">
+                  {filteredModels.map((model, i) => (
+                    <motion.div
+                      key={model.slug}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
+                      layout
+                    >
+                      <ModelFeedCard model={model} make={make} onClick={() => handleFamilyClick(model.name)} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+              </>
             )}
           </div>
 
