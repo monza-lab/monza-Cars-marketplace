@@ -3582,46 +3582,58 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             {/* Filters section (scrollable) */}
             {selectedModel ? (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {/* Back navigation breadcrumb */}
-                {(viewMode === 'generations' || viewMode === 'cars') && (
-                  <div className="shrink-0 px-4 py-2 border-b border-white/5 flex items-center gap-1">
-                    <button
-                      onClick={handleBackToFamilies}
-                      className="inline-flex items-center gap-1 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
-                    >
-                      <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
-                      <span className="uppercase font-semibold">{make}</span>
-                    </button>
-                    {viewMode === 'cars' && selectedFamilyForFeed && (
-                      <>
-                        <ChevronRight className="size-3 text-[#4B5563]" />
-                        <button
-                          onClick={handleBackToGenerations}
-                          className="text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors uppercase font-semibold"
-                        >
-                          {selectedFamilyForFeed}
-                        </button>
-                      </>
-                    )}
+                {/* Back + Family header */}
+                <div className="shrink-0 px-4 py-2.5 border-b border-white/5">
+                  <button
+                    onClick={handleBackToFamilies}
+                    className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group mb-1"
+                  >
+                    <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="uppercase font-semibold tracking-wider">{make}</span>
+                  </button>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{selectedModel.name}</h3>
+                    <span className="text-[10px] text-[#6B7280] font-mono">{familyCars.length} cars</span>
+                  </div>
+                </div>
+
+                {/* Generation Navigation List */}
+                {familyGenerations.length > 0 && (
+                  <div className="shrink-0 border-b border-white/5">
+                    <div className="px-4 py-1.5">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                        Generaciones
+                      </span>
+                    </div>
+                    <div className="max-h-[220px] overflow-y-auto no-scrollbar">
+                      {familyGenerations.map(gen => {
+                        const isActive = selectedGeneration === gen.id
+                        return (
+                          <button
+                            key={gen.id}
+                            onClick={() => handleGenerationClick(gen.id)}
+                            className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
+                              isActive
+                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
+                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                            }`}
+                          >
+                            <span className={`text-[11px] font-medium ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
+                            }`}>
+                              {gen.label}
+                            </span>
+                            <span className={`text-[9px] font-mono ${
+                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                            }`}>
+                              {gen.carCount}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
-                {/* Family search (generations only, no search bar) */}
-                <div className="shrink-0">
-                  <FamilySearchAndFilters
-                    familyName={selectedModel.name}
-                    totalCars={displayCars.length}
-                    hideSearch
-                    onFilterChange={(familyFilters) => {
-                      setActiveFilters(prev => ({
-                        ...prev,
-                        searchQuery: familyFilters.searchQuery,
-                        selectedGenerations: familyFilters.selectedGenerations,
-                        yearRange: familyFilters.yearRange || prev?.yearRange || null,
-                        priceRange: familyFilters.priceRange || prev?.priceRange || null,
-                      }))
-                    }}
-                  />
-                </div>
                 {/* Advanced filters (price, year, km, transmission) */}
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <AdvancedFilters

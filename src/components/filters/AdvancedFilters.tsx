@@ -140,10 +140,10 @@ export function AdvancedFilters({
   return (
     <div className="h-full flex flex-col bg-[rgba(15,14,22,0.5)]">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/5">
+      <div className="px-5 py-2.5 border-b border-white/5">
         <div className="flex items-center justify-between">
-          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-            Filtros Avanzados
+          <h3 className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+            Filtros
           </h3>
           {hasActiveFilters && (
             <button
@@ -160,7 +160,7 @@ export function AdvancedFilters({
       {/* Scrollable filters */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Price Range */}
-        <FilterSection icon={DollarSign} title="Precio">
+        <FilterSection icon={DollarSign} title="Precio" hasSelection={priceRange[0] !== minPrice || priceRange[1] !== maxPrice}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-[#6B7280]">${(priceRange[0] / 1000).toFixed(0)}k</span>
@@ -179,7 +179,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Year Range */}
-        <FilterSection icon={Calendar} title="Año">
+        <FilterSection icon={Calendar} title="Año" hasSelection={yearRange[0] !== minYear || yearRange[1] !== maxYear}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-[#6B7280]">{yearRange[0]}</span>
@@ -198,7 +198,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Mileage */}
-        <FilterSection icon={Gauge} title="Mileage">
+        <FilterSection icon={Gauge} title="Mileage" hasSelection={selectedMileage.length > 0}>
           <div className="space-y-2">
             {MILEAGE_OPTIONS.map((option) => (
               <CheckboxOption
@@ -212,7 +212,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Transmission */}
-        <FilterSection icon={Cog} title="Transmisión">
+        <FilterSection icon={Cog} title="Transmisión" hasSelection={selectedTransmissions.length > 0}>
           <div className="space-y-2">
             {TRANSMISSION_OPTIONS.map((option) => (
               <CheckboxOption
@@ -226,7 +226,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Body Type */}
-        <FilterSection icon={Car} title="Carrocería">
+        <FilterSection icon={Car} title="Carrocería" hasSelection={selectedBodyTypes.length > 0}>
           <div className="flex flex-wrap gap-2">
             {BODY_TYPE_OPTIONS.map((bt) => (
               <button
@@ -245,7 +245,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Color */}
-        <FilterSection icon={Palette} title="Color">
+        <FilterSection icon={Palette} title="Color" hasSelection={selectedColors.length > 0}>
           <div className="flex flex-wrap gap-2">
             {COLOR_OPTIONS.map((color) => (
               <button
@@ -264,7 +264,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Status */}
-        <FilterSection icon={Calendar} title="Estado">
+        <FilterSection icon={Calendar} title="Estado" hasSelection={selectedStatuses.length > 0}>
           <div className="flex flex-wrap gap-2">
             {STATUS_OPTIONS.map((status) => (
               <button
@@ -283,7 +283,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Investment Grade */}
-        <FilterSection icon={Award} title="Investment Grade">
+        <FilterSection icon={Award} title="Investment Grade" hasSelection={selectedGrades.length > 0}>
           <div className="flex flex-wrap gap-2">
             {GRADE_OPTIONS.map((grade) => (
               <button
@@ -313,20 +313,35 @@ function FilterSection({
   icon: Icon,
   title,
   children,
+  hasSelection = false,
 }: {
   icon: any
   title: string
   children: React.ReactNode
+  hasSelection?: boolean
 }) {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <div className="px-5 py-4 border-b border-white/5">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="size-4 text-[#F8B4D9]" />
-        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+    <div className="border-b border-white/5">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-5 py-3 flex items-center gap-2 hover:bg-white/[0.02] transition-colors"
+      >
+        <Icon className="size-3.5 text-[#F8B4D9]" />
+        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] flex-1 text-left">
           {title}
         </span>
-      </div>
-      {children}
+        {hasSelection && (
+          <span className="size-1.5 rounded-full bg-[#F8B4D9]" />
+        )}
+        <ChevronDown className={`size-3 text-[#4B5563] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen && (
+        <div className="px-5 pb-3">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
