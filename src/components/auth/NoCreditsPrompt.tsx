@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Zap } from 'lucide-react'
+import { Link } from '@/i18n/navigation'
 
 interface NoCreditsPromptProps {
   onPurchase?: () => void
@@ -25,9 +26,9 @@ export function NoCreditsPrompt({
       </p>
 
       <div className="grid grid-cols-3 gap-3 mb-6 w-full max-w-sm">
-        <CreditPackage amount={5} price={9} popular={false} />
-        <CreditPackage amount={15} price={19} popular={true} />
-        <CreditPackage amount={50} price={49} popular={false} />
+        <CreditPackage amount={5} price={12.99} popular={false} label="Starter" />
+        <CreditPackage amount={25} price={49.99} popular={true} label="Collector" />
+        <CreditPackage amount={"∞"} price={59.99} popular={false} label="Pro /mo" />
       </div>
 
       <Button
@@ -37,7 +38,14 @@ export function NoCreditsPrompt({
         Purchase Credits
       </Button>
 
-      <p className="text-xs text-[#4B5563] mt-4">
+      <Link
+        href="/pricing"
+        className="text-[11px] text-[#F8B4D9] hover:text-[#f4cbde] mt-3 transition-colors"
+      >
+        View all plans →
+      </Link>
+
+      <p className="text-xs text-[#4B5563] mt-3">
         Free credits reset on the 1st of each month
       </p>
     </div>
@@ -48,10 +56,12 @@ function CreditPackage({
   amount,
   price,
   popular,
+  label,
 }: {
-  amount: number
+  amount: number | string
   price: number
   popular: boolean
+  label: string
 }) {
   return (
     <div
@@ -67,7 +77,7 @@ function CreditPackage({
         </span>
       )}
       <div className="text-xl font-bold text-[#FFFCF7]">{amount}</div>
-      <div className="text-xs text-[#9CA3AF]">credits</div>
+      <div className="text-[10px] text-[#9CA3AF]">{label}</div>
       <div className="text-sm font-semibold text-[#34D399] mt-1">${price}</div>
     </div>
   )

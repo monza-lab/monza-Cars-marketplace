@@ -198,7 +198,7 @@ const REGIONS = [
 const menuLinkKeys = [
   { href: "/auctions", key: "liveAuctions" },
   { href: "/search", key: "marketSearch" },
-  { href: "/history", key: "priceHistory" },
+  { href: "/pricing", key: "pricing" },
   { href: "/about", key: "about" },
 ] as const;
 
@@ -1085,13 +1085,16 @@ export function Header() {
 
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
-            {/* Credits - only show when authenticated */}
+            {/* Credits - only show when authenticated, click → /account */}
             {isAuthenticated && (
-              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
+              <button
+                onClick={() => router.push('/account')}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+              >
                 <Zap className={`size-3 ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
                 <span className="text-[12px] font-medium tabular-nums text-[#FFFCF7]">{creditsRemaining}</span>
                 <span className="text-[10px] text-[#4B5563]">{t('auth.credits')}</span>
-              </div>
+              </button>
             )}
 
             {/* Account / Sign In */}
