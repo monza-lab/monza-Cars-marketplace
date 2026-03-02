@@ -16,8 +16,8 @@ const REPORT_FEATURES = [
   },
   {
     icon: TrendingUp,
-    title: "Price Trend Analysis",
-    description: "Historical price data and 5-year appreciation forecasts",
+    title: "Market Valuation",
+    description: "Current market pricing and fair value analysis across regions",
   },
   {
     icon: Globe,

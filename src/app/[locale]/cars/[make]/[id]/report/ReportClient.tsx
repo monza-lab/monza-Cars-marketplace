@@ -180,12 +180,6 @@ const shippingCosts: Record<string, { domestic: number; euImport: number; ukImpo
   default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
 }
 
-const BENCHMARKS = [
-  { label: "S&P 500", return5y: 42 },
-  { label: "Gold", return5y: 28 },
-  { label: "Real Estate", return5y: 18 },
-]
-
 // ─── PRODUCTION & HERITAGE DATA ───
 const productionData: Record<string, { yearsProduced: string; totalBuilt: number; variants: { name: string; units: number; priceRange: string }[]; lhd: number; rhd: number; keyStat: string }> = {
   McLaren: {
@@ -466,23 +460,6 @@ const conditionData: Record<string, { rustAreas: { area: string; severity: "high
   },
 }
 
-const mockPriceHistory: Record<string, number[]> = {
-  Porsche: [180000, 210000, 245000, 290000, 320000],
-  Ferrari: [450000, 520000, 580000, 640000, 720000],
-  McLaren: [12000000, 13500000, 15000000, 17000000, 19500000],
-  Lamborghini: [280000, 310000, 350000, 400000, 460000],
-  BMW: [65000, 78000, 92000, 108000, 125000],
-  Nissan: [85000, 110000, 145000, 180000, 220000],
-  Toyota: [75000, 95000, 120000, 145000, 175000],
-  "Mercedes-Benz": [320000, 350000, 380000, 420000, 470000],
-  "Aston Martin": [400000, 440000, 480000, 520000, 580000],
-  Lexus: [350000, 380000, 410000, 440000, 490000],
-  Ford: [280000, 310000, 340000, 380000, 420000],
-  Acura: [100000, 115000, 135000, 155000, 180000],
-  Jaguar: [120000, 130000, 145000, 160000, 180000],
-  default: [150000, 170000, 195000, 220000, 250000],
-}
-
 const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
@@ -693,30 +670,6 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     )
   )
 
-  // Price history: prefer DB sold records
-  const priceHistoryYears = [0, 1, 2, 3, 4].map(i => new Date().getFullYear() - 4 + i)
-  const priceHistory = (() => {
-    if (dbSoldHistory.length >= 3) {
-      const years = priceHistoryYears
-      const buckets = years.map(yr => {
-        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
-        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
-      })
-      const filled = [...buckets]
-      for (let i = 0; i < filled.length; i++) {
-        if (filled[i] == null) {
-          const prev = filled.slice(0, i).reverse().find(v => v != null)
-          const next = filled.slice(i + 1).find(v => v != null)
-          filled[i] = prev ?? next ?? car.currentBid
-        }
-      }
-      return filled as number[]
-    }
-    return mockPriceHistory[car.make] || mockPriceHistory.default
-  })()
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
-  const cagr = (Math.pow(priceHistory[priceHistory.length - 1] / priceHistory[0], 1 / 5) - 1) * 100
-
   // Risk score: prefer DB confidence, fallback to grade-based
   const riskScore = dbAnalysis?.confidence === "HIGH" ? 25 :
     dbAnalysis?.confidence === "MEDIUM" ? 45 :
@@ -861,13 +814,13 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.text(tLines, M, 127)
       const tEnd = 127 + tLines.length * 11
       pdf.setFontSize(9); gray()
-      pdf.text(`Grade: ${car.investmentGrade}    Trend: ${car.trend}    5yr: +${brand5yReturn}%`, M, tEnd + 10)
+      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtRegional(fairLow, regionRange.currency)} – ${fmtRegional(fairHigh, regionRange.currency)}`, M, tEnd + 10)
       const vy = tEnd + 22
       pdf.setFillColor(verdict === "buy" ? 52 : 59, verdict === "buy" ? 211 : 130, verdict === "buy" ? 153 : 246)
       pdf.rect(M, vy - 4, 26, 8, "F")
       pdf.setFontSize(8); pdf.setTextColor(11, 11, 16)
       pdf.text(verdict.toUpperCase(), M + 13, vy + 1, { align: "center" })
-      gray(); pdf.text(`Risk: ${riskScore}/100  |  CAGR: ${cagr.toFixed(1)}%  |  Cost: $${totalAnnualCost.toLocaleString()}/yr`, M + 30, vy + 1)
+      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Cost: $${totalAnnualCost.toLocaleString()}/yr`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 24
       pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
@@ -973,7 +926,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         { lbl: "INVESTMENT GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
         { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [248,180,217] },
         { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [255,252,247] },
-        { lbl: "5-YEAR RETURN", val: `+${brand5yReturn}%`, clr: brand5yReturn > 0 ? [52,211,153] : [248,113,113] },
+        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
         { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113] },
         { lbl: "ANNUAL COST", val: `$${totalAnnualCost.toLocaleString()}`, clr: [255,252,247] },
       ]
@@ -1151,82 +1104,6 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(`Buy in ${regionLabels[bestRegion]?.short || bestRegion} — save $${Math.round(arbitrageSavings).toLocaleString()} vs most expensive region`, M + 4, y + 11)
         y += 18
       }
-
-      // ═══ PAGE 8: PERFORMANCE & RETURNS ═══
-      pdf.addPage(); bg(); chrome("Performance & Returns")
-      y = sectionTitle(5, "Performance & Returns", 16)
-      // Area chart card
-      card(M, y, CW, 58)
-      pdf.setFontSize(6); dim(); pdf.text("5-YEAR PRICE HISTORY", M + 4, y + 5)
-      pdf.text(`CAGR: ${cagr.toFixed(1)}%`, M + CW / 2, y + 5); pink(); pdf.text(`5yr: +${brand5yReturn}%`, W - M - 4, y + 5, { align: "right" })
-      const maxP = Math.max(...priceHistory)
-      const chartX = M + 4; const chartY = y + 10; const chartW2 = CW - 8; const chartH2 = 36
-      // Grid lines
-      pdf.setDrawColor(30, 30, 40); pdf.setLineWidth(0.08)
-      for (let g = 0; g <= 4; g++) { pdf.line(chartX, chartY + (g / 4) * chartH2, chartX + chartW2, chartY + (g / 4) * chartH2) }
-      // Area fill: build polygon points, fill row by row
-      const pts = priceHistory.map((p, i) => ({
-        x: chartX + (i / (priceHistory.length - 1)) * chartW2,
-        y: chartY + (1 - p / maxP) * chartH2,
-      }))
-      // Fill area with pink semi-transparent strips
-      for (let si = 0; si < pts.length - 1; si++) {
-        const x1 = pts[si].x; const y1 = pts[si].y; const x2 = pts[si + 1].x; const y2 = pts[si + 1].y
-        const steps = Math.ceil(x2 - x1)
-        for (let s = 0; s < steps; s++) {
-          const frac = s / steps
-          const cx = x1 + (x2 - x1) * frac
-          const cy = y1 + (y2 - y1) * frac
-          const h = chartY + chartH2 - cy
-          pdf.setFillColor(248, 180, 217); pdf.rect(cx, cy, 1.1, h, "F")
-        }
-      }
-      // Darken area fill to make it semi-transparent look
-      pdf.setFillColor(15, 14, 22); pdf.setGState(new (pdf as any).GState({ opacity: 0.75 }))
-      for (let si = 0; si < pts.length - 1; si++) {
-        const x1 = pts[si].x; const y1 = pts[si].y; const x2 = pts[si + 1].x; const y2 = pts[si + 1].y
-        const steps = Math.ceil(x2 - x1)
-        for (let s = 0; s < steps; s++) {
-          const frac = s / steps
-          const cx = x1 + (x2 - x1) * frac
-          const cy = y1 + (y2 - y1) * frac
-          pdf.rect(cx, cy, 1.1, chartY + chartH2 - cy, "F")
-        }
-      }
-      pdf.setGState(new (pdf as any).GState({ opacity: 1 }))
-      // Line
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.5)
-      for (let si = 0; si < pts.length - 1; si++) { pdf.line(pts[si].x, pts[si].y, pts[si + 1].x, pts[si + 1].y) }
-      // Points
-      pts.forEach((pt, i) => {
-        pdf.setFillColor(i === pts.length - 1 ? 248 : 15, i === pts.length - 1 ? 180 : 14, i === pts.length - 1 ? 217 : 22)
-        pdf.circle(pt.x, pt.y, 1.2, "F")
-        pdf.setDrawColor(248, 180, 217); pdf.circle(pt.x, pt.y, 1.2, "S")
-      })
-      // Labels
-      priceHistory.forEach((p, i) => {
-        const px = chartX + (i / (priceHistory.length - 1)) * chartW2
-        pdf.setFontSize(6); dim(); pdf.text(String(priceHistoryYears[i] ?? 2022 + i), px, chartY + chartH2 + 4, { align: "center" })
-        pdf.setFontSize(5.5); white(); pdf.text(formatUsd(p), px, pts[i].y - 2, { align: "center" })
-      })
-      y += 64
-
-      // Benchmarks card
-      const allReturns = [{ label: car.make, ret: brand5yReturn }, ...BENCHMARKS.map(b => ({ label: b.label, ret: b.return5y }))]
-      const maxRet = Math.max(...allReturns.map(r => r.ret))
-      card(M, y, CW, 8 + allReturns.length * 10)
-      pdf.setFontSize(6); dim(); pdf.text("VS. MARKET BENCHMARKS", M + 4, y + 5)
-      allReturns.forEach((r, i) => {
-        const ry = y + 10 + i * 10
-        const isPrimary = r.label === car.make
-        pdf.setFontSize(8); if (isPrimary) pink(); else gray(); pdf.text(r.label, M + 4, ry + 2)
-        pdf.setFontSize(9); if (isPrimary) pink(); else white(); pdf.text(`+${r.ret}%`, W - M - 4, ry + 2, { align: "right" })
-        // Bar
-        const bw = Math.max((r.ret / maxRet) * (CW - 8), 3)
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, ry + 4, CW - 8, 3, "F")
-        pdf.setFillColor(isPrimary ? 248 : 60, isPrimary ? 180 : 60, isPrimary ? 217 : 70)
-        pdf.rect(M + 4, ry + 4, bw, 3, "F")
-      })
 
       // ═══ PAGE 9: TECHNICAL DEEP-DIVE ═══
       pdf.addPage(); bg(); chrome("Technical Deep-Dive")
@@ -1461,7 +1338,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // Verdict metrics card (3 cols)
       const vMetrics = [
         { lbl: "GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
-        { lbl: "5YR RETURN", val: `+${brand5yReturn}%`, clr: brand5yReturn > 0 ? [52,211,153] : [248,113,113] },
+        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
         { lbl: "RISK", val: `${riskScore}/100`, clr: rsClr },
       ]
       const vmW = (CW - 6) / 3
@@ -1483,7 +1360,6 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       if (hasArbitrage) { sy = cardRow("Arbitrage Savings", `$${Math.round(arbitrageSavings).toLocaleString()}`, M, sy, CW) }
       sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
       sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
-      sy = cardRow("CAGR (5yr)", `${cagr.toFixed(1)}%`, M, sy, CW)
 
       // ═══ CLOSING PAGE: THANK YOU ═══
       pdf.addPage(); bg()
@@ -1581,8 +1457,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["Fair Value High (USD)", pricing.US.high],
         ["Price Position", `${pricePosition.toFixed(0)}% of fair range`],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
-        ["5-Year Brand Return", `${brand5yReturn}%`],
-        ["CAGR (5yr)", `${cagr.toFixed(1)}%`],
+        ["Market Position", `${pricePosition}% of fair value`],
         ["Risk Score", `${riskScore}/100`],
         ["Total Annual Cost (USD)", totalAnnualCost],
         [""],
@@ -1682,25 +1557,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["Domestic (Enclosed Transport)", shipping.domestic],
         ["EU Import (incl. duties & VAT)", shipping.euImport],
         ["UK Import (incl. duties & VAT)", shipping.ukImport],
-        [""],
-        ["5-YEAR PRICE HISTORY"],
-        ["Year", "Index Value (USD)", "YoY Change"],
-        ...priceHistory.map((p, i) => [
-          String(priceHistoryYears[i] ?? 2022 + i),
-          p,
-          i === 0 ? "—" : `${(((p - priceHistory[i - 1]) / priceHistory[i - 1]) * 100).toFixed(1)}%`,
-        ]),
-        [""],
-        ["BENCHMARK COMPARISON (5yr Return)"],
-        ["Asset", "5yr Return"],
-        [car.make, `${brand5yReturn}%`],
-        ...BENCHMARKS.map(b => [b.label, `${b.return5y}%`]),
-        [`Outperformance vs S&P 500`, `${brand5yReturn - 42}pp`],
       ]
       const ws4 = XLSX.utils.aoa_to_sheet(costRows)
       ws4["!cols"] = [{ wch: 34 }, { wch: 22 }, { wch: 14 }]
       ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws4, "Costs & Returns")
+      XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
 
       // ═══ Sheet 5: Production & Heritage ═══
       const prodRows: (string | number)[][] = [
@@ -2044,11 +1905,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}
                   </p>
                 </div>
-                {/* 5yr Return */}
+                {/* Market Position */}
                 <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.fiveYearReturn")}</span>
-                  <p className={`text-[24px] font-bold font-mono mt-1 ${brand5yReturn > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                    +{brand5yReturn}%
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">Market Position</span>
+                  <p className={`text-[24px] font-bold font-mono mt-1 ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                    {pricePosition}%
                   </p>
                 </div>
                 {/* Annual Cost */}
@@ -2360,188 +2221,38 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               <PaywallSection sectionId="performance">
                 <SectionHeader id="performance" title={t("sections.performance")} />
 
-                {/* 5-Year Return Comparison bars */}
+                {/* Market Position */}
                 <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">
-                    {t("performance.vsBenchmarks")}
+                    Market Position
                   </h3>
                   <div className="space-y-4">
-                    {/* Brand return */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] font-semibold text-[#F8B4D9]">{car.make}</span>
-                        <span className="text-[14px] font-mono font-bold text-emerald-400">+{brand5yReturn}%</span>
+                        <span className="text-[12px] font-semibold text-[#F8B4D9]">Current Bid vs Fair Value</span>
+                        <span className={`text-[14px] font-mono font-bold ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>{pricePosition}%</span>
                       </div>
                       <div className="relative h-[10px] rounded-full bg-white/[0.04] overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(brand5yReturn, 100)}%` }}
+                          animate={{ width: `${Math.min(pricePosition, 100)}%` }}
                           transition={{ duration: 0.8, delay: 0.1 }}
-                          className="h-full rounded-full bg-gradient-to-r from-[#F8B4D9] to-[#F8B4D9]/60"
+                          className={`h-full rounded-full bg-gradient-to-r ${pricePosition <= 100 ? "from-emerald-400 to-emerald-400/60" : "from-[#F8B4D9] to-[#F8B4D9]/60"}`}
                         />
                       </div>
                     </div>
-                    {/* Benchmarks */}
-                    {BENCHMARKS.map((bench, i) => (
-                      <div key={i}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[12px] text-[#9CA3AF]">{bench.label}</span>
-                          <span className="text-[12px] font-mono text-[#6B7280]">+{bench.return5y}%</span>
-                        </div>
-                        <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(bench.return5y, 100)}%` }}
-                            transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }}
-                            className="h-full rounded-full bg-white/10"
-                          />
-                        </div>
-                      </div>
-                    ))}
+                    <div className="flex items-center justify-between text-[11px] text-[#6B7280]">
+                      <span>Fair Value: {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}</span>
+                      <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
+                    </div>
                   </div>
-                  {brand5yReturn > BENCHMARKS[0].return5y && (
+                  {isBelowFair && (
                     <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/[0.05] border border-emerald-400/10">
                       <TrendingUp className="size-3.5 text-emerald-400" />
-                      <span className="text-[11px] text-emerald-400">{t("performance.outperforms", { benchmark: "S&P 500" })}</span>
+                      <span className="text-[11px] text-emerald-400">Priced below fair value — potential opportunity</span>
                     </div>
                   )}
                 </div>
-
-                {/* Price trend — SVG area chart */}
-                {(() => {
-                  const chartW = 100 // viewBox percentage
-                  const chartH = 60
-                  const padL = 0
-                  const padR = 0
-                  const padT = 8
-                  const padB = 0
-                  const maxP = Math.max(...priceHistory)
-                  const minP = 0
-                  const rangeP = maxP - minP || 1
-                  const points = priceHistory.map((p, i) => ({
-                    x: padL + (i / (priceHistory.length - 1)) * (chartW - padL - padR),
-                    y: padT + (1 - (p - minP) / rangeP) * (chartH - padT - padB),
-                    price: p,
-                    year: priceHistoryYears[i] ?? (2022 + i),
-                  }))
-                  const linePath = points.map((pt, i) => `${i === 0 ? "M" : "L"} ${pt.x} ${pt.y}`).join(" ")
-                  const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartH} L ${points[0].x} ${chartH} Z`
-
-                  return (
-                    <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280]">{t("performance.priceTrend")}</h3>
-                        <div className="flex items-center gap-4">
-                          <span className="text-[10px] text-[#6B7280]">CAGR: <span className="text-emerald-400 font-mono font-semibold">{cagr.toFixed(1)}%</span></span>
-                          <span className="text-[10px] text-[#6B7280]">5yr: <span className="text-[#F8B4D9] font-mono font-semibold">+{brand5yReturn}%</span></span>
-                        </div>
-                      </div>
-
-                      {/* SVG Chart */}
-                      <div className="relative">
-                        <svg viewBox={`0 0 ${chartW} ${chartH + 10}`} className="w-full h-auto" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#F8B4D9" stopOpacity="0.3" />
-                              <stop offset="100%" stopColor="#F8B4D9" stopOpacity="0.02" />
-                            </linearGradient>
-                            <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#F8B4D9" stopOpacity="0.5" />
-                              <stop offset="100%" stopColor="#F8B4D9" stopOpacity="1" />
-                            </linearGradient>
-                          </defs>
-                          {/* Grid lines */}
-                          {[0, 0.25, 0.5, 0.75, 1].map(pct => {
-                            const gy = padT + (1 - pct) * (chartH - padT - padB)
-                            return <line key={pct} x1={padL} y1={gy} x2={chartW - padR} y2={gy} stroke="rgba(255,255,255,0.04)" strokeWidth="0.2" />
-                          })}
-                          {/* Area fill */}
-                          <motion.path
-                            d={areaPath}
-                            fill="url(#areaGrad)"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 1, delay: 0.3 }}
-                          />
-                          {/* Line */}
-                          <motion.path
-                            d={linePath}
-                            fill="none"
-                            stroke="url(#lineGrad)"
-                            strokeWidth="0.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 1.2, delay: 0.2 }}
-                          />
-                          {/* Data points */}
-                          {points.map((pt, i) => (
-                            <motion.circle
-                              key={i}
-                              cx={pt.x}
-                              cy={pt.y}
-                              r={i === points.length - 1 ? 1.4 : 0.8}
-                              fill={i === points.length - 1 ? "#F8B4D9" : "#0b0b10"}
-                              stroke="#F8B4D9"
-                              strokeWidth={i === points.length - 1 ? 0.5 : 0.3}
-                              initial={{ opacity: 0, scale: 0 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.3, delay: 0.5 + i * 0.15 }}
-                            />
-                          ))}
-                          {/* Glow on last point */}
-                          <motion.circle
-                            cx={points[points.length - 1].x}
-                            cy={points[points.length - 1].y}
-                            r="3"
-                            fill="none"
-                            stroke="#F8B4D9"
-                            strokeWidth="0.2"
-                            opacity="0.3"
-                            initial={{ r: 1 }}
-                            animate={{ r: 3, opacity: [0.3, 0, 0.3] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        </svg>
-
-                        {/* X-axis labels (years) */}
-                        <div className="flex justify-between mt-1 px-0">
-                          {points.map((pt, i) => (
-                            <span key={i} className={`text-[9px] font-mono ${i === points.length - 1 ? "text-[#F8B4D9] font-semibold" : "text-[#4B5563]"}`}>
-                              {pt.year}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Y-axis price labels */}
-                        <div className="flex justify-between mt-2">
-                          {points.map((pt, i) => (
-                            <span key={i} className={`text-[9px] font-mono ${i === points.length - 1 ? "text-[#FFFCF7] font-semibold" : "text-[#6B7280]"}`}>
-                              {formatUsd(pt.price)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* YoY change pills */}
-                      <div className="flex gap-2 mt-4">
-                        {priceHistory.slice(1).map((p, i) => {
-                          const prev = priceHistory[i]
-                          const change = ((p - prev) / prev) * 100
-                          return (
-                            <div key={i} className="flex-1 text-center py-1.5 rounded-lg bg-white/[0.02] border border-white/5">
-                              <span className="text-[8px] text-[#4B5563] block">{priceHistoryYears[i]}→{priceHistoryYears[i + 1]}</span>
-                              <span className={`text-[10px] font-mono font-semibold ${change > 0 ? "text-emerald-400" : "text-red-400"}`}>
-                                {change > 0 ? "+" : ""}{change.toFixed(0)}%
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })()}
 
                 {/* Similar Cars Price Comparison */}
                 {similarCars.length > 0 && (() => {
@@ -2938,7 +2649,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   </div>
                 </div>
 
-                {/* 5-Year projection */}
+                {/* Cost projection */}
                 <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("ownership.fiveYearProjection")}</h3>
                   <div className="flex items-end gap-2 md:gap-3 h-[120px]">
@@ -3098,8 +2809,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     </div>
                     <div className="h-8 w-px bg-white/10" />
                     <div className="text-center">
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">5yr Return</span>
-                      <p className="text-[20px] font-black text-emerald-400">+{brand5yReturn}%</p>
+                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">Fair Value</span>
+                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>{pricePosition}%</p>
                     </div>
                     <div className="h-8 w-px bg-white/10" />
                     <div className="text-center">
@@ -3122,7 +2833,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("verdict.keyTakeaways")}</h3>
                   <div className="space-y-2">
                     {[
-                      `${car.investmentGrade} investment grade with ${brand5yReturn}% 5-year return`,
+                      `${car.investmentGrade} investment grade — ${pricePosition}% of fair value`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
                       `Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`,
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,

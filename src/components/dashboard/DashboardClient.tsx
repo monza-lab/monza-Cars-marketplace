@@ -267,17 +267,17 @@ const mockMarketPulse: Record<string, { title: string; price: number; date: stri
 }
 
 const mockWhyBuy: Record<string, string> = {
-  McLaren: "The McLaren F1 represents the pinnacle of analog supercar engineering. With only 64 road cars produced, scarcity is absolute. Recent auction results show consistent 8-12% annual appreciation, outperforming traditional asset classes.",
+  McLaren: "The McLaren F1 represents the pinnacle of analog supercar engineering. Extreme scarcity with only 64 road cars ensures lasting collector interest and consistent auction presence.",
   Porsche: "The 911 Carrera RS 2.7 is the foundation of Porsche's motorsport legacy. As the first homologation special, it carries historical significance that transcends typical collector car metrics. Strong club support and cross-generational appeal make this a cornerstone holding.",
   Ferrari: "Ferrari's timeless design combined with the legendary Colombo V12 creates an investment-grade asset. Classiche certification ensures authenticity. This model has demonstrated remarkable price stability even during market corrections.",
   Lamborghini: "Lamborghini's first true supercar remains the most desirable variant. Polo Storico certification adds provenance value. The mid-engine layout influenced every supercar that followed, cementing its historical importance.",
-  Nissan: "The R34 GT-R represents the peak of Japanese engineering excellence. With 25-year import eligibility now active in the US, demand has surged 40% year-over-year. Low production numbers and strong enthusiast community support continued appreciation.",
+  Nissan: "The R34 GT-R represents the peak of Japanese engineering excellence. With 25-year import eligibility now active in the US, demand continues to grow as 25-year import eligibility expands the collector base. Low production numbers and strong enthusiast community support lasting value.",
   Toyota: "The A80 Supra has achieved icon status, bolstered by pop culture prominence and bulletproof 2JZ reliability. Clean, stock examples are increasingly rare as many were modified. Turbo 6-speed variants command significant premiums.",
-  BMW: "The E30 M3 is widely regarded as the quintessential driver's car. Motorsport heritage and timeless design ensure lasting desirability. Sport Evolution and lightweight variants show strongest appreciation potential.",
+  BMW: "The E30 M3 is widely regarded as the quintessential driver's car. Motorsport heritage and timeless design ensure lasting desirability. Sport Evolution and lightweight variants show strongest collector demand.",
   Mercedes: "Mercedes-Benz classics combine engineering excellence with timeless elegance. Strong parts availability and active restoration community support long-term ownership. Coupe and Cabriolet variants show strongest appreciation.",
   "Aston Martin": "The quintessential British grand tourer. James Bond association ensures global recognition. Strong club support and active restoration community. DB-series cars show consistent appreciation and strong auction presence.",
-  Jaguar: "British elegance meets Le Mans-winning pedigree. The XJ220 was underappreciated for decades but values are now rebounding strongly. Early investors are seeing significant returns as the market corrects.",
-  Mazda: "The RX-7 FD represents the pinnacle of rotary engine development. Spirit R editions are especially collectible. As the final true rotary sports car, scarcity ensures continued appreciation.",
+  Jaguar: "British elegance meets Le Mans-winning pedigree. The XJ220 was underappreciated for decades but collector interest is growing as the market recognizes its engineering significance.",
+  Mazda: "The RX-7 FD represents the pinnacle of rotary engine development. Spirit R editions are especially collectible. As the final true rotary sports car, scarcity supports strong collector value.",
   Honda: "Honda's engineering excellence shines in the S2000. The F20C/F22C engines are legendary for their 9,000 RPM redline. CR variants command significant premiums for their track-focused specification.",
   Shelby: "Carroll Shelby's Cobra is the ultimate American sports car legend. 427 examples represent the pinnacle of analog performance. CSX-documented cars command top dollar at auction.",
   Chevrolet: "The C2 Corvette Stingray is America's sports car at its most beautiful. Big block variants with manual transmissions are the collector's choice. Strong club support ensures lasting value.",
@@ -285,30 +285,30 @@ const mockWhyBuy: Record<string, string> = {
   Lancia: "The Stratos is the most successful rally car ever, dominating World Rally Championship from 1974-1976. Ferrari Dino V6 power and Bertone design ensure eternal collector appeal.",
   "De Tomaso": "Italian design meets American V8 power. The Mangusta's Giugiaro styling and rare production numbers make it an undervalued blue chip. Recognition is growing among serious collectors.",
   Alpine: "The A110 is France's answer to the Porsche 911. Lightweight, agile, and proven in competition. The 1600S is the ultimate road specification. Values rising as recognition spreads globally.",
-  default: "This vehicle represents a compelling opportunity in the collector car market. Strong fundamentals, limited production, and growing collector interest suggest positive long-term value potential.",
+  default: "This vehicle represents a compelling opportunity in the collector car market. Strong fundamentals, limited production, and growing collector interest suggest strong collector market presence.",
 }
 
 // Default analysis for cars without DB analysis
 const mockAnalysis: Record<string, { grade: string; trend: string; lowRange: number; highRange: number }> = {
-  McLaren: { grade: "AAA", trend: "+12% Annually", lowRange: 15_500_000, highRange: 18_000_000 },
-  Porsche: { grade: "AA", trend: "+8% Annually", lowRange: 1_100_000, highRange: 1_400_000 },
-  Ferrari: { grade: "AAA", trend: "+10% Annually", lowRange: 2_800_000, highRange: 3_400_000 },
-  Lamborghini: { grade: "AA", trend: "+9% Annually", lowRange: 1_900_000, highRange: 2_500_000 },
-  Nissan: { grade: "A", trend: "+15% Annually", lowRange: 380_000, highRange: 520_000 },
-  Toyota: { grade: "A", trend: "+12% Annually", lowRange: 145_000, highRange: 190_000 },
-  BMW: { grade: "AA", trend: "+8% Annually", lowRange: 550_000, highRange: 750_000 },
-  Mercedes: { grade: "AA", trend: "+6% Annually", lowRange: 350_000, highRange: 500_000 },
-  "Aston Martin": { grade: "AA", trend: "+6% Annually", lowRange: 400_000, highRange: 550_000 },
-  Jaguar: { grade: "AA", trend: "+9% Annually", lowRange: 480_000, highRange: 650_000 },
-  Mazda: { grade: "AA", trend: "+14% Annually", lowRange: 95_000, highRange: 140_000 },
-  Honda: { grade: "A", trend: "+12% Annually", lowRange: 68_000, highRange: 95_000 },
-  Shelby: { grade: "AAA", trend: "+7% Annually", lowRange: 1_900_000, highRange: 2_400_000 },
-  Chevrolet: { grade: "AA", trend: "+6% Annually", lowRange: 165_000, highRange: 220_000 },
-  Bugatti: { grade: "AAA", trend: "+12% Annually", lowRange: 2_500_000, highRange: 3_200_000 },
-  Lancia: { grade: "AAA", trend: "+9% Annually", lowRange: 550_000, highRange: 700_000 },
-  "De Tomaso": { grade: "A", trend: "+8% Annually", lowRange: 240_000, highRange: 310_000 },
-  Alpine: { grade: "A", trend: "+10% Annually", lowRange: 155_000, highRange: 205_000 },
-  default: { grade: "B+", trend: "+5% Annually", lowRange: 80_000, highRange: 150_000 },
+  McLaren: { grade: "AAA", trend: "Premium Demand", lowRange: 15_500_000, highRange: 18_000_000 },
+  Porsche: { grade: "AA", trend: "Strong Demand", lowRange: 1_100_000, highRange: 1_400_000 },
+  Ferrari: { grade: "AAA", trend: "Premium Demand", lowRange: 2_800_000, highRange: 3_400_000 },
+  Lamborghini: { grade: "AA", trend: "Growing Demand", lowRange: 1_900_000, highRange: 2_500_000 },
+  Nissan: { grade: "A", trend: "High Demand", lowRange: 380_000, highRange: 520_000 },
+  Toyota: { grade: "A", trend: "Growing Demand", lowRange: 145_000, highRange: 190_000 },
+  BMW: { grade: "AA", trend: "Strong Demand", lowRange: 550_000, highRange: 750_000 },
+  Mercedes: { grade: "AA", trend: "Steady Demand", lowRange: 350_000, highRange: 500_000 },
+  "Aston Martin": { grade: "AA", trend: "Steady Demand", lowRange: 400_000, highRange: 550_000 },
+  Jaguar: { grade: "AA", trend: "Growing Demand", lowRange: 480_000, highRange: 650_000 },
+  Mazda: { grade: "AA", trend: "High Demand", lowRange: 95_000, highRange: 140_000 },
+  Honda: { grade: "A", trend: "Growing Demand", lowRange: 68_000, highRange: 95_000 },
+  Shelby: { grade: "AAA", trend: "Premium Demand", lowRange: 1_900_000, highRange: 2_400_000 },
+  Chevrolet: { grade: "AA", trend: "Steady Demand", lowRange: 165_000, highRange: 220_000 },
+  Bugatti: { grade: "AAA", trend: "Premium Demand", lowRange: 2_500_000, highRange: 3_200_000 },
+  Lancia: { grade: "AAA", trend: "Premium Demand", lowRange: 550_000, highRange: 700_000 },
+  "De Tomaso": { grade: "A", trend: "Growing Demand", lowRange: 240_000, highRange: 310_000 },
+  Alpine: { grade: "A", trend: "Growing Demand", lowRange: 155_000, highRange: 205_000 },
+  default: { grade: "B+", trend: "Active Market", lowRange: 80_000, highRange: 150_000 },
 }
 
 // ─── PRICE RANGE FILTERS ───
@@ -342,22 +342,8 @@ const mockOwnershipCost: Record<string, { insurance: number; storage: number; ma
   default: { insurance: 5000, storage: 4800, maintenance: 5000 },
 }
 
-// ─── REGIONAL VALUATION DATA (5-year start → current, in local currency millions + USD equiv) ───
+// ─── REGIONAL VALUATION ───
 type RegionalValuation = { start: number; current: number; symbol: string; usdCurrent: number }
-const mockRegionalValuation: Record<string, Record<string, RegionalValuation>> = {
-  Ferrari:      { US: { start: 2.2, current: 3.4, symbol: "$", usdCurrent: 3.4 }, UK: { start: 1.7, current: 2.6, symbol: "£", usdCurrent: 3.3 }, EU: { start: 2.0, current: 3.1, symbol: "€", usdCurrent: 3.4 }, JP: { start: 250, current: 385, symbol: "¥", usdCurrent: 2.6 } },
-  Porsche:      { US: { start: 0.95, current: 1.45, symbol: "$", usdCurrent: 1.45 }, UK: { start: 0.75, current: 1.1, symbol: "£", usdCurrent: 1.4 }, EU: { start: 0.88, current: 1.35, symbol: "€", usdCurrent: 1.48 }, JP: { start: 105, current: 165, symbol: "¥", usdCurrent: 1.1 } },
-  McLaren:      { US: { start: 14.2, current: 21.0, symbol: "$", usdCurrent: 21.0 }, UK: { start: 11.5, current: 17.0, symbol: "£", usdCurrent: 21.5 }, EU: { start: 13.0, current: 19.5, symbol: "€", usdCurrent: 21.4 }, JP: { start: 1600, current: 2400, symbol: "¥", usdCurrent: 16.0 } },
-  Lamborghini:  { US: { start: 2.1, current: 3.2, symbol: "$", usdCurrent: 3.2 }, UK: { start: 1.7, current: 2.5, symbol: "£", usdCurrent: 3.2 }, EU: { start: 1.9, current: 2.9, symbol: "€", usdCurrent: 3.2 }, JP: { start: 240, current: 365, symbol: "¥", usdCurrent: 2.4 } },
-  Nissan:       { US: { start: 0.22, current: 0.48, symbol: "$", usdCurrent: 0.48 }, UK: { start: 0.18, current: 0.38, symbol: "£", usdCurrent: 0.48 }, EU: { start: 0.20, current: 0.42, symbol: "€", usdCurrent: 0.46 }, JP: { start: 25, current: 52, symbol: "¥", usdCurrent: 0.35 } },
-  Toyota:       { US: { start: 0.095, current: 0.185, symbol: "$", usdCurrent: 0.185 }, UK: { start: 0.075, current: 0.15, symbol: "£", usdCurrent: 0.19 }, EU: { start: 0.088, current: 0.17, symbol: "€", usdCurrent: 0.186 }, JP: { start: 10, current: 21, symbol: "¥", usdCurrent: 0.14 } },
-  BMW:          { US: { start: 1.5, current: 2.35, symbol: "$", usdCurrent: 2.35 }, UK: { start: 1.2, current: 1.9, symbol: "£", usdCurrent: 2.4 }, EU: { start: 1.4, current: 2.2, symbol: "€", usdCurrent: 2.4 }, JP: { start: 170, current: 270, symbol: "¥", usdCurrent: 1.8 } },
-  Mercedes:     { US: { start: 1.2, current: 1.65, symbol: "$", usdCurrent: 1.65 }, UK: { start: 0.95, current: 1.3, symbol: "£", usdCurrent: 1.64 }, EU: { start: 1.1, current: 1.55, symbol: "€", usdCurrent: 1.7 }, JP: { start: 135, current: 190, symbol: "¥", usdCurrent: 1.27 } },
-  "Aston Martin": { US: { start: 0.72, current: 0.99, symbol: "$", usdCurrent: 0.99 }, UK: { start: 0.58, current: 0.82, symbol: "£", usdCurrent: 1.04 }, EU: { start: 0.65, current: 0.92, symbol: "€", usdCurrent: 1.01 }, JP: { start: 82, current: 115, symbol: "¥", usdCurrent: 0.77 } },
-  Shelby:       { US: { start: 1.6, current: 2.35, symbol: "$", usdCurrent: 2.35 }, UK: { start: 1.3, current: 1.9, symbol: "£", usdCurrent: 2.4 }, EU: { start: 1.5, current: 2.2, symbol: "€", usdCurrent: 2.4 }, JP: { start: 185, current: 270, symbol: "¥", usdCurrent: 1.8 } },
-  Bugatti:      { US: { start: 2.2, current: 3.2, symbol: "$", usdCurrent: 3.2 }, UK: { start: 1.8, current: 2.6, symbol: "£", usdCurrent: 3.3 }, EU: { start: 2.0, current: 2.9, symbol: "€", usdCurrent: 3.2 }, JP: { start: 250, current: 370, symbol: "¥", usdCurrent: 2.5 } },
-  default:      { US: { start: 0.1, current: 0.14, symbol: "$", usdCurrent: 0.14 }, UK: { start: 0.08, current: 0.11, symbol: "£", usdCurrent: 0.14 }, EU: { start: 0.09, current: 0.13, symbol: "€", usdCurrent: 0.14 }, JP: { start: 11, current: 16, symbol: "¥", usdCurrent: 0.11 } },
-}
 
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
 
@@ -389,15 +375,15 @@ function formatUsdEquiv(v: number) {
 // ─── TOP MODELS PER BRAND (mock) ───
 type TopModel = { name: string; avgPrice: number; grade: string; trend: string }
 const mockTopModels: Record<string, TopModel[]> = {
-  Ferrari: [{ name: "250 GTO", avgPrice: 48_400_000, grade: "AAA", trend: "+12%" }, { name: "F40", avgPrice: 2_800_000, grade: "AAA", trend: "+10%" }, { name: "275 GTB/4", avgPrice: 3_200_000, grade: "AA", trend: "+8%" }, { name: "Testarossa", avgPrice: 380_000, grade: "A", trend: "+15%" }],
-  Porsche: [{ name: "959", avgPrice: 2_100_000, grade: "AAA", trend: "+9%" }, { name: "911 RS 2.7", avgPrice: 1_450_000, grade: "AA", trend: "+8%" }, { name: "356 Speedster", avgPrice: 680_000, grade: "AA", trend: "+6%" }, { name: "911 GT1", avgPrice: 5_200_000, grade: "AAA", trend: "+11%" }],
-  McLaren: [{ name: "F1", avgPrice: 19_800_000, grade: "AAA", trend: "+12%" }, { name: "F1 GTR", avgPrice: 12_500_000, grade: "AAA", trend: "+10%" }, { name: "F1 LM", avgPrice: 23_100_000, grade: "AAA", trend: "+14%" }],
-  Lamborghini: [{ name: "Miura SV", avgPrice: 2_650_000, grade: "AAA", trend: "+9%" }, { name: "Countach LP400", avgPrice: 1_200_000, grade: "AA", trend: "+11%" }, { name: "Diablo GT", avgPrice: 850_000, grade: "A", trend: "+14%" }],
-  BMW: [{ name: "M3 E30 Evo", avgPrice: 285_000, grade: "AA", trend: "+12%" }, { name: "M1", avgPrice: 680_000, grade: "AAA", trend: "+8%" }, { name: "M3 CSL E46", avgPrice: 225_000, grade: "AA", trend: "+10%" }],
-  Mercedes: [{ name: "300SL Gullwing", avgPrice: 1_650_000, grade: "AAA", trend: "+6%" }, { name: "300SL Roadster", avgPrice: 1_320_000, grade: "AA", trend: "+5%" }, { name: "CLK GTR", avgPrice: 4_500_000, grade: "AAA", trend: "+9%" }],
-  Nissan: [{ name: "R34 GT-R V-Spec", avgPrice: 485_000, grade: "AA", trend: "+18%" }, { name: "R34 GT-R Nur", avgPrice: 520_000, grade: "AA", trend: "+20%" }, { name: "R32 GT-R", avgPrice: 145_000, grade: "A", trend: "+15%" }],
-  Toyota: [{ name: "Supra Turbo 6-Spd", avgPrice: 185_000, grade: "A", trend: "+14%" }, { name: "2000GT", avgPrice: 1_100_000, grade: "AAA", trend: "+8%" }, { name: "Supra RZ", avgPrice: 195_000, grade: "A", trend: "+16%" }],
-  default: [{ name: "Top Variant", avgPrice: 150_000, grade: "A", trend: "+8%" }, { name: "Standard", avgPrice: 85_000, grade: "B+", trend: "+5%" }],
+  Ferrari: [{ name: "250 GTO", avgPrice: 48_400_000, grade: "AAA", trend: "Premium" }, { name: "F40", avgPrice: 2_800_000, grade: "AAA", trend: "Premium" }, { name: "275 GTB/4", avgPrice: 3_200_000, grade: "AA", trend: "Strong" }, { name: "Testarossa", avgPrice: 380_000, grade: "A", trend: "High" }],
+  Porsche: [{ name: "959", avgPrice: 2_100_000, grade: "AAA", trend: "Premium" }, { name: "911 RS 2.7", avgPrice: 1_450_000, grade: "AA", trend: "Strong" }, { name: "356 Speedster", avgPrice: 680_000, grade: "AA", trend: "Steady" }, { name: "911 GT1", avgPrice: 5_200_000, grade: "AAA", trend: "Premium" }],
+  McLaren: [{ name: "F1", avgPrice: 19_800_000, grade: "AAA", trend: "Premium" }, { name: "F1 GTR", avgPrice: 12_500_000, grade: "AAA", trend: "Premium" }, { name: "F1 LM", avgPrice: 23_100_000, grade: "AAA", trend: "Premium" }],
+  Lamborghini: [{ name: "Miura SV", avgPrice: 2_650_000, grade: "AAA", trend: "Premium" }, { name: "Countach LP400", avgPrice: 1_200_000, grade: "AA", trend: "Strong" }, { name: "Diablo GT", avgPrice: 850_000, grade: "A", trend: "High" }],
+  BMW: [{ name: "M3 E30 Evo", avgPrice: 285_000, grade: "AA", trend: "Strong" }, { name: "M1", avgPrice: 680_000, grade: "AAA", trend: "Strong" }, { name: "M3 CSL E46", avgPrice: 225_000, grade: "AA", trend: "Strong" }],
+  Mercedes: [{ name: "300SL Gullwing", avgPrice: 1_650_000, grade: "AAA", trend: "Steady" }, { name: "300SL Roadster", avgPrice: 1_320_000, grade: "AA", trend: "Steady" }, { name: "CLK GTR", avgPrice: 4_500_000, grade: "AAA", trend: "Premium" }],
+  Nissan: [{ name: "R34 GT-R V-Spec", avgPrice: 485_000, grade: "AA", trend: "High" }, { name: "R34 GT-R Nur", avgPrice: 520_000, grade: "AA", trend: "High" }, { name: "R32 GT-R", avgPrice: 145_000, grade: "A", trend: "High" }],
+  Toyota: [{ name: "Supra Turbo 6-Spd", avgPrice: 185_000, grade: "A", trend: "High" }, { name: "2000GT", avgPrice: 1_100_000, grade: "AAA", trend: "Strong" }, { name: "Supra RZ", avgPrice: 195_000, grade: "A", trend: "High" }],
+  default: [{ name: "Top Variant", avgPrice: 150_000, grade: "A", trend: "Strong" }, { name: "Standard", avgPrice: 85_000, grade: "B+", trend: "Steady" }],
 }
 
 // ─── LIQUIDITY & MARKET DEPTH (mock) ───
@@ -1556,7 +1542,7 @@ function AssetCard({ auction }: { auction: Auction }) {
             const trend = auction.analysis?.appreciationPotential === "APPRECIATING"
               ? fallbackAnalysis.trend
               : auction.analysis?.appreciationPotential === "DECLINING"
-              ? "-3% Annually"
+              ? "Low Demand"
               : fallbackAnalysis.trend
             const lowRange = auction.analysis?.bidTargetLow || fallbackAnalysis.lowRange
             const highRange = auction.analysis?.bidTargetHigh || fallbackAnalysis.highRange
@@ -1831,13 +1817,15 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     const regions = ["US", "UK", "EU", "JP"] as const
     const result: Record<string, RegionalValuation> = {}
     const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
-    // 5-year appreciation varies by region (collector car market dynamics)
-    const regionAppreciation: Record<string, number> = { US: 0.22, UK: 0.28, EU: 0.18, JP: 0.12 }
 
     // Get average USD price from all family auctions with bids
     const withBids = familyAuctions.filter(a => a.currentBid > 0)
     if (withBids.length === 0) {
-      return mockRegionalValuation["Porsche"] || mockRegionalValuation["default"]
+      // Return empty fallback when no auction data available
+      for (const region of regions) {
+        result[region] = { start: 0, current: 0, symbol: symbolMap[region], usdCurrent: 0 }
+      }
+      return result
     }
     const avgUsd = withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
     const baseMillions = avgUsd / 1_000_000
@@ -1845,11 +1833,9 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     for (const region of regions) {
       const premium = REGIONAL_MARKET_PREMIUM[region] || 1
       const usdWithPremium = baseMillions * premium
-      const appreciation = regionAppreciation[region] || 0.15
-      const usdStart = usdWithPremium / (1 + appreciation)
       const fxRate = region === "JP" ? (1 / 0.0067) : region === "UK" ? (1 / 1.27) : region === "EU" ? (1 / 1.08) : 1
       result[region] = {
-        start: usdStart * fxRate,
+        start: 0,  // No historical data available
         current: usdWithPremium * fxRate,
         symbol: symbolMap[region],
         usdCurrent: usdWithPremium,
@@ -2012,19 +1998,16 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                 {t("brandContext.valuationByMarket")}
               </span>
             </div>
-            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Avg. valuation & 5-year return by region</p>
+            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair Value by Market</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
               if (!val) return null
-              const pctChange = Math.round(((val.current - val.start) / val.start) * 100)
               const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
-              const usdStart = val.usdCurrent * (val.start / val.current)
-              const localStart = convertFromUsd(usdStart * 1_000_000, userCurrency) / 1_000_000
               const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
-              const barWidth = (val.usdCurrent / maxUsdCurrent) * 100
+              const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
               return (
                 <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
@@ -2038,17 +2021,8 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                     )}
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-mono text-[#6B7280]">
-                        {formatRegionalVal(localStart, userCurrency)}
-                      </span>
-                      <span className="text-[9px] text-[#4B5563]">→</span>
-                      <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
-                        {formatRegionalVal(localCurrent, userCurrency)}
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
-                      +{pctChange}% <span className="text-[7px] font-normal opacity-70">5Y</span>
+                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                      {formatRegionalVal(localCurrent, userCurrency)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
@@ -2243,7 +2217,25 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
   const { selectedRegion, effectiveRegion } = useRegion()
 
   const whyBuy = mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  const regionalVal = mockRegionalValuation[brand.name] || mockRegionalValuation["default"]
+  // Compute regional fair values from brand avg price
+  const regionalVal = useMemo(() => {
+    const avgUsd = (brand.priceMin + brand.priceMax) / 2
+    const baseMillions = avgUsd / 1_000_000
+    const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
+    const result: Record<string, RegionalValuation> = {}
+    for (const region of ["US", "UK", "EU", "JP"] as const) {
+      const premium = REGIONAL_MARKET_PREMIUM[region] || 1
+      const usdWithPremium = baseMillions * premium
+      const fxRate = region === "JP" ? (1 / 0.0067) : region === "UK" ? (1 / 1.27) : region === "EU" ? (1 / 1.08) : 1
+      result[region] = {
+        start: 0,
+        current: usdWithPremium * fxRate,
+        symbol: symbolMap[region],
+        usdCurrent: usdWithPremium,
+      }
+    }
+    return result
+  }, [brand.priceMin, brand.priceMax])
   const marketPulse = mockMarketPulse[brand.name] || mockMarketPulse["default"]
   const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
   const topModels = mockTopModels[brand.name] || mockTopModels["default"]
@@ -2312,19 +2304,16 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                 {t("brandContext.valuationByMarket")}
               </span>
             </div>
-            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Avg. valuation & 5-year return by region</p>
+            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair Value by Market</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
               if (!val) return null
-              const pctChange = Math.round(((val.current - val.start) / val.start) * 100)
               const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
-              const usdStart = val.usdCurrent * (val.start / val.current)
-              const localStart = convertFromUsd(usdStart * 1_000_000, userCurrency) / 1_000_000
               const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
-              const barWidth = (val.usdCurrent / maxUsdCurrent) * 100
+              const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
               return (
                 <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
@@ -2338,17 +2327,8 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                     )}
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-mono text-[#6B7280]">
-                        {formatRegionalVal(localStart, userCurrency)}
-                      </span>
-                      <span className="text-[9px] text-[#4B5563]">→</span>
-                      <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
-                        {formatRegionalVal(localCurrent, userCurrency)}
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono font-bold text-positive bg-positive/10 px-1.5 py-0.5 rounded-full">
-                      +{pctChange}% <span className="text-[7px] font-normal opacity-70">5Y</span>
+                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                      {formatRegionalVal(localCurrent, userCurrency)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
@@ -2389,7 +2369,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                   <span className={`text-[9px] font-bold ${gradeColor(model.grade)}`}>
                     {model.grade}
                   </span>
-                  <span className="text-[9px] font-mono text-positive w-8 text-right">
+                  <span className="text-[9px] font-medium text-positive text-right">
                     {model.trend}
                   </span>
                 </div>

@@ -113,30 +113,27 @@ I'd recommend setting your max bid at ${formatPrice(Math.round(high * 0.95))} to
 **My take:** This ${auction.make} ${auction.model} represents a ${isHighValue ? "flight-to-quality asset" : "solid entry point"} in the current environment.`
   }
 
-  // Appreciation forecast
+  // Market position & collectibility assessment
   if (lowPrompt.includes("appreciation") || lowPrompt.includes("forecast") || lowPrompt.includes("5 year") || lowPrompt.includes("long-term")) {
-    const potential = analysis?.appreciationPotential || "Steady appreciation expected"
     const grade = analysis?.investmentGrade || "GOOD"
-    return `**5-Year Appreciation Forecast: ${auction.year} ${auction.make} ${auction.model}**
+    return `**Market Position: ${auction.year} ${auction.make} ${auction.model}**
 
 Investment Grade: **${grade}**
 
-${potential}
+**Demand Indicators:**
+• ${auction.year < 1975 ? "Pre-1975 examples command significant premiums due to scarcity" : "This era represents a sweet spot for current collector interest"}
+• Fixed global supply with an expanding international collector base
+• Strong auction presence and consistent sell-through rates
 
-**Historical Context:**
-• ${auction.make} ${auction.model} values have appreciated 8-12% annually over the past decade
-• ${auction.year < 1975 ? "Pre-1975 examples command significant premiums" : "This era represents the sweet spot for collector interest"}
-• Supply is fixed while global collector base expands 6% YoY
+**What Makes This Collectible:**
+• ${auction.make} heritage and motorsport provenance
+• Build quality and driving experience unique to this generation
+• Cultural significance and enthusiast community strength
 
-**Projected Value (5Y):**
-Conservative: ${formatPrice(Math.round(auction.currentBid * 1.35))}
-Base case: ${formatPrice(Math.round(auction.currentBid * 1.55))}
-Bull case: ${formatPrice(Math.round(auction.currentBid * 1.85))}
-
-**Catalysts to watch:**
-• Major concours wins by similar examples
-• Celebrity provenance discoveries
-• Manufacturer anniversary events`
+**Key Factors to Monitor:**
+• Condition, documentation, and service history completeness
+• Major concours appearances by similar examples
+• Broader collector market sentiment and economic conditions`
   }
 
   // Risk factors

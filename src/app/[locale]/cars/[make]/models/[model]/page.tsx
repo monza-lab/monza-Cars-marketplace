@@ -33,11 +33,9 @@ export async function generateMetadata({ params }: ModelPageProps) {
   const makeName = cars[0].make
   const modelName = cars[0].model
   const avgPrice = cars.reduce((sum, c) => sum + c.currentBid, 0) / cars.length
-  const avgTrend = cars.reduce((sum, c) => sum + c.trendValue, 0) / cars.length
-
   return {
     title: `${makeName} ${modelName} Market Analysis | Monza Lab`,
-    description: `Investment analysis for ${makeName} ${modelName}. Average market value $${(avgPrice / 1000).toFixed(0)}K with +${avgTrend.toFixed(0)}% annual appreciation. ${cars.length} vehicles tracked.`,
+    description: `Investment analysis for ${makeName} ${modelName}. Average market value $${(avgPrice / 1000).toFixed(0)}K. ${cars.length} vehicles tracked across major auction platforms.`,
   }
 }
 

@@ -42,7 +42,6 @@ import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, format
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
-import { PriceTrendChart } from "@/components/charts/PriceTrendChart"
 
 // ─── MOCK DATA ───
 const redFlags: Record<string, string[]> = {
@@ -177,31 +176,6 @@ const shippingCosts: Record<string, { domestic: number; euImport: number; ukImpo
   Porsche: { domestic: 1800, euImport: 8500, ukImport: 7000 },
   Ferrari: { domestic: 2500, euImport: 12000, ukImport: 10000 },
   default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
-}
-
-// ─── BENCHMARKS (for 5-year return comparison) ───
-const BENCHMARKS = [
-  { label: "S&P 500", return5y: 42 },
-  { label: "Gold", return5y: 28 },
-  { label: "Real Estate", return5y: 18 },
-]
-
-// ─── MOCK 5-YEAR PRICE HISTORY (per brand) ───
-const mockPriceHistory: Record<string, number[]> = {
-  Porsche: [180000, 210000, 245000, 290000, 320000],
-  Ferrari: [450000, 520000, 580000, 640000, 720000],
-  McLaren: [12000000, 13500000, 15000000, 17000000, 19500000],
-  Lamborghini: [280000, 310000, 350000, 400000, 460000],
-  BMW: [65000, 78000, 92000, 108000, 125000],
-  Nissan: [85000, 110000, 145000, 180000, 220000],
-  Toyota: [75000, 95000, 120000, 145000, 175000],
-  "Mercedes-Benz": [320000, 350000, 380000, 420000, 470000],
-  "Aston Martin": [400000, 440000, 480000, 520000, 580000],
-  Lexus: [350000, 380000, 410000, 440000, 490000],
-  Ford: [280000, 310000, 340000, 380000, 420000],
-  Acura: [100000, 115000, 135000, 155000, 180000],
-  Jaguar: [120000, 130000, 145000, 160000, 180000],
-  default: [150000, 170000, 195000, 220000, 250000],
 }
 
 // ─── PLATFORM LABELS ───
@@ -632,30 +606,10 @@ function CarContextPanel({
     ))
   )
 
-  // 5-year return data: prefer DB sold records
-  const priceHistoryYears = (() => {
-    const now = new Date()
-    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-  })()
-  const priceHistory = (() => {
-    if (dbSoldHistory.length >= 3) {
-      const buckets = priceHistoryYears.map(yr => {
-        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
-        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
-      })
-      const filled = [...buckets]
-      for (let i = 0; i < filled.length; i++) {
-        if (filled[i] == null) {
-          const prev = filled.slice(0, i).reverse().find(v => v != null)
-          const next = filled.slice(i + 1).find(v => v != null)
-          filled[i] = prev ?? next ?? car.currentBid
-        }
-      }
-      return filled as number[]
-    }
-    return mockPriceHistory[car.make] || mockPriceHistory.default
-  })()
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
+  // Market position: where is the current bid relative to fair value?
+  const regionRange = pricing[effectiveRegion as keyof typeof pricing] || pricing.US
+  const fairMid = (regionRange.low + regionRange.high) / 2
+  const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
 
   return (
     <div className="h-full flex flex-col overflow-hidden border-l border-white/5">
@@ -765,52 +719,45 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 3. 5-YEAR RETURN COMPARISON */}
+        {/* 3. MARKET POSITION */}
         <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="size-4 text-[#F8B4D9]" />
+            <Scale className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              5-Year Return Comparison
+              Market Position
             </span>
           </div>
-          <div className="space-y-2.5">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-[#F8B4D9]">{car.make}</span>
-                <span className="text-[11px] font-mono font-bold text-emerald-400">+{brand5yReturn}%</span>
-              </div>
-              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-              </div>
-            </div>
-            {BENCHMARKS.map((b) => (
-              <div key={b.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
-                  <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4. 5-YEAR PRICE TREND */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                5-Year Price Trend
+          {/* Price vs Fair Value gauge */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
+              <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+                {pricePosition}%
               </span>
             </div>
-            <span className="text-[10px] font-mono font-semibold text-emerald-400">
-              {brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%
+            <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+              <div
+                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+            </div>
+          </div>
+          {/* Position label */}
+          <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
+            <span className="text-[11px] text-[#D1D5DB]">
+              {pricePosition <= 85
+                ? "Priced well below fair value range — strong buyer opportunity"
+                : pricePosition <= 100
+                  ? "Priced within the lower half of fair value range"
+                  : pricePosition <= 115
+                    ? "Priced at market — fair value for current conditions"
+                    : "Priced above fair value midpoint — verify condition justifies premium"}
             </span>
           </div>
-          <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={100} />
         </div>
 
         {/* 5. ANNUAL OWNERSHIP COST */}
@@ -1062,31 +1009,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     ))
   )
 
-  // Price history: prefer DB sold records, fallback to hardcoded
-  const priceHistoryYears = (() => {
-    const now = new Date()
-    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-  })()
-  const priceHistory = (() => {
-    if (dbSoldHistory.length >= 3) {
-      const buckets = priceHistoryYears.map(yr => {
-        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
-        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
-      })
-      const filled = [...buckets]
-      for (let i = 0; i < filled.length; i++) {
-        if (filled[i] == null) {
-          const prev = filled.slice(0, i).reverse().find(v => v != null)
-          const next = filled.slice(i + 1).find(v => v != null)
-          filled[i] = prev ?? next ?? car.currentBid
-        }
-      }
-      return filled as number[]
-    }
-    return mockPriceHistory[car.make] || mockPriceHistory.default
-  })()
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
-
   // Scroll handler for mobile sticky bar
   useEffect(() => {
     const handleScroll = () => {
@@ -1265,12 +1187,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </span>
               </div>
 
-              {/* Cell 3: 5yr Return */}
+              {/* Cell 3: Fair Value */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
                 <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
-                  {t("investmentPassport.fiveYearReturn")}
+                  Fair Value
                 </span>
-                <span className="text-[24px] font-bold font-mono text-emerald-400">+{brand5yReturn}%</span>
+                <span className="text-[18px] font-bold font-mono text-[#FFFCF7]">
+                  {formatPriceForRegion(Math.round((regionRange.low + regionRange.high) / 2), selectedRegion)}
+                </span>
               </div>
 
               {/* Cell 4: Annual Cost */}
@@ -1364,50 +1288,43 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             </div>
           </div>
 
-          {/* 5. 5-Year Return Comparison */}
+          {/* 5. Market Position */}
           <div className="rounded-xl bg-[rgba(248,180,217,0.03)] border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                {t("fiveYearReturnComparison")}
+                Market Position
               </span>
             </div>
-            <div className="space-y-2.5">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-semibold text-[#F8B4D9]">{car.make}</span>
-                  <span className="text-[11px] font-mono font-bold text-emerald-400">+{brand5yReturn}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-              {BENCHMARKS.map((b) => (
-                <div key={b.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
-                    <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                  </div>
-                  <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                    <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. 5-Year Price Trend */}
-          <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="size-4 text-[#F8B4D9]" />
-                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                  {t("priceTrend")}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
+                <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+                  {pricePosition}%
                 </span>
               </div>
-              <span className="text-[10px] font-mono font-semibold text-emerald-400">{brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%</span>
+              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                  style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+              </div>
             </div>
-            <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={110} />
+            <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
+              <span className="text-[11px] text-[#D1D5DB]">
+                {pricePosition <= 85
+                  ? "Priced well below fair value — strong buyer opportunity"
+                  : pricePosition <= 100
+                    ? "Priced within the lower half of fair value range"
+                    : pricePosition <= 115
+                      ? "Priced at market — fair value for current conditions"
+                      : "Priced above fair value — verify condition justifies premium"}
+              </span>
+            </div>
           </div>
 
           {/* 7. Sale Information */}

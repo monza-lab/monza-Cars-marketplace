@@ -123,12 +123,12 @@ function getMakeKey(make: string): MakeKey {
     : "default"
 }
 
-const mockFinancials: Record<string, { holding: number; appreciation: string; maintenance: number; insurance: number }> = {
-  Lamborghini: { holding: 45000, appreciation: "+9%", maintenance: 25000, insurance: 18000 },
-  Porsche: { holding: 12000, appreciation: "+8%", maintenance: 6000, insurance: 5500 },
-  Ferrari: { holding: 35000, appreciation: "+10%", maintenance: 18000, insurance: 15000 },
-  Nissan: { holding: 8000, appreciation: "+15%", maintenance: 4000, insurance: 3500 },
-  default: { holding: 6000, appreciation: "+5%", maintenance: 3500, insurance: 2500 },
+const mockFinancials: Record<string, { holding: number; maintenance: number; insurance: number }> = {
+  Lamborghini: { holding: 45000, maintenance: 25000, insurance: 18000 },
+  Porsche: { holding: 12000, maintenance: 6000, insurance: 5500 },
+  Ferrari: { holding: 35000, maintenance: 18000, insurance: 15000 },
+  Nissan: { holding: 8000, maintenance: 4000, insurance: 3500 },
+  default: { holding: 6000, maintenance: 3500, insurance: 2500 },
 }
 
 // ---------------------------------------------------------------------------
@@ -474,10 +474,11 @@ function FinancialsModule({
   const data = mockFinancials[auction.make] || mockFinancials.default
   const currentValue = auction.currentBid || 100000
 
-  const appreciationRate = parseFloat(data.appreciation) / 100
-  const projectedValue = currentValue * Math.pow(1 + appreciationRate, period)
-  const totalHoldingCost = data.holding * period
-  const netGain = projectedValue - currentValue - totalHoldingCost
+  const totalHolding = data.holding * period
+  const totalInsurance = data.insurance * period
+  const totalMaintenance = data.maintenance * period
+  const totalCost = totalHolding + totalInsurance + totalMaintenance
+  const costPercent = ((totalCost / currentValue) * 100).toFixed(1)
 
   return (
     <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
@@ -485,7 +486,7 @@ function FinancialsModule({
         <div className="flex items-center gap-2">
           <BarChart3 className="size-4 text-[#F8B4D9]" />
           <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
-            {t("modules.financialProjection")}
+            Ownership Cost Calculator
           </h2>
         </div>
 
@@ -507,47 +508,57 @@ function FinancialsModule({
         </div>
       </div>
 
-      {/* Data Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Cost Breakdown */}
+      <div className="space-y-2">
         <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
-          <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
-            {t("financial.holdingCost", { years: period })}
-          </p>
-          <p className="text-[18px] font-bold text-[#FFFCF7] font-mono mt-1">
-            {formatShort(totalHoldingCost, locale)}
-          </p>
-          <p className="text-[10px] text-[rgba(255,252,247,0.4)] mt-1">
-            {t("financial.maint")}: {formatShort(data.maintenance, locale)}/{t("financial.perYear")} · {t("financial.ins")}: {formatShort(data.insurance, locale)}/{t("financial.perYear")}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+              Holding Cost ({period}Y)
+            </p>
+            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+              {formatShort(totalHolding, locale)}
+            </p>
+          </div>
         </div>
         <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
-          <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
-            {t("financial.appreciation")}
-          </p>
-          <p className="text-[18px] font-bold text-emerald-400 font-mono mt-1">
-            {data.appreciation} / {t("financial.perYear")}
-          </p>
-          <p className="text-[10px] text-[rgba(255,252,247,0.4)] mt-1">
-            {t("financial.projected")}: {formatShort(projectedValue, locale)}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+              Insurance ({period}Y)
+            </p>
+            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+              {formatShort(totalInsurance, locale)}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+              Maintenance ({period}Y)
+            </p>
+            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+              {formatShort(totalMaintenance, locale)}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Net Yield Bar */}
-      <div className="mt-4 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
-            {t("financial.netYield", { years: period })}
+      {/* Total Cost Summary */}
+      <div className="mt-3 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.5)]">
+            Total Cost ({period}Y)
           </span>
-          <span className={`text-[14px] font-bold font-mono ${netGain >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-            {netGain >= 0 ? "+" : ""}{formatShort(netGain, locale)}
+          <span className="text-[18px] font-bold text-[#FFFCF7] font-mono">
+            {formatShort(totalCost, locale)}
           </span>
         </div>
-        <div className="h-2 rounded-full bg-[rgba(255,255,255,0.05)] overflow-hidden">
-          <div
-            className={`h-full rounded-full ${netGain >= 0 ? "bg-emerald-500" : "bg-red-500"}`}
-            style={{ width: `${Math.min(Math.abs(netGain / currentValue) * 100, 100)}%` }}
-          />
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+            Cost as % of Vehicle Value
+          </span>
+          <span className="text-[12px] font-medium text-[rgba(255,252,247,0.6)] font-mono">
+            {costPercent}%
+          </span>
         </div>
       </div>
     </div>
