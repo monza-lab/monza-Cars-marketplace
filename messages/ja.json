@@ -113,6 +113,8 @@
   },
   "carDetail": {
     "askAnything": "この車について何でも聞いてください",
+    "viewReport": "レポートを見る",
+    "askAdvisor": "アドバイザー",
     "isGoodInvestment": "良い投資ですか？",
     "fairPrice": "適正価格",
     "compareAlternatives": "代替品を比較",

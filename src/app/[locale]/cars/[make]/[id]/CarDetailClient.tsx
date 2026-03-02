@@ -1067,17 +1067,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     </div>
                   </div>
                 </div>
-                <a
-                  href={`https://wa.me/573208492641?text=${encodeURIComponent(
-                    `Hola, estoy interesado en el ${car.title} en Monza Lab.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-[#F8B4D9] px-5 py-2 text-[11px] font-semibold uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                <Link
+                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+                  className="flex items-center gap-2 rounded-full bg-[#F8B4D9] px-4 py-2 text-[11px] font-semibold uppercase text-[#0b0b10] active:bg-[#f4cbde] transition-colors"
                 >
-                  <MessageCircle className="size-4" />
-                  Contact
-                </a>
+                  <FileText className="size-3.5" />
+                  Report
+                </Link>
               </div>
             </motion.div>
           )}
@@ -1161,10 +1157,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <div className="grid grid-cols-2 gap-3">
               {/* Cell 1: Grade */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.grade")}
                 </span>
-                <span className={`text-[24px] font-bold ${
+                <span className={`text-[28px] font-bold ${
                   car.investmentGrade === "AAA" ? "text-emerald-400"
                   : car.investmentGrade === "AA" ? "text-[#F8B4D9]"
                   : "text-amber-400"
@@ -1173,7 +1169,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
               {/* Cell 2: Market Position */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.marketPosition")}
                 </span>
                 <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden mt-2 mb-1.5">
@@ -1183,34 +1179,52 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     style={{ left: `calc(${pricePosition}% - 4px)` }}
                   />
                 </div>
-                <span className={`text-[10px] font-medium ${isBelowFair ? "text-emerald-400" : "text-amber-400"}`}>
+                <span className={`text-[11px] font-medium ${isBelowFair ? "text-emerald-400" : "text-amber-400"}`}>
                   {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
                 </span>
               </div>
 
               {/* Cell 3: Fair Value */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
-                <span className="text-[18px] font-bold font-mono text-[#FFFCF7]">
+                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
                   {formatPriceForRegion(Math.round((regionRange.low + regionRange.high) / 2), selectedRegion)}
                 </span>
               </div>
 
               {/* Cell 4: Annual Cost */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.annualCost")}
                 </span>
-                <span className="text-[20px] font-bold font-mono text-[#FFFCF7]">
+                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
                   {formatPriceForRegion(totalAnnualCost, selectedRegion)}
                 </span>
-                <span className="text-[10px] text-[#6B7280]">/yr</span>
+                <span className="text-[11px] text-[#6B7280]">/yr</span>
               </div>
             </div>
           </div>
         </div>
+
+        {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
+        <Link
+          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+          className="mx-4 mt-4 flex items-center gap-4 rounded-2xl border border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] p-4 active:bg-[rgba(248,180,217,0.15)] transition-colors"
+        >
+          <div className="size-12 rounded-xl bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
+            <FileText className="size-6 text-[#F8B4D9]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation · Risks · Comps · Costs</p>
+          </div>
+          <span className="shrink-0 rounded-xl bg-[#F8B4D9] px-4 py-2 text-[12px] font-bold text-[#0b0b10]">
+            View
+            <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
+          </span>
+        </Link>
 
         {/* ═══ CONTINUOUS SCROLL CONTENT ═══ */}
         <div className="px-4 py-6 space-y-4 pb-32">
@@ -1527,32 +1541,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             </CollapsibleSection>
           )}
 
-          {/* 15. Full Report CTA */}
-          {isRegistered && (
-            <Link
-              href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-              className="flex items-center gap-4 rounded-xl border border-[rgba(248,180,217,0.15)] bg-[rgba(248,180,217,0.04)] px-5 py-4 hover:bg-[rgba(248,180,217,0.06)] transition-colors"
-            >
-              <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.1)] flex items-center justify-center shrink-0">
-                <FileText className="size-5 text-[#F8B4D9]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[#FFFCF7]">Full Investment Report</p>
-                <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
-              </div>
-              <span className="flex items-center gap-2 shrink-0 rounded-lg bg-[#F8B4D9] px-5 py-2.5 text-[12px] font-semibold text-[#0b0b10]">
-                View Report
-                <ChevronRight className="size-4" />
-              </span>
-            </Link>
-          )}
         </div>
 
         {/* ═══ MOBILE CTA ═══ */}
         <MobileCarCTA
-          carTitle={car.title}
-          carPrice={formatPriceForRegion(car.currentBid, selectedRegion)}
+          carId={car.id}
           make={car.make}
+          onOpenAdvisor={() => setShowAdvisorChat(true)}
         />
       </div>
 

@@ -115,6 +115,8 @@
   },
   "carDetail": {
     "askAnything": "Ask Anything About This Car",
+    "viewReport": "View Report",
+    "askAdvisor": "Ask Advisor",
     "isGoodInvestment": "Is this a good investment?",
     "fairPrice": "Fair price",
     "compareAlternatives": "Compare alternatives",
