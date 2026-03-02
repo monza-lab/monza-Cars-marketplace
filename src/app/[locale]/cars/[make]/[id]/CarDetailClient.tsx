@@ -2095,9 +2095,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         open={showAdvisorChat}
         onOpenChange={setShowAdvisorChat}
         initialContext={{
-          carTitle: car.title,
-          carPrice: formatPriceForRegion(car.currentBid, selectedRegion),
+          car,
           make: car.make,
+          dbMarketData,
+          dbComparables,
+          dbAnalysis,
+          dbSoldHistory,
         }}
       />
     </div>
