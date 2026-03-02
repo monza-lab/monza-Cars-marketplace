@@ -1,7 +1,8 @@
 export type OnboardingPreferences = {
   region: string | null       // Legacy single region (backwards compat)
   regions: string[]           // ["US", "EU", ...] — multi-select
-  brands: string[]            // ["Ferrari", "Porsche", ...]
+  brands: string[]            // ["Ferrari", "Lamborghini", ...] — other brands beyond Porsche
+  models: string[]            // ["992", "991", "718-cayman", ...] — Porsche series of interest
   intent: string | null       // "buy" | "track" | "learn" | null
   completedAt: number | null  // Date.now() when finished
 }
@@ -12,6 +13,7 @@ const DEFAULT: OnboardingPreferences = {
   region: null,
   regions: [],
   brands: [],
+  models: [],
   intent: null,
   completedAt: null,
 }
