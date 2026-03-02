@@ -1227,5 +1227,10 @@
     "back": "Back",
     "skip": "Skip for now",
     "finish": "Get Started"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "Privacy",
+    "terms": "Terms"
   }
 }

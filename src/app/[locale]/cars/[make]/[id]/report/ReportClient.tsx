@@ -40,6 +40,7 @@ import {
   Search,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
+import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
@@ -541,7 +542,7 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 // ═══════════════════════════════════════════════════════════════
 export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand = [], dbComparables = [], dbAnalysis, dbSoldHistory = [], dbAnalyses = [] }: {
   car: CollectorCar
-  similarCars: CollectorCar[]
+  similarCars: SimilarCarResult[]
   dbMarketData?: DbMarketDataRow | null
   dbMarketDataBrand?: DbMarketDataRow[]
   dbComparables?: DbComparableRow[]
@@ -1311,17 +1312,17 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // ═══ PAGE 15: SIMILAR VEHICLES ═══
       pdf.addPage(); bg(); chrome("Similar Vehicles")
       y = sectionTitle(12, "Similar Vehicles", 16)
-      const maxSimBid = Math.max(car.currentBid, ...similarCars.map(sc => sc.currentBid))
+      const maxSimBid = Math.max(car.currentBid, ...similarCars.map(sc => sc.car.currentBid))
       similarCars.forEach((sc, i) => {
         card(M, y, CW, 16)
-        pdf.setFontSize(8); white(); pdf.text(sc.title, M + 4, y + 5)
+        pdf.setFontSize(8); white(); pdf.text(sc.car.title, M + 4, y + 5)
         // Grade badge
-        const gClr = sc.investmentGrade === "AAA" ? [52,211,153] : sc.investmentGrade === "AA" ? [96,165,250] : [251,191,36]
-        badge(sc.investmentGrade, M + 4, y + 10, gClr[0] > 200 ? 20 : 15, gClr[1] > 150 ? 35 : 25, gClr[2] > 150 ? 25 : 15, gClr[0], gClr[1], gClr[2])
-        pdf.setFontSize(7); gray(); pdf.text(sc.trend, M + 20, y + 10)
+        const gClr = sc.car.investmentGrade === "AAA" ? [52,211,153] : sc.car.investmentGrade === "AA" ? [96,165,250] : [251,191,36]
+        badge(sc.car.investmentGrade, M + 4, y + 10, gClr[0] > 200 ? 20 : 15, gClr[1] > 150 ? 35 : 25, gClr[2] > 150 ? 25 : 15, gClr[0], gClr[1], gClr[2])
+        pdf.setFontSize(7); gray(); pdf.text(sc.car.trend, M + 20, y + 10)
         // Price + bar
-        pdf.setFontSize(9); pink(); pdf.text(`$${sc.currentBid.toLocaleString()}`, W - M - 4, y + 5, { align: "right" })
-        const sbPct = sc.currentBid / maxSimBid
+        pdf.setFontSize(9); pink(); pdf.text(`$${sc.car.currentBid.toLocaleString()}`, W - M - 4, y + 5, { align: "right" })
+        const sbPct = sc.car.currentBid / maxSimBid
         pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, y + 12, CW - 8, 2, "F")
         pdf.setFillColor(60, 60, 70); pdf.rect(M + 4, y + 12, (CW - 8) * sbPct, 2, "F")
         y += 20
@@ -2257,7 +2258,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
                 {/* Similar Cars Price Comparison */}
                 {similarCars.length > 0 && (() => {
-                  const allCars = [{ ...car, isCurrent: true }, ...similarCars.map(sc => ({ ...sc, isCurrent: false }))]
+                  const allCars = [{ ...car, isCurrent: true }, ...similarCars.map(sc => ({ ...sc.car, isCurrent: false }))]
                   const maxBid = Math.max(...allCars.map(c => c.currentBid))
                   return (
                     <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mt-4">
@@ -2330,7 +2331,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         <div className="text-center">
                           <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-[#6B7280] block">{t("performance.vsMkt")}</span>
                           {(() => {
-                            const avg = similarCars.reduce((s, c) => s + c.currentBid, 0) / similarCars.length
+                            const avg = similarCars.reduce((s, c) => s + c.car.currentBid, 0) / similarCars.length
                             const diff = ((car.currentBid - avg) / avg) * 100
                             return (
                               <span className={`text-[13px] font-mono font-bold mt-0.5 block ${diff > 0 ? "text-[#F8B4D9]" : "text-emerald-400"}`}>
@@ -2753,28 +2754,37 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {similarCars.slice(0, 6).map(sc => (
                     <Link
-                      key={sc.id}
-                      href={`/cars/${sc.make.toLowerCase().replace(/\s+/g, "-")}/${sc.id}`}
+                      key={sc.car.id}
+                      href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
                       className="group flex items-center gap-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-[rgba(248,180,217,0.15)] p-3 transition-all"
                     >
                       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
                         <Image
-                          src={sc.image}
-                          alt={sc.title}
+                          src={sc.car.image}
+                          alt={sc.car.title}
                           fill
                           className="object-cover"
                           sizes="80px"
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{sc.title}</p>
+                        <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{sc.car.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPriceForRegion(sc.currentBid, selectedRegion)}</span>
+                          <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPriceForRegion(sc.car.currentBid, selectedRegion)}</span>
                           <span className={`text-[9px] font-bold ${
-                            sc.investmentGrade === "AAA" ? "text-emerald-400" : sc.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
-                          }`}>{sc.investmentGrade}</span>
-                          <span className="text-[10px] text-emerald-400">{sc.trend}</span>
+                            sc.car.investmentGrade === "AAA" ? "text-emerald-400" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
+                          }`}>{sc.car.investmentGrade}</span>
+                          <span className="text-[10px] text-emerald-400">{sc.car.trend}</span>
                         </div>
+                        {sc.matchReasons.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {sc.matchReasons.slice(0, 2).map(reason => (
+                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#6B7280]">
+                                {reason}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors shrink-0" />
                     </Link>

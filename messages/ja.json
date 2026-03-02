@@ -1225,5 +1225,10 @@
     "back": "戻る",
     "skip": "今はスキップ",
     "finish": "始める"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "プライバシー",
+    "terms": "利用規約"
   }
 }

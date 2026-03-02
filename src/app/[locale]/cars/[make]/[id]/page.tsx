@@ -10,6 +10,7 @@ import {
 import { getMarketDataForModel, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake } from "@/lib/db/queries"
 import { CarDetailClient } from "./CarDetailClient"
 import { stripHtml } from "@/lib/stripHtml"
+import { findSimilarCars } from "@/lib/similarCars"
 
 interface CarDetailPageProps {
   params: Promise<{ make: string; id: string }>
@@ -75,19 +76,13 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     notFound()
   }
 
-  // Find similar cars
-  const curatedSimilar = CURATED_CARS.filter(
-    c => c.make !== "Ferrari" && c.id !== car.id && (c.category === car.category || c.make === car.make)
-  ).slice(0, 4)
-
-  let similarCars = curatedSimilar
-  if (similarCars.length < 4 && car.id.startsWith("live-")) {
+  // Find similar cars using professional multi-criteria scoring
+  const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
+  if (car.id.startsWith("live-")) {
     const live = await fetchLiveListingsAsCollectorCars({ limit: 40, includePriceHistory: false })
-    const liveSimilar = live.filter(
-      c => c.id !== car.id && c.make === car.make
-    ).slice(0, 4 - similarCars.length)
-    similarCars = [...similarCars, ...liveSimilar]
+    allCandidates.push(...live.filter(c => c.id !== car.id))
   }
+  const similarCars = findSimilarCars(car, allCandidates, 4)
 
   const shouldQueryPrisma = !car.id.startsWith("live-")
 

@@ -37,6 +37,7 @@ import {
   DollarSign,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
+import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
@@ -286,7 +287,7 @@ function StatCard({ label, value, icon }: {
 }
 
 // ─── SIMILAR CAR CARD ───
-function SimilarCarCard({ car }: { car: CollectorCar }) {
+function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons?: string[] }) {
   const { selectedRegion } = useRegion()
   return (
     <Link
@@ -303,6 +304,12 @@ function SimilarCarCard({ car }: { car: CollectorCar }) {
           referrerPolicy="no-referrer"
           unoptimized
         />
+        {/* Grade badge */}
+        <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 py-0.5 rounded ${
+          car.investmentGrade === "AAA" ? "bg-emerald-500/80 text-white"
+          : car.investmentGrade === "AA" ? "bg-[#F8B4D9]/80 text-[#0b0b10]"
+          : "bg-amber-500/80 text-white"
+        }`}>{car.investmentGrade}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
@@ -312,8 +319,21 @@ function SimilarCarCard({ car }: { car: CollectorCar }) {
           <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">
             {formatPriceForRegion(car.currentBid, selectedRegion)}
           </span>
-          <span className="text-[10px] text-emerald-400">{car.trend}</span>
+          {car.mileage > 0 && (
+            <span className="text-[9px] text-[#6B7280]">
+              {car.mileage.toLocaleString()} {car.mileageUnit}
+            </span>
+          )}
         </div>
+        {matchReasons && matchReasons.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {matchReasons.slice(0, 2).map(reason => (
+              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#6B7280]">
+                {reason}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors shrink-0" />
     </Link>
@@ -364,7 +384,7 @@ function CarNavSidebar({
   similarCars,
 }: {
   car: CollectorCar
-  similarCars: CollectorCar[]
+  similarCars: SimilarCarResult[]
 }) {
   const locale = useLocale()
   const { selectedRegion, effectiveRegion, currency } = useRegion()
@@ -561,7 +581,7 @@ function CarNavSidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-2">
           <div className="space-y-1 pb-4">
             {similarCars.map(c => (
-              <SidebarCarCard key={c.id} car={c} />
+              <SidebarCarCard key={c.car.id} car={c.car} />
             ))}
           </div>
         </div>
@@ -877,7 +897,7 @@ function CarContextPanel({
 // ═══════════════════════════════════════════════════════════════
 export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [] }: {
   car: CollectorCar
-  similarCars: CollectorCar[]
+  similarCars: SimilarCarResult[]
   dbMarketData?: DbMarketDataRow | null
   dbComparables?: DbComparableRow[]
   dbAnalysis?: DbAnalysisRow | null
@@ -1535,7 +1555,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <CollapsibleSection title={t("similarVehicles", { count: similarCars.length })} icon={<Car className="size-5" />} defaultOpen>
               <div className="space-y-3">
                 {similarCars.slice(0, 4).map(c => (
-                  <SimilarCarCard key={c.id} car={c} />
+                  <SimilarCarCard key={c.car.id} car={c.car} matchReasons={c.matchReasons} />
                 ))}
               </div>
             </CollapsibleSection>

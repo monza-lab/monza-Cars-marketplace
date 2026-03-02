@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { RegionProvider } from "@/lib/RegionContext";
 import { MobileBottomNav } from "@/components/mobile";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { AppFooter } from "@/components/layout/AppFooter";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -69,6 +70,7 @@ export default async function LocaleLayout({
           <main>{children}</main>
           <MobileBottomNav />
           <OnboardingModal />
+          <AppFooter />
         </RegionProvider>
       </AuthProvider>
     </NextIntlClientProvider>

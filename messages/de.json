@@ -1225,5 +1225,10 @@
     "back": "Zurück",
     "skip": "Vorerst überspringen",
     "finish": "Loslegen"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
   }
 }
