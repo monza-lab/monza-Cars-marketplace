@@ -4,7 +4,7 @@ import { useState } from "react"
 import { PricingCards, type PlanId } from "@/components/payments/PricingCards"
 import { CheckoutModal } from "@/components/payments/CheckoutModal"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { Shield, BarChart3, Globe, TrendingUp, Zap, FileText } from "lucide-react"
+import { Shield, BarChart3, Globe, TrendingUp, Coins, FileBarChart } from "lucide-react"
 
 // ─── REPORT FEATURES ───
 
@@ -25,7 +25,7 @@ const REPORT_FEATURES = [
     description: "Fair value comparison across US, EU, UK, and JP markets",
   },
   {
-    icon: FileText,
+    icon: FileBarChart,
     title: "Comparable Sales",
     description: "Recent auction results for identical and similar models",
   },
@@ -35,9 +35,9 @@ const REPORT_FEATURES = [
     description: "Red flags, market risks, and key strengths analysis",
   },
   {
-    icon: Zap,
+    icon: Coins,
     title: "Bid Targets",
-    description: "AI-calculated low and high bid recommendations",
+    description: "Data-driven low and high bid recommendations",
   },
 ]
 
@@ -83,7 +83,7 @@ export default function PricingPage() {
       {/* Hero */}
       <div className="text-center px-4 mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F8B4D9]/10 border border-[#F8B4D9]/20 mb-4">
-          <Zap className="size-3 text-[#F8B4D9]" />
+          <Coins className="size-3 text-[#F8B4D9]" />
           <span className="text-[11px] font-medium text-[#F8B4D9]">
             3 free reports every month
           </span>

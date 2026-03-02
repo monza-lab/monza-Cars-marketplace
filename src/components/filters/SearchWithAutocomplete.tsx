@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, X, ArrowRight, Sparkles, Award, Calendar, Zap } from "lucide-react"
+import { Search, X, ArrowRight, Scale, Award, Calendar, ShieldCheck } from "lucide-react"
 
 // ─── PORSCHE DATA (from CSV) ───
 type SearchResult = {
@@ -137,10 +137,10 @@ function fuzzySearch(query: string, data: SearchResult[]): SearchResult[] {
 function ResultItem({ result, onSelect, isActive }: { result: SearchResult; onSelect: () => void; isActive: boolean }) {
   const icons = {
     model: Car,
-    variant: Zap,
+    variant: ShieldCheck,
     generation: Calendar,
     year: Calendar,
-    popular: Sparkles,
+    popular: Scale,
     family: Award,
   }
 
@@ -332,7 +332,7 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
             {popularResults.length > 0 && (
               <div>
                 <div className="px-4 py-2 flex items-center gap-2">
-                  <Sparkles className="size-3 text-[#F8B4D9]" />
+                  <Scale className="size-3 text-[#F8B4D9]" />
                   <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
                     Búsquedas Populares
                   </span>

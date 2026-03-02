@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl"
 import {
   ArrowLeft,
   TrendingUp,
-  Sparkles,
+  Scale,
   ChevronRight,
   Shield,
   Wrench,
@@ -543,7 +543,7 @@ const SECTION_IDS = [
 type SectionId = typeof SECTION_IDS[number]
 
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
-  summary: Sparkles,
+  summary: Scale,
   identity: Car,
   production: Factory,
   valuation: Globe,
@@ -2076,7 +2076,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               {/* Verdict one-liner */}
               <div className="mt-4 rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-4">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="size-5 text-[#F8B4D9] shrink-0 mt-0.5" />
+                  <Scale className="size-5 text-[#F8B4D9] shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[12px] font-semibold text-[#F8B4D9] mb-1">{t("summary.verdict")}</p>
                     <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.thesis}</p>
@@ -3298,7 +3298,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   {/* Header */}
                   <div className="px-6 pt-8 pb-2 text-center">
                     <div className="size-12 rounded-full bg-[#F8B4D9]/10 flex items-center justify-center mx-auto mb-3">
-                      <Sparkles className="size-6 text-[#F8B4D9]" />
+                      <Scale className="size-6 text-[#F8B4D9]" />
                     </div>
                     <h3 className="text-[20px] font-bold text-[#FFFCF7]">{tPricing("title")}</h3>
                     <p className="text-[12px] text-[#6B7280] mt-1 max-w-md mx-auto">{tPricing("subtitle")}</p>

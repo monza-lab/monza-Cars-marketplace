@@ -454,6 +454,17 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* Infinity loader worm animation */
+@keyframes infinity-worm {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -300; }
+}
+
+.animate-infinity-worm {
+  animation: infinity-worm 3s linear infinite;
+  will-change: stroke-dashoffset;
+}
+
 /* ═════════════════════════════════════════════════════════════════════════════
    Scrollbar Utilities
    ═════════════════════════════════════════════════════════════════════════════ */

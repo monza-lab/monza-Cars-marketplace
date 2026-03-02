@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
-import { PorscheWheelSpinner } from "@/components/shared/PorscheWheelSpinner";
+import { MonzaInfinityLoader } from "@/components/shared/MonzaInfinityLoader";
 import { useTranslations } from "next-intl";
 
 const SUPPORTED_LOCALES = new Set(["en", "es", "de", "ja"]);
@@ -189,7 +189,7 @@ function HomeContent({
   }, []);
 
   if (loading) {
-    return <PorscheWheelSpinner label={loadingLabel} />;
+    return <MonzaInfinityLoader />;
   }
 
   if (auctions.length === 0) {
@@ -207,7 +207,7 @@ export default function Home() {
   const t = useTranslations("home");
 
   return (
-    <Suspense fallback={<PorscheWheelSpinner label={t("loadingAssets")} />}>
+    <Suspense fallback={<MonzaInfinityLoader />}>
       <HomeContent loadingLabel={t("loadingAssets")} emptyLabel={t("noAuctionsFound")} />
     </Suspense>
   );

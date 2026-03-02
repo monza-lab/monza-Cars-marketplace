@@ -9,7 +9,7 @@ import {
   ArrowLeft,
   TrendingUp,
   Globe,
-  Sparkles,
+  Scale,
   ChevronRight,
   ChevronDown,
   Shield,
@@ -1230,7 +1230,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="relative z-10 -mt-6 mx-4">
           <div className="rounded-2xl bg-[rgba(15,14,22,0.9)] backdrop-blur-xl border border-white/10 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
                 {t("investmentPassport.title")}
               </span>

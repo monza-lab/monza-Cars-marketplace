@@ -16,7 +16,7 @@ import {
   MapPin,
   Calendar,
   Car,
-  Sparkles,
+  Scale,
   Loader2,
   AlertCircle,
   ChevronLeft,
@@ -29,7 +29,7 @@ import {
   DollarSign,
   BarChart3,
   Target,
-  Zap,
+  Coins,
   FileText,
   MessageCircle,
   Database,
@@ -426,7 +426,7 @@ function StrategyModule({
   return (
     <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
       <div className="flex items-center gap-2 mb-4">
-        <Zap className="size-4 text-[#F8B4D9]" />
+        <Coins className="size-4 text-[#F8B4D9]" />
         <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
           {t("modules.strategyInsights")}
         </h2>

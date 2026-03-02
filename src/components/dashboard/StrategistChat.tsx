@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Send,
-  Sparkles,
+  Scale,
   DollarSign,
   TrendingUp,
   AlertTriangle,
@@ -297,7 +297,7 @@ export function StrategistChat({ auction, className = "" }: StrategistChatProps)
       <div className="shrink-0 px-5 pt-6 pb-4 border-b border-[rgba(248,180,217,0.06)]">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Sparkles className="size-4 text-[#F8B4D9]" />
+            <Scale className="size-4 text-[#F8B4D9]" />
             <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </div>
           <div>
@@ -450,7 +450,7 @@ export function MobileChatDrawer({ auction }: MobileChatDrawerProps) {
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#F8B4D9] rounded-full px-5 py-3 shadow-xl shadow-[rgba(248,180,217,0.3)] hover:bg-[#f4cbde] transition-all md:hidden"
       >
-        <Sparkles className="size-4 text-[#0b0b10]" />
+        <Scale className="size-4 text-[#0b0b10]" />
         <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">
           Ask Strategist
         </span>

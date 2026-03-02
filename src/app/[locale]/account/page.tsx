@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthRequiredPrompt } from "@/components/auth/AuthRequiredPrompt"
 import { BillingDashboard } from "@/components/payments/BillingDashboard"
-import { PorscheWheelSpinner } from "@/components/shared/PorscheWheelSpinner"
+import { MonzaInfinityLoader } from "@/components/shared/MonzaInfinityLoader"
 import { User } from "lucide-react"
 
 export default function AccountPage() {
@@ -11,9 +11,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0b0b10] pt-24 flex items-center justify-center">
-        <PorscheWheelSpinner label="Loading account..." />
-      </div>
+      <MonzaInfinityLoader />
     )
   }
 

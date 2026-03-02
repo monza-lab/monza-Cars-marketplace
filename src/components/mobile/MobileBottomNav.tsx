@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Sparkles,
+  Scale,
   Search,
   Car,
   User,
@@ -253,7 +253,7 @@ function MobileOracleOverlay({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
                 {t("oracle.aiAnalysis")}
               </span>
@@ -591,7 +591,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <div className="space-y-6 py-4">
                   <div className="text-center">
                     <div className="size-20 rounded-full bg-[rgba(248,180,217,0.1)] flex items-center justify-center mx-auto mb-4">
-                      <Sparkles className="size-10 text-[#F8B4D9]" />
+                      <Scale className="size-10 text-[#F8B4D9]" />
                     </div>
                     <h3 className="text-[18px] font-semibold text-[#FFFCF7]">
                       {t("auth.welcomeBack")}
@@ -727,7 +727,7 @@ export function MobileBottomNav() {
               <div className={`size-11 rounded-full flex items-center justify-center transition-colors ${
                 showOracleInput ? "bg-[#F8B4D9] text-[#0b0b10]" : "bg-white/5"
               }`}>
-                <Sparkles className="size-5" />
+                <Scale className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("aiOracle")}</span>
             </button>

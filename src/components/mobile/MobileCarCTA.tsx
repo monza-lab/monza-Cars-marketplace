@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Sparkles,
+  Scale,
   X,
   ArrowRight,
   Car,
@@ -200,7 +200,7 @@ function MobileCarOracleOverlay({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
                 {t("oracle.aiAdvisor")}
               </span>
@@ -399,7 +399,7 @@ export function MobileCarCTA({ carTitle, carPrice, make }: MobileCarCTAProps) {
                 onClick={() => setShowInput(true)}
                 className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[14px] shadow-lg shadow-[#F8B4D9]/20 active:scale-[0.98] transition-transform"
               >
-                <Sparkles className="size-5" />
+                <Scale className="size-5" />
                 {t("carDetail.askAnything")}
               </button>
             </motion.div>

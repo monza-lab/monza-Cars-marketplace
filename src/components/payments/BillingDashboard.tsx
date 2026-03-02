@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { Zap, RefreshCw } from "lucide-react"
+import { Coins, RefreshCw } from "lucide-react"
 import { PricingCards, type PlanId, PRICING_PLANS } from "./PricingCards"
 import { CheckoutModal } from "./CheckoutModal"
 import { TransactionHistory } from "./TransactionHistory"
@@ -38,7 +38,7 @@ export function BillingDashboard() {
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="flex items-center justify-center size-8 rounded-lg bg-[#F8B4D9]/10">
-            <Zap className="size-4 text-[#F8B4D9]" />
+            <Coins className="size-4 text-[#F8B4D9]" />
           </div>
           <div>
             <h3 className="text-[14px] font-semibold text-[#FFFCF7]">
@@ -107,7 +107,7 @@ export function BillingDashboard() {
             onClick={() => handleSelectPlan("starter")}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold hover:bg-[#f4cbde] transition-colors"
           >
-            <Zap className="size-3.5" />
+            <Coins className="size-3.5" />
             Buy Credits — $12.99
           </button>
         </div>

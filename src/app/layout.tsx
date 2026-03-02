@@ -9,8 +9,23 @@ const publicSans = Public_Sans({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
+import type { Viewport } from "next";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+
+export const viewport: Viewport = {
+  themeColor: "#0b0b10",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "Monza Lab | Investment-Grade Automotive Assets",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "Monza Lab | Investment-Grade Automotive Assets",
+    template: "%s | Monza Lab",
+  },
   description:
     "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions.",
   keywords: [
@@ -21,7 +36,41 @@ export const metadata: Metadata = {
     "collectible cars",
     "auction analysis",
     "classic cars",
+    "Porsche 911",
+    "collector car market",
+    "porsche investment",
   ],
+  openGraph: {
+    type: "website",
+    siteName: "Monza Lab",
+    title: "Monza Lab | Investment-Grade Automotive Assets",
+    description:
+      "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions.",
+    locale: "en_US",
+    alternateLocale: ["es_ES", "de_DE", "ja_JP"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Monza Lab | Investment-Grade Automotive Assets",
+    description:
+      "AI-powered collector car investment terminal. Analyze Porsche auctions, track market trends, and make smarter acquisitions.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Monza Lab",
+  },
 };
 
 export default async function RootLayout({

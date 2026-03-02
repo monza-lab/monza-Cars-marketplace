@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Bot, User, Sparkles } from 'lucide-react'
+import { X, Send, Bot, User, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -482,7 +482,7 @@ How may I help you today?`,
               <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#0F1012]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F8B4D9]/20 to-[#F8B4D9]/5 flex items-center justify-center border border-[#F8B4D9]/20">
-                    <Sparkles className="w-5 h-5 text-[#F8B4D9]" />
+                    <Scale className="w-5 h-5 text-[#F8B4D9]" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-[#FFFCF7]">Private Advisor</h3>

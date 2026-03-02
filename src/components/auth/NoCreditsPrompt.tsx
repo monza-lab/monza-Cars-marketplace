@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Zap } from 'lucide-react'
+import { Coins } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 
 interface NoCreditsPromptProps {
@@ -16,7 +16,7 @@ export function NoCreditsPrompt({
   return (
     <div className={`flex flex-col items-center justify-center p-8 rounded-lg border border-[#FB923C]/20 bg-[#0F1012]/80 backdrop-blur-xl ${className}`}>
       <div className="w-12 h-12 rounded-full bg-[#FB923C]/10 flex items-center justify-center mb-4">
-        <Zap className="w-6 h-6 text-[#FB923C]" />
+        <Coins className="w-6 h-6 text-[#FB923C]" />
       </div>
       <h3 className="text-lg font-semibold text-[#FFFCF7] mb-2">
         No Credits Remaining

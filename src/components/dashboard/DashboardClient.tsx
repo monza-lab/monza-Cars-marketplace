@@ -17,7 +17,7 @@ import {
   TrendingDown,
   Minus,
   ChevronRight,
-  Sparkles,
+  Scale,
   BarChart3,
   Calendar,
   Award,
@@ -1656,7 +1656,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       {/* SECTION 1: Investment Thesis */}
       <div className="px-5 py-3 border-b border-white/5">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="size-4 text-[#F8B4D9]" />
+          <Scale className="size-4 text-[#F8B4D9]" />
           <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
             {t("context.investmentThesis")}
           </span>
@@ -1801,7 +1801,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
           rel="noopener noreferrer"
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-[rgba(248,180,217,0.08)] border border-[rgba(248,180,217,0.15)] py-2.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#F8B4D9] hover:bg-[rgba(248,180,217,0.15)] hover:border-[rgba(248,180,217,0.3)] transition-all"
         >
-          <Sparkles className="size-3" />
+          <Scale className="size-3" />
           {t("context.askAboutThisCar")}
           <ChevronRight className="size-3" />
         </a>
