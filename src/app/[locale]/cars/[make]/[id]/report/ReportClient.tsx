@@ -44,6 +44,7 @@ import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } fr
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
 import { useTokens } from "@/hooks/useTokens"
+import { stripHtml } from "@/lib/stripHtml"
 
 // ─── MOCK DATA (same as CarDetailClient) ───
 const redFlags: Record<string, string[]> = {
@@ -946,7 +947,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(6); dim(); pdf.text("INVESTMENT THESIS", M + 4, y + 5)
       pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3); pdf.line(M + 4, y + 7, M + 18, y + 7)
       pdf.setFontSize(8); white()
-      const thesisLines = pdf.splitTextToSize(car.thesis || "—", CW - 8)
+      const thesisLines = pdf.splitTextToSize(stripHtml(car.thesis) || "—", CW - 8)
       pdf.text(thesisLines, M + 4, y + 12)
       y += 30
 
@@ -1008,7 +1009,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
       pdf.setFontSize(6); dim(); pdf.text("HISTORY & PROVENANCE", M + 5, y + 5)
       pdf.setFontSize(8); white()
-      const histLines = pdf.splitTextToSize(car.history || "—", CW - 10)
+      const histLines = pdf.splitTextToSize(stripHtml(car.history) || "—", CW - 10)
       pdf.text(histLines, M + 5, y + 11)
 
       // ═══ PAGE 6: PRODUCTION & HERITAGE ═══
@@ -1660,10 +1661,10 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ...events.map(e => [e.name, e.type, e.impact.toUpperCase()]),
         [""],
         ["VEHICLE THESIS"],
-        [car.thesis || "No specific thesis available"],
+        [stripHtml(car.thesis) || "No specific thesis available"],
         [""],
         ["HISTORY"],
-        [car.history || "No documented history available"],
+        [stripHtml(car.history) || "No documented history available"],
       ]
       const ws9 = XLSX.utils.aoa_to_sheet(mktRows)
       ws9["!cols"] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }]
@@ -1940,7 +1941,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   <Scale className="size-5 text-[#F8B4D9] shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[12px] font-semibold text-[#F8B4D9] mb-1">{t("summary.verdict")}</p>
-                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.thesis}</p>
+                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
                   </div>
                 </div>
               </div>
@@ -1979,7 +1980,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     <h3 className="text-[12px] font-semibold text-[#FFFCF7]">{t("identity.provenance")}</h3>
                   </div>
                   <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.history}</p>
+                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                   </div>
                 </div>
 
@@ -2708,7 +2709,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     <div className="size-1.5 rounded-full bg-[#F8B4D9]" />
                     <h3 className="text-[12px] font-semibold text-[#F8B4D9]">{t("marketContext.brandThesis")}: {car.make}</h3>
                   </div>
-                  <p className="text-[13px] leading-relaxed text-[#D1D5DB]">{car.thesis}</p>
+                  <p className="text-[13px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
                 </div>
 
                 {/* Market events */}

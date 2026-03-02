@@ -21,6 +21,7 @@ import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
+import { stripHtml } from "@/lib/stripHtml";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
@@ -343,7 +344,7 @@ ${car.status === "ACTIVE" || car.status === "ENDING_SOON"
 • Year: ${car.year}
 
 **About this Vehicle** _(Editorial)_
-${car.thesis}
+${stripHtml(car.thesis)}
 
 _Note: Price data from real auction results. No value estimates._`,
       chips: [{ id: "viewCarDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
@@ -459,10 +460,10 @@ ${car.status === "ACTIVE" || car.status === "ENDING_SOON"
 • Transmission: ${car.transmission}
 • Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
 
-**Seller's Notes:** ${car.history}
+**Seller's Notes:** ${stripHtml(car.history)}
 
 **About this Model** _(Editorial)_
-${car.thesis}`,
+${stripHtml(car.thesis)}`,
       chips: [{ id: "viewFullDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
       carContext: { id: car.id, make: car.make },
     };

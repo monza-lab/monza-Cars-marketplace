@@ -39,6 +39,7 @@ import { getModelImage } from "@/lib/modelImages"
 import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
 import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
+import { stripHtml } from "@/lib/stripHtml"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -2190,8 +2191,8 @@ function CarContextPanel({
             {car.year} {make} {car.model}
           </h2>
           {car.thesis && (
-            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
-              {car.thesis}
+            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2 whitespace-pre-line">
+              {stripHtml(car.thesis)}
             </p>
           )}
         </div>

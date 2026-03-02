@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
+import { stripHtml } from "@/lib/stripHtml"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import {
@@ -1223,7 +1224,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
               <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
             </div>
-            <p className="text-[14px] leading-relaxed text-[#D1D5DB]">{car.thesis}</p>
+            <p className="text-[14px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
           </div>
 
           {/* 2. Vehicle Specs */}
@@ -1237,7 +1238,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           {/* 3. Seller's Description */}
           <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
             <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-              <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.history}</p>
+              <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
             </div>
             <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
           </CollapsibleSection>
@@ -1613,7 +1614,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                   <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
                 </div>
-                <p className="text-[13px] leading-relaxed text-[#D1D5DB]">{car.thesis}</p>
+                <p className="text-[13px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
               </div>
 
               {/* PROVENANCE */}
@@ -1623,7 +1624,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <h2 className="text-[12px] font-semibold text-[#FFFCF7]">{t("sellersDescription")}</h2>
                 </div>
                 <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-                  <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.history}</p>
+                  <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                 </div>
                 <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
               </div>

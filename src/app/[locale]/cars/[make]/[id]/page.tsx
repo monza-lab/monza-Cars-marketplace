@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabaseLiveListings"
 import { getMarketDataForModel, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake } from "@/lib/db/queries"
 import { CarDetailClient } from "./CarDetailClient"
+import { stripHtml } from "@/lib/stripHtml"
 
 interface CarDetailPageProps {
   params: Promise<{ make: string; id: string }>
@@ -29,10 +30,10 @@ export async function generateMetadata({ params }: CarDetailPageProps) {
 
   return {
     title: `${car.title} | Monza Lab`,
-    description: `${car.thesis.slice(0, 160)}...`,
+    description: `${stripHtml(car.thesis).slice(0, 160)}...`,
     openGraph: {
       title: `${car.title} | Monza Lab`,
-      description: car.thesis,
+      description: stripHtml(car.thesis),
       images: [{ url: car.image }],
     },
   }
