@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { runCollector } from "@/features/ferrari_collector/collector";
-import { refreshActiveListings } from "@/features/ferrari_collector/supabase_writer";
-import { runLightBackfill, type LightBackfillResult } from "@/features/ferrari_collector/historical_backfill";
+import { runCollector } from "@/features/porsche_collector/collector";
+import { refreshActiveListings } from "@/features/porsche_collector/supabase_writer";
+import { runLightBackfill, type LightBackfillResult } from "@/features/porsche_collector/historical_backfill";
 import { recordScraperRun } from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         });
       } catch (error) {
         backfillError = error instanceof Error ? error.message : "Backfill failed";
-        console.error("[cron/ferrari] Backfill error (non-fatal):", error);
+        console.error("[cron/porsche] Backfill error (non-fatal):", error);
       }
     } else {
       backfillError = `Skipped: only ${Math.round(remainingMs / 1000)}s remaining`;
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
     ];
 
     await recordScraperRun({
-      scraper_name: 'ferrari',
+      scraper_name: 'porsche',
       run_id: result.runId,
       started_at: new Date(startTime).toISOString(),
       finished_at: new Date().toISOString(),
@@ -113,10 +113,10 @@ export async function GET(request: Request) {
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {
-    console.error("[cron/ferrari] Error:", error);
+    console.error("[cron/porsche] Error:", error);
 
     await recordScraperRun({
-      scraper_name: 'ferrari',
+      scraper_name: 'porsche',
       run_id: 'unknown',
       started_at: new Date(startTime).toISOString(),
       finished_at: new Date().toISOString(),

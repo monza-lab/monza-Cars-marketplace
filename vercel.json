@@ -1,8 +1,8 @@
 {
   "crons": [
-    {
-      "path": "/api/cron/ferrari",
-      "schedule": "0 0 * * *"
-    }
+    { "path": "/api/cron/ferrari",    "schedule": "0 0 * * *" },
+    { "path": "/api/cron/porsche",    "schedule": "0 1 * * *" },
+    { "path": "/api/cron/autotrader", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/beforward",  "schedule": "0 3 * * *" }
   ]
 }

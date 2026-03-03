@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { runCollector } from "@/features/ferrari_collector/collector";
-import { refreshActiveListings } from "@/features/ferrari_collector/supabase_writer";
-import { runLightBackfill, type LightBackfillResult } from "@/features/ferrari_collector/historical_backfill";
+import { runCollector } from "@/features/autotrader_collector/collector";
+import { refreshActiveListings } from "@/features/autotrader_collector/supabase_writer";
 import { recordScraperRun } from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +20,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Step 1: Refresh status of existing active listings (mark ended auctions as sold/unsold)
+    // Step 1: Refresh status of existing active listings
     const refreshResult = await refreshActiveListings();
 
-    // Step 2: Discover and ingest new active listings
+    // Step 2: Discover and ingest new active listings via AutoTrader GraphQL
     const result = await runCollector({
       mode: "daily",
       dryRun: false,
@@ -39,36 +38,8 @@ export async function GET(request: Request) {
       0
     );
 
-    // Step 3: Light backfill of recently sold listings (last 30 days)
-    let backfillResult: LightBackfillResult | null = null;
-    let backfillError: string | null = null;
-
-    const elapsedMs = Date.now() - startTime;
-    const remainingMs = maxDuration * 1000 - elapsedMs - 10_000; // 10s safety buffer
-
-    if (remainingMs > 30_000) {
-      try {
-        backfillResult = await runLightBackfill({
-          windowDays: 30,
-          maxListingsPerModel: 3,
-          timeBudgetMs: Math.min(remainingMs, 120_000),
-        });
-      } catch (error) {
-        backfillError = error instanceof Error ? error.message : "Backfill failed";
-        console.error("[cron/ferrari] Backfill error (non-fatal):", error);
-      }
-    } else {
-      backfillError = `Skipped: only ${Math.round(remainingMs / 1000)}s remaining`;
-    }
-
-    const allErrors = [
-      ...result.errors,
-      ...(backfillResult?.errors ?? []),
-      ...(backfillError ? [backfillError] : []),
-    ];
-
     await recordScraperRun({
-      scraper_name: 'ferrari',
+      scraper_name: 'autotrader',
       run_id: result.runId,
       started_at: new Date(startTime).toISOString(),
       finished_at: new Date().toISOString(),
@@ -77,13 +48,11 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startTime,
       discovered: totalDiscovered,
       written: totalWritten,
-      errors_count: allErrors.length,
+      errors_count: result.errors.length,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
       source_counts: result.sourceCounts,
-      backfill_discovered: backfillResult?.discovered,
-      backfill_written: backfillResult?.written,
-      error_messages: allErrors.length > 0 ? allErrors : undefined,
+      error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 
     return NextResponse.json({
@@ -98,25 +67,14 @@ export async function GET(request: Request) {
       written: totalWritten,
       sourceCounts: result.sourceCounts,
       errors: result.errors,
-      backfill: backfillResult
-        ? {
-            modelsSearched: backfillResult.modelsSearched,
-            newModelsFound: backfillResult.newModelsFound,
-            discovered: backfillResult.discovered,
-            written: backfillResult.written,
-            skippedExisting: backfillResult.skippedExisting,
-            errors: backfillResult.errors,
-            timedOut: backfillResult.timedOut,
-            durationMs: backfillResult.durationMs,
-          }
-        : { skipped: true, reason: backfillError },
+      backfill: { skipped: true, reason: "Not implemented for AutoTrader" },
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {
-    console.error("[cron/ferrari] Error:", error);
+    console.error("[cron/autotrader] Error:", error);
 
     await recordScraperRun({
-      scraper_name: 'ferrari',
+      scraper_name: 'autotrader',
       run_id: 'unknown',
       started_at: new Date(startTime).toISOString(),
       finished_at: new Date().toISOString(),

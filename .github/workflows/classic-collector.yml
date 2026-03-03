@@ -1,0 +1,58 @@
+name: Classic.com Collector (Daily)
+
+on:
+  schedule:
+    - cron: '0 4 * * *'     # 04:00 UTC daily
+  workflow_dispatch:          # Manual trigger with overrides
+    inputs:
+      max_pages:
+        description: 'Max search pages'
+        default: '5'
+      max_listings:
+        description: 'Max listings to process'
+        default: '125'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: classic-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+
+      - name: Run collector (incremental)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
+          DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
+          DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
+        run: |
+          npx tsx src/features/classic_collector/cli.ts \
+            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
+            --maxListings=${{ github.event.inputs.max_listings || '125' }} \
+            --navigationDelayMs=3000 \
+            --pageTimeoutMs=30000 \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Upload output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classic-collector-output
+          path: var/classic_collector/
+          retention-days: 7
+          if-no-files-found: ignore

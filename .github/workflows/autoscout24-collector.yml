@@ -1,0 +1,66 @@
+name: AutoScout24 Collector (Daily)
+
+on:
+  schedule:
+    - cron: '0 5 * * *'     # 05:00 UTC daily (after classic at 04:00)
+  workflow_dispatch:          # Manual trigger with overrides
+    inputs:
+      max_listings:
+        description: 'Max listings to process'
+        default: '2000'
+      countries:
+        description: 'Country codes (comma-separated: D,A,B,E,F,I,L,NL)'
+        default: 'D,A,B,E,F,I,L,NL'
+      max_pages_per_shard:
+        description: 'Max pages per shard'
+        default: '20'
+      scrape_details:
+        description: 'Fetch detail pages (slower but richer data)'
+        default: 'false'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: autoscout24-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+
+      - name: Run collector
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
+          DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
+          DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
+        run: |
+          npx tsx src/features/autoscout24_collector/cli.ts \
+            --countries=${{ github.event.inputs.countries || 'D,A,B,E,F,I,L,NL' }} \
+            --maxListings=${{ github.event.inputs.max_listings || '2000' }} \
+            --maxPagesPerShard=${{ github.event.inputs.max_pages_per_shard || '20' }} \
+            --navigationDelayMs=3000 \
+            --pageTimeoutMs=30000 \
+            ${{ github.event.inputs.scrape_details == 'true' && '--scrapeDetails' || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Upload output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoscout24-collector-output
+          path: var/autoscout24_collector/
+          retention-days: 7
+          if-no-files-found: ignore
