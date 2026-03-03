@@ -1,4 +1,5 @@
-import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import type { Browser, BrowserContext, Page } from "playwright-core";
+import { launchServerlessBrowser } from "@/lib/serverless-browser";
 
 export interface BrowserConfig {
   headless: boolean;
@@ -71,20 +72,13 @@ const STEALTH_INIT_SCRIPT = `
  * Launch a Chromium browser with stealth anti-detection settings.
  */
 export async function launchStealthBrowser(config: BrowserConfig): Promise<Browser> {
-  const launchOptions: Parameters<typeof chromium.launch>[0] = {
+  return launchServerlessBrowser({
     headless: config.headless,
     args: STEALTH_ARGS,
-  };
-
-  if (config.proxyServer) {
-    launchOptions.proxy = {
-      server: config.proxyServer,
-      username: config.proxyUsername,
-      password: config.proxyPassword,
-    };
-  }
-
-  return chromium.launch(launchOptions);
+    proxyServer: config.proxyServer,
+    proxyUsername: config.proxyUsername,
+    proxyPassword: config.proxyPassword,
+  });
 }
 
 /**

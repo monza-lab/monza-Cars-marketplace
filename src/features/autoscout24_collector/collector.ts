@@ -47,6 +47,8 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
     akamaiBlocked: 0,
   };
 
+  const startMs = Date.now();
+
   logEvent({ level: "info", event: "collector.start", runId, config: { ...config, proxyPassword: "***" } });
 
   // Generate or use provided shards
@@ -112,6 +114,12 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   try {
     for (const shard of pendingShards) {
+      // Time-budget guard: stop if less than 15s remaining
+      if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+        logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, elapsedMs: Date.now() - startMs });
+        break;
+      }
+
       if (totalListingsProcessed >= config.maxListings) {
         logEvent({ level: "info", event: "collector.max_listings_reached", runId, limit: config.maxListings });
         break;
@@ -259,26 +267,28 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   logEvent({ level: "info", event: "collector.done", runId, counts, shardsCompleted, shardsTotal: allShards.length });
 
-  const endTime = Date.now();
-  const runtime = process.env.GITHUB_ACTIONS ? 'github_actions' as const : 'cli' as const;
+  if (!config.skipMonitoring) {
+    const endTime = Date.now();
+    const runtime = process.env.GITHUB_ACTIONS ? 'github_actions' as const : 'cli' as const;
 
-  await recordScraperRun({
-    scraper_name: 'autoscout24',
-    run_id: runId,
-    started_at: scrapeTimestamp,
-    finished_at: new Date(endTime).toISOString(),
-    success: errors.length === 0 || counts.written > 0,
-    runtime,
-    duration_ms: endTime - new Date(scrapeTimestamp).getTime(),
-    discovered: counts.discovered,
-    written: counts.written,
-    errors_count: counts.errors,
-    details_fetched: counts.detailsFetched,
-    normalized: counts.normalized,
-    skipped_duplicate: counts.skippedDuplicate,
-    bot_blocked: counts.akamaiBlocked,
-    error_messages: errors.length > 0 ? errors : undefined,
-  });
+    await recordScraperRun({
+      scraper_name: 'autoscout24',
+      run_id: runId,
+      started_at: scrapeTimestamp,
+      finished_at: new Date(endTime).toISOString(),
+      success: errors.length === 0 || counts.written > 0,
+      runtime,
+      duration_ms: endTime - new Date(scrapeTimestamp).getTime(),
+      discovered: counts.discovered,
+      written: counts.written,
+      errors_count: counts.errors,
+      details_fetched: counts.detailsFetched,
+      normalized: counts.normalized,
+      skipped_duplicate: counts.skippedDuplicate,
+      bot_blocked: counts.akamaiBlocked,
+      error_messages: errors.length > 0 ? errors : undefined,
+    });
+  }
 
   return {
     runId,

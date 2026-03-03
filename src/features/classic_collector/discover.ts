@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "playwright-core";
 import * as cheerio from "cheerio";
 
 import type { ListingSummary, DiscoverPageResult } from "./types";
@@ -246,6 +246,7 @@ function tryParseGraphQLListing(item: unknown): ListingSummary | null {
                   typeof obj.source === "string" ? obj.source :
                   typeof obj.platform === "string" ? obj.platform : null,
     status: typeof obj.status === "string" ? obj.status : null,
+    location: typeof obj.location === "string" ? obj.location : null,
     thumbnailUrl: typeof obj.thumbnail === "string" ? obj.thumbnail :
                   typeof obj.image === "string" ? obj.image : null,
   };
@@ -258,7 +259,7 @@ function tryParseGraphQLListing(item: unknown): ListingSummary | null {
 async function extractFromNuxtData(page: Page): Promise<ListingSummary[]> {
   try {
     const nuxtData = await page.evaluate(() => {
-      const w = window as Record<string, unknown>;
+      const w = window as unknown as Record<string, unknown>;
       return w.__NUXT__ ?? w.__NUXT_DATA__ ?? null;
     });
 
@@ -311,6 +312,7 @@ export function parseSearchResultsFromDOM(html: string): ListingSummary[] {
       price,
       auctionHouse: null,
       status: null,
+      location: null,
       thumbnailUrl: container.find("img").first().attr("src") ?? null,
     });
   });

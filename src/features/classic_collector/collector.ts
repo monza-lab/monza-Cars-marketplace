@@ -38,6 +38,8 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
     cloudflareBlocked: 0,
   };
 
+  const startMs = Date.now();
+
   logEvent({ level: "info", event: "collector.start", runId, config: { ...config, proxyPassword: "***" } });
 
   // Load checkpoint
@@ -111,6 +113,12 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
     const startIndex = Math.max(0, checkpoint.lastCompletedIndex + 1);
 
     for (let i = startIndex; i < allListings.length; i++) {
+      // Time-budget guard: stop if less than 15s remaining
+      if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+        logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, elapsedMs: Date.now() - startMs });
+        break;
+      }
+
       // Circuit breaker: abort after too many consecutive Cloudflare blocks
       if (consecutiveCfBlocks >= MAX_CONSECUTIVE_CF_BLOCKS) {
         const msg = `Aborting: ${MAX_CONSECUTIVE_CF_BLOCKS} consecutive Cloudflare blocks`;
@@ -236,25 +244,27 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
 
   logEvent({ level: "info", event: "collector.done", runId, counts, errorsCount: errors.length });
 
-  const endTime = Date.now();
-  const runtime = process.env.GITHUB_ACTIONS ? 'github_actions' as const : 'cli' as const;
+  if (!config.skipMonitoring) {
+    const endTime = Date.now();
+    const runtime = process.env.GITHUB_ACTIONS ? 'github_actions' as const : 'cli' as const;
 
-  await recordScraperRun({
-    scraper_name: 'classic',
-    run_id: runId,
-    started_at: scrapeTimestamp,
-    finished_at: new Date(endTime).toISOString(),
-    success: errors.length === 0 || counts.written > 0,
-    runtime,
-    duration_ms: endTime - new Date(scrapeTimestamp).getTime(),
-    discovered: counts.discovered,
-    written: counts.written,
-    errors_count: counts.errors,
-    details_fetched: counts.detailsFetched,
-    normalized: counts.normalized,
-    bot_blocked: counts.cloudflareBlocked,
-    error_messages: errors.length > 0 ? errors : undefined,
-  });
+    await recordScraperRun({
+      scraper_name: 'classic',
+      run_id: runId,
+      started_at: scrapeTimestamp,
+      finished_at: new Date(endTime).toISOString(),
+      success: errors.length === 0 || counts.written > 0,
+      runtime,
+      duration_ms: endTime - new Date(scrapeTimestamp).getTime(),
+      discovered: counts.discovered,
+      written: counts.written,
+      errors_count: counts.errors,
+      details_fetched: counts.detailsFetched,
+      normalized: counts.normalized,
+      bot_blocked: counts.cloudflareBlocked,
+      error_messages: errors.length > 0 ? errors : undefined,
+    });
+  }
 
   return {
     runId,

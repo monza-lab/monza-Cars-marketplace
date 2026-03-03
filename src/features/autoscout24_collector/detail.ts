@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "playwright-core";
 import * as cheerio from "cheerio";
 
 import type { AS24DetailParsed } from "./types";

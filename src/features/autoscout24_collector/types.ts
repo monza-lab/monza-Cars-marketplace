@@ -38,6 +38,8 @@ export interface CollectorRunConfig {
   checkpointPath: string;
   outputPath: string;
   dryRun: boolean;
+  timeBudgetMs?: number;
+  skipMonitoring?: boolean;
 }
 
 export interface ScrapeMeta {

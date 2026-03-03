@@ -45,13 +45,13 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "m.atcdn.co.uk" },
     ],
   },
+  serverExternalPackages: ["@sparticuz/chromium"],
   outputFileTracingExcludes: {
     "*": [
       "**/node_modules/typescript/**",
       "**/node_modules/prisma/**",
       "**/node_modules/@types/**",
       "**/node_modules/@playwright/**",
-      "**/node_modules/playwright/**"
     ],
   },
   experimental: {

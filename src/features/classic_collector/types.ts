@@ -24,6 +24,8 @@ export interface CollectorRunConfig {
   checkpointPath: string;
   outputPath: string;
   dryRun: boolean;
+  timeBudgetMs?: number;
+  skipMonitoring?: boolean;
 }
 
 export interface ScrapeMeta {
@@ -74,6 +76,7 @@ export interface ListingSummary {
   price: number | null;
   auctionHouse: string | null;
   status: string | null;
+  location: string | null;
   thumbnailUrl: string | null;
 }
 

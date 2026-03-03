@@ -1,4 +1,4 @@
-import type { Page } from "playwright";
+import type { Page } from "playwright-core";
 import * as cheerio from "cheerio";
 
 import type { SearchShard, AS24ListingSummary, DiscoverResult } from "./types";
