@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MONZA Cars Marketplace
 
 ## Getting Started
 
-First, run the development server:
+Run the app locally:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin Scrapers Dashboard
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The scraper monitoring dashboard is available at:
 
-## Learn More
+- `/{locale}/admin/scrapers` (example: `/en/admin/scrapers`)
 
-To learn more about Next.js, take a look at the following resources:
+It shows:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- live scraper status cards
+- active/running scraper jobs
+- recent run history with errors
+- daily ingestion trends
+- data quality summaries
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1) Grant Admin Access
 
-## Deploy on Vercel
+Admin access is currently email-allowlisted in code:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `src/app/[locale]/admin/scrapers/page.tsx`
+- `src/app/api/admin/scrapers/live/route.ts`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Add your login email to `ADMIN_EMAILS` in both files.
+
+### 2) Required Environment Variables
+
+Set these vars locally and in Vercel:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+CRON_SECRET=...
+```
+
+Notes:
+
+- `CRON_SECRET` must match what your cron routes expect in `Authorization: Bearer <CRON_SECRET>`.
+- Supabase keys are required for reading/writing scraper monitoring data.
+
+### 3) Apply Active-Run Migration
+
+To track jobs while they are running (not only when finished), apply:
+
+- `supabase/migrations/20260304_scraper_active_runs.sql`
+
+Without this migration, the dashboard still loads, but active live job indicators will be incomplete.
+
+### 4) Verify Live Updates
+
+The dashboard auto-refreshes and also listens for realtime updates where available.
+
+Quick check:
+
+1. Open `/{locale}/admin/scrapers`.
+2. Trigger a cron endpoint (with `Authorization: Bearer <CRON_SECRET>`), for example:
+   - `GET /api/cron/porsche`
+3. Confirm the scraper card switches to running/active, then to success/fail when done.
+4. Confirm the run appears in Run History with duration, written/discovered counts, and error details.
+
+### 5) Troubleshooting
+
+- `401` on dashboard: your user email is not in `ADMIN_EMAILS` allowlist.
+- no active job shown: migration above not applied or cron route not hitting `markScraperRunStarted`/`clearScraperRunActive`.
+- stale status cards: cron schedule did not run recently or runs are failing; inspect Run History errors first.
