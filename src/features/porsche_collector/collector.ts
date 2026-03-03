@@ -108,7 +108,7 @@ export async function runPorscheCollector(config: CollectorRunConfig): Promise<C
   const checkpointRef: { value: typeof checkpoint } = { value: checkpoint };
   const writer = config.dryRun ? createDryRunWriter() : createSupabaseWriter();
 
-  const sources: SourceKey[] = ["BaT", "CarsAndBids", "CollectingCars"];
+  const sources: SourceKey[] = config.sources ?? ["BaT", "CarsAndBids", "CollectingCars"];
   let updatedCheckpoint = checkpointRef.value;
   const sourceCounts: Record<string, SourceScrapeCounts> = {};
   const errors: string[] = [];

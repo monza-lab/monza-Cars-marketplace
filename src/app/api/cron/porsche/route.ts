@@ -21,9 +21,11 @@ export async function GET(request: Request) {
 
   try {
     // Step 1: Discover and ingest new active listings (heavily capped for Vercel 5-min limit)
-    // Each listing triggers an external HTTP fetch, so we limit aggressively
+    // Each listing triggers an external HTTP fetch even with scrapeDetails:false,
+    // so we limit to BaT only (primary source) with 1 page
     const result = await runCollector({
       mode: "daily",
+      sources: ["BaT"],
       maxActivePagesPerSource: 1,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
@@ -39,19 +41,10 @@ export async function GET(request: Request) {
       0
     );
 
-    // Step 2: Refresh a small batch of active listings if time permits
-    let refreshResult = { checked: 0, updated: 0, errors: [] as string[] };
-    const elapsedMs = Date.now() - startTime;
-    const remainingMs = maxDuration * 1000 - elapsedMs - 15_000; // 15s safety buffer
+    // Step 2: Refresh skipped on Vercel cron — GitHub Actions handles full refresh
+    const refreshResult = { checked: 0, updated: 0, errors: [] as string[] };
 
-    if (remainingMs > 30_000) {
-      refreshResult = await refreshActiveListings({ maxListings: 10 });
-    }
-
-    const allErrors = [
-      ...result.errors,
-      ...refreshResult.errors,
-    ];
+    const allErrors = [...result.errors];
 
     await recordScraperRun({
       scraper_name: 'porsche',

@@ -21,6 +21,7 @@ export interface CollectorRunConfig {
   scrapeDetails: boolean;
   checkpointPath: string;
   dryRun: boolean;
+  sources?: SourceKey[];
 }
 
 export interface ScrapeMeta {
