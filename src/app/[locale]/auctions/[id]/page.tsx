@@ -16,7 +16,7 @@ export async function generateMetadata({
 
   try {
     // Attempt to fetch basic auction info for metadata.
-    // In production this would query Prisma directly to avoid an HTTP
+    // In production this would query the database directly to avoid an HTTP
     // round-trip. We keep it as a fetch so it works in both dev and
     // production builds.
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"

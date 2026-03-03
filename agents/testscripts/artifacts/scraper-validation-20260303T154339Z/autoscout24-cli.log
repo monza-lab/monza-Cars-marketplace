@@ -1,0 +1,52 @@
+
+[AutoScout24 Collector] Starting...
+  Make: Porsche
+  Countries: D
+  Max listings: 10
+  Max pages/shard: 1
+  Scrape details: false
+  Dry run: false
+  Headed: false
+  Proxy: none
+
+{"level":"info","event":"collector.start","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:20.266Z","config":{"mode":"daily","make":"Porsche","countries":["D"],"maxPagesPerShard":1,"maxListings":10,"headless":true,"proxyPassword":"***","navigationDelayMs":1000,"pageTimeoutMs":20000,"scrapeDetails":false,"checkpointPath":"var/autoscout24_collector/checkpoint-validation.json","outputPath":"var/autoscout24_collector/listings-validation.jsonl","dryRun":false}}
+{"level":"info","event":"collector.shards_loaded","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:20.269Z","total":17,"pending":17,"completed":0}
+{"level":"info","event":"collector.shard_start","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:20.526Z","shard":"911-D-1963-1989"}
+{"level":"info","event":"discover.page_start","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:20.527Z","shard":"911-D-1963-1989","page":1,"url":"https://www.autoscout24.com/lst/porsche/911?sort=standard&desc=0&ustate=N%2CU&atype=C&cy=D&damaged_listing=exclude&fregfrom=1963&fregto=1989"}
+{"level":"info","event":"discover.page_done","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:22.794Z","shard":"911-D-1963-1989","page":1,"found":19,"total":19,"totalResults":285}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:23.972Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:24.686Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:25.770Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:25.976Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:26.181Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"error","event":"collector.write_error","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:26.339Z","error":"Supabase listings upsert failed: duplicate key value violates unique constraint \"listings_source_url_unique\""}
+{"level":"info","event":"collector.shard_done","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:26.343Z","shard":"911-D-1963-1989","discovered":19,"shardsCompleted":1,"shardsTotal":17}
+{"level":"info","event":"collector.max_listings_reached","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:26.343Z","limit":10}
+{"level":"info","event":"collector.done","runId":"1be5f124-da98-4c2c-b542-79e3d1b418f9","ts":"2026-03-03T16:03:26.601Z","counts":{"discovered":19,"detailsFetched":0,"normalized":10,"written":4,"errors":6,"skippedDuplicate":0,"akamaiBlocked":0},"shardsCompleted":1,"shardsTotal":17}
+
+[AutoScout24 Collector] Done.
+{
+  "event": "collector.result",
+  "runId": "1be5f124-da98-4c2c-b542-79e3d1b418f9",
+  "shardsCompleted": 1,
+  "shardsTotal": 17,
+  "counts": {
+    "discovered": 19,
+    "detailsFetched": 0,
+    "normalized": 10,
+    "written": 4,
+    "errors": 6,
+    "skippedDuplicate": 0,
+    "akamaiBlocked": 0
+  },
+  "errorsCount": 6,
+  "outputPath": "var/autoscout24_collector/listings-validation.jsonl"
+}
+
+[Errors] (6):
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"
+  - Write error: Supabase listings upsert failed: duplicate key value violates unique constraint "listings_source_url_unique"

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db/prisma'
+import { dbQuery } from '@/lib/db/sql'
 import { createClient } from '@supabase/supabase-js'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
@@ -248,16 +248,8 @@ export async function GET(
     }
 
     // Otherwise, fetch from database
-    const auction = await prisma.auction.findUnique({
-      where: { id },
-      include: {
-        analysis: true,
-        comparables: true,
-        priceHistory: {
-          orderBy: { timestamp: 'asc' },
-        },
-      },
-    })
+    const auctionResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Auction" WHERE id = $1 LIMIT 1', [id])
+    const auction = auctionResult.rows[0]
 
     if (!auction) {
       return NextResponse.json(
@@ -269,9 +261,18 @@ export async function GET(
       )
     }
 
+    const analysisResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Analysis" WHERE "auctionId" = $1 LIMIT 1', [id])
+    const comparablesResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST', [id])
+    const historyResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "PriceHistory" WHERE "auctionId" = $1 ORDER BY timestamp ASC', [id])
+
     return NextResponse.json({
       success: true,
-      data: auction,
+      data: {
+        ...auction,
+        analysis: analysisResult.rows[0] ?? null,
+        comparables: comparablesResult.rows,
+        priceHistory: historyResult.rows,
+      },
     })
   } catch (error) {
     console.error('Error fetching auction:', error)

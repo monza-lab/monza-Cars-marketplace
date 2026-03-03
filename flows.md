@@ -120,7 +120,7 @@ How users find specific investment-grade assets.
 2.  **API Routing**: Request hits `/api/auctions?q=...&make=...&year=...`.
 3.  **Unified Search**:
     *   Search `CURATED_CARS` array (high performance, client-ready).
-    *   Search `PostgreSQL` using Prisma `contains` & `insensitive` filters.
+    *   Search `PostgreSQL` using ORM `contains` and `insensitive` filters.
 4.  **Ranking**: 
     *   Priority 1: Matches in Curated list.
     *   Priority 2: Live matches sorted by `endTime` (Ending Soonest).

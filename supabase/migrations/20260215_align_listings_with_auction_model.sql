@@ -1,4 +1,4 @@
--- Migration: Align listings table with Prisma Auction model
+-- Migration: Align listings table with the auction data model
 -- Run this against your Supabase database
 
 -- ═══════════════════════════════════════════════════════════════

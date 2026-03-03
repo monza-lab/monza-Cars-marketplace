@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runClassicComCollector } from "@/features/classic_collector/collector";
+import { refreshStaleListings } from "@/features/classic_collector/supabase_writer";
 import { recordScraperRun } from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,9 @@ export async function GET(request: Request) {
       skipMonitoring: true, // cron route handles monitoring
     });
 
+    // Step 2: Mark stale listings as delisted (runs AFTER discover)
+    const refreshResult = await refreshStaleListings({ staleDays: 7, maxUpdates: 100 });
+
     await recordScraperRun({
       scraper_name: "classic",
       run_id: result.runId,
@@ -54,12 +58,19 @@ export async function GET(request: Request) {
       details_fetched: result.counts.detailsFetched,
       normalized: result.counts.normalized,
       bot_blocked: result.counts.cloudflareBlocked,
+      refresh_checked: refreshResult.checked,
+      refresh_updated: refreshResult.updated,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 
     return NextResponse.json({
       success: true,
       runId: result.runId,
+      refresh: {
+        checked: refreshResult.checked,
+        updated: refreshResult.updated,
+        errors: refreshResult.errors,
+      },
       totalResults: result.totalResults,
       counts: result.counts,
       errors: result.errors,

@@ -20,7 +20,7 @@ Validate that DB/Supabase/network failure paths fail fast and key routes remain 
 ## Expected
 - `mock-auctions` returns `200` without long (20s+) stalls.
 - car detail route returns `200` without long (25s+) stalls.
-- report route returns `200` without repeated Prisma error spam.
+- report route returns `200` without repeated ORM error spam.
 - `/` returns `200` without intermittent `404`.
 
 ## Artifacts

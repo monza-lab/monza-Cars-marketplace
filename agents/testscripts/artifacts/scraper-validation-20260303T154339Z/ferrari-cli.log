@@ -1,0 +1,118 @@
+{"level":"info","event":"collector.start","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:41.995Z","config":{"mode":"daily","endedWindowDays":90,"maxActivePagesPerSource":1,"maxEndedPagesPerSource":1,"scrapeDetails":false,"dryRun":false,"checkpointPath":"var/ferrari_collector/checkpoint-validation.json"}}
+[BaT] Starting Bring a Trailer scrape...
+[BaT] Scraping listings page 1: https://bringatrailer.com/auctions
+[BaT] Found 0 auctions so far (page 1)
+[BaT] Scrape complete: 0 auctions, 0 errors, 368ms
+{"level":"info","event":"discover.page_fetched","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:43.523Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/ferrari/","attempts":1,"bytes":315485}
+{"level":"info","event":"discover.page_fetched","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:45.540Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/results/?search=ferrari","attempts":1,"bytes":888776}
+{"level":"info","event":"discover.page_fetched","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:47.565Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/?search=ferrari","attempts":1,"bytes":1539963}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2011-ferrari-599-gto-10/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:48.630Z","source":"BaT","url":"https://bringatrailer.com/listing/2011-ferrari-599-gto-10/","sourceId":"bat-2011-ferrari-599-gto-10","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":9,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1989-ferrari-328-gts-59/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:51.441Z","source":"BaT","url":"https://bringatrailer.com/listing/1989-ferrari-328-gts-59/","sourceId":"bat-1989-ferrari-328-gts-59","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":7,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/19x8%e2%80%b3-and-19x10-5%e2%80%b3-bbs-wheels-for-ferrari-f430-challenge-4/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/arcade-game-9/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1978-ferrari-308-gts-39/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:53.911Z","source":"BaT","url":"https://bringatrailer.com/listing/1978-ferrari-308-gts-39/","sourceId":"bat-1978-ferrari-308-gts-39","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":38,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1974-ferrari-dino-246-gts-8/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:54.923Z","source":"BaT","url":"https://bringatrailer.com/listing/1974-ferrari-dino-246-gts-8/","sourceId":"bat-1974-ferrari-dino-246-gts-8","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":6,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-ferrari-296-gtb-6/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:55.904Z","source":"BaT","url":"https://bringatrailer.com/listing/2022-ferrari-296-gtb-6/","sourceId":"bat-2022-ferrari-296-gtb-6","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":4,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2011-ferrari-california-22/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:56.913Z","source":"BaT","url":"https://bringatrailer.com/listing/2011-ferrari-california-22/","sourceId":"bat-2011-ferrari-california-22","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":12,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/kiddie-ride-23/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1999-ferrari-f355-spider-70/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:58.921Z","source":"BaT","url":"https://bringatrailer.com/listing/1999-ferrari-f355-spider-70/","sourceId":"bat-1999-ferrari-f355-spider-70","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":11,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2004-ferrari-575m-maranello-25/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:52:59.945Z","source":"BaT","url":"https://bringatrailer.com/listing/2004-ferrari-575m-maranello-25/","sourceId":"bat-2004-ferrari-575m-maranello-25","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":11,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/luggage-154/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2000-ferrari-360-modena-99/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:01.965Z","source":"BaT","url":"https://bringatrailer.com/listing/2000-ferrari-360-modena-99/","sourceId":"bat-2000-ferrari-360-modena-99","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":8,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-ferrari-812-superfast-26/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:02.967Z","source":"BaT","url":"https://bringatrailer.com/listing/2019-ferrari-812-superfast-26/","sourceId":"bat-2019-ferrari-812-superfast-26","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":11,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-ferrari-f12berlinetta-11/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:03.974Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-ferrari-f12berlinetta-11/","sourceId":"bat-2016-ferrari-f12berlinetta-11","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":11,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-ferrari-296-gts-3/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:04.997Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-ferrari-296-gts-3/","sourceId":"bat-2025-ferrari-296-gts-3","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":14,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/bumpers-2/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2002-ferrari-360-spider-60/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:06.999Z","source":"BaT","url":"https://bringatrailer.com/listing/2002-ferrari-360-spider-60/","sourceId":"bat-2002-ferrari-360-spider-60","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":7,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-ferrari-f355-spider-90/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:08.002Z","source":"BaT","url":"https://bringatrailer.com/listing/1997-ferrari-f355-spider-90/","sourceId":"bat-1997-ferrari-f355-spider-90","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":4,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2008-ferrari-f430-27/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:09.014Z","source":"BaT","url":"https://bringatrailer.com/listing/2008-ferrari-f430-27/","sourceId":"bat-2008-ferrari-f430-27","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":11,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-ferrari-roma-24/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:10.026Z","source":"BaT","url":"https://bringatrailer.com/listing/2022-ferrari-roma-24/","sourceId":"bat-2022-ferrari-roma-24","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":2,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-ferrari-gtc4lusso-15/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:11.034Z","source":"BaT","url":"https://bringatrailer.com/listing/2018-ferrari-gtc4lusso-15/","sourceId":"bat-2018-ferrari-gtc4lusso-15","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":3,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/wheels-431/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/tool-kit-159/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-ferrari-296-gtb-9/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:14.129Z","source":"BaT","url":"https://bringatrailer.com/listing/2022-ferrari-296-gtb-9/","sourceId":"bat-2022-ferrari-296-gtb-9","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":3,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1991-ferrari-testarossa-61/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:15.127Z","source":"BaT","url":"https://bringatrailer.com/listing/1991-ferrari-testarossa-61/","sourceId":"bat-1991-ferrari-testarossa-61","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":2,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1984-ferrari-308-gts-quattrovalvole-28/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:16.149Z","source":"BaT","url":"https://bringatrailer.com/listing/1984-ferrari-308-gts-quattrovalvole-28/","sourceId":"bat-1984-ferrari-308-gts-quattrovalvole-28","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":1,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1973-ferrari-dino-246-gts-17/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:17.142Z","source":"BaT","url":"https://bringatrailer.com/listing/1973-ferrari-dino-246-gts-17/","sourceId":"bat-1973-ferrari-dino-246-gts-17","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":4,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1991-porsche-911-carrera-2-coupe-49/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-lamborghini-countach-lpi-800-4-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1979-bmw-m1-4/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1996-porsche-911-carrera-4s-141/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1971-datsun-240z-353/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2004-ferrari-360-challenge-stradale-40/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:23.207Z","source":"BaT","url":"https://bringatrailer.com/listing/2004-ferrari-360-challenge-stradale-40/","sourceId":"bat-2004-ferrari-360-challenge-stradale-40","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":64,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-porsche-911-carrera-speedster-gunther-werks/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2003-ford-mustang-svt-cobra-coupe-50/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2015-dodge-charger-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1985-porsche-911-carrera-coupe-68/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1993-porsche-911-slant-nose-conversion/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1967-ford-mustang-436/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-s-t-24/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1968-buick-riviera-11/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-ford-gt-17/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2020-ferrari-488-pista-spider-9/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:33.289Z","source":"BaT","url":"https://bringatrailer.com/listing/2020-ferrari-488-pista-spider-9/","sourceId":"bat-2020-ferrari-488-pista-spider-9","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":53,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-gt3-rs-62/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-3-2/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-ferrari-sf90-stradale-20/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:36.320Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-ferrari-sf90-stradale-20/","sourceId":"bat-2023-ferrari-sf90-stradale-20","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":45,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1992-ferrari-512-tr-47/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:37.311Z","source":"BaT","url":"https://bringatrailer.com/listing/1992-ferrari-512-tr-47/","sourceId":"bat-1992-ferrari-512-tr-47","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":59,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1994-lamborghini-diablo-vt-10/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-ferrari-296-gtb-4/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:39.337Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-ferrari-296-gtb-4/","sourceId":"bat-2025-ferrari-296-gtb-4","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":18,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-lamborghini-diablo-vt-2/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1965-lamborghini-350-gt/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1989-ferrari-328-gts-60/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:42.404Z","source":"BaT","url":"https://bringatrailer.com/listing/1989-ferrari-328-gts-60/","sourceId":"bat-1989-ferrari-328-gts-60","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":68,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-lamborghini-murcielago-lp640-coupe-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-sport-classic-19/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2008-mercedes-benz-slr-mclaren-roadster-18/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-porsche-911-gt3-175/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-nissan-gt-r-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-touring-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-ferrari-488-pista-19/
+{"level":"info","event":"collector.normalized","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:49.435Z","source":"BaT","url":"https://bringatrailer.com/listing/2019-ferrari-488-pista-19/","sourceId":"bat-2019-ferrari-488-pista-19","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":72,"photosCount":0,"dataQualityScore":65}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-mclaren-senna-32/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-aston-martin-dbs-coupe-5/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2001-lamborghini-diablo-vt-6-0-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2005-mercedes-benz-slr-mclaren-21/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1987-porsche-911-turbo-cabriolet-20/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-9/
+{"level":"info","event":"collector.source_done","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:53:59.501Z","source":"BaT","counts":{"discovered":70,"ferrariKept":28,"skippedMissingRequired":42,"written":28,"errored":0,"retried":0}}
+[C&B] Starting Cars & Bids scrape...
+[C&B] Scraping listings page 1: https://carsandbids.com/auctions
+[C&B] Scrape complete: 0 auctions, 1 errors, 61ms
+{"level":"warn","event":"discover.no_base_url","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:54:02.641Z","source":"CarsAndBids","candidates":["https://carsandbids.com/auctions/past/?q=ferrari","https://carsandbids.com/auctions/past?q=ferrari","https://carsandbids.com/auctions/?q=ferrari","https://carsandbids.com/auctions?q=ferrari"]}
+{"level":"info","event":"collector.source_done","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:54:02.641Z","source":"CarsAndBids","counts":{"discovered":0,"ferrariKept":0,"skippedMissingRequired":0,"written":0,"errored":0,"retried":0}}
+[CC] Starting Collecting Cars scrape...
+[CC] Scraping listings page 1: https://collectingcars.com/search
+[CC] Scrape complete: 0 auctions, 1 errors, 62ms
+{"level":"warn","event":"discover.no_base_url","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:54:04.784Z","source":"CollectingCars","candidates":["https://collectingcars.com/search?q=ferrari","https://collectingcars.com/search?query=ferrari","https://collectingcars.com/search?search=ferrari"]}
+{"level":"info","event":"collector.source_done","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:54:04.784Z","source":"CollectingCars","counts":{"discovered":0,"ferrariKept":0,"skippedMissingRequired":0,"written":0,"errored":0,"retried":0}}
+{"level":"info","event":"collector.done","runId":"9505daaa-1421-494e-980a-7cd177dfeced","ts":"2026-03-03T15:54:04.786Z"}

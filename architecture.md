@@ -2,7 +2,7 @@
 
 > **Generated:** February 12, 2026  
 > **App:** Monza Lab — Investment-Grade Automotive Asset Terminal  
-> **Stack:** Next.js 16 · React 19 · TypeScript · Prisma · Supabase · Claude AI · TailwindCSS 4  
+> **Stack:** Next.js 16 · React 19 · TypeScript · legacy ORM · Supabase · Claude AI · TailwindCSS 4  
 
 ---
 
@@ -74,8 +74,8 @@
 │                                                               │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐  │
 │  │  PostgreSQL  │  │   Supabase   │  │   Static Data      │  │
-│  │  (via Prisma │  │   Auth       │  │   (curatedCars.ts  │  │
-│  │   + PrismaPg)│  │              │  │    + modelImages)  │  │
+│  │  (via ORM    │  │   Auth       │  │   (curatedCars.ts  │  │
+│  │   + PG adap.)│  │              │  │    + modelImages)  │  │
 │  └─────────────┘  └──────────────┘  └────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -102,8 +102,8 @@
 ### 3.2 Backend
 | Technology | Version | Purpose |
 |-----------|---------|---------|
-| **Prisma** | 7.3.0 | ORM with PostgreSQL adapter |
-| **@prisma/adapter-pg** | 7.3.0 | PostgreSQL native adapter |
+| **Legacy ORM** | 7.3.0 | ORM with PostgreSQL adapter |
+| **ORM PG adapter** | 7.3.0 | PostgreSQL native adapter |
 | **Supabase** | 2.95.3 | Authentication (email/password + Google OAuth) |
 | **Anthropic SDK** | 0.72.1 | Claude AI integration |
 | **Cheerio** | 1.2.0 | HTML parsing for scraping |
@@ -128,7 +128,7 @@ The app operates in two modes simultaneously:
 
 1. **Curated/Static Data** (`curatedCars.ts`, `featuredAuctions.ts`) — A handcrafted dataset of ~200+ investment-grade collector vehicles with images, pricing, investment theses, and regional valuations. This serves as the **primary data source** for the dashboard and ensures the app always has rich content to display.
 
-2. **Live Scraped Data** (PostgreSQL via Prisma) — Real auction data scraped from BaT, C&B, and CC platforms via Playwright. This data is stored in PostgreSQL and kept fresh via the `/api/cron` endpoint.
+2. **Live Scraped Data** (PostgreSQL via ORM) — Real auction data scraped from BaT, C&B, and CC platforms via Playwright. This data is stored in PostgreSQL and kept fresh via the `/api/cron` endpoint.
 
 The API layer **cascades** through both: `curated → featured → database`.
 
@@ -507,9 +507,9 @@ External Trigger          API (/api/cron)         Scrapers              Database
 | `/api/scrape` | Public (but rate-limited by design) |
 
 ### 9.3 Data Safety
-- Prisma uses parameterized queries (SQL injection prevention)
+- ORM layer uses parameterized queries (SQL injection prevention)
 - Server Actions capped at 2MB body size
-- Credit deduction uses Prisma `$transaction` for atomicity
+- Credit deduction uses ORM `$transaction` for atomicity
 
 ---
 
@@ -558,7 +558,7 @@ NEXT_PUBLIC_BASE_URL=https://monzalab.com
 
 ### 11.2 Build Process
 ```bash
-prisma generate && next build
+orm generate && next build
 ```
 
 ### 11.3 Recommended Infrastructure

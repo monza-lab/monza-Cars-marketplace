@@ -1,216 +1,363 @@
-# Plan - Porsche Multi-Source Apify -> Supabase
+# Execution Plan: Auth-First ORM Removal + Safe Supabase Empty-Table Cleanup
 
-This plan executes in one-shot feature phases and one-shot testscripts per phase, aligned to `LLM_FRIENDLY_PLAN_TEST_DEBUG`.
+This plan is finalized and one-shot executable by the EYE agent (`plan-code-debug`).
 
-## Scope
+Locality Budget `{files, LOC/file, deps}`:
+- Files touched max: 14
+- LOC per file target: <= 700 (hard <= 1000)
+- New dependencies: 0
 
-- Goal: scrape all Porsche-relevant data for all models from Apify scrapers (Bring a Trailer, Cars & Bids, AutoScout24, ClassicCars) and upload to existing Supabase DB (`xgtlnyemulgdebyweqlf`).
-- Existing DB state (audited): `public.listings` populated with `363` Porsche BaT rows; other target enrichment tables mostly empty; RLS/security and index/perf findings present.
-- Delivery style: vertical slices, locality-first, deterministic runs, replayable artifacts.
+## Phase 0 - Environment Matrix + Baseline Freeze
 
-## Phase 0 - Environment Matrix + DB Contract Freeze
+### Objective
+Capture full environment matrix, auth baseline, and current DB shape before any code or schema changes.
 
-### Deliverables
+### Environment Matrix
+- OS: `win32`
+- Node: `v24.5.0`
+- npm: `v11.5.2`
+- Next.js: `16.1.6`
+- Legacy ORM: present in scripts/dependencies at start
+- Supabase: Postgres + SSR client stack present
+- Build identifier: current git short SHA
+- Configuration flags: `NODE_ENV`, `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `LOG_LEVEL`
 
-- Environment matrix artifact: `agents/testscripts/artifacts/env-matrix.md`.
-- DB audit artifact: `agents/testscripts/artifacts/db-audit-<timestamp>.md`.
-- Contract freeze doc: accepted target columns and source-field mapping table.
+### Non-Functional Targets
+- Auth availability target: >= 99.9% during scripted checks
+- Login success threshold: >= 99.0%
+- Auth/profile `500` rate threshold: < 0.5%
+- Valid-credential `401` drift threshold: <= baseline + 0.5pp
+- Session refresh reliability: 2 consecutive successes
+- Cleanup safety target: 0 false-positive drops (quarantine-before-drop policy)
 
-### Pass/Fail
+### Dedicated Auth Canary (Pre + Post)
+Thresholds:
+1. Login success rate >= 99.0%
+2. Valid-credential `401` drift <= +0.5pp over baseline
+3. `/auth/*` and `/api/user/profile` `500` rate < 0.5%
+4. Session refresh succeeds twice consecutively
+5. Protected unauthorized path returns `401/403` only
 
-- Pass: Supabase connectivity, table inventory, enum constraints, PK/FK set, existing row counts, advisor findings captured.
-- Fail: any unknown required column/type mismatch remains unresolved.
+Rollback triggers:
+- Any canary threshold breach
+- Profile bootstrap schema/status drift
 
-### Testscript TS-P0-DB-AUDIT
+Rollback action:
+- Stop execution, restore prior commit/deployment state, re-run baseline script
 
-- Objective: verify exact runtime and DB baseline before coding.
-- Prerequisites: `.env.local` with Supabase and Apify vars present.
+### Testscript TS-P0-BASELINE-AUTH-AND-DB
+- Objective: freeze auth and DB baseline evidence
+- Prerequisites: valid `.env.local`, seeded test user, staging Supabase credentials
+- Setup:
+  1. Create `agents/testscripts/artifacts/p0/`
 - RUN:
-  - `node -v && npm -v`
-  - `npm run -s env:check` (or equivalent validation command created in Phase 1)
-  - `npm run -s db:audit:porsche`
+  1. `npm run env:check`
+  2. `npm run build`
+  3. Execute login flow + `/api/user/profile` + one protected endpoint
+  4. Capture current table inventory from Supabase SQL
 - OBSERVE:
-  - Runtime versions, DB project ref, table counts, advisor issues, source distribution.
+  - Auth thresholds pass
+  - Baseline DB table inventory captured
 - COLLECT:
-  - `agents/testscripts/artifacts/env-matrix.md`
-  - `agents/testscripts/artifacts/db-audit-<timestamp>.json`
+  - `agents/testscripts/artifacts/p0/env-matrix.md`
+  - `agents/testscripts/artifacts/p0/auth-baseline.json`
+  - `agents/testscripts/artifacts/p0/table-inventory.json`
 - REPORT:
-  - Record observed vs expected and list blocking mismatches.
-- Cleanup: none.
-- Known limitations: row counts in `pg_stat_user_tables` are estimated.
-
-## Phase 1 - Core Ingestion Slice (Canonical Contracts + Supabase Writer)
-
-### Deliverables
-
-- `src/features/porsche_ingest/contracts/*` (zod contracts).
-- `src/features/porsche_ingest/repository/supabase_writer.ts` (idempotent upserts).
-- `src/features/porsche_ingest/services/{normalize,dedupe}.ts`.
-- `scripts/ingest-porsche.ts` CLI entrypoint.
-
-### Pass/Fail
-
-- Pass: one canonical sample listing writes to `public.listings` and correct child table rows.
-- Fail: duplicate insertions, contract drift, or missing required fields.
-
-### Testscript TS-P1-INGEST-CORE
-
-- Objective: verify canonical upsert semantics.
-- Prerequisites: Phase 0 pass.
-- RUN:
-  - `npm run test -- src/features/porsche_ingest/contracts`
-  - `npm run ingest:porsche -- --source=bat --mode=sample --limit=5 --dry-run`
-  - `npm run ingest:porsche -- --source=bat --mode=sample --limit=5`
-- OBSERVE:
-  - Dry-run emits valid mapping summary.
-  - Real-run inserts/updates deterministic row counts.
-  - Re-run same batch produces updates, not duplicates.
-- COLLECT:
-  - `var/runs/porsche-ingest/<run-id>.json`
-  - SQL snapshot of affected rows.
-- REPORT:
-  - Upsert stats (`inserted`, `updated`, `rejected`, `retried`).
+  - `agents/testscripts/artifacts/p0/report.md`
 - Cleanup:
-  - delete test rows by run tag if needed.
-- Known limitations:
-  - sample mode cannot prove full-rate stability.
+  - End sessions, redact secrets from artifacts
 
-## Phase 2 - Source Adapters (BaT, Cars & Bids, AutoScout24, ClassicCars)
+---
 
-### Deliverables
+## Phase 1 - ORM Touchpoint Inventory + Compatibility Seam
 
-- `src/features/porsche_ingest/adapters/bat.ts`
-- `src/features/porsche_ingest/adapters/carsandbids.ts`
-- `src/features/porsche_ingest/adapters/autoscout24.ts`
-- `src/features/porsche_ingest/adapters/classiccars.ts`
-- Source fixture contracts and mapping tests.
+### Objective
+Create/confirm repository seam so routes no longer depend directly on ORM calls.
 
-### Pass/Fail
+### Scope
+- Inventory all legacy ORM imports/usages.
+- Ensure route logic calls feature-local repositories (`src/lib/db/*`) instead of direct ORM access.
+- Do not alter auth flow semantics.
 
-- Pass: each source maps to canonical schema with >=95% parse success on fixture set.
-- Fail: unbounded field loss or source-specific crashes.
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
 
-### Testscript TS-P2-SOURCE-CONTRACTS
+Phase-specific rollback trigger:
+- Any route auth status code changes (`401/403/500`) vs baseline.
 
-- Objective: validate source-specific parsing and normalization.
-- Prerequisites: Phase 1 pass.
+### Testscript TS-P1-SEAM-REGRESSION
+- Objective: verify seam introduction causes no auth regressions
 - RUN:
-  - `npm run test -- src/features/porsche_ingest/adapters`
-  - `npm run ingest:porsche -- --source=carsandbids --mode=sample --limit=20 --dry-run`
-  - `npm run ingest:porsche -- --source=autoscout24 --mode=sample --limit=20 --dry-run`
-  - `npm run ingest:porsche -- --source=classiccars --mode=sample --limit=20 --dry-run`
+  1. `npm run test`
+  2. `npm run build`
+  3. Re-run TS-P0 auth checks
 - OBSERVE:
-  - Porsche-only filter enforced.
-  - Price/date/mileage normalization succeeds.
-  - Rejected records include explicit reason codes.
+  - Same auth outcomes and response contracts as P0
 - COLLECT:
-  - Source parse reports JSON.
-  - Rejects JSONL.
+  - `agents/testscripts/artifacts/p1/orm-touchpoints.txt`
+  - `agents/testscripts/artifacts/p1/auth-regression.json`
 - REPORT:
-  - Parse success %, top rejection reasons, model coverage.
-- Cleanup: remove sample run tags.
-- Known limitations: source payload shape may drift.
+  - `agents/testscripts/artifacts/p1/report.md`
 
-## Phase 3 - Incremental + Backfill Execution Strategy
+---
 
-### Deliverables
+## Phase 2 - ORM Read-Path Removal
 
-- Checkpointing (`last_cursor`, `last_seen_at`, `run_id`) in `ModelBackfillState` or dedicated ingest-state table.
-- Two modes: `incremental` (daily) and `backfill` (historical all models).
-- Concurrency guard + rate pacing.
+### Objective
+Replace ORM-backed reads with Supabase repositories while preserving auth/session behavior.
 
-### Pass/Fail
+### Scope
+- Migrate read paths first (browse/history/read APIs).
+- Preserve route contracts and auth guard ordering.
 
-- Pass: resumed runs continue from checkpoint without replay floods.
-- Fail: missed windows, duplicate storms, or checkpoint corruption.
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
 
-### Testscript TS-P3-RESUME-AND-BACKFILL
+Phase-specific rollback trigger:
+- Any increase in protected-route auth failures after read calls.
 
-- Objective: prove resumability and full model coverage.
-- Prerequisites: Phase 2 pass.
+### Testscript TS-P2-READ-CUTOVER-AUTH
+- Objective: prove read cutover has zero auth/session drift
 - RUN:
-  - `npm run ingest:porsche -- --source=bat --mode=incremental --since=24h`
-  - `npm run ingest:porsche -- --source=all --mode=backfill --from=2000-01-01 --limit=500`
-  - Interrupt run and resume: `npm run ingest:porsche -- --resume=<run-id>`
+  1. Start app in test mode
+  2. Login
+  3. Exercise migrated read endpoints
+  4. Re-check `/api/user/profile` and protected endpoint
 - OBSERVE:
-  - checkpoint advances monotonically.
-  - resumed run skips already committed rows.
-  - model distribution broadens beyond existing BaT subset.
+  - Response parity + auth canary pass
 - COLLECT:
-  - checkpoint table snapshot.
-  - run report before/after resume.
+  - `agents/testscripts/artifacts/p2/http-read-snapshots.json`
+  - `agents/testscripts/artifacts/p2/auth-after-read.json`
 - REPORT:
-  - recovery proof with exact counts.
-- Cleanup: clear test-only checkpoint rows.
-- Known limitations: historical availability differs by marketplace.
+  - `agents/testscripts/artifacts/p2/report.md`
 
-## Phase 4 - Data Quality, Security, and Regression Gate
+---
 
-### Deliverables
+## Phase 3 - ORM Write-Path Removal (Auth-Linked Writes)
 
-- Quality rules (missing price, invalid year, malformed VIN, non-Porsche contamination).
-- Security tasks queued: enable RLS policy rollout plan and restricted service-role usage.
-- Regression testscript pack.
+### Objective
+Move auth-linked writes (profile bootstrap, credits, analysis persistence) to Supabase repositories.
 
-### Pass/Fail
+### Scope
+- Migrate write flows with explicit transaction boundaries.
+- Preserve login/session/profile endpoint behavior.
 
-- Pass: all critical testscripts green; non-Porsche contamination rate is 0%; no secret leaks.
-- Fail: unresolved critical lints, flaky runs, or repeated failures.
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
 
-### Testscript TS-P4-PROD-READINESS
+Phase-specific rollback trigger:
+- Any profile bootstrap failure or credit consistency regression.
 
-- Objective: certify production readiness.
-- Prerequisites: Phases 0-3 pass.
+### Testscript TS-P3-WRITE-CUTOVER-AUTH
+- Objective: validate write-path correctness and auth continuity
 - RUN:
-  - `npm run test -- src/features/porsche_ingest`
-  - `npm run ingest:porsche -- --source=all --mode=incremental --limit=200`
-  - `npm run db:quality:porsche`
-  - `npm run db:security:advisors`
+  1. Login
+  2. Execute write-path API sequence (`/api/user/create`, `/api/user/profile`, `/api/analyze`)
+  3. Run session refresh twice
+  4. Re-check protected endpoint
 - OBSERVE:
-  - stable throughput, deterministic errors, explicit diagnostics.
-  - no non-Porsche rows introduced.
-  - quality scores and missing-field rates within threshold.
+  - Credits/profile contracts stable; auth canary pass
 - COLLECT:
-  - final readiness report + advisor snapshots + run metrics.
+  - `agents/testscripts/artifacts/p3/credit-ledger.json`
+  - `agents/testscripts/artifacts/p3/profile-bootstrap.json`
+  - `agents/testscripts/artifacts/p3/session-refresh.json`
 - REPORT:
-  - go/no-go decision with rationale.
-- Cleanup: archive artifacts under `agents/testscripts/artifacts/final/`.
-- Known limitations: marketplace anti-bot changes can impact source availability.
+  - `agents/testscripts/artifacts/p3/report.md`
 
-## One-Shot Execution Guidance (Feature Phases + Testscripts)
+---
 
-1. Execute Phase 0 -> 4 sequentially in one implementation cycle.
-2. At each phase, run its testscript immediately after implementation.
-3. Re-run all prior phase testscripts before advancing (regression lock).
-4. Use one-hypothesis/one-variable debug iterations when failing.
-5. If any test still fails after two debug turns, stop and generate `agents/testscripts/failure_report.md` with required defect fields.
+## Phase 4 - Remove ORM Runtime/Build Connections
 
-## Failure Report Mandate
+### Objective
+Remove legacy ORM client, generate hooks, and script coupling with minimal essential edits.
 
-If after trying to debug for two turns or more tests still fail, generate `agents/testscripts/failure_report.md` containing:
+### Scope
+- Remove legacy ORM usage in runtime code.
+- Remove legacy ORM build hooks from `package.json` scripts.
+- Remove legacy ORM dependencies only after prior gates are green.
 
-- title, severity, frequency, phase, script-identifier
-- environment matrix, build/commit
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
+
+Phase-specific rollback trigger:
+- Any build/runtime failure requiring legacy ORM, or auth drift post-removal.
+
+### Testscript TS-P4-ORM-EXIT
+- Objective: verify complete ORM exit without auth regressions
+- RUN:
+  1. ORM usage scan across codebase
+  2. `npm run build`
+  3. `npm run test`
+  4. Re-run full auth canary
+- OBSERVE:
+  - No runtime/build ORM dependency; auth canary green
+- COLLECT:
+  - `agents/testscripts/artifacts/p4/orm-scan.txt`
+  - `agents/testscripts/artifacts/p4/auth-post-orm-exit.json`
+- REPORT:
+  - `agents/testscripts/artifacts/p4/report.md`
+
+---
+
+## Phase 5 - Unused Empty Table Detection (Evidence Gate A)
+
+### Objective
+Generate candidate list of empty tables and prove candidates are non-system and currently empty.
+
+### Scope
+- Query table row estimates and explicit counts for candidate confirmation.
+- Exclude system schemas and known active tables.
+
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
+
+Phase-specific rollback trigger:
+- Any auth canary degradation during inventory process.
+
+### Evidence Gate A (Must Pass)
+Per-table evidence required:
+1. `estimated_row_count = 0`
+2. `exact_row_count = 0`
+3. schema is eligible (`public`/approved app schema only)
+
+### Testscript TS-P5-EMPTY-TABLE-DETECT
+- Objective: produce safe candidate inventory
+- RUN:
+  1. Execute detection SQL in Supabase
+  2. Execute exact row count checks for candidates
+  3. Re-run auth canary
+- OBSERVE:
+  - Candidate list generated; auth unaffected
+- COLLECT:
+  - `agents/testscripts/artifacts/p5/empty-table-candidates.json`
+  - `agents/testscripts/artifacts/p5/exact-row-counts.json`
+  - `agents/testscripts/artifacts/p5/auth-after-detect.json`
+- REPORT:
+  - `agents/testscripts/artifacts/p5/report.md`
+
+---
+
+## Phase 6 - Dependency Validation + Quarantine (Evidence Gates B/C)
+
+### Objective
+Quarantine only candidates proven unused (no FK/view/trigger/code usage) and keep reversible restore scripts.
+
+### Scope
+- Validate relational dependencies and runtime references.
+- Quarantine by move-to-schema or deterministic rename.
+- Create restore SQL for each quarantined table.
+
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
+
+Phase-specific rollback trigger:
+- Any production-path query failure, auth/profile drift, or cleanup script touching non-candidate tables.
+
+### Evidence Gate B (Must Pass Before Quarantine)
+Per-table proof:
+1. no inbound FKs
+2. no outbound FKs required by active tables
+3. no dependent views/triggers/functions
+4. no runtime references in code/migrations/logs
+
+### Evidence Gate C (Must Pass During Quarantine)
+Per-table proof:
+1. quarantine SQL applied successfully
+2. restore SQL generated and validated
+3. auth canary still green after quarantine
+
+### Testscript TS-P6-QUARANTINE-SAFETY
+- Objective: quarantine safely with rollback readiness
+- RUN:
+  1. Execute dependency checks
+  2. Apply quarantine SQL for approved candidates
+  3. Validate restore SQL in dry-run form
+  4. Run full auth canary
+- OBSERVE:
+  - Only approved tables quarantined; auth remains green
+- COLLECT:
+  - `agents/testscripts/artifacts/p6/dependency-checks.json`
+  - `agents/testscripts/artifacts/p6/quarantine-sql.sql`
+  - `agents/testscripts/artifacts/p6/restore-sql.sql`
+  - `agents/testscripts/artifacts/p6/auth-after-quarantine.json`
+- REPORT:
+  - `agents/testscripts/artifacts/p6/report.md`
+
+---
+
+## Phase 7 - Optional Drop After Soak (Evidence Gate D)
+
+### Objective
+Drop quarantined tables only after soak window completes with zero incidents.
+
+### Scope
+- Soak duration: minimum 7 days.
+- Drop is optional; if uncertainty remains, keep quarantine and stop.
+
+### Dedicated Auth Canary (Pre + Post)
+Thresholds and rollback triggers are identical to Phase 0.
+
+Phase-specific rollback trigger:
+- Any auth regression, incident, or ambiguous evidence during soak.
+
+### Evidence Gate D (Must Pass Before Drop)
+Per-table proof:
+1. soak window complete with no incidents
+2. no runtime references observed during soak
+3. auth canary stable through soak and pre-drop check
+4. approved drop SQL + fallback plan documented
+
+### Testscript TS-P7-OPTIONAL-DROP-SAFETY
+- Objective: execute optional drop with strict safeguards
+- RUN:
+  1. Verify soak evidence bundle
+  2. Apply drop SQL for approved tables only
+  3. Run full auth canary and protected endpoint suite
+- OBSERVE:
+  - Drop applied only to approved tables; auth unaffected
+- COLLECT:
+  - `agents/testscripts/artifacts/p7/soak-observations.md`
+  - `agents/testscripts/artifacts/p7/drop-sql.sql`
+  - `agents/testscripts/artifacts/p7/auth-post-drop.json`
+- REPORT:
+  - `agents/testscripts/artifacts/p7/report.md`
+
+---
+
+## Cumulative Regression Rule
+
+At phase `N`, execute testscripts for all phases `0..N`.
+No phase advances unless current and prior scripts pass.
+
+## Auth-First Execution Order Rule
+
+For every phase:
+1. Run pre-phase auth canary.
+2. Execute phase changes.
+3. Run phase-specific script.
+4. Re-run all previous scripts.
+5. Trigger rollback immediately on any auth breach.
+
+## Cleanup Safeguards Rule
+
+- No table drop without completed Gates A+B+C+D evidence.
+- Quarantine is mandatory before optional drop.
+- If evidence is incomplete, candidate remains untouched.
+
+## Failure Rule (Mandatory)
+
+If after trying to debug for two turns the tests still fail, stop and generate:
+- `agents/testscripts/failure_report.md`
+
+Required fields in `failure_report.md`:
+- title, severity, frequency, phase, script identifier
+- environment matrix and build commit
 - exact reproduction steps
 - observed vs expected behavior
-- artifact references
-- suspected boundary and hypothesis
-- workaround (if any)
-- regression status and owner
+- artifact references with timestamps
+- suspected boundary and initial hypothesis
+- workaround (if any), regression test status, ownership
 
-## Operator Command Checklist (Exact)
+## EYE Handoff Instruction
 
-```bash
-npm install
-npm run test
-npm run ingest:porsche -- --source=bat --mode=sample --limit=20 --dry-run
-npm run ingest:porsche -- --source=all --mode=incremental --limit=200
-npm run ingest:porsche -- --source=all --mode=backfill --from=2000-01-01
-npm run db:quality:porsche
-```
-
-## Locality Budget (Execution Guardrail)
-
-- Files: <= 16 files touched for ingestion feature rollout.
-- LOC/file: target <= 700, hard max 1000.
-- Dependencies: max +3 production (`@supabase/supabase-js`, `zod`, `p-limit`), max +2 dev.
+EYE agent with `plan-code-debug` executes Phases 0 -> 7 in one-shot order, enforcing auth canary gates and cleanup evidence gates exactly as written.

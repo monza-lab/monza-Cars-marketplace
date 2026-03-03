@@ -215,13 +215,13 @@ scrapeAllWithBackfill() ──► src/lib/scrapers/index.ts
     For each auction
         │
         ▼
-    prisma.auction.upsert() ──► Writes to database
+    orm.auction.upsert() ──► Writes to database
 ```
 
 **What it does:**
 - Runs all platform scrapers in parallel
 - Different from ferrari_collector (no Ferrari filter, writes to different schema)
-- Uses Prisma instead of Supabase client
+- Uses legacy ORM instead of Supabase client
 
 ---
 
@@ -234,7 +234,7 @@ scrapeAllWithBackfill() ──► src/lib/scrapers/index.ts
 | `listings` | source, source_id, source_url, year, make, model, trim, body_style, color_exterior, color_interior, mileage, mileage_unit, vin, hammer_price, original_currency, country, region, city, auction_house, auction_date, sale_date, status, photos_count, description_text, scrape_timestamp |
 | `photos` | listing_id, url, order |
 
-### Cron API → Prisma
+### Cron API -> ORM
 
 | Model | Fields |
 |-------|--------|
@@ -249,7 +249,7 @@ scrapeAllWithBackfill() ──► src/lib/scrapers/index.ts
 | Aspect | Ferrari Collector | Cron API |
 |--------|-------------------|-----------|
 | Scope | Ferrari only | All makes |
-| Output | Supabase | Prisma/Database |
+| Output | Supabase | ORM/Database |
 | Filtering | Ferrari filter | None |
 | Checkpointing | Yes | No |
 | Use case | Ferrari-focused data | Full platform data |

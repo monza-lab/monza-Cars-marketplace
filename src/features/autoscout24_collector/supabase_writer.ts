@@ -153,3 +153,66 @@ function truncateIsoToHour(iso: string): string {
   const hh = String(d.getUTCHours()).padStart(2, "0");
   return `${y}-${m}-${day}T${hh}:00:00.000Z`;
 }
+
+// ─── Staleness-based listing refresh ───
+
+export interface RefreshResult {
+  checked: number;
+  updated: number;
+  errors: string[];
+}
+
+/**
+ * Marks active AutoScout24 listings as "delisted" when they haven't been
+ * re-seen by the discover step within `staleDays`.
+ *
+ * Uses 14-day threshold to account for 7-day country rotation + buffer
+ * for failed runs. Runs AFTER discover.
+ */
+export async function refreshStaleListings(opts?: {
+  staleDays?: number;
+  maxUpdates?: number;
+}): Promise<RefreshResult> {
+  const staleDays = opts?.staleDays ?? 14;
+  const maxUpdates = opts?.maxUpdates ?? 500;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const cutoff = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: staleRows, error: fetchErr } = await client
+    .from("listings")
+    .select("id")
+    .eq("status", "active")
+    .eq("source", "AutoScout24")
+    .lt("scrape_timestamp", cutoff)
+    .order("scrape_timestamp", { ascending: true })
+    .limit(maxUpdates);
+
+  if (fetchErr || !staleRows) {
+    return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No stale rows"] };
+  }
+
+  if (staleRows.length === 0) {
+    return { checked: 0, updated: 0, errors: [] };
+  }
+
+  const staleIds = staleRows.map((r) => r.id);
+
+  const { error: updateErr, count } = await client
+    .from("listings")
+    .update({ status: "delisted", updated_at: new Date().toISOString() })
+    .in("id", staleIds);
+
+  if (updateErr) {
+    return { checked: staleRows.length, updated: 0, errors: [updateErr.message] };
+  }
+
+  return { checked: staleRows.length, updated: count ?? staleIds.length, errors: [] };
+}

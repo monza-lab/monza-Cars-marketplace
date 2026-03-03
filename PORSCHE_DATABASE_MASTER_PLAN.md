@@ -247,7 +247,7 @@ Acciones:
 
 ### Tech Stack Existente
 - **Frontend**: Next.js + TypeScript
-- **Backend/DB**: Supabase (Postgres) + Prisma ORM
+- **Backend/DB**: Supabase (Postgres) + legacy ORM
 - **Scraping**: Cheerio (HTML parsing), fetch (HTTP)
 - **Agregar**: Playwright (para sitios JS-heavy), p-queue (concurrencia), proxy integration
 

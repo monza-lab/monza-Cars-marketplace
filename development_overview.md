@@ -117,7 +117,7 @@ listings (main table)
 | Cron | `/api/cron/ferrari` every 6 hours |
 | i18n | `next-intl` with locale prefix |
 | Image CDNs | BaT, Cars & Bids, Collecting Cars, RM Sotheby's, Unsplash |
-| DB | Supabase (primary), Prisma/PostgreSQL (legacy) |
+| DB | Supabase (primary), ORM/PostgreSQL (legacy) |
 
 ---
 

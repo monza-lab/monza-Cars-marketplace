@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db/prisma'
+import { dbQuery } from '@/lib/db/sql'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { normalizeSupportedMake, resolveRequestedMake } from '@/lib/makeProfiles'
 
@@ -49,50 +49,53 @@ export async function GET(request: Request) {
       })
     }
 
-    // Porsche-first default, expandable via explicit make filter.
-    const where: Record<string, unknown> = {
-      make: { equals: requestedMake ?? resolveRequestedMake(null), mode: 'insensitive' },
-    }
+    const clauses: string[] = []
+    const values: unknown[] = []
+
+    const defaultMake = requestedMake ?? resolveRequestedMake(null)
+    values.push(defaultMake)
+    clauses.push(`make ILIKE $${values.length}`)
 
     if (platform) {
-      where.platform = platform
+      values.push(platform)
+      clauses.push(`platform = $${values.length}`)
     }
 
     if (model) {
-      where.model = { equals: model, mode: 'insensitive' }
+      values.push(model)
+      clauses.push(`model ILIKE $${values.length}`)
     }
 
     if (status) {
-      where.status = status
+      values.push(status)
+      clauses.push(`status = $${values.length}`)
     }
 
     if (yearMin || yearMax) {
-      where.year = {}
       if (yearMin) {
-        (where.year as Record<string, number>).gte = parseInt(yearMin, 10)
+        values.push(parseInt(yearMin, 10))
+        clauses.push(`year >= $${values.length}`)
       }
       if (yearMax) {
-        (where.year as Record<string, number>).lte = parseInt(yearMax, 10)
+        values.push(parseInt(yearMax, 10))
+        clauses.push(`year <= $${values.length}`)
       }
     }
 
     if (priceMin || priceMax) {
-      where.currentBid = {}
       if (priceMin) {
-        (where.currentBid as Record<string, number>).gte = parseFloat(priceMin)
+        values.push(parseFloat(priceMin))
+        clauses.push(`"currentBid" >= $${values.length}`)
       }
       if (priceMax) {
-        (where.currentBid as Record<string, number>).lte = parseFloat(priceMax)
+        values.push(parseFloat(priceMax))
+        clauses.push(`"currentBid" <= $${values.length}`)
       }
     }
 
-    // Search across title, make, and model fields
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { make: { contains: search, mode: 'insensitive' } },
-        { model: { contains: search, mode: 'insensitive' } },
-      ]
+      values.push(`%${search}%`)
+      clauses.push(`(title ILIKE $${values.length} OR make ILIKE $${values.length} OR model ILIKE $${values.length})`)
     }
 
     // Validate sortBy against allowed fields
@@ -109,29 +112,33 @@ export async function GET(request: Request) {
     ]
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt'
 
-    // Execute count and data queries in parallel
+    const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : ''
+    values.push(limit)
+    const limitParam = values.length
+    values.push((page - 1) * limit)
+    const offsetParam = values.length
+
     const [total, auctions] = await withRouteTimeout(
       Promise.all([
-        prisma.auction.count({ where }),
-        prisma.auction.findMany({
-          where,
-          orderBy: { [safeSortBy]: sortOrder },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
+        dbQuery<{ total: string }>(`SELECT COUNT(*)::bigint AS total FROM "Auction" ${whereSql}`, values.slice(0, values.length - 2)),
+        dbQuery<Record<string, unknown>>(
+          `SELECT * FROM "Auction" ${whereSql} ORDER BY "${safeSortBy}" ${sortOrder.toUpperCase()} LIMIT $${limitParam} OFFSET $${offsetParam}`,
+          values,
+        ),
       ]),
       '/api/auctions'
     )
 
-    const totalPages = Math.ceil(total / limit)
+    const totalCount = Number(total.rows[0]?.total ?? 0)
+    const totalPages = Math.ceil(totalCount / limit)
 
     return NextResponse.json({
       success: true,
-      data: auctions,
+      data: auctions.rows,
       meta: {
         page,
         limit,
-        total,
+        total: totalCount,
         totalPages,
       },
     })

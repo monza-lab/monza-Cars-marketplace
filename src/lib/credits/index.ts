@@ -1,67 +1,78 @@
-import { prisma } from '../db/prisma'
+import { dbQuery, withTransaction } from '../db/sql'
 
 const FREE_CREDITS_PER_MONTH = 3
 
-/**
- * Get or create user by Supabase ID
- */
+type UserRow = {
+  id: string
+  supabaseId: string
+  email: string
+  name: string | null
+  creditsBalance: number
+  freeCreditsUsed: number
+  creditResetDate: Date
+  tier: 'FREE' | 'PRO'
+}
+
+async function getUserBySupabaseId(supabaseId: string) {
+  const result = await dbQuery<UserRow>('SELECT * FROM "User" WHERE "supabaseId" = $1 LIMIT 1', [supabaseId])
+  return result.rows[0] ?? null
+}
+
+async function getUserByEmail(email: string) {
+  const result = await dbQuery<UserRow>('SELECT * FROM "User" WHERE email = $1 LIMIT 1', [email])
+  return result.rows[0] ?? null
+}
+
 export async function getOrCreateUser(supabaseId: string, email: string, name?: string) {
-  // 1. Look up by supabaseId first
-  let user = await prisma.user.findUnique({ where: { supabaseId } })
+  let user = await getUserBySupabaseId(supabaseId)
   if (user) return user
 
-  // 2. Check by email (handles Supabase identity linking / provider changes)
-  user = await prisma.user.findUnique({ where: { email } })
+  user = await getUserByEmail(email)
   if (user) {
-    // Email exists but supabaseId differs — update to new Supabase identity
     if (user.supabaseId !== supabaseId) {
-      user = await prisma.user.update({
-        where: { email },
-        data: { supabaseId },
-      })
+      const updated = await dbQuery<UserRow>(
+        'UPDATE "User" SET "supabaseId" = $1, "updatedAt" = NOW() WHERE email = $2 RETURNING *',
+        [supabaseId, email],
+      )
+      return updated.rows[0]
     }
     return user
   }
 
-  // 3. Create new user
   try {
-    user = await prisma.user.create({
-      data: {
-        supabaseId,
-        email,
-        name,
-        creditsBalance: FREE_CREDITS_PER_MONTH,
-        freeCreditsUsed: 0,
-        creditResetDate: new Date(),
-        transactions: {
-          create: {
-            amount: FREE_CREDITS_PER_MONTH,
-            type: 'FREE_MONTHLY',
-            description: 'Welcome credits',
-          },
-        },
-      },
-    })
-  } catch (e: unknown) {
-    // Race condition: another concurrent request created the user first
-    if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'P2002') {
-      user = await prisma.user.findUnique({ where: { supabaseId } })
-        ?? await prisma.user.findUnique({ where: { email } })
+    const inserted = await dbQuery<UserRow>(
+      `
+        INSERT INTO "User" (
+          "supabaseId", email, name, "creditsBalance", "freeCreditsUsed", "creditResetDate", tier
+        )
+        VALUES ($1, $2, $3, $4, 0, NOW(), 'FREE')
+        RETURNING *
+      `,
+      [supabaseId, email, name ?? null, FREE_CREDITS_PER_MONTH],
+    )
+    user = inserted.rows[0]
+
+    await dbQuery(
+      `
+        INSERT INTO "CreditTransaction" ("userId", amount, type, description)
+        VALUES ($1, $2, 'FREE_MONTHLY', 'Welcome credits')
+      `,
+      [user.id, FREE_CREDITS_PER_MONTH],
+    )
+  } catch (e) {
+    const code = typeof e === 'object' && e && 'code' in e ? String((e as { code?: unknown }).code) : ''
+    if (code === '23505') {
+      user = (await getUserBySupabaseId(supabaseId)) ?? (await getUserByEmail(email))
     }
     if (!user) throw e
   }
 
-  return user!
+  return user
 }
 
-/**
- * Check if monthly reset is needed and apply free credits
- */
 export async function checkAndResetFreeCredits(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  })
-
+  const currentResult = await dbQuery<UserRow>('SELECT * FROM "User" WHERE id = $1 LIMIT 1', [userId])
+  const user = currentResult.rows[0]
   if (!user) return null
 
   const now = new Date()
@@ -70,162 +81,143 @@ export async function checkAndResetFreeCredits(userId: string) {
     (now.getFullYear() - resetDate.getFullYear()) * 12 +
     (now.getMonth() - resetDate.getMonth())
 
-  if (monthsSinceReset >= 1) {
-    // Reset free credits for new month
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        creditsBalance: {
-          increment: FREE_CREDITS_PER_MONTH,
-        },
-        freeCreditsUsed: 0,
-        creditResetDate: now,
-        transactions: {
-          create: {
-            amount: FREE_CREDITS_PER_MONTH,
-            type: 'FREE_MONTHLY',
-            description: `Monthly free credits - ${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-          },
-        },
-      },
-    })
+  if (monthsSinceReset < 1) return user
 
-    return updatedUser
-  }
+  const updatedResult = await dbQuery<UserRow>(
+    `
+      UPDATE "User"
+      SET "creditsBalance" = "creditsBalance" + $2,
+          "freeCreditsUsed" = 0,
+          "creditResetDate" = $3,
+          "updatedAt" = NOW()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [userId, FREE_CREDITS_PER_MONTH, now],
+  )
 
-  return user
+  await dbQuery(
+    `
+      INSERT INTO "CreditTransaction" ("userId", amount, type, description)
+      VALUES ($1, $2, 'FREE_MONTHLY', $3)
+    `,
+    [
+      userId,
+      FREE_CREDITS_PER_MONTH,
+      `Monthly free credits - ${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+    ],
+  )
+
+  return updatedResult.rows[0] ?? user
 }
 
-/**
- * Get user credits info
- */
 export async function getUserCredits(supabaseId: string) {
-  const user = await prisma.user.findUnique({
-    where: { supabaseId },
-    select: {
-      id: true,
-      creditsBalance: true,
-      freeCreditsUsed: true,
-      tier: true,
-      creditResetDate: true,
-    },
-  })
-
+  const user = await getUserBySupabaseId(supabaseId)
   if (!user) return null
-
-  // Check for monthly reset
-  const refreshedUser = await checkAndResetFreeCredits(user.id)
-
-  return refreshedUser
+  return checkAndResetFreeCredits(user.id)
 }
 
-/**
- * Check if user has already analyzed this auction (no credit needed)
- */
 export async function hasAlreadyAnalyzed(userId: string, auctionId: string) {
-  const existing = await prisma.userAnalysis.findUnique({
-    where: {
-      userId_auctionId: {
-        userId,
-        auctionId,
-      },
-    },
-  })
-
-  return !!existing
+  const existing = await dbQuery<{ id: string }>(
+    'SELECT id FROM "UserAnalysis" WHERE "userId" = $1 AND "auctionId" = $2 LIMIT 1',
+    [userId, auctionId],
+  )
+  return !!existing.rows[0]
 }
 
 type DeductCreditResult =
   | { success: false; error: string; creditUsed?: never; cached?: never }
   | { success: true; creditUsed: number; cached: boolean; error?: never }
 
-/**
- * Deduct credit for analysis
- */
 export async function deductCredit(userId: string, auctionId: string): Promise<DeductCreditResult> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  })
+  const userResult = await dbQuery<UserRow>('SELECT * FROM "User" WHERE id = $1 LIMIT 1', [userId])
+  const user = userResult.rows[0]
 
   if (!user) {
     return { success: false, error: 'USER_NOT_FOUND' }
   }
 
-  // Check if already analyzed (no credit needed)
   const alreadyAnalyzed = await hasAlreadyAnalyzed(userId, auctionId)
   if (alreadyAnalyzed) {
     return { success: true, creditUsed: 0, cached: true }
   }
 
-  // Check credit balance
   if (user.creditsBalance < 1) {
     return { success: false, error: 'INSUFFICIENT_CREDITS' }
   }
 
-  // Deduct credit and record analysis
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: {
-        creditsBalance: { decrement: 1 },
-        freeCreditsUsed: { increment: user.tier === 'FREE' ? 1 : 0 },
-      },
-    }),
-    prisma.creditTransaction.create({
-      data: {
-        userId,
-        amount: -1,
-        type: 'ANALYSIS_USED',
-        description: `Analysis for auction ${auctionId}`,
-      },
-    }),
-    prisma.userAnalysis.create({
-      data: {
-        userId,
-        auctionId,
-        creditCost: 1,
-      },
-    }),
-  ])
+  try {
+    await withTransaction(async (client) => {
+      await client.query(
+        `
+          UPDATE "User"
+          SET "creditsBalance" = "creditsBalance" - 1,
+              "freeCreditsUsed" = "freeCreditsUsed" + $2,
+              "updatedAt" = NOW()
+          WHERE id = $1
+        `,
+        [userId, user.tier === 'FREE' ? 1 : 0],
+      )
+
+      await client.query(
+        `
+          INSERT INTO "CreditTransaction" ("userId", amount, type, description)
+          VALUES ($1, -1, 'ANALYSIS_USED', $2)
+        `,
+        [userId, `Analysis for auction ${auctionId}`],
+      )
+
+      await client.query(
+        `
+          INSERT INTO "UserAnalysis" ("userId", "auctionId", "creditCost")
+          VALUES ($1, $2, 1)
+        `,
+        [userId, auctionId],
+      )
+    })
+  } catch (error) {
+    const code = typeof error === 'object' && error && 'code' in error ? String((error as { code?: unknown }).code) : ''
+    if (code === '23505') {
+      return { success: true, creditUsed: 0, cached: true }
+    }
+    throw error
+  }
 
   return { success: true, creditUsed: 1, cached: false }
 }
 
-/**
- * Add purchased credits
- */
 export async function addPurchasedCredits(
   userId: string,
   amount: number,
-  stripePaymentId?: string
+  stripePaymentId?: string,
 ) {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      creditsBalance: { increment: amount },
-      transactions: {
-        create: {
-          amount,
-          type: 'PURCHASE',
-          description: `Purchased ${amount} credits`,
-          stripePaymentId,
-        },
-      },
-    },
-  })
+  const updated = await dbQuery<UserRow>(
+    `
+      UPDATE "User"
+      SET "creditsBalance" = "creditsBalance" + $2,
+          "updatedAt" = NOW()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [userId, amount],
+  )
 
-  return user
+  await dbQuery(
+    `
+      INSERT INTO "CreditTransaction" ("userId", amount, type, description, "stripePaymentId")
+      VALUES ($1, $2, 'PURCHASE', $3, $4)
+    `,
+    [userId, amount, `Purchased ${amount} credits`, stripePaymentId ?? null],
+  )
+
+  return updated.rows[0] ?? null
 }
 
-/**
- * Get user transaction history
- */
 export async function getTransactionHistory(userId: string, limit = 20) {
-  const transactions = await prisma.creditTransaction.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  })
+  const transactions = await dbQuery<Record<string, unknown>>(
+    'SELECT * FROM "CreditTransaction" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT $2',
+    [userId, limit],
+  )
 
-  return transactions
+  return transactions.rows
 }

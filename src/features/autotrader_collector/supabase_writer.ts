@@ -1,6 +1,11 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { setTimeout as sleep } from "node:timers/promises";
+import * as cheerio from "cheerio";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
+import { fetchHtml } from "./net";
+import { mapAuctionStatus } from "./normalize";
+import { logEvent } from "./logging";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -164,8 +169,8 @@ export interface RefreshResult {
 }
 
 /**
- * Re-scrapes every listing with `status = 'active'` and updates the DB
- * when the listing has been removed or sold.
+ * Re-fetches each active AutoTrader listing URL and updates the DB
+ * when the listing has been removed (404/410) or sold.
  */
 export async function refreshActiveListings(): Promise<RefreshResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -178,8 +183,11 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
 
   const { data: activeRows, error: fetchErr } = await client
     .from("listings")
-    .select("id,source_url,hammer_price,sale_date")
-    .eq("status", "active");
+    .select("id,source_url")
+    .eq("status", "active")
+    .eq("source", "AutoTrader")
+    .order("scrape_timestamp", { ascending: true })
+    .limit(50);
 
   if (fetchErr || !activeRows) {
     return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
@@ -189,20 +197,44 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
 
   for (const row of activeRows) {
     try {
-      // For AutoTrader, we don't have fetchAuctionData - we'd need to implement specific scraper
-      // For now, just skip - this would need custom implementation
-      logEvent({
-        level: "debug",
-        event: "collector.refresh_skip",
-        runId: "",
-        source: "AutoTrader",
-        url: row.source_url,
-        message: "AutoTrader refresh not implemented",
-      });
+      let newStatus: string | null = null;
+
+      try {
+        const html = await fetchHtml(row.source_url, 10_000);
+        const $ = cheerio.load(html);
+        const bodyText = $("body").text();
+        const detected = mapAuctionStatus({ rawPriceText: bodyText });
+        if (detected !== "active") {
+          newStatus = detected;
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/\b(404|410)\b/.test(msg)) {
+          newStatus = "delisted";
+        } else if (/\b403\b/.test(msg)) {
+          // Ambiguous (rate limit) — skip
+          logEvent({ level: "debug", event: "collector.refresh_skip_403", runId: "", source: "AutoTrader", url: row.source_url });
+          continue;
+        } else {
+          throw err;
+        }
+      }
+
+      if (newStatus) {
+        const { error: updateErr } = await client
+          .from("listings")
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq("id", row.id);
+        if (updateErr) throw new Error(`Update failed: ${updateErr.message}`);
+        result.updated++;
+        logEvent({ level: "info", event: "collector.refresh_updated", runId: "", source: "AutoTrader", url: row.source_url, newStatus });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
     }
+
+    await sleep(1_000);
   }
 
   return result;
@@ -216,6 +248,3 @@ function truncateIsoToHour(iso: string): string {
   const hh = String(d.getUTCHours()).padStart(2, "0");
   return `${y}-${m}-${day}T${hh}:00:00.000Z`;
 }
-
-// Import logEvent for refreshActiveListings
-import { logEvent } from "./logging";

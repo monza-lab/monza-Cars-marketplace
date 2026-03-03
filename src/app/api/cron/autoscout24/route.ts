@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAutoScout24Collector } from "@/features/autoscout24_collector/collector";
+import { refreshStaleListings } from "@/features/autoscout24_collector/supabase_writer";
 import { recordScraperRun } from "@/lib/scraper-monitoring";
 import type { AS24CountryCode } from "@/features/autoscout24_collector/types";
 
@@ -67,6 +68,9 @@ export async function GET(request: Request) {
       skipMonitoring: true, // cron route handles monitoring
     });
 
+    // Step 2: Mark stale listings as delisted (runs AFTER discover)
+    const refreshResult = await refreshStaleListings({ staleDays: 14, maxUpdates: 200 });
+
     await recordScraperRun({
       scraper_name: "autoscout24",
       run_id: result.runId,
@@ -82,12 +86,19 @@ export async function GET(request: Request) {
       normalized: result.counts.normalized,
       skipped_duplicate: result.counts.skippedDuplicate,
       bot_blocked: result.counts.akamaiBlocked,
+      refresh_checked: refreshResult.checked,
+      refresh_updated: refreshResult.updated,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 
     return NextResponse.json({
       success: true,
       runId: result.runId,
+      refresh: {
+        checked: refreshResult.checked,
+        updated: refreshResult.updated,
+        errors: refreshResult.errors,
+      },
       countries,
       shardsCompleted: result.shardsCompleted,
       shardsTotal: result.shardsTotal,

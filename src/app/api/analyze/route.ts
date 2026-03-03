@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db/prisma'
+import { dbQuery } from '@/lib/db/sql'
 import { analyzeAuction } from '@/lib/ai/analyzer'
 import { createClient } from '@/lib/supabase/server'
 import { getOrCreateUser, deductCredit, hasAlreadyAnalyzed } from '@/lib/credits'
@@ -47,13 +47,8 @@ export async function POST(request: Request) {
     )
 
     // Fetch the auction from the database
-    const auction = await prisma.auction.findUnique({
-      where: { id: body.auctionId },
-      include: {
-        analysis: true,
-        comparables: true,
-      },
-    })
+    const auctionResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Auction" WHERE id = $1 LIMIT 1', [body.auctionId])
+    const auction = auctionResult.rows[0]
 
     if (!auction) {
       return NextResponse.json(
@@ -69,15 +64,18 @@ export async function POST(request: Request) {
     const alreadyAnalyzed = await hasAlreadyAnalyzed(dbUser.id, body.auctionId)
 
     // Check if a recent analysis already exists (within cache window)
-    if (auction.analysis) {
+    const analysisLookup = await dbQuery<Record<string, unknown>>('SELECT * FROM "Analysis" WHERE "auctionId" = $1 LIMIT 1', [body.auctionId])
+    const existingAnalysis = analysisLookup.rows[0]
+
+    if (existingAnalysis) {
       const analysisAge =
-        Date.now() - new Date(auction.analysis.createdAt).getTime()
+        Date.now() - new Date(String(existingAnalysis.createdAt)).getTime()
       const cacheThreshold = ANALYSIS_CACHE_HOURS * 60 * 60 * 1000
 
       if (analysisAge < cacheThreshold) {
         return NextResponse.json({
           success: true,
-          data: auction.analysis,
+          data: existingAnalysis,
           cached: true,
           creditUsed: 0,
           creditsRemaining: dbUser.creditsBalance,
@@ -100,76 +98,100 @@ export async function POST(request: Request) {
 
     // Fetch comparables linked to this auction + market data for context
     const [auctionComparables, marketDataRecords] = await Promise.all([
-      prisma.comparable.findMany({
-        where: { auctionId: auction.id },
-        orderBy: { soldDate: 'desc' },
-        take: 10,
-      }),
-      prisma.marketData.findMany({
-        where: {
-          make: { equals: auction.make, mode: 'insensitive' },
-          model: { equals: auction.model, mode: 'insensitive' },
-        },
-        take: 5,
-      }),
+      dbQuery<Record<string, unknown>>(
+        'SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST LIMIT 10',
+        [auction.id],
+      ),
+      dbQuery<Record<string, unknown>>(
+        'SELECT * FROM "MarketData" WHERE make ILIKE $1 AND model ILIKE $2 ORDER BY "lastUpdated" DESC LIMIT 5',
+        [auction.make, auction.model],
+      ),
     ])
 
     // Format vehicle data and market data for the AI prompt
     const vehicleData = {
-      id: auction.id,
-      title: auction.title,
-      make: auction.make,
-      model: auction.model,
-      year: auction.year,
-      mileage: auction.mileage,
-      platform: auction.platform,
-      currentBid: auction.currentBid,
-      endTime: auction.endTime,
-      description: auction.description,
-      url: auction.url,
-      imageUrl: auction.images?.[0] ?? null,
+      id: String(auction.id),
+      title: String(auction.title ?? ''),
+      make: String(auction.make ?? ''),
+      model: String(auction.model ?? ''),
+      year: Number(auction.year ?? 0),
+      mileage: (auction.mileage as number | null) ?? null,
+      platform: String(auction.platform ?? ''),
+      currentBid: (auction.currentBid as number | null) ?? null,
+      endTime: (auction.endTime as string | Date | null | undefined) ?? null,
+      description: (auction.description as string | null) ?? null,
+      url: String(auction.url ?? ''),
+      imageUrl: Array.isArray(auction.images) ? (auction.images[0] as string | undefined) ?? null : null,
     }
 
     const marketData = {
-      comparableSales: auctionComparables.map((comp: { title: string; mileage: number | null; soldPrice: number; soldDate: Date | null; platform: string; condition: string | null }) => ({
-        title: comp.title,
-        mileage: comp.mileage,
-        soldPrice: comp.soldPrice,
-        soldDate: comp.soldDate,
-        platform: comp.platform,
-        condition: comp.condition,
+      comparableSales: auctionComparables.rows.map((comp) => ({
+        title: String(comp.title ?? ''),
+        mileage: comp.mileage as number | null,
+        soldPrice: comp.soldPrice as number,
+        soldDate: (comp.soldDate as string | Date | null | undefined) ?? null,
+        platform: String(comp.platform ?? ''),
+        condition: comp.condition as string | null,
       })),
-      marketContext: marketDataRecords.map((m: { avgPrice: number | null; medianPrice: number | null; totalSales: number; trend: string | null }) => ({
-        avgPrice: m.avgPrice,
-        medianPrice: m.medianPrice,
-        totalSales: m.totalSales,
-        trend: m.trend,
+      marketContext: marketDataRecords.rows.map((m) => ({
+        avgPrice: m.avgPrice as number | null,
+        medianPrice: m.medianPrice as number | null,
+        totalSales: m.totalSales as number,
+        trend: m.trend as string | null,
       })),
-      totalComparables: auctionComparables.length,
+      totalComparables: auctionComparables.rows.length,
     }
 
     // Call the AI analyzer
-    const analysisResult = await analyzeAuction(vehicleData, marketData)
+    const aiAnalysis = await analyzeAuction(vehicleData, marketData)
 
     // Save or update the analysis in the database
-    // Map analysisResult fields to the actual Prisma schema
+    // Map analysis result fields to the persisted analysis columns
     const analysisData = {
-      bidTargetLow: analysisResult.fairValueLow ?? null,
-      bidTargetHigh: analysisResult.fairValueHigh ?? null,
-      confidence: analysisResult.confidenceScore >= 0.8 ? 'HIGH' as const : analysisResult.confidenceScore >= 0.5 ? 'MEDIUM' as const : 'LOW' as const,
-      redFlags: analysisResult.redFlags ?? [],
-      keyStrengths: analysisResult.pros ?? [],
+      bidTargetLow: aiAnalysis.fairValueLow ?? null,
+      bidTargetHigh: aiAnalysis.fairValueHigh ?? null,
+      confidence: aiAnalysis.confidenceScore >= 0.8 ? 'HIGH' as const : aiAnalysis.confidenceScore >= 0.5 ? 'MEDIUM' as const : 'LOW' as const,
+      redFlags: aiAnalysis.redFlags ?? [],
+      keyStrengths: aiAnalysis.pros ?? [],
       criticalQuestions: [],
-      investmentGrade: analysisResult.confidenceScore >= 0.8 ? 'EXCELLENT' as const : analysisResult.confidenceScore >= 0.6 ? 'GOOD' as const : analysisResult.confidenceScore >= 0.4 ? 'FAIR' as const : 'SPECULATIVE' as const,
-      appreciationPotential: analysisResult.marketTrend ?? null,
-      rawAnalysis: { summary: analysisResult.summary, recommendation: analysisResult.recommendation, cons: analysisResult.cons },
+      investmentGrade: aiAnalysis.confidenceScore >= 0.8 ? 'EXCELLENT' as const : aiAnalysis.confidenceScore >= 0.6 ? 'GOOD' as const : aiAnalysis.confidenceScore >= 0.4 ? 'FAIR' as const : 'SPECULATIVE' as const,
+      appreciationPotential: aiAnalysis.marketTrend ?? null,
+      rawAnalysis: { summary: aiAnalysis.summary, recommendation: aiAnalysis.recommendation, cons: aiAnalysis.cons },
     }
 
-    const savedAnalysis = await prisma.analysis.upsert({
-      where: { auctionId: auction.id },
-      update: analysisData,
-      create: { auctionId: auction.id, ...analysisData },
-    })
+    const savedAnalysisResult = await dbQuery<Record<string, unknown>>(
+      `
+        INSERT INTO "Analysis" (
+          "auctionId", "bidTargetLow", "bidTargetHigh", confidence,
+          "redFlags", "keyStrengths", "criticalQuestions", "investmentGrade", "appreciationPotential", "rawAnalysis"
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        ON CONFLICT ("auctionId") DO UPDATE SET
+          "bidTargetLow" = EXCLUDED."bidTargetLow",
+          "bidTargetHigh" = EXCLUDED."bidTargetHigh",
+          confidence = EXCLUDED.confidence,
+          "redFlags" = EXCLUDED."redFlags",
+          "keyStrengths" = EXCLUDED."keyStrengths",
+          "criticalQuestions" = EXCLUDED."criticalQuestions",
+          "investmentGrade" = EXCLUDED."investmentGrade",
+          "appreciationPotential" = EXCLUDED."appreciationPotential",
+          "rawAnalysis" = EXCLUDED."rawAnalysis"
+        RETURNING *
+      `,
+      [
+        auction.id,
+        analysisData.bidTargetLow,
+        analysisData.bidTargetHigh,
+        analysisData.confidence,
+        analysisData.redFlags,
+        analysisData.keyStrengths,
+        analysisData.criticalQuestions,
+        analysisData.investmentGrade,
+        analysisData.appreciationPotential,
+        analysisData.rawAnalysis,
+      ],
+    )
+    const savedAnalysis = savedAnalysisResult.rows[0]
 
     // Deduct credit if this is a new analysis for this user
     let creditUsed = 0
@@ -181,10 +203,11 @@ export async function POST(request: Request) {
     }
 
     // Get updated credits balance
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: dbUser.id },
-      select: { creditsBalance: true },
-    })
+    const updatedUserResult = await dbQuery<{ creditsBalance: number }>(
+      'SELECT "creditsBalance" FROM "User" WHERE id = $1 LIMIT 1',
+      [dbUser.id],
+    )
+    const updatedUser = updatedUserResult.rows[0]
 
     return NextResponse.json({
       success: true,

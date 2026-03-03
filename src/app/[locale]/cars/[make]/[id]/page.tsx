@@ -84,13 +84,13 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   }
   const similarCars = findSimilarCars(car, allCandidates, 4)
 
-  const shouldQueryPrisma = !car.id.startsWith("live-")
+  const shouldQueryHistoricalData = !car.id.startsWith("live-")
 
-  // Fetch Supabase sold history first; fallback to Prisma only when empty.
+  // Fetch Supabase sold history first; fallback to historical tables only when empty.
   const [dbMarketData, dbComparables, dbAnalysis, supabaseSoldHistory] = await Promise.all([
-    shouldQueryPrisma ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
-    shouldQueryPrisma ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
-    shouldQueryPrisma ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
+    shouldQueryHistoricalData ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
+    shouldQueryHistoricalData ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
     fetchSoldListingsForMake(car.make),
   ])
 

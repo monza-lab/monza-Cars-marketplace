@@ -14,6 +14,8 @@
  */
 
 import crypto from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve as resolvePath } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { scrapeDetail, type BaTAuction } from "@/lib/scrapers/bringATrailer";
 import { createSupabaseWriter } from "./supabase_writer";
@@ -642,36 +644,55 @@ export async function runLightBackfill(config: {
 
 const isMain = process.argv[1]?.endsWith("historical_backfill.ts") || process.argv[1]?.endsWith("historical_backfill.js");
 
-if (isMain) {
-  import("dotenv").then((dotenv) => {
-    dotenv.config({ path: ".env.local" });
+function loadEnvFromFile(relPath: string): void {
+  const abs = resolvePath(process.cwd(), relPath);
+  if (!existsSync(abs)) return;
+  const raw = readFileSync(abs, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    if (!key) continue;
+    if (process.env[key] !== undefined) continue;
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
 
-    runHistoricalBackfill()
-      .then((result) => {
-        console.log("\n=== Results by Model ===");
-        const byModel = new Map<string, BackfillResultSummary[]>();
-        for (const r of result.results) {
-          const existing = byModel.get(r.model) || [];
-          existing.push(r);
-          byModel.set(r.model, existing);
+if (isMain) {
+  loadEnvFromFile(".env.local");
+  loadEnvFromFile(".env");
+
+  runHistoricalBackfill()
+    .then((result) => {
+      console.log("\n=== Results by Model ===");
+      const byModel = new Map<string, BackfillResultSummary[]>();
+      for (const r of result.results) {
+        const existing = byModel.get(r.model) || [];
+        existing.push(r);
+        byModel.set(r.model, existing);
+      }
+      for (const [model, results] of byModel) {
+        console.log(`\n  ${model} (${results.length} sold in last 12 months):`);
+        results.sort((a, b) => (b.saleDate ?? "").localeCompare(a.saleDate ?? ""));
+        for (const r of results) {
+          const price = r.hammerPrice ? `$${r.hammerPrice.toLocaleString()}` : "n/a";
+          const detail = r.detailScraped ? "enriched" : "minimal";
+          console.log(`    ${r.year ?? "?"} — ${price} — ${r.saleDate ?? "?"} [${detail}, q=${r.dataQualityScore}]`);
         }
-        for (const [model, results] of byModel) {
-          console.log(`\n  ${model} (${results.length} sold in last 12 months):`);
-          results.sort((a, b) => (b.saleDate ?? "").localeCompare(a.saleDate ?? ""));
-          for (const r of results) {
-            const price = r.hammerPrice ? `$${r.hammerPrice.toLocaleString()}` : "n/a";
-            const detail = r.detailScraped ? "enriched" : "minimal";
-            console.log(`    ${r.year ?? "?"} — ${price} — ${r.saleDate ?? "?"} [${detail}, q=${r.dataQualityScore}]`);
-          }
-        }
-        if (result.errors.length > 0) {
-          console.log(`\n  Errors (${result.errors.length}):`);
-          result.errors.slice(0, 10).forEach((e) => console.log(`    - ${e}`));
-        }
-      })
-      .catch((err) => {
-        console.error("Fatal error:", err);
-        process.exit(1);
-      });
-  });
+      }
+      if (result.errors.length > 0) {
+        console.log(`\n  Errors (${result.errors.length}):`);
+        result.errors.slice(0, 10).forEach((e) => console.log(`    - ${e}`));
+      }
+    })
+    .catch((err) => {
+      console.error("Fatal error:", err);
+      process.exit(1);
+    });
 }

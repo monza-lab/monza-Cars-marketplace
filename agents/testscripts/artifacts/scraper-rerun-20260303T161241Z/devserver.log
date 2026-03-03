@@ -1,0 +1,16 @@
+
+> garage-advisory@0.1.0 dev
+> next dev --webpack
+
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+▲ Next.js 16.1.6 (webpack)
+- Local:         http://localhost:3001
+- Network:       http://10.5.0.2:3001
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+⨯ Unable to acquire lock at C:\Users\capos\Documents\Personal\AI\MONZA\monza-Cars-marketplace\.next\dev\lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

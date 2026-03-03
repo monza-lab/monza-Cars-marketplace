@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db/prisma'
+import { dbQuery } from '@/lib/db/sql'
 import { scrapeAll, scrapePlatform, type ScrapedAuction } from '@/lib/scrapers'
 import {
   fetchAuctionData,
@@ -44,20 +44,15 @@ export async function GET(request: NextRequest) {
 
   try {
     // Check if we have recent data in DB first (persistent cache)
-    const existingAuction = await prisma.auction.findFirst({
-      where: { url },
-      select: {
-        id: true,
-        currentBid: true,
-        bidCount: true,
-        status: true,
-        scrapedAt: true,
-      },
-    })
+    const existingAuctionResult = await dbQuery<Record<string, unknown>>(
+      'SELECT id, "currentBid", "bidCount", status, "scrapedAt" FROM "Auction" WHERE url = $1 LIMIT 1',
+      [url],
+    )
+    const existingAuction = existingAuctionResult.rows[0]
 
     // If DB data is less than 24 hours old, return it (skip scraping)
     if (existingAuction && !forceRefresh) {
-      const ageMs = Date.now() - new Date(existingAuction.scrapedAt).getTime()
+      const ageMs = Date.now() - new Date(String(existingAuction.scrapedAt)).getTime()
       const maxAgeMs = 24 * 60 * 60 * 1000 // 24 hours
 
       if (ageMs < maxAgeMs) {
@@ -67,9 +62,9 @@ export async function GET(request: NextRequest) {
           cached: true,
           ageHours: Math.round(ageMs / (60 * 60 * 1000) * 10) / 10,
           data: {
-            currentBid: existingAuction.currentBid,
-            bidCount: existingAuction.bidCount,
-            status: existingAuction.status,
+            currentBid: existingAuction.currentBid as number | null,
+            bidCount: existingAuction.bidCount as number | null,
+            status: existingAuction.status as string,
             scrapedAt: existingAuction.scrapedAt,
           },
         })
@@ -81,15 +76,23 @@ export async function GET(request: NextRequest) {
 
     // Update DB if we got valid data
     if (scrapedData.currentBid !== null && existingAuction) {
-      await prisma.auction.update({
-        where: { id: existingAuction.id },
-        data: {
-          currentBid: scrapedData.currentBid,
-          bidCount: scrapedData.bidCount ?? undefined,
-          status: scrapedData.status === "SOLD" ? "ENDED" : scrapedData.status || undefined,
-          scrapedAt: new Date(),
-        },
-      })
+      await dbQuery(
+        `
+          UPDATE "Auction"
+          SET "currentBid" = $2,
+              "bidCount" = COALESCE($3, "bidCount"),
+              status = COALESCE($4, status),
+              "scrapedAt" = NOW(),
+              "updatedAt" = NOW()
+          WHERE id = $1
+        `,
+        [
+          existingAuction.id,
+          scrapedData.currentBid,
+          scrapedData.bidCount ?? null,
+          scrapedData.status === 'SOLD' ? 'ENDED' : scrapedData.status ?? null,
+        ],
+      )
     }
 
     return NextResponse.json({
@@ -171,53 +174,60 @@ export async function POST(request: Request) {
             ? [auction.imageUrl]
             : []
 
-        await prisma.auction.upsert({
-          where: { externalId: auction.externalId },
-          update: {
-            title: auction.title,
-            make: auction.make,
-            model: auction.model,
-            year: auction.year,
-            mileage: auction.mileage,
-            currentBid: auction.currentBid,
-            bidCount: auction.bidCount ?? 0,
-            endTime: auction.endTime ? new Date(auction.endTime) : null,
-            url: auction.url,
+        await dbQuery(
+          `
+            INSERT INTO "Auction" (
+              "externalId", platform, url, title, make, model, year, mileage, "mileageUnit",
+              "currentBid", "bidCount", "endTime", images, description, "sellerNotes",
+              transmission, engine, "exteriorColor", "interiorColor", location, vin, status, "scrapedAt", "updatedAt"
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,NOW(),NOW())
+            ON CONFLICT ("externalId") DO UPDATE SET
+              title = EXCLUDED.title,
+              make = EXCLUDED.make,
+              model = EXCLUDED.model,
+              year = EXCLUDED.year,
+              mileage = EXCLUDED.mileage,
+              "currentBid" = EXCLUDED."currentBid",
+              "bidCount" = EXCLUDED."bidCount",
+              "endTime" = EXCLUDED."endTime",
+              url = EXCLUDED.url,
+              images = EXCLUDED.images,
+              description = EXCLUDED.description,
+              transmission = EXCLUDED.transmission,
+              engine = EXCLUDED.engine,
+              "exteriorColor" = EXCLUDED."exteriorColor",
+              "interiorColor" = EXCLUDED."interiorColor",
+              location = EXCLUDED.location,
+              status = EXCLUDED.status,
+              "scrapedAt" = NOW(),
+              "updatedAt" = NOW()
+          `,
+          [
+            auction.externalId,
+            auction.platform,
+            auction.url,
+            auction.title,
+            auction.make,
+            auction.model,
+            auction.year,
+            auction.mileage,
+            auction.mileageUnit ?? 'miles',
+            auction.currentBid,
+            auction.bidCount ?? 0,
+            auction.endTime ? new Date(auction.endTime) : null,
             images,
-            description: auction.description,
-            transmission: auction.transmission,
-            engine: auction.engine,
-            exteriorColor: auction.exteriorColor,
-            interiorColor: auction.interiorColor,
-            location: auction.location,
-            status: mapStatus(auction.status),
-            scrapedAt: new Date(),
-          },
-          create: {
-            externalId: auction.externalId,
-            platform: auction.platform,
-            title: auction.title,
-            make: auction.make,
-            model: auction.model,
-            year: auction.year,
-            mileage: auction.mileage,
-            mileageUnit: auction.mileageUnit ?? 'miles',
-            currentBid: auction.currentBid,
-            bidCount: auction.bidCount ?? 0,
-            endTime: auction.endTime ? new Date(auction.endTime) : null,
-            url: auction.url,
-            images,
-            description: auction.description,
-            sellerNotes: auction.sellerNotes,
-            transmission: auction.transmission,
-            engine: auction.engine,
-            exteriorColor: auction.exteriorColor,
-            interiorColor: auction.interiorColor,
-            location: auction.location,
-            vin: auction.vin,
-            status: mapStatus(auction.status),
-          },
-        })
+            auction.description,
+            auction.sellerNotes,
+            auction.transmission,
+            auction.engine,
+            auction.exteriorColor,
+            auction.interiorColor,
+            auction.location,
+            auction.vin,
+            mapStatus(auction.status),
+          ],
+        )
         auctionsUpdated++
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown DB error'
@@ -229,18 +239,10 @@ export async function POST(request: Request) {
     for (const auction of scrapedAuctions) {
       if (auction.currentBid != null) {
         try {
-          const dbAuction = await prisma.auction.findUnique({
-            where: { externalId: auction.externalId },
-            select: { id: true },
-          })
+          const dbAuction = await dbQuery<{ id: string }>('SELECT id FROM "Auction" WHERE "externalId" = $1 LIMIT 1', [auction.externalId])
 
-          if (dbAuction) {
-            await prisma.priceHistory.create({
-              data: {
-                auctionId: dbAuction.id,
-                bid: auction.currentBid,
-              },
-            })
+          if (dbAuction.rows[0]) {
+            await dbQuery('INSERT INTO "PriceHistory" ("auctionId", bid) VALUES ($1, $2)', [dbAuction.rows[0].id, auction.currentBid])
           }
         } catch {
           // Price history is non-critical

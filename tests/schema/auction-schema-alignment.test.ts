@@ -1,14 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-// ---------------------------------------------------------------------------
-// Prisma Auction model shape (mirrors prisma/schema.prisma)
-// ---------------------------------------------------------------------------
-type PrismaAuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE';
-type PrismaPlatform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS';
+type AuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE';
+type AuctionPlatform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS';
 
-interface PrismaAuctionCreate {
+interface AuctionCreate {
   externalId: string;
-  platform: PrismaPlatform;
+  platform: AuctionPlatform;
   url: string;
   title: string;
   make: string;
@@ -16,9 +13,8 @@ interface PrismaAuctionCreate {
   year: number;
   mileageUnit: string;
   bidCount: number;
-  status: PrismaAuctionStatus;
+  status: AuctionStatus;
   images: string[];
-  // Optional fields
   trim?: string | null;
   vin?: string | null;
   mileage?: number | null;
@@ -33,20 +29,14 @@ interface PrismaAuctionCreate {
   sellerNotes?: string | null;
 }
 
-// ---------------------------------------------------------------------------
-// mapStatus: mirrors the cron route logic
-// ---------------------------------------------------------------------------
-function mapStatus(raw: string | undefined): PrismaAuctionStatus {
+function mapStatus(raw: string | undefined): AuctionStatus {
   if (!raw) return 'ACTIVE';
   const upper = raw.toUpperCase();
   if (upper === 'ENDED' || upper === 'SOLD') return 'ENDED';
   return 'ACTIVE';
 }
 
-// ---------------------------------------------------------------------------
-// Mapper: scraper output -> Prisma create input
-// ---------------------------------------------------------------------------
-function mapScraperToPrisma(auction: Record<string, any>): PrismaAuctionCreate {
+function mapScraperToAuction(auction: Record<string, any>): AuctionCreate {
   const images = auction.images?.length
     ? auction.images
     : auction.imageUrl ? [auction.imageUrl] : [];
@@ -77,10 +67,7 @@ function mapScraperToPrisma(auction: Record<string, any>): PrismaAuctionCreate {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Sample auction factory
-// ---------------------------------------------------------------------------
-function createSampleAuction(platform: PrismaPlatform) {
+function createSampleAuction(platform: AuctionPlatform) {
   return {
     externalId: `test-${platform.toLowerCase()}-1`,
     platform,
@@ -108,17 +95,14 @@ function createSampleAuction(platform: PrismaPlatform) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-const PLATFORMS: PrismaPlatform[] = ['BRING_A_TRAILER', 'CARS_AND_BIDS', 'COLLECTING_CARS'];
+const PLATFORMS: AuctionPlatform[] = ['BRING_A_TRAILER', 'CARS_AND_BIDS', 'COLLECTING_CARS'];
 
-describe('Prisma Schema Alignment', () => {
+describe('Auction Schema Alignment', () => {
   for (const platform of PLATFORMS) {
-    describe(`${platform} -> Prisma Auction`, () => {
+    describe(`${platform} -> auction record`, () => {
       it('maps all required fields without error', () => {
         const auction = createSampleAuction(platform);
-        const mapped = mapScraperToPrisma(auction);
+        const mapped = mapScraperToAuction(auction);
 
         expect(mapped.externalId).toBeTruthy();
         expect(mapped.platform).toBe(platform);
@@ -134,21 +118,21 @@ describe('Prisma Schema Alignment', () => {
       });
 
       it('maps mileage as integer', () => {
-        const mapped = mapScraperToPrisma(createSampleAuction(platform));
+        const mapped = mapScraperToAuction(createSampleAuction(platform));
         if (mapped.mileage !== null && mapped.mileage !== undefined) {
           expect(Number.isInteger(mapped.mileage)).toBe(true);
         }
       });
 
       it('maps currentBid as number', () => {
-        const mapped = mapScraperToPrisma(createSampleAuction(platform));
+        const mapped = mapScraperToAuction(createSampleAuction(platform));
         if (mapped.currentBid !== null && mapped.currentBid !== undefined) {
           expect(typeof mapped.currentBid).toBe('number');
         }
       });
 
       it('converts endTime string to Date', () => {
-        const mapped = mapScraperToPrisma(createSampleAuction(platform));
+        const mapped = mapScraperToAuction(createSampleAuction(platform));
         if (mapped.endTime) {
           expect(mapped.endTime).toBeInstanceOf(Date);
           expect(mapped.endTime.getTime()).not.toBeNaN();
@@ -157,19 +141,19 @@ describe('Prisma Schema Alignment', () => {
 
       it('handles null endTime', () => {
         const auction = { ...createSampleAuction(platform), endTime: null };
-        const mapped = mapScraperToPrisma(auction);
+        const mapped = mapScraperToAuction(auction);
         expect(mapped.endTime).toBeNull();
       });
 
       it('falls back to imageUrl when images array is empty', () => {
         const auction = { ...createSampleAuction(platform), images: [] };
-        const mapped = mapScraperToPrisma(auction);
+        const mapped = mapScraperToAuction(auction);
         expect(mapped.images).toEqual(['https://example.com/img.jpg']);
       });
 
       it('returns empty images when both images and imageUrl are absent', () => {
         const auction = { ...createSampleAuction(platform), images: [], imageUrl: null };
-        const mapped = mapScraperToPrisma(auction);
+        const mapped = mapScraperToAuction(auction);
         expect(mapped.images).toEqual([]);
       });
     });

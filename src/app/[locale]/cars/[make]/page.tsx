@@ -69,13 +69,13 @@ export default async function MakePage({ params, searchParams }: MakePageProps) 
 
   const makeName = cars[0].make
 
-  const shouldQueryPrisma = curated.length > 0
+  const shouldQueryHistoricalData = curated.length > 0
 
-  // Fetch Supabase sold history first; only touch Prisma fallback if needed.
+  // Fetch Supabase sold history first; only touch historical tables fallback if needed.
   const [dbMarketData, dbComparables, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    shouldQueryPrisma ? getMarketDataForMake(makeName) : Promise.resolve([]),
-    shouldQueryPrisma ? getComparablesForMake(makeName) : Promise.resolve([]),
-    shouldQueryPrisma ? getAnalysesForMake(makeName) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getMarketDataForMake(makeName) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getComparablesForMake(makeName) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getAnalysesForMake(makeName) : Promise.resolve([]),
     fetchSoldListingsForMake(makeName),
   ])
 

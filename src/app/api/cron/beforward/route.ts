@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/beforward_porsche_collector/collector";
+import { refreshActiveListings } from "@/features/beforward_porsche_collector/supabase_writer";
 import { recordScraperRun } from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Single-step: discover + ingest with capped config to fit Vercel 5-min limit
+    // Step 1: Refresh status of existing active listings
+    const refreshResult = await refreshActiveListings();
+
+    // Step 2: Discover + ingest with capped config to fit Vercel 5-min limit
     const result = await runCollector({
       maxPages: 3,           // 75 listings (25/page) — enough to catch daily new listings
       summaryOnly: true,     // Skip detail page fetches (biggest time saver)
@@ -41,12 +45,19 @@ export async function GET(request: Request) {
       discovered: result.counts.discovered,
       written: result.counts.written,
       errors_count: result.counts.errors,
+      refresh_checked: refreshResult.checked,
+      refresh_updated: refreshResult.updated,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 
     return NextResponse.json({
       success: true,
       runId: result.runId,
+      refresh: {
+        checked: refreshResult.checked,
+        updated: refreshResult.updated,
+        errors: refreshResult.errors,
+      },
       totalResults: result.totalResults,
       pageCount: result.pageCount,
       processedPages: result.processedPages,

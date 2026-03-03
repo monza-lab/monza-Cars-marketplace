@@ -78,15 +78,15 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
   const similarCars = findSimilarCars(car, allCandidates, 6)
 
-  const shouldQueryPrisma = !car.id.startsWith("live-")
+  const shouldQueryHistoricalData = !car.id.startsWith("live-")
 
-  // Use Supabase-first for live routes and only hit Prisma when needed.
+  // Use Supabase-first for live routes and only hit historical tables when needed.
   const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    shouldQueryPrisma ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
-    shouldQueryPrisma ? getMarketDataForMake(car.make) : Promise.resolve([]),
-    shouldQueryPrisma ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
-    shouldQueryPrisma ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
-    shouldQueryPrisma ? getAnalysesForMake(car.make) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
+    shouldQueryHistoricalData ? getMarketDataForMake(car.make) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
+    shouldQueryHistoricalData ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
+    shouldQueryHistoricalData ? getAnalysesForMake(car.make) : Promise.resolve([]),
     fetchSoldListingsForMake(car.make),
   ])
 

@@ -313,6 +313,7 @@ describe("normalizeListing", () => {
       price: 225000,
       auctionHouse: "Bring a Trailer",
       status: "forsale",
+      location: null,
       thumbnailUrl: null,
       ...overrides,
     };
@@ -431,6 +432,7 @@ describe("normalizeListingFromSummary", () => {
         price: 225000,
         auctionHouse: "BaT",
         status: "forsale",
+        location: null,
         thumbnailUrl: null,
       },
       meta,
@@ -456,6 +458,7 @@ describe("normalizeListingFromSummary", () => {
         price: null,
         auctionHouse: null,
         status: null,
+        location: null,
         thumbnailUrl: null,
       },
       meta,

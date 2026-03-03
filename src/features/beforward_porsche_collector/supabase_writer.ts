@@ -1,6 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
+import { fetchHtml } from "./net";
+import { parseDetailHtml } from "./detail";
+import { mapStatus } from "./normalize";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -149,4 +153,81 @@ function truncateIsoToHour(iso: string): string {
   const day = String(d.getUTCDate()).padStart(2, "0");
   const hh = String(d.getUTCHours()).padStart(2, "0");
   return `${y}-${m}-${day}T${hh}:00:00.000Z`;
+}
+
+// ─── Active listing status refresh ───
+
+export interface RefreshResult {
+  checked: number;
+  updated: number;
+  errors: string[];
+}
+
+/**
+ * Re-fetches each active BeForward listing URL and updates the DB
+ * when the listing has been removed (404) or status changed.
+ */
+export async function refreshActiveListings(): Promise<RefreshResult> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: activeRows, error: fetchErr } = await client
+    .from("listings")
+    .select("id,source_url")
+    .eq("status", "active")
+    .eq("source", "BeForward")
+    .order("scrape_timestamp", { ascending: true })
+    .limit(30);
+
+  if (fetchErr || !activeRows) {
+    return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
+  }
+
+  const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+
+  for (const row of activeRows) {
+    try {
+      let newStatus: string | null = null;
+
+      try {
+        const html = await fetchHtml(row.source_url, 10_000);
+        const detail = parseDetailHtml(html);
+        const detected = mapStatus(detail.sourceStatus, detail.schemaAvailability);
+        if (detected !== "active") {
+          newStatus = detected;
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/\b404\b/.test(msg)) {
+          newStatus = "delisted";
+        } else if (/\b(403|429)\b/.test(msg)) {
+          // Ambiguous (rate limit / block) — skip
+          continue;
+        } else {
+          throw err;
+        }
+      }
+
+      if (newStatus) {
+        const { error: updateErr } = await client
+          .from("listings")
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq("id", row.id);
+        if (updateErr) throw new Error(`Update failed: ${updateErr.message}`);
+        result.updated++;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
+    }
+
+    await sleep(2_500);
+  }
+
+  return result;
 }

@@ -2,7 +2,7 @@
 
 > **Generated:** February 12, 2026  
 > **App Name:** Monza Lab (package name: `garage-advisory`)  
-> **Framework:** Next.js 16 + React 19 + TypeScript + Prisma + Supabase + Claude AI  
+> **Framework:** Next.js 16 + React 19 + TypeScript + legacy ORM + Supabase + Claude AI  
 
 ---
 
@@ -12,7 +12,7 @@
 |------|---------|
 | `package.json` | Dependencies & scripts (`dev`, `build`, `start`, `lint`). App name: `garage-advisory` |
 | `next.config.ts` | Next.js config: remote image patterns (BaT, C&B, CC, Unsplash, Wikimedia, RM Sotheby's), `next-intl` plugin, 2MB server action body limit |
-| `prisma.config.ts` | Prisma CLI configuration |
+| `orm.config.ts` | ORM CLI configuration |
 | `tsconfig.json` | TypeScript config with `@/` path alias |
 | `postcss.config.mjs` | PostCSS (TailwindCSS) |
 | `eslint.config.mjs` | ESLint v9 flat config |
@@ -21,11 +21,11 @@
 
 ---
 
-## 📁 `prisma/`
+## 📁 `orm/`
 
 | File | Purpose |
 |------|---------|
-| `schema.prisma` | **Database schema** — PostgreSQL via `@prisma/adapter-pg`. Defines 7 models: `Auction`, `Analysis`, `Comparable`, `PriceHistory`, `MarketData`, `User`, `CreditTransaction`, `UserAnalysis` + 8 enums |
+| `schema.orm` | **Database schema** — PostgreSQL via the ORM adapter. Defines 7 models: `Auction`, `Analysis`, `Comparable`, `PriceHistory`, `MarketData`, `User`, `CreditTransaction`, `UserAnalysis` + 8 enums |
 
 ### Data Models Overview
 
@@ -121,8 +121,8 @@ MarketData (standalone aggregation table)
 
 | File | Exports | Purpose |
 |------|---------|---------|
-| `prisma.ts` | `prisma` singleton | Prisma client with `PrismaPg` adapter, hot-reload safe singleton |
-| `queries.ts` | `getAuctions()`, `getAuctionById()`, `getAuctionByExternalId()`, `upsertAuction()`, `saveAnalysis()`, `getComparables()`, `saveComparable()`, `savePriceHistory()`, `getMarketData()`, `upsertMarketData()` | All Prisma query abstractions |
+| `orm.ts` | `orm` singleton | ORM client with Postgres adapter, hot-reload safe singleton |
+| `queries.ts` | `getAuctions()`, `getAuctionById()`, `getAuctionByExternalId()`, `upsertAuction()`, `saveAnalysis()`, `getComparables()`, `saveComparable()`, `savePriceHistory()`, `getMarketData()`, `upsertMarketData()` | All ORM query abstractions |
 
 ### `src/lib/ai/` — AI Analysis Engine
 
@@ -386,7 +386,7 @@ Auction Analysis
        └── POST /api/analyze
             ├── Auth check (Supabase)
             ├── Credit check (lib/credits)
-            ├── Fetch auction + comparables (Prisma)
+            ├── Fetch auction + comparables (ORM)
             ├── Build prompt (lib/ai/prompts)
             ├── Call Claude (lib/ai/claude)
             ├── Parse response (lib/ai/analyzer)
@@ -395,7 +395,7 @@ Auction Analysis
 Cron Scraping
   └── GET /api/cron (bearer token)
        ├── scrapeAll() → BaT + C&B + CC (Playwright)
-       ├── Upsert auctions (Prisma)
+       ├── Upsert auctions (ORM)
        ├── Record price history
        └── Update market data aggregations
 ```
@@ -406,7 +406,7 @@ Cron Scraping
 
 | Variable | Used By |
 |----------|---------|
-| `DATABASE_URL` | Prisma (PostgreSQL) |
+| `DATABASE_URL` | ORM (PostgreSQL) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase auth |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase auth |
 | `ANTHROPIC_API_KEY` | Claude AI |

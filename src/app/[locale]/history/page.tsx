@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TrendingUp, BarChart3, Calendar } from "lucide-react";
-import { prisma } from "@/lib/db/prisma";
+import { dbQuery } from "@/lib/db/sql";
 import { MarketTrendsClient } from "./MarketTrendsClient";
 import { getTranslations } from "next-intl/server";
 
@@ -31,14 +31,19 @@ export default async function HistoryPage({
 
   try {
     const [totalAuctions, makes, platforms, dataPoints, marketData] = await Promise.all([
-      prisma.auction.count({ where: { status: { in: ["ENDED", "SOLD"] } } }),
-      prisma.auction.groupBy({ by: ["make"] }),
-      prisma.auction.groupBy({ by: ["platform"] }),
-      prisma.priceHistory.count(),
-      prisma.marketData.findMany({ orderBy: { totalSales: "desc" }, take: 6 }),
+      dbQuery<{ total: string }>('SELECT COUNT(*)::bigint AS total FROM "Auction" WHERE status IN (\'ENDED\', \'SOLD\')'),
+      dbQuery<{ make: string }>('SELECT DISTINCT make FROM "Auction"'),
+      dbQuery<{ platform: string }>('SELECT DISTINCT platform FROM "Auction"'),
+      dbQuery<{ total: string }>('SELECT COUNT(*)::bigint AS total FROM "PriceHistory"'),
+      dbQuery<{ make: string; model: string; avgPrice: number | null; totalSales: number; trend: string | null }>('SELECT make, model, "avgPrice", "totalSales", trend FROM "MarketData" ORDER BY "totalSales" DESC LIMIT 6'),
     ]);
-    stats = { totalAuctions, makesCovered: makes.length, platformsActive: platforms.length, dataPoints };
-    trends = marketData.map((m: { make: string; model: string; avgPrice: number | null; totalSales: number; trend: string | null }) => ({ make: m.make, model: m.model, avgPrice: m.avgPrice, totalSales: m.totalSales, trend: m.trend }));
+    stats = {
+      totalAuctions: Number(totalAuctions.rows[0]?.total ?? 0),
+      makesCovered: makes.rows.length,
+      platformsActive: platforms.rows.length,
+      dataPoints: Number(dataPoints.rows[0]?.total ?? 0),
+    };
+    trends = marketData.rows.map((m) => ({ make: m.make, model: m.model, avgPrice: m.avgPrice, totalSales: m.totalSales, trend: m.trend }));
   } catch {}
 
   return (

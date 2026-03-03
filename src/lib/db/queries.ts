@@ -1,9 +1,7 @@
-import { prisma } from './prisma'
-import type {
-  Platform,
-  AuctionStatus,
-  Prisma,
-} from '@prisma/client'
+import { dbQuery } from './sql'
+
+type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS'
+type AuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE'
 
 const DB_QUERY_TIMEOUT_MS = 2_500
 const DB_UNREACHABLE_COOLDOWN_MS = 30_000
@@ -37,7 +35,6 @@ function isDbReachabilityError(error: unknown): boolean {
     code === 'ECONNREFUSED' ||
     code === 'ENOTFOUND' ||
     code === 'ETIMEDOUT' ||
-    code === 'P1001' ||
     message.includes('EHOSTUNREACH') ||
     message.includes('ECONNREFUSED') ||
     message.includes('ENOTFOUND') ||
@@ -65,30 +62,23 @@ function shouldLogDbError(error: unknown): boolean {
   return getErrorCode(error) !== DB_CIRCUIT_OPEN_CODE
 }
 
-function withDbTimeout<T>(operation: () => PromiseLike<T>, label: string): Promise<T> {
+function withDbTimeout<T>(operation: () => Promise<T>, label: string): Promise<T> {
   if (shouldSkipDbQueries()) {
     return Promise.reject(new DbCircuitOpenError(`DB circuit open, skipped ${label}`))
   }
 
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined
-
   const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      reject(new Error(`DB timeout in ${label} after ${DB_QUERY_TIMEOUT_MS}ms`))
-    }, DB_QUERY_TIMEOUT_MS)
+    timeoutHandle = setTimeout(() => reject(new Error(`DB timeout in ${label} after ${DB_QUERY_TIMEOUT_MS}ms`)), DB_QUERY_TIMEOUT_MS)
   })
 
   return Promise.race([operation(), timeoutPromise])
     .catch((error) => {
-      if (isDbReachabilityError(error)) {
-        markDbUnavailable(error, label)
-      }
+      if (isDbReachabilityError(error)) markDbUnavailable(error, label)
       throw error
     })
     .finally(() => {
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle)
-      }
+      if (timeoutHandle) clearTimeout(timeoutHandle)
     })
 }
 
@@ -98,9 +88,17 @@ function logDbQueryError(label: string, error: unknown) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Auction queries
-// ---------------------------------------------------------------------------
+function normalizeRows(rows: Record<string, unknown>[]) {
+  return rows.map((row) => {
+    const normalized: Record<string, unknown> = { ...row }
+    if (normalized.endTime instanceof Date) normalized.endTime = normalized.endTime.toISOString()
+    if (normalized.startTime instanceof Date) normalized.startTime = normalized.startTime.toISOString()
+    if (normalized.scrapedAt instanceof Date) normalized.scrapedAt = normalized.scrapedAt.toISOString()
+    if (normalized.createdAt instanceof Date) normalized.createdAt = normalized.createdAt.toISOString()
+    if (normalized.updatedAt instanceof Date) normalized.updatedAt = normalized.updatedAt.toISOString()
+    return normalized
+  })
+}
 
 interface GetAuctionsParams {
   platform?: Platform
@@ -119,26 +117,44 @@ export async function getAuctions({
   page = 1,
   pageSize = 20,
 }: GetAuctionsParams = {}) {
-  const where: Prisma.AuctionWhereInput = {}
+  const clauses: string[] = []
+  const values: unknown[] = []
 
-  if (platform) where.platform = platform
-  if (make) where.make = { equals: make, mode: 'insensitive' }
-  if (model) where.model = { equals: model, mode: 'insensitive' }
-  if (status) where.status = status
+  if (platform) {
+    values.push(platform)
+    clauses.push(`"platform" = $${values.length}`)
+  }
+  if (make) {
+    values.push(make)
+    clauses.push(`"make" ILIKE $${values.length}`)
+  }
+  if (model) {
+    values.push(model)
+    clauses.push(`"model" ILIKE $${values.length}`)
+  }
+  if (status) {
+    values.push(status)
+    clauses.push(`"status" = $${values.length}`)
+  }
 
-  const [auctions, total] = await Promise.all([
-    prisma.auction.findMany({
-      where,
-      include: { analysis: true },
-      orderBy: { endTime: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.auction.count({ where }),
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+  const offset = (page - 1) * pageSize
+  values.push(pageSize, offset)
+  const limitIndex = values.length - 1
+  const offsetIndex = values.length
+
+  const [rowsResult, countResult] = await Promise.all([
+    dbQuery<Record<string, unknown>>(
+      `SELECT * FROM "Auction" ${where} ORDER BY "endTime" DESC NULLS LAST LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+      values,
+    ),
+    dbQuery<{ total: string }>(`SELECT COUNT(*)::bigint AS total FROM "Auction" ${where}`, values.slice(0, values.length - 2)),
   ])
 
+  const total = Number(countResult.rows[0]?.total ?? 0)
+
   return {
-    auctions,
+    auctions: normalizeRows(rowsResult.rows),
     total,
     page,
     pageSize,
@@ -147,131 +163,251 @@ export async function getAuctions({
 }
 
 export async function getAuctionById(id: string) {
-  return prisma.auction.findUnique({
-    where: { id },
-    include: {
-      analysis: true,
-      comparables: true,
-      priceHistory: { orderBy: { timestamp: 'asc' } },
-    },
-  })
+  const result = await dbQuery<Record<string, unknown>>('SELECT * FROM "Auction" WHERE id = $1 LIMIT 1', [id])
+  return normalizeRows(result.rows)[0] ?? null
 }
 
 export async function getAuctionByExternalId(externalId: string) {
-  return prisma.auction.findUnique({
-    where: { externalId },
-    include: {
-      analysis: true,
-      comparables: true,
-      priceHistory: { orderBy: { timestamp: 'asc' } },
-    },
-  })
+  const result = await dbQuery<Record<string, unknown>>('SELECT * FROM "Auction" WHERE "externalId" = $1 LIMIT 1', [externalId])
+  return normalizeRows(result.rows)[0] ?? null
 }
 
-export async function upsertAuction(
-  data: Prisma.AuctionCreateInput & { externalId: string },
-) {
-  const { externalId, ...rest } = data
+export async function upsertAuction(data: Record<string, unknown> & { externalId: string }) {
+  const now = new Date()
+  const result = await dbQuery<Record<string, unknown>>(
+    `
+      INSERT INTO "Auction" (
+        "externalId", platform, url, title, make, model, year, trim, vin, mileage,
+        "mileageUnit", transmission, engine, "exteriorColor", "interiorColor", location,
+        "currentBid", "reserveStatus", "bidCount", "viewCount", "watchCount", "startTime",
+        "endTime", status, "finalPrice", description, "sellerNotes", images, "scrapedAt", "updatedAt"
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+        $11,$12,$13,$14,$15,$16,
+        $17,$18,$19,$20,$21,$22,
+        $23,$24,$25,$26,$27,$28,$29,$30
+      )
+      ON CONFLICT ("externalId") DO UPDATE SET
+        platform = EXCLUDED.platform,
+        url = EXCLUDED.url,
+        title = EXCLUDED.title,
+        make = EXCLUDED.make,
+        model = EXCLUDED.model,
+        year = EXCLUDED.year,
+        trim = EXCLUDED.trim,
+        vin = EXCLUDED.vin,
+        mileage = EXCLUDED.mileage,
+        "mileageUnit" = EXCLUDED."mileageUnit",
+        transmission = EXCLUDED.transmission,
+        engine = EXCLUDED.engine,
+        "exteriorColor" = EXCLUDED."exteriorColor",
+        "interiorColor" = EXCLUDED."interiorColor",
+        location = EXCLUDED.location,
+        "currentBid" = EXCLUDED."currentBid",
+        "reserveStatus" = EXCLUDED."reserveStatus",
+        "bidCount" = EXCLUDED."bidCount",
+        "viewCount" = EXCLUDED."viewCount",
+        "watchCount" = EXCLUDED."watchCount",
+        "startTime" = EXCLUDED."startTime",
+        "endTime" = EXCLUDED."endTime",
+        status = EXCLUDED.status,
+        "finalPrice" = EXCLUDED."finalPrice",
+        description = EXCLUDED.description,
+        "sellerNotes" = EXCLUDED."sellerNotes",
+        images = EXCLUDED.images,
+        "scrapedAt" = EXCLUDED."scrapedAt",
+        "updatedAt" = EXCLUDED."updatedAt"
+      RETURNING *
+    `,
+    [
+      data.externalId,
+      data.platform ?? null,
+      data.url ?? null,
+      data.title ?? null,
+      data.make ?? null,
+      data.model ?? null,
+      data.year ?? null,
+      data.trim ?? null,
+      data.vin ?? null,
+      data.mileage ?? null,
+      data.mileageUnit ?? 'miles',
+      data.transmission ?? null,
+      data.engine ?? null,
+      data.exteriorColor ?? null,
+      data.interiorColor ?? null,
+      data.location ?? null,
+      data.currentBid ?? null,
+      data.reserveStatus ?? null,
+      data.bidCount ?? 0,
+      data.viewCount ?? null,
+      data.watchCount ?? null,
+      data.startTime ?? null,
+      data.endTime ?? null,
+      data.status ?? 'ACTIVE',
+      data.finalPrice ?? null,
+      data.description ?? null,
+      data.sellerNotes ?? null,
+      data.images ?? [],
+      data.scrapedAt ?? now,
+      now,
+    ],
+  )
 
-  return prisma.auction.upsert({
-    where: { externalId },
-    create: { externalId, ...rest },
-    update: rest,
-  })
+  return normalizeRows(result.rows)[0] ?? null
 }
 
-// ---------------------------------------------------------------------------
-// Analysis queries
-// ---------------------------------------------------------------------------
+export async function saveAnalysis(auctionId: string, data: Record<string, unknown>) {
+  const result = await dbQuery<Record<string, unknown>>(
+    `
+      INSERT INTO "Analysis" (
+        "auctionId", "bidTargetLow", "bidTargetHigh", confidence,
+        "criticalQuestions", "redFlags", "keyStrengths", "yearlyMaintenance",
+        "insuranceEstimate", "majorServiceCost", "investmentGrade", "appreciationPotential", "rawAnalysis"
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      ON CONFLICT ("auctionId") DO UPDATE SET
+        "bidTargetLow" = EXCLUDED."bidTargetLow",
+        "bidTargetHigh" = EXCLUDED."bidTargetHigh",
+        confidence = EXCLUDED.confidence,
+        "criticalQuestions" = EXCLUDED."criticalQuestions",
+        "redFlags" = EXCLUDED."redFlags",
+        "keyStrengths" = EXCLUDED."keyStrengths",
+        "yearlyMaintenance" = EXCLUDED."yearlyMaintenance",
+        "insuranceEstimate" = EXCLUDED."insuranceEstimate",
+        "majorServiceCost" = EXCLUDED."majorServiceCost",
+        "investmentGrade" = EXCLUDED."investmentGrade",
+        "appreciationPotential" = EXCLUDED."appreciationPotential",
+        "rawAnalysis" = EXCLUDED."rawAnalysis"
+      RETURNING *
+    `,
+    [
+      auctionId,
+      data.bidTargetLow ?? null,
+      data.bidTargetHigh ?? null,
+      data.confidence ?? null,
+      data.criticalQuestions ?? [],
+      data.redFlags ?? [],
+      data.keyStrengths ?? [],
+      data.yearlyMaintenance ?? null,
+      data.insuranceEstimate ?? null,
+      data.majorServiceCost ?? null,
+      data.investmentGrade ?? null,
+      data.appreciationPotential ?? null,
+      data.rawAnalysis ?? null,
+    ],
+  )
 
-export async function saveAnalysis(
-  auctionId: string,
-  data: Omit<Prisma.AnalysisCreateInput, 'auction'>,
-) {
-  return prisma.analysis.upsert({
-    where: { auctionId },
-    create: {
-      ...data,
-      auction: { connect: { id: auctionId } },
-    },
-    update: data,
-  })
+  return normalizeRows(result.rows)[0] ?? null
 }
-
-// ---------------------------------------------------------------------------
-// Comparable queries
-// ---------------------------------------------------------------------------
 
 export async function getComparables(auctionId: string) {
-  return prisma.comparable.findMany({
-    where: { auctionId },
-    orderBy: { soldDate: 'desc' },
-  })
+  const result = await dbQuery<Record<string, unknown>>(
+    'SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST',
+    [auctionId],
+  )
+  return normalizeRows(result.rows)
 }
 
-export async function saveComparable(
-  auctionId: string,
-  data: Omit<Prisma.ComparableCreateInput, 'auction'>,
-) {
-  return prisma.comparable.create({
-    data: {
-      ...data,
-      auction: { connect: { id: auctionId } },
-    },
-  })
+export async function saveComparable(auctionId: string, data: Record<string, unknown>) {
+  const result = await dbQuery<Record<string, unknown>>(
+    `
+      INSERT INTO "Comparable" (
+        "auctionId", title, platform, url, "soldDate", "soldPrice", mileage, condition
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      RETURNING *
+    `,
+    [
+      auctionId,
+      data.title ?? null,
+      data.platform ?? null,
+      data.url ?? null,
+      data.soldDate ?? null,
+      data.soldPrice ?? null,
+      data.mileage ?? null,
+      data.condition ?? null,
+    ],
+  )
+  return normalizeRows(result.rows)[0] ?? null
 }
-
-// ---------------------------------------------------------------------------
-// Price history queries
-// ---------------------------------------------------------------------------
 
 export async function savePriceHistory(auctionId: string, bid: number) {
-  return prisma.priceHistory.create({
-    data: {
-      bid,
-      auction: { connect: { id: auctionId } },
-    },
-  })
+  const result = await dbQuery<Record<string, unknown>>(
+    'INSERT INTO "PriceHistory" ("auctionId", bid) VALUES ($1, $2) RETURNING *',
+    [auctionId, bid],
+  )
+  return normalizeRows(result.rows)[0] ?? null
 }
-
-// ---------------------------------------------------------------------------
-// Market data queries
-// ---------------------------------------------------------------------------
 
 export async function getMarketData(make: string, model: string) {
-  return prisma.marketData.findMany({
-    where: {
-      make: { equals: make, mode: 'insensitive' },
-      model: { equals: model, mode: 'insensitive' },
-    },
-    orderBy: { yearStart: 'asc' },
-  })
+  const result = await dbQuery<Record<string, unknown>>(
+    'SELECT * FROM "MarketData" WHERE make ILIKE $1 AND model ILIKE $2 ORDER BY "yearStart" ASC NULLS LAST',
+    [make, model],
+  )
+  return normalizeRows(result.rows)
 }
 
-export async function upsertMarketData(
-  data: Prisma.MarketDataCreateInput,
-) {
-  const { make, model, yearStart, yearEnd, ...rest } = data
+export async function upsertMarketData(data: Record<string, unknown>) {
+  const lookup = await dbQuery<{ id: string }>(
+    `
+      SELECT id FROM "MarketData"
+      WHERE make ILIKE $1 AND model ILIKE $2
+        AND COALESCE("yearStart", -1) = COALESCE($3::int, -1)
+        AND COALESCE("yearEnd", -1) = COALESCE($4::int, -1)
+      LIMIT 1
+    `,
+    [data.make ?? null, data.model ?? null, data.yearStart ?? null, data.yearEnd ?? null],
+  )
 
-  return prisma.marketData.upsert({
-    where: {
-      make_model_yearStart_yearEnd: {
-        make: make,
-        model: model,
-        yearStart: yearStart ?? 0,
-        yearEnd: yearEnd ?? 0,
-      },
-    },
-    create: { make, model, yearStart, yearEnd, ...rest },
-    update: rest,
-  })
+  if (lookup.rows[0]?.id) {
+    const result = await dbQuery<Record<string, unknown>>(
+      `
+        UPDATE "MarketData"
+        SET "avgPrice" = $2,
+            "medianPrice" = $3,
+            "lowPrice" = $4,
+            "highPrice" = $5,
+            "totalSales" = $6,
+            trend = $7,
+            "lastUpdated" = NOW()
+        WHERE id = $1
+        RETURNING *
+      `,
+      [
+        lookup.rows[0].id,
+        data.avgPrice ?? null,
+        data.medianPrice ?? null,
+        data.lowPrice ?? null,
+        data.highPrice ?? null,
+        data.totalSales ?? 0,
+        data.trend ?? null,
+      ],
+    )
+    return normalizeRows(result.rows)[0] ?? null
+  }
+
+  const inserted = await dbQuery<Record<string, unknown>>(
+    `
+      INSERT INTO "MarketData" (
+        make, model, "yearStart", "yearEnd", "avgPrice", "medianPrice", "lowPrice", "highPrice", "totalSales", trend
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING *
+    `,
+    [
+      data.make ?? null,
+      data.model ?? null,
+      data.yearStart ?? null,
+      data.yearEnd ?? null,
+      data.avgPrice ?? null,
+      data.medianPrice ?? null,
+      data.lowPrice ?? null,
+      data.highPrice ?? null,
+      data.totalSales ?? 0,
+      data.trend ?? null,
+    ],
+  )
+
+  return normalizeRows(inserted.rows)[0] ?? null
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FRONTEND DATA QUERIES — used by page.tsx server components
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ─── Serializable types for client components ───
 
 export interface DbMarketDataRow {
   make: string
@@ -316,213 +452,154 @@ export interface DbSoldRecord {
   title: string
 }
 
-// ─── Query: all MarketData rows for a make ───
-
 export async function getMarketDataForMake(make: string): Promise<DbMarketDataRow[]> {
   try {
     const rows = await withDbTimeout(
-      () => prisma.marketData.findMany({
-        where: { make: { equals: make, mode: "insensitive" } },
-        orderBy: { lastUpdated: "desc" },
-      }),
-      'getMarketDataForMake'
+      () => dbQuery<DbMarketDataRow>('SELECT make, model, "avgPrice", "medianPrice", "lowPrice", "highPrice", "totalSales", trend FROM "MarketData" WHERE make ILIKE $1 ORDER BY "lastUpdated" DESC', [make]),
+      'getMarketDataForMake',
     )
-    return rows.map(r => ({
-      make: r.make,
-      model: r.model,
-      avgPrice: r.avgPrice,
-      medianPrice: r.medianPrice,
-      lowPrice: r.lowPrice,
-      highPrice: r.highPrice,
-      totalSales: r.totalSales,
-      trend: r.trend,
-    }))
+    return rows.rows.map((r) => ({ ...r }))
   } catch (e) {
     logDbQueryError('getMarketDataForMake', e)
     return []
   }
 }
 
-// ─── Query: MarketData for a specific make+model ───
-
 export async function getMarketDataForModel(make: string, model: string): Promise<DbMarketDataRow | null> {
   try {
-    const r = await withDbTimeout(
-      () => prisma.marketData.findFirst({
-        where: {
-          make: { equals: make, mode: "insensitive" },
-          model: { equals: model, mode: "insensitive" },
-        },
-        orderBy: { lastUpdated: "desc" },
-      }),
-      'getMarketDataForModel'
+    const rows = await withDbTimeout(
+      () => dbQuery<DbMarketDataRow>('SELECT make, model, "avgPrice", "medianPrice", "lowPrice", "highPrice", "totalSales", trend FROM "MarketData" WHERE make ILIKE $1 AND model ILIKE $2 ORDER BY "lastUpdated" DESC LIMIT 1', [make, model]),
+      'getMarketDataForModel',
     )
-    if (!r) return null
-    return {
-      make: r.make, model: r.model,
-      avgPrice: r.avgPrice, medianPrice: r.medianPrice,
-      lowPrice: r.lowPrice, highPrice: r.highPrice,
-      totalSales: r.totalSales, trend: r.trend,
-    }
+    return rows.rows[0] ?? null
   } catch (e) {
     logDbQueryError('getMarketDataForModel', e)
     return null
   }
 }
 
-// ─── Query: Comparable sales for a make (across all models) ───
-
 export async function getComparablesForMake(make: string, limit = 20): Promise<DbComparableRow[]> {
   try {
     const rows = await withDbTimeout(
-      () => prisma.comparable.findMany({
-        where: { auction: { make: { equals: make, mode: "insensitive" } } },
-        orderBy: { soldDate: "desc" },
-        take: limit,
-      }),
-      'getComparablesForMake'
+      () => dbQuery<DbComparableRow>(
+        `
+          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
+          FROM "Comparable" c
+          JOIN "Auction" a ON a.id = c."auctionId"
+          WHERE a.make ILIKE $1
+          ORDER BY c."soldDate" DESC NULLS LAST
+          LIMIT $2
+        `,
+        [make, limit],
+      ),
+      'getComparablesForMake',
     )
-    return rows.map(c => ({
-      title: c.title,
-      platform: c.platform,
-      soldDate: c.soldDate?.toISOString() ?? null,
-      soldPrice: c.soldPrice,
-      mileage: c.mileage,
-      condition: c.condition,
-    }))
+    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
   } catch (e) {
     logDbQueryError('getComparablesForMake', e)
     return []
   }
 }
 
-// ─── Query: Comparable sales for a specific make+model ───
-
 export async function getComparablesForModel(make: string, model: string, limit = 10): Promise<DbComparableRow[]> {
   try {
     const rows = await withDbTimeout(
-      () => prisma.comparable.findMany({
-        where: {
-          auction: {
-            make: { equals: make, mode: "insensitive" },
-            model: { contains: model, mode: "insensitive" },
-          },
-        },
-        orderBy: { soldDate: "desc" },
-        take: limit,
-      }),
-      'getComparablesForModel'
+      () => dbQuery<DbComparableRow>(
+        `
+          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
+          FROM "Comparable" c
+          JOIN "Auction" a ON a.id = c."auctionId"
+          WHERE a.make ILIKE $1 AND a.model ILIKE $2
+          ORDER BY c."soldDate" DESC NULLS LAST
+          LIMIT $3
+        `,
+        [make, `%${model}%`, limit],
+      ),
+      'getComparablesForModel',
     )
-    return rows.map(c => ({
-      title: c.title,
-      platform: c.platform,
-      soldDate: c.soldDate?.toISOString() ?? null,
-      soldPrice: c.soldPrice,
-      mileage: c.mileage,
-      condition: c.condition,
-    }))
+    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
   } catch (e) {
     logDbQueryError('getComparablesForModel', e)
     return []
   }
 }
 
-// ─── Query: Analysis for a car (match by make/model/year) ───
-
 export async function getAnalysisForCar(make: string, model: string, year: number): Promise<DbAnalysisRow | null> {
   try {
-    const auction = await withDbTimeout(
-      () => prisma.auction.findFirst({
-        where: {
-          make: { equals: make, mode: "insensitive" },
-          model: { contains: model, mode: "insensitive" },
-          year,
-        },
-        include: { analysis: true },
-        orderBy: { updatedAt: "desc" },
-      }),
-      'getAnalysisForCar'
+    const rows = await withDbTimeout(
+      () =>
+        dbQuery<DbAnalysisRow>(
+          `
+            SELECT an."bidTargetLow", an."bidTargetHigh", an.confidence::text AS confidence,
+                   an."redFlags", an."keyStrengths", an."criticalQuestions", an."yearlyMaintenance",
+                   an."insuranceEstimate", an."majorServiceCost", an."investmentGrade"::text AS "investmentGrade",
+                   an."appreciationPotential", an."rawAnalysis"
+            FROM "Auction" a
+            JOIN "Analysis" an ON an."auctionId" = a.id
+            WHERE a.make ILIKE $1 AND a.model ILIKE $2 AND a.year = $3
+            ORDER BY a."updatedAt" DESC
+            LIMIT 1
+          `,
+          [make, `%${model}%`, year],
+        ),
+      'getAnalysisForCar',
     )
-    if (!auction?.analysis) return null
-    const a = auction.analysis
-    return {
-      bidTargetLow: a.bidTargetLow,
-      bidTargetHigh: a.bidTargetHigh,
-      confidence: a.confidence,
-      redFlags: a.redFlags,
-      keyStrengths: a.keyStrengths,
-      criticalQuestions: a.criticalQuestions,
-      yearlyMaintenance: a.yearlyMaintenance,
-      insuranceEstimate: a.insuranceEstimate,
-      majorServiceCost: a.majorServiceCost,
-      investmentGrade: a.investmentGrade,
-      appreciationPotential: a.appreciationPotential,
-      rawAnalysis: a.rawAnalysis as Record<string, unknown> | null,
-    }
+    return rows.rows[0] ?? null
   } catch (e) {
     logDbQueryError('getAnalysisForCar', e)
     return null
   }
 }
 
-// ─── Query: sold auctions for a make (real price history) ───
-
 export async function getSoldAuctionsForMake(make: string, limit = 200): Promise<DbSoldRecord[]> {
   try {
-    const auctions = await withDbTimeout(
-      () => prisma.auction.findMany({
-        where: {
-          make: { equals: make, mode: "insensitive" },
-          finalPrice: { not: null, gt: 0 },
-          status: { in: ["SOLD", "ENDED"] },
-        },
-        select: { title: true, finalPrice: true, endTime: true, model: true, year: true },
-        orderBy: { endTime: "asc" },
-        take: limit,
-      }),
-      'getSoldAuctionsForMake'
+    const rows = await withDbTimeout(
+      () =>
+        dbQuery<DbSoldRecord>(
+          `
+            SELECT "finalPrice" AS price, "endTime" AS date, model, year, title
+            FROM "Auction"
+            WHERE make ILIKE $1
+              AND "finalPrice" IS NOT NULL
+              AND "finalPrice" > 0
+              AND status IN ('SOLD', 'ENDED')
+            ORDER BY "endTime" ASC
+            LIMIT $2
+          `,
+          [make, limit],
+        ),
+      'getSoldAuctionsForMake',
     )
-    return auctions
-      .filter(a => a.finalPrice != null && a.endTime != null)
-      .map(a => ({
-        price: a.finalPrice!,
-        date: a.endTime!.toISOString(),
-        model: a.model,
-        year: a.year,
-        title: a.title,
-      }))
+    return rows.rows
+      .filter((r) => r.price != null && r.date != null)
+      .map((r) => ({ ...r, date: new Date(r.date).toISOString() }))
   } catch (e) {
     logDbQueryError('getSoldAuctionsForMake', e)
     return []
   }
 }
 
-// ─── Query: all analyses for a make (aggregate red flags, strengths, costs) ───
-
 export async function getAnalysesForMake(make: string): Promise<DbAnalysisRow[]> {
   try {
-    const analyses = await withDbTimeout(
-      () => prisma.analysis.findMany({
-        where: { auction: { make: { equals: make, mode: "insensitive" } } },
-        orderBy: { updatedAt: "desc" },
-        take: 50,
-      }),
-      'getAnalysesForMake'
+    const rows = await withDbTimeout(
+      () =>
+        dbQuery<DbAnalysisRow>(
+          `
+            SELECT an."bidTargetLow", an."bidTargetHigh", an.confidence::text AS confidence,
+                   an."redFlags", an."keyStrengths", an."criticalQuestions", an."yearlyMaintenance",
+                   an."insuranceEstimate", an."majorServiceCost", an."investmentGrade"::text AS "investmentGrade",
+                   an."appreciationPotential", an."rawAnalysis"
+            FROM "Analysis" an
+            JOIN "Auction" a ON a.id = an."auctionId"
+            WHERE a.make ILIKE $1
+            ORDER BY an."updatedAt" DESC
+            LIMIT 50
+          `,
+          [make],
+        ),
+      'getAnalysesForMake',
     )
-    return analyses.map(a => ({
-      bidTargetLow: a.bidTargetLow,
-      bidTargetHigh: a.bidTargetHigh,
-      confidence: a.confidence,
-      redFlags: a.redFlags,
-      keyStrengths: a.keyStrengths,
-      criticalQuestions: a.criticalQuestions,
-      yearlyMaintenance: a.yearlyMaintenance,
-      insuranceEstimate: a.insuranceEstimate,
-      majorServiceCost: a.majorServiceCost,
-      investmentGrade: a.investmentGrade,
-      appreciationPotential: a.appreciationPotential,
-      rawAnalysis: a.rawAnalysis as Record<string, unknown> | null,
-    }))
+    return rows.rows
   } catch (e) {
     logDbQueryError('getAnalysesForMake', e)
     return []

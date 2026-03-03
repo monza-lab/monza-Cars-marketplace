@@ -3,7 +3,7 @@
 Identifier: `TS-PORSCHE-ONLY-CLEANUP`
 
 Objective:
-- Archive and remove non-Porsche rows from listing-serving and Prisma auction-serving tables.
+- Archive and remove non-Porsche rows from listing-serving and legacy ORM auction-serving tables.
 - Prove only Porsche remains visible at DB layer.
 
 Prerequisites:

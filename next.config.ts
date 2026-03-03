@@ -52,7 +52,6 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     "*": [
       "**/node_modules/typescript/**",
-      "**/node_modules/prisma/**",
       "**/node_modules/@types/**",
       "**/node_modules/@playwright/**",
     ],

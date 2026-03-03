@@ -10,7 +10,7 @@ The goal is to collect, enrich, and normalize Porsche vehicle data (listings, sp
 
 ## Existing Codebase (What Already Works)
 
-**Tech Stack**: Next.js, TypeScript, Supabase, Prisma, Cheerio (scraping)
+**Tech Stack**: Next.js, TypeScript, Supabase, legacy ORM, Cheerio (scraping)
 
 **Working Scrapers** (located in `src/lib/scrapers/`):
 - `bringATrailer.ts` - Bring a Trailer auction scraper (Cheerio-based)
@@ -27,7 +27,7 @@ The goal is to collect, enrich, and normalize Porsche vehicle data (listings, sp
 - Duplicate detection via `externalId`
 - Normalized output type: `ScrapedAuction` / `NormalizedListing`
 
-**Existing Database Schema** (Supabase/Prisma):
+**Existing Database Schema** (Supabase/ORM):
 - `listings` - Main table (source, make, model, year, price, status, VIN, mileage, url, images, etc.)
 - `vehicle_specs` - Engine, transmission, body_style linked to listing
 - `pricing` - Price data

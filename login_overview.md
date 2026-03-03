@@ -7,7 +7,7 @@ Google OAuth and email login both fail after deployment. Multiple issues were di
 
 ## Issue 1: Concurrent `/api/user/create` calls (Local)
 
-**Symptom**: `SIGNED_IN` event fires multiple times (session restore, token refresh, component remount), flooding `/api/user/create` with concurrent POSTs and causing Prisma P2002 unique constraint errors.
+**Symptom**: `SIGNED_IN` event fires multiple times (session restore, token refresh, component remount), flooding `/api/user/create` with concurrent POSTs and causing legacy ORM unique constraint errors.
 
 **Root Cause**: `AuthProvider.tsx` had no guard against duplicate calls in the `onAuthStateChange` handler.
 
@@ -63,19 +63,19 @@ This meant the Supabase session refresh (`getUser()`) in middleware never ran fo
 
 ---
 
-## Issue 5: Prisma can't reach database on Vercel (Production)
+## Issue 5: ORM can't reach database on Vercel (Production)
 
-**Symptom**: After deploying to Vercel, all Prisma queries fail with:
+**Symptom**: After deploying to Vercel, all ORM queries fail with:
 ```
-PrismaClientKnownRequestError: Can't reach database server at db.xgtlnyemulgdebyweqlf.supabase.co
+OrmClientKnownRequestError: Can't reach database server at db.xgtlnyemulgdebyweqlf.supabase.co
 Error code: P1001
 ```
 
 **Root Cause**: The `DATABASE_URL` used a **direct connection** (`db.*.supabase.co:5432`). Vercel serverless functions cannot reach Supabase's direct database host due to network/IPv4 restrictions. Supabase requires using their **connection pooler** (Supavisor) for serverless environments.
 
 **Fix**:
-1. Updated `prisma/schema.prisma` to support both pooled and direct URLs:
-   ```prisma
+1. Updated the ORM datasource schema to support both pooled and direct URLs:
+   ```text
    datasource db {
      provider  = "postgresql"
      url       = env("DATABASE_URL")
@@ -118,7 +118,7 @@ Error code: P1001
 | `src/lib/auth/AuthProvider.tsx` | `useRef` debounce, `fetchProfile` returns boolean, stale session cleanup, check `res.ok` |
 | `src/lib/credits/index.ts` | Dual unique-constraint lookup (supabaseId + email), identity linking, improved P2002 catch |
 | `src/proxy.ts` | Middleware matcher includes API routes, skips intl for API routes |
-| `prisma/schema.prisma` | Added `url` + `directUrl` to datasource for pooler support |
+| `orm/schema.orm` | Added `url` + `directUrl` to datasource for pooler support |
 
 ## Vercel Environment Variables
 
@@ -128,7 +128,7 @@ Error code: P1001
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only admin key |
 | `DATABASE_URL` | Yes | **Must be pooler URL** for Vercel |
-| `DIRECT_URL` | Yes | Direct connection for Prisma migrations |
+| `DIRECT_URL` | Yes | Direct connection for ORM migrations |
 | `NEXT_PUBLIC_BASE_URL` | Yes | Set to Vercel domain (e.g. `https://monza-cars-marketplace-pzpy.vercel.app`) |
 | `CRON_SECRET` | Recommended | Protects cron/scrape/enrich endpoints |
 | `ANTHROPIC_API_KEY` | Optional | For AI analysis features |

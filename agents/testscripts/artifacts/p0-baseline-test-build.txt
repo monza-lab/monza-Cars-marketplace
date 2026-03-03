@@ -1,0 +1,32 @@
+TS-P0-BASELINE command sequence:
+1) node -v
+2) npm -v
+3) npm run test
+4) npm run build
+
+Attempt 1:
+- node -v: PASS (v24.5.0)
+- npm -v: PASS (11.5.2)
+- npm run test: PASS (58 files, 715 tests)
+- npm run build: FAIL
+  - module not found: @vercel/analytics/react
+  - module not found: @vercel/speed-insights/next
+  - full output artifact: C:\Users\capos\.local\share\opencode\tool-output\tool_cb474ffb70010DwV6R4ZnhZ7T5
+
+Debug turn 1 (one hypothesis, one variable):
+- Hypothesis: dependencies missing from node_modules despite being in package.json.
+- Change: ran npm install.
+- Result: packages installed.
+
+Attempt 2:
+- node -v: PASS (v24.5.0)
+- npm -v: PASS (11.5.2)
+- npm run test: PASS (58 files, 715 tests)
+- npm run build: FAIL
+  - TypeScript error in src/features/classic_collector/discover.ts:261
+  - conversion window as Record<string, unknown> rejected by TS
+  - full output artifact: C:\Users\capos\.local\share\opencode\tool-output\tool_cb476ac42001jb0TqkvYR6XW4e
+
+Outcome:
+- TS-P0-BASELINE status: FAIL after two debug turns.
+- Per plan rule, execution halted and failure report generated.

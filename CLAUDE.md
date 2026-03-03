@@ -43,7 +43,7 @@ Central registry — **single source of truth** for all brand/series data.
 
 ### Stack
 - `npm run dev` starts the dev server (uses `--webpack` flag)
-- Prisma for DB schema, Supabase for data
+- Legacy ORM for DB schema, Supabase for data
 - i18n via next-intl (locale in URL: `/en/cars/porsche`)
 - Middleware handles locale redirects (307 responses are normal)
 

@@ -1,0 +1,49 @@
+[classic_collector] Starting with config: {
+  mode: 'daily',
+  make: 'Porsche',
+  location: 'US',
+  status: 'forsale',
+  maxPages: 1,
+  maxListings: 5,
+  headless: true,
+  proxyServer: undefined,
+  proxyUsername: undefined,
+  proxyPassword: undefined,
+  navigationDelayMs: 1000,
+  pageTimeoutMs: 20000,
+  checkpointPath: 'var/classic_collector/checkpoint-validation.json',
+  outputPath: 'var/classic_collector/listings-validation.jsonl',
+  dryRun: false
+}
+{"level":"info","event":"collector.start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:11.011Z","config":{"mode":"daily","make":"Porsche","location":"US","status":"forsale","maxPages":1,"maxListings":5,"headless":true,"proxyPassword":"***","navigationDelayMs":1000,"pageTimeoutMs":20000,"checkpointPath":"var/classic_collector/checkpoint-validation.json","outputPath":"var/classic_collector/listings-validation.jsonl","dryRun":false}}
+{"level":"info","event":"collector.discover_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:13.260Z"}
+{"level":"info","event":"discover.page_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:13.261Z","page":1,"url":"https://www.classic.com/search/?q=Porsche&result_type=listings&status=forsale&filters%5Blocation%5D=US"}
+{"level":"info","event":"discover.page_done","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:20.159Z","page":1,"found":24,"total":24}
+{"level":"info","event":"collector.discover_done","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:20.160Z","discovered":5,"totalResults":null}
+{"level":"debug","event":"collector.detail_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:57:20.160Z","index":0,"url":"https://www.classic.com/veh/1996-porsche-911-carrera-by-lab-eleven-wp0zzz99zts-WxZX7J4"}
+{"level":"warn","event":"collector.detail_error","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:58:29.206Z","index":0,"error":"page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.classic.com/veh/1996-porsche-911-carrera-by-lab-eleven-wp0zzz99zts-WxZX7J4\", waiting until \"networkidle\"\u001b[22m\n"}
+{"level":"warn","event":"collector.normalize_skip","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:58:29.207Z","index":0,"title":"Marietta, Georgia, USA"}
+{"level":"debug","event":"collector.detail_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:58:29.210Z","index":1,"url":"https://www.classic.com/veh/2024-porsche-911-gt3-touring-wp0ac2a90rs263305-WReObAn"}
+{"level":"warn","event":"collector.detail_error","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:59:38.267Z","index":1,"error":"page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.classic.com/veh/2024-porsche-911-gt3-touring-wp0ac2a90rs263305-WReObAn\", waiting until \"networkidle\"\u001b[22m\n"}
+{"level":"warn","event":"collector.normalize_skip","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:59:38.267Z","index":1,"title":"Murrieta, California, USA"}
+{"level":"debug","event":"collector.detail_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T15:59:38.269Z","index":2,"url":"https://www.classic.com/veh/1996-porsche-911-turbo-wp0ac2995ts375318-4oGxMP4"}
+{"level":"warn","event":"collector.detail_error","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:00:47.300Z","index":2,"error":"page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.classic.com/veh/1996-porsche-911-turbo-wp0ac2995ts375318-4oGxMP4\", waiting until \"networkidle\"\u001b[22m\n"}
+{"level":"warn","event":"collector.normalize_skip","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:00:47.300Z","index":2,"title":"Plano, Texas, USA"}
+{"level":"debug","event":"collector.detail_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:00:47.301Z","index":3,"url":"https://www.classic.com/veh/2008-porsche-911-turbo-wp0cd29978s788547-4oGjMG4"}
+{"level":"warn","event":"collector.detail_error","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:01:56.338Z","index":3,"error":"page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.classic.com/veh/2008-porsche-911-turbo-wp0cd29978s788547-4oGjMG4\", waiting until \"networkidle\"\u001b[22m\n"}
+{"level":"warn","event":"collector.normalize_skip","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:01:56.338Z","index":3,"title":"Plano, Texas, USA"}
+{"level":"debug","event":"collector.detail_start","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:01:56.340Z","index":4,"url":"https://www.classic.com/veh/2008-porsche-911-gt3-rs-wp0ac29928s792306-nQMqewn"}
+{"level":"warn","event":"collector.detail_error","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:03:05.367Z","index":4,"error":"page.goto: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.classic.com/veh/2008-porsche-911-gt3-rs-wp0ac29928s792306-nQMqewn\", waiting until \"networkidle\"\u001b[22m\n"}
+{"level":"warn","event":"collector.normalize_skip","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:03:05.367Z","index":4,"title":"Hickman County, Tennessee, USA"}
+{"level":"info","event":"collector.progress","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:03:05.368Z","index":5,"total":5,"counts":{"discovered":5,"detailsFetched":0,"normalized":0,"written":0,"errors":5,"cloudflareBlocked":0}}
+{"level":"info","event":"collector.done","runId":"2eeecc4b-6513-4731-b4fd-af6b1480c6f4","ts":"2026-03-03T16:03:05.533Z","counts":{"discovered":5,"detailsFetched":0,"normalized":0,"written":0,"errors":5,"cloudflareBlocked":0},"errorsCount":0}
+
+[classic_collector] Done.
+  Run ID:     2eeecc4b-6513-4731-b4fd-af6b1480c6f4
+  Discovered: 5
+  Details:    0
+  Normalized: 0
+  Written:    0
+  Errors:     5
+  CF Blocked: 0
+  Output:     var/classic_collector/listings-validation.jsonl

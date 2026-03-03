@@ -1,8 +1,8 @@
-# Plan: Align Supabase `listings` Table with Prisma `Auction` Model
+# Plan: Align Supabase `listings` Table with ORM `Auction` Model
 
 ## Context
 
-The Supabase `listings` table and the Prisma `Auction` model represent the same data but have diverged in schema. The `Auction` model (in `prisma/schema.prisma`) has a clean, flat structure with fields like `title`, `currentBid`, `bidCount`, `sellerNotes`, `images[]`, `platform` (enum), and `reserveStatus` (enum). The `listings` table splits data across 6+ satellite tables and is missing several fields. The goal is to bring `listings` in line with `Auction` so data flows through a single consistent model.
+The Supabase `listings` table and the legacy ORM `Auction` model represent the same data but have diverged in schema. The `Auction` model (in the ORM schema file) has a clean, flat structure with fields like `title`, `currentBid`, `bidCount`, `sellerNotes`, `images[]`, `platform` (enum), and `reserveStatus` (enum). The `listings` table splits data across 6+ satellite tables and is missing several fields. The goal is to bring `listings` in line with `Auction` so data flows through a single consistent model.
 
 ## Status
 

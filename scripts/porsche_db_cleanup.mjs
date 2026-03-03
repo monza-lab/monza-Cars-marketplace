@@ -187,9 +187,9 @@ async function run() {
         listings: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.listings")),
         photosMedia: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.photos_media")),
         listingPriceHistory: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.price_history")),
-        prismaAuction: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Auction"')),
-        prismaComparable: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Comparable"')),
-        prismaPriceHistory: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."PriceHistory"')),
+        legacyAuction: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Auction"')),
+        legacyComparable: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Comparable"')),
+        legacyPriceHistory: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."PriceHistory"')),
       },
     };
     writeFileSync(join(artifactDir, "02_preflight_counts.json"), `${JSON.stringify(preflight, null, 2)}\n`);
@@ -253,9 +253,9 @@ async function run() {
         listings: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.listings")),
         photosMedia: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.photos_media")),
         listingPriceHistory: Number(await scalar(client, "SELECT COUNT(*)::bigint FROM public.price_history")),
-        prismaAuction: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Auction"')),
-        prismaComparable: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Comparable"')),
-        prismaPriceHistory: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."PriceHistory"')),
+        legacyAuction: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Auction"')),
+        legacyComparable: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."Comparable"')),
+        legacyPriceHistory: Number(await scalar(client, 'SELECT COUNT(*)::bigint FROM public."PriceHistory"')),
       },
       verificationQueries: {
         nonPorscheListings: Number(await scalar(client, `SELECT COUNT(*)::bigint FROM public.listings WHERE COALESCE(make, '') !~* '${PORSCHE_MAKE_REGEX}'`)),

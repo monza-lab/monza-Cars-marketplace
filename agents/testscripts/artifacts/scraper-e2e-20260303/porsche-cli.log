@@ -1,0 +1,388 @@
+{"level":"info","event":"collector.start","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:23.171Z","config":{"mode":"daily","endedWindowDays":1,"maxActivePagesPerSource":1,"maxEndedPagesPerSource":1,"scrapeDetails":false,"dryRun":true,"checkpointPath":"var/porsche_collector/checkpoint.json"}}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:25.512Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/porsche/","attempts":1,"bytes":630888}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:28.157Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/results/?search=porsche","attempts":1,"bytes":755511}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:30.240Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/?search=porsche","attempts":1,"bytes":1491542}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1991-porsche-911-turbo-95/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-911-turbo-95/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:34.450Z","source":"BaT","url":"https://bringatrailer.com/listing/1991-porsche-911-turbo-95/","sourceId":"bat-1991-porsche-911-turbo-95","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":302000,"bidCount":8,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1977-porsche-911s-targa-72/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1977-porsche-911s-targa-72/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:40.581Z","source":"BaT","url":"https://bringatrailer.com/listing/1977-porsche-911s-targa-72/","sourceId":"bat-1977-porsche-911s-targa-72","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":37210,"bidCount":14,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:46.213Z","source":"BaT","url":"https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/","sourceId":"bat-2009-porsche-911-carrera-s-cabriolet-47-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":46500,"bidCount":16,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-porsche-cayenne-gts-10/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-cayenne-gts-10/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:49.736Z","source":"BaT","url":"https://bringatrailer.com/listing/2017-porsche-cayenne-gts-10/","sourceId":"bat-2017-porsche-cayenne-gts-10","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":10500,"bidCount":10,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2013-porsche-cayenne-diesel-130/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2013-porsche-cayenne-diesel-130/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:55.613Z","source":"BaT","url":"https://bringatrailer.com/listing/2013-porsche-cayenne-diesel-130/","sourceId":"bat-2013-porsche-cayenne-diesel-130","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":26550,"bidCount":17,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1998-porsche-911-carrera-s-coupe-81-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1998-porsche-911-carrera-s-coupe-81-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:04:59.065Z","source":"BaT","url":"https://bringatrailer.com/listing/1998-porsche-911-carrera-s-coupe-81-2/","sourceId":"bat-1998-porsche-911-carrera-s-coupe-81-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":200000,"bidCount":15,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1969-porsche-912-coupe-35/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1969-porsche-912-coupe-35/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:04.787Z","source":"BaT","url":"https://bringatrailer.com/listing/1969-porsche-912-coupe-35/","sourceId":"bat-1969-porsche-912-coupe-35","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":15,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1966-porsche-912-coupe-115-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1966-porsche-912-coupe-115-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:09.709Z","source":"BaT","url":"https://bringatrailer.com/listing/1966-porsche-912-coupe-115-2/","sourceId":"bat-1966-porsche-912-coupe-115-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":48500,"bidCount":7,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-porsche-911-carrera-s-coupe-78/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2007-porsche-911-carrera-s-coupe-78/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:14.501Z","source":"BaT","url":"https://bringatrailer.com/listing/2007-porsche-911-carrera-s-coupe-78/","sourceId":"bat-2007-porsche-911-carrera-s-coupe-78","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":40250,"bidCount":14,"photosCount":7,"dataQualityScore":85}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-porsche-cayman-s-149/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2007-porsche-cayman-s-149/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:19.233Z","source":"BaT","url":"https://bringatrailer.com/listing/2007-porsche-cayman-s-149/","sourceId":"bat-2007-porsche-cayman-s-149","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":16000,"bidCount":13,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-cayman-gt4-clubsport-4/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayman-gt4-clubsport-4/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:26.331Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-cayman-gt4-clubsport-4/","sourceId":"bat-2016-porsche-cayman-gt4-clubsport-4","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":65000,"bidCount":11,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-carrera-4s-coupe-5/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-carrera-4s-coupe-5/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:32.085Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-carrera-4s-coupe-5/","sourceId":"bat-2024-porsche-911-carrera-4s-coupe-5","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":112000,"bidCount":11,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/porsche-recaro-seats/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1987-porsche-911-carrera-targa-128/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-911-carrera-targa-128/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:38.623Z","source":"BaT","url":"https://bringatrailer.com/listing/1987-porsche-911-carrera-targa-128/","sourceId":"bat-1987-porsche-911-carrera-targa-128","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":45000,"bidCount":11,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-turbo-s-coupe-20/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-turbo-s-coupe-20/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:43.459Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-turbo-s-coupe-20/","sourceId":"bat-2024-porsche-911-turbo-s-coupe-20","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":256000,"bidCount":14,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1981-porsche-911sc-52-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-52-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:49.312Z","source":"BaT","url":"https://bringatrailer.com/listing/1981-porsche-911sc-52-2/","sourceId":"bat-1981-porsche-911sc-52-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":56000,"bidCount":15,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2002-porsche-boxster-s-174/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-boxster-s-174/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:05:55.260Z","source":"BaT","url":"https://bringatrailer.com/listing/2002-porsche-boxster-s-174/","sourceId":"bat-2002-porsche-boxster-s-174","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":11250,"bidCount":13,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2014-porsche-cayman-s-105/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayman-s-105/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:00.610Z","source":"BaT","url":"https://bringatrailer.com/listing/2014-porsche-cayman-s-105/","sourceId":"bat-2014-porsche-cayman-s-105","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":30000,"bidCount":23,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-porsche-911-gt3-rs-27-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2007-porsche-911-gt3-rs-27-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:04.861Z","source":"BaT","url":"https://bringatrailer.com/listing/2007-porsche-911-gt3-rs-27-2/","sourceId":"bat-2007-porsche-911-gt3-rs-27-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":266666,"bidCount":14,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2006-porsche-911-carrera-4s-cabriolet-61/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2006-porsche-911-carrera-4s-cabriolet-61/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:08.804Z","source":"BaT","url":"https://bringatrailer.com/listing/2006-porsche-911-carrera-4s-cabriolet-61/","sourceId":"bat-2006-porsche-911-carrera-4s-cabriolet-61","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":15000,"bidCount":6,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-porsche-cayenne-turbo-s-8/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-cayenne-turbo-s-8/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:12.391Z","source":"BaT","url":"https://bringatrailer.com/listing/2017-porsche-cayenne-turbo-s-8/","sourceId":"bat-2017-porsche-cayenne-turbo-s-8","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":13500,"bidCount":5,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-porsche-cayenne-s-20/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-cayenne-s-20/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:19.691Z","source":"BaT","url":"https://bringatrailer.com/listing/2017-porsche-cayenne-s-20/","sourceId":"bat-2017-porsche-cayenne-s-20","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":10000,"bidCount":3,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2012-porsche-panamera-turbo-16/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2012-porsche-panamera-turbo-16/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:26.819Z","source":"BaT","url":"https://bringatrailer.com/listing/2012-porsche-panamera-turbo-16/","sourceId":"bat-2012-porsche-panamera-turbo-16","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":32750,"bidCount":7,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2008-porsche-cayman-s-112/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2008-porsche-cayman-s-112/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:30.036Z","source":"BaT","url":"https://bringatrailer.com/listing/2008-porsche-cayman-s-112/","sourceId":"bat-2008-porsche-cayman-s-112","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":11500,"bidCount":6,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1999-porsche-911-carrera-coupe-196/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-911-carrera-coupe-196/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:37.418Z","source":"BaT","url":"https://bringatrailer.com/listing/1999-porsche-911-carrera-coupe-196/","sourceId":"bat-1999-porsche-911-carrera-coupe-196","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":22500,"bidCount":16,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1981-porsche-911sc-targa-50/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-targa-50/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:41.604Z","source":"BaT","url":"https://bringatrailer.com/listing/1981-porsche-911sc-targa-50/","sourceId":"bat-1981-porsche-911sc-targa-50","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":25250,"bidCount":6,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1990-porsche-928-s4-29/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1990-porsche-928-s4-29/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:46.462Z","source":"BaT","url":"https://bringatrailer.com/listing/1990-porsche-928-s4-29/","sourceId":"bat-1990-porsche-928-s4-29","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":18500,"bidCount":12,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/seats-194/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-turbo-50-years-13/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-turbo-50-years-13/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:53.324Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-turbo-50-years-13/","sourceId":"bat-2025-porsche-911-turbo-50-years-13","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":290000,"bidCount":12,"photosCount":10,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2002-porsche-911-turbo-coupe-92/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-911-turbo-coupe-92/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:06:56.533Z","source":"BaT","url":"https://bringatrailer.com/listing/2002-porsche-911-turbo-coupe-92/","sourceId":"bat-2002-porsche-911-turbo-coupe-92","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":53500,"bidCount":14,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1995-porsche-911-carrera-coupe-139/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1995-porsche-911-carrera-coupe-139/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:00.087Z","source":"BaT","url":"https://bringatrailer.com/listing/1995-porsche-911-carrera-coupe-139/","sourceId":"bat-1995-porsche-911-carrera-coupe-139","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":75000,"bidCount":4,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1987-porsche-911-carrera-coupe-113/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-911-carrera-coupe-113/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:05.580Z","source":"BaT","url":"https://bringatrailer.com/listing/1987-porsche-911-carrera-coupe-113/","sourceId":"bat-1987-porsche-911-carrera-coupe-113","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":53000,"bidCount":4,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-sport-classic-18/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-911-sport-classic-18/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:10.998Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-911-sport-classic-18/","sourceId":"bat-2023-porsche-911-sport-classic-18","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":355000,"bidCount":6,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2005-porsche-911-carrera-s-cabriolet-24/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2005-porsche-911-carrera-s-cabriolet-24/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:16.145Z","source":"BaT","url":"https://bringatrailer.com/listing/2005-porsche-911-carrera-s-cabriolet-24/","sourceId":"bat-2005-porsche-911-carrera-s-cabriolet-24","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":17750,"bidCount":9,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2015-porsche-cayenne-diesel-164/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2015-porsche-cayenne-diesel-164/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:21.944Z","source":"BaT","url":"https://bringatrailer.com/listing/2015-porsche-cayenne-diesel-164/","sourceId":"bat-2015-porsche-cayenne-diesel-164","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":9111,"bidCount":6,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2011-porsche-cayenne-s-24-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2011-porsche-cayenne-s-24-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:27.047Z","source":"BaT","url":"https://bringatrailer.com/listing/2011-porsche-cayenne-s-24-2/","sourceId":"bat-2011-porsche-cayenne-s-24-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":6000,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1980-porsche-928-54/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1980-porsche-928-54/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:33.602Z","source":"BaT","url":"https://bringatrailer.com/listing/1980-porsche-928-54/","sourceId":"bat-1980-porsche-928-54","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":201,"bidCount":3,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1984-porsche-911-carrera-coupe-78/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1984-porsche-911-carrera-coupe-78/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:36.614Z","source":"BaT","url":"https://bringatrailer.com/listing/1984-porsche-911-carrera-coupe-78/","sourceId":"bat-1984-porsche-911-carrera-coupe-78","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":29000,"bidCount":10,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-porsche-911-carrera-cabriolet-17/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2007-porsche-911-carrera-cabriolet-17/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:40.207Z","source":"BaT","url":"https://bringatrailer.com/listing/2007-porsche-911-carrera-cabriolet-17/","sourceId":"bat-2007-porsche-911-carrera-cabriolet-17","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":11161,"bidCount":5,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2010-porsche-panamera-turbo-59/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2010-porsche-panamera-turbo-59/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:46.500Z","source":"BaT","url":"https://bringatrailer.com/listing/2010-porsche-panamera-turbo-59/","sourceId":"bat-2010-porsche-panamera-turbo-59","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":29000,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-porsche-911-carrera-gts-coupe-23/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2018-porsche-911-carrera-gts-coupe-23/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:49.963Z","source":"BaT","url":"https://bringatrailer.com/listing/2018-porsche-911-carrera-gts-coupe-23/","sourceId":"bat-2018-porsche-911-carrera-gts-coupe-23","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":1,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-carrera-4-gts-coupe-3/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-carrera-4-gts-coupe-3/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:54.622Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-carrera-4-gts-coupe-3/","sourceId":"bat-2025-porsche-911-carrera-4-gts-coupe-3","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":110991,"bidCount":3,"photosCount":6,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2026-porsche-911-carrera-t-5/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2026-porsche-911-carrera-t-5/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:07:59.972Z","source":"BaT","url":"https://bringatrailer.com/listing/2026-porsche-911-carrera-t-5/","sourceId":"bat-2026-porsche-911-carrera-t-5","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":157777,"bidCount":8,"photosCount":6,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1999-porsche-boxster-266/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-boxster-266/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:04.145Z","source":"BaT","url":"https://bringatrailer.com/listing/1999-porsche-boxster-266/","sourceId":"bat-1999-porsche-boxster-266","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":14000,"bidCount":14,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1993-porsche-911-rs-america-75/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-911-rs-america-75/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:06.961Z","source":"BaT","url":"https://bringatrailer.com/listing/1993-porsche-911-rs-america-75/","sourceId":"bat-1993-porsche-911-rs-america-75","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":140000,"bidCount":14,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-porsche-911-turbo-104/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1997-porsche-911-turbo-104/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:12.193Z","source":"BaT","url":"https://bringatrailer.com/listing/1997-porsche-911-turbo-104/","sourceId":"bat-1997-porsche-911-turbo-104","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":177777,"bidCount":10,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/transaxle-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1982-porsche-911sc-targa-36/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1982-porsche-911sc-targa-36/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:20.947Z","source":"BaT","url":"https://bringatrailer.com/listing/1982-porsche-911sc-targa-36/","sourceId":"bat-1982-porsche-911sc-targa-36","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":27777,"bidCount":19,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-porsche-911-gt3-touring-146/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2022-porsche-911-gt3-touring-146/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:25.112Z","source":"BaT","url":"https://bringatrailer.com/listing/2022-porsche-911-gt3-touring-146/","sourceId":"bat-2022-porsche-911-gt3-touring-146","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":240500,"bidCount":11,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-porsche-911-gt2-rs-73/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2018-porsche-911-gt2-rs-73/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:28.328Z","source":"BaT","url":"https://bringatrailer.com/listing/2018-porsche-911-gt2-rs-73/","sourceId":"bat-2018-porsche-911-gt2-rs-73","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":615000,"bidCount":16,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-s-t-25/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-s-t-25/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:32.261Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-s-t-25/","sourceId":"bat-2024-porsche-911-s-t-25","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":550000,"bidCount":5,"photosCount":10,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-141/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-141/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:36.248Z","source":"BaT","url":"https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-141/","sourceId":"bat-2014-porsche-cayenne-diesel-141","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":8911,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-targa-4-gts-17/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-targa-4-gts-17/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:39.732Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-targa-4-gts-17/","sourceId":"bat-2024-porsche-911-targa-4-gts-17","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":185000,"bidCount":13,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/literature-50/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2012-porsche-cayman-r-77/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2012-porsche-cayman-r-77/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:46.382Z","source":"BaT","url":"https://bringatrailer.com/listing/2012-porsche-cayman-r-77/","sourceId":"bat-2012-porsche-cayman-r-77","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":21000,"bidCount":5,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/seats-196/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1989-porsche-911-carrera-coupe-54/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1989-porsche-911-carrera-coupe-54/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:53.878Z","source":"BaT","url":"https://bringatrailer.com/listing/1989-porsche-911-carrera-coupe-54/","sourceId":"bat-1989-porsche-911-carrera-coupe-54","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":6,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/porsche-sign-31/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-77/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-77/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:08:59.976Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-77/","sourceId":"bat-2023-porsche-718-cayman-gt4-rs-77","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":162500,"bidCount":3,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-porsche-356-replica/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1970-porsche-914-6-117/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1970-porsche-914-6-117/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:07.360Z","source":"BaT","url":"https://bringatrailer.com/listing/1970-porsche-914-6-117/","sourceId":"bat-1970-porsche-914-6-117","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":51000,"bidCount":7,"photosCount":10,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/wheels-432/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1993-porsche-968-coupe-22/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-968-coupe-22/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:15.239Z","source":"BaT","url":"https://bringatrailer.com/listing/1993-porsche-968-coupe-22/","sourceId":"bat-1993-porsche-968-coupe-22","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":24888,"bidCount":9,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1999-porsche-911-carrera-cabriolet-145/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1999-porsche-911-carrera-cabriolet-145/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:18.575Z","source":"BaT","url":"https://bringatrailer.com/listing/1999-porsche-911-carrera-cabriolet-145/","sourceId":"bat-1999-porsche-911-carrera-cabriolet-145","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":15300,"bidCount":7,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-cayenne-s-24/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-s-24/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:23.581Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-cayenne-s-24/","sourceId":"bat-2016-porsche-cayenne-s-24","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":15750,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-718-boxster-s-3/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-718-boxster-s-3/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:29.191Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-718-boxster-s-3/","sourceId":"bat-2025-porsche-718-boxster-s-3","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":45000,"bidCount":6,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1987-porsche-928-s4-170/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-928-s4-170/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:35.208Z","source":"BaT","url":"https://bringatrailer.com/listing/1987-porsche-928-s4-170/","sourceId":"bat-1987-porsche-928-s4-170","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":2928,"bidCount":6,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2021-porsche-911-turbo-coupe-8/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2021-porsche-911-turbo-coupe-8/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:40.171Z","source":"BaT","url":"https://bringatrailer.com/listing/2021-porsche-911-turbo-coupe-8/","sourceId":"bat-2021-porsche-911-turbo-coupe-8","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":75000,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-porsche-911-carrera-coupe-36/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2017-porsche-911-carrera-coupe-36/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:43.315Z","source":"BaT","url":"https://bringatrailer.com/listing/2017-porsche-911-carrera-coupe-36/","sourceId":"bat-2017-porsche-911-carrera-coupe-36","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":65000,"bidCount":5,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-porsche-911-gt3-178/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2018-porsche-911-gt3-178/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:46.259Z","source":"BaT","url":"https://bringatrailer.com/listing/2018-porsche-911-gt3-178/","sourceId":"bat-2018-porsche-911-gt3-178","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":157000,"bidCount":13,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2014-porsche-cayenne-gts-71/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-gts-71/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:50.229Z","source":"BaT","url":"https://bringatrailer.com/listing/2014-porsche-cayenne-gts-71/","sourceId":"bat-2014-porsche-cayenne-gts-71","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":40000,"bidCount":13,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/wheels-429/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1978-porsche-924-20/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1978-porsche-924-20/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:09:54.827Z","source":"BaT","url":"https://bringatrailer.com/listing/1978-porsche-924-20/","sourceId":"bat-1978-porsche-924-20","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":6000,"bidCount":3,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2002-porsche-911-carrera-4-cabriolet-68/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2002-porsche-911-carrera-4-cabriolet-68/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:00.168Z","source":"BaT","url":"https://bringatrailer.com/listing/2002-porsche-911-carrera-4-cabriolet-68/","sourceId":"bat-2002-porsche-911-carrera-4-cabriolet-68","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":10911,"bidCount":2,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1984-porsche-928s-104/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1984-porsche-928s-104/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:03.269Z","source":"BaT","url":"https://bringatrailer.com/listing/1984-porsche-928s-104/","sourceId":"bat-1984-porsche-928s-104","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":2200,"bidCount":3,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/mfi-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/mfi-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:08.270Z","source":"BaT","url":"https://bringatrailer.com/listing/mfi-2/","sourceId":"bat-mfi-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":2500,"bidCount":1,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-34/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-34/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:12.201Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-34/","sourceId":"bat-2016-porsche-cayenne-turbo-s-34","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":32500,"bidCount":5,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-95/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-95/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:17.185Z","source":"BaT","url":"https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-95/","sourceId":"bat-1996-porsche-911-carrera-coupe-95","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":35000,"bidCount":5,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1975-porsche-914-111/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1975-porsche-914-111/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:20.863Z","source":"BaT","url":"https://bringatrailer.com/listing/1975-porsche-914-111/","sourceId":"bat-1975-porsche-914-111","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":6014,"bidCount":7,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-carrera-coupe-6/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-911-carrera-coupe-6/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:25.019Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-911-carrera-coupe-6/","sourceId":"bat-2023-porsche-911-carrera-coupe-6","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":8,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/workshop-manuals-5/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2004-porsche-cayenne-turbo-56-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2004-porsche-cayenne-turbo-56-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:29.121Z","source":"BaT","url":"https://bringatrailer.com/listing/2004-porsche-cayenne-turbo-56-2/","sourceId":"bat-2004-porsche-cayenne-turbo-56-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":1500,"bidCount":4,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2011-porsche-cayenne-s-26/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2011-porsche-cayenne-s-26/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:33.472Z","source":"BaT","url":"https://bringatrailer.com/listing/2011-porsche-cayenne-s-26/","sourceId":"bat-2011-porsche-cayenne-s-26","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":8000,"bidCount":1,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-33/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-33/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:38.886Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-cayenne-turbo-s-33/","sourceId":"bat-2016-porsche-cayenne-turbo-s-33","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":8500,"bidCount":2,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/literature-49/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2000-porsche-911-carrera-4-coupe-19/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2000-porsche-911-carrera-4-coupe-19/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:45.867Z","source":"BaT","url":"https://bringatrailer.com/listing/2000-porsche-911-carrera-4-coupe-19/","sourceId":"bat-2000-porsche-911-carrera-4-coupe-19","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":5000,"bidCount":3,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/wheels-426/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-96/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-96/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:50.786Z","source":"BaT","url":"https://bringatrailer.com/listing/1996-porsche-911-carrera-coupe-96/","sourceId":"bat-1996-porsche-911-carrera-coupe-96","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":116000,"bidCount":12,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2006-porsche-cayman-s-273/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2006-porsche-cayman-s-273/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:10:56.044Z","source":"BaT","url":"https://bringatrailer.com/listing/2006-porsche-cayman-s-273/","sourceId":"bat-2006-porsche-cayman-s-273","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":14000,"bidCount":5,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-78/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-78/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:01.606Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-718-cayman-gt4-rs-78/","sourceId":"bat-2023-porsche-718-cayman-gt4-rs-78","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":125000,"bidCount":2,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/seats-195/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-142/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-142/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:07.148Z","source":"BaT","url":"https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-142/","sourceId":"bat-2014-porsche-cayenne-diesel-142","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":23000,"bidCount":4,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2001-porsche-911-carrera-4-cabriolet-65/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2001-porsche-911-carrera-4-cabriolet-65/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:10.786Z","source":"BaT","url":"https://bringatrailer.com/listing/2001-porsche-911-carrera-4-cabriolet-65/","sourceId":"bat-2001-porsche-911-carrera-4-cabriolet-65","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":10000,"bidCount":1,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-144/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-144/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:15.615Z","source":"BaT","url":"https://bringatrailer.com/listing/2014-porsche-cayenne-diesel-144/","sourceId":"bat-2014-porsche-cayenne-diesel-144","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":5000,"bidCount":2,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1977-porsche-911-3-0-carrera-coupe-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1977-porsche-911-3-0-carrera-coupe-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:18.939Z","source":"BaT","url":"https://bringatrailer.com/listing/1977-porsche-911-3-0-carrera-coupe-2/","sourceId":"bat-1977-porsche-911-3-0-carrera-coupe-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":5,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1991-porsche-928-gt-31-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-928-gt-31-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:23.088Z","source":"BaT","url":"https://bringatrailer.com/listing/1991-porsche-928-gt-31-2/","sourceId":"bat-1991-porsche-928-gt-31-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":35000,"bidCount":3,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1967-porsche-912-coupe-88/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1967-porsche-912-coupe-88/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:27.936Z","source":"BaT","url":"https://bringatrailer.com/listing/1967-porsche-912-coupe-88/","sourceId":"bat-1967-porsche-912-coupe-88","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":25000,"bidCount":2,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1981-porsche-911sc-89/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1981-porsche-911sc-89/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:33.350Z","source":"BaT","url":"https://bringatrailer.com/listing/1981-porsche-911sc-89/","sourceId":"bat-1981-porsche-911sc-89","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":50000,"bidCount":3,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-cayenne-s-25/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-cayenne-s-25/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:38.795Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-cayenne-s-25/","sourceId":"bat-2016-porsche-cayenne-s-25","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":3000,"bidCount":1,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2001-porsche-911-carrera-cabriolet-124/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2001-porsche-911-carrera-cabriolet-124/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:44.509Z","source":"BaT","url":"https://bringatrailer.com/listing/2001-porsche-911-carrera-cabriolet-124/","sourceId":"bat-2001-porsche-911-carrera-cabriolet-124","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":8750,"bidCount":3,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2016-porsche-panamera-turbo-s-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2016-porsche-panamera-turbo-s-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:48.613Z","source":"BaT","url":"https://bringatrailer.com/listing/2016-porsche-panamera-turbo-s-2/","sourceId":"bat-2016-porsche-panamera-turbo-s-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":40000,"bidCount":10,"photosCount":9,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-turbo-s-cabriolet-5/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-turbo-s-cabriolet-5/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:53.239Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-turbo-s-cabriolet-5/","sourceId":"bat-2025-porsche-911-turbo-s-cabriolet-5","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":235000,"bidCount":9,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-porsche-911-carrera-gts-coupe-29/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2019-porsche-911-carrera-gts-coupe-29/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:11:57.429Z","source":"BaT","url":"https://bringatrailer.com/listing/2019-porsche-911-carrera-gts-coupe-29/","sourceId":"bat-2019-porsche-911-carrera-gts-coupe-29","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":null,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1991-porsche-911-carrera-2-coupe-49/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-911-carrera-2-coupe-49/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:00.342Z","source":"BaT","url":"https://bringatrailer.com/listing/1991-porsche-911-carrera-2-coupe-49/","sourceId":"bat-1991-porsche-911-carrera-2-coupe-49","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":31,"photosCount":9,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2022-lamborghini-countach-lpi-800-4-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1979-bmw-m1-4/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1996-porsche-911-carrera-4s-141/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1996-porsche-911-carrera-4s-141/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:05.714Z","source":"BaT","url":"https://bringatrailer.com/listing/1996-porsche-911-carrera-4s-141/","sourceId":"bat-1996-porsche-911-carrera-4s-141","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":67,"photosCount":10,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1971-datsun-240z-353/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2004-ferrari-360-challenge-stradale-40/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-porsche-911-carrera-speedster-gunther-werks/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1997-porsche-911-carrera-speedster-gunther-werks/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:12.668Z","source":"BaT","url":"https://bringatrailer.com/listing/1997-porsche-911-carrera-speedster-gunther-werks/","sourceId":"bat-1997-porsche-911-carrera-speedster-gunther-werks","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":28,"photosCount":10,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2003-ford-mustang-svt-cobra-coupe-50/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2015-dodge-charger-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1985-porsche-911-carrera-coupe-68/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1985-porsche-911-carrera-coupe-68/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:19.954Z","source":"BaT","url":"https://bringatrailer.com/listing/1985-porsche-911-carrera-coupe-68/","sourceId":"bat-1985-porsche-911-carrera-coupe-68","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":13,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1993-porsche-911-slant-nose-conversion/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1993-porsche-911-slant-nose-conversion/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:24.198Z","source":"BaT","url":"https://bringatrailer.com/listing/1993-porsche-911-slant-nose-conversion/","sourceId":"bat-1993-porsche-911-slant-nose-conversion","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":52,"photosCount":9,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1967-ford-mustang-436/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-s-t-24/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-s-t-24/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:28.580Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-s-t-24/","sourceId":"bat-2024-porsche-911-s-t-24","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":56,"photosCount":10,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1968-buick-riviera-11/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2017-ford-gt-17/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2020-ferrari-488-pista-spider-9/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2024-porsche-911-gt3-rs-62/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2024-porsche-911-gt3-rs-62/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:36.123Z","source":"BaT","url":"https://bringatrailer.com/listing/2024-porsche-911-gt3-rs-62/","sourceId":"bat-2024-porsche-911-gt3-rs-62","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":38,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-3-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-gt3-3-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:39.534Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-gt3-3-2/","sourceId":"bat-2025-porsche-911-gt3-3-2","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":14,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-ferrari-sf90-stradale-20/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1992-ferrari-512-tr-47/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1994-lamborghini-diablo-vt-10/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-ferrari-296-gtb-4/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1997-lamborghini-diablo-vt-2/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1965-lamborghini-350-gt/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1989-ferrari-328-gts-60/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2007-lamborghini-murcielago-lp640-coupe-7/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-sport-classic-19/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-911-sport-classic-19/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:51.199Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-911-sport-classic-19/","sourceId":"bat-2023-porsche-911-sport-classic-19","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":38,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2008-mercedes-benz-slr-mclaren-roadster-18/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2018-porsche-911-gt3-175/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2018-porsche-911-gt3-175/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:12:56.378Z","source":"BaT","url":"https://bringatrailer.com/listing/2018-porsche-911-gt3-175/","sourceId":"bat-2018-porsche-911-gt3-175","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":41,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-nissan-gt-r-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-touring-7/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-gt3-touring-7/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:05.062Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-gt3-touring-7/","sourceId":"bat-2025-porsche-911-gt3-touring-7","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":15,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-ferrari-488-pista-19/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2019-mclaren-senna-32/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-aston-martin-dbs-coupe-5/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:14.531Z","source":"BaT","url":"https://bringatrailer.com/listing/2025-porsche-911-gt3-rs-15/","sourceId":"bat-2025-porsche-911-gt3-rs-15","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":30,"photosCount":7,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2001-lamborghini-diablo-vt-6-0-15/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:22.043Z","source":"BaT","url":"https://bringatrailer.com/listing/1964-porsche-356c-carrera-2-coupe-2/","sourceId":"bat-1964-porsche-356c-carrera-2-coupe-2","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":38,"photosCount":10,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:27.962Z","source":"BaT","url":"https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-8/","sourceId":"bat-2026-porsche-911-gt3-touring-8","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":15,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:34.735Z","source":"BaT","url":"https://bringatrailer.com/listing/2023-porsche-911-sport-classic-17/","sourceId":"bat-2023-porsche-911-sport-classic-17","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":45,"photosCount":9,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2005-mercedes-benz-slr-mclaren-21/
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/1987-porsche-911-turbo-cabriolet-20/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1987-porsche-911-turbo-cabriolet-20/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:43.725Z","source":"BaT","url":"https://bringatrailer.com/listing/1987-porsche-911-turbo-cabriolet-20/","sourceId":"bat-1987-porsche-911-turbo-cabriolet-20","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":41,"photosCount":8,"dataQualityScore":90}
+[Scraper] Cache MISS — fetching https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-9/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-9/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:49.194Z","source":"BaT","url":"https://bringatrailer.com/listing/2026-porsche-911-gt3-touring-9/","sourceId":"bat-2026-porsche-911-gt3-touring-9","status":"active","saleDate":"2026-02-27","currency":null,"currentBid":null,"bidCount":29,"photosCount":8,"dataQualityScore":90}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:50.484Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/porsche/","attempts":1,"bytes":630888}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:52.498Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/results/?search=porsche","attempts":1,"bytes":755511}
+{"level":"info","event":"discover.page_fetched","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:54.513Z","source":"BaT","page":1,"pageUrl":"https://bringatrailer.com/auctions/?search=porsche","attempts":1,"bytes":1509371}
+[Scraper] Cache HIT for https://bringatrailer.com/listing/1991-porsche-911-turbo-95/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1991-porsche-911-turbo-95/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:13:58.426Z","source":"BaT","url":"https://bringatrailer.com/listing/1991-porsche-911-turbo-95/","sourceId":"bat-1991-porsche-911-turbo-95","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":302000,"bidCount":8,"photosCount":8,"dataQualityScore":100}
+[Scraper] Cache HIT for https://bringatrailer.com/listing/1977-porsche-911s-targa-72/
+[BaT] Scraping detail: https://bringatrailer.com/listing/1977-porsche-911s-targa-72/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:01.659Z","source":"BaT","url":"https://bringatrailer.com/listing/1977-porsche-911s-targa-72/","sourceId":"bat-1977-porsche-911s-targa-72","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":37210,"bidCount":14,"photosCount":7,"dataQualityScore":100}
+[Scraper] Cache HIT for https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/
+[BaT] Scraping detail: https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/
+{"level":"info","event":"collector.normalized","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:05.330Z","source":"BaT","url":"https://bringatrailer.com/listing/2009-porsche-911-carrera-s-cabriolet-47-2/","sourceId":"bat-2009-porsche-911-carrera-s-cabriolet-47-2","status":"active","saleDate":"2026-02-27","currency":"USD","currentBid":46500,"bidCount":16,"photosCount":7,"dataQualityScore":100}
+{"level":"info","event":"collector.source_done","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:05.528Z","source":"BaT","counts":{"discovered":148,"porscheKept":148,"skippedMissingRequired":38,"written":110,"errored":0,"retried":0}}
+[C&B] Starting Cars & Bids scrape...
+[C&B] Scraping listings page 1: https://carsandbids.com/auctions
+[C&B] Scrape complete: 0 auctions, 1 errors, 84ms
+{"level":"warn","event":"discover.no_base_url","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:08.702Z","source":"CarsAndBids","candidates":["https://carsandbids.com/auctions/past/?q=porsche","https://carsandbids.com/auctions/past?q=porsche","https://carsandbids.com/auctions/?q=porsche","https://carsandbids.com/auctions?q=porsche"]}
+{"level":"info","event":"collector.source_done","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:08.702Z","source":"CarsAndBids","counts":{"discovered":0,"porscheKept":0,"skippedMissingRequired":0,"written":0,"errored":0,"retried":0}}
+[CC] Starting Collecting Cars scrape...
+[CC] Scraping listings page 1: https://collectingcars.com/search
+[CC] Scrape complete: 0 auctions, 1 errors, 87ms
+{"level":"warn","event":"discover.no_base_url","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:10.872Z","source":"CollectingCars","candidates":["https://collectingcars.com/search?q=porsche","https://collectingcars.com/search?query=porsche","https://collectingcars.com/search?search=porsche"]}
+{"level":"info","event":"collector.source_done","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:10.872Z","source":"CollectingCars","counts":{"discovered":0,"porscheKept":0,"skippedMissingRequired":0,"written":0,"errored":0,"retried":0}}
+{"level":"info","event":"collector.done","runId":"5d75eb01-03fa-4479-ae42-45fa54b88fd8","ts":"2026-03-03T15:14:10.874Z"}
+real 590.767 s

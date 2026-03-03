@@ -643,8 +643,19 @@ export async function runLightBackfill(config: {
 const isMain = process.argv[1]?.endsWith("historical_backfill.ts") || process.argv[1]?.endsWith("historical_backfill.js");
 
 if (isMain) {
-  import("dotenv").then((dotenv) => {
-    dotenv.config({ path: ".env.local" });
+  import("node:fs").then((fs) => {
+    if (fs.existsSync(".env.local")) {
+      const raw = fs.readFileSync(".env.local", "utf8");
+      for (const line of raw.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const index = trimmed.indexOf("=");
+        if (index < 1) continue;
+        const key = trimmed.slice(0, index).trim();
+        if (process.env[key] !== undefined) continue;
+        process.env[key] = trimmed.slice(index + 1).trim().replace(/^['\"]|['\"]$/g, "");
+      }
+    }
 
     runHistoricalBackfill()
       .then((result) => {

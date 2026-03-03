@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           let profileResult = await fetchProfile(session.access_token)
 
           // Email confirmation path can establish auth session before the app profile
-          // row exists in Prisma; create it immediately instead of waiting for timing.
+          // row exists in the app database; create it immediately instead of waiting for timing.
           if (!profileResult.ok && profileResult.status === 404) {
             profileResult = await createUserProfile(session.user, session.access_token)
           }

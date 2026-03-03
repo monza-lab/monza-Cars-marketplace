@@ -11,9 +11,9 @@ function mapStatus(raw: string | undefined): 'ACTIVE' | 'ENDED' {
 }
 
 // ---------------------------------------------------------------------------
-// Mock Prisma and scrapers
+// Mock DB client and scrapers
 // ---------------------------------------------------------------------------
-const mockPrisma = {
+const mockDb = {
   auction: {
     upsert: vi.fn().mockResolvedValue({ id: 'mock-id' }),
     findUnique: vi.fn().mockResolvedValue({ id: 'mock-id' }),
@@ -81,7 +81,7 @@ describe('Cron Pipeline: Auction upsert', () => {
       ? auction.images
       : auction.imageUrl ? [auction.imageUrl] : [];
 
-    await mockPrisma.auction.upsert({
+    await mockDb.auction.upsert({
       where: { externalId: auction.externalId },
       update: {
         title: auction.title,
@@ -105,8 +105,8 @@ describe('Cron Pipeline: Auction upsert', () => {
       },
     });
 
-    expect(mockPrisma.auction.upsert).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.auction.upsert).toHaveBeenCalledWith(
+    expect(mockDb.auction.upsert).toHaveBeenCalledTimes(1);
+    expect(mockDb.auction.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { externalId: 'bat-test-1' },
       }),
@@ -144,19 +144,19 @@ describe('Cron Pipeline: Price history', () => {
     const auction = makeFakeScrapedAuction({ currentBid: 75000 });
 
     if (auction.currentBid != null) {
-      const dbAuction = await mockPrisma.auction.findUnique({
+      const dbAuction = await mockDb.auction.findUnique({
         where: { externalId: auction.externalId },
         select: { id: true },
       });
 
       if (dbAuction) {
-        await mockPrisma.priceHistory.create({
+        await mockDb.priceHistory.create({
           data: { auctionId: dbAuction.id, bid: auction.currentBid },
         });
       }
     }
 
-    expect(mockPrisma.priceHistory.create).toHaveBeenCalledWith({
+    expect(mockDb.priceHistory.create).toHaveBeenCalledWith({
       data: { auctionId: 'mock-id', bid: 75000 },
     });
   });
@@ -165,31 +165,31 @@ describe('Cron Pipeline: Price history', () => {
     const auction = makeFakeScrapedAuction({ currentBid: null });
 
     if (auction.currentBid != null) {
-      await mockPrisma.priceHistory.create({ data: {} as any });
+      await mockDb.priceHistory.create({ data: {} as any });
     }
 
-    expect(mockPrisma.priceHistory.create).not.toHaveBeenCalled();
+    expect(mockDb.priceHistory.create).not.toHaveBeenCalled();
   });
 
   it('skips price history when auction not found in DB', async () => {
-    mockPrisma.auction.findUnique.mockResolvedValueOnce(null);
+    mockDb.auction.findUnique.mockResolvedValueOnce(null);
 
     const auction = makeFakeScrapedAuction({ currentBid: 60000 });
 
     if (auction.currentBid != null) {
-      const dbAuction = await mockPrisma.auction.findUnique({
+      const dbAuction = await mockDb.auction.findUnique({
         where: { externalId: auction.externalId },
         select: { id: true },
       });
 
       if (dbAuction) {
-        await mockPrisma.priceHistory.create({
+        await mockDb.priceHistory.create({
           data: { auctionId: dbAuction.id, bid: auction.currentBid },
         });
       }
     }
 
-    expect(mockPrisma.priceHistory.create).not.toHaveBeenCalled();
+    expect(mockDb.priceHistory.create).not.toHaveBeenCalled();
   });
 });
 
@@ -202,7 +202,7 @@ describe('Cron Pipeline: Market data aggregation', () => {
   });
 
   it('upserts market data for each make/model group', async () => {
-    mockPrisma.auction.groupBy.mockResolvedValue([
+    mockDb.auction.groupBy.mockResolvedValue([
       {
         make: 'Porsche', model: '911',
         _avg: { currentBid: 150000 },
@@ -212,7 +212,7 @@ describe('Cron Pipeline: Market data aggregation', () => {
       },
     ] as any);
 
-    const groups = await mockPrisma.auction.groupBy({
+    const groups = await mockDb.auction.groupBy({
       by: ['make', 'model'],
       _avg: { currentBid: true },
       _count: { id: true },
@@ -221,7 +221,7 @@ describe('Cron Pipeline: Market data aggregation', () => {
     });
 
     for (const group of groups) {
-      await mockPrisma.marketData.upsert({
+      await mockDb.marketData.upsert({
         where: {
           make_model_yearStart_yearEnd: {
             make: group.make, model: group.model,
@@ -245,8 +245,8 @@ describe('Cron Pipeline: Market data aggregation', () => {
       });
     }
 
-    expect(mockPrisma.marketData.upsert).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.marketData.upsert).toHaveBeenCalledWith(
+    expect(mockDb.marketData.upsert).toHaveBeenCalledTimes(1);
+    expect(mockDb.marketData.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({ avgPrice: 150000 }),
       }),
@@ -254,12 +254,12 @@ describe('Cron Pipeline: Market data aggregation', () => {
   });
 
   it('marks expired auctions as ENDED', async () => {
-    await mockPrisma.auction.updateMany({
+    await mockDb.auction.updateMany({
       where: { status: 'ACTIVE', endTime: { lt: expect.any(Date) } },
       data: { status: 'ENDED' },
     });
 
-    expect(mockPrisma.auction.updateMany).toHaveBeenCalledWith(
+    expect(mockDb.auction.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { status: 'ENDED' },
       }),

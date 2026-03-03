@@ -1,0 +1,15 @@
+
+> garage-advisory@0.1.0 dev
+> next dev --webpack --port 3005
+
+▲ Next.js 16.1.6 (webpack)
+- Local:         http://localhost:3005
+- Network:       http://10.5.0.2:3005
+- Environments: .env.local
+- Experiments (use with caution):
+  · serverActions
+
+✓ Starting...
+✓ Ready in 3s
+ GET /api/user/profile 401 in 3.3s (compile: 3.3s, render: 40ms)
+ POST /api/user/create 401 in 767ms (compile: 744ms, render: 23ms)
