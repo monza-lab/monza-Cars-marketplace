@@ -447,6 +447,12 @@ async function scrapeActiveListings(
     mileage: typeof a.mileage === "number" ? a.mileage : null,
     mileageUnit: a.mileageUnit ?? null,
     endTime: a.endTime ? new Date(a.endTime) : null,
+    currentBid: a.currentBid ?? null,
+    bidCount: a.bidCount ?? null,
+    status: a.status ?? null,
+    imageUrl: a.imageUrl ?? null,
+    images: a.images ?? [],
+    location: a.location ?? null,
   }));
 }
 

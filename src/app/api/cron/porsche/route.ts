@@ -22,11 +22,11 @@ export async function GET(request: Request) {
   try {
     // Step 1: Discover and ingest new active listings
     // summaryOnly: normalizes directly from listing-page data (no per-listing HTTP fetches)
-    // CarsAndBids returns rich data (title, make, model, year, bid, images) from 1 page request
+    // CarsAndBids + CollectingCars return rich data from listing pages (1 HTTP per page, not per listing)
     const result = await runCollector({
       mode: "daily",
-      sources: ["CarsAndBids"],
-      maxActivePagesPerSource: 2,
+      sources: ["CarsAndBids", "CollectingCars"],
+      maxActivePagesPerSource: 5,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
       summaryOnly: true,
