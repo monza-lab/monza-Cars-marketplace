@@ -45,7 +45,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "m.atcdn.co.uk" },
     ],
   },
-  serverExternalPackages: ["@sparticuz/chromium"],
+  outputFileTracingIncludes: {
+    "/api/cron/classic": ["./node_modules/@sparticuz/chromium/**/*"],
+    "/api/cron/autoscout24": ["./node_modules/@sparticuz/chromium/**/*"],
+  },
   outputFileTracingExcludes: {
     "*": [
       "**/node_modules/typescript/**",

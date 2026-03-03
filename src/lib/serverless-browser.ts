@@ -28,11 +28,12 @@ export async function launchServerlessBrowser(
 
   if (IS_VERCEL) {
     // Serverless path: @sparticuz/chromium + playwright-core
-    const chromium = await import("@sparticuz/chromium");
+    const chromiumMod = await import("@sparticuz/chromium");
+    const chromium = chromiumMod.default;
     const { chromium: pwChromium } = await import("playwright-core");
 
-    // @sparticuz/chromium needs to decompress the binary on first cold start
-    const executablePath = await chromium.default.executablePath();
+    // @sparticuz/chromium decompresses the brotli binary on first cold start
+    const executablePath = await chromium.executablePath();
 
     return pwChromium.launch({
       ...launchOpts,
@@ -40,7 +41,7 @@ export async function launchServerlessBrowser(
       headless: true, // always headless on Vercel
       args: [
         ...(launchOpts.args ?? []),
-        ...chromium.default.args,
+        ...chromium.args,
       ],
     });
   }
