@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { createClient } from "@/lib/supabase/server";
 import {
   getRecentRuns,
   getDailyAggregates,
@@ -8,6 +10,8 @@ import {
   getLatestRunPerScraper,
 } from "@/lib/scraper-monitoring";
 import ScrapersDashboardClient from "./ScrapersDashboardClient";
+
+const ADMIN_EMAILS = ["caposk8@hotmail.com"];
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -42,6 +46,12 @@ export default async function ScrapersPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+    redirect(`/${locale}`);
+  }
 
   return (
     <Suspense

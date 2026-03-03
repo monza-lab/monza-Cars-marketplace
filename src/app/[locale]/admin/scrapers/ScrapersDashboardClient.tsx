@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import type {
   ScraperRun,
   ScraperName,
@@ -499,10 +498,6 @@ function DailyTrendsSection({
     dateMap.set(agg.run_date, existing);
   }
 
-  const dates = Array.from(dateMap.keys()).sort(
-    (a, b) => new Date(b).getTime() - new Date(a).getTime()
-  );
-
   const filtered =
     selectedScraper === "all"
       ? aggregates
@@ -661,14 +656,14 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
                     {row.avg_quality != null ? (
                       <span
                         className={
-                          row.avg_quality >= 0.7
+                          row.avg_quality >= 70
                             ? "text-emerald-400"
-                            : row.avg_quality >= 0.4
+                            : row.avg_quality >= 40
                               ? "text-amber-400"
                               : "text-red-400"
                         }
                       >
-                        {(row.avg_quality * 100).toFixed(0)}%
+                        {row.avg_quality.toFixed(0)}%
                       </span>
                     ) : (
                       <span className="text-zinc-600">—</span>

@@ -57,12 +57,13 @@ export async function getDataQuality(daysBack: number = 7): Promise<DataQuality[
 export async function getLatestRunPerScraper(): Promise<Map<ScraperName, ScraperRun>> {
   const supabase = await createClient();
 
-  // Get the most recent run for each scraper using distinct on
+  // Get recent runs and pick the latest per scraper in JS.
+  // Limited to 50 rows — enough to cover 6 scrapers even with many runs.
   const { data, error } = await supabase
     .from('scraper_runs')
     .select('*')
-    .order('scraper_name', { ascending: true })
-    .order('finished_at', { ascending: false });
+    .order('finished_at', { ascending: false })
+    .limit(50);
 
   if (error) {
     console.error('[scraper-monitoring] getLatestRunPerScraper error:', error.message);

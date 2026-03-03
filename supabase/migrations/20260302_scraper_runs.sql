@@ -112,5 +112,6 @@ ALTER TABLE scraper_runs ENABLE ROW LEVEL SECURITY;
 -- Public read access (dashboard is public)
 CREATE POLICY "Public read" ON scraper_runs FOR SELECT USING (true);
 
--- Service role write access
-CREATE POLICY "Service role write" ON scraper_runs FOR INSERT WITH CHECK (true);
+-- Service role write access (service_role bypasses RLS; block anon inserts)
+CREATE POLICY "Service role write" ON scraper_runs FOR INSERT
+  WITH CHECK (auth.role() = 'service_role');
