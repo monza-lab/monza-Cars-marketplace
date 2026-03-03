@@ -20,10 +20,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Step 1: Discover and ingest new active listings (capped for Vercel 5-min limit)
+    // Step 1: Discover and ingest new active listings (heavily capped for Vercel 5-min limit)
+    // Each listing triggers an external HTTP fetch, so we limit aggressively
     const result = await runCollector({
       mode: "daily",
-      maxActivePagesPerSource: 2,
+      maxActivePagesPerSource: 1,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
       dryRun: false,
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
     const remainingMs = maxDuration * 1000 - elapsedMs - 15_000; // 15s safety buffer
 
     if (remainingMs > 30_000) {
-      refreshResult = await refreshActiveListings({ maxListings: 20 });
+      refreshResult = await refreshActiveListings({ maxListings: 10 });
     }
 
     const allErrors = [
