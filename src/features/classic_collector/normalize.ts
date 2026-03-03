@@ -113,8 +113,8 @@ export function normalizeListingFromSummary(input: {
   const title = input.summary.title.trim();
   if (!title) return null;
 
-  const year = input.summary.year;
-  const make = input.summary.make ?? "Porsche";
+  const year = input.summary.year ?? parseYearFromTitle(title);
+  const make = input.summary.make ?? parseMakeFromTitle(title) ?? "Porsche";
   if (make.toLowerCase() !== "porsche") return null;
 
   const model = input.summary.model ?? parseModelFromTitle(title);
@@ -388,6 +388,16 @@ export function scoreDataQuality(input: {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+function parseYearFromTitle(title: string): number | null {
+  const m = title.match(/\b(19\d{2}|20\d{2})\b/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function parseMakeFromTitle(title: string): string | null {
+  const m = title.match(/\b(Porsche|Ferrari|BMW|Mercedes|Lamborghini)\b/i);
+  return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase() : null;
+}
 
 function parseModelFromTitle(title: string): string | null {
   const cleaned = title.replace(/\s+/g, " ").trim();

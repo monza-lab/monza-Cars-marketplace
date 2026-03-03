@@ -22,11 +22,15 @@ export async function GET(request: Request) {
 
   try {
     // Step 1: Refresh status of existing active listings (mark ended auctions as sold/unsold)
-    const refreshResult = await refreshActiveListings();
+    // Cap to 50 listings to avoid timeout
+    const refreshResult = await refreshActiveListings({ maxListings: 50 });
 
-    // Step 2: Discover and ingest new active listings
+    // Step 2: Discover and ingest new active listings (capped for Vercel)
     const result = await runCollector({
       mode: "daily",
+      maxActivePagesPerSource: 2,
+      maxEndedPagesPerSource: 0,   // skip ended pages on Vercel — backfill covers these
+      scrapeDetails: false,        // summary-only to stay within time budget
       dryRun: false,
     });
 

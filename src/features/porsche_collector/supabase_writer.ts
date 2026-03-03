@@ -186,7 +186,7 @@ export interface RefreshResult {
  * Re-scrapes every listing with `status = 'active'` and updates the DB
  * when the auction has ended (sold / unsold / delisted).
  */
-export async function refreshActiveListings(): Promise<RefreshResult> {
+export async function refreshActiveListings(opts?: { maxListings?: number }): Promise<RefreshResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
@@ -198,10 +198,16 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: activeRows, error: fetchErr } = await client
+  let query = client
     .from("listings")
     .select("id,source_url,hammer_price,sale_date")
     .eq("status", "active");
+
+  if (opts?.maxListings) {
+    query = query.limit(opts.maxListings);
+  }
+
+  const { data: activeRows, error: fetchErr } = await query;
 
   if (fetchErr || !activeRows) {
     return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
