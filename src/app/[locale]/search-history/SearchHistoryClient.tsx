@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Clock, Trash2, Search, Sparkles, X } from "lucide-react"
+import { Clock, Trash2, Search, Scale, X } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import {
@@ -155,7 +155,7 @@ export default function SearchHistoryClient() {
                   key={entry.timestamp}
                   className="group flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-white/[0.03] transition-colors"
                 >
-                  <Sparkles className="size-4 text-[#F8B4D9]/30 shrink-0" />
+                  <Scale className="size-4 text-[#F8B4D9]/30 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] text-[#FFFCF7] truncate">
                       {entry.query}

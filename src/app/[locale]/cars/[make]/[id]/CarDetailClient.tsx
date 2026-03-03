@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
+import { stripHtml } from "@/lib/stripHtml"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowLeft,
   TrendingUp,
   Globe,
-  Sparkles,
+  Scale,
   ChevronRight,
   ChevronDown,
   Shield,
@@ -36,13 +37,13 @@ import {
   DollarSign,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
+import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
-import { PriceTrendChart } from "@/components/charts/PriceTrendChart"
 
 // ─── MOCK DATA ───
 const redFlags: Record<string, string[]> = {
@@ -179,31 +180,6 @@ const shippingCosts: Record<string, { domestic: number; euImport: number; ukImpo
   default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
 }
 
-// ─── BENCHMARKS (for 5-year return comparison) ───
-const BENCHMARKS = [
-  { label: "S&P 500", return5y: 42 },
-  { label: "Gold", return5y: 28 },
-  { label: "Real Estate", return5y: 18 },
-]
-
-// ─── MOCK 5-YEAR PRICE HISTORY (per brand) ───
-const mockPriceHistory: Record<string, number[]> = {
-  Porsche: [180000, 210000, 245000, 290000, 320000],
-  Ferrari: [450000, 520000, 580000, 640000, 720000],
-  McLaren: [12000000, 13500000, 15000000, 17000000, 19500000],
-  Lamborghini: [280000, 310000, 350000, 400000, 460000],
-  BMW: [65000, 78000, 92000, 108000, 125000],
-  Nissan: [85000, 110000, 145000, 180000, 220000],
-  Toyota: [75000, 95000, 120000, 145000, 175000],
-  "Mercedes-Benz": [320000, 350000, 380000, 420000, 470000],
-  "Aston Martin": [400000, 440000, 480000, 520000, 580000],
-  Lexus: [350000, 380000, 410000, 440000, 490000],
-  Ford: [280000, 310000, 340000, 380000, 420000],
-  Acura: [100000, 115000, 135000, 155000, 180000],
-  Jaguar: [120000, 130000, 145000, 160000, 180000],
-  default: [150000, 170000, 195000, 220000, 250000],
-}
-
 // ─── PLATFORM LABELS ───
 const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
@@ -311,7 +287,7 @@ function StatCard({ label, value, icon }: {
 }
 
 // ─── SIMILAR CAR CARD ───
-function SimilarCarCard({ car }: { car: CollectorCar }) {
+function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons?: string[] }) {
   const { selectedRegion } = useRegion()
   return (
     <Link
@@ -328,6 +304,12 @@ function SimilarCarCard({ car }: { car: CollectorCar }) {
           referrerPolicy="no-referrer"
           unoptimized
         />
+        {/* Grade badge */}
+        <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 py-0.5 rounded ${
+          car.investmentGrade === "AAA" ? "bg-emerald-500/80 text-white"
+          : car.investmentGrade === "AA" ? "bg-[#F8B4D9]/80 text-[#0b0b10]"
+          : "bg-amber-500/80 text-white"
+        }`}>{car.investmentGrade}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
@@ -337,8 +319,21 @@ function SimilarCarCard({ car }: { car: CollectorCar }) {
           <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">
             {formatPriceForRegion(car.currentBid, selectedRegion)}
           </span>
-          <span className="text-[10px] text-emerald-400">{car.trend}</span>
+          {car.mileage > 0 && (
+            <span className="text-[9px] text-[#6B7280]">
+              {car.mileage.toLocaleString()} {car.mileageUnit}
+            </span>
+          )}
         </div>
+        {matchReasons && matchReasons.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {matchReasons.slice(0, 2).map(reason => (
+              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#6B7280]">
+                {reason}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors shrink-0" />
     </Link>
@@ -389,7 +384,7 @@ function CarNavSidebar({
   similarCars,
 }: {
   car: CollectorCar
-  similarCars: CollectorCar[]
+  similarCars: SimilarCarResult[]
 }) {
   const locale = useLocale()
   const { selectedRegion, effectiveRegion, currency } = useRegion()
@@ -586,7 +581,7 @@ function CarNavSidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-2">
           <div className="space-y-1 pb-4">
             {similarCars.map(c => (
-              <SidebarCarCard key={c.id} car={c} />
+              <SidebarCarCard key={c.car.id} car={c.car} />
             ))}
           </div>
         </div>
@@ -632,30 +627,10 @@ function CarContextPanel({
     ))
   )
 
-  // 5-year return data: prefer DB sold records
-  const priceHistoryYears = (() => {
-    const now = new Date()
-    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-  })()
-  const priceHistory = (() => {
-    if (dbSoldHistory.length >= 3) {
-      const buckets = priceHistoryYears.map(yr => {
-        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
-        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
-      })
-      const filled = [...buckets]
-      for (let i = 0; i < filled.length; i++) {
-        if (filled[i] == null) {
-          const prev = filled.slice(0, i).reverse().find(v => v != null)
-          const next = filled.slice(i + 1).find(v => v != null)
-          filled[i] = prev ?? next ?? car.currentBid
-        }
-      }
-      return filled as number[]
-    }
-    return mockPriceHistory[car.make] || mockPriceHistory.default
-  })()
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
+  // Market position: where is the current bid relative to fair value?
+  const regionRange = pricing[effectiveRegion as keyof typeof pricing] || pricing.US
+  const fairMid = (regionRange.low + regionRange.high) / 2
+  const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
 
   return (
     <div className="h-full flex flex-col overflow-hidden border-l border-white/5">
@@ -765,52 +740,45 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 3. 5-YEAR RETURN COMPARISON */}
+        {/* 3. MARKET POSITION */}
         <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="size-4 text-[#F8B4D9]" />
+            <Scale className="size-4 text-[#F8B4D9]" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-              5-Year Return Comparison
+              Market Position
             </span>
           </div>
-          <div className="space-y-2.5">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-[#F8B4D9]">{car.make}</span>
-                <span className="text-[11px] font-mono font-bold text-emerald-400">+{brand5yReturn}%</span>
-              </div>
-              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-              </div>
-            </div>
-            {BENCHMARKS.map((b) => (
-              <div key={b.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
-                  <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4. 5-YEAR PRICE TREND */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                5-Year Price Trend
+          {/* Price vs Fair Value gauge */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
+              <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+                {pricePosition}%
               </span>
             </div>
-            <span className="text-[10px] font-mono font-semibold text-emerald-400">
-              {brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%
+            <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+              <div
+                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+            </div>
+          </div>
+          {/* Position label */}
+          <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
+            <span className="text-[11px] text-[#D1D5DB]">
+              {pricePosition <= 85
+                ? "Priced well below fair value range — strong buyer opportunity"
+                : pricePosition <= 100
+                  ? "Priced within the lower half of fair value range"
+                  : pricePosition <= 115
+                    ? "Priced at market — fair value for current conditions"
+                    : "Priced above fair value midpoint — verify condition justifies premium"}
             </span>
           </div>
-          <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={100} />
         </div>
 
         {/* 5. ANNUAL OWNERSHIP COST */}
@@ -929,7 +897,7 @@ function CarContextPanel({
 // ═══════════════════════════════════════════════════════════════
 export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [] }: {
   car: CollectorCar
-  similarCars: CollectorCar[]
+  similarCars: SimilarCarResult[]
   dbMarketData?: DbMarketDataRow | null
   dbComparables?: DbComparableRow[]
   dbAnalysis?: DbAnalysisRow | null
@@ -1062,31 +1030,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     ))
   )
 
-  // Price history: prefer DB sold records, fallback to hardcoded
-  const priceHistoryYears = (() => {
-    const now = new Date()
-    return [0, 1, 2, 3, 4].map(i => now.getFullYear() - 4 + i)
-  })()
-  const priceHistory = (() => {
-    if (dbSoldHistory.length >= 3) {
-      const buckets = priceHistoryYears.map(yr => {
-        const sales = dbSoldHistory.filter(s => new Date(s.date).getFullYear() === yr)
-        return sales.length > 0 ? Math.round(sales.reduce((sum, s) => sum + s.price, 0) / sales.length) : null
-      })
-      const filled = [...buckets]
-      for (let i = 0; i < filled.length; i++) {
-        if (filled[i] == null) {
-          const prev = filled.slice(0, i).reverse().find(v => v != null)
-          const next = filled.slice(i + 1).find(v => v != null)
-          filled[i] = prev ?? next ?? car.currentBid
-        }
-      }
-      return filled as number[]
-    }
-    return mockPriceHistory[car.make] || mockPriceHistory.default
-  })()
-  const brand5yReturn = Math.round(((priceHistory[priceHistory.length - 1] - priceHistory[0]) / priceHistory[0]) * 100)
-
   // Scroll handler for mobile sticky bar
   useEffect(() => {
     const handleScroll = () => {
@@ -1144,17 +1087,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     </div>
                   </div>
                 </div>
-                <a
-                  href={`https://wa.me/573208492641?text=${encodeURIComponent(
-                    `Hola, estoy interesado en el ${car.title} en Monza Lab.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full bg-[#F8B4D9] px-5 py-2 text-[11px] font-semibold uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                <Link
+                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+                  className="flex items-center gap-2 rounded-full bg-[#F8B4D9] px-4 py-2 text-[11px] font-semibold uppercase text-[#0b0b10] active:bg-[#f4cbde] transition-colors"
                 >
-                  <MessageCircle className="size-4" />
-                  Contact
-                </a>
+                  <FileText className="size-3.5" />
+                  Report
+                </Link>
               </div>
             </motion.div>
           )}
@@ -1230,7 +1169,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="relative z-10 -mt-6 mx-4">
           <div className="rounded-2xl bg-[rgba(15,14,22,0.9)] backdrop-blur-xl border border-white/10 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
                 {t("investmentPassport.title")}
               </span>
@@ -1238,10 +1177,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <div className="grid grid-cols-2 gap-3">
               {/* Cell 1: Grade */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.grade")}
                 </span>
-                <span className={`text-[24px] font-bold ${
+                <span className={`text-[28px] font-bold ${
                   car.investmentGrade === "AAA" ? "text-emerald-400"
                   : car.investmentGrade === "AA" ? "text-[#F8B4D9]"
                   : "text-amber-400"
@@ -1250,7 +1189,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
               {/* Cell 2: Market Position */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.marketPosition")}
                 </span>
                 <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden mt-2 mb-1.5">
@@ -1260,32 +1199,52 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     style={{ left: `calc(${pricePosition}% - 4px)` }}
                   />
                 </div>
-                <span className={`text-[10px] font-medium ${isBelowFair ? "text-emerald-400" : "text-amber-400"}`}>
+                <span className={`text-[11px] font-medium ${isBelowFair ? "text-emerald-400" : "text-amber-400"}`}>
                   {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
                 </span>
               </div>
 
-              {/* Cell 3: 5yr Return */}
+              {/* Cell 3: Fair Value */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
-                  {t("investmentPassport.fiveYearReturn")}
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                  Fair Value
                 </span>
-                <span className="text-[24px] font-bold font-mono text-emerald-400">+{brand5yReturn}%</span>
+                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
+                  {formatPriceForRegion(Math.round((regionRange.low + regionRange.high) / 2), selectedRegion)}
+                </span>
               </div>
 
               {/* Cell 4: Annual Cost */}
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider block mb-1">
+                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
                   {t("investmentPassport.annualCost")}
                 </span>
-                <span className="text-[20px] font-bold font-mono text-[#FFFCF7]">
+                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
                   {formatPriceForRegion(totalAnnualCost, selectedRegion)}
                 </span>
-                <span className="text-[10px] text-[#6B7280]">/yr</span>
+                <span className="text-[11px] text-[#6B7280]">/yr</span>
               </div>
             </div>
           </div>
         </div>
+
+        {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
+        <Link
+          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+          className="mx-4 mt-4 flex items-center gap-4 rounded-2xl border border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] p-4 active:bg-[rgba(248,180,217,0.15)] transition-colors"
+        >
+          <div className="size-12 rounded-xl bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
+            <FileText className="size-6 text-[#F8B4D9]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation · Risks · Comps · Costs</p>
+          </div>
+          <span className="shrink-0 rounded-xl bg-[#F8B4D9] px-4 py-2 text-[12px] font-bold text-[#0b0b10]">
+            View
+            <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
+          </span>
+        </Link>
 
         {/* ═══ CONTINUOUS SCROLL CONTENT ═══ */}
         <div className="px-4 py-6 space-y-4 pb-32">
@@ -1299,7 +1258,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
               <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
             </div>
-            <p className="text-[14px] leading-relaxed text-[#D1D5DB]">{car.thesis}</p>
+            <p className="text-[14px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
           </div>
 
           {/* 2. Vehicle Specs */}
@@ -1313,7 +1272,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           {/* 3. Seller's Description */}
           <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
             <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-              <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.history}</p>
+              <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
             </div>
             <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
           </CollapsibleSection>
@@ -1364,50 +1323,43 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             </div>
           </div>
 
-          {/* 5. 5-Year Return Comparison */}
+          {/* 5. Market Position */}
           <div className="rounded-xl bg-[rgba(248,180,217,0.03)] border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="size-4 text-[#F8B4D9]" />
+              <Scale className="size-4 text-[#F8B4D9]" />
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                {t("fiveYearReturnComparison")}
+                Market Position
               </span>
             </div>
-            <div className="space-y-2.5">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-semibold text-[#F8B4D9]">{car.make}</span>
-                  <span className="text-[11px] font-mono font-bold text-emerald-400">+{brand5yReturn}%</span>
-                </div>
-                <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-[#F8B4D9]/50" style={{ width: `${Math.min((brand5yReturn / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                </div>
-              </div>
-              {BENCHMARKS.map((b) => (
-                <div key={b.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] text-[#9CA3AF]">{b.label}</span>
-                    <span className="text-[11px] font-mono text-[#6B7280]">+{b.return5y}%</span>
-                  </div>
-                  <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-                    <div className="h-full rounded-full bg-white/10" style={{ width: `${Math.min((b.return5y / Math.max(brand5yReturn, 50)) * 100, 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. 5-Year Price Trend */}
-          <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="size-4 text-[#F8B4D9]" />
-                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
-                  {t("priceTrend")}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
+                <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+                  {pricePosition}%
                 </span>
               </div>
-              <span className="text-[10px] font-mono font-semibold text-emerald-400">{brand5yReturn >= 0 ? "+" : ""}{brand5yReturn}%</span>
+              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                  style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+              </div>
             </div>
-            <PriceTrendChart values={priceHistory} years={priceHistoryYears} height={110} />
+            <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
+              <span className="text-[11px] text-[#D1D5DB]">
+                {pricePosition <= 85
+                  ? "Priced well below fair value — strong buyer opportunity"
+                  : pricePosition <= 100
+                    ? "Priced within the lower half of fair value range"
+                    : pricePosition <= 115
+                      ? "Priced at market — fair value for current conditions"
+                      : "Priced above fair value — verify condition justifies premium"}
+              </span>
+            </div>
           </div>
 
           {/* 7. Sale Information */}
@@ -1603,38 +1555,19 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <CollapsibleSection title={t("similarVehicles", { count: similarCars.length })} icon={<Car className="size-5" />} defaultOpen>
               <div className="space-y-3">
                 {similarCars.slice(0, 4).map(c => (
-                  <SimilarCarCard key={c.id} car={c} />
+                  <SimilarCarCard key={c.car.id} car={c.car} matchReasons={c.matchReasons} />
                 ))}
               </div>
             </CollapsibleSection>
           )}
 
-          {/* 15. Full Report CTA */}
-          {isRegistered && (
-            <Link
-              href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-              className="flex items-center gap-4 rounded-xl border border-[rgba(248,180,217,0.15)] bg-[rgba(248,180,217,0.04)] px-5 py-4 hover:bg-[rgba(248,180,217,0.06)] transition-colors"
-            >
-              <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.1)] flex items-center justify-center shrink-0">
-                <FileText className="size-5 text-[#F8B4D9]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[#FFFCF7]">Full Investment Report</p>
-                <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
-              </div>
-              <span className="flex items-center gap-2 shrink-0 rounded-lg bg-[#F8B4D9] px-5 py-2.5 text-[12px] font-semibold text-[#0b0b10]">
-                View Report
-                <ChevronRight className="size-4" />
-              </span>
-            </Link>
-          )}
         </div>
 
         {/* ═══ MOBILE CTA ═══ */}
         <MobileCarCTA
-          carTitle={car.title}
-          carPrice={formatPriceForRegion(car.currentBid, selectedRegion)}
+          carId={car.id}
           make={car.make}
+          onOpenAdvisor={() => setShowAdvisorChat(true)}
         />
       </div>
 
@@ -1696,7 +1629,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                   <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
                 </div>
-                <p className="text-[13px] leading-relaxed text-[#D1D5DB]">{car.thesis}</p>
+                <p className="text-[13px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
               </div>
 
               {/* PROVENANCE */}
@@ -1706,7 +1639,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <h2 className="text-[12px] font-semibold text-[#FFFCF7]">{t("sellersDescription")}</h2>
                 </div>
                 <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-                  <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{car.history}</p>
+                  <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                 </div>
                 <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
               </div>
@@ -2177,9 +2110,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         open={showAdvisorChat}
         onOpenChange={setShowAdvisorChat}
         initialContext={{
-          carTitle: car.title,
-          carPrice: formatPriceForRegion(car.currentBid, selectedRegion),
+          car,
           make: car.make,
+          dbMarketData,
+          dbComparables,
+          dbAnalysis,
+          dbSoldHistory,
         }}
       />
     </div>

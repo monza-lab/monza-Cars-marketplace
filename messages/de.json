@@ -5,7 +5,8 @@
     "priceHistory": "Preisverlauf",
     "about": "Über uns",
     "menu": "Menü",
-    "searchHistory": "Verlauf"
+    "searchHistory": "Verlauf",
+    "pricing": "Preise"
   },
   "mobile": {
     "aiOracle": "KI-Orakel",
@@ -112,6 +113,8 @@
   },
   "carDetail": {
     "askAnything": "Fragen Sie Alles Über Dieses Auto",
+    "viewReport": "Bericht Ansehen",
+    "askAdvisor": "Berater Fragen",
     "isGoodInvestment": "Ist das eine gute Investition?",
     "fairPrice": "Fairer Preis",
     "compareAlternatives": "Alternativen vergleichen",
@@ -1204,8 +1207,12 @@
     "regionDesc": "Wählen Sie einen oder mehrere Märkte für Preise und Verfügbarkeit",
     "other": "Andere",
     "regionsSelected": "Regionen ausgewählt",
-    "brandsTitle": "Marken, denen Sie folgen",
-    "brandsDesc": "Wählen Sie eine oder mehrere, um Ihren Feed zu personalisieren",
+    "brandsTitle": "Neben Porsche — was interessiert Sie noch?",
+    "brandsDesc": "Wir sind Porsche-Spezialisten — wählen Sie weitere Marken, die Sie interessieren",
+    "brandsOptional": "Optional — überspringen, wenn nur Porsche Sie interessiert",
+    "modelsTitle": "Welche Porsche-Modelle interessieren Sie?",
+    "modelsDesc": "Wählen Sie die Generationen, die Sie verfolgen möchten",
+    "modelsSelected": "Modelle ausgewählt",
     "intentTitle": "Was führt Sie hierher?",
     "intentDesc": "Dies hilft uns, Ihre Erfahrung anzupassen",
     "buyTitle": "Kaufen",
@@ -1218,5 +1225,10 @@
     "back": "Zurück",
     "skip": "Vorerst überspringen",
     "finish": "Loslegen"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
   }
 }

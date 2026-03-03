@@ -5,7 +5,8 @@
     "priceHistory": "価格履歴",
     "about": "概要",
     "menu": "メニュー",
-    "searchHistory": "履歴"
+    "searchHistory": "履歴",
+    "pricing": "料金プラン"
   },
   "mobile": {
     "aiOracle": "AIオラクル",
@@ -112,6 +113,8 @@
   },
   "carDetail": {
     "askAnything": "この車について何でも聞いてください",
+    "viewReport": "レポートを見る",
+    "askAdvisor": "アドバイザー",
     "isGoodInvestment": "良い投資ですか？",
     "fairPrice": "適正価格",
     "compareAlternatives": "代替品を比較",
@@ -1204,8 +1207,12 @@
     "regionDesc": "価格と在庫を調整するために1つ以上の市場を選択してください",
     "other": "その他",
     "regionsSelected": "地域を選択済み",
-    "brandsTitle": "フォローするブランド",
-    "brandsDesc": "フィードをパーソナライズするために1つ以上選択してください",
+    "brandsTitle": "ポルシェ以外に興味のあるブランドは？",
+    "brandsDesc": "ポルシェの専門家ですが、他に気になるブランドがあれば選択してください",
+    "brandsOptional": "任意です — ポルシェだけに集中する場合はスキップ",
+    "modelsTitle": "どのポルシェモデルに興味がありますか？",
+    "modelsDesc": "追跡したい世代を選択してください",
+    "modelsSelected": "モデルを選択済み",
     "intentTitle": "ここに来た理由は？",
     "intentDesc": "あなたの体験をカスタマイズするのに役立ちます",
     "buyTitle": "購入",
@@ -1218,5 +1225,10 @@
     "back": "戻る",
     "skip": "今はスキップ",
     "finish": "始める"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "プライバシー",
+    "terms": "利用規約"
   }
 }

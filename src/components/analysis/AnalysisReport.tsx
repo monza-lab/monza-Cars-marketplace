@@ -8,7 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Sparkles,
+  Scale,
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -322,7 +322,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           {criticalQuestions.length > 0 && (
             <CollapsibleSection
               title="Critical Questions to Ask"
-              icon={Sparkles}
+              icon={Scale}
               defaultOpen
               count={criticalQuestions.length}
               accentClass="text-amber-500"
@@ -406,7 +406,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             variant="outline"
             className="border-zinc-700 text-zinc-500 text-[10px] gap-1.5 font-normal"
           >
-            <Sparkles className="size-3 text-amber-600" />
+            <Scale className="size-3 text-amber-600" />
             Powered by Claude AI
           </Badge>
         </div>

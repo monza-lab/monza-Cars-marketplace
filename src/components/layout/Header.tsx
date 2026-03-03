@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, Sparkles, X, TrendingUp, BarChart3, Car, LogOut, Zap, Star, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Coins, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
 import {
   Sheet,
   SheetTrigger,
@@ -21,11 +21,12 @@ import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
+import { stripHtml } from "@/lib/stripHtml";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
 type SearchItem = {
-  type: "family" | "series" | "variant"
+  type: "family" | "series" | "variant" | "link"
   label: string
   subtitle: string
   family?: string
@@ -33,6 +34,51 @@ type SearchItem = {
   variantId?: string
   yearRange?: string
   keywords: string[]
+  url?: string
+}
+
+// ─── AUCTION URL DETECTION ───
+
+const AUCTION_PLATFORMS: { pattern: RegExp; name: string; icon: string }[] = [
+  { pattern: /bringatrailer\.com/i, name: "Bring a Trailer", icon: "BaT" },
+  { pattern: /carsandbids\.com/i, name: "Cars & Bids", icon: "C&B" },
+  { pattern: /pcarmarket\.com/i, name: "PCarMarket", icon: "PCM" },
+  { pattern: /collectingcars\.com/i, name: "Collecting Cars", icon: "CC" },
+  { pattern: /rmsothebys\.com/i, name: "RM Sotheby's", icon: "RM" },
+  { pattern: /bonhams\.com/i, name: "Bonhams", icon: "BH" },
+  { pattern: /elferspot\.com/i, name: "Elferspot", icon: "ES" },
+  { pattern: /hemmings\.com/i, name: "Hemmings", icon: "HM" },
+  { pattern: /bat\.vin/i, name: "Bring a Trailer", icon: "BaT" },
+]
+
+function detectAuctionUrl(input: string): SearchItem | null {
+  const trimmed = input.trim()
+  if (!trimmed.match(/^https?:\/\//i) && !trimmed.match(/^www\./i)) return null
+
+  for (const platform of AUCTION_PLATFORMS) {
+    if (platform.pattern.test(trimmed)) {
+      return {
+        type: "link",
+        label: `Analyze listing from ${platform.name}`,
+        subtitle: "Paste detected — get full investment report",
+        keywords: [],
+        url: trimmed.startsWith("http") ? trimmed : `https://${trimmed}`,
+      }
+    }
+  }
+
+  // Generic URL that looks like a car listing
+  if (trimmed.match(/^https?:\/\//i)) {
+    return {
+      type: "link",
+      label: "Analyze this listing",
+      subtitle: "Paste a link to get an investment report",
+      keywords: [],
+      url: trimmed,
+    }
+  }
+
+  return null
 }
 
 function buildSearchIndex(): SearchItem[] {
@@ -121,9 +167,23 @@ function isTypoMatch(query: string, target: string): boolean {
 function searchItems(query: string): SearchItem[] {
   if (!query.trim()) return []
 
-  // Normalize: strip "porsche" and common typos of it
   let q = query.toLowerCase().trim()
-  q = q.replace(/^(?:porsche|posrche|prsche|porshe|porche|porsch)\s+/i, "")
+
+  // If typing "por", "pors", "porsc", "porsche" etc. — show browse suggestions
+  // This catches both the word in progress and full "porsche" with no suffix
+  const porscheTyping = /^(?:por|pors|porsc|porsch|porsche|posrche|prsche|porshe|porche|porsché)\s*$/i
+  if (porscheTyping.test(q)) {
+    return SEARCH_INDEX
+      .filter(item => item.type === "family" || item.type === "series")
+      .sort((a, b) => {
+        const typePriority: Record<string, number> = { family: 3, series: 2, variant: 1, link: 4 }
+        return (typePriority[b.type] || 0) - (typePriority[a.type] || 0)
+      })
+      .slice(0, 8)
+  }
+
+  // Strip "porsche" prefix for the actual search (e.g. "porsche gt3" → "gt3")
+  q = q.replace(/^(?:porsche|posrche|prsche|porshe|porche|porsch|porsché)\s+/i, "")
   if (!q) return []
 
   // Split multi-word query for multi-token matching
@@ -177,14 +237,14 @@ function searchItems(query: string): SearchItem[] {
     .filter((r): r is { item: SearchItem; score: number } => r !== null)
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score
-      const typePriority = { family: 3, series: 2, variant: 1 }
+      const typePriority: Record<string, number> = { family: 3, series: 2, variant: 1, link: 4 }
       return (typePriority[b.item.type] || 0) - (typePriority[a.item.type] || 0)
     })
     .slice(0, 8)
     .map(r => r.item)
 }
 
-const SEARCH_TYPE_ICON = { family: Award, series: Calendar, variant: Zap } as const
+const SEARCH_TYPE_ICON = { family: Award, series: Calendar, variant: ShieldCheck, link: LinkIcon } as const
 
 const REGIONS = [
   { id: "all", label: "All", flag: "\u{1F30D}" },
@@ -198,7 +258,7 @@ const REGIONS = [
 const menuLinkKeys = [
   { href: "/auctions", key: "liveAuctions" },
   { href: "/search", key: "marketSearch" },
-  { href: "/history", key: "priceHistory" },
+  { href: "/pricing", key: "pricing" },
   { href: "/about", key: "about" },
 ] as const;
 
@@ -284,7 +344,7 @@ ${car.status === "ACTIVE" || car.status === "ENDING_SOON"
 • Year: ${car.year}
 
 **About this Vehicle** _(Editorial)_
-${car.thesis}
+${stripHtml(car.thesis)}
 
 _Note: Price data from real auction results. No value estimates._`,
       chips: [{ id: "viewCarDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
@@ -400,10 +460,10 @@ ${car.status === "ACTIVE" || car.status === "ENDING_SOON"
 • Transmission: ${car.transmission}
 • Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
 
-**Seller's Notes:** ${car.history}
+**Seller's Notes:** ${stripHtml(car.history)}
 
 **About this Model** _(Editorial)_
-${car.thesis}`,
+${stripHtml(car.thesis)}`,
       chips: [{ id: "viewFullDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
       carContext: { id: car.id, make: car.make },
     };
@@ -524,7 +584,7 @@ function OracleToast({
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl"
         >
-          <Sparkles className="size-4 text-[#F8B4D9]" />
+          <Scale className="size-4 text-[#F8B4D9]" />
           <span className="text-[13px] font-medium text-[#FFFCF7]">{message}</span>
         </motion.div>
       )}
@@ -627,7 +687,7 @@ function OracleOverlay({
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(248,180,217,0.1)]">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-[#F8B4D9]" />
+                  <Scale className="size-4 text-[#F8B4D9]" />
                   <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
                     {t("oracle.aiAnalysis")}
                   </span>
@@ -865,12 +925,14 @@ export function Header() {
     setIsFocused(false)
     inputRef.current?.blur()
 
-    if (item.type === "family") {
+    if (item.type === "link" && item.url) {
+      // TODO: Backend will replace with /api/scrape → redirect to detail page
+      // For now, navigate to analyze page with the URL as param
+      router.push(`/search?analyze=${encodeURIComponent(item.url)}`)
+    } else if (item.type === "family") {
       router.push(`/cars/porsche`)
-    } else if (item.seriesId && item.variantId) {
-      router.push(`/cars/porsche?series=${item.seriesId}&variant=${item.variantId}`)
     } else if (item.seriesId) {
-      router.push(`/cars/porsche?series=${item.seriesId}`)
+      router.push(`/cars/porsche?family=${item.seriesId}`)
     }
   }, [router])
 
@@ -932,7 +994,9 @@ export function Header() {
                   onChange={(e) => {
                     const val = e.target.value
                     setQuery(val)
-                    const results = searchItems(val)
+                    // Check for auction URL paste first
+                    const linkResult = detectAuctionUrl(val)
+                    const results = linkResult ? [linkResult] : searchItems(val)
                     setSearchResults(results)
                     setShowDropdown(results.length > 0 && val.trim().length > 0)
                     setActiveIndex(0)
@@ -986,7 +1050,7 @@ export function Header() {
                   {/* Results */}
                   <div className="py-1.5 max-h-[360px] overflow-y-auto">
                     {searchResults.map((item, idx) => {
-                      const Icon = SEARCH_TYPE_ICON[item.type] || Zap
+                      const Icon = SEARCH_TYPE_ICON[item.type] || ShieldCheck
                       const isActive = idx === activeIndex
                       return (
                         <button
@@ -1030,7 +1094,7 @@ export function Header() {
                                 ? "bg-[#F8B4D9]/15 text-[#F8B4D9]"
                                 : "bg-white/[0.04] text-[#6B7280]"
                             }`}>
-                              {item.type === "family" ? "Family" : item.type === "series" ? "Series" : "Variant"}
+                              {item.type === "family" ? "Family" : item.type === "series" ? "Series" : item.type === "link" ? "Analyze" : "Variant"}
                             </span>
                             <ChevronRight className={`size-3 ${isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"}`} />
                           </div>
@@ -1085,13 +1149,16 @@ export function Header() {
 
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
-            {/* Credits - only show when authenticated */}
+            {/* Credits - only show when authenticated, click → /account */}
             {isAuthenticated && (
-              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-                <Zap className={`size-3 ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
+              <button
+                onClick={() => router.push('/account')}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
                 <span className="text-[12px] font-medium tabular-nums text-[#FFFCF7]">{creditsRemaining}</span>
                 <span className="text-[10px] text-[#4B5563]">{t('auth.credits')}</span>
-              </div>
+              </button>
             )}
 
             {/* Account / Sign In */}
@@ -1179,7 +1246,7 @@ export function Header() {
                   <div className="mx-5 rounded-xl bg-[rgba(248,180,217,0.04)] border border-[rgba(248,180,217,0.08)] p-4">
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <Zap className={`size-3.5 ${creditsRemaining > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"}`} />
+                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"}`} />
                         <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Credits</span>
                       </div>
                       <span className="text-[14px] font-mono font-bold text-[#FFFCF7]">
@@ -1206,7 +1273,7 @@ export function Header() {
                   <div className="px-5 pt-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Star className="size-3.5 text-[#F8B4D9]" />
+                        <Bookmark className="size-3.5 text-[#F8B4D9]" />
                         <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Watchlist</span>
                       </div>
                       <span className="text-[10px] font-mono text-[#4B5563]">3 cars</span>
@@ -1218,7 +1285,7 @@ export function Header() {
                         { name: "Toyota Supra MK4", price: "$185K", trend: "+22%", grade: "A" },
                       ].map((car) => (
                         <div key={car.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/[0.02] transition-colors cursor-pointer group">
-                          <Star className="size-3 text-[#F8B4D9]/40 shrink-0" />
+                          <Bookmark className="size-3 text-[#F8B4D9]/40 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{car.name}</p>
                           </div>

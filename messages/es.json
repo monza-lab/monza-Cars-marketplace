@@ -4,6 +4,7 @@
     "marketSearch": "Búsqueda de Mercado",
     "priceHistory": "Historial de Precios",
     "about": "Acerca de",
+    "pricing": "Precios",
     "menu": "Menú",
     "searchHistory": "Historial"
   },
@@ -112,6 +113,8 @@
   },
   "carDetail": {
     "askAnything": "Pregunta Cualquier Cosa Sobre Este Carro",
+    "viewReport": "Ver Reporte",
+    "askAdvisor": "Preguntar",
     "isGoodInvestment": "¿Es buena inversión?",
     "fairPrice": "Precio justo",
     "compareAlternatives": "Comparar alternativas",
@@ -1204,8 +1207,12 @@
     "regionDesc": "Selecciona uno o más mercados para ajustar precios y disponibilidad",
     "other": "Otro",
     "regionsSelected": "regiones seleccionadas",
-    "brandsTitle": "Marcas que sigues",
-    "brandsDesc": "Selecciona una o más para personalizar tu feed",
+    "brandsTitle": "Aparte de Porsche, ¿qué otra marca te interesa?",
+    "brandsDesc": "Somos especialistas en Porsche — selecciona cualquier otra marca que te llame la atención",
+    "brandsOptional": "Esto es opcional — continúa si Porsche es tu único interés",
+    "modelsTitle": "¿Qué modelos Porsche te interesan?",
+    "modelsDesc": "Selecciona las generaciones que quieres seguir",
+    "modelsSelected": "modelos seleccionados",
     "intentTitle": "¿Qué te trae aquí?",
     "intentDesc": "Esto nos ayuda a adaptar tu experiencia",
     "buyTitle": "Comprar",
@@ -1218,5 +1225,10 @@
     "back": "Atrás",
     "skip": "Omitir por ahora",
     "finish": "Comenzar"
+  },
+  "footer": {
+    "copyright": "© 2025 Monza Lab",
+    "privacy": "Privacidad",
+    "terms": "Términos"
   }
 }

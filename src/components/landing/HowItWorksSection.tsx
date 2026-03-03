@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Eye, Sparkles, Target } from "lucide-react"
+import { Eye, Scale, Target } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 const steps = [
@@ -13,7 +13,7 @@ const steps = [
   },
   {
     number: "02",
-    icon: Sparkles,
+    icon: Scale,
     titleKey: "steps.analyzes.title",
     descriptionKey: "steps.analyzes.description",
   },

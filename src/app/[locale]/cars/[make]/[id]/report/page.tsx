@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabaseLiveListings"
 import { getMarketDataForModel, getMarketDataForMake, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { ReportClient } from "./ReportClient"
+import { findSimilarCars } from "@/lib/similarCars"
 
 interface ReportPageProps {
   params: Promise<{ make: string; id: string }>
@@ -69,19 +70,13 @@ export default async function ReportPage({ params }: ReportPageProps) {
     notFound()
   }
 
-  // Find similar cars
-  const curatedSimilar = CURATED_CARS.filter(
-    c => c.id !== car.id && (c.category === car.category || c.make === car.make)
-  ).slice(0, 6)
-
-  let similarCars = curatedSimilar
-  if (similarCars.length < 6 && car.id.startsWith("live-")) {
+  // Find similar cars using professional multi-criteria scoring
+  const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
+  if (car.id.startsWith("live-")) {
     const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
-    const liveSimilar = live.filter(
-      c => c.id !== car.id && c.make === car.make
-    ).slice(0, 6 - similarCars.length)
-    similarCars = [...similarCars, ...liveSimilar]
+    allCandidates.push(...live.filter(c => c.id !== car.id))
   }
+  const similarCars = findSimilarCars(car, allCandidates, 6)
 
   const shouldQueryPrisma = !car.id.startsWith("live-")
 

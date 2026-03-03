@@ -10,7 +10,7 @@ import {
   DollarSign,
   Check,
   Shield,
-  Sparkles,
+  Scale,
   ChevronUp,
 } from "lucide-react"
 import { SearchWithAutocomplete } from "./SearchWithAutocomplete"
@@ -287,7 +287,7 @@ export function FilterSidebar() {
       {/* HEADER FIJO */}
       <div className="px-5 py-4 border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="size-5 text-[#F8B4D9]" />
+          <Scale className="size-5 text-[#F8B4D9]" />
           <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
             Encuentra tu Porsche
           </h3>

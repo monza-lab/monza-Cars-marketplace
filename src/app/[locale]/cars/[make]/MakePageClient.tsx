@@ -39,6 +39,7 @@ import { getModelImage } from "@/lib/modelImages"
 import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
 import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
+import { stripHtml } from "@/lib/stripHtml"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -57,9 +58,9 @@ type Model = {
 
 // ─── MOCK DATA FOR BRAND-LEVEL INSIGHTS ───
 const brandThesis: Record<string, string> = {
-  Porsche: "Porsche represents the pinnacle of driver engagement and investment potential. Air-cooled models (pre-1998) continue to appreciate at 8-12% annually, with the 993 generation showing particular strength. The brand's motorsport heritage and limited production of special models ensures sustained collector demand.",
+  Porsche: "Porsche represents the pinnacle of driver engagement and investment potential. Air-cooled models (pre-1998) remain the most sought-after in the collector market, with the 993 generation commanding particular interest. The brand's motorsport heritage and limited production of special models ensures sustained collector demand.",
   Ferrari: "Ferrari's collector car segment demonstrates remarkable resilience. The brand's strict production limits and heritage continue to drive demand across all eras. Classiche certification is essential—non-certified cars trade at 15-20% discounts.",
-  McLaren: "McLaren F1 stands alone as the greatest supercar ever made. Central driving position, gold-lined engine bay, 240 mph top speed. Only 64 road cars built—the ultimate trophy asset. Values have appreciated 12% annually with no signs of slowing.",
+  McLaren: "McLaren F1 stands alone as the greatest supercar ever made. Central driving position, gold-lined engine bay, 240 mph top speed. Only 64 road cars built—the ultimate trophy asset. Among the most coveted assets in the collector car world, with consistent demand at auction.",
   Lamborghini: "Lamborghini's poster-car icons from the 70s and 80s represent pure automotive artistry. The Miura created the supercar template, while the Countach defined a generation's dreams. Both continue to appreciate as blue-chip collectibles.",
   Nissan: "JDM vehicles are experiencing unprecedented demand as 25-year import eligibility expands the collector base. The R34 GT-R represents peak Japanese engineering, with V-Spec models commanding premium prices.",
   Toyota: "The A80 Supra has achieved icon status, bolstered by Fast & Furious cultural prominence and bulletproof 2JZ reliability. 6-speed manual turbo in stock condition is increasingly rare and highly sought after.",
@@ -70,7 +71,7 @@ const brandThesis: Record<string, string> = {
   BMW: "BMW's M division has created some of the most collectible driver's cars. From the E30 M3 to the 3.0 CSL, these machines combine motorsport DNA with everyday usability. Limited editions and special variants command significant premiums.",
   Acura: "The NSX was developed with Senna's input to create the everyday supercar. NA1 with pop-up headlights is most desirable. Legendary Honda reliability meets exotic performance.",
   Jaguar: "Enzo Ferrari called the E-Type 'the most beautiful car ever made.' Series 1 with covered headlights is the most desirable specification. Timeless British elegance at accessible price points.",
-  default: "Investment-grade collector vehicles with strong appreciation potential and documented provenance.",
+  default: "Investment-grade collector vehicles with strong collector market fundamentals and documented provenance.",
 }
 
 const brandStrategy: Record<string, { advice: string; complexity: string; liquidity: string }> = {
@@ -1414,13 +1415,13 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
   const grade = car.investmentGrade
 
   return (
-    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
+    <div className="h-[calc(100dvh-140px)] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/${makeSlug}/${car.id}`}
         className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
       >
         {/* TOP: CINEMATIC IMAGE */}
-        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+        <div className="relative aspect-[2/1] w-full shrink-0 overflow-hidden">
           {car.image ? (
             <Image
               src={car.image}
@@ -1472,32 +1473,32 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
         </div>
 
         {/* BOTTOM: CAR INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+        <div className="flex-1 w-full bg-[#0F1012] px-5 pt-4 pb-3 flex flex-col min-h-0">
           {/* Car title */}
           <div>
-            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-2xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
               {car.year} {car.model}
             </h2>
-            <p className="text-[13px] text-[#6B7280] mt-1">
+            <p className="text-[12px] text-[#6B7280] mt-0.5">
               {car.mileage?.toLocaleString()} miles
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/5">
             {/* Current Bid */}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-[#6B7280]">
                 <Gavel className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Current Bid</span>
               </div>
-              <p className="text-[15px] font-mono font-bold text-[#F8B4D9]">
+              <p className="text-[14px] font-mono font-bold text-[#F8B4D9]">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
             </div>
 
             {/* Platform + Time Left */}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-[#6B7280]">
                 <Clock className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">
@@ -1515,7 +1516,7 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
             </div>
 
             {/* Grade */}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-[#6B7280]">
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
@@ -1530,19 +1531,19 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
           </div>
 
           {/* Category */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
               {car.category}
             </span>
             {car.region && (
-              <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
                 {car.region}
               </span>
             )}
           </div>
 
-          {/* CTA */}
-          <div className="mt-6 flex items-center justify-center rounded-xl bg-[#F8B4D9] py-3 group-hover:bg-[#f4cbde] transition-colors">
+          {/* CTA — always visible at bottom */}
+          <div className="mt-auto pt-3 flex items-center justify-center rounded-xl bg-[#F8B4D9] py-2.5 group-hover:bg-[#f4cbde] transition-colors">
             <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">
               View Investment Report
             </span>
@@ -2190,8 +2191,8 @@ function CarContextPanel({
             {car.year} {make} {car.model}
           </h2>
           {car.thesis && (
-            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
-              {car.thesis}
+            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2 whitespace-pre-line">
+              {stripHtml(car.thesis)}
             </p>
           )}
         </div>
@@ -3882,13 +3883,13 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                       <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  <div className="flex items-center gap-1 mt-1 overflow-x-auto no-scrollbar">
                     {/* Variant chips */}
                     {availableVariants.length > 0 && (
                       <>
                         <button
                           onClick={() => setSelectedVariantChip(null)}
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                          className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                             !selectedVariantChip
                               ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
                               : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
@@ -3900,7 +3901,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                           <button
                             key={v.id}
                             onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                            className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                               selectedVariantChip === v.id
                                 ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
                                 : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
@@ -3909,14 +3910,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                             {v.label}
                           </button>
                         ))}
-                        <span className="w-px h-3 bg-white/10 mx-0.5" />
+                        <span className="shrink-0 w-px h-3 bg-white/10 mx-0.5" />
                       </>
                     )}
                     {/* Status chips */}
                     {feedStatusCounts.live > 0 && (
                       <button
                         onClick={() => setFeedStatusFilter(feedStatusFilter === "live" ? "all" : "live")}
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
+                        className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
                           feedStatusFilter === "live"
                             ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                             : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
@@ -3929,7 +3930,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     {feedStatusCounts.ended > 0 && (
                       <button
                         onClick={() => setFeedStatusFilter(feedStatusFilter === "ended" ? "all" : "ended")}
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
+                        className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                           feedStatusFilter === "ended"
                             ? "bg-[rgba(107,114,128,0.2)] text-[#9CA3AF] border border-[rgba(107,114,128,0.3)]"
                             : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"

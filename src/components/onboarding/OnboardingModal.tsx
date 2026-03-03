@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Car, Target, ChevronRight, ChevronLeft, Check, Globe } from "lucide-react"
+import { MapPin, Car, Target, ChevronRight, ChevronLeft, Check, Globe, Shield } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useRegion } from "@/lib/RegionContext"
 import {
@@ -10,6 +10,7 @@ import {
   saveOnboardingPreferences,
   type OnboardingPreferences,
 } from "@/lib/onboardingPreferences"
+import { getFamilyGroupsWithSeries } from "@/lib/brandConfig"
 import { useTranslations } from "next-intl"
 
 // ─── DATA ───
@@ -22,9 +23,9 @@ const REGION_OPTIONS = [
   { id: "other", flag: "\u{1F30D}", label: "Other" },
 ]
 
+// Porsche is implicit — these are "other" brands
 const BRAND_OPTIONS = [
   "Ferrari",
-  "Porsche",
   "Lamborghini",
   "McLaren",
   "Mercedes-Benz",
@@ -47,7 +48,10 @@ const INTENT_OPTIONS = [
   { id: "learn", icon: Globe, titleKey: "learnTitle", descKey: "learnDesc" },
 ]
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 4
+
+// Porsche family groups from brandConfig
+const PORSCHE_FAMILIES = getFamilyGroupsWithSeries("porsche")
 
 // ─── SLIDE VARIANTS ───
 
@@ -71,12 +75,12 @@ export function OnboardingModal() {
   // Selections
   const [regions, setRegions] = useState<string[]>([])
   const [brands, setBrands] = useState<string[]>([])
+  const [models, setModels] = useState<string[]>([])
   const [intent, setIntent] = useState<string | null>(null)
 
   // Show modal only once after login
   useEffect(() => {
     if (!loading && user && !isOnboardingCompleted()) {
-      // Small delay so user sees the page first
       const timer = setTimeout(() => setOpen(true), 800)
       return () => clearTimeout(timer)
     }
@@ -88,10 +92,23 @@ export function OnboardingModal() {
     )
   }
 
+  const toggleBrand = (brand: string) => {
+    setBrands((prev) =>
+      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+    )
+  }
+
+  const toggleModel = (modelId: string) => {
+    setModels((prev) =>
+      prev.includes(modelId) ? prev.filter((m) => m !== modelId) : [...prev, modelId]
+    )
+  }
+
   const canProceed = () => {
     if (step === 0) return regions.length > 0
-    if (step === 1) return brands.length > 0
-    if (step === 2) return !!intent
+    if (step === 1) return true // brands are optional (Porsche is implicit)
+    if (step === 2) return true // models are optional
+    if (step === 3) return !!intent
     return false
   }
 
@@ -112,18 +129,17 @@ export function OnboardingModal() {
   }
 
   const finish = () => {
-    // Primary region = first selected non-"other" region
     const primaryRegion = regions.find(r => r !== "other") ?? null
     const prefs: OnboardingPreferences = {
       region: primaryRegion,
       regions,
       brands,
+      models,
       intent,
       completedAt: Date.now(),
     }
     saveOnboardingPreferences(prefs)
 
-    // Set global region from first selection
     if (primaryRegion) {
       setSelectedRegion(primaryRegion)
     }
@@ -136,16 +152,11 @@ export function OnboardingModal() {
       region: null,
       regions: [],
       brands: [],
+      models: [],
       intent: null,
       completedAt: Date.now(),
     })
     setOpen(false)
-  }
-
-  const toggleBrand = (brand: string) => {
-    setBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    )
   }
 
   if (!open) return null
@@ -246,7 +257,7 @@ export function OnboardingModal() {
                     </div>
                   )}
 
-                  {/* ─── Step 2: Brands ─── */}
+                  {/* ─── Step 2: Brands (optional — Porsche is implicit) ─── */}
                   {step === 1 && (
                     <div>
                       <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
@@ -288,16 +299,83 @@ export function OnboardingModal() {
                           )
                         })}
                       </div>
+                      {brands.length === 0 && (
+                        <p className="text-[11px] text-[rgba(255,252,247,0.3)] mt-3 text-center">
+                          {t("brandsOptional")}
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {/* ─── Step 3: Intent ─── */}
+                  {/* ─── Step 3: Porsche Models (multi-select) ─── */}
                   {step === 2 && (
+                    <div>
+                      <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+                        <Shield className="size-4" />
+                        <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
+                          {t("step")} 3
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
+                        {t("modelsTitle")}
+                      </h2>
+                      <p className="text-[13px] text-[rgba(255,252,247,0.4)] mb-5">
+                        {t("modelsDesc")}
+                      </p>
+                      <div className="max-h-[290px] overflow-y-auto no-scrollbar space-y-4 pr-1">
+                        {PORSCHE_FAMILIES.map((family) => (
+                          <div key={family.id}>
+                            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-2">
+                              {family.label}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {family.series.map((s) => {
+                                const selected = models.includes(s.id)
+                                return (
+                                  <button
+                                    key={s.id}
+                                    onClick={() => toggleModel(s.id)}
+                                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border transition-all ${
+                                      selected
+                                        ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
+                                        : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`text-[13px] font-medium ${
+                                        selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                      }`}
+                                    >
+                                      {s.label}
+                                    </span>
+                                    <span className="text-[9px] text-[#4B5563]">
+                                      {s.yearRange[0]}{s.yearRange[1] < 2026 ? `–${String(s.yearRange[1]).slice(2)}` : "+"}
+                                    </span>
+                                    {selected && (
+                                      <Check className="size-3 text-[#F8B4D9] shrink-0" />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {models.length > 0 && (
+                        <p className="text-[11px] text-[#F8B4D9]/60 mt-3 text-center">
+                          {models.length} {t("modelsSelected")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ─── Step 4: Intent ─── */}
+                  {step === 3 && (
                     <div>
                       <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
                         <Target className="size-4" />
                         <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
-                          {t("step")} 3
+                          {t("step")} 4
                         </span>
                       </div>
                       <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
