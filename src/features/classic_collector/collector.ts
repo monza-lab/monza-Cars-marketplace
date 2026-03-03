@@ -106,6 +106,28 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
     }
 
     /* ---------------------------------------------------------------- */
+    /*  SUMMARY-ONLY MODE: skip detail fetches, normalize from search    */
+    /* ---------------------------------------------------------------- */
+
+    if (config.summaryOnly) {
+      for (const summary of allListings) {
+        const normalized = normalizeListingFromSummary({ summary, meta });
+        if (normalized) {
+          counts.normalized++;
+          try {
+            const { wrote } = await writer.upsertAll(normalized, meta, config.dryRun);
+            if (wrote) counts.written++;
+            await fs.appendFile(config.outputPath, JSON.stringify(normalized) + "\n", "utf8");
+          } catch (err) {
+            counts.errors++;
+            const msg = err instanceof Error ? err.message : String(err);
+            errors.push(`Write error: ${msg}`);
+          }
+        }
+      }
+    } else {
+
+    /* ---------------------------------------------------------------- */
     /*  DETAIL + NORMALIZE + WRITE LOOP                                  */
     /* ---------------------------------------------------------------- */
 
@@ -232,6 +254,8 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
         });
       }
     }
+
+    } // end else (detail mode)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     errors.push(`Fatal: ${msg}`);

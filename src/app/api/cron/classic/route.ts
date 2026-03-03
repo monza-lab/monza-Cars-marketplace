@@ -36,6 +36,7 @@ export async function GET(request: Request) {
       outputPath: "/tmp/classic_collector/listings.jsonl",
       dryRun: false,
       timeBudgetMs: 270_000,
+      summaryOnly: true,    // skip detail page fetches on Vercel
       skipMonitoring: true, // cron route handles monitoring
     });
 

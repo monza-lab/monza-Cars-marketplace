@@ -26,6 +26,7 @@ export interface CollectorRunConfig {
   dryRun: boolean;
   timeBudgetMs?: number;
   skipMonitoring?: boolean;
+  summaryOnly?: boolean;
 }
 
 export interface ScrapeMeta {
