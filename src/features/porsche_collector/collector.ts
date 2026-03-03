@@ -47,6 +47,13 @@ type ActiveAuctionBase = {
   mileage: number | null;
   mileageUnit: string | null;
   endTime: Date | null;
+  // Optional rich fields populated by CarsAndBids / CollectingCars scrapers
+  currentBid?: number | null;
+  bidCount?: number | null;
+  status?: string | null;
+  imageUrl?: string | null;
+  images?: string[];
+  location?: string | null;
 };
 
 export interface CollectorResult {
@@ -165,6 +172,9 @@ export async function runCollector(
     scrapeDetails: overrides.scrapeDetails ?? true,
     checkpointPath: overrides.checkpointPath ?? "/tmp/porsche_collector/checkpoint.json",
     dryRun: overrides.dryRun ?? false,
+    sources: overrides.sources,
+    summaryOnly: overrides.summaryOnly,
+    timeBudgetMs: overrides.timeBudgetMs,
   };
 
   return runPorscheCollector(config);
@@ -181,6 +191,11 @@ async function runSource(input: {
 }): Promise<SourceScrapeCounts> {
   const { source, config, meta, limiter } = input;
   const runId = meta.runId;
+  const startMs = Date.now();
+  const isTimeBudgetExceeded = (): boolean => {
+    if (!config.timeBudgetMs) return false;
+    return (Date.now() - startMs) > (config.timeBudgetMs - 15_000);
+  };
 
   const counts: SourceScrapeCounts = {
     discovered: 0,
@@ -192,6 +207,7 @@ async function runSource(input: {
   };
 
   const writer = input.writer;
+  let timeBudgetExceeded = false;
 
   const endedRange = computeEndedRange(config, meta.scrapeTimestamp);
 
@@ -205,20 +221,28 @@ async function runSource(input: {
     counts.discovered += active.length;
 
     for (const a of active) {
-      // Skip early filter since discovery returns URLs without title/make
-      // Filtering happens during normalization (isLuxuryCarListing check)
+      // Time-budget guard: stop if we're running low on time
+      if (isTimeBudgetExceeded()) {
+        logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, source });
+        timeBudgetExceeded = true;
+        break;
+      }
+
       counts.porscheKept++;
 
       try {
-        const normalized = await normalizeFromBaseAndUrl({
-          source,
-          url: a.url,
-          base: a,
-          limiter,
-          meta,
-          scrapeDetails: config.scrapeDetails,
-          make: config.make,
-        });
+        // summaryOnly: normalize directly from listing-page data (no per-listing HTTP fetches)
+        const normalized = config.summaryOnly
+          ? normalizeFromSummary({ base: a, meta, make: config.make })
+          : await normalizeFromBaseAndUrl({
+              source,
+              url: a.url,
+              base: a,
+              limiter,
+              meta,
+              scrapeDetails: config.scrapeDetails,
+              make: config.make,
+            });
 
         if (!normalized) {
           counts.skippedMissingRequired++;
@@ -248,6 +272,28 @@ async function runSource(input: {
   }
 
   // 2) Ended listings (daily + backfill)
+  if (config.maxEndedPagesPerSource <= 0) {
+    logEvent({
+      level: "info",
+      event: "collector.skip_ended_discovery",
+      runId,
+      source,
+      reason: "maxEndedPagesPerSource<=0",
+    });
+    return counts;
+  }
+
+  if (timeBudgetExceeded || isTimeBudgetExceeded()) {
+    logEvent({
+      level: "info",
+      event: "collector.skip_ended_discovery",
+      runId,
+      source,
+      reason: "time_budget_exceeded",
+    });
+    return counts;
+  }
+
   const previousPage = input.checkpointRef.value.sources?.[source]?.backfill?.lastProcessedPage ?? 0;
   const discoverStartPage = config.mode === "backfill" ? Math.max(1, previousPage + 1) : 1;
   const urls = await discoverListingUrls(source, {
@@ -381,6 +427,12 @@ async function scrapeActiveListings(
       mileage: typeof a.mileage === "number" ? a.mileage : null,
       mileageUnit: a.mileageUnit ?? null,
       endTime: a.endTime ? new Date(a.endTime) : null,
+      currentBid: a.currentBid ?? null,
+      bidCount: a.bidCount ?? null,
+      status: a.status ?? null,
+      imageUrl: a.imageUrl ?? null,
+      images: a.images ?? [],
+      location: a.location ?? null,
     }));
   }
   const { auctions } = await scrapeCollectingCars({ maxPages, scrapeDetails: false });
@@ -587,6 +639,119 @@ async function normalizeFromBaseAndUrl(input: {
   });
 
   return normalized;
+}
+
+/**
+ * Fast normalization path: builds a NormalizedListing directly from
+ * ActiveAuctionBase data without any per-listing HTTP fetches.
+ * Used by Vercel cron (summaryOnly mode) where time budget is tight.
+ */
+function normalizeFromSummary(input: {
+  base: ActiveAuctionBase;
+  meta: ScrapeMeta;
+  make: string;
+}): NormalizedListing | null {
+  const { base, meta, make } = input;
+  const url = canonicalizeUrl(base.url);
+  const title = (base.title ?? "").trim();
+  if (!title) return null;
+
+  if (!isLuxuryCarListing({ make: base.make ?? null, title, targetMake: make })) return null;
+
+  const year = (base.year || null) ?? parseYearFromTitle(title);
+  if (!year) return null;
+
+  const vehicle = parseModelTrimFromTitle(title, make);
+  if (!vehicle.model) return null;
+
+  const endTime = base.endTime && !isNaN(base.endTime.getTime()) ? base.endTime : null;
+  const saleDateSource = endTime ?? new Date(meta.scrapeTimestamp);
+  const saleDate = toUtcDateOnly(saleDateSource);
+
+  const status = mapAuctionStatus({
+    sourceStatus: base.status ?? null,
+    rawPriceText: null,
+    currentBid: base.currentBid ?? null,
+    endTime,
+    now: new Date(meta.scrapeTimestamp),
+  });
+
+  const currentBid = base.currentBid ?? null;
+  const bidCount = base.bidCount ?? null;
+  const hammerPrice = status === "sold" ? currentBid : null;
+  const originalCurrency = currentBid != null && currentBid > 0 ? "USD" as const : null;
+
+  const mileageKm = normalizeMileageToKm(base.mileage ?? null, base.mileageUnit ?? null);
+  const location = parseLocation(base.location ?? null);
+
+  const photos: string[] = [];
+  if (base.images && base.images.length > 0) {
+    for (const img of base.images) {
+      if (img && /^https?:\/\//i.test(img) && !photos.includes(img)) photos.push(img);
+    }
+  }
+  if (photos.length === 0 && base.imageUrl && /^https?:\/\//i.test(base.imageUrl)) {
+    photos.push(base.imageUrl);
+  }
+
+  const listDate = status === "active" ? toUtcDateOnly(new Date(meta.scrapeTimestamp)) : null;
+
+  const hasPrice = (status === "active" ? currentBid : (hammerPrice ?? currentBid)) !== null;
+  const dataQualityScore = scoreDataQuality({
+    year,
+    model: vehicle.model,
+    saleDate,
+    country: location.country,
+    photosCount: photos.length,
+    hasPrice,
+  });
+
+  const startTimeDate = listDate ? new Date(listDate + "T00:00:00Z") : null;
+  const validStartTime = startTimeDate && !isNaN(startTimeDate.getTime()) ? startTimeDate : null;
+
+  return {
+    source: base.source,
+    sourceId: deriveSourceId({ source: base.source, sourceId: base.externalId ?? null, sourceUrl: url }),
+    sourceUrl: url,
+    title,
+    platform: mapSourceToPlatform(base.source),
+    sellerNotes: null,
+    endTime,
+    startTime: validStartTime,
+    reserveStatus: mapReserveStatus(null),
+    finalPrice: hammerPrice,
+    locationString: buildLocationString(location),
+    year,
+    make,
+    model: vehicle.model,
+    trim: vehicle.trim,
+    bodyStyle: null,
+    engine: null,
+    transmission: null,
+    exteriorColor: null,
+    interiorColor: null,
+    vin: null,
+    mileageKm,
+    mileageUnitStored: "km",
+    status,
+    reserveMet: null,
+    listDate,
+    saleDate,
+    auctionDate: saleDate,
+    auctionHouse: normalizeSourceAuctionHouse(base.source),
+    descriptionText: null,
+    photos,
+    photosCount: photos.length,
+    location,
+    pricing: {
+      hammerPrice,
+      currentBid,
+      bidCount,
+      originalCurrency,
+      rawPriceText: currentBid != null ? `$${currentBid.toLocaleString("en-US")}` : null,
+    },
+    dataQualityScore,
+  };
 }
 
 async function fetchAuctionDataWithRetry(

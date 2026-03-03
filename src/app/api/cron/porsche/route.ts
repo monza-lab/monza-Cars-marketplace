@@ -20,15 +20,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Step 1: Discover and ingest new active listings (heavily capped for Vercel 5-min limit)
-    // Each listing triggers an external HTTP fetch even with scrapeDetails:false,
-    // so we limit to BaT only (primary source) with 1 page
+    // Step 1: Discover and ingest new active listings
+    // summaryOnly: normalizes directly from listing-page data (no per-listing HTTP fetches)
+    // CarsAndBids returns rich data (title, make, model, year, bid, images) from 1 page request
     const result = await runCollector({
       mode: "daily",
-      sources: ["BaT"],
-      maxActivePagesPerSource: 1,
+      sources: ["CarsAndBids"],
+      maxActivePagesPerSource: 2,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
+      summaryOnly: true,
+      timeBudgetMs: 270_000,
       dryRun: false,
     });
 
