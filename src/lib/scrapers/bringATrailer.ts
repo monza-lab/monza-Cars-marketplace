@@ -311,29 +311,46 @@ export async function scrapeListings(
     console.log(`[BaT] Fetching auctions page for embedded JSON data...`);
     const html = await fetchPage(AUCTIONS_URL);
 
-    // Extract embedded JSON from script tag
-    const jsonMatch = html.match(
-      /var\s+auctionsCurrentInitialData\s*=\s*(\{[\s\S]*?\});\s*(?:<\/script>|\/\*)/
-    );
+    // Extract embedded JSON: find `auctionsCurrentInitialData = {...}` and
+    // use brace-matching to extract the full JSON object reliably.
+    const marker = 'auctionsCurrentInitialData';
+    const markerIdx = html.indexOf(marker);
 
-    if (jsonMatch && jsonMatch[1]) {
-      try {
-        const data = JSON.parse(jsonMatch[1]);
-        const items = data.items ?? [];
-        console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
-
-        for (const item of items) {
-          try {
-            const auction = parseEmbeddedItem(item);
-            if (auction) auctions.push(auction);
-          } catch (err) {
-            const message = err instanceof Error ? err.message : 'Unknown parse error';
-            errors.push(`[BaT] Failed to parse embedded item: ${message}`);
-          }
+    if (markerIdx >= 0) {
+      const jsonStart = html.indexOf('{', markerIdx);
+      if (jsonStart >= 0) {
+        let depth = 0;
+        let jsonEnd = -1;
+        for (let i = jsonStart; i < html.length; i++) {
+          if (html[i] === '{') depth++;
+          else if (html[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
         }
-      } catch (parseErr) {
-        errors.push(`[BaT] Failed to parse embedded JSON: ${parseErr instanceof Error ? parseErr.message : 'Unknown'}`);
+
+        if (jsonEnd > 0) {
+          try {
+            const data = JSON.parse(html.substring(jsonStart, jsonEnd + 1));
+            const items = data.items ?? [];
+            console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
+
+            for (const item of items) {
+              try {
+                const auction = parseEmbeddedItem(item);
+                if (auction) auctions.push(auction);
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Unknown parse error';
+                errors.push(`[BaT] Failed to parse embedded item: ${message}`);
+              }
+            }
+          } catch (parseErr) {
+            errors.push(`[BaT] Failed to parse embedded JSON: ${parseErr instanceof Error ? parseErr.message : 'Unknown'}`);
+          }
+        } else {
+          errors.push(`[BaT] Found marker but could not match braces for JSON extraction`);
+        }
       }
+    } else {
+      console.log(`[BaT] Embedded JSON marker not found in ${html.length} bytes of HTML`);
+      errors.push(`[BaT] No embedded auction data found (${html.length} bytes fetched). Server may be blocking datacenter IPs.`);
     }
 
     // Fallback: try parsing HTML if JSON extraction failed

@@ -124,6 +124,7 @@ export async function runPorscheCollector(config: CollectorRunConfig): Promise<C
         writer,
         checkpointRef,
         checkpointPath: config.checkpointPath,
+        collectorErrors: errors,
       });
       sourceCounts[source] = counts;
       logEvent({ level: "info", event: "collector.source_done", runId, source, counts });
@@ -181,6 +182,7 @@ async function runSource(input: {
   writer: ReturnType<typeof createSupabaseWriter>;
   checkpointRef: { value: Awaited<ReturnType<typeof loadCheckpoint>> };
   checkpointPath: string;
+  collectorErrors: string[];
 }): Promise<SourceScrapeCounts> {
   const { source, config, meta, limiter } = input;
   const runId = meta.runId;
@@ -201,8 +203,16 @@ async function runSource(input: {
 
   // 1) Active listings (daily only)
   if (config.mode === "daily") {
-    const active = await scrapeActiveListings(source, config.maxActivePagesPerSource);
+    const { items: active, scraperErrors } = await scrapeActiveListings(source, config.maxActivePagesPerSource);
     counts.discovered += active.length;
+
+    // Surface scraper-level errors (e.g. BaT blocking datacenter IPs)
+    if (scraperErrors.length > 0) {
+      for (const e of scraperErrors) {
+        input.collectorErrors.push(e);
+        logEvent({ level: "warn", event: "collector.scraper_error", runId, source, message: e });
+      }
+    }
 
     for (const a of active) {
       // Time-budget guard: stop if we're running low on time
@@ -361,14 +371,14 @@ async function runSource(input: {
   return counts;
 }
 
-async function scrapeActiveListings(source: SourceKey, maxPages: number): Promise<ActiveAuctionBase[]> {
+async function scrapeActiveListings(source: SourceKey, maxPages: number): Promise<{ items: ActiveAuctionBase[]; scraperErrors: string[] }> {
   if (source === "BaT") {
     const { auctions, errors } = await scrapeBringATrailer({ maxPages, scrapeDetails: false });
     if (errors.length > 0) {
       console.warn(`[porsche_collector] BaT scraper errors:`, errors);
     }
     console.log(`[porsche_collector] BaT discovered ${auctions.length} listings from ${maxPages} pages`);
-    return auctions.map((a: any) => ({
+    return { scraperErrors: errors, items: auctions.map((a: any) => ({
       source,
       url: a.url,
       externalId: a.externalId ?? null,
@@ -379,11 +389,11 @@ async function scrapeActiveListings(source: SourceKey, maxPages: number): Promis
       mileage: typeof a.mileage === "number" ? a.mileage : null,
       mileageUnit: a.mileageUnit ?? null,
       endTime: a.endTime ? new Date(a.endTime) : null,
-    }));
+    }))};
   }
   if (source === "CarsAndBids") {
-    const { auctions } = await scrapeCarsAndBids({ maxPages, scrapeDetails: false });
-    return auctions.map((a: any) => ({
+    const { auctions, errors } = await scrapeCarsAndBids({ maxPages, scrapeDetails: false });
+    return { scraperErrors: errors, items: auctions.map((a: any) => ({
       source,
       url: a.url,
       externalId: a.externalId ?? null,
@@ -394,10 +404,10 @@ async function scrapeActiveListings(source: SourceKey, maxPages: number): Promis
       mileage: typeof a.mileage === "number" ? a.mileage : null,
       mileageUnit: a.mileageUnit ?? null,
       endTime: a.endTime ? new Date(a.endTime) : null,
-    }));
+    }))};
   }
-  const { auctions } = await scrapeCollectingCars({ maxPages, scrapeDetails: false });
-  return auctions.map((a: any) => ({
+  const { auctions, errors } = await scrapeCollectingCars({ maxPages, scrapeDetails: false });
+  return { scraperErrors: errors, items: auctions.map((a: any) => ({
     source,
     url: a.url,
     externalId: a.externalId ?? null,
@@ -408,7 +418,7 @@ async function scrapeActiveListings(source: SourceKey, maxPages: number): Promis
     mileage: typeof a.mileage === "number" ? a.mileage : null,
     mileageUnit: a.mileageUnit ?? null,
     endTime: a.endTime ? new Date(a.endTime) : null,
-  }));
+  })) };
 }
 
 async function normalizeFromBaseAndUrl(input: {
