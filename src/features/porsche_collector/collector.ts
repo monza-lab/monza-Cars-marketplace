@@ -363,7 +363,11 @@ async function runSource(input: {
 
 async function scrapeActiveListings(source: SourceKey, maxPages: number): Promise<ActiveAuctionBase[]> {
   if (source === "BaT") {
-    const { auctions } = await scrapeBringATrailer({ maxPages, scrapeDetails: false });
+    const { auctions, errors } = await scrapeBringATrailer({ maxPages, scrapeDetails: false });
+    if (errors.length > 0) {
+      console.warn(`[porsche_collector] BaT scraper errors:`, errors);
+    }
+    console.log(`[porsche_collector] BaT discovered ${auctions.length} listings from ${maxPages} pages`);
     return auctions.map((a: any) => ({
       source,
       url: a.url,
