@@ -303,170 +303,93 @@ export async function scrapeListings(
   const auctions: BaTAuction[] = [];
   const errors: string[] = [];
 
-  for (let page = 1; page <= maxPages; page++) {
-    try {
-      const url = page === 1 ? AUCTIONS_URL : `${AUCTIONS_URL}/?page=${page}`;
-      console.log(`[BaT] Scraping listings page ${page}: ${url}`);
+  // BaT loads auction cards dynamically via JS. The initial data is embedded
+  // in a <script> tag as `var auctionsCurrentInitialData = {"items":[...]}`.
+  // We parse this JSON directly — no need for multiple pages since all active
+  // auctions are in the initial data payload.
+  try {
+    console.log(`[BaT] Fetching auctions page for embedded JSON data...`);
+    const html = await fetchPage(AUCTIONS_URL);
 
-      const html = await fetchPage(url);
-      const $ = cheerio.load(html);
-      let pageCount = 0;
+    // Extract embedded JSON from script tag
+    const jsonMatch = html.match(
+      /var\s+auctionsCurrentInitialData\s*=\s*(\{[\s\S]*?\});\s*(?:<\/script>|\/\*)/
+    );
 
-      // Strategy 1: BaT auctions page uses div.auctions-item-container with data-searchable JSON
-      const auctionContainers = $('div.auctions-item-container');
-      if (auctionContainers.length > 0) {
-        auctionContainers.each((_i, el) => {
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const data = JSON.parse(jsonMatch[1]);
+        const items = data.items ?? [];
+        console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
+
+        for (const item of items) {
           try {
-            const auction = parseAuctionContainer($, el);
-            if (auction) { auctions.push(auction); pageCount++; }
+            const auction = parseEmbeddedItem(item);
+            if (auction) auctions.push(auction);
           } catch (err) {
             const message = err instanceof Error ? err.message : 'Unknown parse error';
-            errors.push(`[BaT] Failed to parse auction container: ${message}`);
+            errors.push(`[BaT] Failed to parse embedded item: ${message}`);
           }
-        });
+        }
+      } catch (parseErr) {
+        errors.push(`[BaT] Failed to parse embedded JSON: ${parseErr instanceof Error ? parseErr.message : 'Unknown'}`);
       }
-
-      // Strategy 2: Featured listings on make-specific pages (e.g. /porsche/)
-      if (pageCount === 0) {
-        const featuredCards = $('.featured-listing-content');
-        featuredCards.each((_i, el) => {
-          try {
-            const auction = parseFeaturedListing($, el);
-            if (auction) { auctions.push(auction); pageCount++; }
-          } catch (err) {
-            const message = err instanceof Error ? err.message : 'Unknown parse error';
-            errors.push(`[BaT] Failed to parse featured listing: ${message}`);
-          }
-        });
-      }
-
-      // Strategy 3: Fallback — find any links to /listing/ pages
-      if (pageCount === 0) {
-        const listingLinks = $('a[href*="/listing/"]');
-        const seen = new Set<string>();
-        listingLinks.each((_i, el) => {
-          const href = $(el).attr('href') || '';
-          if (!href || seen.has(href)) return;
-          if (!/\/listing\/[a-z0-9]/.test(href)) return;
-          seen.add(href);
-          const fullUrl = href.startsWith('http') ? href : `${BASE_URL}${href}`;
-          const card = $(el).closest('li, article, div');
-          const auction = parseAuctionCard($, card.length > 0 ? card[0] : el);
-          if (auction) { auctions.push(auction); pageCount++; }
-        });
-      }
-
-      if (pageCount === 0 && page === 1) {
-        errors.push(`[BaT] No auction cards found on page ${page}. Site structure may have changed.`);
-        break;
-      }
-
-      console.log(`[BaT] Found ${auctions.length} auctions so far (page ${page})`);
-
-      if (page < maxPages) {
-        await randomDelay(REQUEST_DELAY_MS, REQUEST_DELAY_MS + 1000);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      errors.push(`[BaT] Error scraping page ${page}: ${message}`);
-      if (page === 1) break;
     }
+
+    // Fallback: try parsing HTML if JSON extraction failed
+    if (auctions.length === 0) {
+      const $ = cheerio.load(html);
+      const listingLinks = $('a[href*="/listing/"]');
+      const seen = new Set<string>();
+      listingLinks.each((_i, el) => {
+        const href = $(el).attr('href') || '';
+        if (!href || seen.has(href)) return;
+        if (!/\/listing\/[a-z0-9]/.test(href)) return;
+        seen.add(href);
+        const card = $(el).closest('li, article, div');
+        const auction = parseAuctionCard($, card.length > 0 ? card[0] : el);
+        if (auction) auctions.push(auction);
+      });
+    }
+
+    if (auctions.length === 0) {
+      errors.push(`[BaT] No auctions found. Site structure may have changed.`);
+    }
+
+    console.log(`[BaT] Total: ${auctions.length} auctions parsed`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    errors.push(`[BaT] Error fetching auctions page: ${message}`);
   }
 
   return { auctions, errors };
 }
 
 /**
- * Parse a BaT auction container (div.auctions-item-container).
- * Uses data-searchable JSON attribute for structured data.
+ * Parse a single item from BaT's embedded auctionsCurrentInitialData JSON.
  */
-function parseAuctionContainer(
-  $: cheerio.CheerioAPI,
-  el: cheerio.Element,
-): BaTAuction | null {
-  const $el = $(el);
+function parseEmbeddedItem(item: any): BaTAuction | null {
+  const url = item.url;
+  if (!url || typeof url !== 'string') return null;
 
-  // Extract structured data from data-searchable JSON attribute
-  const searchableJson = $el.attr('data-searchable');
-  let searchable: { make?: string; title?: string; year?: number } = {};
-  if (searchableJson) {
-    try { searchable = JSON.parse(searchableJson); } catch { /* ignore */ }
-  }
-
-  // Extract URL from the image link
-  const linkEl = $el.find('a.auctions-item-image-link, a[href*="/listing/"]').first();
-  const relativeUrl = linkEl.attr('href');
-  if (!relativeUrl) return null;
-
-  const url = relativeUrl.startsWith('http') ? relativeUrl : `${BASE_URL}${relativeUrl}`;
-  const externalId = extractExternalId(url);
-
-  const title = (searchable.title || $el.find('h3, h2, .auction-title').first().text().trim() || '');
+  const title = item.title || '';
   if (!title) return null;
 
-  const { year: parsedYear, make: parsedMake, model } = parseTitleComponents(title);
-  const year = searchable.year || parsedYear;
-  const make = searchable.make || parsedMake;
-
-  // Price from data-price attribute or text
-  const dataPrice = $el.attr('data-price');
-  const currentBid = dataPrice ? parsePrice(dataPrice) : null;
-
-  // Image
-  const imageUrl = $el.find('img').first().attr('src') || $el.find('img').first().attr('data-src') || null;
-
-  return {
-    externalId,
-    platform: 'BRING_A_TRAILER',
-    title, make, model, year,
-    mileage: null, mileageUnit: 'miles',
-    transmission: null, engine: null,
-    exteriorColor: null, interiorColor: null,
-    location: null,
-    currentBid, bidCount: 0, endTime: null,
-    url, imageUrl,
-    description: null, sellerNotes: null,
-    status: 'active',
-    vin: null,
-    images: imageUrl ? [imageUrl] : [],
-    reserveStatus: null, bodyStyle: null,
-  };
-}
-
-/**
- * Parse a BaT featured listing card (.featured-listing-content).
- * Used on make-specific pages like /porsche/.
- */
-function parseFeaturedListing(
-  $: cheerio.CheerioAPI,
-  el: cheerio.Element,
-): BaTAuction | null {
-  const $el = $(el);
-
-  const titleLink = $el.find('.featured-listing-title-link, a[href*="/listing/"]').first();
-  const relativeUrl = titleLink.attr('href');
-  if (!relativeUrl) return null;
-
-  const url = relativeUrl.startsWith('http') ? relativeUrl : `${BASE_URL}${relativeUrl}`;
   const externalId = extractExternalId(url);
-  const title = titleLink.text().trim();
-  if (!title) return null;
+  const { year: parsedYear, make, model } = parseTitleComponents(title);
+  const year = parseInt(item.year, 10) || parsedYear;
 
-  const { year, make, model } = parseTitleComponents(title);
+  const currentBid = typeof item.current_bid === 'number' ? item.current_bid : null;
+  const imageUrl = item.thumbnail_url || null;
 
-  const priceText = $el.find('.featured-listing-meta-value').first().text().trim();
-  const currentBid = parsePrice(priceText);
-
-  const imageUrl = $el.find('img').first().attr('src') || null;
-
-  // End time from data attribute (unix timestamp)
-  const endsAttr = $el.find('[data-featured_listing_ends]').attr('data-featured_listing_ends');
   let endTime: Date | null = null;
-  if (endsAttr) {
-    const ts = parseInt(endsAttr, 10);
+  if (item.timestamp_end) {
+    const ts = typeof item.timestamp_end === 'number' ? item.timestamp_end : parseInt(item.timestamp_end, 10);
     if (!isNaN(ts)) endTime = new Date(ts * 1000);
   }
 
+  const noReserve = item.noreserve === true;
+
   return {
     externalId,
     platform: 'BRING_A_TRAILER',
@@ -474,14 +397,16 @@ function parseFeaturedListing(
     mileage: null, mileageUnit: 'miles',
     transmission: null, engine: null,
     exteriorColor: null, interiorColor: null,
-    location: null,
+    location: item.country || null,
     currentBid, bidCount: 0, endTime,
     url, imageUrl,
-    description: null, sellerNotes: null,
-    status: 'active',
+    description: item.excerpt || null,
+    sellerNotes: null,
+    status: item.active ? 'active' : 'sold',
     vin: null,
     images: imageUrl ? [imageUrl] : [],
-    reserveStatus: null, bodyStyle: null,
+    reserveStatus: noReserve ? 'NO_RESERVE' : null,
+    bodyStyle: null,
   };
 }
 
