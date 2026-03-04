@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/porsche_collector/collector";
-import { refreshActiveListings } from "@/features/porsche_collector/supabase_writer";
-import { recordScraperRun } from "@/lib/scraper-monitoring";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel
 
 export async function GET(request: Request) {
   const startTime = Date.now();
+  const startedAtIso = new Date(startTime).toISOString();
+  const liveRunId = crypto.randomUUID();
 
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -19,17 +24,24 @@ export async function GET(request: Request) {
     );
   }
 
+  await markScraperRunStarted({
+    scraperName: "porsche",
+    runId: liveRunId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
+
   try {
-    // Step 1: Discover and ingest new active listings
-    // summaryOnly: normalizes directly from listing-page data (no per-listing HTTP fetches)
-    // CarsAndBids + CollectingCars return rich data from listing pages (1 HTTP per page, not per listing)
+    // Step 1: Discover and ingest new active listings via BaT
+    // scrapeBringATrailer returns rich data (title, make, model, year) from listing pages,
+    // then isLuxuryCarListing pre-filters to Porsche-only before per-listing fetches.
+    // With 3 pages (~60 listings) filtered to ~5-15 Porsche = well within 300s budget.
     const result = await runCollector({
       mode: "daily",
-      sources: ["CarsAndBids", "CollectingCars"],
-      maxActivePagesPerSource: 5,
+      sources: ["BaT"],
+      maxActivePagesPerSource: 3,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
-      summaryOnly: true,
       timeBudgetMs: 270_000,
       dryRun: false,
     });
@@ -51,7 +63,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: 'porsche',
       run_id: result.runId,
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: true,
       runtime: 'vercel_cron',
@@ -64,6 +76,8 @@ export async function GET(request: Request) {
       source_counts: result.sourceCounts,
       error_messages: allErrors.length > 0 ? allErrors : undefined,
     });
+
+    await clearScraperRunActive("porsche");
 
     return NextResponse.json({
       success: true,
@@ -85,7 +99,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: 'porsche',
       run_id: 'unknown',
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: false,
       runtime: 'vercel_cron',
@@ -95,6 +109,8 @@ export async function GET(request: Request) {
       errors_count: 1,
       error_messages: [error instanceof Error ? error.message : "Collector failed"],
     });
+
+    await clearScraperRunActive("porsche");
 
     return NextResponse.json(
       {

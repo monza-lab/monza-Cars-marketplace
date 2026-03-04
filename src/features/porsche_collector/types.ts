@@ -22,8 +22,6 @@ export interface CollectorRunConfig {
   checkpointPath: string;
   dryRun: boolean;
   sources?: SourceKey[];
-  /** When true, normalize from listing-page data only — no per-listing HTTP fetches. */
-  summaryOnly?: boolean;
   /** Max milliseconds before the collector should stop processing. */
   timeBudgetMs?: number;
 }
