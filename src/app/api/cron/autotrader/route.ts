@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/autotrader_collector/collector";
 import { refreshActiveListings } from "@/features/autotrader_collector/supabase_writer";
-import { recordScraperRun } from "@/lib/scraper-monitoring";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/lib/scraper-monitoring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel
 
 export async function GET(request: Request) {
   const startTime = Date.now();
+  const startedAtIso = new Date(startTime).toISOString();
+  const liveRunId = crypto.randomUUID();
 
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -18,6 +24,13 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+
+  await markScraperRunStarted({
+    scraperName: "autotrader",
+    runId: liveRunId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
 
   try {
     // Step 1: Refresh status of existing active listings
@@ -41,7 +54,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: 'autotrader',
       run_id: result.runId,
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: true,
       runtime: 'vercel_cron',
@@ -54,6 +67,8 @@ export async function GET(request: Request) {
       source_counts: result.sourceCounts,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
+
+    await clearScraperRunActive("autotrader");
 
     return NextResponse.json({
       success: true,
@@ -76,7 +91,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: 'autotrader',
       run_id: 'unknown',
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: false,
       runtime: 'vercel_cron',
@@ -86,6 +101,8 @@ export async function GET(request: Request) {
       errors_count: 1,
       error_messages: [error instanceof Error ? error.message : "Collector failed"],
     });
+
+    await clearScraperRunActive("autotrader");
 
     return NextResponse.json(
       {

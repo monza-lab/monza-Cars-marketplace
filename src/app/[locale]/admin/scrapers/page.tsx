@@ -8,6 +8,7 @@ import {
   getDailyAggregates,
   getDataQuality,
   getLatestRunPerScraper,
+  getActiveRuns,
 } from "@/lib/scraper-monitoring";
 import ScrapersDashboardClient from "./ScrapersDashboardClient";
 
@@ -21,12 +22,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 async function DashboardData() {
-  const [recentRuns, dailyAggregates, dataQuality, latestRuns] =
+  const [recentRuns, dailyAggregates, dataQuality, latestRuns, activeRuns] =
     await Promise.all([
       getRecentRuns(50),
       getDailyAggregates(30),
       getDataQuality(7),
       getLatestRunPerScraper(),
+      getActiveRuns(),
     ]);
 
   return (
@@ -35,6 +37,7 @@ async function DashboardData() {
       dailyAggregates={dailyAggregates}
       dataQuality={dataQuality}
       latestRuns={Object.fromEntries(latestRuns)}
+      activeRuns={Object.fromEntries(activeRuns)}
     />
   );
 }

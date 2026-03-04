@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { runAutoScout24Collector } from "@/features/autoscout24_collector/collector";
 import { refreshStaleListings } from "@/features/autoscout24_collector/supabase_writer";
-import { recordScraperRun } from "@/lib/scraper-monitoring";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/lib/scraper-monitoring";
 import type { AS24CountryCode } from "@/features/autoscout24_collector/types";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +38,8 @@ function getCountriesForToday(): AS24CountryCode[] {
 
 export async function GET(request: Request) {
   const startTime = Date.now();
+  const startedAtIso = new Date(startTime).toISOString();
+  const liveRunId = crypto.randomUUID();
 
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -44,6 +50,13 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+
+  await markScraperRunStarted({
+    scraperName: "autoscout24",
+    runId: liveRunId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
 
   const countries = getCountriesForToday();
 
@@ -74,7 +87,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: "autoscout24",
       run_id: result.runId,
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: true,
       runtime: "vercel_cron",
@@ -90,6 +103,8 @@ export async function GET(request: Request) {
       refresh_updated: refreshResult.updated,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
+
+    await clearScraperRunActive("autoscout24");
 
     return NextResponse.json({
       success: true,
@@ -112,7 +127,7 @@ export async function GET(request: Request) {
     await recordScraperRun({
       scraper_name: "autoscout24",
       run_id: "unknown",
-      started_at: new Date(startTime).toISOString(),
+      started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: false,
       runtime: "vercel_cron",
@@ -122,6 +137,8 @@ export async function GET(request: Request) {
       errors_count: 1,
       error_messages: [error instanceof Error ? error.message : "Collector failed"],
     });
+
+    await clearScraperRunActive("autoscout24");
 
     return NextResponse.json(
       {

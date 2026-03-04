@@ -29,6 +29,15 @@ export interface ScraperRun extends ScraperRunRecord {
   id: string;
 }
 
+/** Row returned from the scraper_active_runs table */
+export interface ActiveScraperRun {
+  scraper_name: ScraperName;
+  run_id: string;
+  started_at: string;
+  runtime: RuntimeEnv;
+  updated_at: string;
+}
+
 /** Row returned by scraper_daily_aggregates() RPC */
 export interface DailyAggregate {
   scraper_name: string;

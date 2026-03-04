@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import type {
   ScraperRun,
   ScraperName,
   DailyAggregate,
   DataQuality,
+  ActiveScraperRun,
 } from "@/lib/scraper-monitoring";
 
 const ALL_SCRAPERS: ScraperName[] = [
@@ -45,11 +47,36 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   autoscout24: "GitHub Actions",
 };
 
+const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
+  porsche: 24 * 60 * 60 * 1000,
+  ferrari: 24 * 60 * 60 * 1000,
+  autotrader: 24 * 60 * 60 * 1000,
+  beforward: 24 * 60 * 60 * 1000,
+  classic: 24 * 60 * 60 * 1000,
+  autoscout24: 24 * 60 * 60 * 1000,
+};
+
+const POLL_INTERVAL_MS = 20_000;
+const STALE_MULTIPLIER = 1.5;
+const RUNNING_STALLED_AFTER_MS = 20 * 60 * 1000;
+
+type CardStatus = "running" | "green" | "yellow" | "red";
+
+type LivePayload = {
+  recentRuns: ScraperRun[];
+  dailyAggregates: DailyAggregate[];
+  dataQuality: DataQuality[];
+  latestRuns: Record<string, ScraperRun>;
+  activeRuns: Record<string, ActiveScraperRun>;
+  generatedAt: string;
+};
+
 interface Props {
   recentRuns: ScraperRun[];
   dailyAggregates: DailyAggregate[];
   dataQuality: DataQuality[];
   latestRuns: Record<string, ScraperRun>;
+  activeRuns: Record<string, ActiveScraperRun>;
 }
 
 function formatDuration(ms: number): string {
@@ -66,25 +93,36 @@ function formatTimeAgo(isoString: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+function isRunStale(scraperName: ScraperName, finishedAt: string): boolean {
+  const cadence = SCRAPER_CADENCE_MS[scraperName] ?? 24 * 60 * 60 * 1000;
+  return Date.now() - new Date(finishedAt).getTime() > cadence * STALE_MULTIPLIER;
+}
+
+function isActiveRunStalled(activeRun: ActiveScraperRun): boolean {
+  return Date.now() - new Date(activeRun.started_at).getTime() > RUNNING_STALLED_AFTER_MS;
+}
+
 function getStatusColor(
-  run: ScraperRun | undefined
-): "green" | "yellow" | "red" {
+  scraperName: ScraperName,
+  run: ScraperRun | undefined,
+  activeRun: ActiveScraperRun | undefined
+): CardStatus {
+  if (activeRun && !isActiveRunStalled(activeRun)) return "running";
   if (!run) return "red";
   if (!run.success) return "red";
-  const hoursAgo =
-    (Date.now() - new Date(run.finished_at).getTime()) / (1000 * 60 * 60);
-  if (hoursAgo <= 26) return "green";
-  if (hoursAgo <= 48) return "yellow";
-  return "red";
+  if (isRunStale(scraperName, run.finished_at)) return "yellow";
+  return "green";
 }
 
 const STATUS_STYLES = {
+  running: "border-sky-500/40 bg-sky-500/10",
   green: "border-emerald-500/30 bg-emerald-500/5",
   yellow: "border-amber-500/30 bg-amber-500/5",
   red: "border-red-500/30 bg-red-500/5",
 };
 
 const STATUS_DOT = {
+  running: "bg-sky-400 animate-pulse",
   green: "bg-emerald-500",
   yellow: "bg-amber-500",
   red: "bg-red-500",
@@ -95,14 +133,127 @@ export default function ScrapersDashboardClient({
   dailyAggregates,
   dataQuality,
   latestRuns,
+  activeRuns,
 }: Props) {
   const [scraperFilter, setScraperFilter] = useState<string>("all");
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+  const [liveRecentRuns, setLiveRecentRuns] = useState<ScraperRun[]>(recentRuns);
+  const [liveDailyAggregates, setLiveDailyAggregates] =
+    useState<DailyAggregate[]>(dailyAggregates);
+  const [liveDataQuality, setLiveDataQuality] = useState<DataQuality[]>(dataQuality);
+  const [liveLatestRuns, setLiveLatestRuns] =
+    useState<Record<string, ScraperRun>>(latestRuns);
+  const [liveActiveRuns, setLiveActiveRuns] =
+    useState<Record<string, ActiveScraperRun>>(activeRuns);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string>(new Date().toISOString());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const filteredRuns =
     scraperFilter === "all"
-      ? recentRuns
-      : recentRuns.filter((r) => r.scraper_name === scraperFilter);
+      ? liveRecentRuns
+      : liveRecentRuns.filter((r) => r.scraper_name === scraperFilter);
+
+  const issueCount = useMemo(() => {
+    return ALL_SCRAPERS.reduce((count, scraperName) => {
+      const run = liveLatestRuns[scraperName];
+      const activeRun = liveActiveRuns[scraperName];
+
+      if (!run) return count + 1;
+      if (activeRun && isActiveRunStalled(activeRun)) return count + 1;
+      if (!run.success || run.errors_count > 0 || isRunStale(scraperName, run.finished_at)) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+  }, [liveActiveRuns, liveLatestRuns]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const applyPayload = (payload: LivePayload) => {
+      setLiveRecentRuns(payload.recentRuns);
+      setLiveDailyAggregates(payload.dailyAggregates);
+      setLiveDataQuality(payload.dataQuality);
+      setLiveLatestRuns(payload.latestRuns);
+      setLiveActiveRuns(payload.activeRuns ?? {});
+      setLastUpdatedAt(payload.generatedAt || new Date().toISOString());
+      setLiveError(null);
+    };
+
+    const refresh = async () => {
+      try {
+        if (isMountedRef.current) setIsRefreshing(true);
+        const response = await fetch("/api/admin/scrapers/live", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Live refresh failed (${response.status})`);
+        }
+
+        const json = await response.json();
+        const payload = json?.data as LivePayload | undefined;
+
+        if (!payload) {
+          throw new Error("Live refresh returned empty payload");
+        }
+
+        if (isMountedRef.current) {
+          applyPayload(payload);
+        }
+      } catch (error) {
+        if (isMountedRef.current) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Live updates unavailable, showing last known data";
+          setLiveError(message);
+        }
+      } finally {
+        if (isMountedRef.current) setIsRefreshing(false);
+      }
+    };
+
+    void refresh();
+    const interval = window.setInterval(refresh, POLL_INTERVAL_MS);
+
+    let removeChannel: (() => void) | null = null;
+    try {
+      const supabase = createSupabaseClient();
+      const channel = supabase
+        .channel("admin-scrapers-live")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "scraper_runs" },
+          () => {
+            void refresh();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "scraper_active_runs" },
+          () => {
+            void refresh();
+          }
+        )
+        .subscribe();
+
+      removeChannel = () => {
+        void supabase.removeChannel(channel);
+      };
+    } catch {
+      // Polling remains active even if realtime setup fails.
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      window.clearInterval(interval);
+      if (removeChannel) removeChannel();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -112,9 +263,22 @@ export default function ScrapersDashboardClient({
           <h1 className="text-2xl font-bold text-white">
             Scraper Monitoring
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            6 collectors &middot; 4 Vercel Cron + 2 GitHub Actions
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+            <p>6 collectors &middot; 4 Vercel Cron + 2 GitHub Actions</p>
+            <span className="text-zinc-700">|</span>
+            <p>
+              Last updated <span className="text-zinc-300">{formatTimeAgo(lastUpdatedAt)}</span>
+            </p>
+            <Badge variant={isRefreshing ? "secondary" : "outline"} className="text-[11px]">
+              {isRefreshing ? "Refreshing" : "Live"}
+            </Badge>
+            {issueCount > 0 && (
+              <Badge variant="destructive" className="text-[11px]">
+                {issueCount} issues
+              </Badge>
+            )}
+            {liveError && <span className="text-amber-400 text-xs">{liveError}</span>}
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -129,8 +293,11 @@ export default function ScrapersDashboardClient({
           <TabsContent value="overview">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {ALL_SCRAPERS.map((name) => {
-                const run = latestRuns[name];
-                const status = getStatusColor(run);
+                const run = liveLatestRuns[name];
+                const activeRun = liveActiveRuns[name];
+                const status = getStatusColor(name, run, activeRun);
+                const stale = run ? isRunStale(name, run.finished_at) : false;
+                const stalled = activeRun ? isActiveRunStalled(activeRun) : false;
                 return (
                   <Card
                     key={name}
@@ -147,11 +314,25 @@ export default function ScrapersDashboardClient({
                           />
                           <Badge
                             variant={
-                              run?.success ? "default" : "destructive"
+                              status === "running"
+                                ? "secondary"
+                                : run?.success
+                                  ? "default"
+                                  : "destructive"
                             }
                             className="text-xs"
                           >
-                            {run ? (run.success ? "OK" : "FAIL") : "NO DATA"}
+                            {status === "running"
+                              ? stalled
+                                ? "RUN STALLED"
+                                : "RUNNING"
+                              : run
+                                ? run.success
+                                  ? stale
+                                    ? "STALE"
+                                    : "OK"
+                                  : "FAIL"
+                                : "NO DATA"}
                           </Badge>
                         </div>
                       </div>
@@ -162,12 +343,27 @@ export default function ScrapersDashboardClient({
                     <CardContent>
                       {run ? (
                         <div className="space-y-2 text-sm">
+                          {activeRun && (
+                            <div className="flex justify-between text-zinc-400">
+                              <span>Live run</span>
+                              <span className={stalled ? "text-red-400" : "text-sky-300"}>
+                                {stalled
+                                  ? `Stalled (${formatTimeAgo(activeRun.started_at)})`
+                                  : `Running (${formatTimeAgo(activeRun.started_at)})`}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex justify-between text-zinc-400">
                             <span>Last run</span>
                             <span className="text-zinc-300">
                               {formatTimeAgo(run.finished_at)}
                             </span>
                           </div>
+                          {stale && (
+                            <div className="text-amber-300 text-xs">
+                              Expected cadence missed ({Math.round(SCRAPER_CADENCE_MS[name] / (60 * 60 * 1000))}h)
+                            </div>
+                          )}
                           <div className="flex justify-between text-zinc-400">
                             <span>Duration</span>
                             <span className="text-zinc-300">
@@ -193,6 +389,11 @@ export default function ScrapersDashboardClient({
                                 {run.errors_count}
                               </span>
                             </div>
+                          )}
+                          {run.error_messages && run.error_messages.length > 0 && (
+                            <p className="text-red-300/90 text-xs truncate" title={run.error_messages[0]}>
+                              {run.error_messages[0]}
+                            </p>
                           )}
                           {run.bot_blocked != null && run.bot_blocked > 0 && (
                             <div className="flex justify-between text-zinc-400">
@@ -466,12 +667,12 @@ export default function ScrapersDashboardClient({
 
           {/* ── Section 3: Daily Trends ── */}
           <TabsContent value="trends">
-            <DailyTrendsSection aggregates={dailyAggregates} />
+            <DailyTrendsSection aggregates={liveDailyAggregates} />
           </TabsContent>
 
           {/* ── Section 4: Data Quality ── */}
           <TabsContent value="quality">
-            <DataQualitySection data={dataQuality} />
+            <DataQualitySection data={liveDataQuality} />
           </TabsContent>
         </Tabs>
       </div>

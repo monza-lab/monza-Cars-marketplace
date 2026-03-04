@@ -3,15 +3,21 @@ export type {
   RuntimeEnv,
   ScraperRunRecord,
   ScraperRun,
+  ActiveScraperRun,
   DailyAggregate,
   DataQuality,
 } from './types';
 
-export { recordScraperRun } from './record';
+export {
+  recordScraperRun,
+  markScraperRunStarted,
+  clearScraperRunActive,
+} from './record';
 
 export {
   getRecentRuns,
   getDailyAggregates,
   getDataQuality,
   getLatestRunPerScraper,
+  getActiveRuns,
 } from './queries';

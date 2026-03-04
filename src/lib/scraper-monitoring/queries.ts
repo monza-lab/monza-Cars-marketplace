@@ -1,5 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
-import type { ScraperRun, ScraperName, DailyAggregate, DataQuality } from './types';
+import type {
+  ScraperRun,
+  ScraperName,
+  DailyAggregate,
+  DataQuality,
+  ActiveScraperRun,
+} from './types';
 
 /**
  * Fetch the most recent scraper runs, ordered by finished_at DESC.
@@ -72,6 +78,30 @@ export async function getLatestRunPerScraper(): Promise<Map<ScraperName, Scraper
 
   const map = new Map<ScraperName, ScraperRun>();
   for (const row of (data ?? []) as ScraperRun[]) {
+    if (!map.has(row.scraper_name)) {
+      map.set(row.scraper_name, row);
+    }
+  }
+  return map;
+}
+
+/**
+ * Fetch currently active scraper runs, keyed by scraper_name.
+ */
+export async function getActiveRuns(): Promise<Map<ScraperName, ActiveScraperRun>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('scraper_active_runs')
+    .select('scraper_name, run_id, started_at, runtime, updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('[scraper-monitoring] getActiveRuns error:', error.message);
+    return new Map();
+  }
+
+  const map = new Map<ScraperName, ActiveScraperRun>();
+  for (const row of (data ?? []) as ActiveScraperRun[]) {
     if (!map.has(row.scraper_name)) {
       map.set(row.scraper_name, row);
     }

@@ -1,5 +1,70 @@
 import { createClient } from '@supabase/supabase-js';
-import type { ScraperRunRecord } from './types';
+import type { ScraperRunRecord, ScraperName, RuntimeEnv } from './types';
+
+function getMonitoringClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    console.warn('[scraper-monitoring] Missing SUPABASE_URL or SERVICE_ROLE_KEY — skipping monitoring write');
+    return null;
+  }
+
+  return createClient(url, serviceKey);
+}
+
+/**
+ * Mark a scraper as actively running.
+ */
+export async function markScraperRunStarted(params: {
+  scraperName: ScraperName;
+  runId: string;
+  startedAt: string;
+  runtime: RuntimeEnv;
+}): Promise<void> {
+  try {
+    const supabase = getMonitoringClient();
+    if (!supabase) return;
+
+    const { error } = await supabase.from('scraper_active_runs').upsert(
+      {
+        scraper_name: params.scraperName,
+        run_id: params.runId,
+        started_at: params.startedAt,
+        runtime: params.runtime,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'scraper_name' }
+    );
+
+    if (error) {
+      console.error('[scraper-monitoring] Failed to mark run started:', error.message);
+    }
+  } catch (err) {
+    console.error('[scraper-monitoring] Unexpected error marking run started:', err instanceof Error ? err.message : err);
+  }
+}
+
+/**
+ * Clear active run marker once run is finished.
+ */
+export async function clearScraperRunActive(scraperName: ScraperName): Promise<void> {
+  try {
+    const supabase = getMonitoringClient();
+    if (!supabase) return;
+
+    const { error } = await supabase
+      .from('scraper_active_runs')
+      .delete()
+      .eq('scraper_name', scraperName);
+
+    if (error) {
+      console.error('[scraper-monitoring] Failed to clear active run:', error.message);
+    }
+  } catch (err) {
+    console.error('[scraper-monitoring] Unexpected error clearing active run:', err instanceof Error ? err.message : err);
+  }
+}
 
 /**
  * Persist a scraper run record to the scraper_runs table.
@@ -9,15 +74,8 @@ import type { ScraperRunRecord } from './types';
  */
 export async function recordScraperRun(record: ScraperRunRecord): Promise<void> {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!url || !serviceKey) {
-      console.warn('[scraper-monitoring] Missing SUPABASE_URL or SERVICE_ROLE_KEY — skipping run recording');
-      return;
-    }
-
-    const supabase = createClient(url, serviceKey);
+    const supabase = getMonitoringClient();
+    if (!supabase) return;
 
     const { error } = await supabase.from('scraper_runs').insert({
       scraper_name: record.scraper_name,
