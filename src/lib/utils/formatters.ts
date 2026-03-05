@@ -231,7 +231,7 @@ export function platformLabel(platform: string): string {
  * Get the brand color (hex) for a platform.
  */
 export function platformColor(platform: string): string {
-  return PLATFORM_COLORS[platform] || '#6B7280';
+  return PLATFORM_COLORS[platform] || '#6B6365';
 }
 
 // ---------------------------------------------------------------------------
@@ -257,7 +257,7 @@ export function investmentGradeColor(grade: string): string {
     case 'F':
       return '#DC2626'; // red
     default:
-      return '#6B7280'; // gray
+      return '#6B6365'; // gray
   }
 }
 
@@ -301,6 +301,6 @@ export function trendColor(trend: string): string {
     case 'DOWN':
       return '#DC2626'; // red
     default:
-      return '#6B7280'; // gray
+      return '#6B6365'; // gray
   }
 }

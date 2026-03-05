@@ -83,42 +83,42 @@ function PricingCard({
     <div
       className={`relative flex flex-col p-6 rounded-2xl border transition-all ${
         isPopular
-          ? "border-[#F8B4D9]/50 bg-[#F8B4D9]/[0.03] shadow-lg shadow-[#F8B4D9]/5"
-          : "border-white/10 bg-white/[0.02] hover:border-white/20"
+          ? "border-primary/50 bg-primary/[0.03] shadow-lg shadow-primary/5"
+          : "border-border bg-foreground/2 hover:border-border/80"
       }`}
     >
       {/* Badge */}
       {plan.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest px-3 py-1 bg-[#F8B4D9] text-[#0b0b10] rounded-full font-bold">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest px-3 py-1 bg-primary text-primary-foreground rounded-full font-bold">
           {plan.badge}
         </span>
       )}
 
       {/* Plan name */}
-      <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-4">
+      <h3 className="text-[15px] font-semibold text-foreground mb-4">
         {plan.name}
       </h3>
 
       {/* Price */}
       <div className="mb-1">
-        <span className="text-3xl font-bold text-[#FFFCF7]">
+        <span className="text-3xl font-bold text-foreground">
           ${plan.price}
         </span>
-        <span className="text-[13px] text-[#6B7280] ml-1">
+        <span className="text-[13px] text-muted-foreground ml-1">
           {plan.period === "monthly" ? "/mo" : "one-time"}
         </span>
       </div>
 
       {/* Per report */}
       {plan.perReport && (
-        <span className="text-[11px] text-[#F8B4D9] font-medium mb-4">
+        <span className="text-[11px] text-primary font-medium mb-4">
           {plan.perReport}
         </span>
       )}
       {!plan.perReport && <div className="mb-4" />}
 
       {/* Credits summary */}
-      <p className="text-[12px] text-[#9CA3AF] mb-6">
+      <p className="text-[12px] text-muted-foreground mb-6">
         {plan.credits === "unlimited"
           ? "Unlimited reports per month"
           : `${plan.credits} reports, never expire`}
@@ -130,10 +130,10 @@ function PricingCard({
           <li key={feature} className="flex items-start gap-2.5">
             <Check
               className={`size-4 mt-0.5 shrink-0 ${
-                isPopular ? "text-[#F8B4D9]" : "text-[#34D399]"
+                isPopular ? "text-primary" : "text-[#34D399]"
               }`}
             />
-            <span className="text-[12px] text-[#D1D5DB]">{feature}</span>
+            <span className="text-[12px] text-muted-foreground">{feature}</span>
           </li>
         ))}
       </ul>
@@ -143,8 +143,8 @@ function PricingCard({
         onClick={() => onSelect(plan.id)}
         className={`w-full py-3 rounded-xl text-[13px] font-semibold transition-all ${
           isPopular
-            ? "bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde]"
-            : "bg-white/[0.06] text-[#FFFCF7] border border-white/10 hover:bg-white/10"
+            ? "bg-primary text-primary-foreground hover:bg-primary/80"
+            : "bg-foreground/6 text-foreground border border-border hover:bg-foreground/10"
         }`}
       >
         {plan.cta}

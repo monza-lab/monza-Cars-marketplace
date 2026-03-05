@@ -202,8 +202,8 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
   if (images.length === 0) {
     return (
       <div className="sticky top-[100px] h-[calc(100vh-120px)]">
-        <div className="h-full rounded-2xl bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.1)] flex items-center justify-center">
-          <Car className="size-20 text-[rgba(255,252,247,0.1)]" />
+        <div className="h-full rounded-2xl bg-card border border-primary/10 flex items-center justify-center">
+          <Car className="size-20 text-[rgba(232,226,222,0.1)]" />
         </div>
       </div>
     )
@@ -212,7 +212,7 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
   return (
     <div className="sticky top-[100px] h-[calc(100vh-120px)] flex flex-col gap-3">
       {/* Main Image */}
-      <div className="relative flex-1 rounded-2xl overflow-hidden bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.1)] group">
+      <div className="relative flex-1 rounded-2xl overflow-hidden bg-card border border-primary/10 group">
         <Image
           src={images[currentIndex]}
           alt={`${title} - ${currentIndex + 1}`}
@@ -229,13 +229,13 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
           <>
             <button
               onClick={() => setCurrentIndex((p) => (p === 0 ? images.length - 1 : p - 1))}
-              className="absolute left-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-[#0b0b10]/70 backdrop-blur-md flex items-center justify-center text-[#FFFCF7] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#0b0b10]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-background/70 backdrop-blur-md flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
             >
               <ChevronLeft className="size-5" />
             </button>
             <button
               onClick={() => setCurrentIndex((p) => (p === images.length - 1 ? 0 : p + 1))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-[#0b0b10]/70 backdrop-blur-md flex items-center justify-center text-[#FFFCF7] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#0b0b10]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-background/70 backdrop-blur-md flex items-center justify-center text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
             >
               <ChevronRight className="size-5" />
             </button>
@@ -243,7 +243,7 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
         )}
 
         {/* Counter */}
-        <div className="absolute bottom-4 right-4 rounded-full bg-[#0b0b10]/70 backdrop-blur-md px-3 py-1.5 text-[11px] font-medium text-[#FFFCF7]">
+        <div className="absolute bottom-4 right-4 rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[11px] font-medium text-foreground">
           {currentIndex + 1} / {images.length}
         </div>
       </div>
@@ -257,16 +257,16 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
               onClick={() => setCurrentIndex(idx)}
               className={`relative h-16 w-24 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
                 idx === currentIndex
-                  ? "border-[#F8B4D9] shadow-lg shadow-[#F8B4D9]/20"
-                  : "border-[rgba(248,180,217,0.1)] opacity-60 hover:opacity-100"
+                  ? "border-primary shadow-lg shadow-primary/20"
+                  : "border-primary/10 opacity-60 hover:opacity-100"
               }`}
             >
               <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" sizes="96px" referrerPolicy="no-referrer" unoptimized />
             </button>
           ))}
           {images.length > 6 && (
-            <div className="h-16 w-24 shrink-0 rounded-lg bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.1)] flex items-center justify-center">
-              <span className="text-[12px] text-[rgba(255,252,247,0.5)]">+{images.length - 6}</span>
+            <div className="h-16 w-24 shrink-0 rounded-lg bg-card border border-primary/10 flex items-center justify-center">
+              <span className="text-[12px] text-[rgba(232,226,222,0.5)]">+{images.length - 6}</span>
             </div>
           )}
         </div>
@@ -293,27 +293,27 @@ function ExecutiveSummary({
   const bidTargetHigh = auction.analysis?.pricePrediction.high || auction.currentBid! * 1.15
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.05)] pb-6">
+    <div className="border-b border-border pb-6">
       {/* Title */}
-      <h1 className="text-3xl font-bold text-[#FFFCF7] tracking-tight leading-tight">
+      <h1 className="text-3xl font-bold text-foreground tracking-tight leading-tight">
         {auction.year} {auction.make} {auction.model}
       </h1>
       {auction.trim && (
-        <p className="text-[15px] text-[rgba(255,252,247,0.5)] mt-1">{auction.trim}</p>
+        <p className="text-[15px] text-[rgba(232,226,222,0.5)] mt-1">{auction.trim}</p>
       )}
 
       {/* The Buy Box */}
-      <div className="mt-6 rounded-xl bg-[rgba(248,180,217,0.04)] border border-[rgba(248,180,217,0.1)] p-5">
+      <div className="mt-6 rounded-xl bg-primary/4 border border-primary/10 p-5">
         <div className="flex items-start justify-between gap-4">
           {/* Current Bid */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
               {isLive ? t("labels.currentBid") : t("labels.finalPrice")}
             </p>
-            <p className="text-4xl font-bold text-[#FFFCF7] font-mono mt-1">
+            <p className="text-4xl font-bold text-foreground font-mono mt-1">
               {formatCurrency(auction.currentBid, locale)}
             </p>
-            <div className="flex items-center gap-3 mt-2 text-[rgba(255,252,247,0.5)]">
+            <div className="flex items-center gap-3 mt-2 text-[rgba(232,226,222,0.5)]">
               <span className="flex items-center gap-1 text-[12px]">
                 <Gavel className="size-3" />
                 {t("bids.count", { count: auction.bidCount })}
@@ -334,13 +334,13 @@ function ExecutiveSummary({
 
           {/* Bid Target */}
           <div className="text-right">
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#F8B4D9]">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-primary">
               {t("labels.recommendedCap")}
             </p>
-            <p className="text-2xl font-bold text-[#F8B4D9] font-mono mt-1">
+            <p className="text-2xl font-bold text-primary font-mono mt-1">
               {formatShort(bidTargetLow, locale)} — {formatShort(bidTargetHigh, locale)}
             </p>
-            <p className="text-[11px] text-[rgba(255,252,247,0.4)] mt-1">
+            <p className="text-[11px] text-[rgba(232,226,222,0.4)] mt-1">
               {t("labels.basedOnMarketAnalysis")}
             </p>
           </div>
@@ -349,7 +349,7 @@ function ExecutiveSummary({
         {/* Action Buttons */}
         <div className="flex gap-3 mt-5">
           {isLive && (
-            <button className="flex-1 rounded-full bg-[#F8B4D9] py-3.5 text-[13px] font-semibold tracking-[0.05em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors">
+            <button className="flex-1 rounded-full bg-primary py-3.5 text-[13px] font-semibold tracking-[0.05em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors">
               {t("actions.placeBid")}
             </button>
           )}
@@ -357,7 +357,7 @@ function ExecutiveSummary({
             href={auction.platformUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 rounded-full border border-[rgba(248,180,217,0.2)] py-3.5 text-center text-[13px] font-medium tracking-[0.05em] uppercase text-[rgba(255,252,247,0.7)] hover:text-[#FFFCF7] hover:border-[rgba(248,180,217,0.4)] transition-all flex items-center justify-center gap-2"
+            className="flex-1 rounded-full border border-primary/20 py-3.5 text-center text-[13px] font-medium tracking-[0.05em] uppercase text-foreground/70 hover:text-foreground hover:border-primary/40 transition-all flex items-center justify-center gap-2"
           >
             <ExternalLink className="size-4" />
             {t("actions.viewOriginalListing")}
@@ -375,9 +375,9 @@ function ExecutiveSummary({
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2.5 rounded-full border border-[#F8B4D9]/40 bg-[rgba(15,14,22,0.8)] backdrop-blur-md py-3.5 text-[13px] font-medium tracking-[0.05em] uppercase text-[#FFFCF7] hover:border-[#F8B4D9]/70 hover:bg-[rgba(248,180,217,0.08)] transition-all group"
+          className="mt-3 flex items-center justify-center gap-2.5 rounded-full border border-primary/40 bg-card backdrop-blur-md py-3.5 text-[13px] font-medium tracking-[0.05em] uppercase text-foreground hover:border-primary/70 hover:bg-primary/8 transition-all group"
         >
-          <MessageCircle className="size-4 text-[#F8B4D9] group-hover:scale-110 transition-transform" />
+          <MessageCircle className="size-4 text-primary group-hover:scale-110 transition-transform" />
           <span>{t("actions.chatWithAnalyst")}</span>
         </a>
       </div>
@@ -397,11 +397,11 @@ function ExecutiveSummary({
           { label: t("specs.location"), value: auction.location || "—", icon: MapPin },
         ].map((spec) => (
           <div key={spec.label} className="space-y-1">
-            <div className="flex items-center gap-1 text-[rgba(255,252,247,0.4)]">
+            <div className="flex items-center gap-1 text-[rgba(232,226,222,0.4)]">
               <spec.icon className="size-3" />
               <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{spec.label}</span>
             </div>
-            <p className="text-[13px] text-[#FFFCF7] truncate">{spec.value}</p>
+            <p className="text-[13px] text-foreground truncate">{spec.value}</p>
           </div>
         ))}
       </div>
@@ -424,15 +424,15 @@ function StrategyModule({
   const score = auction.analysis?.score || 75
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+    <div className="border-b border-border py-5">
       <div className="flex items-center gap-2 mb-4">
-        <Coins className="size-4 text-[#F8B4D9]" />
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+        <Coins className="size-4 text-primary" />
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
           {t("modules.strategyInsights")}
         </h2>
       </div>
 
-      <p className="text-[14px] leading-relaxed text-[rgba(255,252,247,0.8)]">
+      <p className="text-[14px] leading-relaxed text-[rgba(232,226,222,0.8)]">
         {t(`mock.strategy.${makeKey}.strategy`)}
       </p>
 
@@ -440,16 +440,16 @@ function StrategyModule({
       <div className="flex flex-wrap gap-2 mt-4">
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase ${
           score >= 80 ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" :
-          score >= 60 ? "bg-[rgba(248,180,217,0.1)] text-[#F8B4D9] border border-[rgba(248,180,217,0.2)]" :
+          score >= 60 ? "bg-primary/10 text-primary border border-primary/20" :
           "bg-amber-500/15 text-amber-400 border border-amber-500/30"
         }`}>
           <Target className="size-3" />
           {t("labels.grade")} {score >= 80 ? "AAA" : score >= 60 ? "AA" : "A"}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-[10px] font-medium text-[rgba(255,252,247,0.6)] border border-[rgba(255,255,255,0.08)]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-[rgba(232,226,222,0.6)] border border-border">
           {t("labels.complexity")}: {t(`mock.strategy.${makeKey}.complexity`)}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-[10px] font-medium text-[rgba(255,252,247,0.6)] border border-[rgba(255,255,255,0.08)]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-[rgba(232,226,222,0.6)] border border-border">
           {t("labels.demand")}: {t(`mock.strategy.${makeKey}.demand`)}
         </span>
       </div>
@@ -481,25 +481,25 @@ function FinancialsModule({
   const costPercent = ((totalCost / currentValue) * 100).toFixed(1)
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+    <div className="border-b border-border py-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BarChart3 className="size-4 text-[#F8B4D9]" />
-          <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+          <BarChart3 className="size-4 text-primary" />
+          <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
             Ownership Cost Calculator
           </h2>
         </div>
 
         {/* Period Tabs */}
-        <div className="flex rounded-full bg-[rgba(255,255,255,0.04)] p-0.5">
+        <div className="flex rounded-full bg-foreground/4 p-0.5">
           {[1, 3, 5].map((y) => (
             <button
               key={y}
               onClick={() => setPeriod(y as 1 | 3 | 5)}
               className={`px-3 py-1 rounded-full text-[10px] font-medium transition-all ${
                 period === y
-                  ? "bg-[#F8B4D9] text-[#0b0b10]"
-                  : "text-[rgba(255,252,247,0.5)] hover:text-[#FFFCF7]"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-[rgba(232,226,222,0.5)] hover:text-foreground"
               }`}
             >
               {y}Y
@@ -510,32 +510,32 @@ function FinancialsModule({
 
       {/* Cost Breakdown */}
       <div className="space-y-2">
-        <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
+        <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
               Holding Cost ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+            <p className="text-[14px] font-bold text-foreground font-mono">
               {formatShort(totalHolding, locale)}
             </p>
           </div>
         </div>
-        <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
+        <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
               Insurance ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+            <p className="text-[14px] font-bold text-foreground font-mono">
               {formatShort(totalInsurance, locale)}
             </p>
           </div>
         </div>
-        <div className="rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] p-3">
+        <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
               Maintenance ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-[#FFFCF7] font-mono">
+            <p className="text-[14px] font-bold text-foreground font-mono">
               {formatShort(totalMaintenance, locale)}
             </p>
           </div>
@@ -543,20 +543,20 @@ function FinancialsModule({
       </div>
 
       {/* Total Cost Summary */}
-      <div className="mt-3 rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] p-3">
+      <div className="mt-3 rounded-lg bg-foreground/4 border border-border p-3">
         <div className="flex items-center justify-between">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.5)]">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.5)]">
             Total Cost ({period}Y)
           </span>
-          <span className="text-[18px] font-bold text-[#FFFCF7] font-mono">
+          <span className="text-[18px] font-bold text-foreground font-mono">
             {formatShort(totalCost, locale)}
           </span>
         </div>
         <div className="flex items-center justify-between mt-2">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)]">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
             Cost as % of Vehicle Value
           </span>
-          <span className="text-[12px] font-medium text-[rgba(255,252,247,0.6)] font-mono">
+          <span className="text-[12px] font-medium text-[rgba(232,226,222,0.6)] font-mono">
             {costPercent}%
           </span>
         </div>
@@ -582,7 +582,7 @@ function RiskModule({
   const questions = (t.raw(`mock.sellerQuestions.${makeKey}`) as unknown as string[]) ?? []
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+    <div className="border-b border-border py-5">
       <div className="flex items-center gap-2 mb-4">
         <AlertTriangle className="size-4 text-amber-400" />
         <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-amber-400">
@@ -593,7 +593,7 @@ function RiskModule({
       {/* Red Flags */}
       <div className="space-y-2">
         {redFlags.map((flag: string, i: number) => (
-          <div key={i} className="flex items-start gap-2 text-[13px] text-[rgba(255,252,247,0.7)]">
+          <div key={i} className="flex items-start gap-2 text-[13px] text-foreground/70">
             <AlertCircle className="size-3.5 text-amber-400 mt-0.5 shrink-0" />
             <span>{flag}</span>
           </div>
@@ -603,16 +603,16 @@ function RiskModule({
       {/* Seller Questions Toggle */}
       <button
         onClick={() => setShowQuestions(!showQuestions)}
-        className="mt-4 flex items-center gap-2 text-[12px] font-medium text-[#F8B4D9] hover:text-[#f4cbde] transition-colors"
+        className="mt-4 flex items-center gap-2 text-[12px] font-medium text-primary hover:text-primary/80 transition-colors"
       >
         <HelpCircle className="size-4" />
         {showQuestions ? t("actions.hide") : t("actions.show")} {t("labels.sellerQuestions", { count: questions.length })}
       </button>
 
       {showQuestions && (
-        <div className="mt-3 space-y-2 pl-4 border-l-2 border-[rgba(248,180,217,0.2)]">
+        <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
           {questions.map((q: string, i: number) => (
-            <p key={i} className="text-[12px] text-[rgba(255,252,247,0.6)]">
+            <p key={i} className="text-[12px] text-[rgba(232,226,222,0.6)]">
               {q}
             </p>
           ))}
@@ -647,8 +647,8 @@ function ComparablesModule({
   return (
     <div className="py-5">
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="size-4 text-[#F8B4D9]" />
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+        <TrendingUp className="size-4 text-primary" />
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
           {t("modules.comparableSales")}
         </h2>
       </div>
@@ -657,15 +657,15 @@ function ComparablesModule({
         {sales.slice(0, 5).map((sale: { title: string; price: number; date: string; platform: string }, i: number) => (
           <div
             key={i}
-            className="flex items-center justify-between py-2.5 border-b border-[rgba(255,255,255,0.04)] last:border-0"
+            className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0"
           >
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-[#FFFCF7] truncate">{sale.title}</p>
-              <p className="text-[10px] text-[rgba(255,252,247,0.4)] mt-0.5">
+              <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
+              <p className="text-[10px] text-[rgba(232,226,222,0.4)] mt-0.5">
                 {sale.date} · {sale.platform}
               </p>
             </div>
-            <span className="text-[14px] font-bold font-mono text-[#FFFCF7] ml-4">
+            <span className="text-[14px] font-bold font-mono text-foreground ml-4">
               {formatShort(sale.price, locale)}
             </span>
           </div>
@@ -695,12 +695,12 @@ function RegistryIntelligenceModule({
   const chassisNumber = auction.vin || `${registryData.chassisPrefix}${Math.floor(Math.random() * 9000) + 1000}`
 
   return (
-    <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+    <div className="border-b border-border py-5">
       {/* Header with Verified Badge */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <Database className="size-4 text-[#F8B4D9]" />
-          <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+          <Database className="size-4 text-primary" />
+          <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
             {t("modules.registryIntelligence")}
           </h2>
         </div>
@@ -715,23 +715,23 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Chassis Identity - Terminal Style */}
-      <div className="rounded-lg bg-[#0b0b10] border border-[rgba(255,255,255,0.06)] p-4 mb-4">
+      <div className="rounded-lg bg-background border border-border p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <Fingerprint className="size-3.5 text-[rgba(255,252,247,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
+          <Fingerprint className="size-3.5 text-[rgba(232,226,222,0.4)]" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
             {t("labels.chassisIdentity")}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-[9px] text-[rgba(255,252,247,0.35)] uppercase tracking-wider mb-1">{t("labels.vinOrChassis")}</p>
-            <p className="text-[15px] font-mono font-medium text-[#FFFCF7] tracking-wide">{chassisNumber}</p>
+            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.vinOrChassis")}</p>
+            <p className="text-[15px] font-mono font-medium text-foreground tracking-wide">{chassisNumber}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[rgba(255,252,247,0.35)] uppercase tracking-wider mb-1">{t("labels.production")}</p>
-            <p className="text-[13px] font-mono text-[#F8B4D9]">{registryData.productionSequence}</p>
+            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.production")}</p>
+            <p className="text-[13px] font-mono text-primary">{registryData.productionSequence}</p>
             {registryData.totalProduced > 0 && (
-              <p className="text-[10px] text-[rgba(255,252,247,0.4)] mt-0.5">
+              <p className="text-[10px] text-[rgba(232,226,222,0.4)] mt-0.5">
                 {t("labels.totalProduced")}: {registryData.totalProduced.toLocaleString(locale)}
               </p>
             )}
@@ -740,35 +740,35 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Configuration - The Spec */}
-      <div className="rounded-lg bg-[rgba(15,14,22,0.5)] border border-[rgba(255,255,255,0.04)] p-4 mb-4">
+      <div className="rounded-lg bg-card border border-border/50 p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <Palette className="size-3.5 text-[rgba(255,252,247,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
+          <Palette className="size-3.5 text-[rgba(232,226,222,0.4)]" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
             {t("labels.factoryConfiguration")}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
           <div>
-            <p className="text-[9px] text-[rgba(255,252,247,0.35)] uppercase tracking-wider mb-1">{t("labels.exterior")}</p>
-            <p className="text-[12px] text-[#FFFCF7]">{registryData.config.exteriorColor}</p>
-            <p className="text-[10px] font-mono text-[rgba(255,252,247,0.4)]">{registryData.config.exteriorCode}</p>
+            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.exterior")}</p>
+            <p className="text-[12px] text-foreground">{registryData.config.exteriorColor}</p>
+            <p className="text-[10px] font-mono text-[rgba(232,226,222,0.4)]">{registryData.config.exteriorCode}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[rgba(255,252,247,0.35)] uppercase tracking-wider mb-1">{t("labels.interior")}</p>
-            <p className="text-[12px] text-[#FFFCF7]">{registryData.config.interiorColor}</p>
-            <p className="text-[10px] text-[rgba(255,252,247,0.4)]">{registryData.config.interiorMaterial}</p>
+            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.interior")}</p>
+            <p className="text-[12px] text-foreground">{registryData.config.interiorColor}</p>
+            <p className="text-[10px] text-[rgba(232,226,222,0.4)]">{registryData.config.interiorMaterial}</p>
           </div>
         </div>
 
         {/* Key Options */}
         <div>
-          <p className="text-[9px] text-[rgba(255,252,247,0.35)] uppercase tracking-wider mb-2">{t("labels.keyOptions")}</p>
+          <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-2">{t("labels.keyOptions")}</p>
           <div className="flex flex-wrap gap-1.5">
             {registryData.config.keyOptions.map((option, i) => (
               <span
                 key={i}
-                className="inline-flex items-center rounded bg-[rgba(248,180,217,0.08)] border border-[rgba(248,180,217,0.12)] px-2 py-1 text-[10px] font-medium text-[rgba(255,252,247,0.7)]"
+                className="inline-flex items-center rounded bg-primary/8 border border-primary/12 px-2 py-1 text-[10px] font-medium text-foreground/70"
               >
                 {option}
               </span>
@@ -778,10 +778,10 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Asset Lifecycle - Spotting Timeline */}
-      <div className="rounded-lg bg-[rgba(15,14,22,0.5)] border border-[rgba(255,255,255,0.04)] p-4">
+      <div className="rounded-lg bg-card border border-border/50 p-4">
         <div className="flex items-center gap-2 mb-4">
-          <History className="size-3.5 text-[rgba(255,252,247,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
+          <History className="size-3.5 text-[rgba(232,226,222,0.4)]" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
             {t("labels.assetLifecycle")}
           </span>
         </div>
@@ -789,7 +789,7 @@ function RegistryIntelligenceModule({
         {/* Timeline */}
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-[5px] top-2 bottom-2 w-px bg-gradient-to-b from-[#F8B4D9]/40 via-[rgba(255,255,255,0.1)] to-transparent" />
+          <div className="absolute left-[5px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-[rgba(255,255,255,0.1)] to-transparent" />
 
           <div className="space-y-3">
             {registryData.spottings.map((spot, i) => (
@@ -797,23 +797,23 @@ function RegistryIntelligenceModule({
                 {/* Timeline dot */}
                 <div className={`relative z-10 size-2.5 rounded-full mt-1.5 shrink-0 ${
                   i === registryData.spottings.length - 1
-                    ? "bg-[#F8B4D9] shadow-lg shadow-[#F8B4D9]/30"
-                    : "bg-[rgba(255,255,255,0.2)] border border-[rgba(255,255,255,0.1)]"
+                    ? "bg-primary shadow-lg shadow-primary/30"
+                    : "bg-foreground/20 border border-border"
                 }`} />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">{spot.year}</span>
-                    <span className="text-[11px] text-[rgba(255,252,247,0.7)]">{spot.event}</span>
+                    <span className="text-[11px] font-mono font-semibold text-foreground">{spot.year}</span>
+                    <span className="text-[11px] text-foreground/70">{spot.event}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <MapPin className="size-2.5 text-[rgba(255,252,247,0.3)]" />
-                    <span className="text-[10px] text-[rgba(255,252,247,0.4)]">{spot.location}</span>
+                    <MapPin className="size-2.5 text-[rgba(232,226,222,0.3)]" />
+                    <span className="text-[10px] text-[rgba(232,226,222,0.4)]">{spot.location}</span>
                     {spot.source && (
                       <>
-                        <span className="text-[rgba(255,252,247,0.2)]">·</span>
-                        <span className="text-[10px] text-[rgba(248,180,217,0.6)]">{spot.source}</span>
+                        <span className="text-[rgba(232,226,222,0.2)]">·</span>
+                        <span className="text-[10px] text-primary/60">{spot.source}</span>
                       </>
                     )}
                   </div>
@@ -825,7 +825,7 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Registry Data Source */}
-      <p className="mt-3 text-[9px] text-[rgba(255,252,247,0.25)] text-center">
+      <p className="mt-3 text-[9px] text-[rgba(232,226,222,0.25)] text-center">
         {t("registry.dataSource", {
           date: new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" }).format(new Date()),
         })}
@@ -840,15 +840,15 @@ function RegistryIntelligenceModule({
 
 function DetailSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0b0b10] pt-[100px]">
+    <div className="min-h-screen bg-background pt-[100px]">
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="aspect-[4/3] rounded-2xl bg-[rgba(248,180,217,0.05)] animate-pulse" />
+          <div className="aspect-[4/3] rounded-2xl bg-primary/5 animate-pulse" />
           <div className="space-y-6">
-            <div className="h-10 w-3/4 bg-[rgba(248,180,217,0.05)] rounded animate-pulse" />
-            <div className="h-32 bg-[rgba(248,180,217,0.05)] rounded-xl animate-pulse" />
-            <div className="h-24 bg-[rgba(248,180,217,0.05)] rounded-xl animate-pulse" />
-            <div className="h-24 bg-[rgba(248,180,217,0.05)] rounded-xl animate-pulse" />
+            <div className="h-10 w-3/4 bg-primary/5 rounded animate-pulse" />
+            <div className="h-32 bg-primary/5 rounded-xl animate-pulse" />
+            <div className="h-24 bg-primary/5 rounded-xl animate-pulse" />
+            <div className="h-24 bg-primary/5 rounded-xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -1022,15 +1022,15 @@ export default function AuctionDetailClient() {
           : t("errors.notFound")
 
     return (
-      <div className="min-h-screen bg-[#0b0b10] pt-[100px] flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-[100px] flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="mx-auto rounded-full bg-red-500/10 p-4 w-fit">
             <AlertCircle className="size-8 text-red-400" />
           </div>
-          <h2 className="text-lg font-semibold text-[#FFFCF7]">{title}</h2>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-[13px] text-[#F8B4D9] hover:text-[#f4cbde] transition-colors"
+            className="inline-flex items-center gap-2 text-[13px] text-primary hover:text-primary/80 transition-colors"
           >
             <ArrowLeft className="size-4" />
             {t("actions.goBack")}
@@ -1041,14 +1041,14 @@ export default function AuctionDetailClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] pt-[100px]">
+    <div className="min-h-screen bg-background pt-[100px]">
       {/* Back Navigation */}
-      <div className="fixed top-[100px] left-0 right-0 z-30 bg-[#0b0b10]/80 backdrop-blur-md border-b border-[rgba(248,180,217,0.06)]">
+      <div className="fixed top-[100px] left-0 right-0 z-30 bg-background/80 backdrop-blur-md border-b border-primary/6">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex items-center justify-between h-12">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1.5 text-[12px] text-[rgba(255,252,247,0.5)] hover:text-[#F8B4D9] transition-colors"
+              className="flex items-center gap-1.5 text-[12px] text-[rgba(232,226,222,0.5)] hover:text-primary transition-colors"
             >
               <ArrowLeft className="size-4" />
               {t("actions.backToFeed")}
@@ -1076,10 +1076,10 @@ export default function AuctionDetailClient() {
 
             {/* Price History Chart (live listings from Supabase) */}
             {priceHistory.length > 0 && (
-              <div className="border-b border-[rgba(255,255,255,0.05)] py-5">
+              <div className="border-b border-border py-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="size-4 text-[#F8B4D9]" />
-                  <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+                  <TrendingUp className="size-4 text-primary" />
+                  <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
                     {t("modules.comparableSales") ?? "Price History"}
                   </h2>
                 </div>
@@ -1104,11 +1104,11 @@ export default function AuctionDetailClient() {
 
             {/* VIN */}
             {auction.vin && (
-              <div className="py-5 border-t border-[rgba(255,255,255,0.05)]">
-                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.4)]">
+              <div className="py-5 border-t border-border">
+                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
                   {t("labels.vin")}
                 </p>
-                <p className="text-[12px] font-mono text-[rgba(255,252,247,0.6)] mt-1">{auction.vin}</p>
+                <p className="text-[12px] font-mono text-[rgba(232,226,222,0.6)] mt-1">{auction.vin}</p>
               </div>
             )}
           </div>

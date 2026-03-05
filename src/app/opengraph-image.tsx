@@ -17,7 +17,7 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0b0b10 0%, #1a1a2e 50%, #0b0b10 100%)",
+          background: "linear-gradient(135deg, #0E0A0C 0%, #1a1a2e 50%, #0E0A0C 100%)",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -31,7 +31,7 @@ export default function OGImage() {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(248,180,217,0.08) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(212,115,138,0.08) 0%, transparent 70%)",
           }}
         />
 
@@ -43,7 +43,7 @@ export default function OGImage() {
             left: 0,
             right: 0,
             height: "3px",
-            background: "linear-gradient(90deg, transparent, #F8B4D9, transparent)",
+            background: "linear-gradient(90deg, transparent, #D4738A, transparent)",
           }}
         />
 
@@ -60,7 +60,7 @@ export default function OGImage() {
             style={{
               fontSize: "72px",
               fontWeight: 800,
-              color: "#FFFCF7",
+              color: "#E8E2DE",
               letterSpacing: "-2px",
             }}
           >
@@ -70,7 +70,7 @@ export default function OGImage() {
             style={{
               fontSize: "72px",
               fontWeight: 300,
-              color: "#F8B4D9",
+              color: "#D4738A",
               letterSpacing: "-2px",
             }}
           >
@@ -83,7 +83,7 @@ export default function OGImage() {
           style={{
             fontSize: "24px",
             fontWeight: 400,
-            color: "#9CA3AF",
+            color: "#6B6365",
             letterSpacing: "6px",
             textTransform: "uppercase",
           }}
@@ -105,14 +105,14 @@ export default function OGImage() {
             style={{
               width: "40px",
               height: "1px",
-              background: "linear-gradient(90deg, transparent, #4B5563)",
+              background: "linear-gradient(90deg, transparent, #564E50)",
             }}
           />
           <span
             style={{
               fontSize: "12px",
               fontWeight: 600,
-              color: "#4B5563",
+              color: "#564E50",
               letterSpacing: "3px",
               textTransform: "uppercase",
             }}
@@ -123,7 +123,7 @@ export default function OGImage() {
             style={{
               width: "40px",
               height: "1px",
-              background: "linear-gradient(90deg, #4B5563, transparent)",
+              background: "linear-gradient(90deg, #564E50, transparent)",
             }}
           />
         </div>

@@ -46,7 +46,7 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
   BRING_A_TRAILER: {
     label: "Bring a Trailer",
     shortLabel: "BaT",
-    color: "#F8B4D9",
+    color: "#D4738A",
     market: "US"
   },
   CARS_AND_BIDS: {
@@ -115,9 +115,9 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <Link href={`/cars/${makePath}/${car.id}`} className="group block">
-        <div className="overflow-hidden rounded-2xl border border-white/5 bg-[#0F1012]/80 transition-all hover:border-[#F8B4D9]/20 hover:shadow-xl hover:shadow-[#F8B4D9]/5">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5">
           {/* Image */}
-          <div className="relative aspect-[16/10] overflow-hidden bg-[#0b0b10]">
+          <div className="relative aspect-[16/10] overflow-hidden bg-background">
             <Image
               src={car.image}
               alt={car.title}
@@ -125,7 +125,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
 
             {/* Platform badge - real source */}
             <span
@@ -144,7 +144,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
               className={cn(
                 "absolute right-3 top-3 rounded-full border px-2.5 py-0.5 text-[10px] font-medium backdrop-blur-sm",
                 isEnded
-                  ? "bg-white/5 border-white/10 text-[#9CA3AF]"
+                  ? "bg-foreground/5 border-border text-muted-foreground"
                   : "bg-[#34D399]/10 border-[#34D399]/20 text-[#34D399]"
               )}
             >
@@ -154,24 +154,24 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
 
           {/* Body - Real data only */}
           <div className="p-4">
-            <h3 className="text-sm font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors line-clamp-1">
+            <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
               {car.title}
             </h3>
 
             {/* Price - the real sale/bid price */}
             <div className="mt-3 flex items-baseline justify-between">
               <div>
-                <span className="text-xl font-light text-[#F8B4D9]">
+                <span className="text-xl font-light text-primary">
                   {formatCurrency(car.currentBid)}
                 </span>
-                <span className="ml-2 text-[10px] text-[#4B5563]">
+                <span className="ml-2 text-[10px] text-muted-foreground">
                   {isEnded ? "sold" : "current bid"}
                 </span>
               </div>
             </div>
 
             {/* Verified details */}
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#4B5563]">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="size-3" />
                 {formatDate(car.endTime)}
@@ -232,10 +232,10 @@ function PlatformSection({
             </span>
           </div>
           <div>
-            <h3 className="text-lg font-medium text-[#FFFCF7]">
+            <h3 className="text-lg font-medium text-foreground">
               {cfg.label}
             </h3>
-            <p className="text-[11px] text-[#4B5563]">
+            <p className="text-[11px] text-muted-foreground">
               {cfg.market} Market · {soldCount} sold · {cars.length - soldCount} active
             </p>
           </div>
@@ -243,10 +243,10 @@ function PlatformSection({
 
         {/* Real price range from actual sales */}
         <div className="text-right hidden sm:block">
-          <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#4B5563]">
+          <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
             Price Range
           </span>
-          <p className="text-sm text-[#FFFCF7]">
+          <p className="text-sm text-foreground">
             {formatCurrency(minPrice)} – {formatCurrency(maxPrice)}
           </p>
         </div>
@@ -317,7 +317,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0b0b10]">
+    <div className="min-h-screen bg-background">
       {/* ═══════════════════════════════════════════════════════════════════
           HERO SECTION - Clean, factual
           ═══════════════════════════════════════════════════════════════════ */}
@@ -331,7 +331,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/70 to-[#0b0b10]/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
         </div>
 
         {/* Content */}
@@ -343,23 +343,23 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             className="max-w-4xl"
           >
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-[11px] text-[#9CA3AF] mb-4">
-              <Link href="/" className="hover:text-[#F8B4D9] transition-colors">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-4">
+              <Link href="/" className="hover:text-primary transition-colors">
                 Market
               </Link>
               <ChevronRight className="size-3" />
               <Link
                 href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}`}
-                className="hover:text-[#F8B4D9] transition-colors"
+                className="hover:text-primary transition-colors"
               >
                 {make}
               </Link>
               <ChevronRight className="size-3" />
-              <span className="text-[#FFFCF7]">{model}</span>
+              <span className="text-foreground">{model}</span>
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-[#FFFCF7]">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground">
               {make}{" "}
               <span className="text-gradient font-normal">{model}</span>
             </h1>
@@ -367,28 +367,28 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             {/* Real stats only */}
             <div className="mt-6 flex flex-wrap items-center gap-6">
               <div>
-                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
+                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
                   Sales Tracked
                 </span>
-                <p className="text-2xl font-light text-[#FFFCF7]">
+                <p className="text-2xl font-light text-foreground">
                   {stats.totalSales}
                 </p>
               </div>
-              <div className="h-10 w-px bg-white/10" />
+              <div className="h-10 w-px bg-foreground/10" />
               <div>
-                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
+                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
                   Price Range
                 </span>
-                <p className="text-2xl font-light text-[#F8B4D9]">
+                <p className="text-2xl font-light text-primary">
                   {formatCurrency(stats.minPrice)} – {formatCurrency(stats.maxPrice)}
                 </p>
               </div>
-              <div className="h-10 w-px bg-white/10" />
+              <div className="h-10 w-px bg-foreground/10" />
               <div>
-                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
+                <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
                   Platforms
                 </span>
-                <p className="text-2xl font-light text-[#FFFCF7]">
+                <p className="text-2xl font-light text-foreground">
                   {stats.platforms}
                 </p>
               </div>
@@ -401,10 +401,10 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
           DATA SOURCE NOTICE - Transparency
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="px-6 py-6 md:px-12 lg:px-20">
-        <div className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-          <Info className="size-4 text-[#4B5563] mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-foreground/2 p-4">
+          <Info className="size-4 text-muted-foreground mt-0.5 shrink-0" />
           <div>
-            <p className="text-[12px] text-[#9CA3AF]">
+            <p className="text-[12px] text-muted-foreground">
               Data from {formatDate(stats.oldestSale)} to {formatDate(stats.newestSale)} ·
               Sourced from {stats.platforms} auction platform{stats.platforms > 1 ? "s" : ""} ·
               {stats.soldCount} completed sale{stats.soldCount !== 1 ? "s" : ""}, {stats.activeCount} active listing{stats.activeCount !== 1 ? "s" : ""}
@@ -418,10 +418,10 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="px-6 py-8 md:px-12 lg:px-20 pb-24">
         <div className="mb-8">
-          <h2 className="text-2xl font-light text-[#FFFCF7]">
+          <h2 className="text-2xl font-light text-foreground">
             Market Activity
           </h2>
-          <p className="mt-1 text-[13px] text-[#9CA3AF]">
+          <p className="mt-1 text-[13px] text-muted-foreground">
             Sales grouped by auction platform
           </p>
         </div>
@@ -443,7 +443,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
         {/* No data message if somehow empty */}
         {Object.keys(carsByPlatform).length === 0 && (
           <div className="flex items-center justify-center py-20">
-            <p className="text-[#4B5563]">No sales data available for this model</p>
+            <p className="text-muted-foreground">No sales data available for this model</p>
           </div>
         )}
       </section>

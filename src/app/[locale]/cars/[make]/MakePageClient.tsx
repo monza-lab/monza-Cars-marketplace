@@ -263,14 +263,14 @@ function FilterChip({
       className={`
         inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-medium transition-all
         ${active
-          ? "bg-[#F8B4D9] text-[#0b0b10]"
-          : "bg-white/5 text-[#9CA3AF] hover:bg-white/10 border border-white/10"
+          ? "bg-primary text-primary-foreground"
+          : "bg-foreground/5 text-muted-foreground hover:bg-foreground/10 border border-border"
         }
       `}
     >
       {label}
       {count !== undefined && (
-        <span className={`text-[10px] ${active ? "text-[#0b0b10]/60" : "text-[#4B5563]"}`}>
+        <span className={`text-[10px] ${active ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
           ({count})
         </span>
       )}
@@ -303,7 +303,7 @@ function SortSelector({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#FFFCF7] transition-colors"
+        className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowUpDown className="size-3" />
         <span className="font-medium">{SORT_LABELS[sortBy] || "Ordenar"}</span>
@@ -316,7 +316,7 @@ function SortSelector({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-1.5 w-40 bg-[#1a1a24] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50"
+            className="absolute right-0 top-full mt-1.5 w-40 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50"
           >
             {options.map((opt) => (
               <button
@@ -324,8 +324,8 @@ function SortSelector({
                 onClick={() => { setSortBy(opt.value); setOpen(false) }}
                 className={`w-full text-left px-3 py-2 text-[11px] transition-colors ${
                   sortBy === opt.value
-                    ? "text-[#F8B4D9] bg-[rgba(248,180,217,0.08)]"
-                    : "text-[#9CA3AF] hover:text-[#FFFCF7] hover:bg-white/5"
+                    ? "text-primary bg-primary/8"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/5"
                 }`}
               >
                 {SORT_LABELS[opt.value]}
@@ -359,9 +359,9 @@ function DropdownSelect({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-[12px] font-medium text-[#9CA3AF] hover:bg-white/10 transition-colors min-w-[160px]"
+        className="flex items-center gap-2 rounded-xl bg-foreground/5 border border-border px-4 py-2.5 text-[12px] font-medium text-muted-foreground hover:bg-foreground/10 transition-colors min-w-[160px]"
       >
-        {Icon && <Icon className="size-4 text-[#F8B4D9]" />}
+        {Icon && <Icon className="size-4 text-primary" />}
         <span className="flex-1 text-left">{selectedOption?.label || label}</span>
         <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -377,7 +377,7 @@ function DropdownSelect({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 mt-2 w-full min-w-[200px] rounded-xl bg-[#0F1012] border border-white/10 shadow-xl z-50 overflow-hidden"
+              className="absolute top-full left-0 mt-2 w-full min-w-[200px] rounded-xl bg-card border border-border shadow-xl z-50 overflow-hidden"
             >
               {options.map((option) => (
                 <button
@@ -389,8 +389,8 @@ function DropdownSelect({
                   className={`
                     w-full flex items-center justify-between px-4 py-3 text-[12px] transition-colors
                     ${option.value === value
-                      ? "bg-[#F8B4D9]/10 text-[#F8B4D9]"
-                      : "text-[#9CA3AF] hover:bg-white/5"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-foreground/5"
                     }
                   `}
                 >
@@ -417,7 +417,7 @@ function MakePageRegionPills({ regionCounts }: { regionCounts: Record<string, nu
     { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}", countKey: "JP" },
   ]
   return (
-    <div className="sticky top-0 z-20 bg-[#0b0b10]/95 backdrop-blur-md border-b border-white/5 px-4 py-2.5">
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border px-4 py-2.5">
       <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
         {REGIONS.map((region) => {
           const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
@@ -427,13 +427,13 @@ function MakePageRegionPills({ regionCounts }: { regionCounts: Record<string, nu
               key={region.id}
               onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all shrink-0 ${isActive
-                  ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
-                  : "text-[#6B7280] hover:text-[#9CA3AF] bg-white/[0.03] border border-transparent"
+                  ? "bg-primary/15 text-primary border border-primary/25"
+                  : "text-muted-foreground hover:text-muted-foreground bg-foreground/3 border border-transparent"
                 }`}
             >
               <span className="text-[12px]">{region.flag}</span>
               <span>{region.label}</span>
-              <span className={`text-[9px] ${isActive ? "text-[#F8B4D9]/60" : "text-[#4B5563]"}`}>{count}</span>
+              <span className={`text-[9px] ${isActive ? "text-primary/60" : "text-muted-foreground"}`}>{count}</span>
             </button>
           )
         })}
@@ -460,11 +460,11 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
 
         {/* Back link */}
         <div className="absolute top-4 left-4">
-          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-[rgba(255,252,247,0.5)] hover:text-[rgba(255,252,247,0.8)] transition-colors cursor-pointer">
+          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-[rgba(232,226,222,0.5)] hover:text-[rgba(232,226,222,0.8)] transition-colors cursor-pointer">
             <ArrowLeft className="size-3.5" />
             {t("hero.backToCollection")}
           </button>
@@ -475,8 +475,8 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
           <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${model.representativeCar.investmentGrade === "AAA"
               ? "bg-emerald-500/30 text-emerald-300"
               : model.representativeCar.investmentGrade === "AA"
-                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                : "bg-white/20 text-white"
+                ? "bg-primary/30 text-primary"
+                : "bg-foreground/20 text-white"
             }`}>
             {model.representativeCar.investmentGrade}
           </span>
@@ -484,7 +484,7 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
 
         {/* Live badge */}
         {model.liveCount > 0 && (
-          <div className="absolute top-12 right-4 flex items-center gap-1.5 rounded-full bg-[#0b0b10]/70 backdrop-blur-md px-2.5 py-1">
+          <div className="absolute top-12 right-4 flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md px-2.5 py-1">
             <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] font-semibold text-emerald-400">{model.liveCount} LIVE</span>
           </div>
@@ -492,24 +492,24 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
 
         {/* Overlaid info */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
+          <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
             {t("hero.brandCollection")}
           </span>
-          <h1 className="text-3xl font-bold text-[#FFFCF7] mt-1">
+          <h1 className="text-3xl font-bold text-foreground mt-1">
             {make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
           </h1>
-          <p className="text-[12px] text-[rgba(255,252,247,0.5)] mt-0.5">
+          <p className="text-[12px] text-[rgba(232,226,222,0.5)] mt-0.5">
             {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[16px] font-bold font-mono text-[#F8B4D9]">
+            <span className="text-[16px] font-display font-medium text-primary">
               {formatPriceForRegion(model.priceMin, selectedRegion)} – {formatPriceForRegion(model.priceMax, selectedRegion)}
             </span>
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-2.5">
             {model.categories.slice(0, 3).map((cat) => (
-              <span key={cat} className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-[10px] text-[#FFFCF7]/70">
+              <span key={cat} className="px-2.5 py-1 rounded-full bg-foreground/10 backdrop-blur-sm text-[10px] text-foreground/70">
                 {cat}
               </span>
             ))}
@@ -536,8 +536,8 @@ function MobileModelRow({
   const gradeColor = (g: string) => {
     switch (g) {
       case "AAA": return "text-emerald-400"
-      case "AA": return "text-[#F8B4D9]"
-      default: return "text-[#6B7280]"
+      case "AA": return "text-primary"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -546,7 +546,7 @@ function MobileModelRow({
       {/* Thumbnail — links to car detail */}
       <Link
         href={`/cars/${makeSlug}/${model.representativeCar.id}`}
-        className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-[#0F1012]"
+        className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-card"
       >
         <Image
           src={model.representativeImage}
@@ -556,7 +556,7 @@ function MobileModelRow({
           sizes="80px"
         />
         {model.liveCount > 0 && (
-          <div className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-[#0b0b10]/80 px-1.5 py-0.5">
+          <div className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5">
             <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[8px] font-bold text-emerald-400">{model.liveCount}</span>
           </div>
@@ -568,14 +568,14 @@ function MobileModelRow({
         href={`/cars/${makeSlug}/${model.representativeCar.id}`}
         className="flex-1 min-w-0"
       >
-        <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
+        <p className="text-[14px] font-semibold text-foreground truncate">
           {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
         </p>
-        <p className="text-[11px] text-[#6B7280] mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5">
           {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] font-mono text-[#F8B4D9]">
+          <span className="text-[12px] font-mono text-primary">
             {formatPriceForRegion(model.priceMin, selectedRegion)} – {formatPriceForRegion(model.priceMax, selectedRegion)}
           </span>
         </div>
@@ -588,7 +588,7 @@ function MobileModelRow({
         </span>
         <button
           onClick={onTap}
-          className="flex items-center gap-1 text-[10px] text-[#6B7280] active:text-[#F8B4D9]"
+          className="flex items-center gap-1 text-[10px] text-muted-foreground active:text-primary"
         >
           <Info className="size-3.5" />
         </button>
@@ -646,10 +646,10 @@ function MobileModelContext({
     <div className="mx-4 mt-3 space-y-3">
       {/* Panel 1: Regional Valuation */}
       {regionalPricing && (
-        <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
+        <div className="rounded-2xl bg-card border border-border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Globe className="size-3.5 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+            <Globe className="size-3.5 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
               {t("mobileContext.valuationByMarket")}
             </span>
           </div>
@@ -661,25 +661,25 @@ function MobileModelContext({
               const usdAvg = toUsd((pricing.low + pricing.high) / 2, pricing.currency)
               const barWidth = (usdAvg / maxRegionalUsd) * 100
               return (
-                <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-1 px-1 py-1" : ""}>
+                <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-1 px-1 py-1" : ""}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px]">{regionLabels[region]?.flag}</span>
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{region}</span>
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                       {isBest && <span className="text-[7px] font-bold text-emerald-400">{t("mobileContext.best")}</span>}
-                      {isSelected && <span className="text-[7px] font-bold text-[#F8B4D9]">{t("mobileContext.yourMarket")}</span>}
+                      {isSelected && <span className="text-[7px] font-bold text-primary">{t("mobileContext.yourMarket")}</span>}
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] font-mono text-[#FFFCF7]">{fmtRegional(pricing.low, pricing.currency)}</span>
-                      <span className="text-[8px] text-[#6B7280]">→</span>
-                      <span className={`text-[10px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                      <span className="text-[10px] font-mono text-foreground">{fmtRegional(pricing.low, pricing.currency)}</span>
+                      <span className="text-[8px] text-muted-foreground">→</span>
+                      <span className={`text-[10px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
                         {fmtRegional(pricing.high, pricing.currency)}
                       </span>
                     </div>
                   </div>
-                  <div className="h-[5px] rounded-full bg-white/[0.04] overflow-hidden">
+                  <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${isBest ? "bg-emerald-400/50" : isSelected ? "bg-[#F8B4D9]/60" : "bg-[#F8B4D9]/30"}`}
+                      className={`h-full rounded-full ${isBest ? "bg-emerald-400/50" : isSelected ? "bg-primary/60" : "bg-primary/30"}`}
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
@@ -691,38 +691,38 @@ function MobileModelContext({
       )}
 
       {/* Panel 2: Market Depth — 2x2 grid */}
-      <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
+      <div className="rounded-2xl bg-card border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Gauge className="size-3.5 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+          <Gauge className="size-3.5 text-primary" />
+          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             {t("mobileContext.marketDepth")}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[9px] text-[#6B7280] uppercase">{t("mobileContext.auctionsPerYear")}</p>
-            <p className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.auctionsPerYear")}</p>
+            <p className="text-[14px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[#6B7280] uppercase">{t("mobileContext.avgDaysToSell")}</p>
-            <p className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</p>
+            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.avgDaysToSell")}</p>
+            <p className="text-[14px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</p>
           </div>
           <div>
-            <p className="text-[9px] text-[#6B7280] uppercase">{t("mobileContext.sellThroughRate")}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.sellThroughRate")}</p>
             <p className="text-[14px] font-mono font-semibold text-emerald-400">{depth.sellThroughRate}%</p>
           </div>
           <div>
-            <p className="text-[9px] text-[#6B7280] uppercase">{t("mobileContext.demandScore")}</p>
-            <p className="text-[14px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</p>
+            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.demandScore")}</p>
+            <p className="text-[14px] font-display font-medium text-primary">{depth.demandScore}/10</p>
           </div>
         </div>
       </div>
 
       {/* Panel 4: Ownership Cost */}
-      <div className="rounded-2xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
+      <div className="rounded-2xl bg-card border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Wrench className="size-3.5 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#9CA3AF]">
+          <Wrench className="size-3.5 text-primary" />
+          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             {t("mobileContext.ownershipCost")}
           </span>
         </div>
@@ -733,13 +733,13 @@ function MobileModelContext({
             { label: t("mobileContext.maintenance"), value: costs.maintenance },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-              <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              <span className="text-[11px] text-muted-foreground">{item.label}</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
             </div>
           ))}
-          <div className="flex items-center justify-between pt-2 mt-1 border-t border-white/5">
-            <span className="text-[11px] font-medium text-[#FFFCF7]">{t("mobileContext.total")}</span>
-            <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("mobileContext.perYear")}</span>
+          <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
+            <span className="text-[11px] font-medium text-foreground">{t("mobileContext.total")}</span>
+            <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("mobileContext.perYear")}</span>
           </div>
         </div>
       </div>
@@ -783,19 +783,19 @@ function MobileModelContextSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl bg-[#0b0b10] border-t border-white/10 overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl bg-background border-t border-border overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <p className="text-[14px] font-semibold text-[#FFFCF7]">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</p>
-                <p className="text-[11px] text-[#6B7280] mt-0.5">{model.years} · {model.carCount} cars</p>
+                <p className="text-[14px] font-semibold text-foreground">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{model.years} · {model.carCount} cars</p>
               </div>
               <button
                 onClick={onClose}
-                className="size-8 flex items-center justify-center rounded-full bg-white/5"
+                className="size-8 flex items-center justify-center rounded-full bg-foreground/5"
               >
-                <X className="size-4 text-[#9CA3AF]" />
+                <X className="size-4 text-muted-foreground" />
               </button>
             </div>
 
@@ -843,12 +843,12 @@ function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: CollectorCar[]
     <div className="mt-6">
       <div className="px-4 py-3 flex items-center gap-2">
         <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
           {t("mobileContext.liveAuctions")}
         </span>
-        <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">{totalLiveCount}</span>
+        <span className="text-[10px] font-display font-medium text-primary">{totalLiveCount}</span>
       </div>
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {liveAuctions.map((car) => {
           const isEndingSoon = car.status === "ENDING_SOON"
           const remaining = timeLeft(new Date(car.endTime), timeLabels)
@@ -856,25 +856,25 @@ function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: CollectorCar[]
             <Link
               key={car.id}
               href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-              className="flex items-center gap-3 px-4 py-3 active:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
             >
-              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-card">
                 <Image src={car.image} alt={car.title} fill className="object-cover" sizes="64px" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#FFFCF7] truncate">{car.title}</p>
+                <p className="text-[12px] font-semibold text-foreground truncate">{car.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                  <span className="text-[12px] font-display font-medium text-primary">
                     {formatPriceForRegion(car.currentBid, selectedRegion)}
                   </span>
-                  <span className="text-[10px] text-[#6B7280]">
+                  <span className="text-[10px] text-muted-foreground">
                     {tAuction("bids.count", { count: car.bidCount })}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`} />
-                <span className={`text-[10px] font-mono font-medium ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`}>
+                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
+                <span className={`text-[10px] font-mono font-medium ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`}>
                   {remaining}
                 </span>
               </div>
@@ -905,7 +905,7 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
     >
       <Link
         href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-        className="group block rounded-2xl bg-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.08)] overflow-hidden hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+        className="group block rounded-2xl bg-card border border-primary/8 overflow-hidden hover:border-primary/20 transition-all duration-300"
       >
         {/* Image */}
         <div className="relative aspect-[16/10] overflow-hidden">
@@ -917,18 +917,18 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
             sizes="(max-width: 768px) 100vw, 33vw"
           />
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
 
           {/* Status badge */}
           {isLive && (
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-[#0b0b10]/80 backdrop-blur-md px-2.5 py-1">
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-md px-2.5 py-1">
               <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-medium text-emerald-400">{tStatus("live")}</span>
             </div>
           )}
 
           {/* Platform badge - real data source */}
-          <div className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-medium bg-white/10 text-white/70 border border-white/20">
+          <div className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-medium bg-foreground/10 text-foreground/70 border border-border/80">
             {car.platform === "BRING_A_TRAILER" ? "BaT" :
               car.platform === "CARS_AND_BIDS" ? "C&B" :
                 car.platform === "COLLECTING_CARS" ? "CC" :
@@ -938,33 +938,33 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
 
         {/* Content */}
         <div className="p-4">
-          <h3 className="text-[15px] font-semibold text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors line-clamp-1">
+          <h3 className="text-[15px] font-display font-normal text-foreground group-hover:text-primary transition-colors line-clamp-1">
             {car.title}
           </h3>
 
           {/* Stats row - real data only */}
           <div className="mt-3 flex items-center justify-between">
             <div>
-              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#4B5563]">
+              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
                 {isLive ? t("card.currentBid") : t("card.soldFor")}
               </p>
-              <p className="text-[18px] font-bold font-mono text-[#F8B4D9]">
+              <p className="text-[18px] font-display font-medium text-primary">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#4B5563]">
+              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
                 {tAuction("specs.mileage")}
               </p>
-              <p className="text-[13px] font-medium text-[#9CA3AF]">
+              <p className="text-[13px] font-medium text-muted-foreground">
                 {car.mileage.toLocaleString(locale)} {car.mileageUnit}
               </p>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3 text-[10px] text-[#4B5563]">
+          <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
               {isLive && (
                 <span className="flex items-center gap-1">
                   <Clock className="size-3" />
@@ -981,7 +981,7 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
                 {tAuction("bids.count", { count: car.bidCount })}
               </span>
             </div>
-            <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors" />
+            <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
         </div>
       </Link>
@@ -1044,21 +1044,21 @@ function MobileFilterSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl bg-[#0F1012] border-t border-white/10 overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl bg-card border-t border-border overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <Filter className="size-4 text-[#F8B4D9]" />
-                <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-[#FFFCF7]">
+                <Filter className="size-4 text-primary" />
+                <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-foreground">
                   {t("mobileFilters.title")}
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="size-8 flex items-center justify-center rounded-full bg-white/5"
+                className="size-8 flex items-center justify-center rounded-full bg-foreground/5"
               >
-                <X className="size-4 text-[#9CA3AF]" />
+                <X className="size-4 text-muted-foreground" />
               </button>
             </div>
 
@@ -1066,7 +1066,7 @@ function MobileFilterSheet({
             <div className="px-5 py-6 space-y-6 overflow-y-auto max-h-[calc(85vh-140px)]">
               {/* Model Filter */}
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4B5563] mb-3 block">
+                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3 block">
                   {t("filters.model")}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1089,7 +1089,7 @@ function MobileFilterSheet({
 
               {/* Price Range */}
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4B5563] mb-3 block">
+                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3 block">
                   {t("filters.priceRange")}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1106,7 +1106,7 @@ function MobileFilterSheet({
 
               {/* Status */}
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4B5563] mb-3 block">
+                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3 block">
                   {t("filters.status")}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1123,7 +1123,7 @@ function MobileFilterSheet({
 
               {/* Sort */}
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4B5563] mb-3 block">
+                <label className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-3 block">
                   {t("filters.sortBy")}
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1140,10 +1140,10 @@ function MobileFilterSheet({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-white/5 bg-[#0F1012]">
+            <div className="px-5 py-4 border-t border-border bg-card">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[13px]"
+                className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px]"
               >
                 {t("mobileFilters.showResults", { count: filteredCount })}
               </button>
@@ -1190,13 +1190,13 @@ function SidebarPill({
     <button
       onClick={onClick}
       className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all whitespace-nowrap ${active
-          ? "bg-[#F8B4D9] text-[#0b0b10]"
-          : "bg-white/5 text-[#9CA3AF] hover:bg-white/10 border border-white/[0.06]"
+          ? "bg-primary text-primary-foreground"
+          : "bg-foreground/5 text-muted-foreground hover:bg-foreground/10 border border-border"
         }`}
     >
       {label}
       {count !== undefined && count > 0 && (
-        <span className={`ml-1 text-[9px] ${active ? "text-[#0b0b10]/60" : "text-[#4B5563]"}`}>
+        <span className={`ml-1 text-[9px] ${active ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
           {count}
         </span>
       )}
@@ -1238,24 +1238,24 @@ function ModelNavSidebar({
       case "AAA": return "text-emerald-400"
       case "AA": return "text-blue-400"
       case "A": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
   return (
-    <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+    <div className="h-full flex flex-col border-r border-border overflow-hidden">
       {/* Compact brand header */}
-      <div className="shrink-0 px-3 pt-2.5 pb-2 border-b border-white/5">
+      <div className="shrink-0 px-3 pt-2.5 pb-2 border-b border-border">
         <div className="flex items-center justify-between">
           <a
             href="/"
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <ArrowLeft className="size-3 text-[#6B7280]" />
-            <h1 className="text-[13px] font-bold text-[#FFFCF7] tracking-wide uppercase hover:text-[#F8B4D9] transition-colors">{make}</h1>
+            <ArrowLeft className="size-3 text-muted-foreground" />
+            <h1 className="text-[13px] font-bold text-foreground tracking-wide uppercase hover:text-primary transition-colors">{make}</h1>
           </a>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-[#F8B4D9]">{cars.length}</span>
+            <span className="text-[10px] font-mono text-primary">{cars.length}</span>
             {liveCount > 0 && (
               <span className="flex items-center gap-1">
                 <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -1269,13 +1269,13 @@ function ModelNavSidebar({
       {/* ═══ 50/50 SPLIT: MODELS + LIVE BIDS ═══ */}
       <div className="flex-1 min-h-0 flex flex-col">
         {/* TOP HALF: MODELS LIST */}
-        <div className="h-1/2 flex flex-col border-b border-white/5 overflow-hidden">
+        <div className="h-1/2 flex flex-col border-b border-border overflow-hidden">
           {/* Models header */}
-          <div className="shrink-0 px-3 py-1.5 flex items-center justify-between bg-[rgba(11,11,16,0.4)]">
-            <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[#6B7280]">
+          <div className="shrink-0 px-3 py-1.5 flex items-center justify-between bg-background/40">
+            <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
               MODELS
             </span>
-            <span className="text-[9px] text-[#4B5563]">
+            <span className="text-[9px] text-muted-foreground">
               {models.length}
             </span>
           </div>
@@ -1286,13 +1286,13 @@ function ModelNavSidebar({
               <button
                 key={model.slug}
                 onClick={() => onSelectModel(index)}
-                className={`w-full text-left flex gap-2.5 px-3 py-2 border-b border-white/[0.03] transition-all ${index === currentModelIndex
-                    ? "bg-[rgba(248,180,217,0.08)] border-l-2 border-l-[#F8B4D9]"
-                    : "hover:bg-white/[0.02]"
+                className={`w-full text-left flex gap-2.5 px-3 py-2 border-b border-border/50 transition-all ${index === currentModelIndex
+                    ? "bg-primary/8 border-l-2 border-l-primary"
+                    : "hover:bg-foreground/2"
                   }`}
               >
                 {/* Mini thumbnail */}
-                <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0 bg-card">
                   <Image
                     src={model.representativeImage}
                     alt={model.name}
@@ -1307,7 +1307,7 @@ function ModelNavSidebar({
                 {/* Model info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className={`text-[12px] font-semibold truncate ${index === currentModelIndex ? "text-[#F8B4D9]" : "text-[#FFFCF7]"
+                    <p className={`text-[12px] font-semibold truncate ${index === currentModelIndex ? "text-primary" : "text-foreground"
                       }`}>
                       {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
                     </p>
@@ -1316,10 +1316,10 @@ function ModelNavSidebar({
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-[#6B7280]">{model.years}</span>
-                    <span className="text-[10px] text-[#6B7280]">{model.carCount} cars</span>
+                    <span className="text-[10px] text-muted-foreground">{model.years}</span>
+                    <span className="text-[10px] text-muted-foreground">{model.carCount} cars</span>
                   </div>
-                  <span className="text-[11px] font-mono text-[#F8B4D9] mt-0.5 block">
+                  <span className="text-[11px] font-mono text-primary mt-0.5 block">
                     {formatPriceForRegion(model.priceMin, selectedRegion)}–{formatPriceForRegion(model.priceMax, selectedRegion)}
                   </span>
                 </div>
@@ -1331,7 +1331,7 @@ function ModelNavSidebar({
         {/* BOTTOM HALF: LIVE BIDS */}
         <div className="h-1/2 flex flex-col overflow-hidden">
           {/* Live header */}
-          <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-[rgba(11,11,16,0.4)]">
+          <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-background/40">
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
@@ -1350,7 +1350,7 @@ function ModelNavSidebar({
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
             {liveCars.length === 0 ? (
               <div className="px-4 py-6 text-center">
-                <span className="text-[11px] text-[#4B5563]">No live auctions</span>
+                <span className="text-[11px] text-muted-foreground">No live auctions</span>
               </div>
             ) : (
               liveCars.map((car) => {
@@ -1360,10 +1360,10 @@ function ModelNavSidebar({
                   <Link
                     key={car.id}
                     href={`/cars/${makeSlug}/${car.id}`}
-                    className="group flex gap-2.5 px-3 py-2 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+                    className="group flex gap-2.5 px-3 py-2 border-b border-border/50 hover:bg-foreground/2 transition-all"
                   >
                     {/* Thumbnail */}
-                    <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                    <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-card">
                       <Image
                         src={car.image}
                         alt={car.title}
@@ -1375,14 +1375,14 @@ function ModelNavSidebar({
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                      <p className="text-[11px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {car.year} {car.model}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] font-mono font-bold text-[#F8B4D9]">
+                        <span className="text-[11px] font-display font-medium text-primary">
                           {formatPriceForRegion(car.currentBid, selectedRegion)}
                         </span>
-                        <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-[#6B7280]"}`}>
+                        <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
                           <Clock className="size-2.5" />
                           {timeLeft(new Date(car.endTime), {
                             ended: tAuction("time.ended"),
@@ -1418,7 +1418,7 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
     <div className="h-[calc(100dvh-140px)] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/${makeSlug}/${car.id}`}
-        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[2/1] w-full shrink-0 overflow-hidden">
@@ -1434,13 +1434,13 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{car.year} {car.model}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{car.year} {car.model}</span>
             </div>
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
@@ -1448,8 +1448,8 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
               grade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : grade === "AA"
-                  ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                  : "bg-white/20 text-white"
+                  ? "bg-primary/30 text-primary"
+                  : "bg-foreground/20 text-white"
             }`}>
               {grade}
             </span>
@@ -1473,39 +1473,39 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
         </div>
 
         {/* BOTTOM: CAR INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] px-5 pt-4 pb-3 flex flex-col min-h-0">
+        <div className="flex-1 w-full bg-card px-5 pt-4 pb-3 flex flex-col min-h-0">
           {/* Car title */}
           <div>
-            <h2 className="text-2xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-2xl font-display font-light text-foreground tracking-tight group-hover:text-primary transition-colors">
               {car.year} {car.model}
             </h2>
-            <p className="text-[12px] text-[#6B7280] mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {car.mileage?.toLocaleString()} miles
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border">
             {/* Current Bid */}
             <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Gavel className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Current Bid</span>
               </div>
-              <p className="text-[14px] font-mono font-bold text-[#F8B4D9]">
+              <p className="text-[14px] font-display font-medium text-primary">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
             </div>
 
             {/* Platform + Time Left */}
             <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">
                   {platformLabels[car.platform]?.short || car.platform.replace(/_/g, " ")}
                 </span>
               </div>
-              <p className={`text-[13px] font-medium ${isEndingSoon ? "text-orange-400" : "text-[#FFFCF7]"}`}>
+              <p className={`text-[13px] font-medium ${isEndingSoon ? "text-orange-400" : "text-foreground"}`}>
                 {timeLeft(new Date(car.endTime), {
                   ended: tAuction("time.ended"),
                   day: tAuction("time.units.day"),
@@ -1517,7 +1517,7 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
 
             {/* Grade */}
             <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
               </div>
@@ -1525,29 +1525,29 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
                 grade === "AAA" ? "text-emerald-400"
                   : grade === "AA" ? "text-blue-400"
                     : grade === "A" ? "text-amber-400"
-                      : "text-[#6B7280]"
+                      : "text-muted-foreground"
               }`}>{grade}</p>
             </div>
           </div>
 
           {/* Category */}
           <div className="flex flex-wrap gap-1.5 mt-3">
-            <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
+            <span className="px-2.5 py-0.5 rounded-full bg-foreground/5 text-[10px] text-muted-foreground">
               {car.category}
             </span>
             {car.region && (
-              <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]">
+              <span className="px-2.5 py-0.5 rounded-full bg-foreground/5 text-[10px] text-muted-foreground">
                 {car.region}
               </span>
             )}
           </div>
 
           {/* CTA — always visible at bottom */}
-          <div className="mt-auto pt-3 flex items-center justify-center rounded-xl bg-[#F8B4D9] py-2.5 group-hover:bg-[#f4cbde] transition-colors">
-            <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]">
+          <div className="mt-auto pt-3 flex items-center justify-center rounded-xl bg-primary py-2.5 group-hover:bg-primary/80 transition-colors">
+            <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground">
               View Investment Report
             </span>
-            <ChevronRight className="size-4 text-[#0b0b10] ml-1" />
+            <ChevronRight className="size-4 text-primary-foreground ml-1" />
           </div>
         </div>
       </Link>
@@ -1576,7 +1576,7 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
       <button
         onClick={onClick}
-        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300 text-left"
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300 text-left"
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
@@ -1592,13 +1592,13 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{familyName} {gen.label}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{familyName} {gen.label}</span>
             </div>
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
@@ -1606,8 +1606,8 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
               gen.topGrade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : gen.topGrade === "AA"
-                  ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                  : "bg-white/20 text-white"
+                  ? "bg-primary/30 text-primary"
+                  : "bg-foreground/20 text-white"
             }`}>
               {gen.topGrade}
             </span>
@@ -1615,48 +1615,48 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
 
           {/* Car count badge — top right */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+            <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
               {gen.carCount} {gen.carCount === 1 ? "car" : "cars"}
             </span>
           </div>
         </div>
 
         {/* BOTTOM: GENERATION INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
               {make} {familyName}
             </p>
-            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {gen.label}
             </h2>
-            <p className="text-[13px] text-[#6B7280] mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               {gen.representativeCar}
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Price Range</span>
               </div>
-              <p className="text-[13px] font-mono text-[#FFFCF7]">
+              <p className="text-[13px] font-mono text-foreground">
                 {formatPriceForRegion(gen.priceMin, selectedRegion)}&ndash;{formatPriceForRegion(gen.priceMax, selectedRegion)}
               </p>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Listings</span>
               </div>
-              <p className="text-[13px] text-[#FFFCF7]">{gen.carCount} vehicles</p>
+              <p className="text-[13px] text-foreground">{gen.carCount} vehicles</p>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Grade</span>
               </div>
@@ -1664,17 +1664,17 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
                 gen.topGrade === "AAA" ? "text-emerald-400"
                   : gen.topGrade === "AA" ? "text-blue-400"
                     : gen.topGrade === "A" ? "text-amber-400"
-                      : "text-[#6B7280]"
+                      : "text-muted-foreground"
               }`}>{gen.topGrade}</p>
             </div>
           </div>
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
               View Listings
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </button>
@@ -1707,21 +1707,21 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}</span>
             </div>
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
             <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${grade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : grade === "AA"
-                  ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                  : "bg-white/20 text-white"
+                  ? "bg-primary/30 text-primary"
+                  : "bg-foreground/20 text-white"
               }`}>
               {grade}
             </span>
@@ -1730,61 +1730,61 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
           {/* Car count badge — top right */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
             {model.liveCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-emerald-400">
+              <span className="flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-emerald-400">
                 <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 {t("hero.liveCount", { count: model.liveCount })}
               </span>
             )}
-            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+            <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
               {model.carCount} {t("hero.listings")}
             </span>
           </div>
         </div>
 
         {/* BOTTOM: MODEL INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           {/* Model name + subtitle */}
           <div>
-            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
             </h2>
-            <p className="text-[13px] text-[#6B7280] mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               {model.years}
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
             {/* Price Range */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("model.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-[#FFFCF7]">
+              <p className="text-[13px] font-mono text-foreground">
                 {formatPriceForRegion(model.priceMin, selectedRegion)}&ndash;{formatPriceForRegion(model.priceMax, selectedRegion)}
               </p>
             </div>
 
             {/* Listed */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("hero.listings")}</span>
               </div>
-              <p className="text-[13px] text-[#FFFCF7]">{model.carCount} vehicles</p>
+              <p className="text-[13px] text-foreground">{model.carCount} vehicles</p>
             </div>
 
             {/* Grade */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
               </div>
               <p className={`text-[13px] font-semibold ${grade === "AAA" ? "text-emerald-400"
                   : grade === "AA" ? "text-blue-400"
                     : grade === "A" ? "text-amber-400"
-                      : "text-[#6B7280]"
+                      : "text-muted-foreground"
                 }`}>{grade}</p>
             </div>
           </div>
@@ -1795,13 +1795,13 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
               {model.categories.slice(0, 3).map((cat) => (
                 <span
                   key={cat}
-                  className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]"
+                  className="px-3 py-1 rounded-full bg-foreground/5 text-[10px] text-muted-foreground"
                 >
                   {cat}
                 </span>
               ))}
               {model.categories.length > 3 && (
-                <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#6B7280]">
+                <span className="px-3 py-1 rounded-full bg-foreground/5 text-[10px] text-muted-foreground">
                   +{model.categories.length - 3} more
                 </span>
               )}
@@ -1810,16 +1810,16 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
               {t("model.viewCollection")}
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </div>
     </>
   )
 
-  const containerClass = "flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+  const containerClass = "flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
 
   return (
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
@@ -1955,7 +1955,7 @@ function GenerationContextPanel({
       case "AAA": return "text-emerald-400"
       case "AA": return "text-blue-400"
       case "A": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -1963,47 +1963,47 @@ function GenerationContextPanel({
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {/* 1. GENERATION OVERVIEW */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Generation Analysis
             </span>
           </div>
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
             {make} {familyName}
           </p>
-          <h2 className="text-[18px] font-bold text-[#FFFCF7] leading-tight">
+          <h2 className="text-[18px] font-bold text-foreground leading-tight">
             {gen.label}
           </h2>
-          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
             <span>{gen.carCount} listings</span>
             <span>·</span>
             <span>{gen.yearMin === gen.yearMax ? gen.yearMin : `${gen.yearMin}–${gen.yearMax}`}</span>
           </div>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
+          <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">
             {gen.representativeCar}
           </p>
         </div>
 
         {/* 2. KEY METRICS */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
-              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
+              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-emerald-400" : "text-primary"}`}>
                 {gen.topGrade}
               </p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Min Price</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">
                 {formatPriceForRegion(gen.priceMin, selectedRegion)}
               </p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Max Price</span>
-              <p className="text-[13px] font-mono font-semibold text-[#F8B4D9]">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Max Price</span>
+              <p className="text-[13px] font-display font-medium text-primary">
                 {formatPriceForRegion(gen.priceMax, selectedRegion)}
               </p>
             </div>
@@ -2012,22 +2012,22 @@ function GenerationContextPanel({
 
         {/* 3. TOP VARIANTS */}
         {topVariants.length > 0 && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
-              <Car className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Car className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Variants in {gen.label}
               </span>
             </div>
             <div className="space-y-2">
               {topVariants.map((variant) => (
-                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
+                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-medium text-[#FFFCF7] truncate block">{variant.name}</span>
-                    <span className="text-[9px] text-[#6B7280]">{variant.count} listings</span>
+                    <span className="text-[11px] font-medium text-foreground truncate block">{variant.name}</span>
+                    <span className="text-[9px] text-muted-foreground">{variant.count} listings</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                    <span className="text-[11px] font-display font-medium text-primary">
                       {formatPriceForRegion(variant.avgPrice, selectedRegion)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
@@ -2041,21 +2041,21 @@ function GenerationContextPanel({
         )}
 
         {/* 4. MARKET DEPTH */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Gauge className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Gauge className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Market Depth
             </span>
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Active Listings</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{gen.carCount}</span>
+              <span className="text-[11px] text-muted-foreground">Active Listings</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{gen.carCount}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Avg. Price</span>
-              <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">
+              <span className="text-[11px] text-muted-foreground">Avg. Price</span>
+              <span className="text-[12px] font-display font-medium text-primary">
                 {formatPriceForRegion(
                   gen.priceMin > 0 && gen.priceMax > 0
                     ? Math.round((gen.priceMin + gen.priceMax) / 2)
@@ -2065,19 +2065,19 @@ function GenerationContextPanel({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Sell-Through Rate</span>
+              <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
               <span className="text-[12px] font-mono font-semibold text-emerald-400">{Math.min(85 + Math.floor(gen.carCount / 3), 98)}%</span>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-[#9CA3AF]">Demand Score</span>
-                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10)}/10</span>
+                <span className="text-[11px] text-muted-foreground">Demand Score</span>
+                <span className="text-[12px] font-display font-medium text-primary">{Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10)}/10</span>
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`h-[6px] flex-1 rounded-sm ${i < Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10) ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"}`}
+                    className={`h-[6px] flex-1 rounded-sm ${i < Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10) ? "bg-primary/50" : "bg-foreground/4"}`}
                   />
                 ))}
               </div>
@@ -2087,23 +2087,23 @@ function GenerationContextPanel({
 
         {/* 5. RECENT SALES */}
         {recentSales.length > 0 && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <DollarSign className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Recent Sales
               </span>
             </div>
             <div className="space-y-2">
               {recentSales.map((sale) => (
-                <div key={sale.id} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                <div key={sale.id} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
-                    <p className="text-[9px] text-[#6B7280] mt-0.5">
+                    <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">
                       {sale.platform?.replace(/_/g, " ") || "Auction"} · {sale.region}
                     </p>
                   </div>
-                  <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                  <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
                     {formatPriceForRegion(sale.currentBid, selectedRegion)}
                   </span>
                 </div>
@@ -2113,10 +2113,10 @@ function GenerationContextPanel({
         )}
 
         {/* 6. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Annual Ownership Cost
             </span>
           </div>
@@ -2127,23 +2127,23 @@ function GenerationContextPanel({
               { label: "Maintenance", value: genOwnershipCosts.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">Total</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance, selectedRegion)}/yr</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+      <div className="shrink-0 px-5 py-3 border-t border-border">
         <button
           onClick={onOpenAdvisor}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           <MessageCircle className="size-4" />
           Speak with Advisor
@@ -2180,45 +2180,45 @@ function CarContextPanel({
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {/* 1. CAR OVERVIEW */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Investment Analysis
             </span>
           </div>
-          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">
+          <h2 className="text-[14px] font-display font-normal text-foreground leading-tight">
             {car.year} {make} {car.model}
           </h2>
           {car.thesis && (
-            <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2 whitespace-pre-line">
+            <p className="text-[11px] leading-relaxed text-muted-foreground mt-2 whitespace-pre-line">
               {stripHtml(car.thesis)}
             </p>
           )}
         </div>
 
         {/* 2. KEY METRICS */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
               <p className={`text-[16px] font-bold ${
                 grade === "AAA" ? "text-emerald-400"
                   : grade === "AA" ? "text-blue-400"
                     : grade === "A" ? "text-amber-400"
-                      : "text-[#6B7280]"
+                      : "text-muted-foreground"
               }`}>{grade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Current Bid</span>
-              <p className="text-[13px] font-mono font-semibold text-[#F8B4D9]">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Current Bid</span>
+              <p className="text-[13px] font-display font-medium text-primary">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Status</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Status</span>
               <p className={`text-[13px] font-semibold ${
-                isEndingSoon ? "text-orange-400" : car.status === "ACTIVE" ? "text-emerald-400" : "text-[#6B7280]"
+                isEndingSoon ? "text-orange-400" : car.status === "ACTIVE" ? "text-emerald-400" : "text-muted-foreground"
               }`}>
                 {isEndingSoon ? "Ending Soon" : car.status === "ACTIVE" ? "Live" : car.status}
               </p>
@@ -2227,48 +2227,48 @@ function CarContextPanel({
         </div>
 
         {/* 3. CAR DETAILS */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Car className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Car className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Specifications
             </span>
           </div>
           <div className="space-y-2">
             {car.mileage && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Mileage</span>
-                <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{car.mileage.toLocaleString()} mi</span>
+                <span className="text-[11px] text-muted-foreground">Mileage</span>
+                <span className="text-[12px] font-mono font-semibold text-foreground">{car.mileage.toLocaleString()} mi</span>
               </div>
             )}
             {car.transmission && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Transmission</span>
-                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.transmission}</span>
+                <span className="text-[11px] text-muted-foreground">Transmission</span>
+                <span className="text-[12px] font-semibold text-foreground">{car.transmission}</span>
               </div>
             )}
             {car.exteriorColor && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Exterior</span>
-                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.exteriorColor}</span>
+                <span className="text-[11px] text-muted-foreground">Exterior</span>
+                <span className="text-[12px] font-semibold text-foreground">{car.exteriorColor}</span>
               </div>
             )}
             {car.interiorColor && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Interior</span>
-                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.interiorColor}</span>
+                <span className="text-[11px] text-muted-foreground">Interior</span>
+                <span className="text-[12px] font-semibold text-foreground">{car.interiorColor}</span>
               </div>
             )}
             {car.region && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Region</span>
-                <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.region}</span>
+                <span className="text-[11px] text-muted-foreground">Region</span>
+                <span className="text-[12px] font-semibold text-foreground">{car.region}</span>
               </div>
             )}
             {car.endTime && (
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">Time Left</span>
-                <span className={`text-[12px] font-mono font-semibold ${isEndingSoon ? "text-orange-400" : "text-[#FFFCF7]"}`}>
+                <span className="text-[11px] text-muted-foreground">Time Left</span>
+                <span className={`text-[12px] font-mono font-semibold ${isEndingSoon ? "text-orange-400" : "text-foreground"}`}>
                   {timeLeft(new Date(car.endTime), {
                     ended: tAuction("time.ended"),
                     day: tAuction("time.units.day"),
@@ -2282,32 +2282,32 @@ function CarContextPanel({
         </div>
 
         {/* 4. PLATFORM */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Globe className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Globe className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Listing Source
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[#9CA3AF]">Platform</span>
-            <span className="text-[12px] font-semibold text-[#FFFCF7]">
+            <span className="text-[11px] text-muted-foreground">Platform</span>
+            <span className="text-[12px] font-semibold text-foreground">
               {car.platform?.replace(/_/g, " ") || "Auction"}
             </span>
           </div>
           {car.category && (
             <div className="flex items-center justify-between mt-2">
-              <span className="text-[11px] text-[#9CA3AF]">Category</span>
-              <span className="text-[12px] font-semibold text-[#FFFCF7]">{car.category}</span>
+              <span className="text-[11px] text-muted-foreground">Category</span>
+              <span className="text-[12px] font-semibold text-foreground">{car.category}</span>
             </div>
           )}
         </div>
 
         {/* 5. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Annual Ownership Cost
             </span>
           </div>
@@ -2318,30 +2318,30 @@ function CarContextPanel({
               { label: "Maintenance", value: carOwnershipCosts.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">Total</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance, selectedRegion)}/yr</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5 space-y-2">
+      <div className="shrink-0 px-5 py-3 border-t border-border space-y-2">
         <Link
           href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           <FileText className="size-4" />
           View Full Report
         </Link>
         <button
           onClick={onOpenAdvisor}
-          className="w-full flex items-center justify-center gap-2 rounded-xl border border-[rgba(248,180,217,0.3)] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#F8B4D9] hover:bg-[rgba(248,180,217,0.06)] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl border border-primary/30 py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary hover:bg-primary/6 transition-all"
         >
           <MessageCircle className="size-4" />
           Ask Advisor
@@ -2420,7 +2420,7 @@ function ModelContextPanel({
       case "AAA": return "text-emerald-400"
       case "AA": return "text-blue-400"
       case "A": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -2436,56 +2436,56 @@ function ModelContextPanel({
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
 
         {/* 1. MODEL OVERVIEW */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Investment Analysis
             </span>
           </div>
-          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">
+          <h2 className="text-[14px] font-display font-normal text-foreground leading-tight">
             {make} {model.representativeCar.model}
           </h2>
-          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
             <span>{model.carCount} cars</span>
             <span>·</span>
             <span>{model.years}</span>
           </div>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF] mt-2">
+          <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">
             {modelThesis}
           </p>
         </div>
 
         {/* 2. PRICE SUMMARY */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("sidebar.grade")}</span>
-              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("sidebar.grade")}</span>
+              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-primary"
                 }`}>{model.representativeCar.investmentGrade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Min Price</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(model.priceMin, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(model.priceMin, selectedRegion)}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Max Price</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(model.priceMax, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Max Price</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(model.priceMax, selectedRegion)}</p>
             </div>
           </div>
         </div>
 
         {/* 3. VALUATION BY MARKET — with visual bars */}
         {regionalPricing && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="mb-4">
               <div className="flex items-center gap-2">
-                <Globe className="size-4 text-[#F8B4D9]" />
-                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                <Globe className="size-4 text-primary" />
+                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                   Valuation by Market
                 </span>
               </div>
-              <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair value range by region</p>
+              <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair value range by region</p>
             </div>
             <div className="space-y-2.5">
               {(["US", "UK", "EU", "JP"] as const).map(region => {
@@ -2495,38 +2495,38 @@ function ModelContextPanel({
                 const usdAvg = toUsd((pricing.low + pricing.high) / 2, pricing.currency)
                 const barWidth = (usdAvg / maxRegionalUsd) * 100
                 return (
-                  <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-2 px-2 py-1.5" : ""}>
+                  <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px]">{regionLabels[region].flag}</span>
-                        <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{region}</span>
+                        <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                         {isBest && (
                           <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>
                         )}
                         {isSelected && (
-                          <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>
+                          <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>
                         )}
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
+                        <span className="text-[11px] font-mono font-semibold text-foreground">
                           {fmtRegional(pricing.low, pricing.currency)}
                         </span>
-                        <span className="text-[9px] text-[#6B7280]">→</span>
-                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                        <span className="text-[9px] text-muted-foreground">→</span>
+                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
                           {fmtRegional(pricing.high, pricing.currency)}
                         </span>
                       </div>
                     </div>
                     {region !== effectiveRegion && (
                       <div className="flex justify-end mb-1">
-                        <span className="text-[9px] font-mono text-[#6B7280]">
+                        <span className="text-[9px] font-mono text-muted-foreground">
                           ≈ {formatUsd(toUsd(pricing.high, pricing.currency))} USD
                         </span>
                       </div>
                     )}
-                    <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="h-[6px] rounded-full bg-foreground/4 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70" : "bg-gradient-to-r from-[#F8B4D9]/25 to-[#F8B4D9]/50"}`}
+                        className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-primary/40 to-primary/70" : "bg-gradient-to-r from-primary/25 to-primary/50"}`}
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
@@ -2539,10 +2539,10 @@ function ModelContextPanel({
 
         {/* 4. RECENT SALES */}
         {recentSales.length > 0 && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <DollarSign className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Recent Sales
               </span>
             </div>
@@ -2550,14 +2550,14 @@ function ModelContextPanel({
               {recentSales.map((sale) => {
                 const platform = platformLabels[sale.platform]
                 return (
-                  <div key={sale.id} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                  <div key={sale.id} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
-                      <p className="text-[9px] text-[#6B7280] mt-0.5">
+                      <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">
                         {platform?.short || sale.platform} · {regionLabels[sale.region]?.flag} {sale.region}
                       </p>
                     </div>
-                    <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                    <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
                       {formatPriceForRegion(sale.currentBid, selectedRegion)}
                     </span>
                   </div>
@@ -2568,37 +2568,37 @@ function ModelContextPanel({
         )}
 
         {/* 5. LIQUIDITY & MARKET DEPTH */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Gauge className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Gauge className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Liquidity & Market Depth
             </span>
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Auctions / Year</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
+              <span className="text-[11px] text-muted-foreground">Auctions / Year</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Avg Days to Sell</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
+              <span className="text-[11px] text-muted-foreground">Avg Days to Sell</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">Sell-Through Rate</span>
+              <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
               <span className="text-[12px] font-mono font-semibold text-emerald-400">{depth.sellThroughRate}%</span>
             </div>
             {/* Demand score visual */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-[#9CA3AF]">Demand Score</span>
-                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
+                <span className="text-[11px] text-muted-foreground">Demand Score</span>
+                <span className="text-[12px] font-display font-medium text-primary">{depth.demandScore}/10</span>
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`h-[6px] flex-1 rounded-sm ${i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                    className={`h-[6px] flex-1 rounded-sm ${i < depth.demandScore ? "bg-primary/50" : "bg-foreground/4"
                       }`}
                   />
                 ))}
@@ -2608,10 +2608,10 @@ function ModelContextPanel({
         </div>
 
         {/* 6. ANNUAL OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Annual Ownership Cost
             </span>
           </div>
@@ -2622,13 +2622,13 @@ function ModelContextPanel({
               { label: "Maintenance", value: costs.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">Total</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
             </div>
           </div>
         </div>
@@ -2637,8 +2637,8 @@ function ModelContextPanel({
         {similarModels.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Award className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Other {make} Models
               </span>
             </div>
@@ -2646,13 +2646,13 @@ function ModelContextPanel({
               {similarModels.map((m) => (
                 <div
                   key={m.slug}
-                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors px-1 -mx-1"
+                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-foreground/3 transition-colors px-1 -mx-1"
                 >
-                  <span className="text-[11px] font-medium text-[#FFFCF7]">
+                  <span className="text-[11px] font-medium text-foreground">
                     {m.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-[#6B7280]">
+                    <span className="text-[10px] font-mono text-muted-foreground">
                       {formatPriceForRegion(m.priceMin, selectedRegion)}–{formatPriceForRegion(m.priceMax, selectedRegion)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(m.representativeCar.investmentGrade)}`}>
@@ -2670,26 +2670,26 @@ function ModelContextPanel({
       <div className="shrink-0 px-4 pt-3">
         <Link
           href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${model.representativeCar.id}/report`}
-          className="block rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-4 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+          className="block rounded-xl border border-primary/20 bg-primary/6 p-4 hover:bg-primary/10 transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
-              <FileText className="size-5 text-[#F8B4D9]" />
+            <div className="size-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
-              <p className="text-[10px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; costs</p>
+              <p className="text-[12px] font-semibold text-foreground">Full Investment Report</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; costs</p>
             </div>
-            <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
           </div>
         </Link>
       </div>
 
       {/* CTA — pinned bottom */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+      <div className="shrink-0 px-5 py-3 border-t border-border">
         <button
           onClick={onOpenAdvisor}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           <MessageCircle className="size-4" />
           {t("sidebar.speakWithAdvisor")}
@@ -3528,30 +3528,30 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   return (
     <>
       {/* ═══ MOBILE LAYOUT ═══ */}
-      <div className="md:hidden min-h-screen bg-[#0b0b10] pt-14">
+      <div className="md:hidden min-h-screen bg-background pt-14">
         {/* Sticky region pills with counts */}
         <MakePageRegionPills regionCounts={regionCounts} />
 
         {/* Sticky search + filter bar */}
-        <div className="sticky top-[45px] z-20 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-4 py-3">
+        <div className="sticky top-[45px] z-20 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#4B5563]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("filters.searchMakePlaceholder", { make })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
+                className="w-full bg-foreground/5 border border-border rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
               />
             </div>
             <button
               onClick={() => setShowMobileFilters(true)}
-              className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[12px] font-medium text-[#9CA3AF]"
+              className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl bg-foreground/5 border border-border text-[12px] font-medium text-muted-foreground"
             >
               <SlidersHorizontal className="size-4" />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 size-5 flex items-center justify-center rounded-full bg-[#F8B4D9] text-[10px] font-bold text-[#0b0b10]">
+                <span className="absolute -top-1 -right-1 size-5 flex items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                   {activeFilterCount}
                 </span>
               )}
@@ -3562,10 +3562,10 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
         <div className="pb-24">
           {filteredModels.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center px-8 py-20">
-              <Car className="size-12 text-[#4B5563] mb-4" />
-              <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">{t("empty.title")}</h3>
-              <p className="text-[13px] text-[#4B5563] mb-6">{t("empty.subtitle")}</p>
-              <button onClick={clearFilters} className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold">
+              <Car className="size-12 text-muted-foreground mb-4" />
+              <h3 className="text-[15px] font-semibold text-foreground mb-2">{t("empty.title")}</h3>
+              <p className="text-[13px] text-muted-foreground mb-6">{t("empty.subtitle")}</p>
+              <button onClick={clearFilters} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold">
                 {t("empty.clearAll")}
               </button>
             </div>
@@ -3590,12 +3590,12 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               {filteredModels.length > 1 && (
                 <div className="mt-6">
                   <div className="px-4 py-3 flex items-center gap-2">
-                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                       {t("mobileContext.models")}
                     </span>
-                    <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">{filteredModels.length - 1}</span>
+                    <span className="text-[10px] font-display font-medium text-primary">{filteredModels.length - 1}</span>
                   </div>
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-border">
                     {filteredModels.slice(1).map((model) => (
                       <MobileModelRow
                         key={model.slug}
@@ -3649,33 +3649,33 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: GENERATIONS + FILTERS + LIVE */}
-          <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+          <div className="h-full flex flex-col border-r border-border overflow-hidden">
             {/* Filters section (scrollable) */}
             {selectedModel ? (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                 {/* Back + Family Group header */}
-                <div className="shrink-0 px-4 py-2.5 border-b border-white/5">
+                <div className="shrink-0 px-4 py-2.5 border-b border-border">
                   <button
                     onClick={handleBackToFamilies}
-                    className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group mb-1"
+                    className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors group mb-1"
                   >
                     <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
                     <span className="uppercase font-semibold tracking-wider">{make}</span>
                   </button>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{currentFamilyGroupLabel}</h3>
-                    <span className="text-[10px] text-[#6B7280] font-mono">{familyCars.length} cars</span>
+                    <h3 className="text-[14px] font-semibold text-foreground">{currentFamilyGroupLabel}</h3>
+                    <span className="text-[10px] text-muted-foreground font-mono">{familyCars.length} cars</span>
                   </div>
                 </div>
 
                 {/* Sibling Series Navigation (same family group) */}
                 {siblingSeries.length > 1 && (
-                  <div className="shrink-0 border-b border-white/5">
+                  <div className="shrink-0 border-b border-border">
                     <div className="px-4 py-1.5">
-                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                         Series
                       </span>
                     </div>
@@ -3688,17 +3688,17 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                             onClick={() => handleSiblingClick(s.id)}
                             className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
                               isActive
-                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
-                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                                ? "bg-primary/6 border-l-2 border-l-primary"
+                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
                             }`}
                           >
                             <span className={`text-[11px] font-medium ${
-                              isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
+                              isActive ? "text-primary" : "text-muted-foreground"
                             }`}>
                               {s.label}
                             </span>
                             <span className={`text-[9px] font-mono ${
-                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                              isActive ? "text-primary" : "text-muted-foreground"
                             }`}>
                               {s.carCount}
                             </span>
@@ -3710,12 +3710,12 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 )}
                 {/* Car Index List — synced with Column B scroll */}
                 {viewMode === 'cars' && variantFilteredFeedCars.length > 0 && (
-                  <div className="shrink-0 max-h-[40%] flex flex-col border-b border-white/5 overflow-hidden">
+                  <div className="shrink-0 max-h-[40%] flex flex-col border-b border-border overflow-hidden">
                     <div className="shrink-0 px-4 py-1.5 flex items-center justify-between">
-                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+                      <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                         Cars
                       </span>
-                      <span className="text-[9px] font-mono text-[#4B5563]">
+                      <span className="text-[9px] font-mono text-muted-foreground">
                         {activeCarIndex + 1}/{variantFilteredFeedCars.length}
                       </span>
                     </div>
@@ -3729,23 +3729,23 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                             onClick={() => scrollToCar(i)}
                             className={`w-full flex items-center gap-2 px-4 py-1.5 transition-all ${
                               isActive
-                                ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
-                                : "border-l-2 border-l-transparent hover:bg-white/[0.02]"
+                                ? "bg-primary/6 border-l-2 border-l-primary"
+                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
                             }`}
                           >
                             <span className={`text-[9px] font-mono w-4 shrink-0 ${
-                              isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                              isActive ? "text-primary" : "text-muted-foreground"
                             }`}>
                               {i + 1}
                             </span>
                             <span className={`text-[10px] truncate flex-1 text-left ${
-                              isActive ? "text-[#FFFCF7] font-medium" : "text-[#9CA3AF]"
+                              isActive ? "text-foreground font-medium" : "text-muted-foreground"
                             }`}>
                               {car.year} {car.model?.replace(/^Porsche\s*/i, "")}
                             </span>
                             {car.currentBid > 0 && (
                               <span className={`text-[9px] font-mono shrink-0 ${
-                                isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"
+                                isActive ? "text-primary" : "text-muted-foreground"
                               }`}>
                                 ${(car.currentBid / 1000).toFixed(0)}k
                               </span>
@@ -3789,9 +3789,9 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
             )}
 
             {/* LIVE BIDS (always at bottom) */}
-            <div className="shrink-0 max-h-[35%] flex flex-col border-t border-white/5 overflow-hidden">
+            <div className="shrink-0 max-h-[35%] flex flex-col border-t border-border overflow-hidden">
               {/* Live header */}
-              <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-[rgba(11,11,16,0.4)]">
+              <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-background/40">
                 <span className="relative flex size-2">
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
@@ -3809,7 +3809,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                 {liveCars.length === 0 ? (
                   <div className="px-4 py-6 text-center">
-                    <span className="text-[11px] text-[#4B5563]">No live auctions</span>
+                    <span className="text-[11px] text-muted-foreground">No live auctions</span>
                   </div>
                 ) : (
                   liveCars.map((car) => {
@@ -3819,9 +3819,9 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                       <Link
                         key={car.id}
                         href={`/cars/${makeSlug}/${car.id}`}
-                        className="group flex gap-2.5 px-3 py-2 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+                        className="group flex gap-2.5 px-3 py-2 border-b border-border/50 hover:bg-foreground/2 transition-all"
                       >
-                        <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                        <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-card">
                           <Image
                             src={car.image}
                             alt={car.title}
@@ -3832,14 +3832,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                           <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[11px] font-semibold text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                          <p className="text-[11px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                             {car.year} {car.model}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] font-mono font-bold text-[#F8B4D9]">
+                            <span className="text-[11px] font-display font-medium text-primary">
                               {formatPriceForRegion(car.currentBid, selectedRegion)}
                             </span>
-                            <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-[#6B7280]"}`}>
+                            <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
                               <Clock className="size-2.5" />
                               {timeLeft(new Date(car.endTime), {
                                 ended: tAuction("time.ended"),
@@ -3867,11 +3867,11 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               // MODE: Viewing specific generation's cars (feed style)
               <>
                 {/* Back navigation + sort + variant chips — compact */}
-                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-4 py-1.5">
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-1.5">
                   <div className="flex items-center justify-between">
                     <button
                       onClick={handleBackToGenerations}
-                      className="inline-flex items-center gap-1 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors group"
+                      className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors group"
                     >
                       <ArrowLeft className="size-3 group-hover:-translate-x-0.5 transition-transform" />
                       <span className="uppercase font-semibold tracking-wider">
@@ -3879,7 +3879,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                       </span>
                     </button>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-[#4B5563] font-mono">{variantFilteredFeedCars.length} cars</span>
+                      <span className="text-[9px] text-muted-foreground font-mono">{variantFilteredFeedCars.length} cars</span>
                       <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
                     </div>
                   </div>
@@ -3891,8 +3891,8 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                           onClick={() => setSelectedVariantChip(null)}
                           className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                             !selectedVariantChip
-                              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                              : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                              ? "bg-primary/15 text-primary border border-primary/30"
+                              : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                           }`}
                         >
                           All
@@ -3903,14 +3903,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                             onClick={() => setSelectedVariantChip(selectedVariantChip === v.id ? null : v.id)}
                             className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                               selectedVariantChip === v.id
-                                ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                                : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                                ? "bg-primary/15 text-primary border border-primary/30"
+                                : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                             }`}
                           >
                             {v.label}
                           </button>
                         ))}
-                        <span className="shrink-0 w-px h-3 bg-white/10 mx-0.5" />
+                        <span className="shrink-0 w-px h-3 bg-foreground/10 mx-0.5" />
                       </>
                     )}
                     {/* Status chips */}
@@ -3920,7 +3920,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                         className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
                           feedStatusFilter === "live"
                             ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                            : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                         }`}
                       >
                         <span className="size-1.5 rounded-full bg-emerald-400" />
@@ -3932,8 +3932,8 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                         onClick={() => setFeedStatusFilter(feedStatusFilter === "ended" ? "all" : "ended")}
                         className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all ${
                           feedStatusFilter === "ended"
-                            ? "bg-[rgba(107,114,128,0.2)] text-[#9CA3AF] border border-[rgba(107,114,128,0.3)]"
-                            : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                            ? "bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/30"
+                            : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                         }`}
                       >
                         Ended {feedStatusCounts.ended}
@@ -3943,14 +3943,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 </div>
                 {variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
-                    <Car className="size-12 text-[#4B5563] mb-4" />
-                    <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No hay carros</h3>
-                    <p className="text-[13px] text-[#4B7280] mb-6">
+                    <Car className="size-12 text-muted-foreground mb-4" />
+                    <h3 className="text-[15px] font-semibold text-foreground mb-2">No hay carros</h3>
+                    <p className="text-[13px] text-muted-foreground mb-6">
                       No se encontraron carros para esta generación
                     </p>
                     <button
                       onClick={handleBackToGenerations}
-                      className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold"
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold"
                     >
                       Volver a generaciones
                     </button>
@@ -3977,14 +3977,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               <>
                 {familyGenerations.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
-                    <Car className="size-12 text-[#4B5563] mb-4" />
-                    <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No generations found</h3>
-                    <p className="text-[13px] text-[#4B5563] mb-6">
+                    <Car className="size-12 text-muted-foreground mb-4" />
+                    <h3 className="text-[15px] font-semibold text-foreground mb-2">No generations found</h3>
+                    <p className="text-[13px] text-muted-foreground mb-6">
                       No se encontraron generaciones para {selectedFamilyForFeed}
                     </p>
                     <button
                       onClick={handleBackToFamilies}
-                      className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold"
+                      className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold"
                     >
                       Volver a familias
                     </button>
@@ -4015,14 +4015,14 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               // MODE: Filters active from COLUMN C (grid style)
               displayCars.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
-                  <Search className="size-12 text-[#4B5563] mb-4" />
-                  <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">No hay resultados</h3>
-                  <p className="text-[13px] text-[#4B5563] mb-6">
+                  <Search className="size-12 text-muted-foreground mb-4" />
+                  <h3 className="text-[15px] font-semibold text-foreground mb-2">No hay resultados</h3>
+                  <p className="text-[13px] text-muted-foreground mb-6">
                     No se encontraron carros que coincidan con tu búsqueda
                   </p>
                   <button
                     onClick={() => setActiveFilters(null)}
-                    className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold"
+                    className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold"
                   >
                     Limpiar filtros
                   </button>
@@ -4030,12 +4030,12 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               ) : (
                 <div className="p-6 space-y-4">
                   {/* Header with filter info */}
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-center justify-between pb-3 border-b border-border">
                     <div>
-                      <p className="text-[13px] font-semibold text-[#FFFCF7]">
+                      <p className="text-[13px] font-semibold text-foreground">
                         {displayCars.length} {displayCars.length === 1 ? "resultado" : "resultados"}
                       </p>
-                      <p className="text-[10px] text-[#6B7280] mt-0.5">
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
                         {activeFilters.searchQuery && `"${activeFilters.searchQuery}"`}
                         {activeFilters.searchQuery && activeFilters.selectedGenerations.length > 0 && " • "}
                         {activeFilters.selectedGenerations.length > 0 &&
@@ -4044,7 +4044,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </div>
                     <button
                       onClick={() => setActiveFilters(null)}
-                      className="text-[11px] text-[#F8B4D9] hover:text-[#FFFCF7] transition-colors flex items-center gap-1"
+                      className="text-[11px] text-primary hover:text-foreground transition-colors flex items-center gap-1"
                     >
                       <X className="size-3" />
                       Limpiar
@@ -4074,8 +4074,8 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               // MODE: Default - Show family feed (families with snap scroll)
               <>
               {filteredModels.length > 1 && (
-                <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5 px-5 py-2.5 flex items-center justify-between">
-                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border px-5 py-2.5 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                     {filteredModels.length} {filteredModels.length === 1 ? "familia" : "familias"}
                   </span>
                   <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={sortOptions} />
@@ -4083,10 +4083,10 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
               )}
               {filteredModels.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
-                  <Car className="size-12 text-[#4B5563] mb-4" />
-                  <h3 className="text-[15px] font-semibold text-[#FFFCF7] mb-2">{t("empty.title")}</h3>
-                  <p className="text-[13px] text-[#4B5563] mb-6">{t("empty.subtitle")}</p>
-                  <button onClick={clearFilters} className="px-6 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold">
+                  <Car className="size-12 text-muted-foreground mb-4" />
+                  <h3 className="text-[15px] font-semibold text-foreground mb-2">{t("empty.title")}</h3>
+                  <p className="text-[13px] text-muted-foreground mb-6">{t("empty.subtitle")}</p>
+                  <button onClick={clearFilters} className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold">
                     {t("empty.clearAll")}
                   </button>
                 </div>
@@ -4111,7 +4111,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
           </div>
 
           {/* COLUMN C: MARKET INTELLIGENCE — synced with center scroll */}
-          <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
+          <div className="h-full overflow-hidden border-l border-primary/8 bg-card">
             {viewMode === 'generations' && familyGenerations[activeGenIndex] ? (
               <GenerationContextPanel
                 key={familyGenerations[activeGenIndex].id}

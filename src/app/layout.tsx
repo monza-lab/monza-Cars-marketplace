@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { Public_Sans } from "next/font/google";
+import { Cormorant, Karla } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { routing } from "@/i18n/routing";
 
-const publicSans = Public_Sans({
+const cormorant = Cormorant({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["300", "400", "500", "600"],
+});
+
+const karla = Karla({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 import type { Viewport } from "next";
@@ -16,8 +22,8 @@ import type { Viewport } from "next";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b10",
-  colorScheme: "dark",
+  themeColor: "#0E0A0C",
+  colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
 };
@@ -90,9 +96,9 @@ export default async function RootLayout({
     : routing.defaultLocale;
 
   return (
-    <html lang={lang} className="dark">
+    <html lang={lang} className="dark" suppressHydrationWarning>
       <body
-        className={`${publicSans.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
+        className={`${cormorant.variable} ${karla.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
       >
         {children}
         <Analytics />

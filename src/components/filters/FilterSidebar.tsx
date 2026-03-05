@@ -180,14 +180,14 @@ function FilterSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-border">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+        className="w-full px-5 py-3 flex items-center justify-between hover:bg-foreground/2 transition-colors"
       >
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="size-4 text-[#F8B4D9]" />}
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+          {Icon && <Icon className="size-4 text-primary" />}
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             {title}
           </span>
         </div>
@@ -195,7 +195,7 @@ function FilterSection({
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="size-4 text-[#6B7280]" />
+          <ChevronDown className="size-4 text-muted-foreground" />
         </motion.div>
       </button>
       <AnimatePresence>
@@ -283,12 +283,12 @@ export function FilterSidebar() {
     (onlyInvestmentGrade ? 1 : 0)
 
   return (
-    <div className="h-full flex flex-col bg-[#0A0A0A]">
+    <div className="h-full flex flex-col bg-background">
       {/* HEADER FIJO */}
-      <div className="px-5 py-4 border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="px-5 py-4 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2 mb-3">
-          <Scale className="size-5 text-[#F8B4D9]" />
-          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+          <Scale className="size-5 text-primary" />
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
             Encuentra tu Porsche
           </h3>
         </div>
@@ -315,25 +315,25 @@ export function FilterSidebar() {
                 onClick={() => toggleFamily(family.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
                   selectedFamily.includes(family.id)
-                    ? "bg-[#F8B4D9]/10 border border-[#F8B4D9]/30"
-                    : "bg-white/[0.02] border border-transparent hover:bg-white/[0.04]"
+                    ? "bg-primary/10 border border-primary/30"
+                    : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <div className={`size-4 rounded border flex items-center justify-center ${
                     selectedFamily.includes(family.id)
-                      ? "bg-[#F8B4D9] border-[#F8B4D9]"
-                      : "border-white/20"
+                      ? "bg-primary border-primary"
+                      : "border-border/80"
                   }`}>
                     {selectedFamily.includes(family.id) && (
-                      <Check className="size-3 text-[#0A0A0A]" />
+                      <Check className="size-3 text-primary-foreground" />
                     )}
                   </div>
-                  <span className="text-[11px] font-medium text-[#D1D5DB]">
+                  <span className="text-[11px] font-medium text-muted-foreground">
                     {family.label}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-[#6B7280]">
+                <span className="text-[10px] font-mono text-muted-foreground">
                   {family.count}
                 </span>
               </button>
@@ -350,25 +350,25 @@ export function FilterSidebar() {
                 onClick={() => toggleGeneration(gen.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
                   selectedGenerations.includes(gen.id)
-                    ? "bg-[#F8B4D9]/10 border border-[#F8B4D9]/30"
-                    : "bg-white/[0.02] border border-transparent hover:bg-white/[0.04]"
+                    ? "bg-primary/10 border border-primary/30"
+                    : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <div className={`size-4 rounded border flex items-center justify-center ${
                     selectedGenerations.includes(gen.id)
-                      ? "bg-[#F8B4D9] border-[#F8B4D9]"
-                      : "border-white/20"
+                      ? "bg-primary border-primary"
+                      : "border-border/80"
                   }`}>
                     {selectedGenerations.includes(gen.id) && (
-                      <Check className="size-3 text-[#0A0A0A]" />
+                      <Check className="size-3 text-primary-foreground" />
                     )}
                   </div>
-                  <span className="text-[11px] font-medium text-[#D1D5DB]">
+                  <span className="text-[11px] font-medium text-muted-foreground">
                     {gen.label}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-[#6B7280]">
+                <span className="text-[10px] font-mono text-muted-foreground">
                   {gen.count}
                 </span>
               </button>
@@ -385,8 +385,8 @@ export function FilterSidebar() {
                 onClick={() => toggleVariant(variant)}
                 className={`px-3 py-1.5 rounded-full text-[10px] font-medium tracking-wide transition-all ${
                   selectedVariants.includes(variant)
-                    ? "bg-[#F8B4D9] text-[#0A0A0A] shadow-lg shadow-[#F8B4D9]/20"
-                    : "bg-white/[0.05] text-[#D1D5DB] hover:bg-white/[0.08] border border-white/10"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "bg-white/[0.05] text-muted-foreground hover:bg-foreground/8 border border-border"
                 }`}
               >
                 {variant}
@@ -401,16 +401,16 @@ export function FilterSidebar() {
             {/* HP Slider */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                   Caballos de fuerza
                 </span>
-                <span className="text-[10px] font-mono text-[#F8B4D9]">
+                <span className="text-[10px] font-mono text-primary">
                   {hpRange[0]} - {hpRange[1]} HP
                 </span>
               </div>
-              <div className="relative h-1.5 bg-white/[0.04] rounded-full">
+              <div className="relative h-1.5 bg-foreground/4 rounded-full">
                 <div
-                  className="absolute h-full bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70 rounded-full"
+                  className="absolute h-full bg-gradient-to-r from-primary/40 to-primary/70 rounded-full"
                   style={{
                     left: `${((hpRange[0] - 200) / 500) * 100}%`,
                     width: `${((hpRange[1] - hpRange[0]) / 500) * 100}%`,
@@ -418,27 +418,27 @@ export function FilterSidebar() {
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[8px] text-[#6B7280]">200</span>
-                <span className="text-[8px] text-[#6B7280]">700+</span>
+                <span className="text-[8px] text-muted-foreground">200</span>
+                <span className="text-[8px] text-muted-foreground">700+</span>
               </div>
             </div>
 
             {/* 0-60 Info */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">
+                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                   0-60 mph
                 </span>
-                <span className="text-[10px] font-mono text-[#F8B4D9]">
+                <span className="text-[10px] font-mono text-primary">
                   2.5s - 6.0s
                 </span>
               </div>
-              <div className="relative h-1.5 bg-white/[0.04] rounded-full">
-                <div className="absolute h-full w-3/4 bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70 rounded-full" />
+              <div className="relative h-1.5 bg-foreground/4 rounded-full">
+                <div className="absolute h-full w-3/4 bg-gradient-to-r from-primary/40 to-primary/70 rounded-full" />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[8px] text-[#6B7280]">2.5s</span>
-                <span className="text-[8px] text-[#6B7280]">6.0s</span>
+                <span className="text-[8px] text-muted-foreground">2.5s</span>
+                <span className="text-[8px] text-muted-foreground">6.0s</span>
               </div>
             </div>
           </div>
@@ -448,14 +448,14 @@ export function FilterSidebar() {
         <FilterSection title="Precio MSRP" icon={DollarSign}>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">
+              <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                 Rango de precio
               </span>
-              <span className="text-[10px] font-mono text-[#F8B4D9]">
+              <span className="text-[10px] font-mono text-primary">
                 ${priceRange[0]}K - ${priceRange[1]}K
               </span>
             </div>
-            <div className="relative h-1.5 bg-white/[0.04] rounded-full">
+            <div className="relative h-1.5 bg-foreground/4 rounded-full">
               <div
                 className="absolute h-full bg-gradient-to-r from-emerald-400/40 to-emerald-400/70 rounded-full"
                 style={{
@@ -465,8 +465,8 @@ export function FilterSidebar() {
               />
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-[8px] text-[#6B7280]">$50K</span>
-              <span className="text-[8px] text-[#6B7280]">$300K+</span>
+              <span className="text-[8px] text-muted-foreground">$50K</span>
+              <span className="text-[8px] text-muted-foreground">$300K+</span>
             </div>
           </div>
         </FilterSection>
@@ -478,18 +478,18 @@ export function FilterSidebar() {
               onClick={() => setOnlyManual(!onlyManual)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 onlyManual
-                  ? "bg-[#F8B4D9]/10 border border-[#F8B4D9]/30"
-                  : "bg-white/[0.02] border border-transparent hover:bg-white/[0.04]"
+                  ? "bg-primary/10 border border-primary/30"
+                  : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
               }`}
             >
               <div className={`size-4 rounded border flex items-center justify-center ${
                 onlyManual
-                  ? "bg-[#F8B4D9] border-[#F8B4D9]"
-                  : "border-white/20"
+                  ? "bg-primary border-primary"
+                  : "border-border/80"
               }`}>
-                {onlyManual && <Check className="size-3 text-[#0A0A0A]" />}
+                {onlyManual && <Check className="size-3 text-primary-foreground" />}
               </div>
-              <span className="text-[11px] font-medium text-[#D1D5DB]">
+              <span className="text-[11px] font-medium text-muted-foreground">
                 Solo manuales
               </span>
             </button>
@@ -498,18 +498,18 @@ export function FilterSidebar() {
               onClick={() => setOnlyAWD(!onlyAWD)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 onlyAWD
-                  ? "bg-[#F8B4D9]/10 border border-[#F8B4D9]/30"
-                  : "bg-white/[0.02] border border-transparent hover:bg-white/[0.04]"
+                  ? "bg-primary/10 border border-primary/30"
+                  : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
               }`}
             >
               <div className={`size-4 rounded border flex items-center justify-center ${
                 onlyAWD
-                  ? "bg-[#F8B4D9] border-[#F8B4D9]"
-                  : "border-white/20"
+                  ? "bg-primary border-primary"
+                  : "border-border/80"
               }`}>
-                {onlyAWD && <Check className="size-3 text-[#0A0A0A]" />}
+                {onlyAWD && <Check className="size-3 text-primary-foreground" />}
               </div>
-              <span className="text-[11px] font-medium text-[#D1D5DB]">
+              <span className="text-[11px] font-medium text-muted-foreground">
                 Tracción AWD
               </span>
             </button>
@@ -519,17 +519,17 @@ export function FilterSidebar() {
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 onlyInvestmentGrade
                   ? "bg-emerald-400/10 border border-emerald-400/30"
-                  : "bg-white/[0.02] border border-transparent hover:bg-white/[0.04]"
+                  : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
               }`}
             >
               <div className={`size-4 rounded border flex items-center justify-center ${
                 onlyInvestmentGrade
                   ? "bg-emerald-400 border-emerald-400"
-                  : "border-white/20"
+                  : "border-border/80"
               }`}>
-                {onlyInvestmentGrade && <Check className="size-3 text-[#0A0A0A]" />}
+                {onlyInvestmentGrade && <Check className="size-3 text-primary-foreground" />}
               </div>
-              <span className="text-[11px] font-medium text-[#D1D5DB]">
+              <span className="text-[11px] font-medium text-muted-foreground">
                 Investment Grade
               </span>
             </button>
@@ -538,21 +538,21 @@ export function FilterSidebar() {
       </div>
 
       {/* FOOTER CON BOTONES */}
-      <div className="px-5 py-4 border-t border-white/5 bg-[#0A0A0A]/95 backdrop-blur-sm space-y-3">
+      <div className="px-5 py-4 border-t border-border bg-background/95 backdrop-blur-sm space-y-3">
         <div className="text-center">
-          <span className="text-[10px] font-mono text-[#9CA3AF]">
+          <span className="text-[10px] font-mono text-muted-foreground">
             45 modelos encontrados
           </span>
         </div>
 
-        <button className="w-full py-3 bg-gradient-to-r from-[#F8B4D9] to-[#F8B4D9]/90 rounded-lg text-[11px] font-semibold tracking-wider text-[#0A0A0A] hover:shadow-lg hover:shadow-[#F8B4D9]/30 transition-all uppercase">
+        <button className="w-full py-3 bg-gradient-to-r from-primary to-primary/90 rounded-lg text-[11px] font-semibold tracking-wider text-primary-foreground hover:shadow-lg hover:shadow-primary/30 transition-all uppercase">
           Ver Resultados
         </button>
 
         {activeFiltersCount > 0 && (
           <button
             onClick={clearAllFilters}
-            className="w-full py-2 bg-white/[0.03] border border-white/10 rounded-lg text-[10px] font-medium text-[#9CA3AF] hover:bg-white/[0.06] hover:text-[#F8B4D9] transition-all"
+            className="w-full py-2 bg-foreground/3 border border-border rounded-lg text-[10px] font-medium text-muted-foreground hover:bg-foreground/6 hover:text-primary transition-all"
           >
             Limpiar filtros ({activeFiltersCount})
           </button>

@@ -239,17 +239,17 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 border-l-2 border-l-[#F8B4D9]/20 overflow-hidden">
+    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/20 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-foreground/3 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="text-[#F8B4D9]">{icon}</div>
-          <span className="text-[13px] font-medium text-[#FFFCF7]">{title}</span>
+          <div className="text-primary">{icon}</div>
+          <span className="text-[13px] font-medium text-foreground">{title}</span>
           {badge}
         </div>
-        <ChevronDown className={`size-4 text-[#F8B4D9]/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-4 text-primary/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence>
         {isOpen && (
@@ -276,12 +276,12 @@ function StatCard({ label, value, icon }: {
   icon: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 border-l-2 border-l-[#F8B4D9]/30 p-4">
-      <div className="flex items-center gap-2 text-[#F8B4D9]/60 mb-2">
+    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/30 p-4">
+      <div className="flex items-center gap-2 text-primary/60 mb-2">
         {icon}
-        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">{label}</span>
+        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{label}</span>
       </div>
-      <span className="text-[20px] font-bold text-[#FFFCF7]">{value}</span>
+      <span className="text-[20px] font-bold text-foreground">{value}</span>
     </div>
   )
 }
@@ -292,7 +292,7 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
   return (
     <Link
       href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-      className="group flex items-center gap-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-[rgba(248,180,217,0.15)] p-3 transition-all"
+      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/4 border border-border hover:border-primary/15 p-3 transition-all"
     >
       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
         <Image
@@ -307,20 +307,20 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
         {/* Grade badge */}
         <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 py-0.5 rounded ${
           car.investmentGrade === "AAA" ? "bg-emerald-500/80 text-white"
-          : car.investmentGrade === "AA" ? "bg-[#F8B4D9]/80 text-[#0b0b10]"
+          : car.investmentGrade === "AA" ? "bg-primary/80 text-primary-foreground"
           : "bg-amber-500/80 text-white"
         }`}>{car.investmentGrade}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+        <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
           {car.title}
         </p>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">
+          <span className="text-[12px] font-display font-medium text-primary">
             {formatPriceForRegion(car.currentBid, selectedRegion)}
           </span>
           {car.mileage > 0 && (
-            <span className="text-[9px] text-[#6B7280]">
+            <span className="text-[9px] text-muted-foreground">
               {car.mileage.toLocaleString()} {car.mileageUnit}
             </span>
           )}
@@ -328,14 +328,14 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
         {matchReasons && matchReasons.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {matchReasons.slice(0, 2).map(reason => (
-              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#6B7280]">
+              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
                 {reason}
               </span>
             ))}
           </div>
         )}
       </div>
-      <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors shrink-0" />
+      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
     </Link>
   )
 }
@@ -346,7 +346,7 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
   return (
     <Link
       href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
+      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-foreground/4 transition-colors"
     >
       <div className="relative w-14 h-10 rounded-md overflow-hidden shrink-0">
         <Image
@@ -360,11 +360,11 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-[#D1D5DB] truncate group-hover:text-[#F8B4D9] transition-colors">
+        <p className="text-[11px] text-muted-foreground truncate group-hover:text-primary transition-colors">
           {car.title}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+          <span className="text-[11px] font-display font-medium text-primary">
             {formatPriceForRegion(car.currentBid, selectedRegion)}
           </span>
           <span className={`text-[9px] font-bold ${
@@ -405,23 +405,23 @@ function CarNavSidebar({
   const priceLabel = car.status === "ENDED" ? "Sold for" : isLive ? "Current Bid" : "Est. Value"
 
   return (
-    <div className="h-full flex flex-col overflow-hidden border-r border-white/5">
+    <div className="h-full flex flex-col overflow-hidden border-r border-border">
       {/* ── Back nav ── */}
       <div className="px-4 pt-3 pb-1 shrink-0">
         <Link
           href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
-          className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
+          className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="size-3" />
           <span>{car.make.toUpperCase()}</span>
-          <ChevronRight className="size-2.5 text-[#4B5563]" />
-          <span className="text-[#9CA3AF]">{car.model}</span>
+          <ChevronRight className="size-2.5 text-muted-foreground" />
+          <span className="text-muted-foreground">{car.model}</span>
         </Link>
       </div>
 
       {/* ── Identity: title + grade + trend ── */}
-      <div className="px-4 pb-3 shrink-0 border-b border-white/5">
-        <h2 className="text-[12px] font-semibold text-[#FFFCF7] leading-tight">{car.title}</h2>
+      <div className="px-4 pb-3 shrink-0 border-b border-border">
+        <h2 className="text-[12px] font-semibold text-foreground leading-tight">{car.title}</h2>
         <div className="flex items-center gap-2 mt-2">
           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
             car.investmentGrade === "AAA"
@@ -431,7 +431,7 @@ function CarNavSidebar({
                 : "bg-amber-500/15 text-amber-400 border border-amber-400/20"
           }`}>{car.investmentGrade}</span>
           <span className={`text-[11px] font-mono font-semibold ${
-            car.trendValue > 0 ? "text-emerald-400" : car.trendValue < 0 ? "text-red-400" : "text-[#6B7280]"
+            car.trendValue > 0 ? "text-emerald-400" : car.trendValue < 0 ? "text-red-400" : "text-muted-foreground"
           }`}>
             {car.trendValue > 0 ? "+" : ""}{car.trendValue}% {car.trendValue > 0 ? "↑" : car.trendValue < 0 ? "↓" : "→"}
           </span>
@@ -439,25 +439,25 @@ function CarNavSidebar({
       </div>
 
       {/* ── Price ── */}
-      <div className="px-4 py-3 shrink-0 border-b border-white/5">
-        <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{priceLabel}</span>
-        <p className="text-[20px] font-mono font-bold text-[#F8B4D9] mt-0.5">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+      <div className="px-4 py-3 shrink-0 border-b border-border">
+        <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{priceLabel}</span>
+        <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
       </div>
 
       {/* ── Market Position (always visible) ── */}
-      <div className="px-4 py-3 shrink-0 border-b border-white/5">
-        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280] mb-2 block">Market Position</span>
+      <div className="px-4 py-3 shrink-0 border-b border-border">
+        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-mono text-[#9CA3AF]">{fmtRegional(fairLow, regionRange.currency)}</span>
-          <span className="text-[9px] text-[#6B7280]">Fair Value Range ({effectiveRegion})</span>
-          <span className="text-[10px] font-mono text-[#9CA3AF]">{fmtRegional(fairHigh, regionRange.currency)}</span>
+          <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairLow, regionRange.currency)}</span>
+          <span className="text-[9px] text-muted-foreground">Fair Value Range ({effectiveRegion})</span>
+          <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairHigh, regionRange.currency)}</span>
         </div>
         {/* Position bar */}
-        <div className="relative h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-[#F8B4D9]/20 to-red-400/20" />
+        <div className="relative h-[8px] rounded-full bg-foreground/4 overflow-hidden">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
           {/* Indicator dot */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 size-[10px] rounded-full bg-[#F8B4D9] border-2 border-[#0b0b10] shadow-lg shadow-[#F8B4D9]/30"
+            className="absolute top-1/2 -translate-y-1/2 size-[10px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
             style={{ left: `calc(${pricePosition}% - 5px)` }}
           />
         </div>
@@ -491,7 +491,7 @@ function CarNavSidebar({
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[#D1D5DB]">{car.bidCount} bids</span>
+            <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>
             <span className="text-[11px] font-mono text-amber-400">{timeLeft(car.endTime)}</span>
           </div>
           {car.sourceUrl && (
@@ -499,7 +499,7 @@ function CarNavSidebar({
               href={car.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] py-1.5 text-[10px] text-[#D1D5DB] hover:bg-white/[0.06] transition-colors"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
             >
               Ver en {platform?.short || car.platform.replace(/_/g, " ")}
               <ChevronRight className="size-3" />
@@ -510,7 +510,7 @@ function CarNavSidebar({
 
       {/* ── Sold / Platform info (when NOT live) ── */}
       {!isLive && car.status === "ENDED" && (
-        <div className="mx-3 my-3 shrink-0 rounded-lg border border-white/5 bg-white/[0.02] p-3">
+        <div className="mx-3 my-3 shrink-0 rounded-lg border border-border bg-foreground/2 p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {platform && (
@@ -518,16 +518,16 @@ function CarNavSidebar({
                   {platform.short}
                 </span>
               )}
-              <span className="text-[10px] text-[#9CA3AF]">{car.bidCount} bids</span>
+              <span className="text-[10px] text-muted-foreground">{car.bidCount} bids</span>
             </div>
-            <span className="text-[10px] font-medium text-[#6B7280]">Sold</span>
+            <span className="text-[10px] font-medium text-muted-foreground">Sold</span>
           </div>
           {car.sourceUrl && (
             <a
               href={car.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] py-1.5 text-[10px] text-[#D1D5DB] hover:bg-white/[0.06] transition-colors"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
             >
               Ver en {platform?.short || car.platform.replace(/_/g, " ")}
               <ChevronRight className="size-3" />
@@ -537,8 +537,8 @@ function CarNavSidebar({
       )}
 
       {/* ── Specs ── */}
-      <div className="px-4 py-3 shrink-0 border-b border-white/5">
-        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280] mb-2 block">Vehicle</span>
+      <div className="px-4 py-3 shrink-0 border-b border-border">
+        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Vehicle</span>
         <div className="space-y-1.5">
           {[
             { icon: <Gauge className="size-3.5" />, value: `${car.mileage.toLocaleString(locale)} ${car.mileageUnit}` },
@@ -547,26 +547,26 @@ function CarNavSidebar({
             { icon: <MapPin className="size-3.5" />, value: car.location },
           ].map((spec, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-[#6B7280]">{spec.icon}</span>
-              <span className="text-[11px] text-[#D1D5DB] truncate">{spec.value}</span>
+              <span className="text-muted-foreground">{spec.icon}</span>
+              <span className="text-[11px] text-muted-foreground truncate">{spec.value}</span>
             </div>
           ))}
           {car.vin && (
             <div className="flex items-center gap-2">
-              <span className="text-[#6B7280]"><FileText className="size-3.5" /></span>
-              <span className="text-[11px] text-[#D1D5DB] font-mono">{car.vin}</span>
+              <span className="text-muted-foreground"><FileText className="size-3.5" /></span>
+              <span className="text-[11px] text-muted-foreground font-mono">{car.vin}</span>
             </div>
           )}
         </div>
       </div>
 
       {/* ── Risk / Inspection ── */}
-      <div className="px-4 py-3 shrink-0 border-b border-white/5">
+      <div className="px-4 py-3 shrink-0 border-b border-border">
         <div className="flex items-center gap-2 mb-1">
           <AlertTriangle className="size-3.5 text-amber-400" />
-          <span className="text-[10px] font-semibold text-[#D1D5DB]">{flags.length} inspection points</span>
+          <span className="text-[10px] font-semibold text-muted-foreground">{flags.length} inspection points</span>
         </div>
-        <p className="text-[10px] text-[#6B7280] leading-relaxed pl-[22px]">
+        <p className="text-[10px] text-muted-foreground leading-relaxed pl-[22px]">
           {flags[0]}
         </p>
       </div>
@@ -574,7 +574,7 @@ function CarNavSidebar({
       {/* ── Similar vehicles (scrollable) ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="px-4 py-2 shrink-0">
-          <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+          <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             Similar · {similarCars.length}
           </span>
         </div>
@@ -633,19 +633,19 @@ function CarContextPanel({
   const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
 
   return (
-    <div className="h-full flex flex-col overflow-hidden border-l border-white/5">
+    <div className="h-full flex flex-col overflow-hidden border-l border-border">
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
 
         {/* 0. CAR IDENTITY HEADER */}
-        <div className="px-5 py-3 border-b border-white/5">
+        <div className="px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Investment Analysis
             </span>
           </div>
-          <h2 className="text-[14px] font-bold text-[#FFFCF7] leading-tight">{car.title}</h2>
-          <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6B7280]">
+          <h2 className="text-[14px] font-display font-normal text-foreground leading-tight">{car.title}</h2>
+          <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
             <span>{car.transmission}</span>
             <span>·</span>
             <span>{car.mileage.toLocaleString()} {car.mileageUnit}</span>
@@ -659,37 +659,37 @@ function CarContextPanel({
         </div>
 
         {/* 1. INVESTMENT GRADE + PRICE */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
               <p className={`text-[16px] font-bold ${
-                car.investmentGrade === "AAA" ? "text-emerald-400" : "text-[#F8B4D9]"
+                car.investmentGrade === "AAA" ? "text-emerald-400" : "text-primary"
               }`}>{car.investmentGrade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
                 {car.status === "ENDED" ? "Sold" : "Bid"}
               </span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">Trend</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
               <p className="text-[13px] font-mono font-semibold text-emerald-400">{car.trend}</p>
             </div>
           </div>
         </div>
 
         {/* 2. VALUATION BY MARKET */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="mb-4">
             <div className="flex items-center gap-2">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Globe className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Valuation by Market
               </span>
             </div>
-            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair value range by region</p>
+            <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair value range by region</p>
           </div>
           <div className="space-y-2.5">
             {(["US", "UK", "EU", "JP"] as const).map(region => {
@@ -699,38 +699,38 @@ function CarContextPanel({
               const usdAvg = toUsd((rp.low + rp.high) / 2, rp.currency)
               const barWidth = (usdAvg / maxRegionalUsd) * 100
               return (
-                <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-2 px-2 py-1.5" : ""}>
+                <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[12px]">{regionLabels[region].flag}</span>
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{region}</span>
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                       {isBest && (
                         <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>
                       )}
                       {isSelected && (
-                        <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>
+                        <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
+                      <span className="text-[11px] font-mono font-semibold text-foreground">
                         {fmtRegional(rp.low, rp.currency)}
                       </span>
-                      <span className="text-[9px] text-[#6B7280]">→</span>
-                      <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                      <span className="text-[9px] text-muted-foreground">→</span>
+                      <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
                         {fmtRegional(rp.high, rp.currency)}
                       </span>
                     </div>
                   </div>
                   {region !== effectiveRegion && (
                     <div className="flex justify-end mb-1">
-                      <span className="text-[9px] font-mono text-[#6B7280]">
+                      <span className="text-[9px] font-mono text-muted-foreground">
                         ≈ {formatUsd(toUsd(rp.high, rp.currency))} USD
                       </span>
                     </div>
                   )}
-                  <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                  <div className="h-[6px] rounded-full bg-foreground/4 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70" : "bg-gradient-to-r from-[#F8B4D9]/25 to-[#F8B4D9]/50"}`}
+                      className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-primary/40 to-primary/70" : "bg-gradient-to-r from-primary/25 to-primary/50"}`}
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
@@ -741,35 +741,35 @@ function CarContextPanel({
         </div>
 
         {/* 3. MARKET POSITION */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Scale className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Scale className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Market Position
             </span>
           </div>
           {/* Price vs Fair Value gauge */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
-              <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+              <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+              <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-primary" : "text-orange-400"}`}>
                 {pricePosition}%
               </span>
             </div>
-            <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+            <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
               <div
-                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-orange-400/50"}`}
                 style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
               />
             </div>
             <div className="flex items-center justify-between mt-1">
-              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
-              <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+              <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+              <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
             </div>
           </div>
           {/* Position label */}
-          <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
-            <span className="text-[11px] text-[#D1D5DB]">
+          <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+            <span className="text-[11px] text-muted-foreground">
               {pricePosition <= 85
                 ? "Priced well below fair value range — strong buyer opportunity"
                 : pricePosition <= 100
@@ -782,10 +782,10 @@ function CarContextPanel({
         </div>
 
         {/* 5. ANNUAL OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Annual Ownership Cost
             </span>
           </div>
@@ -796,22 +796,22 @@ function CarContextPanel({
               { label: "Maintenance", value: costs.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">Total</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">Total</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
             </div>
           </div>
         </div>
 
         {/* 6. SHIPPING COSTS */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Truck className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Truck className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Shipping Estimates
             </span>
           </div>
@@ -822,18 +822,18 @@ function CarContextPanel({
               { label: "UK Import", value: shipping.ukImport },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* 7. EVENTS & COMMUNITY */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Users className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Users className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Events & Community
             </span>
           </div>
@@ -843,13 +843,13 @@ function CarContextPanel({
                 <div className="flex items-center gap-2">
                   <span className={`size-1.5 rounded-full ${
                     event.impact === "positive" ? "bg-emerald-400" :
-                    event.impact === "negative" ? "bg-red-400" : "bg-[#4B5563]"
+                    event.impact === "negative" ? "bg-red-400" : "bg-muted-foreground"
                   }`} />
-                  <span className="text-[11px] text-[#D1D5DB]">{event.name}</span>
+                  <span className="text-[11px] text-muted-foreground">{event.name}</span>
                 </div>
                 <span className={`text-[9px] font-semibold ${
                   event.impact === "positive" ? "text-emerald-400" :
-                  event.impact === "negative" ? "text-red-400" : "text-[#6B7280]"
+                  event.impact === "negative" ? "text-red-400" : "text-muted-foreground"
                 }`}>
                   {event.impact === "positive" ? "+" : event.impact === "negative" ? "−" : "~"}
                 </span>
@@ -863,26 +863,26 @@ function CarContextPanel({
       <div className="shrink-0 px-4 pt-3">
         <Link
           href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-          className="block rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-4 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+          className="block rounded-xl border border-primary/20 bg-primary/6 p-4 hover:bg-primary/10 transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
-              <FileText className="size-5 text-[#F8B4D9]" />
+            <div className="size-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
-              <p className="text-[10px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; costs</p>
+              <p className="text-[12px] font-semibold text-foreground">Full Investment Report</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; costs</p>
             </div>
-            <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
           </div>
         </Link>
       </div>
 
       {/* CTA pinned bottom */}
-      <div className="shrink-0 p-4 border-t border-white/5">
+      <div className="shrink-0 p-4 border-t border-border">
         <button
           onClick={onOpenAdvisor}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-3 text-[11px] font-semibold uppercase tracking-wider text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground hover:bg-primary/80 transition-colors"
         >
           <MessageCircle className="size-4" />
           Speak with Advisor
@@ -1053,7 +1053,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   }, [showRegistrationGate])
 
   return (
-    <div className="min-h-screen bg-[#0b0b10]">
+    <div className="min-h-screen bg-background">
       {/* ═══════════════════════════════════════════════════════════
           MOBILE LAYOUT — Investment Passport + Continuous Scroll
           ═══════════════════════════════════════════════════════════ */}
@@ -1065,23 +1065,23 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -100, opacity: 0 }}
-              className="fixed top-0 left-0 right-0 z-50 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5"
+              className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border"
             >
               <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Link
                     href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
-                    className="text-[#4B5563] hover:text-[#F8B4D9] transition-colors"
+                    className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     <ArrowLeft className="size-5" />
                   </Link>
                   <div>
-                    <h1 className="text-[14px] font-semibold text-[#FFFCF7]">{car.title}</h1>
+                    <h1 className="text-[14px] font-semibold text-foreground">{car.title}</h1>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-[18px] font-bold font-mono text-[#F8B4D9]">
+                      <span className="text-[18px] font-display font-medium text-primary">
                         {formatPriceForRegion(car.currentBid, selectedRegion)}
                       </span>
-                      <span className="text-[10px] text-[#4B5563]">
+                      <span className="text-[10px] text-muted-foreground">
                         {car.status === "ENDED" ? "sold" : "current bid"}
                       </span>
                     </div>
@@ -1089,7 +1089,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
                 <Link
                   href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-                  className="flex items-center gap-2 rounded-full bg-[#F8B4D9] px-4 py-2 text-[11px] font-semibold uppercase text-[#0b0b10] active:bg-[#f4cbde] transition-colors"
+                  className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] font-semibold uppercase text-primary-foreground active:bg-primary/80 transition-colors"
                 >
                   <FileText className="size-3.5" />
                   Report
@@ -1102,14 +1102,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         {/* ═══ HERO SECTION ═══ */}
         <div ref={heroRef} className="relative h-[40dvh] min-h-[340px]">
           <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0b10]/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/70 to-transparent" />
 
           {/* Navigation */}
           <div className="absolute top-24 left-0 right-0 px-6">
             <Link
               href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
-              className="inline-flex items-center gap-2 text-[12px] text-white/50 hover:text-[#F8B4D9] transition-colors"
+              className="inline-flex items-center gap-2 text-[12px] text-foreground/50 hover:text-primary transition-colors"
             >
               <ArrowLeft className="size-4" />
               {t("backTo", { make: car.make })}
@@ -1121,32 +1121,32 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
               car.investmentGrade === "AAA"
                 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/30"
-                : "bg-[#F8B4D9]/20 text-[#F8B4D9] border border-[#F8B4D9]/30"
+                : "bg-primary/20 text-primary border border-primary/30"
             }`}>{car.investmentGrade}</span>
             {isLive && (
-              <div className="flex items-center gap-1.5 rounded-full bg-[#0b0b10]/80 backdrop-blur-md px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-md px-3 py-1.5">
                 <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[10px] font-medium text-emerald-400">LIVE</span>
               </div>
             )}
-            <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-white/10 text-white/70 border border-white/10">
+            <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-foreground/10 text-foreground/70 border border-border">
               {car.platform.replace(/_/g, " ")}
             </div>
           </div>
 
           {/* Title & Quick Stats */}
           <div className="absolute bottom-0 left-0 right-0 p-6 pb-10">
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
+            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
               {car.category}
             </span>
-            <h1 className="mt-2 text-3xl font-bold text-[#FFFCF7] tracking-tight">{car.title}</h1>
+            <h1 className="mt-2 text-3xl font-display font-light text-foreground tracking-tight">{car.title}</h1>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <div>
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">
+                <p className="text-[10px] text-foreground/40 uppercase tracking-wider">
                   {car.status === "ENDED" ? t("soldFor") : t("currentBid")}
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold font-mono text-[#F8B4D9]">
+                  <p className="text-2xl font-display font-medium text-primary">
                     {formatPriceForRegion(car.currentBid, selectedRegion)}
                   </p>
                   <span className="text-[12px] font-mono font-semibold text-emerald-400">{car.trend}</span>
@@ -1154,9 +1154,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
               {isLive && (
                 <>
-                  <div className="h-8 w-px bg-white/10" />
+                  <div className="h-8 w-px bg-foreground/10" />
                   <div>
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider">{t("timeLeft")}</p>
+                    <p className="text-[10px] text-foreground/40 uppercase tracking-wider">{t("timeLeft")}</p>
                     <p className="text-xl font-bold text-amber-400 font-mono">{timeLeft(car.endTime)}</p>
                   </div>
                 </>
@@ -1167,35 +1167,35 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
         {/* ═══ INVESTMENT PASSPORT ═══ */}
         <div className="relative z-10 -mt-6 mx-4">
-          <div className="rounded-2xl bg-[rgba(15,14,22,0.9)] backdrop-blur-xl border border-white/10 p-4">
+          <div className="rounded-2xl bg-card backdrop-blur-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Scale className="size-4 text-[#F8B4D9]" />
-              <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+              <Scale className="size-4 text-primary" />
+              <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary">
                 {t("investmentPassport.title")}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {/* Cell 1: Grade */}
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
+              <div className="rounded-xl bg-foreground/3 border border-border p-3">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.grade")}
                 </span>
                 <span className={`text-[28px] font-bold ${
                   car.investmentGrade === "AAA" ? "text-emerald-400"
-                  : car.investmentGrade === "AA" ? "text-[#F8B4D9]"
+                  : car.investmentGrade === "AA" ? "text-primary"
                   : "text-amber-400"
                 }`}>{car.investmentGrade}</span>
               </div>
 
               {/* Cell 2: Market Position */}
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
+              <div className="rounded-xl bg-foreground/3 border border-border p-3">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.marketPosition")}
                 </span>
-                <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden mt-2 mb-1.5">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-[#F8B4D9]/20 to-red-400/20" />
+                <div className="relative h-[6px] rounded-full bg-foreground/4 overflow-hidden mt-2 mb-1.5">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-[#F8B4D9] border-2 border-[#0b0b10] shadow-lg shadow-[#F8B4D9]/30"
+                    className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
                     style={{ left: `calc(${pricePosition}% - 4px)` }}
                   />
                 </div>
@@ -1205,24 +1205,24 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               {/* Cell 3: Fair Value */}
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
+              <div className="rounded-xl bg-foreground/3 border border-border p-3">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
-                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
+                <span className="text-[22px] font-bold font-mono text-foreground">
                   {formatPriceForRegion(Math.round((regionRange.low + regionRange.high) / 2), selectedRegion)}
                 </span>
               </div>
 
               {/* Cell 4: Annual Cost */}
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3">
-                <span className="text-[10px] text-[#6B7280] uppercase tracking-wider block mb-1">
+              <div className="rounded-xl bg-foreground/3 border border-border p-3">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.annualCost")}
                 </span>
-                <span className="text-[22px] font-bold font-mono text-[#FFFCF7]">
+                <span className="text-[22px] font-bold font-mono text-foreground">
                   {formatPriceForRegion(totalAnnualCost, selectedRegion)}
                 </span>
-                <span className="text-[11px] text-[#6B7280]">/yr</span>
+                <span className="text-[11px] text-muted-foreground">/yr</span>
               </div>
             </div>
           </div>
@@ -1231,16 +1231,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
         <Link
           href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-          className="mx-4 mt-4 flex items-center gap-4 rounded-2xl border border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] p-4 active:bg-[rgba(248,180,217,0.15)] transition-colors"
+          className="mx-4 mt-4 flex items-center gap-4 rounded-2xl border border-primary/25 bg-primary/8 p-4 active:bg-primary/15 transition-colors"
         >
-          <div className="size-12 rounded-xl bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
-            <FileText className="size-6 text-[#F8B4D9]" />
+          <div className="size-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <FileText className="size-6 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold text-[#FFFCF7]">Full Investment Report</p>
-            <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation · Risks · Comps · Costs</p>
+            <p className="text-[14px] font-semibold text-foreground">Full Investment Report</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Valuation · Risks · Comps · Costs</p>
           </div>
-          <span className="shrink-0 rounded-xl bg-[#F8B4D9] px-4 py-2 text-[12px] font-bold text-[#0b0b10]">
+          <span className="shrink-0 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-primary-foreground">
             View
             <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
           </span>
@@ -1250,15 +1250,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="px-4 py-6 space-y-4 pb-32">
 
           {/* 1. About This Vehicle */}
-          <div className="rounded-2xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-5">
+          <div className="rounded-2xl bg-primary/6 border border-primary/15 p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="size-1.5 rounded-full bg-[#F8B4D9]" />
-                <h2 className="text-[13px] font-semibold text-[#F8B4D9]">{t("aboutThisVehicle")}</h2>
+                <div className="size-1.5 rounded-full bg-primary" />
+                <h2 className="text-[13px] font-semibold text-primary">{t("aboutThisVehicle")}</h2>
               </div>
-              <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
+              <span className="text-[9px] text-primary/50 bg-primary/8 px-2 py-0.5 rounded">{t("editorial")}</span>
             </div>
-            <p className="text-[14px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
+            <p className="text-[14px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
           </div>
 
           {/* 2. Vehicle Specs */}
@@ -1271,17 +1271,17 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* 3. Seller's Description */}
           <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
-            <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-              <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+            <div className="border-l-2 border-primary/20 pl-4">
+              <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
             </div>
-            <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
+            <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
           </CollapsibleSection>
 
           {/* 4. Regional Valuation */}
-          <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
+          <div className="rounded-xl bg-card border border-border p-4">
             <div className="flex items-center gap-2 mb-4">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Globe className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("regionalValuation")}
               </span>
             </div>
@@ -1293,27 +1293,27 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 const usdAvg = toUsd((rp.low + rp.high) / 2, rp.currency)
                 const barWidth = (usdAvg / maxRegionalUsd) * 100
                 return (
-                  <div key={region} className={isSelected ? "rounded-lg bg-[rgba(248,180,217,0.04)] -mx-2 px-2 py-1.5" : ""}>
+                  <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px]">{regionLabels[region].flag}</span>
-                        <span className={`text-[11px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{region}</span>
+                        <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                         {isBest && <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>}
-                        {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">YOUR MARKET</span>}
+                        {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>}
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-[11px] font-mono font-semibold text-[#FFFCF7]">
+                        <span className="text-[11px] font-mono font-semibold text-foreground">
                           {fmtRegional(rp.low, rp.currency)}
                         </span>
-                        <span className="text-[9px] text-[#6B7280]">→</span>
-                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                        <span className="text-[9px] text-muted-foreground">→</span>
+                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
                           {fmtRegional(rp.high, rp.currency)}
                         </span>
                       </div>
                     </div>
-                    <div className="h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="h-[6px] rounded-full bg-foreground/4 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70" : "bg-gradient-to-r from-[#F8B4D9]/25 to-[#F8B4D9]/50"}`}
+                        className={`h-full rounded-full ${isBest ? "bg-gradient-to-r from-emerald-400/30 to-emerald-400/60" : isSelected ? "bg-gradient-to-r from-primary/40 to-primary/70" : "bg-gradient-to-r from-primary/25 to-primary/50"}`}
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
@@ -1324,33 +1324,33 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           </div>
 
           {/* 5. Market Position */}
-          <div className="rounded-xl bg-[rgba(248,180,217,0.03)] border border-white/5 p-4">
+          <div className="rounded-xl bg-primary/3 border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Scale className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Scale className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Market Position
               </span>
             </div>
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] text-[#6B7280]">Price vs Fair Value</span>
-                <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-[#F8B4D9]" : "text-orange-400"}`}>
+                <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+                <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-primary" : "text-orange-400"}`}>
                   {pricePosition}%
                 </span>
               </div>
-              <div className="h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+              <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-[#F8B4D9]/50" : "bg-orange-400/50"}`}
+                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-orange-400/50"}`}
                   style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
                 />
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
-                <span className="text-[9px] text-[#4B5563]">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+                <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
+                <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
               </div>
             </div>
-            <div className="rounded-lg bg-white/[0.03] border border-white/5 px-3 py-2">
-              <span className="text-[11px] text-[#D1D5DB]">
+            <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+              <span className="text-[11px] text-muted-foreground">
                 {pricePosition <= 85
                   ? "Priced well below fair value — strong buyer opportunity"
                   : pricePosition <= 100
@@ -1363,29 +1363,29 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           </div>
 
           {/* 7. Sale Information */}
-          <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
+          <div className="rounded-xl bg-card border border-border p-4">
             <div className="flex items-center gap-2 mb-4">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <h2 className="text-[13px] font-semibold text-[#FFFCF7]">{t("saleInformation")}</h2>
+              <Globe className="size-4 text-primary" />
+              <h2 className="text-[13px] font-semibold text-foreground">{t("saleInformation")}</h2>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-3 bg-white/[0.02] border border-white/5">
-                <p className="text-[10px] text-[#4B5563] uppercase tracking-wider mb-1">{t("platform")}</p>
-                <p className="text-[14px] font-semibold text-[#FFFCF7]">{car.platform.replace(/_/g, " ")}</p>
+              <div className="rounded-xl p-3 bg-foreground/2 border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("platform")}</p>
+                <p className="text-[14px] font-semibold text-foreground">{car.platform.replace(/_/g, " ")}</p>
               </div>
-              <div className="rounded-xl p-3 bg-white/[0.02] border border-white/5">
-                <p className="text-[10px] text-[#4B5563] uppercase tracking-wider mb-1">
+              <div className="rounded-xl p-3 bg-foreground/2 border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                   {car.status === "ENDED" ? t("soldFor") : t("currentBid")}
                 </p>
-                <p className="text-[14px] font-bold font-mono text-[#F8B4D9]">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                <p className="text-[14px] font-display font-medium text-primary">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
               </div>
-              <div className="rounded-xl p-3 bg-white/[0.02] border border-white/5">
-                <p className="text-[10px] text-[#4B5563] uppercase tracking-wider mb-1">{t("bids")}</p>
-                <p className="text-[14px] font-semibold text-[#FFFCF7]">{car.bidCount}</p>
+              <div className="rounded-xl p-3 bg-foreground/2 border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("bids")}</p>
+                <p className="text-[14px] font-semibold text-foreground">{car.bidCount}</p>
               </div>
-              <div className="rounded-xl p-3 bg-white/[0.02] border border-white/5">
-                <p className="text-[10px] text-[#4B5563] uppercase tracking-wider mb-1">{t("status")}</p>
-                <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-emerald-400" : "text-[#9CA3AF]"}`}>
+              <div className="rounded-xl p-3 bg-foreground/2 border border-border">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("status")}</p>
+                <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-emerald-400" : "text-muted-foreground"}`}>
                   {car.status === "ENDED" ? tStatus("sold") : car.status === "ENDING_SOON" ? tStatus("endingSoon") : tStatus("active")}
                 </p>
               </div>
@@ -1397,13 +1397,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             title={t("keyInspectionPoints")}
             icon={<AlertTriangle className="size-5" />}
             defaultOpen
-            badge={<span className="text-[10px] text-[#F8B4D9]/60 bg-[rgba(248,180,217,0.1)] px-2 py-0.5 rounded-full">{flags.length} items</span>}
+            badge={<span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length} items</span>}
           >
             <div className="space-y-2">
               {flags.map((flag, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[rgba(248,180,217,0.03)]">
-                  <AlertTriangle className="size-4 text-[#F8B4D9] mt-0.5 shrink-0" />
-                  <span className="text-[13px] text-[#FFFCF7]">{flag}</span>
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/3">
+                  <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
+                  <span className="text-[13px] text-foreground">{flag}</span>
                 </div>
               ))}
             </div>
@@ -1413,15 +1413,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <CollapsibleSection
             title={t("questionsToAsk")}
             icon={<HelpCircle className="size-5" />}
-            badge={<span className="text-[10px] text-[#9CA3AF] bg-white/5 px-2 py-0.5 rounded-full">{questions.length}</span>}
+            badge={<span className="text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded-full">{questions.length}</span>}
           >
             <div className="space-y-2">
               {questions.map((q, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02]">
-                  <span className="flex items-center justify-center size-5 rounded-full bg-[#F8B4D9]/10 text-[10px] font-bold text-[#F8B4D9] shrink-0">
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                  <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
                     {i + 1}
                   </span>
-                  <span className="text-[13px] text-[#9CA3AF]">{q}</span>
+                  <span className="text-[13px] text-muted-foreground">{q}</span>
                 </div>
               ))}
             </div>
@@ -1438,10 +1438,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 { item: "Road test (minimum 30 minutes)", critical: true },
                 { item: "Fluid analysis (engine oil, transmission)", critical: false },
               ].map((check, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                  <span className="text-[13px] text-[#9CA3AF]">{check.item}</span>
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                  <span className="text-[13px] text-muted-foreground">{check.item}</span>
                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                    check.critical ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]" : "bg-[#4B5563]/20 text-[#4B5563]"
+                    check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
                   }`}>
                     {check.critical ? "Critical" : "Recommended"}
                   </span>
@@ -1455,16 +1455,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             title={t("comparableSales")}
             icon={<TrendingUp className="size-5" />}
             defaultOpen
-            badge={<span className="text-[9px] text-[#4B5563] bg-white/5 px-2 py-0.5 rounded">{t("sampleData")}</span>}
+            badge={<span className="text-[9px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">{t("sampleData")}</span>}
           >
             <div className="space-y-3">
               {comps.map((sale, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-[#FFFCF7] truncate">{sale.title}</p>
-                    <p className="text-[11px] text-[#4B5563] mt-0.5">{sale.date} · {sale.platform}</p>
+                    <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                   </div>
-                  <p className="text-[16px] font-bold font-mono text-[#FFFCF7] shrink-0 ml-3">{formatPriceForRegion(sale.price, selectedRegion)}</p>
+                  <p className="text-[16px] font-bold font-mono text-foreground shrink-0 ml-3">{formatPriceForRegion(sale.price, selectedRegion)}</p>
                 </div>
               ))}
             </div>
@@ -1473,50 +1473,50 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           {/* 12. Ownership Cost & Shipping */}
           <CollapsibleSection title={t("ownershipAndShipping")} icon={<Wrench className="size-5" />}>
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
+              <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
-                  <Shield className="size-4 text-[#4B5563]" />
-                  <span className="text-[13px] text-[#9CA3AF]">{t("ownershipCosts.insurance")}</span>
+                  <Shield className="size-4 text-muted-foreground" />
+                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(costs.insurance, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.insurance, selectedRegion)}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
+              <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
-                  <MapPin className="size-4 text-[#4B5563]" />
-                  <span className="text-[13px] text-[#9CA3AF]">{t("ownershipCosts.storage")}</span>
+                  <MapPin className="size-4 text-muted-foreground" />
+                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(costs.storage, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.storage, selectedRegion)}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
+              <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
-                  <Wrench className="size-4 text-[#4B5563]" />
-                  <span className="text-[13px] text-[#9CA3AF]">{t("ownershipCosts.service")}</span>
+                  <Wrench className="size-4 text-muted-foreground" />
+                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(costs.maintenance, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.maintenance, selectedRegion)}</span>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <span className="text-[13px] font-semibold text-[#FFFCF7]">{t("totalAnnual")}</span>
-                <span className="text-[18px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+                <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
+                <span className="text-[18px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
               </div>
-              <div className="border-t border-white/5 pt-3 mt-1">
+              <div className="border-t border-border pt-3 mt-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <Truck className="size-4 text-[#F8B4D9]" />
-                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                  <Truck className="size-4 text-primary" />
+                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                     Shipping Estimates
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                    <span className="text-[13px] text-[#9CA3AF]">{t("domestic")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(shipping.domestic, selectedRegion)}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                    <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.domestic, selectedRegion)}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                    <span className="text-[13px] text-[#9CA3AF]">{t("euImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(shipping.euImport, selectedRegion)}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                    <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.euImport, selectedRegion)}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                    <span className="text-[13px] text-[#9CA3AF]">{t("ukImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(shipping.ukImport, selectedRegion)}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                    <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.ukImport, selectedRegion)}</span>
                   </div>
                 </div>
               </div>
@@ -1527,21 +1527,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <CollapsibleSection title={t("eventsAndCommunity")} icon={<Users className="size-5" />}>
             <div className="space-y-2">
               {events.map((event, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                   <div className="flex items-center gap-3">
                     <span className={`size-2 rounded-full ${
                       event.impact === "positive" ? "bg-emerald-400" :
-                      event.impact === "negative" ? "bg-red-400" : "bg-[#4B5563]"
+                      event.impact === "negative" ? "bg-red-400" : "bg-muted-foreground"
                     }`} />
                     <div>
-                      <p className="text-[13px] text-[#FFFCF7]">{event.name}</p>
-                      <p className="text-[10px] text-[#4B5563]">{event.type}</p>
+                      <p className="text-[13px] text-foreground">{event.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{event.type}</p>
                     </div>
                   </div>
                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
                     event.impact === "positive" ? "bg-emerald-500/10 text-emerald-400" :
                     event.impact === "negative" ? "bg-red-500/10 text-red-400" :
-                    "bg-white/5 text-[#4B5563]"
+                    "bg-foreground/5 text-muted-foreground"
                   }`}>
                     {event.impact === "positive" ? "Value +" : event.impact === "negative" ? "Value -" : "Neutral"}
                   </span>
@@ -1574,7 +1574,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       {/* ═══════════════════════════════════════════════════════════
           DESKTOP LAYOUT (3-column grid)
           ═══════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
 
           {/* COLUMN A: LEFT SIDEBAR */}
@@ -1602,7 +1602,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
                     car.investmentGrade === "AAA"
                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/30"
-                      : "bg-[#F8B4D9]/20 text-[#F8B4D9] border border-[#F8B4D9]/30"
+                      : "bg-primary/20 text-primary border border-primary/30"
                   }`}>{car.investmentGrade}</span>
                   {isLive && (
                     <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30">
@@ -1613,77 +1613,77 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
                 {/* Bottom text on hero */}
                 <div className="absolute bottom-4 left-4 right-4">
-                  <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
+                  <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-primary">
                     {car.category}
                   </span>
-                  <h1 className="text-2xl font-bold text-white mt-1">{car.title}</h1>
+                  <h1 className="text-2xl font-display font-light text-white mt-1">{car.title}</h1>
                 </div>
               </div>
 
               {/* ABOUT THIS VEHICLE */}
-              <div className="rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-5">
+              <div className="rounded-xl bg-primary/6 border border-primary/15 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-[#F8B4D9]" />
-                    <h2 className="text-[12px] font-semibold text-[#F8B4D9]">{t("aboutThisVehicle")}</h2>
+                    <div className="size-1.5 rounded-full bg-primary" />
+                    <h2 className="text-[12px] font-semibold text-primary">{t("aboutThisVehicle")}</h2>
                   </div>
-                  <span className="text-[9px] text-[#F8B4D9]/50 bg-[rgba(248,180,217,0.08)] px-2 py-0.5 rounded">{t("editorial")}</span>
+                  <span className="text-[9px] text-primary/50 bg-primary/8 px-2 py-0.5 rounded">{t("editorial")}</span>
                 </div>
-                <p className="text-[13px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                <p className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
               </div>
 
               {/* PROVENANCE */}
-              <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+              <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <History className="size-4 text-[#F8B4D9]" />
-                  <h2 className="text-[12px] font-semibold text-[#FFFCF7]">{t("sellersDescription")}</h2>
+                  <History className="size-4 text-primary" />
+                  <h2 className="text-[12px] font-semibold text-foreground">{t("sellersDescription")}</h2>
                 </div>
-                <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-                  <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                <div className="border-l-2 border-primary/20 pl-4">
+                  <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                 </div>
-                <p className="text-[10px] text-[#4B5563] mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
+                <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
               </div>
 
               {/* KEY INSPECTION POINTS */}
-              <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+              <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="size-4 text-[#F8B4D9]" />
-                  <h2 className="text-[12px] font-semibold text-[#FFFCF7]">Key Inspection Points</h2>
-                  <span className="text-[9px] text-[#F8B4D9]/60 bg-[rgba(248,180,217,0.1)] px-2 py-0.5 rounded-full">{flags.length}</span>
+                  <AlertTriangle className="size-4 text-primary" />
+                  <h2 className="text-[12px] font-semibold text-foreground">Key Inspection Points</h2>
+                  <span className="text-[9px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length}</span>
                 </div>
                 <div className="space-y-2">
                   {flags.map((flag, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-[rgba(248,180,217,0.03)]">
-                      <AlertTriangle className="size-3.5 text-[#F8B4D9] mt-0.5 shrink-0" />
-                      <span className="text-[12px] text-[#FFFCF7]">{flag}</span>
+                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-primary/3">
+                      <AlertTriangle className="size-3.5 text-primary mt-0.5 shrink-0" />
+                      <span className="text-[12px] text-foreground">{flag}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* QUESTIONS TO ASK */}
-              <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+              <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <HelpCircle className="size-4 text-[#F8B4D9]" />
-                  <h2 className="text-[12px] font-semibold text-[#FFFCF7]">Questions to Ask the Seller</h2>
+                  <HelpCircle className="size-4 text-primary" />
+                  <h2 className="text-[12px] font-semibold text-foreground">Questions to Ask the Seller</h2>
                 </div>
                 <div className="space-y-2">
                   {questions.map((q, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-white/[0.02]">
-                      <span className="flex items-center justify-center size-5 rounded-full bg-[#F8B4D9]/10 text-[9px] font-bold text-[#F8B4D9] shrink-0">
+                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-foreground/2">
+                      <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[9px] font-bold text-primary shrink-0">
                         {i + 1}
                       </span>
-                      <span className="text-[12px] text-[#9CA3AF]">{q}</span>
+                      <span className="text-[12px] text-muted-foreground">{q}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* PRE-PURCHASE INSPECTION */}
-              <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+              <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="size-4 text-[#F8B4D9]" />
-                  <h2 className="text-[12px] font-semibold text-[#FFFCF7]">Pre-Purchase Inspection</h2>
+                  <CheckCircle2 className="size-4 text-primary" />
+                  <h2 className="text-[12px] font-semibold text-foreground">Pre-Purchase Inspection</h2>
                 </div>
                 <div className="space-y-2">
                   {[
@@ -1694,10 +1694,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     { item: "Road test (minimum 30 minutes)", critical: true },
                     { item: "Fluid analysis (engine oil, transmission)", critical: false },
                   ].map((check, i) => (
-                    <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02]">
-                      <span className="text-[12px] text-[#9CA3AF]">{check.item}</span>
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-foreground/2">
+                      <span className="text-[12px] text-muted-foreground">{check.item}</span>
                       <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                        check.critical ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]" : "bg-[#4B5563]/20 text-[#4B5563]"
+                        check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
                       }`}>
                         {check.critical ? "Critical" : "Recommended"}
                       </span>
@@ -1707,22 +1707,22 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               {/* COMPARABLE SALES */}
-              <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+              <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="size-4 text-[#F8B4D9]" />
-                    <h2 className="text-[12px] font-semibold text-[#FFFCF7]">Recent Comparable Sales</h2>
+                    <DollarSign className="size-4 text-primary" />
+                    <h2 className="text-[12px] font-semibold text-foreground">Recent Comparable Sales</h2>
                   </div>
-                  <span className="text-[9px] text-[#4B5563] bg-white/5 px-2 py-0.5 rounded">Sample</span>
+                  <span className="text-[9px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">Sample</span>
                 </div>
                 <div className="space-y-2">
                   {comps.map((sale, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/[0.03]">
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2 border border-border/50">
                       <div>
-                        <p className="text-[12px] font-medium text-[#FFFCF7]">{sale.title}</p>
-                        <p className="text-[10px] text-[#4B5563] mt-0.5">{sale.date} · {sale.platform}</p>
+                        <p className="text-[12px] font-medium text-foreground">{sale.title}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                       </div>
-                      <span className="text-[14px] font-mono font-bold text-[#FFFCF7]">{formatPriceForRegion(sale.price, selectedRegion)}</span>
+                      <span className="text-[14px] font-mono font-bold text-foreground">{formatPriceForRegion(sale.price, selectedRegion)}</span>
                     </div>
                   ))}
                 </div>
@@ -1731,17 +1731,17 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               {/* FULL REPORT CTA */}
               <Link
                 href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-                className="block rounded-xl border border-[rgba(248,180,217,0.15)] bg-[rgba(248,180,217,0.04)] p-5 hover:bg-[rgba(248,180,217,0.06)] transition-colors"
+                className="block rounded-xl border border-primary/15 bg-primary/4 p-5 hover:bg-primary/6 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="size-10 rounded-lg bg-[rgba(248,180,217,0.1)] flex items-center justify-center shrink-0">
-                    <FileText className="size-5 text-[#F8B4D9]" />
+                  <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <FileText className="size-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-[#FFFCF7]">Full Investment Report</p>
-                    <p className="text-[11px] text-[#6B7280] mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
+                    <p className="text-[13px] font-medium text-foreground">Full Investment Report</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
                   </div>
-                  <span className="flex items-center gap-2 shrink-0 rounded-lg bg-[#F8B4D9] px-5 py-2.5 text-[12px] font-semibold text-[#0b0b10]">
+                  <span className="flex items-center gap-2 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-[12px] font-semibold text-primary-foreground">
                     View Report
                     <ChevronRight className="size-4" />
                   </span>
@@ -1770,23 +1770,23 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[70] flex items-end md:items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/60 backdrop-blur-md" />
-            <div className="absolute inset-x-0 top-0 h-[45vh] bg-gradient-to-b from-transparent via-transparent to-[rgba(11,11,16,0.85)]" />
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-md" />
+            <div className="absolute inset-x-0 top-0 h-[45vh] bg-gradient-to-b from-transparent via-transparent to-background/85" />
 
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.15 }}
-              className="relative w-full max-w-md mx-4 rounded-2xl bg-[#0F1012]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md mx-4 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden"
             >
-              <div className="h-0.5 bg-gradient-to-r from-[#F8B4D9] via-[#F8B4D9]/40 to-transparent" />
+              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
 
               <div className="px-6 pt-8 pb-2 text-center">
-                <h3 className="text-xl font-bold text-[#FFFCF7]">
+                <h3 className="text-xl font-bold text-foreground">
                   Sign up to continue
                 </h3>
-                <p className="text-[12px] text-[#6B7280] mt-1">
+                <p className="text-[12px] text-muted-foreground mt-1">
                   Create a free account to explore this vehicle
                 </p>
               </div>
@@ -1795,7 +1795,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <button
                   onClick={handleGoogleSignIn}
                   type="button"
-                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[13px] hover:bg-[#f4cbde] transition-all"
+                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
                 >
                   <svg className="size-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -1808,22 +1808,22 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               <div className="px-6 flex items-center gap-3 pb-4">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[10px] text-[#6B7280]">or use email</span>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-foreground/10" />
+                <span className="text-[10px] text-muted-foreground">or use email</span>
+                <div className="flex-1 h-px bg-foreground/10" />
               </div>
 
               <form onSubmit={handleGateSubmit} className="px-6 pb-6 space-y-3">
                 <div>
                   <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#4B5563]" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <input
                       type="text"
                       value={gateName}
                       onChange={(e) => { setGateName(e.target.value); setGateErrors(prev => ({ ...prev, name: false })) }}
                       placeholder="Your name"
-                      className={`w-full bg-white/[0.03] border rounded-xl pl-10 pr-4 py-3 text-[13px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none transition-colors ${
-                        gateErrors.name ? "border-red-500/50" : "border-white/10 focus:border-[#F8B4D9]/50"
+                      className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
+                        gateErrors.name ? "border-red-500/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
@@ -1832,14 +1832,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
                 <div>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#4B5563]" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <input
                       type="email"
                       value={gateEmail}
                       onChange={(e) => { setGateEmail(e.target.value); setGateErrors(prev => ({ ...prev, email: false })) }}
                       placeholder="your@email.com"
-                      className={`w-full bg-white/[0.03] border rounded-xl pl-10 pr-4 py-3 text-[13px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none transition-colors ${
-                        gateErrors.email ? "border-red-500/50" : "border-white/10 focus:border-[#F8B4D9]/50"
+                      className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
+                        gateErrors.email ? "border-red-500/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
@@ -1848,12 +1848,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl border border-white/10 text-[#FFFCF7] font-medium text-[13px] hover:bg-white/[0.05] transition-all"
+                  className="w-full py-3 rounded-xl border border-border text-foreground font-medium text-[13px] hover:bg-white/[0.05] transition-all"
                 >
                   Sign up with email
                 </button>
 
-                <p className="text-[10px] text-[#4B5563] text-center pt-1">
+                <p className="text-[10px] text-muted-foreground text-center pt-1">
                   Free account. No credit card needed.
                 </p>
               </form>
@@ -1872,60 +1872,60 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[80] flex items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/50 backdrop-blur-sm" onClick={() => setShowWelcome(false)} />
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => setShowWelcome(false)} />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#0F1012] border border-white/10 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
             >
               <div className="px-6 pt-7 pb-4 text-center">
-                <div className="size-14 rounded-full bg-[#F8B4D9]/10 flex items-center justify-center mx-auto mb-4">
-                  <Coins className="size-7 text-[#F8B4D9]" />
+                <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Coins className="size-7 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-[#FFFCF7]">
+                <h3 className="text-lg font-bold text-foreground">
                   Welcome to Monza
                 </h3>
-                <p className="text-3xl font-mono font-black text-[#F8B4D9] mt-2">
+                <p className="text-3xl font-mono font-black text-primary mt-2">
                   3,000 tokens
                 </p>
-                <p className="text-[11px] text-[#6B7280] mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   have been added to your account
                 </p>
               </div>
 
               <div className="px-6 pb-5">
-                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">
+                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
                   How it works
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-white/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-[#F8B4D9]">1</span>
+                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[11px] font-bold text-primary">1</span>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium text-[#FFFCF7]">Browse all vehicles freely</p>
-                      <p className="text-[10px] text-[#6B7280] mt-0.5">Explore every car, model, and brand at no cost</p>
+                      <p className="text-[12px] font-medium text-foreground">Browse all vehicles freely</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Explore every car, model, and brand at no cost</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-white/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-[#F8B4D9]">2</span>
+                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[11px] font-bold text-primary">2</span>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium text-[#FFFCF7]">Generate full analyses with tokens</p>
-                      <p className="text-[10px] text-[#6B7280] mt-0.5">Each report costs 1,000 tokens &mdash; you have 3 free</p>
+                      <p className="text-[12px] font-medium text-foreground">Generate full analyses with tokens</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs 1,000 tokens &mdash; you have 3 free</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-white/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-[#F8B4D9]">3</span>
+                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[11px] font-bold text-primary">3</span>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium text-[#FFFCF7]">Download or receive by email</p>
-                      <p className="text-[10px] text-[#6B7280] mt-0.5">Re-downloading a report you already generated is free</p>
+                      <p className="text-[12px] font-medium text-foreground">Download or receive by email</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Re-downloading a report you already generated is free</p>
                     </div>
                   </div>
                 </div>
@@ -1934,7 +1934,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="px-6 pb-6">
                 <button
                   onClick={() => setShowWelcome(false)}
-                  className="w-full py-3.5 rounded-xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[13px] hover:bg-[#f4cbde] transition-all"
+                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
                 >
                   Got it
                 </button>
@@ -1954,16 +1954,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[80] flex items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/50 backdrop-blur-sm" onClick={() => { setShowAnalysisPopup(false); setAnalysisSent(false) }} />
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => { setShowAnalysisPopup(false); setAnalysisSent(false) }} />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#0F1012] border border-white/10 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
             >
-              <div className="h-0.5 bg-gradient-to-r from-[#F8B4D9] via-[#F8B4D9]/40 to-transparent" />
+              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
 
               {analysisSent ? (
                 <div className="px-6 py-10 text-center">
@@ -1975,18 +1975,18 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   >
                     <CheckCircle2 className="size-7 text-emerald-400" />
                   </motion.div>
-                  <h3 className="text-lg font-bold text-[#FFFCF7]">Analysis sent!</h3>
-                  <p className="text-[12px] text-[#6B7280] mt-1">
+                  <h3 className="text-lg font-bold text-foreground">Analysis sent!</h3>
+                  <p className="text-[12px] text-muted-foreground mt-1">
                     Check your inbox at {user?.email}
                   </p>
                 </div>
               ) : (
                 <>
                   <div className="px-6 pt-6 pb-4 text-center">
-                    <h3 className="text-lg font-bold text-[#FFFCF7]">
+                    <h3 className="text-lg font-bold text-foreground">
                       Your analysis is ready
                     </h3>
-                    <p className="text-[12px] text-[#6B7280] mt-1">
+                    <p className="text-[12px] text-muted-foreground mt-1">
                       {car.title}
                     </p>
                   </div>
@@ -1994,14 +1994,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <div className="px-6 pb-6 space-y-3">
                     <button
                       onClick={handleSendAnalysis}
-                      className="w-full flex items-center gap-4 rounded-xl bg-[#F8B4D9] px-5 py-4 text-left hover:bg-[#f4cbde] transition-all group"
+                      className="w-full flex items-center gap-4 rounded-xl bg-primary px-5 py-4 text-left hover:bg-primary/80 transition-all group"
                     >
-                      <div className="size-10 rounded-full bg-[#0b0b10]/10 flex items-center justify-center shrink-0">
-                        <Send className="size-5 text-[#0b0b10]" />
+                      <div className="size-10 rounded-full bg-background/10 flex items-center justify-center shrink-0">
+                        <Send className="size-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="text-[13px] font-semibold text-[#0b0b10]">Send to my email</p>
-                        <p className="text-[11px] text-[#0b0b10]/60">{user?.email}</p>
+                        <p className="text-[13px] font-semibold text-primary-foreground">Send to my email</p>
+                        <p className="text-[11px] text-primary-foreground/60">{user?.email}</p>
                       </div>
                     </button>
 
@@ -2009,21 +2009,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       onClick={() => {
                         setShowAnalysisPopup(false)
                       }}
-                      className="w-full flex items-center gap-4 rounded-xl border border-white/10 px-5 py-4 text-left hover:bg-white/[0.03] transition-all group"
+                      className="w-full flex items-center gap-4 rounded-xl border border-border px-5 py-4 text-left hover:bg-foreground/3 transition-all group"
                     >
-                      <div className="size-10 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                        <Download className="size-5 text-[#F8B4D9]" />
+                      <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
+                        <Download className="size-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-[13px] font-medium text-[#FFFCF7]">Download PDF</p>
-                        <p className="text-[11px] text-[#6B7280]">Full investment report</p>
+                        <p className="text-[13px] font-medium text-foreground">Download PDF</p>
+                        <p className="text-[11px] text-muted-foreground">Full investment report</p>
                       </div>
                     </button>
 
                     {!hasAnalyzed(car.id) && (
                       <div className="flex items-center justify-center gap-2 pt-2">
-                        <Coins className="size-3.5 text-[#F8B4D9]" />
-                        <span className="text-[11px] text-[#6B7280]">
+                        <Coins className="size-3.5 text-primary" />
+                        <span className="text-[11px] text-muted-foreground">
                           1,000 tokens used &middot; {tokens.toLocaleString()} remaining
                         </span>
                       </div>
@@ -2046,25 +2046,25 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[80] flex items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/50 backdrop-blur-sm" onClick={() => setShowPaywall(false)} />
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => setShowPaywall(false)} />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-[#0F1012] border border-white/10 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
             >
-              <div className="h-0.5 bg-gradient-to-r from-[#F8B4D9] via-[#F8B4D9]/40 to-transparent" />
+              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
 
               <div className="px-6 pt-7 pb-6 text-center">
-                <div className="size-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                  <Coins className="size-7 text-[#4B5563]" />
+                <div className="size-14 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
+                  <Coins className="size-7 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-bold text-[#FFFCF7]">
+                <h3 className="text-lg font-bold text-foreground">
                   You&apos;ve used your free analyses
                 </h3>
-                <p className="text-[12px] text-[#6B7280] mt-1">
+                <p className="text-[12px] text-muted-foreground mt-1">
                   Get unlimited access to all vehicle reports
                 </p>
 
@@ -2075,8 +2075,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     "Personal collector advisor",
                   ].map((benefit) => (
                     <div key={benefit} className="flex items-center gap-2.5">
-                      <CheckCircle2 className="size-3.5 text-[#F8B4D9] shrink-0" />
-                      <span className="text-[12px] text-[#9CA3AF]">{benefit}</span>
+                      <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                      <span className="text-[12px] text-muted-foreground">{benefit}</span>
                     </div>
                   ))}
                 </div>
@@ -2087,7 +2087,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 mt-6 rounded-xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[13px] hover:bg-[#f4cbde] transition-all"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 mt-6 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
                 >
                   <MessageCircle className="size-4" />
                   Contact us to upgrade
@@ -2095,7 +2095,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
                 <button
                   onClick={() => setShowPaywall(false)}
-                  className="w-full py-3 mt-2 text-[12px] text-[#6B7280] hover:text-[#9CA3AF] transition-colors"
+                  className="w-full py-3 mt-2 text-[12px] text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   Maybe later
                 </button>

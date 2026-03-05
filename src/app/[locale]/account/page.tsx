@@ -17,23 +17,23 @@ export default function AccountPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#0b0b10] pt-24 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background pt-24 flex items-center justify-center px-4">
         <AuthRequiredPrompt message="Sign in to view your account and billing" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] pt-24 pb-16">
+    <div className="min-h-screen bg-background pt-24 pb-16">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="flex items-center justify-center size-12 rounded-full bg-[#F8B4D9]/10 border border-[#F8B4D9]/20">
-            <User className="size-5 text-[#F8B4D9]" />
+          <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 border border-primary/20">
+            <User className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#FFFCF7]">My Account</h1>
-            <p className="text-[12px] text-[#6B7280]">
+            <h1 className="text-xl font-bold text-foreground">My Account</h1>
+            <p className="text-[12px] text-muted-foreground">
               {profile?.email || user.email}
             </p>
           </div>

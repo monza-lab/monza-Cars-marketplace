@@ -35,16 +35,16 @@ export function BillingDashboard() {
   return (
     <div className="space-y-6">
       {/* Credit Balance Card */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+      <div className="rounded-2xl border border-border bg-foreground/2 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex items-center justify-center size-8 rounded-lg bg-[#F8B4D9]/10">
-            <Coins className="size-4 text-[#F8B4D9]" />
+          <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10">
+            <Coins className="size-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-[14px] font-semibold text-[#FFFCF7]">
+            <h3 className="text-[14px] font-semibold text-foreground">
               Credit Balance
             </h3>
-            <p className="text-[11px] text-[#6B7280]">
+            <p className="text-[11px] text-muted-foreground">
               Your available report credits
             </p>
           </div>
@@ -54,37 +54,37 @@ export function BillingDashboard() {
         <div className="mb-5">
           <span
             className={`text-4xl font-bold ${
-              credits > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"
+              credits > 0 ? "text-primary" : "text-[#FB923C]"
             }`}
           >
             {credits}
           </span>
-          <span className="text-[15px] text-[#6B7280] ml-2">credits</span>
+          <span className="text-[15px] text-muted-foreground ml-2">credits</span>
         </div>
 
         {/* Breakdown */}
         <div className="space-y-2 mb-5">
-          <div className="flex items-center justify-between py-2 border-b border-white/5">
-            <span className="text-[12px] text-[#9CA3AF]">Free Reports</span>
-            <span className="text-[12px] text-[#D1D5DB]">
+          <div className="flex items-center justify-between py-2 border-b border-border">
+            <span className="text-[12px] text-muted-foreground">Free Reports</span>
+            <span className="text-[12px] text-muted-foreground">
               {freeUsed} of 3 used
             </span>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-white/5">
-            <span className="text-[12px] text-[#9CA3AF]">
+          <div className="flex items-center justify-between py-2 border-b border-border">
+            <span className="text-[12px] text-muted-foreground">
               Purchased Credits
             </span>
-            <span className="text-[12px] text-[#D1D5DB]">
+            <span className="text-[12px] text-muted-foreground">
               {Math.max(0, credits - (3 - freeUsed))} credits
             </span>
           </div>
           <div className="flex items-center justify-between py-2">
-            <span className="text-[12px] text-[#9CA3AF]">Current Plan</span>
+            <span className="text-[12px] text-muted-foreground">Current Plan</span>
             <span
               className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                 tier === "PRO"
-                  ? "bg-[#F8B4D9]/10 text-[#F8B4D9]"
-                  : "bg-white/5 text-[#6B7280]"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-foreground/5 text-muted-foreground"
               }`}
             >
               {tier}
@@ -96,7 +96,7 @@ export function BillingDashboard() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-[12px] font-medium text-[#D1D5DB] hover:bg-white/[0.08] transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-foreground/4 border border-border text-[12px] font-medium text-muted-foreground hover:bg-foreground/8 transition-colors"
           >
             <RefreshCw
               className={`size-3.5 ${refreshing ? "animate-spin" : ""}`}
@@ -105,7 +105,7 @@ export function BillingDashboard() {
           </button>
           <button
             onClick={() => handleSelectPlan("starter")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold hover:bg-[#f4cbde] transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary/80 transition-colors"
           >
             <Coins className="size-3.5" />
             Buy Credits — $12.99
@@ -114,11 +114,11 @@ export function BillingDashboard() {
       </div>
 
       {/* Upgrade Section */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-        <h3 className="text-[14px] font-semibold text-[#FFFCF7] mb-1">
+      <div className="rounded-2xl border border-border bg-foreground/2 p-6">
+        <h3 className="text-[14px] font-semibold text-foreground mb-1">
           Upgrade Your Plan
         </h3>
-        <p className="text-[12px] text-[#6B7280] mb-6">
+        <p className="text-[12px] text-muted-foreground mb-6">
           Get more reports with a credit pack or unlimited subscription
         </p>
 
@@ -129,27 +129,27 @@ export function BillingDashboard() {
               key={plan.id}
               className={`relative p-5 rounded-xl border transition-all ${
                 plan.badge
-                  ? "border-[#F8B4D9]/50 bg-[#F8B4D9]/[0.03]"
-                  : "border-white/10 bg-white/[0.02]"
+                  ? "border-primary/50 bg-primary/[0.03]"
+                  : "border-border bg-foreground/2"
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-2.5 right-4 text-[9px] uppercase tracking-wider px-2 py-0.5 bg-[#F8B4D9] text-[#0b0b10] rounded-full font-bold">
+                <span className="absolute -top-2.5 right-4 text-[9px] uppercase tracking-wider px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-bold">
                   {plan.badge}
                 </span>
               )}
-              <h4 className="text-[13px] font-semibold text-[#FFFCF7] mb-1">
+              <h4 className="text-[13px] font-semibold text-foreground mb-1">
                 {plan.name}
               </h4>
               <div className="mb-1">
-                <span className="text-2xl font-bold text-[#FFFCF7]">
+                <span className="text-2xl font-bold text-foreground">
                   ${plan.price}
                 </span>
-                <span className="text-[11px] text-[#6B7280] ml-1">
+                <span className="text-[11px] text-muted-foreground ml-1">
                   {plan.period === "monthly" ? "/mo" : "one-time"}
                 </span>
               </div>
-              <p className="text-[11px] text-[#9CA3AF] mb-4">
+              <p className="text-[11px] text-muted-foreground mb-4">
                 {plan.credits === "unlimited"
                   ? "Unlimited reports/month"
                   : `${plan.credits} reports, never expire`}
@@ -158,8 +158,8 @@ export function BillingDashboard() {
                 onClick={() => handleSelectPlan(plan.id)}
                 className={`w-full py-2.5 rounded-lg text-[12px] font-semibold transition-colors ${
                   plan.badge
-                    ? "bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde]"
-                    : "bg-white/[0.06] text-[#FFFCF7] border border-white/10 hover:bg-white/10"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                    : "bg-foreground/6 text-foreground border border-border hover:bg-foreground/10"
                 }`}
               >
                 {plan.id === "pro" ? "Subscribe" : "Buy Now"}

@@ -168,14 +168,14 @@ export function OnboardingModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b0b10]/90 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-md p-4"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="relative w-full max-w-lg bg-[#0F1012] border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-black/60"
+            className="relative w-full max-w-lg bg-card border border-border rounded-3xl overflow-hidden shadow-2xl shadow-black/60"
           >
             {/* Progress dots */}
             <div className="flex items-center justify-center gap-2 pt-6 pb-2">
@@ -184,10 +184,10 @@ export function OnboardingModal() {
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     i === step
-                      ? "w-8 bg-[#F8B4D9]"
+                      ? "w-8 bg-primary"
                       : i < step
-                        ? "w-4 bg-[#F8B4D9]/40"
-                        : "w-4 bg-white/10"
+                        ? "w-4 bg-primary/40"
+                        : "w-4 bg-foreground/10"
                   }`}
                 />
               ))}
@@ -209,16 +209,16 @@ export function OnboardingModal() {
                   {/* ─── Step 1: Region (multi-select) ─── */}
                   {step === 0 && (
                     <div>
-                      <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+                      <div className="flex items-center gap-2 text-primary mb-3">
                         <MapPin className="size-4" />
                         <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
                           {t("step")} 1
                         </span>
                       </div>
-                      <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
+                      <h2 className="text-xl font-light text-foreground mb-1">
                         {t("regionTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(255,252,247,0.4)] mb-6">
+                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-6">
                         {t("regionDesc")}
                       </p>
                       <div className="space-y-2">
@@ -230,27 +230,27 @@ export function OnboardingModal() {
                               onClick={() => toggleRegion(r.id)}
                               className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border transition-all ${
                                 selected
-                                  ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
-                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                                  ? "border-primary/40 bg-primary/8"
+                                  : "border-border bg-foreground/2 hover:bg-foreground/4"
                               }`}
                             >
                               <span className="text-xl">{r.flag}</span>
                               <span
                                 className={`text-[14px] font-medium ${
-                                  selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                  selected ? "text-foreground" : "text-muted-foreground"
                                 }`}
                               >
                                 {r.id === "other" ? t("other") : r.label}
                               </span>
                               {selected && (
-                                <Check className="size-4 text-[#F8B4D9] ml-auto" />
+                                <Check className="size-4 text-primary ml-auto" />
                               )}
                             </button>
                           )
                         })}
                       </div>
                       {regions.length > 1 && (
-                        <p className="text-[11px] text-[#F8B4D9]/60 mt-3 text-center">
+                        <p className="text-[11px] text-primary/60 mt-3 text-center">
                           {regions.length} {t("regionsSelected") ?? "regions selected"}
                         </p>
                       )}
@@ -260,16 +260,16 @@ export function OnboardingModal() {
                   {/* ─── Step 2: Brands (optional — Porsche is implicit) ─── */}
                   {step === 1 && (
                     <div>
-                      <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+                      <div className="flex items-center gap-2 text-primary mb-3">
                         <Car className="size-4" />
                         <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
                           {t("step")} 2
                         </span>
                       </div>
-                      <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
+                      <h2 className="text-xl font-light text-foreground mb-1">
                         {t("brandsTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(255,252,247,0.4)] mb-5">
+                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-5">
                         {t("brandsDesc")}
                       </p>
                       <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto no-scrollbar pr-1">
@@ -281,26 +281,26 @@ export function OnboardingModal() {
                               onClick={() => toggleBrand(brand)}
                               className={`relative flex items-center gap-2.5 px-3.5 py-3 rounded-xl border transition-all text-left ${
                                 selected
-                                  ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
-                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                                  ? "border-primary/40 bg-primary/8"
+                                  : "border-border bg-foreground/2 hover:bg-foreground/4"
                               }`}
                             >
                               <span
                                 className={`text-[13px] font-medium truncate ${
-                                  selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                  selected ? "text-foreground" : "text-muted-foreground"
                                 }`}
                               >
                                 {brand}
                               </span>
                               {selected && (
-                                <Check className="size-3.5 text-[#F8B4D9] ml-auto shrink-0" />
+                                <Check className="size-3.5 text-primary ml-auto shrink-0" />
                               )}
                             </button>
                           )
                         })}
                       </div>
                       {brands.length === 0 && (
-                        <p className="text-[11px] text-[rgba(255,252,247,0.3)] mt-3 text-center">
+                        <p className="text-[11px] text-[rgba(232,226,222,0.3)] mt-3 text-center">
                           {t("brandsOptional")}
                         </p>
                       )}
@@ -310,22 +310,22 @@ export function OnboardingModal() {
                   {/* ─── Step 3: Porsche Models (multi-select) ─── */}
                   {step === 2 && (
                     <div>
-                      <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+                      <div className="flex items-center gap-2 text-primary mb-3">
                         <Shield className="size-4" />
                         <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
                           {t("step")} 3
                         </span>
                       </div>
-                      <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
+                      <h2 className="text-xl font-light text-foreground mb-1">
                         {t("modelsTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(255,252,247,0.4)] mb-5">
+                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-5">
                         {t("modelsDesc")}
                       </p>
                       <div className="max-h-[290px] overflow-y-auto no-scrollbar space-y-4 pr-1">
                         {PORSCHE_FAMILIES.map((family) => (
                           <div key={family.id}>
-                            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-2">
+                            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-2">
                               {family.label}
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -337,22 +337,22 @@ export function OnboardingModal() {
                                     onClick={() => toggleModel(s.id)}
                                     className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border transition-all ${
                                       selected
-                                        ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
-                                        : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                                        ? "border-primary/40 bg-primary/8"
+                                        : "border-border bg-foreground/2 hover:bg-foreground/4"
                                     }`}
                                   >
                                     <span
                                       className={`text-[13px] font-medium ${
-                                        selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                        selected ? "text-foreground" : "text-muted-foreground"
                                       }`}
                                     >
                                       {s.label}
                                     </span>
-                                    <span className="text-[9px] text-[#4B5563]">
+                                    <span className="text-[9px] text-muted-foreground">
                                       {s.yearRange[0]}{s.yearRange[1] < 2026 ? `–${String(s.yearRange[1]).slice(2)}` : "+"}
                                     </span>
                                     {selected && (
-                                      <Check className="size-3 text-[#F8B4D9] shrink-0" />
+                                      <Check className="size-3 text-primary shrink-0" />
                                     )}
                                   </button>
                                 )
@@ -362,7 +362,7 @@ export function OnboardingModal() {
                         ))}
                       </div>
                       {models.length > 0 && (
-                        <p className="text-[11px] text-[#F8B4D9]/60 mt-3 text-center">
+                        <p className="text-[11px] text-primary/60 mt-3 text-center">
                           {models.length} {t("modelsSelected")}
                         </p>
                       )}
@@ -372,16 +372,16 @@ export function OnboardingModal() {
                   {/* ─── Step 4: Intent ─── */}
                   {step === 3 && (
                     <div>
-                      <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+                      <div className="flex items-center gap-2 text-primary mb-3">
                         <Target className="size-4" />
                         <span className="text-[10px] font-semibold tracking-[0.25em] uppercase">
                           {t("step")} 4
                         </span>
                       </div>
-                      <h2 className="text-xl font-light text-[#FFFCF7] mb-1">
+                      <h2 className="text-xl font-light text-foreground mb-1">
                         {t("intentTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(255,252,247,0.4)] mb-6">
+                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-6">
                         {t("intentDesc")}
                       </p>
                       <div className="space-y-3">
@@ -394,37 +394,37 @@ export function OnboardingModal() {
                               onClick={() => setIntent(opt.id)}
                               className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border transition-all text-left ${
                                 selected
-                                  ? "border-[#F8B4D9]/40 bg-[rgba(248,180,217,0.08)]"
-                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                                  ? "border-primary/40 bg-primary/8"
+                                  : "border-border bg-foreground/2 hover:bg-foreground/4"
                               }`}
                             >
                               <div
                                 className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
                                   selected
-                                    ? "bg-[#F8B4D9]/15"
-                                    : "bg-white/[0.04]"
+                                    ? "bg-primary/15"
+                                    : "bg-foreground/4"
                                 }`}
                               >
                                 <Icon
                                   className={`size-5 ${
-                                    selected ? "text-[#F8B4D9]" : "text-[#6B7280]"
+                                    selected ? "text-primary" : "text-muted-foreground"
                                   }`}
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p
                                   className={`text-[14px] font-medium ${
-                                    selected ? "text-[#FFFCF7]" : "text-[#9CA3AF]"
+                                    selected ? "text-foreground" : "text-muted-foreground"
                                   }`}
                                 >
                                   {t(opt.titleKey)}
                                 </p>
-                                <p className="text-[12px] text-[rgba(255,252,247,0.3)] mt-0.5">
+                                <p className="text-[12px] text-[rgba(232,226,222,0.3)] mt-0.5">
                                   {t(opt.descKey)}
                                 </p>
                               </div>
                               {selected && (
-                                <Check className="size-4 text-[#F8B4D9] shrink-0" />
+                                <Check className="size-4 text-primary shrink-0" />
                               )}
                             </button>
                           )
@@ -442,7 +442,7 @@ export function OnboardingModal() {
               {step > 0 ? (
                 <button
                   onClick={goBack}
-                  className="flex items-center gap-1 text-[12px] font-medium text-[#6B7280] hover:text-[#9CA3AF] transition-colors"
+                  className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   <ChevronLeft className="size-3.5" />
                   {t("back")}
@@ -450,7 +450,7 @@ export function OnboardingModal() {
               ) : (
                 <button
                   onClick={skip}
-                  className="text-[12px] font-medium text-[#4B5563] hover:text-[#6B7280] transition-colors"
+                  className="text-[12px] font-medium text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
                   {t("skip")}
                 </button>
@@ -462,8 +462,8 @@ export function OnboardingModal() {
                 disabled={!canProceed()}
                 className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-[12px] font-semibold tracking-wide transition-all ${
                   canProceed()
-                    ? "bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde]"
-                    : "bg-white/[0.06] text-[#4B5563] cursor-not-allowed"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/80"
+                    : "bg-foreground/6 text-muted-foreground cursor-not-allowed"
                 }`}
               >
                 {step === TOTAL_STEPS - 1 ? t("finish") : t("next")}

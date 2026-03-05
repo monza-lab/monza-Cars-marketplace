@@ -57,7 +57,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
   if (!car) {
     if (isLiveId && liveLookupTransientError) {
       return (
-        <div className="min-h-screen bg-[#0b0b10] flex items-center justify-center px-6 text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center px-6 text-center">
           <div className="max-w-xl space-y-4">
             <h1 className="text-2xl font-semibold text-white">Live report temporarily unavailable</h1>
             <p className="text-zinc-400">
@@ -97,11 +97,11 @@ export default async function ReportPage({ params }: ReportPageProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0b0b10] flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
               <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
-              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-[#F8B4D9] border-t-transparent animate-spin" />
+              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             </div>
             <p className="text-sm text-zinc-500">Loading report...</p>
           </div>

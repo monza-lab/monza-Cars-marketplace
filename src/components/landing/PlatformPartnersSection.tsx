@@ -7,10 +7,10 @@ const platforms = [
     name: "Bring a Trailer",
     abbreviation: "BaT",
     description: "The premier online auction platform for enthusiast vehicles",
-    color: "text-[#F8B4D9]",
-    bgColor: "bg-[rgba(248,180,217,0.06)]",
-    borderColor: "border-[rgba(248,180,217,0.1)]",
-    hoverBorder: "hover:border-[rgba(248,180,217,0.25)]",
+    color: "text-primary",
+    bgColor: "bg-primary/6",
+    borderColor: "border-primary/10",
+    hoverBorder: "hover:border-primary/25",
   },
   {
     name: "Cars & Bids",
@@ -44,13 +44,13 @@ export function PlatformPartnersSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <span className="mb-4 inline-block text-[11px] font-medium tracking-[0.2em] uppercase text-[#F8B4D9]">
+          <span className="mb-4 inline-block text-[11px] font-medium tracking-[0.2em] uppercase text-primary">
             Platform Partners
           </span>
-          <h2 className="text-3xl font-light tracking-tight text-[#FFFCF7] sm:text-4xl">
+          <h2 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
             The Best Auctions, <span className="font-semibold text-gradient">One Platform</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-[rgba(255,252,247,0.4)] font-light">
+          <p className="mx-auto mt-4 max-w-lg text-sm text-[rgba(232,226,222,0.4)] font-light">
             Aggregating the best auctions from the world&apos;s premier platforms.
           </p>
         </motion.div>
@@ -60,7 +60,7 @@ export function PlatformPartnersSection() {
           {platforms.map((platform, index) => (
             <motion.div
               key={platform.name}
-              className={`group relative flex flex-col items-center gap-4 rounded-2xl border ${platform.borderColor} ${platform.hoverBorder} bg-[rgba(15,14,22,0.7)] p-8 text-center transition-all duration-300 hover:shadow-2xl hover:shadow-[rgba(248,180,217,0.03)]`}
+              className={`group relative flex flex-col items-center gap-4 rounded-2xl border ${platform.borderColor} ${platform.hoverBorder} bg-card p-8 text-center transition-all duration-300 hover:shadow-2xl hover:shadow-primary/3`}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -75,11 +75,11 @@ export function PlatformPartnersSection() {
                 </span>
               </div>
 
-              <h3 className="text-base font-semibold text-[#FFFCF7]">
+              <h3 className="text-base font-semibold text-foreground">
                 {platform.name}
               </h3>
 
-              <p className="text-sm text-[rgba(255,252,247,0.4)] font-light">
+              <p className="text-sm text-[rgba(232,226,222,0.4)] font-light">
                 {platform.description}
               </p>
             </motion.div>
@@ -94,11 +94,11 @@ export function PlatformPartnersSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(248,180,217,0.1)]" />
-          <span className="shrink-0 text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.25)]">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/10" />
+          <span className="shrink-0 text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.25)]">
             Unified in Monza Lab
           </span>
-          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(248,180,217,0.1)]" />
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/10" />
         </motion.div>
       </div>
     </section>

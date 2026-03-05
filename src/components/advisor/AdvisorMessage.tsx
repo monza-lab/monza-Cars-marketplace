@@ -16,7 +16,7 @@ function RichContent({ text }: { text: string }) {
         const parts = line.split(/(\*\*[^*]+\*\*)/g)
         const rendered = parts.map((part, j) => {
           if (part.startsWith("**") && part.endsWith("**")) {
-            return <span key={j} className="font-semibold text-[#FFFCF7]">{part.slice(2, -2)}</span>
+            return <span key={j} className="font-semibold text-foreground">{part.slice(2, -2)}</span>
           }
           return <span key={j}>{part}</span>
         })
@@ -25,7 +25,7 @@ function RichContent({ text }: { text: string }) {
         if (/^\d+\.\s/.test(line)) {
           return (
             <div key={i} className="flex gap-2 pl-1 py-0.5">
-              <span className="text-[#F8B4D9] shrink-0 font-mono text-[11px] mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
+              <span className="text-primary shrink-0 font-mono text-[11px] mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
               <span>{rendered.slice(1)}</span>
             </div>
           )
@@ -35,19 +35,19 @@ function RichContent({ text }: { text: string }) {
         if (line.startsWith("- ")) {
           return (
             <div key={i} className="flex gap-2 pl-1 py-0.5">
-              <span className="text-[#F8B4D9] shrink-0 mt-1">
-                <span className="block size-1 rounded-full bg-[#F8B4D9]" />
+              <span className="text-primary shrink-0 mt-1">
+                <span className="block size-1 rounded-full bg-primary" />
               </span>
               <span>{parts.slice(1).map((part, j) => {
                 const inner = part.replace(/^-\s*/, "")
                 if (inner.startsWith("**") && inner.endsWith("**")) {
-                  return <span key={j} className="font-semibold text-[#FFFCF7]">{inner.slice(2, -2)}</span>
+                  return <span key={j} className="font-semibold text-foreground">{inner.slice(2, -2)}</span>
                 }
                 // Handle mixed: "**Bold:** rest"
                 const boldParts = inner.split(/(\*\*[^*]+\*\*)/g)
                 return boldParts.map((bp, k) => {
                   if (bp.startsWith("**") && bp.endsWith("**")) {
-                    return <span key={`${j}-${k}`} className="font-semibold text-[#FFFCF7]">{bp.slice(2, -2)}</span>
+                    return <span key={`${j}-${k}`} className="font-semibold text-foreground">{bp.slice(2, -2)}</span>
                   }
                   return <span key={`${j}-${k}`}>{bp}</span>
                 })
@@ -72,16 +72,16 @@ function ReportCtaCard({ cta, onGenerate }: { cta: ReportCtaData; onGenerate?: (
     return (
       <Link
         href={`/cars/${cta.make.toLowerCase().replace(/\s+/g, "-")}/${cta.carId}/report`}
-        className="mt-3 flex items-center gap-3 rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] p-3 hover:bg-[rgba(248,180,217,0.1)] transition-colors group"
+        className="mt-3 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/6 p-3 hover:bg-primary/10 transition-colors group"
       >
-        <div className="size-9 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
-          <FileText className="size-4 text-[#F8B4D9]" />
+        <div className="size-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+          <FileText className="size-4 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-semibold text-[#FFFCF7]">View Report</p>
-          <p className="text-[10px] text-[#6B7280] truncate">{cta.carTitle}</p>
+          <p className="text-[12px] font-semibold text-foreground">View Report</p>
+          <p className="text-[10px] text-muted-foreground truncate">{cta.carTitle}</p>
         </div>
-        <ExternalLink className="size-4 text-[#F8B4D9] shrink-0" />
+        <ExternalLink className="size-4 text-primary shrink-0" />
       </Link>
     )
   }
@@ -90,16 +90,16 @@ function ReportCtaCard({ cta, onGenerate }: { cta: ReportCtaData; onGenerate?: (
     return (
       <button
         onClick={() => onGenerate?.(cta.carId)}
-        className="mt-3 w-full flex items-center gap-3 rounded-xl border border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] p-3 hover:bg-[rgba(248,180,217,0.15)] transition-colors group text-left"
+        className="mt-3 w-full flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/8 p-3 hover:bg-primary/15 transition-colors group text-left"
       >
-        <div className="size-9 rounded-lg bg-[rgba(248,180,217,0.15)] flex items-center justify-center shrink-0">
-          <FileText className="size-4 text-[#F8B4D9]" />
+        <div className="size-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+          <FileText className="size-4 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-semibold text-[#FFFCF7]">Generate Report</p>
-          <p className="text-[10px] text-[#6B7280]">1,000 tokens ({cta.analysesRemaining} remaining)</p>
+          <p className="text-[12px] font-semibold text-foreground">Generate Report</p>
+          <p className="text-[10px] text-muted-foreground">1,000 tokens ({cta.analysesRemaining} remaining)</p>
         </div>
-        <ChevronRight className="size-4 text-[#F8B4D9] group-hover:translate-x-0.5 transition-transform shrink-0" />
+        <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform shrink-0" />
       </button>
     )
   }
@@ -107,16 +107,16 @@ function ReportCtaCard({ cta, onGenerate }: { cta: ReportCtaData; onGenerate?: (
   return (
     <Link
       href="/pricing"
-      className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 hover:bg-white/[0.06] transition-colors group"
+      className="mt-3 flex items-center gap-3 rounded-xl border border-border bg-foreground/3 p-3 hover:bg-foreground/6 transition-colors group"
     >
-      <div className="size-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-        <FileText className="size-4 text-[#6B7280]" />
+      <div className="size-9 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
+        <FileText className="size-4 text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-[#FFFCF7]">Upgrade to Generate Reports</p>
-        <p className="text-[10px] text-[#6B7280]">Full investment analysis with comparables</p>
+        <p className="text-[12px] font-semibold text-foreground">Upgrade to Generate Reports</p>
+        <p className="text-[10px] text-muted-foreground">Full investment analysis with comparables</p>
       </div>
-      <ChevronRight className="size-4 text-[#6B7280] group-hover:translate-x-0.5 transition-transform shrink-0" />
+      <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
     </Link>
   )
 }
@@ -130,7 +130,7 @@ function QuickActionChips({ actions, onAction }: { actions: QuickAction[]; onAct
         <button
           key={action.id}
           onClick={() => onAction(action.prompt)}
-          className="text-[11px] px-3 py-1.5 rounded-full border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] text-[#F8B4D9] hover:bg-[rgba(248,180,217,0.15)] transition-colors"
+          className="text-[11px] px-3 py-1.5 rounded-full border border-primary/20 bg-primary/6 text-primary hover:bg-primary/15 transition-colors"
         >
           {action.label}
         </button>
@@ -160,12 +160,12 @@ export function MessageBubble({ message, onQuickAction, onGenerateReport }: Prop
       {/* Avatar */}
       <div className={`size-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
         isUser
-          ? "bg-[rgba(248,180,217,0.15)] border border-[rgba(248,180,217,0.2)]"
-          : "bg-[rgba(248,180,217,0.1)] border border-white/5"
+          ? "bg-primary/15 border border-primary/20"
+          : "bg-primary/10 border border-border"
       }`}>
         {isUser
-          ? <User className="size-3.5 text-[#F8B4D9]" />
-          : <Bot className="size-3.5 text-[#F8B4D9]" />
+          ? <User className="size-3.5 text-primary" />
+          : <Bot className="size-3.5 text-primary" />
         }
       </div>
 
@@ -173,8 +173,8 @@ export function MessageBubble({ message, onQuickAction, onGenerateReport }: Prop
       <div className={`flex-1 min-w-0 ${isUser ? "flex flex-col items-end" : ""}`}>
         <div className={`rounded-2xl px-4 py-3 max-w-[90%] ${
           isUser
-            ? "bg-[rgba(248,180,217,0.15)] border border-[rgba(248,180,217,0.2)] text-[#FFFCF7]"
-            : "bg-white/[0.04] border border-white/5 text-[#D1D5DB]"
+            ? "bg-primary/15 border border-primary/20 text-foreground"
+            : "bg-foreground/4 border border-border text-muted-foreground"
         }`}>
           {isUser
             ? <p className="text-[13px] leading-relaxed">{message.content}</p>
@@ -205,15 +205,15 @@ export function MessageBubble({ message, onQuickAction, onGenerateReport }: Prop
 export function TypingIndicator() {
   return (
     <div className="flex gap-2.5">
-      <div className="size-7 rounded-full bg-[rgba(248,180,217,0.1)] border border-white/5 flex items-center justify-center shrink-0">
-        <Bot className="size-3.5 text-[#F8B4D9]" />
+      <div className="size-7 rounded-full bg-primary/10 border border-border flex items-center justify-center shrink-0">
+        <Bot className="size-3.5 text-primary" />
       </div>
-      <div className="rounded-2xl px-4 py-3 bg-white/[0.04] border border-white/5">
+      <div className="rounded-2xl px-4 py-3 bg-foreground/4 border border-border">
         <div className="flex gap-1">
           {[0, 1, 2].map(i => (
             <motion.div
               key={i}
-              className="size-1.5 rounded-full bg-[#F8B4D9]"
+              className="size-1.5 rounded-full bg-primary"
               animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
             />

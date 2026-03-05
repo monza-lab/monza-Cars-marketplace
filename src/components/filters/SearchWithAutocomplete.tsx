@@ -151,33 +151,33 @@ function ResultItem({ result, onSelect, isActive }: { result: SearchResult; onSe
       onClick={onSelect}
       className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all ${
         isActive
-          ? "bg-[#F8B4D9]/10 border-l-2 border-[#F8B4D9]"
-          : "hover:bg-white/[0.03]"
+          ? "bg-primary/10 border-l-2 border-primary"
+          : "hover:bg-foreground/3"
       }`}
     >
-      <Icon className={`size-4 ${isActive ? "text-[#F8B4D9]" : "text-[#6B7280]"}`} />
+      <Icon className={`size-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
       <div className="flex-1 text-left">
         <div className="flex items-center gap-2">
-          <span className={`text-[12px] font-medium ${isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>
+          <span className={`text-[12px] font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>
             {result.name}
           </span>
           {result.generation && (
-            <span className="text-[9px] text-[#6B7280] font-mono">
+            <span className="text-[9px] text-muted-foreground font-mono">
               {result.generation}
             </span>
           )}
         </div>
         {result.subtitle && (
-          <span className="text-[10px] text-[#6B7280]">
+          <span className="text-[10px] text-muted-foreground">
             {result.subtitle}
           </span>
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-mono text-[#6B7280]">
+        <span className="text-[10px] font-mono text-muted-foreground">
           {result.count}
         </span>
-        <ArrowRight className="size-3 text-[#6B7280]" />
+        <ArrowRight className="size-3 text-muted-foreground" />
       </div>
     </button>
   )
@@ -271,7 +271,7 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
     <div className="relative">
       {/* INPUT */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <input
           ref={inputRef}
           type="text"
@@ -283,12 +283,12 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
             setActiveIndex(0)
           }}
           onFocus={() => setIsOpen(true)}
-          className="w-full pl-10 pr-10 py-2.5 bg-white/[0.03] border border-white/10 rounded-lg text-[12px] text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none focus:border-[#F8B4D9]/50 focus:ring-1 focus:ring-[#F8B4D9]/30 transition-all"
+          className="w-full pl-10 pr-10 py-2.5 bg-foreground/3 border border-border rounded-lg text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -304,14 +304,14 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 w-full mt-2 bg-[#0A0A0A]/98 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden"
+            className="absolute z-50 w-full mt-2 bg-background/98 backdrop-blur-xl border border-border rounded-xl shadow-2xl shadow-black/50 overflow-hidden"
           >
             {/* Search Results */}
             {results.length > 0 && (
-              <div className="border-b border-white/5">
+              <div className="border-b border-border">
                 <div className="px-4 py-2 flex items-center gap-2">
-                  <Search className="size-3 text-[#F8B4D9]" />
-                  <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                  <Search className="size-3 text-primary" />
+                  <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                     Resultados ({results.length})
                   </span>
                 </div>
@@ -332,8 +332,8 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
             {popularResults.length > 0 && (
               <div>
                 <div className="px-4 py-2 flex items-center gap-2">
-                  <Scale className="size-3 text-[#F8B4D9]" />
-                  <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+                  <Scale className="size-3 text-primary" />
+                  <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                     Búsquedas Populares
                   </span>
                 </div>
@@ -351,15 +351,15 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
             )}
 
             {/* Keyboard hint */}
-            <div className="px-4 py-2 border-t border-white/5 flex items-center justify-center gap-4">
-              <span className="text-[9px] text-[#6B7280]">
-                <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-[8px]">↑↓</kbd> navegar
+            <div className="px-4 py-2 border-t border-border flex items-center justify-center gap-4">
+              <span className="text-[9px] text-muted-foreground">
+                <kbd className="px-1.5 py-0.5 bg-foreground/5 rounded text-[8px]">↑↓</kbd> navegar
               </span>
-              <span className="text-[9px] text-[#6B7280]">
-                <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-[8px]">Enter</kbd> seleccionar
+              <span className="text-[9px] text-muted-foreground">
+                <kbd className="px-1.5 py-0.5 bg-foreground/5 rounded text-[8px]">Enter</kbd> seleccionar
               </span>
-              <span className="text-[9px] text-[#6B7280]">
-                <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-[8px]">Esc</kbd> cerrar
+              <span className="text-[9px] text-muted-foreground">
+                <kbd className="px-1.5 py-0.5 bg-foreground/5 rounded text-[8px]">Esc</kbd> cerrar
               </span>
             </div>
           </motion.div>

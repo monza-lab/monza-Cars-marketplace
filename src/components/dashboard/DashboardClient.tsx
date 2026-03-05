@@ -535,7 +535,7 @@ function BrandCard({ brand }: { brand: Brand }) {
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/${brand.slug}`}
-        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
@@ -551,17 +551,17 @@ function BrandCard({ brand }: { brand: Brand }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{brand.name}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{brand.name}</span>
             </div>
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
 
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+            <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
               {t("brandCard.carsCount", { count: brand.carCount })}
             </span>
           </div>
@@ -572,8 +572,8 @@ function BrandCard({ brand }: { brand: Brand }) {
               brand.topGrade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : brand.topGrade === "AA"
-                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                : "bg-white/20 text-white"
+                ? "bg-primary/30 text-primary"
+                : "bg-foreground/20 text-white"
             }`}>
               {brand.topGrade}
             </span>
@@ -581,33 +581,33 @@ function BrandCard({ brand }: { brand: Brand }) {
         </div>
 
         {/* BOTTOM: BRAND INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           {/* Brand name */}
           <div>
-            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {brand.name}
             </h2>
-            <p className="text-[13px] text-[#6B7280] mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               {brand.representativeCar}
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
             {/* Price Range */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-[#FFFCF7]">
+              <p className="text-[13px] font-mono text-foreground">
                 {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
               </p>
             </div>
 
             {/* Trend */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <TrendingUp className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.trend")}</span>
               </div>
@@ -616,11 +616,11 @@ function BrandCard({ brand }: { brand: Brand }) {
 
             {/* Collection */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
               </div>
-              <p className="text-[13px] text-[#FFFCF7]">{t("brandCard.vehiclesCount", { count: brand.carCount })}</p>
+              <p className="text-[13px] text-foreground">{t("brandCard.vehiclesCount", { count: brand.carCount })}</p>
             </div>
           </div>
 
@@ -630,13 +630,13 @@ function BrandCard({ brand }: { brand: Brand }) {
               {brand.categories.slice(0, 3).map((cat) => (
                 <span
                   key={cat}
-                  className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#9CA3AF]"
+                  className="px-3 py-1 rounded-full bg-foreground/5 text-[10px] text-muted-foreground"
                 >
                   {cat}
                 </span>
               ))}
               {brand.categories.length > 3 && (
-                <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-[#6B7280]">
+                <span className="px-3 py-1 rounded-full bg-foreground/5 text-[10px] text-muted-foreground">
                   {t("brandCard.more", { count: brand.categories.length - 3 })}
                 </span>
               )}
@@ -645,10 +645,10 @@ function BrandCard({ brand }: { brand: Brand }) {
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
               {t("brandCard.exploreCollection")}
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </Link>
@@ -669,7 +669,7 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
-        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5 group cursor-pointer hover:border-[rgba(248,180,217,0.2)] transition-all duration-300"
+        className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
@@ -685,17 +685,17 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{family.name}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{family.name}</span>
             </div>
           )}
 
           {/* Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
 
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+            <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
               {family.carCount} {family.carCount === 1 ? "car" : "cars"}
             </span>
           </div>
@@ -706,8 +706,8 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
               family.topGrade === "AAA"
                 ? "bg-emerald-500/30 text-emerald-300"
                 : family.topGrade === "AA"
-                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                : "bg-white/20 text-white"
+                ? "bg-primary/30 text-primary"
+                : "bg-foreground/20 text-white"
             }`}>
               {family.topGrade}
             </span>
@@ -715,54 +715,54 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
         </div>
 
         {/* BOTTOM: FAMILY INFO */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-between">
+        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
               Porsche
             </p>
-            <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight group-hover:text-[#F8B4D9] transition-colors">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {family.name}
             </h2>
-            <p className="text-[13px] text-[#6B7280] mt-1">
+            <p className="text-[13px] text-muted-foreground mt-1">
               {family.representativeCar}
             </p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-[#FFFCF7]">
+              <p className="text-[13px] font-mono text-foreground">
                 {formatPriceForRegion(family.priceMin, selectedRegion)}–{formatPriceForRegion(family.priceMax, selectedRegion)}
               </p>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Calendar className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Years</span>
               </div>
-              <p className="text-[13px] font-mono text-[#FFFCF7]">{yearLabel}</p>
+              <p className="text-[13px] font-mono text-foreground">{yearLabel}</p>
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[#6B7280]">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
               </div>
-              <p className="text-[13px] text-[#FFFCF7]">{family.carCount} listings</p>
+              <p className="text-[13px] text-foreground">{family.carCount} listings</p>
             </div>
           </div>
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
-            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] group-hover:text-[#F8B4D9] transition-colors">
+            <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
               Explore {family.name}
             </span>
-            <ChevronRight className="size-5 text-[#9CA3AF] group-hover:text-[#F8B4D9] group-hover:translate-x-1 transition-all" />
+            <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </Link>
@@ -782,7 +782,7 @@ function MobileRegionPills() {
     { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
   ]
   return (
-    <div className="sticky top-0 z-20 bg-[#0b0b10]/95 backdrop-blur-md border-b border-white/5 px-4 py-2.5">
+    <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border px-4 py-2.5">
       <div className="flex items-center gap-1">
         {REGIONS.map((region) => {
           const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
@@ -792,8 +792,8 @@ function MobileRegionPills() {
               onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all ${
                 isActive
-                  ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
-                  : "text-[#6B7280] hover:text-[#9CA3AF] bg-white/[0.03] border border-transparent"
+                  ? "bg-primary/15 text-primary border border-primary/25"
+                  : "text-muted-foreground hover:text-muted-foreground bg-foreground/3 border border-transparent"
               }`}
             >
               <span className="text-[12px]">{region.flag}</span>
@@ -827,13 +827,13 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-            <span className="text-[#6B7280] text-2xl font-bold">{brand.name}</span>
+          <div className="absolute inset-0 bg-card flex items-center justify-center">
+            <span className="text-muted-foreground text-2xl font-bold">{brand.name}</span>
           </div>
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
 
         {/* Grade badge */}
         <div className="absolute top-4 left-4">
@@ -841,8 +841,8 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
             brand.topGrade === "AAA"
               ? "bg-emerald-500/30 text-emerald-300"
               : brand.topGrade === "AA"
-                ? "bg-[rgba(248,180,217,0.3)] text-[#F8B4D9]"
-                : "bg-white/20 text-white"
+                ? "bg-primary/30 text-primary"
+                : "bg-foreground/20 text-white"
           }`}>
             {brand.topGrade}
           </span>
@@ -850,21 +850,21 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
 
         {/* Car count */}
         <div className="absolute top-4 right-4">
-          <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-[#FFFCF7]">
+          <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-foreground">
             {t("brandCard.carsCount", { count: brand.carCount })}
           </span>
         </div>
 
         {/* Overlaid info at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h2 className="text-3xl font-bold text-[#FFFCF7] tracking-tight">
+          <h2 className="text-3xl font-bold text-foreground tracking-tight">
             {brand.name}
           </h2>
-          <p className="text-[13px] text-[rgba(255,252,247,0.5)] mt-0.5">
+          <p className="text-[13px] text-[rgba(232,226,222,0.5)] mt-0.5">
             {brand.representativeCar}
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[16px] font-bold font-mono text-[#F8B4D9]">
+            <span className="text-[16px] font-display font-medium text-primary">
               {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
             </span>
             <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
@@ -874,14 +874,14 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
             {brand.categories.slice(0, 3).map((cat) => (
               <span
                 key={cat}
-                className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-[10px] text-[#FFFCF7]/70"
+                className="px-2.5 py-1 rounded-full bg-foreground/10 backdrop-blur-sm text-[10px] text-foreground/70"
               >
                 {cat}
               </span>
             ))}
           </div>
           {/* Inline CTA */}
-          <div className="flex items-center gap-1.5 mt-3 text-[#F8B4D9]">
+          <div className="flex items-center gap-1.5 mt-3 text-primary">
             <span className="text-[12px] font-semibold tracking-[0.1em] uppercase">
               {t("mobileFeed.viewCollection")}
             </span>
@@ -901,10 +901,10 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
   return (
     <Link
       href={`/cars/${brand.slug}`}
-      className="flex items-center gap-4 px-4 py-3.5 active:bg-white/[0.03] transition-colors"
+      className="flex items-center gap-4 px-4 py-3.5 active:bg-foreground/3 transition-colors"
     >
       {/* Thumbnail */}
-      <div className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-[#0F1012]">
+      <div className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-card">
         {brand.representativeImage ? (
           <Image
             src={brand.representativeImage}
@@ -917,21 +917,21 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Car className="size-5 text-[#6B7280]" />
+            <Car className="size-5 text-muted-foreground" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
+        <p className="text-[14px] font-semibold text-foreground truncate">
           {brand.name}
         </p>
-        <p className="text-[11px] text-[#6B7280] mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5">
           {t("mobileFeed.vehicles", { count: brand.carCount })}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] font-mono text-[#F8B4D9]">
+          <span className="text-[12px] font-mono text-primary">
             {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
           </span>
           <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
@@ -944,12 +944,12 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
           brand.topGrade === "AAA"
             ? "text-emerald-400"
             : brand.topGrade === "AA"
-              ? "text-[#F8B4D9]"
-              : "text-[#6B7280]"
+              ? "text-primary"
+              : "text-muted-foreground"
         }`}>
           {brand.topGrade}
         </span>
-        <ChevronRight className="size-4 text-[#4B5563]" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </div>
     </Link>
   )
@@ -982,16 +982,16 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
       {/* Section header */}
       <div className="px-4 py-3 flex items-center gap-2">
         <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
           {t("mobileFeed.liveAuctions")}
         </span>
-        <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
+        <span className="text-[10px] font-display font-medium text-primary">
           {totalLiveCount}
         </span>
       </div>
 
       {/* Auction rows */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {liveAuctions.map((auction) => {
           const isEndingSoon = auction.status === "ENDING_SOON"
           const remaining = timeLeft(auction.endTime, timeLabels)
@@ -1000,10 +1000,10 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
             <Link
               key={auction.id}
               href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="flex items-center gap-3 px-4 py-3 active:bg-white/[0.03] transition-colors"
+              className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-card">
                 {auction.images[0] ? (
                   <Image
                     src={auction.images[0]}
@@ -1016,21 +1016,21 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Car className="size-3.5 text-[#6B7280]" />
+                    <Car className="size-3.5 text-muted-foreground" />
                   </div>
                 )}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#FFFCF7] truncate">
+                <p className="text-[12px] font-semibold text-foreground truncate">
                   {auction.year} {auction.make} {auction.model}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                  <span className="text-[12px] font-display font-medium text-primary">
                     {formatPriceForRegion(auction.currentBid, selectedRegion)}
                   </span>
-                  <span className="text-[10px] text-[#6B7280]">
+                  <span className="text-[10px] text-muted-foreground">
                     {tAuction("bids.count", { count: auction.bidCount })}
                   </span>
                 </div>
@@ -1038,9 +1038,9 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
 
               {/* Time */}
               <div className="flex items-center gap-1 shrink-0">
-                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`} />
+                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
                 <span className={`text-[10px] font-mono font-medium ${
-                  isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"
+                  isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
                 }`}>
                   {remaining}
                 </span>
@@ -1067,30 +1067,30 @@ function BrandNavigationPanel({
   const { selectedRegion } = useRegion()
 
   return (
-    <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+    <div className="h-full flex flex-col border-r border-border overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 px-4 py-4 border-b border-white/5">
-        <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#9CA3AF]">
+      <div className="shrink-0 px-4 py-4 border-b border-border">
+        <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
           {t("brandNav.title")}
         </span>
-        <p className="mt-1 text-[12px] text-[#6B7280]">
+        <p className="mt-1 text-[12px] text-muted-foreground">
           {t("brandNav.manufacturers", { count: brands.length })}
         </p>
       </div>
 
       {/* Quick Stats */}
-      <div className="shrink-0 px-4 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.02)]">
+      <div className="shrink-0 px-4 py-3 border-b border-border bg-primary/2">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">
+            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
               {t("brandNav.totalCars")}
             </span>
-            <p className="text-[14px] font-bold text-[#FFFCF7] mt-0.5">
+            <p className="text-[14px] font-bold text-foreground mt-0.5">
               {brands.reduce((sum, b) => sum + b.carCount, 0).toLocaleString()}
             </p>
           </div>
           <div>
-            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">
+            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
               {t("brandNav.aaaBrands")}
             </span>
             <p className="text-[14px] font-bold text-positive mt-0.5">
@@ -1110,14 +1110,14 @@ function BrandNavigationPanel({
               key={brand.slug}
               onClick={() => onSelect(index)}
               className={`group relative w-full text-left px-4 py-3 transition-all duration-200 ${
-                isActive ? "bg-[rgba(248,180,217,0.08)]" : "hover:bg-white/[0.02]"
+                isActive ? "bg-primary/8" : "hover:bg-foreground/2"
               }`}
             >
               {/* Active indicator */}
               {isActive && (
                 <motion.div
                   layoutId="nav-active"
-                  className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#F8B4D9]"
+                  className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -1126,17 +1126,17 @@ function BrandNavigationPanel({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-[13px] font-semibold truncate transition-colors ${
-                    isActive ? "text-[#FFFCF7]" : "text-[#9CA3AF] group-hover:text-[#FFFCF7]"
+                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   }`}>
                     {brand.name}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[11px] font-mono ${
-                      isActive ? "text-[#F8B4D9]" : "text-[rgba(248,180,217,0.6)]"
+                      isActive ? "text-primary" : "text-primary/60"
                     }`}>
                       {t("brandNav.carsCount", { count: brand.carCount })}
                     </span>
-                    <span className="text-[9px] text-[#6B7280]">
+                    <span className="text-[9px] text-muted-foreground">
                       {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
                     </span>
                   </div>
@@ -1145,8 +1145,8 @@ function BrandNavigationPanel({
                 {/* Grade badge */}
                 <span className={`text-[10px] font-bold ${
                   brand.topGrade === "AAA" ? "text-positive" :
-                  brand.topGrade === "AA" ? "text-[#F8B4D9]" :
-                  "text-[#9CA3AF]"
+                  brand.topGrade === "AA" ? "text-primary" :
+                  "text-muted-foreground"
                 }`}>
                   {brand.topGrade}
                 </span>
@@ -1230,7 +1230,7 @@ function DiscoverySidebar({
       case "AAA": case "EXCELLENT": return "text-emerald-400"
       case "AA": case "GOOD": return "text-blue-400"
       case "A": case "FAIR": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -1242,17 +1242,17 @@ function DiscoverySidebar({
   }
 
   return (
-    <div className="h-full flex flex-col border-r border-white/5 overflow-hidden">
+    <div className="h-full flex flex-col border-r border-border overflow-hidden">
 
       {/* ═══ TOP HALF: FIND YOUR CAR ═══ */}
       <div className="flex-1 min-h-0 flex flex-col">
 
         {/* Section header */}
         <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-1.5">
-          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#6B7280]">
+          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
             {t("sidebar.popular")}
           </span>
-          <span className="text-[9px] font-mono text-[#6B7280]">
+          <span className="text-[9px] font-mono text-muted-foreground">
             {t("sidebar.brandsCount", { count: brands.length })}
           </span>
         </div>
@@ -1261,7 +1261,7 @@ function DiscoverySidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {brands.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
-              <p className="text-[11px] text-[#6B7280]">{t("sidebar.noResults")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("sidebar.noResults")}</p>
             </div>
           ) : (
             brands.map((brand) => {
@@ -1270,15 +1270,15 @@ function DiscoverySidebar({
                 <div key={brand.slug}>
                   <button
                     onClick={() => onSelectBrand(brand.slug)}
-                    className={`w-full text-left px-4 py-2.5 border-b border-white/[0.03] transition-all group ${
+                    className={`w-full text-left px-4 py-2.5 border-b border-border/50 transition-all group ${
                       isActive
-                        ? "bg-[rgba(248,180,217,0.06)] border-l-2 border-l-[#F8B4D9]"
-                        : "hover:bg-white/[0.02] border-l-2 border-l-transparent"
+                        ? "bg-primary/6 border-l-2 border-l-primary"
+                        : "hover:bg-foreground/2 border-l-2 border-l-transparent"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className={`text-[12px] font-semibold transition-colors ${
-                        isActive ? "text-[#F8B4D9]" : "text-[#FFFCF7] group-hover:text-[#F8B4D9]"
+                        isActive ? "text-primary" : "text-foreground group-hover:text-primary"
                       }`}>
                         {brand.name}
                       </span>
@@ -1286,16 +1286,16 @@ function DiscoverySidebar({
                         <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
                           {brand.topGrade}
                         </span>
-                        <span className="text-[10px] text-[#6B7280] font-mono">
+                        <span className="text-[10px] text-muted-foreground font-mono">
                           {brand.carCount}
                         </span>
                         <ChevronRight className={`size-3 transition-all ${
-                          isActive ? "text-[#F8B4D9] rotate-90" : "text-[#4B5563] group-hover:text-[#6B7280]"
+                          isActive ? "text-primary rotate-90" : "text-muted-foreground group-hover:text-muted-foreground"
                         }`} />
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-[10px] font-mono text-[#6B7280]">
+                      <span className="text-[10px] font-mono text-muted-foreground">
                         {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
                       </span>
                       <span className="text-[9px] text-positive font-medium">
@@ -1306,9 +1306,9 @@ function DiscoverySidebar({
 
                   {/* Families drill-down (shown when brand is active) */}
                   {isActive && activeBrandFamilies.length > 0 && (
-                    <div className="bg-white/[0.02] border-b border-white/[0.03]">
+                    <div className="bg-foreground/2 border-b border-border/50">
                       <div className="px-4 pl-6 py-1.5">
-                        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                           {t("sidebar.families")}
                         </span>
                       </div>
@@ -1321,20 +1321,20 @@ function DiscoverySidebar({
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
-                              ? "bg-[rgba(248,180,217,0.08)] border-l-2 border-l-[#F8B4D9]"
-                              : "hover:bg-white/[0.03] border-l-2 border-l-transparent"
+                              ? "bg-primary/8 border-l-2 border-l-primary"
+                              : "hover:bg-foreground/3 border-l-2 border-l-transparent"
                           }`}
                         >
                           <span className={`text-[11px] font-medium transition-colors ${
-                            isFamilyActive ? "text-[#F8B4D9]" : "text-[#D1D5DB] group-hover/fam:text-[#F8B4D9]"
+                            isFamilyActive ? "text-primary" : "text-muted-foreground group-hover/fam:text-primary"
                           }`}>
                             {family.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-mono text-[#F8B4D9]">
+                            <span className="text-[9px] font-mono text-primary">
                               {family.count}
                             </span>
-                            <span className="text-[8px] text-[#4B5563]">
+                            <span className="text-[8px] text-muted-foreground">
                               {family.yearMin === family.yearMax
                                 ? `${family.yearMin}`
                                 : `${family.yearMin}–${family.yearMax}`}
@@ -1353,15 +1353,15 @@ function DiscoverySidebar({
       </div>
 
       {/* ═══ BOTTOM HALF: LIVE BIDS ═══ */}
-      <div className="flex-1 min-h-0 flex flex-col border-t border-white/5">
+      <div className="flex-1 min-h-0 flex flex-col border-t border-border">
 
         {/* Live header */}
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[rgba(15,14,22,0.5)]">
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-card">
           <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-[#9CA3AF]">
+          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
             {t("sidebar.liveNow")}
           </span>
-          <span className="text-[10px] font-mono font-semibold text-[#F8B4D9]">
+          <span className="text-[10px] font-display font-medium text-primary">
             {liveAuctions.length}
           </span>
         </div>
@@ -1370,7 +1370,7 @@ function DiscoverySidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
-              <p className="text-[11px] text-[#6B7280]">{t("sidebar.noLiveAuctions")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveAuctions")}</p>
             </div>
           ) : (
             liveAuctions.map((auction) => {
@@ -1381,11 +1381,11 @@ function DiscoverySidebar({
                 <Link
                   key={auction.id}
                   href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-                  className="group relative block px-4 py-2.5 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all"
+                  className="group relative block px-4 py-2.5 border-b border-border/50 hover:bg-foreground/2 transition-all"
                 >
                   <div className="flex gap-3">
                     {/* Thumbnail */}
-                    <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-[#0F1012]">
+                    <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-card">
                       {auction.images[0] ? (
                         <Image
                           src={auction.images[0]}
@@ -1398,31 +1398,31 @@ function DiscoverySidebar({
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <Car className="size-3.5 text-[#6B7280]" />
+                          <Car className="size-3.5 text-muted-foreground" />
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                      <p className="text-[11px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {auction.year} {auction.make} {auction.model}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">
+                        <span className="text-[12px] font-display font-medium text-primary">
                           {formatPriceForRegion(auction.currentBid, selectedRegion)}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
-                          <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"}`} />
+                          <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
                           <span className={`text-[9px] font-mono font-medium ${
-                            isEndingSoon ? "text-[#FB923C]" : "text-[#6B7280]"
+                            isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
                           }`}>
                             {remaining}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[8px] text-[#6B7280]">
+                        <span className="text-[8px] text-muted-foreground">
                           {platformShort[auction.platform] || auction.platform}
                         </span>
                         {auction.analysis?.investmentGrade && (
@@ -1455,7 +1455,7 @@ function AssetCard({ auction }: { auction: Auction }) {
 
   return (
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
-      <div className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-[#0F1012] border border-white/5">
+      <div className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border">
         {/* TOP: CINEMATIC IMAGE (wider aspect ratio to fit CTAs) */}
         <div className="relative aspect-[16/8] w-full shrink-0">
           {auction.images[0] ? (
@@ -1470,13 +1470,13 @@ function AssetCard({ auction }: { auction: Auction }) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 bg-[#0F1012] flex items-center justify-center">
-              <span className="text-[#6B7280] text-lg">{t("asset.noImage")}</span>
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-lg">{t("asset.noImage")}</span>
             </div>
           )}
 
           {/* Vignette gradient at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0F1012] to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
 
           {/* Status pill overlay */}
           <div className="absolute top-4 left-4 flex items-center gap-2">
@@ -1496,29 +1496,29 @@ function AssetCard({ auction }: { auction: Auction }) {
 
           {/* Platform badge */}
           <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-[rgba(11,11,16,0.7)] backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#FFFCF7]">
+            <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
               {platformShort[auction.platform]}
             </span>
           </div>
         </div>
 
         {/* BOTTOM: DATA DECK (fills remaining space) */}
-        <div className="flex-1 w-full bg-[#0F1012] p-6 flex flex-col justify-start overflow-hidden">
+        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-start overflow-hidden">
           {/* Title + Price row */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-[#FFFCF7] tracking-tight truncate">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight truncate">
                 {auction.make} {auction.model}
               </h2>
               {auction.trim && (
-                <p className="text-[15px] text-[#9CA3AF] mt-0.5">{auction.trim}</p>
+                <p className="text-[15px] text-muted-foreground mt-0.5">{auction.trim}</p>
               )}
             </div>
             <div className="text-right shrink-0">
-              <p className="text-3xl font-bold text-[#FFFCF7] font-mono tabular-nums">
+              <p className="text-3xl font-bold text-foreground font-mono tabular-nums">
                 {formatPriceForRegion(auction.currentBid, selectedRegion)}
               </p>
-              <div className="flex items-center justify-end gap-3 mt-1 text-[#9CA3AF]">
+              <div className="flex items-center justify-end gap-3 mt-1 text-muted-foreground">
                 <span className="text-[11px]">{tAuction("bids.count", { count: auction.bidCount })}</span>
                 {isLive && (
                   <span className="flex items-center gap-1 text-[11px] font-mono">
@@ -1548,23 +1548,23 @@ function AssetCard({ auction }: { auction: Auction }) {
             const highRange = auction.analysis?.bidTargetHigh || fallbackAnalysis.highRange
 
             return (
-              <div className="mt-auto grid grid-cols-4 gap-4 pt-4 border-t border-white/5">
+              <div className="mt-auto grid grid-cols-4 gap-4 pt-4 border-t border-border">
                 {/* Grade */}
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-[#6B7280]">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Award className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.grade")}</span>
                   </div>
                   <p className={`text-[15px] font-bold ${
                     grade === "AAA" || grade === "EXCELLENT" ? "text-positive" :
-                    grade === "AA" || grade === "A" || grade === "GOOD" ? "text-[#F8B4D9]" :
-                    "text-[#FFFCF7]"
+                    grade === "AA" || grade === "A" || grade === "GOOD" ? "text-primary" :
+                    "text-foreground"
                   }`}>{grade}</p>
                 </div>
 
                 {/* Trend */}
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-[#6B7280]">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <TrendingUp className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.trend")}</span>
                   </div>
@@ -1573,22 +1573,22 @@ function AssetCard({ auction }: { auction: Auction }) {
 
                 {/* Fair Value */}
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-[#6B7280]">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <DollarSign className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.fairValue")}</span>
                   </div>
-                  <p className="text-[13px] text-[#FFFCF7] font-mono">
+                  <p className="text-[13px] text-foreground font-mono">
                     {formatPriceForRegion(lowRange, selectedRegion)}–{formatPriceForRegion(highRange, selectedRegion)}
                   </p>
                 </div>
 
                 {/* Category */}
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-[#6B7280]">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Car className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.category")}</span>
                   </div>
-                  <p className="text-[13px] text-[#FFFCF7] truncate">{auction.category || t("asset.metrics.collector")}</p>
+                  <p className="text-[13px] text-foreground truncate">{auction.category || t("asset.metrics.collector")}</p>
                 </div>
               </div>
             )
@@ -1597,13 +1597,13 @@ function AssetCard({ auction }: { auction: Auction }) {
           {/* CTA Row */}
           <div className="flex items-center gap-3 mt-4">
             {isLive && (
-              <button className="flex-1 rounded-full bg-[#F8B4D9] py-3 text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors">
+              <button className="flex-1 rounded-full bg-primary py-3 text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors">
                 {tAuction("actions.placeBid")}
               </button>
             )}
             <Link
               href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="flex-1 rounded-full border border-white/10 py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] hover:border-[rgba(248,180,217,0.5)] transition-all"
+              className="flex-1 rounded-full border border-border py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
             >
               {t("asset.fullAnalysis")}
             </Link>
@@ -1640,23 +1640,23 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* SECTION 1: Investment Thesis */}
-      <div className="px-5 py-3 border-b border-white/5">
+      <div className="px-5 py-3 border-b border-border">
         <div className="flex items-center gap-2 mb-2">
-          <Scale className="size-4 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+          <Scale className="size-4 text-primary" />
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             {t("context.investmentThesis")}
           </span>
         </div>
-        <p className="text-[11px] leading-snug text-[#9CA3AF] line-clamp-4">
+        <p className="text-[11px] leading-snug text-muted-foreground line-clamp-4">
           {whyBuy}
         </p>
       </div>
 
       {/* SECTION 2: Fair Value by Region */}
-      <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+      <div className="px-5 py-3 border-b border-border bg-primary/3">
         <div className="flex items-center gap-2 mb-2">
-          <Globe className="size-4 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+          <Globe className="size-4 text-primary" />
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             {t("context.fairValueByRegion")}
           </span>
         </div>
@@ -1668,13 +1668,13 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
               const isSelected = region === effectiveRegion
               const flags: Record<string, string> = { US: "🇺🇸", EU: "🇪🇺", UK: "🇬🇧", JP: "🇯🇵" }
               return (
-                <div key={region} className={`flex items-center justify-between ${isSelected ? "rounded bg-[rgba(248,180,217,0.04)] -mx-1 px-1 py-0.5" : ""}`}>
+                <div key={region} className={`flex items-center justify-between ${isSelected ? "rounded bg-primary/4 -mx-1 px-1 py-0.5" : ""}`}>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{flags[region]}</span>
-                    <span className={`text-[10px] font-medium ${isSelected ? "text-[#F8B4D9]" : "text-[#9CA3AF]"}`}>{region}</span>
-                    {isSelected && <span className="text-[8px] font-bold text-[#F8B4D9] tracking-wide">{t("brandContext.yourMarket")}</span>}
+                    <span className={`text-[10px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
+                    {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">{t("brandContext.yourMarket")}</span>}
                   </div>
-                  <span className={`text-[12px] font-bold font-mono ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                  <span className={`text-[12px] font-bold font-mono ${isSelected ? "text-primary" : "text-foreground"}`}>
                     {fmtRegional(rp.low, rp.currency)} — {fmtRegional(rp.high, rp.currency)}
                   </span>
                 </div>
@@ -1683,7 +1683,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
           </div>
         ) : (
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold font-mono text-[#F8B4D9]">
+            <span className="text-lg font-display font-medium text-primary">
               {formatPriceForRegion(lowRange, selectedRegion)} — {formatPriceForRegion(highRange, selectedRegion)}
             </span>
           </div>
@@ -1691,33 +1691,33 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       </div>
 
       {/* SECTION 3: Ownership Cost */}
-      <div className="px-5 py-3 border-b border-white/5">
+      <div className="px-5 py-3 border-b border-border">
         <div className="flex items-center gap-2 mb-2">
-          <Wrench className="size-4 text-[#F8B4D9]" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+          <Wrench className="size-4 text-primary" />
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             {t("context.annualOwnershipCost")}
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center">
-            <Shield className="size-3 text-[#6B7280] mx-auto mb-1" />
-            <p className="text-[10px] text-[#6B7280]">{t("context.insurance")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.insurance / 1000).toFixed(0)}K</p>
+            <Shield className="size-3 text-muted-foreground mx-auto mb-1" />
+            <p className="text-[10px] text-muted-foreground">{t("context.insurance")}</p>
+            <p className="text-[11px] font-mono font-semibold text-foreground">${(ownershipCost.insurance / 1000).toFixed(0)}K</p>
           </div>
           <div className="text-center">
-            <MapPin className="size-3 text-[#6B7280] mx-auto mb-1" />
-            <p className="text-[10px] text-[#6B7280]">{t("context.storage")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.storage / 1000).toFixed(1)}K</p>
+            <MapPin className="size-3 text-muted-foreground mx-auto mb-1" />
+            <p className="text-[10px] text-muted-foreground">{t("context.storage")}</p>
+            <p className="text-[11px] font-mono font-semibold text-foreground">${(ownershipCost.storage / 1000).toFixed(1)}K</p>
           </div>
           <div className="text-center">
-            <Wrench className="size-3 text-[#6B7280] mx-auto mb-1" />
-            <p className="text-[10px] text-[#6B7280]">{t("context.service")}</p>
-            <p className="text-[11px] font-mono font-semibold text-[#FFFCF7]">${(ownershipCost.maintenance / 1000).toFixed(0)}K</p>
+            <Wrench className="size-3 text-muted-foreground mx-auto mb-1" />
+            <p className="text-[10px] text-muted-foreground">{t("context.service")}</p>
+            <p className="text-[11px] font-mono font-semibold text-foreground">${(ownershipCost.maintenance / 1000).toFixed(0)}K</p>
           </div>
         </div>
-        <div className="mt-2 pt-2 border-t border-white/5 flex justify-between">
-          <span className="text-[10px] text-[#6B7280]">{t("context.totalAnnual")}</span>
-          <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">${(totalAnnualCost / 1000).toFixed(0)}K{t("context.perYear")}</span>
+        <div className="mt-2 pt-2 border-t border-border flex justify-between">
+          <span className="text-[10px] text-muted-foreground">{t("context.totalAnnual")}</span>
+          <span className="text-[12px] font-display font-medium text-primary">${(totalAnnualCost / 1000).toFixed(0)}K{t("context.perYear")}</span>
         </div>
       </div>
 
@@ -1726,8 +1726,8 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         {similarCars.length > 0 && (
           <>
             <div className="flex items-center gap-2 mb-2">
-              <Car className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Car className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("context.alsoConsider")}
               </span>
             </div>
@@ -1736,15 +1736,15 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                 <Link
                   key={car.id}
                   href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-                  className="flex items-center justify-between py-2 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group"
+                  className="flex items-center justify-between py-2 px-2 rounded-lg bg-foreground/2 hover:bg-foreground/4 transition-colors cursor-pointer group"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">
+                    <p className="text-[11px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
                       {car.make} {car.model}
                     </p>
-                    <p className="text-[10px] text-[#6B7280]">{car.category}</p>
+                    <p className="text-[10px] text-muted-foreground">{car.category}</p>
                   </div>
-                  <span className="text-[11px] font-mono font-semibold text-[#F8B4D9] ml-2">
+                  <span className="text-[11px] font-display font-medium text-primary ml-2">
                     {formatPriceForRegion(car.currentBid, selectedRegion)}
                   </span>
                 </Link>
@@ -1756,8 +1756,8 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         {/* Recent Comparables */}
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Calendar className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("context.recentSales")}
             </span>
           </div>
@@ -1765,10 +1765,10 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
             {marketPulse.slice(0, 5).map((sale, i) => (
               <div key={i} className="flex items-center justify-between py-1.5">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-[#9CA3AF] truncate">{sale.title}</p>
-                  <p className="text-[9px] text-[#6B7280]">{sale.date}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{sale.title}</p>
+                  <p className="text-[9px] text-muted-foreground">{sale.date}</p>
                 </div>
-                <span className="text-[11px] font-mono font-semibold text-[#FFFCF7] ml-2">
+                <span className="text-[11px] font-mono font-semibold text-foreground ml-2">
                   {formatPriceForRegion(sale.price, selectedRegion)}
                 </span>
               </div>
@@ -1778,14 +1778,14 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       </div>
 
       {/* Ask Button */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+      <div className="shrink-0 px-5 py-3 border-t border-border">
         <a
           href={`https://wa.me/573208492641?text=${encodeURIComponent(
             t("context.askWhatsAppMessage", { make: auction.make, model: auction.model })
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[rgba(248,180,217,0.08)] border border-[rgba(248,180,217,0.15)] py-2.5 text-[10px] font-medium tracking-[0.1em] uppercase text-[#F8B4D9] hover:bg-[rgba(248,180,217,0.15)] hover:border-[rgba(248,180,217,0.3)] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/8 border border-primary/15 py-2.5 text-[10px] font-medium tracking-[0.1em] uppercase text-primary hover:bg-primary/15 hover:border-primary/30 transition-all"
         >
           <Scale className="size-3" />
           {t("context.askAboutThisCar")}
@@ -1939,7 +1939,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
       case "AAA": case "EXCELLENT": return "text-emerald-400"
       case "AA": case "GOOD": return "text-blue-400"
       case "A": case "FAIR": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -1951,54 +1951,54 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
       <div>
         {/* 1. FAMILY OVERVIEW */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.overview")}
             </span>
           </div>
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9] mb-1">
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
             Porsche
           </p>
-          <h3 className="text-[18px] font-bold text-[#FFFCF7] tracking-tight mb-2">
+          <h3 className="text-[18px] font-bold text-foreground tracking-tight mb-2">
             {family.name}
           </h3>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
             {thesis}
           </p>
         </div>
 
         {/* 2. KEY METRICS */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.grade")}</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
               <p className={`text-[16px] font-bold ${
-                family.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                family.topGrade === "AAA" ? "text-positive" : "text-primary"
               }`}>{family.topGrade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(family.priceMin, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMin, selectedRegion)}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(family.priceMax, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMax, selectedRegion)}</p>
             </div>
           </div>
         </div>
 
         {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="mb-4">
             <div className="flex items-center gap-2">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Globe className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("brandContext.valuationByMarket")}
               </span>
             </div>
-            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair Value by Market</p>
+            <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair Value by Market</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
@@ -2010,29 +2010,29 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
               const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
               return (
-                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
+                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-primary/6 border border-primary/10" : "border border-transparent"}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-[13px]">{REGION_FLAGS[region]}</span>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{t(REGION_LABEL_KEYS[region])}</span>
                     {isSelected && (
-                      <span className="text-[7px] font-bold text-[#F8B4D9] bg-[#F8B4D9]/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                      <span className="text-[7px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
                         {t("brandContext.yourMarket")}
                       </span>
                     )}
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
-                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
                       {formatRegionalVal(localCurrent, userCurrency)}
                     </span>
                   </div>
-                  <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
+                  <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
                     <div
-                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/50 to-[#F8B4D9]/80" : "bg-gradient-to-r from-[#F8B4D9]/20 to-[#F8B4D9]/45"}`}
+                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-primary/50 to-primary/80" : "bg-gradient-to-r from-primary/20 to-primary/45"}`}
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
                   <div className="flex justify-end">
-                    <span className="text-[8px] font-mono text-[#4B5563]">
+                    <span className="text-[8px] font-mono text-muted-foreground">
                       {formatUsdEquiv(val.usdCurrent)} USD
                     </span>
                   </div>
@@ -2044,22 +2044,22 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 
         {/* 4. TOP VARIANTS */}
         {topVariants.length > 0 && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
-              <Car className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Car className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("brandContext.topModels")}
               </span>
             </div>
             <div className="space-y-2">
               {topVariants.map((variant) => (
-                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
+                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-medium text-[#FFFCF7] truncate block">{variant.name}</span>
-                    <span className="text-[9px] text-[#6B7280]">{variant.count} listings</span>
+                    <span className="text-[11px] font-medium text-foreground truncate block">{variant.name}</span>
+                    <span className="text-[9px] text-muted-foreground">{variant.count} listings</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                    <span className="text-[11px] font-display font-medium text-primary">
                       {formatPriceForRegion(variant.avgPrice, selectedRegion)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
@@ -2074,21 +2074,21 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 
         {/* 5. RECENT SALES */}
         {recentSales.length > 0 && (
-          <div className="px-5 py-4 border-b border-white/5">
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <DollarSign className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("brandContext.recentSales")}
               </span>
             </div>
             <div className="space-y-2">
               {recentSales.map((sale, i) => (
-                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+                <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
-                    <p className="text-[9px] text-[#6B7280] mt-0.5">{sale.platform} · {sale.date}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
                   </div>
-                  <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                  <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
                     {formatPriceForRegion(sale.price, selectedRegion)}
                   </span>
                 </div>
@@ -2098,37 +2098,37 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
         )}
 
         {/* 6. LIQUIDITY & MARKET DEPTH */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Gauge className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Gauge className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.liquidityDepth")}
             </span>
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.auctionsPerYear")}</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.auctionsPerYear")}</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.avgDaysToSell")}</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.avgDaysToSell")}</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.sellThroughRate")}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.sellThroughRate")}</span>
               <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.demandScore")}</span>
-                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
+                <span className="text-[11px] text-muted-foreground">{t("brandContext.demandScore")}</span>
+                <span className="text-[12px] font-display font-medium text-primary">{depth.demandScore}/10</span>
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
                     className={`h-[6px] flex-1 rounded-sm ${
-                      i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                      i < depth.demandScore ? "bg-primary/50" : "bg-foreground/4"
                     }`}
                   />
                 ))}
@@ -2138,10 +2138,10 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
         </div>
 
         {/* 7. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.annualOwnership")}
             </span>
           </div>
@@ -2152,13 +2152,13 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
               { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>
@@ -2167,8 +2167,8 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
         {similarFamilies.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Award className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Other Families
               </span>
             </div>
@@ -2177,17 +2177,17 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                 <Link
                   key={f.slug}
                   href={`/cars/porsche?family=${encodeURIComponent(f.name)}`}
-                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors px-1 -mx-1 group"
+                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-foreground/3 transition-colors px-1 -mx-1 group"
                 >
-                  <span className="text-[11px] font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+                  <span className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors">
                     {f.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-[#6B7280]">
+                    <span className="text-[10px] font-mono text-muted-foreground">
                       {formatPriceForRegion(f.priceMin, selectedRegion)}–{formatPriceForRegion(f.priceMax, selectedRegion)}
                     </span>
                     <span className={`text-[9px] font-bold ${
-                      f.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                      f.topGrade === "AAA" ? "text-positive" : "text-primary"
                     }`}>{f.topGrade}</span>
                   </div>
                 </Link>
@@ -2198,10 +2198,10 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
       </div>
 
       {/* CTA — pinned bottom */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+      <div className="shrink-0 px-5 py-3 border-t border-border">
         <Link
           href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           Explore {family.name} Collection
           <ChevronRight className="size-4" />
@@ -2254,7 +2254,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
       case "AAA": case "EXCELLENT": return "text-emerald-400"
       case "AA": case "GOOD": return "text-blue-400"
       case "A": case "FAIR": return "text-amber-400"
-      default: return "text-[#6B7280]"
+      default: return "text-muted-foreground"
     }
   }
 
@@ -2263,48 +2263,48 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
       {/* BRAND CONTEXT — starts directly with brand overview */}
       <div>
         {/* 1. BRAND OVERVIEW */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Shield className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.overview")}
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
             {whyBuy}
           </p>
         </div>
 
         {/* 2. PRICE SUMMARY */}
-        <div className="px-5 py-3 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.grade")}</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
               <p className={`text-[16px] font-bold ${
-                brand.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                brand.topGrade === "AAA" ? "text-positive" : "text-primary"
               }`}>{brand.topGrade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(brand.priceMin, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMin, selectedRegion)}</p>
             </div>
             <div>
-              <span className="text-[8px] text-[#6B7280] uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(brand.priceMax, selectedRegion)}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMax, selectedRegion)}</p>
             </div>
           </div>
         </div>
 
         {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="mb-4">
             <div className="flex items-center gap-2">
-              <Globe className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Globe className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("brandContext.valuationByMarket")}
               </span>
             </div>
-            <p className="text-[8px] text-[#6B7280] mt-1 ml-6">Fair Value by Market</p>
+            <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair Value by Market</p>
           </div>
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
@@ -2316,29 +2316,29 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
               const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
               return (
-                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-[rgba(248,180,217,0.06)] border border-[#F8B4D9]/10" : "border border-transparent"}`}>
+                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-primary/6 border border-primary/10" : "border border-transparent"}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-[13px]">{REGION_FLAGS[region]}</span>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-[#F8B4D9]" : "text-[#D1D5DB]"}`}>{t(REGION_LABEL_KEYS[region])}</span>
+                    <span className={`text-[11px] font-semibold ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{t(REGION_LABEL_KEYS[region])}</span>
                     {isSelected && (
-                      <span className="text-[7px] font-bold text-[#F8B4D9] bg-[#F8B4D9]/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
+                      <span className="text-[7px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
                         {t("brandContext.yourMarket")}
                       </span>
                     )}
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
-                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
                       {formatRegionalVal(localCurrent, userCurrency)}
                     </span>
                   </div>
-                  <div className="h-[4px] rounded-full bg-white/[0.04] overflow-hidden mb-1.5">
+                  <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
                     <div
-                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-[#F8B4D9]/50 to-[#F8B4D9]/80" : "bg-gradient-to-r from-[#F8B4D9]/20 to-[#F8B4D9]/45"}`}
+                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-primary/50 to-primary/80" : "bg-gradient-to-r from-primary/20 to-primary/45"}`}
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
                   <div className="flex justify-end">
-                    <span className="text-[8px] font-mono text-[#4B5563]">
+                    <span className="text-[8px] font-mono text-muted-foreground">
                       {formatUsdEquiv(val.usdCurrent)} USD
                     </span>
                   </div>
@@ -2349,21 +2349,21 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         </div>
 
         {/* 4. TOP MODELS */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Car className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Car className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.topModels")}
             </span>
           </div>
           <div className="space-y-2">
             {topModels.map((model) => (
-              <div key={model.name} className="flex items-center justify-between py-1.5 border-b border-white/[0.03] last:border-0">
+              <div key={model.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                 <div className="flex-1 min-w-0">
-                  <span className="text-[11px] font-medium text-[#FFFCF7]">{model.name}</span>
+                  <span className="text-[11px] font-medium text-foreground">{model.name}</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[11px] font-mono font-semibold text-[#F8B4D9]">
+                  <span className="text-[11px] font-display font-medium text-primary">
                     {formatPriceForRegion(model.avgPrice, selectedRegion)}
                   </span>
                   <span className={`text-[9px] font-bold ${gradeColor(model.grade)}`}>
@@ -2379,21 +2379,21 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         </div>
 
         {/* 5. RECENT SALES */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <DollarSign className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.recentSales")}
             </span>
           </div>
           <div className="space-y-2">
             {marketPulse.map((sale, i) => (
-              <div key={i} className="flex items-center gap-3 py-1.5 border-b border-white/[0.03] last:border-0">
+              <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-[#D1D5DB] truncate">{sale.title}</p>
-                  <p className="text-[9px] text-[#6B7280] mt-0.5">{sale.platform} · {sale.date}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
                 </div>
-                <span className="text-[12px] font-mono font-semibold text-[#FFFCF7] shrink-0">
+                <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
                   {formatPriceForRegion(sale.price, selectedRegion)}
                 </span>
               </div>
@@ -2402,38 +2402,38 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         </div>
 
         {/* 6. LIQUIDITY & MARKET DEPTH */}
-        <div className="px-5 py-4 border-b border-white/5 bg-[rgba(248,180,217,0.03)]">
+        <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
-            <Gauge className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Gauge className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.liquidityDepth")}
             </span>
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.auctionsPerYear")}</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.auctionsPerYear}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.auctionsPerYear")}</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.avgDaysToSell")}</span>
-              <span className="text-[12px] font-mono font-semibold text-[#FFFCF7]">{depth.avgDaysToSell}d</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.avgDaysToSell")}</span>
+              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.sellThroughRate")}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.sellThroughRate")}</span>
               <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
             </div>
             {/* Demand score visual */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-[#9CA3AF]">{t("brandContext.demandScore")}</span>
-                <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{depth.demandScore}/10</span>
+                <span className="text-[11px] text-muted-foreground">{t("brandContext.demandScore")}</span>
+                <span className="text-[12px] font-display font-medium text-primary">{depth.demandScore}/10</span>
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
                     key={i}
                     className={`h-[6px] flex-1 rounded-sm ${
-                      i < depth.demandScore ? "bg-[#F8B4D9]/50" : "bg-white/[0.04]"
+                      i < depth.demandScore ? "bg-primary/50" : "bg-foreground/4"
                     }`}
                   />
                 ))}
@@ -2443,10 +2443,10 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         </div>
 
         {/* 7. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-white/5">
+        <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-[#F8B4D9]" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+            <Wrench className="size-4 text-primary" />
+            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               {t("brandContext.annualOwnership")}
             </span>
           </div>
@@ -2457,13 +2457,13 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
               { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-[#9CA3AF]">{item.label}</span>
-                <span className="text-[11px] font-mono text-[#D1D5DB]">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-white/5">
-              <span className="text-[11px] font-medium text-[#FFFCF7]">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
+            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+              <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>
@@ -2472,8 +2472,8 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
         {similarBrands.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
-              <Award className="size-4 text-[#F8B4D9]" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">
+              <Award className="size-4 text-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 {t("brandContext.similarBrands")}
               </span>
             </div>
@@ -2482,17 +2482,17 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
                 <Link
                   key={b.slug}
                   href={`/cars/${b.slug}`}
-                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-white/[0.03] transition-colors px-1 -mx-1 group"
+                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-foreground/3 transition-colors px-1 -mx-1 group"
                 >
-                  <span className="text-[11px] font-medium text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+                  <span className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors">
                     {b.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-[#6B7280]">
+                    <span className="text-[10px] font-mono text-muted-foreground">
                       {formatPriceForRegion(b.priceMin, selectedRegion)}–{formatPriceForRegion(b.priceMax, selectedRegion)}
                     </span>
                     <span className={`text-[9px] font-bold ${
-                      b.topGrade === "AAA" ? "text-positive" : "text-[#F8B4D9]"
+                      b.topGrade === "AAA" ? "text-positive" : "text-primary"
                     }`}>{b.topGrade}</span>
                   </div>
                 </Link>
@@ -2503,10 +2503,10 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
       </div>
 
       {/* CTA — pinned bottom */}
-      <div className="shrink-0 px-5 py-3 border-t border-white/5">
+      <div className="shrink-0 px-5 py-3 border-t border-border">
         <Link
           href={`/cars/${brand.slug}`}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-all"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           {t("brandContext.explore", { brand: brand.name })}
           <ChevronRight className="size-4" />
@@ -2612,7 +2612,7 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
   return (
     <>
       {/* ═══ MOBILE LAYOUT — Vertical Scrollable Feed ═══ */}
-      <div className="md:hidden min-h-[100dvh] w-full bg-[#0b0b10] pt-14">
+      <div className="md:hidden min-h-[100dvh] w-full bg-background pt-14">
         {/* Sticky region pills */}
         <MobileRegionPills />
 
@@ -2620,8 +2620,8 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
         <div className="pb-24">
           {brands.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60dvh] px-8 text-center">
-              <Globe className="size-8 text-[#4B5563] mb-3" />
-              <p className="text-[14px] text-[#6B7280]">{t("mobileFeed.noBrands")}</p>
+              <Globe className="size-8 text-muted-foreground mb-3" />
+              <p className="text-[14px] text-muted-foreground">{t("mobileFeed.noBrands")}</p>
             </div>
           ) : (
             <>
@@ -2632,12 +2632,12 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
               {brands.length > 1 && (
                 <div className="mt-2">
                   <div className="px-4 py-3 flex items-center justify-between">
-                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">
+                    <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                       {t("mobileFeed.brands")}
                     </span>
-                    <span className="text-[10px] font-mono text-[#6B7280]">{brands.length}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{brands.length}</span>
                   </div>
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-border">
                     {brands.slice(1).map((brand) => (
                       <MobileBrandRow key={brand.slug} brand={brand} />
                     ))}
@@ -2653,7 +2653,7 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-[#0b0b10] overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
@@ -2677,7 +2677,7 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
           </div>
 
           {/* COLUMN C: CONTEXT PANEL (28%) — synced with active family in scroll */}
-          <div className="h-full overflow-hidden border-l border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.5)]">
+          <div className="h-full overflow-hidden border-l border-primary/8 bg-card">
             {activeFamily ? (
               <FamilyContextPanel
                 key={activeFamily.slug}

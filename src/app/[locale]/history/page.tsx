@@ -48,17 +48,17 @@ export default async function HistoryPage({
 
   return (
     <div className="min-h-screen">
-      <section className="relative border-b border-[rgba(248,180,217,0.06)] bg-[#0b0b10] pt-28">
-        <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(60% 40% at 50% 0%, rgba(248, 180, 217, 0.08) 0%, transparent 60%)" }} />
+      <section className="relative border-b border-primary/6 bg-background pt-28">
+        <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(60% 40% at 50% 0%, rgba(var(--glow-color), 0.08) 0%, transparent 60%)" }} />
         <div className="relative mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-[#F8B4D9]">
+          <div className="flex items-center gap-2 text-primary">
             <TrendingUp className="size-4" />
             <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{t("kicker")}</span>
           </div>
-          <h1 className="mt-4 text-3xl font-light tracking-tight text-[#FFFCF7] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-light tracking-tight text-foreground sm:text-4xl">
             {t("title1")} <span className="font-semibold text-gradient">{t("title2")}</span>
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-[rgba(255,252,247,0.45)] font-light">
+          <p className="mt-3 max-w-2xl text-sm text-[rgba(232,226,222,0.45)] font-light">
             {t("subtitle")}
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -70,12 +70,12 @@ export default async function HistoryPage({
             ].map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.id} className="rounded-2xl border border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.6)] px-4 py-3">
+                <div key={stat.id} className="rounded-2xl border border-primary/8 bg-card px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Icon className="size-3 text-[#F8B4D9]" />
-                    <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(255,252,247,0.35)]">{t(`stats.${stat.id}`)}</span>
+                    <Icon className="size-3 text-primary" />
+                    <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.35)]">{t(`stats.${stat.id}`)}</span>
                   </div>
-                  <p className="mt-1.5 text-xl font-light text-[#FFFCF7]">{stat.value}</p>
+                  <p className="mt-1.5 text-xl font-light text-foreground">{stat.value}</p>
                 </div>
               );
             })}

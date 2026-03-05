@@ -173,7 +173,7 @@ function FilterSection({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-2 text-xs font-semibold tracking-wider text-zinc-300 uppercase transition-colors hover:text-white"
+        className="flex w-full items-center justify-between py-2 text-xs font-semibold tracking-wider text-zinc-300 uppercase transition-colors hover:text-foreground"
       >
         {title}
         <ChevronDown
@@ -276,7 +276,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
         {hasActiveFilters && (
           <button
             onClick={handleClear}
-            className="flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-white"
+            className="flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-foreground"
           >
             <RotateCcw className="size-3" />
             Clear All
@@ -293,7 +293,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
               <label
                 key={platform.id}
                 htmlFor={`platform-${platform.id}`}
-                className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-white/[0.03]"
+                className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-foreground/3"
               >
                 <Checkbox
                   id={`platform-${platform.id}`}
@@ -447,7 +447,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                 <SelectItem
                   key={make}
                   value={make}
-                  className="text-xs text-zinc-300 focus:bg-white/[0.06] focus:text-white"
+                  className="text-xs text-zinc-300 focus:bg-foreground/6 focus:text-white"
                 >
                   {make}
                 </SelectItem>
@@ -468,7 +468,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                 <label
                   key={status.id}
                   htmlFor={`status-${status.id}`}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-white/[0.03]"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-foreground/3"
                 >
                   <Checkbox
                     id={`status-${status.id}`}
@@ -499,7 +499,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
               <label
                 key={option.id}
                 htmlFor={`trans-${option.id}`}
-                className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-white/[0.03]"
+                className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-foreground/3"
               >
                 <Checkbox
                   id={`trans-${option.id}`}
