@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Car, Target, ChevronRight, ChevronLeft, Check, Globe, Shield } from "lucide-react"
+import { MapPin, Car, Target, ChevronRight, ChevronLeft, Check, Globe, Shield, DollarSign } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useRegion } from "@/lib/RegionContext"
 import {
@@ -43,9 +43,10 @@ const BRAND_OPTIONS = [
 ]
 
 const INTENT_OPTIONS = [
-  { id: "buy", icon: Car, titleKey: "buyTitle", descKey: "buyDesc" },
-  { id: "track", icon: Target, titleKey: "trackTitle", descKey: "trackDesc" },
-  { id: "learn", icon: Globe, titleKey: "learnTitle", descKey: "learnDesc" },
+  { id: "buy",   icon: Car,        titleKey: "buyTitle",   descKey: "buyDesc" },
+  { id: "sell",  icon: DollarSign,  titleKey: "sellTitle",  descKey: "sellDesc" },
+  { id: "track", icon: Target,      titleKey: "trackTitle", descKey: "trackDesc" },
+  { id: "learn", icon: Globe,       titleKey: "learnTitle", descKey: "learnDesc" },
 ]
 
 const TOTAL_STEPS = 4
@@ -76,7 +77,7 @@ export function OnboardingModal() {
   const [regions, setRegions] = useState<string[]>([])
   const [brands, setBrands] = useState<string[]>([])
   const [models, setModels] = useState<string[]>([])
-  const [intent, setIntent] = useState<string | null>(null)
+  const [intents, setIntents] = useState<string[]>([])
 
   // Show modal only once after login
   useEffect(() => {
@@ -104,11 +105,17 @@ export function OnboardingModal() {
     )
   }
 
+  const toggleIntent = (id: string) => {
+    setIntents((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    )
+  }
+
   const canProceed = () => {
     if (step === 0) return regions.length > 0
     if (step === 1) return true // brands are optional (Porsche is implicit)
     if (step === 2) return true // models are optional
-    if (step === 3) return !!intent
+    if (step === 3) return intents.length > 0
     return false
   }
 
@@ -135,7 +142,8 @@ export function OnboardingModal() {
       regions,
       brands,
       models,
-      intent,
+      intent: intents[0] ?? null,
+      intents,
       completedAt: Date.now(),
     }
     saveOnboardingPreferences(prefs)
@@ -154,6 +162,7 @@ export function OnboardingModal() {
       brands: [],
       models: [],
       intent: null,
+      intents: [],
       completedAt: Date.now(),
     })
     setOpen(false)
@@ -218,7 +227,7 @@ export function OnboardingModal() {
                       <h2 className="text-xl font-light text-foreground mb-1">
                         {t("regionTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-6">
+                      <p className="text-[13px] text-muted-foreground/60 mb-6">
                         {t("regionDesc")}
                       </p>
                       <div className="space-y-2">
@@ -269,7 +278,7 @@ export function OnboardingModal() {
                       <h2 className="text-xl font-light text-foreground mb-1">
                         {t("brandsTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-5">
+                      <p className="text-[13px] text-muted-foreground/60 mb-5">
                         {t("brandsDesc")}
                       </p>
                       <div className="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto no-scrollbar pr-1">
@@ -300,7 +309,7 @@ export function OnboardingModal() {
                         })}
                       </div>
                       {brands.length === 0 && (
-                        <p className="text-[11px] text-[rgba(232,226,222,0.3)] mt-3 text-center">
+                        <p className="text-[11px] text-muted-foreground/50 mt-3 text-center">
                           {t("brandsOptional")}
                         </p>
                       )}
@@ -319,7 +328,7 @@ export function OnboardingModal() {
                       <h2 className="text-xl font-light text-foreground mb-1">
                         {t("modelsTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-5">
+                      <p className="text-[13px] text-muted-foreground/60 mb-5">
                         {t("modelsDesc")}
                       </p>
                       <div className="max-h-[290px] overflow-y-auto no-scrollbar space-y-4 pr-1">
@@ -381,17 +390,17 @@ export function OnboardingModal() {
                       <h2 className="text-xl font-light text-foreground mb-1">
                         {t("intentTitle")}
                       </h2>
-                      <p className="text-[13px] text-[rgba(232,226,222,0.4)] mb-6">
+                      <p className="text-[13px] text-muted-foreground/60 mb-6">
                         {t("intentDesc")}
                       </p>
                       <div className="space-y-3">
                         {INTENT_OPTIONS.map((opt) => {
-                          const selected = intent === opt.id
+                          const selected = intents.includes(opt.id)
                           const Icon = opt.icon
                           return (
                             <button
                               key={opt.id}
-                              onClick={() => setIntent(opt.id)}
+                              onClick={() => toggleIntent(opt.id)}
                               className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border transition-all text-left ${
                                 selected
                                   ? "border-primary/40 bg-primary/8"
@@ -419,7 +428,7 @@ export function OnboardingModal() {
                                 >
                                   {t(opt.titleKey)}
                                 </p>
-                                <p className="text-[12px] text-[rgba(232,226,222,0.3)] mt-0.5">
+                                <p className="text-[12px] text-muted-foreground/50 mt-0.5">
                                   {t(opt.descKey)}
                                 </p>
                               </div>
@@ -430,6 +439,11 @@ export function OnboardingModal() {
                           )
                         })}
                       </div>
+                      {intents.length > 1 && (
+                        <p className="text-[11px] text-primary/60 mt-3 text-center">
+                          {intents.length} selected
+                        </p>
+                      )}
                     </div>
                   )}
                 </motion.div>

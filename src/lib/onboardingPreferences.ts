@@ -3,7 +3,8 @@ export type OnboardingPreferences = {
   regions: string[]           // ["US", "EU", ...] — multi-select
   brands: string[]            // ["Ferrari", "Lamborghini", ...] — other brands beyond Porsche
   models: string[]            // ["992", "991", "718-cayman", ...] — Porsche series of interest
-  intent: string | null       // "buy" | "track" | "learn" | null
+  intent: string | null       // Legacy single intent (backwards compat)
+  intents: string[]           // ["buy", "sell", "track"] — multi-select
   completedAt: number | null  // Date.now() when finished
 }
 
@@ -15,6 +16,7 @@ const DEFAULT: OnboardingPreferences = {
   brands: [],
   models: [],
   intent: null,
+  intents: [],
   completedAt: null,
 }
 
