@@ -20,7 +20,6 @@ import {
   HelpCircle,
   FileText,
   Users,
-  Truck,
   CheckCircle2,
   Lock,
   Coins,
@@ -35,9 +34,6 @@ import {
   History,
   Clock,
   Download,
-  Factory,
-  Settings,
-  Search,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
@@ -47,420 +43,7 @@ import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, format
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 
-// ─── MOCK DATA (same as CarDetailClient) ───
-const redFlags: Record<string, string[]> = {
-  McLaren: [
-    "Central driving position requires specialist knowledge",
-    "BMW V12 servicing limited to certified facilities",
-    "Gold foil heat shielding integrity critical",
-    "Monocoque carbon fiber inspection mandatory",
-  ],
-  Porsche: [
-    "Chain tensioner failure risk on early models",
-    "Heat exchanger condition critical; rust inspection required",
-    "Galvanized vs non-galvanized body impacts value",
-    "Verify matching numbers engine and transmission",
-  ],
-  Ferrari: [
-    "Cam belt service history critical ($5,000+ if overdue)",
-    "Sticky interior switches common; verify all electronics",
-    "Classiche rejection significantly impacts resale",
-    "Exhaust manifold cracks require specialist repair",
-  ],
-  Lamborghini: [
-    "Carburetors require specialized tuning",
-    "Clutch replacement labor-intensive (~$8,000+)",
-    "Cooling system prone to issues in traffic",
-    "Frame susceptible to stress cracks",
-  ],
-  Nissan: [
-    "ATTESA E-TS pump failure common",
-    "RB26 head gasket issues if previously tuned",
-    "Rust in rear quarters common on JDM imports",
-    "Verify legal import status and compliance",
-  ],
-  default: [
-    "Request comprehensive service history",
-    "Verify VIN matches title and body panels",
-    "Check for evidence of previous accident damage",
-    "Confirm mileage with service records",
-  ],
-}
-
-const sellerQuestions: Record<string, string[]> = {
-  McLaren: [
-    "Is the original tool kit and owner's documentation complete?",
-    "When was the last McLaren Special Operations service?",
-    "Has the monocoque been inspected for stress fractures?",
-    "What is the history of the BMW engine servicing?",
-  ],
-  Porsche: [
-    "When was the last valve adjustment performed?",
-    "Has the vehicle been used in motorsport?",
-    "Are the date codes correct on all glass?",
-    "Has the transmission been rebuilt?",
-  ],
-  Ferrari: [
-    "Is Classiche certification obtainable?",
-    "When was the last cam belt service?",
-    "Are all tools and books present?",
-    "Has the car ever been repainted?",
-  ],
-  default: [
-    "Is a pre-purchase inspection permitted?",
-    "What is the complete service history?",
-    "Are there any known mechanical issues?",
-    "What is included in the sale?",
-  ],
-}
-
-const ownershipCosts: Record<string, { insurance: number; storage: number; maintenance: number }> = {
-  McLaren: { insurance: 45000, storage: 12000, maintenance: 25000 },
-  Porsche: { insurance: 8500, storage: 6000, maintenance: 8000 },
-  Ferrari: { insurance: 18000, storage: 8000, maintenance: 15000 },
-  Lamborghini: { insurance: 15000, storage: 8000, maintenance: 12000 },
-  Nissan: { insurance: 4500, storage: 3600, maintenance: 3500 },
-  Toyota: { insurance: 3200, storage: 3600, maintenance: 2500 },
-  BMW: { insurance: 3800, storage: 3600, maintenance: 4000 },
-  "Mercedes-Benz": { insurance: 6500, storage: 4800, maintenance: 6000 },
-  "Aston Martin": { insurance: 8000, storage: 6000, maintenance: 10000 },
-  Lexus: { insurance: 6000, storage: 4800, maintenance: 4500 },
-  Ford: { insurance: 5500, storage: 4200, maintenance: 4000 },
-  Acura: { insurance: 3000, storage: 3600, maintenance: 2800 },
-  Jaguar: { insurance: 4500, storage: 4200, maintenance: 5000 },
-  default: { insurance: 5000, storage: 4800, maintenance: 5000 },
-}
-
-const comparableSales: Record<string, { title: string; price: number; date: string; platform: string; delta: number }[]> = {
-  McLaren: [
-    { title: "1994 McLaren F1", price: 20_500_000, date: "Aug 2025", platform: "RM Sotheby's", delta: 8 },
-    { title: "1995 McLaren F1", price: 19_800_000, date: "May 2025", platform: "Gooding", delta: 5 },
-    { title: "1996 McLaren F1", price: 18_200_000, date: "Jan 2025", platform: "Bonhams", delta: -3 },
-  ],
-  Porsche: [
-    { title: "1973 911 Carrera RS 2.7", price: 1_450_000, date: "Oct 2025", platform: "RM Sotheby's", delta: 12 },
-    { title: "1973 911 Carrera RS", price: 1_320_000, date: "Jul 2025", platform: "Gooding", delta: 8 },
-    { title: "1972 911 2.7 RS", price: 1_180_000, date: "Apr 2025", platform: "BaT", delta: 5 },
-  ],
-  Ferrari: [
-    { title: "1990 Ferrari F40", price: 2_850_000, date: "Nov 2025", platform: "RM Sotheby's", delta: 10 },
-    { title: "1989 Ferrari F40", price: 2_650_000, date: "Aug 2025", platform: "Gooding", delta: 7 },
-    { title: "1991 Ferrari F40", price: 2_450_000, date: "May 2025", platform: "Bonhams", delta: 3 },
-  ],
-  default: [
-    { title: "Similar Model (Recent)", price: 125_000, date: "Nov 2025", platform: "BaT", delta: 5 },
-    { title: "Similar Model (Mid-Year)", price: 118_000, date: "Jul 2025", platform: "C&B", delta: 3 },
-  ],
-}
-
-const eventsData: Record<string, { name: string; type: string; impact: "positive" | "neutral" | "negative" }[]> = {
-  McLaren: [
-    { name: "Pebble Beach Concours", type: "Show", impact: "positive" },
-    { name: "Gordon Murray Documentary Release", type: "Media", impact: "positive" },
-    { name: "McLaren F1 Owners Club Annual Meet", type: "Community", impact: "positive" },
-  ],
-  Porsche: [
-    { name: "Rennsport Reunion", type: "Event", impact: "positive" },
-    { name: "Luftgekühlt", type: "Show", impact: "positive" },
-    { name: "911 60th Anniversary", type: "Milestone", impact: "positive" },
-  ],
-  Ferrari: [
-    { name: "Ferrari Cavalcade", type: "Event", impact: "positive" },
-    { name: "Maranello Factory Tour Program", type: "Experience", impact: "neutral" },
-    { name: "Classiche Certification Backlog", type: "Service", impact: "negative" },
-  ],
-  default: [
-    { name: "Monterey Car Week", type: "Event", impact: "positive" },
-    { name: "Barrett-Jackson Scottsdale", type: "Auction", impact: "neutral" },
-  ],
-}
-
-const shippingCosts: Record<string, { domestic: number; euImport: number; ukImport: number }> = {
-  McLaren: { domestic: 3500, euImport: 18000, ukImport: 15000 },
-  Porsche: { domestic: 1800, euImport: 8500, ukImport: 7000 },
-  Ferrari: { domestic: 2500, euImport: 12000, ukImport: 10000 },
-  default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
-}
-
-// ─── PRODUCTION & HERITAGE DATA ───
-const productionData: Record<string, { yearsProduced: string; totalBuilt: number; variants: { name: string; units: number; priceRange: string }[]; lhd: number; rhd: number; keyStat: string }> = {
-  McLaren: {
-    yearsProduced: "1992–1998",
-    totalBuilt: 106,
-    variants: [
-      { name: "Standard", units: 64, priceRange: "$18M–$22M" },
-      { name: "LM", units: 5, priceRange: "$25M+" },
-      { name: "GTR", units: 28, priceRange: "$8M–$12M" },
-      { name: "S / High Downforce", units: 9, priceRange: "$20M+" },
-    ],
-    lhd: 72,
-    rhd: 34,
-    keyStat: "Only 64 road cars built — the ultimate driver's hypercar",
-  },
-  Porsche: {
-    yearsProduced: "1963–Present (911)",
-    totalBuilt: 1500000,
-    variants: [
-      { name: "Carrera RS 2.7", units: 1580, priceRange: "$900K–$1.5M" },
-      { name: "930 Turbo", units: 21589, priceRange: "$120K–$250K" },
-      { name: "993 GT2", units: 194, priceRange: "$1.2M–$2M" },
-      { name: "997 GT3 RS 4.0", units: 600, priceRange: "$450K–$650K" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "Air-cooled models (pre-1998) command the strongest premiums",
-  },
-  Ferrari: {
-    yearsProduced: "1987–1992 (F40)",
-    totalBuilt: 1315,
-    variants: [
-      { name: "F40 Standard", units: 1274, priceRange: "$2.2M–$3.5M" },
-      { name: "F40 LM", units: 19, priceRange: "$5M–$8M" },
-      { name: "F40 GTE", units: 10, priceRange: "$6M+" },
-      { name: "F40 Competizione", units: 12, priceRange: "$4M–$6M" },
-    ],
-    lhd: 1150,
-    rhd: 165,
-    keyStat: "Last Ferrari signed off by Enzo himself",
-  },
-  Lamborghini: {
-    yearsProduced: "1966–1973 (Miura)",
-    totalBuilt: 764,
-    variants: [
-      { name: "P400", units: 275, priceRange: "$1.2M–$1.8M" },
-      { name: "P400 S", units: 140, priceRange: "$1.5M–$2.2M" },
-      { name: "P400 SV", units: 150, priceRange: "$2.5M–$4M" },
-      { name: "P400 SVJ", units: 5, priceRange: "$5M+" },
-    ],
-    lhd: 700,
-    rhd: 64,
-    keyStat: "The car that invented the supercar category",
-  },
-  Nissan: {
-    yearsProduced: "1989–2002 (R32/R33/R34)",
-    totalBuilt: 58532,
-    variants: [
-      { name: "R32 GT-R", units: 43934, priceRange: "$80K–$180K" },
-      { name: "R33 GT-R", units: 8136, priceRange: "$70K–$150K" },
-      { name: "R34 GT-R", units: 6462, priceRange: "$200K–$500K" },
-      { name: "R34 V-Spec II Nür", units: 750, priceRange: "$400K–$800K" },
-    ],
-    lhd: 2000,
-    rhd: 56532,
-    keyStat: "R34 became legal in the US (25-year rule) driving prices 3x",
-  },
-  BMW: {
-    yearsProduced: "1978–Present (M-cars)",
-    totalBuilt: 500000,
-    variants: [
-      { name: "E30 M3", units: 17970, priceRange: "$60K–$150K" },
-      { name: "E30 M3 Sport Evo", units: 600, priceRange: "$200K–$350K" },
-      { name: "E28 M5", units: 2241, priceRange: "$50K–$100K" },
-      { name: "E46 M3 CSL", units: 1383, priceRange: "$100K–$180K" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "E30 M3 Sport Evolution is the holy grail of BMW collecting",
-  },
-  default: {
-    yearsProduced: "Varies",
-    totalBuilt: 5000,
-    variants: [
-      { name: "Standard", units: 4000, priceRange: "Varies" },
-      { name: "Special Edition", units: 800, priceRange: "Varies" },
-      { name: "Limited", units: 200, priceRange: "Premium" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "Limited production numbers support long-term value",
-  },
-}
-
-// ─── TECHNICAL DEEP-DIVE DATA ───
-const technicalData: Record<string, { engineDetails: { spec: string; value: string }[]; knownIssues: { issue: string; severity: "critical" | "moderate" | "minor"; repairCost: string }[]; serviceIntervals: { item: string; interval: string; cost: string }[] }> = {
-  McLaren: {
-    engineDetails: [
-      { spec: "Configuration", value: "BMW S70/2 60° V12" },
-      { spec: "Displacement", value: "6,064 cc" },
-      { spec: "Power", value: "618 bhp @ 7,400 rpm" },
-      { spec: "Torque", value: "480 lb-ft @ 5,600 rpm" },
-      { spec: "Compression", value: "10.5:1" },
-      { spec: "Redline", value: "7,500 rpm" },
-    ],
-    knownIssues: [
-      { issue: "Gold foil heat shielding delamination", severity: "critical", repairCost: "$50,000+" },
-      { issue: "Main bearing wear at high mileage", severity: "critical", repairCost: "$30,000+" },
-      { issue: "A/C compressor failure (Nippondenso)", severity: "moderate", repairCost: "$8,000" },
-      { issue: "Window regulator cable stretch", severity: "minor", repairCost: "$2,500" },
-    ],
-    serviceIntervals: [
-      { item: "Engine oil & filter", interval: "Every 6,000 mi", cost: "$2,500" },
-      { item: "Major service (belts, fluids)", interval: "Every 12,000 mi", cost: "$15,000" },
-      { item: "Full engine-out service", interval: "Every 6 years", cost: "$45,000" },
-    ],
-  },
-  Porsche: {
-    engineDetails: [
-      { spec: "Configuration", value: "Air-Cooled Flat-6" },
-      { spec: "Displacement", value: "2,687–3,600 cc" },
-      { spec: "Power", value: "210–450 bhp (model dependent)" },
-      { spec: "Torque", value: "188–369 lb-ft" },
-      { spec: "Cooling", value: "Air-cooled (pre-1998)" },
-      { spec: "Fuel System", value: "Mechanical/CIS Injection" },
-    ],
-    knownIssues: [
-      { issue: "Chain tensioner failure (Mezger engines)", severity: "critical", repairCost: "$12,000" },
-      { issue: "IMS bearing failure (M96/M97)", severity: "critical", repairCost: "$8,000" },
-      { issue: "Heat exchanger rust-through", severity: "moderate", repairCost: "$3,500" },
-      { issue: "Valve guide wear (high-mileage)", severity: "moderate", repairCost: "$6,000" },
-    ],
-    serviceIntervals: [
-      { item: "Oil change & filter", interval: "Every 6,000 mi", cost: "$500" },
-      { item: "Valve adjustment", interval: "Every 15,000 mi", cost: "$1,800" },
-      { item: "Major service (belts, hoses)", interval: "Every 30,000 mi", cost: "$4,500" },
-    ],
-  },
-  Ferrari: {
-    engineDetails: [
-      { spec: "Configuration", value: "Twin-Turbo V8 (F40)" },
-      { spec: "Displacement", value: "2,936 cc" },
-      { spec: "Power", value: "478 bhp @ 7,000 rpm" },
-      { spec: "Torque", value: "425 lb-ft @ 4,000 rpm" },
-      { spec: "Boost Pressure", value: "1.1 bar" },
-      { spec: "Construction", value: "Tubular steel, Kevlar/carbon body" },
-    ],
-    knownIssues: [
-      { issue: "Cam belt failure (catastrophic if overdue)", severity: "critical", repairCost: "$5,000" },
-      { issue: "Sticky interior switch syndrome", severity: "moderate", repairCost: "$3,000" },
-      { issue: "Exhaust manifold cracking", severity: "moderate", repairCost: "$8,000" },
-      { issue: "Turbo wastegate actuator wear", severity: "minor", repairCost: "$4,000" },
-    ],
-    serviceIntervals: [
-      { item: "Engine oil & filter", interval: "Every 6,000 mi", cost: "$800" },
-      { item: "Cam belt replacement", interval: "Every 3 years / 18,000 mi", cost: "$5,000" },
-      { item: "Major engine service", interval: "Every 5 years", cost: "$12,000" },
-    ],
-  },
-  default: {
-    engineDetails: [
-      { spec: "Configuration", value: "Inline / V-type" },
-      { spec: "Displacement", value: "Model specific" },
-      { spec: "Power", value: "Model specific" },
-      { spec: "Torque", value: "Model specific" },
-    ],
-    knownIssues: [
-      { issue: "Age-related seal and gasket degradation", severity: "moderate", repairCost: "$2,000–$5,000" },
-      { issue: "Electrical system aging (relays, grounds)", severity: "moderate", repairCost: "$1,000–$3,000" },
-      { issue: "Cooling system component fatigue", severity: "minor", repairCost: "$800–$2,000" },
-    ],
-    serviceIntervals: [
-      { item: "Oil change & filter", interval: "Every 5,000 mi", cost: "$300–$800" },
-      { item: "Major service", interval: "Every 30,000 mi", cost: "$2,000–$5,000" },
-    ],
-  },
-}
-
-// ─── CONDITION GUIDE DATA (Bodywork / Interior / Inspection) ───
-const conditionData: Record<string, { rustAreas: { area: string; severity: "high" | "medium" | "low" }[]; interiorIssues: { item: string; commonProblem: string; partAvailability: "easy" | "moderate" | "rare" }[]; inspectionPriorities: string[] }> = {
-  McLaren: {
-    rustAreas: [
-      { area: "Monocoque tub (carbon fiber — check for delamination)", severity: "high" },
-      { area: "Suspension pickup points (aluminum corrosion)", severity: "medium" },
-      { area: "Engine bay heat shield area", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Leather seat bolsters", commonProblem: "Wear on driver's side entry point", partAvailability: "rare" },
-      { item: "Center console switches", commonProblem: "Fading/cracking due to heat", partAvailability: "rare" },
-      { item: "Headliner", commonProblem: "Sagging in tropical climates", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Full monocoque inspection with ultrasound",
-      "Gold foil heat shielding integrity check",
-      "Windshield seal condition (unique curved glass)",
-      "Door mechanism and dihedral hinge wear",
-      "Complete electrical system diagnostic",
-    ],
-  },
-  Porsche: {
-    rustAreas: [
-      { area: "Front trunk floor and battery box", severity: "high" },
-      { area: "Rear quarter panels and kidney area", severity: "high" },
-      { area: "Door bottoms and rocker panels", severity: "medium" },
-      { area: "Targa bar (Targa models)", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard top", commonProblem: "Cracking and warping from UV exposure", partAvailability: "moderate" },
-      { item: "Door panel pockets", commonProblem: "Sagging and deformation", partAvailability: "easy" },
-      { item: "Seat heating elements", commonProblem: "Failure on Sport Seats", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Galvanized vs non-galvanized body check (pre-1976 at risk)",
-      "Heater channel and sill inspection",
-      "Cylinder head leaks (check between fins)",
-      "Transmission synchro condition (2nd and 3rd gear)",
-      "Rear trailing arm bushing condition",
-    ],
-  },
-  Ferrari: {
-    rustAreas: [
-      { area: "Tubular steel frame (hidden by body panels)", severity: "high" },
-      { area: "Door sill panels", severity: "medium" },
-      { area: "Underbody crossmembers", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Leather dashboard", commonProblem: "Shrinkage and cracking", partAvailability: "moderate" },
-      { item: "Switchgear", commonProblem: "Sticky surface coating degradation", partAvailability: "easy" },
-      { item: "Carpet and trim", commonProblem: "Fading from UV exposure", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Frame rail and structural tube inspection",
-      "Cam belt service date verification (critical)",
-      "Classiche certification eligibility check",
-      "All body panel fit and gap alignment",
-      "Brake system (Brembo) pad and rotor condition",
-    ],
-  },
-  Nissan: {
-    rustAreas: [
-      { area: "Rear wheel arches and quarters", severity: "high" },
-      { area: "Front chassis rails", severity: "high" },
-      { area: "Boot/trunk floor", severity: "medium" },
-      { area: "Strut tower tops", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard", commonProblem: "Cracking on top surface (R32/R33)", partAvailability: "rare" },
-      { item: "Boost gauge and MFD", commonProblem: "LCD pixel failure", partAvailability: "rare" },
-      { item: "Seat bolsters", commonProblem: "Wear on entry points", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "ATTESA E-TS system full diagnostic",
-      "RB26 compression and leak-down test",
-      "Turbo shaft play and boost response",
-      "Import compliance and title verification",
-      "Underbody rust inspection (salt road exposure)",
-    ],
-  },
-  default: {
-    rustAreas: [
-      { area: "Rocker panels and sills", severity: "high" },
-      { area: "Wheel arches", severity: "medium" },
-      { area: "Trunk/boot floor", severity: "medium" },
-      { area: "Door bottoms", severity: "low" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard", commonProblem: "Cracking and fading", partAvailability: "moderate" },
-      { item: "Seat leather/fabric", commonProblem: "Wear on bolsters", partAvailability: "easy" },
-      { item: "Headliner", commonProblem: "Sagging from adhesive failure", partAvailability: "easy" },
-    ],
-    inspectionPriorities: [
-      "Full structural and chassis inspection",
-      "Engine compression and leak-down test",
-      "Complete electrical system check",
-      "Brake system inspection",
-      "Fluid analysis (oil, coolant, transmission)",
-    ],
-  },
-}
+// ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
 const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
@@ -506,12 +89,9 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
 const SECTION_IDS = [
   "summary",
   "identity",
-  "production",
   "valuation",
   "performance",
-  "technical",
   "risk",
-  "condition",
   "dueDiligence",
   "ownership",
   "marketContext",
@@ -524,12 +104,9 @@ type SectionId = typeof SECTION_IDS[number]
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
   summary: Scale,
   identity: Car,
-  production: Factory,
   valuation: Globe,
   performance: TrendingUp,
-  technical: Settings,
   risk: AlertTriangle,
-  condition: Search,
   dueDiligence: HelpCircle,
   ownership: DollarSign,
   marketContext: BarChart3,
@@ -618,24 +195,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     }, 1500)
   }
 
-  // ─── COMPUTED DATA (DB-first, fallback to hardcoded) ───
+  // ─── COMPUTED DATA (DB-only — no fabricated fallbacks) ───
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // Red flags & questions: prefer DB analysis
-  const flags = (dbAnalysis?.redFlags?.length ?? 0) > 0
-    ? dbAnalysis!.redFlags : (redFlags[car.make] || redFlags.default)
-  const questions = (dbAnalysis?.criticalQuestions?.length ?? 0) > 0
-    ? dbAnalysis!.criticalQuestions : (sellerQuestions[car.make] || sellerQuestions.default)
+  // Red flags & questions: DB only (no hardcoded fallback)
+  const flags = dbAnalysis?.redFlags?.length ? dbAnalysis.redFlags : []
+  const questions = dbAnalysis?.criticalQuestions?.length ? dbAnalysis.criticalQuestions : []
+  const hasDbRiskData = flags.length > 0
+  const hasDbQuestions = questions.length > 0
 
-  // Ownership costs: prefer DB analysis
-  const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
-  const costs = {
-    insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
-    storage: fallbackCosts.storage,
-    maintenance: dbAnalysis?.yearlyMaintenance ?? fallbackCosts.maintenance,
-  }
+  // Ownership costs: DB only (no hardcoded fallback)
+  const hasDbOwnershipData = !!(dbAnalysis?.insuranceEstimate || dbAnalysis?.yearlyMaintenance)
+  const costs = hasDbOwnershipData ? {
+    insurance: dbAnalysis!.insuranceEstimate ?? 0,
+    maintenance: dbAnalysis!.yearlyMaintenance ?? 0,
+  } : null
+  const totalAnnualCost = costs ? costs.insurance + costs.maintenance : 0
 
-  // Comparable sales: prefer DB
+  // Comparable sales: DB → similarCars → empty (no hardcoded fallback)
   const comps = dbComparables.length > 0
     ? dbComparables.map(c => ({
         title: c.title,
@@ -652,16 +229,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
           platform: (platformLabels[sc.car.platform]?.short || sc.car.platform.replace(/_/g, " ")),
           delta: car.currentBid > 0 ? Math.round(((sc.car.currentBid - car.currentBid) / car.currentBid) * 100) : 0,
         }))
-      : (comparableSales[car.make] || comparableSales.default)
+      : []
 
-  const events = eventsData[car.make] || eventsData.default
-  const shipping = shippingCosts[car.make] || shippingCosts.default
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
   const platform = platformLabels[car.platform]
-
-  const production = productionData[car.make] || productionData.default
-  const technical = technicalData[car.make] || technicalData.default
-  const condition = conditionData[car.make] || conditionData.default
 
   // Fair value: prefer DB market data for range
   const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
@@ -869,7 +439,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.rect(M, vy - 4, 26, 8, "F")
       pdf.setFontSize(8); pdf.setTextColor(11, 11, 16)
       pdf.text(verdict.toUpperCase(), M + 13, vy + 1, { align: "center" })
-      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Cost: $${totalAnnualCost.toLocaleString()}/yr`, M + 30, vy + 1)
+      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 24
       pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
@@ -888,7 +458,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("monzalab.com", W - M, H - 15, { align: "right" })
       pdf.setFillColor(248, 180, 217); pdf.rect(0, H - 2, W, 2, "F")
 
-      const secNames = ["Executive Summary", "Vehicle Identity", "Production & Heritage", "Regional Valuation", "Performance & Returns", "Technical Deep-Dive", "Risk Assessment", "Condition Guide", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
+      const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
 
       // ═══ PAGE 2: PERSONAL LETTER ═══
       pdf.addPage(); bg(); chrome("Welcome")
@@ -977,7 +547,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [255,252,247] },
         { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
         { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113] },
-        { lbl: "ANNUAL COST", val: `$${totalAnnualCost.toLocaleString()}`, clr: [255,252,247] },
+        { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [255,252,247] },
       ]
       const mw = (CW - 6) / 3
       mData.forEach((m, i) => {
@@ -1071,46 +641,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const histLines = pdf.splitTextToSize(stripHtml(car.history) || "—", CW - 10)
       pdf.text(histLines, M + 5, y + 11)
 
-      // ═══ PAGE 6: PRODUCTION & HERITAGE ═══
-      pdf.addPage(); bg(); chrome("Production & Heritage")
-      y = sectionTitle(3, "Production & Heritage", 16)
-      // Key stat callout card (pink tint)
-      pdf.setFillColor(25, 18, 24); pdf.rect(M, y, CW, 12, "F")
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3); pdf.rect(M, y, CW, 12, "S")
-      pdf.setFontSize(8); pink(); pdf.text(production.keyStat, M + 4, y + 7.5)
-      y += 18
-      // Stats grid (3 cards)
-      const pCards = [
-        { lbl: "YEARS PRODUCED", val: production.yearsProduced },
-        { lbl: "TOTAL BUILT", val: production.totalBuilt.toLocaleString() },
-        { lbl: "STEERING", val: production.lhd > 0 ? `${production.lhd} LHD / ${production.rhd} RHD` : "Varies" },
-      ]
-      const pw = (CW - 6) / 3
-      pCards.forEach((pc, i) => {
-        const px = M + i * (pw + 3)
-        card(px, y, pw, 16)
-        pdf.setFontSize(6); dim(); pdf.text(pc.lbl, px + 4, y + 5)
-        pdf.setFontSize(10); white(); pdf.text(pc.val, px + 4, y + 12)
-      })
-      y += 22
-      // Variant bars
-      card(M, y, CW, 8 + production.variants.length * 11)
-      pdf.setFontSize(6); dim(); pdf.text("VARIANT BREAKDOWN", M + 4, y + 5)
-      const maxUnits = Math.max(...production.variants.map(v => v.units))
-      production.variants.forEach((v, i) => {
-        const vy = y + 10 + i * 11
-        pdf.setFontSize(8); white(); pdf.text(v.name, M + 4, vy)
-        pdf.setFontSize(7); gray(); pdf.text(`${v.units.toLocaleString()} units`, M + 4, vy + 4)
-        pink(); pdf.text(v.priceRange, W - M - 4, vy, { align: "right" })
-        // Bar
-        const bw = Math.max((v.units / maxUnits) * (CW - 8), 4)
-        pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, vy + 5.5, bw, 2.5, "F")
-        pdf.setFillColor(40, 40, 50); pdf.rect(M + 4 + bw, vy + 5.5, CW - 8 - bw, 2.5, "F")
-      })
-
-      // ═══ PAGE 7: REGIONAL VALUATION ═══
+      // ═══ PAGE 6: REGIONAL VALUATION ═══
       pdf.addPage(); bg(); chrome("Regional Valuation")
-      y = sectionTitle(4, "Regional Valuation", 16)
+      y = sectionTitle(3, "Regional Valuation", 16)
       // Regional bars card
       card(M, y, CW, 6 + 4 * 16)
       pdf.setFontSize(6); dim(); pdf.text("REGIONAL FAIR VALUE COMPARISON", M + 4, y + 5)
@@ -1167,7 +700,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // ═══ PAGE 8: PERFORMANCE & RETURNS ═══
       pdf.addPage(); bg(); chrome("Performance & Returns")
-      y = sectionTitle(5, "Performance & Returns", 16)
+      y = sectionTitle(4, "Performance & Returns", 16)
 
       // Investment Grade Breakdown card
       card(M, y, CW, 32)
@@ -1178,7 +711,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.text(car.investmentGrade, M + 4, y + 18)
       pdf.setFontSize(10); pdf.text(gradeLabel, M + 30, y + 18)
       pdf.setFontSize(7); gray()
-      pdf.text(`Price Position: ${pricePosition.toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Annual Cost: $${totalAnnualCost.toLocaleString()}`, M + 4, y + 26)
+      pdf.text(`Price Position: ${pricePosition.toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
       y += 38
 
       // Price vs Fair Value card
@@ -1206,65 +739,25 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(7); gray(); pdf.text(`${pricePosition.toFixed(0)}% of fair range`, M + 4, pvGY + 8)
       y += 42
 
-      // Cost of Ownership vs Appreciation card
-      const costPct = (totalAnnualCost / car.currentBid) * 100
-      const costHighFlag = costPct > 15
-      card(M, y, CW, costHighFlag ? 34 : 26)
-      pdf.setFontSize(6); dim(); pdf.text("COST OF OWNERSHIP vs APPRECIATION", M + 4, y + 5)
-      pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}/yr`, M + 4, y + 14)
-      pdf.setFontSize(8); gray(); pdf.text(`${costPct.toFixed(1)}% of vehicle value`, M + 65, y + 14)
-      if (costHighFlag) {
-        pdf.setFillColor(25, 18, 18); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
-        pdf.setDrawColor(248, 113, 113); pdf.setLineWidth(0.2); pdf.rect(M + 4, y + 19, CW - 8, 10, "S")
-        pdf.setFontSize(7); pdf.setTextColor(248, 113, 113)
-        pdf.text("High ownership cost relative to value — consider negotiating price down", M + 8, y + 25.5)
+      // Cost of Ownership vs Appreciation card (only if data available)
+      if (totalAnnualCost > 0) {
+        const costPct = (totalAnnualCost / car.currentBid) * 100
+        const costHighFlag = costPct > 15
+        card(M, y, CW, costHighFlag ? 34 : 26)
+        pdf.setFontSize(6); dim(); pdf.text("COST OF OWNERSHIP vs APPRECIATION", M + 4, y + 5)
+        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}/yr`, M + 4, y + 14)
+        pdf.setFontSize(8); gray(); pdf.text(`${costPct.toFixed(1)}% of vehicle value`, M + 65, y + 14)
+        if (costHighFlag) {
+          pdf.setFillColor(25, 18, 18); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
+          pdf.setDrawColor(248, 113, 113); pdf.setLineWidth(0.2); pdf.rect(M + 4, y + 19, CW - 8, 10, "S")
+          pdf.setFontSize(7); pdf.setTextColor(248, 113, 113)
+          pdf.text("High ownership cost relative to value — consider negotiating price down", M + 8, y + 25.5)
+        }
       }
 
-      // ═══ PAGE 9: TECHNICAL DEEP-DIVE ═══
-      pdf.addPage(); bg(); chrome("Technical Deep-Dive")
-      y = sectionTitle(6, "Technical Deep-Dive", 16)
-      // Engine specs grid card
-      const specW = (CW - 6) / 3
-      card(M, y, CW, 8 + Math.ceil(technical.engineDetails.length / 3) * 16)
-      pdf.setFontSize(6); dim(); pdf.text("ENGINE & POWERTRAIN", M + 4, y + 5)
-      technical.engineDetails.forEach((d, i) => {
-        const col = i % 3; const rw2 = Math.floor(i / 3)
-        const ex = M + 4 + col * (specW + 1); const ey = y + 10 + rw2 * 16
-        pdf.setFontSize(6); dim(); pdf.text(d.spec.toUpperCase(), ex, ey)
-        pdf.setFontSize(9); white(); pdf.text(d.value, ex, ey + 6)
-      })
-      y += 12 + Math.ceil(technical.engineDetails.length / 3) * 16
-
-      // Issues card
-      card(M, y, CW, 7 + technical.knownIssues.length * 10)
-      pdf.setFontSize(6); dim(); pdf.text("KNOWN MECHANICAL ISSUES", M + 4, y + 5)
-      technical.knownIssues.forEach((iss, i) => {
-        const iy = y + 10 + i * 10
-        // Severity dot
-        const sClr = iss.severity === "critical" ? [248,113,113] : iss.severity === "moderate" ? [251,191,36] : [100,100,110]
-        pdf.setFillColor(sClr[0], sClr[1], sClr[2]); pdf.circle(M + 6, iy - 0.5, 1, "F")
-        pdf.setFontSize(7.5); white()
-        const issText = pdf.splitTextToSize(iss.issue, CW - 45)
-        pdf.text(issText, M + 10, iy)
-        // Badge
-        badge(iss.severity.toUpperCase(), M + CW - 55, iy, sClr[0] > 200 ? 40 : 30, sClr[1] > 150 ? 30 : 25, sClr[2] > 150 ? 25 : 20, sClr[0], sClr[1], sClr[2])
-        pdf.setFontSize(7); gray(); pdf.text(iss.repairCost, W - M - 4, iy, { align: "right" })
-      })
-      y += 11 + technical.knownIssues.length * 10
-
-      // Service schedule card
-      card(M, y, CW, 7 + technical.serviceIntervals.length * 6)
-      pdf.setFontSize(6); dim(); pdf.text("SERVICE SCHEDULE", M + 4, y + 5)
-      technical.serviceIntervals.forEach((s, i) => {
-        const sy = y + 10 + i * 6
-        pdf.setFontSize(7.5); white(); pdf.text(s.item, M + 4, sy)
-        gray(); pdf.text(s.interval, M + CW / 2, sy)
-        pink(); pdf.text(s.cost, W - M - 4, sy, { align: "right" })
-      })
-
-      // ═══ PAGE 10: RISK ASSESSMENT ═══
+      // ═══ PAGE 8: RISK ASSESSMENT ═══
       pdf.addPage(); bg(); chrome("Risk Assessment")
-      y = sectionTitle(7, "Risk Assessment", 16)
+      y = sectionTitle(5, "Risk Assessment", 16)
       // Risk gauge card
       card(M, y, CW, 26)
       pdf.setFontSize(6); dim(); pdf.text("RISK SCORE", M + 4, y + 5)
@@ -1307,56 +800,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const riskCtx = pdf.splitTextToSize(`Score ${riskScore}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk — proceed with caution and specialist inspection."}`, CW - 8)
       pdf.text(riskCtx, M + 4, y + 11)
 
-      // ═══ PAGE 11: CONDITION GUIDE ═══
-      pdf.addPage(); bg(); chrome("Condition Guide")
-      y = sectionTitle(8, "Condition Guide", 16)
-      // Rust areas card
-      card(M, y, CW, 7 + condition.rustAreas.length * 7)
-      pdf.setFontSize(6); dim(); pdf.text("BODYWORK & RUST-PRONE AREAS", M + 4, y + 5)
-      condition.rustAreas.forEach((a, i) => {
-        const ay = y + 11 + i * 7
-        const aClr = a.severity === "high" ? [248,113,113] : a.severity === "medium" ? [251,191,36] : [52,211,153]
-        pdf.setFillColor(aClr[0], aClr[1], aClr[2]); pdf.circle(M + 6, ay - 0.5, 0.8, "F")
-        pdf.setFontSize(7.5); white(); pdf.text(a.area, M + 10, ay)
-        badge(a.severity.toUpperCase(), W - M - 22, ay, aClr[0] > 200 ? 40 : 20, aClr[1] > 150 ? 30 : 25, aClr[2] > 150 ? 25 : 20, aClr[0], aClr[1], aClr[2])
-      })
-      y += 11 + condition.rustAreas.length * 7 + 4
-      // Interior card
-      card(M, y, CW, 7 + condition.interiorIssues.length * 10)
-      pdf.setFontSize(6); dim(); pdf.text("INTERIOR CONCERNS", M + 4, y + 5)
-      condition.interiorIssues.forEach((item, i) => {
-        const iy = y + 11 + i * 10
-        pdf.setFontSize(8); white(); pdf.text(item.item, M + 4, iy)
-        pdf.setFontSize(7); gray(); pdf.text(item.commonProblem, M + 4, iy + 4.5)
-        const pClr = item.partAvailability === "rare" ? [248,113,113] : item.partAvailability === "moderate" ? [251,191,36] : [52,211,153]
-        badge(`PARTS: ${item.partAvailability.toUpperCase()}`, W - M - 36, iy, pClr[0] > 200 ? 40 : 20, pClr[1] > 150 ? 30 : 25, pClr[2] > 150 ? 25 : 20, pClr[0], pClr[1], pClr[2])
-      })
-      y += 11 + condition.interiorIssues.length * 10 + 4
-      // Inspection priorities card
-      card(M, y, CW, 7 + condition.inspectionPriorities.length * 6)
-      pdf.setFontSize(6); dim(); pdf.text("INSPECTION PRIORITIES", M + 4, y + 5)
-      condition.inspectionPriorities.forEach((p, i) => {
-        const py = y + 11 + i * 6
-        // Numbered circle
-        pdf.setFillColor(248, 180, 217); pdf.circle(M + 7, py - 0.5, 2, "F")
-        pdf.setFontSize(6); pdf.setTextColor(11, 11, 16); pdf.text(String(i + 1), M + 7, py + 0.3, { align: "center" })
-        pdf.setFontSize(7.5); white(); pdf.text(p, M + 12, py)
-      })
-
-      // ═══ PAGE 12: DUE DILIGENCE ═══
+      // ═══ PAGE 9: DUE DILIGENCE ═══
       pdf.addPage(); bg(); chrome("Due Diligence")
-      y = sectionTitle(9, "Due Diligence", 16)
-      // Pre-purchase inspection checklist card
-      const inspItems = condition.inspectionPriorities
-      card(M, y, CW, 7 + inspItems.length * 7)
-      pdf.setFontSize(6); dim(); pdf.text("PRE-PURCHASE INSPECTION CHECKLIST", M + 4, y + 5)
-      inspItems.forEach((p, i) => {
-        const py = y + 11 + i * 7
-        // Checkbox style
-        pdf.setDrawColor(60, 60, 70); pdf.setLineWidth(0.15); pdf.rect(M + 4, py - 2.5, 3.5, 3.5, "S")
-        pdf.setFontSize(7.5); white(); pdf.text(p, M + 10, py)
-      })
-      y += 11 + inspItems.length * 7 + 4
+      y = sectionTitle(6, "Due Diligence", 16)
       // Questions card
       card(M, y, CW, 7 + questions.length * 6.5)
       pdf.setFontSize(6); dim(); pdf.text("QUESTIONS FOR THE SELLER", M + 4, y + 5)
@@ -1367,57 +813,40 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFontSize(7.5); white(); pdf.text(q, M + 12, qy)
       })
 
-      // ═══ PAGE 13: OWNERSHIP ECONOMICS ═══
+      // ═══ PAGE 10: OWNERSHIP ECONOMICS ═══
       pdf.addPage(); bg(); chrome("Ownership Economics")
-      y = sectionTitle(10, "Ownership Economics", 16)
-      // Annual costs card with bars
-      const costItems = [
+      y = sectionTitle(7, "Ownership Economics", 16)
+      // Annual costs card with bars (conditional on DB data)
+      const costItems = costs ? [
         { lbl: "Insurance (Agreed Value)", val: costs.insurance },
-        { lbl: "Climate-Controlled Storage", val: costs.storage },
         { lbl: "Service & Maintenance", val: costs.maintenance },
-      ]
-      card(M, y, CW, 7 + costItems.length * 12 + 14)
-      pdf.setFontSize(6); dim(); pdf.text("ANNUAL OWNERSHIP COSTS (USD)", M + 4, y + 5)
-      costItems.forEach((c, i) => {
-        const cy2 = y + 11 + i * 12
-        pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
-        pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
-        const pct = c.val / totalAnnualCost
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
-        pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
-        pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
-      })
-      // Total
-      const tY = y + 11 + costItems.length * 12
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
-      pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
-      pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
-      pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
-      y += 11 + costItems.length * 12 + 18
+      ] : []
+      if (costItems.length > 0) {
+        card(M, y, CW, 7 + costItems.length * 12 + 14)
+        pdf.setFontSize(6); dim(); pdf.text("ANNUAL OWNERSHIP COSTS (USD)", M + 4, y + 5)
+        costItems.forEach((c, i) => {
+          const cy2 = y + 11 + i * 12
+          pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
+          pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
+          const pct = totalAnnualCost > 0 ? c.val / totalAnnualCost : 0.5
+          pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
+          pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
+          pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
+        })
+        // Total
+        const tY = y + 11 + costItems.length * 12
+        pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
+        pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
+        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
+        pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
+      } else {
+        card(M, y, CW, 16)
+        pdf.setFontSize(8); gray(); pdf.text("Ownership cost data not yet available for this vehicle.", M + 4, y + 10)
+      }
 
-      // Shipping card
-      card(M, y, CW, 30)
-      pdf.setFontSize(6); dim(); pdf.text("SHIPPING & LOGISTICS (USD)", M + 4, y + 5)
-      y += 8
-      y = cardRow("Domestic (Enclosed)", `$${shipping.domestic.toLocaleString()}`, M, y, CW)
-      y = cardRow("EU Import (incl. duties)", `$${shipping.euImport.toLocaleString()}`, M, y, CW)
-      y = cardRow("UK Import (incl. duties)", `$${shipping.ukImport.toLocaleString()}`, M, y, CW)
-
-      // ═══ PAGE 14: MARKET CONTEXT ═══
+      // ═══ PAGE 11: MARKET CONTEXT ═══
       pdf.addPage(); bg(); chrome("Market Context")
-      y = sectionTitle(11, "Market Context", 16)
-      // Events card
-      card(M, y, CW, 7 + events.length * 8)
-      pdf.setFontSize(6); dim(); pdf.text("UPCOMING EVENTS & CATALYSTS", M + 4, y + 5)
-      events.forEach((e, i) => {
-        const ey = y + 11 + i * 8
-        const eClr = e.impact === "positive" ? [52,211,153] : e.impact === "negative" ? [248,113,113] : [130,130,140]
-        pdf.setFillColor(eClr[0], eClr[1], eClr[2]); pdf.circle(M + 6, ey - 0.5, 0.8, "F")
-        pdf.setFontSize(7.5); white(); pdf.text(e.name, M + 10, ey)
-        pdf.setFontSize(6.5); gray(); pdf.text(e.type, M + 10, ey + 3.5)
-        badge(e.impact.toUpperCase(), W - M - 28, ey, eClr[0] > 200 ? 40 : 15, eClr[1] > 150 ? 30 : 25, eClr[2] > 150 ? 25 : 18, eClr[0], eClr[1], eClr[2])
-      })
-      y += 11 + events.length * 8 + 4
+      y = sectionTitle(8, "Market Context", 16)
 
       // Comps card
       card(M, y, CW, 7 + comps.length * 10)
@@ -1433,7 +862,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // ═══ PAGE 15: SIMILAR VEHICLES ═══
       pdf.addPage(); bg(); chrome("Similar Vehicles")
-      y = sectionTitle(12, "Similar Vehicles", 16)
+      y = sectionTitle(9, "Similar Vehicles", 16)
       const maxSimBid = Math.max(car.currentBid, ...similarCars.map(sc => sc.car.currentBid))
       similarCars.forEach((sc, i) => {
         card(M, y, CW, 16)
@@ -1452,7 +881,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // ═══ PAGE 16: FINAL VERDICT ═══
       pdf.addPage(); bg(); chrome("Final Verdict")
-      y = sectionTitle(13, "Final Verdict", 16)
+      y = sectionTitle(10, "Final Verdict", 16)
       // Large verdict badge
       const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [248,180,217]
       pdf.setFillColor(vClr[0], vClr[1], vClr[2]); pdf.rect(M, y, 55, 18, "F")
@@ -1482,8 +911,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       sy = cardRow("Below Fair Value?", isBelowFair ? "YES" : "NO", M, sy, CW)
       sy = cardRow("Best Buy Region", regionLabels[bestRegion]?.short || bestRegion, M, sy, CW)
       if (hasArbitrage) { sy = cardRow("Arbitrage Savings", `$${Math.round(arbitrageSavings).toLocaleString()}`, M, sy, CW) }
-      sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
-      sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
+      if (totalAnnualCost > 0) {
+        sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
+        sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
+      }
+      sy = cardRow("Similar Vehicles", `${similarCars.length}`, M, sy, CW)
 
       // ═══ CLOSING PAGE: THANK YOU ═══
       pdf.addPage(); bg()
@@ -1583,7 +1015,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
         ["Market Position", `${pricePosition}% of fair value`],
         ["Risk Score", `${riskScore}/100`],
-        ["Total Annual Cost (USD)", totalAnnualCost],
+        ...(totalAnnualCost > 0 ? [["Total Annual Cost (USD)", totalAnnualCost]] : []),
+        ["Similar Vehicles Found", similarCars.length],
         [""],
         ["VEHICLE DETAILS"],
         ["Engine", car.engine],
@@ -1665,100 +1098,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       ws3["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]
       XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
 
-      // ═══ Sheet 4: Ownership Costs ═══
-      const costRows: (string | number)[][] = [
-        ["ANNUAL OWNERSHIP COSTS"],
-        [""],
-        ["Category", "Annual Cost (USD)"],
-        ["Insurance (Agreed Value)", costs.insurance],
-        ["Climate-Controlled Storage", costs.storage],
-        ["Service & Maintenance", costs.maintenance],
-        ["Total Annual Cost", totalAnnualCost],
-        ["Cost as % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
-        [""],
-        ["SHIPPING & LOGISTICS"],
-        ["Route", "Estimated Cost (USD)"],
-        ["Domestic (Enclosed Transport)", shipping.domestic],
-        ["EU Import (incl. duties & VAT)", shipping.euImport],
-        ["UK Import (incl. duties & VAT)", shipping.ukImport],
-      ]
-      const ws4 = XLSX.utils.aoa_to_sheet(costRows)
-      ws4["!cols"] = [{ wch: 34 }, { wch: 22 }, { wch: 14 }]
-      ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
+      // ═══ Sheet 4: Ownership Costs (conditional) ═══
+      if (costs) {
+        const costRows: (string | number)[][] = [
+          ["ANNUAL OWNERSHIP COSTS"],
+          [""],
+          ["Category", "Annual Cost (USD)"],
+          ["Insurance (Agreed Value)", costs.insurance],
+          ["Service & Maintenance", costs.maintenance],
+          ["Total Annual Cost", totalAnnualCost],
+          ["Cost as % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
+        ]
+        const ws4 = XLSX.utils.aoa_to_sheet(costRows)
+        ws4["!cols"] = [{ wch: 34 }, { wch: 22 }]
+        ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+        XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
+      }
 
-      // ═══ Sheet 5: Production & Heritage ═══
-      const prodRows: (string | number)[][] = [
-        ["PRODUCTION & HERITAGE"],
-        [""],
-        ["Attribute", "Value"],
-        ["Years Produced", production.yearsProduced],
-        ["Total Units Built", production.totalBuilt],
-        ...(production.lhd > 0 || production.rhd > 0 ? [
-          ["Left-Hand Drive", production.lhd],
-          ["Right-Hand Drive", production.rhd],
-          ["LHD/RHD Split", `${((production.lhd / (production.lhd + production.rhd)) * 100).toFixed(0)}% / ${((production.rhd / (production.lhd + production.rhd)) * 100).toFixed(0)}%`],
-        ] as (string | number)[][] : []),
-        ["Key Fact", production.keyStat],
-        [""],
-        ["VARIANT BREAKDOWN"],
-        ["Variant", "Units Produced", "Current Price Range"],
-        ...production.variants.map(v => [v.name, v.units, v.priceRange]),
-        [""],
-        ["Total Across All Variants", production.variants.reduce((sum, v) => sum + v.units, 0)],
-      ]
-      const ws5 = XLSX.utils.aoa_to_sheet(prodRows)
-      ws5["!cols"] = [{ wch: 28 }, { wch: 20 }, { wch: 22 }]
-      ws5["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws5, "Production")
-
-      // ═══ Sheet 6: Technical Deep-Dive ═══
-      const techRows: (string | number)[][] = [
-        ["TECHNICAL DEEP-DIVE"],
-        [""],
-        ["ENGINE SPECIFICATIONS"],
-        ["Specification", "Value"],
-        ...technical.engineDetails.map(d => [d.spec, d.value]),
-        [""],
-        ["KNOWN MECHANICAL ISSUES"],
-        ["Issue", "Severity", "Est. Repair Cost"],
-        ...technical.knownIssues.map(i => [i.issue, i.severity.toUpperCase(), i.repairCost]),
-        [""],
-        ["Total Critical Issues", technical.knownIssues.filter(i => i.severity === "critical").length],
-        ["Total Moderate Issues", technical.knownIssues.filter(i => i.severity === "moderate").length],
-        ["Total Minor Issues", technical.knownIssues.filter(i => i.severity === "minor").length],
-        [""],
-        ["SERVICE SCHEDULE"],
-        ["Service Item", "Interval", "Estimated Cost"],
-        ...technical.serviceIntervals.map(s => [s.item, s.interval, s.cost]),
-      ]
-      const ws6 = XLSX.utils.aoa_to_sheet(techRows)
-      ws6["!cols"] = [{ wch: 44 }, { wch: 22 }, { wch: 18 }]
-      ws6["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws6, "Technical")
-
-      // ═══ Sheet 7: Condition Guide ═══
-      const condRows: (string | number)[][] = [
-        ["CONDITION & INSPECTION GUIDE"],
-        [""],
-        ["BODYWORK & RUST-PRONE AREAS"],
-        ["Area", "Severity"],
-        ...condition.rustAreas.map(a => [a.area, a.severity.toUpperCase()]),
-        [""],
-        ["INTERIOR CONDITION CONCERNS"],
-        ["Component", "Common Problem", "Part Availability"],
-        ...condition.interiorIssues.map(i => [i.item, i.commonProblem, i.partAvailability.toUpperCase()]),
-        [""],
-        ["MODEL-SPECIFIC INSPECTION PRIORITIES"],
-        ["Priority", "Item"],
-        ...condition.inspectionPriorities.map((p, i) => [i + 1, p]),
-      ]
-      const ws7 = XLSX.utils.aoa_to_sheet(condRows)
-      ws7["!cols"] = [{ wch: 50 }, { wch: 34 }, { wch: 20 }]
-      ws7["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws7, "Condition")
-
-      // ═══ Sheet 8: Due Diligence ═══
+      // ═══ Sheet 5: Due Diligence ═══
       const ddRows: (string | number)[][] = [
         ["DUE DILIGENCE CHECKLIST"],
         [""],
@@ -1775,13 +1132,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       ws8["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
       XLSX.utils.book_append_sheet(wb, ws8, "Due Diligence")
 
-      // ═══ Sheet 9: Market Context ═══
+      // ═══ Sheet 6: Market Context ═══
       const mktRows: (string | number)[][] = [
-        ["MARKET CONTEXT & EVENTS"],
-        [""],
-        ["UPCOMING EVENTS & CATALYSTS"],
-        ["Event", "Type", "Expected Impact"],
-        ...events.map(e => [e.name, e.type, e.impact.toUpperCase()]),
+        ["MARKET CONTEXT"],
         [""],
         ["VEHICLE THESIS"],
         [(() => {
@@ -1795,11 +1148,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         [stripHtml(car.history) || "No documented history available"],
       ]
       const ws9 = XLSX.utils.aoa_to_sheet(mktRows)
-      ws9["!cols"] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }]
+      ws9["!cols"] = [{ wch: 60 }, { wch: 18 }]
       ws9["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
-        { s: { r: 7, c: 0 }, e: { r: 7, c: 2 } },
-        { s: { r: 9, c: 0 }, e: { r: 9, c: 2 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } },
+        { s: { r: 6, c: 0 }, e: { r: 6, c: 1 } },
       ]
       XLSX.utils.book_append_sheet(wb, ws9, "Market Context")
 
@@ -2041,10 +1394,10 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     {pricePosition}%
                   </p>
                 </div>
-                {/* Annual Cost */}
+                {/* Similar Cars */}
                 <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.annualCost")}</span>
-                  <p className="text-[18px] font-bold font-mono text-foreground mt-1">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</p>
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                  <p className="text-[24px] font-bold font-mono text-foreground mt-1">{similarCars.length}</p>
                 </div>
                 {/* Risk Score */}
                 <div className="rounded-xl bg-card border border-border p-4">
@@ -2149,75 +1502,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             </section>
 
             {/* ═══════════════════════════════════════
-                §3 — PRODUCTION & HERITAGE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("production")} id="section-production" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="production">
-                <SectionHeader id="production" title={t("sections.production")} />
-
-                {/* Key stat callout */}
-                <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <Factory className="size-5 text-primary shrink-0 mt-0.5" />
-                    <p className="text-[13px] text-foreground/80 leading-relaxed">{production.keyStat}</p>
-                  </div>
-                </div>
-
-                {/* Production stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                  <div className="rounded-xl bg-card border border-border p-4">
-                    <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("production.yearsProduced")}</span>
-                    <p className="text-[16px] font-bold text-foreground mt-1">{production.yearsProduced}</p>
-                  </div>
-                  <div className="rounded-xl bg-card border border-border p-4">
-                    <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("production.totalBuilt")}</span>
-                    <p className="text-[16px] font-bold font-mono text-primary mt-1">{production.totalBuilt.toLocaleString()}</p>
-                  </div>
-                  {(production.lhd > 0 || production.rhd > 0) && (
-                    <div className="rounded-xl bg-card border border-border p-4 col-span-2 md:col-span-1">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("production.steering")}</span>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[12px] font-mono text-foreground">LHD: {production.lhd.toLocaleString()}</span>
-                        <span className="text-[10px] text-muted-foreground">|</span>
-                        <span className="text-[12px] font-mono text-foreground">RHD: {production.rhd.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Variant breakdown with pricing */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("production.variants")}</h3>
-                  <div className="space-y-2">
-                    {production.variants.map((v, i) => {
-                      const pct = production.totalBuilt > 0 ? (v.units / production.totalBuilt) * 100 : 25
-                      return (
-                        <div key={i} className="p-3 rounded-xl bg-foreground/2 border border-border">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[13px] font-semibold text-foreground">{v.name}</span>
-                              <span className="text-[9px] font-mono text-muted-foreground">({v.units.toLocaleString()} units)</span>
-                            </div>
-                            <span className="text-[12px] font-mono font-semibold text-primary">{v.priceRange}</span>
-                          </div>
-                          <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(pct, 100)}%` }}
-                              transition={{ duration: 0.6, delay: 0.1 + i * 0.08 }}
-                              className="h-full rounded-full bg-primary/30"
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §4 — MARKET VALUATION & REGIONAL ARBITRAGE
+                §3 — MARKET VALUATION & REGIONAL ARBITRAGE
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("valuation")} id="section-valuation" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="valuation">
@@ -2475,73 +1760,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             </section>
 
             {/* ═══════════════════════════════════════
-                §6 — TECHNICAL DEEP-DIVE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("technical")} id="section-technical" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="technical">
-                <SectionHeader id="technical" title={t("sections.technical")} />
-
-                {/* Engine specifications */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("technical.engineSpecs")}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {technical.engineDetails.map((detail, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-foreground/2">
-                        <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-muted-foreground">{detail.spec}</span>
-                        <p className="text-[13px] font-semibold text-foreground mt-1">{detail.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Known mechanical issues */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("technical.knownIssues")}</h3>
-                  <div className="space-y-2">
-                    {technical.knownIssues.map((issue, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-foreground/2 border border-border">
-                        <div className={`size-2 rounded-full mt-1.5 shrink-0 ${
-                          issue.severity === "critical" ? "bg-red-400" : issue.severity === "moderate" ? "bg-amber-400" : "bg-muted-foreground"
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-foreground">{issue.issue}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{t("technical.estRepair")}: {issue.repairCost}</p>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                          issue.severity === "critical" ? "bg-red-500/10 text-red-400" :
-                          issue.severity === "moderate" ? "bg-amber-500/10 text-amber-400" :
-                          "bg-white/5 text-muted-foreground"
-                        }`}>
-                          {t(`technical.${issue.severity}`)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Service intervals & costs */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Wrench className="size-4 text-primary" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("technical.serviceSchedule")}</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {technical.serviceIntervals.map((svc, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-foreground">{svc.item}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{svc.interval}</p>
-                        </div>
-                        <span className="text-[13px] font-mono font-semibold text-primary shrink-0 ml-3">{svc.cost}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §7 — RISK ASSESSMENT
+                §5 — RISK ASSESSMENT
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("risk")} id="section-risk" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="risk">
@@ -2577,103 +1796,38 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   </div>
                 </div>
 
-                {/* Red flags */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.knownIssues")}</h3>
-                  <div className="space-y-2">
-                    {flags.map((flag, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-border">
-                        <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-foreground">{flag}</p>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                          i < 2 ? "bg-primary/15 text-primary" : "bg-white/5 text-muted-foreground"
-                        }`}>
-                          {i < 2 ? t("risk.critical") : t("risk.monitor")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §8 — CONDITION GUIDE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("condition")} id="section-condition" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="condition">
-                <SectionHeader id="condition" title={t("sections.condition")} />
-
-                {/* Bodywork / Rust-prone areas */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("condition.rustAreas")}</h3>
-                  <div className="space-y-2">
-                    {condition.rustAreas.map((area, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`size-3 rounded-full shrink-0 ${
-                            area.severity === "high" ? "bg-red-400" : area.severity === "medium" ? "bg-amber-400" : "bg-emerald-400"
-                          }`} />
-                          <span className="text-[13px] text-foreground">{area.area}</span>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                          area.severity === "high" ? "bg-red-500/10 text-red-400" :
-                          area.severity === "medium" ? "bg-amber-500/10 text-amber-400" :
-                          "bg-emerald-500/10 text-emerald-400"
-                        }`}>
-                          {t(`condition.${area.severity}`)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Interior condition concerns */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("condition.interiorIssues")}</h3>
-                  <div className="space-y-2">
-                    {condition.interiorIssues.map((item, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-foreground/2 border border-border">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[13px] font-semibold text-foreground">{item.item}</span>
-                          <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                            item.partAvailability === "rare" ? "bg-red-500/10 text-red-400" :
-                            item.partAvailability === "moderate" ? "bg-amber-500/10 text-amber-400" :
-                            "bg-emerald-500/10 text-emerald-400"
+                {/* Red flags — only show when DB data available */}
+                {hasDbRiskData ? (
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.knownIssues")}</h3>
+                    <div className="space-y-2">
+                      {flags.map((flag, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-border">
+                          <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] text-foreground">{flag}</p>
+                          </div>
+                          <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                            i < 2 ? "bg-primary/15 text-primary" : "bg-white/5 text-muted-foreground"
                           }`}>
-                            {t(`condition.parts_${item.partAvailability}`)}
+                            {i < 2 ? t("risk.critical") : t("risk.monitor")}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">{item.commonProblem}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Model-specific inspection priorities */}
-                <div className="rounded-xl bg-primary/5 border border-primary/15 p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Search className="size-4 text-primary" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-primary">{t("condition.inspectionPriorities")}</h3>
+                ) : (
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <p className="text-[13px] text-muted-foreground text-center">
+                      Detailed risk analysis not yet available for this vehicle.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    {condition.inspectionPriorities.map((priority, i) => (
-                      <div key={i} className="flex items-start gap-3 p-2.5">
-                        <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[9px] font-bold text-primary shrink-0">
-                          {i + 1}
-                        </span>
-                        <span className="text-[13px] text-foreground/80">{priority}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </PaywallSection>
             </section>
 
             {/* ═══════════════════════════════════════
-                §9 — DUE DILIGENCE TOOLKIT
+                §6 — DUE DILIGENCE TOOLKIT
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="dueDiligence">
@@ -2741,86 +1895,76 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               <PaywallSection sectionId="ownership">
                 <SectionHeader id="ownership" title={t("sections.ownership")} />
 
-                {/* Annual costs */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.annualCosts")}</h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: t("ownership.insurance"), value: costs.insurance, icon: <Shield className="size-4 text-muted-foreground" /> },
-                      { label: t("ownership.storage"), value: costs.storage, icon: <MapPin className="size-4 text-muted-foreground" /> },
-                      { label: t("ownership.maintenance"), value: costs.maintenance, icon: <Wrench className="size-4 text-muted-foreground" /> },
-                    ].map((item, i) => {
-                      const pct = totalAnnualCost > 0 ? (item.value / totalAnnualCost) * 100 : 33
-                      return (
-                        <div key={i}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              {item.icon}
-                              <span className="text-[12px] text-muted-foreground">{item.label}</span>
+                {/* Annual costs — only shown when DB data available */}
+                {costs ? (
+                  <>
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.annualCosts")}</h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: t("ownership.insurance"), value: costs.insurance, icon: <Shield className="size-4 text-muted-foreground" /> },
+                          { label: t("ownership.maintenance"), value: costs.maintenance, icon: <Wrench className="size-4 text-muted-foreground" /> },
+                        ].map((item, i) => {
+                          const pct = totalAnnualCost > 0 ? (item.value / totalAnnualCost) * 100 : 50
+                          return (
+                            <div key={i}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  {item.icon}
+                                  <span className="text-[12px] text-muted-foreground">{item.label}</span>
+                                </div>
+                                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                              </div>
+                              <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${pct}%` }}
+                                  transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
+                                  className="h-full rounded-full bg-primary/30"
+                                />
+                              </div>
                             </div>
-                            <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
-                          </div>
-                          <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${pct}%` }}
-                              transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
-                              className="h-full rounded-full bg-primary/30"
-                            />
-                          </div>
+                          )
+                        })}
+                        <div className="flex items-center justify-between pt-3 border-t border-border">
+                          <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
+                          <span className="text-[20px] font-mono font-bold text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
                         </div>
-                      )
-                    })}
-                    <div className="flex items-center justify-between pt-3 border-t border-border">
-                      <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
-                      <span className="text-[20px] font-mono font-bold text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cost projection */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.fiveYearProjection")}</h3>
-                  <div className="flex items-end gap-2 md:gap-3 h-[120px]">
-                    {[1, 2, 3, 4, 5].map(year => {
-                      const cumulative = totalAnnualCost * year
-                      const maxCumulative = totalAnnualCost * 5
-                      const barHeight = (cumulative / maxCumulative) * 100
-                      return (
-                        <div key={year} className="flex-1 flex flex-col items-center gap-1">
-                          <span className="text-[9px] font-mono text-muted-foreground">{formatPriceForRegion(cumulative, selectedRegion)}</span>
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${barHeight}%` }}
-                            transition={{ duration: 0.6, delay: year * 0.1 }}
-                            className="w-full rounded-t-md bg-primary/20"
-                          />
-                          <span className="text-[9px] text-muted-foreground">Yr {year}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Shipping estimates */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Truck className="size-4 text-primary" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("ownership.shippingEstimates")}</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { label: t("ownership.domestic"), value: shipping.domestic },
-                      { label: t("ownership.euImport"), value: shipping.euImport },
-                      { label: t("ownership.ukImport"), value: shipping.ukImport },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <span className="text-[13px] text-muted-foreground">{item.label}</span>
-                        <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Cost projection */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.fiveYearProjection")}</h3>
+                      <div className="flex items-end gap-2 md:gap-3 h-[120px]">
+                        {[1, 2, 3, 4, 5].map(year => {
+                          const cumulative = totalAnnualCost * year
+                          const maxCumulative = totalAnnualCost * 5
+                          const barHeight = (cumulative / maxCumulative) * 100
+                          return (
+                            <div key={year} className="flex-1 flex flex-col items-center gap-1">
+                              <span className="text-[9px] font-mono text-muted-foreground">{formatPriceForRegion(cumulative, selectedRegion)}</span>
+                              <motion.div
+                                initial={{ height: 0 }}
+                                animate={{ height: `${barHeight}%` }}
+                                transition={{ duration: 0.6, delay: year * 0.1 }}
+                                className="w-full rounded-t-md bg-primary/20"
+                              />
+                              <span className="text-[9px] text-muted-foreground">Yr {year}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                    <p className="text-[13px] text-muted-foreground text-center">
+                      Ownership cost data not yet available for this vehicle.
+                    </p>
                   </div>
-                </div>
+                )}
+
               </PaywallSection>
             </section>
 
@@ -2840,33 +1984,6 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   <p className="text-[13px] leading-relaxed text-foreground/80 whitespace-pre-line">{stripHtml(car.thesis)}</p>
                 </div>
 
-                {/* Market events */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("marketContext.marketEvents")}</h3>
-                  <div className="space-y-2">
-                    {events.map((event, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <div className="flex items-center gap-3">
-                          <span className={`size-2 rounded-full ${
-                            event.impact === "positive" ? "bg-emerald-400" :
-                            event.impact === "negative" ? "bg-red-400" : "bg-muted-foreground"
-                          }`} />
-                          <div>
-                            <p className="text-[13px] text-foreground">{event.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{event.type}</p>
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                          event.impact === "positive" ? "bg-emerald-500/10 text-emerald-400" :
-                          event.impact === "negative" ? "bg-red-500/10 text-red-400" :
-                          "bg-white/5 text-muted-foreground"
-                        }`}>
-                          {event.impact === "positive" ? t("marketContext.valuePositive") : event.impact === "negative" ? t("marketContext.valueNegative") : t("marketContext.neutral")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </PaywallSection>
             </section>
 
@@ -2973,7 +2090,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     {[
                       `${car.investmentGrade} investment grade — ${pricePosition}% of fair value`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      `Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`,
+                      ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
                     ].map((takeaway, i) => (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
