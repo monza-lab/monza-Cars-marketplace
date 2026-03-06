@@ -125,7 +125,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />
 
             {/* Platform badge - real source */}
             <span
@@ -331,7 +331,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent dark:from-background dark:via-background/70 dark:to-background/30" />
         </div>
 
         {/* Content */}

@@ -74,7 +74,7 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
           className="object-cover"
           sizes="50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card" />
       </div>
 
       {/* Content */}

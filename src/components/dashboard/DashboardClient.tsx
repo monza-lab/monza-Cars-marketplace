@@ -557,7 +557,7 @@ function BrandCard({ brand }: { brand: Brand }) {
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
@@ -691,7 +691,7 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
           )}
 
           {/* Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
@@ -833,7 +833,7 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
 
         {/* Grade badge */}
         <div className="absolute top-4 left-4">

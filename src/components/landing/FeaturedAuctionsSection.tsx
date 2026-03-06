@@ -84,7 +84,7 @@ function FeaturedCard({
         />
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent dark:from-background dark:via-background/40" />
 
         {/* Platform Badge */}
         <div className="absolute top-4 left-4 flex items-center gap-2">

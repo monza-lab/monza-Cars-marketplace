@@ -460,7 +460,7 @@ function MobileHeroModel({ model, make }: { model: Model; make: string }) {
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent dark:from-background dark:via-background/40" />
 
         {/* Back link */}
         <div className="absolute top-4 left-4">
@@ -917,7 +917,7 @@ function CarCard({ car, index }: { car: CollectorCar; index: number }) {
             sizes="(max-width: 768px) 100vw, 33vw"
           />
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />
 
           {/* Status badge */}
           {isLive && (
@@ -1440,7 +1440,7 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
@@ -1598,7 +1598,7 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
@@ -1713,7 +1713,7 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
           )}
 
           {/* Vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">

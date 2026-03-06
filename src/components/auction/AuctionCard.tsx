@@ -128,7 +128,7 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
           )}
 
           {/* Gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />
 
           {/* Platform badge */}
           <span
