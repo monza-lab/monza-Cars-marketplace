@@ -22,7 +22,7 @@ import type { Viewport } from "next";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
 
 export const viewport: Viewport = {
-  themeColor: "#0E0A0C",
+  themeColor: "#FDFBF9",
   colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
@@ -96,7 +96,7 @@ export default async function RootLayout({
     : routing.defaultLocale;
 
   return (
-    <html lang={lang} className="dark" suppressHydrationWarning>
+    <html lang={lang} className="" suppressHydrationWarning>
       <body
         className={`${cormorant.variable} ${karla.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
       >

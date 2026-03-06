@@ -40,6 +40,7 @@ import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
+import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 
@@ -130,6 +131,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const { selectedRegion, effectiveRegion } = useRegion()
+  const { resolvedTheme } = useTheme()
 
   // Scroll-spy state
   const [activeSection, setActiveSection] = useState<SectionId>("summary")
@@ -317,13 +319,49 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const CW = W - M * 2 // content width
       let pg = 0
 
+      // ─── Theme-aware color palette ───
+      const isDark = resolvedTheme === "dark"
+      const pal = isDark ? {
+        bg: [14, 10, 12] as const,           // #0E0A0C
+        fg: [232, 226, 222] as const,        // #E8E2DE
+        card: [22, 17, 19] as const,         // #161113
+        primary: [212, 115, 138] as const,   // #D4738A
+        muted: [107, 99, 101] as const,      // #6B6365
+        dim: [80, 72, 75] as const,
+        border: [42, 34, 38] as const,       // #2A2226
+        barBg: [35, 28, 32] as const,
+        barFill: [60, 52, 56] as const,
+        onPrimary: [14, 10, 12] as const,
+        letterBody: [180, 175, 172] as const,
+        closingText: [160, 155, 152] as const,
+        footerDim: [100, 94, 96] as const,
+        greenTintBg: [15, 25, 20] as const,
+        redTintBg: [30, 18, 18] as const,
+      } : {
+        bg: [253, 251, 249] as const,        // #FDFBF9
+        fg: [42, 35, 32] as const,           // #2A2320
+        card: [245, 242, 238] as const,      // #F5F2EE
+        primary: [122, 46, 74] as const,     // #7A2E4A
+        muted: [154, 142, 136] as const,     // #9A8E88
+        dim: [185, 175, 168] as const,
+        border: [232, 226, 220] as const,    // #E8E2DC
+        barBg: [238, 233, 228] as const,
+        barFill: [210, 202, 196] as const,
+        onPrimary: [253, 251, 249] as const,
+        letterBody: [100, 90, 85] as const,
+        closingText: [120, 110, 105] as const,
+        footerDim: [175, 165, 158] as const,
+        greenTintBg: [235, 250, 242] as const,
+        redTintBg: [255, 242, 240] as const,
+      }
+
       // ─── Helpers ───
-      const bg = () => { pdf.setFillColor(11, 11, 16); pdf.rect(0, 0, W, H, "F") }
-      const pink = () => pdf.setTextColor(248, 180, 217)
-      const white = () => pdf.setTextColor(255, 252, 247)
-      const gray = () => pdf.setTextColor(130, 130, 140)
-      const dim = () => pdf.setTextColor(90, 90, 100)
-      const accentBar = () => { pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 1.2, "F") }
+      const bg = () => { pdf.setFillColor(pal.bg[0], pal.bg[1], pal.bg[2]); pdf.rect(0, 0, W, H, "F") }
+      const pink = () => pdf.setTextColor(pal.primary[0], pal.primary[1], pal.primary[2])
+      const white = () => pdf.setTextColor(pal.fg[0], pal.fg[1], pal.fg[2])
+      const gray = () => pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
+      const dim = () => pdf.setTextColor(pal.dim[0], pal.dim[1], pal.dim[2])
+      const accentBar = () => { pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F") }
 
       const clientName = user?.name || "Valued Client"
       const firstName = clientName.split(" ")[0]
@@ -334,7 +372,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFontSize(7); dim()
         pdf.text("MONZA LAB", M, 8)
         pdf.text(title.toUpperCase(), W - M, 8, { align: "right" })
-        pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
         pdf.line(M, 11, W - M, 11)
         pdf.line(M, H - 12, W - M, H - 12)
         pdf.setFontSize(6.5); dim()
@@ -347,7 +385,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(`SECTION ${String(num).padStart(2, "0")}`, M, y)
         pdf.setFontSize(14); white()
         pdf.text(title, M, y + 7)
-        pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3)
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3)
         pdf.line(M, y + 10, M + 25, y + 10)
         return y + 16
       }
@@ -422,11 +460,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // ═══ PAGE 1: COVER ═══
       bg()
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 2, "F")
       pdf.setFontSize(8); pink(); pdf.text("MONZA LAB", M, 20)
       pdf.setFontSize(7); dim()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), W - M, 20, { align: "right" })
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.5); pdf.line(M, 100, M + 40, 100)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.5); pdf.line(M, 100, M + 40, 100)
       pdf.setFontSize(11); pink(); pdf.text("INVESTMENT DOSSIER", M, 112)
       pdf.setFontSize(30); white()
       const tLines = pdf.splitTextToSize(pdfTitle, CW)
@@ -435,41 +473,42 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(9); gray()
       pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}`, M, tEnd + 10)
       const vy = tEnd + 22
-      pdf.setFillColor(verdict === "buy" ? 52 : 59, verdict === "buy" ? 211 : 130, verdict === "buy" ? 153 : 246)
+      const vBadgeClr = verdict === "buy" ? [52, 211, 153] : verdict === "hold" ? [251, 191, 36] : pal.primary
+      pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
       pdf.rect(M, vy - 4, 26, 8, "F")
-      pdf.setFontSize(8); pdf.setTextColor(11, 11, 16)
+      pdf.setFontSize(8); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text(verdict.toUpperCase(), M + 13, vy + 1, { align: "center" })
       gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 24
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
       pdf.setFontSize(8); dim(); pdf.text("PREPARED EXCLUSIVELY FOR", M, prepY + 7)
       pdf.setFontSize(18); white(); pdf.text(clientName, M, prepY + 17)
       pdf.setFontSize(8); gray()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), M, prepY + 24)
       // Financial box
       const bY = 220
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
       label("CURRENT BID", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
       pdf.setFontSize(12); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 8, bY + 21)
       white(); pdf.text(`$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
       pdf.text(regionLabels[bestRegion]?.short || "US", M + 135, bY + 21)
-      pdf.setDrawColor(40, 40, 50); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
       pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("monzalab.com", W - M, H - 15, { align: "right" })
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, H - 2, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
       const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
 
       // ═══ PAGE 2: PERSONAL LETTER ═══
       pdf.addPage(); bg(); chrome("Welcome")
       // Decorative top line
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
       pdf.line(M, 22, M + 20, 22)
       // Greeting
       pdf.setFontSize(22); white()
       pdf.text(`Dear ${firstName},`, M, 38)
       // Letter body
-      pdf.setFontSize(10); pdf.setTextColor(180, 180, 190)
+      pdf.setFontSize(10); pdf.setTextColor(pal.letterBody[0], pal.letterBody[1], pal.letterBody[2])
       const letterBody = [
         `Thank you for trusting Monza Lab with your investment analysis of the ${pdfTitle}.`,
         "",
@@ -490,7 +529,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       // Signature
       ly += 10
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3)
       pdf.line(M, ly, M + 15, ly)
       ly += 8
       pdf.setFontSize(10); pink()
@@ -498,7 +537,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(8); gray()
       pdf.text("monzalab.com", M, ly + 6)
       // Bottom decorative element
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 40, W - M, H - 40)
       pdf.setFontSize(7); dim()
       pdf.text("\"The best investment you can make is an informed one.\"", W / 2, H - 33, { align: "center" })
@@ -506,21 +545,21 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // ═══ PAGE 3: TABLE OF CONTENTS ═══
       pdf.addPage(); bg(); chrome("Contents")
       pdf.setFontSize(18); white(); pdf.text("Contents", M, 30)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4); pdf.line(M, 34, M + 28, 34)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, 34, M + 28, 34)
       secNames.forEach((name, i) => {
         const y = 44 + i * 14
         pdf.setFontSize(8); pink(); pdf.text(String(i + 1).padStart(2, "0"), M, y)
         pdf.setFontSize(10); white(); pdf.text(name, M + 12, y)
-        pdf.setDrawColor(50, 50, 60); pdf.setLineWidth(0.1); pdf.line(M + 80, y, W - M - 12, y)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.1); pdf.line(M + 80, y, W - M - 12, y)
         pdf.setFontSize(8); dim(); pdf.text(String(i + 3), W - M - 3, y, { align: "right" })
       })
 
-      // ─── Card helper: dark card with border like the web ───
+      // ─── Card helper: themed card with border like the web ───
       const card = (x: number, y: number, w: number, h: number) => {
-        pdf.setFillColor(15, 14, 22); pdf.setDrawColor(255, 255, 255); pdf.setLineWidth(0.08)
-        // Fill + very faint white border (simulates border-border)
+        pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2])
         pdf.rect(x, y, w, h, "F")
-        pdf.setDrawColor(40, 40, 50); pdf.rect(x, y, w, h, "S")
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.08)
+        pdf.rect(x, y, w, h, "S")
       }
       // Badge helper: colored pill
       const badge = (text: string, x: number, y: number, bgR: number, bgG: number, bgB: number, txR: number, txG: number, txB: number) => {
@@ -533,7 +572,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const cardRow = (k: string, v: string, x: number, y: number, w: number) => {
         pdf.setFontSize(7.5); gray(); pdf.text(k, x + 4, y)
         pdf.setFontSize(7.5); white(); pdf.text(v, x + w - 4, y, { align: "right" })
-        pdf.setDrawColor(30, 30, 40); pdf.setLineWidth(0.08); pdf.line(x + 4, y + 1.5, x + w - 4, y + 1.5)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.08); pdf.line(x + 4, y + 1.5, x + w - 4, y + 1.5)
         return y + 5.5
       }
 
@@ -543,11 +582,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // 6-metric card grid (3 cols x 2 rows)
       const mData = [
         { lbl: "INVESTMENT GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
-        { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [248,180,217] },
-        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [255,252,247] },
-        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
-        { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113] },
-        { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [255,252,247] },
+        { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
+        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
+        { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
       ]
       const mw = (CW - 6) / 3
       mData.forEach((m, i) => {
@@ -563,7 +602,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // Thesis card
       card(M, y, CW, 24)
       pdf.setFontSize(6); dim(); pdf.text("INVESTMENT THESIS", M + 4, y + 5)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3); pdf.line(M + 4, y + 7, M + 18, y + 7)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3); pdf.line(M + 4, y + 7, M + 18, y + 7)
       pdf.setFontSize(8); white()
       const thesisLines = pdf.splitTextToSize(pdfThesis, CW - 8)
       pdf.text(thesisLines, M + 4, y + 12)
@@ -576,15 +615,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const gY = y + 9; const gW = CW - 8
       for (let gi = 0; gi < gW; gi++) {
         const pct = gi / gW
-        const r = pct < 0.5 ? Math.round(52 + (248 - 52) * pct * 2) : Math.round(248 + (248 - 248) * (pct - 0.5) * 2)
-        const g = pct < 0.5 ? Math.round(211 + (180 - 211) * pct * 2) : Math.round(180 + (113 - 180) * (pct - 0.5) * 2)
-        const b = pct < 0.5 ? Math.round(153 + (217 - 153) * pct * 2) : Math.round(217 + (113 - 217) * (pct - 0.5) * 2)
+        const r = pct < 0.5 ? Math.round(52 + (pal.primary[0] - 52) * pct * 2) : Math.round(pal.primary[0] + (248 - pal.primary[0]) * (pct - 0.5) * 2)
+        const g = pct < 0.5 ? Math.round(211 + (pal.primary[1] - 211) * pct * 2) : Math.round(pal.primary[1] + (113 - pal.primary[1]) * (pct - 0.5) * 2)
+        const b = pct < 0.5 ? Math.round(153 + (pal.primary[2] - 153) * pct * 2) : Math.round(pal.primary[2] + (113 - pal.primary[2]) * (pct - 0.5) * 2)
         pdf.setFillColor(r, g, b); pdf.rect(M + 4 + gi, gY, 1.2, 4, "F")
       }
       // Position dot
       const dotX = M + 4 + (pricePosition / 100) * gW
-      pdf.setFillColor(255, 255, 255); pdf.circle(dotX, gY + 2, 2.5, "F")
-      pdf.setFillColor(248, 180, 217); pdf.circle(dotX, gY + 2, 1.8, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(dotX, gY + 2, 2.5, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(dotX, gY + 2, 1.8, "F")
       pdf.setFontSize(6); gray()
       pdf.text(fmtPdf(fairLow, regionRange.currency), M + 4, gY + 9)
       pdf.text(fmtPdf(fairHigh, regionRange.currency), M + 4 + gW, gY + 9, { align: "right" })
@@ -635,7 +674,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // History card
       card(M, y, CW, 28)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
       pdf.setFontSize(6); dim(); pdf.text("HISTORY & PROVENANCE", M + 5, y + 5)
       pdf.setFontSize(8); white()
       const histLines = pdf.splitTextToSize(stripHtml(car.history) || "—", CW - 10)
@@ -661,8 +700,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(`${fmtPdf(rp.low, rp.currency)} – ${fmtPdf(rp.high, rp.currency)}`, W - M - 4, ry, { align: "right" })
         // Bar
         const bw = (barPct / 100) * (CW - 8)
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, ry + 3, CW - 8, 3.5, "F")
-        pdf.setFillColor(isBest ? 52 : 248, isBest ? 211 : 180, isBest ? 153 : 217)
+        pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, ry + 3, CW - 8, 3.5, "F")
+        pdf.setFillColor(isBest ? 52 : pal.primary[0], isBest ? 211 : pal.primary[1], isBest ? 153 : pal.primary[2])
         pdf.rect(M + 4, ry + 3, bw, 3.5, "F")
         pdf.setFontSize(6); dim(); pdf.text(`$${Math.round(avgUsd).toLocaleString()}`, M + 4, ry + 10)
       })
@@ -674,14 +713,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const g2Y = y + 9; const g2W = CW - 8
       for (let gi = 0; gi < g2W; gi++) {
         const pct = gi / g2W
-        const r2 = pct < 0.5 ? Math.round(52 + (248 - 52) * pct * 2) : Math.round(248 + (248 - 248) * (pct - 0.5) * 2)
-        const g2 = pct < 0.5 ? Math.round(211 + (180 - 211) * pct * 2) : Math.round(180 + (113 - 180) * (pct - 0.5) * 2)
-        const b2 = pct < 0.5 ? Math.round(153 + (217 - 153) * pct * 2) : Math.round(217 + (113 - 217) * (pct - 0.5) * 2)
+        const r2 = pct < 0.5 ? Math.round(52 + (pal.primary[0] - 52) * pct * 2) : Math.round(pal.primary[0] + (248 - pal.primary[0]) * (pct - 0.5) * 2)
+        const g2 = pct < 0.5 ? Math.round(211 + (pal.primary[1] - 211) * pct * 2) : Math.round(pal.primary[1] + (113 - pal.primary[1]) * (pct - 0.5) * 2)
+        const b2 = pct < 0.5 ? Math.round(153 + (pal.primary[2] - 153) * pct * 2) : Math.round(pal.primary[2] + (113 - pal.primary[2]) * (pct - 0.5) * 2)
         pdf.setFillColor(r2, g2, b2); pdf.rect(M + 4 + gi, g2Y, 1.2, 4, "F")
       }
       const d2X = M + 4 + (pricePosition / 100) * g2W
-      pdf.setFillColor(255, 255, 255); pdf.circle(d2X, g2Y + 2, 2.5, "F")
-      pdf.setFillColor(248, 180, 217); pdf.circle(d2X, g2Y + 2, 1.8, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(d2X, g2Y + 2, 2.5, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(d2X, g2Y + 2, 1.8, "F")
       pdf.setFontSize(7)
       if (isBelowFair) { pdf.setTextColor(52, 211, 153); pdf.text("Below fair value — potential opportunity", M + 4, g2Y + 9) }
       else { pdf.setTextColor(251, 191, 36); pdf.text("At or above fair value midpoint", M + 4, g2Y + 9) }
@@ -689,11 +728,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // Arbitrage card
       if (hasArbitrage) {
-        pdf.setFillColor(15, 25, 20); pdf.rect(M, y, CW, 14, "F")
+        pdf.setFillColor(pal.greenTintBg[0], pal.greenTintBg[1], pal.greenTintBg[2]); pdf.rect(M, y, CW, 14, "F")
         pdf.setDrawColor(52, 211, 153); pdf.setLineWidth(0.2); pdf.rect(M, y, CW, 14, "S")
         pdf.setFontSize(8); pdf.setTextColor(52, 211, 153)
         pdf.text("ARBITRAGE OPPORTUNITY", M + 4, y + 5)
-        pdf.setFontSize(7.5); pdf.setTextColor(160, 170, 165)
+        pdf.setFontSize(7.5); pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
         pdf.text(`Buy in ${regionLabels[bestRegion]?.short || bestRegion} — save $${Math.round(arbitrageSavings).toLocaleString()} vs most expensive region`, M + 4, y + 11)
         y += 18
       }
@@ -718,7 +757,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       card(M, y, CW, 36)
       pdf.setFontSize(6); dim(); pdf.text("PRICE vs FAIR VALUE", M + 4, y + 5)
       const pvLabels = [
-        { lbl: "CURRENT BID", val: `$${car.currentBid.toLocaleString()}`, clr: [248, 180, 217] },
+        { lbl: "CURRENT BID", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0], pal.primary[1], pal.primary[2]] },
         { lbl: "FAIR LOW", val: fmtPdf(fairLow, regionRange.currency), clr: [52, 211, 153] },
         { lbl: "FAIR HIGH", val: fmtPdf(fairHigh, regionRange.currency), clr: [248, 113, 113] },
       ]
@@ -731,11 +770,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       // Position bar
       const pvGY = y + 25; const pvGW = CW - 8
-      pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, pvGY, pvGW, 3, "F")
+      pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, pvGY, pvGW, 3, "F")
       const pvDot = M + 4 + (pricePosition / 100) * pvGW
-      pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, pvGY, pvDot - M - 4, 3, "F")
-      pdf.setFillColor(255, 255, 255); pdf.circle(pvDot, pvGY + 1.5, 2, "F")
-      pdf.setFillColor(248, 180, 217); pdf.circle(pvDot, pvGY + 1.5, 1.3, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, pvGY, pvDot - M - 4, 3, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(pvDot, pvGY + 1.5, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(pvDot, pvGY + 1.5, 1.3, "F")
       pdf.setFontSize(7); gray(); pdf.text(`${pricePosition.toFixed(0)}% of fair range`, M + 4, pvGY + 8)
       y += 42
 
@@ -748,7 +787,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}/yr`, M + 4, y + 14)
         pdf.setFontSize(8); gray(); pdf.text(`${costPct.toFixed(1)}% of vehicle value`, M + 65, y + 14)
         if (costHighFlag) {
-          pdf.setFillColor(25, 18, 18); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
+          pdf.setFillColor(pal.redTintBg[0], pal.redTintBg[1], pal.redTintBg[2]); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
           pdf.setDrawColor(248, 113, 113); pdf.setLineWidth(0.2); pdf.rect(M + 4, y + 19, CW - 8, 10, "S")
           pdf.setFontSize(7); pdf.setTextColor(248, 113, 113)
           pdf.text("High ownership cost relative to value — consider negotiating price down", M + 8, y + 25.5)
@@ -762,7 +801,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       card(M, y, CW, 26)
       pdf.setFontSize(6); dim(); pdf.text("RISK SCORE", M + 4, y + 5)
       pdf.setFontSize(20)
-      const rsClr = riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113]
+      const rsClr = riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113]
       pdf.setTextColor(rsClr[0], rsClr[1], rsClr[2])
       pdf.text(`${riskScore}`, M + 4, y + 16)
       pdf.setFontSize(9); gray(); pdf.text("/100", M + 18, y + 16)
@@ -776,7 +815,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFillColor(gr, gg, gb); pdf.rect(M + 4 + gi, rGY, 1.2, 3, "F")
       }
       const rDot = M + 4 + (riskScore / 100) * (CW - 8)
-      pdf.setFillColor(255, 255, 255); pdf.circle(rDot, rGY + 1.5, 2, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(rDot, rGY + 1.5, 2, "F")
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
 
@@ -808,8 +847,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(6); dim(); pdf.text("QUESTIONS FOR THE SELLER", M + 4, y + 5)
       questions.forEach((q, i) => {
         const qy = y + 11 + i * 6.5
-        pdf.setFillColor(248, 180, 217); pdf.circle(M + 7, qy - 0.5, 2, "F")
-        pdf.setFontSize(6); pdf.setTextColor(11, 11, 16); pdf.text(String(i + 1), M + 7, qy + 0.3, { align: "center" })
+        pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(M + 7, qy - 0.5, 2, "F")
+        pdf.setFontSize(6); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2]); pdf.text(String(i + 1), M + 7, qy + 0.3, { align: "center" })
         pdf.setFontSize(7.5); white(); pdf.text(q, M + 12, qy)
       })
 
@@ -829,13 +868,13 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
           pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
           pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
           const pct = totalAnnualCost > 0 ? c.val / totalAnnualCost : 0.5
-          pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
-          pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
+          pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
+          pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
           pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
         })
         // Total
         const tY = y + 11 + costItems.length * 12
-        pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
         pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
         pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
         pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
@@ -874,8 +913,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         // Price + bar
         pdf.setFontSize(9); pink(); pdf.text(`$${sc.car.currentBid.toLocaleString()}`, W - M - 4, y + 5, { align: "right" })
         const sbPct = sc.car.currentBid / maxSimBid
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, y + 12, CW - 8, 2, "F")
-        pdf.setFillColor(60, 60, 70); pdf.rect(M + 4, y + 12, (CW - 8) * sbPct, 2, "F")
+        pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, y + 12, CW - 8, 2, "F")
+        pdf.setFillColor(pal.barFill[0], pal.barFill[1], pal.barFill[2]); pdf.rect(M + 4, y + 12, (CW - 8) * sbPct, 2, "F")
         y += 20
       })
 
@@ -883,15 +922,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.addPage(); bg(); chrome("Final Verdict")
       y = sectionTitle(10, "Final Verdict", 16)
       // Large verdict badge
-      const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [248,180,217]
+      const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [pal.primary[0], pal.primary[1], pal.primary[2]]
       pdf.setFillColor(vClr[0], vClr[1], vClr[2]); pdf.rect(M, y, 55, 18, "F")
-      pdf.setFontSize(22); pdf.setTextColor(11, 11, 16)
+      pdf.setFontSize(22); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text(verdict.toUpperCase(), M + 27.5, y + 12.5, { align: "center" })
       y += 25
       // Verdict metrics card (3 cols)
       const vMetrics = [
         { lbl: "GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
-        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
+        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
         { lbl: "RISK", val: `${riskScore}/100`, clr: rsClr },
       ]
       const vmW = (CW - 6) / 3
@@ -920,15 +959,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // ═══ CLOSING PAGE: THANK YOU ═══
       pdf.addPage(); bg()
       // No chrome on this page — clean, personal
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 1.2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F")
       // Centered decorative line
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
       pdf.line(W / 2 - 15, 80, W / 2 + 15, 80)
       // Thank you message
       pdf.setFontSize(24); white()
       pdf.text(`Thank you, ${firstName}.`, W / 2, 100, { align: "center" })
       // Body text
-      pdf.setFontSize(10); pdf.setTextColor(160, 160, 170)
+      pdf.setFontSize(10); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2])
       const closingLines = [
         "We hope this dossier gives you the confidence and clarity",
         "to make the right decision at the right time.",
@@ -948,14 +987,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       // Divider
       cy += 12
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2)
       pdf.line(W / 2 - 20, cy, W / 2 + 20, cy)
       cy += 12
       // What's next section
       pdf.setFontSize(8); pink()
       pdf.text("WHAT'S NEXT", W / 2, cy, { align: "center" })
       cy += 8
-      pdf.setFontSize(9); pdf.setTextColor(160, 160, 170)
+      pdf.setFontSize(9); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2])
       const nextSteps = [
         "Explore more vehicles in our curated marketplace",
         "Generate dossiers for any listing that catches your eye",
@@ -963,19 +1002,19 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       ]
       nextSteps.forEach((step, i) => {
         pdf.setFontSize(7); pink(); pdf.text(`${i + 1}`, W / 2 - 45, cy, { align: "center" })
-        pdf.setFontSize(9); pdf.setTextColor(160, 160, 170); pdf.text(step, W / 2 - 38, cy)
+        pdf.setFontSize(9); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2]); pdf.text(step, W / 2 - 38, cy)
         cy += 7
       })
       // Brand footer
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 45, W - M, H - 45)
       pdf.setFontSize(9); pink()
       pdf.text("MONZA LAB", W / 2, H - 36, { align: "center" })
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 110)
+      pdf.setFontSize(7); pdf.setTextColor(pal.footerDim[0], pal.footerDim[1], pal.footerDim[2])
       pdf.text("Collector Vehicle Intelligence", W / 2, H - 30, { align: "center" })
       pdf.text("monzalab.com", W / 2, H - 24, { align: "center" })
       // Bottom accent
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, H - 2, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
       // Save
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
@@ -1517,7 +1556,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
                   <div className="flex items-center gap-3 mt-2">
-                    <div className="flex-1 h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                       <div
                         className={`h-full rounded-full ${riskScore <= 30 ? "bg-emerald-400" : riskScore <= 50 ? "bg-amber-400" : "bg-red-400"}`}
                         style={{ width: `${riskScore}%` }}
@@ -1653,7 +1692,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                               {fmtRegional(rp.low, rp.currency)} – {fmtRegional(rp.high, rp.currency)}
                             </span>
                           </div>
-                          <div className="relative h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                          <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${barWidth}%` }}
@@ -1675,7 +1714,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
                     <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairHigh, regionRange.currency)}</span>
                   </div>
-                  <div className="relative h-[12px] rounded-full bg-white/[0.04] overflow-hidden">
+                  <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
                     <div
                       className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/40"
@@ -1760,7 +1799,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         <span className="text-[12px] font-semibold text-primary">Current Bid vs Fair Value</span>
                         <span className={`text-[14px] font-mono font-bold ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>{pricePosition}%</span>
                       </div>
-                      <div className="relative h-[10px] rounded-full bg-white/[0.04] overflow-hidden">
+                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(pricePosition, 100)}%` }}
@@ -1821,7 +1860,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                                   {formatPriceForRegion(c.currentBid, selectedRegion)}
                                 </span>
                               </div>
-                              <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                              <div className="relative h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${barPct}%` }}
@@ -1885,7 +1924,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.overallScore")}</h3>
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <div className="relative h-[10px] rounded-full bg-white/[0.04] overflow-hidden">
+                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-amber-400/30 to-red-400/30" />
                         <motion.div
                           initial={{ left: 0 }}
@@ -1922,7 +1961,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                             <p className="text-[13px] text-foreground">{flag}</p>
                           </div>
                           <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                            i < 2 ? "bg-primary/15 text-primary" : "bg-white/5 text-muted-foreground"
+                            i < 2 ? "bg-primary/15 text-primary" : "bg-foreground/5 text-muted-foreground"
                           }`}>
                             {i < 2 ? t("risk.critical") : t("risk.monitor")}
                           </span>
@@ -1953,7 +1992,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("dueDiligence.questionsToAsk")}</h3>
                     <button
                       onClick={handleCopyQuestions}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
                     >
                       {copiedQuestions ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
                       {copiedQuestions ? t("dueDiligence.copied") : t("dueDiligence.copyAll")}
@@ -1985,7 +2024,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     ].map((check, i) => (
                       <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                         <div className="flex items-center gap-3">
-                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-primary/10" : "bg-white/5"}`}>
+                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-primary/10" : "bg-foreground/5"}`}>
                             <CheckCircle2 className={`size-3 ${check.critical ? "text-primary" : "text-muted-foreground"}`} />
                           </div>
                           <span className="text-[13px] text-foreground/80">{check.item}</span>
@@ -2029,7 +2068,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                                 </div>
                                 <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
                               </div>
-                              <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
+                              <div className="relative h-[4px] rounded-full bg-foreground/[0.04] overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${pct}%` }}
@@ -2114,7 +2153,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     <Link
                       key={sc.car.id}
                       href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
-                      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-white/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
+                      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
                     >
                       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
                         <Image
@@ -2137,7 +2176,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         {sc.matchReasons.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {sc.matchReasons.slice(0, 2).map(reason => (
-                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
+                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
                                 {reason}
                               </span>
                             ))}
@@ -2189,7 +2228,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   </div>
 
                   {/* Strategy */}
-                  <div className="rounded-xl bg-white/[0.03] border border-border p-4">
+                  <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
                     <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
                     <p className="text-[12px] text-muted-foreground leading-relaxed">
                       {t(`verdict.${verdict}Strategy`)}
@@ -2270,9 +2309,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 28, stiffness: 250, delay: 0.05 }}
-              className="relative w-full max-w-sm mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-[#111114] border border-border shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
             >
-              {/* Pink accent line */}
+              {/* Accent line */}
               <div className="h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent" />
 
               {/* Header */}
@@ -2289,10 +2328,10 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <button
                   onClick={() => { handleDownloadPdf(); setShowDownloadSheet(false) }}
                   disabled={downloadingPdf}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary text-background hover:bg-primary/80 active:scale-[0.98] transition-all disabled:opacity-60"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/80 active:scale-[0.98] transition-all disabled:opacity-60"
                 >
                   {downloadingPdf ? (
-                    <div className="size-5 rounded-full border-2 border-background/30 border-t-background animate-spin shrink-0" />
+                    <div className="size-5 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin shrink-0" />
                   ) : (
                     <FileText className="size-5 shrink-0" />
                   )}
@@ -2306,7 +2345,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <button
                   onClick={() => { handleDownloadExcel(); setShowDownloadSheet(false) }}
                   disabled={downloadingExcel}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-white/[0.03] text-foreground hover:bg-white/[0.06] active:scale-[0.98] transition-all disabled:opacity-60"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-secondary text-foreground hover:bg-accent active:scale-[0.98] transition-all disabled:opacity-60"
                 >
                   {downloadingExcel ? (
                     <div className="size-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0" />
@@ -2342,7 +2381,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-              className="relative w-full max-w-2xl mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-[#0F1012] border border-border shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-2xl mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
             >
               {/* Top gradient bar */}
               <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
@@ -2350,7 +2389,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               {/* Close button */}
               <button
                 onClick={() => !purchaseProcessing && setShowPricing(false)}
-                className="absolute top-4 right-4 z-10 size-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+                className="absolute top-4 right-4 z-10 size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
               >
                 <span className="text-[16px]">&times;</span>
               </button>
@@ -2407,7 +2446,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       <button
                         onClick={() => handlePurchase("single")}
                         disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-white/[0.05] disabled:opacity-50 transition-all"
+                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
                       >
                         {purchaseProcessing === "single" ? (
                           <span className="flex items-center justify-center gap-2">
@@ -2477,7 +2516,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       <button
                         onClick={() => handlePurchase("unlimited")}
                         disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-white/[0.05] disabled:opacity-50 transition-all"
+                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
                       >
                         {purchaseProcessing === "unlimited" ? (
                           <span className="flex items-center justify-center gap-2">
