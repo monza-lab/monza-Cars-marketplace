@@ -59,8 +59,8 @@ export default async function ReportPage({ params }: ReportPageProps) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center px-6 text-center">
           <div className="max-w-xl space-y-4">
-            <h1 className="text-2xl font-semibold text-white">Live report temporarily unavailable</h1>
-            <p className="text-zinc-400">
+            <h1 className="text-2xl font-semibold text-foreground">Live report temporarily unavailable</h1>
+            <p className="text-muted-foreground">
               We could not reach the live listing data source right now. Please retry in a moment.
             </p>
           </div>
@@ -100,10 +100,10 @@ export default async function ReportPage({ params }: ReportPageProps) {
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
+              <div className="h-10 w-10 rounded-full border-2 border-border" />
               <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
             </div>
-            <p className="text-sm text-zinc-500">Loading report...</p>
+            <p className="text-sm text-muted-foreground">Loading report...</p>
           </div>
         </div>
       }
