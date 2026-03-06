@@ -995,52 +995,64 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const XLSX = await import("xlsx")
       const wb = XLSX.utils.book_new()
 
-      // ═══ Sheet 1: Cover & Summary ═══
+      // ═══ Sheet 1: Summary ═══
       const coverData: (string | number)[][] = [
         ["MONZA LAB — Investment Dossier"],
         [""],
-        ["Vehicle", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
+        ["VEHICLE"],
+        ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
         ["Year", car.year],
         ["Make", car.make],
         ["Model", car.model],
         ["Trim", car.trim || "—"],
+        ["Engine", car.engine],
+        ["Transmission", car.transmission],
+        ["Mileage", car.mileage],
+        ["Mileage Unit", car.mileageUnit],
+        ...(car.exteriorColor ? [["Exterior Color", car.exteriorColor]] : []),
+        ...(car.interiorColor ? [["Interior Color", car.interiorColor]] : []),
+        [""],
+        ["LISTING"],
+        ["Platform", car.platform.replace(/_/g, " ")],
+        ["Status", car.status],
+        ["Current Bid (USD)", car.currentBid],
+        ["Bid Count", car.bidCount],
+        ["Location", car.location],
+        ["Region", car.region],
+        ["Category", car.category],
         [""],
         ["INVESTMENT ANALYSIS"],
         ["Investment Grade", car.investmentGrade],
         ["Verdict", verdict.toUpperCase()],
-        ["Current Bid (USD)", car.currentBid],
-        ["Fair Value Low (USD)", pricing.US.low],
-        ["Fair Value High (USD)", pricing.US.high],
-        ["Price Position", `${pricePosition.toFixed(0)}% of fair range`],
+        ["Fair Value Low (USD)", fairLow],
+        ["Fair Value High (USD)", fairHigh],
+        ["Fair Value Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
+        ["Price Position (%)", pricePosition],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
-        ["Market Position", `${pricePosition}% of fair value`],
-        ["Risk Score", `${riskScore}/100`],
-        ...(totalAnnualCost > 0 ? [["Total Annual Cost (USD)", totalAnnualCost]] : []),
-        ["Similar Vehicles Found", similarCars.length],
+        ["Risk Score (0-100)", riskScore],
+        ["Trend", car.trend],
+        ...(totalAnnualCost > 0 ? [["Est. Annual Cost (USD)", totalAnnualCost]] : []),
         [""],
-        ["VEHICLE DETAILS"],
-        ["Engine", car.engine],
-        ["Transmission", car.transmission],
-        ["Mileage", `${car.mileage.toLocaleString()} ${car.mileageUnit}`],
-        ["Platform", car.platform.replace(/_/g, " ")],
-        ["Location", car.location],
-        ["Region", car.region],
-        ["Category", car.category],
-        ["Status", car.status],
-        ["Bid Count", car.bidCount],
-        [""],
-        ["ARBITRAGE OPPORTUNITY"],
+        ["ARBITRAGE"],
         ["Best Buy Region", regionLabels[bestRegion]?.short || bestRegion],
-        ["Potential Savings (USD)", hasArbitrage ? Math.round(arbitrageSavings) : 0],
-        ["Arbitrage Available?", hasArbitrage ? "YES" : "NO"],
+        ["Arbitrage Savings (USD)", hasArbitrage ? Math.round(arbitrageSavings) : 0],
+        ...(dbMarketData ? [
+          [""],
+          ["MARKET DATA (from DB)"],
+          ["Avg Sale Price (USD)", dbMarketData.avgPrice ?? "N/A"],
+          ["Median Sale Price (USD)", dbMarketData.medianPrice ?? "N/A"],
+          ["Lowest Sale (USD)", dbMarketData.lowPrice ?? "N/A"],
+          ["Highest Sale (USD)", dbMarketData.highPrice ?? "N/A"],
+          ["Total Sales Tracked", dbMarketData.totalSales],
+          ["Market Trend", dbMarketData.trend ?? "N/A"],
+        ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
         ...(user?.name ? [[`Prepared for: ${user.name}`]] : []),
         ["CONFIDENTIAL — monzalab.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
-      ws1["!cols"] = [{ wch: 28 }, { wch: 45 }]
-      // Merge title row
+      ws1["!cols"] = [{ wch: 28 }, { wch: 50 }]
       ws1["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
       XLSX.utils.book_append_sheet(wb, ws1, "Summary")
 
@@ -1048,113 +1060,215 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const valuationRows: (string | number)[][] = [
         ["REGIONAL FAIR VALUE COMPARISON"],
         [""],
-        ["Region", "Currency", "Fair Low", "Fair High", "Fair Average", "Average (USD)", "vs Best Region"],
+        ["Region", "Currency", "Fair Low", "Fair High", "Fair Avg", "Avg (USD)", "Premium vs Best", "Best Buy?"],
       ]
       const regions = ["US", "EU", "UK", "JP"] as const
+      const bestAvgUsd = toUsd((pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2, pricing[bestRegion as keyof typeof pricing].currency)
       for (const r of regions) {
         const rp = pricing[r]
         const avg = (rp.low + rp.high) / 2
         const avgUsd = toUsd(avg, rp.currency)
-        const bestAvgUsd = toUsd((pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2, pricing[bestRegion as keyof typeof pricing].currency)
         const diff = avgUsd - bestAvgUsd
+        const premiumPct = bestAvgUsd > 0 ? ((diff / bestAvgUsd) * 100) : 0
         valuationRows.push([
-          `${regionLabels[r].short}${r === bestRegion ? " (BEST)" : ""}`,
+          regionLabels[r].short,
           rp.currency,
-          rp.low,
-          rp.high,
+          Math.round(rp.low),
+          Math.round(rp.high),
           Math.round(avg),
           Math.round(avgUsd),
-          r === bestRegion ? "—" : `+$${Math.round(diff).toLocaleString()}`,
+          r === bestRegion ? 0 : Math.round(diff),
+          r === bestRegion ? "YES" : "NO",
         ])
       }
       valuationRows.push(
         [""],
-        ["PRICE POSITION ANALYSIS"],
+        ["PRICE ANALYSIS"],
         ["Current Bid (USD)", car.currentBid],
-        ["Position in Fair Range", `${pricePosition.toFixed(0)}%`],
-        ["Below Midpoint?", isBelowFair ? "YES — Potential value" : "NO — At or above midpoint"],
+        ["Fair Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
+        ["Price Position (%)", pricePosition],
+        ["Discount/Premium (USD)", Math.round(car.currentBid - (fairLow + fairHigh) / 2)],
+        ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
       )
       const ws2 = XLSX.utils.aoa_to_sheet(valuationRows)
-      ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 18 }]
-      ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
+      ws2["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 10 }]
+      ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
       XLSX.utils.book_append_sheet(wb, ws2, "Valuation")
 
-      // ═══ Sheet 3: Comparable Sales ═══
-      const compsRows: (string | number | null)[][] = [
-        ["COMPARABLE MARKET TRANSACTIONS"],
-        [""],
-        ["Vehicle", "Sale Price (USD)", "Date", "Platform", "Delta vs Current"],
-      ]
-      for (const s of comps) {
-        compsRows.push([s.title, s.price, s.date, s.platform, `${s.delta > 0 ? "+" : ""}${s.delta}%`])
+      // ═══ Sheet 3: Similar Vehicles ═══
+      if (similarCars.length > 0) {
+        const simRows: (string | number)[][] = [
+          ["SIMILAR VEHICLES ON MARKET"],
+          [""],
+          ["Title", "Year", "Make", "Model", "Price (USD)", "Grade", "Trend", "Platform", "Mileage", "Match Score", "Match Reasons"],
+        ]
+        for (const sc of similarCars) {
+          simRows.push([
+            sc.car.title,
+            sc.car.year,
+            sc.car.make,
+            sc.car.model,
+            sc.car.currentBid,
+            sc.car.investmentGrade,
+            sc.car.trend,
+            sc.car.platform.replace(/_/g, " "),
+            sc.car.mileage,
+            Math.round(sc.score * 100),
+            sc.matchReasons.join(", "),
+          ])
+        }
+        // Summary stats
+        const simPrices = similarCars.map(sc => sc.car.currentBid).filter(p => p > 0)
+        if (simPrices.length > 0) {
+          const simAvg = Math.round(simPrices.reduce((a, b) => a + b, 0) / simPrices.length)
+          const simMin = Math.min(...simPrices)
+          const simMax = Math.max(...simPrices)
+          const simSorted = [...simPrices].sort((a, b) => a - b)
+          const simMedian = simSorted[Math.floor(simSorted.length / 2)]
+          simRows.push(
+            [""],
+            ["STATISTICS"],
+            ["Count", similarCars.length],
+            ["Avg Price (USD)", simAvg],
+            ["Median Price (USD)", simMedian],
+            ["Min Price (USD)", simMin],
+            ["Max Price (USD)", simMax],
+            ["Price Range (USD)", simMax - simMin],
+            ["This Car vs Avg", car.currentBid - simAvg],
+            ["This Car vs Avg (%)", simAvg > 0 ? Math.round(((car.currentBid - simAvg) / simAvg) * 100) : 0],
+          )
+        }
+        const wsSim = XLSX.utils.aoa_to_sheet(simRows)
+        wsSim["!cols"] = [{ wch: 40 }, { wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 7 }, { wch: 8 }, { wch: 20 }, { wch: 10 }, { wch: 8 }, { wch: 30 }]
+        wsSim["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }]
+        XLSX.utils.book_append_sheet(wb, wsSim, "Similar Vehicles")
       }
-      compsRows.push(
-        [""],
-        ["Average Sale Price (USD)", Math.round(comps.reduce((sum, s) => sum + s.price, 0) / comps.length)],
-        ["Median Delta", `${comps.length > 0 ? comps.sort((a, b) => a.delta - b.delta)[Math.floor(comps.length / 2)].delta : 0}%`],
-      )
-      const ws3 = XLSX.utils.aoa_to_sheet(compsRows)
-      ws3["!cols"] = [{ wch: 32 }, { wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 16 }]
-      ws3["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]
-      XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
 
-      // ═══ Sheet 4: Ownership Costs (conditional) ═══
+      // ═══ Sheet 4: Comparable Sales ═══
+      if (comps.length > 0) {
+        const compsRows: (string | number)[][] = [
+          ["COMPARABLE SALES"],
+          [""],
+          ["Vehicle", "Sale Price (USD)", "Date", "Platform", "Delta vs Current (%)"],
+        ]
+        for (const s of comps) {
+          compsRows.push([s.title, s.price, s.date, s.platform, s.delta])
+        }
+        const avgCompPrice = Math.round(comps.reduce((sum, s) => sum + s.price, 0) / comps.length)
+        const sortedDeltas = [...comps].sort((a, b) => a.delta - b.delta)
+        const medianDelta = sortedDeltas[Math.floor(sortedDeltas.length / 2)].delta
+        compsRows.push(
+          [""],
+          ["STATISTICS"],
+          ["Count", comps.length],
+          ["Avg Sale Price (USD)", avgCompPrice],
+          ["Median Delta (%)", medianDelta],
+          ["This Car vs Avg Comp", car.currentBid - avgCompPrice],
+        )
+        const ws3 = XLSX.utils.aoa_to_sheet(compsRows)
+        ws3["!cols"] = [{ wch: 40 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 18 }]
+        ws3["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]
+        XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
+      }
+
+      // ═══ Sheet 5: Sold History (if available) ═══
+      if (dbSoldHistory.length > 0) {
+        const soldRows: (string | number)[][] = [
+          ["SOLD AUCTION HISTORY"],
+          [""],
+          ["Title", "Year", "Model", "Sold Price (USD)", "Sale Date", "vs Current Bid", "vs Current (%)"],
+        ]
+        const sortedSold = [...dbSoldHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        for (const s of sortedSold) {
+          const diff = s.price - car.currentBid
+          const diffPct = car.currentBid > 0 ? Math.round((diff / car.currentBid) * 100) : 0
+          soldRows.push([
+            s.title,
+            s.year,
+            s.model,
+            s.price,
+            new Date(s.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            diff,
+            diffPct,
+          ])
+        }
+        const soldPrices = dbSoldHistory.map(s => s.price).filter(p => p > 0)
+        if (soldPrices.length > 0) {
+          const soldAvg = Math.round(soldPrices.reduce((a, b) => a + b, 0) / soldPrices.length)
+          const soldMin = Math.min(...soldPrices)
+          const soldMax = Math.max(...soldPrices)
+          const soldSorted = [...soldPrices].sort((a, b) => a - b)
+          const soldMedian = soldSorted[Math.floor(soldSorted.length / 2)]
+          soldRows.push(
+            [""],
+            ["STATISTICS"],
+            ["Total Sold Records", dbSoldHistory.length],
+            ["Avg Sold Price (USD)", soldAvg],
+            ["Median Sold Price (USD)", soldMedian],
+            ["Min Sold Price (USD)", soldMin],
+            ["Max Sold Price (USD)", soldMax],
+            ["Price Range (USD)", soldMax - soldMin],
+            ["This Car vs Avg Sold", car.currentBid - soldAvg],
+          )
+        }
+        const wsSold = XLSX.utils.aoa_to_sheet(soldRows)
+        wsSold["!cols"] = [{ wch: 40 }, { wch: 6 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 }]
+        wsSold["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
+        XLSX.utils.book_append_sheet(wb, wsSold, "Sold History")
+      }
+
+      // ═══ Sheet 6: Ownership Costs (conditional) ═══
       if (costs) {
         const costRows: (string | number)[][] = [
           ["ANNUAL OWNERSHIP COSTS"],
           [""],
-          ["Category", "Annual Cost (USD)"],
-          ["Insurance (Agreed Value)", costs.insurance],
-          ["Service & Maintenance", costs.maintenance],
-          ["Total Annual Cost", totalAnnualCost],
-          ["Cost as % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
+          ["Category", "Annual Cost (USD)", "% of Total"],
+          ["Insurance (Agreed Value)", costs.insurance, totalAnnualCost > 0 ? Math.round((costs.insurance / totalAnnualCost) * 100) : 0],
+          ["Service & Maintenance", costs.maintenance, totalAnnualCost > 0 ? Math.round((costs.maintenance / totalAnnualCost) * 100) : 0],
+          [""],
+          ["Total Annual Cost", totalAnnualCost, 100],
+          ["Cost as % of Vehicle Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
+          [""],
+          ["5-YEAR PROJECTION"],
+          ["Year", "Cumulative Cost (USD)", "% of Vehicle Value"],
+          ...([1, 2, 3, 4, 5].map(yr => [
+            `Year ${yr}`,
+            totalAnnualCost * yr,
+            `${((totalAnnualCost * yr / car.currentBid) * 100).toFixed(1)}%`,
+          ])),
         ]
         const ws4 = XLSX.utils.aoa_to_sheet(costRows)
-        ws4["!cols"] = [{ wch: 34 }, { wch: 22 }]
-        ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+        ws4["!cols"] = [{ wch: 30 }, { wch: 22 }, { wch: 18 }]
+        ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
         XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
       }
 
-      // ═══ Sheet 5: Due Diligence ═══
-      const ddRows: (string | number)[][] = [
-        ["DUE DILIGENCE CHECKLIST"],
-        [""],
-        ["RED FLAGS — Key Risk Areas"],
-        ["#", "Risk Item"],
-        ...flags.map((f, i) => [i + 1, f]),
-        [""],
-        ["SELLER QUESTIONS — Pre-Purchase"],
-        ["#", "Question"],
-        ...questions.map((q, i) => [i + 1, q]),
-      ]
-      const ws8 = XLSX.utils.aoa_to_sheet(ddRows)
-      ws8["!cols"] = [{ wch: 6 }, { wch: 60 }]
-      ws8["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
-      XLSX.utils.book_append_sheet(wb, ws8, "Due Diligence")
-
-      // ═══ Sheet 6: Market Context ═══
-      const mktRows: (string | number)[][] = [
-        ["MARKET CONTEXT"],
-        [""],
-        ["VEHICLE THESIS"],
-        [(() => {
-          const t = stripHtml(car.thesis) || ""
-          return (!t || t.length < 50 || /Live auction listing from|Live Data/i.test(t))
-            ? `${car.year} ${car.make} ${car.model} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Grade: ${car.investmentGrade}.`
-            : t
-        })()],
-        [""],
-        ["HISTORY"],
-        [stripHtml(car.history) || "No documented history available"],
-      ]
-      const ws9 = XLSX.utils.aoa_to_sheet(mktRows)
-      ws9["!cols"] = [{ wch: 60 }, { wch: 18 }]
-      ws9["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } },
-        { s: { r: 6, c: 0 }, e: { r: 6, c: 1 } },
-      ]
-      XLSX.utils.book_append_sheet(wb, ws9, "Market Context")
+      // ═══ Sheet 7: Due Diligence (only if data available) ═══
+      if (flags.length > 0 || questions.length > 0) {
+        const ddRows: (string | number)[][] = [
+          ["DUE DILIGENCE CHECKLIST"],
+          [""],
+        ]
+        if (flags.length > 0) {
+          ddRows.push(
+            ["RED FLAGS — Key Risk Areas"],
+            ["#", "Risk Item"],
+            ...flags.map((f, i) => [i + 1, f]),
+            [""],
+          )
+        }
+        if (questions.length > 0) {
+          ddRows.push(
+            ["SELLER QUESTIONS — Pre-Purchase"],
+            ["#", "Question"],
+            ...questions.map((q, i) => [i + 1, q]),
+          )
+        }
+        const wsDd = XLSX.utils.aoa_to_sheet(ddRows)
+        wsDd["!cols"] = [{ wch: 6 }, { wch: 60 }]
+        wsDd["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+        XLSX.utils.book_append_sheet(wb, wsDd, "Due Diligence")
+      }
 
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
       const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
