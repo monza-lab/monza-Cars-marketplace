@@ -20,13 +20,13 @@ export function MobileCarCTA({ carId, make, onOpenAdvisor }: MobileCarCTAProps) 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-4 pb-safe bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/95 to-transparent"
+        className="p-4 pb-safe bg-gradient-to-t from-background via-background/95 to-transparent"
       >
         <div className="flex items-center gap-2.5">
           {/* Primary CTA — View Report */}
           <Link
             href={reportUrl}
-            className="flex-[3] flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[14px] shadow-lg shadow-[#F8B4D9]/20 active:scale-[0.98] transition-transform"
+            className="flex-[3] flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-[14px] shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
           >
             <FileText className="size-5" />
             {t("carDetail.viewReport")}
@@ -35,7 +35,7 @@ export function MobileCarCTA({ carId, make, onOpenAdvisor }: MobileCarCTAProps) 
           {/* Secondary CTA — Ask Advisor */}
           <button
             onClick={onOpenAdvisor}
-            className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/10 text-[#F8B4D9] font-medium text-[13px] active:scale-[0.98] active:bg-white/10 transition-all"
+            className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-2xl bg-foreground/5 border border-border text-primary font-medium text-[13px] active:scale-[0.98] active:bg-foreground/10 transition-all"
           >
             <Scale className="size-4" />
             {t("carDetail.askAdvisor")}

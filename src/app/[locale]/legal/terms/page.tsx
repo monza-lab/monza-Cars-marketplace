@@ -283,19 +283,19 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] pt-24 pb-16 px-6">
+    <div className="min-h-screen bg-background pt-24 pb-16 px-6">
       <article className="max-w-2xl mx-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-[11px] text-[#6B7280] hover:text-[#9CA3AF] transition-colors mb-8"
+          className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-muted-foreground transition-colors mb-8"
         >
           <ArrowLeft className="size-3" />
           {backLabels[locale] || backLabels.en}
         </Link>
 
-        <h1 className="text-2xl font-bold text-[#FFFCF7] mb-2">{titles[locale] || titles.en}</h1>
+        <h1 className="text-2xl font-display font-light text-foreground mb-2">{titles[locale] || titles.en}</h1>
 
-        <div className="prose-legal mt-8 space-y-4 text-[13px] leading-relaxed text-[#9CA3AF] [&_h2]:text-[15px] [&_h2]:font-semibold [&_h2]:text-[#FFFCF7] [&_h2]:mt-8 [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_strong]:text-[#D1D5DB] [&_a]:text-[#F8B4D9] [&_a]:underline">
+        <div className="prose-legal mt-8 space-y-4 text-[13px] leading-relaxed text-muted-foreground [&_h2]:text-[15px] [&_h2]:font-semibold [&_h2]:text-foreground [&_h2]:mt-8 [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_strong]:text-muted-foreground [&_a]:text-primary [&_a]:underline">
           <Content />
         </div>
       </article>

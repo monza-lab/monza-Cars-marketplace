@@ -47,21 +47,21 @@ export function LiveAuctionsSection() {
           transition={{ duration: 0.5 }}
         >
           <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-light tracking-tight text-[#FFFCF7] sm:text-3xl">
-              Featured <span className="font-semibold text-[#F8B4D9]">Auctions</span>
+            <h2 className="text-2xl font-light tracking-tight text-foreground sm:text-3xl">
+              Featured <span className="font-semibold text-primary">Auctions</span>
             </h2>
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F8B4D9] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#F8B4D9]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
-            <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#F8B4D9]">
+            <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-primary">
               Live
             </span>
           </div>
 
           <Link
             href="/auctions"
-            className="group inline-flex items-center gap-1.5 text-[11px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)] transition-colors hover:text-[#F8B4D9]"
+            className="group inline-flex items-center gap-1.5 text-[11px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)] transition-colors hover:text-primary"
           >
             View All
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -72,8 +72,8 @@ export function LiveAuctionsSection() {
       {/* Scrollable row */}
       <div className="relative">
         {/* Fade edges */}
-        <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-[#0b0b10] to-transparent sm:w-20" />
-        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-[#0b0b10] to-transparent sm:w-20" />
+        <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-background to-transparent sm:w-20" />
+        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-background to-transparent sm:w-20" />
 
         <div className="scrollbar-hide flex gap-5 overflow-x-auto px-4 pb-4 sm:px-8 lg:px-16">
           <div className="w-0 shrink-0 sm:w-4 lg:w-8" />
@@ -82,13 +82,13 @@ export function LiveAuctionsSection() {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="w-[320px] shrink-0 sm:w-[340px] rounded-2xl border border-[rgba(248,180,217,0.06)] bg-[rgba(15,14,22,0.6)] animate-pulse"
+                  className="w-[320px] shrink-0 sm:w-[340px] rounded-2xl border border-primary/6 bg-card animate-pulse"
                 >
-                  <div className="aspect-[16/10] bg-[rgba(248,180,217,0.03)]" />
+                  <div className="aspect-[16/10] bg-primary/3" />
                   <div className="space-y-3 p-5">
-                    <div className="h-4 w-3/4 rounded bg-[rgba(248,180,217,0.06)]" />
-                    <div className="h-6 w-1/2 rounded bg-[rgba(248,180,217,0.06)]" />
-                    <div className="h-3 w-full rounded bg-[rgba(248,180,217,0.04)]" />
+                    <div className="h-4 w-3/4 rounded bg-primary/6" />
+                    <div className="h-6 w-1/2 rounded bg-primary/6" />
+                    <div className="h-3 w-full rounded bg-primary/4" />
                   </div>
                 </div>
               ))
@@ -113,7 +113,7 @@ export function LiveAuctionsSection() {
       <div className="mt-8 text-center sm:hidden">
         <Link
           href="/auctions"
-          className="inline-flex items-center gap-2 rounded-full bg-[#F8B4D9] px-6 py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10]"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground"
         >
           View All Auctions
           <ArrowRight className="h-3.5 w-3.5" />

@@ -138,17 +138,17 @@ export function AdvancedFilters({
   }
 
   return (
-    <div className="h-full flex flex-col bg-[rgba(15,14,22,0.5)]">
+    <div className="h-full flex flex-col bg-card">
       {/* Header */}
-      <div className="px-5 py-2.5 border-b border-white/5">
+      <div className="px-5 py-2.5 border-b border-border">
         <div className="flex items-center justify-between">
-          <h3 className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#4B5563]">
+          <h3 className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             Filtros
           </h3>
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="flex items-center gap-1 text-[10px] text-[#F8B4D9] hover:text-[#FFFCF7] transition-colors"
+              className="flex items-center gap-1 text-[10px] text-primary hover:text-foreground transition-colors"
             >
               <X className="size-3" />
               Limpiar todo
@@ -163,8 +163,8 @@ export function AdvancedFilters({
         <FilterSection icon={DollarSign} title="Precio" hasSelection={priceRange[0] !== minPrice || priceRange[1] !== maxPrice}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#6B7280]">${(priceRange[0] / 1000).toFixed(0)}k</span>
-              <span className="text-[#FFFCF7] font-mono">${(priceRange[1] / 1000).toFixed(0)}k</span>
+              <span className="text-muted-foreground">${(priceRange[0] / 1000).toFixed(0)}k</span>
+              <span className="text-foreground font-mono">${(priceRange[1] / 1000).toFixed(0)}k</span>
             </div>
             <input
               type="range"
@@ -173,7 +173,7 @@ export function AdvancedFilters({
               step={10000}
               value={priceRange[1]}
               onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+              className="w-full h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer slider"
             />
           </div>
         </FilterSection>
@@ -182,8 +182,8 @@ export function AdvancedFilters({
         <FilterSection icon={Calendar} title="Año" hasSelection={yearRange[0] !== minYear || yearRange[1] !== maxYear}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-[#6B7280]">{yearRange[0]}</span>
-              <span className="text-[#FFFCF7] font-mono">{yearRange[1]}</span>
+              <span className="text-muted-foreground">{yearRange[0]}</span>
+              <span className="text-foreground font-mono">{yearRange[1]}</span>
             </div>
             <input
               type="range"
@@ -192,7 +192,7 @@ export function AdvancedFilters({
               step={1}
               value={yearRange[1]}
               onChange={(e) => setYearRange([yearRange[0], parseInt(e.target.value)])}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+              className="w-full h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer slider"
             />
           </div>
         </FilterSection>
@@ -234,8 +234,8 @@ export function AdvancedFilters({
                 onClick={() => toggleItem(bt.id, selectedBodyTypes, setSelectedBodyTypes)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
                   selectedBodyTypes.includes(bt.id)
-                    ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                    : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                    ? "bg-primary/15 text-primary border border-primary/30"
+                    : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                 }`}
               >
                 {bt.label}
@@ -253,8 +253,8 @@ export function AdvancedFilters({
                 onClick={() => toggleItem(color, selectedColors, setSelectedColors)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
                   selectedColors.includes(color)
-                    ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                    : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                    ? "bg-primary/15 text-primary border border-primary/30"
+                    : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                 }`}
               >
                 {color}
@@ -272,8 +272,8 @@ export function AdvancedFilters({
                 onClick={() => toggleItem(status.id, selectedStatuses, setSelectedStatuses)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
                   selectedStatuses.includes(status.id)
-                    ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                    : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                    ? "bg-primary/15 text-primary border border-primary/30"
+                    : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                 }`}
               >
                 {status.label}
@@ -296,7 +296,7 @@ export function AdvancedFilters({
                       : grade.id === "AA"
                         ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                         : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                    : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                    : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                 }`}
               >
                 {grade.label}
@@ -323,19 +323,19 @@ function FilterSection({
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="border-b border-white/5">
+    <div className="border-b border-border">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-5 py-3 flex items-center gap-2 hover:bg-white/[0.02] transition-colors"
+        className="w-full px-5 py-3 flex items-center gap-2 hover:bg-foreground/2 transition-colors"
       >
-        <Icon className="size-3.5 text-[#F8B4D9]" />
-        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] flex-1 text-left">
+        <Icon className="size-3.5 text-primary" />
+        <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground flex-1 text-left">
           {title}
         </span>
         {hasSelection && (
-          <span className="size-1.5 rounded-full bg-[#F8B4D9]" />
+          <span className="size-1.5 rounded-full bg-primary" />
         )}
-        <ChevronDown className={`size-3 text-[#4B5563] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-3 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
       {isOpen && (
         <div className="px-5 pb-3">
@@ -360,17 +360,17 @@ function CheckboxOption({
       <div
         className={`size-4 rounded border-2 flex items-center justify-center transition-all ${
           checked
-            ? "bg-[#F8B4D9] border-[#F8B4D9]"
-            : "bg-transparent border-white/20 group-hover:border-white/40"
+            ? "bg-primary border-primary"
+            : "bg-transparent border-border/80 group-hover:border-border"
         }`}
       >
         {checked && (
-          <svg className="size-3 text-[#0b0b10]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="size-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         )}
       </div>
-      <span className={`text-[11px] ${checked ? "text-[#FFFCF7]" : "text-[#6B7280] group-hover:text-[#9CA3AF]"}`}>
+      <span className={`text-[11px] ${checked ? "text-foreground" : "text-muted-foreground group-hover:text-muted-foreground"}`}>
         {label}
       </span>
     </label>

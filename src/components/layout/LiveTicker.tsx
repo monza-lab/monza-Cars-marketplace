@@ -47,7 +47,7 @@ function TrendIndicator({ trend }: { trend: "up" | "neutral" | "hot" }) {
   if (trend === "up") {
     return <TrendingUp className="size-3 text-emerald-400" />;
   }
-  return <Minus className="size-3 text-[rgba(255,252,247,0.3)]" />;
+  return <Minus className="size-3 text-[rgba(232,226,222,0.3)]" />;
 }
 
 interface LiveTickerProps {
@@ -79,21 +79,21 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
         ref={containerRef}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
-        className="relative h-11 rounded-full bg-[#0b0b10]/85 backdrop-blur-xl border border-[rgba(248,180,217,0.08)] shadow-2xl shadow-black/40 overflow-hidden flex items-center"
+        className="relative h-11 rounded-full bg-background/85 backdrop-blur-xl border border-primary/8 shadow-2xl shadow-black/40 overflow-hidden flex items-center"
       >
         {/* Left fade gradient */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#0b0b10] to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
 
         {/* Right fade gradient */}
-        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#0b0b10] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
         {/* Live indicator pill */}
-        <div className="absolute left-3 z-20 flex items-center gap-1.5 rounded-full bg-[rgba(248,180,217,0.1)] border border-[rgba(248,180,217,0.15)] px-2.5 py-1">
+        <div className="absolute left-3 z-20 flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-2.5 py-1">
           <span className="relative flex size-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
           </span>
-          <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[rgba(255,252,247,0.6)]">
+          <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[rgba(232,226,222,0.6)]">
             Live
           </span>
         </div>
@@ -112,12 +112,12 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
               <button
                 key={`${item.id}-${index}`}
                 onClick={() => handleItemClick(item)}
-                className="inline-flex items-center gap-3 px-4 py-1 rounded-lg hover:bg-[rgba(248,180,217,0.06)] transition-colors group"
+                className="inline-flex items-center gap-3 px-4 py-1 rounded-lg hover:bg-primary/6 transition-colors group"
               >
                 {/* Make + Model */}
-                <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[rgba(255,252,247,0.5)] group-hover:text-[rgba(255,252,247,0.8)] transition-colors">
+                <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[rgba(232,226,222,0.5)] group-hover:text-[rgba(232,226,222,0.8)] transition-colors">
                   {item.make}{" "}
-                  <span className="text-[rgba(255,252,247,0.7)] group-hover:text-[#FFFCF7]">
+                  <span className="text-foreground/70 group-hover:text-foreground">
                     {item.model}
                   </span>
                 </span>
@@ -126,12 +126,12 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
                 <TrendIndicator trend={item.trend} />
 
                 {/* Price */}
-                <span className="text-[12px] font-mono font-medium tabular-nums text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+                <span className="text-[12px] font-mono font-medium tabular-nums text-foreground group-hover:text-primary transition-colors">
                   {formatPrice(item.price)}
                 </span>
 
                 {/* Separator */}
-                <span className="text-[rgba(255,252,247,0.15)] mx-2">/</span>
+                <span className="text-[rgba(232,226,222,0.15)] mx-2">/</span>
               </button>
             ))}
           </div>

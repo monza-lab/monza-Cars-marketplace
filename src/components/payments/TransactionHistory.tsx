@@ -73,13 +73,13 @@ const TYPE_CONFIG: Record<
   },
   PURCHASE: {
     label: "Purchase",
-    color: "text-[#F8B4D9]",
-    bg: "bg-[#F8B4D9]/10",
+    color: "text-primary",
+    bg: "bg-primary/10",
   },
   ANALYSIS_USED: {
     label: "Analysis",
-    color: "text-[#9CA3AF]",
-    bg: "bg-white/5",
+    color: "text-muted-foreground",
+    bg: "bg-foreground/5",
   },
   BONUS: {
     label: "Bonus",
@@ -99,29 +99,29 @@ export function TransactionHistory() {
   const transactions = MOCK_TRANSACTIONS // TODO: replace with API call
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+    <div className="rounded-2xl border border-border bg-foreground/2 overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/5">
+      <div className="px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <Clock className="size-4 text-[#6B7280]" />
-          <h3 className="text-[14px] font-semibold text-[#FFFCF7]">
+          <Clock className="size-4 text-muted-foreground" />
+          <h3 className="text-[14px] font-semibold text-foreground">
             Transaction History
           </h3>
         </div>
       </div>
 
       {/* Transactions list */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {transactions.map((tx) => {
           const config = TYPE_CONFIG[tx.type]
           const isPositive = tx.amount > 0
           return (
             <div
               key={tx.id}
-              className="flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors"
+              className="flex items-center justify-between px-5 py-3.5 hover:bg-foreground/2 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-[11px] text-[#4B5563] font-mono shrink-0 w-16">
+                <span className="text-[11px] text-muted-foreground font-mono shrink-0 w-16">
                   {new Date(tx.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -132,13 +132,13 @@ export function TransactionHistory() {
                 >
                   {config.label}
                 </span>
-                <span className="text-[12px] text-[#9CA3AF] truncate">
+                <span className="text-[12px] text-muted-foreground truncate">
                   {tx.description}
                 </span>
               </div>
               <span
                 className={`text-[13px] font-semibold shrink-0 ml-3 ${
-                  isPositive ? "text-[#34D399]" : "text-[#6B7280]"
+                  isPositive ? "text-[#34D399]" : "text-muted-foreground"
                 }`}
               >
                 {isPositive ? "+" : ""}
@@ -152,7 +152,7 @@ export function TransactionHistory() {
       {/* Empty state */}
       {transactions.length === 0 && (
         <div className="py-8 text-center">
-          <span className="text-[12px] text-[#4B5563]">
+          <span className="text-[12px] text-muted-foreground">
             No transactions yet
           </span>
         </div>

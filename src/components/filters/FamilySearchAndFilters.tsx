@@ -228,13 +228,13 @@ export function FamilySearchAndFilters({
   }, [searchQuery, selectedGenerations])
 
   return (
-    <div className="border-b border-white/5 bg-[#0A0A0A]/95 backdrop-blur-xl">
+    <div className="border-b border-border bg-background/95 backdrop-blur-xl">
       {/* Header con título de familia */}
-      <div className="px-5 py-3 border-b border-white/5">
+      <div className="px-5 py-3 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-[#FFFCF7]">{familyName}</h3>
-            <p className="text-[10px] text-[#6B7280] mt-0.5">
+            <h3 className="text-sm font-semibold text-foreground">{familyName}</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
               {totalCars} {totalCars === 1 ? "carro" : "carros"} disponibles
             </p>
           </div>
@@ -245,20 +245,20 @@ export function FamilySearchAndFilters({
         {/* Buscador contextual */}
         {!hideSearch && (
           <div className="relative mb-3" ref={inputRef}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#6B7280]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder={`Buscar variantes (Turbo, GT3, Carrera...)...`}
-              className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-[12px] text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
+              className="w-full bg-foreground/3 border border-border rounded-xl pl-10 pr-10 py-2.5 text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 size-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-5 rounded-full bg-foreground/10 hover:bg-foreground/20 flex items-center justify-center transition-colors"
               >
-                <X className="size-3 text-[#6B7280]" />
+                <X className="size-3 text-muted-foreground" />
               </button>
             )}
 
@@ -270,7 +270,7 @@ export function FamilySearchAndFilters({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-1 bg-[#0A0A0A]/98 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden z-50 shadow-2xl"
+                  className="absolute top-full left-0 right-0 mt-1 bg-background/98 backdrop-blur-xl border border-border rounded-xl overflow-hidden z-50 shadow-2xl"
                 >
                   {suggestions.map((variant, idx) => {
                     // Si es el nombre de la familia, mostrar "Porsche [familia]"
@@ -279,15 +279,15 @@ export function FamilySearchAndFilters({
                       <button
                         key={idx}
                         onClick={() => selectSuggestion(isFullName ? `Porsche ${variant}` : variant)}
-                        className="w-full px-4 py-2.5 text-left text-[11px] text-[#FFFCF7] hover:bg-[rgba(248,180,217,0.08)] transition-colors border-b border-white/5 last:border-b-0"
+                        className="w-full px-4 py-2.5 text-left text-[11px] text-foreground hover:bg-primary/8 transition-colors border-b border-border last:border-b-0"
                       >
                         {isFullName ? (
                           <>
-                            Porsche <span className="text-[#F8B4D9]">{variant}</span>
+                            Porsche <span className="text-primary">{variant}</span>
                           </>
                         ) : (
                           <>
-                            {familyName} <span className="text-[#F8B4D9]">{variant}</span>
+                            {familyName} <span className="text-primary">{variant}</span>
                           </>
                         )}
                       </button>
@@ -302,7 +302,7 @@ export function FamilySearchAndFilters({
         {/* Generation filter pills */}
         {generations.length > 1 && (
           <div className="mt-3 space-y-2">
-            <p className="text-[9px] text-[#6B7280] uppercase tracking-wider">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
               Generación
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -312,8 +312,8 @@ export function FamilySearchAndFilters({
                   onClick={() => toggleGeneration(gen.id)}
                   className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
                     selectedGenerations.includes(gen.id)
-                      ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.3)]"
-                      : "bg-white/[0.03] text-[#6B7280] border border-white/10 hover:border-white/20"
+                      ? "bg-primary/15 text-primary border border-primary/30"
+                      : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                   }`}
                 >
                   {gen.label}
@@ -326,8 +326,8 @@ export function FamilySearchAndFilters({
 
       {/* Hint para descubrir análisis */}
       {!hideSearch && (
-        <div className="px-5 py-2 bg-[rgba(248,180,217,0.03)] border-t border-[rgba(248,180,217,0.1)]">
-          <p className="text-[9px] text-[#6B7280] text-center">
+        <div className="px-5 py-2 bg-primary/3 border-t border-primary/10">
+          <p className="text-[9px] text-muted-foreground text-center">
             ↓ Scroll para ver análisis de mercado, precios y más
           </p>
         </div>

@@ -63,7 +63,7 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
   return (
     <Link
       href={`/cars/${makePath}`}
-      className="group relative flex flex-col rounded-2xl bg-[#0F1012] border border-white/5 overflow-hidden active:scale-[0.98] transition-transform"
+      className="group relative flex flex-col rounded-2xl bg-card border border-border overflow-hidden active:scale-[0.98] transition-transform"
     >
       {/* Image */}
       <div className="relative h-28 w-full">
@@ -74,16 +74,16 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
           className="object-cover"
           sizes="50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F1012] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card" />
       </div>
 
       {/* Content */}
       <div className="p-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[14px] font-semibold text-[#FFFCF7]">{make}</h3>
-          <ChevronRight className="size-4 text-[#4B5563] group-active:text-[#F8B4D9] transition-colors" />
+          <h3 className="text-[14px] font-semibold text-foreground">{make}</h3>
+          <ChevronRight className="size-4 text-muted-foreground group-active:text-primary transition-colors" />
         </div>
-        <p className="text-[11px] text-[#4B5563] mt-0.5">
+        <p className="text-[11px] text-muted-foreground mt-0.5">
           {count > 1 ? t("vehicles", { count }) : t("vehicle", { count })}
         </p>
       </div>
@@ -99,7 +99,7 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
     <Link
       href={`/cars/${makePath}/${car.id}`}
       onClick={onSelect}
-      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 active:bg-white/[0.05] transition-colors"
+      className="flex items-center gap-3 p-3 rounded-xl bg-foreground/2 border border-border active:bg-white/[0.05] transition-colors"
     >
       <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0">
         <Image
@@ -111,13 +111,13 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-[#FFFCF7] truncate">{car.title}</p>
+        <p className="text-[13px] font-medium text-foreground truncate">{car.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPrice(car.currentBid)}</span>
+          <span className="text-[12px] font-display font-medium text-primary">{formatPrice(car.currentBid)}</span>
           <span className="text-[10px] text-emerald-400">{car.trend}</span>
         </div>
       </div>
-      <ChevronRight className="size-4 text-[#4B5563] shrink-0" />
+      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
     </Link>
   )
 }
@@ -248,19 +248,19 @@ function MobileOracleOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-[#0b0b10]/98 backdrop-blur-xl"
+          className="fixed inset-0 z-[60] bg-background/98 backdrop-blur-xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <Scale className="size-4 text-[#F8B4D9]" />
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#F8B4D9]">
+              <Scale className="size-4 text-primary" />
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
                 {t("oracle.aiAnalysis")}
               </span>
             </div>
             <button
               onClick={onClose}
-              className="size-10 flex items-center justify-center rounded-full bg-white/5 text-[#9CA3AF]"
+              className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
             >
               <X className="size-5" />
             </button>
@@ -268,8 +268,8 @@ function MobileOracleOverlay({
 
           {/* Query */}
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[12px] text-[#4B5563]">
-              {t("oracle.youAsked")} <span className="text-[#FFFCF7]">"{query}"</span>
+            <p className="text-[12px] text-muted-foreground">
+              {t("oracle.youAsked")} <span className="text-foreground">"{query}"</span>
             </p>
           </div>
 
@@ -278,24 +278,24 @@ function MobileOracleOverlay({
             {isLoading ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="size-2 rounded-full bg-[#F8B4D9] animate-pulse" />
-                  <span className="text-[13px] text-[#9CA3AF]">{t("oracle.analyzingMarket")}</span>
+                  <div className="size-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[13px] text-muted-foreground">{t("oracle.analyzingMarket")}</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-white/5 rounded animate-pulse w-full" />
-                  <div className="h-4 bg-white/5 rounded animate-pulse w-5/6" />
-                  <div className="h-4 bg-white/5 rounded animate-pulse w-4/6" />
+                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-full" />
+                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-5/6" />
+                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-4/6" />
                 </div>
               </div>
             ) : (
-              <div className="text-[15px] leading-relaxed text-[#FFFCF7] whitespace-pre-wrap">
+              <div className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
                 {displayedText.split("\n").map((line, i) => {
                   const parts = line.split(/(\*\*[^*]+\*\*)/g)
                   return (
                     <p key={i} className={line.startsWith("•") ? "pl-4 my-1" : "my-2"}>
                       {parts.map((part, j) => {
                         if (part.startsWith("**") && part.endsWith("**")) {
-                          return <span key={j} className="font-semibold text-[#F8B4D9]">{part.slice(2, -2)}</span>
+                          return <span key={j} className="font-semibold text-primary">{part.slice(2, -2)}</span>
                         }
                         return <span key={j}>{part}</span>
                       })}
@@ -312,14 +312,14 @@ function MobileOracleOverlay({
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10] to-transparent pt-16"
+                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-background via-background to-transparent pt-16"
               >
                 <div className="flex flex-wrap gap-2">
                   {chips.map((chip, i) => (
                     <button
                       key={chip.id}
                       onClick={() => handleChipClick(chip)}
-                      className="flex items-center gap-2 rounded-full bg-[rgba(248,180,217,0.1)] border border-[rgba(248,180,217,0.2)] px-5 py-3 text-[13px] font-medium text-[#F8B4D9] active:scale-95 transition-transform"
+                      className="flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-3 text-[13px] font-medium text-primary active:scale-95 transition-transform"
                     >
                       {i === 0 && <Car className="size-4" />}
                       {i === 1 && <BarChart3 className="size-4" />}
@@ -369,17 +369,17 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: "100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-[60] bg-[#0b0b10]"
+          className="fixed inset-0 z-[60] bg-background"
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border">
             <div className="flex items-center justify-between px-5 py-4">
-              <h2 className="text-[16px] font-semibold text-[#FFFCF7]">
+              <h2 className="text-[16px] font-semibold text-foreground">
                 {activeSection === "brands" ? t("exploreBrands") : t("search")}
               </h2>
               <button
                 onClick={onClose}
-                className="size-10 flex items-center justify-center rounded-full bg-white/5 text-[#9CA3AF]"
+                className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
               >
                 <X className="size-5" />
               </button>
@@ -391,8 +391,8 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 onClick={() => setActiveSection("brands")}
                 className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
                   activeSection === "brands"
-                    ? "bg-[#F8B4D9] text-[#0b0b10]"
-                    : "bg-white/5 text-[#9CA3AF]"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-foreground/5 text-muted-foreground"
                 }`}
               >
                 <Car className="size-4 inline mr-2" />
@@ -402,8 +402,8 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 onClick={() => setActiveSection("search")}
                 className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
                   activeSection === "search"
-                    ? "bg-[#F8B4D9] text-[#0b0b10]"
-                    : "bg-white/5 text-[#9CA3AF]"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-foreground/5 text-muted-foreground"
                 }`}
               >
                 <Search className="size-4 inline mr-2" />
@@ -415,19 +415,19 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             {activeSection === "search" && (
               <div className="px-5 pb-4">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-[#4B5563]" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
                   <input
                     ref={inputRef}
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("searchPlaceholder")}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-[15px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/30"
+                    className="w-full bg-foreground/5 border border-border rounded-xl pl-12 pr-4 py-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-white/10 text-[#9CA3AF]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-foreground/10 text-muted-foreground"
                     >
                       <X className="size-3" />
                     </button>
@@ -453,24 +453,24 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
               <div className="px-5 py-4">
                 {searchQuery.length === 0 ? (
                   <div className="text-center py-12">
-                    <Search className="size-12 text-[#4B5563] mx-auto mb-4" />
-                    <p className="text-[#9CA3AF] text-[14px]">
+                    <Search className="size-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground text-[14px]">
                       {t("vehicles", { count: CURATED_CARS.filter(c => c.make !== "Ferrari").length })}
                     </p>
                   </div>
                 ) : searchResults.length === 0 ? (
                   <div className="text-center py-12">
-                    <Car className="size-12 text-[#4B5563] mx-auto mb-4" />
-                    <p className="text-[#9CA3AF] text-[14px]">
+                    <Car className="size-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground text-[14px]">
                       {t("noResults", { query: searchQuery })}
                     </p>
-                    <p className="text-[#4B5563] text-[12px] mt-2">
+                    <p className="text-muted-foreground text-[12px] mt-2">
                       {t("tryAnother")}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-[11px] text-[#4B5563] uppercase tracking-wider mb-4">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-4">
                       {searchResults.length > 1 ? t("results", { count: searchResults.length }) : t("result", { count: searchResults.length })}
                     </p>
                     {searchResults.slice(0, 20).map((car) => (
@@ -510,20 +510,20 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[60] bg-[#0F1012] rounded-t-3xl border-t border-white/10"
+            className="fixed inset-x-0 bottom-0 z-[60] bg-card rounded-t-3xl border-t border-border"
             style={{ maxHeight: "85vh" }}
           >
             {/* Handle */}
             <div className="flex justify-center py-3">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-foreground/20" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 pb-4">
-              <h2 className="text-[16px] font-semibold text-[#FFFCF7]">{t("mobile.account")}</h2>
+              <h2 className="text-[16px] font-semibold text-foreground">{t("mobile.account")}</h2>
               <button
                 onClick={onClose}
-                className="size-10 flex items-center justify-center rounded-full bg-white/5 text-[#9CA3AF]"
+                className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
               >
                 <X className="size-5" />
               </button>
@@ -533,46 +533,46 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <div className="px-6 pb-8 overflow-y-auto" style={{ maxHeight: "calc(85vh - 100px)" }}>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="size-8 border-2 border-[#F8B4D9] border-t-transparent rounded-full animate-spin" />
+                  <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : isAuthenticated ? (
                 <div className="space-y-6">
                   {/* User Info */}
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5">
-                    <div className="size-14 rounded-full bg-[#F8B4D9]/20 flex items-center justify-center">
-                      <User className="size-7 text-[#F8B4D9]" />
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-foreground/5">
+                    <div className="size-14 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="size-7 text-primary" />
                     </div>
                     <div>
-                      <p className="text-[15px] font-semibold text-[#FFFCF7]">
+                      <p className="text-[15px] font-semibold text-foreground">
                         {profile?.name || "User"}
                       </p>
-                      <p className="text-[12px] text-[#4B5563]">{user.email}</p>
+                      <p className="text-[12px] text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
 
                   {/* Credits */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-[rgba(248,180,217,0.1)] to-transparent border border-[rgba(248,180,217,0.15)]">
+                  <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/15">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">
+                        <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
                           {t("auth.credits")}
                         </p>
-                        <p className={`text-[32px] font-bold ${creditsRemaining > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"}`}>
+                        <p className={`text-[32px] font-bold ${creditsRemaining > 0 ? "text-primary" : "text-[#FB923C]"}`}>
                           {creditsRemaining}
                         </p>
                       </div>
-                      <button className="px-5 py-2.5 rounded-full bg-[#F8B4D9] text-[#0b0b10] text-[12px] font-semibold">
+                      <button className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold">
                         {t("auth.buy")}
                       </button>
                     </div>
-                    <p className="text-[11px] text-[#4B5563] mt-3">
+                    <p className="text-[11px] text-muted-foreground mt-3">
                       {t("auth.creditsReset")}
                     </p>
                   </div>
 
                   {/* Language Switcher */}
-                  <div className="py-4 border-t border-white/5">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563] mb-3">
+                  <div className="py-4 border-t border-border">
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
                       {t("language.select")}
                     </p>
                     <MobileLanguageSwitcher onSelect={() => {}} />
@@ -581,7 +581,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   {/* Sign Out */}
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-white/10 text-[#9CA3AF] active:bg-white/5 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-border text-muted-foreground active:bg-foreground/5 transition-colors"
                   >
                     <LogOut className="size-5" />
                     <span className="text-[14px] font-medium">{t("auth.signOut")}</span>
@@ -590,13 +590,13 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               ) : (
                 <div className="space-y-6 py-4">
                   <div className="text-center">
-                    <div className="size-20 rounded-full bg-[rgba(248,180,217,0.1)] flex items-center justify-center mx-auto mb-4">
-                      <Scale className="size-10 text-[#F8B4D9]" />
+                    <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Scale className="size-10 text-primary" />
                     </div>
-                    <h3 className="text-[18px] font-semibold text-[#FFFCF7]">
+                    <h3 className="text-[18px] font-semibold text-foreground">
                       {t("auth.welcomeBack")}
                     </h3>
-                    <p className="text-[14px] text-[#9CA3AF] mt-2">
+                    <p className="text-[14px] text-muted-foreground mt-2">
                       {t("auth.freeCredits")}
                     </p>
                   </div>
@@ -606,14 +606,14 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       onClose()
                       setTimeout(() => setShowAuthModal(true), 300)
                     }}
-                    className="w-full py-4 rounded-xl bg-[#F8B4D9] text-[#0b0b10] text-[15px] font-semibold active:scale-[0.98] transition-transform"
+                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold active:scale-[0.98] transition-transform"
                   >
                     {t("auth.createAccount")}
                   </button>
 
                   {/* Language Switcher for non-authenticated */}
-                  <div className="py-4 border-t border-white/5">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[#4B5563] mb-3">
+                  <div className="py-4 border-t border-border">
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
                       {t("language.select")}
                     </p>
                     <MobileLanguageSwitcher onSelect={() => {}} />
@@ -700,12 +700,12 @@ export function MobileBottomNav() {
                   value={oracleQuery}
                   onChange={(e) => setOracleQuery(e.target.value)}
                   placeholder={t("askAnything")}
-                  className="w-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] rounded-2xl pl-5 pr-14 py-4 text-[15px] text-[#FFFCF7] placeholder:text-[#4B5563] focus:outline-none focus:border-[#F8B4D9]/50"
+                  className="w-full bg-card border border-primary/20 rounded-2xl pl-5 pr-14 py-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                 />
                 <button
                   type="submit"
                   disabled={!oracleQuery.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-[#F8B4D9] text-[#0b0b10] disabled:opacity-50 disabled:bg-white/10 disabled:text-[#4B5563]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50 disabled:bg-foreground/10 disabled:text-muted-foreground"
                 >
                   <ArrowRight className="size-5" />
                 </button>
@@ -715,17 +715,17 @@ export function MobileBottomNav() {
         </AnimatePresence>
 
         {/* Nav Bar */}
-        <div className="bg-[#0b0b10]/95 backdrop-blur-xl border-t border-white/5 px-6 py-3 pb-safe">
+        <div className="bg-background/95 backdrop-blur-xl border-t border-border px-6 py-3 pb-safe">
           <div className="flex items-center justify-around">
             {/* AI Oracle Button */}
             <button
               onClick={() => setShowOracleInput(!showOracleInput)}
               className={`flex flex-col items-center gap-1 transition-colors ${
-                showOracleInput ? "text-[#F8B4D9]" : "text-[#9CA3AF]"
+                showOracleInput ? "text-primary" : "text-muted-foreground"
               }`}
             >
               <div className={`size-11 rounded-full flex items-center justify-center transition-colors ${
-                showOracleInput ? "bg-[#F8B4D9] text-[#0b0b10]" : "bg-white/5"
+                showOracleInput ? "bg-primary text-primary-foreground" : "bg-foreground/5"
               }`}>
                 <Scale className="size-5" />
               </div>
@@ -735,9 +735,9 @@ export function MobileBottomNav() {
             {/* Browse */}
             <button
               onClick={() => setShowBrowse(true)}
-              className="flex flex-col items-center gap-1 text-[#9CA3AF]"
+              className="flex flex-col items-center gap-1 text-muted-foreground"
             >
-              <div className="size-11 rounded-full bg-white/5 flex items-center justify-center">
+              <div className="size-11 rounded-full bg-foreground/5 flex items-center justify-center">
                 <Car className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("explore")}</span>
@@ -746,9 +746,9 @@ export function MobileBottomNav() {
             {/* Account */}
             <button
               onClick={() => setShowAccount(true)}
-              className="flex flex-col items-center gap-1 text-[#9CA3AF]"
+              className="flex flex-col items-center gap-1 text-muted-foreground"
             >
-              <div className="size-11 rounded-full bg-white/5 flex items-center justify-center">
+              <div className="size-11 rounded-full bg-foreground/5 flex items-center justify-center">
                 <User className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("account")}</span>

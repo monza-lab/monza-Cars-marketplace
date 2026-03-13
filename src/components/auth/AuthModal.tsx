@@ -100,12 +100,12 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0F1012] border-white/10 sm:max-w-[420px]">
+      <DialogContent className="bg-card border-border sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle className="text-[#FFFCF7] text-xl font-semibold">
+          <DialogTitle className="text-foreground text-xl font-semibold">
             {mode === 'signin' ? t('welcomeBack') : t('createAccountTitle')}
           </DialogTitle>
-          <DialogDescription className="text-[#9CA3AF]">
+          <DialogDescription className="text-muted-foreground">
             {mode === 'signin'
               ? t('signInDesc')
               : t('createAccountDesc')}
@@ -115,7 +115,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {mode === 'signup' && (
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-[0.2em] text-[#4B5563]">
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 {t('name')}
               </label>
               <Input
@@ -123,13 +123,13 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                 placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-[#4B5563]">
+            <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               {t('email')}
             </label>
             <Input
@@ -138,12 +138,12 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-[#4B5563]">
+            <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
               {t('password')}
             </label>
             <Input
@@ -153,7 +153,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="bg-[#0b0b10] border-white/10 text-[#FFFCF7] placeholder:text-[#4B5563]"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -169,7 +169,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                   type="button"
                   onClick={handleResendConfirmation}
                   disabled={loading}
-                  className="text-xs text-[#9CA3AF] hover:text-[#F8B4D9] transition-colors underline underline-offset-2"
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
                 >
                   {t('resendConfirmation')}
                 </button>
@@ -180,7 +180,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#F8B4D9]/90 font-semibold"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             {loading
               ? t('loading')
@@ -192,10 +192,10 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-white/10" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#0F1012] px-2 text-[#4B5563] tracking-[0.2em]">
+            <span className="bg-card px-2 text-muted-foreground tracking-[0.2em]">
               {t('or')}
             </span>
           </div>
@@ -206,7 +206,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           variant="outline"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full border-white/10 text-[#FFFCF7] hover:bg-white/5"
+          className="w-full border-border text-foreground hover:bg-foreground/5"
         >
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path
@@ -233,7 +233,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-sm text-[#9CA3AF] hover:text-[#F8B4D9] transition-colors"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             {mode === 'signin'
               ? t('switchToSignUp')

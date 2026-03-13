@@ -49,14 +49,14 @@ export function HowItWorksSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <span className="mb-4 inline-block text-[11px] font-medium tracking-[0.2em] uppercase text-[#F8B4D9]">
+          <span className="mb-4 inline-block text-[11px] font-medium tracking-[0.2em] uppercase text-primary">
             {t("kicker")}
           </span>
-          <h2 className="text-3xl font-light tracking-tight text-[#FFFCF7] sm:text-4xl">
+          <h2 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
             {t("title1")}{" "}
             <span className="font-semibold text-gradient">{t("title2")}</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-[rgba(255,252,247,0.45)] font-light">
+          <p className="mx-auto mt-4 max-w-xl text-sm text-[rgba(232,226,222,0.45)] font-light">
             {t("subtitle")}
           </p>
         </motion.div>
@@ -72,33 +72,33 @@ export function HowItWorksSection() {
           {steps.map((step) => (
             <motion.div
               key={step.number}
-              className="group relative overflow-hidden rounded-2xl border border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.7)] p-8 transition-all duration-300 hover:border-[rgba(248,180,217,0.2)] hover:shadow-2xl hover:shadow-[rgba(248,180,217,0.03)]"
+              className="group relative overflow-hidden rounded-2xl border border-primary/8 bg-card p-8 transition-all duration-300 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/3"
               variants={cardVariants}
               whileHover={{ y: -4 }}
             >
               {/* Hover glow */}
-              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[rgba(248,180,217,0.08)] opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/8 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
 
               {/* Step number */}
-              <span className="mb-6 inline-block font-mono text-[11px] font-medium tracking-[0.1em] text-[rgba(255,252,247,0.2)]">
+              <span className="mb-6 inline-block font-mono text-[11px] font-medium tracking-[0.1em] text-[rgba(232,226,222,0.2)]">
                 {step.number}
               </span>
 
               {/* Icon */}
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(248,180,217,0.08)] text-[#F8B4D9] transition-all duration-300 group-hover:bg-[rgba(248,180,217,0.12)]">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/8 text-primary transition-all duration-300 group-hover:bg-primary/12">
                 <step.icon className="h-5 w-5" />
               </div>
 
               {/* Content */}
-              <h3 className="mb-3 text-lg font-semibold text-[#FFFCF7]">
+              <h3 className="mb-3 text-lg font-semibold text-foreground">
                 {t(step.titleKey)}
               </h3>
-              <p className="text-sm leading-relaxed text-[rgba(255,252,247,0.4)] font-light">
+              <p className="text-sm leading-relaxed text-[rgba(232,226,222,0.4)] font-light">
                 {t(step.descriptionKey)}
               </p>
 
               {/* Bottom accent line */}
-              <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r from-[#F8B4D9] to-transparent transition-all duration-500 group-hover:w-full" />
+              <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r from-primary to-transparent transition-all duration-500 group-hover:w-full" />
             </motion.div>
           ))}
         </motion.div>

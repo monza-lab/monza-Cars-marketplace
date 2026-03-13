@@ -194,8 +194,8 @@ function HomeContent({
 
   if (auctions.length === 0) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#0b0b10]">
-        <span className="text-[#9CA3AF] text-sm">{emptyLabel}</span>
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <span className="text-muted-foreground text-sm">{emptyLabel}</span>
       </div>
     );
   }

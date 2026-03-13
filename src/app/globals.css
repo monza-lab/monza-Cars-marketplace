@@ -5,13 +5,14 @@
 
 @theme inline {
   /* ═══════════════════════════════════════════════════════════════════════════
-     OBSIDIAN & NEON — Ultra-Premium Investment Terminal Palette
+     SALON — Art Gallery Palette
      ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Core Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-geist-mono);
 
   /* Semantic Colors */
@@ -55,143 +56,156 @@
   --radius-4xl: calc(var(--radius) + 16px);
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     OBSIDIAN & NEON — Design Tokens
+     SALON — Design Tokens
      ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Backgrounds */
-  --color-obsidian: #0b0b10;
-  --color-obsidian-card: #0F1012;
-  --color-obsidian-surface: rgba(15, 16, 18, 0.9);
+  --color-salon-dark: #0E0A0C;
+  --color-salon-surface: #161113;
+  --color-salon-surface-alpha: rgba(22, 17, 19, 0.9);
 
   /* Typography */
-  --color-bone: #FFFCF7;
-  --color-cool-gray: #9CA3AF;
-  --color-deep-gray: #4B5563;
+  --color-salon-warm-white: #E8E2DE;
+  --color-salon-muted: #6B6365;
+  --color-salon-muted-deep: #564E50;
 
-  /* Accent — Monza Pink (unchanged) */
-  --color-monza-pink: #F8B4D9;
+  /* Accent — Salon Rose */
+  --color-salon-rose: #D4738A;
 
-  /* Financial Indicators */
+  /* Financial Indicators (unchanged) */
   --color-positive: #34D399;
   --color-negative: #FB923C;
   --color-warning: #FBBF24;
 
   /* Legacy aliases for compatibility */
-  --color-monza-cream: #FFFCF7;
-  --color-monza-dark: #0b0b10;
-  --color-monza-surface: rgba(15, 16, 18, 0.9);
+  --color-obsidian: #0E0A0C;
+  --color-obsidian-card: #161113;
+  --color-obsidian-surface: rgba(22, 17, 19, 0.9);
+  --color-bone: #E8E2DE;
+  --color-cool-gray: #6B6365;
+  --color-deep-gray: #564E50;
+  --color-monza-pink: #D4738A;
+  --color-monza-cream: #E8E2DE;
+  --color-monza-dark: #0E0A0C;
+  --color-monza-surface: rgba(22, 17, 19, 0.9);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
-   OBSIDIAN & NEON — Root Variables
+   SALON — Light Mode (Default for :root)
    ═════════════════════════════════════════════════════════════════════════════ */
 
 :root {
   --radius: 0.625rem;
 
-  /* ─── BACKGROUNDS (Depth & Texture) ─── */
-  --background: #0b0b10;
-  --foreground: #FFFCF7;
+  /* ─── BACKGROUNDS (warm cream, not cold white) ─── */
+  --background: #FDFBF9;
+  --foreground: #2A2320;
+  --card: #F5F2EE;
+  --card-foreground: #2A2320;
+  --popover: rgba(253, 251, 249, 0.98);
+  --popover-foreground: #2A2320;
 
-  /* Cards — cool-toned charcoal */
-  --card: #0F1012;
-  --card-foreground: #FFFCF7;
-
-  /* Popovers / dropdowns */
-  --popover: rgba(15, 16, 18, 0.98);
-  --popover-foreground: #FFFCF7;
-
-  /* ─── PRIMARY: MONZA PINK ─── */
-  --primary: #F8B4D9;
-  --primary-foreground: #0b0b10;
+  /* ─── PRIMARY: SALON BURGUNDY ─── */
+  --primary: #7A2E4A;
+  --primary-foreground: #FDFBF9;
 
   /* ─── SECONDARY ─── */
-  --secondary: rgba(248, 180, 217, 0.06);
-  --secondary-foreground: #9CA3AF;
+  --secondary: rgba(122, 46, 74, 0.06);
+  --secondary-foreground: #9A8E88;
 
   /* ─── MUTED ─── */
-  --muted: rgba(242, 240, 233, 0.04);
-  --muted-foreground: #4B5563;
+  --muted: rgba(42, 35, 32, 0.04);
+  --muted-foreground: #9A8E88;
 
   /* ─── ACCENT ─── */
-  --accent: rgba(248, 180, 217, 0.08);
-  --accent-foreground: #FFFCF7;
+  --accent: rgba(122, 46, 74, 0.07);
+  --accent-foreground: #2A2320;
 
   /* ─── DESTRUCTIVE ─── */
   --destructive: #FB923C;
 
   /* ─── BORDERS & INPUTS ─── */
-  --border: rgba(255, 255, 255, 0.05);
-  --input: rgba(255, 255, 255, 0.04);
-  --ring: rgba(248, 180, 217, 0.3);
+  --border: #E8E2DC;
+  --input: rgba(42, 35, 32, 0.05);
+  --ring: rgba(122, 46, 74, 0.3);
+
+  /* ─── GLOW (light mode — subtle burgundy) ─── */
+  --glow-color: 122, 46, 74;
 
   /* ─── CHART PALETTE ─── */
-  --chart-1: #F8B4D9;
+  --chart-1: #7A2E4A;
   --chart-2: #34D399;
   --chart-3: #FB923C;
   --chart-4: #c084fc;
   --chart-5: #67e8f9;
 
   /* ─── SIDEBAR ─── */
-  --sidebar: #0A0A0C;
-  --sidebar-foreground: #FFFCF7;
-  --sidebar-primary: #F8B4D9;
-  --sidebar-primary-foreground: #0b0b10;
-  --sidebar-accent: rgba(248, 180, 217, 0.08);
-  --sidebar-accent-foreground: #FFFCF7;
-  --sidebar-border: rgba(255, 255, 255, 0.05);
-  --sidebar-ring: rgba(248, 180, 217, 0.3);
+  --sidebar: #F5F2EE;
+  --sidebar-foreground: #2A2320;
+  --sidebar-primary: #7A2E4A;
+  --sidebar-primary-foreground: #FDFBF9;
+  --sidebar-accent: rgba(122, 46, 74, 0.07);
+  --sidebar-accent-foreground: #2A2320;
+  --sidebar-border: #E8E2DC;
+  --sidebar-ring: rgba(122, 46, 74, 0.3);
 }
 
-.dark {
-  /* ─── BACKGROUNDS ─── */
-  --background: #0b0b10;
-  --foreground: #FFFCF7;
-  --card: #0F1012;
-  --card-foreground: #FFFCF7;
-  --popover: rgba(15, 16, 18, 0.98);
-  --popover-foreground: #FFFCF7;
+/* ═════════════════════════════════════════════════════════════════════════════
+   SALON — Dark Mode
+   ═════════════════════════════════════════════════════════════════════════════ */
 
-  /* ─── PRIMARY ─── */
-  --primary: #F8B4D9;
-  --primary-foreground: #0b0b10;
+.dark {
+  /* ─── BACKGROUNDS (Warm Burgundy-Black) ─── */
+  --background: #0E0A0C;
+  --foreground: #E8E2DE;
+  --card: #161113;
+  --card-foreground: #E8E2DE;
+  --popover: rgba(14, 10, 12, 0.98);
+  --popover-foreground: #E8E2DE;
+
+  /* ─── PRIMARY: SALON ROSE ─── */
+  --primary: #D4738A;
+  --primary-foreground: #0E0A0C;
 
   /* ─── SECONDARY ─── */
-  --secondary: rgba(248, 180, 217, 0.06);
-  --secondary-foreground: #9CA3AF;
+  --secondary: rgba(212, 115, 138, 0.08);
+  --secondary-foreground: #6B6365;
 
   /* ─── MUTED ─── */
-  --muted: rgba(242, 240, 233, 0.04);
-  --muted-foreground: #4B5563;
+  --muted: rgba(232, 226, 222, 0.04);
+  --muted-foreground: #6B6365;
 
   /* ─── ACCENT ─── */
-  --accent: rgba(248, 180, 217, 0.08);
-  --accent-foreground: #FFFCF7;
+  --accent: rgba(212, 115, 138, 0.10);
+  --accent-foreground: #E8E2DE;
 
   /* ─── DESTRUCTIVE ─── */
   --destructive: #FB923C;
 
   /* ─── BORDERS ─── */
-  --border: rgba(255, 255, 255, 0.05);
+  --border: #2A2226;
   --input: rgba(255, 255, 255, 0.04);
-  --ring: rgba(248, 180, 217, 0.3);
+  --ring: rgba(212, 115, 138, 0.3);
 
   /* ─── CHARTS ─── */
-  --chart-1: #F8B4D9;
+  --chart-1: #D4738A;
   --chart-2: #34D399;
   --chart-3: #FB923C;
   --chart-4: #c084fc;
   --chart-5: #67e8f9;
 
+  /* ─── GLOW (dark mode — rose) ─── */
+  --glow-color: 212, 115, 138;
+
   /* ─── SIDEBAR ─── */
-  --sidebar: #0A0A0C;
-  --sidebar-foreground: #FFFCF7;
-  --sidebar-primary: #F8B4D9;
-  --sidebar-primary-foreground: #0b0b10;
-  --sidebar-accent: rgba(248, 180, 217, 0.08);
-  --sidebar-accent-foreground: #FFFCF7;
-  --sidebar-border: rgba(255, 255, 255, 0.05);
-  --sidebar-ring: rgba(248, 180, 217, 0.3);
+  --sidebar: #0B0809;
+  --sidebar-foreground: #E8E2DE;
+  --sidebar-primary: #D4738A;
+  --sidebar-primary-foreground: #0E0A0C;
+  --sidebar-accent: rgba(212, 115, 138, 0.08);
+  --sidebar-accent-foreground: #E8E2DE;
+  --sidebar-border: #2A2226;
+  --sidebar-ring: rgba(212, 115, 138, 0.3);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -213,18 +227,26 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Selection highlight in pink */
+  /* Selection highlight */
   ::selection {
-    background: rgba(248, 180, 217, 0.3);
-    color: #FFFCF7;
+    background: rgba(92, 26, 51, 0.2);
+    color: var(--foreground);
+  }
+  .dark ::selection {
+    background: rgba(212, 115, 138, 0.3);
+    color: var(--foreground);
   }
 
   ::-moz-selection {
-    background: rgba(248, 180, 217, 0.3);
-    color: #FFFCF7;
+    background: rgba(92, 26, 51, 0.2);
+    color: var(--foreground);
+  }
+  .dark ::-moz-selection {
+    background: rgba(212, 115, 138, 0.3);
+    color: var(--foreground);
   }
 
-  /* Custom scrollbar — thin, dark */
+  /* Custom scrollbar — thin */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
@@ -235,41 +257,50 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(248, 180, 217, 0.15);
+    background: rgba(92, 26, 51, 0.15);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(248, 180, 217, 0.3);
+    background: rgba(92, 26, 51, 0.3);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(212, 115, 138, 0.15);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 115, 138, 0.3);
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(248, 180, 217, 0.15) transparent;
+    scrollbar-color: rgba(92, 26, 51, 0.15) transparent;
+  }
+  .dark * {
+    scrollbar-color: rgba(212, 115, 138, 0.15) transparent;
   }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
-   OBSIDIAN & NEON — Utility Classes
+   SALON — Utility Classes
    ═════════════════════════════════════════════════════════════════════════════ */
 
 @layer utilities {
   /* ─── TYPOGRAPHY UTILITIES ─── */
 
-  /* Primary text — Bone (for headings) */
+  /* Primary text — Warm White (dark) / Dark (light) */
   .text-bone {
-    color: #FFFCF7;
+    color: var(--foreground);
   }
 
-  /* Secondary text — Cool Gray (for body) */
+  /* Secondary text — Museum Grey */
   .text-cool-gray {
-    color: #9CA3AF;
+    color: var(--muted-foreground);
   }
 
-  /* Muted text — Deep Gray (for labels) */
+  /* Muted text — Deep Muted */
   .text-deep-gray {
-    color: #4B5563;
+    color: var(--muted-foreground);
   }
 
   /* ─── FINANCIAL INDICATOR UTILITIES ─── */
@@ -314,15 +345,15 @@
     border-color: rgba(251, 146, 60, 0.2);
   }
 
-  /* ─── PINK GRADIENT TEXT ─── */
+  /* ─── ROSE GRADIENT TEXT ─── */
   .text-gradient {
     background: linear-gradient(
       90deg,
-      #F8B4D9 0%,
-      #f4cbde 30%,
-      #F8B4D9 60%,
-      #e991bf 80%,
-      #F8B4D9 100%
+      #5C1A33 0%,
+      #7A2E4A 30%,
+      #5C1A33 60%,
+      #4A1228 80%,
+      #5C1A33 100%
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -330,19 +361,39 @@
     -webkit-text-fill-color: transparent;
     animation: text-gradient-shimmer 8s ease-in-out infinite;
   }
+  .dark .text-gradient {
+    background: linear-gradient(
+      90deg,
+      #D4738A 0%,
+      #e091a8 30%,
+      #D4738A 60%,
+      #c45f7a 80%,
+      #D4738A 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 
   /* ─── GLASSMORPHISM CARD ─── */
   .glass-card {
-    background: rgba(15, 16, 18, 0.6);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(24px) saturate(1.3);
     -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.03),
+      0 8px 40px rgba(0, 0, 0, 0.08);
+  }
+  .dark .glass-card {
+    background: rgba(22, 17, 19, 0.6);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.02),
       0 8px 40px rgba(0, 0, 0, 0.6);
   }
 
-  /* ─── MONZA GLOW — Radial pink light ─── */
+  /* ─── SALON GLOW — Radial rose light ─── */
   .monza-glow {
     position: relative;
   }
@@ -356,11 +407,18 @@
     height: 50%;
     background: radial-gradient(
       80% 50% at 50% 0%,
-      rgba(248, 180, 217, 0.12) 0%,
+      rgba(92, 26, 51, 0.04) 0%,
       transparent 60%
     );
     pointer-events: none;
     z-index: 0;
+  }
+  .dark .monza-glow::before {
+    background: radial-gradient(
+      80% 50% at 50% 0%,
+      rgba(212, 115, 138, 0.12) 0%,
+      transparent 60%
+    );
   }
 
   /* ─── GRAIN/NOISE OVERLAY (2% opacity for premium feel) ─── */
@@ -370,22 +428,25 @@
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.02;
+    opacity: 0.01;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
     background-repeat: repeat;
     background-size: 256px 256px;
   }
+  .dark .noise-overlay::after {
+    opacity: 0.02;
+  }
 
-  /* ─── MONZA LABEL — Uppercase, wide tracking ─── */
+  /* ─── SALON LABEL — Uppercase, wide tracking ─── */
   .monza-label {
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #4B5563;
+    color: var(--muted-foreground);
   }
 
-  /* ─── MONZA SECTION GLOW ─── */
+  /* ─── SALON SECTION GLOW ─── */
   .monza-section-glow {
     position: relative;
   }
@@ -399,21 +460,48 @@
     height: 200px;
     background: radial-gradient(
       50% 100% at 50% 0%,
-      rgba(248, 180, 217, 0.06) 0%,
+      rgba(92, 26, 51, 0.03) 0%,
       transparent 100%
     );
     pointer-events: none;
   }
+  .dark .monza-section-glow::before {
+    background: radial-gradient(
+      50% 100% at 50% 0%,
+      rgba(212, 115, 138, 0.06) 0%,
+      transparent 100%
+    );
+  }
 
-  /* ─── OBSIDIAN BACKGROUND UTILITIES ─── */
+  /* ─── BACKGROUND UTILITIES ─── */
   .bg-obsidian {
-    background-color: #0b0b10;
+    background-color: var(--background);
   }
   .bg-obsidian-card {
-    background-color: #0F1012;
+    background-color: var(--card);
   }
   .bg-obsidian-surface {
-    background-color: rgba(15, 16, 18, 0.9);
+    background-color: var(--popover);
+  }
+
+  /* ─── SALON TYPOGRAPHY UTILITIES ─── */
+  .font-display {
+    font-family: var(--font-serif);
+  }
+  .salon-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+  .salon-price {
+    font-family: var(--font-serif);
+    font-weight: 500;
+  }
+  .salon-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
   }
 }
 

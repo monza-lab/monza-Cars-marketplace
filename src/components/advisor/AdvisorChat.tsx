@@ -143,20 +143,20 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100%-2rem)] sm:w-[420px] h-[600px] max-h-[85vh] bg-[#0F1012] border border-white/10 rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-[9999]"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100%-2rem)] sm:w-[420px] h-[600px] max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl shadow-black/50 flex flex-col overflow-hidden z-[9999]"
           >
             {/* ═══ HEADER ═══ */}
-            <div className="px-4 py-3 border-b border-white/5 shrink-0">
+            <div className="px-4 py-3 border-b border-border shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-xl bg-[rgba(248,180,217,0.1)] border border-[rgba(248,180,217,0.15)] flex items-center justify-center">
-                    <Scale className="size-4 text-[#F8B4D9]" />
+                  <div className="size-9 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center">
+                    <Scale className="size-4 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-[13px] font-semibold text-[#FFFCF7]">Monza Advisor</h3>
+                    <h3 className="text-[13px] font-semibold text-foreground">Monza Advisor</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] text-[#6B7280]">
+                      <span className="text-[10px] text-muted-foreground">
                         {profile?.name
                           ? `Helping ${profile.name.split(" ")[0]}`
                           : "At your service"
@@ -168,19 +168,19 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="size-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+                  className="size-8 rounded-lg flex items-center justify-center hover:bg-foreground/5 transition-colors"
                 >
-                  <X className="size-4 text-[#6B7280]" />
+                  <X className="size-4 text-muted-foreground" />
                 </button>
               </div>
 
               {/* Car context bar */}
               {car && (
-                <div className="mt-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/5">
-                  <span className="text-[10px] text-[#6B7280] truncate flex-1">
+                <div className="mt-2 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-foreground/3 border border-border">
+                  <span className="text-[10px] text-muted-foreground truncate flex-1">
                     {car.year} {car.make} {car.model}
                   </span>
-                  <span className="text-[10px] font-mono font-semibold text-[#F8B4D9] shrink-0">
+                  <span className="text-[10px] font-display font-medium text-primary shrink-0">
                     {formatPriceForRegion(car.currentBid, selectedRegion)}
                   </span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
@@ -211,7 +211,7 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
             </div>
 
             {/* ═══ INPUT ═══ */}
-            <div className="px-4 py-3 border-t border-white/5 shrink-0">
+            <div className="px-4 py-3 border-t border-border shrink-0">
               <div className="flex items-center gap-2">
                 <input
                   ref={inputRef}
@@ -220,18 +220,18 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                   placeholder={car ? `Ask about ${car.make} ${car.model}...` : "Ask anything..."}
-                  className="flex-1 bg-white/[0.04] border border-white/5 rounded-xl px-4 py-2.5 text-[13px] text-[#FFFCF7] placeholder-[#4B5563] focus:outline-none focus:border-[rgba(248,180,217,0.3)] transition-colors"
+                  className="flex-1 bg-foreground/4 border border-border rounded-xl px-4 py-2.5 text-[13px] text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/30 transition-colors"
                   disabled={isTyping}
                 />
                 <button
                   onClick={() => handleSend()}
                   disabled={!input.trim() || isTyping}
-                  className="size-10 rounded-xl bg-[rgba(248,180,217,0.15)] border border-[rgba(248,180,217,0.2)] flex items-center justify-center hover:bg-[rgba(248,180,217,0.25)] transition-colors disabled:opacity-30 disabled:hover:bg-[rgba(248,180,217,0.15)]"
+                  className="size-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center hover:bg-primary/25 transition-colors disabled:opacity-30 disabled:hover:bg-primary/15"
                 >
-                  <Send className="size-4 text-[#F8B4D9]" />
+                  <Send className="size-4 text-primary" />
                 </button>
               </div>
-              <p className="text-[9px] text-[#4B5563] text-center mt-2">
+              <p className="text-[9px] text-muted-foreground text-center mt-2">
                 Specialist advisory · Responds in your language
               </p>
             </div>

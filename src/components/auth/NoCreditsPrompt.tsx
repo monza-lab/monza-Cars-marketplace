@@ -14,14 +14,14 @@ export function NoCreditsPrompt({
   className = '',
 }: NoCreditsPromptProps) {
   return (
-    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border border-[#FB923C]/20 bg-[#0F1012]/80 backdrop-blur-xl ${className}`}>
+    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border border-[#FB923C]/20 bg-card backdrop-blur-xl ${className}`}>
       <div className="w-12 h-12 rounded-full bg-[#FB923C]/10 flex items-center justify-center mb-4">
         <Coins className="w-6 h-6 text-[#FB923C]" />
       </div>
-      <h3 className="text-lg font-semibold text-[#FFFCF7] mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         No Credits Remaining
       </h3>
-      <p className="text-[#9CA3AF] text-center mb-6 max-w-sm">
+      <p className="text-muted-foreground text-center mb-6 max-w-sm">
         You&apos;ve used all your analysis credits. Purchase more to continue analyzing vehicles.
       </p>
 
@@ -33,19 +33,19 @@ export function NoCreditsPrompt({
 
       <Button
         onClick={onPurchase}
-        className="bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#F8B4D9]/90 font-semibold w-full max-w-sm"
+        className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold w-full max-w-sm"
       >
         Purchase Credits
       </Button>
 
       <Link
         href="/pricing"
-        className="text-[11px] text-[#F8B4D9] hover:text-[#f4cbde] mt-3 transition-colors"
+        className="text-[11px] text-primary hover:text-primary/80 mt-3 transition-colors"
       >
         View all plans →
       </Link>
 
-      <p className="text-xs text-[#4B5563] mt-3">
+      <p className="text-xs text-muted-foreground mt-3">
         Free credits reset on the 1st of each month
       </p>
     </div>
@@ -67,17 +67,17 @@ function CreditPackage({
     <div
       className={`relative p-3 rounded-lg border text-center ${
         popular
-          ? 'border-[#F8B4D9]/50 bg-[#F8B4D9]/5'
-          : 'border-white/10 bg-white/5'
+          ? 'border-primary/50 bg-primary/5'
+          : 'border-border bg-foreground/5'
       }`}
     >
       {popular && (
-        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider px-2 py-0.5 bg-[#F8B4D9] text-[#0b0b10] rounded-full font-semibold">
+        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-wider px-2 py-0.5 bg-primary text-primary-foreground rounded-full font-semibold">
           Best
         </span>
       )}
-      <div className="text-xl font-bold text-[#FFFCF7]">{amount}</div>
-      <div className="text-[10px] text-[#9CA3AF]">{label}</div>
+      <div className="text-xl font-bold text-foreground">{amount}</div>
+      <div className="text-[10px] text-muted-foreground">{label}</div>
       <div className="text-sm font-semibold text-[#34D399] mt-1">${price}</div>
     </div>
   )

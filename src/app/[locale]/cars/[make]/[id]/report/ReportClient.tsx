@@ -20,7 +20,6 @@ import {
   HelpCircle,
   FileText,
   Users,
-  Truck,
   CheckCircle2,
   Lock,
   Coins,
@@ -35,432 +34,17 @@ import {
   History,
   Clock,
   Download,
-  Factory,
-  Settings,
-  Search,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
+import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 
-// ─── MOCK DATA (same as CarDetailClient) ───
-const redFlags: Record<string, string[]> = {
-  McLaren: [
-    "Central driving position requires specialist knowledge",
-    "BMW V12 servicing limited to certified facilities",
-    "Gold foil heat shielding integrity critical",
-    "Monocoque carbon fiber inspection mandatory",
-  ],
-  Porsche: [
-    "Chain tensioner failure risk on early models",
-    "Heat exchanger condition critical; rust inspection required",
-    "Galvanized vs non-galvanized body impacts value",
-    "Verify matching numbers engine and transmission",
-  ],
-  Ferrari: [
-    "Cam belt service history critical ($5,000+ if overdue)",
-    "Sticky interior switches common; verify all electronics",
-    "Classiche rejection significantly impacts resale",
-    "Exhaust manifold cracks require specialist repair",
-  ],
-  Lamborghini: [
-    "Carburetors require specialized tuning",
-    "Clutch replacement labor-intensive (~$8,000+)",
-    "Cooling system prone to issues in traffic",
-    "Frame susceptible to stress cracks",
-  ],
-  Nissan: [
-    "ATTESA E-TS pump failure common",
-    "RB26 head gasket issues if previously tuned",
-    "Rust in rear quarters common on JDM imports",
-    "Verify legal import status and compliance",
-  ],
-  default: [
-    "Request comprehensive service history",
-    "Verify VIN matches title and body panels",
-    "Check for evidence of previous accident damage",
-    "Confirm mileage with service records",
-  ],
-}
-
-const sellerQuestions: Record<string, string[]> = {
-  McLaren: [
-    "Is the original tool kit and owner's documentation complete?",
-    "When was the last McLaren Special Operations service?",
-    "Has the monocoque been inspected for stress fractures?",
-    "What is the history of the BMW engine servicing?",
-  ],
-  Porsche: [
-    "When was the last valve adjustment performed?",
-    "Has the vehicle been used in motorsport?",
-    "Are the date codes correct on all glass?",
-    "Has the transmission been rebuilt?",
-  ],
-  Ferrari: [
-    "Is Classiche certification obtainable?",
-    "When was the last cam belt service?",
-    "Are all tools and books present?",
-    "Has the car ever been repainted?",
-  ],
-  default: [
-    "Is a pre-purchase inspection permitted?",
-    "What is the complete service history?",
-    "Are there any known mechanical issues?",
-    "What is included in the sale?",
-  ],
-}
-
-const ownershipCosts: Record<string, { insurance: number; storage: number; maintenance: number }> = {
-  McLaren: { insurance: 45000, storage: 12000, maintenance: 25000 },
-  Porsche: { insurance: 8500, storage: 6000, maintenance: 8000 },
-  Ferrari: { insurance: 18000, storage: 8000, maintenance: 15000 },
-  Lamborghini: { insurance: 15000, storage: 8000, maintenance: 12000 },
-  Nissan: { insurance: 4500, storage: 3600, maintenance: 3500 },
-  Toyota: { insurance: 3200, storage: 3600, maintenance: 2500 },
-  BMW: { insurance: 3800, storage: 3600, maintenance: 4000 },
-  "Mercedes-Benz": { insurance: 6500, storage: 4800, maintenance: 6000 },
-  "Aston Martin": { insurance: 8000, storage: 6000, maintenance: 10000 },
-  Lexus: { insurance: 6000, storage: 4800, maintenance: 4500 },
-  Ford: { insurance: 5500, storage: 4200, maintenance: 4000 },
-  Acura: { insurance: 3000, storage: 3600, maintenance: 2800 },
-  Jaguar: { insurance: 4500, storage: 4200, maintenance: 5000 },
-  default: { insurance: 5000, storage: 4800, maintenance: 5000 },
-}
-
-const comparableSales: Record<string, { title: string; price: number; date: string; platform: string; delta: number }[]> = {
-  McLaren: [
-    { title: "1994 McLaren F1", price: 20_500_000, date: "Aug 2025", platform: "RM Sotheby's", delta: 8 },
-    { title: "1995 McLaren F1", price: 19_800_000, date: "May 2025", platform: "Gooding", delta: 5 },
-    { title: "1996 McLaren F1", price: 18_200_000, date: "Jan 2025", platform: "Bonhams", delta: -3 },
-  ],
-  Porsche: [
-    { title: "1973 911 Carrera RS 2.7", price: 1_450_000, date: "Oct 2025", platform: "RM Sotheby's", delta: 12 },
-    { title: "1973 911 Carrera RS", price: 1_320_000, date: "Jul 2025", platform: "Gooding", delta: 8 },
-    { title: "1972 911 2.7 RS", price: 1_180_000, date: "Apr 2025", platform: "BaT", delta: 5 },
-  ],
-  Ferrari: [
-    { title: "1990 Ferrari F40", price: 2_850_000, date: "Nov 2025", platform: "RM Sotheby's", delta: 10 },
-    { title: "1989 Ferrari F40", price: 2_650_000, date: "Aug 2025", platform: "Gooding", delta: 7 },
-    { title: "1991 Ferrari F40", price: 2_450_000, date: "May 2025", platform: "Bonhams", delta: 3 },
-  ],
-  default: [
-    { title: "Similar Model (Recent)", price: 125_000, date: "Nov 2025", platform: "BaT", delta: 5 },
-    { title: "Similar Model (Mid-Year)", price: 118_000, date: "Jul 2025", platform: "C&B", delta: 3 },
-  ],
-}
-
-const eventsData: Record<string, { name: string; type: string; impact: "positive" | "neutral" | "negative" }[]> = {
-  McLaren: [
-    { name: "Pebble Beach Concours", type: "Show", impact: "positive" },
-    { name: "Gordon Murray Documentary Release", type: "Media", impact: "positive" },
-    { name: "McLaren F1 Owners Club Annual Meet", type: "Community", impact: "positive" },
-  ],
-  Porsche: [
-    { name: "Rennsport Reunion", type: "Event", impact: "positive" },
-    { name: "Luftgekühlt", type: "Show", impact: "positive" },
-    { name: "911 60th Anniversary", type: "Milestone", impact: "positive" },
-  ],
-  Ferrari: [
-    { name: "Ferrari Cavalcade", type: "Event", impact: "positive" },
-    { name: "Maranello Factory Tour Program", type: "Experience", impact: "neutral" },
-    { name: "Classiche Certification Backlog", type: "Service", impact: "negative" },
-  ],
-  default: [
-    { name: "Monterey Car Week", type: "Event", impact: "positive" },
-    { name: "Barrett-Jackson Scottsdale", type: "Auction", impact: "neutral" },
-  ],
-}
-
-const shippingCosts: Record<string, { domestic: number; euImport: number; ukImport: number }> = {
-  McLaren: { domestic: 3500, euImport: 18000, ukImport: 15000 },
-  Porsche: { domestic: 1800, euImport: 8500, ukImport: 7000 },
-  Ferrari: { domestic: 2500, euImport: 12000, ukImport: 10000 },
-  default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
-}
-
-// ─── PRODUCTION & HERITAGE DATA ───
-const productionData: Record<string, { yearsProduced: string; totalBuilt: number; variants: { name: string; units: number; priceRange: string }[]; lhd: number; rhd: number; keyStat: string }> = {
-  McLaren: {
-    yearsProduced: "1992–1998",
-    totalBuilt: 106,
-    variants: [
-      { name: "Standard", units: 64, priceRange: "$18M–$22M" },
-      { name: "LM", units: 5, priceRange: "$25M+" },
-      { name: "GTR", units: 28, priceRange: "$8M–$12M" },
-      { name: "S / High Downforce", units: 9, priceRange: "$20M+" },
-    ],
-    lhd: 72,
-    rhd: 34,
-    keyStat: "Only 64 road cars built — the ultimate driver's hypercar",
-  },
-  Porsche: {
-    yearsProduced: "1963–Present (911)",
-    totalBuilt: 1500000,
-    variants: [
-      { name: "Carrera RS 2.7", units: 1580, priceRange: "$900K–$1.5M" },
-      { name: "930 Turbo", units: 21589, priceRange: "$120K–$250K" },
-      { name: "993 GT2", units: 194, priceRange: "$1.2M–$2M" },
-      { name: "997 GT3 RS 4.0", units: 600, priceRange: "$450K–$650K" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "Air-cooled models (pre-1998) command the strongest premiums",
-  },
-  Ferrari: {
-    yearsProduced: "1987–1992 (F40)",
-    totalBuilt: 1315,
-    variants: [
-      { name: "F40 Standard", units: 1274, priceRange: "$2.2M–$3.5M" },
-      { name: "F40 LM", units: 19, priceRange: "$5M–$8M" },
-      { name: "F40 GTE", units: 10, priceRange: "$6M+" },
-      { name: "F40 Competizione", units: 12, priceRange: "$4M–$6M" },
-    ],
-    lhd: 1150,
-    rhd: 165,
-    keyStat: "Last Ferrari signed off by Enzo himself",
-  },
-  Lamborghini: {
-    yearsProduced: "1966–1973 (Miura)",
-    totalBuilt: 764,
-    variants: [
-      { name: "P400", units: 275, priceRange: "$1.2M–$1.8M" },
-      { name: "P400 S", units: 140, priceRange: "$1.5M–$2.2M" },
-      { name: "P400 SV", units: 150, priceRange: "$2.5M–$4M" },
-      { name: "P400 SVJ", units: 5, priceRange: "$5M+" },
-    ],
-    lhd: 700,
-    rhd: 64,
-    keyStat: "The car that invented the supercar category",
-  },
-  Nissan: {
-    yearsProduced: "1989–2002 (R32/R33/R34)",
-    totalBuilt: 58532,
-    variants: [
-      { name: "R32 GT-R", units: 43934, priceRange: "$80K–$180K" },
-      { name: "R33 GT-R", units: 8136, priceRange: "$70K–$150K" },
-      { name: "R34 GT-R", units: 6462, priceRange: "$200K–$500K" },
-      { name: "R34 V-Spec II Nür", units: 750, priceRange: "$400K–$800K" },
-    ],
-    lhd: 2000,
-    rhd: 56532,
-    keyStat: "R34 became legal in the US (25-year rule) driving prices 3x",
-  },
-  BMW: {
-    yearsProduced: "1978–Present (M-cars)",
-    totalBuilt: 500000,
-    variants: [
-      { name: "E30 M3", units: 17970, priceRange: "$60K–$150K" },
-      { name: "E30 M3 Sport Evo", units: 600, priceRange: "$200K–$350K" },
-      { name: "E28 M5", units: 2241, priceRange: "$50K–$100K" },
-      { name: "E46 M3 CSL", units: 1383, priceRange: "$100K–$180K" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "E30 M3 Sport Evolution is the holy grail of BMW collecting",
-  },
-  default: {
-    yearsProduced: "Varies",
-    totalBuilt: 5000,
-    variants: [
-      { name: "Standard", units: 4000, priceRange: "Varies" },
-      { name: "Special Edition", units: 800, priceRange: "Varies" },
-      { name: "Limited", units: 200, priceRange: "Premium" },
-    ],
-    lhd: 0,
-    rhd: 0,
-    keyStat: "Limited production numbers support long-term value",
-  },
-}
-
-// ─── TECHNICAL DEEP-DIVE DATA ───
-const technicalData: Record<string, { engineDetails: { spec: string; value: string }[]; knownIssues: { issue: string; severity: "critical" | "moderate" | "minor"; repairCost: string }[]; serviceIntervals: { item: string; interval: string; cost: string }[] }> = {
-  McLaren: {
-    engineDetails: [
-      { spec: "Configuration", value: "BMW S70/2 60° V12" },
-      { spec: "Displacement", value: "6,064 cc" },
-      { spec: "Power", value: "618 bhp @ 7,400 rpm" },
-      { spec: "Torque", value: "480 lb-ft @ 5,600 rpm" },
-      { spec: "Compression", value: "10.5:1" },
-      { spec: "Redline", value: "7,500 rpm" },
-    ],
-    knownIssues: [
-      { issue: "Gold foil heat shielding delamination", severity: "critical", repairCost: "$50,000+" },
-      { issue: "Main bearing wear at high mileage", severity: "critical", repairCost: "$30,000+" },
-      { issue: "A/C compressor failure (Nippondenso)", severity: "moderate", repairCost: "$8,000" },
-      { issue: "Window regulator cable stretch", severity: "minor", repairCost: "$2,500" },
-    ],
-    serviceIntervals: [
-      { item: "Engine oil & filter", interval: "Every 6,000 mi", cost: "$2,500" },
-      { item: "Major service (belts, fluids)", interval: "Every 12,000 mi", cost: "$15,000" },
-      { item: "Full engine-out service", interval: "Every 6 years", cost: "$45,000" },
-    ],
-  },
-  Porsche: {
-    engineDetails: [
-      { spec: "Configuration", value: "Air-Cooled Flat-6" },
-      { spec: "Displacement", value: "2,687–3,600 cc" },
-      { spec: "Power", value: "210–450 bhp (model dependent)" },
-      { spec: "Torque", value: "188–369 lb-ft" },
-      { spec: "Cooling", value: "Air-cooled (pre-1998)" },
-      { spec: "Fuel System", value: "Mechanical/CIS Injection" },
-    ],
-    knownIssues: [
-      { issue: "Chain tensioner failure (Mezger engines)", severity: "critical", repairCost: "$12,000" },
-      { issue: "IMS bearing failure (M96/M97)", severity: "critical", repairCost: "$8,000" },
-      { issue: "Heat exchanger rust-through", severity: "moderate", repairCost: "$3,500" },
-      { issue: "Valve guide wear (high-mileage)", severity: "moderate", repairCost: "$6,000" },
-    ],
-    serviceIntervals: [
-      { item: "Oil change & filter", interval: "Every 6,000 mi", cost: "$500" },
-      { item: "Valve adjustment", interval: "Every 15,000 mi", cost: "$1,800" },
-      { item: "Major service (belts, hoses)", interval: "Every 30,000 mi", cost: "$4,500" },
-    ],
-  },
-  Ferrari: {
-    engineDetails: [
-      { spec: "Configuration", value: "Twin-Turbo V8 (F40)" },
-      { spec: "Displacement", value: "2,936 cc" },
-      { spec: "Power", value: "478 bhp @ 7,000 rpm" },
-      { spec: "Torque", value: "425 lb-ft @ 4,000 rpm" },
-      { spec: "Boost Pressure", value: "1.1 bar" },
-      { spec: "Construction", value: "Tubular steel, Kevlar/carbon body" },
-    ],
-    knownIssues: [
-      { issue: "Cam belt failure (catastrophic if overdue)", severity: "critical", repairCost: "$5,000" },
-      { issue: "Sticky interior switch syndrome", severity: "moderate", repairCost: "$3,000" },
-      { issue: "Exhaust manifold cracking", severity: "moderate", repairCost: "$8,000" },
-      { issue: "Turbo wastegate actuator wear", severity: "minor", repairCost: "$4,000" },
-    ],
-    serviceIntervals: [
-      { item: "Engine oil & filter", interval: "Every 6,000 mi", cost: "$800" },
-      { item: "Cam belt replacement", interval: "Every 3 years / 18,000 mi", cost: "$5,000" },
-      { item: "Major engine service", interval: "Every 5 years", cost: "$12,000" },
-    ],
-  },
-  default: {
-    engineDetails: [
-      { spec: "Configuration", value: "Inline / V-type" },
-      { spec: "Displacement", value: "Model specific" },
-      { spec: "Power", value: "Model specific" },
-      { spec: "Torque", value: "Model specific" },
-    ],
-    knownIssues: [
-      { issue: "Age-related seal and gasket degradation", severity: "moderate", repairCost: "$2,000–$5,000" },
-      { issue: "Electrical system aging (relays, grounds)", severity: "moderate", repairCost: "$1,000–$3,000" },
-      { issue: "Cooling system component fatigue", severity: "minor", repairCost: "$800–$2,000" },
-    ],
-    serviceIntervals: [
-      { item: "Oil change & filter", interval: "Every 5,000 mi", cost: "$300–$800" },
-      { item: "Major service", interval: "Every 30,000 mi", cost: "$2,000–$5,000" },
-    ],
-  },
-}
-
-// ─── CONDITION GUIDE DATA (Bodywork / Interior / Inspection) ───
-const conditionData: Record<string, { rustAreas: { area: string; severity: "high" | "medium" | "low" }[]; interiorIssues: { item: string; commonProblem: string; partAvailability: "easy" | "moderate" | "rare" }[]; inspectionPriorities: string[] }> = {
-  McLaren: {
-    rustAreas: [
-      { area: "Monocoque tub (carbon fiber — check for delamination)", severity: "high" },
-      { area: "Suspension pickup points (aluminum corrosion)", severity: "medium" },
-      { area: "Engine bay heat shield area", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Leather seat bolsters", commonProblem: "Wear on driver's side entry point", partAvailability: "rare" },
-      { item: "Center console switches", commonProblem: "Fading/cracking due to heat", partAvailability: "rare" },
-      { item: "Headliner", commonProblem: "Sagging in tropical climates", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Full monocoque inspection with ultrasound",
-      "Gold foil heat shielding integrity check",
-      "Windshield seal condition (unique curved glass)",
-      "Door mechanism and dihedral hinge wear",
-      "Complete electrical system diagnostic",
-    ],
-  },
-  Porsche: {
-    rustAreas: [
-      { area: "Front trunk floor and battery box", severity: "high" },
-      { area: "Rear quarter panels and kidney area", severity: "high" },
-      { area: "Door bottoms and rocker panels", severity: "medium" },
-      { area: "Targa bar (Targa models)", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard top", commonProblem: "Cracking and warping from UV exposure", partAvailability: "moderate" },
-      { item: "Door panel pockets", commonProblem: "Sagging and deformation", partAvailability: "easy" },
-      { item: "Seat heating elements", commonProblem: "Failure on Sport Seats", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Galvanized vs non-galvanized body check (pre-1976 at risk)",
-      "Heater channel and sill inspection",
-      "Cylinder head leaks (check between fins)",
-      "Transmission synchro condition (2nd and 3rd gear)",
-      "Rear trailing arm bushing condition",
-    ],
-  },
-  Ferrari: {
-    rustAreas: [
-      { area: "Tubular steel frame (hidden by body panels)", severity: "high" },
-      { area: "Door sill panels", severity: "medium" },
-      { area: "Underbody crossmembers", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Leather dashboard", commonProblem: "Shrinkage and cracking", partAvailability: "moderate" },
-      { item: "Switchgear", commonProblem: "Sticky surface coating degradation", partAvailability: "easy" },
-      { item: "Carpet and trim", commonProblem: "Fading from UV exposure", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "Frame rail and structural tube inspection",
-      "Cam belt service date verification (critical)",
-      "Classiche certification eligibility check",
-      "All body panel fit and gap alignment",
-      "Brake system (Brembo) pad and rotor condition",
-    ],
-  },
-  Nissan: {
-    rustAreas: [
-      { area: "Rear wheel arches and quarters", severity: "high" },
-      { area: "Front chassis rails", severity: "high" },
-      { area: "Boot/trunk floor", severity: "medium" },
-      { area: "Strut tower tops", severity: "medium" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard", commonProblem: "Cracking on top surface (R32/R33)", partAvailability: "rare" },
-      { item: "Boost gauge and MFD", commonProblem: "LCD pixel failure", partAvailability: "rare" },
-      { item: "Seat bolsters", commonProblem: "Wear on entry points", partAvailability: "moderate" },
-    ],
-    inspectionPriorities: [
-      "ATTESA E-TS system full diagnostic",
-      "RB26 compression and leak-down test",
-      "Turbo shaft play and boost response",
-      "Import compliance and title verification",
-      "Underbody rust inspection (salt road exposure)",
-    ],
-  },
-  default: {
-    rustAreas: [
-      { area: "Rocker panels and sills", severity: "high" },
-      { area: "Wheel arches", severity: "medium" },
-      { area: "Trunk/boot floor", severity: "medium" },
-      { area: "Door bottoms", severity: "low" },
-    ],
-    interiorIssues: [
-      { item: "Dashboard", commonProblem: "Cracking and fading", partAvailability: "moderate" },
-      { item: "Seat leather/fabric", commonProblem: "Wear on bolsters", partAvailability: "easy" },
-      { item: "Headliner", commonProblem: "Sagging from adhesive failure", partAvailability: "easy" },
-    ],
-    inspectionPriorities: [
-      "Full structural and chassis inspection",
-      "Engine compression and leak-down test",
-      "Complete electrical system check",
-      "Brake system inspection",
-      "Fluid analysis (oil, coolant, transmission)",
-    ],
-  },
-}
+// ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
 const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
@@ -506,12 +90,9 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
 const SECTION_IDS = [
   "summary",
   "identity",
-  "production",
   "valuation",
   "performance",
-  "technical",
   "risk",
-  "condition",
   "dueDiligence",
   "ownership",
   "marketContext",
@@ -524,12 +105,9 @@ type SectionId = typeof SECTION_IDS[number]
 const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string }>> = {
   summary: Scale,
   identity: Car,
-  production: Factory,
   valuation: Globe,
   performance: TrendingUp,
-  technical: Settings,
   risk: AlertTriangle,
-  condition: Search,
   dueDiligence: HelpCircle,
   ownership: DollarSign,
   marketContext: BarChart3,
@@ -553,6 +131,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const { selectedRegion, effectiveRegion } = useRegion()
+  const { resolvedTheme } = useTheme()
 
   // Scroll-spy state
   const [activeSection, setActiveSection] = useState<SectionId>("summary")
@@ -618,24 +197,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     }, 1500)
   }
 
-  // ─── COMPUTED DATA (DB-first, fallback to hardcoded) ───
+  // ─── COMPUTED DATA (DB-only — no fabricated fallbacks) ───
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // Red flags & questions: prefer DB analysis
-  const flags = (dbAnalysis?.redFlags?.length ?? 0) > 0
-    ? dbAnalysis!.redFlags : (redFlags[car.make] || redFlags.default)
-  const questions = (dbAnalysis?.criticalQuestions?.length ?? 0) > 0
-    ? dbAnalysis!.criticalQuestions : (sellerQuestions[car.make] || sellerQuestions.default)
+  // Red flags & questions: DB only (no hardcoded fallback)
+  const flags = dbAnalysis?.redFlags?.length ? dbAnalysis.redFlags : []
+  const questions = dbAnalysis?.criticalQuestions?.length ? dbAnalysis.criticalQuestions : []
+  const hasDbRiskData = flags.length > 0
+  const hasDbQuestions = questions.length > 0
 
-  // Ownership costs: prefer DB analysis
-  const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
-  const costs = {
-    insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
-    storage: fallbackCosts.storage,
-    maintenance: dbAnalysis?.yearlyMaintenance ?? fallbackCosts.maintenance,
-  }
+  // Ownership costs: DB only (no hardcoded fallback)
+  const hasDbOwnershipData = !!(dbAnalysis?.insuranceEstimate || dbAnalysis?.yearlyMaintenance)
+  const costs = hasDbOwnershipData ? {
+    insurance: dbAnalysis!.insuranceEstimate ?? 0,
+    maintenance: dbAnalysis!.yearlyMaintenance ?? 0,
+  } : null
+  const totalAnnualCost = costs ? costs.insurance + costs.maintenance : 0
 
-  // Comparable sales: prefer DB
+  // Comparable sales: DB → similarCars → empty (no hardcoded fallback)
   const comps = dbComparables.length > 0
     ? dbComparables.map(c => ({
         title: c.title,
@@ -644,16 +223,17 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform === "AUTO_SCOUT_24" ? "AS24" : c.platform,
         delta: dbMarketData?.avgPrice ? Math.round(((c.soldPrice - dbMarketData.avgPrice) / dbMarketData.avgPrice) * 100) : 0,
       }))
-    : (comparableSales[car.make] || comparableSales.default)
+    : similarCars.length > 0
+      ? similarCars.slice(0, 4).map(sc => ({
+          title: sc.car.title,
+          price: sc.car.currentBid,
+          date: "Live",
+          platform: (platformLabels[sc.car.platform]?.short || sc.car.platform.replace(/_/g, " ")),
+          delta: car.currentBid > 0 ? Math.round(((sc.car.currentBid - car.currentBid) / car.currentBid) * 100) : 0,
+        }))
+      : []
 
-  const events = eventsData[car.make] || eventsData.default
-  const shipping = shippingCosts[car.make] || shippingCosts.default
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
   const platform = platformLabels[car.platform]
-
-  const production = productionData[car.make] || productionData.default
-  const technical = technicalData[car.make] || technicalData.default
-  const condition = conditionData[car.make] || conditionData.default
 
   // Fair value: prefer DB market data for range
   const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
@@ -739,13 +319,49 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const CW = W - M * 2 // content width
       let pg = 0
 
+      // ─── Theme-aware color palette ───
+      const isDark = resolvedTheme === "dark"
+      const pal = isDark ? {
+        bg: [14, 10, 12] as const,           // #0E0A0C
+        fg: [232, 226, 222] as const,        // #E8E2DE
+        card: [22, 17, 19] as const,         // #161113
+        primary: [212, 115, 138] as const,   // #D4738A
+        muted: [107, 99, 101] as const,      // #6B6365
+        dim: [80, 72, 75] as const,
+        border: [42, 34, 38] as const,       // #2A2226
+        barBg: [35, 28, 32] as const,
+        barFill: [60, 52, 56] as const,
+        onPrimary: [14, 10, 12] as const,
+        letterBody: [180, 175, 172] as const,
+        closingText: [160, 155, 152] as const,
+        footerDim: [100, 94, 96] as const,
+        greenTintBg: [15, 25, 20] as const,
+        redTintBg: [30, 18, 18] as const,
+      } : {
+        bg: [253, 251, 249] as const,        // #FDFBF9
+        fg: [42, 35, 32] as const,           // #2A2320
+        card: [245, 242, 238] as const,      // #F5F2EE
+        primary: [122, 46, 74] as const,     // #7A2E4A
+        muted: [154, 142, 136] as const,     // #9A8E88
+        dim: [185, 175, 168] as const,
+        border: [232, 226, 220] as const,    // #E8E2DC
+        barBg: [238, 233, 228] as const,
+        barFill: [210, 202, 196] as const,
+        onPrimary: [253, 251, 249] as const,
+        letterBody: [100, 90, 85] as const,
+        closingText: [120, 110, 105] as const,
+        footerDim: [175, 165, 158] as const,
+        greenTintBg: [235, 250, 242] as const,
+        redTintBg: [255, 242, 240] as const,
+      }
+
       // ─── Helpers ───
-      const bg = () => { pdf.setFillColor(11, 11, 16); pdf.rect(0, 0, W, H, "F") }
-      const pink = () => pdf.setTextColor(248, 180, 217)
-      const white = () => pdf.setTextColor(255, 252, 247)
-      const gray = () => pdf.setTextColor(130, 130, 140)
-      const dim = () => pdf.setTextColor(90, 90, 100)
-      const accentBar = () => { pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 1.2, "F") }
+      const bg = () => { pdf.setFillColor(pal.bg[0], pal.bg[1], pal.bg[2]); pdf.rect(0, 0, W, H, "F") }
+      const pink = () => pdf.setTextColor(pal.primary[0], pal.primary[1], pal.primary[2])
+      const white = () => pdf.setTextColor(pal.fg[0], pal.fg[1], pal.fg[2])
+      const gray = () => pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
+      const dim = () => pdf.setTextColor(pal.dim[0], pal.dim[1], pal.dim[2])
+      const accentBar = () => { pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F") }
 
       const clientName = user?.name || "Valued Client"
       const firstName = clientName.split(" ")[0]
@@ -756,7 +372,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFontSize(7); dim()
         pdf.text("MONZA LAB", M, 8)
         pdf.text(title.toUpperCase(), W - M, 8, { align: "right" })
-        pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
         pdf.line(M, 11, W - M, 11)
         pdf.line(M, H - 12, W - M, H - 12)
         pdf.setFontSize(6.5); dim()
@@ -769,7 +385,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(`SECTION ${String(num).padStart(2, "0")}`, M, y)
         pdf.setFontSize(14); white()
         pdf.text(title, M, y + 7)
-        pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3)
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3)
         pdf.line(M, y + 10, M + 25, y + 10)
         return y + 16
       }
@@ -803,58 +419,98 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         return y + lines.length * 4.2
       }
 
+      // ─── PDF-safe helpers ───
+      // Clean title: strip listing cruft, normalize to "{year} {make} {model} {trim}"
+      const cleanTitle = (c: typeof car) => {
+        const parts = [String(c.year), c.make, c.model]
+        if (c.trim && c.trim !== "—" && c.trim !== c.model) parts.push(c.trim)
+        return parts.join(" ").replace(/\*+/g, "").replace(/\s+/g, " ").trim()
+      }
+      const pdfTitle = cleanTitle(car)
+
+      // PDF-safe currency formatter: avoid CJK characters that jsPDF can't render
+      const fmtPdf = (amount: number, currency: string) => {
+        if (currency === "JPY") return `¥${Math.round(amount).toLocaleString()}`
+        if (currency === "GBP") return `£${Math.round(amount).toLocaleString()}`
+        if (currency === "EUR") return `€${Math.round(amount).toLocaleString()}`
+        return `$${Math.round(amount).toLocaleString()}`
+      }
+
+      // Smart thesis: fallback when DB thesis is empty or generic
+      const rawThesis = stripHtml(car.thesis) || ""
+      const isGenericThesis = !rawThesis || rawThesis.length < 50 || /Live auction listing from|Live Data/i.test(rawThesis)
+      const pdfThesis = isGenericThesis
+        ? `${pdfTitle} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}–${fmtPdf(fairHigh, regionRange.currency)}. Investment Grade: ${car.investmentGrade}.`
+        : rawThesis
+
+      // Fetch car image for PDF embedding
+      let carImageData: string | null = null
+      if (car.image) {
+        try {
+          const imgResp = await fetch(car.image)
+          const blob = await imgResp.blob()
+          carImageData = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          })
+        } catch { /* skip image if fetch fails (CORS etc.) */ }
+      }
+
       // ═══ PAGE 1: COVER ═══
       bg()
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 2, "F")
       pdf.setFontSize(8); pink(); pdf.text("MONZA LAB", M, 20)
       pdf.setFontSize(7); dim()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), W - M, 20, { align: "right" })
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.5); pdf.line(M, 100, M + 40, 100)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.5); pdf.line(M, 100, M + 40, 100)
       pdf.setFontSize(11); pink(); pdf.text("INVESTMENT DOSSIER", M, 112)
       pdf.setFontSize(30); white()
-      const tLines = pdf.splitTextToSize(car.title, CW)
+      const tLines = pdf.splitTextToSize(pdfTitle, CW)
       pdf.text(tLines, M, 127)
       const tEnd = 127 + tLines.length * 11
       pdf.setFontSize(9); gray()
-      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtRegional(fairLow, regionRange.currency)} – ${fmtRegional(fairHigh, regionRange.currency)}`, M, tEnd + 10)
+      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}`, M, tEnd + 10)
       const vy = tEnd + 22
-      pdf.setFillColor(verdict === "buy" ? 52 : 59, verdict === "buy" ? 211 : 130, verdict === "buy" ? 153 : 246)
+      const vBadgeClr = verdict === "buy" ? [52, 211, 153] : verdict === "hold" ? [251, 191, 36] : pal.primary
+      pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
       pdf.rect(M, vy - 4, 26, 8, "F")
-      pdf.setFontSize(8); pdf.setTextColor(11, 11, 16)
+      pdf.setFontSize(8); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text(verdict.toUpperCase(), M + 13, vy + 1, { align: "center" })
-      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Cost: $${totalAnnualCost.toLocaleString()}/yr`, M + 30, vy + 1)
+      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 24
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
       pdf.setFontSize(8); dim(); pdf.text("PREPARED EXCLUSIVELY FOR", M, prepY + 7)
       pdf.setFontSize(18); white(); pdf.text(clientName, M, prepY + 17)
       pdf.setFontSize(8); gray()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), M, prepY + 24)
       // Financial box
       const bY = 220
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
       label("CURRENT BID", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
       pdf.setFontSize(12); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 8, bY + 21)
       white(); pdf.text(`$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
       pdf.text(regionLabels[bestRegion]?.short || "US", M + 135, bY + 21)
-      pdf.setDrawColor(40, 40, 50); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
       pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("monzalab.com", W - M, H - 15, { align: "right" })
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, H - 2, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
-      const secNames = ["Executive Summary", "Vehicle Identity", "Production & Heritage", "Regional Valuation", "Performance & Returns", "Technical Deep-Dive", "Risk Assessment", "Condition Guide", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
+      const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
 
       // ═══ PAGE 2: PERSONAL LETTER ═══
       pdf.addPage(); bg(); chrome("Welcome")
       // Decorative top line
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
       pdf.line(M, 22, M + 20, 22)
       // Greeting
       pdf.setFontSize(22); white()
       pdf.text(`Dear ${firstName},`, M, 38)
       // Letter body
-      pdf.setFontSize(10); pdf.setTextColor(180, 180, 190)
+      pdf.setFontSize(10); pdf.setTextColor(pal.letterBody[0], pal.letterBody[1], pal.letterBody[2])
       const letterBody = [
-        `Thank you for trusting Monza Lab with your investment analysis of the ${car.title}.`,
+        `Thank you for trusting Monza Lab with your investment analysis of the ${pdfTitle}.`,
         "",
         "We understand that acquiring a collector vehicle is more than a financial decision — it's a deeply personal one. Every car tells a story, and the right one becomes part of yours.",
         "",
@@ -873,7 +529,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       // Signature
       ly += 10
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3)
       pdf.line(M, ly, M + 15, ly)
       ly += 8
       pdf.setFontSize(10); pink()
@@ -881,7 +537,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       pdf.setFontSize(8); gray()
       pdf.text("monzalab.com", M, ly + 6)
       // Bottom decorative element
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 40, W - M, H - 40)
       pdf.setFontSize(7); dim()
       pdf.text("\"The best investment you can make is an informed one.\"", W / 2, H - 33, { align: "center" })
@@ -889,21 +545,21 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // ═══ PAGE 3: TABLE OF CONTENTS ═══
       pdf.addPage(); bg(); chrome("Contents")
       pdf.setFontSize(18); white(); pdf.text("Contents", M, 30)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4); pdf.line(M, 34, M + 28, 34)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, 34, M + 28, 34)
       secNames.forEach((name, i) => {
         const y = 44 + i * 14
         pdf.setFontSize(8); pink(); pdf.text(String(i + 1).padStart(2, "0"), M, y)
         pdf.setFontSize(10); white(); pdf.text(name, M + 12, y)
-        pdf.setDrawColor(50, 50, 60); pdf.setLineWidth(0.1); pdf.line(M + 80, y, W - M - 12, y)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.1); pdf.line(M + 80, y, W - M - 12, y)
         pdf.setFontSize(8); dim(); pdf.text(String(i + 3), W - M - 3, y, { align: "right" })
       })
 
-      // ─── Card helper: dark card with border like the web ───
+      // ─── Card helper: themed card with border like the web ───
       const card = (x: number, y: number, w: number, h: number) => {
-        pdf.setFillColor(15, 14, 22); pdf.setDrawColor(255, 255, 255); pdf.setLineWidth(0.08)
-        // Fill + very faint white border (simulates border-white/5)
+        pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2])
         pdf.rect(x, y, w, h, "F")
-        pdf.setDrawColor(40, 40, 50); pdf.rect(x, y, w, h, "S")
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.08)
+        pdf.rect(x, y, w, h, "S")
       }
       // Badge helper: colored pill
       const badge = (text: string, x: number, y: number, bgR: number, bgG: number, bgB: number, txR: number, txG: number, txB: number) => {
@@ -916,7 +572,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const cardRow = (k: string, v: string, x: number, y: number, w: number) => {
         pdf.setFontSize(7.5); gray(); pdf.text(k, x + 4, y)
         pdf.setFontSize(7.5); white(); pdf.text(v, x + w - 4, y, { align: "right" })
-        pdf.setDrawColor(30, 30, 40); pdf.setLineWidth(0.08); pdf.line(x + 4, y + 1.5, x + w - 4, y + 1.5)
+        pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.08); pdf.line(x + 4, y + 1.5, x + w - 4, y + 1.5)
         return y + 5.5
       }
 
@@ -926,11 +582,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // 6-metric card grid (3 cols x 2 rows)
       const mData = [
         { lbl: "INVESTMENT GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
-        { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [248,180,217] },
-        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [255,252,247] },
-        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
-        { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113] },
-        { lbl: "ANNUAL COST", val: `$${totalAnnualCost.toLocaleString()}`, clr: [255,252,247] },
+        { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
+        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
+        { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
       ]
       const mw = (CW - 6) / 3
       mData.forEach((m, i) => {
@@ -946,9 +602,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       // Thesis card
       card(M, y, CW, 24)
       pdf.setFontSize(6); dim(); pdf.text("INVESTMENT THESIS", M + 4, y + 5)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3); pdf.line(M + 4, y + 7, M + 18, y + 7)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3); pdf.line(M + 4, y + 7, M + 18, y + 7)
       pdf.setFontSize(8); white()
-      const thesisLines = pdf.splitTextToSize(stripHtml(car.thesis) || "—", CW - 8)
+      const thesisLines = pdf.splitTextToSize(pdfThesis, CW - 8)
       pdf.text(thesisLines, M + 4, y + 12)
       y += 30
 
@@ -959,18 +615,18 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const gY = y + 9; const gW = CW - 8
       for (let gi = 0; gi < gW; gi++) {
         const pct = gi / gW
-        const r = pct < 0.5 ? Math.round(52 + (248 - 52) * pct * 2) : Math.round(248 + (248 - 248) * (pct - 0.5) * 2)
-        const g = pct < 0.5 ? Math.round(211 + (180 - 211) * pct * 2) : Math.round(180 + (113 - 180) * (pct - 0.5) * 2)
-        const b = pct < 0.5 ? Math.round(153 + (217 - 153) * pct * 2) : Math.round(217 + (113 - 217) * (pct - 0.5) * 2)
+        const r = pct < 0.5 ? Math.round(52 + (pal.primary[0] - 52) * pct * 2) : Math.round(pal.primary[0] + (248 - pal.primary[0]) * (pct - 0.5) * 2)
+        const g = pct < 0.5 ? Math.round(211 + (pal.primary[1] - 211) * pct * 2) : Math.round(pal.primary[1] + (113 - pal.primary[1]) * (pct - 0.5) * 2)
+        const b = pct < 0.5 ? Math.round(153 + (pal.primary[2] - 153) * pct * 2) : Math.round(pal.primary[2] + (113 - pal.primary[2]) * (pct - 0.5) * 2)
         pdf.setFillColor(r, g, b); pdf.rect(M + 4 + gi, gY, 1.2, 4, "F")
       }
       // Position dot
       const dotX = M + 4 + (pricePosition / 100) * gW
-      pdf.setFillColor(255, 255, 255); pdf.circle(dotX, gY + 2, 2.5, "F")
-      pdf.setFillColor(248, 180, 217); pdf.circle(dotX, gY + 2, 1.8, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(dotX, gY + 2, 2.5, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(dotX, gY + 2, 1.8, "F")
       pdf.setFontSize(6); gray()
-      pdf.text(fmtRegional(fairLow, regionRange.currency), M + 4, gY + 9)
-      pdf.text(fmtRegional(fairHigh, regionRange.currency), M + 4 + gW, gY + 9, { align: "right" })
+      pdf.text(fmtPdf(fairLow, regionRange.currency), M + 4, gY + 9)
+      pdf.text(fmtPdf(fairHigh, regionRange.currency), M + 4 + gW, gY + 9, { align: "right" })
       pdf.setFontSize(7); white(); pdf.text(`${pricePosition.toFixed(0)}%`, dotX, gY + 9, { align: "center" })
       y += 28
 
@@ -995,6 +651,17 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       y += specs.length / 2 * 5.5 + 10
 
+      // Car photo (if available)
+      if (carImageData) {
+        try {
+          const imgFormat = carImageData.includes("image/png") ? "PNG" : "JPEG"
+          const imgW = CW
+          const imgH = imgW * (9 / 16) // 16:9 aspect ratio
+          pdf.addImage(carImageData, imgFormat, M, y, imgW, imgH)
+          y += imgH + 6
+        } catch { /* skip if image can't be embedded */ }
+      }
+
       // Auction info card
       card(M, y, CW, 22)
       pdf.setFontSize(6); dim(); pdf.text("AUCTION STATUS", M + 4, y + 5)
@@ -1007,52 +674,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // History card
       card(M, y, CW, 28)
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
       pdf.setFontSize(6); dim(); pdf.text("HISTORY & PROVENANCE", M + 5, y + 5)
       pdf.setFontSize(8); white()
       const histLines = pdf.splitTextToSize(stripHtml(car.history) || "—", CW - 10)
       pdf.text(histLines, M + 5, y + 11)
 
-      // ═══ PAGE 6: PRODUCTION & HERITAGE ═══
-      pdf.addPage(); bg(); chrome("Production & Heritage")
-      y = sectionTitle(3, "Production & Heritage", 16)
-      // Key stat callout card (pink tint)
-      pdf.setFillColor(25, 18, 24); pdf.rect(M, y, CW, 12, "F")
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.3); pdf.rect(M, y, CW, 12, "S")
-      pdf.setFontSize(8); pink(); pdf.text(production.keyStat, M + 4, y + 7.5)
-      y += 18
-      // Stats grid (3 cards)
-      const pCards = [
-        { lbl: "YEARS PRODUCED", val: production.yearsProduced },
-        { lbl: "TOTAL BUILT", val: production.totalBuilt.toLocaleString() },
-        { lbl: "STEERING", val: production.lhd > 0 ? `${production.lhd} LHD / ${production.rhd} RHD` : "Varies" },
-      ]
-      const pw = (CW - 6) / 3
-      pCards.forEach((pc, i) => {
-        const px = M + i * (pw + 3)
-        card(px, y, pw, 16)
-        pdf.setFontSize(6); dim(); pdf.text(pc.lbl, px + 4, y + 5)
-        pdf.setFontSize(10); white(); pdf.text(pc.val, px + 4, y + 12)
-      })
-      y += 22
-      // Variant bars
-      card(M, y, CW, 8 + production.variants.length * 11)
-      pdf.setFontSize(6); dim(); pdf.text("VARIANT BREAKDOWN", M + 4, y + 5)
-      const maxUnits = Math.max(...production.variants.map(v => v.units))
-      production.variants.forEach((v, i) => {
-        const vy = y + 10 + i * 11
-        pdf.setFontSize(8); white(); pdf.text(v.name, M + 4, vy)
-        pdf.setFontSize(7); gray(); pdf.text(`${v.units.toLocaleString()} units`, M + 4, vy + 4)
-        pink(); pdf.text(v.priceRange, W - M - 4, vy, { align: "right" })
-        // Bar
-        const bw = Math.max((v.units / maxUnits) * (CW - 8), 4)
-        pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, vy + 5.5, bw, 2.5, "F")
-        pdf.setFillColor(40, 40, 50); pdf.rect(M + 4 + bw, vy + 5.5, CW - 8 - bw, 2.5, "F")
-      })
-
-      // ═══ PAGE 7: REGIONAL VALUATION ═══
+      // ═══ PAGE 6: REGIONAL VALUATION ═══
       pdf.addPage(); bg(); chrome("Regional Valuation")
-      y = sectionTitle(4, "Regional Valuation", 16)
+      y = sectionTitle(3, "Regional Valuation", 16)
       // Regional bars card
       card(M, y, CW, 6 + 4 * 16)
       pdf.setFontSize(6); dim(); pdf.text("REGIONAL FAIR VALUE COMPARISON", M + 4, y + 5)
@@ -1067,11 +697,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(regionLabels[r].short, M + 4, ry)
         if (isBest) badge("BEST BUY", M + 18, ry, 20, 60, 45, 52, 211, 153)
         pdf.setFontSize(7); gray()
-        pdf.text(`${fmtRegional(rp.low, rp.currency)} – ${fmtRegional(rp.high, rp.currency)}`, W - M - 4, ry, { align: "right" })
+        pdf.text(`${fmtPdf(rp.low, rp.currency)} – ${fmtPdf(rp.high, rp.currency)}`, W - M - 4, ry, { align: "right" })
         // Bar
         const bw = (barPct / 100) * (CW - 8)
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, ry + 3, CW - 8, 3.5, "F")
-        pdf.setFillColor(isBest ? 52 : 248, isBest ? 211 : 180, isBest ? 153 : 217)
+        pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, ry + 3, CW - 8, 3.5, "F")
+        pdf.setFillColor(isBest ? 52 : pal.primary[0], isBest ? 211 : pal.primary[1], isBest ? 153 : pal.primary[2])
         pdf.rect(M + 4, ry + 3, bw, 3.5, "F")
         pdf.setFontSize(6); dim(); pdf.text(`$${Math.round(avgUsd).toLocaleString()}`, M + 4, ry + 10)
       })
@@ -1083,14 +713,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const g2Y = y + 9; const g2W = CW - 8
       for (let gi = 0; gi < g2W; gi++) {
         const pct = gi / g2W
-        const r2 = pct < 0.5 ? Math.round(52 + (248 - 52) * pct * 2) : Math.round(248 + (248 - 248) * (pct - 0.5) * 2)
-        const g2 = pct < 0.5 ? Math.round(211 + (180 - 211) * pct * 2) : Math.round(180 + (113 - 180) * (pct - 0.5) * 2)
-        const b2 = pct < 0.5 ? Math.round(153 + (217 - 153) * pct * 2) : Math.round(217 + (113 - 217) * (pct - 0.5) * 2)
+        const r2 = pct < 0.5 ? Math.round(52 + (pal.primary[0] - 52) * pct * 2) : Math.round(pal.primary[0] + (248 - pal.primary[0]) * (pct - 0.5) * 2)
+        const g2 = pct < 0.5 ? Math.round(211 + (pal.primary[1] - 211) * pct * 2) : Math.round(pal.primary[1] + (113 - pal.primary[1]) * (pct - 0.5) * 2)
+        const b2 = pct < 0.5 ? Math.round(153 + (pal.primary[2] - 153) * pct * 2) : Math.round(pal.primary[2] + (113 - pal.primary[2]) * (pct - 0.5) * 2)
         pdf.setFillColor(r2, g2, b2); pdf.rect(M + 4 + gi, g2Y, 1.2, 4, "F")
       }
       const d2X = M + 4 + (pricePosition / 100) * g2W
-      pdf.setFillColor(255, 255, 255); pdf.circle(d2X, g2Y + 2, 2.5, "F")
-      pdf.setFillColor(248, 180, 217); pdf.circle(d2X, g2Y + 2, 1.8, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(d2X, g2Y + 2, 2.5, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(d2X, g2Y + 2, 1.8, "F")
       pdf.setFontSize(7)
       if (isBelowFair) { pdf.setTextColor(52, 211, 153); pdf.text("Below fair value — potential opportunity", M + 4, g2Y + 9) }
       else { pdf.setTextColor(251, 191, 36); pdf.text("At or above fair value midpoint", M + 4, g2Y + 9) }
@@ -1098,65 +728,80 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // Arbitrage card
       if (hasArbitrage) {
-        pdf.setFillColor(15, 25, 20); pdf.rect(M, y, CW, 14, "F")
+        pdf.setFillColor(pal.greenTintBg[0], pal.greenTintBg[1], pal.greenTintBg[2]); pdf.rect(M, y, CW, 14, "F")
         pdf.setDrawColor(52, 211, 153); pdf.setLineWidth(0.2); pdf.rect(M, y, CW, 14, "S")
         pdf.setFontSize(8); pdf.setTextColor(52, 211, 153)
         pdf.text("ARBITRAGE OPPORTUNITY", M + 4, y + 5)
-        pdf.setFontSize(7.5); pdf.setTextColor(160, 170, 165)
+        pdf.setFontSize(7.5); pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
         pdf.text(`Buy in ${regionLabels[bestRegion]?.short || bestRegion} — save $${Math.round(arbitrageSavings).toLocaleString()} vs most expensive region`, M + 4, y + 11)
         y += 18
       }
 
-      // ═══ PAGE 9: TECHNICAL DEEP-DIVE ═══
-      pdf.addPage(); bg(); chrome("Technical Deep-Dive")
-      y = sectionTitle(6, "Technical Deep-Dive", 16)
-      // Engine specs grid card
-      const specW = (CW - 6) / 3
-      card(M, y, CW, 8 + Math.ceil(technical.engineDetails.length / 3) * 16)
-      pdf.setFontSize(6); dim(); pdf.text("ENGINE & POWERTRAIN", M + 4, y + 5)
-      technical.engineDetails.forEach((d, i) => {
-        const col = i % 3; const rw2 = Math.floor(i / 3)
-        const ex = M + 4 + col * (specW + 1); const ey = y + 10 + rw2 * 16
-        pdf.setFontSize(6); dim(); pdf.text(d.spec.toUpperCase(), ex, ey)
-        pdf.setFontSize(9); white(); pdf.text(d.value, ex, ey + 6)
-      })
-      y += 12 + Math.ceil(technical.engineDetails.length / 3) * 16
+      // ═══ PAGE 8: PERFORMANCE & RETURNS ═══
+      pdf.addPage(); bg(); chrome("Performance & Returns")
+      y = sectionTitle(4, "Performance & Returns", 16)
 
-      // Issues card
-      card(M, y, CW, 7 + technical.knownIssues.length * 10)
-      pdf.setFontSize(6); dim(); pdf.text("KNOWN MECHANICAL ISSUES", M + 4, y + 5)
-      technical.knownIssues.forEach((iss, i) => {
-        const iy = y + 10 + i * 10
-        // Severity dot
-        const sClr = iss.severity === "critical" ? [248,113,113] : iss.severity === "moderate" ? [251,191,36] : [100,100,110]
-        pdf.setFillColor(sClr[0], sClr[1], sClr[2]); pdf.circle(M + 6, iy - 0.5, 1, "F")
-        pdf.setFontSize(7.5); white()
-        const issText = pdf.splitTextToSize(iss.issue, CW - 45)
-        pdf.text(issText, M + 10, iy)
-        // Badge
-        badge(iss.severity.toUpperCase(), M + CW - 55, iy, sClr[0] > 200 ? 40 : 30, sClr[1] > 150 ? 30 : 25, sClr[2] > 150 ? 25 : 20, sClr[0], sClr[1], sClr[2])
-        pdf.setFontSize(7); gray(); pdf.text(iss.repairCost, W - M - 4, iy, { align: "right" })
-      })
-      y += 11 + technical.knownIssues.length * 10
+      // Investment Grade Breakdown card
+      card(M, y, CW, 32)
+      pdf.setFontSize(6); dim(); pdf.text("INVESTMENT GRADE BREAKDOWN", M + 4, y + 5)
+      const gradeLabel = car.investmentGrade === "AAA" ? "Exceptional" : car.investmentGrade === "AA" ? "Strong" : car.investmentGrade === "A" ? "Solid" : "Speculative"
+      const gradeClr = car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : car.investmentGrade === "A" ? [251,191,36] : [248,113,113]
+      pdf.setFontSize(22); pdf.setTextColor(gradeClr[0], gradeClr[1], gradeClr[2])
+      pdf.text(car.investmentGrade, M + 4, y + 18)
+      pdf.setFontSize(10); pdf.text(gradeLabel, M + 30, y + 18)
+      pdf.setFontSize(7); gray()
+      pdf.text(`Price Position: ${pricePosition.toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
+      y += 38
 
-      // Service schedule card
-      card(M, y, CW, 7 + technical.serviceIntervals.length * 6)
-      pdf.setFontSize(6); dim(); pdf.text("SERVICE SCHEDULE", M + 4, y + 5)
-      technical.serviceIntervals.forEach((s, i) => {
-        const sy = y + 10 + i * 6
-        pdf.setFontSize(7.5); white(); pdf.text(s.item, M + 4, sy)
-        gray(); pdf.text(s.interval, M + CW / 2, sy)
-        pink(); pdf.text(s.cost, W - M - 4, sy, { align: "right" })
+      // Price vs Fair Value card
+      card(M, y, CW, 36)
+      pdf.setFontSize(6); dim(); pdf.text("PRICE vs FAIR VALUE", M + 4, y + 5)
+      const pvLabels = [
+        { lbl: "CURRENT BID", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0], pal.primary[1], pal.primary[2]] },
+        { lbl: "FAIR LOW", val: fmtPdf(fairLow, regionRange.currency), clr: [52, 211, 153] },
+        { lbl: "FAIR HIGH", val: fmtPdf(fairHigh, regionRange.currency), clr: [248, 113, 113] },
+      ]
+      const pvW = (CW - 12) / 3
+      pvLabels.forEach((pv, i) => {
+        const px = M + 4 + i * (pvW + 3)
+        pdf.setFontSize(6); dim(); pdf.text(pv.lbl, px, y + 12)
+        pdf.setFontSize(11); pdf.setTextColor(pv.clr[0], pv.clr[1], pv.clr[2])
+        pdf.text(pv.val, px, y + 20)
       })
+      // Position bar
+      const pvGY = y + 25; const pvGW = CW - 8
+      pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, pvGY, pvGW, 3, "F")
+      const pvDot = M + 4 + (pricePosition / 100) * pvGW
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, pvGY, pvDot - M - 4, 3, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(pvDot, pvGY + 1.5, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(pvDot, pvGY + 1.5, 1.3, "F")
+      pdf.setFontSize(7); gray(); pdf.text(`${pricePosition.toFixed(0)}% of fair range`, M + 4, pvGY + 8)
+      y += 42
 
-      // ═══ PAGE 10: RISK ASSESSMENT ═══
+      // Cost of Ownership vs Appreciation card (only if data available)
+      if (totalAnnualCost > 0) {
+        const costPct = (totalAnnualCost / car.currentBid) * 100
+        const costHighFlag = costPct > 15
+        card(M, y, CW, costHighFlag ? 34 : 26)
+        pdf.setFontSize(6); dim(); pdf.text("COST OF OWNERSHIP vs APPRECIATION", M + 4, y + 5)
+        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}/yr`, M + 4, y + 14)
+        pdf.setFontSize(8); gray(); pdf.text(`${costPct.toFixed(1)}% of vehicle value`, M + 65, y + 14)
+        if (costHighFlag) {
+          pdf.setFillColor(pal.redTintBg[0], pal.redTintBg[1], pal.redTintBg[2]); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
+          pdf.setDrawColor(248, 113, 113); pdf.setLineWidth(0.2); pdf.rect(M + 4, y + 19, CW - 8, 10, "S")
+          pdf.setFontSize(7); pdf.setTextColor(248, 113, 113)
+          pdf.text("High ownership cost relative to value — consider negotiating price down", M + 8, y + 25.5)
+        }
+      }
+
+      // ═══ PAGE 8: RISK ASSESSMENT ═══
       pdf.addPage(); bg(); chrome("Risk Assessment")
-      y = sectionTitle(7, "Risk Assessment", 16)
+      y = sectionTitle(5, "Risk Assessment", 16)
       // Risk gauge card
       card(M, y, CW, 26)
       pdf.setFontSize(6); dim(); pdf.text("RISK SCORE", M + 4, y + 5)
       pdf.setFontSize(20)
-      const rsClr = riskScore < 35 ? [52,211,153] : riskScore < 55 ? [248,180,217] : [248,113,113]
+      const rsClr = riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113]
       pdf.setTextColor(rsClr[0], rsClr[1], rsClr[2])
       pdf.text(`${riskScore}`, M + 4, y + 16)
       pdf.setFontSize(9); gray(); pdf.text("/100", M + 18, y + 16)
@@ -1170,7 +815,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.setFillColor(gr, gg, gb); pdf.rect(M + 4 + gi, rGY, 1.2, 3, "F")
       }
       const rDot = M + 4 + (riskScore / 100) * (CW - 8)
-      pdf.setFillColor(255, 255, 255); pdf.circle(rDot, rGY + 1.5, 2, "F")
+      pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(rDot, rGY + 1.5, 2, "F")
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
 
@@ -1185,117 +830,62 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         pdf.text(fLines, M + 10, fy)
       })
 
-      // ═══ PAGE 11: CONDITION GUIDE ═══
-      pdf.addPage(); bg(); chrome("Condition Guide")
-      y = sectionTitle(8, "Condition Guide", 16)
-      // Rust areas card
-      card(M, y, CW, 7 + condition.rustAreas.length * 7)
-      pdf.setFontSize(6); dim(); pdf.text("BODYWORK & RUST-PRONE AREAS", M + 4, y + 5)
-      condition.rustAreas.forEach((a, i) => {
-        const ay = y + 11 + i * 7
-        const aClr = a.severity === "high" ? [248,113,113] : a.severity === "medium" ? [251,191,36] : [52,211,153]
-        pdf.setFillColor(aClr[0], aClr[1], aClr[2]); pdf.circle(M + 6, ay - 0.5, 0.8, "F")
-        pdf.setFontSize(7.5); white(); pdf.text(a.area, M + 10, ay)
-        badge(a.severity.toUpperCase(), W - M - 22, ay, aClr[0] > 200 ? 40 : 20, aClr[1] > 150 ? 30 : 25, aClr[2] > 150 ? 25 : 20, aClr[0], aClr[1], aClr[2])
-      })
-      y += 11 + condition.rustAreas.length * 7 + 4
-      // Interior card
-      card(M, y, CW, 7 + condition.interiorIssues.length * 10)
-      pdf.setFontSize(6); dim(); pdf.text("INTERIOR CONCERNS", M + 4, y + 5)
-      condition.interiorIssues.forEach((item, i) => {
-        const iy = y + 11 + i * 10
-        pdf.setFontSize(8); white(); pdf.text(item.item, M + 4, iy)
-        pdf.setFontSize(7); gray(); pdf.text(item.commonProblem, M + 4, iy + 4.5)
-        const pClr = item.partAvailability === "rare" ? [248,113,113] : item.partAvailability === "moderate" ? [251,191,36] : [52,211,153]
-        badge(`PARTS: ${item.partAvailability.toUpperCase()}`, W - M - 36, iy, pClr[0] > 200 ? 40 : 20, pClr[1] > 150 ? 30 : 25, pClr[2] > 150 ? 25 : 20, pClr[0], pClr[1], pClr[2])
-      })
-      y += 11 + condition.interiorIssues.length * 10 + 4
-      // Inspection priorities card
-      card(M, y, CW, 7 + condition.inspectionPriorities.length * 6)
-      pdf.setFontSize(6); dim(); pdf.text("INSPECTION PRIORITIES", M + 4, y + 5)
-      condition.inspectionPriorities.forEach((p, i) => {
-        const py = y + 11 + i * 6
-        // Numbered circle
-        pdf.setFillColor(248, 180, 217); pdf.circle(M + 7, py - 0.5, 2, "F")
-        pdf.setFontSize(6); pdf.setTextColor(11, 11, 16); pdf.text(String(i + 1), M + 7, py + 0.3, { align: "center" })
-        pdf.setFontSize(7.5); white(); pdf.text(p, M + 12, py)
-      })
-
-      // ═══ PAGE 12: DUE DILIGENCE ═══
-      pdf.addPage(); bg(); chrome("Due Diligence")
-      y = sectionTitle(9, "Due Diligence", 16)
-      // Red flags card
-      card(M, y, CW, 7 + flags.length * 7)
-      pdf.setFontSize(6); dim(); pdf.text("KEY RISK AREAS", M + 4, y + 5)
-      flags.forEach((f, i) => {
-        const fy = y + 11 + i * 7
-        pdf.setFillColor(248, 113, 113); pdf.circle(M + 6, fy - 0.5, 0.8, "F")
-        pdf.setFontSize(7.5); white()
-        const fL = pdf.splitTextToSize(f, CW - 12)
-        pdf.text(fL, M + 10, fy)
-      })
+      // Risk context card
       y += 11 + flags.length * 7 + 4
+      const riskLevel = riskScore < 35 ? "low" : riskScore < 55 ? "moderate" : "elevated"
+      card(M, y, CW, 18)
+      pdf.setFontSize(6); dim(); pdf.text("RISK CONTEXT", M + 4, y + 5)
+      pdf.setFontSize(8); white()
+      const riskCtx = pdf.splitTextToSize(`Score ${riskScore}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk — proceed with caution and specialist inspection."}`, CW - 8)
+      pdf.text(riskCtx, M + 4, y + 11)
+
+      // ═══ PAGE 9: DUE DILIGENCE ═══
+      pdf.addPage(); bg(); chrome("Due Diligence")
+      y = sectionTitle(6, "Due Diligence", 16)
       // Questions card
       card(M, y, CW, 7 + questions.length * 6.5)
       pdf.setFontSize(6); dim(); pdf.text("QUESTIONS FOR THE SELLER", M + 4, y + 5)
       questions.forEach((q, i) => {
         const qy = y + 11 + i * 6.5
-        pdf.setFillColor(248, 180, 217); pdf.circle(M + 7, qy - 0.5, 2, "F")
-        pdf.setFontSize(6); pdf.setTextColor(11, 11, 16); pdf.text(String(i + 1), M + 7, qy + 0.3, { align: "center" })
+        pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(M + 7, qy - 0.5, 2, "F")
+        pdf.setFontSize(6); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2]); pdf.text(String(i + 1), M + 7, qy + 0.3, { align: "center" })
         pdf.setFontSize(7.5); white(); pdf.text(q, M + 12, qy)
       })
 
-      // ═══ PAGE 13: OWNERSHIP ECONOMICS ═══
+      // ═══ PAGE 10: OWNERSHIP ECONOMICS ═══
       pdf.addPage(); bg(); chrome("Ownership Economics")
-      y = sectionTitle(10, "Ownership Economics", 16)
-      // Annual costs card with bars
-      const costItems = [
+      y = sectionTitle(7, "Ownership Economics", 16)
+      // Annual costs card with bars (conditional on DB data)
+      const costItems = costs ? [
         { lbl: "Insurance (Agreed Value)", val: costs.insurance },
-        { lbl: "Climate-Controlled Storage", val: costs.storage },
         { lbl: "Service & Maintenance", val: costs.maintenance },
-      ]
-      card(M, y, CW, 7 + costItems.length * 12 + 14)
-      pdf.setFontSize(6); dim(); pdf.text("ANNUAL OWNERSHIP COSTS (USD)", M + 4, y + 5)
-      costItems.forEach((c, i) => {
-        const cy2 = y + 11 + i * 12
-        pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
-        pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
-        const pct = c.val / totalAnnualCost
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
-        pdf.setFillColor(248, 180, 217); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
-        pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
-      })
-      // Total
-      const tY = y + 11 + costItems.length * 12
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
-      pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
-      pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
-      pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
-      y += 11 + costItems.length * 12 + 18
+      ] : []
+      if (costItems.length > 0) {
+        card(M, y, CW, 7 + costItems.length * 12 + 14)
+        pdf.setFontSize(6); dim(); pdf.text("ANNUAL OWNERSHIP COSTS (USD)", M + 4, y + 5)
+        costItems.forEach((c, i) => {
+          const cy2 = y + 11 + i * 12
+          pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
+          pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
+          const pct = totalAnnualCost > 0 ? c.val / totalAnnualCost : 0.5
+          pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
+          pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
+          pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
+        })
+        // Total
+        const tY = y + 11 + costItems.length * 12
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
+        pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
+        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
+        pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
+      } else {
+        card(M, y, CW, 16)
+        pdf.setFontSize(8); gray(); pdf.text("Ownership cost data not yet available for this vehicle.", M + 4, y + 10)
+      }
 
-      // Shipping card
-      card(M, y, CW, 30)
-      pdf.setFontSize(6); dim(); pdf.text("SHIPPING & LOGISTICS (USD)", M + 4, y + 5)
-      y += 8
-      y = cardRow("Domestic (Enclosed)", `$${shipping.domestic.toLocaleString()}`, M, y, CW)
-      y = cardRow("EU Import (incl. duties)", `$${shipping.euImport.toLocaleString()}`, M, y, CW)
-      y = cardRow("UK Import (incl. duties)", `$${shipping.ukImport.toLocaleString()}`, M, y, CW)
-
-      // ═══ PAGE 14: MARKET CONTEXT ═══
+      // ═══ PAGE 11: MARKET CONTEXT ═══
       pdf.addPage(); bg(); chrome("Market Context")
-      y = sectionTitle(11, "Market Context", 16)
-      // Events card
-      card(M, y, CW, 7 + events.length * 8)
-      pdf.setFontSize(6); dim(); pdf.text("UPCOMING EVENTS & CATALYSTS", M + 4, y + 5)
-      events.forEach((e, i) => {
-        const ey = y + 11 + i * 8
-        const eClr = e.impact === "positive" ? [52,211,153] : e.impact === "negative" ? [248,113,113] : [130,130,140]
-        pdf.setFillColor(eClr[0], eClr[1], eClr[2]); pdf.circle(M + 6, ey - 0.5, 0.8, "F")
-        pdf.setFontSize(7.5); white(); pdf.text(e.name, M + 10, ey)
-        pdf.setFontSize(6.5); gray(); pdf.text(e.type, M + 10, ey + 3.5)
-        badge(e.impact.toUpperCase(), W - M - 28, ey, eClr[0] > 200 ? 40 : 15, eClr[1] > 150 ? 30 : 25, eClr[2] > 150 ? 25 : 18, eClr[0], eClr[1], eClr[2])
-      })
-      y += 11 + events.length * 8 + 4
+      y = sectionTitle(8, "Market Context", 16)
 
       // Comps card
       card(M, y, CW, 7 + comps.length * 10)
@@ -1311,7 +901,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       // ═══ PAGE 15: SIMILAR VEHICLES ═══
       pdf.addPage(); bg(); chrome("Similar Vehicles")
-      y = sectionTitle(12, "Similar Vehicles", 16)
+      y = sectionTitle(9, "Similar Vehicles", 16)
       const maxSimBid = Math.max(car.currentBid, ...similarCars.map(sc => sc.car.currentBid))
       similarCars.forEach((sc, i) => {
         card(M, y, CW, 16)
@@ -1323,24 +913,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         // Price + bar
         pdf.setFontSize(9); pink(); pdf.text(`$${sc.car.currentBid.toLocaleString()}`, W - M - 4, y + 5, { align: "right" })
         const sbPct = sc.car.currentBid / maxSimBid
-        pdf.setFillColor(30, 30, 40); pdf.rect(M + 4, y + 12, CW - 8, 2, "F")
-        pdf.setFillColor(60, 60, 70); pdf.rect(M + 4, y + 12, (CW - 8) * sbPct, 2, "F")
+        pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, y + 12, CW - 8, 2, "F")
+        pdf.setFillColor(pal.barFill[0], pal.barFill[1], pal.barFill[2]); pdf.rect(M + 4, y + 12, (CW - 8) * sbPct, 2, "F")
         y += 20
       })
 
       // ═══ PAGE 16: FINAL VERDICT ═══
       pdf.addPage(); bg(); chrome("Final Verdict")
-      y = sectionTitle(13, "Final Verdict", 16)
+      y = sectionTitle(10, "Final Verdict", 16)
       // Large verdict badge
-      const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [248,180,217]
+      const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [pal.primary[0], pal.primary[1], pal.primary[2]]
       pdf.setFillColor(vClr[0], vClr[1], vClr[2]); pdf.rect(M, y, 55, 18, "F")
-      pdf.setFontSize(22); pdf.setTextColor(11, 11, 16)
+      pdf.setFontSize(22); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text(verdict.toUpperCase(), M + 27.5, y + 12.5, { align: "center" })
       y += 25
       // Verdict metrics card (3 cols)
       const vMetrics = [
         { lbl: "GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
-        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [248,180,217] },
+        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
         { lbl: "RISK", val: `${riskScore}/100`, clr: rsClr },
       ]
       const vmW = (CW - 6) / 3
@@ -1360,21 +950,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       sy = cardRow("Below Fair Value?", isBelowFair ? "YES" : "NO", M, sy, CW)
       sy = cardRow("Best Buy Region", regionLabels[bestRegion]?.short || bestRegion, M, sy, CW)
       if (hasArbitrage) { sy = cardRow("Arbitrage Savings", `$${Math.round(arbitrageSavings).toLocaleString()}`, M, sy, CW) }
-      sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
-      sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
+      if (totalAnnualCost > 0) {
+        sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
+        sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
+      }
+      sy = cardRow("Similar Vehicles", `${similarCars.length}`, M, sy, CW)
 
       // ═══ CLOSING PAGE: THANK YOU ═══
       pdf.addPage(); bg()
       // No chrome on this page — clean, personal
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, 0, W, 1.2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F")
       // Centered decorative line
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.4)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
       pdf.line(W / 2 - 15, 80, W / 2 + 15, 80)
       // Thank you message
       pdf.setFontSize(24); white()
       pdf.text(`Thank you, ${firstName}.`, W / 2, 100, { align: "center" })
       // Body text
-      pdf.setFontSize(10); pdf.setTextColor(160, 160, 170)
+      pdf.setFontSize(10); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2])
       const closingLines = [
         "We hope this dossier gives you the confidence and clarity",
         "to make the right decision at the right time.",
@@ -1383,7 +976,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         "Monza Lab is here to support your journey.",
         "",
         "Great cars find great owners — and we believe",
-        `the ${car.title} deserves someone who truly`,
+        `the ${pdfTitle} deserves someone who truly`,
         "understands its value.",
       ]
       let cy = 115
@@ -1394,14 +987,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       })
       // Divider
       cy += 12
-      pdf.setDrawColor(248, 180, 217); pdf.setLineWidth(0.2)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2)
       pdf.line(W / 2 - 20, cy, W / 2 + 20, cy)
       cy += 12
       // What's next section
       pdf.setFontSize(8); pink()
       pdf.text("WHAT'S NEXT", W / 2, cy, { align: "center" })
       cy += 8
-      pdf.setFontSize(9); pdf.setTextColor(160, 160, 170)
+      pdf.setFontSize(9); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2])
       const nextSteps = [
         "Explore more vehicles in our curated marketplace",
         "Generate dossiers for any listing that catches your eye",
@@ -1409,19 +1002,19 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       ]
       nextSteps.forEach((step, i) => {
         pdf.setFontSize(7); pink(); pdf.text(`${i + 1}`, W / 2 - 45, cy, { align: "center" })
-        pdf.setFontSize(9); pdf.setTextColor(160, 160, 170); pdf.text(step, W / 2 - 38, cy)
+        pdf.setFontSize(9); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2]); pdf.text(step, W / 2 - 38, cy)
         cy += 7
       })
       // Brand footer
-      pdf.setDrawColor(40, 40, 50); pdf.setLineWidth(0.15)
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 45, W - M, H - 45)
       pdf.setFontSize(9); pink()
       pdf.text("MONZA LAB", W / 2, H - 36, { align: "center" })
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 110)
+      pdf.setFontSize(7); pdf.setTextColor(pal.footerDim[0], pal.footerDim[1], pal.footerDim[2])
       pdf.text("Collector Vehicle Intelligence", W / 2, H - 30, { align: "center" })
       pdf.text("monzalab.com", W / 2, H - 24, { align: "center" })
       // Bottom accent
-      pdf.setFillColor(248, 180, 217); pdf.rect(0, H - 2, W, 2, "F")
+      pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
       // Save
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
@@ -1441,51 +1034,64 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const XLSX = await import("xlsx")
       const wb = XLSX.utils.book_new()
 
-      // ═══ Sheet 1: Cover & Summary ═══
+      // ═══ Sheet 1: Summary ═══
       const coverData: (string | number)[][] = [
         ["MONZA LAB — Investment Dossier"],
         [""],
-        ["Vehicle", car.title],
+        ["VEHICLE"],
+        ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
         ["Year", car.year],
         ["Make", car.make],
         ["Model", car.model],
         ["Trim", car.trim || "—"],
+        ["Engine", car.engine],
+        ["Transmission", car.transmission],
+        ["Mileage", car.mileage],
+        ["Mileage Unit", car.mileageUnit],
+        ...(car.exteriorColor ? [["Exterior Color", car.exteriorColor]] : []),
+        ...(car.interiorColor ? [["Interior Color", car.interiorColor]] : []),
+        [""],
+        ["LISTING"],
+        ["Platform", car.platform.replace(/_/g, " ")],
+        ["Status", car.status],
+        ["Current Bid (USD)", car.currentBid],
+        ["Bid Count", car.bidCount],
+        ["Location", car.location],
+        ["Region", car.region],
+        ["Category", car.category],
         [""],
         ["INVESTMENT ANALYSIS"],
         ["Investment Grade", car.investmentGrade],
         ["Verdict", verdict.toUpperCase()],
-        ["Current Bid (USD)", car.currentBid],
-        ["Fair Value Low (USD)", pricing.US.low],
-        ["Fair Value High (USD)", pricing.US.high],
-        ["Price Position", `${pricePosition.toFixed(0)}% of fair range`],
+        ["Fair Value Low (USD)", fairLow],
+        ["Fair Value High (USD)", fairHigh],
+        ["Fair Value Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
+        ["Price Position (%)", pricePosition],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
-        ["Market Position", `${pricePosition}% of fair value`],
-        ["Risk Score", `${riskScore}/100`],
-        ["Total Annual Cost (USD)", totalAnnualCost],
+        ["Risk Score (0-100)", riskScore],
+        ["Trend", car.trend],
+        ...(totalAnnualCost > 0 ? [["Est. Annual Cost (USD)", totalAnnualCost]] : []),
         [""],
-        ["VEHICLE DETAILS"],
-        ["Engine", car.engine],
-        ["Transmission", car.transmission],
-        ["Mileage", `${car.mileage.toLocaleString()} ${car.mileageUnit}`],
-        ["Platform", car.platform.replace(/_/g, " ")],
-        ["Location", car.location],
-        ["Region", car.region],
-        ["Category", car.category],
-        ["Status", car.status],
-        ["Bid Count", car.bidCount],
-        [""],
-        ["ARBITRAGE OPPORTUNITY"],
+        ["ARBITRAGE"],
         ["Best Buy Region", regionLabels[bestRegion]?.short || bestRegion],
-        ["Potential Savings (USD)", hasArbitrage ? Math.round(arbitrageSavings) : 0],
-        ["Arbitrage Available?", hasArbitrage ? "YES" : "NO"],
+        ["Arbitrage Savings (USD)", hasArbitrage ? Math.round(arbitrageSavings) : 0],
+        ...(dbMarketData ? [
+          [""],
+          ["MARKET DATA (from DB)"],
+          ["Avg Sale Price (USD)", dbMarketData.avgPrice ?? "N/A"],
+          ["Median Sale Price (USD)", dbMarketData.medianPrice ?? "N/A"],
+          ["Lowest Sale (USD)", dbMarketData.lowPrice ?? "N/A"],
+          ["Highest Sale (USD)", dbMarketData.highPrice ?? "N/A"],
+          ["Total Sales Tracked", dbMarketData.totalSales],
+          ["Market Trend", dbMarketData.trend ?? "N/A"],
+        ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
         ...(user?.name ? [[`Prepared for: ${user.name}`]] : []),
         ["CONFIDENTIAL — monzalab.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
-      ws1["!cols"] = [{ wch: 28 }, { wch: 45 }]
-      // Merge title row
+      ws1["!cols"] = [{ wch: 28 }, { wch: 50 }]
       ws1["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
       XLSX.utils.book_append_sheet(wb, ws1, "Summary")
 
@@ -1493,188 +1099,215 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       const valuationRows: (string | number)[][] = [
         ["REGIONAL FAIR VALUE COMPARISON"],
         [""],
-        ["Region", "Currency", "Fair Low", "Fair High", "Fair Average", "Average (USD)", "vs Best Region"],
+        ["Region", "Currency", "Fair Low", "Fair High", "Fair Avg", "Avg (USD)", "Premium vs Best", "Best Buy?"],
       ]
       const regions = ["US", "EU", "UK", "JP"] as const
+      const bestAvgUsd = toUsd((pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2, pricing[bestRegion as keyof typeof pricing].currency)
       for (const r of regions) {
         const rp = pricing[r]
         const avg = (rp.low + rp.high) / 2
         const avgUsd = toUsd(avg, rp.currency)
-        const bestAvgUsd = toUsd((pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2, pricing[bestRegion as keyof typeof pricing].currency)
         const diff = avgUsd - bestAvgUsd
+        const premiumPct = bestAvgUsd > 0 ? ((diff / bestAvgUsd) * 100) : 0
         valuationRows.push([
-          `${regionLabels[r].short}${r === bestRegion ? " (BEST)" : ""}`,
+          regionLabels[r].short,
           rp.currency,
-          rp.low,
-          rp.high,
+          Math.round(rp.low),
+          Math.round(rp.high),
           Math.round(avg),
           Math.round(avgUsd),
-          r === bestRegion ? "—" : `+$${Math.round(diff).toLocaleString()}`,
+          r === bestRegion ? 0 : Math.round(diff),
+          r === bestRegion ? "YES" : "NO",
         ])
       }
       valuationRows.push(
         [""],
-        ["PRICE POSITION ANALYSIS"],
+        ["PRICE ANALYSIS"],
         ["Current Bid (USD)", car.currentBid],
-        ["Position in Fair Range", `${pricePosition.toFixed(0)}%`],
-        ["Below Midpoint?", isBelowFair ? "YES — Potential value" : "NO — At or above midpoint"],
+        ["Fair Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
+        ["Price Position (%)", pricePosition],
+        ["Discount/Premium (USD)", Math.round(car.currentBid - (fairLow + fairHigh) / 2)],
+        ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
       )
       const ws2 = XLSX.utils.aoa_to_sheet(valuationRows)
-      ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 18 }]
-      ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
+      ws2["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 10 }]
+      ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
       XLSX.utils.book_append_sheet(wb, ws2, "Valuation")
 
-      // ═══ Sheet 3: Comparable Sales ═══
-      const compsRows: (string | number | null)[][] = [
-        ["COMPARABLE MARKET TRANSACTIONS"],
-        [""],
-        ["Vehicle", "Sale Price (USD)", "Date", "Platform", "Delta vs Current"],
-      ]
-      for (const s of comps) {
-        compsRows.push([s.title, s.price, s.date, s.platform, `${s.delta > 0 ? "+" : ""}${s.delta}%`])
+      // ═══ Sheet 3: Similar Vehicles ═══
+      if (similarCars.length > 0) {
+        const simRows: (string | number)[][] = [
+          ["SIMILAR VEHICLES ON MARKET"],
+          [""],
+          ["Title", "Year", "Make", "Model", "Price (USD)", "Grade", "Trend", "Platform", "Mileage", "Match Score", "Match Reasons"],
+        ]
+        for (const sc of similarCars) {
+          simRows.push([
+            sc.car.title,
+            sc.car.year,
+            sc.car.make,
+            sc.car.model,
+            sc.car.currentBid,
+            sc.car.investmentGrade,
+            sc.car.trend,
+            sc.car.platform.replace(/_/g, " "),
+            sc.car.mileage,
+            Math.round(sc.score * 100),
+            sc.matchReasons.join(", "),
+          ])
+        }
+        // Summary stats
+        const simPrices = similarCars.map(sc => sc.car.currentBid).filter(p => p > 0)
+        if (simPrices.length > 0) {
+          const simAvg = Math.round(simPrices.reduce((a, b) => a + b, 0) / simPrices.length)
+          const simMin = Math.min(...simPrices)
+          const simMax = Math.max(...simPrices)
+          const simSorted = [...simPrices].sort((a, b) => a - b)
+          const simMedian = simSorted[Math.floor(simSorted.length / 2)]
+          simRows.push(
+            [""],
+            ["STATISTICS"],
+            ["Count", similarCars.length],
+            ["Avg Price (USD)", simAvg],
+            ["Median Price (USD)", simMedian],
+            ["Min Price (USD)", simMin],
+            ["Max Price (USD)", simMax],
+            ["Price Range (USD)", simMax - simMin],
+            ["This Car vs Avg", car.currentBid - simAvg],
+            ["This Car vs Avg (%)", simAvg > 0 ? Math.round(((car.currentBid - simAvg) / simAvg) * 100) : 0],
+          )
+        }
+        const wsSim = XLSX.utils.aoa_to_sheet(simRows)
+        wsSim["!cols"] = [{ wch: 40 }, { wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 7 }, { wch: 8 }, { wch: 20 }, { wch: 10 }, { wch: 8 }, { wch: 30 }]
+        wsSim["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }]
+        XLSX.utils.book_append_sheet(wb, wsSim, "Similar Vehicles")
       }
-      compsRows.push(
-        [""],
-        ["Average Sale Price (USD)", Math.round(comps.reduce((sum, s) => sum + s.price, 0) / comps.length)],
-        ["Median Delta", `${comps.length > 0 ? comps.sort((a, b) => a.delta - b.delta)[Math.floor(comps.length / 2)].delta : 0}%`],
-      )
-      const ws3 = XLSX.utils.aoa_to_sheet(compsRows)
-      ws3["!cols"] = [{ wch: 32 }, { wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 16 }]
-      ws3["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]
-      XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
 
-      // ═══ Sheet 4: Ownership Costs ═══
-      const costRows: (string | number)[][] = [
-        ["ANNUAL OWNERSHIP COSTS"],
-        [""],
-        ["Category", "Annual Cost (USD)"],
-        ["Insurance (Agreed Value)", costs.insurance],
-        ["Climate-Controlled Storage", costs.storage],
-        ["Service & Maintenance", costs.maintenance],
-        ["Total Annual Cost", totalAnnualCost],
-        ["Cost as % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
-        [""],
-        ["SHIPPING & LOGISTICS"],
-        ["Route", "Estimated Cost (USD)"],
-        ["Domestic (Enclosed Transport)", shipping.domestic],
-        ["EU Import (incl. duties & VAT)", shipping.euImport],
-        ["UK Import (incl. duties & VAT)", shipping.ukImport],
-      ]
-      const ws4 = XLSX.utils.aoa_to_sheet(costRows)
-      ws4["!cols"] = [{ wch: 34 }, { wch: 22 }, { wch: 14 }]
-      ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
+      // ═══ Sheet 4: Comparable Sales ═══
+      if (comps.length > 0) {
+        const compsRows: (string | number)[][] = [
+          ["COMPARABLE SALES"],
+          [""],
+          ["Vehicle", "Sale Price (USD)", "Date", "Platform", "Delta vs Current (%)"],
+        ]
+        for (const s of comps) {
+          compsRows.push([s.title, s.price, s.date, s.platform, s.delta])
+        }
+        const avgCompPrice = Math.round(comps.reduce((sum, s) => sum + s.price, 0) / comps.length)
+        const sortedDeltas = [...comps].sort((a, b) => a.delta - b.delta)
+        const medianDelta = sortedDeltas[Math.floor(sortedDeltas.length / 2)].delta
+        compsRows.push(
+          [""],
+          ["STATISTICS"],
+          ["Count", comps.length],
+          ["Avg Sale Price (USD)", avgCompPrice],
+          ["Median Delta (%)", medianDelta],
+          ["This Car vs Avg Comp", car.currentBid - avgCompPrice],
+        )
+        const ws3 = XLSX.utils.aoa_to_sheet(compsRows)
+        ws3["!cols"] = [{ wch: 40 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 18 }]
+        ws3["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }]
+        XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
+      }
 
-      // ═══ Sheet 5: Production & Heritage ═══
-      const prodRows: (string | number)[][] = [
-        ["PRODUCTION & HERITAGE"],
-        [""],
-        ["Attribute", "Value"],
-        ["Years Produced", production.yearsProduced],
-        ["Total Units Built", production.totalBuilt],
-        ...(production.lhd > 0 || production.rhd > 0 ? [
-          ["Left-Hand Drive", production.lhd],
-          ["Right-Hand Drive", production.rhd],
-          ["LHD/RHD Split", `${((production.lhd / (production.lhd + production.rhd)) * 100).toFixed(0)}% / ${((production.rhd / (production.lhd + production.rhd)) * 100).toFixed(0)}%`],
-        ] as (string | number)[][] : []),
-        ["Key Fact", production.keyStat],
-        [""],
-        ["VARIANT BREAKDOWN"],
-        ["Variant", "Units Produced", "Current Price Range"],
-        ...production.variants.map(v => [v.name, v.units, v.priceRange]),
-        [""],
-        ["Total Across All Variants", production.variants.reduce((sum, v) => sum + v.units, 0)],
-      ]
-      const ws5 = XLSX.utils.aoa_to_sheet(prodRows)
-      ws5["!cols"] = [{ wch: 28 }, { wch: 20 }, { wch: 22 }]
-      ws5["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws5, "Production")
+      // ═══ Sheet 5: Sold History (if available) ═══
+      if (dbSoldHistory.length > 0) {
+        const soldRows: (string | number)[][] = [
+          ["SOLD AUCTION HISTORY"],
+          [""],
+          ["Title", "Year", "Model", "Sold Price (USD)", "Sale Date", "vs Current Bid", "vs Current (%)"],
+        ]
+        const sortedSold = [...dbSoldHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        for (const s of sortedSold) {
+          const diff = s.price - car.currentBid
+          const diffPct = car.currentBid > 0 ? Math.round((diff / car.currentBid) * 100) : 0
+          soldRows.push([
+            s.title,
+            s.year,
+            s.model,
+            s.price,
+            new Date(s.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            diff,
+            diffPct,
+          ])
+        }
+        const soldPrices = dbSoldHistory.map(s => s.price).filter(p => p > 0)
+        if (soldPrices.length > 0) {
+          const soldAvg = Math.round(soldPrices.reduce((a, b) => a + b, 0) / soldPrices.length)
+          const soldMin = Math.min(...soldPrices)
+          const soldMax = Math.max(...soldPrices)
+          const soldSorted = [...soldPrices].sort((a, b) => a - b)
+          const soldMedian = soldSorted[Math.floor(soldSorted.length / 2)]
+          soldRows.push(
+            [""],
+            ["STATISTICS"],
+            ["Total Sold Records", dbSoldHistory.length],
+            ["Avg Sold Price (USD)", soldAvg],
+            ["Median Sold Price (USD)", soldMedian],
+            ["Min Sold Price (USD)", soldMin],
+            ["Max Sold Price (USD)", soldMax],
+            ["Price Range (USD)", soldMax - soldMin],
+            ["This Car vs Avg Sold", car.currentBid - soldAvg],
+          )
+        }
+        const wsSold = XLSX.utils.aoa_to_sheet(soldRows)
+        wsSold["!cols"] = [{ wch: 40 }, { wch: 6 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 }]
+        wsSold["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
+        XLSX.utils.book_append_sheet(wb, wsSold, "Sold History")
+      }
 
-      // ═══ Sheet 6: Technical Deep-Dive ═══
-      const techRows: (string | number)[][] = [
-        ["TECHNICAL DEEP-DIVE"],
-        [""],
-        ["ENGINE SPECIFICATIONS"],
-        ["Specification", "Value"],
-        ...technical.engineDetails.map(d => [d.spec, d.value]),
-        [""],
-        ["KNOWN MECHANICAL ISSUES"],
-        ["Issue", "Severity", "Est. Repair Cost"],
-        ...technical.knownIssues.map(i => [i.issue, i.severity.toUpperCase(), i.repairCost]),
-        [""],
-        ["Total Critical Issues", technical.knownIssues.filter(i => i.severity === "critical").length],
-        ["Total Moderate Issues", technical.knownIssues.filter(i => i.severity === "moderate").length],
-        ["Total Minor Issues", technical.knownIssues.filter(i => i.severity === "minor").length],
-        [""],
-        ["SERVICE SCHEDULE"],
-        ["Service Item", "Interval", "Estimated Cost"],
-        ...technical.serviceIntervals.map(s => [s.item, s.interval, s.cost]),
-      ]
-      const ws6 = XLSX.utils.aoa_to_sheet(techRows)
-      ws6["!cols"] = [{ wch: 44 }, { wch: 22 }, { wch: 18 }]
-      ws6["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws6, "Technical")
+      // ═══ Sheet 6: Ownership Costs (conditional) ═══
+      if (costs) {
+        const costRows: (string | number)[][] = [
+          ["ANNUAL OWNERSHIP COSTS"],
+          [""],
+          ["Category", "Annual Cost (USD)", "% of Total"],
+          ["Insurance (Agreed Value)", costs.insurance, totalAnnualCost > 0 ? Math.round((costs.insurance / totalAnnualCost) * 100) : 0],
+          ["Service & Maintenance", costs.maintenance, totalAnnualCost > 0 ? Math.round((costs.maintenance / totalAnnualCost) * 100) : 0],
+          [""],
+          ["Total Annual Cost", totalAnnualCost, 100],
+          ["Cost as % of Vehicle Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
+          [""],
+          ["5-YEAR PROJECTION"],
+          ["Year", "Cumulative Cost (USD)", "% of Vehicle Value"],
+          ...([1, 2, 3, 4, 5].map(yr => [
+            `Year ${yr}`,
+            totalAnnualCost * yr,
+            `${((totalAnnualCost * yr / car.currentBid) * 100).toFixed(1)}%`,
+          ])),
+        ]
+        const ws4 = XLSX.utils.aoa_to_sheet(costRows)
+        ws4["!cols"] = [{ wch: 30 }, { wch: 22 }, { wch: 18 }]
+        ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
+        XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
+      }
 
-      // ═══ Sheet 7: Condition Guide ═══
-      const condRows: (string | number)[][] = [
-        ["CONDITION & INSPECTION GUIDE"],
-        [""],
-        ["BODYWORK & RUST-PRONE AREAS"],
-        ["Area", "Severity"],
-        ...condition.rustAreas.map(a => [a.area, a.severity.toUpperCase()]),
-        [""],
-        ["INTERIOR CONDITION CONCERNS"],
-        ["Component", "Common Problem", "Part Availability"],
-        ...condition.interiorIssues.map(i => [i.item, i.commonProblem, i.partAvailability.toUpperCase()]),
-        [""],
-        ["MODEL-SPECIFIC INSPECTION PRIORITIES"],
-        ["Priority", "Item"],
-        ...condition.inspectionPriorities.map((p, i) => [i + 1, p]),
-      ]
-      const ws7 = XLSX.utils.aoa_to_sheet(condRows)
-      ws7["!cols"] = [{ wch: 50 }, { wch: 34 }, { wch: 20 }]
-      ws7["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-      XLSX.utils.book_append_sheet(wb, ws7, "Condition")
-
-      // ═══ Sheet 8: Due Diligence ═══
-      const ddRows: (string | number)[][] = [
-        ["DUE DILIGENCE CHECKLIST"],
-        [""],
-        ["RED FLAGS — Key Risk Areas"],
-        ["#", "Risk Item"],
-        ...flags.map((f, i) => [i + 1, f]),
-        [""],
-        ["SELLER QUESTIONS — Pre-Purchase"],
-        ["#", "Question"],
-        ...questions.map((q, i) => [i + 1, q]),
-      ]
-      const ws8 = XLSX.utils.aoa_to_sheet(ddRows)
-      ws8["!cols"] = [{ wch: 6 }, { wch: 60 }]
-      ws8["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
-      XLSX.utils.book_append_sheet(wb, ws8, "Due Diligence")
-
-      // ═══ Sheet 9: Market Context ═══
-      const mktRows: (string | number)[][] = [
-        ["MARKET CONTEXT & EVENTS"],
-        [""],
-        ["UPCOMING EVENTS & CATALYSTS"],
-        ["Event", "Type", "Expected Impact"],
-        ...events.map(e => [e.name, e.type, e.impact.toUpperCase()]),
-        [""],
-        ["VEHICLE THESIS"],
-        [stripHtml(car.thesis) || "No specific thesis available"],
-        [""],
-        ["HISTORY"],
-        [stripHtml(car.history) || "No documented history available"],
-      ]
-      const ws9 = XLSX.utils.aoa_to_sheet(mktRows)
-      ws9["!cols"] = [{ wch: 40 }, { wch: 18 }, { wch: 18 }]
-      ws9["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
-        { s: { r: 7, c: 0 }, e: { r: 7, c: 2 } },
-        { s: { r: 9, c: 0 }, e: { r: 9, c: 2 } },
-      ]
-      XLSX.utils.book_append_sheet(wb, ws9, "Market Context")
+      // ═══ Sheet 7: Due Diligence (only if data available) ═══
+      if (flags.length > 0 || questions.length > 0) {
+        const ddRows: (string | number)[][] = [
+          ["DUE DILIGENCE CHECKLIST"],
+          [""],
+        ]
+        if (flags.length > 0) {
+          ddRows.push(
+            ["RED FLAGS — Key Risk Areas"],
+            ["#", "Risk Item"],
+            ...flags.map((f, i) => [i + 1, f]),
+            [""],
+          )
+        }
+        if (questions.length > 0) {
+          ddRows.push(
+            ["SELLER QUESTIONS — Pre-Purchase"],
+            ["#", "Question"],
+            ...questions.map((q, i) => [i + 1, q]),
+          )
+        }
+        const wsDd = XLSX.utils.aoa_to_sheet(ddRows)
+        wsDd["!cols"] = [{ wch: 6 }, { wch: 60 }]
+        wsDd["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+        XLSX.utils.book_append_sheet(wb, wsDd, "Due Diligence")
+      }
 
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
       const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
@@ -1692,14 +1325,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     return (
       <div className="relative">
         <div className="blur-sm pointer-events-none select-none">{children}</div>
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0b0b10]/60 backdrop-blur-[2px] rounded-2xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px] rounded-2xl">
           <div className="text-center px-6 py-8">
-            <Lock className="size-8 text-[#F8B4D9] mx-auto mb-3" />
-            <p className="text-[14px] font-semibold text-[#FFFCF7] mb-1">{t("unlockReport")}</p>
-            <p className="text-[11px] text-[#6B7280] max-w-[280px]">{t("unlockDesc")}</p>
+            <Lock className="size-8 text-primary mx-auto mb-3" />
+            <p className="text-[14px] font-semibold text-foreground mb-1">{t("unlockReport")}</p>
+            <p className="text-[11px] text-muted-foreground max-w-[280px]">{t("unlockDesc")}</p>
             <button
               onClick={handleUnlock}
-              className="mt-4 flex items-center gap-2 mx-auto rounded-xl bg-[#F8B4D9] px-6 py-3 text-[12px] font-semibold text-[#0b0b10] hover:bg-[#f4cbde] active:scale-[0.97] transition-all"
+              className="mt-4 flex items-center gap-2 mx-auto rounded-xl bg-primary px-6 py-3 text-[12px] font-semibold text-background hover:bg-primary/80 active:scale-[0.97] transition-all"
             >
               <Coins className="size-4" />
               {t("unlockCost")}
@@ -1716,27 +1349,27 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     const sectionNumber = SECTION_IDS.indexOf(id) + 1
     return (
       <div className="flex items-center gap-3 mb-5">
-        <div className="flex items-center justify-center size-8 rounded-lg bg-[rgba(248,180,217,0.1)]">
-          <Icon className="size-4 text-[#F8B4D9]" />
+        <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10">
+          <Icon className="size-4 text-primary" />
         </div>
         <div>
-          <span className="text-[9px] font-mono text-[#4B5563] tracking-wider">SECTION {String(sectionNumber).padStart(2, "0")}</span>
-          <h2 className="text-[16px] md:text-[18px] font-bold text-[#FFFCF7] leading-tight">{title}</h2>
+          <span className="text-[9px] font-mono text-muted-foreground tracking-wider">SECTION {String(sectionNumber).padStart(2, "0")}</span>
+          <h2 className="text-[16px] md:text-[18px] font-bold text-foreground leading-tight">{title}</h2>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b10]">
+    <div className="min-h-screen bg-background">
       {/* ═══ STICKY NAV — Desktop: sidebar, Mobile: top pills ═══ */}
 
       {/* MOBILE: Sticky top pills */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0b0b10]/95 backdrop-blur-xl border-b border-white/5">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-2 px-3 py-2">
           <Link
             href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-            className="shrink-0 p-2 text-[#4B5563] hover:text-[#F8B4D9] transition-colors"
+            className="shrink-0 p-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="size-4" />
           </Link>
@@ -1752,8 +1385,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     onClick={() => scrollToSection(id)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
                       isActive
-                        ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/20"
-                        : "text-[#6B7280] hover:text-[#9CA3AF]"
+                        ? "bg-primary/15 text-primary border border-primary/20"
+                        : "text-muted-foreground hover:text-muted-foreground"
                     }`}
                   >
                     {isLocked ? <Lock className="size-2.5" /> : <Icon className="size-2.5" />}
@@ -1767,16 +1400,16 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       </div>
 
       {/* DESKTOP: Fixed left sidebar nav */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-[#0b0b10] border-r border-white/5 z-40 pt-[80px]">
-        <div className="px-4 py-4 border-b border-white/5">
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-background border-r border-border z-40 pt-[80px]">
+        <div className="px-4 py-4 border-b border-border">
           <Link
             href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
-            className="inline-flex items-center gap-1.5 text-[10px] text-[#6B7280] hover:text-[#F8B4D9] transition-colors"
+            className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="size-3" />
             {t("backToVehicle")}
           </Link>
-          <h1 className="text-[13px] font-bold text-[#FFFCF7] mt-2 leading-tight">{car.title}</h1>
+          <h1 className="text-[13px] font-bold text-foreground mt-2 leading-tight">{car.title}</h1>
           <div className="flex items-center gap-2 mt-1.5">
             <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
               car.investmentGrade === "AAA"
@@ -1785,7 +1418,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
                   : "bg-amber-500/15 text-amber-400 border border-amber-400/20"
             }`}>{car.investmentGrade}</span>
-            <span className="text-[10px] text-[#4B5563]">{t("title")}</span>
+            <span className="text-[10px] text-muted-foreground">{t("title")}</span>
           </div>
         </div>
 
@@ -1800,8 +1433,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 onClick={() => scrollToSection(id)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-all mb-0.5 ${
                   isActive
-                    ? "bg-[rgba(248,180,217,0.08)] text-[#F8B4D9]"
-                    : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.02]"
+                    ? "bg-primary/8 text-primary"
+                    : "text-muted-foreground hover:text-muted-foreground hover:bg-foreground/2"
                 }`}
               >
                 <span className="text-[9px] font-mono w-4 text-right">{String(i + 1).padStart(2, "0")}</span>
@@ -1813,15 +1446,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         </nav>
 
         {hasAccess ? (
-          <div className="p-3 border-t border-white/5">
+          <div className="p-3 border-t border-border">
             <button
               onClick={() => setShowDownloadSheet(true)}
               disabled={downloadingPdf || downloadingExcel}
-              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] active:scale-[0.97] transition-all disabled:opacity-50"
+              className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-primary text-background hover:bg-primary/80 active:scale-[0.97] transition-all disabled:opacity-50"
             >
               {(downloadingPdf || downloadingExcel) ? (
                 <>
-                  <div className="size-4 rounded-full border-2 border-[#0b0b10]/30 border-t-[#0b0b10] animate-spin shrink-0" />
+                  <div className="size-4 rounded-full border-2 border-background/30 border-t-background animate-spin shrink-0" />
                   <span className="text-[12px] font-semibold">{t("downloadGenerating")}</span>
                 </>
               ) : (
@@ -1834,15 +1467,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             </button>
           </div>
         ) : !tokensLoading && (
-          <div className="p-4 border-t border-white/5">
+          <div className="p-4 border-t border-border">
             <button
               onClick={handleUnlock}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#F8B4D9] py-3 text-[11px] font-semibold uppercase tracking-wider text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-background hover:bg-primary/80 transition-colors"
             >
               <Lock className="size-3.5" />
               {t("unlockReport")}
             </button>
-            <p className="text-[9px] text-[#4B5563] text-center mt-2">{t("unlockCost")}</p>
+            <p className="text-[9px] text-muted-foreground text-center mt-2">{t("unlockCost")}</p>
           </div>
         )}
       </div>
@@ -1861,20 +1494,20 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               priority
               sizes="(min-width: 768px) 840px, 100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-[#0b0b10]/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
             <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#F8B4D9]/20 text-[#F8B4D9] text-[9px] font-bold border border-[#F8B4D9]/20 backdrop-blur-md">
+                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold border border-primary/20 backdrop-blur-md">
                   {t("title")}
                 </span>
                 {!hasAccess && (
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-[#9CA3AF] text-[9px] font-medium backdrop-blur-md">
+                  <span className="px-2 py-0.5 rounded-full bg-foreground/10 text-muted-foreground text-[9px] font-medium backdrop-blur-md">
                     {t("freePreview")}
                   </span>
                 )}
               </div>
-              <h1 className="text-[20px] md:text-[28px] font-bold text-white">{car.title}</h1>
-              <p className="text-[11px] md:text-[13px] text-[#9CA3AF] mt-1">{t("subtitle")}</p>
+              <h1 className="text-[20px] md:text-[28px] font-bold text-foreground">{car.title}</h1>
+              <p className="text-[11px] md:text-[13px] text-muted-foreground mt-1">{t("subtitle")}</p>
             </div>
           </div>
 
@@ -1889,41 +1522,41 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               {/* 6-metric grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {/* Investment Grade */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.investmentGrade")}</span>
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.investmentGrade")}</span>
                   <p className={`text-[28px] font-black mt-1 ${
                     car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
                   }`}>{car.investmentGrade}</p>
                 </div>
                 {/* Current Price */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.currentPrice")}</span>
-                  <p className="text-[20px] font-bold font-mono text-[#F8B4D9] mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
+                  <p className="text-[20px] font-bold font-mono text-primary mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
                 </div>
                 {/* Fair Value */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.fairValue")}</span>
-                  <p className="text-[14px] font-mono font-semibold text-[#FFFCF7] mt-2">
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
+                  <p className="text-[14px] font-mono font-semibold text-foreground mt-2">
                     {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}
                   </p>
                 </div>
                 {/* Market Position */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">Market Position</span>
-                  <p className={`text-[24px] font-bold font-mono mt-1 ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
+                  <p className={`text-[24px] font-bold font-mono mt-1 ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>
                     {pricePosition}%
                   </p>
                 </div>
-                {/* Annual Cost */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.annualCost")}</span>
-                  <p className="text-[18px] font-bold font-mono text-[#FFFCF7] mt-1">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</p>
+                {/* Similar Cars */}
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                  <p className="text-[24px] font-bold font-mono text-foreground mt-1">{similarCars.length}</p>
                 </div>
                 {/* Risk Score */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("summary.riskScore")}</span>
+                <div className="rounded-xl bg-card border border-border p-4">
+                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
                   <div className="flex items-center gap-3 mt-2">
-                    <div className="flex-1 h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                       <div
                         className={`h-full rounded-full ${riskScore <= 30 ? "bg-emerald-400" : riskScore <= 50 ? "bg-amber-400" : "bg-red-400"}`}
                         style={{ width: `${riskScore}%` }}
@@ -1937,12 +1570,12 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               </div>
 
               {/* Verdict one-liner */}
-              <div className="mt-4 rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-4">
+              <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
                 <div className="flex items-start gap-3">
-                  <Scale className="size-5 text-[#F8B4D9] shrink-0 mt-0.5" />
+                  <Scale className="size-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[12px] font-semibold text-[#F8B4D9] mb-1">{t("summary.verdict")}</p>
-                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                    <p className="text-[12px] font-semibold text-primary mb-1">{t("summary.verdict")}</p>
+                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
                   </div>
                 </div>
               </div>
@@ -1964,54 +1597,54 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
                     { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
                   ].map((spec, i) => (
-                    <div key={i} className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                      <div className="flex items-center gap-2 text-[#F8B4D9]/60 mb-2">
+                    <div key={i} className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-2 text-primary/60 mb-2">
                         {spec.icon}
-                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{spec.label}</span>
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
                       </div>
-                      <span className="text-[14px] font-semibold text-[#FFFCF7]">{spec.value}</span>
+                      <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Provenance */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <History className="size-4 text-[#F8B4D9]" />
-                    <h3 className="text-[12px] font-semibold text-[#FFFCF7]">{t("identity.provenance")}</h3>
+                    <History className="size-4 text-primary" />
+                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
                   </div>
-                  <div className="border-l-2 border-[#F8B4D9]/20 pl-4">
-                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                  <div className="border-l-2 border-primary/20 pl-4">
+                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                   </div>
                 </div>
 
                 {/* Platform data */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
+                <div className="rounded-xl bg-card border border-border p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText className="size-4 text-[#F8B4D9]" />
-                    <h3 className="text-[12px] font-semibold text-[#FFFCF7]">{t("identity.platformData")}</h3>
+                    <FileText className="size-4 text-primary" />
+                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">{t("identity.platform")}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
                       <div className="flex items-center gap-2 mt-1">
                         {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
-                        <span className="text-[12px] text-[#9CA3AF]">{car.platform.replace(/_/g, " ")}</span>
+                        <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
                       </div>
                     </div>
                     <div>
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">{t("identity.currentBid")}</span>
-                      <p className="text-[16px] font-mono font-bold text-[#F8B4D9] mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
+                      <p className="text-[16px] font-mono font-bold text-primary mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
                     </div>
                     <div>
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">{t("identity.bidCount")}</span>
-                      <p className="text-[14px] font-semibold text-[#FFFCF7] mt-1">{car.bidCount}</p>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
+                      <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
                     </div>
                     <div>
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">{t("identity.status")}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
                       <div className="flex items-center gap-1.5 mt-1">
                         {isLive && <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                        <span className={`text-[12px] font-semibold ${isLive ? "text-emerald-400" : "text-[#9CA3AF]"}`}>
+                        <span className={`text-[12px] font-semibold ${isLive ? "text-emerald-400" : "text-muted-foreground"}`}>
                           {car.status === "ENDED" ? "Ended" : isLive ? `Live · ${timeLeft(car.endTime)}` : car.status}
                         </span>
                       </div>
@@ -2022,83 +1655,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             </section>
 
             {/* ═══════════════════════════════════════
-                §3 — PRODUCTION & HERITAGE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("production")} id="section-production" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="production">
-                <SectionHeader id="production" title={t("sections.production")} />
-
-                {/* Key stat callout */}
-                <div className="rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <Factory className="size-5 text-[#F8B4D9] shrink-0 mt-0.5" />
-                    <p className="text-[13px] text-[#D1D5DB] leading-relaxed">{production.keyStat}</p>
-                  </div>
-                </div>
-
-                {/* Production stats grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                  <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                    <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("production.yearsProduced")}</span>
-                    <p className="text-[16px] font-bold text-[#FFFCF7] mt-1">{production.yearsProduced}</p>
-                  </div>
-                  <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4">
-                    <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("production.totalBuilt")}</span>
-                    <p className="text-[16px] font-bold font-mono text-[#F8B4D9] mt-1">{production.totalBuilt.toLocaleString()}</p>
-                  </div>
-                  {(production.lhd > 0 || production.rhd > 0) && (
-                    <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-4 col-span-2 md:col-span-1">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#6B7280]">{t("production.steering")}</span>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[12px] font-mono text-[#FFFCF7]">LHD: {production.lhd.toLocaleString()}</span>
-                        <span className="text-[10px] text-[#4B5563]">|</span>
-                        <span className="text-[12px] font-mono text-[#FFFCF7]">RHD: {production.rhd.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Variant breakdown with pricing */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("production.variants")}</h3>
-                  <div className="space-y-2">
-                    {production.variants.map((v, i) => {
-                      const pct = production.totalBuilt > 0 ? (v.units / production.totalBuilt) * 100 : 25
-                      return (
-                        <div key={i} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[13px] font-semibold text-[#FFFCF7]">{v.name}</span>
-                              <span className="text-[9px] font-mono text-[#4B5563]">({v.units.toLocaleString()} units)</span>
-                            </div>
-                            <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{v.priceRange}</span>
-                          </div>
-                          <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(pct, 100)}%` }}
-                              transition={{ duration: 0.6, delay: 0.1 + i * 0.08 }}
-                              className="h-full rounded-full bg-[#F8B4D9]/30"
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §4 — MARKET VALUATION & REGIONAL ARBITRAGE
+                §3 — MARKET VALUATION & REGIONAL ARBITRAGE
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("valuation")} id="section-valuation" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="valuation">
                 <SectionHeader id="valuation" title={t("sections.valuation")} />
 
                 {/* Regional breakdown bars */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("valuation.regionalBreakdown")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.regionalBreakdown")}</h3>
                   <div className="space-y-4">
                     {(["US", "EU", "UK", "JP"] as const).map(r => {
                       const rp = pricing[r]
@@ -2111,28 +1676,28 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2">
                               <span className="text-[14px]">{regionLabels[r].flag}</span>
-                              <span className="text-[12px] font-medium text-[#FFFCF7]">{regionLabels[r].short}</span>
+                              <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
                               {isBest && (
                                 <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-400/20">
                                   {t("valuation.bestBuy")}
                                 </span>
                               )}
                               {isUserRegion && !isBest && (
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/20">
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-primary/15 text-primary border border-primary/20">
                                   {t("valuation.yourMarket")}
                                 </span>
                               )}
                             </div>
-                            <span className="text-[12px] font-mono text-[#9CA3AF]">
+                            <span className="text-[12px] font-mono text-muted-foreground">
                               {fmtRegional(rp.low, rp.currency)} – {fmtRegional(rp.high, rp.currency)}
                             </span>
                           </div>
-                          <div className="relative h-[8px] rounded-full bg-white/[0.04] overflow-hidden">
+                          <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${barWidth}%` }}
                               transition={{ duration: 0.8, delay: 0.1 }}
-                              className={`h-full rounded-full ${isBest ? "bg-emerald-400" : "bg-[#F8B4D9]/40"}`}
+                              className={`h-full rounded-full ${isBest ? "bg-emerald-400" : "bg-primary/40"}`}
                             />
                           </div>
                         </div>
@@ -2142,17 +1707,17 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 </div>
 
                 {/* Market position gauge */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("valuation.marketPositionGauge")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono text-[#9CA3AF]">{fmtRegional(fairLow, regionRange.currency)}</span>
-                    <span className="text-[9px] text-[#6B7280]">{effectiveRegion} Fair Value Range</span>
-                    <span className="text-[10px] font-mono text-[#9CA3AF]">{fmtRegional(fairHigh, regionRange.currency)}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairLow, regionRange.currency)}</span>
+                    <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairHigh, regionRange.currency)}</span>
                   </div>
-                  <div className="relative h-[12px] rounded-full bg-white/[0.04] overflow-hidden">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-[#F8B4D9]/20 to-red-400/20" />
+                  <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-[#F8B4D9] border-2 border-[#0b0b10] shadow-lg shadow-[#F8B4D9]/40"
+                      className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/40"
                       style={{ left: `calc(${pricePosition}% - 7px)` }}
                     />
                   </div>
@@ -2185,7 +1750,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       </div>
                       <div>
                         <p className="text-[13px] font-semibold text-emerald-400 mb-1">{t("valuation.arbitrageAlert")}</p>
-                        <p className="text-[12px] text-[#9CA3AF] leading-relaxed">
+                        <p className="text-[12px] text-muted-foreground leading-relaxed">
                           {t("valuation.arbitrageDesc", { region: regionLabels[bestRegion]?.short || bestRegion, amount: formatUsd(arbitrageSavings) })}
                         </p>
                       </div>
@@ -2194,17 +1759,17 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 )}
 
                 {/* Comparable sales */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("valuation.comparables")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.comparables")}</h3>
                   <div className="space-y-2">
                     {comps.map((sale, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-[#FFFCF7] truncate">{sale.title}</p>
-                          <p className="text-[10px] text-[#4B5563] mt-0.5">{sale.date} · {sale.platform}</p>
+                          <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className="text-[16px] font-bold font-mono text-[#FFFCF7]">{formatPriceForRegion(sale.price, selectedRegion)}</p>
+                          <p className="text-[16px] font-bold font-mono text-foreground">{formatPriceForRegion(sale.price, selectedRegion)}</p>
                           <span className={`text-[10px] font-mono font-semibold ${sale.delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
                             {sale.delta > 0 ? "+" : ""}{sale.delta}%
                           </span>
@@ -2224,26 +1789,26 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <SectionHeader id="performance" title={t("sections.performance")} />
 
                 {/* Market Position */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">
                     Market Position
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] font-semibold text-[#F8B4D9]">Current Bid vs Fair Value</span>
-                        <span className={`text-[14px] font-mono font-bold ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>{pricePosition}%</span>
+                        <span className="text-[12px] font-semibold text-primary">Current Bid vs Fair Value</span>
+                        <span className={`text-[14px] font-mono font-bold ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>{pricePosition}%</span>
                       </div>
-                      <div className="relative h-[10px] rounded-full bg-white/[0.04] overflow-hidden">
+                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(pricePosition, 100)}%` }}
                           transition={{ duration: 0.8, delay: 0.1 }}
-                          className={`h-full rounded-full bg-gradient-to-r ${pricePosition <= 100 ? "from-emerald-400 to-emerald-400/60" : "from-[#F8B4D9] to-[#F8B4D9]/60"}`}
+                          className={`h-full rounded-full bg-gradient-to-r ${pricePosition <= 100 ? "from-emerald-400 to-emerald-400/60" : "from-primary to-primary/60"}`}
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#6B7280]">
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span>Fair Value: {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}</span>
                       <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
                     </div>
@@ -2261,9 +1826,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   const allCars = [{ ...car, isCurrent: true }, ...similarCars.map(sc => ({ ...sc.car, isCurrent: false }))]
                   const maxBid = Math.max(...allCars.map(c => c.currentBid))
                   return (
-                    <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mt-4">
-                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-1">{t("performance.similarComparison")}</h3>
-                      <p className="text-[10px] text-[#4B5563] mb-5">{t("performance.similarComparisonDesc")}</p>
+                    <div className="rounded-xl bg-card border border-border p-5 mt-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-1">{t("performance.similarComparison")}</h3>
+                      <p className="text-[10px] text-muted-foreground mb-5">{t("performance.similarComparisonDesc")}</p>
 
                       <div className="space-y-3">
                         {allCars.map((c, i) => {
@@ -2273,11 +1838,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                             <div key={i}>
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <span className={`text-[11px] font-medium truncate ${isCurrent ? "text-[#F8B4D9]" : "text-[#FFFCF7]"}`}>
+                                  <span className={`text-[11px] font-medium truncate ${isCurrent ? "text-primary" : "text-foreground"}`}>
                                     {c.title}
                                   </span>
                                   {isCurrent && (
-                                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[7px] font-bold bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/20">
+                                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[7px] font-bold bg-primary/15 text-primary border border-primary/20">
                                       THIS CAR
                                     </span>
                                   )}
@@ -2291,23 +1856,23 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                                     {c.investmentGrade}
                                   </span>
                                 </div>
-                                <span className={`text-[12px] font-mono font-semibold shrink-0 ml-3 ${isCurrent ? "text-[#F8B4D9]" : "text-[#9CA3AF]"}`}>
+                                <span className={`text-[12px] font-mono font-semibold shrink-0 ml-3 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
                                   {formatPriceForRegion(c.currentBid, selectedRegion)}
                                 </span>
                               </div>
-                              <div className="relative h-[6px] rounded-full bg-white/[0.04] overflow-hidden">
+                              <div className="relative h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${barPct}%` }}
                                   transition={{ duration: 0.7, delay: 0.1 + i * 0.08 }}
-                                  className={`h-full rounded-full ${isCurrent ? "bg-[#F8B4D9]" : "bg-white/10"}`}
+                                  className={`h-full rounded-full ${isCurrent ? "bg-primary" : "bg-foreground/10"}`}
                                 />
                               </div>
                               <div className="flex items-center gap-3 mt-1">
                                 <span className={`text-[9px] ${c.trend === "Appreciating" ? "text-emerald-400" : c.trend === "Stable" ? "text-amber-400" : "text-red-400"}`}>
                                   {c.trend}
                                 </span>
-                                <span className="text-[9px] text-[#4B5563]">{c.category}</span>
+                                <span className="text-[9px] text-muted-foreground">{c.category}</span>
                               </div>
                             </div>
                           )
@@ -2315,26 +1880,26 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       </div>
 
                       {/* Summary stats */}
-                      <div className="mt-5 pt-4 border-t border-white/5 grid grid-cols-3 gap-3">
+                      <div className="mt-5 pt-4 border-t border-border grid grid-cols-3 gap-3">
                         <div className="text-center">
-                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-[#6B7280] block">{t("performance.avgPrice")}</span>
-                          <span className="text-[13px] font-mono font-bold text-[#FFFCF7] mt-0.5 block">
+                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.avgPrice")}</span>
+                          <span className="text-[13px] font-mono font-bold text-foreground mt-0.5 block">
                             {formatPriceForRegion(Math.round(allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length), selectedRegion)}
                           </span>
                         </div>
                         <div className="text-center">
-                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-[#6B7280] block">{t("performance.priceRank")}</span>
-                          <span className="text-[13px] font-mono font-bold text-[#F8B4D9] mt-0.5 block">
+                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.priceRank")}</span>
+                          <span className="text-[13px] font-mono font-bold text-primary mt-0.5 block">
                             #{[...allCars].sort((a, b) => b.currentBid - a.currentBid).findIndex(c => "isCurrent" in c && c.isCurrent) + 1}/{allCars.length}
                           </span>
                         </div>
                         <div className="text-center">
-                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-[#6B7280] block">{t("performance.vsMkt")}</span>
+                          <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.vsMkt")}</span>
                           {(() => {
                             const avg = similarCars.reduce((s, c) => s + c.car.currentBid, 0) / similarCars.length
                             const diff = ((car.currentBid - avg) / avg) * 100
                             return (
-                              <span className={`text-[13px] font-mono font-bold mt-0.5 block ${diff > 0 ? "text-[#F8B4D9]" : "text-emerald-400"}`}>
+                              <span className={`text-[13px] font-mono font-bold mt-0.5 block ${diff > 0 ? "text-primary" : "text-emerald-400"}`}>
                                 {diff > 0 ? "+" : ""}{diff.toFixed(0)}%
                               </span>
                             )
@@ -2348,90 +1913,24 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             </section>
 
             {/* ═══════════════════════════════════════
-                §6 — TECHNICAL DEEP-DIVE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("technical")} id="section-technical" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="technical">
-                <SectionHeader id="technical" title={t("sections.technical")} />
-
-                {/* Engine specifications */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("technical.engineSpecs")}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {technical.engineDetails.map((detail, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-white/[0.02]">
-                        <span className="text-[9px] font-medium tracking-[0.12em] uppercase text-[#6B7280]">{detail.spec}</span>
-                        <p className="text-[13px] font-semibold text-[#FFFCF7] mt-1">{detail.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Known mechanical issues */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("technical.knownIssues")}</h3>
-                  <div className="space-y-2">
-                    {technical.knownIssues.map((issue, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                        <div className={`size-2 rounded-full mt-1.5 shrink-0 ${
-                          issue.severity === "critical" ? "bg-red-400" : issue.severity === "moderate" ? "bg-amber-400" : "bg-[#4B5563]"
-                        }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-[#FFFCF7]">{issue.issue}</p>
-                          <p className="text-[10px] text-[#6B7280] mt-0.5">{t("technical.estRepair")}: {issue.repairCost}</p>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                          issue.severity === "critical" ? "bg-red-500/10 text-red-400" :
-                          issue.severity === "moderate" ? "bg-amber-500/10 text-amber-400" :
-                          "bg-white/5 text-[#4B5563]"
-                        }`}>
-                          {t(`technical.${issue.severity}`)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Service intervals & costs */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Wrench className="size-4 text-[#F8B4D9]" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280]">{t("technical.serviceSchedule")}</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {technical.serviceIntervals.map((svc, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-[#FFFCF7]">{svc.item}</p>
-                          <p className="text-[10px] text-[#4B5563] mt-0.5">{svc.interval}</p>
-                        </div>
-                        <span className="text-[13px] font-mono font-semibold text-[#F8B4D9] shrink-0 ml-3">{svc.cost}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §7 — RISK ASSESSMENT
+                §5 — RISK ASSESSMENT
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("risk")} id="section-risk" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="risk">
                 <SectionHeader id="risk" title={t("sections.risk")} />
 
                 {/* Risk gauge */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("risk.overallScore")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.overallScore")}</h3>
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <div className="relative h-[10px] rounded-full bg-white/[0.04] overflow-hidden">
+                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-amber-400/30 to-red-400/30" />
                         <motion.div
                           initial={{ left: 0 }}
                           animate={{ left: `calc(${riskScore}% - 8px)` }}
                           transition={{ duration: 0.8 }}
-                          className="absolute top-1/2 -translate-y-1/2 size-[16px] rounded-full bg-white border-2 border-[#0b0b10] shadow-lg"
+                          className="absolute top-1/2 -translate-y-1/2 size-[16px] rounded-full bg-white border-2 border-background shadow-lg"
                           style={{ left: `calc(${riskScore}% - 8px)` }}
                         />
                       </div>
@@ -2445,120 +1944,55 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       <span className={`text-[28px] font-black ${riskScore <= 30 ? "text-emerald-400" : riskScore <= 50 ? "text-amber-400" : "text-red-400"}`}>
                         {riskScore}
                       </span>
-                      <span className="text-[12px] text-[#4B5563]">/100</span>
+                      <span className="text-[12px] text-muted-foreground">/100</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Red flags */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("risk.knownIssues")}</h3>
-                  <div className="space-y-2">
-                    {flags.map((flag, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[rgba(248,180,217,0.03)] border border-white/[0.03]">
-                        <AlertTriangle className="size-4 text-[#F8B4D9] mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] text-[#FFFCF7]">{flag}</p>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                          i < 2 ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]" : "bg-white/5 text-[#4B5563]"
-                        }`}>
-                          {i < 2 ? t("risk.critical") : t("risk.monitor")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §8 — CONDITION GUIDE
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("condition")} id="section-condition" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="condition">
-                <SectionHeader id="condition" title={t("sections.condition")} />
-
-                {/* Bodywork / Rust-prone areas */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("condition.rustAreas")}</h3>
-                  <div className="space-y-2">
-                    {condition.rustAreas.map((area, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`size-3 rounded-full shrink-0 ${
-                            area.severity === "high" ? "bg-red-400" : area.severity === "medium" ? "bg-amber-400" : "bg-emerald-400"
-                          }`} />
-                          <span className="text-[13px] text-[#FFFCF7]">{area.area}</span>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                          area.severity === "high" ? "bg-red-500/10 text-red-400" :
-                          area.severity === "medium" ? "bg-amber-500/10 text-amber-400" :
-                          "bg-emerald-500/10 text-emerald-400"
-                        }`}>
-                          {t(`condition.${area.severity}`)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Interior condition concerns */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("condition.interiorIssues")}</h3>
-                  <div className="space-y-2">
-                    {condition.interiorIssues.map((item, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.03]">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[13px] font-semibold text-[#FFFCF7]">{item.item}</span>
-                          <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                            item.partAvailability === "rare" ? "bg-red-500/10 text-red-400" :
-                            item.partAvailability === "moderate" ? "bg-amber-500/10 text-amber-400" :
-                            "bg-emerald-500/10 text-emerald-400"
+                {/* Red flags — only show when DB data available */}
+                {hasDbRiskData ? (
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.knownIssues")}</h3>
+                    <div className="space-y-2">
+                      {flags.map((flag, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-border">
+                          <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] text-foreground">{flag}</p>
+                          </div>
+                          <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                            i < 2 ? "bg-primary/15 text-primary" : "bg-foreground/5 text-muted-foreground"
                           }`}>
-                            {t(`condition.parts_${item.partAvailability}`)}
+                            {i < 2 ? t("risk.critical") : t("risk.monitor")}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#6B7280]">{item.commonProblem}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Model-specific inspection priorities */}
-                <div className="rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Search className="size-4 text-[#F8B4D9]" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#F8B4D9]">{t("condition.inspectionPriorities")}</h3>
+                ) : (
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <p className="text-[13px] text-muted-foreground text-center">
+                      Detailed risk analysis not yet available for this vehicle.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    {condition.inspectionPriorities.map((priority, i) => (
-                      <div key={i} className="flex items-start gap-3 p-2.5">
-                        <span className="flex items-center justify-center size-5 rounded-full bg-[#F8B4D9]/10 text-[9px] font-bold text-[#F8B4D9] shrink-0">
-                          {i + 1}
-                        </span>
-                        <span className="text-[13px] text-[#D1D5DB]">{priority}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </PaywallSection>
             </section>
 
             {/* ═══════════════════════════════════════
-                §9 — DUE DILIGENCE TOOLKIT
+                §6 — DUE DILIGENCE TOOLKIT
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="dueDiligence">
                 <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
 
                 {/* Questions to ask */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280]">{t("dueDiligence.questionsToAsk")}</h3>
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("dueDiligence.questionsToAsk")}</h3>
                     <button
                       onClick={handleCopyQuestions}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/5 text-[10px] font-medium text-[#9CA3AF] hover:text-[#F8B4D9] hover:border-[#F8B4D9]/20 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
                     >
                       {copiedQuestions ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
                       {copiedQuestions ? t("dueDiligence.copied") : t("dueDiligence.copyAll")}
@@ -2566,19 +2000,19 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   </div>
                   <div className="space-y-2">
                     {questions.map((q, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02]">
-                        <span className="flex items-center justify-center size-6 rounded-full bg-[#F8B4D9]/10 text-[10px] font-bold text-[#F8B4D9] shrink-0">
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                        <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
                           {i + 1}
                         </span>
-                        <span className="text-[13px] text-[#D1D5DB]">{q}</span>
+                        <span className="text-[13px] text-foreground/80">{q}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Inspection checklist */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("dueDiligence.inspectionChecklist")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("dueDiligence.inspectionChecklist")}</h3>
                   <div className="space-y-2">
                     {[
                       { item: "Compression test all cylinders", critical: true },
@@ -2588,15 +2022,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       { item: "Road test (minimum 30 minutes)", critical: true },
                       { item: "Fluid analysis (engine oil, transmission)", critical: false },
                     ].map((check, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                         <div className="flex items-center gap-3">
-                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-[#F8B4D9]/10" : "bg-white/5"}`}>
-                            <CheckCircle2 className={`size-3 ${check.critical ? "text-[#F8B4D9]" : "text-[#4B5563]"}`} />
+                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-primary/10" : "bg-foreground/5"}`}>
+                            <CheckCircle2 className={`size-3 ${check.critical ? "text-primary" : "text-muted-foreground"}`} />
                           </div>
-                          <span className="text-[13px] text-[#D1D5DB]">{check.item}</span>
+                          <span className="text-[13px] text-foreground/80">{check.item}</span>
                         </div>
                         <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                          check.critical ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9]" : "bg-[#4B5563]/20 text-[#4B5563]"
+                          check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
                         }`}>
                           {check.critical ? t("dueDiligence.required") : t("dueDiligence.recommended")}
                         </span>
@@ -2614,86 +2048,76 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
               <PaywallSection sectionId="ownership">
                 <SectionHeader id="ownership" title={t("sections.ownership")} />
 
-                {/* Annual costs */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("ownership.annualCosts")}</h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: t("ownership.insurance"), value: costs.insurance, icon: <Shield className="size-4 text-[#4B5563]" /> },
-                      { label: t("ownership.storage"), value: costs.storage, icon: <MapPin className="size-4 text-[#4B5563]" /> },
-                      { label: t("ownership.maintenance"), value: costs.maintenance, icon: <Wrench className="size-4 text-[#4B5563]" /> },
-                    ].map((item, i) => {
-                      const pct = totalAnnualCost > 0 ? (item.value / totalAnnualCost) * 100 : 33
-                      return (
-                        <div key={i}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              {item.icon}
-                              <span className="text-[12px] text-[#9CA3AF]">{item.label}</span>
+                {/* Annual costs — only shown when DB data available */}
+                {costs ? (
+                  <>
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.annualCosts")}</h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: t("ownership.insurance"), value: costs.insurance, icon: <Shield className="size-4 text-muted-foreground" /> },
+                          { label: t("ownership.maintenance"), value: costs.maintenance, icon: <Wrench className="size-4 text-muted-foreground" /> },
+                        ].map((item, i) => {
+                          const pct = totalAnnualCost > 0 ? (item.value / totalAnnualCost) * 100 : 50
+                          return (
+                            <div key={i}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  {item.icon}
+                                  <span className="text-[12px] text-muted-foreground">{item.label}</span>
+                                </div>
+                                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                              </div>
+                              <div className="relative h-[4px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${pct}%` }}
+                                  transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
+                                  className="h-full rounded-full bg-primary/30"
+                                />
+                              </div>
                             </div>
-                            <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(item.value, selectedRegion)}</span>
-                          </div>
-                          <div className="relative h-[4px] rounded-full bg-white/[0.04] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${pct}%` }}
-                              transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
-                              className="h-full rounded-full bg-[#F8B4D9]/30"
-                            />
-                          </div>
+                          )
+                        })}
+                        <div className="flex items-center justify-between pt-3 border-t border-border">
+                          <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
+                          <span className="text-[20px] font-mono font-bold text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
                         </div>
-                      )
-                    })}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                      <span className="text-[13px] font-semibold text-[#FFFCF7]">{t("ownership.totalAnnual")}</span>
-                      <span className="text-[20px] font-mono font-bold text-[#F8B4D9]">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Cost projection */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-4">{t("ownership.fiveYearProjection")}</h3>
-                  <div className="flex items-end gap-2 md:gap-3 h-[120px]">
-                    {[1, 2, 3, 4, 5].map(year => {
-                      const cumulative = totalAnnualCost * year
-                      const maxCumulative = totalAnnualCost * 5
-                      const barHeight = (cumulative / maxCumulative) * 100
-                      return (
-                        <div key={year} className="flex-1 flex flex-col items-center gap-1">
-                          <span className="text-[9px] font-mono text-[#6B7280]">{formatPriceForRegion(cumulative, selectedRegion)}</span>
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${barHeight}%` }}
-                            transition={{ duration: 0.6, delay: year * 0.1 }}
-                            className="w-full rounded-t-md bg-[#F8B4D9]/20"
-                          />
-                          <span className="text-[9px] text-[#4B5563]">Yr {year}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Shipping estimates */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Truck className="size-4 text-[#F8B4D9]" />
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280]">{t("ownership.shippingEstimates")}</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { label: t("ownership.domestic"), value: shipping.domestic },
-                      { label: t("ownership.euImport"), value: shipping.euImport },
-                      { label: t("ownership.ukImport"), value: shipping.ukImport },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                        <span className="text-[13px] text-[#9CA3AF]">{item.label}</span>
-                        <span className="text-[14px] font-mono font-semibold text-[#FFFCF7]">{formatPriceForRegion(item.value, selectedRegion)}</span>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Cost projection */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.fiveYearProjection")}</h3>
+                      <div className="flex items-end gap-2 md:gap-3 h-[120px]">
+                        {[1, 2, 3, 4, 5].map(year => {
+                          const cumulative = totalAnnualCost * year
+                          const maxCumulative = totalAnnualCost * 5
+                          const barHeight = (cumulative / maxCumulative) * 100
+                          return (
+                            <div key={year} className="flex-1 flex flex-col items-center gap-1">
+                              <span className="text-[9px] font-mono text-muted-foreground">{formatPriceForRegion(cumulative, selectedRegion)}</span>
+                              <motion.div
+                                initial={{ height: 0 }}
+                                animate={{ height: `${barHeight}%` }}
+                                transition={{ duration: 0.6, delay: year * 0.1 }}
+                                className="w-full rounded-t-md bg-primary/20"
+                              />
+                              <span className="text-[9px] text-muted-foreground">Yr {year}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                    <p className="text-[13px] text-muted-foreground text-center">
+                      Ownership cost data not yet available for this vehicle.
+                    </p>
                   </div>
-                </div>
+                )}
+
               </PaywallSection>
             </section>
 
@@ -2705,41 +2129,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <SectionHeader id="marketContext" title={t("sections.marketContext")} />
 
                 {/* Brand thesis */}
-                <div className="rounded-xl bg-[rgba(248,180,217,0.06)] border border-[rgba(248,180,217,0.15)] p-5 mb-4">
+                <div className="rounded-xl bg-primary/5 border border-primary/15 p-5 mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="size-1.5 rounded-full bg-[#F8B4D9]" />
-                    <h3 className="text-[12px] font-semibold text-[#F8B4D9]">{t("marketContext.brandThesis")}: {car.make}</h3>
+                    <div className="size-1.5 rounded-full bg-primary" />
+                    <h3 className="text-[12px] font-semibold text-primary">{t("marketContext.brandThesis")}: {car.make}</h3>
                   </div>
-                  <p className="text-[13px] leading-relaxed text-[#D1D5DB] whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                  <p className="text-[13px] leading-relaxed text-foreground/80 whitespace-pre-line">{stripHtml(car.thesis)}</p>
                 </div>
 
-                {/* Market events */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("marketContext.marketEvents")}</h3>
-                  <div className="space-y-2">
-                    {events.map((event, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02]">
-                        <div className="flex items-center gap-3">
-                          <span className={`size-2 rounded-full ${
-                            event.impact === "positive" ? "bg-emerald-400" :
-                            event.impact === "negative" ? "bg-red-400" : "bg-[#4B5563]"
-                          }`} />
-                          <div>
-                            <p className="text-[13px] text-[#FFFCF7]">{event.name}</p>
-                            <p className="text-[10px] text-[#4B5563]">{event.type}</p>
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                          event.impact === "positive" ? "bg-emerald-500/10 text-emerald-400" :
-                          event.impact === "negative" ? "bg-red-500/10 text-red-400" :
-                          "bg-white/5 text-[#4B5563]"
-                        }`}>
-                          {event.impact === "positive" ? t("marketContext.valuePositive") : event.impact === "negative" ? t("marketContext.valueNegative") : t("marketContext.neutral")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </PaywallSection>
             </section>
 
@@ -2749,14 +2146,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             <section ref={setSectionRef("similar")} id="section-similar" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="similar">
                 <SectionHeader id="similar" title={t("sections.similar")} />
-                <p className="text-[11px] text-[#6B7280] mb-4">{t("similar.compareNote")}</p>
+                <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {similarCars.slice(0, 6).map(sc => (
                     <Link
                       key={sc.car.id}
                       href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
-                      className="group flex items-center gap-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-[rgba(248,180,217,0.15)] p-3 transition-all"
+                      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
                     >
                       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
                         <Image
@@ -2768,9 +2165,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{sc.car.title}</p>
+                        <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] font-mono font-semibold text-[#F8B4D9]">{formatPriceForRegion(sc.car.currentBid, selectedRegion)}</span>
+                          <span className="text-[12px] font-mono font-semibold text-primary">{formatPriceForRegion(sc.car.currentBid, selectedRegion)}</span>
                           <span className={`text-[9px] font-bold ${
                             sc.car.investmentGrade === "AAA" ? "text-emerald-400" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
                           }`}>{sc.car.investmentGrade}</span>
@@ -2779,14 +2176,14 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         {sc.matchReasons.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
                             {sc.matchReasons.slice(0, 2).map(reason => (
-                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#6B7280]">
+                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
                                 {reason}
                               </span>
                             ))}
                           </div>
                         )}
                       </div>
-                      <ChevronRight className="size-4 text-[#4B5563] group-hover:text-[#F8B4D9] transition-colors shrink-0" />
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                     </Link>
                   ))}
                 </div>
@@ -2801,11 +2198,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <SectionHeader id="verdict" title={t("sections.verdict")} />
 
                 {/* Verdict card */}
-                <div className="rounded-2xl bg-gradient-to-br from-[rgba(248,180,217,0.08)] via-[rgba(15,14,22,0.8)] to-[rgba(15,14,22,0.6)] border border-[rgba(248,180,217,0.2)] p-6 md:p-8 mb-4">
+                <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
                   <div className="text-center mb-6">
-                    <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#6B7280]">{t("verdict.recommendation")}</span>
+                    <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
                     <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
-                      verdict === "buy" ? "text-emerald-400" : verdict === "hold" ? "text-amber-400" : "text-[#F8B4D9]"
+                      verdict === "buy" ? "text-emerald-400" : verdict === "hold" ? "text-amber-400" : "text-primary"
                     }`}>
                       {t(`verdict.${verdict}`)}
                     </p>
@@ -2813,53 +2210,53 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
                   <div className="flex items-center justify-center gap-4 mb-6">
                     <div className="text-center">
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">Grade</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Grade</span>
                       <p className={`text-[20px] font-black ${
                         car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
                       }`}>{car.investmentGrade}</p>
                     </div>
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">Fair Value</span>
-                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-emerald-400" : "text-[#F8B4D9]"}`}>{pricePosition}%</p>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Fair Value</span>
+                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>{pricePosition}%</p>
                     </div>
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
-                      <span className="text-[9px] text-[#6B7280] uppercase tracking-wider">Risk</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
                       <p className={`text-[20px] font-black ${riskScore <= 30 ? "text-emerald-400" : riskScore <= 50 ? "text-amber-400" : "text-red-400"}`}>{riskScore}/100</p>
                     </div>
                   </div>
 
                   {/* Strategy */}
-                  <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
-                    <h4 className="text-[11px] font-semibold text-[#FFFCF7] mb-2">{t("verdict.strategyTitle")}</h4>
-                    <p className="text-[12px] text-[#9CA3AF] leading-relaxed">
+                  <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
+                    <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
+                    <p className="text-[12px] text-muted-foreground leading-relaxed">
                       {t(`verdict.${verdict}Strategy`)}
                     </p>
                   </div>
                 </div>
 
                 {/* Key takeaways */}
-                <div className="rounded-xl bg-[rgba(15,14,22,0.6)] border border-white/5 p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#6B7280] mb-3">{t("verdict.keyTakeaways")}</h3>
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
                   <div className="space-y-2">
                     {[
                       `${car.investmentGrade} investment grade — ${pricePosition}% of fair value`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      `Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`,
+                      ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
                     ].map((takeaway, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/[0.02]">
-                        <CheckCircle2 className="size-4 text-[#F8B4D9] mt-0.5 shrink-0" />
-                        <span className="text-[13px] text-[#D1D5DB]">{takeaway}</span>
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                        <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
+                        <span className="text-[13px] text-foreground/80">{takeaway}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Disclaimer */}
-                <div className="rounded-xl bg-white/[0.02] border border-white/[0.03] p-4">
-                  <p className="text-[10px] text-[#4B5563] leading-relaxed italic">
+                <div className="rounded-xl bg-foreground/2 border border-border p-4">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed italic">
                     {t("verdict.disclaimer")}
                   </p>
                 </div>
@@ -2872,16 +2269,16 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 
       {/* ═══ MOBILE: Floating download button ═══ */}
       {hasAccess && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0b0b10]/90 backdrop-blur-xl border-t border-[rgba(248,180,217,0.08)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-primary/10">
           <div className="px-4 py-2.5">
             <button
               onClick={() => setShowDownloadSheet(true)}
               disabled={downloadingPdf || downloadingExcel}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.06)] text-[#F8B4D9] font-semibold text-[12px] hover:bg-[rgba(248,180,217,0.1)] active:scale-[0.97] transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-primary/20 bg-primary/5 text-primary font-semibold text-[12px] hover:bg-primary/10 active:scale-[0.97] transition-all disabled:opacity-50"
             >
               {(downloadingPdf || downloadingExcel) ? (
                 <>
-                  <div className="size-3.5 rounded-full border-2 border-[#F8B4D9]/30 border-t-[#F8B4D9] animate-spin" />
+                  <div className="size-3.5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
                   <span>{t("downloadGenerating")}</span>
                 </>
               ) : (
@@ -2905,25 +2302,25 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[70] flex items-end md:items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/60 backdrop-blur-sm" onClick={() => !downloadingPdf && !downloadingExcel && setShowDownloadSheet(false)} />
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={() => !downloadingPdf && !downloadingExcel && setShowDownloadSheet(false)} />
 
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 28, stiffness: 250, delay: 0.05 }}
-              className="relative w-full max-w-sm mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-[#111114] border border-white/10 shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
             >
-              {/* Pink accent line */}
-              <div className="h-[2px] bg-gradient-to-r from-transparent via-[#F8B4D9] to-transparent" />
+              {/* Accent line */}
+              <div className="h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent" />
 
               {/* Header */}
               <div className="px-6 pt-6 pb-4 text-center">
-                <div className="size-11 rounded-full bg-[#F8B4D9]/10 flex items-center justify-center mx-auto mb-3">
-                  <Download className="size-5 text-[#F8B4D9]" />
+                <div className="size-11 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Download className="size-5 text-primary" />
                 </div>
-                <h3 className="text-[16px] font-bold text-[#FFFCF7]">{t("downloadButton")}</h3>
-                <p className="text-[11px] text-[#6B7280] mt-1">{car.title}</p>
+                <h3 className="text-[16px] font-bold text-foreground">{t("downloadButton")}</h3>
+                <p className="text-[11px] text-muted-foreground mt-1">{car.title}</p>
               </div>
 
               {/* Options */}
@@ -2931,10 +2328,10 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <button
                   onClick={() => { handleDownloadPdf(); setShowDownloadSheet(false) }}
                   disabled={downloadingPdf}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] active:scale-[0.98] transition-all disabled:opacity-60"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-primary text-primary-foreground hover:bg-primary/80 active:scale-[0.98] transition-all disabled:opacity-60"
                 >
                   {downloadingPdf ? (
-                    <div className="size-5 rounded-full border-2 border-[#0b0b10]/30 border-t-[#0b0b10] animate-spin shrink-0" />
+                    <div className="size-5 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin shrink-0" />
                   ) : (
                     <FileText className="size-5 shrink-0" />
                   )}
@@ -2948,18 +2345,18 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <button
                   onClick={() => { handleDownloadExcel(); setShowDownloadSheet(false) }}
                   disabled={downloadingExcel}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/[0.03] text-[#FFFCF7] hover:bg-white/[0.06] active:scale-[0.98] transition-all disabled:opacity-60"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-secondary text-foreground hover:bg-accent active:scale-[0.98] transition-all disabled:opacity-60"
                 >
                   {downloadingExcel ? (
-                    <div className="size-5 rounded-full border-2 border-[#F8B4D9]/30 border-t-[#F8B4D9] animate-spin shrink-0" />
+                    <div className="size-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0" />
                   ) : (
-                    <BarChart3 className="size-5 text-[#F8B4D9] shrink-0" />
+                    <BarChart3 className="size-5 text-primary shrink-0" />
                   )}
                   <div className="text-left flex-1">
                     <p className="text-[13px] font-semibold">{t("downloadExcel")}</p>
-                    <p className="text-[10px] text-[#6B7280]">{t("downloadExcelDesc")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("downloadExcelDesc")}</p>
                   </div>
-                  <ChevronRight className="size-4 text-[#4B5563] shrink-0" />
+                  <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 </button>
               </div>
             </motion.div>
@@ -2977,22 +2374,22 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[80] flex items-end md:items-center justify-center"
           >
-            <div className="absolute inset-0 bg-[#0b0b10]/70 backdrop-blur-md" onClick={() => !purchaseProcessing && setShowPricing(false)} />
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-md" onClick={() => !purchaseProcessing && setShowPricing(false)} />
 
             <motion.div
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-              className="relative w-full max-w-2xl mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-[#0F1012] border border-white/10 shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-2xl mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
             >
               {/* Top gradient bar */}
-              <div className="h-0.5 bg-gradient-to-r from-[#F8B4D9] via-[#F8B4D9]/40 to-transparent" />
+              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
 
               {/* Close button */}
               <button
                 onClick={() => !purchaseProcessing && setShowPricing(false)}
-                className="absolute top-4 right-4 z-10 size-8 rounded-full bg-white/5 flex items-center justify-center text-[#6B7280] hover:text-[#FFFCF7] hover:bg-white/10 transition-all"
+                className="absolute top-4 right-4 z-10 size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
               >
                 <span className="text-[16px]">&times;</span>
               </button>
@@ -3012,48 +2409,48 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   >
                     <Check className="size-8 text-emerald-400" />
                   </motion.div>
-                  <h3 className="text-[20px] font-bold text-[#FFFCF7]">{tPricing("successTitle")}</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-2">{tPricing("successDesc")}</p>
+                  <h3 className="text-[20px] font-bold text-foreground">{tPricing("successTitle")}</h3>
+                  <p className="text-[13px] text-muted-foreground mt-2">{tPricing("successDesc")}</p>
                 </motion.div>
               ) : (
                 <>
                   {/* Header */}
                   <div className="px-6 pt-8 pb-2 text-center">
-                    <div className="size-12 rounded-full bg-[#F8B4D9]/10 flex items-center justify-center mx-auto mb-3">
-                      <Scale className="size-6 text-[#F8B4D9]" />
+                    <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Scale className="size-6 text-primary" />
                     </div>
-                    <h3 className="text-[20px] font-bold text-[#FFFCF7]">{tPricing("title")}</h3>
-                    <p className="text-[12px] text-[#6B7280] mt-1 max-w-md mx-auto">{tPricing("subtitle")}</p>
+                    <h3 className="text-[20px] font-bold text-foreground">{tPricing("title")}</h3>
+                    <p className="text-[12px] text-muted-foreground mt-1 max-w-md mx-auto">{tPricing("subtitle")}</p>
                   </div>
 
                   {/* Plans grid */}
                   <div className="px-6 pt-5 pb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                     {/* ─── SINGLE REPORT ─── */}
-                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 flex flex-col">
+                    <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
                       <div className="mb-4">
-                        <h4 className="text-[13px] font-semibold text-[#FFFCF7]">{tPricing("single.name")}</h4>
-                        <p className="text-[11px] text-[#6B7280] mt-0.5">{tPricing("single.desc")}</p>
+                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("single.name")}</h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("single.desc")}</p>
                       </div>
                       <div className="mb-4">
-                        <span className="text-[32px] font-black text-[#FFFCF7]">{tPricing("single.price")}</span>
-                        <span className="text-[11px] text-[#4B5563] ml-1.5">{tPricing("single.period")}</span>
+                        <span className="text-[32px] font-black text-foreground">{tPricing("single.price")}</span>
+                        <span className="text-[11px] text-muted-foreground ml-1.5">{tPricing("single.period")}</span>
                       </div>
                       <div className="space-y-2 mb-5 flex-1">
                         {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
                           <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-[#F8B4D9] shrink-0" />
-                            <span className="text-[11px] text-[#9CA3AF]">{tPricing(`single.${key}`)}</span>
+                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                            <span className="text-[11px] text-muted-foreground">{tPricing(`single.${key}`)}</span>
                           </div>
                         ))}
                       </div>
                       <button
                         onClick={() => handlePurchase("single")}
                         disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-white/10 text-[#FFFCF7] font-semibold text-[12px] hover:bg-white/[0.05] disabled:opacity-50 transition-all"
+                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
                       >
                         {purchaseProcessing === "single" ? (
                           <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-[#F8B4D9] border-t-transparent animate-spin" />
+                            <div className="size-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                             {tPricing("processing")}
                           </span>
                         ) : tPricing("single.cta")}
@@ -3061,37 +2458,37 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     </div>
 
                     {/* ─── EXPLORER PACK (HIGHLIGHTED) ─── */}
-                    <div className="rounded-xl border border-[#F8B4D9]/30 bg-[rgba(248,180,217,0.04)] p-5 flex flex-col relative">
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col relative">
                       <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                        <span className="px-3 py-1 rounded-full bg-[#F8B4D9] text-[#0b0b10] text-[9px] font-bold uppercase tracking-wider">
+                        <span className="px-3 py-1 rounded-full bg-primary text-background text-[9px] font-bold uppercase tracking-wider">
                           {tPricing("explorer.badge")}
                         </span>
                       </div>
                       <div className="mb-4 mt-1">
-                        <h4 className="text-[13px] font-semibold text-[#FFFCF7]">{tPricing("explorer.name")}</h4>
-                        <p className="text-[11px] text-[#6B7280] mt-0.5">{tPricing("explorer.desc")}</p>
+                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("explorer.name")}</h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("explorer.desc")}</p>
                       </div>
                       <div className="mb-1">
-                        <span className="text-[32px] font-black text-[#FFFCF7]">{tPricing("explorer.price")}</span>
-                        <span className="text-[11px] text-[#4B5563] ml-1.5">{tPricing("explorer.period")}</span>
+                        <span className="text-[32px] font-black text-foreground">{tPricing("explorer.price")}</span>
+                        <span className="text-[11px] text-muted-foreground ml-1.5">{tPricing("explorer.period")}</span>
                       </div>
-                      <p className="text-[10px] text-[#F8B4D9] font-mono font-semibold mb-4">{tPricing("explorer.perReport")}</p>
+                      <p className="text-[10px] text-primary font-mono font-semibold mb-4">{tPricing("explorer.perReport")}</p>
                       <div className="space-y-2 mb-5 flex-1">
                         {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
                           <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-[#F8B4D9] shrink-0" />
-                            <span className="text-[11px] text-[#9CA3AF]">{tPricing(`explorer.${key}`)}</span>
+                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                            <span className="text-[11px] text-muted-foreground">{tPricing(`explorer.${key}`)}</span>
                           </div>
                         ))}
                       </div>
                       <button
                         onClick={() => handlePurchase("explorer")}
                         disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl bg-[#F8B4D9] text-[#0b0b10] font-semibold text-[12px] hover:bg-[#f4cbde] disabled:opacity-50 active:scale-[0.97] transition-all"
+                        className="w-full py-3 rounded-xl bg-primary text-background font-semibold text-[12px] hover:bg-primary/80 disabled:opacity-50 active:scale-[0.97] transition-all"
                       >
                         {purchaseProcessing === "explorer" ? (
                           <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-[#0b0b10] border-t-transparent animate-spin" />
+                            <div className="size-3.5 rounded-full border-2 border-background border-t-transparent animate-spin" />
                             {tPricing("processing")}
                           </span>
                         ) : tPricing("explorer.cta")}
@@ -3099,31 +2496,31 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     </div>
 
                     {/* ─── UNLIMITED ─── */}
-                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 flex flex-col">
+                    <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
                       <div className="mb-4">
-                        <h4 className="text-[13px] font-semibold text-[#FFFCF7]">{tPricing("unlimited.name")}</h4>
-                        <p className="text-[11px] text-[#6B7280] mt-0.5">{tPricing("unlimited.desc")}</p>
+                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("unlimited.name")}</h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("unlimited.desc")}</p>
                       </div>
                       <div className="mb-4">
-                        <span className="text-[32px] font-black text-[#FFFCF7]">{tPricing("unlimited.price")}</span>
-                        <span className="text-[11px] text-[#4B5563] ml-0.5">{tPricing("unlimited.period")}</span>
+                        <span className="text-[32px] font-black text-foreground">{tPricing("unlimited.price")}</span>
+                        <span className="text-[11px] text-muted-foreground ml-0.5">{tPricing("unlimited.period")}</span>
                       </div>
                       <div className="space-y-2 mb-5 flex-1">
                         {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
                           <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-[#F8B4D9] shrink-0" />
-                            <span className="text-[11px] text-[#9CA3AF]">{tPricing(`unlimited.${key}`)}</span>
+                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                            <span className="text-[11px] text-muted-foreground">{tPricing(`unlimited.${key}`)}</span>
                           </div>
                         ))}
                       </div>
                       <button
                         onClick={() => handlePurchase("unlimited")}
                         disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-white/10 text-[#FFFCF7] font-semibold text-[12px] hover:bg-white/[0.05] disabled:opacity-50 transition-all"
+                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
                       >
                         {purchaseProcessing === "unlimited" ? (
                           <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-[#F8B4D9] border-t-transparent animate-spin" />
+                            <div className="size-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                             {tPricing("processing")}
                           </span>
                         ) : tPricing("unlimited.cta")}
@@ -3134,12 +2531,12 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   {/* Footer */}
                   <div className="px-6 pb-6 pt-2">
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <Coins className="size-3.5 text-[#F8B4D9]" />
-                      <span className="text-[11px] text-[#6B7280]">
-                        {tPricing("currentBalance")}: <span className="font-mono font-semibold text-[#FFFCF7]">{tokens.toLocaleString()}</span> {tPricing("tokens")}
+                      <Coins className="size-3.5 text-primary" />
+                      <span className="text-[11px] text-muted-foreground">
+                        {tPricing("currentBalance")}: <span className="font-mono font-semibold text-foreground">{tokens.toLocaleString()}</span> {tPricing("tokens")}
                       </span>
                     </div>
-                    <p className="text-[10px] text-[#4B5563] text-center">
+                    <p className="text-[10px] text-muted-foreground text-center">
                       {tPricing("guarantee")}
                     </p>
                   </div>

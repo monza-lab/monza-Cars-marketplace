@@ -17,7 +17,7 @@ export default function Error({
 
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center px-4">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(248,180,217,0.03),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,115,138,0.03),transparent_70%)]" />
 
       <div className="relative text-center max-w-md">
         {/* Icon */}
@@ -26,17 +26,17 @@ export default function Error({
         </div>
 
         {/* Heading */}
-        <h1 className="text-2xl font-bold tracking-tight text-[#FFFCF7] sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Something went wrong
         </h1>
-        <p className="mt-3 text-[14px] text-[#6B7280] leading-relaxed">
+        <p className="mt-3 text-[14px] text-muted-foreground leading-relaxed">
           An unexpected error occurred. This has been logged automatically.
           Try refreshing the page or head back to the dashboard.
         </p>
 
         {/* Error digest (dev info) */}
         {error.digest && (
-          <p className="mt-3 text-[11px] font-mono text-[#4B5563]">
+          <p className="mt-3 text-[11px] font-mono text-muted-foreground">
             Error ID: {error.digest}
           </p>
         )}
@@ -52,14 +52,14 @@ export default function Error({
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={reset}
-            className="flex items-center gap-2 rounded-xl bg-[#F8B4D9] px-6 py-3 text-[13px] font-semibold text-[#0b0b10] transition-colors hover:bg-[#f4cbde]"
+            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
           >
             <RotateCcw className="size-4" />
             Try Again
           </button>
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3 text-[13px] font-medium text-[#D1D5DB] transition-colors hover:bg-white/[0.08]"
+            className="flex items-center gap-2 rounded-xl border border-border bg-foreground/4 px-6 py-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-foreground/8"
           >
             <Home className="size-4" />
             Back to Home
@@ -67,7 +67,7 @@ export default function Error({
         </div>
 
         {/* Bottom tag */}
-        <p className="mt-12 text-[10px] uppercase tracking-widest text-[#4B5563]">
+        <p className="mt-12 text-[10px] uppercase tracking-widest text-muted-foreground">
           Monza Lab &middot; Investment-Grade Automotive Assets
         </p>
       </div>

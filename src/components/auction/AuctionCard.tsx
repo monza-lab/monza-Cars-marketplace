@@ -35,7 +35,7 @@ interface AuctionCardProps {
 const PLATFORM_CONFIG: Record<Platform, { label: string; className: string }> = {
   BRING_A_TRAILER: {
     label: "BaT",
-    className: "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border-[rgba(248,180,217,0.2)]",
+    className: "bg-primary/15 text-primary border-primary/20",
   },
   CARS_AND_BIDS: {
     label: "C&B",
@@ -54,19 +54,19 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; className: string }> = 
 const STATUS_CONFIG: Record<AuctionStatus, { label: string; className: string }> = {
   ACTIVE: {
     label: "Active",
-    className: "bg-[rgba(248,180,217,0.1)] text-[#F8B4D9] border-[rgba(248,180,217,0.2)]",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   ENDING_SOON: {
     label: "Ending Soon",
-    className: "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border-[rgba(248,180,217,0.25)] animate-pulse",
+    className: "bg-primary/15 text-primary border-primary/25 animate-pulse",
   },
   SOLD: {
     label: "Sold",
-    className: "bg-[rgba(255,252,247,0.05)] text-[rgba(255,252,247,0.4)] border-[rgba(255,252,247,0.1)]",
+    className: "bg-foreground/5 text-muted-foreground/50 border-border",
   },
   ENDED: {
     label: "Ended",
-    className: "bg-[rgba(255,252,247,0.05)] text-[rgba(255,252,247,0.4)] border-[rgba(255,252,247,0.1)]",
+    className: "bg-foreground/5 text-muted-foreground/50 border-border",
   },
   NO_SALE: {
     label: "No Sale",
@@ -96,15 +96,15 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
         whileHover={{ y: -4 }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
         className={cn(
-          "overflow-hidden rounded-2xl border border-[rgba(248,180,217,0.08)] bg-[rgba(15,14,22,0.9)]",
+          "overflow-hidden rounded-2xl border border-primary/8 bg-card",
           "transition-all duration-300",
-          "hover:border-[rgba(248,180,217,0.2)] hover:shadow-2xl hover:shadow-[rgba(248,180,217,0.04)]",
+          "hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/4",
           isEnded && "opacity-70 group-hover:opacity-100",
           className
         )}
       >
         {/* Image */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-[#0b0b10]">
+        <div className="relative aspect-[16/10] overflow-hidden bg-background">
           {heroImage ? (
             <motion.div
               className="size-full"
@@ -123,12 +123,12 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             </motion.div>
           ) : (
             <div className="flex size-full items-center justify-center">
-              <ImageOff className="size-10 text-[rgba(255,252,247,0.1)]" />
+              <ImageOff className="size-10 text-[rgba(232,226,222,0.1)]" />
             </div>
           )}
 
           {/* Gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0b0b10] via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />
 
           {/* Platform badge */}
           <span
@@ -152,7 +152,7 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
 
           {/* No Reserve */}
           {reserveStatus === "NO_RESERVE" && (
-            <span className="absolute bottom-3 left-3 rounded-full border border-[rgba(248,180,217,0.2)] bg-[rgba(248,180,217,0.1)] text-[10px] font-semibold tracking-[0.1em] uppercase text-[#F8B4D9] backdrop-blur-sm px-2.5 py-0.5">
+            <span className="absolute bottom-3 left-3 rounded-full border border-primary/20 bg-primary/10 text-[10px] font-semibold tracking-[0.1em] uppercase text-primary backdrop-blur-sm px-2.5 py-0.5">
               No Reserve
             </span>
           )}
@@ -161,36 +161,36 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
         {/* Body */}
         <div className="flex flex-col gap-3 p-5">
           {/* Title */}
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#FFFCF7] group-hover:text-[#F8B4D9] transition-colors">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
             {year} {make} {model}
           </h3>
 
           {/* Price */}
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-[#F8B4D9]">
+            <span className="text-xl font-bold text-primary">
               {formatCurrency(currentBid)}
             </span>
             {!isEnded && (
-              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.35)]">
+              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
                 current bid
               </span>
             )}
             {status === "SOLD" && (
-              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.35)]">
+              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
                 sold
               </span>
             )}
           </div>
 
           {/* Meta row */}
-          <div className="flex items-center justify-between text-[11px] text-[rgba(255,252,247,0.35)]">
+          <div className="flex items-center justify-between text-[11px] text-[rgba(232,226,222,0.35)]">
             <span className="flex items-center gap-1.5">
               <Gavel className="size-3" />
               {bidCount} bid{bidCount !== 1 ? "s" : ""}
             </span>
 
             {endTime && !isEnded ? (
-              <AuctionTimer endTime={endTime} className="text-[11px] font-mono text-[rgba(255,252,247,0.5)]" />
+              <AuctionTimer endTime={endTime} className="text-[11px] font-mono text-[rgba(232,226,222,0.5)]" />
             ) : endTime && isEnded ? (
               <span className="flex items-center gap-1">
                 <Eye className="size-3" />

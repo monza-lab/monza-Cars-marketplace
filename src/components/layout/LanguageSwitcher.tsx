@@ -34,14 +34,14 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] transition-colors">
+        <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors">
           <Globe className="size-4" />
           <span className="hidden md:inline">{localeFlags[locale]}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="bg-[#0F1012] border-white/10 min-w-[140px]"
+        className="bg-card border-border min-w-[140px]"
       >
         {routing.locales.map((loc) => (
           <DropdownMenuItem
@@ -49,8 +49,8 @@ export function LanguageSwitcher() {
             onClick={() => handleLocaleChange(loc)}
             className={`flex items-center gap-3 text-[13px] cursor-pointer ${
               loc === locale
-                ? "text-[#F8B4D9] bg-[rgba(248,180,217,0.08)]"
-                : "text-[#9CA3AF] hover:text-[#FFFCF7]"
+                ? "text-primary bg-primary/8"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <span>{localeFlags[loc]}</span>
@@ -88,8 +88,8 @@ export function MobileLanguageSwitcher({
           onClick={() => handleLocaleChange(loc)}
           className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-[13px] font-medium transition-all ${
             loc === locale
-              ? "bg-[rgba(248,180,217,0.15)] text-[#F8B4D9] border border-[rgba(248,180,217,0.25)]"
-              : "bg-white/5 text-[#9CA3AF] hover:bg-white/10 border border-transparent"
+              ? "bg-primary/15 text-primary border border-primary/25"
+              : "bg-foreground/5 text-muted-foreground hover:bg-foreground/10 border border-transparent"
           }`}
         >
           <span className="text-lg">{localeFlags[loc]}</span>

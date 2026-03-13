@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { ThemeProvider } from "next-themes";
 import { ClientHeader } from "@/components/layout/ClientHeader";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { RegionProvider } from "@/lib/RegionContext";
@@ -64,15 +65,17 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <AuthProvider>
-        <RegionProvider>
-          <ClientHeader />
-          <main>{children}</main>
-          <MobileBottomNav />
-          <OnboardingModal />
-          <AppFooter />
-        </RegionProvider>
-      </AuthProvider>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <AuthProvider>
+          <RegionProvider>
+            <ClientHeader />
+            <main>{children}</main>
+            <MobileBottomNav />
+            <OnboardingModal />
+            <AppFooter />
+          </RegionProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </NextIntlClientProvider>
   );
 }

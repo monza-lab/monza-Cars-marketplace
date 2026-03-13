@@ -189,45 +189,45 @@ export function SearchClient() {
       {/* ═══════════════════════════════════════════════════════════════════════
           COMPACT HEADER — Search + Title + Filters inline
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-none px-6 py-4 border-b border-white/5">
+      <div className="flex-none px-6 py-4 border-b border-border">
         {/* Top Row: Title + Search + Sort */}
         <div className="flex items-center gap-6">
           {/* Title */}
           <div className="shrink-0">
-            <h1 className="text-xl font-semibold text-[#FFFCF7] tracking-tight">
+            <h1 className="text-xl font-semibold text-foreground tracking-tight">
               {t("header.title")} <span className="text-gradient">{t("header.titleAccent")}</span>
             </h1>
           </div>
 
           {/* Search Bar */}
           <div className="relative flex-1 max-w-xl">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4B5563]" />
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               placeholder={t("header.searchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-10 rounded-full border-white/5 bg-[#0F1012] pl-10 pr-10 text-sm text-[#FFFCF7] placeholder:text-[#4B5563] focus-visible:border-[rgba(248,180,217,0.25)] focus-visible:ring-[rgba(248,180,217,0.1)] backdrop-blur-xl"
+              className="h-10 rounded-full border-border bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-primary/25 focus-visible:ring-primary/10 backdrop-blur-xl"
             />
             {query && (
-              <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B5563] hover:text-[#FFFCF7]">
+              <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="size-4" />
               </button>
             )}
             {isSearching && (
               <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                <Loader2 className="size-4 animate-spin text-[#F8B4D9]" />
+                <Loader2 className="size-4 animate-spin text-primary" />
               </div>
             )}
           </div>
 
           {/* Results Count + Sort */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
-            <span className="text-[11px] tracking-[0.1em] text-[#4B5563] tabular-nums">
+            <span className="text-[11px] tracking-[0.1em] text-muted-foreground tabular-nums">
               {t("header.results", { count: total })}
             </span>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-8 w-[150px] rounded-full border-white/5 bg-[#0F1012] text-[#9CA3AF] text-xs">
+              <SelectTrigger className="h-8 w-[150px] rounded-full border-border bg-card text-muted-foreground text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -247,15 +247,15 @@ export function SearchClient() {
             variant="outline"
             size="sm"
             className={cn(
-              "h-7 gap-1.5 rounded-full border-white/5 text-[10px] tracking-[0.05em] text-[#9CA3AF] hover:bg-[rgba(248,180,217,0.06)] hover:text-[#FFFCF7]",
-              filtersOpen && "border-[rgba(248,180,217,0.25)] bg-[rgba(248,180,217,0.08)] text-[#F8B4D9]"
+              "h-7 gap-1.5 rounded-full border-border text-[10px] tracking-[0.05em] text-muted-foreground hover:bg-primary/6 hover:text-foreground",
+              filtersOpen && "border-primary/25 bg-primary/8 text-primary"
             )}
             onClick={() => setFiltersOpen(!filtersOpen)}
           >
             <SlidersHorizontal className="size-3" />
             {t("filters.button")}
             {activeFilterCount > 0 && (
-              <Badge className="ml-1 size-4 items-center justify-center rounded-full bg-[#F8B4D9] p-0 text-[9px] text-[#0b0b10]">
+              <Badge className="ml-1 size-4 items-center justify-center rounded-full bg-primary p-0 text-[9px] text-primary-foreground">
                 {activeFilterCount}
               </Badge>
             )}
@@ -270,8 +270,8 @@ export function SearchClient() {
               className={cn(
                 "h-7 px-3 rounded-full text-[10px] font-medium tracking-[0.05em] transition-all border",
                 selectedStatus === status.value
-                  ? "bg-[#F8B4D9] text-[#0b0b10] border-transparent"
-                  : "bg-transparent text-[#9CA3AF] border-white/5 hover:border-[rgba(248,180,217,0.2)] hover:text-[#FFFCF7]"
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : "bg-transparent text-muted-foreground border-border hover:border-primary/20 hover:text-foreground"
               )}
             >
               {t(`statuses.${status.key}`)}
@@ -280,7 +280,7 @@ export function SearchClient() {
 
           {/* Make Chip */}
           <Select value={selectedMake} onValueChange={setSelectedMake}>
-            <SelectTrigger className="h-7 w-auto min-w-[100px] rounded-full border-white/5 bg-transparent text-[10px] tracking-[0.05em] text-[#9CA3AF] hover:border-[rgba(248,180,217,0.2)]">
+            <SelectTrigger className="h-7 w-auto min-w-[100px] rounded-full border-border bg-transparent text-[10px] tracking-[0.05em] text-muted-foreground hover:border-primary/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -297,7 +297,7 @@ export function SearchClient() {
 
           {/* Platform Chip */}
           <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-            <SelectTrigger className="h-7 w-auto min-w-[110px] rounded-full border-white/5 bg-transparent text-[10px] tracking-[0.05em] text-[#9CA3AF] hover:border-[rgba(248,180,217,0.2)]">
+            <SelectTrigger className="h-7 w-auto min-w-[110px] rounded-full border-border bg-transparent text-[10px] tracking-[0.05em] text-muted-foreground hover:border-primary/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -313,7 +313,7 @@ export function SearchClient() {
           {activeFilterCount > 0 && (
             <button
               onClick={clearFilters}
-              className="h-7 px-3 text-[10px] text-[#4B5563] hover:text-[#FFFCF7] transition-colors"
+              className="h-7 px-3 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
             >
               {t("filters.clearAll")}
             </button>
@@ -322,27 +322,27 @@ export function SearchClient() {
 
         {/* Advanced Filters Panel */}
         {filtersOpen && (
-          <div className="mt-4 pt-4 border-t border-white/5">
+          <div className="mt-4 pt-4 border-t border-border">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="mb-1.5 block text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">{t("filters.yearRange")}</label>
+                <label className="mb-1.5 block text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{t("filters.yearRange")}</label>
                 <div className="flex items-center gap-2">
-                  <Input type="number" placeholder={t("filters.from")} value={yearMin} onChange={(e) => setYearMin(e.target.value)} className="h-8 rounded-lg border-white/5 bg-[#0F1012] text-sm text-[#9CA3AF] placeholder:text-[#4B5563]" />
-                  <span className="text-[#4B5563]">-</span>
-                  <Input type="number" placeholder={t("filters.to")} value={yearMax} onChange={(e) => setYearMax(e.target.value)} className="h-8 rounded-lg border-white/5 bg-[#0F1012] text-sm text-[#9CA3AF] placeholder:text-[#4B5563]" />
+                  <Input type="number" placeholder={t("filters.from")} value={yearMin} onChange={(e) => setYearMin(e.target.value)} className="h-8 rounded-lg border-border bg-card text-sm text-muted-foreground placeholder:text-muted-foreground" />
+                  <span className="text-muted-foreground">-</span>
+                  <Input type="number" placeholder={t("filters.to")} value={yearMax} onChange={(e) => setYearMax(e.target.value)} className="h-8 rounded-lg border-border bg-card text-sm text-muted-foreground placeholder:text-muted-foreground" />
                 </div>
               </div>
               <div className="sm:col-span-2 lg:col-span-2">
-                <label className="mb-1.5 block text-[9px] font-medium tracking-[0.2em] uppercase text-[#4B5563]">{t("filters.priceRange")}</label>
+                <label className="mb-1.5 block text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">{t("filters.priceRange")}</label>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <DollarSign className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#4B5563]" />
-                    <Input type="number" placeholder={t("filters.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="h-8 rounded-lg border-white/5 bg-[#0F1012] pl-7 text-sm text-[#9CA3AF] placeholder:text-[#4B5563]" />
+                    <DollarSign className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+                    <Input type="number" placeholder={t("filters.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="h-8 rounded-lg border-border bg-card pl-7 text-sm text-muted-foreground placeholder:text-muted-foreground" />
                   </div>
-                  <span className="text-[#4B5563]">-</span>
+                  <span className="text-muted-foreground">-</span>
                   <div className="relative flex-1">
-                    <DollarSign className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-[#4B5563]" />
-                    <Input type="number" placeholder={t("filters.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="h-8 rounded-lg border-white/5 bg-[#0F1012] pl-7 text-sm text-[#9CA3AF] placeholder:text-[#4B5563]" />
+                    <DollarSign className="absolute left-2.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+                    <Input type="number" placeholder={t("filters.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="h-8 rounded-lg border-border bg-card pl-7 text-sm text-muted-foreground placeholder:text-muted-foreground" />
                   </div>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export function SearchClient() {
         <div className="px-6 py-4">
           {isSearching ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="size-6 animate-spin text-[#F8B4D9]" />
+              <Loader2 className="size-6 animate-spin text-primary" />
             </div>
           ) : results.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -372,17 +372,17 @@ export function SearchClient() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/5 bg-[#0F1012]">
+            <div className="rounded-2xl border border-border bg-card">
               <div className="flex flex-col items-center justify-center py-20">
-                <Search className="size-10 text-[#4B5563]/30" />
-                <p className="mt-4 text-sm font-medium text-[#9CA3AF]">{t("empty.title")}</p>
-                <p className="mt-1 max-w-sm text-center text-[11px] text-[#4B5563]">
+                <Search className="size-10 text-muted-foreground/30" />
+                <p className="mt-4 text-sm font-medium text-muted-foreground">{t("empty.title")}</p>
+                <p className="mt-1 max-w-sm text-center text-[11px] text-muted-foreground">
                   {t("empty.subtitle")}
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-6 rounded-full border-white/10 text-[#9CA3AF]"
+                  className="mt-6 rounded-full border-border text-muted-foreground"
                   onClick={() => { setQuery(""); clearFilters(); }}
                 >
                   {t("empty.clearSearch")}
@@ -417,7 +417,7 @@ function InvestmentCard({
   return (
     <div
       onClick={onClick}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/5 bg-[#0F1012] transition-all duration-300 hover:border-[rgba(248,180,217,0.4)] hover:shadow-2xl hover:shadow-[rgba(248,180,217,0.08)] hover:-translate-y-1"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/8 hover:-translate-y-1"
     >
       {/* Full-bleed Image */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -428,8 +428,8 @@ function InvestmentCard({
             className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-[#0b0b10]">
-            <Car className="size-12 text-[#4B5563]/30" />
+          <div className="flex h-full items-center justify-center bg-background">
+            <Car className="size-12 text-muted-foreground/30" />
           </div>
         )}
 
@@ -444,7 +444,7 @@ function InvestmentCard({
               "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] uppercase backdrop-blur-md",
               isLive
                 ? "bg-positive/20 text-positive"
-                : "bg-white/10 text-[#9CA3AF]"
+                : "bg-foreground/10 text-muted-foreground"
             )}
           >
             {isLive && (
@@ -457,7 +457,7 @@ function InvestmentCard({
           </span>
 
           {/* Platform Badge */}
-          <span className="rounded-full bg-[rgba(0,0,0,0.5)] backdrop-blur-md px-2.5 py-1 text-[10px] font-medium tracking-[0.08em] uppercase text-[#FFFCF7]">
+          <span className="rounded-full bg-black/50 backdrop-blur-md px-2.5 py-1 text-[10px] font-medium tracking-[0.08em] uppercase text-foreground">
             {PLATFORM_SHORT[result.platform] ?? result.platform}
           </span>
         </div>
@@ -465,24 +465,24 @@ function InvestmentCard({
         {/* Bottom overlay content */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           {/* Title */}
-          <h3 className="text-[15px] font-semibold text-[#FFFCF7] leading-tight line-clamp-2 group-hover:text-[#F8B4D9] transition-colors">
+          <h3 className="text-[15px] font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {result.year} {result.make} {result.model}
           </h3>
 
           {/* Price + Time Row */}
           <div className="flex items-end justify-between mt-2">
             <div>
-              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
+              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
                 {isLive ? t("card.currentBid") : t("card.soldFor")}
               </p>
-              <p className="text-xl font-bold text-[#F8B4D9] tabular-nums">
+              <p className="text-xl font-bold text-primary tabular-nums">
                 {price ? formatCurrency(price) : t("common.none")}
               </p>
             </div>
 
             <div className="text-right">
               {isLive && result.endTime && (
-                <div className="flex items-center gap-1 text-[#FFFCF7]">
+                <div className="flex items-center gap-1 text-foreground">
                   <Clock className="size-3" />
                   <span className="text-[12px] font-mono font-medium tabular-nums">
                     {timeLeft(result.endTime, {
@@ -495,7 +495,7 @@ function InvestmentCard({
                   </span>
                 </div>
               )}
-              <p className="text-[10px] text-[#4B5563] mt-0.5">
+              <p className="text-[10px] text-muted-foreground mt-0.5">
                 {result.bidCount > 0
                   ? t("card.bids", { count: result.bidCount })
                   : t("card.noBids")}

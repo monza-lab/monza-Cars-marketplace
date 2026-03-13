@@ -80,18 +80,18 @@ export default function SearchHistoryClient() {
   // Not authenticated
   if (!authLoading && !user) {
     return (
-      <div className="min-h-screen bg-[#0b0b10] pt-28">
+      <div className="min-h-screen bg-background pt-28">
         <div className="mx-auto max-w-2xl px-4 text-center">
-          <div className="mx-auto size-16 rounded-2xl bg-[rgba(248,180,217,0.08)] flex items-center justify-center mb-6">
-            <Clock className="size-7 text-[#F8B4D9]" />
+          <div className="mx-auto size-16 rounded-2xl bg-primary/8 flex items-center justify-center mb-6">
+            <Clock className="size-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-light text-[#FFFCF7]">{t("title")}</h1>
-          <p className="mt-3 text-sm text-[rgba(255,252,247,0.45)]">
+          <h1 className="text-2xl font-light text-foreground">{t("title")}</h1>
+          <p className="mt-3 text-sm text-[rgba(232,226,222,0.45)]">
             {t("signInRequired")}
           </p>
           <button
             onClick={() => setShowAuthModal(true)}
-            className="mt-6 rounded-full bg-[#F8B4D9] px-8 py-2.5 text-[12px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+            className="mt-6 rounded-full bg-primary px-8 py-2.5 text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
           >
             {t("signIn")}
           </button>
@@ -102,25 +102,25 @@ export default function SearchHistoryClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b10] pt-28 pb-32">
+    <div className="min-h-screen bg-background pt-28 pb-32">
       {/* Header */}
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="flex items-center gap-2 text-[#F8B4D9] mb-3">
+            <div className="flex items-center gap-2 text-primary mb-3">
               <Clock className="size-4" />
               <span className="text-[11px] font-medium tracking-[0.2em] uppercase">
                 {t("kicker")}
               </span>
             </div>
-            <h1 className="text-2xl font-light tracking-tight text-[#FFFCF7] sm:text-3xl">
+            <h1 className="text-2xl font-light tracking-tight text-foreground sm:text-3xl">
               {t("title")}
             </h1>
           </div>
           {entries.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-1.5 text-[11px] font-medium text-[#9CA3AF] hover:text-red-400 hover:border-red-400/30 transition-colors"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-red-400 hover:border-red-400/30 transition-colors"
             >
               <Trash2 className="size-3" />
               {t("clearAll")}
@@ -131,13 +131,13 @@ export default function SearchHistoryClient() {
         {/* Empty state */}
         {entries.length === 0 && !authLoading && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mx-auto size-16 rounded-2xl bg-[rgba(248,180,217,0.06)] flex items-center justify-center mb-5">
-              <Search className="size-7 text-[#F8B4D9]/40" />
+            <div className="mx-auto size-16 rounded-2xl bg-primary/6 flex items-center justify-center mb-5">
+              <Search className="size-7 text-primary/40" />
             </div>
-            <p className="text-[15px] text-[rgba(255,252,247,0.5)]">
+            <p className="text-[15px] text-[rgba(232,226,222,0.5)]">
               {t("empty")}
             </p>
-            <p className="mt-2 text-[13px] text-[rgba(255,252,247,0.25)]">
+            <p className="mt-2 text-[13px] text-[rgba(232,226,222,0.25)]">
               {t("emptyHint")}
             </p>
           </div>
@@ -146,27 +146,27 @@ export default function SearchHistoryClient() {
         {/* Grouped history */}
         {orderedGroups.map((group) => (
           <div key={group} className="mb-6">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[rgba(255,252,247,0.3)] mb-3 px-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[rgba(232,226,222,0.3)] mb-3 px-1">
               {group}
             </p>
             <div className="space-y-1">
               {grouped[group].map((entry) => (
                 <div
                   key={entry.timestamp}
-                  className="group flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-white/[0.03] transition-colors"
+                  className="group flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-foreground/3 transition-colors"
                 >
-                  <Scale className="size-4 text-[#F8B4D9]/30 shrink-0" />
+                  <Scale className="size-4 text-primary/30 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] text-[#FFFCF7] truncate">
+                    <p className="text-[14px] text-foreground truncate">
                       {entry.query}
                     </p>
                   </div>
-                  <span className="text-[11px] text-[#4B5563] shrink-0 font-mono">
+                  <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
                     {timeAgo(entry.timestamp, t)}
                   </span>
                   <button
                     onClick={() => handleRemove(entry.timestamp)}
-                    className="opacity-0 group-hover:opacity-100 size-7 flex items-center justify-center rounded-lg hover:bg-white/[0.05] text-[#4B5563] hover:text-red-400 transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 size-7 flex items-center justify-center rounded-lg hover:bg-white/[0.05] text-muted-foreground hover:text-red-400 transition-all shrink-0"
                     title={t("remove")}
                   >
                     <X className="size-3.5" />

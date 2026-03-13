@@ -11,7 +11,6 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
-import Image from "next/image";
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -22,6 +21,8 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { stripHtml } from "@/lib/stripHtml";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
@@ -582,10 +583,10 @@ function OracleToast({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-full bg-[#0F1012] border border-[rgba(248,180,217,0.2)] px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-full bg-card border border-primary/20 px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl"
         >
-          <Scale className="size-4 text-[#F8B4D9]" />
-          <span className="text-[13px] font-medium text-[#FFFCF7]">{message}</span>
+          <Scale className="size-4 text-primary" />
+          <span className="text-[13px] font-medium text-foreground">{message}</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -670,7 +671,7 @@ function OracleOverlay({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-[#0b0b10]/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
             onClick={handleBackdropClick}
           />
 
@@ -683,18 +684,18 @@ function OracleOverlay({
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="fixed left-1/2 -translate-x-1/2 top-28 z-50 w-full max-w-3xl mx-4"
           >
-            <div className="bg-[#0b0b10]/95 backdrop-blur-xl border border-[rgba(255,255,255,0.1)] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+            <div className="bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(248,180,217,0.1)]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10">
                 <div className="flex items-center gap-2">
-                  <Scale className="size-4 text-[#F8B4D9]" />
-                  <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#F8B4D9]">
+                  <Scale className="size-4 text-primary" />
+                  <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
                     {t("oracle.aiAnalysis")}
                   </span>
                 </div>
                 <button
                   onClick={onClose}
-                  className="size-8 flex items-center justify-center rounded-full hover:bg-[rgba(255,255,255,0.05)] text-[rgba(255,252,247,0.5)] hover:text-[#FFFCF7] transition-colors"
+                  className="size-8 flex items-center justify-center rounded-full hover:bg-foreground/5 text-[rgba(232,226,222,0.5)] hover:text-foreground transition-colors"
                 >
                   <X className="size-4" />
                 </button>
@@ -702,9 +703,9 @@ function OracleOverlay({
 
               {/* Query Echo */}
               <div className="px-6 pt-4">
-                <p className="text-[13px] text-[rgba(255,252,247,0.5)]">
-                  <span className="text-[rgba(255,252,247,0.3)]">{t("oracle.youAsked")}</span>{" "}
-                  <span className="text-[#FFFCF7]">"{query}"</span>
+                <p className="text-[13px] text-[rgba(232,226,222,0.5)]">
+                  <span className="text-[rgba(232,226,222,0.3)]">{t("oracle.youAsked")}</span>{" "}
+                  <span className="text-foreground">"{query}"</span>
                 </p>
               </div>
 
@@ -714,21 +715,21 @@ function OracleOverlay({
                   // Loading State
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-[#F8B4D9] animate-pulse" />
-                      <span className="text-[14px] text-[rgba(255,252,247,0.6)]">
+                      <div className="size-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[14px] text-[rgba(232,226,222,0.6)]">
                         {t("oracle.analyzingMarket")}
                       </span>
                     </div>
                     <div className="space-y-3">
-                      <div className="h-4 bg-[rgba(248,180,217,0.08)] rounded animate-pulse w-full" />
-                      <div className="h-4 bg-[rgba(248,180,217,0.08)] rounded animate-pulse w-5/6" />
-                      <div className="h-4 bg-[rgba(248,180,217,0.08)] rounded animate-pulse w-4/6" />
+                      <div className="h-4 bg-primary/8 rounded animate-pulse w-full" />
+                      <div className="h-4 bg-primary/8 rounded animate-pulse w-5/6" />
+                      <div className="h-4 bg-primary/8 rounded animate-pulse w-4/6" />
                     </div>
                   </div>
                 ) : response ? (
                   // Answer - simple text display (no typewriter)
                   <div className="prose prose-invert prose-sm max-w-none">
-                    <div className="text-[15px] leading-relaxed text-[#FFFCF7] whitespace-pre-wrap">
+                    <div className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
                       {response.answer.split("\n").map((line, i) => {
                         const parts = line.split(/(\*\*[^*]+\*\*)/g);
                         return (
@@ -736,7 +737,7 @@ function OracleOverlay({
                             {parts.map((part, j) => {
                               if (part.startsWith("**") && part.endsWith("**")) {
                                 return (
-                                  <span key={j} className="font-semibold text-[#F8B4D9]">
+                                  <span key={j} className="font-semibold text-primary">
                                     {part.slice(2, -2)}
                                   </span>
                                 );
@@ -753,8 +754,8 @@ function OracleOverlay({
 
               {/* Follow-up Chips */}
               {response && response.chips.length > 0 && (
-                <div className="px-6 pb-5 pt-2 border-t border-[rgba(248,180,217,0.08)]">
-                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(255,252,247,0.4)] mb-3">
+                <div className="px-6 pb-5 pt-2 border-t border-primary/8">
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)] mb-3">
                     {t("oracle.relatedActions")}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -762,7 +763,7 @@ function OracleOverlay({
                       <button
                         key={i}
                         onClick={() => handleChipClick(chip)}
-                        className="flex items-center gap-1.5 rounded-full bg-[rgba(248,180,217,0.08)] border border-[rgba(248,180,217,0.15)] px-4 py-2 text-[11px] font-medium text-[#F8B4D9] cursor-pointer hover:bg-[rgba(248,180,217,0.2)] hover:border-[rgba(248,180,217,0.3)] active:scale-95 transition-all duration-150"
+                        className="flex items-center gap-1.5 rounded-full bg-primary/8 border border-primary/15 px-4 py-2 text-[11px] font-medium text-primary cursor-pointer hover:bg-primary/20 hover:border-primary/30 active:scale-95 transition-all duration-150"
                       >
                         {i === 0 && <Car className="size-3" />}
                         {i === 1 && <BarChart3 className="size-3" />}
@@ -808,13 +809,13 @@ function InlineLanguageSwitcher() {
     <div className="flex items-center gap-0.5">
       {["en", "es", "de", "ja"].map((loc, i) => (
         <div key={loc} className="flex items-center">
-          {i > 0 && <div className="w-px h-3 bg-white/10 mx-0.5" />}
+          {i > 0 && <div className="w-px h-3 bg-foreground/10 mx-0.5" />}
           <button
             onClick={() => handleChange(loc)}
             className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all ${
               loc === locale
-                ? "bg-[#F8B4D9]/15 text-[#F8B4D9]"
-                : "text-[#4B5563] hover:text-[#9CA3AF]"
+                ? "bg-primary/15 text-primary"
+                : "text-muted-foreground hover:text-muted-foreground"
             }`}
           >
             {LOCALE_LABELS[loc]}
@@ -846,6 +847,7 @@ export function Header() {
   const [isOracleOpen, setIsOracleOpen] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { theme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -962,13 +964,15 @@ export function Header() {
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         {/* Glass background — Obsidian */}
-        <div className="absolute inset-0 h-full bg-[rgba(11,11,16,0.85)] backdrop-blur-xl border-b border-white/5" />
+        <div className="absolute inset-0 h-full bg-background/85 backdrop-blur-xl border-b border-border" />
 
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
           <a href="/" className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
-            <Image src="/logo-crema.png" alt="Monza Lab" width={992} height={260} className="h-7 md:h-8 w-auto" priority />
+            <span className="font-display font-light text-[18px] md:text-[22px] tracking-[0.35em] uppercase text-foreground">
+              MONZA
+            </span>
           </a>
 
           {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
@@ -981,10 +985,10 @@ export function Header() {
                     className="absolute inset-0 flex items-center pointer-events-none select-none"
                     onClick={() => inputRef.current?.focus()}
                   >
-                    <span className="text-[15px] font-light text-[#6B7280] tracking-tight">
+                    <span className="text-[15px] font-light text-muted-foreground tracking-tight">
                       {typedPlaceholder}
                     </span>
-                    <span className="inline-block w-[2px] h-[18px] bg-[#F8B4D9] ml-[1px] animate-blink" />
+                    <span className="inline-block w-[2px] h-[18px] bg-primary ml-[1px] animate-blink" />
                   </div>
                 )}
                 <input
@@ -1023,12 +1027,12 @@ export function Header() {
                     }
                   }}
                   placeholder={isFocused ? "Search 992, GT3, Turbo, Cayenne..." : ""}
-                  className="w-full bg-transparent text-[15px] font-light text-[#FFFCF7] placeholder:text-[#6B7280] focus:outline-none tracking-tight"
+                  className="w-full bg-transparent text-[15px] font-light text-foreground placeholder:text-muted-foreground focus:outline-none tracking-tight"
                 />
                 {query.trim() && (
                   <button
                     type="submit"
-                    className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                    className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
                   >
                     <ArrowRight className="size-4" />
                   </button>
@@ -1045,7 +1049,7 @@ export function Header() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-[rgba(11,11,16,0.97)] backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-[60]"
+                  className="absolute top-full left-0 right-0 mt-2 bg-background/[0.97] backdrop-blur-2xl border border-border rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-[60]"
                 >
                   {/* Results */}
                   <div className="py-1.5 max-h-[360px] overflow-y-auto">
@@ -1062,41 +1066,41 @@ export function Header() {
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
                             isActive
-                              ? "bg-[#F8B4D9]/10 border-l-2 border-l-[#F8B4D9]"
-                              : "border-l-2 border-l-transparent hover:bg-white/[0.03]"
+                              ? "bg-primary/10 border-l-2 border-l-primary"
+                              : "border-l-2 border-l-transparent hover:bg-foreground/3"
                           }`}
                         >
                           <div className={`flex items-center justify-center size-7 rounded-lg ${
-                            isActive ? "bg-[#F8B4D9]/15" : "bg-white/[0.04]"
+                            isActive ? "bg-primary/15" : "bg-foreground/4"
                           }`}>
-                            <Icon className={`size-3.5 ${isActive ? "text-[#F8B4D9]" : "text-[#6B7280]"}`} />
+                            <Icon className={`size-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                           </div>
                           <div className="flex-1 text-left min-w-0">
                             <div className="flex items-center gap-2">
                               <span className={`text-[12px] font-medium truncate ${
-                                isActive ? "text-[#F8B4D9]" : "text-[#D1D5DB]"
+                                isActive ? "text-primary" : "text-muted-foreground"
                               }`}>
                                 {item.label}
                               </span>
                               {item.yearRange && (
-                                <span className="text-[9px] font-mono text-[#6B7280] shrink-0">
+                                <span className="text-[9px] font-mono text-muted-foreground shrink-0">
                                   {item.yearRange}
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-[#6B7280] truncate block">
+                            <span className="text-[10px] text-muted-foreground truncate block">
                               {item.subtitle}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
                               isActive
-                                ? "bg-[#F8B4D9]/15 text-[#F8B4D9]"
-                                : "bg-white/[0.04] text-[#6B7280]"
+                                ? "bg-primary/15 text-primary"
+                                : "bg-foreground/4 text-muted-foreground"
                             }`}>
                               {item.type === "family" ? "Family" : item.type === "series" ? "Series" : item.type === "link" ? "Analyze" : "Variant"}
                             </span>
-                            <ChevronRight className={`size-3 ${isActive ? "text-[#F8B4D9]" : "text-[#4B5563]"}`} />
+                            <ChevronRight className={`size-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                           </div>
                         </button>
                       )
@@ -1104,16 +1108,16 @@ export function Header() {
                   </div>
 
                   {/* Footer hint */}
-                  <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[9px] text-[#4B5563]">
-                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mr-1">↑↓</kbd>
+                  <div className="px-4 py-2 border-t border-border flex items-center justify-between">
+                    <span className="text-[9px] text-muted-foreground">
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mr-1">↑↓</kbd>
                       navigate
-                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mx-1">↵</kbd>
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mx-1">↵</kbd>
                       select
-                      <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[8px] font-mono mx-1">esc</kbd>
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mx-1">esc</kbd>
                       close
                     </span>
-                    <span className="text-[9px] text-[#4B5563]">
+                    <span className="text-[9px] text-muted-foreground">
                       Powered by brandConfig
                     </span>
                   </div>
@@ -1129,14 +1133,14 @@ export function Header() {
               return (
                 <div key={region.id} className="flex items-center">
                   {i > 0 && (
-                    <div className="w-px h-3.5 bg-[#F8B4D9]/20 mx-0.5" />
+                    <div className="w-px h-3.5 bg-primary/20 mx-0.5" />
                   )}
                   <button
                     onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
                       isActive
-                        ? "bg-[#F8B4D9]/15 text-[#F8B4D9] border border-[#F8B4D9]/25"
-                        : "text-[#6B7280] hover:text-[#9CA3AF] hover:bg-white/[0.03]"
+                        ? "bg-primary/15 text-primary border border-primary/25"
+                        : "text-muted-foreground hover:text-muted-foreground hover:bg-foreground/3"
                     }`}
                   >
                     <span className="text-[12px] leading-none">{region.flag}</span>
@@ -1153,23 +1157,23 @@ export function Header() {
             {isAuthenticated && (
               <button
                 onClick={() => router.push('/account')}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
               >
-                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-[#F8B4D9]' : 'text-[#FB923C]'}`} />
-                <span className="text-[12px] font-medium tabular-nums text-[#FFFCF7]">{creditsRemaining}</span>
-                <span className="text-[10px] text-[#4B5563]">{t('auth.credits')}</span>
+                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-primary' : 'text-[#FB923C]'}`} />
+                <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
+                <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
               </button>
             )}
 
             {/* Account / Sign In */}
             {authLoading ? (
               <div className="hidden md:flex size-8 items-center justify-center">
-                <div className="size-4 border-2 border-[#4B5563] border-t-transparent rounded-full animate-spin" />
+                <div className="size-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               </div>
             ) : isAuthenticated ? (
                 <button
                   onClick={() => signOut()}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-[#9CA3AF] hover:text-[#FFFCF7] hover:bg-white/5 transition-colors"
+                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
                   title={t("auth.signOut")}
                 >
                   <User className="size-4" />
@@ -1180,7 +1184,7 @@ export function Header() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F8B4D9] text-[#0b0b10] hover:bg-[#f4cbde] transition-colors text-[11px] font-semibold tracking-wide"
+                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide"
               >
                 {t('auth.signIn')}
               </button>
@@ -1189,15 +1193,24 @@ export function Header() {
             {/* Language Switcher */}
             <LanguageSwitcher />
 
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="hidden md:flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+            </button>
+
             {/* Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#FFFCF7] transition-colors">
+                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors">
                   <Menu className="size-4" />
                   <span className="hidden md:inline">{t('nav.menu')}</span>
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="border-l border-[rgba(248,180,217,0.08)] bg-[#0b0b10] w-[340px] p-0 flex flex-col overflow-hidden">
+              <SheetContent side="right" className="border-l border-primary/8 bg-background w-[340px] p-0 flex flex-col overflow-hidden">
                 <SheetHeader className="sr-only">
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
@@ -1209,14 +1222,14 @@ export function Header() {
                   {isAuthenticated ? (
                     <div className="px-6 pt-6 pb-5">
                       <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-gradient-to-br from-[#F8B4D9]/30 to-[#F8B4D9]/10 border border-[#F8B4D9]/20 flex items-center justify-center">
-                          <User className="size-5 text-[#F8B4D9]" />
+                        <div className="size-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center">
+                          <User className="size-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-[#FFFCF7] truncate">
+                          <p className="text-[14px] font-semibold text-foreground truncate">
                             {profile?.name || "Collector"}
                           </p>
-                          <p className="text-[11px] text-[#6B7280] truncate">
+                          <p className="text-[11px] text-muted-foreground truncate">
                             {user?.email || "member@monza.com"}
                           </p>
                         </div>
@@ -1225,17 +1238,17 @@ export function Header() {
                   ) : (
                     <div className="px-6 pt-6 pb-5">
                       <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-white/[0.04] border border-white/5 flex items-center justify-center">
-                          <User className="size-5 text-[#4B5563]" />
+                        <div className="size-11 rounded-full bg-foreground/4 border border-border flex items-center justify-center">
+                          <User className="size-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-[#FFFCF7]">Welcome</p>
-                          <p className="text-[11px] text-[#6B7280]">Sign in to track your portfolio</p>
+                          <p className="text-[14px] font-semibold text-foreground">Welcome</p>
+                          <p className="text-[11px] text-muted-foreground">Sign in to track your portfolio</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setShowAuthModal(true)}
-                        className="mt-4 w-full rounded-xl bg-[#F8B4D9] py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0b0b10] hover:bg-[#f4cbde] transition-colors"
+                        className="mt-4 w-full rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
                       >
                         {t('auth.signIn')}
                       </button>
@@ -1243,27 +1256,27 @@ export function Header() {
                   )}
 
                   {/* ── Credits ── */}
-                  <div className="mx-5 rounded-xl bg-[rgba(248,180,217,0.04)] border border-[rgba(248,180,217,0.08)] p-4">
+                  <div className="mx-5 rounded-xl bg-primary/4 border border-primary/8 p-4">
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-[#F8B4D9]" : "text-[#FB923C]"}`} />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Credits</span>
+                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-[#FB923C]"}`} />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Credits</span>
                       </div>
-                      <span className="text-[14px] font-mono font-bold text-[#FFFCF7]">
+                      <span className="text-[14px] font-mono font-bold text-foreground">
                         {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
-                        <span className="text-[10px] font-normal text-[#4B5563] ml-1">/ 3,000</span>
+                        <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 3,000</span>
                       </span>
                     </div>
                     {/* Progress bar */}
-                    <div className="h-[5px] rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#F8B4D9]/40 to-[#F8B4D9]/70 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/70 transition-all duration-500"
                         style={{ width: `${Math.min((creditsRemaining / 3000) * 100, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between mt-2.5">
-                      <span className="text-[10px] text-[#4B5563]">1 report = 1,000 credits</span>
-                      <button className="text-[10px] font-semibold text-[#F8B4D9] hover:text-[#f4cbde] transition-colors">
+                      <span className="text-[10px] text-muted-foreground">1 report = 1,000 credits</span>
+                      <button className="text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors">
                         {t('auth.buyCredits')}
                       </button>
                     </div>
@@ -1273,10 +1286,10 @@ export function Header() {
                   <div className="px-5 pt-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Bookmark className="size-3.5 text-[#F8B4D9]" />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Watchlist</span>
+                        <Bookmark className="size-3.5 text-primary" />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Watchlist</span>
                       </div>
-                      <span className="text-[10px] font-mono text-[#4B5563]">3 cars</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">3 cars</span>
                     </div>
                     <div className="space-y-1">
                       {[
@@ -1284,12 +1297,12 @@ export function Header() {
                         { name: "Porsche 959", price: "$890K", trend: "+8%", grade: "AA" },
                         { name: "Toyota Supra MK4", price: "$185K", trend: "+22%", grade: "A" },
                       ].map((car) => (
-                        <div key={car.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/[0.02] transition-colors cursor-pointer group">
-                          <Bookmark className="size-3 text-[#F8B4D9]/40 shrink-0" />
+                        <div key={car.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-foreground/2 transition-colors cursor-pointer group">
+                          <Bookmark className="size-3 text-primary/40 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{car.name}</p>
+                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{car.name}</p>
                           </div>
-                          <span className="text-[11px] font-mono text-[#FFFCF7] shrink-0">{car.price}</span>
+                          <span className="text-[11px] font-mono text-foreground shrink-0">{car.price}</span>
                           <span className="text-[9px] font-mono text-emerald-400 shrink-0 w-8 text-right">{car.trend}</span>
                         </div>
                       ))}
@@ -1300,8 +1313,8 @@ export function Header() {
                   <div className="px-5 pt-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <FileText className="size-3.5 text-[#F8B4D9]" />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF]">Recent Analyses</span>
+                        <FileText className="size-3.5 text-primary" />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Recent Analyses</span>
                       </div>
                     </div>
                     <div className="space-y-1">
@@ -1310,17 +1323,17 @@ export function Header() {
                         { name: "McLaren F1", time: "5d ago", cost: "1,000 cr" },
                         { name: "Porsche 911 GT1", time: "1w ago", cost: "1,000 cr" },
                       ].map((report) => (
-                        <div key={report.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-white/[0.02] transition-colors cursor-pointer group">
-                          <div className="size-7 rounded-lg bg-[rgba(248,180,217,0.06)] flex items-center justify-center shrink-0">
-                            <BarChart3 className="size-3 text-[#F8B4D9]/60" />
+                        <div key={report.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-foreground/2 transition-colors cursor-pointer group">
+                          <div className="size-7 rounded-lg bg-primary/6 flex items-center justify-center shrink-0">
+                            <BarChart3 className="size-3 text-primary/60" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium text-[#FFFCF7] truncate group-hover:text-[#F8B4D9] transition-colors">{report.name}</p>
-                            <p className="text-[10px] text-[#4B5563]">{report.cost}</p>
+                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{report.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{report.cost}</p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <Clock className="size-2.5 text-[#4B5563]" />
-                            <span className="text-[10px] text-[#4B5563]">{report.time}</span>
+                            <Clock className="size-2.5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">{report.time}</span>
                           </div>
                         </div>
                       ))}
@@ -1329,20 +1342,20 @@ export function Header() {
 
                   {/* ── Quick Links ── */}
                   <div className="px-5 pt-6 pb-2">
-                    <div className="h-px bg-white/5 mb-4" />
+                    <div className="h-px bg-foreground/5 mb-4" />
 
                     {/* Search History — only for logged-in users */}
                     {isAuthenticated && (
                       <SheetClose asChild>
                         <Link
                           href="/search-history"
-                          className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-white/[0.02] transition-colors group"
+                          className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
                         >
-                          <Clock className="size-4 text-[#4B5563] group-hover:text-[#9CA3AF] transition-colors" />
-                          <span className="flex-1 text-left text-[13px] text-[#9CA3AF] group-hover:text-[#FFFCF7] transition-colors">
+                          <Clock className="size-4 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                          <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">
                             {t("nav.searchHistory")}
                           </span>
-                          <ChevronRight className="size-3.5 text-[#4B5563] group-hover:text-[#6B7280] transition-colors" />
+                          <ChevronRight className="size-3.5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
                         </Link>
                       </SheetClose>
                     )}
@@ -1354,23 +1367,23 @@ export function Header() {
                     ].map((item) => (
                       <button
                         key={item.label}
-                        className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-white/[0.02] transition-colors group"
+                        className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
                       >
-                        <item.icon className="size-4 text-[#4B5563] group-hover:text-[#9CA3AF] transition-colors" />
-                        <span className="flex-1 text-left text-[13px] text-[#9CA3AF] group-hover:text-[#FFFCF7] transition-colors">{item.label}</span>
+                        <item.icon className="size-4 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                        <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
                         {item.badge && (
-                          <span className="size-4.5 flex items-center justify-center rounded-full bg-[#F8B4D9] text-[9px] font-bold text-[#0b0b10] leading-none px-1.5 py-0.5">
+                          <span className="size-4.5 flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground leading-none px-1.5 py-0.5">
                             {item.badge}
                           </span>
                         )}
-                        <ChevronRight className="size-3.5 text-[#4B5563] group-hover:text-[#6B7280] transition-colors" />
+                        <ChevronRight className="size-3.5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
                       </button>
                     ))}
 
                     {/* Language in quick links */}
                     <div className="flex items-center gap-3 w-full py-2.5 px-2">
-                      <Globe className="size-4 text-[#4B5563]" />
-                      <span className="flex-1 text-left text-[13px] text-[#9CA3AF]">Language</span>
+                      <Globe className="size-4 text-muted-foreground" />
+                      <span className="flex-1 text-left text-[13px] text-muted-foreground">Language</span>
                       <InlineLanguageSwitcher />
                     </div>
                   </div>
@@ -1378,11 +1391,11 @@ export function Header() {
 
                 {/* ── Footer: Sign Out (pinned) ── */}
                 {isAuthenticated && (
-                  <div className="shrink-0 px-5 py-4 border-t border-white/5">
+                  <div className="shrink-0 px-5 py-4 border-t border-border">
                     <SheetClose asChild>
                       <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-[#6B7280] hover:text-[#FB923C] hover:bg-white/[0.02] transition-colors"
+                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-[#FB923C] hover:bg-foreground/2 transition-colors"
                       >
                         <LogOut className="size-4" />
                         {t('auth.signOut')}

@@ -47,7 +47,7 @@ export default function NotFound() {
             asChild
             variant="outline"
             size="lg"
-            className="gap-2 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+            className="gap-2 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-foreground"
           >
             <Link href="/search">
               <Search className="size-4" />
