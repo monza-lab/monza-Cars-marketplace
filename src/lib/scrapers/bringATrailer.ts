@@ -311,6 +311,9 @@ export async function scrapeListings(
     console.log(`[BaT] Fetching auctions page for embedded JSON data...`);
     const html = await fetchPage(AUCTIONS_URL);
 
+    // Diagnostic: always report HTML size so cron response shows what we got
+    errors.push(`[BaT:diag] HTML=${html.length}b, title="${html.match(/<title>([^<]*)<\/title>/)?.[1]?.slice(0, 60) ?? 'none'}"`);
+
     // Extract embedded JSON: find `auctionsCurrentInitialData = {...}` and
     // use brace-matching to extract the full JSON object reliably.
     const marker = 'auctionsCurrentInitialData';
@@ -330,6 +333,7 @@ export async function scrapeListings(
           try {
             const data = JSON.parse(html.substring(jsonStart, jsonEnd + 1));
             const items = data.items ?? [];
+            errors.push(`[BaT:diag] marker=true, jsonLen=${jsonEnd - jsonStart + 1}, items=${items.length}`);
             console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
 
             for (const item of items) {
