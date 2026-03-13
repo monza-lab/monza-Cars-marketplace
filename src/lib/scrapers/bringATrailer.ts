@@ -9,8 +9,6 @@
 // ---------------------------------------------------------------------------
 
 import * as cheerio from 'cheerio';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -78,13 +76,14 @@ function randomDelay(minMs: number, maxMs: number): Promise<void> {
   return delay(ms);
 }
 
-function getProxyAgent(): HttpsProxyAgent<string> | undefined {
+async function getProxyAgent(): Promise<unknown | undefined> {
   const proxyUrl = process.env.DECODO_PROXY_URL;
   const user = process.env.DECODO_PROXY_USER;
   const pass = process.env.DECODO_PROXY_PASS;
   if (!proxyUrl) return undefined;
 
   try {
+    const { HttpsProxyAgent } = await import('https-proxy-agent');
     const url = new URL(proxyUrl);
     if (user) url.username = user;
     if (pass) url.password = pass;
@@ -97,7 +96,7 @@ function getProxyAgent(): HttpsProxyAgent<string> | undefined {
 async function fetchPage(url: string): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  const agent = getProxyAgent();
+  const agent = await getProxyAgent();
 
   try {
     const response = await fetch(url, {

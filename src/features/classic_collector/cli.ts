@@ -117,6 +117,7 @@ async function main(): Promise<void> {
     checkpointPath: readString(args, "checkpointPath") ?? "var/classic_collector/checkpoint.json",
     outputPath: readString(args, "outputPath") ?? "var/classic_collector/listings.jsonl",
     dryRun: hasFlag(args, "dryRun"),
+    summaryOnly: hasFlag(args, "summaryOnly"),
   };
 
   console.log(`[classic_collector] Starting with config:`, {

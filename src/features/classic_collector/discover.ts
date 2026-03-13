@@ -292,9 +292,17 @@ export function parseSearchResultsFromDOM(html: string): ListingSummary[] {
     const card = $(el).closest("[class*='card'], [class*='listing'], [class*='result']");
     const container = card.length > 0 ? card : $(el);
 
-    const title = container.find("h2, h3, [class*='title']").first().text().trim() ||
+    let title = container.find("h2, h3, [class*='title']").first().text().trim() ||
                   $(el).attr("title") ||
                   $(el).text().trim().split("\n")[0].trim();
+
+    // Parse structured data from the URL slug (always reliable)
+    const urlData = parseVehicleDataFromUrl(fullUrl);
+
+    // If DOM title looks like a location (no year, no make), use URL-derived title
+    if (!title || (!parseYearFromTitle(title) && !/porsche/i.test(title))) {
+      title = urlData.title;
+    }
 
     if (!title) return;
 
@@ -305,9 +313,9 @@ export function parseSearchResultsFromDOM(html: string): ListingSummary[] {
       sourceUrl: fullUrl,
       classicComId: extractClassicComId(fullUrl),
       title,
-      year: parseYearFromTitle(title),
-      make: /porsche/i.test(title) ? "Porsche" : null,
-      model: parseModelFromTitle(title),
+      year: urlData.year ?? parseYearFromTitle(title),
+      make: urlData.make ?? (/porsche/i.test(title) ? "Porsche" : null),
+      model: urlData.model ?? parseModelFromTitle(title),
       vin: extractVinFromUrl(fullUrl),
       price,
       auctionHouse: null,
@@ -323,6 +331,51 @@ export function parseSearchResultsFromDOM(html: string): ListingSummary[] {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Parse year, make, model from classic.com URL slug.
+ * URL format: /veh/{year}-{make}-{model...}-{vin17}-{classicComId}
+ * Example: /veh/2015-porsche-911-turbo-s-wp0cd2a94fs178193-pGwNjgp
+ */
+function parseVehicleDataFromUrl(url: string): {
+  title: string;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+} {
+  const match = url.match(/\/veh\/(.+?)(?:\?|$)/);
+  if (!match) return { title: "", year: null, make: null, model: null };
+
+  const slug = match[1];
+  const parts = slug.split("-");
+  if (parts.length < 3) return { title: "", year: null, make: null, model: null };
+
+  // First part: year
+  const yearStr = parts[0];
+  const year = /^(19|20)\d{2}$/.test(yearStr) ? parseInt(yearStr, 10) : null;
+
+  // Second part: make
+  const make = parts[1] ? parts[1].charAt(0).toUpperCase() + parts[1].slice(1) : null;
+
+  // Find VIN (17 alphanumeric chars) or classicComId to know where model words end
+  let modelEndIdx = parts.length;
+  for (let i = 2; i < parts.length; i++) {
+    if (/^[a-z0-9]{17}$/i.test(parts[i])) {
+      modelEndIdx = i;
+      break;
+    }
+  }
+
+  // Model words: everything between make and VIN
+  const modelParts = parts.slice(2, modelEndIdx);
+  const model = modelParts.length > 0 ? modelParts.join(" ") : null;
+
+  // Build a human-readable title
+  const titleParts = [yearStr, make, ...(modelParts)].filter(Boolean);
+  const title = titleParts.join(" ");
+
+  return { title, year, make, model };
+}
 
 function parseYearFromTitle(title: string): number | null {
   const m = title.match(/\b(19\d{2}|20\d{2})\b/);
