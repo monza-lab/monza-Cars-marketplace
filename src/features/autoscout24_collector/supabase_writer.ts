@@ -36,6 +36,23 @@ export function createSupabaseWriter(): SupabaseWriter {
 
 async function upsertListing(client: SupabaseClient, listing: NormalizedListing, meta: ScrapeMeta): Promise<string> {
   const row = mapNormalizedListingToListingsRow(listing, meta);
+
+  // Handle source_url conflict: if a row exists with the same source_url but
+  // a different source_id (e.g. AS24 changed the URL slug), update its
+  // source_id first so the onConflict upsert can match it.
+  const { data: existing } = await client
+    .from("listings")
+    .select("id, source_id")
+    .eq("source_url", listing.sourceUrl)
+    .limit(1);
+
+  if (existing?.[0] && existing[0].source_id !== listing.sourceId) {
+    await client
+      .from("listings")
+      .update({ source_id: listing.sourceId })
+      .eq("id", existing[0].id);
+  }
+
   const { data, error } = await client
     .from("listings")
     .upsert(row, { onConflict: "source,source_id" })

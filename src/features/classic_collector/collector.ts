@@ -123,6 +123,9 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
             const msg = err instanceof Error ? err.message : String(err);
             errors.push(`Write error: ${msg}`);
           }
+        } else {
+          counts.errors++;
+          errors.push(`Normalize failed: ${summary.title ?? summary.sourceUrl}`);
         }
       }
     } else {

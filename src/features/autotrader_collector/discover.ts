@@ -180,11 +180,20 @@ export async function fetchAutoTraderGatewayPage(input: {
   });
 
   if (!res.ok) {
+    const errorBody = await res.text().catch(() => "(unreadable)");
+    console.error(`[AutoTrader] Gateway HTTP ${res.status}: ${errorBody.slice(0, 500)}`);
     throw new Error(`AutoTrader gateway HTTP ${res.status} ${res.statusText}`);
   }
 
   const payload = (await res.json()) as GatewayResponse;
-  return parseGatewayListings(payload);
+  const result = parseGatewayListings(payload);
+
+  // Diagnostic: log when 0 listings returned so cron runs show what the API gave us
+  if (result.listings.length === 0) {
+    console.warn(`[AutoTrader] Gateway returned 0 listings for page ${input.page}. totalResults=${result.totalResults}, errors=${JSON.stringify(payload.errors ?? [])}, keys=${Object.keys(payload.data?.searchResults ?? {}).join(",")}`);
+  }
+
+  return result;
 }
 
 export async function discoverListingUrls(source: SourceKey, opts: DiscoverOptions): Promise<string[]> {

@@ -111,14 +111,23 @@ export function normalizeListingFromSummary(input: {
   meta: ScrapeMeta;
 }): NormalizedListing | null {
   const title = input.summary.title.trim();
-  if (!title) return null;
+  if (!title) {
+    console.warn(`[classic:normalize] Skipped: no title | url=${input.summary.sourceUrl}`);
+    return null;
+  }
 
   const year = input.summary.year ?? parseYearFromTitle(title);
   const make = input.summary.make ?? parseMakeFromTitle(title) ?? "Porsche";
-  if (make.toLowerCase() !== "porsche") return null;
+  if (make.toLowerCase() !== "porsche") {
+    console.warn(`[classic:normalize] Skipped: make="${make}" not Porsche | title="${title}"`);
+    return null;
+  }
 
-  const model = input.summary.model ?? parseModelFromTitle(title);
-  if (!year || !model) return null;
+  const model = input.summary.model ?? parseModelFromTitle(title) ?? parseModelFromTitleBroad(title);
+  if (!year || !model) {
+    console.warn(`[classic:normalize] Skipped: year=${year} model=${model} | title="${title}" url=${input.summary.sourceUrl}`);
+    return null;
+  }
 
   const vin = input.summary.vin ?? extractVinFromUrl(input.summary.sourceUrl);
   const classicComId = extractClassicComId(input.summary.sourceUrl);
@@ -403,6 +412,22 @@ function parseModelFromTitle(title: string): string | null {
   const cleaned = title.replace(/\s+/g, " ").trim();
   const m = cleaned.match(/\bPorsche\s+(\S+)/i);
   return m ? m[1] : null;
+}
+
+/**
+ * Broader model extraction: strips year and make, takes up to 3 words.
+ * Handles titles like "1973 Porsche 911 Carrera RS" → "911 Carrera RS"
+ * or "2024 911 GT3" → "911 GT3"
+ */
+function parseModelFromTitleBroad(title: string): string | null {
+  const cleaned = title
+    .replace(/\b(19|20)\d{2}\b/, "")    // strip year
+    .replace(/\bPorsche\b/i, "")         // strip make
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return null;
+  const words = cleaned.split(/\s+/).slice(0, 3).join(" ");
+  return words || null;
 }
 
 export function toUtcDateOnly(date: Date): string {
