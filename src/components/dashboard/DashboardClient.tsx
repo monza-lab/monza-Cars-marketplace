@@ -32,7 +32,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
-import { extractSeries, getSeriesConfig, getSeriesThesis } from "@/lib/brandConfig"
+import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion } from "./platformMapping"
 // FilterSidebar removed — filters now live only on brand detail pages
 
@@ -2333,7 +2333,34 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
   }, [brandAuctions])
-  const depth = mockMarketDepth[brand.name] || mockMarketDepth["default"]
+  const depth = useMemo(() => {
+    const count = brandAuctions.length
+    if (count === 0) {
+      const config = getBrandConfig(brand.name)
+      return config?.marketDepth ?? { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 }
+    }
+    const withBids = brandAuctions.filter(a => a.currentBid > 0)
+    const ended = brandAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
+    const sold = ended.filter(a => a.currentBid > 0)
+    const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
+    const avgDays = ended.length > 0
+      ? Math.round(ended.reduce((sum, a) => {
+          const created = new Date(a.endTime).getTime() - (7 * 86400000)
+          return sum + (new Date(a.endTime).getTime() - created) / 86400000
+        }, 0) / ended.length)
+      : 14
+    const demandScore = Math.min(10, Math.max(1, Math.round(
+      (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
+      (withBids.length / Math.max(count, 1)) * 4 +
+      (sellThrough / 100) * 3
+    )))
+    return {
+      auctionsPerYear: Math.max(count * 4, 12),
+      avgDaysToSell: avgDays,
+      sellThroughRate: sellThrough,
+      demandScore,
+    }
+  }, [brandAuctions, brand.name])
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
