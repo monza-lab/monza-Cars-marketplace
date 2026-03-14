@@ -1675,7 +1675,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const tCommon = useTranslations("common")
   const { selectedRegion, effectiveRegion } = useRegion()
 
-  const whyBuy = mockWhyBuy[auction.make] || mockWhyBuy["default"]
+  const whyBuy = getBrandConfig(auction.make)?.defaultThesis || mockWhyBuy[auction.make] || mockWhyBuy["default"]
   const marketPulse = mockMarketPulse[auction.make] || mockMarketPulse["default"]
   const ownershipCost = mockOwnershipCost[auction.make] || mockOwnershipCost["default"]
   const fallbackAnalysis = mockAnalysis[auction.make] || mockAnalysis["default"]
@@ -2274,7 +2274,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
     [auctions, brand.name]
   )
 
-  const whyBuy = mockWhyBuy[brand.name] || mockWhyBuy["default"]
+  const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
   // Compute regional fair values from brand avg price
   const regionalVal = useMemo(() => {
     const avgUsd = (brand.priceMin + brand.priceMax) / 2
