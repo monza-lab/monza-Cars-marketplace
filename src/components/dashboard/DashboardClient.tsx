@@ -1676,8 +1676,29 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const { selectedRegion, effectiveRegion } = useRegion()
 
   const whyBuy = getBrandConfig(auction.make)?.defaultThesis || mockWhyBuy[auction.make] || mockWhyBuy["default"]
-  const marketPulse = mockMarketPulse[auction.make] || mockMarketPulse["default"]
-  const ownershipCost = mockOwnershipCost[auction.make] || mockOwnershipCost["default"]
+  const recentSales = useMemo(() => {
+    return allAuctions
+      .filter(a => a.make === auction.make && a.id !== auction.id && a.currentBid > 0)
+      .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
+      .slice(0, 5)
+      .map(a => ({
+        title: `${a.year} ${a.model}`,
+        price: a.currentBid,
+        platform: a.platform?.replace(/_/g, " ") || "Auction",
+        date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      }))
+  }, [allAuctions, auction.make, auction.id])
+  const ownershipCost = useMemo(() => {
+    const config = getBrandConfig(auction.make)
+    const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
+    const price = auction.currentBid || 100_000
+    const scale = price < 100_000 ? 0.7 : price < 250_000 ? 1.0 : price < 500_000 ? 1.3 : 1.6
+    return {
+      insurance: Math.round(base.insurance * scale),
+      storage: Math.round(base.storage * scale),
+      maintenance: Math.round(base.maintenance * scale),
+    }
+  }, [auction.make, auction.currentBid])
   const fallbackAnalysis = mockAnalysis[auction.make] || mockAnalysis["default"]
 
   // Fair value range for fallback display
@@ -1816,7 +1837,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
             </span>
           </div>
           <div className="space-y-1">
-            {marketPulse.slice(0, 5).map((sale, i) => (
+            {recentSales.map((sale, i) => (
               <div key={i} className="flex items-center justify-between py-1.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] text-muted-foreground truncate">{sale.title}</p>
