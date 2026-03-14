@@ -2294,7 +2294,18 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
     }
     return result
   }, [brand.priceMin, brand.priceMax])
-  const marketPulse = mockMarketPulse[brand.name] || mockMarketPulse["default"]
+  const recentSales = useMemo(() => {
+    return brandAuctions
+      .filter(a => a.currentBid > 0)
+      .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
+      .slice(0, 5)
+      .map(a => ({
+        title: \,
+        price: a.currentBid,
+        platform: a.platform?.replace(/_/g, " ") || "Auction",
+        date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      }))
+  }, [brandAuctions])
   const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
   const topModels = useMemo(() => {
     const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
@@ -2470,7 +2481,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
             </span>
           </div>
           <div className="space-y-2">
-            {marketPulse.map((sale, i) => (
+            {recentSales.map((sale, i) => (
               <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
