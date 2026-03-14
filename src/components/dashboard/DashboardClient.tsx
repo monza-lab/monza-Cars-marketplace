@@ -2266,9 +2266,13 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 }
 
 // ─── BRAND CONTEXT PANEL ───
-function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Brand[] }) {
+function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const { selectedRegion, effectiveRegion } = useRegion()
+  const brandAuctions = useMemo(() =>
+    auctions.filter(a => a.make === brand.name),
+    [auctions, brand.name]
+  )
 
   const whyBuy = mockWhyBuy[brand.name] || mockWhyBuy["default"]
   // Compute regional fair values from brand avg price
@@ -2746,7 +2750,7 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
                 allFamilies={porscheFamilies}
               />
             ) : (
-              <BrandContextPanel brand={selectedBrand} allBrands={brands} />
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} />
             )}
           </div>
         </div>
