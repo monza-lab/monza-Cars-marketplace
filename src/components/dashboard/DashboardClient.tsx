@@ -409,11 +409,13 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
   const brandMap = new Map<string, Auction[]>()
 
   // Group by make
-  auctions.forEach(auction => {
-    const existing = brandMap.get(auction.make) || []
-    existing.push(auction)
-    brandMap.set(auction.make, existing)
-  })
+  auctions
+    .filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON")
+    .forEach(auction => {
+      const existing = brandMap.get(auction.make) || []
+      existing.push(auction)
+      brandMap.set(auction.make, existing)
+    })
 
   // Convert to Brand array with stats
   const brands: Brand[] = []
@@ -476,7 +478,9 @@ function getFamilyDisplayName(familyKey: string): string {
 function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, number>): PorscheFamily[] {
   const familyMap = new Map<string, Auction[]>()
 
-  auctions.forEach(auction => {
+  auctions
+    .filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON")
+    .forEach(auction => {
     const family = extractSeries(auction.model, auction.year, auction.make || "Porsche")
     const existing = familyMap.get(family) || []
     existing.push(auction)
@@ -534,6 +538,25 @@ function timeLeft(
   return `${hrs}${labels.hour} ${mins}${labels.minute}`
 }
 
+// ─── SAFE IMAGE: renders fallback when the URL exists but fails to load ───
+function SafeImage({
+  src,
+  alt,
+  fallback,
+  ...props
+}: React.ComponentProps<typeof Image> & { fallback: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false)
+  if (hasError || !src) return <>{fallback}</>
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      onError={() => setHasError(true)}
+      {...props}
+    />
+  )
+}
+
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
 function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
   const t = useTranslations("dashboard")
@@ -547,23 +570,22 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
-          {brand.representativeImage ? (
-            <Image
-              src={brand.representativeImage}
-              alt={brand.name}
-              fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              sizes="50vw"
-              priority={index === 0}
-              loading={index === 0 ? "eager" : "lazy"}
-              referrerPolicy="no-referrer"
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <span className="text-muted-foreground text-lg">{brand.name}</span>
-            </div>
-          )}
+          <SafeImage
+            src={brand.representativeImage}
+            alt={brand.name}
+            fill
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            sizes="50vw"
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
+            referrerPolicy="no-referrer"
+            unoptimized
+            fallback={
+              <div className="absolute inset-0 bg-card flex items-center justify-center">
+                <span className="text-muted-foreground text-lg">{brand.name}</span>
+              </div>
+            }
+          />
 
           {/* Vignette gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
@@ -682,23 +704,22 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
-          {family.representativeImage ? (
-            <Image
-              src={family.representativeImage}
-              alt={family.name}
-              fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              sizes="50vw"
-              priority={index === 0}
-              loading={index === 0 ? "eager" : "lazy"}
-              referrerPolicy="no-referrer"
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <span className="text-muted-foreground text-lg">{family.name}</span>
-            </div>
-          )}
+          <SafeImage
+            src={family.representativeImage}
+            alt={family.name}
+            fill
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            sizes="50vw"
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
+            referrerPolicy="no-referrer"
+            unoptimized
+            fallback={
+              <div className="absolute inset-0 bg-card flex items-center justify-center">
+                <span className="text-muted-foreground text-lg">{family.name}</span>
+              </div>
+            }
+          />
 
           {/* Vignette */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
@@ -825,22 +846,21 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
     <Link href={`/cars/${brand.slug}`} className="block relative">
       {/* Hero image */}
       <div className="relative h-[45dvh] w-full overflow-hidden">
-        {brand.representativeImage ? (
-          <Image
-            src={brand.representativeImage}
-            alt={brand.name}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority
-            referrerPolicy="no-referrer"
-            unoptimized
-          />
-        ) : (
-          <div className="absolute inset-0 bg-card flex items-center justify-center">
-            <span className="text-muted-foreground text-2xl font-bold">{brand.name}</span>
-          </div>
-        )}
+        <SafeImage
+          src={brand.representativeImage}
+          alt={brand.name}
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+          referrerPolicy="no-referrer"
+          unoptimized
+          fallback={
+            <div className="absolute inset-0 bg-card flex items-center justify-center">
+              <span className="text-muted-foreground text-2xl font-bold">{brand.name}</span>
+            </div>
+          }
+        />
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
@@ -915,22 +935,21 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
     >
       {/* Thumbnail */}
       <div className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-card">
-        {brand.representativeImage ? (
-          <Image
-            src={brand.representativeImage}
-            alt={brand.name}
-            fill
-            className="object-cover"
-            sizes="80px"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            unoptimized
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Car className="size-5 text-muted-foreground" />
-          </div>
-        )}
+        <SafeImage
+          src={brand.representativeImage}
+          alt={brand.name}
+          fill
+          className="object-cover"
+          sizes="80px"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          unoptimized
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Car className="size-5 text-muted-foreground" />
+            </div>
+          }
+        />
       </div>
 
       {/* Info */}
@@ -1015,22 +1034,21 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
             >
               {/* Thumbnail */}
               <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-card">
-                {auction.images[0] ? (
-                  <Image
-                    src={auction.images[0]}
-                    alt={auction.title}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Car className="size-3.5 text-muted-foreground" />
-                  </div>
-                )}
+                <SafeImage
+                  src={auction.images[0]}
+                  alt={auction.title}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  unoptimized
+                  fallback={
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Car className="size-3.5 text-muted-foreground" />
+                    </div>
+                  }
+                />
               </div>
 
               {/* Info */}
@@ -1200,7 +1218,10 @@ function DiscoverySidebar({
     const brandName = brands.find(b => b.slug === activeBrandSlug)?.name
     if (!brandName) return []
 
-    const brandAuctions = auctions.filter(a => a.make === brandName)
+    const brandAuctions = auctions.filter(
+      a => a.make === brandName &&
+           (a.status === "ACTIVE" || a.status === "ENDING_SOON")
+    )
     const familyMap = new Map<string, { count: number; years: number[] }>()
 
     brandAuctions.forEach(a => {
@@ -1418,22 +1439,21 @@ function DiscoverySidebar({
                   <div className="flex gap-3">
                     {/* Thumbnail */}
                     <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-card">
-                      {auction.images[0] ? (
-                        <Image
-                          src={auction.images[0]}
-                          alt={auction.title}
-                          fill
-                          className="object-cover"
-                          sizes="56px"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Car className="size-3.5 text-muted-foreground" />
-                        </div>
-                      )}
+                      <SafeImage
+                        src={auction.images[0]}
+                        alt={auction.title}
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        unoptimized
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Car className="size-3.5 text-muted-foreground" />
+                          </div>
+                        }
+                      />
                     </div>
 
                     {/* Info */}
@@ -1491,22 +1511,21 @@ function AssetCard({ auction }: { auction: Auction }) {
       <div className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border">
         {/* TOP: CINEMATIC IMAGE (wider aspect ratio to fit CTAs) */}
         <div className="relative aspect-[16/8] w-full shrink-0">
-          {auction.images[0] ? (
-            <Image
-              src={auction.images[0]}
-              alt={auction.title}
-              fill
-              className="object-cover object-center"
-              sizes="50vw"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              unoptimized
-            />
-          ) : (
-            <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <span className="text-muted-foreground text-lg">{t("asset.noImage")}</span>
-            </div>
-          )}
+          <SafeImage
+            src={auction.images[0]}
+            alt={auction.title}
+            fill
+            className="object-cover object-center"
+            sizes="50vw"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            unoptimized
+            fallback={
+              <div className="absolute inset-0 bg-card flex items-center justify-center">
+                <span className="text-muted-foreground text-lg">{t("asset.noImage")}</span>
+              </div>
+            }
+          />
 
           {/* Vignette gradient at bottom */}
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
@@ -2558,7 +2577,11 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
-    return filterAuctionsForRegion(auctions, selectedRegion)
+    const regionFiltered = filterAuctionsForRegion(auctions, selectedRegion)
+    // Hard requirement: only active listings are ever displayed.
+    return regionFiltered.filter(
+      a => a.status === "ACTIVE" || a.status === "ENDING_SOON"
+    )
   }, [auctions, selectedRegion])
 
   const liveNowCount = useMemo(() => {

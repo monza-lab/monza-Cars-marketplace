@@ -157,7 +157,11 @@ export async function GET(request: NextRequest) {
     fetchSeriesCounts(requestedMake ?? "Porsche"),
   ]);
 
-  let results: CollectorCar[] = live;
+  // Hard guard: only active listings are ever shown on the dashboard.
+  // The DB already filters this, but we enforce it here as a safety net.
+  let results: CollectorCar[] = live.filter(
+    car => car.status === "ACTIVE" || car.status === "ENDING_SOON"
+  );
 
   // Apply filters
   if (query) {

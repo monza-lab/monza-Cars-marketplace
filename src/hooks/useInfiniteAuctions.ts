@@ -132,10 +132,15 @@ export function useInfiniteAuctions(
       const nextCursor: string | null = data.nextCursor ?? null;
       const pageHasMore: boolean = data.hasMore ?? false;
 
+      // Client-side safety net: only active listings reach the UI
+      const activeAuctions = rawAuctions.filter(
+        (c: any) => c.status === "ACTIVE" || c.status === "ENDING_SOON"
+      );
+
       // Client-side family filter
-      let filtered = rawAuctions;
+      let filtered = activeAuctions;
       if (family) {
-        filtered = rawAuctions.filter(
+        filtered = activeAuctions.filter(
           (car: any) =>
             extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make) === family,
         );
