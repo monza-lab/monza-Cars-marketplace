@@ -2306,7 +2306,20 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])
-  const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
+  const ownershipCost = useMemo(() => {
+    const config = getBrandConfig(brand.name)
+    const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
+    const withBids = brandAuctions.filter(a => a.currentBid > 0)
+    const avgPrice = withBids.length > 0
+      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+      : (brand.priceMin + brand.priceMax) / 2
+    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
+    return {
+      insurance: Math.round(base.insurance * scale),
+      storage: Math.round(base.storage * scale),
+      maintenance: Math.round(base.maintenance * scale),
+    }
+  }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
   const topModels = useMemo(() => {
     const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
     brandAuctions.forEach(a => {
