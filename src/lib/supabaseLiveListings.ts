@@ -1154,6 +1154,7 @@ export async function fetchPaginatedListings(options: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   status?: "active" | "all";
+  modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
@@ -1182,6 +1183,23 @@ export async function fetchPaginatedListings(options: {
     // Status filter
     if (options.status !== "all") {
       query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+    }
+
+    // Model pattern filter (series-level, e.g. "992" → model ILIKE %992%)
+    if (options.modelPatterns) {
+      const { keywords, yearMin, yearMax } = options.modelPatterns;
+      if (keywords.length > 0) {
+        const orClauses = keywords
+          .map((kw) => `model.ilike.%${kw.replace(/[%_]/g, "")}%`)
+          .join(",");
+        query = query.or(orClauses);
+      }
+      if (yearMin !== undefined) {
+        query = query.gte("year", yearMin);
+      }
+      if (yearMax !== undefined) {
+        query = query.lte("year", yearMax);
+      }
     }
 
     // Region filter

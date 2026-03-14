@@ -90,6 +90,7 @@ export function useInfiniteAuctions(
       url.searchParams.set("make", make);
 
       if (pageCursor) url.searchParams.set("cursor", pageCursor);
+      if (family) url.searchParams.set("family", family);
       if (region && region !== "all") url.searchParams.set("region", region);
       if (platform && platform !== "All Platforms")
         url.searchParams.set("platform", platform);
@@ -99,7 +100,7 @@ export function useInfiniteAuctions(
 
       return url.toString();
     },
-    [make, region, platform, query, sortBy, sortOrder],
+    [make, family, region, platform, query, sortBy, sortOrder],
   );
 
   // ── Fetch a single page ──
@@ -314,29 +315,9 @@ export function useInfiniteAuctions(
       }
     }, 0);
     return () => clearTimeout(timer);
-    // family is intentionally excluded — it's client-side only
+    // family is now sent to the API for server-side filtering
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [make, region, platform, query, sortBy, sortOrder, enabled]);
-
-  // ── Effect: when family changes, re-trigger auto-fetch if needed ──
-  const prevFamilyRef = useRef(family);
-  useEffect(() => {
-    if (prevFamilyRef.current === family) return;
-    prevFamilyRef.current = family;
-
-    // Family is a client-side filter: we don't reset, but if the visible
-    // results after filtering are too few and there are more pages, fetch more.
-    if (!family || !enabled) return;
-
-    const visibleCount = cars.filter(
-      (car) =>
-        extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make) === family,
-    ).length;
-
-    if (visibleCount < MIN_FILTERED_RESULTS && hasMore) {
-      loadNextPage();
-    }
-  }, [family, cars, hasMore, make, enabled, loadNextPage]);
+  }, [make, family, region, platform, query, sortBy, sortOrder, enabled]);
 
   // ── Derived: filtered cars (when family is set) ──
   const visibleCars = family

@@ -520,6 +520,24 @@ export function getSeriesConfig(seriesId: string, make: string): SeriesConfig | 
 }
 
 /**
+ * Returns model ILIKE patterns + optional year range for a series.
+ * Used by fetchPaginatedListings to filter at the DB level.
+ */
+export function getModelPatternsForSeries(
+  seriesId: string,
+  make: string
+): { keywords: string[]; yearMin?: number; yearMax?: number } | null {
+  const series = getSeriesConfig(seriesId, make)
+  if (!series) return null
+
+  return {
+    keywords: series.keywords,
+    yearMin: series.yearRange[0],
+    yearMax: series.yearRange[1],
+  }
+}
+
+/**
  * Get all series for a brand, sorted by display order.
  */
 export function getSeriesForBrand(make: string): SeriesConfig[] {

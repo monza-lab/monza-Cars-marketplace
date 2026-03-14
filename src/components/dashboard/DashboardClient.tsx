@@ -220,7 +220,7 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
     // Use the actual car's image from database, fall back to static brand image only if needed
     const carImage = mostExpensiveCar.images?.[0]
     const verifiedBrandImage = getBrandImage(name)
-    const representativeImage = carImage || verifiedBrandImage || ""
+    const representativeImage = carImage || verifiedBrandImage || "/cars/placeholder.svg"
 
     // Use DB aggregate count when available and there's a single brand (e.g. Porsche-only dashboard).
     // This shows the true DB total instead of the capped fetched sample.

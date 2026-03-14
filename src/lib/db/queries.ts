@@ -579,29 +579,7 @@ export async function getSoldAuctionsForMake(make: string, limit = 200): Promise
   }
 }
 
-export async function getAnalysesForMake(make: string): Promise<DbAnalysisRow[]> {
-  try {
-    const rows = await withDbTimeout(
-      () =>
-        dbQuery<DbAnalysisRow>(
-          `
-            SELECT an."bidTargetLow", an."bidTargetHigh", an.confidence::text AS confidence,
-                   an."redFlags", an."keyStrengths", an."criticalQuestions", an."yearlyMaintenance",
-                   an."insuranceEstimate", an."majorServiceCost", an."investmentGrade"::text AS "investmentGrade",
-                   an."appreciationPotential", an."rawAnalysis"
-            FROM "Analysis" an
-            JOIN "Auction" a ON a.id = an."auctionId"
-            WHERE a.make ILIKE $1
-            ORDER BY an."updatedAt" DESC
-            LIMIT 50
-          `,
-          [make],
-        ),
-      'getAnalysesForMake',
-    )
-    return rows.rows
-  } catch (e) {
-    logDbQueryError('getAnalysesForMake', e)
-    return []
-  }
+export async function getAnalysesForMake(_make: string): Promise<DbAnalysisRow[]> {
+  // Analysis table does not exist in Supabase — skip query to avoid log noise
+  return []
 }

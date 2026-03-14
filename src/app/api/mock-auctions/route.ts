@@ -10,6 +10,7 @@ import {
   fetchSeriesCounts,
 } from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
+import { getModelPatternsForSeries } from "@/lib/brandConfig";
 
 // Per-source budget for the non-paginated (dashboard) path.
 // Dashboard only needs enough data for family-level aggregations (counts, sample images).
@@ -37,6 +38,7 @@ function transformCar(car: CollectorCar) {
     currentBid: car.currentBid,
     bidCount: car.bidCount,
     endTime: car.endTime instanceof Date ? car.endTime.toISOString() : car.endTime,
+    image: car.images?.[0] || car.image || "/cars/placeholder.svg",
     images: car.images.slice(0, 1),
     sourceUrl: car.sourceUrl ?? null,
     investmentGrade: car.investmentGrade,
@@ -57,6 +59,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") || "";
   const platform = searchParams.get("platform") || "";
   const category = searchParams.get("category") || "";
+  const family = searchParams.get("family") || "";
   const sortBy = searchParams.get("sortBy") || "endTime";
   const sortOrder = searchParams.get("sortOrder") || "asc";
 
@@ -97,6 +100,11 @@ export async function GET(request: NextRequest) {
     const dbStatus: "active" | "all" =
       status === "Ended" || status === "ENDED" ? "all" : "active";
 
+    // Resolve family to DB-level model patterns
+    const modelPatterns = family
+      ? getModelPatternsForSeries(family, requestedMake ?? "Porsche")
+      : null;
+
     const paginatedPromise = fetchPaginatedListings({
       make: requestedMake ?? "Porsche",
       pageSize: rawPageSize,
@@ -107,6 +115,7 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder: sortOrder as "asc" | "desc",
       status: dbStatus,
+      modelPatterns,
     });
 
     // Only fetch aggregates on the first page (offset === 0)
