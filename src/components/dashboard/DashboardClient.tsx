@@ -999,8 +999,9 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   }
 
   const liveAuctions = useMemo(() => {
+    const now = Date.now()
     return auctions
-      .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
+      .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
       .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
       .slice(0, 8)
   }, [auctions])
@@ -1266,7 +1267,8 @@ function DiscoverySidebar({
 
   // Live auctions sorted by ending soonest — filtered by active family when scrolling
   const liveAuctions = useMemo(() => {
-    let filtered = auctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status))
+    const now = Date.now()
+    let filtered = auctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
     if (activeFamilyName) {
       const familySlug = activeFamilyName.toLowerCase()
       filtered = filtered.filter(a => {
