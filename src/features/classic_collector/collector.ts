@@ -128,6 +128,33 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
           errors.push(`Normalize failed: ${summary.title ?? summary.sourceUrl}`);
         }
       }
+
+      // Backfill images for listings missing them (using leftover time)
+      if (config.timeBudgetMs) {
+        const elapsedMs = Date.now() - startMs;
+        const remainingMs = config.timeBudgetMs - elapsedMs;
+        if (remainingMs > 40_000) {
+          try {
+            const { backfillMissingImages } = await import("./backfill");
+            const backfillResult = await backfillMissingImages({
+              page,
+              timeBudgetMs: remainingMs,
+              maxListings: 5,
+              navigationDelayMs: config.navigationDelayMs,
+              pageTimeoutMs: config.pageTimeoutMs,
+              runId,
+            });
+            counts.backfillDiscovered = backfillResult.discovered;
+            counts.backfillWritten = backfillResult.backfilled;
+            if (backfillResult.errors.length > 0) {
+              errors.push(...backfillResult.errors);
+            }
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            errors.push(`Backfill error: ${msg}`);
+          }
+        }
+      }
     } else {
 
     /* ---------------------------------------------------------------- */

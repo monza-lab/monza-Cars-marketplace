@@ -73,6 +73,8 @@ export async function GET(request: Request) {
       bot_blocked: result.counts.cloudflareBlocked,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
+      backfill_discovered: result.counts.backfillDiscovered,
+      backfill_written: result.counts.backfillWritten,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 

@@ -150,6 +150,8 @@ export interface CollectorCounts {
   written: number;
   errors: number;
   cloudflareBlocked: number;
+  backfillDiscovered?: number;
+  backfillWritten?: number;
 }
 
 export interface CollectorResult {
@@ -158,4 +160,5 @@ export interface CollectorResult {
   counts: CollectorCounts;
   errors: string[];
   outputPath: string;
+  backfill?: { discovered: number; backfilled: number; errors: string[] };
 }

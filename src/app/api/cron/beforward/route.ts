@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/beforward_porsche_collector/collector";
 import { refreshActiveListings } from "@/features/beforward_porsche_collector/supabase_writer";
+import { backfillMissingImages } from "@/features/beforward_porsche_collector/backfill";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -47,6 +48,21 @@ export async function GET(request: Request) {
       dryRun: false,
     });
 
+    // Step 3: Backfill images for listings scraped with summaryOnly
+    const elapsedMs = Date.now() - startTime;
+    const remainingMs = 290_000 - elapsedMs; // 10s safety for metrics
+    let backfillResult = { discovered: 0, backfilled: 0, errors: [] as string[] };
+
+    if (remainingMs > 30_000) {
+      backfillResult = await backfillMissingImages({
+        timeBudgetMs: remainingMs,
+        maxListings: 20,
+        rateLimitMs: 2500,
+        timeoutMs: 20_000,
+        runId: result.runId,
+      });
+    }
+
     await recordScraperRun({
       scraper_name: 'beforward',
       run_id: result.runId,
@@ -60,6 +76,8 @@ export async function GET(request: Request) {
       errors_count: result.counts.errors,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
+      backfill_discovered: backfillResult.discovered,
+      backfill_written: backfillResult.backfilled,
       error_messages: result.errors.length > 0 ? result.errors : undefined,
     });
 
@@ -72,6 +90,11 @@ export async function GET(request: Request) {
         checked: refreshResult.checked,
         updated: refreshResult.updated,
         errors: refreshResult.errors,
+      },
+      backfill: {
+        discovered: backfillResult.discovered,
+        backfilled: backfillResult.backfilled,
+        errors: backfillResult.errors,
       },
       totalResults: result.totalResults,
       pageCount: result.pageCount,
