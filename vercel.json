@@ -5,6 +5,7 @@
     { "path": "/api/cron/autotrader",   "schedule": "0 2 * * *" },
     { "path": "/api/cron/beforward",    "schedule": "0 3 * * *" },
     { "path": "/api/cron/classic",      "schedule": "0 4 * * *" },
-    { "path": "/api/cron/autoscout24",  "schedule": "0 5 * * *" }
+    { "path": "/api/cron/autoscout24",  "schedule": "0 5 * * *" },
+    { "path": "/api/cron/cleanup",     "schedule": "0 6 * * *" }
   ]
 }
