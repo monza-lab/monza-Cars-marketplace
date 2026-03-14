@@ -36,7 +36,8 @@ export async function GET(request: Request) {
     const priceMax = searchParams.get('priceMax')
     const search = searchParams.get('search')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
-    const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
+    const rawSortOrder = searchParams.get('sortOrder') || 'desc'
+    const sortOrder: 'asc' | 'desc' = rawSortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc'
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
     const limit = Math.min(2000, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)))
 

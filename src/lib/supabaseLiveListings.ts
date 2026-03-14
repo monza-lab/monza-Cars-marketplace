@@ -13,7 +13,7 @@ import {
   type SupportedLiveMake,
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
-import { extractSeries } from "./brandConfig";
+import { extractSeries, getSeriesConfig } from "./brandConfig";
 
 // ─── Row types ───
 
@@ -473,6 +473,31 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     description: desc,
     sellerNotes: row.seller_notes ?? null,
   };
+}
+
+// ─── Junk listing filter (safety net — catches items the cron cleanup hasn't removed yet) ───
+
+function isJunkListing(row: { make: string; model: string; year: number; title?: string | null }): boolean {
+  const model = (row.model ?? "").toLowerCase();
+  const title = (row.title ?? "").toLowerCase();
+
+  // Porsche-Diesel tractors (but NOT Cayenne Diesel which is a real car)
+  if (model.includes("diesel") && !model.includes("cayenne")) return true;
+
+  // Tractors by model or title
+  if (model.includes("tractor") || title.includes("tractor")) return true;
+
+  // Literature, press kits, tool kits
+  if (model.includes("literature") || model.includes("press kit")) return true;
+  if (model.includes("tool kit") || (model.includes("tool") && model.includes("356"))) return true;
+
+  // Kit cars using Porsche engines (APAL, Genie, etc.)
+  if (model.includes("apal") || model.includes("genie")) return true;
+
+  // Non-car projects / parts / accessories
+  if (model.includes("kenworth")) return true;
+
+  return false;
 }
 
 // ─── Trend computation ───
@@ -1033,7 +1058,8 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
     // Per-source bucketed query ensures balanced representation across all regions.
     // queryAllListingsDirect is kept as a fallback but queryListingsMany handles
     // source-level interleaving so EU/UK/JP tabs always have data.
-    const rows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
+    const rawRows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
+    const rows = rawRows.filter((r) => !isJunkListing(r));
     if (rows.length === 0) return [];
 
     if (!includePriceHistory) {
@@ -1216,7 +1242,7 @@ export async function fetchPaginatedListings(options: {
       return { cars: [], hasMore: false };
     }
 
-    const rows = (data ?? []) as ListingRow[];
+    const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
     const hasMore = rows.length > pageSize;
     const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
 
@@ -1286,7 +1312,9 @@ export async function fetchSeriesCounts(
 
     for (const page of pages) {
       for (const row of page as { model: string; year: number }[]) {
+        if (isJunkListing({ make, model: row.model, year: row.year })) continue;
         const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make);
+        if (!getSeriesConfig(seriesId, make)) continue;
         counts[seriesId] = (counts[seriesId] ?? 0) + 1;
       }
     }

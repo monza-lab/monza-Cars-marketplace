@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { CanonicalListing } from "../contracts/listing";
+import { validateListing } from "@/lib/listingValidator";
 import { buildListingFingerprint } from "../services/dedupe";
 
 export type WriteResult = { inserted: number; updated: number; warnings: string[] };
@@ -235,6 +236,23 @@ async function upsertChildTables(client: SupabaseClient, listingId: string, list
 
 export async function upsertCanonicalListing(listing: CanonicalListing, dryRun: boolean, options: WriteOptions = {}): Promise<WriteResult> {
   if (dryRun) return { inserted: 0, updated: 0, warnings: [] };
+
+  const validation = validateListing({
+    make: listing.make,
+    model: listing.model,
+    title: listing.title,
+    year: listing.year,
+  });
+
+  if (!validation.valid) {
+    console.log(`[porsche_ingest] Skipped invalid listing: ${validation.reason} — ${listing.title}`);
+    return { inserted: 0, updated: 0, warnings: [`skipped: ${validation.reason}`] };
+  }
+
+  if (validation.fixedModel) {
+    listing.model = validation.fixedModel;
+  }
+
   const client = createSupabase();
   const warnings: string[] = [];
 

@@ -3,6 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import * as cheerio from "cheerio";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
+import { validateListing } from "@/lib/listingValidator";
 import { fetchHtml } from "./net";
 import { mapAuctionStatus } from "./normalize";
 import { logEvent } from "./logging";
@@ -42,6 +43,23 @@ export function createSupabaseWriter(): SupabaseWriter {
   return {
     upsertAll: async (listing, meta, dryRun) => {
       if (dryRun) return { listingId: "dry_run", wrote: false };
+
+      const validation = validateListing({
+        make: listing.make,
+        model: listing.model,
+        title: listing.title,
+        year: listing.year,
+      });
+
+      if (!validation.valid) {
+        console.log(`[autotrader] Skipped invalid listing: ${validation.reason} — ${listing.title}`);
+        return { listingId: "skipped_invalid", wrote: false };
+      }
+
+      if (validation.fixedModel) {
+        listing.model = validation.fixedModel;
+      }
+
       const listingId = await upsertListing(client, listing, meta);
       await insertPriceHistorySnapshot(client, listingId, listing, meta);
       return { listingId, wrote: true };

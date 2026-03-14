@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
+import { validateListing } from "@/lib/listingValidator";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -27,6 +28,23 @@ export function createSupabaseWriter(): SupabaseWriter {
   return {
     upsertAll: async (listing, meta, dryRun) => {
       if (dryRun) return { listingId: "dry_run", wrote: false };
+
+      const validation = validateListing({
+        make: listing.make,
+        model: listing.model,
+        title: listing.title,
+        year: listing.year,
+      });
+
+      if (!validation.valid) {
+        console.log(`[autoscout24] Skipped invalid listing: ${validation.reason} — ${listing.title}`);
+        return { listingId: "skipped_invalid", wrote: false };
+      }
+
+      if (validation.fixedModel) {
+        listing.model = validation.fixedModel;
+      }
+
       const listingId = await upsertListing(client, listing, meta);
       await insertPriceHistorySnapshot(client, listingId, listing, meta);
       return { listingId, wrote: true };

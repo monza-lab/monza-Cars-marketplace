@@ -50,6 +50,27 @@ function detectJunk(row: ListingRow): string | null {
     return "kit-car";
   }
 
+  // Rule 7: Non-Porsche vehicles (Kenworth trucks, etc.)
+  if (model.includes("kenworth")) {
+    return "non-porsche-vehicle";
+  }
+
+  // Rule 8: Boats
+  if (model.includes("craft") || model.includes("boat") || title.includes("boat")) {
+    return "boat";
+  }
+
+  // Rule 9: Bikes, minibikes, scooters
+  if (model.includes("bike") || model.includes("minibike") || model.includes("scooter")
+      || title.includes("minibike") || title.includes("porsche bike")) {
+    return "bike";
+  }
+
+  // Rule 10: Other non-car items
+  if (model.includes("autonacional") || model.includes("projects unlimited")) {
+    return "non-car-misc";
+  }
+
   return null;
 }
 

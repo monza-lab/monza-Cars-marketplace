@@ -20,8 +20,44 @@ function mapStatus(raw: string | undefined): 'ACTIVE' | 'ENDED' {
   return 'ACTIVE'
 }
 
+// Allowed auction platform domains for scraping
+const ALLOWED_SCRAPE_DOMAINS = [
+  'bringatrailer.com',
+  'rmsothebys.com',
+  'carsandbids.com',
+  'collectingcars.com',
+  'autoscout24.com',
+  'classic.com',
+  'beforward.jp',
+  'autotrader.co.uk',
+]
+
+function isAllowedScrapeUrl(raw: string): boolean {
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
+    const host = parsed.hostname.toLowerCase()
+    return ALLOWED_SCRAPE_DOMAINS.some(
+      (d) => host === d || host.endsWith(`.${d}`)
+    )
+  } catch {
+    return false
+  }
+}
+
 // ─── GET: Zero-cost price fetch for a single URL ───
 export async function GET(request: NextRequest) {
+  // Auth check — prevent unauthenticated SSRF
+  const authHeader = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    )
+  }
+
   const url = request.nextUrl.searchParams.get("url")
   const forceRefresh = request.nextUrl.searchParams.get("refresh") === "true"
   const statsOnly = request.nextUrl.searchParams.get("stats") === "true"
@@ -39,6 +75,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { success: false, error: "Missing 'url' parameter" },
       { status: 400 }
+    )
+  }
+
+  if (!isAllowedScrapeUrl(url)) {
+    return NextResponse.json(
+      { success: false, error: "URL domain not allowed" },
+      { status: 403 }
     )
   }
 

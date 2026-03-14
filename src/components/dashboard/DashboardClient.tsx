@@ -266,6 +266,8 @@ function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, 
     .filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON")
     .forEach(auction => {
     const family = extractSeries(auction.model, auction.year, auction.make || "Porsche")
+    // Skip models that don't match any known Porsche series in brandConfig
+    if (!getSeriesConfig(family, auction.make || "Porsche")) return
     const existing = familyMap.get(family) || []
     existing.push(auction)
     familyMap.set(family, existing)
@@ -1011,6 +1013,8 @@ function DiscoverySidebar({
 
     brandAuctions.forEach(a => {
       const series = extractSeries(a.model, a.year, a.make || brandName)
+      // Skip models that don't match any known series in brandConfig
+      if (!getSeriesConfig(series, a.make || brandName)) return
       const existing = familyMap.get(series) || { count: 0, years: [] }
       existing.count++
       existing.years.push(a.year)
