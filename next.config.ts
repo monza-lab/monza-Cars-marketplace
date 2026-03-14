@@ -40,6 +40,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.autoscout24.es" },
       { protocol: "https", hostname: "**.autoscout24.at" },
       { protocol: "https", hostname: "**.autoscout24.be" },
+      // Classic.com CDN for listing images
+      { protocol: "https", hostname: "images.classic.com" },
+      { protocol: "https", hostname: "**.classic.com" },
       // Other platforms
       { protocol: "https", hostname: "image-cdn.beforward.jp" },
       { protocol: "https", hostname: "m.atcdn.co.uk" },
@@ -66,7 +69,7 @@ const nextConfig: NextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: *.bringatrailer.com *.wp.com *.carsandbids.com *.collectingcars.com images.unsplash.com source.unsplash.com upload.wikimedia.org *.wikimedia.org picsum.photos fastly.picsum.photos cdn.rmsothebys.com *.rmsothebys.com *.autoscout24.net *.autoscout24.com *.autoscout24.de *.autoscout24.ch *.autoscout24.it *.autoscout24.fr *.autoscout24.nl *.autoscout24.es *.autoscout24.at *.autoscout24.be image-cdn.beforward.jp m.atcdn.co.uk",
+      "img-src 'self' data: blob: *.bringatrailer.com *.wp.com *.carsandbids.com *.collectingcars.com images.unsplash.com source.unsplash.com upload.wikimedia.org *.wikimedia.org picsum.photos fastly.picsum.photos cdn.rmsothebys.com *.rmsothebys.com *.autoscout24.net *.autoscout24.com *.autoscout24.de *.autoscout24.ch *.autoscout24.it *.autoscout24.fr *.autoscout24.nl *.autoscout24.es *.autoscout24.at *.autoscout24.be images.classic.com *.classic.com image-cdn.beforward.jp m.atcdn.co.uk",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com",
       "frame-ancestors 'none'",

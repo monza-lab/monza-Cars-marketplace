@@ -132,6 +132,7 @@ const platformShort: Record<string, string> = {
   AUTO_SCOUT_24: "AS24",
   AUTO_TRADER: "AT",
   BE_FORWARD: "BF",
+  CLASSIC_COM: "Cls",
 }
 
 // ─── UNIVERSAL MOCK DATA ───
@@ -404,7 +405,7 @@ const mockMarketDepth: Record<string, MarketDepth> = {
 }
 
 // ─── AGGREGATE AUCTIONS BY BRAND ───
-function aggregateBrands(auctions: Auction[]): Brand[] {
+function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[] {
   const brandMap = new Map<string, Auction[]>()
 
   // Group by make
@@ -435,10 +436,14 @@ function aggregateBrands(auctions: Auction[]): Brand[] {
     const verifiedBrandImage = getBrandImage(name)
     const representativeImage = carImage || verifiedBrandImage || ""
 
+    // Use DB aggregate count when available and there's a single brand (e.g. Porsche-only dashboard).
+    // This shows the true DB total instead of the capped fetched sample.
+    const count = (dbTotalOverride && brandMap.size === 1) ? dbTotalOverride : cars.length
+
     brands.push({
       name,
       slug: name.toLowerCase().replace(/\s+/g, "-"),
-      carCount: cars.length,
+      carCount: count,
       priceMin: Math.min(...prices),
       priceMax: Math.max(...prices),
       avgTrend: mockAnalysis[name]?.trend || mockAnalysis["default"].trend,
@@ -468,7 +473,7 @@ function getFamilyDisplayName(familyKey: string): string {
   return config?.label || familyKey
 }
 
-function aggregateFamilies(auctions: Auction[]): PorscheFamily[] {
+function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, number>): PorscheFamily[] {
   const familyMap = new Map<string, Auction[]>()
 
   auctions.forEach(auction => {
@@ -491,10 +496,13 @@ function aggregateFamilies(auctions: Auction[]): PorscheFamily[] {
     const modelImage = getModelImage("Porsche", bestCar.model)
     const fallbackImage = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
+    // Use exact DB series count if available, otherwise fall back to sample count
+    const carCount = dbSeriesCounts?.[familyKey] ?? cars.length
+
     families.push({
       name: getFamilyDisplayName(familyKey),
       slug: familyKey.toLowerCase(),
-      carCount: cars.length,
+      carCount,
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       yearMin: Math.min(...years),
@@ -527,7 +535,7 @@ function timeLeft(
 }
 
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
-function BrandCard({ brand }: { brand: Brand }) {
+function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
 
@@ -546,7 +554,8 @@ function BrandCard({ brand }: { brand: Brand }) {
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               sizes="50vw"
-              priority
+              priority={index === 0}
+              loading={index === 0 ? "eager" : "lazy"}
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -657,7 +666,7 @@ function BrandCard({ brand }: { brand: Brand }) {
 }
 
 // ─── FAMILY CARD (full-screen scroll card for Porsche families) ───
-function FamilyCard({ family }: { family: PorscheFamily }) {
+function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: number }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
 
@@ -680,7 +689,8 @@ function FamilyCard({ family }: { family: PorscheFamily }) {
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               sizes="50vw"
-              priority
+              priority={index === 0}
+              loading={index === 0 ? "eager" : "lazy"}
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -912,6 +922,7 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
             fill
             className="object-cover"
             sizes="80px"
+            loading="lazy"
             referrerPolicy="no-referrer"
             unoptimized
           />
@@ -1011,6 +1022,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                     fill
                     className="object-cover"
                     sizes="64px"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     unoptimized
                   />
@@ -1167,6 +1179,8 @@ function DiscoverySidebar({
   onSelectFamily,
   activeBrandSlug,
   activeFamilyName,
+  seriesCounts,
+  liveRegionTotals,
 }: {
   auctions: Auction[]
   brands: Brand[]
@@ -1174,6 +1188,8 @@ function DiscoverySidebar({
   onSelectFamily?: (familyName: string) => void
   activeBrandSlug?: string
   activeFamilyName?: string
+  seriesCounts?: Record<string, number>
+  liveRegionTotals?: LiveRegionTotals
 }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
@@ -1195,21 +1211,37 @@ function DiscoverySidebar({
       familyMap.set(series, existing)
     })
 
+    // Determine which DB total to use for scaling
+    const dbTotal = selectedRegion && liveRegionTotals
+      ? (liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all)
+      : liveRegionTotals?.all
+    const sampleTotal = brandAuctions.length
+
     return Array.from(familyMap.entries())
-      .map(([seriesId, data]) => ({
-        name: getSeriesConfig(seriesId.toLowerCase(), brandName)?.label || seriesId,
-        slug: seriesId.toLowerCase(),
-        count: data.count,
-        yearMin: Math.min(...data.years),
-        yearMax: Math.max(...data.years),
-      }))
+      .map(([seriesId, data]) => {
+        let count: number
+        if (selectedRegion && dbTotal && sampleTotal > 0) {
+          // Region selected: scale sample distribution by DB regional total
+          count = Math.round(data.count / sampleTotal * dbTotal)
+        } else {
+          // All regions: use exact DB count from fetchSeriesCounts
+          count = seriesCounts?.[seriesId] ?? data.count
+        }
+        return {
+          name: getSeriesConfig(seriesId.toLowerCase(), brandName)?.label || seriesId,
+          slug: seriesId.toLowerCase(),
+          count,
+          yearMin: Math.min(...data.years),
+          yearMax: Math.max(...data.years),
+        }
+      })
       .sort((a, b) => {
         const orderA = getSeriesConfig(a.slug, brandName)?.order ?? 99
         const orderB = getSeriesConfig(b.slug, brandName)?.order ?? 99
         if (orderA !== orderB) return orderA - orderB
         return b.count - a.count
       })
-  }, [auctions, activeBrandSlug, brands])
+  }, [auctions, activeBrandSlug, brands, seriesCounts, selectedRegion, liveRegionTotals])
 
   // Live auctions sorted by ending soonest — filtered by active family when scrolling
   const liveAuctions = useMemo(() => {
@@ -1393,6 +1425,7 @@ function DiscoverySidebar({
                           fill
                           className="object-cover"
                           sizes="56px"
+                          loading="lazy"
                           referrerPolicy="no-referrer"
                           unoptimized
                         />
@@ -1465,7 +1498,7 @@ function AssetCard({ auction }: { auction: Auction }) {
               fill
               className="object-cover object-center"
               sizes="50vw"
-              priority
+              loading="lazy"
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -2517,7 +2550,7 @@ function BrandContextPanel({ brand, allBrands }: { brand: Brand; allBrands: Bran
 }
 
 // ─── MAIN COMPONENT ───
-export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auction[]; liveRegionTotals?: LiveRegionTotals }) {
+export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
   const t = useTranslations("dashboard")
@@ -2541,10 +2574,10 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
   }, [filteredAuctions, liveRegionTotals, selectedRegion])
 
   // Aggregate filtered auctions into brands
-  const brands = useMemo(() => aggregateBrands(filteredAuctions), [filteredAuctions])
+  const brands = useMemo(() => aggregateBrands(filteredAuctions, liveNowCount), [filteredAuctions, liveNowCount])
 
   // Aggregate into Porsche families for the family-based landing scroll
-  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions), [filteredAuctions])
+  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, seriesCounts), [filteredAuctions, seriesCounts])
 
   // Reset scroll position when region changes
   useEffect(() => {
@@ -2664,6 +2697,8 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
               onSelectFamily={scrollToFamily}
               activeBrandSlug={selectedBrand?.slug}
               activeFamilyName={activeFamilyName}
+              seriesCounts={seriesCounts}
+              liveRegionTotals={liveRegionTotals}
             />
 
           {/* COLUMN B: FAMILY FEED (50%) — scroll through Porsche families */}
@@ -2671,8 +2706,8 @@ export function DashboardClient({ auctions, liveRegionTotals }: { auctions: Auct
             ref={feedRef}
             className="h-full overflow-y-auto snap-y snap-mandatory no-scrollbar scroll-smooth"
           >
-            {porscheFamilies.map((family) => (
-              <FamilyCard key={family.slug} family={family} />
+            {porscheFamilies.map((family, idx) => (
+              <FamilyCard key={family.slug} family={family} index={idx} />
             ))}
           </div>
 

@@ -26,6 +26,7 @@ type LiveRegionTotals = {
 type HomeAggregates = {
   liveNow: number;
   regionTotals: LiveRegionTotals;
+  seriesCounts?: Record<string, number>;
 };
 
 type HomeAuctionPayload = {
@@ -74,6 +75,7 @@ function normalizeAuctionPayload(payload: any): HomeAuctionPayload {
           EU: Number(aggregatePayload?.regionTotals?.EU ?? 0),
           JP: Number(aggregatePayload?.regionTotals?.JP ?? auctions.length),
         },
+        seriesCounts: aggregatePayload.seriesCounts as Record<string, number> | undefined,
       }
     : undefined;
 
@@ -86,10 +88,10 @@ async function fetchAuctionsWithFallback(): Promise<HomeAuctionPayload> {
     : getLocalePrefixFromPathname(window.location.pathname);
 
   const candidates = [
-    `${localePrefix}/api/mock-auctions?limit=400`,
-    "/api/mock-auctions?limit=400",
-    `${localePrefix}/api/auctions?limit=400`,
-    "/api/auctions?limit=400",
+    `${localePrefix}/api/mock-auctions`,
+    "/api/mock-auctions",
+    `${localePrefix}/api/auctions`,
+    "/api/auctions",
   ];
 
   for (const endpoint of candidates) {
@@ -171,6 +173,7 @@ function HomeContent({
 }) {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [aggregates, setAggregates] = useState<HomeAggregates | undefined>(undefined);
+  const [seriesCounts, setSeriesCounts] = useState<Record<string, number> | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -179,6 +182,7 @@ function HomeContent({
         const fetched = await fetchAuctionsWithFallback();
         setAuctions(fetched.auctions);
         setAggregates(fetched.aggregates);
+        setSeriesCounts(fetched.aggregates?.seriesCounts);
       } catch (error) {
         console.error("Failed to fetch auctions:", error);
       } finally {
@@ -200,7 +204,7 @@ function HomeContent({
     );
   }
 
-  return <DashboardClient auctions={auctions} liveRegionTotals={aggregates?.regionTotals} />;
+  return <DashboardClient auctions={auctions} liveRegionTotals={aggregates?.regionTotals} liveNowTotal={aggregates?.liveNow} seriesCounts={seriesCounts} />;
 }
 
 export default function Home() {

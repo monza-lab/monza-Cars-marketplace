@@ -4,7 +4,8 @@ import { derivePerSourceLimit } from "./limits";
 
 describe("mock-auctions derivePerSourceLimit", () => {
   it("splits a global limit across all canonical sources", () => {
-    expect(derivePerSourceLimit(2000)).toBe(334);
+    // 7 canonical sources: BaT, AutoScout24, AutoTrader, BeForward, CarsAndBids, CollectingCars, ClassicCom
+    expect(derivePerSourceLimit(2000)).toBe(286);
     expect(derivePerSourceLimit(24)).toBe(4);
     expect(derivePerSourceLimit(6)).toBe(1);
   });

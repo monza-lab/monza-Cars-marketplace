@@ -1,23 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  CURATED_CARS,
-  searchCars,
-  getTopPicks,
-  getLiveAuctions,
-  getEndingSoon,
-  getCarsByMake,
-  getCarsByGrade,
   type CollectorCar,
   type InvestmentGrade
 } from "@/lib/curatedCars";
-import { fetchLiveListingAggregateCounts, fetchLiveListingsAsCollectorCars } from "@/lib/supabaseLiveListings";
+import {
+  fetchLiveListingAggregateCounts,
+  fetchLiveListingsAsCollectorCars,
+  fetchPaginatedListings,
+  fetchSeriesCounts,
+} from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
-import { derivePerSourceLimit } from "./limits";
+
+// Per-source budget for the non-paginated (dashboard) path.
+// Dashboard only needs enough data for family-level aggregations (counts, sample images).
+// Individual car browsing uses the paginated path instead.
+const PER_SOURCE_BUDGET = 500;
+
+// Maximum page size for paginated requests
+const MAX_PAGE_SIZE = 200;
+
+function transformCar(car: CollectorCar) {
+  return {
+    id: car.id,
+    title: car.title,
+    year: car.year,
+    make: car.make,
+    model: car.model,
+    trim: car.trim,
+    engine: car.engine,
+    transmission: car.transmission,
+    mileage: car.mileage,
+    mileageUnit: car.mileageUnit,
+    location: car.location,
+    platform: car.platform,
+    status: car.status,
+    currentBid: car.currentBid,
+    bidCount: car.bidCount,
+    endTime: car.endTime instanceof Date ? car.endTime.toISOString() : car.endTime,
+    images: car.images.slice(0, 1),
+    sourceUrl: car.sourceUrl ?? null,
+    investmentGrade: car.investmentGrade,
+    trend: car.trend,
+    trendValue: car.trendValue,
+    category: car.category,
+    region: car.region,
+  };
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  // Query parameters
   const query = searchParams.get("query") || "";
   const filter = searchParams.get("filter") || "";
   const make = searchParams.get("make") || "";
@@ -27,10 +59,6 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category") || "";
   const sortBy = searchParams.get("sortBy") || "endTime";
   const sortOrder = searchParams.get("sortOrder") || "asc";
-  const page = parseInt(searchParams.get("page") || "1");
-  const parsedLimit = parseInt(searchParams.get("limit") || "24", 10);
-  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 400) : 24;
-  const perSourceLimit = derivePerSourceLimit(limit);
 
   const requestedMake = make && make !== "All Makes"
     ? normalizeSupportedMake(make)
@@ -40,20 +68,93 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       auctions: [],
       total: 0,
-      page,
-      limit,
+      page: 1,
+      limit: 0,
       totalPages: 0,
     });
   }
 
-  const [live, aggregates] = await Promise.all([
+  // ─── Paginated path (server-side filtering & pagination) ───
+  const isPaginated = searchParams.has("pageSize") || searchParams.has("cursor");
+
+  if (isPaginated) {
+    const rawPageSize = Math.min(
+      Math.max(1, parseInt(searchParams.get("pageSize") || "50", 10) || 50),
+      MAX_PAGE_SIZE
+    );
+    const cursor = searchParams.get("cursor") || null;
+    const offset = cursor
+      ? (JSON.parse(atob(cursor)) as { offset: number }).offset
+      : 0;
+
+    // Map platform query param to source value for DB filtering
+    const platformFilter = platform && platform !== "All Platforms" ? platform : null;
+
+    // Map region from filter params
+    const regionParam = searchParams.get("region") || null;
+
+    // Determine DB-level status filter
+    const dbStatus: "active" | "all" =
+      status === "Ended" || status === "ENDED" ? "all" : "active";
+
+    const paginatedPromise = fetchPaginatedListings({
+      make: requestedMake ?? "Porsche",
+      pageSize: rawPageSize,
+      offset,
+      region: regionParam,
+      platform: platformFilter,
+      query: query || null,
+      sortBy,
+      sortOrder: sortOrder as "asc" | "desc",
+      status: dbStatus,
+    });
+
+    // Only fetch aggregates on the first page (offset === 0)
+    const aggregatesPromise =
+      offset === 0
+        ? fetchLiveListingAggregateCounts({ make: requestedMake })
+        : null;
+
+    const [paginatedResult, aggregatesResult] = await Promise.all([
+      paginatedPromise,
+      aggregatesPromise ?? Promise.resolve(null),
+    ]);
+
+    const transformed = paginatedResult.cars.map(transformCar);
+
+    const nextCursor = paginatedResult.hasMore
+      ? btoa(JSON.stringify({ offset: offset + rawPageSize }))
+      : null;
+
+    const response: Record<string, unknown> = {
+      auctions: transformed,
+      nextCursor,
+      hasMore: paginatedResult.hasMore,
+    };
+
+    if (aggregatesResult) {
+      response.aggregates = {
+        liveNow: aggregatesResult.liveNow,
+        regionTotals: aggregatesResult.regionTotalsByPlatform,
+      };
+    }
+
+    return NextResponse.json(response);
+  }
+
+  // ─── Non-paginated path (dashboard / legacy) ───
+
+  const [live, aggregates, seriesCounts] = await Promise.all([
     fetchLiveListingsAsCollectorCars({
-      limit: perSourceLimit,
+      // Per-source budget — queryListingsMany fetches up to this many per marketplace
+      // then interleaves so every region (US/EU/UK/JP) has data.
+      limit: PER_SOURCE_BUDGET,
       includePriceHistory: false,
       make: requestedMake,
       includeAllSources: true,
     }),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
+    fetchSeriesCounts(requestedMake ?? "Porsche"),
   ]);
 
   let results: CollectorCar[] = live;
@@ -68,8 +169,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Note: The 'filter' param (top-picks, live, ending-soon) logic below is simplified
-  // because we are now restricted to ONLY Supabase Porsches.
   if (filter === "top-picks") {
     results = results.filter(car => car.investmentGrade === "AAA");
   } else if (filter === "live") {
@@ -134,54 +233,21 @@ export async function GET(request: NextRequest) {
     return sortOrder === "desc" ? -comparison : comparison;
   });
 
-  // Pagination
   const total = results.length;
-  const startIndex = (page - 1) * limit;
-  const paginatedResults = results.slice(startIndex, startIndex + limit);
 
-  // Transform to match existing API format
-  const transformed = paginatedResults.map(car => ({
-    id: car.id,
-    title: car.title,
-    year: car.year,
-    make: car.make,
-    model: car.model,
-    trim: car.trim,
-    engine: car.engine,
-    transmission: car.transmission,
-    mileage: car.mileage,
-    mileageUnit: car.mileageUnit,
-    location: car.location,
-    platform: car.platform,
-    status: car.status,
-    currentBid: car.currentBid,
-    finalPrice: car.status === "ENDED" ? car.currentBid : null,
-    bidCount: car.bidCount,
-    endTime: car.endTime.toISOString(),
-    images: car.images,
-    sourceUrl: car.sourceUrl ?? `https://example.com/auction/${car.id}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    // Extended fields
-    investmentGrade: car.investmentGrade,
-    thesis: car.thesis,
-    trend: car.trend,
-    trendValue: car.trendValue,
-    history: car.history,
-    category: car.category,
-    region: car.region,
-    fairValueByRegion: car.fairValueByRegion
-  }));
+  // Transform — keep only first image per listing to reduce payload size
+  const transformed = results.map(transformCar);
 
   return NextResponse.json({
     auctions: transformed,
     total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
+    page: 1,
+    limit: total,
+    totalPages: 1,
     aggregates: {
       liveNow: aggregates.liveNow,
       regionTotals: aggregates.regionTotalsByPlatform,
+      seriesCounts,
     },
   });
 }

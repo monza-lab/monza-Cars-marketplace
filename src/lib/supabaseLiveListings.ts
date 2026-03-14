@@ -6,7 +6,6 @@ import type {
   Region,
   FairValueByRegion,
 } from "./curatedCars";
-import { isLuxuryCarListing } from "@/features/ferrari_collector/normalize";
 import {
   isSupportedLiveMake,
   normalizeSupportedMake,
@@ -14,6 +13,7 @@ import {
   type SupportedLiveMake,
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
+import { extractSeries } from "./brandConfig";
 
 // ─── Row types ───
 
@@ -102,6 +102,7 @@ const SOURCE_ALIASES = {
   BeForward: ["BeForward", "BEFORWARD", "be_forward", "BE_FORWARD"],
   CarsAndBids: ["CarsAndBids", "CARS_AND_BIDS", "carsandbids"],
   CollectingCars: ["CollectingCars", "COLLECTING_CARS", "collectingcars"],
+  ClassicCom: ["ClassicCom", "CLASSICCOM", "classiccom", "CLASSIC_COM", "classic.com"],
 } as const;
 
 const PLATFORM_ALIASES = {
@@ -109,6 +110,7 @@ const PLATFORM_ALIASES = {
   AutoScout24: ["AUTO_SCOUT_24", "AUTOSCOUT24", "AUTOSCOUT"],
   AutoTrader: ["AUTO_TRADER", "AUTOTRADER"],
   BeForward: ["BE_FORWARD", "BEFORWARD"],
+  ClassicCom: ["CLASSIC_COM", "CLASSICCOM"],
 } as const;
 
 const LIVE_STATUS_ALIASES = [
@@ -122,7 +124,7 @@ const LIVE_STATUS_ALIASES = [
 
 export const LIVE_DB_STATUS_VALUES = ["active"] as const;
 
-type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars";
+type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars" | "ClassicCom";
 
 const ALLOWED_IMAGE_HOSTS = [
   "bringatrailer.com",
@@ -150,6 +152,7 @@ const ALLOWED_IMAGE_HOSTS = [
   "autoscout24.be",
   "image-cdn.beforward.jp",
   "m.atcdn.co.uk",
+  "images.classic.com",
 ] as const;
 
 function isAllowedImageHost(hostname: string): boolean {
@@ -240,11 +243,13 @@ export function resolveCanonicalSource(source: string | null | undefined, platfo
   if (SOURCE_ALIASES.BeForward.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "BeForward";
   if (SOURCE_ALIASES.CarsAndBids.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CarsAndBids";
   if (SOURCE_ALIASES.CollectingCars.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CollectingCars";
+  if (SOURCE_ALIASES.ClassicCom.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "ClassicCom";
 
   if (PLATFORM_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BaT";
   if (PLATFORM_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoScout24";
   if (PLATFORM_ALIASES.AutoTrader.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoTrader";
   if (PLATFORM_ALIASES.BeForward.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BeForward";
+  if (PLATFORM_ALIASES.ClassicCom.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "ClassicCom";
 
   return null;
 }
@@ -265,6 +270,8 @@ function mapPlatform(source: string, platform: string | null): Platform {
       return "AUTO_TRADER";
     case "BeForward":
       return "BE_FORWARD";
+    case "ClassicCom":
+      return "CLASSIC_COM";
     default:
       return "BRING_A_TRAILER";
   }
@@ -314,6 +321,8 @@ function auctionHouseLabel(source: string): string {
       return "Auto Trader";
     case "BeForward":
       return "Be Forward";
+    case "ClassicCom":
+      return "Classic.com";
     default:
       return source;
   }
@@ -413,7 +422,9 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
         ? "CARS_AND_BIDS"
         : normalizedPlatform === "COLLECTINGCARS"
           ? "COLLECTING_CARS"
-          : mapPlatform(row.source, row.platform);
+          : normalizedPlatform === "CLASSICCOM"
+            ? "CLASSIC_COM"
+            : mapPlatform(row.source, row.platform);
 
   // Prefer direct end_time; fall back to sale_date
   const endTime = row.end_time
@@ -493,7 +504,7 @@ function computeTrend(
 
 // Default sources for lightweight live listing views.
 const DEFAULT_QUERY_SOURCES = ["BaT", "AutoScout24"] as const;
-const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "AutoTrader", "BeForward", "CarsAndBids", "CollectingCars"] as const;
+const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "AutoTrader", "BeForward", "CarsAndBids", "CollectingCars", "ClassicCom"] as const;
 
 export type LiveListingRegionTotals = {
   all: number;
@@ -582,7 +593,8 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
         .eq("status", LIVE_DB_STATUS_VALUES[0])
     );
 
-    const usPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
+    const usBatPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
+    const usClassicPromise = countLiveListingsForCanonicalSource(supabase, "ClassicCom", targetMake);
     const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
     const ukPromise = countLiveListingsForCanonicalSource(supabase, "AutoTrader", targetMake);
     const jpPromise = countLiveListingsForCanonicalSource(supabase, "BeForward", targetMake);
@@ -612,9 +624,10 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
         .in("country", ["JAPAN"])
     );
 
-    const [total, us, eu, uk, jp, locationUs, locationUk, locationJp] = await Promise.all([
+    const [total, usBat, usClassic, eu, uk, jp, locationUs, locationUk, locationJp] = await Promise.all([
       totalPromise,
-      usPromise,
+      usBatPromise,
+      usClassicPromise,
       euPromise,
       ukPromise,
       jpPromise,
@@ -629,7 +642,7 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
       liveNow: total,
       regionTotalsByPlatform: {
         all: total,
-        US: us,
+        US: usBat + usClassic,
         EU: eu,
         UK: uk,
         JP: jp,
@@ -667,6 +680,62 @@ export function interleaveResultsBySource<T>(resultsBySource: T[][], limit: numb
   return interleaved;
 }
 
+// Direct query: fetch ALL listings for a make without per-source bucketing.
+// This ensures no listings are silently dropped due to unrecognised source/platform values.
+async function queryAllListingsDirect(
+  supabase: SupabaseClient,
+  limit: number,
+  targetMake: SupportedLiveMake,
+  statusFilter?: string,
+): Promise<ListingRow[]> {
+  const pageSize = 500;
+  const maxRows = limit > 0 ? limit : 5000;
+  const rows: ListingRow[] = [];
+  let from = 0;
+
+  while (rows.length < maxRows) {
+    try {
+      let query = supabase
+        .from("listings")
+        .select(SELECT_NARROW)
+        .ilike("make", targetMake);
+
+      if (statusFilter && statusFilter.toLowerCase() === "active") {
+        query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+      } else if (statusFilter) {
+        query = query.eq("status", statusFilter);
+      }
+
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await query
+        .order("sale_date", { ascending: false, nullsFirst: false })
+        .order("end_time", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error("[supabaseLiveListings] queryAllListingsDirect failed:", error.message);
+        break;
+      }
+
+      const page = (data ?? []) as ListingRow[];
+      if (page.length === 0) break;
+
+      for (const row of page) {
+        rows.push(row);
+      }
+
+      if (page.length < pageSize) break;
+      from += pageSize;
+    } catch (err) {
+      console.error("[supabaseLiveListings] queryAllListingsDirect threw:", err);
+      break;
+    }
+  }
+
+  return rows;
+}
+
 async function queryListingsMany(
   supabase: SupabaseClient,
   limit: number,
@@ -675,7 +744,7 @@ async function queryListingsMany(
   sources: readonly CanonicalSource[] = DEFAULT_QUERY_SOURCES,
 ): Promise<ListingRow[]> {
   const hasLimit = limit > 0;
-  const sourceQueryLimit = hasLimit ? limit : 500;
+  const sourceQueryLimit = hasLimit ? limit : 1000;
   const maxRowsPerSource = hasLimit ? sourceQueryLimit : 5000;
 
   const buildBaseQuery = () => {
@@ -717,12 +786,11 @@ async function queryListingsMany(
       label: "source" | "platform",
       build: (from: number, to: number) => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>
     ) => {
-      if (hasLimit) {
-        return runBucketQuery(label, () => build(0, sourceQueryLimit - 1));
-      }
-
+      // Always paginate in chunks to avoid Supabase PostgREST max_rows
+      // silent truncation (default 1000). A single .range(0, 3999) would
+      // silently return only 1000 rows with no error.
       const rows: ListingRow[] = [];
-      const pageSize = sourceQueryLimit;
+      const pageSize = 1000;
       let from = 0;
 
       while (rows.length < maxRowsPerSource) {
@@ -769,7 +837,6 @@ async function queryListingsMany(
       for (const row of merged) {
         const canonicalSource = resolveCanonicalSource(row.source, row.platform);
         if (canonicalSource !== source) continue;
-        if (!isLuxuryCarListing({ make: row.make, title: row.title, targetMake })) continue;
         if (statusFilter && statusFilter.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
         byId.set(row.id, row);
       }
@@ -956,12 +1023,16 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
   const includePriceHistory = options?.includePriceHistory ?? true;
   const targetMake = resolveRequestedMake(options?.make);
   const statusFilter = options?.status === "all" ? undefined : "active";
-  const sources = options?.includeAllSources ? ALL_QUERY_SOURCES : DEFAULT_QUERY_SOURCES;
+  // Always query all 7 sources so every region tab has data.
+  // includeAllSources is kept for backwards compat but defaults to all.
+  const sources = options?.includeAllSources === false ? DEFAULT_QUERY_SOURCES : ALL_QUERY_SOURCES;
 
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Only fetch active (live) listings — sold/unsold/delisted are historical data
+    // Per-source bucketed query ensures balanced representation across all regions.
+    // queryAllListingsDirect is kept as a fallback but queryListingsMany handles
+    // source-level interleaving so EU/UK/JP tabs always have data.
     const rows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
     if (rows.length === 0) return [];
 
@@ -1009,5 +1080,221 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
   } catch (err) {
     console.error("[supabaseLiveListings] Failed to fetch:", err);
     return [];
+  }
+}
+
+// ─── Paginated listings (server-side filtering, sorting, pagination) ───
+
+const REGION_COUNTRY_MAP: Record<string, string[]> = {
+  US: ["USA", "US", "UNITED STATES"],
+  UK: ["UK", "UNITED KINGDOM"],
+  JP: ["JAPAN"],
+};
+
+function resolveSourceAliasesForPlatform(platformKey: string): string[] {
+  const upperKey = platformKey.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+  for (const [canonical, aliases] of Object.entries(SOURCE_ALIASES)) {
+    const normalizedCanonical = canonical.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (normalizedCanonical === upperKey) {
+      return [...aliases];
+    }
+    for (const alias of aliases) {
+      if (alias.toUpperCase().replace(/[^A-Z0-9]/g, "") === upperKey) {
+        return [...aliases];
+      }
+    }
+  }
+
+  return [platformKey];
+}
+
+const SORT_COLUMN_MAP: Record<string, string> = {
+  endTime: "end_time",
+  price: "hammer_price",
+  currentBid: "hammer_price",
+  year: "year",
+  bidCount: "bid_count",
+  trendValue: "hammer_price",
+};
+
+export async function fetchPaginatedListings(options: {
+  make: string;
+  pageSize?: number;
+  offset?: number;
+  region?: string | null;
+  platform?: string | null;
+  query?: string | null;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  status?: "active" | "all";
+}): Promise<{
+  cars: CollectorCar[];
+  hasMore: boolean;
+}> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    return { cars: [], hasMore: false };
+  }
+
+  const pageSize = options.pageSize ?? 50;
+  const offset = options.offset ?? 0;
+  const targetMake = resolveRequestedMake(options.make);
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+
+    // Build base query
+    let query = supabase
+      .from("listings")
+      .select(SELECT_NARROW)
+      .ilike("make", targetMake);
+
+    // Status filter
+    if (options.status !== "all") {
+      query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+    }
+
+    // Region filter
+    if (options.region) {
+      const regionUpper = options.region.toUpperCase();
+      const countryValues = REGION_COUNTRY_MAP[regionUpper];
+
+      if (countryValues) {
+        // Match specific region countries
+        query = query.in("country", countryValues);
+      } else if (regionUpper === "EU") {
+        // EU = everything NOT in US, UK, or JP
+        const excludedCountries = [
+          ...REGION_COUNTRY_MAP.US,
+          ...REGION_COUNTRY_MAP.UK,
+          ...REGION_COUNTRY_MAP.JP,
+        ];
+        query = query.not(
+          "country",
+          "in",
+          `(${encodePostgrestInValues(excludedCountries)})`
+        );
+      }
+    }
+
+    // Platform filter
+    if (options.platform) {
+      const sourceAliases = resolveSourceAliasesForPlatform(options.platform);
+      query = query.in("source", sourceAliases);
+    }
+
+    // Text search filter
+    if (options.query) {
+      const escaped = options.query.replace(/[%_]/g, "");
+      query = query.or(
+        `title.ilike.%${escaped}%,model.ilike.%${escaped}%`
+      );
+    }
+
+    // Sorting
+    const sortColumn = SORT_COLUMN_MAP[options.sortBy ?? "endTime"] ?? "end_time";
+    const ascending = (options.sortOrder ?? "asc") === "asc";
+    query = query.order(sortColumn, { ascending, nullsFirst: false });
+
+    // Secondary sort for stable pagination
+    if (sortColumn !== "id") {
+      query = query.order("id", { ascending: false });
+    }
+
+    // Fetch pageSize + 1 to determine hasMore
+    const fetchCount = pageSize + 1;
+    query = query.range(offset, offset + fetchCount - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
+      return { cars: [], hasMore: false };
+    }
+
+    const rows = (data ?? []) as ListingRow[];
+    const hasMore = rows.length > pageSize;
+    const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+
+    const cars = pageRows.map((row) => rowToCollectorCar(row));
+
+    return { cars, hasMore };
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
+    return { cars: [], hasMore: false };
+  }
+}
+
+// ─── Per-series counts (accurate, fetches only model+year) ───
+
+/**
+ * Returns exact listing counts per Porsche series by fetching all model+year
+ * pairs and running extractSeries() on each. Only model+year are fetched so
+ * the payload is tiny (~600KB for 26K rows) even though we paginate through all.
+ * Results are cached in memory for 10 minutes to avoid repeating 27 parallel
+ * Supabase requests on every page load.
+ */
+const _seriesCountsCache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();
+const SERIES_COUNTS_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function fetchSeriesCounts(
+  make: string,
+): Promise<Record<string, number>> {
+  const cacheKey = make.toLowerCase();
+  const cached = _seriesCountsCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.counts;
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return {};
+
+  const targetMake = resolveRequestedMake(make);
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+    const PAGE = 1000; // Supabase PostgREST hard-caps .range() at 1000 rows per request
+    const counts: Record<string, number> = {};
+
+    // First, get total count to know how many parallel pages to fetch
+    const { count: total, error: countErr } = await supabase
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .ilike("make", targetMake)
+      .eq("status", LIVE_DB_STATUS_VALUES[0]);
+
+    if (countErr || !total) return {};
+
+    // Fetch all model+year pairs in parallel pages of 1000
+    const pageCount = Math.ceil(total / PAGE);
+    const pagePromises = Array.from({ length: pageCount }, (_, i) =>
+      supabase
+        .from("listings")
+        .select("model,year")
+        .ilike("make", targetMake)
+        .eq("status", LIVE_DB_STATUS_VALUES[0])
+        .range(i * PAGE, (i + 1) * PAGE - 1)
+        .then(({ data }) => data ?? [])
+    );
+
+    const pages = await Promise.all(pagePromises);
+
+    for (const page of pages) {
+      for (const row of page as { model: string; year: number }[]) {
+        const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make);
+        counts[seriesId] = (counts[seriesId] ?? 0) + 1;
+      }
+    }
+
+    _seriesCountsCache.set(cacheKey, { counts, expiresAt: Date.now() + SERIES_COUNTS_TTL_MS });
+    return counts;
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchSeriesCounts threw:", err);
+    return {};
   }
 }

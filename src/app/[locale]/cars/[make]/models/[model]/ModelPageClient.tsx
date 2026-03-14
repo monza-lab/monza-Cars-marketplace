@@ -97,6 +97,12 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
     color: "#fb923c",
     market: "Global"
   },
+  CLASSIC_COM: {
+    label: "Classic.com",
+    shortLabel: "Cls",
+    color: "#a78bfa",
+    market: "US"
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

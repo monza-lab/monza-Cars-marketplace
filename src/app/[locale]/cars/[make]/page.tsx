@@ -1,21 +1,13 @@
 import { notFound } from "next/navigation"
-import { CURATED_CARS } from "@/lib/curatedCars"
+import { isSupportedLiveMake } from "@/lib/makeProfiles"
 import {
   fetchLiveListingAggregateCounts,
-  fetchLiveListingsAsCollectorCars,
   fetchSoldListingsForMake,
 } from "@/lib/supabaseLiveListings"
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 
-const MAKE_PAGE_GLOBAL_LIVE_LIMIT = 120
-const MAKE_PAGE_SOURCE_COUNT = 6
-
-function derivePerSourceLimit(globalLimit: number, sourceCount = MAKE_PAGE_SOURCE_COUNT): number {
-  const safeGlobalLimit = Number.isFinite(globalLimit) ? Math.max(1, Math.floor(globalLimit)) : 24
-  const safeSourceCount = Number.isFinite(sourceCount) ? Math.max(1, Math.floor(sourceCount)) : MAKE_PAGE_SOURCE_COUNT
-  return Math.max(1, Math.ceil(safeGlobalLimit / safeSourceCount))
-}
+export const dynamic = 'force-dynamic'
 
 interface MakePageProps {
   params: Promise<{ make: string }>
@@ -25,10 +17,11 @@ interface MakePageProps {
 export async function generateMetadata({ params }: MakePageProps) {
   const { make } = await params
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
-  const curated = CURATED_CARS.find(
-    car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
-  )
-  const makeName = curated?.make ?? decodedMake
+  // Capitalize each word for display
+  const makeName = decodedMake
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
 
   return {
     title: `${makeName} Collection | Monza Lab`,
@@ -36,46 +29,27 @@ export async function generateMetadata({ params }: MakePageProps) {
   }
 }
 
-export async function generateStaticParams() {
-  const makes = Array.from(new Set(CURATED_CARS.filter(c => c.make !== "Ferrari").map(car => car.make)))
-  return makes.map(make => ({
-    make: make.toLowerCase().replace(/\s+/g, "-"),
-  }))
-}
-
 export default async function MakePage({ params, searchParams }: MakePageProps) {
   const { make } = await params
   const { family: initialFamily, gen: initialGen } = await searchParams
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
-  const curated = CURATED_CARS.filter(
-    car => car.make !== "Ferrari" && car.make.toLowerCase() === decodedMake.toLowerCase()
-  )
-  const live = await fetchLiveListingsAsCollectorCars({
-    // supabaseLiveListings treats `limit` as per-source budget when includeAllSources=true.
-    // Keep a global cap here to avoid oversized RSC payloads in production.
-    limit: derivePerSourceLimit(MAKE_PAGE_GLOBAL_LIVE_LIMIT),
-    includePriceHistory: false,
-    make: decodedMake,
-    status: "active",
-    includeAllSources: true,
-  })
-  const liveMake = live.filter(car => car.make.toLowerCase() === decodedMake.toLowerCase())
-  const cars = [...curated, ...liveMake]
-
-  if (cars.length === 0) {
+  if (!isSupportedLiveMake(decodedMake)) {
     notFound()
   }
 
-  const makeName = cars[0].make
+  // Capitalize for display / downstream queries
+  const makeName = decodedMake
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
 
-  const shouldQueryHistoricalData = curated.length > 0
-
-  // Fetch Supabase sold history first; only touch historical tables fallback if needed.
-  const [dbMarketData, dbComparables, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    shouldQueryHistoricalData ? getMarketDataForMake(makeName) : Promise.resolve([]),
-    shouldQueryHistoricalData ? getComparablesForMake(makeName) : Promise.resolve([]),
-    shouldQueryHistoricalData ? getAnalysesForMake(makeName) : Promise.resolve([]),
+  // Fetch aggregate counts + DB metadata in parallel
+  const [liveCounts, dbMarketData, dbComparables, dbAnalyses, supabaseSoldHistory] = await Promise.all([
+    fetchLiveListingAggregateCounts({ make: makeName }),
+    getMarketDataForMake(makeName),
+    getComparablesForMake(makeName),
+    getAnalysesForMake(makeName),
     fetchSoldListingsForMake(makeName),
   ])
 
@@ -83,12 +57,9 @@ export default async function MakePage({ params, searchParams }: MakePageProps) 
     ? supabaseSoldHistory
     : await getSoldAuctionsForMake(makeName)
 
-  const liveCounts = await fetchLiveListingAggregateCounts({ make: makeName })
-
   return (
     <MakePageClient
       make={makeName}
-      cars={cars}
       liveRegionTotals={liveCounts.regionTotalsByLocation}
       liveNowCount={liveCounts.liveNow}
       dbMarketData={dbMarketData}

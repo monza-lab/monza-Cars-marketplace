@@ -8,10 +8,19 @@ export function normalizeAuctionPlatform(platform: string | null | undefined): s
   if (normalized === "BEFORWARD") return "BE_FORWARD";
   if (normalized === "CARSANDBIDS") return "CARS_AND_BIDS";
   if (normalized === "COLLECTINGCARS") return "COLLECTING_CARS";
+  if (normalized === "CLASSICCOM") return "CLASSIC_COM";
 
   return platform.toUpperCase();
 }
 
+export const REGION_TO_PLATFORMS: Record<string, string[]> = {
+  US: ["BRING_A_TRAILER", "CLASSIC_COM", "CARS_AND_BIDS"],
+  EU: ["AUTO_SCOUT_24", "COLLECTING_CARS"],
+  UK: ["AUTO_TRADER"],
+  JP: ["BE_FORWARD"],
+};
+
+// Keep single-platform map for backward compatibility
 export const REGION_TO_PLATFORM: Record<string, string> = {
   US: "BRING_A_TRAILER",
   EU: "AUTO_SCOUT_24",
@@ -25,8 +34,11 @@ export function filterAuctionsForRegion<T extends { platform: string | null | un
 ): T[] {
   if (!selectedRegion) return auctions;
 
-  const targetPlatform = REGION_TO_PLATFORM[selectedRegion];
-  if (!targetPlatform) return auctions;
+  const targetPlatforms = REGION_TO_PLATFORMS[selectedRegion];
+  if (!targetPlatforms || targetPlatforms.length === 0) return auctions;
 
-  return auctions.filter((auction) => normalizeAuctionPlatform(auction.platform) === targetPlatform);
+  return auctions.filter((auction) => {
+    const normalized = normalizeAuctionPlatform(auction.platform);
+    return normalized !== null && targetPlatforms.includes(normalized);
+  });
 }

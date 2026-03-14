@@ -40,6 +40,7 @@ import { FamilySearchAndFilters, type FamilyFilters } from "@/components/filters
 import { AdvancedFilters, type AdvancedFilterValues } from "@/components/filters/AdvancedFilters"
 import { extractSeries, getSeriesConfig, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
 import { stripHtml } from "@/lib/stripHtml"
+import { useInfiniteAuctions } from "@/hooks/useInfiniteAuctions"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 type Model = {
@@ -1429,7 +1430,7 @@ function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               sizes="50vw"
-              priority
+              loading="lazy"
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -1587,7 +1588,7 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               sizes="50vw"
-              priority
+              loading="lazy"
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -1683,7 +1684,7 @@ function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Generatio
 }
 
 // ─── MODEL FEED CARD (Full-height card for center column) ───
-function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; onClick?: () => void }) {
+function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Model; make: string; onClick?: () => void; index?: number }) {
   const t = useTranslations("makePage")
   const { selectedRegion } = useRegion()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
@@ -1702,7 +1703,8 @@ function ModelFeedCard({ model, make, onClick }: { model: Model; make: string; o
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               sizes="50vw"
-              priority
+              priority={index === 0}
+              loading={index === 0 ? "eager" : "lazy"}
               referrerPolicy="no-referrer"
               unoptimized
             />
@@ -2700,9 +2702,8 @@ function ModelContextPanel({
 }
 
 // ─── MAIN COMPONENT ───
-export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [], initialFamily, initialGen }: {
+export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [], initialFamily, initialGen }: {
   make: string
-  cars: CollectorCar[]
   liveRegionTotals?: LiveListingRegionTotals
   liveNowCount?: number
   dbMarketData?: DbMarketDataRow[]
@@ -2791,11 +2792,27 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   const feedRef = useRef<HTMLDivElement>(null)
   const carIndexRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
 
+  // ─── INFINITE SCROLL HOOK — replaces the old `cars` prop ───
+  const {
+    cars: infiniteScrollCars,
+    total: infiniteTotal,
+    aggregates: infiniteAggregates,
+    isLoading: isLoadingCars,
+    isFetchingMore,
+    hasMore,
+    sentinelRef,
+    reset: resetInfiniteScroll,
+  } = useInfiniteAuctions({
+    make,
+    region: selectedRegion && selectedRegion !== "all" ? selectedRegion : undefined,
+    query: searchQuery || undefined,
+  })
+
   // Filter cars by region first, then aggregate into models
   const regionFilteredCars = useMemo(() => {
-    if (!selectedRegion || selectedRegion === "all") return cars
-    return cars.filter(c => c.region === selectedRegion)
-  }, [cars, selectedRegion])
+    if (!selectedRegion || selectedRegion === "all") return infiniteScrollCars
+    return infiniteScrollCars.filter(c => c.region === selectedRegion)
+  }, [infiniteScrollCars, selectedRegion])
 
   // Live auction cars (for left sidebar) — filtered by region + active family
   const liveCars = useMemo(() => {
@@ -3473,11 +3490,11 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
   }, [searchQuery, selectedPriceRange, selectedPriceTier, selectedStatus, selectedRegion, selectedEra])
 
   // Brand data
-  const sampledLiveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
+  const sampledLiveCount = infiniteScrollCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
   const liveCount = liveNowCount ?? sampledLiveCount
-  const soldCount = cars.filter(c => c.status === "ENDED").length
-  const minPrice = Math.min(...cars.map(c => c.currentBid))
-  const maxPrice = Math.max(...cars.map(c => c.currentBid))
+  const soldCount = infiniteScrollCars.filter(c => c.status === "ENDED").length
+  const minPrice = infiniteScrollCars.length > 0 ? Math.min(...infiniteScrollCars.map(c => c.currentBid)) : 0
+  const maxPrice = infiniteScrollCars.length > 0 ? Math.max(...infiniteScrollCars.map(c => c.currentBid)) : 0
   const activeFilterCount = (selectedPriceRange !== 0 ? 1 : 0) + (selectedStatus !== "All" ? 1 : 0)
 
   // Region counts for pills
@@ -3493,13 +3510,13 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
     }
 
     return {
-      All: cars.length,
-      US: cars.filter(c => c.region === "US").length,
-      EU: cars.filter(c => c.region === "EU").length,
-      UK: cars.filter(c => c.region === "UK").length,
-      JP: cars.filter(c => c.region === "JP").length,
+      All: infiniteScrollCars.length,
+      US: infiniteScrollCars.filter(c => c.region === "US").length,
+      EU: infiniteScrollCars.filter(c => c.region === "EU").length,
+      UK: infiniteScrollCars.filter(c => c.region === "UK").length,
+      JP: infiniteScrollCars.filter(c => c.region === "JP").length,
     }
-  }, [cars, liveRegionTotals])
+  }, [infiniteScrollCars, liveRegionTotals])
 
   const selectedRegionLiveCount = useMemo(() => {
     if (!selectedRegion || selectedRegion === "all") {
@@ -3579,7 +3596,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     model={filteredModels[0]}
                     make={make}
                     cars={regionFilteredCars}
-                    allCars={cars}
+                    allCars={infiniteScrollCars}
                     allModels={filteredModels}
                     dbOwnershipCosts={realOwnershipCosts}
                   />
@@ -3625,7 +3642,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
           model={expandedModel}
           make={make}
           cars={regionFilteredCars}
-          allCars={cars}
+          allCars={infiniteScrollCars}
           allModels={filteredModels}
           onClose={() => setExpandedModel(null)}
           dbOwnershipCosts={realOwnershipCosts}
@@ -3643,7 +3660,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
           setSelectedStatus={setSelectedStatus}
           sortBy={sortBy}
           setSortBy={setSortBy}
-          cars={cars}
+          cars={infiniteScrollCars}
           filteredCount={filteredModels.length}
         />
       </div>
@@ -3941,7 +3958,11 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     )}
                   </div>
                 </div>
-                {variantFilteredFeedCars.length === 0 ? (
+                {isLoadingCars && variantFilteredFeedCars.length === 0 ? (
+                  <div className="flex items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
+                  </div>
+                ) : !isLoadingCars && variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-muted-foreground mb-4" />
                     <h3 className="text-[15px] font-semibold text-foreground mb-2">No hay carros</h3>
@@ -3956,20 +3977,39 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                     </button>
                   </div>
                 ) : (
-                  <AnimatePresence mode="popLayout">
-                    {variantFilteredFeedCars.map((car, i) => (
-                      <motion.div
-                        key={car.id}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.15) }}
-                        layout
-                      >
-                        <CarFeedCard car={car} make={make} />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+                  <>
+                    <AnimatePresence mode="popLayout">
+                      {variantFilteredFeedCars.map((car, i) => (
+                        <motion.div
+                          key={car.id}
+                          initial={{ opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.15) }}
+                          layout
+                        >
+                          <CarFeedCard car={car} make={make} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {hasMore && (
+                      <div ref={sentinelRef} className="h-20 flex items-center justify-center">
+                        {isFetchingMore && (
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+                        )}
+                      </div>
+                    )}
+                    {!hasMore && infiniteScrollCars.length > 0 && (
+                      <p className="text-center text-zinc-500 py-8">
+                        Showing all {infiniteScrollCars.length} listings
+                      </p>
+                    )}
+                    {!isLoadingCars && !hasMore && infiniteScrollCars.length === 0 && (
+                      <div className="text-center text-zinc-500 py-16">
+                        <p>No listings found for these filters.</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             ) : viewMode === 'generations' ? (
@@ -4081,7 +4121,11 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                   <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={sortOptions} />
                 </div>
               )}
-              {filteredModels.length === 0 ? (
+              {isLoadingCars && filteredModels.length === 0 ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
+                </div>
+              ) : filteredModels.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
                   <Car className="size-12 text-muted-foreground mb-4" />
                   <h3 className="text-[15px] font-semibold text-foreground mb-2">{t("empty.title")}</h3>
@@ -4091,20 +4135,29 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                   </button>
                 </div>
               ) : (
-                <AnimatePresence mode="popLayout">
-                  {filteredModels.map((model, i) => (
-                    <motion.div
-                      key={model.slug}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
-                      layout
-                    >
-                      <ModelFeedCard model={model} make={make} onClick={() => handleFamilyClick(model.name)} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                <>
+                  <AnimatePresence mode="popLayout">
+                    {filteredModels.map((model, i) => (
+                      <motion.div
+                        key={model.slug}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.25, delay: Math.min(i * 0.04, 0.2) }}
+                        layout
+                      >
+                        <ModelFeedCard model={model} make={make} onClick={() => handleFamilyClick(model.name)} index={i} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  {hasMore && (
+                    <div ref={sentinelRef} className="h-20 flex items-center justify-center">
+                      {isFetchingMore && (
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+                      )}
+                    </div>
+                  )}
+                </>
               )}
               </>
             )}
@@ -4133,7 +4186,7 @@ export function MakePageClient({ make, cars, liveRegionTotals, liveNowCount, dbM
                 model={selectedModel}
                 make={make}
                 cars={displayCars}
-                allCars={cars}
+                allCars={infiniteScrollCars}
                 allModels={filteredModels}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
                 dbOwnershipCosts={realOwnershipCosts}
