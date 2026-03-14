@@ -221,10 +221,31 @@ npx tsx src/features/beforward_porsche_collector/cli.ts --help
 - Runs with capped config: 3 pages, summary-only, to fit Vercel's 5-minute limit
 - Max duration: 5 minutes
 
+### Image backfill
+
+The cron route runs with `summaryOnly=true` to fit the 5-minute Vercel limit, so newly discovered listings have no images. After the discovery phase, any remaining time (>30s) is used to **backfill images** for existing listings:
+
+1. Queries Supabase for active BeForward listings where `images IS NULL OR images = '{}'`
+2. Fetches each listing's detail page using `fetchAndParseDetail()` (HTTP + cheerio)
+3. Updates only `images`, `photos_count`, `updated_at` in the DB
+4. Stops 15s before time budget expires
+5. Circuit-breaks on 403/429 (site blocking)
+
+**Config:** max 20 listings per run, 2.5s rate limit between fetches. Backfill stats (`backfill_discovered`, `backfill_written`) are recorded in the `scraper_runs` table and returned in the response JSON.
+
+**Source:** `src/features/beforward_porsche_collector/backfill.ts`
+
 ### Test the cron route
 
 ```bash
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/beforward
+```
+
+The response includes a `backfill` object:
+```json
+{
+  "backfill": { "discovered": 20, "backfilled": 2, "errors": [] }
+}
 ```
 
 ---
@@ -277,6 +298,21 @@ npx tsx src/features/classic_collector/cli.ts --help
 - Timeout: 30 minutes
 - Can be triggered manually via `workflow_dispatch` with overrides for `max_pages`, `max_listings`, `dry_run`
 - Output artifacts uploaded with 7-day retention
+
+### Image backfill
+
+When running with `summaryOnly=true` (the Vercel cron default), listings are ingested without images. After the discovery/write loop, if >40s of time budget remains, the collector automatically backfills images:
+
+1. Queries Supabase for active ClassicCom listings where `images IS NULL OR images = '{}'`
+2. Navigates to each listing's detail page using the existing Playwright `page` object
+3. Extracts vehicle images from `images.classic.com/vehicles/` sources
+4. Updates only `images`, `photos_count`, `updated_at` in the DB
+5. Stops 20s before time budget expires (Playwright cleanup is slower)
+6. Circuit-breaks on Cloudflare challenges
+
+**Config:** max 5 listings per run (Playwright is ~10-15s/listing). Backfill stats are recorded in `scraper_runs` as `backfill_discovered`/`backfill_written`.
+
+**Source:** `src/features/classic_collector/backfill.ts`
 
 ### Trigger manually on GitHub
 
@@ -504,8 +540,8 @@ SELECT * FROM source_data_quality(7);
 | `normalized` | INTEGER | Listings normalized (classic/autoscout24) |
 | `skipped_duplicate` | INTEGER | Duplicates skipped (autoscout24) |
 | `bot_blocked` | INTEGER | Cloudflare/Akamai blocks (classic/autoscout24) |
-| `backfill_discovered` | INTEGER | Backfill listings found (porsche/ferrari) |
-| `backfill_written` | INTEGER | Backfill listings written (porsche/ferrari) |
+| `backfill_discovered` | INTEGER | Listings found needing image backfill (beforward/classic/porsche/ferrari) |
+| `backfill_written` | INTEGER | Listings updated with backfilled images (beforward/classic/porsche/ferrari) |
 | `source_counts` | JSONB | Per-source breakdown, e.g. `{"BaT": {"discovered": 10, "written": 8}}` |
 | `error_messages` | TEXT[] | Array of error strings |
 
