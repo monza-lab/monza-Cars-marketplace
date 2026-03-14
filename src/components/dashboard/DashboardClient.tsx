@@ -448,7 +448,7 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
       carCount: count,
       priceMin: Math.min(...prices),
       priceMax: Math.max(...prices),
-      avgTrend: mockAnalysis[name]?.trend || mockAnalysis["default"].trend,
+      avgTrend: topGrade === "AAA" ? "Premium Demand" : topGrade === "AA" ? "Strong Demand" : topGrade === "A" ? "High Demand" : "Growing Demand",
       topGrade,
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
@@ -1699,11 +1699,10 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       maintenance: Math.round(base.maintenance * scale),
     }
   }, [auction.make, auction.currentBid])
-  const fallbackAnalysis = mockAnalysis[auction.make] || mockAnalysis["default"]
-
-  // Fair value range for fallback display
-  const lowRange = auction.analysis?.bidTargetLow || fallbackAnalysis.lowRange
-  const highRange = auction.analysis?.bidTargetHigh || fallbackAnalysis.highRange
+  // Fair value range — use analysis if available, otherwise derive from current bid
+  const bidFallback = auction.currentBid || 50_000
+  const lowRange = auction.analysis?.bidTargetLow || Math.round(bidFallback * 0.85)
+  const highRange = auction.analysis?.bidTargetHigh || Math.round(bidFallback * 1.15)
 
   // Find similar cars (same category, different car)
   const similarCars = allAuctions
@@ -2321,7 +2320,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
-        title: \,
+        title: a.title,
         price: a.currentBid,
         platform: a.platform?.replace(/_/g, " ") || "Auction",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
