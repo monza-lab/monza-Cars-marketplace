@@ -159,29 +159,6 @@ const mockWhyBuy: Record<string, string> = {
   default: "This vehicle represents a compelling opportunity in the collector car market. Strong fundamentals, limited production, and growing collector interest suggest strong collector market presence.",
 }
 
-// Default analysis for cars without DB analysis
-const mockAnalysis: Record<string, { grade: string; trend: string; lowRange: number; highRange: number }> = {
-  McLaren: { grade: "AAA", trend: "Premium Demand", lowRange: 15_500_000, highRange: 18_000_000 },
-  Porsche: { grade: "AA", trend: "Strong Demand", lowRange: 1_100_000, highRange: 1_400_000 },
-  Ferrari: { grade: "AAA", trend: "Premium Demand", lowRange: 2_800_000, highRange: 3_400_000 },
-  Lamborghini: { grade: "AA", trend: "Growing Demand", lowRange: 1_900_000, highRange: 2_500_000 },
-  Nissan: { grade: "A", trend: "High Demand", lowRange: 380_000, highRange: 520_000 },
-  Toyota: { grade: "A", trend: "Growing Demand", lowRange: 145_000, highRange: 190_000 },
-  BMW: { grade: "AA", trend: "Strong Demand", lowRange: 550_000, highRange: 750_000 },
-  Mercedes: { grade: "AA", trend: "Steady Demand", lowRange: 350_000, highRange: 500_000 },
-  "Aston Martin": { grade: "AA", trend: "Steady Demand", lowRange: 400_000, highRange: 550_000 },
-  Jaguar: { grade: "AA", trend: "Growing Demand", lowRange: 480_000, highRange: 650_000 },
-  Mazda: { grade: "AA", trend: "High Demand", lowRange: 95_000, highRange: 140_000 },
-  Honda: { grade: "A", trend: "Growing Demand", lowRange: 68_000, highRange: 95_000 },
-  Shelby: { grade: "AAA", trend: "Premium Demand", lowRange: 1_900_000, highRange: 2_400_000 },
-  Chevrolet: { grade: "AA", trend: "Steady Demand", lowRange: 165_000, highRange: 220_000 },
-  Bugatti: { grade: "AAA", trend: "Premium Demand", lowRange: 2_500_000, highRange: 3_200_000 },
-  Lancia: { grade: "AAA", trend: "Premium Demand", lowRange: 550_000, highRange: 700_000 },
-  "De Tomaso": { grade: "A", trend: "Growing Demand", lowRange: 240_000, highRange: 310_000 },
-  Alpine: { grade: "A", trend: "Growing Demand", lowRange: 155_000, highRange: 205_000 },
-  default: { grade: "B+", trend: "Active Market", lowRange: 80_000, highRange: 150_000 },
-}
-
 // ─── REGIONAL VALUATION ───
 type RegionalValuation = { start: number; current: number; symbol: string; usdCurrent: number }
 
@@ -1398,15 +1375,15 @@ function AssetCard({ auction }: { auction: Auction }) {
 
           {/* Investment Metrics Grid */}
           {(() => {
-            const fallbackAnalysis = mockAnalysis[auction.make] || mockAnalysis["default"]
-            const grade = auction.analysis?.investmentGrade || fallbackAnalysis.grade
+            const grade = auction.analysis?.investmentGrade || "B+"
             const trend = auction.analysis?.appreciationPotential === "APPRECIATING"
-              ? fallbackAnalysis.trend
+              ? (grade === "AAA" ? "Premium Demand" : grade === "AA" ? "Strong Demand" : "High Demand")
               : auction.analysis?.appreciationPotential === "DECLINING"
               ? "Low Demand"
-              : fallbackAnalysis.trend
-            const lowRange = auction.analysis?.bidTargetLow || fallbackAnalysis.lowRange
-            const highRange = auction.analysis?.bidTargetHigh || fallbackAnalysis.highRange
+              : (grade === "AAA" ? "Premium Demand" : grade === "AA" ? "Strong Demand" : "Growing Demand")
+            const bidFallback = auction.currentBid || 50_000
+            const lowRange = auction.analysis?.bidTargetLow || Math.round(bidFallback * 0.85)
+            const highRange = auction.analysis?.bidTargetHigh || Math.round(bidFallback * 1.15)
 
             return (
               <div className="mt-auto grid grid-cols-4 gap-4 pt-4 border-t border-border">
