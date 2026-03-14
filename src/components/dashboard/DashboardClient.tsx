@@ -2296,7 +2296,32 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
   }, [brand.priceMin, brand.priceMax])
   const marketPulse = mockMarketPulse[brand.name] || mockMarketPulse["default"]
   const ownershipCost = mockOwnershipCost[brand.name] || mockOwnershipCost["default"]
-  const topModels = mockTopModels[brand.name] || mockTopModels["default"]
+  const topModels = useMemo(() => {
+    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    brandAuctions.forEach(a => {
+      const variant = a.model
+      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      existing.count++
+      if (a.currentBid > 0) existing.prices.push(a.currentBid)
+      const g = a.analysis?.investmentGrade || "B"
+      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
+        existing.grade = g
+      }
+      variantMap.set(variant, existing)
+    })
+
+    return Array.from(variantMap.entries())
+      .filter(([, data]) => data.prices.length > 0)
+      .map(([name, data]) => ({
+        name,
+        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
+        count: data.count,
+        grade: data.grade,
+        trend: data.grade === "AAA" ? "Premium" : data.grade === "AA" ? "Strong" : "Stable",
+      }))
+      .sort((a, b) => b.avgPrice - a.avgPrice)
+      .slice(0, 5)
+  }, [brandAuctions])
   const depth = mockMarketDepth[brand.name] || mockMarketDepth["default"]
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
