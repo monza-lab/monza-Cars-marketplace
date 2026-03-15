@@ -30,6 +30,7 @@ export interface SeriesConfig {
   yearRange: [number, number]
   order: number            // display priority (lower = first)
   keywords: string[]       // match these in model string (case-insensitive)
+  titleKeywords?: string[] // extra keywords checked only against title (year-range gated)
   yearFallback?: [number, number] // for ambiguous models (e.g. "911 Carrera"), use year to match
   turboOnly?: boolean      // only match if model also contains "turbo" (for 930)
   thesis: string
@@ -187,6 +188,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     yearRange: [1975, 1989],
     order: 7,
     keywords: ["930"],
+    titleKeywords: ["911 turbo", "turbo carrera"],
     turboOnly: false,
     thesis: "The 930 is the original 911 Turbo — widowmaker reputation and iconic whale tail. Flachbau (slantnose) variants are ultra-rare. Early 3.0L models carry the most heritage. A poster-car legend.",
   },
@@ -456,7 +458,7 @@ export function getAllBrands(): BrandConfig[] {
  *
  * For brands without config, returns the first word of the model.
  */
-export function extractSeries(model: string, year: number, make: string): string {
+export function extractSeries(model: string, year: number, make: string, title?: string): string {
   const config = getBrandConfig(make)
   if (!config) {
     // No config for this brand — return first word as fallback
@@ -477,6 +479,25 @@ export function extractSeries(model: string, year: number, make: string): string
         // Special case: 930 only matches non-turbo when model explicitly says "930"
         if (series.turboOnly && !lowerModel.includes("turbo")) continue
         return series.id
+      }
+    }
+  }
+
+  // Pass 1b: Title refinement — if model was too generic (e.g. "911"), check the title
+  // for more specific series keywords before falling back to year-based guessing.
+  // Checks both regular keywords and titleKeywords (year-range gated for safety).
+  if (title) {
+    const lowerTitle = title.toLowerCase()
+    for (const series of sortedByKeywordLength) {
+      if (year > 0 && series.yearRange) {
+        if (year < series.yearRange[0] || year > series.yearRange[1]) continue
+      }
+      const allKeywords = [...series.keywords, ...(series.titleKeywords || [])]
+      for (const keyword of allKeywords) {
+        if (lowerTitle.includes(keyword.toLowerCase())) {
+          if (series.turboOnly && !lowerTitle.includes("turbo")) continue
+          return series.id
+        }
       }
     }
   }

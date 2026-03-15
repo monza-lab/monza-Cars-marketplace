@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { extractSeries, getSeriesConfig } from "@/lib/brandConfig";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -166,8 +167,45 @@ export async function GET(request: Request) {
       );
     }
 
-    // ── Step 2: Scan all listings for junk ──
+    // ── Step 2: Reclassify misclassified listings using title ──
+    // Some listings have model="911" but title="1976 Porsche 911 Turbo" — the title
+    // reveals a more specific series (930). We detect and fix these by comparing
+    // extractSeries(model) vs extractSeries(model, title).
     const allListings = await fetchAllListings(supabase);
+    let reclassified = 0;
+
+    for (const row of allListings) {
+      if (!row.make || !row.model || !row.title || !row.year) continue;
+      const seriesWithoutTitle = extractSeries(row.model, row.year, row.make);
+      const seriesWithTitle = extractSeries(row.model, row.year, row.make, row.title);
+
+      if (seriesWithTitle !== seriesWithoutTitle && getSeriesConfig(seriesWithTitle, row.make)) {
+        // The title reveals a better classification — update the model field
+        // to include the series identifier so future lookups work without title
+        const config = getSeriesConfig(seriesWithTitle, row.make);
+        if (config) {
+          const { error: updateErr } = await supabase
+            .from("listings")
+            .update({ model: config.label })
+            .eq("id", row.id);
+
+          if (!updateErr) {
+            reclassified++;
+            if (reclassified <= 20) {
+              console.log(
+                `[cron/cleanup] Reclassified: "${row.model}" → "${config.label}" (title: "${row.title?.substring(0, 60)}")`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    if (reclassified > 0) {
+      console.log(`[cron/cleanup] Reclassified ${reclassified} listings using title data`);
+    }
+
+    // ── Step 3: Scan all listings for junk ──
 
     // Detect junk
     const junkItems: { id: string; reason: string; model: string | null }[] = [];
@@ -184,6 +222,7 @@ export async function GET(request: Request) {
         scanned: allListings.length,
         deleted: 0,
         staleFixed: 0,
+        reclassified,
         items: [],
         duration: `${Date.now() - startTime}ms`,
       });
@@ -227,6 +266,7 @@ export async function GET(request: Request) {
       staleFixed: totalStaleFixed,
       staleSold: staleSoldCount,
       staleUnsold: staleUnsoldCount,
+      reclassified,
       byReason,
       items: junkItems.slice(0, 100), // cap response size
       duration: `${Date.now() - startTime}ms`,

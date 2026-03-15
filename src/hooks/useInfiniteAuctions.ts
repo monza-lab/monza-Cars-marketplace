@@ -143,7 +143,7 @@ export function useInfiniteAuctions(
       if (family) {
         filtered = activeAuctions.filter(
           (car: any) =>
-            extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make) === family,
+            extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === family,
         );
       }
 

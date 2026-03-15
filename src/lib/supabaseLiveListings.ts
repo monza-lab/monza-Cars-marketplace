@@ -476,6 +476,7 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     interiorColor: row.color_interior ?? null,
     description: desc,
     sellerNotes: row.seller_notes ?? null,
+    originalCurrency: row.original_currency ?? null,
   };
 }
 
@@ -1327,7 +1328,7 @@ export async function fetchSeriesCounts(
     const pagePromises = Array.from({ length: pageCount }, (_, i) =>
       supabase
         .from("listings")
-        .select("model,year")
+        .select("model,year,title")
         .ilike("make", targetMake)
         .eq("status", LIVE_DB_STATUS_VALUES[0])
         .range(i * PAGE, (i + 1) * PAGE - 1)
@@ -1337,9 +1338,9 @@ export async function fetchSeriesCounts(
     const pages = await Promise.all(pagePromises);
 
     for (const page of pages) {
-      for (const row of page as { model: string; year: number }[]) {
+      for (const row of page as { model: string; year: number; title: string | null }[]) {
         if (isJunkListing({ make, model: row.model, year: row.year })) continue;
-        const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make);
+        const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make, row.title ?? undefined);
         if (!getSeriesConfig(seriesId, make)) continue;
         counts[seriesId] = (counts[seriesId] ?? 0) + 1;
       }

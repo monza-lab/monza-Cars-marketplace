@@ -139,7 +139,7 @@ function buildInvestmentResponse(ctx: AdvisorContext, lang: DetectedLanguage): s
   const car = ctx.car
   if (!car) return t(lang, "noCarContext")
 
-  const series = extractSeries(car.model, car.year, car.make)
+  const series = extractSeries(car.model, car.year, car.make, car.title)
   const thesis = getSeriesThesis(series, car.make) || car.thesis
   const strengths = ctx.dbAnalysis?.keyStrengths || []
   const redFlags = ctx.dbAnalysis?.redFlags || []

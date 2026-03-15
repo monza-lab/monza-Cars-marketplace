@@ -34,8 +34,8 @@ function scoreSimilarity(target: CollectorCar, candidate: CollectorCar): { score
   const reasons: string[] = []
 
   // 1. Series match (strongest signal — same generation)
-  const targetSeries = extractSeries(target.model, target.year, target.make)
-  const candidateSeries = extractSeries(candidate.model, candidate.year, candidate.make)
+  const targetSeries = extractSeries(target.model, target.year, target.make, target.title)
+  const candidateSeries = extractSeries(candidate.model, candidate.year, candidate.make, candidate.title)
 
   if (targetSeries && candidateSeries && targetSeries === candidateSeries) {
     score += 50

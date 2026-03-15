@@ -523,7 +523,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     // Count cars per sibling from regionFilteredCars
     const countMap = new Map<string, number>()
     regionFilteredCars.forEach(car => {
-      const seriesId = extractSeries(car.model, car.year || 0, make)
+      const seriesId = extractSeries(car.model, car.year || 0, make, car.title)
       countMap.set(seriesId, (countMap.get(seriesId) || 0) + 1)
     })
 

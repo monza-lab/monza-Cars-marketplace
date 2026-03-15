@@ -46,6 +46,7 @@ function transformCar(car: CollectorCar) {
     trendValue: car.trendValue,
     category: car.category,
     region: car.region,
+    originalCurrency: car.originalCurrency ?? null,
   };
 }
 
