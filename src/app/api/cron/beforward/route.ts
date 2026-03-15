@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       maxPages: 3,           // 75 listings (25/page) — enough to catch daily new listings
       summaryOnly: true,     // Skip detail page fetches (biggest time saver)
       concurrency: 6,
-      rateLimitMs: 2500,
+      rateLimitMs: 3500,
       checkpointPath: "/tmp/beforward_porsche_collector/checkpoint.json",
       outputPath: "/tmp/beforward_porsche_collector/listings.jsonl",
       dryRun: false,
@@ -56,8 +56,8 @@ export async function GET(request: Request) {
     if (remainingMs > 30_000) {
       backfillResult = await backfillMissingImages({
         timeBudgetMs: remainingMs,
-        maxListings: 20,
-        rateLimitMs: 2500,
+        maxListings: 15,
+        rateLimitMs: 3500,
         timeoutMs: 20_000,
         runId: result.runId,
       });
