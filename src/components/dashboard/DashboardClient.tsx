@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY, REGIONAL_MARKET_PREMIUM } from "@/lib/regionPricing"
+import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY, FROM_USD_RATE } from "@/lib/regionPricing"
 import {
   Clock,
   MapPin,
@@ -110,6 +110,7 @@ type PorscheFamily = {
   yearMin: number
   yearMax: number
   representativeImage: string
+  fallbackImage: string
   representativeCar: string
   topGrade: string
 }
@@ -161,6 +162,47 @@ const mockWhyBuy: Record<string, string> = {
 
 // ─── REGIONAL VALUATION ───
 type RegionalValuation = { start: number; current: number; symbol: string; usdCurrent: number }
+
+function computeMedian(values: number[]): number {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
+
+function computeRegionalValFromAuctions(
+  auctionList: Auction[],
+): Record<string, RegionalValuation> {
+  const regions = ["US", "UK", "EU", "JP"] as const
+  const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
+  const result: Record<string, RegionalValuation> = {}
+
+  for (const region of regions) {
+    const regionCurrency = REGION_CURRENCY[region] || "$"
+    const regionAuctions = auctionList.filter(a => a.region === region)
+
+    // Convert each price to USD before computing median (prices stored in original currency)
+    const soldPricesUsd = regionAuctions
+      .filter(a => a.currentBid > 0 && (a.status === "SOLD" || a.status === "ENDED"))
+      .map(a => toUsd(a.currentBid, regionCurrency))
+    const activeBidsUsd = regionAuctions
+      .filter(a => a.currentBid > 0 && (a.status === "ACTIVE" || a.status === "ENDING_SOON"))
+      .map(a => toUsd(a.currentBid, regionCurrency))
+
+    // Prefer median of sold prices; fall back to median of active bids
+    const medianUsd = soldPricesUsd.length > 0
+      ? computeMedian(soldPricesUsd)
+      : computeMedian(activeBidsUsd)
+
+    result[region] = {
+      start: 0,
+      current: medianUsd > 0 ? (medianUsd / 1_000_000) * (FROM_USD_RATE[symbolMap[region]] || 1) : 0,
+      symbol: symbolMap[region],
+      usdCurrent: medianUsd / 1_000_000,
+    }
+  }
+  return result
+}
 
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
 
@@ -284,7 +326,8 @@ function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, 
     const bestCar = cars.reduce((max, car) => car.currentBid > max.currentBid ? car : max, cars[0])
     const carImage = bestCar.images?.[0]
     const modelImage = getModelImage("Porsche", bestCar.model)
-    const fallbackImage = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
+    // Static fallback keyed by series ID — guaranteed to resolve for all Porsche series
+    const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
     // Use exact DB series count if available, otherwise fall back to sample count
     const carCount = dbSeriesCounts?.[familyKey] ?? cars.length
@@ -297,7 +340,8 @@ function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, 
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       yearMin: Math.min(...years),
       yearMax: Math.max(...years),
-      representativeImage: carImage || modelImage || fallbackImage,
+      representativeImage: carImage || modelImage || staticFallback,
+      fallbackImage: staticFallback,
       representativeCar: `${bestCar.year} Porsche ${bestCar.model}`,
       topGrade,
     })
@@ -329,15 +373,26 @@ function SafeImage({
   src,
   alt,
   fallback,
+  fallbackSrc,
   ...props
-}: React.ComponentProps<typeof Image> & { fallback: React.ReactNode }) {
-  const [hasError, setHasError] = useState(false)
-  if (hasError || !src) return <>{fallback}</>
+}: React.ComponentProps<typeof Image> & { fallback: React.ReactNode; fallbackSrc?: string }) {
+  const [useFallback, setUseFallback] = useState(false)
+  const [fallbackFailed, setFallbackFailed] = useState(false)
+
+  const activeSrc = !useFallback ? src : fallbackSrc
+  if (!activeSrc || (useFallback && fallbackFailed)) return <>{fallback}</>
   return (
     <Image
-      src={src}
+      key={String(activeSrc)}
+      src={activeSrc}
       alt={alt}
-      onError={() => setHasError(true)}
+      onError={() => {
+        if (!useFallback && fallbackSrc) {
+          setUseFallback(true)
+        } else {
+          setFallbackFailed(true)
+        }
+      }}
       {...props}
     />
   )
@@ -500,6 +555,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
             loading={index === 0 ? "eager" : "lazy"}
             referrerPolicy="no-referrer"
             unoptimized
+            fallbackSrc={family.fallbackImage}
             fallback={
               <div className="absolute inset-0 bg-card flex items-center justify-center">
                 <span className="text-muted-foreground text-lg">{family.name}</span>
@@ -1674,37 +1730,8 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from real fairValueByRegion data ───
-  const regionalVal = useMemo(() => {
-    const regions = ["US", "UK", "EU", "JP"] as const
-    const result: Record<string, RegionalValuation> = {}
-    const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
-
-    // Get average USD price from all family auctions with bids
-    const withBids = familyAuctions.filter(a => a.currentBid > 0)
-    if (withBids.length === 0) {
-      // Return empty fallback when no auction data available
-      for (const region of regions) {
-        result[region] = { start: 0, current: 0, symbol: symbolMap[region], usdCurrent: 0 }
-      }
-      return result
-    }
-    const avgUsd = withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
-    const baseMillions = avgUsd / 1_000_000
-
-    for (const region of regions) {
-      const premium = REGIONAL_MARKET_PREMIUM[region] || 1
-      const usdWithPremium = baseMillions * premium
-      const fxRate = region === "JP" ? (1 / 0.0067) : region === "UK" ? (1 / 1.27) : region === "EU" ? (1 / 1.08) : 1
-      result[region] = {
-        start: 0,  // No historical data available
-        current: usdWithPremium * fxRate,
-        symbol: symbolMap[region],
-        usdCurrent: usdWithPremium,
-      }
-    }
-    return result
-  }, [familyAuctions])
+  // ─── DYNAMIC: Valuation by Market from real median sold prices per region ───
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(familyAuctions), [familyAuctions])
 
   // ─── DYNAMIC: Market Depth from real auction counts ───
   const depth = useMemo(() => {
@@ -1865,7 +1892,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
-              if (!val) return null
+              if (!val || val.usdCurrent <= 0) return null
               const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
               const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
@@ -2083,25 +2110,8 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  // Compute regional fair values from brand avg price
-  const regionalVal = useMemo(() => {
-    const avgUsd = (brand.priceMin + brand.priceMax) / 2
-    const baseMillions = avgUsd / 1_000_000
-    const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
-    const result: Record<string, RegionalValuation> = {}
-    for (const region of ["US", "UK", "EU", "JP"] as const) {
-      const premium = REGIONAL_MARKET_PREMIUM[region] || 1
-      const usdWithPremium = baseMillions * premium
-      const fxRate = region === "JP" ? (1 / 0.0067) : region === "UK" ? (1 / 1.27) : region === "EU" ? (1 / 1.08) : 1
-      result[region] = {
-        start: 0,
-        current: usdWithPremium * fxRate,
-        symbol: symbolMap[region],
-        usdCurrent: usdWithPremium,
-      }
-    }
-    return result
-  }, [brand.priceMin, brand.priceMax])
+  // Compute regional fair values from real median sold prices per region
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(brandAuctions), [brandAuctions])
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => a.currentBid > 0)
@@ -2251,7 +2261,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
           <div className="space-y-1">
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
-              if (!val) return null
+              if (!val || val.usdCurrent <= 0) return null
               const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
               const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))

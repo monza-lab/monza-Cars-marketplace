@@ -32,7 +32,7 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Ferrari|Monza SP1": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
   "Ferrari|Monza SP2": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
 
-  // ─── PORSCHE ───
+  // ─── PORSCHE (model names) ───
   "Porsche|911": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
   "Porsche|911 Carrera": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
   "Porsche|911 Carrera RS": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
@@ -49,8 +49,50 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Porsche|Panamera": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
   "Porsche|Taycan": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
   "Porsche|718 Cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman S": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GT4": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GT4 RS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GTS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
   "Porsche|Boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|Boxster S": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|Boxster GTS": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|Boxster Spyder": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster S": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster GTS": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster Spyder": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|Cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|Cayman S": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|Cayman GT4": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|Cayman GTS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
   "Porsche|356": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+
+  // ─── PORSCHE (series IDs — fallbacks for family cards) ───
+  "Porsche|992": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|991": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|997": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|996": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|993": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|964": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|930": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|g-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  "Porsche|f-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  "Porsche|912": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  "Porsche|918": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
+  "Porsche|carrera-gt": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
+  "Porsche|718-cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|718-boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  "Porsche|boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche|914": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  "Porsche|944": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|928": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|968": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|924": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|cayenne": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
+  "Porsche|macan": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
+  "Porsche|panamera": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  "Porsche|taycan": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
 
   // ─── LAMBORGHINI ───
   "Lamborghini|Miura": "https://images.unsplash.com/photo-1621135802920-133df287f89c?w=1200&h=800&fit=crop",
@@ -330,12 +372,28 @@ export const BRAND_IMAGES: Record<string, string> = {
 }
 
 /**
- * Get verified image URL for a specific make + model
- * Falls back to brand image if model not found
+ * Get verified image URL for a specific make + model.
+ * Tries exact match first, then checks if a known model name
+ * is contained in the input (e.g. "718 Boxster S" matches "718 Boxster").
  */
 export function getModelImage(make: string, model: string): string | null {
-  const key = `${make}|${model}`
-  return MODEL_IMAGES[key] || null
+  // Exact match
+  const exact = MODEL_IMAGES[`${make}|${model}`]
+  if (exact) return exact
+
+  // Fuzzy: find the longest matching key whose model part is a prefix of the input
+  const prefix = `${make}|`
+  let best: string | null = null
+  let bestLen = 0
+  for (const key of Object.keys(MODEL_IMAGES)) {
+    if (!key.startsWith(prefix)) continue
+    const knownModel = key.slice(prefix.length)
+    if (model.includes(knownModel) && knownModel.length > bestLen) {
+      best = MODEL_IMAGES[key]
+      bestLen = knownModel.length
+    }
+  }
+  return best
 }
 
 /**
