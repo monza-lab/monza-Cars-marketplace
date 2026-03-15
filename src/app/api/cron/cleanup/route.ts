@@ -125,7 +125,46 @@ export async function GET(request: Request) {
   try {
     const supabase = getSupabaseClient();
 
-    // Scan all listings
+    // ── Step 1: Mark stale auctions as sold/unsold ──
+    // Listings with end_time in the past but still status='active' are stale.
+    // If they have a current_bid > 0, mark as 'sold'; otherwise 'unsold'.
+    const now = new Date().toISOString();
+
+    const { data: staleSold, error: staleSoldErr } = await supabase
+      .from("listings")
+      .update({ status: "sold" })
+      .eq("status", "active")
+      .lt("end_time", now)
+      .gt("current_bid", 0)
+      .select("id");
+
+    if (staleSoldErr) {
+      console.error("[cron/cleanup] stale→sold error:", staleSoldErr.message);
+    }
+
+    const { data: staleUnsold, error: staleUnsoldErr } = await supabase
+      .from("listings")
+      .update({ status: "unsold" })
+      .eq("status", "active")
+      .lt("end_time", now)
+      .or("current_bid.is.null,current_bid.eq.0")
+      .select("id");
+
+    if (staleUnsoldErr) {
+      console.error("[cron/cleanup] stale→unsold error:", staleUnsoldErr.message);
+    }
+
+    const staleSoldCount = staleSold?.length ?? 0;
+    const staleUnsoldCount = staleUnsold?.length ?? 0;
+    const totalStaleFixed = staleSoldCount + staleUnsoldCount;
+
+    if (totalStaleFixed > 0) {
+      console.log(
+        `[cron/cleanup] Fixed ${totalStaleFixed} stale listings: ${staleSoldCount} → sold, ${staleUnsoldCount} → unsold`
+      );
+    }
+
+    // ── Step 2: Scan all listings for junk ──
     const allListings = await fetchAllListings(supabase);
 
     // Detect junk
@@ -137,11 +176,12 @@ export async function GET(request: Request) {
       }
     }
 
-    if (junkItems.length === 0) {
+    if (junkItems.length === 0 && totalStaleFixed === 0) {
       return NextResponse.json({
         success: true,
         scanned: allListings.length,
         deleted: 0,
+        staleFixed: 0,
         items: [],
         duration: `${Date.now() - startTime}ms`,
       });
@@ -182,6 +222,9 @@ export async function GET(request: Request) {
       success: true,
       scanned: allListings.length,
       deleted: deletedCount,
+      staleFixed: totalStaleFixed,
+      staleSold: staleSoldCount,
+      staleUnsold: staleUnsoldCount,
       byReason,
       items: junkItems.slice(0, 100), // cap response size
       duration: `${Date.now() - startTime}ms`,

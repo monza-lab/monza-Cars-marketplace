@@ -201,10 +201,16 @@ export interface RefreshResult {
 }
 
 /**
- * Re-scrapes every listing with `status = 'active'` and updates the DB
+ * Re-scrapes BaT Porsche listings with `status = 'active'` and updates the DB
  * when the auction has ended (sold / unsold / delisted).
+ *
+ * @param opts.maxListings  Hard cap on listings to check (default 30)
+ * @param opts.timeBudgetMs Soft time limit; loop breaks early if exceeded (default 60 000)
  */
-export async function refreshActiveListings(opts?: { maxListings?: number }): Promise<RefreshResult> {
+export async function refreshActiveListings(opts?: {
+  maxListings?: number;
+  timeBudgetMs?: number;
+}): Promise<RefreshResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
@@ -216,16 +222,17 @@ export async function refreshActiveListings(opts?: { maxListings?: number }): Pr
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  let query = client
+  const maxListings = opts?.maxListings ?? 30;
+  const timeBudgetMs = opts?.timeBudgetMs ?? 60_000;
+  const refreshStart = Date.now();
+
+  const { data: activeRows, error: fetchErr } = await client
     .from("listings")
     .select("id,source_url,hammer_price,sale_date")
-    .eq("status", "active");
-
-  if (opts?.maxListings) {
-    query = query.limit(opts.maxListings);
-  }
-
-  const { data: activeRows, error: fetchErr } = await query;
+    .eq("status", "active")
+    .ilike("make", "porsche")
+    .eq("source", "BaT")
+    .limit(maxListings);
 
   if (fetchErr || !activeRows) {
     return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
@@ -234,7 +241,16 @@ export async function refreshActiveListings(opts?: { maxListings?: number }): Pr
   const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
 
   for (const row of activeRows) {
+    // Time-budget guard: break early so the collector still has runway
+    if (Date.now() - refreshStart > timeBudgetMs) {
+      console.log(`[porsche_collector] Refresh time budget (${timeBudgetMs}ms) exceeded after ${result.checked} checks`);
+      break;
+    }
+
     try {
+      // Rate-limit: 1.5-2.5s random delay between requests
+      await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1000));
+
       const scraped = await fetchAuctionData(row.source_url, true);
 
       const newStatus = mapAuctionStatus({
@@ -274,6 +290,7 @@ export async function refreshActiveListings(opts?: { maxListings?: number }): Pr
         result.errors.push(`Update failed for ${row.id}: ${updateErr.message}`);
       } else {
         result.updated++;
+        console.log(`[porsche_collector] Refresh: ${row.source_url} → ${newStatus}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

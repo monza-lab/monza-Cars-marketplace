@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/porsche_collector/collector";
+import { refreshActiveListings } from "@/features/porsche_collector/supabase_writer";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -32,17 +33,30 @@ export async function GET(request: Request) {
   });
 
   try {
-    // Step 1: Discover and ingest new active listings via BaT
-    // scrapeBringATrailer returns rich data (title, make, model, year) from listing pages,
-    // then isLuxuryCarListing pre-filters to Porsche-only before per-listing fetches.
-    // With 3 pages (~60 listings) filtered to ~5-15 Porsche = well within 300s budget.
+    // Step 1: Refresh existing active BaT Porsche listings
+    // Re-scrapes each URL to detect sold/unsold/delisted status changes.
+    // Budget: 60s max, 30 listings max, 1.5-2.5s delay between requests.
+    const REFRESH_BUDGET_MS = 60_000;
+    const refreshResult = await refreshActiveListings({
+      maxListings: 30,
+      timeBudgetMs: REFRESH_BUDGET_MS,
+    });
+
+    const refreshDurationMs = Date.now() - startTime;
+    console.log(
+      `[cron/porsche] Refresh done in ${refreshDurationMs}ms: checked=${refreshResult.checked}, updated=${refreshResult.updated}, errors=${refreshResult.errors.length}`
+    );
+
+    // Step 2: Discover and ingest new active listings via BaT
+    // Subtract refresh duration from collector budget to stay within 300s Vercel limit.
+    const remainingBudgetMs = Math.max(270_000 - refreshDurationMs, 30_000);
     const result = await runCollector({
       mode: "daily",
       sources: ["BaT"],
       maxActivePagesPerSource: 3,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
-      timeBudgetMs: 270_000,
+      timeBudgetMs: remainingBudgetMs,
       dryRun: false,
     });
 
@@ -55,10 +69,7 @@ export async function GET(request: Request) {
       0
     );
 
-    // Step 2: Refresh skipped on Vercel cron — GitHub Actions handles full refresh
-    const refreshResult = { checked: 0, updated: 0, errors: [] as string[] };
-
-    const allErrors = [...result.errors];
+    const allErrors = [...result.errors, ...refreshResult.errors];
 
     await recordScraperRun({
       scraper_name: 'porsche',

@@ -283,15 +283,19 @@ export function isLiveListingStatus(status: string | null | undefined): boolean 
 }
 
 function mapStatus(status: string): AuctionStatus {
-  switch (status) {
+  switch ((status ?? "").toLowerCase().trim()) {
     case "active":
+    case "live":
       return "ACTIVE";
+    case "ending_soon":
+      return "ENDING_SOON";
     case "sold":
     case "unsold":
     case "delisted":
+    case "ended":
       return "ENDED";
     default:
-      return "ACTIVE";
+      return "ENDED";
   }
 }
 
@@ -780,6 +784,8 @@ async function queryListingsMany(
 
     if (statusFilter && statusFilter.toLowerCase() === "active") {
       query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+      // Exclude stale auction listings whose end_time has already passed
+      query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
     } else if (statusFilter) {
       query = query.eq("status", statusFilter);
     }
@@ -1183,6 +1189,8 @@ export async function fetchPaginatedListings(options: {
     // Status filter
     if (options.status !== "all") {
       query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
+      // Exclude stale auction listings whose end_time has already passed
+      query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
     }
 
     // Model pattern filter (series-level, e.g. "992" → model ILIKE %992%)
