@@ -20,7 +20,7 @@ export interface DetailFetchOptions {
  */
 export async function fetchAndParseDetail(opts: DetailFetchOptions): Promise<DetailParsed> {
   await opts.page.goto(opts.url, {
-    waitUntil: "networkidle",
+    waitUntil: "domcontentloaded",
     timeout: opts.pageTimeoutMs,
   });
 
@@ -30,8 +30,12 @@ export async function fetchAndParseDetail(opts: DetailFetchOptions): Promise<Det
     if (!resolved) {
       throw new Error("Cloudflare challenge not resolved");
     }
-    await opts.page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
+    await opts.page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
   }
+
+  // Wait for page content to render
+  await opts.page.waitForSelector("h1", { timeout: 15_000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 1_500));
 
   // Extract all data from the rendered page using evaluate
   const extracted = await opts.page.evaluate(() => {

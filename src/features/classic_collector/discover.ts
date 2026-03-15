@@ -40,6 +40,46 @@ export function buildSearchUrl(
 }
 
 /**
+ * Click the "Next" pagination button instead of navigating via URL.
+ * This preserves Cloudflare clearance cookies across pages.
+ */
+async function clickNextPage(page: Page, timeoutMs: number): Promise<boolean> {
+  // Classic.com uses Material Icons for pagination: "chevron_right" = next page
+  const nextSelectors = [
+    'a:has-text("chevron_right")',
+    'a[aria-label="Next"]',
+    'a[aria-label="Next page"]',
+    'a[rel="next"]',
+    'a:has-text("Next")',
+    'button:has-text("Next")',
+    'button:has-text("chevron_right")',
+  ];
+
+  for (const selector of nextSelectors) {
+    try {
+      const el = await page.$(selector);
+      if (el) {
+        const isDisabled = await el.getAttribute("disabled");
+        const ariaDisabled = await el.getAttribute("aria-disabled");
+        if (isDisabled !== null || ariaDisabled === "true") continue;
+
+        // Record current URL to detect navigation
+        const currentUrl = page.url();
+        await el.click();
+
+        // Wait for URL to change (page navigation)
+        await page.waitForURL((url) => url.toString() !== currentUrl, { timeout: timeoutMs }).catch(() => {});
+        await page.waitForSelector('a[href*="/veh/"]', { timeout: timeoutMs }).catch(() => {});
+        await new Promise((r) => setTimeout(r, 2_000));
+        return true;
+      }
+    } catch { /* selector didn't match, try next */ }
+  }
+
+  return false;
+}
+
+/**
  * Discover all listings from classic.com search pages.
  *
  * Strategy:
@@ -75,10 +115,22 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
     opts.page.on("response", responseHandler);
 
     try {
-      await opts.page.goto(url, {
-        waitUntil: "networkidle",
-        timeout: opts.pageTimeoutMs,
-      });
+      if (pageNum === 1) {
+        // First page: navigate via URL
+        await opts.page.goto(url, {
+          waitUntil: "domcontentloaded",
+          timeout: opts.pageTimeoutMs,
+        });
+      } else {
+        // Subsequent pages: click "Next" to preserve CF clearance cookie
+        const clicked = await clickNextPage(opts.page, opts.pageTimeoutMs);
+        if (!clicked) {
+          logEvent({ level: "info", event: "discover.no_next_button", runId: opts.runId, page: pageNum });
+          hasNextPage = false;
+          opts.page.removeListener("response", responseHandler);
+          break;
+        }
+      }
 
       // Handle Cloudflare challenge
       if (await isCloudflareChallenge(opts.page)) {
@@ -88,9 +140,13 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
           logEvent({ level: "error", event: "discover.cloudflare_blocked", runId: opts.runId, page: pageNum });
           break;
         }
-        // Wait for content after challenge resolution
-        await opts.page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
+        await opts.page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
       }
+
+      // Wait for listing content to render (more reliable than networkidle)
+      await opts.page.waitForSelector('a[href*="/veh/"]', { timeout: 15_000 }).catch(() => {});
+      // Brief extra wait for GraphQL responses to arrive
+      await new Promise((r) => setTimeout(r, 2_000));
 
       // Try extraction strategies in priority order
       let pageListings: ListingSummary[] = [];

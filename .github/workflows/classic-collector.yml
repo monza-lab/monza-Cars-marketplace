@@ -7,10 +7,10 @@ on:
     inputs:
       max_pages:
         description: 'Max search pages'
-        default: '5'
+        default: '170'
       max_listings:
         description: 'Max listings to process'
-        default: '125'
+        default: '5000'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -50,10 +50,11 @@ jobs:
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
         run: |
           npx tsx src/features/classic_collector/cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
-            --maxListings=${{ github.event.inputs.max_listings || '125' }} \
+            --maxPages=${{ github.event.inputs.max_pages || '170' }} \
+            --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \
+            --summaryOnly \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Upload output artifact
