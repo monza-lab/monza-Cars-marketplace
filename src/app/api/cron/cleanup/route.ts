@@ -130,6 +130,7 @@ export async function GET(request: Request) {
     // If they have a current_bid > 0, mark as 'sold'; otherwise 'unsold'.
     const now = new Date().toISOString();
 
+    // Step 1a: Mark stale auctions with bids as 'sold'
     const { data: staleSold, error: staleSoldErr } = await supabase
       .from("listings")
       .update({ status: "sold" })
@@ -142,12 +143,13 @@ export async function GET(request: Request) {
       console.error("[cron/cleanup] stale→sold error:", staleSoldErr.message);
     }
 
+    // Step 1b: Mark any remaining stale auctions (no bid / null bid) as 'unsold'
+    // Runs after 1a so only listings NOT caught by the sold query remain.
     const { data: staleUnsold, error: staleUnsoldErr } = await supabase
       .from("listings")
       .update({ status: "unsold" })
       .eq("status", "active")
       .lt("end_time", now)
-      .or("current_bid.is.null,current_bid.eq.0")
       .select("id");
 
     if (staleUnsoldErr) {
