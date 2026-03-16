@@ -1074,7 +1074,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
                 </span>
                 <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
-                  LIVE NOW
+                  LATEST LISTINGS
                 </span>
                 {liveCars.length > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
@@ -1086,7 +1086,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
               <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                 {liveCars.length === 0 ? (
                   <div className="px-4 py-6 text-center">
-                    <span className="text-[11px] text-muted-foreground">No live auctions</span>
+                    <span className="text-[11px] text-muted-foreground">No active listings</span>
                   </div>
                 ) : (
                   liveCars.map((car) => {
@@ -1213,7 +1213,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                         }`}
                       >
-                        Ended {feedStatusCounts.ended}
+                        Sold {feedStatusCounts.ended}
                       </button>
                     )}
                   </div>

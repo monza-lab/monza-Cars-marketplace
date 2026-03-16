@@ -64,8 +64,8 @@ const PLATFORMS = [
 ];
 
 const STATUSES = [
-  { value: "live", label: "Live Auction" },
-  { value: "ended", label: "Ended" },
+  { value: "live", label: "Live" },
+  { value: "ended", label: "Sold / Ended" },
   { value: "upcoming", label: "Upcoming" },
   { value: "sold", label: "Sold" },
   { value: "no-sale", label: "No Sale" },

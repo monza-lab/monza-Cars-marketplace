@@ -15,7 +15,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion } from "@/lib/regionPricing"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
-import { ownershipCosts } from "@/lib/makePageConstants"
+import { ownershipCosts, getPriceLabel, isAuctionPlatform, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { stripHtml } from "@/lib/stripHtml"
 
 // ─── CAR CONTEXT PANEL (right panel for individual car view) ───
@@ -75,7 +75,7 @@ export function CarContextPanel({
               }`}>{grade}</p>
             </div>
             <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Current Bid</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{getPriceLabel(car.platform, car.status)}</span>
               <p className="text-[13px] font-display font-medium text-primary">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
@@ -85,7 +85,7 @@ export function CarContextPanel({
               <p className={`text-[13px] font-semibold ${
                 isEndingSoon ? "text-orange-400" : car.status === "ACTIVE" ? "text-emerald-400" : "text-muted-foreground"
               }`}>
-                {isEndingSoon ? "Ending Soon" : car.status === "ACTIVE" ? "Live" : car.status}
+                {isEndingSoon ? "Ending Soon" : getStatusLabel(car.platform, car.status)}
               </p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export function CarContextPanel({
                 <span className="text-[12px] font-semibold text-foreground">{car.region}</span>
               </div>
             )}
-            {car.endTime && (
+            {car.endTime && isAuctionPlatform(car.platform) && (
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">Time Left</span>
                 <span className={`text-[12px] font-mono font-semibold ${isEndingSoon ? "text-orange-400" : "text-foreground"}`}>
@@ -157,7 +157,7 @@ export function CarContextPanel({
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">Platform</span>
             <span className="text-[12px] font-semibold text-foreground">
-              {car.platform?.replace(/_/g, " ") || "Auction"}
+              {getPlatformName(car.platform)}
             </span>
           </div>
           {car.category && (

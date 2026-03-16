@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Gavel, Eye, ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AuctionTimer } from "./AuctionTimer";
+import { isAuctionPlatform, getPriceLabel, getStatusLabel } from "@/lib/makePageConstants";
 import type {
   Auction,
   Platform,
@@ -140,14 +141,14 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             {platformCfg.label}
           </span>
 
-          {/* Status badge */}
+          {/* Status badge — smart: "For Sale" for marketplace, "Ended" for auctions */}
           <span
             className={cn(
               "absolute right-3 top-3 rounded-full text-[10px] font-medium tracking-[0.1em] border px-2.5 py-0.5 backdrop-blur-sm",
               statusCfg.className
             )}
           >
-            {statusCfg.label}
+            {getStatusLabel(platform, status)}
           </span>
 
           {/* No Reserve */}
@@ -170,28 +171,28 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             <span className="text-xl font-bold text-primary">
               {formatCurrency(currentBid)}
             </span>
-            {!isEnded && (
-              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
-                current bid
-              </span>
-            )}
-            {status === "SOLD" && (
-              <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
-                sold
-              </span>
-            )}
+            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
+              {getPriceLabel(platform, status).toLowerCase()}
+            </span>
           </div>
 
           {/* Meta row */}
           <div className="flex items-center justify-between text-[11px] text-[rgba(232,226,222,0.35)]">
-            <span className="flex items-center gap-1.5">
-              <Gavel className="size-3" />
-              {bidCount} bid{bidCount !== 1 ? "s" : ""}
-            </span>
+            {isAuctionPlatform(platform) ? (
+              <span className="flex items-center gap-1.5">
+                <Gavel className="size-3" />
+                {bidCount} bid{bidCount !== 1 ? "s" : ""}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <Eye className="size-3" />
+                {getStatusLabel(platform, status)}
+              </span>
+            )}
 
-            {endTime && !isEnded ? (
+            {isAuctionPlatform(platform) && endTime && !isEnded ? (
               <AuctionTimer endTime={endTime} className="text-[11px] font-mono text-[rgba(232,226,222,0.5)]" />
-            ) : endTime && isEnded ? (
+            ) : isAuctionPlatform(platform) && endTime && isEnded ? (
               <span className="flex items-center gap-1">
                 <Eye className="size-3" />
                 Ended

@@ -34,7 +34,7 @@ export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand
       .map(a => ({
         title: a.title,
         price: a.currentBid,
-        platform: a.platform?.replace(/_/g, " ") || "Auction",
+        platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])

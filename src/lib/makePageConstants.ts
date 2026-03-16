@@ -107,6 +107,50 @@ export const platformLabels: Record<string, { short: string; color: string }> = 
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
   GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
+  AUTO_TRADER: { short: "AutoTrader", color: "bg-orange-500/20 text-orange-400" },
+  BE_FORWARD: { short: "BeForward", color: "bg-teal-500/20 text-teal-400" },
+  CLASSIC_COM: { short: "Classic.com", color: "bg-indigo-500/20 text-indigo-400" },
+}
+
+// ─── AUCTION vs MARKETPLACE DISTINCTION ───
+// Only these platforms run time-limited auctions with bidding.
+// Everything else is a fixed-price marketplace listing.
+const AUCTION_PLATFORMS = new Set([
+  "BRING_A_TRAILER",
+  "CARS_AND_BIDS",
+  "COLLECTING_CARS",
+  "RM_SOTHEBYS",
+  "GOODING",
+  "BONHAMS",
+])
+
+/** Returns true if the platform is an auction house (has bids, time-limited). */
+export function isAuctionPlatform(platform?: string | null): boolean {
+  return !!platform && AUCTION_PLATFORMS.has(platform)
+}
+
+/** Smart price label: "Current Bid" for live auctions, "Sold for" for ended auctions, "Price" for marketplace. */
+export function getPriceLabel(platform?: string | null, status?: string | null): string {
+  if (isAuctionPlatform(platform)) {
+    return status === "ENDED" ? "Sold for" : "Current Bid"
+  }
+  return status === "ENDED" ? "Last Listed" : "Price"
+}
+
+/** Smart status label: "Ended" for auctions, "Sold" for ended marketplace, "For Sale" for active marketplace. */
+export function getStatusLabel(platform?: string | null, status?: string | null): string {
+  if (isAuctionPlatform(platform)) {
+    if (status === "ENDED") return "Ended"
+    if (status === "ENDING_SOON") return "Ending Soon"
+    return "Live"
+  }
+  return status === "ENDED" ? "Sold" : "For Sale"
+}
+
+/** Platform display name — human-readable, never "Auction" as fallback. */
+export function getPlatformName(platform?: string | null): string {
+  if (!platform) return "Listing"
+  return platformLabels[platform]?.short ?? platform.replace(/_/g, " ")
 }
 
 // ─── REGION FLAG LABELS ───

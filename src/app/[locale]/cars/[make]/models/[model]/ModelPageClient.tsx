@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import type { CollectorCar, Platform } from "@/lib/curatedCars";
+import { getPriceLabel } from "@/lib/makePageConstants";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -171,7 +172,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
                   {formatCurrency(car.currentBid)}
                 </span>
                 <span className="ml-2 text-[10px] text-muted-foreground">
-                  {isEnded ? "sold" : "current bid"}
+                  {getPriceLabel(car.platform, car.status).toLowerCase()}
                 </span>
               </div>
             </div>

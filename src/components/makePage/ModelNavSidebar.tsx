@@ -144,7 +144,7 @@ export function ModelNavSidebar({
               <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
             </span>
             <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
-              LIVE NOW
+              LATEST LISTINGS
             </span>
             {liveCount > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">

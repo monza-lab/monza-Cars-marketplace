@@ -8,7 +8,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion } from "@/lib/regionPricing"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
-import { platformLabels } from "@/lib/makePageConstants"
+import { platformLabels, getPriceLabel, isAuctionPlatform, getStatusLabel } from "@/lib/makePageConstants"
 
 // ─── CAR FEED CARD (Full-height card for individual cars) ───
 export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
@@ -92,18 +92,18 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
 
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border">
-            {/* Current Bid */}
+            {/* Price / Current Bid */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Gavel className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Current Bid</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{getPriceLabel(car.platform, car.status)}</span>
               </div>
               <p className="text-[14px] font-display font-medium text-primary">
                 {formatPriceForRegion(car.currentBid, selectedRegion)}
               </p>
             </div>
 
-            {/* Platform + Time Left */}
+            {/* Platform + Status */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="size-3" />
@@ -112,12 +112,14 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
                 </span>
               </div>
               <p className={`text-[13px] font-medium ${isEndingSoon ? "text-orange-400" : "text-foreground"}`}>
-                {timeLeft(new Date(car.endTime), {
-                  ended: tAuction("time.ended"),
-                  day: tAuction("time.units.day"),
-                  hour: tAuction("time.units.hour"),
-                  minute: tAuction("time.units.minute"),
-                })}
+                {isAuctionPlatform(car.platform)
+                  ? timeLeft(new Date(car.endTime), {
+                      ended: tAuction("time.ended"),
+                      day: tAuction("time.units.day"),
+                      hour: tAuction("time.units.hour"),
+                      minute: tAuction("time.units.minute"),
+                    })
+                  : getStatusLabel(car.platform, car.status)}
               </p>
             </div>
 

@@ -41,6 +41,7 @@ import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
+import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
@@ -202,7 +203,7 @@ const regionLabels: Record<string, { flag: string; short: string }> = {
 // ─── HELPERS ───
 function timeLeft(endTime: Date): string {
   const diff = endTime.getTime() - Date.now()
-  if (diff <= 0) return "Ended"
+  if (diff <= 0) return "—"
   const days = Math.floor(diff / 86400000)
   const hrs = Math.floor((diff % 86400000) / 3600000)
   if (days > 0) return `${days}d ${hrs}h`
@@ -402,7 +403,7 @@ function CarNavSidebar({
     ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
     : 50
   const isBelowFair = bidInRegion < (fairLow + fairHigh) / 2
-  const priceLabel = car.status === "ENDED" ? "Sold for" : isLive ? "Current Bid" : "Est. Value"
+  const priceLabel = getPriceLabel(car.platform, car.status)
 
   return (
     <div className="h-full flex flex-col overflow-hidden border-r border-border">
@@ -1082,7 +1083,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         {formatPriceForRegion(car.currentBid, selectedRegion)}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        {car.status === "ENDED" ? "sold" : "current bid"}
+                        {getPriceLabel(car.platform, car.status).toLowerCase()}
                       </span>
                     </div>
                   </div>
