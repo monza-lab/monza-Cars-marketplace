@@ -1786,33 +1786,6 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
-  // Top variants: group by model variant name, sorted by avg price
-  const topVariants = useMemo(() => {
-    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
-    familyAuctions.forEach(a => {
-      const variant = a.model
-      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
-      existing.count++
-      if (a.currentBid > 0) existing.prices.push(a.currentBid)
-      const g = a.analysis?.investmentGrade || "B"
-      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
-        existing.grade = g
-      }
-      variantMap.set(variant, existing)
-    })
-
-    return Array.from(variantMap.entries())
-      .filter(([, data]) => data.prices.length > 0)
-      .map(([name, data]) => ({
-        name,
-        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
-        count: data.count,
-        grade: data.grade,
-      }))
-      .sort((a, b) => b.avgPrice - a.avgPrice)
-      .slice(0, 5)
-  }, [familyAuctions])
-
   // Recent sales from this family
   const recentSales = useMemo(() => {
     return familyAuctions
@@ -1826,11 +1799,6 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [familyAuctions])
-
-  // Similar families (nearby in prestige order)
-  const similarFamilies = allFamilies
-    .filter(f => f.slug !== family.slug)
-    .slice(0, 3)
 
   const gradeColor = (g: string) => {
     switch (g) {
@@ -1940,37 +1908,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
           </div>
         </div>
 
-        {/* 4. TOP VARIANTS */}
-        {topVariants.length > 0 && (
-          <div className="px-5 py-4 border-b border-border">
-            <div className="flex items-center gap-2 mb-3">
-              <Car className="size-4 text-primary" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                {t("brandContext.topModels")}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {topVariants.map((variant) => (
-                <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-medium text-foreground truncate block">{variant.name}</span>
-                    <span className="text-[9px] text-muted-foreground">{variant.count} listings</span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] font-display font-medium text-primary">
-                      {formatPriceForRegion(variant.avgPrice, selectedRegion)}
-                    </span>
-                    <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
-                      {variant.grade}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 5. RECENT SALES */}
+        {/* 4. RECENT SALES */}
         {recentSales.length > 0 && (
           <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
@@ -2061,38 +1999,6 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
           </div>
         </div>
 
-        {/* 8. OTHER FAMILIES */}
-        {similarFamilies.length > 0 && (
-          <div className="px-5 py-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="size-4 text-primary" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                Other Families
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {similarFamilies.map((f) => (
-                <Link
-                  key={f.slug}
-                  href={`/cars/porsche?family=${encodeURIComponent(f.name)}`}
-                  className="flex items-center justify-between py-1.5 rounded-lg hover:bg-foreground/3 transition-colors px-1 -mx-1 group"
-                >
-                  <span className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors">
-                    {f.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      {formatPriceForRegion(f.priceMin, selectedRegion)}–{formatPriceForRegion(f.priceMax, selectedRegion)}
-                    </span>
-                    <span className={`text-[9px] font-bold ${
-                      f.topGrade === "AAA" ? "text-positive" : "text-primary"
-                    }`}>{f.topGrade}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* CTA — pinned bottom */}
@@ -2147,32 +2053,6 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
       maintenance: Math.round(base.maintenance * scale),
     }
   }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
-  const topModels = useMemo(() => {
-    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
-    brandAuctions.forEach(a => {
-      const variant = a.model
-      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
-      existing.count++
-      if (a.currentBid > 0) existing.prices.push(a.currentBid)
-      const g = a.analysis?.investmentGrade || "B"
-      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
-        existing.grade = g
-      }
-      variantMap.set(variant, existing)
-    })
-
-    return Array.from(variantMap.entries())
-      .filter(([, data]) => data.prices.length > 0)
-      .map(([name, data]) => ({
-        name,
-        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
-        count: data.count,
-        grade: data.grade,
-        trend: data.grade === "AAA" ? "Premium" : data.grade === "AA" ? "Strong" : "Stable",
-      }))
-      .sort((a, b) => b.avgPrice - a.avgPrice)
-      .slice(0, 5)
-  }, [brandAuctions])
   const depth = useMemo(() => {
     const count = brandAuctions.length
     if (count === 0) {
@@ -2309,37 +2189,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
           </div>
         </div>
 
-        {/* 4. TOP MODELS */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Car className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              {t("brandContext.topModels")}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {topModels.map((model) => (
-              <div key={model.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <span className="text-[11px] font-medium text-foreground">{model.name}</span>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[11px] font-display font-medium text-primary">
-                    {formatPriceForRegion(model.avgPrice, selectedRegion)}
-                  </span>
-                  <span className={`text-[9px] font-bold ${gradeColor(model.grade)}`}>
-                    {model.grade}
-                  </span>
-                  <span className="text-[9px] font-medium text-positive text-right">
-                    {model.trend}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 5. RECENT SALES */}
+        {/* 4. RECENT SALES */}
         <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="size-4 text-primary" />
