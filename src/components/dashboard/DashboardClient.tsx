@@ -39,20 +39,8 @@ import { platformShort, mockWhyBuy, REGION_FLAGS, REGION_LABEL_KEYS } from "./co
 import type { RegionalValuation } from "./utils/valuation"
 import { computeRegionalValFromAuctions, formatRegionalVal, formatUsdEquiv } from "./utils/valuation"
 import { aggregateBrands, aggregateFamilies } from "./utils/aggregation"
+import { timeLeft } from "./utils/timeLeft"
 // FilterSidebar removed — filters now live only on brand detail pages
-
-function timeLeft(
-  endTime: string,
-  labels: { ended: string; day: string; hour: string; minute: string }
-) {
-  const diff = new Date(endTime).getTime() - Date.now()
-  if (diff <= 0) return labels.ended
-  const days = Math.floor(diff / 86400000)
-  const hrs = Math.floor((diff % 86400000) / 3600000)
-  if (days > 0) return `${days}${labels.day} ${hrs}${labels.hour}`
-  const mins = Math.floor((diff % 3600000) / 60000)
-  return `${hrs}${labels.hour} ${mins}${labels.minute}`
-}
 
 // ─── SAFE IMAGE: renders fallback when the URL exists but fails to load ───
 function SafeImage({
