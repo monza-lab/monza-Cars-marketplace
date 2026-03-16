@@ -83,7 +83,7 @@ export function FamilyContextPanel({ family, auctions, allFamilies }: { family: 
       .map(a => ({
         title: `${a.year} ${a.model}`,
         price: a.currentBid,
-        platform: a.platform?.replace(/_/g, " ") || "Auction",
+        platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [familyAuctions])

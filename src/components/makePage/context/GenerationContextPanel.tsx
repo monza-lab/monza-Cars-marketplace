@@ -237,7 +237,7 @@ export function GenerationContextPanel({
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
                     <p className="text-[9px] text-muted-foreground mt-0.5">
-                      {sale.platform?.replace(/_/g, " ") || "Auction"} · {sale.region}
+                      {sale.platform?.replace(/_/g, " ") || "Listing"} · {sale.region}
                     </p>
                   </div>
                   <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">

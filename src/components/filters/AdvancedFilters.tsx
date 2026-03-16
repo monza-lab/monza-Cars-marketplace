@@ -62,7 +62,7 @@ const COLOR_OPTIONS = [
 const STATUS_OPTIONS = [
   { id: "ACTIVE", label: "Live" },
   { id: "ENDING_SOON", label: "Ending Soon" },
-  { id: "ENDED", label: "Ended" },
+  { id: "ENDED", label: "Sold / Ended" },
 ]
 
 const GRADE_OPTIONS = [
