@@ -37,7 +37,8 @@ import {
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
-import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
+import type { ListingReport, ModelMarketStats, RegionalMarketStats } from "@/lib/reports/types"
+import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
 import { useTheme } from "next-themes"
@@ -118,16 +119,20 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand = [], dbComparables = [], dbAnalysis, dbSoldHistory = [], dbAnalyses = [] }: {
+export function ReportClient({ car, similarCars, existingReport, marketStats }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
-  dbMarketData?: DbMarketDataRow | null
-  dbMarketDataBrand?: DbMarketDataRow[]
-  dbComparables?: DbComparableRow[]
-  dbAnalysis?: DbAnalysisRow | null
-  dbSoldHistory?: DbSoldRecord[]
-  dbAnalyses?: DbAnalysisRow[]
+  existingReport: ListingReport | null
+  marketStats: ModelMarketStats | null
 }) {
+  const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
+
+  // Use existing report or the one just generated
+  const report = generatedReport ?? existingReport
+  const hasLLM = !!(report?.investment_grade)
+  const hasStats = !!(marketStats && marketStats.totalDataPoints > 0) || !!(report?.regional_stats?.length)
+  const regions: RegionalMarketStats[] = report?.regional_stats ?? marketStats?.regions ?? []
+
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const { selectedRegion, effectiveRegion } = useRegion()
@@ -200,45 +205,31 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
   // ─── COMPUTED DATA (DB-only — no fabricated fallbacks) ───
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // Red flags & questions: DB only (no hardcoded fallback)
-  const flags = dbAnalysis?.redFlags?.length ? dbAnalysis.redFlags : []
-  const questions = dbAnalysis?.criticalQuestions?.length ? dbAnalysis.criticalQuestions : []
+  // Red flags & questions: from report only
+  const flags = report?.red_flags?.length ? report.red_flags : []
+  const questions = report?.critical_questions?.length ? report.critical_questions : []
+  const strengths = report?.key_strengths?.length ? report.key_strengths : []
   const hasDbRiskData = flags.length > 0
   const hasDbQuestions = questions.length > 0
 
-  // Ownership costs: DB only (no hardcoded fallback)
-  const hasDbOwnershipData = !!(dbAnalysis?.insuranceEstimate || dbAnalysis?.yearlyMaintenance)
-  const costs = hasDbOwnershipData ? {
-    insurance: dbAnalysis!.insuranceEstimate ?? 0,
-    maintenance: dbAnalysis!.yearlyMaintenance ?? 0,
+  // Ownership costs: from report only
+  const hasOwnershipData = !!(report?.insurance_estimate || report?.yearly_maintenance)
+  const costs = hasOwnershipData ? {
+    insurance: report!.insurance_estimate ?? 0,
+    maintenance: report!.yearly_maintenance ?? 0,
+    majorService: report!.major_service_cost ?? 0,
   } : null
   const totalAnnualCost = costs ? costs.insurance + costs.maintenance : 0
 
-  // Comparable sales: DB → similarCars → empty (no hardcoded fallback)
-  const comps = dbComparables.length > 0
-    ? dbComparables.map(c => ({
-        title: c.title,
-        price: c.soldPrice,
-        date: c.soldDate ? new Date(c.soldDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A",
-        platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform === "AUTO_SCOUT_24" ? "AS24" : c.platform,
-        delta: dbMarketData?.avgPrice ? Math.round(((c.soldPrice - dbMarketData.avgPrice) / dbMarketData.avgPrice) * 100) : 0,
-      }))
-    : similarCars.length > 0
-      ? similarCars.slice(0, 4).map(sc => ({
-          title: sc.car.title,
-          price: sc.car.currentBid,
-          date: "Live",
-          platform: (platformLabels[sc.car.platform]?.short || sc.car.platform.replace(/_/g, " ")),
-          delta: car.currentBid > 0 ? Math.round(((sc.car.currentBid - car.currentBid) / car.currentBid) * 100) : 0,
-        }))
-      : []
+  // No fake comparables — regional stats replace this
+  const comps: Array<{ title: string; price: number; date: string; platform: string; delta: number }> = []
 
   const platform = platformLabels[car.platform]
 
-  // Fair value: prefer DB market data for range
+  // Fair value: from report or market stats (real data only)
+  const fairLow = report?.fair_value_low ?? marketStats?.primaryFairValueLow ?? 0
+  const fairHigh = report?.fair_value_high ?? marketStats?.primaryFairValueHigh ?? 0
   const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
-  const fairLow = dbMarketData?.lowPrice ?? regionRange.low
-  const fairHigh = dbMarketData?.highPrice ?? regionRange.high
   const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
   const pricePosition = fairHigh > fairLow
     ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
@@ -252,16 +243,18 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     )
   )
 
-  // Risk score: prefer DB confidence, fallback to grade-based
-  const riskScore = dbAnalysis?.confidence === "HIGH" ? 25 :
-    dbAnalysis?.confidence === "MEDIUM" ? 45 :
-    dbAnalysis?.confidence === "LOW" ? 70 :
+  // Risk score: from report confidence, fallback to grade-based
+  const investmentGrade = report?.investment_grade ?? car.investmentGrade
+  const riskScore = report?.confidence === "HIGH" ? 25 :
+    report?.confidence === "MEDIUM" ? 45 :
+    report?.confidence === "LOW" ? 70 :
     car.investmentGrade === "AAA" ? 25 : car.investmentGrade === "AA" ? 35 : car.investmentGrade === "A" ? 50 : 65
 
-  // Verdict logic
-  const verdict = isBelowFair && car.investmentGrade <= "AA" ? "buy" :
-    isBelowFair ? "hold" :
-    pricePosition > 70 ? "watch" : "hold"
+  // Verdict logic — only when LLM data exists
+  const isAboveFair = car.price > 0 && fairHigh > 0 && car.price > fairHigh
+  const verdict = !hasLLM ? null :
+    isBelowFair && (report?.investment_grade === "AAA" || report?.investment_grade === "AA") ? "buy" :
+    isAboveFair ? "watch" : "hold"
 
   // Arbitrage: difference between cheapest and most expensive region
   const cheapestRegionAvgUsd = toUsd(
@@ -1075,15 +1068,15 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["ARBITRAGE"],
         ["Best Buy Region", regionLabels[bestRegion]?.short || bestRegion],
         ["Arbitrage Savings (USD)", hasArbitrage ? Math.round(arbitrageSavings) : 0],
-        ...(dbMarketData ? [
+        ...(report ? [
           [""],
-          ["MARKET DATA (from DB)"],
-          ["Avg Sale Price (USD)", dbMarketData.avgPrice ?? "N/A"],
-          ["Median Sale Price (USD)", dbMarketData.medianPrice ?? "N/A"],
-          ["Lowest Sale (USD)", dbMarketData.lowPrice ?? "N/A"],
-          ["Highest Sale (USD)", dbMarketData.highPrice ?? "N/A"],
-          ["Total Sales Tracked", dbMarketData.totalSales],
-          ["Market Trend", dbMarketData.trend ?? "N/A"],
+          ["MARKET DATA (from report)"],
+          ["Avg Price (USD)", report.avg_price ?? "N/A"],
+          ["Median Price (USD)", report.median_price ?? "N/A"],
+          ["Fair Value Low (USD)", report.fair_value_low ?? "N/A"],
+          ["Fair Value High (USD)", report.fair_value_high ?? "N/A"],
+          ["Total Comparable Sales", report.total_comparable_sales ?? 0],
+          ["Trend", report.trend_direction ?? "N/A"],
         ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
@@ -1210,50 +1203,31 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
       }
 
-      // ═══ Sheet 5: Sold History (if available) ═══
-      if (dbSoldHistory.length > 0) {
-        const soldRows: (string | number)[][] = [
-          ["SOLD AUCTION HISTORY"],
+      // ═══ Sheet 5: Regional Market Data (if available) ═══
+      if (regions.length > 0) {
+        const regionRows: (string | number)[][] = [
+          ["REGIONAL MARKET DATA"],
           [""],
-          ["Title", "Year", "Model", "Sold Price (USD)", "Sale Date", "vs Current Bid", "vs Current (%)"],
+          ["Region", "Tier", "Median Price", "P25", "P75", "Min", "Max", "Count", "Trend", "Currency"],
         ]
-        const sortedSold = [...dbSoldHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        for (const s of sortedSold) {
-          const diff = s.price - car.currentBid
-          const diffPct = car.currentBid > 0 ? Math.round((diff / car.currentBid) * 100) : 0
-          soldRows.push([
-            s.title,
-            s.year,
-            s.model,
-            s.price,
-            new Date(s.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-            diff,
-            diffPct,
+        for (const r of regions) {
+          regionRows.push([
+            r.region,
+            r.tierLabel,
+            r.medianPrice,
+            r.p25Price,
+            r.p75Price,
+            r.minPrice,
+            r.maxPrice,
+            r.totalListings,
+            `${r.trendDirection} (${r.trendPercent > 0 ? "+" : ""}${r.trendPercent}%)`,
+            r.currency,
           ])
         }
-        const soldPrices = dbSoldHistory.map(s => s.price).filter(p => p > 0)
-        if (soldPrices.length > 0) {
-          const soldAvg = Math.round(soldPrices.reduce((a, b) => a + b, 0) / soldPrices.length)
-          const soldMin = Math.min(...soldPrices)
-          const soldMax = Math.max(...soldPrices)
-          const soldSorted = [...soldPrices].sort((a, b) => a - b)
-          const soldMedian = soldSorted[Math.floor(soldSorted.length / 2)]
-          soldRows.push(
-            [""],
-            ["STATISTICS"],
-            ["Total Sold Records", dbSoldHistory.length],
-            ["Avg Sold Price (USD)", soldAvg],
-            ["Median Sold Price (USD)", soldMedian],
-            ["Min Sold Price (USD)", soldMin],
-            ["Max Sold Price (USD)", soldMax],
-            ["Price Range (USD)", soldMax - soldMin],
-            ["This Car vs Avg Sold", car.currentBid - soldAvg],
-          )
-        }
-        const wsSold = XLSX.utils.aoa_to_sheet(soldRows)
-        wsSold["!cols"] = [{ wch: 40 }, { wch: 6 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 }]
-        wsSold["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }]
-        XLSX.utils.book_append_sheet(wb, wsSold, "Sold History")
+        const wsSold = XLSX.utils.aoa_to_sheet(regionRows)
+        wsSold["!cols"] = [{ wch: 8 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 8 }]
+        wsSold["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }]
+        XLSX.utils.book_append_sheet(wb, wsSold, "Regional Data")
       }
 
       // ═══ Sheet 6: Ownership Costs (conditional) ═══
