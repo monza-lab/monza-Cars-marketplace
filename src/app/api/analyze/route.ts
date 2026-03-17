@@ -1,240 +1,152 @@
-import { NextResponse } from 'next/server'
-import { dbQuery } from '@/lib/db/sql'
-import { analyzeAuction } from '@/lib/ai/analyzer'
-import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser, deductCredit, hasAlreadyAnalyzed } from '@/lib/credits'
+import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { fetchPricedListingsForModel, fetchLiveListingById } from "@/lib/supabaseLiveListings"
+import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
+import { computeMarketStatsForCar } from "@/lib/marketStats"
+import { analyzeForReport } from "@/lib/ai/analyzer"
+import {
+  getReportForListing,
+  saveReport,
+  getOrCreateUser,
+  hasAlreadyGenerated,
+  deductCredit,
+  checkAndResetFreeCredits,
+} from "@/lib/reports/queries"
 
 interface AnalyzeRequestBody {
-  auctionId: string
+  listingId: string
 }
-
-const ANALYSIS_CACHE_HOURS = 24
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
+    // 1. Auth
     const supabase = await createClient()
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser()
 
     if (authError || !authUser) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'AUTH_REQUIRED',
-          message: 'Please sign in to analyze auctions',
-        },
-        { status: 401 }
+        { success: false, error: "AUTH_REQUIRED", message: "Please sign in to generate reports" },
+        { status: 401 },
       )
     }
 
     const body: AnalyzeRequestBody = await request.json()
+    if (!body.listingId) {
+      return NextResponse.json({ success: false, error: "listingId is required" }, { status: 400 })
+    }
 
-    if (!body.auctionId) {
+    // 2. Get/create user + reset credits if needed
+    const dbUser = await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
+    const user = await checkAndResetFreeCredits(dbUser.id)
+
+    // 3. Check if user already generated this report (free re-access)
+    const alreadyGenerated = await hasAlreadyGenerated(user.id, body.listingId)
+
+    // 4. Check existing report
+    const existingReport = await getReportForListing(body.listingId)
+    if (existingReport && existingReport.investment_grade) {
+      return NextResponse.json({
+        success: true,
+        data: existingReport,
+        cached: true,
+        creditUsed: 0,
+        creditsRemaining: user.credits_balance,
+      })
+    }
+
+    // 5. Credits check (if not already generated and no cached report)
+    if (!alreadyGenerated && user.credits_balance < 1) {
       return NextResponse.json(
         {
           success: false,
-          error: 'auctionId is required',
-        },
-        { status: 400 }
-      )
-    }
-
-    // Get or create user in our database
-    const dbUser = await getOrCreateUser(
-      authUser.id,
-      authUser.email!,
-      authUser.user_metadata?.full_name
-    )
-
-    // Fetch the auction from the database
-    const auctionResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Auction" WHERE id = $1 LIMIT 1', [body.auctionId])
-    const auction = auctionResult.rows[0]
-
-    if (!auction) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Auction not found',
-        },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has already analyzed this auction (free re-access)
-    const alreadyAnalyzed = await hasAlreadyAnalyzed(dbUser.id, body.auctionId)
-
-    // Check if a recent analysis already exists (within cache window)
-    const analysisLookup = await dbQuery<Record<string, unknown>>('SELECT * FROM "Analysis" WHERE "auctionId" = $1 LIMIT 1', [body.auctionId])
-    const existingAnalysis = analysisLookup.rows[0]
-
-    if (existingAnalysis) {
-      const analysisAge =
-        Date.now() - new Date(String(existingAnalysis.createdAt)).getTime()
-      const cacheThreshold = ANALYSIS_CACHE_HOURS * 60 * 60 * 1000
-
-      if (analysisAge < cacheThreshold) {
-        return NextResponse.json({
-          success: true,
-          data: existingAnalysis,
-          cached: true,
-          creditUsed: 0,
-          creditsRemaining: dbUser.creditsBalance,
-        })
-      }
-    }
-
-    // If new analysis needed and user hasn't analyzed before, check credits
-    if (!alreadyAnalyzed && dbUser.creditsBalance < 1) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'INSUFFICIENT_CREDITS',
-          message: 'You have no analysis credits remaining. Purchase more to continue.',
+          error: "INSUFFICIENT_CREDITS",
+          message: "You have no report credits remaining.",
           creditsRemaining: 0,
         },
-        { status: 402 }
+        { status: 402 },
       )
     }
 
-    // Fetch comparables linked to this auction + market data for context
-    const [auctionComparables, marketDataRecords] = await Promise.all([
-      dbQuery<Record<string, unknown>>(
-        'SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST LIMIT 10',
-        [auction.id],
-      ),
-      dbQuery<Record<string, unknown>>(
-        'SELECT * FROM "MarketData" WHERE make ILIKE $1 AND model ILIKE $2 ORDER BY "lastUpdated" DESC LIMIT 5',
-        [auction.make, auction.model],
-      ),
-    ])
-
-    // Format vehicle data and market data for the AI prompt
-    const vehicleData = {
-      id: String(auction.id),
-      title: String(auction.title ?? ''),
-      make: String(auction.make ?? ''),
-      model: String(auction.model ?? ''),
-      year: Number(auction.year ?? 0),
-      mileage: (auction.mileage as number | null) ?? null,
-      platform: String(auction.platform ?? ''),
-      currentBid: (auction.currentBid as number | null) ?? null,
-      endTime: (auction.endTime as string | Date | null | undefined) ?? null,
-      description: (auction.description as string | null) ?? null,
-      url: String(auction.url ?? ''),
-      imageUrl: Array.isArray(auction.images) ? (auction.images[0] as string | undefined) ?? null : null,
+    // 6. Fetch the car
+    const car = await fetchLiveListingById(body.listingId)
+    if (!car) {
+      return NextResponse.json({ success: false, error: "Listing not found" }, { status: 404 })
     }
 
-    const marketData = {
-      comparableSales: auctionComparables.rows.map((comp) => ({
-        title: String(comp.title ?? ''),
-        mileage: comp.mileage as number | null,
-        soldPrice: comp.soldPrice as number,
-        soldDate: (comp.soldDate as string | Date | null | undefined) ?? null,
-        platform: String(comp.platform ?? ''),
-        condition: comp.condition as string | null,
-      })),
-      marketContext: marketDataRecords.rows.map((m) => ({
-        avgPrice: m.avgPrice as number | null,
-        medianPrice: m.medianPrice as number | null,
-        totalSales: m.totalSales as number,
-        trend: m.trend as string | null,
-      })),
-      totalComparables: auctionComparables.rows.length,
+    // 7. Fetch priced listings and compute market stats (shared helper)
+    const allPriced = await fetchPricedListingsForModel(car.make)
+    const { marketStats, pricedRecords } = computeMarketStatsForCar(car, allPriced)
+    const series = extractSeries(car.model, car.year, car.make)
+
+    // 8. Get brand thesis
+    const brandThesis = getSeriesThesis(series, car.make)
+
+    // 9. Call Gemini
+    let llmData = null
+    try {
+      llmData = await analyzeForReport(
+        {
+          title: car.title,
+          year: car.year,
+          make: car.make,
+          model: car.model,
+          trim: car.trim,
+          mileage: car.mileage,
+          mileageUnit: car.mileageUnit,
+          transmission: car.transmission,
+          engine: car.engine,
+          exteriorColor: car.exteriorColor,
+          interiorColor: car.interiorColor,
+          location: car.location,
+          price: car.price,
+          vin: car.vin,
+          description: car.description,
+          sellerNotes: car.sellerNotes,
+          platform: car.platform,
+          sourceUrl: car.sourceUrl,
+        },
+        marketStats?.regions ?? [],
+        pricedRecords.slice(0, 60),
+        brandThesis,
+      )
+    } catch (geminiError) {
+      console.error("[analyze] Gemini failed:", geminiError)
+      // Continue with market stats only
     }
 
-    // Call the AI analyzer
-    const aiAnalysis = await analyzeAuction(vehicleData, marketData)
+    // 10. Save report
+    const report = await saveReport(body.listingId, marketStats, llmData)
 
-    // Save or update the analysis in the database
-    // Map analysis result fields to the persisted analysis columns
-    const analysisData = {
-      bidTargetLow: aiAnalysis.fairValueLow ?? null,
-      bidTargetHigh: aiAnalysis.fairValueHigh ?? null,
-      confidence: aiAnalysis.confidenceScore >= 0.8 ? 'HIGH' as const : aiAnalysis.confidenceScore >= 0.5 ? 'MEDIUM' as const : 'LOW' as const,
-      redFlags: aiAnalysis.redFlags ?? [],
-      keyStrengths: aiAnalysis.pros ?? [],
-      criticalQuestions: [],
-      investmentGrade: aiAnalysis.confidenceScore >= 0.8 ? 'EXCELLENT' as const : aiAnalysis.confidenceScore >= 0.6 ? 'GOOD' as const : aiAnalysis.confidenceScore >= 0.4 ? 'FAIR' as const : 'SPECULATIVE' as const,
-      appreciationPotential: aiAnalysis.marketTrend ?? null,
-      rawAnalysis: { summary: aiAnalysis.summary, recommendation: aiAnalysis.recommendation, cons: aiAnalysis.cons },
-    }
-
-    const savedAnalysisResult = await dbQuery<Record<string, unknown>>(
-      `
-        INSERT INTO "Analysis" (
-          "auctionId", "bidTargetLow", "bidTargetHigh", confidence,
-          "redFlags", "keyStrengths", "criticalQuestions", "investmentGrade", "appreciationPotential", "rawAnalysis"
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-        ON CONFLICT ("auctionId") DO UPDATE SET
-          "bidTargetLow" = EXCLUDED."bidTargetLow",
-          "bidTargetHigh" = EXCLUDED."bidTargetHigh",
-          confidence = EXCLUDED.confidence,
-          "redFlags" = EXCLUDED."redFlags",
-          "keyStrengths" = EXCLUDED."keyStrengths",
-          "criticalQuestions" = EXCLUDED."criticalQuestions",
-          "investmentGrade" = EXCLUDED."investmentGrade",
-          "appreciationPotential" = EXCLUDED."appreciationPotential",
-          "rawAnalysis" = EXCLUDED."rawAnalysis"
-        RETURNING *
-      `,
-      [
-        auction.id,
-        analysisData.bidTargetLow,
-        analysisData.bidTargetHigh,
-        analysisData.confidence,
-        analysisData.redFlags,
-        analysisData.keyStrengths,
-        analysisData.criticalQuestions,
-        analysisData.investmentGrade,
-        analysisData.appreciationPotential,
-        analysisData.rawAnalysis,
-      ],
-    )
-    const savedAnalysis = savedAnalysisResult.rows[0]
-
-    // Deduct credit if this is a new analysis for this user
+    // 11. Deduct credit
     let creditUsed = 0
-    if (!alreadyAnalyzed) {
-      const creditResult = await deductCredit(dbUser.id, body.auctionId)
+    if (!alreadyGenerated) {
+      const creditResult = await deductCredit(user.id, body.listingId, report.id)
       if (creditResult.success) {
         creditUsed = creditResult.creditUsed
       }
     }
 
-    // Get updated credits balance
-    const updatedUserResult = await dbQuery<{ creditsBalance: number }>(
-      'SELECT "creditsBalance" FROM "User" WHERE id = $1 LIMIT 1',
-      [dbUser.id],
-    )
-    const updatedUser = updatedUserResult.rows[0]
-
     return NextResponse.json({
       success: true,
-      data: savedAnalysis,
+      data: report,
       cached: false,
       creditUsed,
-      creditsRemaining: updatedUser?.creditsBalance ?? dbUser.creditsBalance,
+      creditsRemaining: user.credits_balance - creditUsed,
+      geminiUsed: !!llmData,
     })
   } catch (error) {
-    console.error('Error analyzing auction:', error)
+    console.error("Error analyzing listing:", error)
 
     if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid JSON in request body',
-        },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: "Invalid JSON in request body" }, { status: 400 })
     }
 
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to analyze auction',
-      },
-      { status: 500 }
+      { success: false, error: error instanceof Error ? error.message : "Failed to generate report" },
+      { status: 500 },
     )
   }
 }
