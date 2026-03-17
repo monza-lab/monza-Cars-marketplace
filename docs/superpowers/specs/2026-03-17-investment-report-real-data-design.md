@@ -60,45 +60,93 @@ listings {
 
 `hammer_price` values come from multiple sources in different currencies. Before computing market stats, all prices must be converted to USD using the `original_currency` field. The `original_currency` stores ISO codes (`"USD"`, `"EUR"`, `"GBP"`, `"JPY"`) but `toUsd()` in `regionPricing.ts` uses currency symbols (`"$"`, `"€"`, `"£"`, `"¥"`). A mapping function `isoCurrencyToSymbol()` bridges this gap in `marketStats.ts`.
 
+### Regional market segregation (3-tier pricing)
+
+**Problem**: Only ~4,117 listings have verified sold status with `hammer_price > 0`, and 99% of those are from Bring a Trailer (US only). But we have 19k AutoScout24 listings (EU) and 6.5k AutoTrader listings (UK) with asking prices stored in `hammer_price`.
+
+**Solution**: Segregate market data by region and data quality tier:
+
+| Tier | Label in Report | Sources | What `hammer_price` means | Region |
+|------|----------------|---------|--------------------------|--------|
+| **Tier 1: Verified Sales** | "Based on X verified sales" | BaT, ClassicCom | Actual sale price (hammer price) | US |
+| **Tier 2: Active Asking Prices** | "Based on X active listings" | AutoScout24, AutoTrader | Asking/listing price | EU (EUR), UK (GBP) |
+| **Tier 3: Recently Removed** | "Based on X recently delisted" | AutoScout24 (delisted) | Last known asking price | EU |
+
+**Implementation rules**:
+- Never mix tiers in the same statistical calculation
+- Each tier gets its own `RegionalMarketStats` block
+- Labels are always honest about data type (sale price vs asking price)
+- Currency stays native per region (USD for US, EUR for EU, GBP for UK), with USD conversion available
+- The report shows all available regional data, clearly separated
+
+**Source-to-region mapping**:
+```typescript
+const SOURCE_REGION: Record<string, { region: string; tier: 1 | 2 | 3; currency: string }> = {
+  "Bring a Trailer": { region: "US", tier: 1, currency: "USD" },
+  "ClassicCom":      { region: "US", tier: 1, currency: "USD" },
+  "AutoScout24":     { region: "EU", tier: 2, currency: "EUR" },
+  "AutoTrader":      { region: "UK", tier: 2, currency: "GBP" },
+  "BeForward":       { region: "JP", tier: 2, currency: "JPY" },  // limited data
+}
+```
+
+**Delisted detection**: AutoScout24 listings with `status = 'delisted'` or `status = 'sold'` without auction provenance are Tier 3.
+
 ### Key queries needed
 
 | Query | Purpose | Filter |
 |-------|---------|--------|
-| `fetchSoldListingsForModel(make, model)` | **NEW** - Comparables for same model | `status = "sold"`, `hammer_price > 0`, same make + model |
+| `fetchPricedListingsForModel(make, model)` | **NEW** - All listings with price data for same model | `hammer_price > 0`, same make + model, any status |
 | `fetchSoldListingsForMake(make)` | Market context for the brand | Already exists — `status = "sold"`, `hammer_price > 0` |
 | `fetchLiveListingById(id)` | The car being analyzed | Already exists |
 | `findSimilarCars(car, candidates)` | Similar active listings | Already exists |
 
-### Model matching strategy for `fetchSoldListingsForModel()`
+### Model matching strategy for `fetchPricedListingsForModel()`
 
 Rather than raw `model ILIKE %model%` (which matches too broadly, e.g., "911" matching all 911 variants), use `extractSeries()` from brandConfig to normalize the model to its series ID first:
 
 1. Extract series via `extractSeries(model, year, make)`
-2. Query sold listings where `extractSeries(listing.model, listing.year, listing.make)` matches the same series
+2. Query listings where `extractSeries(listing.model, listing.year, listing.make)` matches the same series
 3. If < 3 results, expand to same family group via `getSeriesConfig(series).familyGroup`
 4. Always label the scope used in the stats: `"model"`, `"series"`, or `"family"`
 
-In practice, the series extraction happens in the app layer after fetching sold listings for the make, since `extractSeries()` is a JS function, not a SQL function. So the flow is: fetch all sold listings for the make → filter in JS by matching series → compute stats.
+In practice, the series extraction happens in the app layer after fetching priced listings for the make, since `extractSeries()` is a JS function, not a SQL function. So the flow is: fetch all priced listings for the make → filter in JS by matching series → segregate by tier/region → compute stats per region.
 
-### Computed market stats (from sold history)
+### Computed market stats (per region)
 
-From `fetchSoldListingsForModel()` results, compute:
+From `fetchPricedListingsForModel()` results, segregated by region/tier, compute:
 
 ```typescript
-interface ModelMarketStats {
-  totalSales: number
-  medianPrice: number
-  avgPrice: number
-  p25Price: number       // 25th percentile
-  p75Price: number       // 75th percentile
+interface RegionalMarketStats {
+  region: string            // "US" | "EU" | "UK"
+  tier: 1 | 2 | 3
+  tierLabel: string         // "Verified Sales" | "Active Listings" | "Recently Delisted"
+  currency: string          // native currency: "USD" | "EUR" | "GBP"
+  totalListings: number
+  medianPrice: number       // in native currency
+  avgPrice: number          // in native currency
+  p25Price: number          // 25th percentile, native currency
+  p75Price: number          // 75th percentile, native currency
   minPrice: number
   maxPrice: number
+  medianPriceUsd: number    // converted to USD for cross-region comparison
   // Trend: compare avg of recent 6 months vs prior 6 months
-  trendPercent: number   // e.g., +5.2 or -3.1
+  trendPercent: number      // e.g., +5.2 or -3.1
   trendDirection: "up" | "down" | "stable"
-  oldestSaleDate: string
-  newestSaleDate: string
+  oldestDate: string
+  newestDate: string
+  sources: string[]         // e.g., ["Bring a Trailer", "ClassicCom"]
+}
+
+interface ModelMarketStats {
   scope: "model" | "series" | "family"
+  regions: RegionalMarketStats[]
+  // Convenience: best available fair value (Tier 1 > Tier 2 > Tier 3)
+  primaryFairValueLow: number   // USD, P25 from best tier
+  primaryFairValueHigh: number  // USD, P75 from best tier
+  primaryTier: 1 | 2 | 3
+  primaryRegion: string
+  totalDataPoints: number       // sum across all regions
 }
 ```
 
@@ -115,17 +163,22 @@ CREATE TABLE listing_reports (
   id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   listing_id             uuid NOT NULL REFERENCES listings(id),
 
-  -- Market stats (computed from sold history, cached here)
-  fair_value_low         numeric,          -- P25 of real sales (USD)
-  fair_value_high        numeric,          -- P75 of real sales (USD)
-  median_price           numeric,          -- median hammer_price (USD)
-  avg_price              numeric,          -- average hammer_price (USD)
-  min_price              numeric,          -- lowest sale price (USD)
-  max_price              numeric,          -- highest sale price (USD)
-  total_comparable_sales integer,          -- how many sales were used
+  -- Market stats (best available, in USD for primary comparison)
+  fair_value_low         numeric,          -- P25 from best tier (USD)
+  fair_value_high        numeric,          -- P75 from best tier (USD)
+  median_price           numeric,          -- median from best tier (USD)
+  avg_price              numeric,          -- average from best tier (USD)
+  min_price              numeric,          -- lowest price from best tier (USD)
+  max_price              numeric,          -- highest price from best tier (USD)
+  total_comparable_sales integer,          -- data points from best tier
   trend_percent          numeric,          -- e.g., +5.2 or -3.1
   trend_direction        text,             -- 'up' / 'down' / 'stable'
   stats_scope            text,             -- 'model' / 'series' / 'family'
+  primary_tier           integer,          -- 1 (verified sales) / 2 (asking) / 3 (delisted)
+  primary_region         text,             -- 'US' / 'EU' / 'UK'
+
+  -- Full regional breakdown (all tiers, stored as JSONB)
+  regional_stats         jsonb,            -- array of RegionalMarketStats objects
 
   -- LLM analysis (Gemini)
   investment_grade       text,             -- AAA / AA / A / BBB / BB / B
@@ -265,9 +318,9 @@ Car detail page → "Investment Report" button
   │   └─ YES → Load report page instantly (all sections populated)
   │
   └─ NO → Show generation loading state (~5-10s)
-       ├─ Step 1: Fetch sold history for model + make from Supabase listings
-       ├─ Step 2: Compute market stats (median, P25-P75, trend)
-       ├─ Step 3: Call Gemini with full context (sold history + car data + stats)
+       ├─ Step 1: Fetch all priced listings for model from Supabase (sold + active + delisted)
+       ├─ Step 2: Segregate by region/tier → compute regional market stats
+       ├─ Step 3: Call Gemini with full context (regional data + car data + stats)
        ├─ Step 4: Save to listing_reports table (market stats + LLM analysis)
        ├─ Step 5: Record in user_reports + deduct credit
        └─ Step 6: Show complete report (all sections)
@@ -333,11 +386,16 @@ The `analyzer.ts` orchestrator stays largely the same — it already handles JSO
 The prompt receives (via refactored `prompts.ts`):
 
 1. **Car listing data** — full specs + description_text (not truncated)
-2. **Sold history (same series)** — up to 50 recent sales with hammer_price, sale_date, mileage, currency
-3. **Sold history (same make)** — broader market context, up to 200 sales
-4. **Market stats** — computed median, P25, P75, avg, trend for the series
+2. **Regional market data** — per-region stats with tier labels:
+   - US Market: verified sales from BaT/ClassicCom (Tier 1)
+   - EU Market: asking prices from AutoScout24 (Tier 2)
+   - UK Market: asking prices from AutoTrader (Tier 2)
+3. **Sample comparable listings** — up to 20 per region with hammer_price, date, mileage, currency, source
+4. **Cross-market summary** — primary fair value, total data points, scope used
 5. **Similar active listings** — current market offerings for comparison
 6. **Brand/series thesis** — from brandConfig.ts
+
+Key: the prompt explicitly tells Gemini which data is verified sales vs asking prices, so the LLM can weight them appropriately.
 
 Key instruction in prompt:
 
@@ -377,20 +435,40 @@ GEMINI_MODEL=gemini-2.0-flash   # configurable, verify model ID at implementatio
 
 | Data | Source | Change |
 |------|--------|--------|
-| Fair Value range | `listing_reports.fair_value_low/high` | **Replace** circular calculation |
-| Market position | Car price vs `listing_reports.median_price` | **Replace** — based on real sales |
-| Comparable sales | Sold listings of same series from Supabase | **Replace** — real sold cars only, never live fallback |
-| Regional breakdown | Apply regional premiums to real fair value | Keep but base on real data |
+| Fair Value range | `listing_reports.fair_value_low/high` (from best tier, in USD) | **Replace** circular calculation |
+| Market position | Car price vs `listing_reports.median_price` | **Replace** — based on real data |
+| Comparable transactions | Tier 1: real sold cars. Tier 2: active asking prices. Labeled honestly. | **Replace** — never fake "comparable sales" |
+| Regional breakdown | `listing_reports.regional_stats` — show each region's P25-P75 in native currency | **Replace** — real per-region data, not premiums applied to one value |
+
+**Display logic for valuation**:
+- Primary fair value (bold, top): from best available tier (Tier 1 preferred)
+- If Tier 1 data exists: "Fair Value: $X - $Y (based on N verified sales, US market)"
+- If only Tier 2: "Estimated Range: €X - €Y (based on N active listings, EU market)"
+- Show all available regions below as supplementary data
 
 ### Section 4: Market Context — visible when report has market stats
 
 | Data | Source | Change |
 |------|--------|--------|
-| Total sales tracked | `listing_reports.total_comparable_sales` | Real data |
-| Average / Median price | `listing_reports.avg_price / median_price` (USD) | Real data |
-| Price range (min-max) | From sold listings | Real data |
-| Trend | `listing_reports.trend_percent / trend_direction` | Real data |
+| Regional market cards | `listing_reports.regional_stats` (one card per region with data) | **NEW** — separate US/EU/UK cards |
+| Per-region stats | median, avg, P25-P75, trend, count — in native currency | Real data per region |
+| Data quality label | Tier 1: "Verified Sales", Tier 2: "Asking Prices", Tier 3: "Recently Delisted" | **NEW** — honest labeling |
 | Brand thesis | `getSeriesThesis()` from brandConfig | **Fix**: use brand thesis, not description snippet |
+
+**Display example**:
+```
+🇺🇸 US Market — Verified Sales (BaT, ClassicCom)
+   Median: $185,000 | Range: $142,000 - $245,000 | Trend: ↑ +5.2%
+   Based on 47 verified sales (Jan 2024 - Mar 2026)
+
+🇪🇺 EU Market — Active Listings (AutoScout24)
+   Median: €168,000 | Range: €125,000 - €220,000 | Trend: → stable
+   Based on 89 active listings
+
+🇬🇧 UK Market — Active Listings (AutoTrader)
+   Median: £155,000 | Range: £118,000 - £198,000 | Trend: ↓ -2.1%
+   Based on 34 active listings
+```
 
 ### Section 5: Risk Assessment — visible when report has LLM analysis
 
@@ -437,36 +515,45 @@ No changes — already uses real data from `findSimilarCars()`.
 | Key takeaways | Generated from real data points | Only reference available data |
 | Strategy text | Removed | **Remove** generic i18n copy |
 
-## New query: `fetchSoldListingsForModel()`
+## New query: `fetchPricedListingsForModel()`
 
 ```typescript
 // In src/lib/supabaseLiveListings.ts
-export interface SoldListingRecordWithCurrency extends SoldListingRecord {
+export interface PricedListingRecord {
+  id: string
+  year: number
+  make: string
+  model: string
+  trim: string | null
+  hammerPrice: number
   originalCurrency: string | null
+  saleDate: string | null
+  status: string
   mileage: number | null
   source: string
+  country: string | null
 }
 
-export async function fetchSoldListingsForModel(
+export async function fetchPricedListingsForModel(
   make: string,
   model: string,
-  limit = 50
-): Promise<SoldListingRecordWithCurrency[]> {
-  // 1. Fetch sold listings for make from Supabase
-  //    IMPORTANT: SELECT must include original_currency, mileage, source
-  //    (the existing fetchSoldListingsForMake does NOT select these)
+  limit = 300
+): Promise<PricedListingRecord[]> {
+  // 1. Fetch ALL listings with price data for this make from Supabase
+  //    NOT limited to status="sold" — includes active, delisted, sold
+  //    IMPORTANT: SELECT must include original_currency, mileage, source, country, status
   //
   //    .from("listings")
-  //    .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source")
+  //    .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
   //    .ilike("make", make)
-  //    .eq("status", "sold")
   //    .gt("hammer_price", 0)
   //    .order("sale_date", { ascending: false })
-  //    .limit(200)
+  //    .limit(500)
   //
   // 2. In JS: use extractSeries() to filter to same series
   // 3. If < 3 results, expand to same family group
-  // 4. Return up to $limit results with currency info
+  // 4. Segregate by tier/region using SOURCE_REGION mapping
+  // 5. Return up to $limit results
 }
 ```
 
@@ -479,32 +566,76 @@ const ISO_TO_SYMBOL: Record<string, string> = {
   USD: "$", EUR: "€", GBP: "£", JPY: "¥", CHF: "CHF",
 }
 
-export interface ModelMarketStats {
-  totalSales: number
-  medianPrice: number      // USD
-  avgPrice: number         // USD
-  p25Price: number         // USD
-  p75Price: number         // USD
-  minPrice: number         // USD
-  maxPrice: number         // USD
+const SOURCE_REGION: Record<string, { region: string; tier: 1 | 2 | 3; currency: string }> = {
+  "Bring a Trailer": { region: "US", tier: 1, currency: "USD" },
+  "ClassicCom":      { region: "US", tier: 1, currency: "USD" },
+  "AutoScout24":     { region: "EU", tier: 2, currency: "EUR" },
+  "AutoTrader":      { region: "UK", tier: 2, currency: "GBP" },
+  "BeForward":       { region: "JP", tier: 2, currency: "JPY" },
+}
+
+export interface RegionalMarketStats {
+  region: string
+  tier: 1 | 2 | 3
+  tierLabel: string
+  currency: string
+  totalListings: number
+  medianPrice: number
+  avgPrice: number
+  p25Price: number
+  p75Price: number
+  minPrice: number
+  maxPrice: number
+  medianPriceUsd: number
   trendPercent: number
-  trendDirection: "up" | "down" | "stable"  // ±3% threshold
-  oldestSaleDate: string
-  newestSaleDate: string
+  trendDirection: "up" | "down" | "stable"
+  oldestDate: string
+  newestDate: string
+  sources: string[]
+}
+
+export interface ModelMarketStats {
   scope: "model" | "series" | "family"
+  regions: RegionalMarketStats[]
+  primaryFairValueLow: number    // USD, P25 from best tier
+  primaryFairValueHigh: number   // USD, P75 from best tier
+  primaryTier: 1 | 2 | 3
+  primaryRegion: string
+  totalDataPoints: number
+}
+
+export function segregateByRegion(
+  listings: PricedListingRecord[]
+): Map<string, { tier: number; currency: string; listings: PricedListingRecord[] }> {
+  // Group listings by source → region/tier using SOURCE_REGION mapping
+  // For AutoScout24: status="delisted" → Tier 3, else → Tier 2
+  // Returns Map keyed by "region-tier" (e.g., "US-1", "EU-2", "EU-3")
+}
+
+export function computeRegionalStats(
+  listings: PricedListingRecord[],
+  region: string,
+  tier: 1 | 2 | 3,
+  currency: string
+): RegionalMarketStats | null {
+  // Returns null if < 3 listings
+  // 1. Compute stats in NATIVE currency (not USD) for display
+  // 2. Also compute medianPriceUsd for cross-region comparison
+  // 3. Sort prices ascending → P25, P50 (median), P75, avg, min, max
+  // 4. Trend: split by date into recent 6 months vs prior 6 months, compare averages
+  // 5. trendDirection: stable if ±3%, up if > +3%, down if < -3%
 }
 
 export function computeMarketStats(
-  soldListings: SoldListingRecordWithCurrency[],
+  listings: PricedListingRecord[],
   scope: "model" | "series" | "family"
 ): ModelMarketStats | null {
-  // Returns null if < 3 sold listings
-  // 1. Convert all hammer_prices to USD:
-  //    toUsd(price, ISO_TO_SYMBOL[originalCurrency] ?? "$")
-  // 2. Sort USD prices ascending
-  // 3. Compute: P25, P50 (median), P75, avg, min, max
-  // 4. Trend: split by date into recent 6 months vs prior 6 months, compare averages
-  // 5. trendDirection: stable if ±3%, up if > +3%, down if < -3%
+  // Returns null if no regions have >= 3 listings
+  // 1. segregateByRegion(listings)
+  // 2. computeRegionalStats() for each region/tier group
+  // 3. Pick primary: Tier 1 > Tier 2 > Tier 3 (by highest tier, then most data)
+  // 4. primaryFairValueLow/High = P25/P75 from primary region, converted to USD
+  // 5. totalDataPoints = sum across all regions
 }
 ```
 
@@ -531,20 +662,21 @@ export async function getTransactionHistory(userId: string, limit?: number): Pro
 ## Implementation phases (internal, not user-facing)
 
 ### Phase I: Real data infrastructure
-1. Create `listing_reports` table in Supabase (SQL migration)
+1. Create `listing_reports` table in Supabase (SQL migration) — includes `regional_stats` JSONB column
 2. Create `user_credits`, `user_reports`, `credit_transactions` tables in Supabase
-3. Add `fetchSoldListingsForModel()` to `supabaseLiveListings.ts`
-4. Create `src/lib/marketStats.ts` with `computeMarketStats()`
+3. Add `fetchPricedListingsForModel()` to `supabaseLiveListings.ts` — fetches all listings with price (not just sold)
+4. Create `src/lib/marketStats.ts` with `segregateByRegion()`, `computeRegionalStats()`, `computeMarketStats()`
 5. Create `src/lib/reports/queries.ts` (Supabase queries for new tables)
 6. Update `report/page.tsx`:
    - Add `setRequestLocale(locale)` (pre-existing bug fix)
    - Remove `shouldQueryHistoricalData` gate
-   - Fetch model-specific sold history + existing report from Supabase
-   - Compute market stats and pass to ReportClient
+   - Fetch model-specific priced listings + existing report from Supabase
+   - Compute regional market stats and pass to ReportClient
 7. Update `ReportClient.tsx`:
    - Accept `report: ListingReport | null` and `marketStats: ModelMarketStats | null` props
-   - Replace circular fair value with real P25-P75 from report/stats
-   - Remove comparables fallback to similar cars — use real sold listings only
+   - Replace circular fair value with real P25-P75 from best tier
+   - Show regional market cards (US/EU/UK) with honest tier labels
+   - Remove comparables fallback to similar cars — use real priced listings by tier
    - Hide sections without real data (conditional rendering)
    - Remove hardcoded inspection checklist
    - Remove hardcoded criticality badges
@@ -571,8 +703,8 @@ export async function getTransactionHistory(userId: string, limit?: number): Pro
 
 | File | Changes |
 |------|---------|
-| `src/lib/supabaseLiveListings.ts` | Add `fetchSoldListingsForModel()` with currency info |
-| `src/lib/marketStats.ts` | **NEW** — market stats computation with USD normalization |
+| `src/lib/supabaseLiveListings.ts` | Add `fetchPricedListingsForModel()` — all listings with price data (sold + active + delisted) |
+| `src/lib/marketStats.ts` | **NEW** — regional market stats computation with tier segregation + USD normalization |
 | `src/lib/reports/queries.ts` | **NEW** — Supabase queries for `listing_reports` + credits tables |
 | `src/lib/ai/gemini.ts` | **NEW** — Gemini API client (replaces `claude.ts` for reports) |
 | `src/lib/ai/prompts.ts` | Refactor — add sold history context, update response schema |
