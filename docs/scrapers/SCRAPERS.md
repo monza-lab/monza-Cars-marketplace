@@ -40,6 +40,7 @@ DECODO_PROXY_PASS=password
 | 4 | [BeForward Collector](#4-beforward-collector) | BeForward | HTTP / HTML | Vercel Cron | 03:00 UTC |
 | 5 | [Classic.com Collector](#5-classiccom-collector) | Classic.com (US) | Playwright Browser | GitHub Actions | 04:00 UTC |
 | 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Playwright Browser | GitHub Actions | 05:00 UTC |
+| 7 | [Image Backfill](#7-image-backfill-cross-source) | BaT, BeForward, AutoScout24 | HTTP / HTML | Vercel Cron | 06:30 UTC |
 
 ---
 
@@ -407,6 +408,78 @@ Go to **Actions > AutoScout24 Collector (Daily) > Run workflow** and optionally 
 
 ---
 
+## 7. Image Backfill (Cross-Source)
+
+**What it does:** Finds active listings with missing images across BaT, BeForward, and AutoScout24, fetches images from each listing's source URL, and updates the database. ClassicCom is excluded (handled by its own Playwright-based backfill inside the Classic.com collector).
+
+**Source files:**
+- Core module: `src/features/scrapers/common/backfillImages.ts`
+- BaT image extractor: `src/features/scrapers/auctions/bringATrailerImages.ts`
+- Cron route: `src/app/api/cron/backfill-images/route.ts`
+- CLI script: `scripts/backfill-images.ts`
+
+### How it works
+
+1. Queries Supabase for active listings where `images = '{}'` (empty array)
+2. For each listing, fetches the source URL and extracts images:
+   - **BaT**: cheerio HTML parse (gallery/CDN images, filters thumbnails)
+   - **BeForward**: `parseDetailHtml()` from BeForward collector (cheerio)
+   - **AutoScout24**: `parseDetailHtml()` from AutoScout24 collector (cheerio)
+3. Updates only `images`, `photos_count`, `updated_at` in the database
+4. Circuit-breaks on 403/429/Cloudflare responses
+5. Records run metrics via `recordScraperRun()` monitoring
+
+### Run locally (CLI)
+
+```bash
+# Backfill all sources
+npx tsx scripts/backfill-images.ts
+
+# Single source, limited
+npx tsx scripts/backfill-images.ts --source BeForward --limit 100
+
+# Preview without writing
+npx tsx scripts/backfill-images.ts --dry-run
+
+# Custom delay between requests
+npx tsx scripts/backfill-images.ts --source AutoScout24 --delay 3000
+
+# Show help
+npx tsx scripts/backfill-images.ts --help
+```
+
+### CLI flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--source` | `all` | Filter by source (`BaT`, `BeForward`, `AutoScout24`, `all`) |
+| `--limit` | unlimited | Max listings to process |
+| `--dry-run` | `false` | Preview without writing to DB |
+| `--delay` | `2000` | Delay between requests (ms) |
+
+### Automated schedule
+
+- **Vercel Cron** at `06:30 UTC` daily (after cleanup at 06:00)
+- Route: `GET /api/cron/backfill-images` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Processes BaT → BeForward → AutoScout24 sequentially
+- Max 20 listings per source, 2s delay, 270s total time budget
+- Max duration: 5 minutes
+
+### Test the cron route
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/backfill-images
+```
+
+### Relationship to existing backfills
+
+This module **does not conflict** with existing per-source backfills:
+- **BeForward**: The BeForward cron (`/api/cron/beforward`) runs its own image backfill after discovery. This cross-source backfill catches anything missed.
+- **Classic.com**: Excluded entirely — ClassicCom uses Playwright for image extraction, handled inside its own collector.
+- **BaT/AutoScout24**: These scrapers don't have their own image backfill — this module fills that gap.
+
+---
+
 ## Daily Schedule Summary
 
 All times in UTC. Staggered to avoid overlapping.
@@ -418,6 +491,9 @@ All times in UTC. Staggered to avoid overlapping.
 03:00  BeForward Collector      (Vercel Cron)
 04:00  Classic.com Collector    (GitHub Actions)
 05:00  AutoScout24 Collector    (GitHub Actions)
+05:30  Listing Validator        (Vercel Cron)
+06:00  Cleanup                  (Vercel Cron)
+06:30  Image Backfill           (Vercel Cron)
 ```
 
 **Why two runtimes?**
@@ -524,7 +600,7 @@ SELECT * FROM source_data_quality(7);
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | UUID | Primary key |
-| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24` |
+| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24`, `backfill-images` |
 | `run_id` | TEXT | Collector's own UUID |
 | `started_at` | TIMESTAMPTZ | When the run started |
 | `finished_at` | TIMESTAMPTZ | When the run finished |
