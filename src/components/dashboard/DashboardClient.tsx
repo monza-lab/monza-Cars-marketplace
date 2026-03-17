@@ -310,7 +310,12 @@ function getFamilyDisplayName(familyKey: string): string {
   return config?.label || familyKey
 }
 
-function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, number>): PorscheFamily[] {
+function aggregateFamilies(
+  auctions: Auction[],
+  dbSeriesCounts?: Record<string, number>,
+  selectedRegion?: string | null,
+  liveRegionTotals?: LiveRegionTotals
+): PorscheFamily[] {
   const familyMap = new Map<string, Auction[]>()
 
   auctions
@@ -323,6 +328,13 @@ function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, 
     existing.push(auction)
     familyMap.set(family, existing)
   })
+
+  // Region-aware scaling: when a region is selected, scale sample distribution
+  // by the DB regional total (same approach as DiscoverySidebar)
+  const dbTotal = selectedRegion && liveRegionTotals
+    ? (liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all)
+    : liveRegionTotals?.all
+  const sampleTotal = auctions.filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON").length
 
   const families: PorscheFamily[] = []
   familyMap.forEach((cars, familyKey) => {
@@ -338,8 +350,14 @@ function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<string, 
     // Static fallback keyed by series ID — guaranteed to resolve for all Porsche series
     const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
-    // Use exact DB series count if available, otherwise fall back to sample count
-    const carCount = dbSeriesCounts?.[familyKey] ?? cars.length
+    let carCount: number
+    if (selectedRegion && dbTotal && sampleTotal > 0) {
+      // Region selected: scale sample distribution by DB regional total
+      carCount = Math.round(cars.length / sampleTotal * dbTotal)
+    } else {
+      // All regions: use exact DB count if available, otherwise sample count
+      carCount = dbSeriesCounts?.[familyKey] ?? cars.length
+    }
 
     families.push({
       name: getFamilyDisplayName(familyKey),
@@ -2450,7 +2468,7 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
   const brands = useMemo(() => aggregateBrands(filteredAuctions, liveNowCount), [filteredAuctions, liveNowCount])
 
   // Aggregate into Porsche families for the family-based landing scroll
-  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, seriesCounts), [filteredAuctions, seriesCounts])
+  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, seriesCounts, selectedRegion, liveRegionTotals), [filteredAuctions, seriesCounts, selectedRegion, liveRegionTotals])
 
   // Reset scroll position when region changes
   useEffect(() => {
