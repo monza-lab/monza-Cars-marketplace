@@ -3,8 +3,7 @@
 import { useMemo } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, Award, ChevronRight } from "lucide-react"
 import { getBrandConfig } from "@/lib/brandConfig"
 import { mockWhyBuy } from "../constants"
@@ -17,7 +16,7 @@ import type { Brand, Auction } from "../types"
 
 export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
@@ -114,11 +113,11 @@ export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMin, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMax, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -156,7 +155,7 @@ export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono text-muted-foreground">
-                      {formatPriceForRegion(b.priceMin, selectedRegion)}–{formatPriceForRegion(b.priceMax, selectedRegion)}
+                      {formatPrice(b.priceMin)}–{formatPrice(b.priceMax)}
                     </span>
                     <span className={`text-[9px] font-bold ${
                       b.topGrade === "AAA" ? "text-positive" : "text-primary"

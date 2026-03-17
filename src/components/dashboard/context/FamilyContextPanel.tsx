@@ -3,8 +3,7 @@
 import { useMemo } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, ChevronRight } from "lucide-react"
 import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
 import { computeRegionalValFromAuctions } from "../utils/valuation"
@@ -16,7 +15,7 @@ import type { PorscheFamily, Auction } from "../types"
 
 export function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
@@ -125,11 +124,11 @@ export function FamilyContextPanel({ family, auctions, allFamilies }: { family: 
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMin, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMax, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMax)}</p>
             </div>
           </div>
         </div>

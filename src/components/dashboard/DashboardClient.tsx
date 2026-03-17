@@ -6,7 +6,8 @@ import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, resolveRegion, convertFromUsd, REGION_CURRENCY } from "@/lib/regionPricing"
+import { formatUsd, resolveRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import {
   Clock,
   MapPin,
@@ -171,16 +172,6 @@ function computeMedian(values: number[]): number {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
-function auctionCurrency(a: Auction, regionFallback: string): string {
-  // Use actual original currency when available; fall back to region-inferred currency
-  const oc = a.originalCurrency?.toUpperCase()
-  if (oc === "USD") return "$"
-  if (oc === "GBP") return "£"
-  if (oc === "EUR") return "€"
-  if (oc === "JPY") return "¥"
-  return regionFallback
-}
-
 function computeRegionalValFromAuctions(
   auctionList: Auction[],
 ): Record<string, RegionalValuation> {
@@ -189,16 +180,15 @@ function computeRegionalValFromAuctions(
   const result: Record<string, RegionalValuation> = {}
 
   for (const region of regions) {
-    const regionCurrency = REGION_CURRENCY[region] || "$"
     const regionAuctions = auctionList.filter(a => a.region === region)
 
-    // Convert each price to USD using the listing's actual currency
+    // Auction prices are already in USD (currentBid field)
     const soldPricesUsd = regionAuctions
       .filter(a => a.currentBid > 0 && a.status === "ENDED")
-      .map(a => toUsd(a.currentBid, auctionCurrency(a, regionCurrency)))
+      .map(a => a.currentBid)
     const activeBidsUsd = regionAuctions
       .filter(a => a.currentBid > 0 && (a.status === "ACTIVE" || a.status === "ENDING_SOON"))
-      .map(a => toUsd(a.currentBid, auctionCurrency(a, regionCurrency)))
+      .map(a => a.currentBid)
 
     // Prefer median of sold prices; fall back to median of active bids
     const medianUsd = soldPricesUsd.length > 0
@@ -221,6 +211,13 @@ const REGION_LABEL_KEYS = {
   EU: "brandContext.regionEU",
   JP: "brandContext.regionJP",
 } as const
+
+// Local helper: format a price already in a regional currency (e.g. fairValueByRegion data)
+function fmtRegional(amount: number, symbol: string) {
+  if (amount >= 1_000_000) return `${symbol}${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `${symbol}${Math.round(amount / 1_000).toLocaleString()}K`
+  return `${symbol}${Math.round(amount).toLocaleString()}`
+}
 
 function formatRegionalVal(v: number, symbol: string) {
   if (symbol === "¥") return `¥${Math.round(v)}M`
@@ -428,7 +425,7 @@ function SafeImage({
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
 function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
@@ -500,7 +497,7 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
-                {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
+                {formatPrice(brand.priceMin)}–{formatPrice(brand.priceMax)}
               </p>
             </div>
 
@@ -558,7 +555,7 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
 // ─── FAMILY CARD (full-screen scroll card for Porsche families) ───
 function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: number }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const yearLabel = family.yearMin === family.yearMax
     ? `${family.yearMin}`
@@ -636,7 +633,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
-                {formatPriceForRegion(family.priceMin, selectedRegion)}–{formatPriceForRegion(family.priceMax, selectedRegion)}
+                {formatPrice(family.priceMin)}–{formatPrice(family.priceMax)}
               </p>
             </div>
 
@@ -709,7 +706,7 @@ function MobileRegionPills() {
 // ─── MOBILE: HERO BRAND (first brand) ───
 function MobileHeroBrand({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <Link href={`/cars/${brand.slug}`} className="block relative">
@@ -764,7 +761,7 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
           </p>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-[16px] font-display font-medium text-primary">
-              {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+              {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
             <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
           </div>
@@ -795,7 +792,7 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
 // ─── MOBILE: BRAND ROW (compact) ───
 function MobileBrandRow({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <Link
@@ -831,7 +828,7 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-mono text-primary">
-            {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+            {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
           <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
         </div>
@@ -858,7 +855,7 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
 function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const timeLabels = {
     ended: t("asset.ended"),
@@ -928,7 +925,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[12px] font-display font-medium text-primary">
-                    {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                    {formatPrice(auction.currentBid)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
                     {tAuction("bids.count", { count: auction.bidCount })}
@@ -964,7 +961,7 @@ function BrandNavigationPanel({
   onSelect: (index: number) => void
 }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <div className="h-full flex flex-col border-r border-border overflow-hidden">
@@ -1037,7 +1034,7 @@ function BrandNavigationPanel({
                       {t("brandNav.carsCount", { count: brand.carCount })}
                     </span>
                     <span className="text-[9px] text-muted-foreground">
-                      {formatPriceForRegion(brand.priceMin, selectedRegion)}–{formatPriceForRegion(brand.priceMax, selectedRegion)}
+                      {formatPrice(brand.priceMin)}–{formatPrice(brand.priceMax)}
                     </span>
                   </div>
                 </div>
@@ -1081,6 +1078,7 @@ function DiscoverySidebar({
 }) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   // Extract model families for the active brand (drill-down navigation)
   const activeBrandFamilies = useMemo(() => {
@@ -1222,7 +1220,7 @@ function DiscoverySidebar({
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[10px] font-mono text-muted-foreground">
-                        {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+                        {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
                       </span>
                       <span className="text-[9px] text-positive font-medium">
                         {brand.avgTrend}
@@ -1336,7 +1334,7 @@ function DiscoverySidebar({
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[12px] font-display font-medium text-primary">
-                          {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                          {formatPrice(auction.currentBid)}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
                           <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
@@ -1374,7 +1372,7 @@ function AssetCard({ auction }: { auction: Auction }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const isLive = auction.status === "ACTIVE" || auction.status === "ENDING_SOON"
   const isEndingSoon = auction.status === "ENDING_SOON"
@@ -1441,7 +1439,7 @@ function AssetCard({ auction }: { auction: Auction }) {
             </div>
             <div className="text-right shrink-0">
               <p className="text-3xl font-bold text-foreground font-mono tabular-nums">
-                {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                {formatPrice(auction.currentBid)}
               </p>
               <div className="flex items-center justify-end gap-3 mt-1 text-muted-foreground">
                 <span className="text-[11px]">{tAuction("bids.count", { count: auction.bidCount })}</span>
@@ -1503,7 +1501,7 @@ function AssetCard({ auction }: { auction: Auction }) {
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.fairValue")}</span>
                   </div>
                   <p className="text-[13px] text-foreground font-mono">
-                    {formatPriceForRegion(lowRange, selectedRegion)}–{formatPriceForRegion(highRange, selectedRegion)}
+                    {formatPrice(lowRange)}–{formatPrice(highRange)}
                   </p>
                 </div>
 
@@ -1544,7 +1542,8 @@ function AssetCard({ auction }: { auction: Auction }) {
 function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const tCommon = useTranslations("common")
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const whyBuy = getBrandConfig(auction.make)?.defaultThesis || mockWhyBuy[auction.make] || mockWhyBuy["default"]
   const recentSales = useMemo(() => {
@@ -1629,7 +1628,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         ) : (
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-display font-medium text-primary">
-              {formatPriceForRegion(lowRange, selectedRegion)} — {formatPriceForRegion(highRange, selectedRegion)}
+              {formatPrice(lowRange)} — {formatPrice(highRange)}
             </span>
           </div>
         )}
@@ -1690,7 +1689,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                     <p className="text-[10px] text-muted-foreground">{car.category}</p>
                   </div>
                   <span className="text-[11px] font-display font-medium text-primary ml-2">
-                    {formatPriceForRegion(car.currentBid, selectedRegion)}
+                    {formatPrice(car.currentBid)}
                   </span>
                 </Link>
               ))}
@@ -1714,7 +1713,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
                   <p className="text-[9px] text-muted-foreground">{sale.date}</p>
                 </div>
                 <span className="text-[11px] font-mono font-semibold text-foreground ml-2">
-                  {formatPriceForRegion(sale.price, selectedRegion)}
+                  {formatPrice(sale.price)}
                 </span>
               </div>
             ))}
@@ -1744,7 +1743,8 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 // ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
 function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, convertFromUsd } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
@@ -1896,11 +1896,11 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMin, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(family.priceMax, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -1920,8 +1920,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
               if (!val || val.usdCurrent <= 0) return null
-              const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
-              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
+              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
               const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
@@ -1938,7 +1937,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, userCurrency)}
+                      {formatRegionalVal(localCurrent, val.symbol)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
@@ -1976,7 +1975,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-[11px] font-display font-medium text-primary">
-                      {formatPriceForRegion(variant.avgPrice, selectedRegion)}
+                      {formatPrice(variant.avgPrice)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
                       {variant.grade}
@@ -2005,7 +2004,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                     <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
                   </div>
                   <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
-                    {formatPriceForRegion(sale.price, selectedRegion)}
+                    {formatPrice(sale.price)}
                   </span>
                 </div>
               ))}
@@ -2069,12 +2068,12 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>
@@ -2099,7 +2098,8 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 // ─── BRAND CONTEXT PANEL ───
 function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, convertFromUsd } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
@@ -2234,11 +2234,11 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMin, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(brand.priceMax, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -2258,8 +2258,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
             {(["US", "UK", "EU", "JP"] as const).map((region) => {
               const val = regionalVal[region]
               if (!val || val.usdCurrent <= 0) return null
-              const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
-              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
+              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
               const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
               const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
               const isSelected = region === effectiveRegion
@@ -2276,7 +2275,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, userCurrency)}
+                      {formatRegionalVal(localCurrent, val.symbol)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
@@ -2314,7 +2313,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
                   <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
                 </div>
                 <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
-                  {formatPriceForRegion(sale.price, selectedRegion)}
+                  {formatPrice(sale.price)}
                 </span>
               </div>
             ))}
@@ -2378,12 +2377,12 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("brandContext.perYear")}</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>
@@ -2409,7 +2408,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono text-muted-foreground">
-                      {formatPriceForRegion(b.priceMin, selectedRegion)}–{formatPriceForRegion(b.priceMax, selectedRegion)}
+                      {formatPrice(b.priceMin)}–{formatPrice(b.priceMax)}
                     </span>
                     <span className={`text-[9px] font-bold ${
                       b.topGrade === "AAA" ? "text-positive" : "text-primary"

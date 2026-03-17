@@ -2,15 +2,14 @@
 
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { Car, ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import type { Brand } from "../types"
 
 export function MobileBrandRow({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <Link
@@ -46,7 +45,7 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-mono text-primary">
-            {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+            {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
           <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
         </div>

@@ -3,8 +3,7 @@
 import { useMemo } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { Clock, Car } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
@@ -13,7 +12,7 @@ import type { Auction } from "../types"
 export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const timeLabels = {
     ended: t("asset.ended"),
@@ -83,7 +82,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[12px] font-display font-medium text-primary">
-                    {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                    {formatPrice(auction.currentBid)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
                     {tAuction("bids.count", { count: auction.bidCount })}

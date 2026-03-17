@@ -2,15 +2,14 @@
 
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { DollarSign, Calendar, Car, ChevronRight } from "lucide-react"
 import { SafeImage } from "./SafeImage"
 import type { PorscheFamily } from "../types"
 
 export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: number }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const yearLabel = family.yearMin === family.yearMax
     ? `${family.yearMin}`
@@ -88,7 +87,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
-                {formatPriceForRegion(family.priceMin, selectedRegion)}–{formatPriceForRegion(family.priceMax, selectedRegion)}
+                {formatPrice(family.priceMin)}–{formatPrice(family.priceMax)}
               </p>
             </div>
 

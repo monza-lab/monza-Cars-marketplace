@@ -2,15 +2,14 @@
 
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import type { Brand } from "../types"
 
 export function MobileHeroBrand({ brand }: { brand: Brand }) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <Link href={`/cars/${brand.slug}`} className="block relative">
@@ -65,7 +64,7 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
           </p>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-[16px] font-display font-medium text-primary">
-              {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+              {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
             <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
           </div>

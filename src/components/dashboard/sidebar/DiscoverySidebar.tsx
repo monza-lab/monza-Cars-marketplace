@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { Clock, Car, ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
@@ -35,6 +35,7 @@ export function DiscoverySidebar({
 }: DiscoverySidebarProps) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   // Extract model families for the active brand (drill-down navigation)
   const activeBrandFamilies = useMemo(() => {
@@ -176,7 +177,7 @@ export function DiscoverySidebar({
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[10px] font-mono text-muted-foreground">
-                        {formatPriceForRegion(brand.priceMin, selectedRegion)} – {formatPriceForRegion(brand.priceMax, selectedRegion)}
+                        {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
                       </span>
                       <span className="text-[9px] text-positive font-medium">
                         {brand.avgTrend}
@@ -290,7 +291,7 @@ export function DiscoverySidebar({
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[12px] font-display font-medium text-primary">
-                          {formatPriceForRegion(auction.currentBid, selectedRegion)}
+                          {formatPrice(auction.currentBid)}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
                           <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />

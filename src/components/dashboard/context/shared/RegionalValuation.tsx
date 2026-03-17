@@ -3,7 +3,7 @@
 import { Globe } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
-import { convertFromUsd, REGION_CURRENCY } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { REGION_FLAGS, REGION_LABEL_KEYS } from "../../constants"
 import { formatRegionalVal, formatUsdEquiv } from "../../utils/valuation"
 import type { RegionalValuation } from "../../utils/valuation"
@@ -15,6 +15,7 @@ interface RegionalValuationProps {
 export function RegionalValuationSection({ regionalVal }: RegionalValuationProps) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
+  const { convertFromUsd, currencySymbol } = useCurrency()
 
   return (
     <div className="px-5 py-4 border-b border-border">
@@ -31,8 +32,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
         {(["US", "UK", "EU", "JP"] as const).map((region) => {
           const val = regionalVal[region]
           if (!val || val.usdCurrent <= 0) return null
-          const userCurrency = REGION_CURRENCY[effectiveRegion] || "$"
-          const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000, userCurrency) / 1_000_000
+          const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
           const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
           const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
           const isSelected = region === effectiveRegion
@@ -49,7 +49,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
               </div>
               <div className="flex items-baseline justify-between mb-1.5">
                 <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                  {formatRegionalVal(localCurrent, userCurrency)}
+                  {formatRegionalVal(localCurrent, currencySymbol)}
                 </span>
               </div>
               <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">

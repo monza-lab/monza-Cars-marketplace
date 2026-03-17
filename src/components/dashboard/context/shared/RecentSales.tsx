@@ -2,8 +2,7 @@
 
 import { DollarSign } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 
 export type SaleEntry = {
   title: string
@@ -18,7 +17,7 @@ interface RecentSalesProps {
 
 export function RecentSalesSection({ sales }: RecentSalesProps) {
   const t = useTranslations("dashboard")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   if (sales.length === 0) return null
 
@@ -38,7 +37,7 @@ export function RecentSalesSection({ sales }: RecentSalesProps) {
               <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
             </div>
             <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
-              {formatPriceForRegion(sale.price, selectedRegion)}
+              {formatPrice(sale.price)}
             </span>
           </div>
         ))}
