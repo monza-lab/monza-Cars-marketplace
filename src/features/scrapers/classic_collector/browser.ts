@@ -79,15 +79,36 @@ const STEALTH_INIT_SCRIPT = `
 
 /**
  * Launch a Chromium browser with stealth anti-detection settings.
+ * On Vercel: uses serverless-browser (sparticuz/chromium).
+ * Local / GitHub Actions: uses rebrowser-playwright for Cloudflare bypass.
  */
 export async function launchStealthBrowser(config: BrowserConfig): Promise<Browser> {
-  return launchServerlessBrowser({
+  if (process.env.VERCEL) {
+    return launchServerlessBrowser({
+      headless: config.headless,
+      args: STEALTH_ARGS,
+      proxyServer: config.proxyServer,
+      proxyUsername: config.proxyUsername,
+      proxyPassword: config.proxyPassword,
+    });
+  }
+
+  // Local / GitHub Actions: use rebrowser-playwright for Cloudflare CDP bypass
+  const { chromium } = await import("rebrowser-playwright");
+  const launchOptions: Record<string, unknown> = {
     headless: config.headless,
     args: STEALTH_ARGS,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
-  });
+  };
+
+  if (config.proxyServer) {
+    launchOptions.proxy = {
+      server: config.proxyServer,
+      username: config.proxyUsername,
+      password: config.proxyPassword,
+    };
+  }
+
+  return chromium.launch(launchOptions) as unknown as Browser;
 }
 
 /**
