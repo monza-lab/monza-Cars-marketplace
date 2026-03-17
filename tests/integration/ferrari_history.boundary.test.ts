@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { FerrariHistoryInputSchema } from "@/features/ferrari_history/contracts";
+import { FerrariHistoryInputSchema } from "@/features/scrapers/ferrari_history/contracts";
 import {
   mapToComparableSales,
   mapToPriceHistoryEntries,
   normalizeModel,
   normalizeSoldRows,
-} from "@/features/ferrari_history/adapters";
-import { fetchFerrariHistoricalByModel } from "@/features/ferrari_history/service";
+} from "@/features/scrapers/ferrari_history/adapters";
+import { fetchFerrariHistoricalByModel } from "@/features/scrapers/ferrari_history/service";
 
 function monthsAgo(months: number): string {
   const date = new Date();

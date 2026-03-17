@@ -1,6 +1,6 @@
 // tests/lib/listingValidator.test.ts
 import { describe, it, expect } from "vitest";
-import { validateListing, isNonCar, tryExtractModel } from "@/lib/listingValidator";
+import { validateListing, isNonCar, tryExtractModel } from "@/features/scrapers/common/listingValidator";
 
 describe("isNonCar", () => {
   it("rejects tractors in model", () => {
