@@ -9,7 +9,7 @@ import {
   getDataQuality,
   getLatestRunPerScraper,
   getActiveRuns,
-} from "@/lib/scraper-monitoring";
+} from "@/features/scrapers/common/monitoring";
 import ScrapersDashboardClient from "./ScrapersDashboardClient";
 
 const ADMIN_EMAILS = ["caposk8@hotmail.com"];

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;

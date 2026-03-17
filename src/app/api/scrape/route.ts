@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { dbQuery } from '@/lib/db/sql'
-import { scrapeAll, scrapePlatform, type ScrapedAuction } from '@/lib/scrapers'
+import { scrapeAll, scrapePlatform, type ScrapedAuction } from '@/features/scrapers/auctions'
 import {
   fetchAuctionData,
   getCacheStats,
   cleanCache,
   getCachedData,
-} from '@/lib/scraper'
+} from '@/features/scrapers/common/scraper'
 
 function mapStatus(raw: string | undefined): 'ACTIVE' | 'ENDED' {
   if (!raw) return 'ACTIVE'

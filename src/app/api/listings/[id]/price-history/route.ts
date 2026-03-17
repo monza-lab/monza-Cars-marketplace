@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { fetchFerrariHistoricalByListingId } from "@/features/ferrari_history/service";
+import { fetchFerrariHistoricalByListingId } from "@/features/scrapers/ferrari_history/service";
 import { isSupportedLiveMake } from "@/lib/makeProfiles";
 
 export const dynamic = "force-dynamic";

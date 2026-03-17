@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { featuredAuctions } from '@/lib/featuredAuctions'
 import { CURATED_CARS } from '@/lib/curatedCars'
 import { fetchLiveListingByIdWithStatus } from '@/lib/supabaseLiveListings'
-import { fetchFerrariHistoricalByModel } from '@/features/ferrari_history/service'
+import { fetchFerrariHistoricalByModel } from '@/features/scrapers/ferrari_history/service'
 import { isSupportedLiveMake } from '@/lib/makeProfiles'
 
 type ListingPriceHistoryRow = {

@@ -1,10 +1,10 @@
 import crypto from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
-import { fetchAuctionData, type ScrapedAuctionData } from "@/lib/scraper";
-import { scrapeBringATrailer } from "@/lib/scrapers/bringATrailer";
-import { scrapeCarsAndBids } from "@/lib/scrapers/carsAndBids";
-import { scrapeCollectingCars } from "@/lib/scrapers/collectingCars";
+import { fetchAuctionData, type ScrapedAuctionData } from "@/features/scrapers/common/scraper";
+import { scrapeBringATrailer } from "@/features/scrapers/auctions/bringATrailer";
+import { scrapeCarsAndBids } from "@/features/scrapers/auctions/carsAndBids";
+import { scrapeCollectingCars } from "@/features/scrapers/auctions/collectingCars";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
 import { discoverListingUrls } from "./discover";
@@ -612,7 +612,7 @@ async function fetchDetailViaExistingScraper(input: {
   // We only need fields these scrapers already attempt to parse.
   // They are @ts-nocheck, so we can supply a minimal shape.
   if (input.source === "BaT") {
-    const mod = await import("@/lib/scrapers/bringATrailer");
+    const mod = await import("@/features/scrapers/auctions/bringATrailer");
     return await mod.scrapeDetail({
       externalId: `bat-${shaFromUrl(input.url)}`,
       platform: "BRING_A_TRAILER",
@@ -643,7 +643,7 @@ async function fetchDetailViaExistingScraper(input: {
   }
 
   if (input.source === "CarsAndBids") {
-    const mod = await import("@/lib/scrapers/carsAndBids");
+    const mod = await import("@/features/scrapers/auctions/carsAndBids");
     return await mod.scrapeDetail({
       externalId: `cab-${shaFromUrl(input.url)}`,
       platform: "CARS_AND_BIDS",
@@ -671,7 +671,7 @@ async function fetchDetailViaExistingScraper(input: {
     });
   }
 
-  const mod = await import("@/lib/scrapers/collectingCars");
+  const mod = await import("@/features/scrapers/auctions/collectingCars");
   return await mod.scrapeDetail({
     externalId: `cc-${shaFromUrl(input.url)}`,
     platform: "COLLECTING_CARS",

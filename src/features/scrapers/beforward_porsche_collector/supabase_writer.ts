@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { fetchHtml } from "./net";
 import { parseDetailHtml } from "./detail";
 import { mapStatus } from "./normalize";

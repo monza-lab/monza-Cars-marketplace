@@ -26,7 +26,7 @@ import {
 import { launchStealthBrowser, createStealthContext, createPage, closeBrowser } from "./browser";
 import { createSupabaseWriter, createDryRunWriter } from "./supabase_writer";
 import { logEvent } from "./logging";
-import { recordScraperRun } from "@/lib/scraper-monitoring";
+import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 
 const MAX_CONSECUTIVE_BLOCKS = 5;
 const CONTEXT_REFRESH_INTERVAL = 100;

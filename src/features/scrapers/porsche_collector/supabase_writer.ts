@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -215,7 +215,7 @@ export async function refreshActiveListings(opts?: {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
 
-  const { fetchAuctionData } = await import("@/lib/scraper");
+  const { fetchAuctionData } = await import("@/features/scrapers/common/scraper");
   const { mapAuctionStatus } = await import("./normalize");
 
   const client = createClient(url, key, {

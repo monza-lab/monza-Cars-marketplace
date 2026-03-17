@@ -1,5 +1,5 @@
 import type { Browser, BrowserContext, Page } from "playwright-core";
-import { launchServerlessBrowser } from "@/lib/serverless-browser";
+import { launchServerlessBrowser } from "@/features/scrapers/common/serverless-browser";
 
 export interface BrowserConfig {
   headless: boolean;

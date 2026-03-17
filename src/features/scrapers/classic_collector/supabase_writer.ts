@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;

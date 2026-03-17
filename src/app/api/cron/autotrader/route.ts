@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { runCollector } from "@/features/autotrader_collector/collector";
-import { refreshActiveListings } from "@/features/autotrader_collector/supabase_writer";
+import { runCollector } from "@/features/scrapers/autotrader_collector/collector";
+import { refreshActiveListings } from "@/features/scrapers/autotrader_collector/supabase_writer";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
   recordScraperRun,
-} from "@/lib/scraper-monitoring";
+} from "@/features/scrapers/common/monitoring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel

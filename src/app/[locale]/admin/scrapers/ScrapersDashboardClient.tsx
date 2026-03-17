@@ -18,7 +18,7 @@ import type {
   DailyAggregate,
   DataQuality,
   ActiveScraperRun,
-} from "@/lib/scraper-monitoring";
+} from "@/features/scrapers/common/monitoring";
 
 const ALL_SCRAPERS: ScraperName[] = [
   "porsche",

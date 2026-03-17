@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { CanonicalListing } from "../contracts/listing";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { buildListingFingerprint } from "../services/dedupe";
 
 export type WriteResult = { inserted: number; updated: number; warnings: string[] };

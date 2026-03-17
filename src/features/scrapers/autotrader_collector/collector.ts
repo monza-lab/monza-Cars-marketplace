@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import { createClient } from "@supabase/supabase-js";
 import * as cheerio from "cheerio";
-import { fetchAuctionData, type ScrapedAuctionData } from "@/lib/scraper";
+import { fetchAuctionData, type ScrapedAuctionData } from "@/features/scrapers/common/scraper";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
 import { discoverListingUrls, fetchAutoTraderGatewayPage } from "./discover";

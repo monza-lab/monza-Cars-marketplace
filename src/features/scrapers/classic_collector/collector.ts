@@ -18,7 +18,7 @@ import { NavigationRateLimiter, withRetry } from "./net";
 import { loadCheckpoint, saveCheckpoint, type CollectorCheckpoint } from "./checkpoint";
 import { createSupabaseWriter, createDryRunWriter, type SupabaseWriter } from "./supabase_writer";
 import { logEvent } from "./logging";
-import { recordScraperRun } from "@/lib/scraper-monitoring";
+import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 
 const MAX_CONSECUTIVE_CF_BLOCKS = 5;
 const CONTEXT_REFRESH_INTERVAL = 100;

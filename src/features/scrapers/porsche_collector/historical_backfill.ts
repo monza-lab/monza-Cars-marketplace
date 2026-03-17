@@ -17,7 +17,7 @@ import crypto from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 import { createClient } from "@supabase/supabase-js";
-import { scrapeDetail, type BaTAuction } from "@/lib/scrapers/bringATrailer";
+import { scrapeDetail, type BaTAuction } from "@/features/scrapers/auctions/bringATrailer";
 import { createSupabaseWriter } from "./supabase_writer";
 import { canonicalizeUrl, deriveSourceId } from "./id";
 import { fetchHtml, PerDomainRateLimiter } from "./net";

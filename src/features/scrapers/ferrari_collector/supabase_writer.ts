@@ -170,7 +170,7 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
 
-  const { fetchAuctionData } = await import("@/lib/scraper");
+  const { fetchAuctionData } = await import("@/features/scrapers/common/scraper");
   const { mapAuctionStatus } = await import("./normalize");
 
   const client = createClient(url, key, {

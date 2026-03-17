@@ -3,7 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import * as cheerio from "cheerio";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
-import { validateListing } from "@/lib/listingValidator";
+import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { fetchHtml } from "./net";
 import { mapAuctionStatus } from "./normalize";
 import { logEvent } from "./logging";

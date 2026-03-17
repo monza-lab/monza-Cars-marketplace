@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { runAutoScout24Collector } from "@/features/autoscout24_collector/collector";
-import { refreshStaleListings } from "@/features/autoscout24_collector/supabase_writer";
+import { runAutoScout24Collector } from "@/features/scrapers/autoscout24_collector/collector";
+import { refreshStaleListings } from "@/features/scrapers/autoscout24_collector/supabase_writer";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
   recordScraperRun,
-} from "@/lib/scraper-monitoring";
-import type { AS24CountryCode } from "@/features/autoscout24_collector/types";
+} from "@/features/scrapers/common/monitoring";
+import type { AS24CountryCode } from "@/features/scrapers/autoscout24_collector/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel Pro
