@@ -7,7 +7,7 @@ import { useRouter } from "@/i18n/navigation"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useTokens } from "@/hooks/useTokens"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import type { AdvisorChatProps, AdvisorMessage, AdvisorContext } from "./advisorTypes"
 import { generateWelcome, generateResponse } from "./advisorEngine"
 import { detectLanguage } from "./advisorLanguage"
@@ -19,7 +19,8 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
   const router = useRouter()
   const { profile } = useAuth()
   const { tokens, consumeForAnalysis, hasAnalyzed, analysesRemaining } = useTokens()
-  const { selectedRegion, effectiveRegion, currency } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, currency } = useCurrency()
 
   const [messages, setMessages] = useState<AdvisorMessage[]>([])
   const [input, setInput] = useState("")
@@ -38,13 +39,13 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
     dbSoldHistory: initialContext?.dbSoldHistory,
     userName: profile?.name ?? undefined,
     userTier: (profile?.tier as "FREE" | "PRO") ?? "FREE",
-    selectedRegion,
     effectiveRegion,
     currency,
+    formatPrice,
     tokens,
     analysesRemaining,
     hasAnalyzedCurrentCar: initialContext?.car ? hasAnalyzed(initialContext.car.id) : false,
-  }), [initialContext, profile, selectedRegion, effectiveRegion, currency, tokens, analysesRemaining, hasAnalyzed])
+  }), [initialContext, profile, effectiveRegion, currency, formatPrice, tokens, analysesRemaining, hasAnalyzed])
 
   // Welcome message on open
   useEffect(() => {
@@ -181,7 +182,7 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                     {car.year} {car.make} {car.model}
                   </span>
                   <span className="text-[10px] font-display font-medium text-primary shrink-0">
-                    {formatPriceForRegion(car.currentBid, selectedRegion)}
+                    {formatPrice(car.currentBid)}
                   </span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
                     car.investmentGrade === "AAA"

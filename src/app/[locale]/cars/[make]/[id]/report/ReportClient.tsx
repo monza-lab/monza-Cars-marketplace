@@ -39,7 +39,8 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, convertFromUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
@@ -80,7 +81,7 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
   let bestAvg = Infinity
   for (const r of regions) {
     const p = pricing[r]
-    const avg = toUsd((p.low + p.high) / 2, p.currency)
+    const avg = (p.low + p.high) / 2
     if (avg < bestAvg) { bestAvg = avg; best = r }
   }
   return best
@@ -130,7 +131,8 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
 }) {
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, convertFromUsd } = useCurrency()
   const { resolvedTheme } = useTheme()
 
   // Scroll-spy state
@@ -236,19 +238,19 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
   const platform = platformLabels[car.platform]
 
   // Fair value: prefer DB market data for range
-  const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
+  const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
-  const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
+  const bidInCurrency = convertFromUsd(car.currentBid)
   const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
-  const isBelowFair = bidInRegion < (fairLow + fairHigh) / 2
+    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
+  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = car.fairValueByRegion
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...(["US", "EU", "UK", "JP"] as const).map(r =>
-      toUsd((pricing[r].low + pricing[r].high) / 2, pricing[r].currency)
+      (pricing[r].low + pricing[r].high) / 2
     )
   )
 
@@ -264,10 +266,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
     pricePosition > 70 ? "watch" : "hold"
 
   // Arbitrage: difference between cheapest and most expensive region
-  const cheapestRegionAvgUsd = toUsd(
-    (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2,
-    pricing[bestRegion as keyof typeof pricing].currency
-  )
+  const cheapestRegionAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
   const arbitrageSavings = maxRegionalUsd - cheapestRegionAvgUsd
   const hasArbitrage = arbitrageSavings > car.currentBid * 0.05
 
@@ -689,7 +688,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
       ;(["US", "EU", "UK", "JP"] as const).forEach((r, i) => {
         const ry = y + 10 + i * 16
         const rp = pricing[r]
-        const avgUsd = toUsd((rp.low + rp.high) / 2, rp.currency)
+        const avgUsd = (rp.low + rp.high) / 2
         const barPct = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
         const isBest = r === bestRegion
         // Label row
@@ -1102,11 +1101,11 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
         ["Region", "Currency", "Fair Low", "Fair High", "Fair Avg", "Avg (USD)", "Premium vs Best", "Best Buy?"],
       ]
       const regions = ["US", "EU", "UK", "JP"] as const
-      const bestAvgUsd = toUsd((pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2, pricing[bestRegion as keyof typeof pricing].currency)
+      const bestAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
       for (const r of regions) {
         const rp = pricing[r]
         const avg = (rp.low + rp.high) / 2
-        const avgUsd = toUsd(avg, rp.currency)
+        const avgUsd = avg
         const diff = avgUsd - bestAvgUsd
         const premiumPct = bestAvgUsd > 0 ? ((diff / bestAvgUsd) * 100) : 0
         valuationRows.push([
@@ -1531,13 +1530,13 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 {/* Current Price */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                  <p className="text-[20px] font-bold font-mono text-primary mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                  <p className="text-[20px] font-bold font-mono text-primary mt-1">{formatPrice(car.currentBid)}</p>
                 </div>
                 {/* Fair Value */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
                   <p className="text-[14px] font-mono font-semibold text-foreground mt-2">
-                    {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}
+                    {formatRegionalPrice(fairLow, regionRange.currency)} – {formatRegionalPrice(fairHigh, regionRange.currency)}
                   </p>
                 </div>
                 {/* Market Position */}
@@ -1634,7 +1633,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     </div>
                     <div>
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
-                      <p className="text-[16px] font-mono font-bold text-primary mt-1">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                      <p className="text-[16px] font-mono font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
                     </div>
                     <div>
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
@@ -1667,7 +1666,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                   <div className="space-y-4">
                     {(["US", "EU", "UK", "JP"] as const).map(r => {
                       const rp = pricing[r]
-                      const avgUsd = toUsd((rp.low + rp.high) / 2, rp.currency)
+                      const avgUsd = (rp.low + rp.high) / 2
                       const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
                       const isBest = r === bestRegion
                       const isUserRegion = r === effectiveRegion
@@ -1689,7 +1688,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                               )}
                             </div>
                             <span className="text-[12px] font-mono text-muted-foreground">
-                              {fmtRegional(rp.low, rp.currency)} – {fmtRegional(rp.high, rp.currency)}
+                              {formatRegionalPrice(rp.low, rp.currency)} – {formatRegionalPrice(rp.high, rp.currency)}
                             </span>
                           </div>
                           <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
@@ -1710,9 +1709,9 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairLow, regionRange.currency)}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
                     <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairHigh, regionRange.currency)}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
                   </div>
                   <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
@@ -1769,7 +1768,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                           <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className="text-[16px] font-bold font-mono text-foreground">{formatPriceForRegion(sale.price, selectedRegion)}</p>
+                          <p className="text-[16px] font-bold font-mono text-foreground">{formatPrice(sale.price)}</p>
                           <span className={`text-[10px] font-mono font-semibold ${sale.delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
                             {sale.delta > 0 ? "+" : ""}{sale.delta}%
                           </span>
@@ -1809,7 +1808,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Fair Value: {fmtRegional(fairLow, regionRange.currency)} – {fmtRegional(fairHigh, regionRange.currency)}</span>
+                      <span>Fair Value: {formatRegionalPrice(fairLow, regionRange.currency)} – {formatRegionalPrice(fairHigh, regionRange.currency)}</span>
                       <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
                     </div>
                   </div>
@@ -1857,7 +1856,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                                   </span>
                                 </div>
                                 <span className={`text-[12px] font-mono font-semibold shrink-0 ml-3 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
-                                  {formatPriceForRegion(c.currentBid, selectedRegion)}
+                                  {formatPrice(c.currentBid)}
                                 </span>
                               </div>
                               <div className="relative h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
@@ -1884,7 +1883,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         <div className="text-center">
                           <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.avgPrice")}</span>
                           <span className="text-[13px] font-mono font-bold text-foreground mt-0.5 block">
-                            {formatPriceForRegion(Math.round(allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length), selectedRegion)}
+                            {formatPrice(Math.round(allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length))}
                           </span>
                         </div>
                         <div className="text-center">
@@ -2066,7 +2065,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                                   {item.icon}
                                   <span className="text-[12px] text-muted-foreground">{item.label}</span>
                                 </div>
-                                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(item.value)}</span>
                               </div>
                               <div className="relative h-[4px] rounded-full bg-foreground/[0.04] overflow-hidden">
                                 <motion.div
@@ -2081,7 +2080,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                         })}
                         <div className="flex items-center justify-between pt-3 border-t border-border">
                           <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
-                          <span className="text-[20px] font-mono font-bold text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+                          <span className="text-[20px] font-mono font-bold text-primary">{formatPrice(totalAnnualCost)}/yr</span>
                         </div>
                       </div>
                     </div>
@@ -2096,7 +2095,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                           const barHeight = (cumulative / maxCumulative) * 100
                           return (
                             <div key={year} className="flex-1 flex flex-col items-center gap-1">
-                              <span className="text-[9px] font-mono text-muted-foreground">{formatPriceForRegion(cumulative, selectedRegion)}</span>
+                              <span className="text-[9px] font-mono text-muted-foreground">{formatPrice(cumulative)}</span>
                               <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: `${barHeight}%` }}
@@ -2167,7 +2166,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] font-mono font-semibold text-primary">{formatPriceForRegion(sc.car.currentBid, selectedRegion)}</span>
+                          <span className="text-[12px] font-mono font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
                           <span className={`text-[9px] font-bold ${
                             sc.car.investmentGrade === "AAA" ? "text-emerald-400" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
                           }`}>{sc.car.investmentGrade}</span>
@@ -2243,7 +2242,7 @@ export function ReportClient({ car, similarCars, dbMarketData, dbMarketDataBrand
                     {[
                       `${car.investmentGrade} investment grade — ${pricePosition}% of fair value`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPriceForRegion(totalAnnualCost, selectedRegion)}`] : []),
+                      ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPrice(totalAnnualCost)}`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
                     ].map((takeaway, i) => (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">

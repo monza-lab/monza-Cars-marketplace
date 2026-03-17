@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { Globe, Gauge, Wrench } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
-import { formatRegionalPrice as fmtRegional, toUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice as fmtRegional } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import {
@@ -57,7 +57,7 @@ export function MobileModelContext({
 
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
-      toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
+      (regionalPricing[r].low + regionalPricing[r].high) / 2
     ))
     : 1
 
@@ -77,7 +77,7 @@ export function MobileModelContext({
               const pricing = regionalPricing[region]
               const isBest = bestRegion === region
               const isSelected = region === effectiveRegion
-              const usdAvg = toUsd((pricing.low + pricing.high) / 2, pricing.currency)
+              const usdAvg = (pricing.low + pricing.high) / 2
               const barWidth = (usdAvg / maxRegionalUsd) * 100
               return (
                 <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-1 px-1 py-1" : ""}>

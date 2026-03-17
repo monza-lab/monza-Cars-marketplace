@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
-import { formatRegionalPrice as fmtRegional, toUsd, formatUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice as fmtRegional, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import {
@@ -108,7 +108,7 @@ export function ModelContextPanel({
   // Regional price bar max value for relative widths
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
-      toUsd((regionalPricing[r].low + regionalPricing[r].high) / 2, regionalPricing[r].currency)
+      (regionalPricing[r].low + regionalPricing[r].high) / 2
     ))
     : 1
 
@@ -173,7 +173,7 @@ export function ModelContextPanel({
                 const pricing = regionalPricing[region]
                 const isBest = bestRegion === region
                 const isSelected = region === effectiveRegion
-                const usdAvg = toUsd((pricing.low + pricing.high) / 2, pricing.currency)
+                const usdAvg = (pricing.low + pricing.high) / 2
                 const barWidth = (usdAvg / maxRegionalUsd) * 100
                 return (
                   <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
@@ -201,7 +201,7 @@ export function ModelContextPanel({
                     {region !== effectiveRegion && (
                       <div className="flex justify-end mb-1">
                         <span className="text-[9px] font-mono text-muted-foreground">
-                          ≈ {formatUsd(toUsd(pricing.high, pricing.currency))} USD
+                          ≈ {formatUsd(pricing.high)} USD
                         </span>
                       </div>
                     )}

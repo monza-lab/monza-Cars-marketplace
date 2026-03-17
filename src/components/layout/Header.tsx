@@ -15,6 +15,7 @@ import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useRegion } from "@/lib/RegionContext";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -265,14 +266,6 @@ const menuLinkKeys = [
 ] as const;
 
 
-// Format USD price
-function formatPrice(value: number): string {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  return `$${(value / 1000).toFixed(0)}K`;
-}
-
 // Response type with optional car context for navigation
 type OracleResponse = {
   answer: string;
@@ -303,7 +296,8 @@ type OracleChip = {
 // Generate intelligent response based on query and car data
 function getResponseForQuery(
   query: string,
-  t: (key: string, values?: any) => string
+  t: (key: string, values?: any) => string,
+  formatPrice: (usdAmount: number) => string
 ): OracleResponse {
   const lowerQuery = query.toLowerCase();
 
@@ -606,6 +600,7 @@ function OracleOverlay({
 }) {
   const t = useTranslations();
   const router = useRouter();
+  const { formatPrice } = useCurrency();
   const [phase, setPhase] = useState<"loading" | "ready">("loading");
   const [response, setResponse] = useState<OracleResponse | null>(null);
   const [toastMessage, setToastMessage] = useState("");
@@ -636,14 +631,14 @@ function OracleOverlay({
     }
 
     // Calculate response and show after brief delay
-    const result = getResponseForQuery(query, t);
+    const result = getResponseForQuery(query, t, formatPrice);
     const timer = setTimeout(() => {
       setResponse(result);
       setPhase("ready");
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [isOpen, query, t]);
+  }, [isOpen, query, t, formatPrice]);
 
   // Close on ESC
   useEffect(() => {

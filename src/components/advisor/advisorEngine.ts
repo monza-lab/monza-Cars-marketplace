@@ -1,7 +1,14 @@
 import type { AdvisorContext, AdvisorMessage, Intent, QuickAction, ReportCtaData, DetectedLanguage } from "./advisorTypes"
 import { detectLanguage, getTimeGreeting, t } from "./advisorLanguage"
 import { extractSeries, getSeriesThesis, getOwnershipCosts, getMarketDepth } from "@/lib/brandConfig"
-import { REGIONAL_MARKET_PREMIUM, formatPriceForRegion, formatRegionalPrice, convertFromUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
+
+// ═══ HELPERS ═══
+
+/** Format a USD amount using the context's formatPrice (from useCurrency) or fallback to formatUsd */
+function fmtPrice(ctx: AdvisorContext, usdAmount: number): string {
+  return ctx.formatPrice ? ctx.formatPrice(usdAmount) : formatUsd(usdAmount)
+}
 
 // ═══ INTENT CLASSIFICATION ═══
 
@@ -61,7 +68,7 @@ export function generateWelcome(ctx: AdvisorContext, lang: DetectedLanguage = "e
   let quickActions: QuickAction[]
 
   if (car) {
-    const price = formatPriceForRegion(car.currentBid, ctx.selectedRegion ?? null)
+    const price = fmtPrice(ctx, car.currentBid)
     content = `${greeting}${name}.\n\n` +
       `I see you're looking at the **${car.year} ${car.make} ${car.model}${car.trim ? ` ${car.trim}` : ""}**.\n\n` +
       `- ${t(lang, "currentBid")}: **${price}**\n` +
@@ -99,14 +106,14 @@ function buildValuationResponse(ctx: AdvisorContext, lang: DetectedLanguage): st
   const car = ctx.car
   if (!car) return t(lang, "noCarContext")
 
-  const region = ctx.selectedRegion ?? "US"
   const fv = car.fairValueByRegion
+  const region = ctx.effectiveRegion ?? "US"
   const regionFv = fv[region as keyof typeof fv] || fv.US
-  const priceFormatted = formatPriceForRegion(car.currentBid, region)
+  const priceFormatted = fmtPrice(ctx, car.currentBid)
   const lowFormatted = formatRegionalPrice(regionFv.low, regionFv.currency)
   const highFormatted = formatRegionalPrice(regionFv.high, regionFv.currency)
 
-  const priceInCurrency = convertFromUsd(car.currentBid, regionFv.currency)
+  const priceInCurrency = car.currentBid // prices are USD-based
   const range = regionFv.high - regionFv.low
   const positionPct = range > 0 ? Math.round(((priceInCurrency - regionFv.low) / range) * 100) : 50
   const positionLabel = positionPct < 30
@@ -121,9 +128,9 @@ function buildValuationResponse(ctx: AdvisorContext, lang: DetectedLanguage): st
     const sales = md.totalSales ?? 0
     if (sales > 0) {
       marketContext = `\n\n**Market Data** (${sales} sales tracked):\n` +
-        (md.avgPrice ? `- Average: ${formatPriceForRegion(md.avgPrice, region)}\n` : "") +
-        (md.medianPrice ? `- Median: ${formatPriceForRegion(md.medianPrice, region)}\n` : "") +
-        (md.lowPrice && md.highPrice ? `- Range: ${formatPriceForRegion(md.lowPrice, region)} – ${formatPriceForRegion(md.highPrice, region)}\n` : "") +
+        (md.avgPrice ? `- Average: ${fmtPrice(ctx, md.avgPrice)}\n` : "") +
+        (md.medianPrice ? `- Median: ${fmtPrice(ctx, md.medianPrice)}\n` : "") +
+        (md.lowPrice && md.highPrice ? `- Range: ${fmtPrice(ctx, md.lowPrice)} – ${fmtPrice(ctx, md.highPrice)}\n` : "") +
         (md.trend ? `- Trend: ${md.trend}` : "")
     }
   }
@@ -189,7 +196,6 @@ function buildSpecsResponse(ctx: AdvisorContext, lang: DetectedLanguage): string
   const car = ctx.car
   if (!car) return t(lang, "noCarContext")
 
-  const region = ctx.selectedRegion ?? "US"
   return `**${car.year} ${car.make} ${car.model}${car.trim ? ` ${car.trim}` : ""}**\n\n` +
     `- **Engine:** ${car.engine}\n` +
     `- **Transmission:** ${car.transmission}\n` +
@@ -198,7 +204,7 @@ function buildSpecsResponse(ctx: AdvisorContext, lang: DetectedLanguage): string
     (car.exteriorColor ? `- **Exterior:** ${car.exteriorColor}\n` : "") +
     (car.interiorColor ? `- **Interior:** ${car.interiorColor}\n` : "") +
     `- **Platform:** ${car.platform.replace(/_/g, " ")}\n` +
-    `- **${t(lang, "currentBid")}:** ${formatPriceForRegion(car.currentBid, region)}\n` +
+    `- **${t(lang, "currentBid")}:** ${fmtPrice(ctx, car.currentBid)}\n` +
     `- **Bids:** ${car.bidCount}\n\n` +
     `**${t(lang, "grade")}:** ${car.investmentGrade}`
 }
@@ -206,7 +212,6 @@ function buildSpecsResponse(ctx: AdvisorContext, lang: DetectedLanguage): string
 function buildOwnershipResponse(ctx: AdvisorContext, lang: DetectedLanguage): string {
   const car = ctx.car
   const make = ctx.make || car?.make || "Porsche"
-  const region = ctx.selectedRegion ?? "US"
 
   const costs = getOwnershipCosts(make, car ? Math.max(car.currentBid / 100000, 0.5) : 1)
   const ins = ctx.dbAnalysis?.insuranceEstimate ?? costs.insurance
@@ -215,12 +220,12 @@ function buildOwnershipResponse(ctx: AdvisorContext, lang: DetectedLanguage): st
   const total = ins + stor + maint
 
   return `**${t(lang, "ownershipCost")}${car ? ` — ${car.year} ${car.make} ${car.model}` : ""}**\n\n` +
-    `- **Insurance:** ${formatPriceForRegion(ins, region)}/yr\n` +
-    `- **Storage:** ${formatPriceForRegion(stor, region)}/yr\n` +
-    `- **Maintenance:** ${formatPriceForRegion(maint, region)}/yr\n` +
-    `- **Total:** ${formatPriceForRegion(total, region)}/yr\n\n` +
+    `- **Insurance:** ${fmtPrice(ctx, ins)}/yr\n` +
+    `- **Storage:** ${fmtPrice(ctx, stor)}/yr\n` +
+    `- **Maintenance:** ${fmtPrice(ctx, maint)}/yr\n` +
+    `- **Total:** ${fmtPrice(ctx, total)}/yr\n\n` +
     (ctx.dbAnalysis?.majorServiceCost
-      ? `**Major Service:** ${formatPriceForRegion(ctx.dbAnalysis.majorServiceCost, region)} (every 3-4 years)\n\n`
+      ? `**Major Service:** ${fmtPrice(ctx, ctx.dbAnalysis.majorServiceCost)} (every 3-4 years)\n\n`
       : "") +
     (car ? `These costs represent approximately **${((total / car.currentBid) * 100).toFixed(1)}%** of the vehicle's value annually.` : "")
 }
@@ -239,10 +244,12 @@ function buildRegionalResponse(ctx: AdvisorContext, lang: DetectedLanguage): str
 
   const fv = car.fairValueByRegion
   const regions = ["US", "EU", "UK", "JP"] as const
+  const usAvg = (fv.US.low + fv.US.high) / 2
   const lines = regions.map(r => {
     const rv = fv[r]
-    const premium = REGIONAL_MARKET_PREMIUM[r]
-    const premiumLabel = premium > 1 ? `+${((premium - 1) * 100).toFixed(0)}%` : premium < 1 ? `${((premium - 1) * 100).toFixed(0)}%` : "baseline"
+    const rAvg = (rv.low + rv.high) / 2
+    const premiumPct = usAvg > 0 ? ((rAvg - usAvg) / usAvg) * 100 : 0
+    const premiumLabel = Math.abs(premiumPct) < 1 ? "baseline" : premiumPct > 0 ? `+${premiumPct.toFixed(0)}%` : `${premiumPct.toFixed(0)}%`
     return `- **${r}:** ${formatRegionalPrice(rv.low, rv.currency)} – ${formatRegionalPrice(rv.high, rv.currency)} (${premiumLabel})`
   })
 
@@ -260,14 +267,13 @@ function buildRegionalResponse(ctx: AdvisorContext, lang: DetectedLanguage): str
 
 function buildComparablesResponse(ctx: AdvisorContext, lang: DetectedLanguage): string {
   const comps = ctx.dbComparables
-  const region = ctx.selectedRegion ?? "US"
 
   if (!comps || comps.length === 0) {
     return `No comparable sales data currently available for this model. I can still provide analysis based on regional pricing and investment grade.`
   }
 
   const lines = comps.slice(0, 5).map((c, i) => {
-    const price = formatPriceForRegion(c.soldPrice, region)
+    const price = fmtPrice(ctx, c.soldPrice)
     const date = c.soldDate ? new Date(c.soldDate).toLocaleDateString() : "N/A"
     return `${i + 1}. **${c.title}** — ${price} (${c.platform}, ${date})${c.mileage ? ` · ${c.mileage.toLocaleString()} mi` : ""}`
   })

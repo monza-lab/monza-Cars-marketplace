@@ -40,7 +40,8 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd, getFairValueForRegion, resolveRegion, convertFromUsd, buildRegionalFairValue } from "@/lib/regionPricing"
+import { formatRegionalPrice, formatUsd, buildRegionalFairValue } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
@@ -217,7 +218,7 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
   let bestAvg = Infinity
   for (const r of regions) {
     const p = pricing[r]
-    const avg = toUsd((p.low + p.high) / 2, p.currency)
+    const avg = (p.low + p.high) / 2
     if (avg < bestAvg) { bestAvg = avg; best = r }
   }
   return best
@@ -289,7 +290,7 @@ function StatCard({ label, value, icon }: {
 
 // ─── SIMILAR CAR CARD ───
 function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons?: string[] }) {
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   return (
     <Link
       href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
@@ -318,7 +319,7 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
         </p>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-[12px] font-display font-medium text-primary">
-            {formatPriceForRegion(car.currentBid, selectedRegion)}
+            {formatPrice(car.currentBid)}
           </span>
           {car.mileage > 0 && (
             <span className="text-[9px] text-muted-foreground">
@@ -343,7 +344,7 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
 
 // ─── SIDEBAR MINI CAR CARD (compact for left sidebar) ───
 function SidebarCarCard({ car }: { car: CollectorCar }) {
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   return (
     <Link
       href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
@@ -366,7 +367,7 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className="text-[11px] font-display font-medium text-primary">
-            {formatPriceForRegion(car.currentBid, selectedRegion)}
+            {formatPrice(car.currentBid)}
           </span>
           <span className={`text-[9px] font-bold ${
             car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
@@ -388,21 +389,22 @@ function CarNavSidebar({
   similarCars: SimilarCarResult[]
 }) {
   const locale = useLocale()
-  const { selectedRegion, effectiveRegion, currency } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, convertFromUsd } = useCurrency()
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
   const flags = redFlags[car.make] || redFlags.default
   const platform = platformLabels[car.platform]
 
   // Market position: where current price sits within selected region's fair value range
-  const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
+  const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const fairLow = regionRange.low
   const fairHigh = regionRange.high
-  // Convert currentBid (USD) to regional currency for comparison
-  const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
+  // Convert currentBid (USD) to selected currency for comparison
+  const bidInCurrency = convertFromUsd(car.currentBid)
   const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
+    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
     : 50
-  const isBelowFair = bidInRegion < (fairLow + fairHigh) / 2
+  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
   const priceLabel = getPriceLabel(car.platform, car.status)
 
   return (
@@ -442,16 +444,16 @@ function CarNavSidebar({
       {/* ── Price ── */}
       <div className="px-4 py-3 shrink-0 border-b border-border">
         <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{priceLabel}</span>
-        <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+        <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPrice(car.currentBid)}</p>
       </div>
 
       {/* ── Market Position (always visible) ── */}
       <div className="px-4 py-3 shrink-0 border-b border-border">
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairLow, regionRange.currency)}</span>
+          <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
           <span className="text-[9px] text-muted-foreground">Fair Value Range ({effectiveRegion})</span>
-          <span className="text-[10px] font-mono text-muted-foreground">{fmtRegional(fairHigh, regionRange.currency)}</span>
+          <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
         </div>
         {/* Position bar */}
         <div className="relative h-[8px] rounded-full bg-foreground/4 overflow-hidden">
@@ -605,7 +607,8 @@ function CarContextPanel({
   dbAnalysis?: DbAnalysisRow | null
   dbSoldHistory?: DbSoldRecord[]
 }) {
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
   const costs = {
     insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
@@ -624,7 +627,7 @@ function CarContextPanel({
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
-      toUsd((pricing[r].low + pricing[r].high) / 2, pricing[r].currency)
+      (pricing[r].low + pricing[r].high) / 2
     ))
   )
 
@@ -672,7 +675,7 @@ function CarContextPanel({
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
                 {car.status === "ENDED" ? "Sold" : "Bid"}
               </span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(car.currentBid)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
@@ -697,8 +700,8 @@ function CarContextPanel({
               const rp = pricing[region]
               const isBest = bestRegion === region
               const isSelected = region === effectiveRegion
-              const usdAvg = toUsd((rp.low + rp.high) / 2, rp.currency)
-              const barWidth = (usdAvg / maxRegionalUsd) * 100
+              const avg = (rp.low + rp.high) / 2
+              const barWidth = (avg / maxRegionalUsd) * 100
               return (
                 <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                   <div className="flex items-center justify-between mb-1">
@@ -714,18 +717,18 @@ function CarContextPanel({
                     </div>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-[11px] font-mono font-semibold text-foreground">
-                        {fmtRegional(rp.low, rp.currency)}
+                        {formatRegionalPrice(rp.low, rp.currency)}
                       </span>
                       <span className="text-[9px] text-muted-foreground">→</span>
                       <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
-                        {fmtRegional(rp.high, rp.currency)}
+                        {formatRegionalPrice(rp.high, rp.currency)}
                       </span>
                     </div>
                   </div>
                   {region !== effectiveRegion && (
                     <div className="flex justify-end mb-1">
                       <span className="text-[9px] font-mono text-muted-foreground">
-                        ≈ {formatUsd(toUsd(rp.high, rp.currency))} USD
+                        ≈ {formatUsd(rp.high)} USD
                       </span>
                     </div>
                   )}
@@ -764,8 +767,8 @@ function CarContextPanel({
               />
             </div>
             <div className="flex items-center justify-between mt-1">
-              <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
-              <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
             </div>
           </div>
           {/* Position label */}
@@ -798,12 +801,12 @@ function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
             </div>
           </div>
         </div>
@@ -824,7 +827,7 @@ function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
           </div>
@@ -908,8 +911,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const t = useTranslations("carDetail")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
-  const { selectedRegion, effectiveRegion } = useRegion()
-
+  const { effectiveRegion } = useRegion()
+  const { formatPrice, convertFromUsd } = useCurrency()
 
   const [showSticky, setShowSticky] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
@@ -1015,19 +1018,19 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     ? (car.fairValueByRegion.US.low + car.fairValueByRegion.US.high) / 2
     : car.currentBid
   const mobilePricing = buildRegionalFairValue(mobileUsdBase)
-  const regionRange = getFairValueForRegion(mobilePricing, selectedRegion)
+  const regionRange = mobilePricing[effectiveRegion as keyof typeof mobilePricing] || mobilePricing.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
-  const bidInRegion = convertFromUsd(car.currentBid, regionRange.currency)
+  const bidInCurrency = convertFromUsd(car.currentBid)
   const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInRegion - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
-  const isBelowFair = bidInRegion < (fairLow + fairHigh) / 2
+    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
+  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = mobilePricing
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
-      toUsd((pricing[r].low + pricing[r].high) / 2, pricing[r].currency)
+      (pricing[r].low + pricing[r].high) / 2
     ))
   )
 
@@ -1080,7 +1083,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <h1 className="text-[14px] font-semibold text-foreground">{car.title}</h1>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[18px] font-display font-medium text-primary">
-                        {formatPriceForRegion(car.currentBid, selectedRegion)}
+                        {formatPrice(car.currentBid)}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         {getPriceLabel(car.platform, car.status).toLowerCase()}
@@ -1148,7 +1151,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-2xl font-display font-medium text-primary">
-                    {formatPriceForRegion(car.currentBid, selectedRegion)}
+                    {formatPrice(car.currentBid)}
                   </p>
                   <span className="text-[12px] font-mono font-semibold text-emerald-400">{car.trend}</span>
                 </div>
@@ -1211,7 +1214,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   Fair Value
                 </span>
                 <span className="text-[22px] font-bold font-mono text-foreground">
-                  {formatPriceForRegion(Math.round((regionRange.low + regionRange.high) / 2), selectedRegion)}
+                  {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
                 </span>
               </div>
 
@@ -1221,7 +1224,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   {t("investmentPassport.annualCost")}
                 </span>
                 <span className="text-[22px] font-bold font-mono text-foreground">
-                  {formatPriceForRegion(totalAnnualCost, selectedRegion)}
+                  {formatPrice(totalAnnualCost)}
                 </span>
                 <span className="text-[11px] text-muted-foreground">/yr</span>
               </div>
@@ -1291,7 +1294,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 const rp = pricing[region]
                 const isBest = bestRegion === region
                 const isSelected = region === effectiveRegion
-                const usdAvg = toUsd((rp.low + rp.high) / 2, rp.currency)
+                const usdAvg = (rp.low + rp.high) / 2
                 const barWidth = (usdAvg / maxRegionalUsd) * 100
                 return (
                   <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
@@ -1304,11 +1307,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       </div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[11px] font-mono font-semibold text-foreground">
-                          {fmtRegional(rp.low, rp.currency)}
+                          {formatRegionalPrice(rp.low, rp.currency)}
                         </span>
                         <span className="text-[9px] text-muted-foreground">→</span>
                         <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
-                          {fmtRegional(rp.high, rp.currency)}
+                          {formatRegionalPrice(rp.high, rp.currency)}
                         </span>
                       </div>
                     </div>
@@ -1346,8 +1349,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 />
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.low, selectedRegion)}</span>
-                <span className="text-[9px] text-muted-foreground">{formatPriceForRegion(regionRange.high, selectedRegion)}</span>
+                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
               </div>
             </div>
             <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
@@ -1378,7 +1381,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                   {car.status === "ENDED" ? t("soldFor") : t("currentBid")}
                 </p>
-                <p className="text-[14px] font-display font-medium text-primary">{formatPriceForRegion(car.currentBid, selectedRegion)}</p>
+                <p className="text-[14px] font-display font-medium text-primary">{formatPrice(car.currentBid)}</p>
               </div>
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("bids")}</p>
@@ -1465,7 +1468,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                   </div>
-                  <p className="text-[16px] font-bold font-mono text-foreground shrink-0 ml-3">{formatPriceForRegion(sale.price, selectedRegion)}</p>
+                  <p className="text-[16px] font-bold font-mono text-foreground shrink-0 ml-3">{formatPrice(sale.price)}</p>
                 </div>
               ))}
             </div>
@@ -1479,25 +1482,25 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <Shield className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.insurance, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.insurance)}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
                   <MapPin className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.storage, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.storage)}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
                   <Wrench className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(costs.maintenance, selectedRegion)}</span>
+                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.maintenance)}</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
-                <span className="text-[18px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+                <span className="text-[18px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
               </div>
               <div className="border-t border-border pt-3 mt-1">
                 <div className="flex items-center gap-2 mb-3">
@@ -1509,15 +1512,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.domestic, selectedRegion)}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.euImport, selectedRegion)}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPriceForRegion(shipping.ukImport, selectedRegion)}</span>
+                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
                   </div>
                 </div>
               </div>
@@ -1723,7 +1726,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         <p className="text-[12px] font-medium text-foreground">{sale.title}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                       </div>
-                      <span className="text-[14px] font-mono font-bold text-foreground">{formatPriceForRegion(sale.price, selectedRegion)}</span>
+                      <span className="text-[14px] font-mono font-bold text-foreground">{formatPrice(sale.price)}</span>
                     </div>
                   ))}
                 </div>

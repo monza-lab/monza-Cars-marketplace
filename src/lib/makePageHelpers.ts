@@ -6,7 +6,7 @@
 import type { CollectorCar, FairValueByRegion } from "@/lib/curatedCars"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { getModelImage } from "@/lib/modelImages"
-import { toUsd, buildRegionalFairValue } from "@/lib/regionPricing"
+import { buildRegionalFairValue } from "@/lib/regionPricing"
 
 // ─── MODEL TYPE (aggregated from cars) ───
 export type Model = {
@@ -136,7 +136,7 @@ export function findBestRegion(pricing: FairValueByRegion): keyof FairValueByReg
   for (const r of regions) {
     const region = pricing[r]
     if (!region) continue
-    const avg = toUsd((region.low + region.high) / 2, region.currency)
+    const avg = (region.low + region.high) / 2
     if (avg < bestAvg) {
       bestAvg = avg
       best = r

@@ -39,9 +39,9 @@ export interface AdvisorContext {
   // User data (from hooks)
   userName?: string
   userTier?: "FREE" | "PRO"
-  selectedRegion?: string | null
   effectiveRegion?: string
   currency?: string
+  formatPrice?: (usdAmount: number) => string
 
   // Token data
   tokens?: number
