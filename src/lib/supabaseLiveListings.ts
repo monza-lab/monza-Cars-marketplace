@@ -1038,6 +1038,59 @@ export async function fetchSoldListingsForMake(
   }
 }
 
+// ─── Priced listings for model (all statuses with hammer_price) ───
+
+export interface PricedListingRow {
+  id: string
+  year: number
+  make: string
+  model: string
+  trim: string | null
+  hammer_price: number
+  original_currency: string | null
+  sale_date: string | null
+  status: string
+  mileage: number | null
+  source: string
+  country: string | null
+}
+
+export async function fetchPricedListingsForModel(
+  make: string,
+  limit = 500
+): Promise<PricedListingRow[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) return [];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+
+    const { data, error } = await supabase
+      .from("listings")
+      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
+      .ilike("make", normalizedMake)
+      .not("hammer_price", "is", null)
+      .gt("hammer_price", 0)
+      .order("sale_date", { ascending: false })
+      .limit(limit);
+
+    if (error || !data) return [];
+
+    return data.filter(
+      (r: { hammer_price: string | number | null }) => r.hammer_price != null && Number(r.hammer_price) > 0
+    ) as PricedListingRow[];
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
+    return [];
+  }
+}
+
 export async function fetchLiveListingsAsCollectorCars(options?: {
   limit?: number;
   includePriceHistory?: boolean;

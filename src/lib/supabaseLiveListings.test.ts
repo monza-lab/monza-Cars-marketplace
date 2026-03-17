@@ -128,3 +128,10 @@ describe("supabaseLiveListings image url normalization", () => {
     ).toBe("https://m.atcdn.co.uk/a/media/9d4417fa89f14146a53b45937e829dd4.jpg");
   });
 });
+
+describe("fetchPricedListingsForModel", () => {
+  it("is exported as a function", async () => {
+    const mod = await import("./supabaseLiveListings")
+    expect(typeof mod.fetchPricedListingsForModel).toBe("function")
+  })
+})
