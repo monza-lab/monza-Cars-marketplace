@@ -1,5 +1,54 @@
 import type { Region, FairValueByRegion } from "./curatedCars"
 
+// Region → currency symbol
+export const REGION_CURRENCY: Record<string, string> = {
+  US: "$",
+  EU: "€",
+  UK: "£",
+  JP: "¥",
+}
+
+// Currency → USD rate
+export const TO_USD_RATE: Record<string, number> = {
+  "$": 1,
+  "€": 1.08,
+  "£": 1.27,
+  "¥": 0.0067,
+  "CHF": 1.13,
+}
+
+// USD → currency rate (inverse)
+export const FROM_USD_RATE: Record<string, number> = {
+  "$": 1,
+  "€": 1 / 1.08,
+  "£": 1 / 1.27,
+  "¥": 1 / 0.0067,
+  "CHF": 1 / 1.13,
+}
+
+// Regional market premium multipliers (relative to US base)
+export const REGIONAL_MARKET_PREMIUM: Record<string, number> = {
+  US: 1.0,
+  EU: 1.08,
+  UK: 1.15,
+  JP: 0.85,
+}
+
+/** Convert any currency amount to USD */
+export function toUsd(value: number, currency: string): number {
+  return value * (TO_USD_RATE[currency] || 1)
+}
+
+/** Convert a USD amount to the target currency */
+export function convertFromUsd(usdAmount: number, targetCurrency: string): number {
+  return usdAmount * (FROM_USD_RATE[targetCurrency] || 1)
+}
+
+/** Get currency symbol for a region */
+export function getCurrency(selected: string | null): string {
+  return REGION_CURRENCY[resolveRegion(selected)]
+}
+
 /** Resolve null/"all" to "US" default */
 export function resolveRegion(selected: string | null): Region {
   if (!selected || selected === "all" || selected === "All") return "US"
@@ -24,6 +73,13 @@ export function formatRegionalPrice(value: number, currency: string): string {
   if (safeValue >= 1_000_000) return `${sym}${(safeValue / 1_000_000).toFixed(1)}M`
   if (safeValue >= 1_000) return `${sym}${(safeValue / 1_000).toFixed(0)}K`
   return `${sym}${INTEGER_FORMATTER.format(Math.round(safeValue))}`
+}
+
+/** One-liner: convert USD → target region, then format */
+export function formatPriceForRegion(usdAmount: number, selectedRegion: string | null): string {
+  const currency = getCurrency(selectedRegion)
+  const converted = convertFromUsd(usdAmount, currency)
+  return formatRegionalPrice(converted, currency)
 }
 
 /** Format a USD amount as USD string */
@@ -54,4 +110,13 @@ export function buildRegionalFairValue(usdPrice: number): FairValueByRegion {
     UK: { currency: "£", low: Math.round(low), high: Math.round(high) },
     JP: { currency: "¥", low: Math.round(low), high: Math.round(high) },
   }
+}
+
+/** Get the fair value range for the selected region */
+export function getFairValueForRegion(
+  fairValue: FairValueByRegion,
+  selectedRegion: string | null
+): { currency: string; low: number; high: number } {
+  const region = resolveRegion(selectedRegion)
+  return fairValue[region]
 }
