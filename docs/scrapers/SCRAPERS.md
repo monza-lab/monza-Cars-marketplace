@@ -315,6 +315,23 @@ When running with `summaryOnly=true` (the Vercel cron default), listings are ing
 
 **Source:** `src/features/classic_collector/backfill.ts`
 
+### Dedicated bulk image backfill
+
+For large-scale ClassicCom image backfill, a separate GitHub Actions workflow processes up to 200 listings per run using Playwright with Decodo residential proxy (required to bypass Cloudflare):
+
+- **GitHub Actions** at `04:30 UTC` daily (after the collector at 04:00)
+- Workflow: `.github/workflows/classic-backfill-images.yml`
+- Timeout: 45 minutes
+- Uses `scripts/backfill-classic-images.ts` CLI
+
+**Run locally** (requires `DECODO_PROXY_*` env vars in `.env.local`):
+```bash
+npx tsx scripts/backfill-classic-images.ts --maxListings=50 --navigationDelayMs=4000
+npx tsx scripts/backfill-classic-images.ts --headed   # debug with visible browser
+```
+
+**Note:** Without Decodo proxy credentials, Cloudflare blocks the headless browser after 1-2 requests. The proxy is mandatory for bulk backfill.
+
 ### Trigger manually on GitHub
 
 Go to **Actions > Classic.com Collector (Daily) > Run workflow** and optionally override:
@@ -324,6 +341,14 @@ Go to **Actions > Classic.com Collector (Daily) > Run workflow** and optionally 
 | Max search pages | `5` |
 | Max listings to process | `125` |
 | Skip DB writes | `false` |
+
+Go to **Actions > Classic.com Image Backfill > Run workflow** for dedicated image backfill:
+
+| Input | Default |
+|-------|---------|
+| Max listings to backfill | `200` |
+| Delay between pages (ms) | `4000` |
+| Time budget (ms) | `2400000` (40 min) |
 
 ---
 
@@ -490,6 +515,7 @@ All times in UTC. Staggered to avoid overlapping.
 02:00  AutoTrader Collector     (Vercel Cron)
 03:00  BeForward Collector      (Vercel Cron)
 04:00  Classic.com Collector    (GitHub Actions)
+04:30  Classic.com Image Backfill (GitHub Actions)
 05:00  AutoScout24 Collector    (GitHub Actions)
 05:30  Listing Validator        (Vercel Cron)
 06:00  Cleanup                  (Vercel Cron)
