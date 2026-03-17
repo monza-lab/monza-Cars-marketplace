@@ -1,0 +1,45 @@
+name: BaT Detail Scraper
+
+on:
+  schedule:
+    - cron: '30 1 * * *'  # 01:30 UTC daily (after Porsche cron at 01:00)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max listings to process'
+        default: '700'
+      time_budget_minutes:
+        description: 'Time budget in minutes'
+        default: '20'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: bat-detail-scraper
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Run BaT Detail Scraper
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          BUDGET_MS=$(( ${{ github.event.inputs.time_budget_minutes || '20' }} * 60 * 1000 ))
+          npx tsx scripts/bat-detail-scraper.ts \
+            --limit=${{ github.event.inputs.limit || '700' }} \
+            --timeBudgetMs=$BUDGET_MS \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
