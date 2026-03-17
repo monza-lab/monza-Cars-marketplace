@@ -242,7 +242,9 @@ export function useInfiniteAuctions(
     setAggregates(null);
     setTotalCount(null);
     setError(null);
-    setIsLoading(false);
+    // Keep isLoading=true during reset→refetch transition to prevent
+    // a flash of the "no listings" empty state before new data loads.
+    setIsLoading(true);
     setIsFetchingMore(false);
     autoFetchCountRef.current = 0;
 
