@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useSearch } from "@/hooks/useSearch";
+import { useCurrency } from "@/lib/CurrencyContext";
 
 import { useLocale, useTranslations } from "next-intl";
 
@@ -83,10 +84,6 @@ interface AuctionResult {
   status: string; endTime: string | null; bidCount: number; images: string[];
 }
 
-function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString("en-US")}`;
-}
-
 function mapStatus(status: string): "live" | "completed" {
   if (status === "ACTIVE" || status === "ENDING_SOON") return "live";
   return "completed";
@@ -115,6 +112,7 @@ export function SearchClient() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("search");
+  const { formatPrice } = useCurrency();
   const { query, debouncedQuery, setQuery } = useSearch(300);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedMake, setSelectedMake] = useState(ALL);
@@ -128,16 +126,6 @@ export function SearchClient() {
   const [results, setResults] = useState<AuctionResult[]>([]);
   const [total, setTotal] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
-
-  const formatCurrencyLocal = useCallback(
-    (amount: number) =>
-      new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      }).format(amount),
-    [locale]
-  );
 
   const fetchResults = useCallback(async () => {
     setIsSearching(true);
@@ -367,7 +355,7 @@ export function SearchClient() {
                   key={result.id}
                   result={result}
                   onClick={() => router.push(`/auctions/${result.id}`)}
-                  formatCurrency={formatCurrencyLocal}
+                  formatCurrency={(amount: number) => formatPrice(amount)}
                 />
               ))}
             </div>

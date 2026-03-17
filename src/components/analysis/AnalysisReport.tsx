@@ -12,6 +12,7 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -89,10 +90,6 @@ const TREND_CONFIG: Record<
     color: "text-red-400",
   },
 };
-
-function formatCurrency(amount: number, currency = "$") {
-  return `${currency}${amount.toLocaleString("en-US")}`;
-}
 
 // ---------------------------------------------------------------------------
 // Collapsible Section
@@ -227,6 +224,7 @@ function InvestmentOutlookSection({
 // ---------------------------------------------------------------------------
 
 export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
+  const { formatPrice } = useCurrency();
   const {
     bidTarget,
     criticalQuestions,
@@ -282,11 +280,11 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           </p>
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-3xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-              {formatCurrency(bidTarget.low, bidTarget.currency)}
+              {formatPrice(bidTarget.low ?? 0)}
             </span>
             <span className="text-zinc-500 text-lg">&ndash;</span>
             <span className="text-3xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-              {formatCurrency(bidTarget.high, bidTarget.currency)}
+              {formatPrice(bidTarget.high ?? 0)}
             </span>
           </div>
 

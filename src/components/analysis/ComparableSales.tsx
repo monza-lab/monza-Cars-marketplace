@@ -10,6 +10,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { Badge } from "@/components/ui/badge";
 
 // ---------------------------------------------------------------------------
@@ -35,10 +36,6 @@ interface ComparableSalesProps {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrency(amount: number, currency = "$") {
-  return `${currency}${amount.toLocaleString("en-US")}`;
-}
 
 function formatMileage(miles: number) {
   return `${miles.toLocaleString("en-US")} mi`;
@@ -70,12 +67,11 @@ function getPlatformStyle(platform: string) {
 function PriceComparison({
   soldPrice,
   currentPrice,
-  currency,
 }: {
   soldPrice: number;
   currentPrice: number;
-  currency?: string;
 }) {
+  const { formatPrice } = useCurrency();
   const diff = soldPrice - currentPrice;
   const pctDiff = ((diff / currentPrice) * 100).toFixed(1);
 
@@ -93,7 +89,7 @@ function PriceComparison({
     return (
       <span className="flex items-center gap-1 text-xs text-emerald-400">
         <ArrowUpRight className="size-3" />
-        +{formatCurrency(diff, currency)} ({pctDiff}%)
+        +{formatPrice(diff ?? 0)} ({pctDiff}%)
       </span>
     );
   }
@@ -101,7 +97,7 @@ function PriceComparison({
   return (
     <span className="flex items-center gap-1 text-xs text-red-400">
       <ArrowDownRight className="size-3" />
-      {formatCurrency(diff, currency)} ({pctDiff}%)
+      {formatPrice(diff ?? 0)} ({pctDiff}%)
     </span>
   );
 }
@@ -116,6 +112,7 @@ export function ComparableSales({
   currency = "$",
   className,
 }: ComparableSalesProps) {
+  const { formatPrice } = useCurrency();
   if (comparables.length === 0) return null;
 
   // Compute average
@@ -131,7 +128,7 @@ export function ComparableSales({
             Avg. Comparable Sale
           </p>
           <p className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-            {formatCurrency(Math.round(avgPrice), currency)}
+            {formatPrice(Math.round(avgPrice) ?? 0)}
           </p>
         </div>
         <div className="text-right">
@@ -203,13 +200,12 @@ export function ComparableSales({
               {/* Right: Price + comparison */}
               <div className="text-right shrink-0">
                 <p className="text-sm font-bold text-amber-400">
-                  {formatCurrency(comp.soldPrice, currency)}
+                  {formatPrice(comp.soldPrice ?? 0)}
                 </p>
                 {currentPrice !== undefined && (
                   <PriceComparison
                     soldPrice={comp.soldPrice}
                     currentPrice={currentPrice}
-                    currency={currency}
                   />
                 )}
               </div>

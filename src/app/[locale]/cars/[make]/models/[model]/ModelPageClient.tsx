@@ -11,6 +11,7 @@ import {
   Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { Link } from "@/i18n/navigation";
 import type { CollectorCar, Platform } from "@/lib/curatedCars";
 import { getPriceLabel } from "@/lib/makePageConstants";
@@ -28,12 +29,6 @@ interface ModelPageClientProps {
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
-
-function formatCurrency(amount: number): string {
-  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
-  return `$${amount.toLocaleString("en-US")}`;
-}
 
 function formatDate(date: Date): string {
   return new Date(date).toLocaleDateString("en-US", {
@@ -111,6 +106,7 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
+  const { formatPrice } = useCurrency();
   const platformCfg = PLATFORM_CONFIG[car.platform];
   const makePath = car.make.toLowerCase().replace(/\s+/g, "-");
   const isEnded = car.status === "ENDED";
@@ -169,7 +165,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
             <div className="mt-3 flex items-baseline justify-between">
               <div>
                 <span className="text-xl font-light text-primary">
-                  {formatCurrency(car.currentBid)}
+                  {formatPrice(car.currentBid ?? 0)}
                 </span>
                 <span className="ml-2 text-[10px] text-muted-foreground">
                   {getPriceLabel(car.platform, car.status).toLowerCase()}
@@ -212,6 +208,7 @@ function PlatformSection({
   cars: CollectorCar[];
   isFirst: boolean;
 }) {
+  const { formatPrice } = useCurrency();
   const cfg = PLATFORM_CONFIG[platform];
 
   // Calculate real stats from actual data
@@ -254,7 +251,7 @@ function PlatformSection({
             Price Range
           </span>
           <p className="text-sm text-foreground">
-            {formatCurrency(minPrice)} – {formatCurrency(maxPrice)}
+            {formatPrice(minPrice ?? 0)} – {formatPrice(maxPrice ?? 0)}
           </p>
         </div>
       </div>
@@ -274,6 +271,8 @@ function PlatformSection({
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
+  const { formatPrice } = useCurrency();
+
   // Group cars by platform for real market segmentation
   const carsByPlatform = useMemo(() => {
     const grouped = cars.reduce((acc, car) => {
@@ -387,7 +386,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
                   Price Range
                 </span>
                 <p className="text-2xl font-light text-primary">
-                  {formatCurrency(stats.minPrice)} – {formatCurrency(stats.maxPrice)}
+                  {formatPrice(stats.minPrice ?? 0)} – {formatPrice(stats.maxPrice ?? 0)}
                 </p>
               </div>
               <div className="h-10 w-px bg-foreground/10" />

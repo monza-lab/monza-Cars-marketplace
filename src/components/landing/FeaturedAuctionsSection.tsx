@@ -4,23 +4,12 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { BadgeCheck, Clock, Gavel, ExternalLink, TrendingUp } from "lucide-react"
 import { featuredAuctions, getPlatformDisplayName, type FeaturedAuction } from "@/lib/featuredAuctions"
-import { useLocale, useTranslations } from "next-intl"
+import { useCurrency } from "@/lib/CurrencyContext"
+import { useTranslations } from "next-intl"
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrency(amount: number, locale: string): string {
-  if (amount >= 1_000_000) {
-    return `$${(amount / 1_000_000).toFixed(2)}M`
-  }
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
 
 function getGradeBadgeStyle(grade: FeaturedAuction["investmentGrade"]): string {
   switch (grade) {
@@ -42,12 +31,10 @@ function getGradeBadgeStyle(grade: FeaturedAuction["investmentGrade"]): string {
 function FeaturedCard({
   auction,
   index,
-  locale,
   labels,
 }: {
   auction: FeaturedAuction
   index: number
-  locale: string
   labels: {
     verified: string
     sold: string
@@ -58,6 +45,7 @@ function FeaturedCard({
     viewListing: string
   }
 }) {
+  const { formatPrice } = useCurrency()
   const isHero = index === 0
 
   return (
@@ -158,7 +146,7 @@ function FeaturedCard({
                 {auction.status === "SOLD" ? labels.hammerPrice : labels.currentBid}
               </p>
               <p className={`font-display font-medium text-primary ${isHero ? "text-3xl" : "text-xl"}`}>
-                {formatCurrency(auction.currentBid, locale)}
+                {formatPrice(auction.currentBid ?? 0)}
               </p>
             </div>
 
@@ -193,7 +181,6 @@ function FeaturedCard({
 // ---------------------------------------------------------------------------
 
 export function FeaturedAuctionsSection() {
-  const locale = useLocale()
   const tFeatured = useTranslations("featuredAuctions")
   const tCommon = useTranslations("common")
   const tStatus = useTranslations("status")
@@ -241,7 +228,6 @@ export function FeaturedAuctionsSection() {
               key={auction.id}
               auction={auction}
               index={i}
-              locale={locale}
               labels={labels}
             />
           ))}

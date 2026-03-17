@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 import type { PriceHistoryEntry } from "@/types/auction";
 
 // ---------------------------------------------------------------------------
@@ -35,16 +36,6 @@ interface PriceChartProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatCurrency(amount: number): string {
-  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}k`;
-  return `$${amount.toLocaleString("en-US")}`;
-}
-
-function formatAxisTick(value: number): string {
-  return formatCurrency(value);
-}
-
 function formatTime(iso: string): string {
   try {
     return format(new Date(iso), "MMM d, h:mm a");
@@ -65,10 +56,12 @@ interface TooltipPayloadEntry {
 function CustomTooltip({
   active,
   payload,
+  formatPrice,
 }: {
   active?: boolean;
   payload?: TooltipPayloadEntry[];
   label?: string;
+  formatPrice: (amount: number) => string;
 }) {
   if (!active || !payload?.length) return null;
 
@@ -76,7 +69,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/95 px-3 py-2 shadow-xl shadow-black/40 backdrop-blur-sm">
       <p className="text-sm font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-        ${entry.value.toLocaleString("en-US")}
+        {formatPrice(entry.value ?? 0)}
       </p>
       <p className="mt-0.5 text-[11px] text-zinc-400">
         {entry.payload.formattedTime}
@@ -94,6 +87,10 @@ export function PriceChart({
   comparables,
   className,
 }: PriceChartProps) {
+  const { formatPrice } = useCurrency();
+
+  const formatAxisTick = (value: number): string => formatPrice(value ?? 0);
+
   // Prepare data sorted ascending by time
   const data = useMemo(() => {
     return [...priceHistory]
@@ -161,7 +158,7 @@ export function PriceChart({
             width={60}
           />
 
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip formatPrice={formatPrice} />} />
 
           {/* Comparable reference lines */}
           {comparables?.map((comp) => (
@@ -172,7 +169,7 @@ export function PriceChart({
               strokeDasharray="6 4"
               strokeWidth={1.5}
               label={{
-                value: `${comp.label} ${formatCurrency(comp.price)}`,
+                value: `${comp.label} ${formatPrice(comp.price ?? 0)}`,
                 fill: comp.color ?? "#a78bfa",
                 fontSize: 10,
                 position: "right",

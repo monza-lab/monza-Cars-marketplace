@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Wrench, ShieldCheck, Settings, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,10 +21,6 @@ interface OwnershipCostsProps {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrency(amount: number) {
-  return `$${amount.toLocaleString("en-US")}`;
-}
 
 interface CostItem {
   label: string;
@@ -46,6 +43,7 @@ function CostBar({
   maxAmount: number;
   index: number;
 }) {
+  const { formatPrice } = useCurrency();
   const widthPct = maxAmount > 0 ? (item.amount / maxAmount) * 100 : 0;
   const Icon = item.icon;
 
@@ -62,7 +60,7 @@ function CostBar({
           {item.label}
         </span>
         <span className="text-sm font-semibold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-          {formatCurrency(item.amount)}
+          {formatPrice(item.amount ?? 0)}
         </span>
       </div>
 
@@ -90,6 +88,7 @@ function FiveYearProjection({
   annualTotal: number;
   majorServiceCost: number;
 }) {
+  const { formatPrice } = useCurrency();
   const years = [1, 2, 3, 4, 5];
   // Assume major service hits in year 3
   const projections = years.map((y) => {
@@ -115,7 +114,7 @@ function FiveYearProjection({
             <div key={p.year} className="flex-1 flex flex-col items-center gap-1">
               {/* Amount label */}
               <span className="text-[10px] font-medium text-zinc-400 tabular-nums">
-                {formatCurrency(p.cost)}
+                {formatPrice(p.cost ?? 0)}
               </span>
 
               {/* Bar */}
@@ -162,6 +161,7 @@ export function OwnershipCosts({
   majorServiceDescription,
   className,
 }: OwnershipCostsProps) {
+  const { formatPrice } = useCurrency();
   const costItems: CostItem[] = useMemo(
     () => [
       {
@@ -220,7 +220,7 @@ export function OwnershipCosts({
           Total Annual Cost
         </span>
         <span className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-          {formatCurrency(annualTotal)}
+          {formatPrice(annualTotal ?? 0)}
         </span>
       </div>
 

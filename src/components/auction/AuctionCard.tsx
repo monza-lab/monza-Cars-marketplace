@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import { Gavel, Eye, ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/CurrencyContext";
 import { AuctionTimer } from "./AuctionTimer";
 import { isAuctionPlatform, getPriceLabel, getStatusLabel } from "@/lib/makePageConstants";
 import type {
@@ -75,12 +76,8 @@ const STATUS_CONFIG: Record<AuctionStatus, { label: string; className: string }>
   },
 };
 
-function formatCurrency(amount: number | null | undefined): string {
-  if (amount == null) return "$--";
-  return `$${amount.toLocaleString("en-US")}`;
-}
-
 export function AuctionCard({ auction, className }: AuctionCardProps) {
+  const { formatPrice } = useCurrency();
   const {
     id, title, make, model, year, currentBid, bidCount,
     endTime, images, platform, status, reserveStatus,
@@ -169,7 +166,7 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
           {/* Price */}
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-primary">
-              {formatCurrency(currentBid)}
+              {formatPrice(currentBid ?? 0)}
             </span>
             <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
               {getPriceLabel(platform, status).toLowerCase()}

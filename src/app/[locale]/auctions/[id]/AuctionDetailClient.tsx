@@ -39,6 +39,7 @@ import {
   BadgeCheck,
 } from "lucide-react"
 import { PriceChart } from "@/components/auction/PriceChart"
+import { useCurrency } from "@/lib/CurrencyContext"
 import type { PriceHistoryEntry } from "@/types/auction"
 
 // ---------------------------------------------------------------------------
@@ -163,22 +164,6 @@ interface RegistryData {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatCurrency(amount: number | null, locale: string): string {
-  if (amount === null) return "—"
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function formatShort(n: number, locale: string): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toLocaleString(locale, { maximumFractionDigits: 1 })}M`
-  if (n >= 1_000) return `$${(n / 1_000).toLocaleString(locale, { maximumFractionDigits: 0 })}K`
-  return `$${n.toLocaleString(locale)}`
-}
-
 function timeLeft(
   endTime: string,
   labels: { ended: string; day: string; hour: string; minute: string }
@@ -288,6 +273,7 @@ function ExecutiveSummary({
   t: ReturnType<typeof useTranslations>
   locale: string
 }) {
+  const { formatPrice } = useCurrency()
   const isLive = auction.status === "active"
   const bidTargetLow = auction.analysis?.pricePrediction.low || auction.currentBid! * 1.05
   const bidTargetHigh = auction.analysis?.pricePrediction.high || auction.currentBid! * 1.15
@@ -311,7 +297,7 @@ function ExecutiveSummary({
               {isLive ? t("labels.currentBid") : t("labels.finalPrice")}
             </p>
             <p className="text-4xl font-bold text-foreground font-mono mt-1">
-              {formatCurrency(auction.currentBid, locale)}
+              {formatPrice(auction.currentBid ?? 0)}
             </p>
             <div className="flex items-center gap-3 mt-2 text-[rgba(232,226,222,0.5)]">
               <span className="flex items-center gap-1 text-[12px]">
@@ -338,7 +324,7 @@ function ExecutiveSummary({
               {t("labels.recommendedCap")}
             </p>
             <p className="text-2xl font-bold text-primary font-mono mt-1">
-              {formatShort(bidTargetLow, locale)} — {formatShort(bidTargetHigh, locale)}
+              {formatPrice(bidTargetLow ?? 0)} — {formatPrice(bidTargetHigh ?? 0)}
             </p>
             <p className="text-[11px] text-[rgba(232,226,222,0.4)] mt-1">
               {t("labels.basedOnMarketAnalysis")}
@@ -470,6 +456,7 @@ function FinancialsModule({
   t: ReturnType<typeof useTranslations>
   locale: string
 }) {
+  const { formatPrice } = useCurrency()
   const [period, setPeriod] = useState<1 | 3 | 5>(1)
   const data = mockFinancials[auction.make] || mockFinancials.default
   const currentValue = auction.currentBid || 100000
@@ -516,7 +503,7 @@ function FinancialsModule({
               Holding Cost ({period}Y)
             </p>
             <p className="text-[14px] font-bold text-foreground font-mono">
-              {formatShort(totalHolding, locale)}
+              {formatPrice(totalHolding ?? 0)}
             </p>
           </div>
         </div>
@@ -526,7 +513,7 @@ function FinancialsModule({
               Insurance ({period}Y)
             </p>
             <p className="text-[14px] font-bold text-foreground font-mono">
-              {formatShort(totalInsurance, locale)}
+              {formatPrice(totalInsurance ?? 0)}
             </p>
           </div>
         </div>
@@ -536,7 +523,7 @@ function FinancialsModule({
               Maintenance ({period}Y)
             </p>
             <p className="text-[14px] font-bold text-foreground font-mono">
-              {formatShort(totalMaintenance, locale)}
+              {formatPrice(totalMaintenance ?? 0)}
             </p>
           </div>
         </div>
@@ -549,7 +536,7 @@ function FinancialsModule({
             Total Cost ({period}Y)
           </span>
           <span className="text-[18px] font-bold text-foreground font-mono">
-            {formatShort(totalCost, locale)}
+            {formatPrice(totalCost ?? 0)}
           </span>
         </div>
         <div className="flex items-center justify-between mt-2">
@@ -635,6 +622,7 @@ function ComparablesModule({
   t: ReturnType<typeof useTranslations>
   locale: string
 }) {
+  const { formatPrice } = useCurrency()
   const makeKey = getMakeKey(auction.make)
   const fallbackSales = (t.raw(`mock.comparables.${makeKey}`) as unknown as {
     title: string
@@ -666,7 +654,7 @@ function ComparablesModule({
               </p>
             </div>
             <span className="text-[14px] font-bold font-mono text-foreground ml-4">
-              {formatShort(sale.price, locale)}
+              {formatPrice(sale.price ?? 0)}
             </span>
           </div>
         ))}
@@ -865,6 +853,7 @@ export default function AuctionDetailClient() {
   const router = useRouter()
   const t = useTranslations("auctionDetail")
   const locale = useLocale()
+  const { formatPrice } = useCurrency()
   const auctionId = params.id as string
 
   const [auction, setAuction] = useState<AuctionDetail | null>(null)

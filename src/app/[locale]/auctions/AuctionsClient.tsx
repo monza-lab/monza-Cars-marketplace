@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 
 // ---------------------------------------------------------------------------
@@ -129,20 +130,6 @@ const POPULAR_MAKES = [
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrencyLocal(
-  amount: number | null,
-  locale: string,
-  noBidsLabel: string
-): string {
-  if (amount === null) return noBidsLabel
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
 
 function formatTimeRemaining(
   endDate: string,
@@ -262,6 +249,7 @@ function AuctionCard({
   const locale = useLocale()
   const t = useTranslations("auctionsList")
   const tStatus = useTranslations("status")
+  const { formatPrice } = useCurrency()
 
   const [isEnding, setIsEnding] = useState(false)
 
@@ -350,7 +338,7 @@ function AuctionCard({
                       {hasEnded ? t("card.soldFor") : t("card.currentBid")}
                     </p>
                     <p className="text-lg font-bold text-amber-400">
-                      {formatCurrencyLocal(auction.currentBid, locale, t("card.noBids"))}
+                      {auction.currentBid !== null ? formatPrice(auction.currentBid) : t("card.noBids")}
                     </p>
                   </div>
                   {/* Bids */}
@@ -500,7 +488,7 @@ function AuctionCard({
                 {hasEnded ? t("card.soldFor") : t("card.currentBid")}
               </p>
               <p className="text-lg font-bold text-amber-400">
-                {formatCurrencyLocal(auction.currentBid, locale, t("card.noBids"))}
+                {auction.currentBid !== null ? formatPrice(auction.currentBid) : t("card.noBids")}
               </p>
             </div>
             <div className="flex items-center gap-1.5">

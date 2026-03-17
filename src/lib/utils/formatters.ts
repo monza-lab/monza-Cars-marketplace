@@ -5,38 +5,6 @@
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Currency
-// ---------------------------------------------------------------------------
-
-/**
- * Format a number as US dollar currency: $XX,XXX
- */
-export function formatCurrency(amount: number | null | undefined): string {
-  if (amount == null) return '--';
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-/**
- * Format a number as currency with cents: $XX,XXX.XX
- */
-export function formatCurrencyPrecise(amount: number | null | undefined): string {
-  if (amount == null) return '--';
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-// ---------------------------------------------------------------------------
 // Numbers
 // ---------------------------------------------------------------------------
 
