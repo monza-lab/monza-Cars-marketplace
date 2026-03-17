@@ -58,6 +58,22 @@ export async function decodeVinBatch(vins: string[]): Promise<NhtsaDecodedVin[]>
   }
 }
 
+/** Shorten verbose NHTSA BodyClass values to fit varchar(50) */
+function shortenBodyClass(raw: string): string {
+  // "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)" → "SUV"
+  // "Convertible/Cabriolet" → "Convertible"
+  const BODY_MAP: Record<string, string> = {
+    "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)": "SUV",
+    "Sport Utility Vehicle (SUV)": "SUV",
+    "Multi-Purpose Vehicle (MPV)": "MPV",
+    "Convertible/Cabriolet": "Convertible",
+    "Hatchback/Liftback/Notchback": "Hatchback",
+    "Sedan/Saloon": "Sedan",
+    "Station Wagon (Wagon)/Sport Utility Vehicle (SUV)": "Wagon",
+  };
+  return BODY_MAP[raw] ?? (raw.length > 50 ? raw.slice(0, 50) : raw);
+}
+
 export function mapNhtsaToListingFields(decoded: NhtsaDecodedVin): VinEnrichmentFields {
   const engineParts: string[] = [];
   if (decoded.DisplacementL && decoded.DisplacementL !== "0") {
@@ -71,10 +87,12 @@ export function mapNhtsaToListingFields(decoded: NhtsaDecodedVin): VinEnrichment
   }
   const engine = engineParts.length > 0 ? engineParts.join(" ") : null;
 
+  const rawBody = decoded.BodyClass || null;
+
   return {
     engine,
     transmission: decoded.TransmissionStyle || null,
-    bodyStyle: decoded.BodyClass || null,
+    bodyStyle: rawBody ? shortenBodyClass(rawBody) : null,
     driveType: decoded.DriveType || null,
   };
 }

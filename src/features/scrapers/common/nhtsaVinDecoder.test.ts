@@ -140,5 +140,19 @@ describe("nhtsaVinDecoder", () => {
       expect(fields.transmission).toBeNull();
       expect(fields.bodyStyle).toBeNull();
     });
+
+    it("should shorten verbose NHTSA body classes to fit DB column", () => {
+      const base: NhtsaDecodedVin = {
+        VIN: "X", Make: "X", Model: "", ModelYear: "", DriveType: "",
+        DisplacementL: "", EngineCylinders: "", EngineConfiguration: "",
+        FuelTypePrimary: "", TransmissionStyle: "", Doors: "",
+        ErrorCode: "0", ErrorText: "", BodyClass: "",
+      };
+
+      expect(mapNhtsaToListingFields({ ...base, BodyClass: "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)" }).bodyStyle).toBe("SUV");
+      expect(mapNhtsaToListingFields({ ...base, BodyClass: "Convertible/Cabriolet" }).bodyStyle).toBe("Convertible");
+      expect(mapNhtsaToListingFields({ ...base, BodyClass: "Sedan/Saloon" }).bodyStyle).toBe("Sedan");
+      expect(mapNhtsaToListingFields({ ...base, BodyClass: "Coupe" }).bodyStyle).toBe("Coupe"); // short values pass through
+    });
   });
 });
