@@ -5,8 +5,7 @@ import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { Clock } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 
@@ -14,7 +13,7 @@ import { timeLeft } from "@/lib/makePageHelpers"
 export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: CollectorCar[]; totalLiveCount: number }) {
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const liveAuctions = useMemo(() => {
     return cars
@@ -58,7 +57,7 @@ export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: Collect
                 <p className="text-[12px] font-semibold text-foreground truncate">{car.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[12px] font-display font-medium text-primary">
-                    {formatPriceForRegion(car.currentBid, selectedRegion)}
+                    {formatPrice(car.currentBid)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
                     {tAuction("bids.count", { count: car.bidCount })}

@@ -16,7 +16,7 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import type { LiveListingRegionTotals } from "@/lib/supabaseLiveListings"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
@@ -123,6 +123,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [currentModelIndex, setCurrentModelIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const { selectedRegion, setSelectedRegion, effectiveRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const [selectedPriceRange, setSelectedPriceRange] = useState(0)
   const [selectedPriceTier, setSelectedPriceTier] = useState("all")
   const [selectedEra, setSelectedEra] = useState("All")
@@ -1120,7 +1121,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[11px] font-display font-medium text-primary">
-                              {formatPriceForRegion(car.currentBid, selectedRegion)}
+                              {formatPrice(car.currentBid)}
                             </span>
                             <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
                               <Clock className="size-2.5" />

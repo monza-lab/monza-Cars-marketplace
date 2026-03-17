@@ -4,8 +4,7 @@ import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { Clock, Gavel, Shield, ChevronRight } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { platformLabels, getPriceLabel, isAuctionPlatform, getStatusLabel } from "@/lib/makePageConstants"
@@ -14,7 +13,7 @@ import { platformLabels, getPriceLabel, isAuctionPlatform, getStatusLabel } from
 export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
 
   const isEndingSoon = car.status === "ENDING_SOON"
@@ -99,7 +98,7 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{getPriceLabel(car.platform, car.status)}</span>
               </div>
               <p className="text-[14px] font-display font-medium text-primary">
-                {formatPriceForRegion(car.currentBid, selectedRegion)}
+                {formatPrice(car.currentBid)}
               </p>
             </div>
 

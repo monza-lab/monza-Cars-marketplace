@@ -5,8 +5,7 @@ import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { Clock, Gavel, ChevronRight } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 
@@ -16,7 +15,7 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
@@ -73,7 +72,7 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
                 {isLive ? t("card.currentBid") : t("card.soldFor")}
               </p>
               <p className="text-[18px] font-display font-medium text-primary">
-                {formatPriceForRegion(car.currentBid, selectedRegion)}
+                {formatPrice(car.currentBid)}
               </p>
             </div>
             <div className="text-right">

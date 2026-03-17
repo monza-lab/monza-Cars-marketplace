@@ -2,8 +2,7 @@
 
 import Image from "next/image"
 import { DollarSign, Car, Shield, ChevronRight } from "lucide-react"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 
 // ─── GENERATION AGGREGATE TYPE ───
 export type GenerationAggregate = {
@@ -21,7 +20,7 @@ export type GenerationAggregate = {
 
 // ─── GENERATION FEED CARD (Full-height card for generation drill-down) ───
 export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: GenerationAggregate; familyName: string; make: string; onClick: () => void }) {
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   return (
     <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
@@ -94,7 +93,7 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Price Range</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
-                {formatPriceForRegion(gen.priceMin, selectedRegion)}&ndash;{formatPriceForRegion(gen.priceMax, selectedRegion)}
+                {formatPrice(gen.priceMin)}&ndash;{formatPrice(gen.priceMax)}
               </p>
             </div>
 

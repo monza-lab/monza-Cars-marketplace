@@ -15,7 +15,8 @@ import {
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd, formatUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice as fmtRegional, toUsd, formatUsd } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import {
   extractFamily,
@@ -50,7 +51,8 @@ export function ModelContextPanel({
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
   const locale = useLocale()
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   // All cars of this model family (unfiltered) for regional analysis
   const allModelCars = allCars.filter(c => extractFamily(c.model, c.year, make) === model.name)
@@ -145,11 +147,11 @@ export function ModelContextPanel({
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(model.priceMin, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(model.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Max Price</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPriceForRegion(model.priceMax, selectedRegion)}</p>
+              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(model.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -237,7 +239,7 @@ export function ModelContextPanel({
                       </p>
                     </div>
                     <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
-                      {formatPriceForRegion(sale.currentBid, selectedRegion)}
+                      {formatPrice(sale.currentBid)}
                     </span>
                   </div>
                 )
@@ -302,12 +304,12 @@ export function ModelContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}/yr</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
             </div>
           </div>
         </div>
@@ -332,7 +334,7 @@ export function ModelContextPanel({
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono text-muted-foreground">
-                      {formatPriceForRegion(m.priceMin, selectedRegion)}-{formatPriceForRegion(m.priceMax, selectedRegion)}
+                      {formatPrice(m.priceMin)}-{formatPrice(m.priceMax)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(m.representativeCar.investmentGrade)}`}>
                       {m.representativeCar.investmentGrade}

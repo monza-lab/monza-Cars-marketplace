@@ -3,8 +3,7 @@
 import Image from "next/image"
 import { Link, useRouter } from "@/i18n/navigation"
 import { ArrowLeft } from "lucide-react"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import type { Model } from "@/lib/makePageHelpers"
@@ -13,7 +12,7 @@ import type { Model } from "@/lib/makePageHelpers"
 export function MobileHeroModel({ model, make }: { model: Model; make: string }) {
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
   const t = useTranslations("makePage")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const router = useRouter()
 
   return (
@@ -70,7 +69,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
           </p>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-[16px] font-display font-medium text-primary">
-              {formatPriceForRegion(model.priceMin, selectedRegion)} – {formatPriceForRegion(model.priceMax, selectedRegion)}
+              {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
             </span>
           </div>
           {/* Categories */}

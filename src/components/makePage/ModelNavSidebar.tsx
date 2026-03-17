@@ -5,8 +5,7 @@ import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { ArrowLeft, Clock } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import { timeLeft, type Model } from "@/lib/makePageHelpers"
@@ -26,7 +25,7 @@ export function ModelNavSidebar({
   onSelectModel: (index: number) => void
 }) {
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const minPrice = cars.length > 0 ? Math.min(...cars.map(c => c.currentBid)) : 0
   const maxPrice = cars.length > 0 ? Math.max(...cars.map(c => c.currentBid)) : 0
   const liveCount = cars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
@@ -127,7 +126,7 @@ export function ModelNavSidebar({
                     <span className="text-[10px] text-muted-foreground">{model.carCount} cars</span>
                   </div>
                   <span className="text-[11px] font-mono text-primary mt-0.5 block">
-                    {formatPriceForRegion(model.priceMin, selectedRegion)}-{formatPriceForRegion(model.priceMax, selectedRegion)}
+                    {formatPrice(model.priceMin)}-{formatPrice(model.priceMax)}
                   </span>
                 </div>
               </button>
@@ -187,7 +186,7 @@ export function ModelNavSidebar({
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[11px] font-display font-medium text-primary">
-                          {formatPriceForRegion(car.currentBid, selectedRegion)}
+                          {formatPrice(car.currentBid)}
                         </span>
                         <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
                           <Clock className="size-2.5" />

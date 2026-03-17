@@ -11,8 +11,7 @@ import {
   Clock,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { ownershipCosts, getPriceLabel, isAuctionPlatform, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
@@ -29,7 +28,7 @@ export function CarContextPanel({
   onOpenAdvisor: () => void
 }) {
   const tAuction = useTranslations("auctionDetail")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const grade = car.investmentGrade
   const isEndingSoon = car.status === "ENDING_SOON"
 
@@ -77,7 +76,7 @@ export function CarContextPanel({
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{getPriceLabel(car.platform, car.status)}</span>
               <p className="text-[13px] font-display font-medium text-primary">
-                {formatPriceForRegion(car.currentBid, selectedRegion)}
+                {formatPrice(car.currentBid)}
               </p>
             </div>
             <div>
@@ -184,12 +183,12 @@ export function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance)}/yr</span>
             </div>
           </div>
         </div>

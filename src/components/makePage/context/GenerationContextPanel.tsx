@@ -10,8 +10,7 @@ import {
   MessageCircle,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { extractGenerationFromModel } from "@/lib/makePageHelpers"
 import { ownershipCosts } from "@/lib/makePageConstants"
 import type { GenerationAggregate } from "@/components/makePage/GenerationFeedCard"
@@ -30,7 +29,7 @@ export function GenerationContextPanel({
   familyCars: CollectorCar[]
   onOpenAdvisor: () => void
 }) {
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   // Cars in this generation
   const genCars = useMemo(() => {
@@ -135,13 +134,13 @@ export function GenerationContextPanel({
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
               <p className="text-[13px] font-mono font-semibold text-foreground">
-                {formatPriceForRegion(gen.priceMin, selectedRegion)}
+                {formatPrice(gen.priceMin)}
               </p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Max Price</span>
               <p className="text-[13px] font-display font-medium text-primary">
-                {formatPriceForRegion(gen.priceMax, selectedRegion)}
+                {formatPrice(gen.priceMax)}
               </p>
             </div>
           </div>
@@ -165,7 +164,7 @@ export function GenerationContextPanel({
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-[11px] font-display font-medium text-primary">
-                      {formatPriceForRegion(variant.avgPrice, selectedRegion)}
+                      {formatPrice(variant.avgPrice)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
                       {variant.grade}
@@ -193,11 +192,10 @@ export function GenerationContextPanel({
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Avg. Price</span>
               <span className="text-[12px] font-display font-medium text-primary">
-                {formatPriceForRegion(
+                {formatPrice(
                   gen.priceMin > 0 && gen.priceMax > 0
                     ? Math.round((gen.priceMin + gen.priceMax) / 2)
-                    : 0,
-                  selectedRegion
+                    : 0
                 )}
               </span>
             </div>
@@ -241,7 +239,7 @@ export function GenerationContextPanel({
                     </p>
                   </div>
                   <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
-                    {formatPriceForRegion(sale.currentBid, selectedRegion)}
+                    {formatPrice(sale.currentBid)}
                   </span>
                 </div>
               ))}
@@ -265,12 +263,12 @@ export function GenerationContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
               <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance, selectedRegion)}/yr</span>
+              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance)}/yr</span>
             </div>
           </div>
         </div>

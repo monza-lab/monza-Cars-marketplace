@@ -3,8 +3,7 @@
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { DollarSign, Car, Shield, ChevronRight } from "lucide-react"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import type { Model } from "@/lib/makePageHelpers"
@@ -12,7 +11,7 @@ import type { Model } from "@/lib/makePageHelpers"
 // ─── MODEL FEED CARD (Full-height card for center column) ───
 export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Model; make: string; onClick?: () => void; index?: number }) {
   const t = useTranslations("makePage")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
 
   // Investment grade from representative car
@@ -90,7 +89,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("model.priceRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
-                {formatPriceForRegion(model.priceMin, selectedRegion)}&ndash;{formatPriceForRegion(model.priceMax, selectedRegion)}
+                {formatPrice(model.priceMin)}&ndash;{formatPrice(model.priceMax)}
               </p>
             </div>
 

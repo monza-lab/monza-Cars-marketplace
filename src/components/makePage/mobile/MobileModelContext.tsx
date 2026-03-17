@@ -4,7 +4,8 @@ import { useMemo } from "react"
 import { Globe, Gauge, Wrench } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion, formatRegionalPrice as fmtRegional, toUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice as fmtRegional, toUsd } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import {
   aggregateRegionalPricing,
@@ -31,7 +32,8 @@ export function MobileModelContext({
   dbOwnershipCosts?: { insurance?: number; storage?: number; maintenance?: number } | null
 }) {
   const t = useTranslations("makePage")
-  const { selectedRegion, effectiveRegion } = useRegion()
+  const { effectiveRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const allModelCars = allCars.filter(c => c.model === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
@@ -151,12 +153,12 @@ export function MobileModelContext({
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">{item.label}</span>
-              <span className="text-[11px] font-mono text-muted-foreground">{formatPriceForRegion(item.value, selectedRegion)}</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
             </div>
           ))}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
             <span className="text-[11px] font-medium text-foreground">{t("mobileContext.total")}</span>
-            <span className="text-[12px] font-display font-medium text-primary">{formatPriceForRegion(totalAnnualCost, selectedRegion)}{t("mobileContext.perYear")}</span>
+            <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("mobileContext.perYear")}</span>
           </div>
         </div>
       </div>

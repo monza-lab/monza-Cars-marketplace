@@ -3,8 +3,7 @@
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { Info } from "lucide-react"
-import { useRegion } from "@/lib/RegionContext"
-import { formatPriceForRegion } from "@/lib/regionPricing"
+import { useCurrency } from "@/lib/CurrencyContext"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import type { Model } from "@/lib/makePageHelpers"
 
@@ -19,7 +18,7 @@ export function MobileModelRow({
   onTap: () => void
 }) {
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
-  const { selectedRegion } = useRegion()
+  const { formatPrice } = useCurrency()
 
   const gradeColor = (g: string) => {
     switch (g) {
@@ -64,7 +63,7 @@ export function MobileModelRow({
         </p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-mono text-primary">
-            {formatPriceForRegion(model.priceMin, selectedRegion)} – {formatPriceForRegion(model.priceMax, selectedRegion)}
+            {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
           </span>
         </div>
       </Link>
