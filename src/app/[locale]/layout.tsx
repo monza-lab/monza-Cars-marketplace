@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { ClientHeader } from "@/components/layout/ClientHeader";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { RegionProvider } from "@/lib/RegionContext";
+import { CurrencyProvider } from "@/lib/CurrencyContext";
 import { MobileBottomNav } from "@/components/mobile";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AppFooter } from "@/components/layout/AppFooter";
@@ -68,11 +69,13 @@ export default async function LocaleLayout({
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <AuthProvider>
           <RegionProvider>
-            <ClientHeader />
-            <main>{children}</main>
-            <MobileBottomNav />
-            <OnboardingModal />
-            <AppFooter />
+            <CurrencyProvider>
+              <ClientHeader />
+              <main>{children}</main>
+              <MobileBottomNav />
+              <OnboardingModal />
+              <AppFooter />
+            </CurrencyProvider>
           </RegionProvider>
         </AuthProvider>
       </ThemeProvider>
