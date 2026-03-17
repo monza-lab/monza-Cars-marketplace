@@ -20,6 +20,7 @@ import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
+import { CurrencyDropdown } from "./CurrencyDropdown";
 import { stripHtml } from "@/lib/stripHtml";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
@@ -1149,6 +1150,12 @@ export function Header() {
                 </div>
               )
             })}
+          </div>
+
+          {/* Currency Dropdown */}
+          <div className="hidden md:flex items-center ml-2">
+            <div className="w-px h-3.5 bg-primary/20 mx-1" />
+            <CurrencyDropdown />
           </div>
 
           {/* Right: Actions — anchored to far right */}
