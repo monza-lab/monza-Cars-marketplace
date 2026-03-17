@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock individual scrapers before importing the orchestrator
-vi.mock('@/lib/scrapers/bringATrailer', () => ({
+vi.mock('@/features/scrapers/auctions/bringATrailer', () => ({
   scrapeBringATrailer: vi.fn(),
 }));
-vi.mock('@/lib/scrapers/carsAndBids', () => ({
+vi.mock('@/features/scrapers/auctions/carsAndBids', () => ({
   scrapeCarsAndBids: vi.fn(),
 }));
-vi.mock('@/lib/scrapers/collectingCars', () => ({
+vi.mock('@/features/scrapers/auctions/collectingCars', () => ({
   scrapeCollectingCars: vi.fn(),
 }));
 
-import { scrapeAll, scrapePlatform, delay } from '@/lib/scrapers/index';
-import { scrapeBringATrailer } from '@/lib/scrapers/bringATrailer';
-import { scrapeCarsAndBids } from '@/lib/scrapers/carsAndBids';
-import { scrapeCollectingCars } from '@/lib/scrapers/collectingCars';
+import { scrapeAll, scrapePlatform, delay } from '@/features/scrapers/auctions';
+import { scrapeBringATrailer } from '@/features/scrapers/auctions/bringATrailer';
+import { scrapeCarsAndBids } from '@/features/scrapers/auctions/carsAndBids';
+import { scrapeCollectingCars } from '@/features/scrapers/auctions/collectingCars';
 
 const mockBaT = vi.mocked(scrapeBringATrailer);
 const mockCaB = vi.mocked(scrapeCarsAndBids);

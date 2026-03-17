@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { scrapeDetail as scrapeBaTDetail } from '@/lib/scrapers/bringATrailer';
-import { scrapeDetail as scrapeCaBDetail } from '@/lib/scrapers/carsAndBids';
-import { scrapeDetail as scrapeCCDetail } from '@/lib/scrapers/collectingCars';
-import type { BaTAuction } from '@/lib/scrapers/bringATrailer';
-import type { CaBAuction } from '@/lib/scrapers/carsAndBids';
-import type { CCarsAuction } from '@/lib/scrapers/collectingCars';
+import { scrapeDetail as scrapeBaTDetail } from '@/features/scrapers/auctions/bringATrailer';
+import { scrapeDetail as scrapeCaBDetail } from '@/features/scrapers/auctions/carsAndBids';
+import { scrapeDetail as scrapeCCDetail } from '@/features/scrapers/auctions/collectingCars';
+import type { BaTAuction } from '@/features/scrapers/auctions/bringATrailer';
+import type { CaBAuction } from '@/features/scrapers/auctions/carsAndBids';
+import type { CCarsAuction } from '@/features/scrapers/auctions/collectingCars';
 
 // ---------------------------------------------------------------------------
 // Base auctions

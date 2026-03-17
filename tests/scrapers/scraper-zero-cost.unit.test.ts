@@ -3,7 +3,7 @@ import {
   detectPlatform,
   parsePrice,
   parseBidCount,
-} from '@/lib/scraper';
+} from '@/features/scrapers/common/scraper';
 
 // ---------------------------------------------------------------------------
 // detectPlatform

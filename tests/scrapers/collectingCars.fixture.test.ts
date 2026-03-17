@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
-import { parseAuctionCard, scrapeDetail } from '@/lib/scrapers/collectingCars';
-import type { CCarsAuction } from '@/lib/scrapers/collectingCars';
+import { parseAuctionCard, scrapeDetail } from '@/features/scrapers/auctions/collectingCars';
+import type { CCarsAuction } from '@/features/scrapers/auctions/collectingCars';
 
 const listingCardHtml = fs.readFileSync(
   path.join(__dirname, '../fixtures/cc-listing-card.html'), 'utf-8',

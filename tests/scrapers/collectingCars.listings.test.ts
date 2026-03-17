@@ -3,8 +3,8 @@ import {
   scrapeListings,
   scrapeDetail,
   scrapeCollectingCars,
-} from '@/lib/scrapers/collectingCars';
-import type { CCarsAuction } from '@/lib/scrapers/collectingCars';
+} from '@/features/scrapers/auctions/collectingCars';
+import type { CCarsAuction } from '@/features/scrapers/auctions/collectingCars';
 
 // ---------------------------------------------------------------------------
 // Helpers

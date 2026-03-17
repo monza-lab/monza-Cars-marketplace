@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { scrapeCollectingCars } from '@/lib/scrapers/collectingCars';
+import { scrapeCollectingCars } from '@/features/scrapers/auctions/collectingCars';
 
 // ---------------------------------------------------------------------------
 // Helpers

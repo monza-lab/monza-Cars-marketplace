@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import * as cheerio from 'cheerio';
-import { parseAuctionCard as parseBaTCard } from '@/lib/scrapers/bringATrailer';
-import { parseAuctionCard as parseCaBCard } from '@/lib/scrapers/carsAndBids';
-import { parseAuctionCard as parseCCCard } from '@/lib/scrapers/collectingCars';
+import { parseAuctionCard as parseBaTCard } from '@/features/scrapers/auctions/bringATrailer';
+import { parseAuctionCard as parseCaBCard } from '@/features/scrapers/auctions/carsAndBids';
+import { parseAuctionCard as parseCCCard } from '@/features/scrapers/auctions/collectingCars';
 
 // ===========================================================================
 // BaT parseAuctionCard edge cases

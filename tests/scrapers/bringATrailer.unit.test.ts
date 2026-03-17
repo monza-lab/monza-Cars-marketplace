@@ -4,7 +4,7 @@ import {
   parseMileage,
   parseTitleComponents,
   extractExternalId,
-} from '@/lib/scrapers/bringATrailer';
+} from '@/features/scrapers/auctions/bringATrailer';
 
 // ---------------------------------------------------------------------------
 // parsePrice

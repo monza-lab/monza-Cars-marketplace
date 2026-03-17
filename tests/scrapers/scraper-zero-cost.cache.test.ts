@@ -8,7 +8,7 @@ import {
   clearCache,
   getCachedData,
   batchFetchAuctionData,
-} from '@/lib/scraper';
+} from '@/features/scrapers/common/scraper';
 
 const FIXTURES_DIR = path.resolve(__dirname, '../fixtures');
 

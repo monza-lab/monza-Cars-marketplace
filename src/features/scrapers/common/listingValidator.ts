@@ -1,5 +1,5 @@
 // src/lib/listingValidator.ts
-import { extractSeries, getSeriesConfig } from "./brandConfig";
+import { extractSeries, getSeriesConfig } from "@/lib/brandConfig";
 
 // ─── Constants ───
 

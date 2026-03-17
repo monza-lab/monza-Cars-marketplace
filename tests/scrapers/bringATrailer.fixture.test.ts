@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
-import { parseAuctionCard, scrapeDetail } from '@/lib/scrapers/bringATrailer';
-import type { BaTAuction } from '@/lib/scrapers/bringATrailer';
+import { parseAuctionCard, scrapeDetail } from '@/features/scrapers/auctions/bringATrailer';
+import type { BaTAuction } from '@/features/scrapers/auctions/bringATrailer';
 
 const listingCardHtml = fs.readFileSync(
   path.join(__dirname, '../fixtures/bat-listing-card.html'), 'utf-8',

@@ -3,8 +3,8 @@ import {
   scrapeListings,
   scrapeDetail,
   scrapeBringATrailer,
-} from '@/lib/scrapers/bringATrailer';
-import type { BaTAuction } from '@/lib/scrapers/bringATrailer';
+} from '@/features/scrapers/auctions/bringATrailer';
+import type { BaTAuction } from '@/features/scrapers/auctions/bringATrailer';
 
 // ---------------------------------------------------------------------------
 // Helpers

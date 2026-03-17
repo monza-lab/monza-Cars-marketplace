@@ -3,8 +3,8 @@ import {
   scrapeListings,
   scrapeDetail,
   scrapeCarsAndBids,
-} from '@/lib/scrapers/carsAndBids';
-import type { CaBAuction } from '@/lib/scrapers/carsAndBids';
+} from '@/features/scrapers/auctions/carsAndBids';
+import type { CaBAuction } from '@/features/scrapers/auctions/carsAndBids';
 
 // ---------------------------------------------------------------------------
 // Helpers

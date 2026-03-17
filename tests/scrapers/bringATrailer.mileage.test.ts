@@ -4,7 +4,7 @@ import {
   parseMileageFromDescription,
   parseBodyStyleFromTitle,
   parseTitleComponents,
-} from '@/lib/scrapers/bringATrailer';
+} from '@/features/scrapers/auctions/bringATrailer';
 
 // ---------------------------------------------------------------------------
 // parseMileageFromTitle

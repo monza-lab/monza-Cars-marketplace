@@ -7,7 +7,7 @@ import {
   clearCache,
   getCachedData,
   detectPlatform,
-} from '@/lib/scraper';
+} from '@/features/scrapers/common/scraper';
 
 // ---------------------------------------------------------------------------
 // Helpers

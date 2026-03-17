@@ -4,7 +4,7 @@ import {
   parseMileage,
   parseTitleComponents,
   extractExternalId,
-} from '@/lib/scrapers/collectingCars';
+} from '@/features/scrapers/auctions/collectingCars';
 
 // ---------------------------------------------------------------------------
 // parsePrice
