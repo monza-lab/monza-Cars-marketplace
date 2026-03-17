@@ -6,20 +6,22 @@
  *   npx tsx scripts/backfill-classic-images.ts --maxListings=50 --headed
  *   npx tsx scripts/backfill-classic-images.ts --navigationDelayMs=5000
  */
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
-// Load .env.local
+// Load .env.local if it exists (not available in CI — env vars come from secrets)
 const envPath = resolve(__dirname, "../.env.local");
-const envContent = readFileSync(envPath, "utf-8");
-for (const line of envContent.split("\n")) {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) continue;
-  const eqIdx = trimmed.indexOf("=");
-  if (eqIdx === -1) continue;
-  const k = trimmed.slice(0, eqIdx).trim();
-  const v = trimmed.slice(eqIdx + 1).trim();
-  if (!process.env[k]) process.env[k] = v;
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) continue;
+    const k = trimmed.slice(0, eqIdx).trim();
+    const v = trimmed.slice(eqIdx + 1).trim();
+    if (!process.env[k]) process.env[k] = v;
+  }
 }
 
 function parseArgs() {
