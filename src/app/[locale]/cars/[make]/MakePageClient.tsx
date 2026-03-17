@@ -21,7 +21,7 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters } from "@/components/filters/AdvancedFilters"
-import { extractSeries, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries } from "@/lib/brandConfig"
+import { extractSeries, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { useInfiniteAuctions } from "@/hooks/useInfiniteAuctions"
 import {
   timeLeft, extractFamily, extractGenerationFromModel, aggregateModels,
@@ -144,6 +144,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const {
     cars: infiniteScrollCars,
     total: infiniteTotal,
+    totalCount: infiniteTotalCount,
     aggregates: infiniteAggregates,
     isLoading: isLoadingCars,
     isFetchingMore,
@@ -157,11 +158,9 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     query: searchQuery || undefined,
   })
 
-  // Filter cars by region first, then aggregate into models
-  const regionFilteredCars = useMemo(() => {
-    if (!selectedRegion || selectedRegion === "all") return infiniteScrollCars
-    return infiniteScrollCars.filter(c => c.region === selectedRegion)
-  }, [infiniteScrollCars, selectedRegion])
+  // Region filtering is already handled server-side by the API (source-based).
+  // No client-side re-filter needed — the API returns only cars for the selected region.
+  const regionFilteredCars = infiniteScrollCars
 
   // Live auction cars (for left sidebar) — filtered by region + active family
   const liveCars = useMemo(() => {
@@ -535,6 +534,13 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
       }))
       .filter(s => s.carCount > 0)
   }, [selectedFamilyForFeed, make, regionFilteredCars])
+
+  // Series label (e.g. "992") for the header — NOT the family group label ("911 Family")
+  const currentSeriesLabel = useMemo(() => {
+    if (!selectedFamilyForFeed) return ""
+    const config = getSeriesConfig(selectedFamilyForFeed.toLowerCase(), make)
+    return config?.label || selectedFamilyForFeed
+  }, [selectedFamilyForFeed, make])
 
   const currentFamilyGroupLabel = useMemo(() => {
     if (!selectedFamilyForFeed) return ""
@@ -943,8 +949,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                     <span className="uppercase font-semibold tracking-wider">{make}</span>
                   </button>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[14px] font-semibold text-foreground">{currentFamilyGroupLabel}</h3>
-                    <span className="text-[10px] text-muted-foreground font-mono">{familyCars.length} cars</span>
+                    <h3 className="text-[14px] font-semibold text-foreground">{currentSeriesLabel}</h3>
+                    <span className="text-[10px] text-muted-foreground font-mono">{infiniteTotalCount ?? familyCars.length} cars</span>
                   </div>
                 </div>
 

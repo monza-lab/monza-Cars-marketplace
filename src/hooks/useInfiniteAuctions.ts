@@ -24,6 +24,7 @@ interface Aggregates {
 interface UseInfiniteAuctionsResult {
   cars: any[];                    // accumulated auction objects across pages
   total: number;                  // aggregates.liveNow (DB count)
+  totalCount: number | null;      // exact DB count for current filters (family + region)
   aggregates: Aggregates | null;
   isLoading: boolean;             // first page loading
   isFetchingMore: boolean;        // subsequent page loading
@@ -60,6 +61,7 @@ export function useInfiniteAuctions(
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [aggregates, setAggregates] = useState<Aggregates | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +126,12 @@ export function useInfiniteAuctions(
         return { filteredNew: [], nextCursor: null, pageHasMore: false };
       }
 
-      // Cache aggregates from the first page
+      // Cache aggregates and total count from the first page
       if (data.aggregates) {
         setAggregates(data.aggregates);
+      }
+      if (data.totalCount !== undefined) {
+        setTotalCount(data.totalCount);
       }
 
       const rawAuctions: any[] = data.auctions ?? [];
@@ -235,6 +240,7 @@ export function useInfiniteAuctions(
     cursorRef.current = null;
     setHasMore(true);
     setAggregates(null);
+    setTotalCount(null);
     setError(null);
     setIsLoading(false);
     setIsFetchingMore(false);
@@ -320,10 +326,12 @@ export function useInfiniteAuctions(
   }, [make, family, region, platform, query, sortBy, sortOrder, enabled]);
 
   // ── Derived: filtered cars (when family is set) ──
+  // Note: cars are already filtered by family in fetchPage (with title),
+  // so this is just a safety net — must also pass title for consistency.
   const visibleCars = family
     ? cars.filter(
         (car) =>
-          extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make) === family,
+          extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === family,
       )
     : cars;
 
@@ -331,6 +339,7 @@ export function useInfiniteAuctions(
   return {
     cars: visibleCars,
     total: aggregates?.liveNow ?? 0,
+    totalCount,
     aggregates,
     isLoading,
     isFetchingMore,

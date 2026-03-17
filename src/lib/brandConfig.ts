@@ -551,8 +551,25 @@ export function getModelPatternsForSeries(
   const series = getSeriesConfig(seriesId, make)
   if (!series) return null
 
+  // For series with yearFallback (e.g. 911 generations like 992, 991, 997…),
+  // include the family-level keywords so the DB query matches models like
+  // "911 Carrera S" in the correct year range — not just literal "992".
+  const keywords = [...series.keywords]
+  if (series.yearFallback) {
+    const config = getBrandConfig(make)
+    if (config) {
+      const familyGroup = config.familyGroups.find(g => g.seriesIds.includes(seriesId))
+      if (familyGroup) {
+        const familyKws = getFamilyKeywords(familyGroup.id)
+        for (const kw of familyKws) {
+          if (!keywords.includes(kw)) keywords.push(kw)
+        }
+      }
+    }
+  }
+
   return {
-    keywords: series.keywords,
+    keywords,
     yearMin: series.yearRange[0],
     yearMax: series.yearRange[1],
   }

@@ -1124,6 +1124,16 @@ const REGION_COUNTRY_MAP: Record<string, string[]> = {
   JP: ["JAPAN"],
 };
 
+// Region → source platforms (mirrors platformMapping.ts REGION_TO_PLATFORMS).
+// Used for DB-level region filtering since the `source` column is always populated
+// while `country` may be NULL for some scrapers (e.g. BeForward).
+const REGION_SOURCE_MAP: Record<string, readonly (readonly string[])[]> = {
+  US: [SOURCE_ALIASES.BaT, SOURCE_ALIASES.ClassicCom, SOURCE_ALIASES.CarsAndBids],
+  EU: [SOURCE_ALIASES.AutoScout24, SOURCE_ALIASES.CollectingCars],
+  UK: [SOURCE_ALIASES.AutoTrader],
+  JP: [SOURCE_ALIASES.BeForward],
+};
+
 function resolveSourceAliasesForPlatform(platformKey: string): string[] {
   const upperKey = platformKey.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
@@ -1165,6 +1175,7 @@ export async function fetchPaginatedListings(options: {
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
+  totalCount?: number;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
@@ -1181,10 +1192,10 @@ export async function fetchPaginatedListings(options: {
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Build base query
+    // Build base query — use count: "exact" to get total matching rows
     let query = supabase
       .from("listings")
-      .select(SELECT_NARROW)
+      .select(SELECT_NARROW, { count: "exact" })
       .ilike("make", targetMake);
 
     // Status filter
@@ -1211,26 +1222,21 @@ export async function fetchPaginatedListings(options: {
       }
     }
 
-    // Region filter
+    // Region filter — use source/platform mapping (reliable) instead of country
+    // column which may be NULL for some scrapers (e.g. BeForward for JP).
     if (options.region) {
       const regionUpper = options.region.toUpperCase();
-      const countryValues = REGION_COUNTRY_MAP[regionUpper];
+      const sourceGroups = REGION_SOURCE_MAP[regionUpper];
 
-      if (countryValues) {
-        // Match specific region countries
-        query = query.in("country", countryValues);
-      } else if (regionUpper === "EU") {
-        // EU = everything NOT in US, UK, or JP
-        const excludedCountries = [
-          ...REGION_COUNTRY_MAP.US,
-          ...REGION_COUNTRY_MAP.UK,
-          ...REGION_COUNTRY_MAP.JP,
-        ];
-        query = query.not(
-          "country",
-          "in",
-          `(${encodePostgrestInValues(excludedCountries)})`
-        );
+      if (sourceGroups) {
+        const allAliases = sourceGroups.flat();
+        query = query.in("source", allAliases);
+      } else {
+        // Unknown region — fall back to country-based filtering
+        const countryValues = REGION_COUNTRY_MAP[regionUpper];
+        if (countryValues) {
+          query = query.in("country", countryValues);
+        }
       }
     }
 
@@ -1262,7 +1268,7 @@ export async function fetchPaginatedListings(options: {
     const fetchCount = pageSize + 1;
     query = query.range(offset, offset + fetchCount - 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
@@ -1275,7 +1281,7 @@ export async function fetchPaginatedListings(options: {
 
     const cars = pageRows.map((row) => rowToCollectorCar(row));
 
-    return { cars, hasMore };
+    return { cars, hasMore, totalCount: count ?? undefined };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
     return { cars: [], hasMore: false };

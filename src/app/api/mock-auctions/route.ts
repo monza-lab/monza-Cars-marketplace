@@ -142,6 +142,11 @@ export async function GET(request: NextRequest) {
       hasMore: paginatedResult.hasMore,
     };
 
+    // Include exact total count for the current query filters (family + region)
+    if (paginatedResult.totalCount !== undefined) {
+      response.totalCount = paginatedResult.totalCount;
+    }
+
     if (aggregatesResult) {
       response.aggregates = {
         liveNow: aggregatesResult.liveNow,
