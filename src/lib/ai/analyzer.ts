@@ -179,6 +179,9 @@ function extractJSON<T>(text: string): T {
     }
   }
 
+  // Strip control characters that Gemini sometimes injects inside JSON strings
+  cleaned = cleaned.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+
   return JSON.parse(cleaned) as T;
 }
 
