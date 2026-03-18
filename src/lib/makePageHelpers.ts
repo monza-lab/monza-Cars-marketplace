@@ -6,7 +6,7 @@
 import type { CollectorCar, FairValueByRegion } from "@/lib/curatedCars"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { getModelImage } from "@/lib/modelImages"
-import { buildRegionalFairValue } from "@/lib/regionPricing"
+
 
 // ─── MODEL TYPE (aggregated from cars) ───
 export type Model = {
@@ -115,17 +115,40 @@ export function aggregateModels(cars: CollectorCar[], make: string): Model[] {
 // ─── REGIONAL PRICING HELPERS ───
 
 export function aggregateRegionalPricing(modelCars: CollectorCar[]): FairValueByRegion | null {
-  // Always derive from USD prices to ensure proper regional differentiation
-  const usdPrices = modelCars
-    .map(c => {
-      const us = c.fairValueByRegion?.US
-      if (us && us.high > 0) return (us.low + us.high) / 2
-      return c.currentBid > 0 ? c.currentBid : 0
-    })
-    .filter(p => p > 0)
-  if (usdPrices.length === 0) return null
-  const avgUsd = usdPrices.reduce((sum, p) => sum + p, 0) / usdPrices.length
-  return buildRegionalFairValue(avgUsd)
+  const REGIONS = ["US", "EU", "UK", "JP"] as const
+  const CURRENCY_MAP: Record<string, "$" | "€" | "£" | "¥"> = {
+    US: "$", EU: "€", UK: "£", JP: "¥",
+  }
+
+  // Filter cars with valid prices
+  const carsWithPrice = modelCars.filter(c => (c.currentBid > 0 || c.price > 0))
+  if (carsWithPrice.length === 0) return null
+
+  // Overall median as fallback for regions with no data
+  const allPrices = carsWithPrice.map(c => c.currentBid > 0 ? c.currentBid : c.price)
+  const overallMedian = median(allPrices)
+
+  const result = {} as FairValueByRegion
+  for (const region of REGIONS) {
+    const regionPrices = carsWithPrice
+      .filter(c => c.region === region)
+      .map(c => c.currentBid > 0 ? c.currentBid : c.price)
+
+    const med = regionPrices.length > 0 ? median(regionPrices) : overallMedian
+    result[region] = {
+      currency: CURRENCY_MAP[region],
+      low: Math.round(med * 0.85),
+      high: Math.round(med * 1.15),
+    }
+  }
+  return result
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
 // Find the region with the lowest average USD price (= BEST value)

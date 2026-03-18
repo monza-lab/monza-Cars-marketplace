@@ -33,7 +33,7 @@ export function MobileModelContext({
 }) {
   const t = useTranslations("makePage")
   const { effectiveRegion } = useRegion()
-  const { formatPrice } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
 
   const allModelCars = allCars.filter(c => c.model === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
@@ -89,10 +89,10 @@ export function MobileModelContext({
                       {isSelected && <span className="text-[7px] font-bold text-primary">{t("mobileContext.yourMarket")}</span>}
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] font-mono text-foreground">{fmtRegional(pricing.low, pricing.currency)}</span>
+                      <span className="text-[10px] font-mono text-foreground">{fmtRegional(convertFromUsd(pricing.low), currencySymbol)}</span>
                       <span className="text-[8px] text-muted-foreground">→</span>
                       <span className={`text-[10px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
-                        {fmtRegional(pricing.high, pricing.currency)}
+                        {fmtRegional(convertFromUsd(pricing.high), currencySymbol)}
                       </span>
                     </div>
                   </div>

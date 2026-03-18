@@ -137,7 +137,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
   const { resolvedTheme } = useTheme()
 
   // Scroll-spy state
@@ -231,8 +231,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   // Fair value: from report or market stats (real data only)
   const fairLow = report?.fair_value_low ?? marketStats?.primaryFairValueLow ?? 0
   const fairHigh = report?.fair_value_high ?? marketStats?.primaryFairValueHigh ?? 0
-  const regionRange = getFairValueForRegion(car.fairValueByRegion, selectedRegion)
-  const bidInCurrency = convertFromUsd(car.currentBid, regionRange.currency)
+  const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
+  const bidInCurrency = convertFromUsd(car.currentBid)
   const pricePosition = fairHigh > fairLow
     ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
   const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
@@ -1510,7 +1510,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
                   <p className="text-[14px] font-mono font-semibold text-foreground mt-2">
-                    {formatRegionalPrice(fairLow, regionRange.currency)} – {formatRegionalPrice(fairHigh, regionRange.currency)}
+                    {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
                   </p>
                 </div>
                 {/* Market Position */}
@@ -1662,7 +1662,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                               )}
                             </div>
                             <span className="text-[12px] font-mono text-muted-foreground">
-                              {formatRegionalPrice(rp.low, rp.currency)} – {formatRegionalPrice(rp.high, rp.currency)}
+                              {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)} – {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
                             </span>
                           </div>
                           <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
@@ -1683,9 +1683,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
                     <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
                   </div>
                   <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
@@ -1782,7 +1782,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Fair Value: {formatRegionalPrice(fairLow, regionRange.currency)} – {formatRegionalPrice(fairHigh, regionRange.currency)}</span>
+                      <span>Fair Value: {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
                       <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
-import { formatRegionalPrice as fmtRegional, formatUsd } from "@/lib/regionPricing"
+import { formatRegionalPrice as fmtRegional } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import {
@@ -52,7 +52,7 @@ export function ModelContextPanel({
   const tAuction = useTranslations("auctionDetail")
   const locale = useLocale()
   const { effectiveRegion } = useRegion()
-  const { formatPrice } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
 
   // All cars of this model family (unfiltered) for regional analysis
   const allModelCars = allCars.filter(c => extractFamily(c.model, c.year, make) === model.name)
@@ -190,18 +190,18 @@ export function ModelContextPanel({
                       </div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[11px] font-mono font-semibold text-foreground">
-                          {fmtRegional(pricing.low, pricing.currency)}
+                          {fmtRegional(convertFromUsd(pricing.low), currencySymbol)}
                         </span>
                         <span className="text-[9px] text-muted-foreground">→</span>
                         <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
-                          {fmtRegional(pricing.high, pricing.currency)}
+                          {fmtRegional(convertFromUsd(pricing.high), currencySymbol)}
                         </span>
                       </div>
                     </div>
                     {region !== effectiveRegion && (
                       <div className="flex justify-end mb-1">
                         <span className="text-[9px] font-mono text-muted-foreground">
-                          ≈ {formatUsd(pricing.high)} USD
+                          ≈ {formatPrice(pricing.high)}
                         </span>
                       </div>
                     )}

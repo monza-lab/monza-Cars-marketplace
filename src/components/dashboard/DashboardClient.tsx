@@ -1744,7 +1744,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
@@ -1937,7 +1937,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, val.symbol)}
+                      {formatRegionalVal(localCurrent, currencySymbol)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
@@ -2099,7 +2099,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
@@ -2275,7 +2275,7 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
                   </div>
                   <div className="flex items-baseline justify-between mb-1.5">
                     <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, val.symbol)}
+                      {formatRegionalVal(localCurrent, currencySymbol)}
                     </span>
                   </div>
                   <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">

@@ -312,6 +312,77 @@ function buildFairValue(price: number): FairValueByRegion {
   return buildRegionalFairValue(price);
 }
 
+// ─── Median helper ───
+function computeMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// ─── Enrich cars with real per-region fair values ───
+// Groups cars by make|model, computes per-region median prices,
+// and replaces the fake ±20% band with real data.
+export function enrichFairValues(cars: CollectorCar[]): CollectorCar[] {
+  if (cars.length === 0) return cars;
+
+  const REGIONS = ["US", "EU", "UK", "JP"] as const;
+  const CURRENCY_MAP: Record<string, "$" | "€" | "£" | "¥"> = {
+    US: "$", EU: "€", UK: "£", JP: "¥",
+  };
+
+  // Group prices by model key → region
+  const modelRegionPrices = new Map<string, Map<string, number[]>>();
+
+  for (const car of cars) {
+    const key = `${car.make}|${car.model}`;
+    if (!modelRegionPrices.has(key)) {
+      modelRegionPrices.set(key, new Map());
+    }
+    const regionMap = modelRegionPrices.get(key)!;
+    const price = car.currentBid > 0 ? car.currentBid : car.price;
+    if (price > 0) {
+      if (!regionMap.has(car.region)) {
+        regionMap.set(car.region, []);
+      }
+      regionMap.get(car.region)!.push(price);
+    }
+  }
+
+  // Pre-compute fair values per model
+  const modelFairValues = new Map<string, FairValueByRegion>();
+
+  for (const [modelKey, regionMap] of modelRegionPrices) {
+    // Overall median for this model (fallback for regions with no data)
+    const allPrices: number[] = [];
+    for (const prices of regionMap.values()) allPrices.push(...prices);
+    const overallMedian = computeMedian(allPrices);
+
+    const result = {} as FairValueByRegion;
+    for (const region of REGIONS) {
+      const prices = regionMap.get(region) || [];
+      const median = prices.length > 0 ? computeMedian(prices) : overallMedian;
+      result[region] = {
+        currency: CURRENCY_MAP[region],
+        low: Math.round(median * 0.85),
+        high: Math.round(median * 1.15),
+      };
+    }
+    modelFairValues.set(modelKey, result);
+  }
+
+  // Apply real fair values to each car
+  for (const car of cars) {
+    const key = `${car.make}|${car.model}`;
+    const fairValue = modelFairValues.get(key);
+    if (fairValue) {
+      car.fairValueByRegion = fairValue;
+    }
+  }
+
+  return cars;
+}
+
 function auctionHouseLabel(source: string): string {
   const canonical = resolveCanonicalSource(source, null);
   switch (canonical) {
@@ -1123,7 +1194,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
     if (rows.length === 0) return [];
 
     if (!includePriceHistory) {
-      return rows.map((row) => rowToCollectorCar(row));
+      return enrichFairValues(rows.map((row) => rowToCollectorCar(row)));
     }
 
     // Fetch price history for trend computation
@@ -1141,7 +1212,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       historyByListing.set(row.listing_id, existing);
     }
 
-    return rows.map((row) => {
+    const cars = rows.map((row) => {
       const car = rowToCollectorCar(row);
       const history = historyByListing.get(row.id);
 
@@ -1152,7 +1223,6 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
         if (latestPrice > 0) {
           car.currentBid = latestPrice;
           car.price = latestPrice;
-          car.fairValueByRegion = buildFairValue(latestPrice);
         }
       }
 
@@ -1163,6 +1233,8 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       }
       return car;
     });
+
+    return enrichFairValues(cars);
   } catch (err) {
     console.error("[supabaseLiveListings] Failed to fetch:", err);
     return [];

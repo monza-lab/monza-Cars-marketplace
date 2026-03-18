@@ -6,6 +6,7 @@ import {
   fetchLiveListingByIdWithStatus,
   fetchLiveListingsAsCollectorCars,
   fetchSoldListingsForMake,
+  enrichFairValues,
 } from "@/lib/supabaseLiveListings"
 import { getMarketDataForModel, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake } from "@/lib/db/queries"
 import { CarDetailClient } from "./CarDetailClient"
@@ -76,11 +77,23 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     notFound()
   }
 
-  // Find similar cars using professional multi-criteria scoring
+  // Load same-make listings for similar cars + real regional fair values
   const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
   if (car.id.startsWith("live-")) {
-    const live = await fetchLiveListingsAsCollectorCars({ limit: 40, includePriceHistory: false })
+    const live = await fetchLiveListingsAsCollectorCars({
+      limit: 200,
+      make: car.make,
+      includePriceHistory: false,
+      status: "all",
+    })
     allCandidates.push(...live.filter(c => c.id !== car.id))
+
+    // Compute real regional fair values from same-model listings
+    const sameModelCars = live.filter(c => c.model === car.model)
+    if (sameModelCars.length > 0) {
+      const enriched = enrichFairValues([car, ...sameModelCars])
+      car.fairValueByRegion = enriched[0].fairValueByRegion
+    }
   }
   const similarCars = findSimilarCars(car, allCandidates, 4)
 

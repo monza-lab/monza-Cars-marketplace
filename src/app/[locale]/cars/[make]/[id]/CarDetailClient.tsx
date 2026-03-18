@@ -40,7 +40,7 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import { useRegion } from "@/lib/RegionContext"
-import { formatRegionalPrice, formatUsd, buildRegionalFairValue } from "@/lib/regionPricing"
+import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
@@ -608,7 +608,7 @@ function CarContextPanel({
   dbSoldHistory?: DbSoldRecord[]
 }) {
   const { effectiveRegion } = useRegion()
-  const { formatPrice } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
   const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
   const costs = {
     insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
@@ -619,11 +619,8 @@ function CarContextPanel({
   const shipping = shippingCosts[car.make] || shippingCosts.default
   const events = eventsData[car.make] || eventsData.default
 
-  // Regional pricing — recalculate from USD to ensure proper regional differentiation
-  const usdBase = car.fairValueByRegion.US.high > 0
-    ? (car.fairValueByRegion.US.low + car.fairValueByRegion.US.high) / 2
-    : car.currentBid
-  const pricing = buildRegionalFairValue(usdBase)
+  // Regional pricing — use real per-region fair values from DB
+  const pricing = car.fairValueByRegion
   const bestRegion = findBestRegion(pricing)
   const maxRegionalUsd = Math.max(
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
@@ -717,18 +714,18 @@ function CarContextPanel({
                     </div>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-[11px] font-mono font-semibold text-foreground">
-                        {formatRegionalPrice(rp.low, rp.currency)}
+                        {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)}
                       </span>
                       <span className="text-[9px] text-muted-foreground">→</span>
                       <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
-                        {formatRegionalPrice(rp.high, rp.currency)}
+                        {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
                       </span>
                     </div>
                   </div>
                   {region !== effectiveRegion && (
                     <div className="flex justify-end mb-1">
                       <span className="text-[9px] font-mono text-muted-foreground">
-                        ≈ {formatUsd(rp.high)} USD
+                        ≈ {formatPrice(rp.high)}
                       </span>
                     </div>
                   )}
@@ -1013,11 +1010,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
 
   // ─── Investment Passport computations (for mobile) ───
-  // Fair value: recalculate from USD base for proper regional differentiation
-  const mobileUsdBase = car.fairValueByRegion.US.high > 0
-    ? (car.fairValueByRegion.US.low + car.fairValueByRegion.US.high) / 2
-    : car.currentBid
-  const mobilePricing = buildRegionalFairValue(mobileUsdBase)
+  // Use real per-region fair values from DB
+  const mobilePricing = car.fairValueByRegion
   const regionRange = mobilePricing[effectiveRegion as keyof typeof mobilePricing] || mobilePricing.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
