@@ -1,88 +1,52 @@
 "use client"
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from "react"
+import type { ListingReport } from "@/lib/reports/types"
 
-interface AnalysisResult {
-  id: string;
-  auctionId: string;
-  overallScore: number;
-  investmentRating: string;
-  summary: string;
-  marketAnalysis: {
-    estimatedValue: number;
-    confidenceLevel: number;
-    comparableSales: number;
-    marketTrend: 'appreciating' | 'stable' | 'depreciating';
-    pricePosition: 'below' | 'at' | 'above';
-  };
-  conditionAssessment: {
-    exterior: number;
-    interior: number;
-    mechanical: number;
-    documentation: number;
-    overall: number;
-    flags: string[];
-  };
-  investmentOutlook: {
-    shortTerm: string;
-    longTerm: string;
-    risks: string[];
-    opportunities: string[];
-  };
-  recommendation: string;
-  createdAt: string;
+interface UseReportResult {
+  report: ListingReport | null
+  loading: boolean
+  error: string | null
+  generating: boolean
+  triggerGeneration: () => Promise<void>
+  creditUsed: number
+  creditsRemaining: number | null
 }
 
-export function useAnalysis(auctionId: string) {
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
-  const [loading, setLoading] = useState(true)
+export function useReport(listingId: string): UseReportResult {
+  const [report, setReport] = useState<ListingReport | null>(null)
+  const [loading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [analyzing, setAnalyzing] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [creditUsed, setCreditUsed] = useState(0)
+  const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
 
-  const fetchAnalysis = useCallback(async () => {
-    if (!auctionId) return
-    setLoading(true)
+  const triggerGeneration = useCallback(async () => {
+    if (!listingId) return
+    setGenerating(true)
     setError(null)
     try {
-      const res = await fetch(`/api/analyze?auctionId=${auctionId}`)
-      const data = await res.json()
-      if (data.success && data.data) {
-        setAnalysis(data.data)
-      } else if (res.status === 404) {
-        setAnalysis(null)
-      } else {
-        setError(data.error || 'Failed to fetch analysis')
-      }
-    } catch (err) {
-      setError('Failed to fetch analysis')
-    } finally {
-      setLoading(false)
-    }
-  }, [auctionId])
-
-  useEffect(() => { fetchAnalysis() }, [fetchAnalysis])
-
-  const triggerAnalysis = useCallback(async () => {
-    if (!auctionId) return
-    setAnalyzing(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auctionId }),
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId }),
       })
       const data = await res.json()
       if (data.success) {
-        setAnalysis(data.data)
+        setReport(data.data)
+        setCreditUsed(data.creditUsed ?? 0)
+        setCreditsRemaining(data.creditsRemaining ?? null)
       } else {
-        setError(data.error || 'Analysis failed')
+        setError(data.error || "Report generation failed")
       }
-    } catch (err) {
-      setError('Failed to trigger analysis')
+    } catch {
+      setError("Failed to generate report")
     } finally {
-      setAnalyzing(false)
+      setGenerating(false)
     }
-  }, [auctionId])
+  }, [listingId])
 
-  return { analysis, loading, error, analyzing, triggerAnalysis }
+  return { report, loading, error, generating, triggerGeneration, creditUsed, creditsRemaining }
 }
+
+// Keep old export name for backward compatibility
+export const useAnalysis = useReport

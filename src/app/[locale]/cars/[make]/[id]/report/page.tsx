@@ -1,32 +1,31 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
+import { setRequestLocale } from "next-intl/server"
 import { CURATED_CARS } from "@/lib/curatedCars"
 import {
   fetchLiveListingById,
   fetchLiveListingByIdWithStatus,
   fetchLiveListingsAsCollectorCars,
-  fetchSoldListingsForMake,
+  fetchPricedListingsForModel,
 } from "@/lib/supabaseLiveListings"
-import { getMarketDataForModel, getMarketDataForMake, getComparablesForModel, getAnalysisForCar, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
+import { computeMarketStatsForCar } from "@/lib/marketStats"
+import { getReportForListing } from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
 
 interface ReportPageProps {
-  params: Promise<{ make: string; id: string }>
+  params: Promise<{ locale: string; make: string; id: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
   const { id } = await params
 
   let car = CURATED_CARS.find(c => c.id === id) ?? null
-
   if (!car && id.startsWith("live-")) {
     car = await fetchLiveListingById(id)
   }
 
-  if (!car) {
-    return { title: "Not Found | Monza Lab" }
-  }
+  if (!car) return { title: "Not Found | Monza Lab" }
 
   return {
     title: `Investment Dossier: ${car.title} | Monza Lab`,
@@ -42,7 +41,9 @@ export async function generateStaticParams() {
 }
 
 export default async function ReportPage({ params }: ReportPageProps) {
-  const { id } = await params
+  const { locale, id } = await params
+  setRequestLocale(locale)
+
   const isLiveId = id.startsWith("live-")
 
   let car = CURATED_CARS.find(c => c.id === id) ?? null
@@ -70,7 +71,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     notFound()
   }
 
-  // Find similar cars using professional multi-criteria scoring
+  // Fetch similar cars
   const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
   if (car.id.startsWith("live-")) {
     const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
@@ -78,21 +79,14 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
   const similarCars = findSimilarCars(car, allCandidates, 6)
 
-  const shouldQueryHistoricalData = !car.id.startsWith("live-")
-
-  // Use Supabase-first for live routes and only hit historical tables when needed.
-  const [dbMarketData, dbMarketDataBrand, dbComparables, dbAnalysis, dbAnalyses, supabaseSoldHistory] = await Promise.all([
-    shouldQueryHistoricalData ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
-    shouldQueryHistoricalData ? getMarketDataForMake(car.make) : Promise.resolve([]),
-    shouldQueryHistoricalData ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
-    shouldQueryHistoricalData ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
-    shouldQueryHistoricalData ? getAnalysesForMake(car.make) : Promise.resolve([]),
-    fetchSoldListingsForMake(car.make),
+  // Fetch priced listings + compute market stats + check for existing report
+  const [allPriced, existingReport] = await Promise.all([
+    fetchPricedListingsForModel(car.make),
+    getReportForListing(car.id),
   ])
 
-  const dbSoldHistory = supabaseSoldHistory.length > 0
-    ? supabaseSoldHistory
-    : await getSoldAuctionsForMake(car.make)
+  // Filter by series, expand to family if needed, compute regional stats (shared helper)
+  const { marketStats } = computeMarketStatsForCar(car, allPriced)
 
   return (
     <Suspense
@@ -111,12 +105,8 @@ export default async function ReportPage({ params }: ReportPageProps) {
       <ReportClient
         car={car}
         similarCars={similarCars}
-        dbMarketData={dbMarketData}
-        dbMarketDataBrand={dbMarketDataBrand}
-        dbComparables={dbComparables}
-        dbAnalysis={dbAnalysis}
-        dbSoldHistory={dbSoldHistory}
-        dbAnalyses={dbAnalyses}
+        existingReport={existingReport}
+        marketStats={marketStats}
       />
     </Suspense>
   )

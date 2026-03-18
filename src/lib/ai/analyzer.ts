@@ -6,12 +6,16 @@
 // ---------------------------------------------------------------------------
 
 import { analyzeVehicle, analyzeWithSystem } from './claude';
+import { analyzeWithGemini } from './gemini';
 import {
   ANALYSIS_SYSTEM_PROMPT,
   buildVehicleAnalysisPrompt,
   buildMarketSummaryPrompt,
+  REPORT_SYSTEM_PROMPT,
+  buildReportAnalysisPrompt,
 } from './prompts';
 import type { AIAnalysisResponse } from '@/types/analysis';
+import type { RegionalMarketStats, PricedListingRecord, ListingReport } from '@/lib/reports/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -174,6 +178,9 @@ function extractJSON<T>(text: string): T {
       }
     }
   }
+
+  // Strip control characters that Gemini sometimes injects inside JSON strings
+  cleaned = cleaned.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
 
   return JSON.parse(cleaned) as T;
 }
@@ -402,4 +409,72 @@ export async function analyzeMarket(
   const prompt = buildMarketSummaryPrompt(auctions);
   const rawResponse = await analyzeVehicle(prompt);
   return parseWithRetry<Record<string, unknown>>(rawResponse, prompt, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Investment Report Analysis (Gemini-powered)
+// ---------------------------------------------------------------------------
+
+/** LLM fields from listing_reports that Gemini fills */
+export interface ReportLLMFields {
+  investment_grade: string | null
+  confidence: string | null
+  red_flags: string[]
+  key_strengths: string[]
+  critical_questions: string[]
+  yearly_maintenance: number | null
+  insurance_estimate: number | null
+  major_service_cost: number | null
+  appreciation_potential: string | null
+  bid_target_low: number | null
+  bid_target_high: number | null
+  raw_llm_response: Record<string, unknown> | null
+  llm_model: string
+}
+
+/**
+ * Generate a Gemini-powered investment report analysis.
+ * Returns the LLM fields ready to merge into listing_reports.
+ */
+export async function analyzeForReport(
+  vehicle: Parameters<typeof buildReportAnalysisPrompt>[0],
+  regionalStats: RegionalMarketStats[],
+  sampleListings: PricedListingRecord[],
+  brandThesis: string | null,
+): Promise<ReportLLMFields> {
+  const userPrompt = buildReportAnalysisPrompt(
+    vehicle,
+    regionalStats,
+    sampleListings,
+    brandThesis,
+  )
+
+  const rawText = await analyzeWithGemini(REPORT_SYSTEM_PROMPT, userPrompt)
+
+  // Reuse existing robust JSON parser
+  const parsed = extractJSON<Record<string, unknown>>(rawText)
+
+  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+
+  return {
+    investment_grade: typeof parsed.investmentGrade === 'string' ? parsed.investmentGrade : null,
+    confidence: typeof parsed.confidence === 'string' ? parsed.confidence : null,
+    red_flags: Array.isArray(parsed.redFlags) ? parsed.redFlags.filter((s: unknown) => typeof s === 'string') : [],
+    key_strengths: Array.isArray(parsed.keyStrengths) ? parsed.keyStrengths.filter((s: unknown) => typeof s === 'string') : [],
+    critical_questions: Array.isArray(parsed.criticalQuestions) ? parsed.criticalQuestions.filter((s: unknown) => typeof s === 'string') : [],
+    yearly_maintenance: typeof parsed.ownershipCosts === 'object' && parsed.ownershipCosts != null
+      ? (parsed.ownershipCosts as Record<string, unknown>).yearlyMaintenance as number ?? null
+      : null,
+    insurance_estimate: typeof parsed.ownershipCosts === 'object' && parsed.ownershipCosts != null
+      ? (parsed.ownershipCosts as Record<string, unknown>).insuranceEstimate as number ?? null
+      : null,
+    major_service_cost: typeof parsed.ownershipCosts === 'object' && parsed.ownershipCosts != null
+      ? (parsed.ownershipCosts as Record<string, unknown>).majorServiceCost as number ?? null
+      : null,
+    appreciation_potential: typeof parsed.appreciationPotential === 'string' ? parsed.appreciationPotential : null,
+    bid_target_low: typeof parsed.bidTargetLow === 'number' ? parsed.bidTargetLow : null,
+    bid_target_high: typeof parsed.bidTargetHigh === 'number' ? parsed.bidTargetHigh : null,
+    raw_llm_response: parsed,
+    llm_model: model,
+  }
 }

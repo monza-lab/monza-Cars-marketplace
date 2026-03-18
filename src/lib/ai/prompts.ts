@@ -1,3 +1,5 @@
+import type { RegionalMarketStats, PricedListingRecord } from "@/lib/reports/types"
+
 // ---------------------------------------------------------------------------
 // AI Prompts for Vehicle Analysis
 // ---------------------------------------------------------------------------
@@ -213,4 +215,126 @@ Respond with ONLY a JSON object:
   "factors": ["<string - key factors affecting value>"],
   "notes": "<string - brief notes on this model's market position>"
 }`;
+}
+
+// ---------------------------------------------------------------------------
+// Investment Report Analysis Prompt (Gemini)
+// ---------------------------------------------------------------------------
+
+export const REPORT_SYSTEM_PROMPT = `You are Monza Lab AI, an expert collector car investment analyst. You specialize in valuations based on real market data — actual sale prices, asking prices, and listing histories.
+
+RULES:
+- Base ALL analysis on the real market data provided below
+- Clearly distinguish between verified sales and asking prices in your reasoning
+- If insufficient data exists for any field, return null for that field
+- Never fabricate sale records, price data, or market statistics
+- Be specific to the exact vehicle being analyzed
+- Reference known issues for the specific year/make/model
+- Express uncertainty when data is limited
+
+You always respond with valid JSON when asked to do so.`
+
+export function buildReportAnalysisPrompt(
+  vehicle: {
+    title: string
+    year: number
+    make: string
+    model: string
+    trim?: string | null
+    mileage?: number | null
+    mileageUnit?: string
+    transmission?: string | null
+    engine?: string | null
+    exteriorColor?: string | null
+    interiorColor?: string | null
+    location?: string | null
+    price: number
+    vin?: string | null
+    description?: string | null
+    sellerNotes?: string | null
+    platform: string
+    sourceUrl?: string
+  },
+  regionalStats: RegionalMarketStats[],
+  sampleListings: PricedListingRecord[],
+  brandThesis: string | null,
+): string {
+  // Vehicle section
+  const vehicleSection = `VEHICLE BEING ANALYZED:
+- Title: ${vehicle.title}
+- Year: ${vehicle.year}
+- Make: ${vehicle.make}
+- Model: ${vehicle.model}${vehicle.trim ? ` ${vehicle.trim}` : ""}
+- Price: $${vehicle.price.toLocaleString()} (listing price)
+- Mileage: ${vehicle.mileage != null ? `${vehicle.mileage.toLocaleString()} ${vehicle.mileageUnit || "mi"}` : "Not specified"}
+- Transmission: ${vehicle.transmission || "Not specified"}
+- Engine: ${vehicle.engine || "Not specified"}
+- Exterior: ${vehicle.exteriorColor || "Not specified"}
+- Interior: ${vehicle.interiorColor || "Not specified"}
+- Location: ${vehicle.location || "Not specified"}
+- VIN: ${vehicle.vin || "Not provided"}
+- Platform: ${vehicle.platform}
+${vehicle.sourceUrl ? `- URL: ${vehicle.sourceUrl}` : ""}
+
+${vehicle.description ? `LISTING DESCRIPTION:\n${vehicle.description.slice(0, 3000)}\n` : ""}
+${vehicle.sellerNotes ? `SELLER NOTES:\n${vehicle.sellerNotes.slice(0, 1000)}\n` : ""}`
+
+  // Regional market data
+  const marketSections = regionalStats.map(r => {
+    const tierNote = r.tier === 1
+      ? "VERIFIED SALES (actual transaction prices)"
+      : r.tier === 2
+        ? "ASKING PRICES (active listings, NOT confirmed sales)"
+        : "RECENTLY DELISTED (last known asking prices)"
+
+    return `${r.region} MARKET — ${tierNote} [${r.sources.join(", ")}]:
+  Count: ${r.totalListings}
+  Median: ${r.currency === "USD" ? "$" : r.currency === "EUR" ? "€" : r.currency === "GBP" ? "£" : "¥"}${r.medianPrice.toLocaleString()} (${r.currency})
+  Range: P25=${r.p25Price.toLocaleString()} — P75=${r.p75Price.toLocaleString()} (${r.currency})
+  Min-Max: ${r.minPrice.toLocaleString()} — ${r.maxPrice.toLocaleString()} (${r.currency})
+  Trend: ${r.trendDirection} (${r.trendPercent > 0 ? "+" : ""}${r.trendPercent}%)
+  Period: ${r.oldestDate} to ${r.newestDate}`
+  }).join("\n\n")
+
+  // Sample comparables (up to 20 per region)
+  const sampleSection = sampleListings.length > 0
+    ? `SAMPLE COMPARABLE LISTINGS:\n${sampleListings.slice(0, 60).map((l, i) =>
+        `${i + 1}. ${l.year} ${l.make} ${l.model}${l.trim ? ` ${l.trim}` : ""} — ${l.originalCurrency ?? "USD"} ${l.hammerPrice.toLocaleString()} [${l.source}] ${l.status} ${l.saleDate ?? ""} ${l.mileage ? `(${l.mileage.toLocaleString()} mi)` : ""}`
+      ).join("\n")}`
+    : "NO COMPARABLE LISTINGS AVAILABLE."
+
+  const thesisSection = brandThesis
+    ? `BRAND/SERIES INVESTMENT THESIS:\n${brandThesis}\n`
+    : ""
+
+  return `${vehicleSection}
+
+REGIONAL MARKET DATA:
+${marketSections}
+
+${sampleSection}
+
+${thesisSection}
+INSTRUCTIONS:
+Analyze this vehicle and respond with ONLY a valid JSON object (no markdown fences). Use this exact structure:
+
+{
+  "investmentGrade": "<AAA|AA|A|BBB|BB|B or null if insufficient data>",
+  "confidence": "<HIGH|MEDIUM|LOW>",
+  "redFlags": ["<string — potential concern identified from listing or market data>"],
+  "keyStrengths": ["<string — positive aspect of this vehicle>"],
+  "criticalQuestions": ["<string — important question a buyer should ask>"],
+  "ownershipCosts": {
+    "yearlyMaintenance": <number in USD or null>,
+    "insuranceEstimate": <number in USD or null>,
+    "majorServiceCost": <number in USD or null>,
+    "majorServiceDescription": "<string describing what the service is>"
+  },
+  "appreciationPotential": "<string — 2-3 sentences on investment outlook>",
+  "bidTargetLow": <number in USD — conservative buy price or null>,
+  "bidTargetHigh": <number in USD — aggressive buy price or null>,
+  "comparableAnalysis": "<string — 2-3 paragraphs analyzing this vehicle vs comparable market data>"
+}
+
+Be specific to THIS exact vehicle. Weight verified sales (Tier 1) more heavily than asking prices (Tier 2). If data is limited, lower the confidence and explain why.`
 }
