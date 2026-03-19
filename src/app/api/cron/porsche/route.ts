@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/scrapers/porsche_collector/collector";
 import { refreshActiveListings } from "@/features/scrapers/porsche_collector/supabase_writer";
+import { runLightBackfill, type LightBackfillResult } from "@/features/scrapers/porsche_collector/historical_backfill";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -49,11 +50,11 @@ export async function GET(request: Request) {
 
     // Step 2: Discover and ingest new active listings via BaT
     // Subtract refresh duration from collector budget to stay within 300s Vercel limit.
-    const remainingBudgetMs = Math.max(270_000 - refreshDurationMs, 30_000);
+    const remainingBudgetMs = Math.max(180_000 - refreshDurationMs, 30_000);
     const result = await runCollector({
       mode: "daily",
-      sources: ["BaT"],
-      maxActivePagesPerSource: 3,
+      sources: ["BaT", "CarsAndBids", "CollectingCars"],
+      maxActivePagesPerSource: 2,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
       timeBudgetMs: remainingBudgetMs,
@@ -69,7 +70,34 @@ export async function GET(request: Request) {
       0
     );
 
-    const allErrors = [...result.errors, ...refreshResult.errors];
+    // Step 3: Light backfill of recently sold auctions
+    let backfillResult: LightBackfillResult | null = null;
+    let backfillError: string | null = null;
+
+    const elapsedMs = Date.now() - startTime;
+    const remainingMs = maxDuration * 1000 - elapsedMs - 10_000; // 10s safety buffer
+
+    if (remainingMs > 30_000) {
+      try {
+        backfillResult = await runLightBackfill({
+          windowDays: 30,
+          maxListingsPerModel: 1,
+          timeBudgetMs: Math.min(remainingMs - 10_000, 90_000),
+        });
+      } catch (error) {
+        backfillError = error instanceof Error ? error.message : "Backfill failed";
+        console.error("[cron/porsche] Backfill error (non-fatal):", error);
+      }
+    } else {
+      backfillError = `Skipped: only ${Math.round(remainingMs / 1000)}s remaining`;
+    }
+
+    const allErrors = [
+      ...result.errors,
+      ...refreshResult.errors,
+      ...(backfillResult?.errors ?? []),
+      ...(backfillError ? [backfillError] : []),
+    ];
 
     await recordScraperRun({
       scraper_name: 'porsche',
@@ -85,6 +113,8 @@ export async function GET(request: Request) {
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
       source_counts: result.sourceCounts,
+      backfill_discovered: backfillResult?.discovered,
+      backfill_written: backfillResult?.written,
       error_messages: allErrors.length > 0 ? allErrors : undefined,
     });
 
@@ -102,6 +132,18 @@ export async function GET(request: Request) {
       written: totalWritten,
       sourceCounts: result.sourceCounts,
       errors: result.errors,
+      backfill: backfillResult
+        ? {
+            modelsSearched: backfillResult.modelsSearched,
+            newModelsFound: backfillResult.newModelsFound,
+            discovered: backfillResult.discovered,
+            written: backfillResult.written,
+            skippedExisting: backfillResult.skippedExisting,
+            errors: backfillResult.errors,
+            timedOut: backfillResult.timedOut,
+            durationMs: backfillResult.durationMs,
+          }
+        : { skipped: true, reason: backfillError },
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

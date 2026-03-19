@@ -7,7 +7,7 @@ on:
     inputs:
       max_listings:
         description: 'Max listings to process'
-        default: '5000'
+        default: '7000'
       countries:
         description: 'Country codes (comma-separated: D,A,B,E,F,I,L,NL)'
         default: 'D,A,B,E,F,I,L,NL'
@@ -57,7 +57,7 @@ jobs:
         run: |
           npx tsx src/features/autoscout24_collector/cli.ts \
             --countries=${{ github.event.inputs.countries || 'D,A,B,E,F,I,L,NL' }} \
-            --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
+            --maxListings=${{ github.event.inputs.max_listings || '7000' }} \
             --maxPagesPerShard=${{ github.event.inputs.max_pages_per_shard || '20' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \

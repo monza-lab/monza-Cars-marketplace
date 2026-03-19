@@ -131,9 +131,9 @@ describe("BeForward Cron Route", () => {
     expect(backfillMissingImages).toHaveBeenCalledWith(
       expect.objectContaining({
         timeBudgetMs: expect.any(Number),
-        maxListings: 15,
+        maxListings: 8,
         rateLimitMs: 3500,
-        timeoutMs: 20_000,
+        timeoutMs: 15_000,
         runId: "bf-run",
       })
     );

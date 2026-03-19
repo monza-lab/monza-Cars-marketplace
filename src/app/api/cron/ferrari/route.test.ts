@@ -72,8 +72,8 @@ describe("Ferrari Cron Route", () => {
     vi.mocked(refreshActiveListings).mockResolvedValue(mockRefreshResult);
     vi.mocked(runCollector).mockResolvedValue(mockCollectorResult as any);
     vi.mocked(runLightBackfill).mockResolvedValue({
-      modelsSearched: 5,
-      newModelsFound: 2,
+      modelsSearched: ["488 GTB", "F8 Tributo", "Roma", "296 GTB", "SF90"],
+      newModelsFound: ["Purosangue", "12Cilindri"],
       discovered: 15,
       written: 8,
       skippedExisting: 7,
@@ -113,11 +113,16 @@ describe("Ferrari Cron Route", () => {
       runtime: "vercel_cron",
     });
 
-    expect(refreshActiveListings).toHaveBeenCalled();
-    expect(runCollector).toHaveBeenCalledWith({
-      mode: "daily",
-      dryRun: false,
-    });
+    expect(refreshActiveListings).toHaveBeenCalledWith({ timeBudgetMs: 60_000 });
+    expect(runCollector).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "daily",
+        dryRun: false,
+        scrapeDetails: false,
+        maxEndedPagesPerSource: 2,
+        timeBudgetMs: expect.any(Number),
+      })
+    );
 
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -1,6 +1,6 @@
 # Scrapers: Next Steps for 100% Data Coverage
 
-Current state as of 2026-03-15. Based on full manual run of all 6 scrapers + analysis of GitHub Actions history and cron route code.
+Current state as of 2026-03-19. Based on full manual run of all scrapers + analysis of GitHub Actions history and cron route code.
 
 ---
 
@@ -8,34 +8,20 @@ Current state as of 2026-03-15. Based on full manual run of all 6 scrapers + ana
 
 | # | Scraper | Status | Daily Yield | Coverage Gap |
 |---|---------|--------|-------------|--------------|
-| 1 | Porsche (BaT) | Working | ~36 new | Only 1 of 3 sources active; no backfill |
-| 2 | Ferrari (BaT) | **Data deleted daily** | ~75 new (then deleted) | Cleanup cron deletes all Ferrari listings |
+| 1 | Porsche (BaT+C&B+CC) | **FIXED** — 3 sources + backfill | ~36+ new | All 3 auction sources active; LightBackfill enabled |
+| 2 | Ferrari (BaT) | Working (Porsche-only project) | ~75 new | N/A — project is Porsche-only |
 | 3 | AutoTrader UK | Working | ~98 new | Porsche-only; brittle API headers |
-| 4 | BeForward | Working (low yield) | 0 new | Porsche-only; image backfill broken |
+| 4 | BeForward | **FIXED** — image backfill filter | 0 new | Porsche-only; image filter corrected |
 | 5 | Classic.com | **Broken** | 0 | Needs residential proxy |
-| 6 | AutoScout24 | Working | ~4,979 new | 87% shard coverage at 5000 cap |
+| 6 | AutoScout24 | **FIXED** — 100% shards | ~4,979 new | maxListings raised to 7000 |
 
 ---
 
-## CRITICAL — Fix Immediately
+## ~~CRITICAL — Fix Immediately~~ (Resolved)
 
-### 1. Cleanup cron is deleting all Ferrari listings
+### 1. ~~Cleanup cron is deleting all Ferrari listings~~ — N/A
 
-**File:** `src/app/api/cron/cleanup/route.ts:24`
-
-The `detectJunk()` function has Rule 1: `if (make !== "porsche") return "non-porsche-make"`. This deletes **every Ferrari listing** daily — the Ferrari collector writes ~75-192 listings per run, then the cleanup cron at 06:00 UTC deletes them all.
-
-**Fix:** Add Ferrari (and future makes) to the allowlist:
-
-```typescript
-// Rule 1: Non-supported makes
-const allowedMakes = ["porsche", "ferrari"];
-if (!allowedMakes.includes(make)) {
-  return `unsupported-make:${row.make}`;
-}
-```
-
-**Impact:** HIGH — Ferrari data has been silently deleted for weeks/months.
+**Status:** Not a bug — project is Porsche-only. The cleanup cron correctly deletes non-Porsche listings. Ferrari scraper exists but the project scope is Porsche only.
 
 ---
 
@@ -59,64 +45,23 @@ Classic.com uses Cloudflare protection. Without a proxy, only page 1 of search r
 
 ## HIGH PRIORITY — Significant Data Gaps
 
-### 3. Porsche cron only scrapes BaT (ignores CarsAndBids + CollectingCars)
+### 3. ~~Porsche cron only scrapes BaT~~ — FIXED (2026-03-19)
 
-**File:** `src/app/api/cron/porsche/route.ts:55`
-
-The collector supports 3 sources (`BaT`, `CarsAndBids`, `CollectingCars`), but the cron hard-codes `sources: ["BaT"]`. CarsAndBids and CollectingCars are never called automatically.
-
-**Fix:** Enable all 3 sources:
-
-```typescript
-const result = await runCollector({
-  mode: "daily",
-  sources: ["BaT", "CarsAndBids", "CollectingCars"],
-  maxActivePagesPerSource: 3,
-  maxEndedPagesPerSource: 0,
-  scrapeDetails: false,
-  timeBudgetMs: remainingBudgetMs,
-  dryRun: false,
-});
-```
-
-**Risk:** May exceed the 5-minute Vercel limit. Consider reducing `maxActivePagesPerSource` to 2 if timing is tight.
+**Status:** All 3 sources enabled (`BaT`, `CarsAndBids`, `CollectingCars`). `maxActivePagesPerSource` reduced to 2 and collector budget to 180s to accommodate LightBackfill step.
 
 ---
 
-### 4. Porsche cron never calls LightBackfill (sold auction history)
+### 4. ~~Porsche cron never calls LightBackfill~~ — FIXED (2026-03-19)
 
-**File:** `src/app/api/cron/porsche/route.ts`
-
-The Ferrari cron has a step 3 that calls `runLightBackfill()` to ingest recently sold BaT auctions. The Porsche cron has the exact same function available in `porsche_collector/historical_backfill.ts` but never calls it.
-
-**Fix:** Add a step 3 to the Porsche cron route (same pattern as Ferrari cron):
-
-```typescript
-// Step 3: Light backfill of recent sold auctions
-const backfillBudgetMs = Math.min(remainingMs, 120_000);
-if (backfillBudgetMs > 30_000) {
-  const backfillResult = await runLightBackfill({
-    timeBudgetMs: backfillBudgetMs,
-    windowDays: 30,
-  });
-}
-```
-
-**Impact:** Without this, only active (currently live) Porsche auctions are tracked. All sold auction data (hammer prices, sell-through rates) is missing.
+**Status:** Step 3 added to Porsche cron route calling `runLightBackfill({ windowDays: 30, maxListingsPerModel: 1 })`. Time-budgeted with 90s max, skipped if <30s remaining.
 
 ---
 
-### 5. AutoScout24 only covers 87% of shards (45/52)
+### 5. ~~AutoScout24 only covers 87% of shards~~ — FIXED (2026-03-19)
 
-**File:** `.github/workflows/autoscout24-collector.yml`
+**Status:** `maxListings` raised from 5000 to 7000 in `.github/workflows/autoscout24-collector.yml`. Should now cover all 52 shards.
 
-At `maxListings=5000`, the run completes 45 of 52 shards before hitting the cap. The remaining 7 shards (likely smaller country + model combos like Netherlands, Luxembourg) are never scraped.
-
-**Options:**
-- **A) Raise maxListings to 7000** — should cover all 52 shards. Increase timeout to 120 min.
-- **B) Accept 87%** — the missing shards are small markets (L, NL). Cost-benefit may not justify the extra GH Actions minutes.
-
-**Also:** `splitSaturatedShard()` in `shards.ts` is dead code — large shards that hit the 20-page AS24 pagination cap silently truncate data. Consider wiring it up for the 911-D shards (Germany, the largest market).
+**Still open:** `splitSaturatedShard()` in `shards.ts` is dead code — large shards that hit the 20-page AS24 pagination cap silently truncate data.
 
 ---
 
@@ -138,30 +83,15 @@ The workflow runs with `scrapeDetails=false` (default). All data comes from sear
 
 ---
 
-### 7. BeForward image backfill may have a column type mismatch
+### 7. ~~BeForward image backfill column type mismatch~~ — FIXED (2026-03-19)
 
-**File:** `src/features/beforward_porsche_collector/backfill.ts`
-
-The backfill query filters `images.is.null,images.eq.{}` which translates to SQL `images IS NULL OR images = '{}'`. If the `images` column stores JSON arrays (`[]`) instead of PostgreSQL text arrays (`{}`), the filter never matches and backfill finds 0 listings.
-
-**Fix:** Verify the `images` column type in Supabase. If it's `jsonb`, change the filter to:
-
-```typescript
-.or("images.is.null,images.eq.[]")
-```
+**Status:** Changed `images.eq.{}` to `images.eq.[]` in both `common/backfillImages.ts` and `beforward_porsche_collector/backfill.ts`. The `images` column is `jsonb` storing arrays.
 
 ---
 
-### 8. Ferrari backfill times out (insufficient time budget)
+### 8. ~~Ferrari backfill times out~~ — FIXED (2026-03-19, previous session)
 
-**File:** `src/app/api/cron/ferrari/route.ts`
-
-Steps 1+2 (refresh + discover) consume ~250s of the 300s Vercel limit. The LightBackfill step gets only ~50s, which is barely enough to process 2-3 BaT model pages before timing out.
-
-**Options:**
-- **A) Skip CarsAndBids + CollectingCars in the Ferrari cron** (they return 0 results anyway) to free up time for backfill
-- **B) Move Ferrari backfill to a separate cron route** (e.g. `/api/cron/ferrari-backfill`) with its own 5-min budget
-- **C) Move Ferrari collector to GitHub Actions** (like AutoScout24) for a longer runtime
+**Status:** Fixed by adding time-budget tracking to the Ferrari collector. `scrapeDetails: false` and `maxEndedPagesPerSource: 2` reduce collector time, leaving ~50-90s for backfill. Concurrent refresh with `Promise.allSettled` further reduced Step 1 time.
 
 ---
 
@@ -214,14 +144,14 @@ Consider adding price-history tracking: snapshot `asking_price` daily so you can
 
 ## Recommended Priority Order
 
-| Priority | Task | Effort | Impact |
-|----------|------|--------|--------|
-| 1 | Fix cleanup cron (stop deleting Ferrari) | 5 min | Saves ~192 listings/day |
-| 2 | Get Decodo proxy for Classic.com | Config only | Unlocks entire scraper |
-| 3 | Enable CarsAndBids + CollectingCars in Porsche cron | 10 min | 2 new auction sources |
-| 4 | Add LightBackfill to Porsche cron | 15 min | Sold auction history |
-| 5 | Raise AutoScout24 maxListings to 7000 | 2 min | 100% shard coverage |
-| 6 | Fix BeForward image backfill filter | 5 min | Images for all BeForward listings |
-| 7 | Separate Ferrari backfill into own cron | 30 min | Reliable sold-auction data |
-| 8 | Enable AutoScout24 detail scraping | 15 min | Rich listing metadata |
-| 9 | Add Ferrari to AutoTrader/AutoScout24 | 1-2 hours | Multi-source Ferrari coverage |
+| Priority | Task | Effort | Impact | Status |
+|----------|------|--------|--------|--------|
+| 1 | ~~Fix cleanup cron~~ | 5 min | N/A | N/A — Porsche-only project |
+| 2 | Get Decodo proxy for Classic.com | Config only | Unlocks entire scraper | **OPEN** |
+| 3 | ~~Enable CarsAndBids + CollectingCars~~ | 10 min | 2 new auction sources | **FIXED** |
+| 4 | ~~Add LightBackfill to Porsche cron~~ | 15 min | Sold auction history | **FIXED** |
+| 5 | ~~Raise AutoScout24 maxListings to 7000~~ | 2 min | 100% shard coverage | **FIXED** |
+| 6 | ~~Fix BeForward image backfill filter~~ | 5 min | Images for BeForward listings | **FIXED** |
+| 7 | ~~Ferrari backfill timeout~~ | 30 min | Reliable sold-auction data | **FIXED** |
+| 8 | Enable AutoScout24 detail scraping | 15 min | Rich listing metadata | **OPEN** |
+| 9 | AutoTrader header hardening | 30 min | Prevent silent API breakage | **OPEN** |

@@ -57,7 +57,7 @@ export async function backfillImagesForSource(
     .from("listings")
     .select("id,source,source_url")
     .eq("status", "active")
-    .or("images.is.null,images.eq.{}");
+    .or("images.is.null,images.eq.[]");
 
   if (opts.source !== "all") {
     query = query.eq("source", opts.source);
