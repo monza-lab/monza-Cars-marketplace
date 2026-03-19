@@ -1,0 +1,209 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/features/scrapers/common/monitoring";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 300;
+
+const FETCH_HEADERS: Record<string, string> = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+};
+
+export async function GET(request: Request) {
+  const startTime = Date.now();
+  const startedAtIso = new Date(startTime).toISOString();
+  const runId = crypto.randomUUID();
+
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json(
+      { success: false, error: "Missing Supabase env vars" },
+      { status: 500 }
+    );
+  }
+
+  await markScraperRunStarted({
+    scraperName: "enrich-details",
+    runId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
+
+  try {
+    const client = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    // Query AS24 active listings missing detail fields (trim IS NULL as proxy)
+    const { data: rows, error: fetchErr } = await client
+      .from("listings")
+      .select("id,source_url")
+      .eq("source", "AutoScout24")
+      .eq("status", "active")
+      .is("trim", null)
+      .order("updated_at", { ascending: true })
+      .limit(25);
+
+    if (fetchErr || !rows) {
+      throw new Error(fetchErr?.message ?? "No rows returned");
+    }
+
+    const discovered = rows.length;
+    let enriched = 0;
+    const errors: string[] = [];
+    const DELAY_MS = 2_000;
+    const TIME_BUDGET_MS = 270_000;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+
+      // Time budget check
+      if (Date.now() - startTime > TIME_BUDGET_MS) {
+        errors.push(`Time budget reached after ${enriched} enrichments`);
+        break;
+      }
+
+      // Rate limit
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, DELAY_MS));
+      }
+
+      try {
+        const response = await fetch(row.source_url, {
+          headers: FETCH_HEADERS,
+          signal: AbortSignal.timeout(15_000),
+        });
+
+        if (!response.ok) {
+          if (response.status === 404 || response.status === 410) {
+            // Mark as delisted
+            await client
+              .from("listings")
+              .update({ status: "delisted", updated_at: new Date().toISOString() })
+              .eq("id", row.id);
+            errors.push(`Dead URL (${row.id}): HTTP ${response.status}`);
+            continue;
+          }
+          throw new Error(`HTTP ${response.status} for ${row.source_url}`);
+        }
+
+        const html = await response.text();
+        const detail = parseDetailHtml(html);
+
+        // Build update payload — only set non-null fields from detail
+        const update: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+
+        if (detail.trim) update.trim = detail.trim;
+        if (detail.transmission) update.transmission = detail.transmission;
+        if (detail.bodyStyle) update.body_style = detail.bodyStyle;
+        if (detail.engine) update.engine = detail.engine;
+        if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
+        if (detail.interiorColor) update.color_interior = detail.interiorColor;
+        if (detail.vin) update.vin = detail.vin;
+        if (detail.description) update.description_text = detail.description;
+        if (detail.images && detail.images.length > 0) {
+          update.images = detail.images;
+          update.photos_count = detail.images.length;
+        }
+
+        // Only update if we got at least one new field
+        const newFieldCount = Object.keys(update).length - 1; // minus updated_at
+        if (newFieldCount > 0) {
+          const { error: updateErr } = await client
+            .from("listings")
+            .update(update)
+            .eq("id", row.id);
+
+          if (updateErr) {
+            errors.push(`Update failed (${row.id}): ${updateErr.message}`);
+          } else {
+            enriched++;
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+
+        // Circuit-break on 403/429
+        if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
+          errors.push(`Circuit-break: ${msg}`);
+          break;
+        }
+
+        errors.push(`Failed ${row.source_url}: ${msg}`);
+      }
+    }
+
+    await recordScraperRun({
+      scraper_name: "enrich-details",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: true,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered,
+      written: enriched,
+      errors_count: errors.length,
+      error_messages: errors.length > 0 ? errors : undefined,
+    });
+
+    await clearScraperRunActive("enrich-details");
+
+    return NextResponse.json({
+      success: true,
+      runId,
+      discovered,
+      enriched,
+      errors,
+      duration: `${Date.now() - startTime}ms`,
+    });
+  } catch (error) {
+    console.error("[cron/enrich-details] Error:", error);
+
+    await recordScraperRun({
+      scraper_name: "enrich-details",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: false,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered: 0,
+      written: 0,
+      errors_count: 1,
+      error_messages: [error instanceof Error ? error.message : "Enrichment failed"],
+    });
+
+    await clearScraperRunActive("enrich-details");
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Enrichment failed",
+        duration: `${Date.now() - startTime}ms`,
+      },
+      { status: 500 }
+    );
+  }
+}
