@@ -299,13 +299,34 @@ function mapStatus(status: string): AuctionStatus {
   }
 }
 
-function mapRegion(country: string | null): Region {
-  if (!country) return "US";
-  const c = country.toUpperCase();
-  if (c === "USA" || c === "US" || c === "UNITED STATES") return "US";
-  if (c === "UK" || c === "UNITED KINGDOM") return "UK";
-  if (c === "JAPAN") return "JP";
-  return "EU";
+function mapRegion(country: string | null, source?: string | null): Region {
+  // 1. Try country first
+  if (country) {
+    const c = country.toUpperCase();
+    if (c === "USA" || c === "US" || c === "UNITED STATES") return "US";
+    if (c === "UK" || c === "UNITED KINGDOM") return "UK";
+    if (c === "JAPAN" || c === "JP") return "JP";
+    if (c === "GERMANY" || c === "FRANCE" || c === "ITALY" || c === "SPAIN" || c === "NETHERLANDS" || c === "BELGIUM" || c === "AUSTRIA" || c === "SWITZERLAND" || c === "PORTUGAL" || c === "SWEDEN") return "EU";
+    return "EU"; // other countries default to EU
+  }
+  // 2. Fallback: derive region from source/platform
+  if (source) {
+    const canonical = resolveCanonicalSource(source, null);
+    switch (canonical) {
+      case "BaT":
+      case "CarsAndBids":
+      case "ClassicCom":
+        return "US";
+      case "AutoScout24":
+      case "CollectingCars":
+        return "EU";
+      case "AutoTrader":
+        return "UK";
+      case "BeForward":
+        return "JP";
+    }
+  }
+  return "US"; // ultimate fallback
 }
 
 function buildFairValue(price: number): FairValueByRegion {
@@ -531,7 +552,7 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     mileage: displayMileage,
     mileageUnit: displayUnit,
     location: location || "Unknown",
-    region: mapRegion(row.country),
+    region: mapRegion(row.country, row.source),
     fairValueByRegion: buildFairValue(price),
     history,
     platform,
