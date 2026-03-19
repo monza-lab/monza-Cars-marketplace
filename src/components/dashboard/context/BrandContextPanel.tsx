@@ -14,7 +14,7 @@ import { MarketDepthSection } from "./shared/MarketDepth"
 import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { Brand, Auction } from "../types"
 
-export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
+export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions?: Auction[] }) {
   const t = useTranslations("dashboard")
   const { formatPrice } = useCurrency()
   const brandAuctions = useMemo(() =>
@@ -23,8 +23,12 @@ export function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  // Compute regional fair values from real median sold prices per region
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(brandAuctions), [brandAuctions])
+  // Compute regional fair values from ALL auctions (unfiltered by region)
+  const allBrandAuctions = useMemo(() =>
+    (allAuctions || auctions).filter(a => a.make === brand.name),
+    [allAuctions, auctions, brand.name]
+  )
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions), [allBrandAuctions])
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => a.currentBid > 0)

@@ -1752,7 +1752,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 }
 
 // ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
-function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
+function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
@@ -1768,8 +1768,15 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from real median sold prices per region ───
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(familyAuctions), [familyAuctions])
+  // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
+  const allFamilyAuctions = useMemo(() => {
+    const familyKey = family.slug
+    return allAuctions.filter(a => {
+      const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
+      return series === familyKey
+    })
+  }, [allAuctions, family.slug])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions), [allFamilyAuctions])
 
   // ─── DYNAMIC: Market Depth from real auction counts ───
   const depth = useMemo(() => {
@@ -2107,7 +2114,7 @@ function FamilyContextPanel({ family, auctions, allFamilies }: { family: Porsche
 }
 
 // ─── BRAND CONTEXT PANEL ───
-function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[] }) {
+function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
@@ -2117,8 +2124,12 @@ function BrandContextPanel({ brand, allBrands, auctions }: { brand: Brand; allBr
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  // Compute regional fair values from real median sold prices per region
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(brandAuctions), [brandAuctions])
+  // Compute regional fair values from ALL auctions (unfiltered by region)
+  const allBrandAuctions = useMemo(() =>
+    allAuctions.filter(a => a.make === brand.name),
+    [allAuctions, brand.name]
+  )
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions), [allBrandAuctions])
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => a.currentBid > 0)
@@ -2619,10 +2630,11 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
                 key={activeFamily.slug}
                 family={activeFamily}
                 auctions={filteredAuctions}
+                allAuctions={auctions}
                 allFamilies={porscheFamilies}
               />
             ) : (
-              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} />
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} allAuctions={auctions} />
             )}
           </div>
         </div>

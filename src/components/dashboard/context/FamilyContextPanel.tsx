@@ -13,7 +13,7 @@ import { MarketDepthSection } from "./shared/MarketDepth"
 import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { PorscheFamily, Auction } from "../types"
 
-export function FamilyContextPanel({ family, auctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allFamilies: PorscheFamily[] }) {
+export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions?: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { formatPrice } = useCurrency()
 
@@ -28,8 +28,16 @@ export function FamilyContextPanel({ family, auctions, allFamilies }: { family: 
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from real median sold prices per region ───
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(familyAuctions), [familyAuctions])
+  // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
+  const allFamilyAuctions = useMemo(() => {
+    const source = allAuctions || auctions
+    const familyKey = family.slug
+    return source.filter(a => {
+      const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
+      return series === familyKey
+    })
+  }, [allAuctions, auctions, family.slug])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions), [allFamilyAuctions])
 
   // ─── DYNAMIC: Market Depth from real auction counts ───
   const depth = useMemo(() => {
