@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import {
   buildGatewayFilters,
@@ -8,6 +8,8 @@ import {
   parseGatewayListings,
   hasNextPage,
   getTotalPages,
+  detectAppVersion,
+  resetCachedAppVersion,
 } from "./discover";
 
 describe("buildGatewayFilters", () => {
@@ -304,5 +306,64 @@ describe("getTotalPages", () => {
   it("should return 1 when no pagination info", () => {
     const html = "<html><body><p>No pagination</p></body></html>";
     expect(getTotalPages(html)).toBe(1);
+  });
+});
+
+describe("detectAppVersion", () => {
+  beforeEach(() => {
+    resetCachedAppVersion();
+    vi.restoreAllMocks();
+  });
+
+  it("returns fallback version when fetch fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("Network error"));
+    const version = await detectAppVersion();
+    expect(version).toBe("6c9dff0561");
+  });
+
+  it("returns fallback version when page returns non-200", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("Forbidden", { status: 403 })
+    );
+    const version = await detectAppVersion();
+    expect(version).toBe("6c9dff0561");
+  });
+
+  it("detects version from webpack chunk pattern", async () => {
+    const html = `<html><head><script src="/_next/static/chunks/_app-abc1234def.js"></script></head></html>`;
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(html, { status: 200 })
+    );
+    const version = await detectAppVersion();
+    expect(version).toBe("abc1234def");
+  });
+
+  it("detects version from JSON metadata", async () => {
+    const html = `<html><script>{"buildId":"ff00112233"}</script></html>`;
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(html, { status: 200 })
+    );
+    const version = await detectAppVersion();
+    expect(version).toBe("ff00112233");
+  });
+
+  it("caches the result across calls", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(`<script src="/_app-aabbccddee.js"></script>`, { status: 200 })
+    );
+    const v1 = await detectAppVersion();
+    const v2 = await detectAppVersion();
+    expect(v1).toBe("aabbccddee");
+    expect(v2).toBe("aabbccddee");
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // Only fetched once
+  });
+
+  it("returns fallback when no patterns match", async () => {
+    const html = `<html><body><h1>AutoTrader</h1></body></html>`;
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(html, { status: 200 })
+    );
+    const version = await detectAppVersion();
+    expect(version).toBe("6c9dff0561");
   });
 });
