@@ -165,7 +165,10 @@ export interface RefreshResult {
  * Re-scrapes every listing with `status = 'active'` and updates the DB
  * when the auction has ended (sold / unsold / delisted).
  */
-export async function refreshActiveListings(): Promise<RefreshResult> {
+export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): Promise<RefreshResult> {
+  const timeBudgetMs = opts?.timeBudgetMs ?? 60_000; // 60s default
+  const startTime = Date.now();
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
@@ -180,16 +183,24 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
   const { data: activeRows, error: fetchErr } = await client
     .from("listings")
     .select("id,source_url,hammer_price,sale_date")
-    .eq("status", "active");
+    .eq("status", "active")
+    .limit(30);
 
   if (fetchErr || !activeRows) {
     return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
   }
 
   const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+  const CONCURRENCY = 5;
 
-  for (const row of activeRows) {
-    try {
+  for (let i = 0; i < activeRows.length; i += CONCURRENCY) {
+    if (Date.now() - startTime > timeBudgetMs) {
+      result.errors.push(`Time budget reached after ${i} listings`);
+      break;
+    }
+
+    const batch = activeRows.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(batch.map(async (row) => {
       const scraped = await fetchAuctionData(row.source_url, true);
 
       const newStatus = mapAuctionStatus({
@@ -200,8 +211,7 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
         now: new Date(),
       });
 
-      // Still active — nothing to update
-      if (newStatus === "active") continue;
+      if (newStatus === "active") return;
 
       const updates: Record<string, unknown> = {
         status: newStatus,
@@ -225,14 +235,15 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
         .update(updates)
         .eq("id", row.id);
 
-      if (updateErr) {
-        result.errors.push(`Update failed for ${row.id}: ${updateErr.message}`);
-      } else {
-        result.updated++;
+      if (updateErr) throw new Error(`Update failed for ${row.id}: ${updateErr.message}`);
+      result.updated++;
+    }));
+
+    for (let j = 0; j < settled.length; j++) {
+      const s = settled[j];
+      if (s.status === "rejected") {
+        result.errors.push(`Refresh failed for ${batch[j].source_url}: ${s.reason}`);
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
     }
   }
 

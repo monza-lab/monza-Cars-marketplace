@@ -185,7 +185,10 @@ export interface RefreshResult {
  * Re-fetches each active BeForward listing URL and updates the DB
  * when the listing has been removed (404) or status changed.
  */
-export async function refreshActiveListings(): Promise<RefreshResult> {
+export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): Promise<RefreshResult> {
+  const timeBudgetMs = opts?.timeBudgetMs ?? 60_000;
+  const startTime = Date.now();
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
@@ -207,9 +210,16 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
   }
 
   const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+  const CONCURRENCY = 5;
 
-  for (const row of activeRows) {
-    try {
+  for (let i = 0; i < activeRows.length; i += CONCURRENCY) {
+    if (Date.now() - startTime > timeBudgetMs) {
+      result.errors.push(`Time budget reached after ${i} listings`);
+      break;
+    }
+
+    const batch = activeRows.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(batch.map(async (row) => {
       let newStatus: string | null = null;
 
       try {
@@ -224,8 +234,7 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
         if (/\b404\b/.test(msg)) {
           newStatus = "delisted";
         } else if (/\b(403|429)\b/.test(msg)) {
-          // Ambiguous (rate limit / block) — skip
-          continue;
+          return; // Ambiguous — skip
         } else {
           throw err;
         }
@@ -239,12 +248,17 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
         if (updateErr) throw new Error(`Update failed: ${updateErr.message}`);
         result.updated++;
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
+    }));
+
+    for (let j = 0; j < settled.length; j++) {
+      const s = settled[j];
+      if (s.status === "rejected") {
+        result.errors.push(`Refresh failed for ${batch[j].source_url}: ${s.reason}`);
+      }
     }
 
-    await sleep(2_500);
+    // Brief pause between batches to avoid rate limits
+    await sleep(1_000);
   }
 
   return result;

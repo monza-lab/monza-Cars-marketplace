@@ -35,12 +35,14 @@ export async function GET(request: Request) {
 
   try {
     // Step 1: Refresh status of existing active listings (mark ended auctions as sold/unsold)
-    const refreshResult = await refreshActiveListings();
+    const refreshResult = await refreshActiveListings({ timeBudgetMs: 60_000 });
 
-    // Step 2: Discover and ingest new active listings
+    // Step 2: Discover and ingest new active listings (skip detail scraping to fit time budget)
     const result = await runCollector({
       mode: "daily",
       dryRun: false,
+      scrapeDetails: false,
+      maxEndedPagesPerSource: 2,
     });
 
     const totalWritten = Object.values(result.sourceCounts).reduce(
@@ -63,8 +65,8 @@ export async function GET(request: Request) {
       try {
         backfillResult = await runLightBackfill({
           windowDays: 30,
-          maxListingsPerModel: 3,
-          timeBudgetMs: Math.min(remainingMs, 120_000),
+          maxListingsPerModel: 1,
+          timeBudgetMs: Math.min(remainingMs - 10_000, 90_000),
         });
       } catch (error) {
         backfillError = error instanceof Error ? error.message : "Backfill failed";

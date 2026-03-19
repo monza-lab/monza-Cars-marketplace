@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
   try {
     // Step 1: Refresh status of existing active listings
-    const refreshResult = await refreshActiveListings();
+    const refreshResult = await refreshActiveListings({ timeBudgetMs: 60_000 });
 
     // Step 2: Discover + ingest with capped config to fit Vercel 5-min limit
     const result = await runCollector({
@@ -55,10 +55,10 @@ export async function GET(request: Request) {
 
     if (remainingMs > 30_000) {
       backfillResult = await backfillMissingImages({
-        timeBudgetMs: remainingMs,
-        maxListings: 15,
+        timeBudgetMs: Math.min(remainingMs - 15_000, 120_000),
+        maxListings: 8,
         rateLimitMs: 3500,
-        timeoutMs: 20_000,
+        timeoutMs: 15_000,
         runId: result.runId,
       });
     }
