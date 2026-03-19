@@ -123,7 +123,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [currentModelIndex, setCurrentModelIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const { selectedRegion, setSelectedRegion, effectiveRegion } = useRegion()
-  const { formatPrice } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
   const [selectedPriceRange, setSelectedPriceRange] = useState(0)
   const [selectedPriceTier, setSelectedPriceTier] = useState("all")
   const [selectedEra, setSelectedEra] = useState("All")
@@ -173,7 +173,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   }, [regionFilteredCars, selectedFamilyForFeed])
 
   // Aggregate filtered cars into models
-  const allModels = useMemo(() => aggregateModels(regionFilteredCars, make), [regionFilteredCars, make])
+  const allModels = useMemo(() => aggregateModels(regionFilteredCars, make, rates), [regionFilteredCars, make, rates])
 
   // Filter and sort models
   const filteredModels = useMemo(() => {

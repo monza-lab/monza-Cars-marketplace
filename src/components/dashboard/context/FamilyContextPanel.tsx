@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, ChevronRight } from "lucide-react"
 import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
-import { computeRegionalValFromAuctions } from "../utils/valuation"
+import { computeRegionalValFromAuctions, listingPriceUsd } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
@@ -15,7 +15,7 @@ import type { PorscheFamily, Auction } from "../types"
 
 export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions?: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
-  const { formatPrice } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
@@ -37,42 +37,40 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
       return series === familyKey
     })
   }, [allAuctions, auctions, family.slug])
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions), [allFamilyAuctions])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions, rates), [allFamilyAuctions, rates])
 
-  // ─── DYNAMIC: Market Depth from real auction counts ───
+  // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {
     const count = familyAuctions.length
-    const withBids = familyAuctions.filter(a => a.currentBid > 0)
+    const withPrice = familyAuctions.filter(a => listingPriceUsd(a, rates) > 0)
     const ended = familyAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
-    const sold = ended.filter(a => a.currentBid > 0)
+    const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
       ? Math.round(ended.reduce((sum, a) => {
-          const created = new Date(a.endTime).getTime() - (7 * 86400000) // estimate listing duration
+          const created = new Date(a.endTime).getTime() - (7 * 86400000)
           return sum + (new Date(a.endTime).getTime() - created) / 86400000
         }, 0) / ended.length)
       : 14
     const demandScore = Math.min(10, Math.max(1, Math.round(
       (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
-      (withBids.length / Math.max(count, 1)) * 4 +
+      (withPrice.length / Math.max(count, 1)) * 4 +
       (sellThrough / 100) * 3
     )))
     return {
-      auctionsPerYear: Math.max(count * 4, 12), // annualize from current listings
+      auctionsPerYear: Math.max(count * 4, 12),
       avgDaysToSell: avgDays,
       sellThroughRate: sellThrough,
       demandScore,
     }
   }, [familyAuctions])
 
-  // ─── DYNAMIC: Ownership Cost scaled by family avg price ───
+  // ─── DYNAMIC: Ownership Cost scaled by family avg listing price (in USD) ───
   const ownershipCost = useMemo(() => {
-    const withBids = familyAuctions.filter(a => a.currentBid > 0)
-    const avgPrice = withBids.length > 0
-      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+    const prices = familyAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
+    const avgPrice = prices.length > 0
+      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
       : (family.priceMin + family.priceMax) / 2
-    // Scale: base Porsche costs, adjusted by price tier
-    // Under $100K = 0.7x, $100-250K = 1x, $250-500K = 1.3x, $500K+ = 1.6x
     const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
     return {
       insurance: Math.round(8500 * scale),
@@ -84,12 +82,12 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
   // Recent sales from this family
   const recentSales = useMemo(() => {
     return familyAuctions
-      .filter(a => a.currentBid > 0)
+      .filter(a => (a.price > 0 || a.currentBid > 0))
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
         title: `${a.year} ${a.model}`,
-        price: a.currentBid,
+        price: listingPriceUsd(a, rates),
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))

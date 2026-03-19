@@ -1,4 +1,5 @@
 import type { Auction } from "../types"
+import { toUsd } from "@/lib/exchangeRates"
 
 // ─── REGIONAL VALUATION ───
 export type RegionalValuation = { symbol: string; usdCurrent: number }
@@ -10,8 +11,15 @@ export function computeMedian(values: number[]): number {
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
+// Convert listing price (in original currency) to USD using live rates
+export function listingPriceUsd(a: Auction, rates: Record<string, number> = {}): number {
+  const raw = a.price > 0 ? a.price : a.currentBid
+  return toUsd(raw, a.originalCurrency, rates)
+}
+
 export function computeRegionalValFromAuctions(
   auctionList: Auction[],
+  rates: Record<string, number> = {},
 ): Record<string, RegionalValuation> {
   const regions = ["US", "UK", "EU", "JP"] as const
   const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
@@ -19,24 +27,26 @@ export function computeRegionalValFromAuctions(
 
   // Compute overall median as fallback for regions with no listings
   const allPricesUsd = auctionList
-    .filter(a => a.currentBid > 0)
-    .map(a => a.currentBid)
+    .map(a => listingPriceUsd(a, rates))
+    .filter(p => p > 0)
   const overallMedianUsd = computeMedian(allPricesUsd)
 
   for (const region of regions) {
     const regionAuctions = auctionList.filter(a => a.region === region)
 
-    // Prices are already normalized to USD
+    // Use listing/sold price converted to USD
     const soldPricesUsd = regionAuctions
-      .filter(a => a.currentBid > 0 && a.status === "ENDED")
-      .map(a => a.currentBid)
-    const activeBidsUsd = regionAuctions
-      .filter(a => a.currentBid > 0 && (a.status === "ACTIVE" || a.status === "ENDING_SOON"))
-      .map(a => a.currentBid)
+      .filter(a => a.status === "ENDED")
+      .map(a => listingPriceUsd(a, rates))
+      .filter(p => p > 0)
+    const listingPricesUsd = regionAuctions
+      .map(a => listingPriceUsd(a, rates))
+      .filter(p => p > 0)
 
+    // Prefer median of sold prices; fall back to median of all listing prices
     let medianUsd = soldPricesUsd.length > 0
       ? computeMedian(soldPricesUsd)
-      : computeMedian(activeBidsUsd)
+      : computeMedian(listingPricesUsd)
 
     // Fallback to overall median if no listings in this region
     if (medianUsd === 0 && overallMedianUsd > 0) {

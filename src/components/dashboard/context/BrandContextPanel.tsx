@@ -7,7 +7,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, Award, ChevronRight } from "lucide-react"
 import { getBrandConfig } from "@/lib/brandConfig"
 import { mockWhyBuy } from "../constants"
-import { computeRegionalValFromAuctions } from "../utils/valuation"
+import { computeRegionalValFromAuctions, listingPriceUsd } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
@@ -16,7 +16,7 @@ import type { Brand, Auction } from "../types"
 
 export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions?: Auction[] }) {
   const t = useTranslations("dashboard")
-  const { formatPrice } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
@@ -28,15 +28,15 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
     (allAuctions || auctions).filter(a => a.make === brand.name),
     [allAuctions, auctions, brand.name]
   )
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions), [allBrandAuctions])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
   const recentSales = useMemo(() => {
     return brandAuctions
-      .filter(a => a.currentBid > 0)
+      .filter(a => (a.price > 0 || a.currentBid > 0))
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
         title: a.title,
-        price: a.currentBid,
+        price: listingPriceUsd(a, rates),
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
@@ -44,9 +44,9 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
   const ownershipCost = useMemo(() => {
     const config = getBrandConfig(brand.name)
     const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const withBids = brandAuctions.filter(a => a.currentBid > 0)
-    const avgPrice = withBids.length > 0
-      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+    const prices = brandAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
+    const avgPrice = prices.length > 0
+      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
       : (brand.priceMin + brand.priceMax) / 2
     const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
     return {
@@ -61,9 +61,9 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
       const config = getBrandConfig(brand.name)
       return config?.marketDepth ?? { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 }
     }
-    const withBids = brandAuctions.filter(a => a.currentBid > 0)
+    const withPrice = brandAuctions.filter(a => listingPriceUsd(a, rates) > 0)
     const ended = brandAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
-    const sold = ended.filter(a => a.currentBid > 0)
+    const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
       ? Math.round(ended.reduce((sum, a) => {
@@ -73,7 +73,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
       : 14
     const demandScore = Math.min(10, Math.max(1, Math.round(
       (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
-      (withBids.length / Math.max(count, 1)) * 4 +
+      (withPrice.length / Math.max(count, 1)) * 4 +
       (sellThrough / 100) * 3
     )))
     return {

@@ -35,6 +35,7 @@ import {
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion } from "./platformMapping"
+import { listingPriceUsd, computeRegionalValFromAuctions, computeMedian } from "./utils/valuation"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── BRAND TYPE ───
@@ -71,6 +72,7 @@ type Auction = {
   model: string
   year: number
   trim: string | null
+  price: number
   currentBid: number
   bidCount: number
   viewCount: number
@@ -162,58 +164,6 @@ const mockWhyBuy: Record<string, string> = {
   default: "This vehicle represents a compelling opportunity in the collector car market. Strong fundamentals, limited production, and growing collector interest suggest strong collector market presence.",
 }
 
-// ─── REGIONAL VALUATION ───
-type RegionalValuation = { symbol: string; usdCurrent: number }
-
-function computeMedian(values: number[]): number {
-  if (values.length === 0) return 0
-  const sorted = [...values].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
-}
-
-function computeRegionalValFromAuctions(
-  auctionList: Auction[],
-): Record<string, RegionalValuation> {
-  const regions = ["US", "UK", "EU", "JP"] as const
-  const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
-  const result: Record<string, RegionalValuation> = {}
-
-  // Compute overall median as fallback for regions with no listings
-  const allPricesUsd = auctionList
-    .filter(a => a.currentBid > 0)
-    .map(a => a.currentBid)
-  const overallMedianUsd = computeMedian(allPricesUsd)
-
-  for (const region of regions) {
-    const regionAuctions = auctionList.filter(a => a.region === region)
-
-    // Auction prices are already in USD (currentBid field)
-    const soldPricesUsd = regionAuctions
-      .filter(a => a.currentBid > 0 && a.status === "ENDED")
-      .map(a => a.currentBid)
-    const activeBidsUsd = regionAuctions
-      .filter(a => a.currentBid > 0 && (a.status === "ACTIVE" || a.status === "ENDING_SOON"))
-      .map(a => a.currentBid)
-
-    // Prefer median of sold prices; fall back to median of active bids
-    let medianUsd = soldPricesUsd.length > 0
-      ? computeMedian(soldPricesUsd)
-      : computeMedian(activeBidsUsd)
-
-    // Fallback to overall median if no listings in this region
-    if (medianUsd === 0 && overallMedianUsd > 0) {
-      medianUsd = overallMedianUsd
-    }
-
-    result[region] = {
-      symbol: symbolMap[region],
-      usdCurrent: medianUsd / 1_000_000,
-    }
-  }
-  return result
-}
-
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
 
 const REGION_LABEL_KEYS = {
@@ -248,7 +198,7 @@ function formatUsdEquiv(v: number) {
   return `$${Math.round(v * 1000).toLocaleString()}K`
 }
 // ─── AGGREGATE AUCTIONS BY BRAND ───
-function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[] {
+function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbTotalOverride?: number): Brand[] {
   const brandMap = new Map<string, Auction[]>()
 
   // Group by make
@@ -263,7 +213,7 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
   // Convert to Brand array with stats
   const brands: Brand[] = []
   brandMap.forEach((cars, name) => {
-    const prices = cars.map(c => c.currentBid)
+    const prices = cars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
     const grades = cars.map(c => c.analysis?.investmentGrade || "B+")
     const categories = [...new Set(cars.map(c => c.category).filter(Boolean))]
 
@@ -272,8 +222,8 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
     const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
 
     // Get the MOST EXPENSIVE car for the representative image
-    const mostExpensiveCar = cars.reduce((max, car) => 
-      car.currentBid > max.currentBid ? car : max
+    const mostExpensiveCar = cars.reduce((max, car) =>
+      listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max
     , cars[0])
     
     // Use the actual car's image from database, fall back to static brand image only if needed
@@ -289,8 +239,8 @@ function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): Brand[]
       name,
       slug: name.toLowerCase().replace(/\s+/g, "-"),
       carCount: count,
-      priceMin: Math.min(...prices),
-      priceMax: Math.max(...prices),
+      priceMin: prices.length > 0 ? Math.min(...prices) : 0,
+      priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       avgTrend: topGrade === "AAA" ? "Premium Demand" : topGrade === "AA" ? "Strong Demand" : topGrade === "A" ? "High Demand" : "Growing Demand",
       topGrade,
       representativeImage,
@@ -320,6 +270,7 @@ function getFamilyDisplayName(familyKey: string): string {
 
 function aggregateFamilies(
   auctions: Auction[],
+  rates: Record<string, number>,
   dbSeriesCounts?: Record<string, number>,
   selectedRegion?: string | null,
   liveRegionTotals?: LiveRegionTotals
@@ -346,13 +297,13 @@ function aggregateFamilies(
 
   const families: PorscheFamily[] = []
   familyMap.forEach((cars, familyKey) => {
-    const prices = cars.map(c => c.currentBid).filter(p => p > 0)
+    const prices = cars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
     const years = cars.map(c => c.year)
     const grades = cars.map(c => c.analysis?.investmentGrade || "B+")
     const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
     const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
 
-    const bestCar = cars.reduce((max, car) => car.currentBid > max.currentBid ? car : max, cars[0])
+    const bestCar = cars.reduce((max, car) => listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max, cars[0])
     const carImage = bestCar.images?.[0]
     const modelImage = getModelImage("Porsche", bestCar.model)
     // Static fallback keyed by series ID — guaranteed to resolve for all Porsche series
@@ -1554,25 +1505,25 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const t = useTranslations("dashboard")
   const tCommon = useTranslations("common")
   const { effectiveRegion } = useRegion()
-  const { formatPrice } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
 
   const whyBuy = getBrandConfig(auction.make)?.defaultThesis || mockWhyBuy[auction.make] || mockWhyBuy["default"]
   const recentSales = useMemo(() => {
     return allAuctions
-      .filter(a => a.make === auction.make && a.id !== auction.id && a.currentBid > 0)
+      .filter(a => a.make === auction.make && a.id !== auction.id && (a.price > 0 || a.currentBid > 0))
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
         title: `${a.year} ${a.model}`,
-        price: a.currentBid,
+        price: listingPriceUsd(a, rates),
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
-  }, [allAuctions, auction.make, auction.id])
+  }, [allAuctions, auction.make, auction.id, rates])
   const ownershipCost = useMemo(() => {
     const config = getBrandConfig(auction.make)
     const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const price = auction.currentBid || 100_000
+    const price = listingPriceUsd(auction, rates) || 100_000
     const scale = price < 100_000 ? 0.7 : price < 250_000 ? 1.0 : price < 500_000 ? 1.3 : 1.6
     return {
       insurance: Math.round(base.insurance * scale),
@@ -1755,7 +1706,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
@@ -1776,42 +1727,40 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
       return series === familyKey
     })
   }, [allAuctions, family.slug])
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions), [allFamilyAuctions])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions, rates), [allFamilyAuctions, rates])
 
-  // ─── DYNAMIC: Market Depth from real auction counts ───
+  // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {
     const count = familyAuctions.length
-    const withBids = familyAuctions.filter(a => a.currentBid > 0)
+    const withPrice = familyAuctions.filter(a => listingPriceUsd(a, rates) > 0)
     const ended = familyAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
-    const sold = ended.filter(a => a.currentBid > 0)
+    const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
       ? Math.round(ended.reduce((sum, a) => {
-          const created = new Date(a.endTime).getTime() - (7 * 86400000) // estimate listing duration
+          const created = new Date(a.endTime).getTime() - (7 * 86400000)
           return sum + (new Date(a.endTime).getTime() - created) / 86400000
         }, 0) / ended.length)
       : 14
     const demandScore = Math.min(10, Math.max(1, Math.round(
       (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
-      (withBids.length / Math.max(count, 1)) * 4 +
+      (withPrice.length / Math.max(count, 1)) * 4 +
       (sellThrough / 100) * 3
     )))
     return {
-      auctionsPerYear: Math.max(count * 4, 12), // annualize from current listings
+      auctionsPerYear: Math.max(count * 4, 12),
       avgDaysToSell: avgDays,
       sellThroughRate: sellThrough,
       demandScore,
     }
   }, [familyAuctions])
 
-  // ─── DYNAMIC: Ownership Cost scaled by family avg price ───
+  // ─── DYNAMIC: Ownership Cost scaled by family avg listing price (in USD) ───
   const ownershipCost = useMemo(() => {
-    const withBids = familyAuctions.filter(a => a.currentBid > 0)
-    const avgPrice = withBids.length > 0
-      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+    const prices = familyAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
+    const avgPrice = prices.length > 0
+      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
       : (family.priceMin + family.priceMax) / 2
-    // Scale: base Porsche costs, adjusted by price tier
-    // Under $100K = 0.7x, $100-250K = 1x, $250-500K = 1.3x, $500K+ = 1.6x
     const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
     return {
       insurance: Math.round(8500 * scale),
@@ -1822,14 +1771,15 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
-  // Top variants: group by model variant name, sorted by avg price
+  // Top variants: group by model variant name, sorted by avg listing price (USD)
   const topVariants = useMemo(() => {
     const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
     familyAuctions.forEach(a => {
       const variant = a.model
       const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
       existing.count++
-      if (a.currentBid > 0) existing.prices.push(a.currentBid)
+      const usd = listingPriceUsd(a, rates)
+      if (usd > 0) existing.prices.push(usd)
       const g = a.analysis?.investmentGrade || "B"
       if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
         existing.grade = g
@@ -1852,12 +1802,12 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
   // Recent sales from this family
   const recentSales = useMemo(() => {
     return familyAuctions
-      .filter(a => a.currentBid > 0)
+      .filter(a => (a.price > 0 || a.currentBid > 0))
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
         title: `${a.year} ${a.model}`,
-        price: a.currentBid,
+        price: listingPriceUsd(a, rates),
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
@@ -2117,7 +2067,7 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
 function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions: Auction[] }) {
   const t = useTranslations("dashboard")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
@@ -2129,15 +2079,15 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
     allAuctions.filter(a => a.make === brand.name),
     [allAuctions, brand.name]
   )
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions), [allBrandAuctions])
+  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
   const recentSales = useMemo(() => {
     return brandAuctions
-      .filter(a => a.currentBid > 0)
+      .filter(a => (a.price > 0 || a.currentBid > 0))
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 5)
       .map(a => ({
         title: a.title,
-        price: a.currentBid,
+        price: listingPriceUsd(a, rates),
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
@@ -2145,9 +2095,9 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
   const ownershipCost = useMemo(() => {
     const config = getBrandConfig(brand.name)
     const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const withBids = brandAuctions.filter(a => a.currentBid > 0)
-    const avgPrice = withBids.length > 0
-      ? withBids.reduce((sum, a) => sum + a.currentBid, 0) / withBids.length
+    const prices = brandAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
+    const avgPrice = prices.length > 0
+      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
       : (brand.priceMin + brand.priceMax) / 2
     const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
     return {
@@ -2162,7 +2112,8 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
       const variant = a.model
       const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
       existing.count++
-      if (a.currentBid > 0) existing.prices.push(a.currentBid)
+      const usd = listingPriceUsd(a, rates)
+      if (usd > 0) existing.prices.push(usd)
       const g = a.analysis?.investmentGrade || "B"
       if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
         existing.grade = g
@@ -2188,9 +2139,9 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
       const config = getBrandConfig(brand.name)
       return config?.marketDepth ?? { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 }
     }
-    const withBids = brandAuctions.filter(a => a.currentBid > 0)
+    const withPrice = brandAuctions.filter(a => listingPriceUsd(a, rates) > 0)
     const ended = brandAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
-    const sold = ended.filter(a => a.currentBid > 0)
+    const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
       ? Math.round(ended.reduce((sum, a) => {
@@ -2200,7 +2151,7 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
       : 14
     const demandScore = Math.min(10, Math.max(1, Math.round(
       (count >= 20 ? 3 : count >= 10 ? 2 : 1) +
-      (withBids.length / Math.max(count, 1)) * 4 +
+      (withPrice.length / Math.max(count, 1)) * 4 +
       (sellThrough / 100) * 3
     )))
     return {
@@ -2461,6 +2412,7 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
 export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
+  const { rates } = useCurrency()
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
 
@@ -2486,10 +2438,10 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
   }, [filteredAuctions, liveRegionTotals, selectedRegion])
 
   // Aggregate filtered auctions into brands
-  const brands = useMemo(() => aggregateBrands(filteredAuctions, liveNowCount), [filteredAuctions, liveNowCount])
+  const brands = useMemo(() => aggregateBrands(filteredAuctions, rates, liveNowCount), [filteredAuctions, rates, liveNowCount])
 
   // Aggregate into Porsche families for the family-based landing scroll
-  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, seriesCounts, selectedRegion, liveRegionTotals), [filteredAuctions, seriesCounts, selectedRegion, liveRegionTotals])
+  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals), [filteredAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals])
 
   // Reset scroll position when region changes
   useEffect(() => {

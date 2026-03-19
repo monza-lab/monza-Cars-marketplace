@@ -33,10 +33,10 @@ export function MobileModelContext({
 }) {
   const t = useTranslations("makePage")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
 
   const allModelCars = allCars.filter(c => c.model === model.name)
-  const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
+  const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars, rates), [allModelCars, rates])
   const bestRegion = regionalPricing ? findBestRegion(regionalPricing) : null
   const depth = deriveModelDepth(allModelCars)
 

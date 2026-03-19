@@ -52,11 +52,11 @@ export function ModelContextPanel({
   const tAuction = useTranslations("auctionDetail")
   const locale = useLocale()
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
+  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
 
   // All cars of this model family (unfiltered) for regional analysis
   const allModelCars = allCars.filter(c => extractFamily(c.model, c.year, make) === model.name)
-  const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars), [allModelCars])
+  const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars, rates), [allModelCars, rates])
 
   // Model-specific thesis (from the representative car's real data)
   const modelThesis = model.representativeCar.thesis

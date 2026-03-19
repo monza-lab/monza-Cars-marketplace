@@ -14,6 +14,7 @@ import {
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
 import { extractSeries, getSeriesConfig } from "./brandConfig";
+import { getExchangeRates, toUsd } from "./exchangeRates";
 
 // ─── Row types ───
 
@@ -342,17 +343,19 @@ function computeMedian(values: number[]): number {
 }
 
 // ─── Enrich cars with real per-region fair values ───
-// Groups cars by make|model, computes per-region median prices,
+// Groups cars by make|model, computes per-region median listing prices (in USD),
 // and replaces the fake ±20% band with real data.
-export function enrichFairValues(cars: CollectorCar[]): CollectorCar[] {
+export async function enrichFairValues(cars: CollectorCar[]): Promise<CollectorCar[]> {
   if (cars.length === 0) return cars;
+
+  const rates = await getExchangeRates();
 
   const REGIONS = ["US", "EU", "UK", "JP"] as const;
   const CURRENCY_MAP: Record<string, "$" | "€" | "£" | "¥"> = {
     US: "$", EU: "€", UK: "£", JP: "¥",
   };
 
-  // Group prices by model key → region
+  // Group USD-converted prices by model key → region
   const modelRegionPrices = new Map<string, Map<string, number[]>>();
 
   for (const car of cars) {
@@ -361,12 +364,13 @@ export function enrichFairValues(cars: CollectorCar[]): CollectorCar[] {
       modelRegionPrices.set(key, new Map());
     }
     const regionMap = modelRegionPrices.get(key)!;
-    const price = car.currentBid > 0 ? car.currentBid : car.price;
-    if (price > 0) {
+    const raw = car.price > 0 ? car.price : car.currentBid;
+    const usdPrice = toUsd(raw, car.originalCurrency, rates);
+    if (usdPrice > 0) {
       if (!regionMap.has(car.region)) {
         regionMap.set(car.region, []);
       }
-      regionMap.get(car.region)!.push(price);
+      regionMap.get(car.region)!.push(usdPrice);
     }
   }
 
@@ -1215,7 +1219,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
     if (rows.length === 0) return [];
 
     if (!includePriceHistory) {
-      return enrichFairValues(rows.map((row) => rowToCollectorCar(row)));
+      return await enrichFairValues(rows.map((row) => rowToCollectorCar(row)));
     }
 
     // Fetch price history for trend computation
@@ -1255,7 +1259,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       return car;
     });
 
-    return enrichFairValues(cars);
+    return await enrichFairValues(cars);
   } catch (err) {
     console.error("[supabaseLiveListings] Failed to fetch:", err);
     return [];

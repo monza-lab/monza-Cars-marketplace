@@ -91,7 +91,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     // Compute real regional fair values from same-model listings
     const sameModelCars = live.filter(c => c.model === car.model)
     if (sameModelCars.length > 0) {
-      const enriched = enrichFairValues([car, ...sameModelCars])
+      const enriched = await enrichFairValues([car, ...sameModelCars])
       car.fairValueByRegion = enriched[0].fairValueByRegion
     }
   }

@@ -6,6 +6,7 @@
 import type { CollectorCar, FairValueByRegion } from "@/lib/curatedCars"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { getModelImage } from "@/lib/modelImages"
+import { toUsd } from "@/lib/exchangeRates"
 
 
 // ─── MODEL TYPE (aggregated from cars) ───
@@ -53,8 +54,10 @@ export function extractGenerationFromModel(modelName: string, year?: number): st
 }
 
 // ─── AGGREGATE CARS INTO FAMILIES ───
-export function aggregateModels(cars: CollectorCar[], make: string): Model[] {
+export function aggregateModels(cars: CollectorCar[], make: string, rates: Record<string, number> = {}): Model[] {
   const familyMap = new Map<string, CollectorCar[]>()
+
+  const carPriceUsd = (c: CollectorCar) => toUsd(c.price > 0 ? c.price : c.currentBid, c.originalCurrency, rates)
 
   // Group by FAMILY (not specific model)
   cars.forEach(car => {
@@ -67,13 +70,13 @@ export function aggregateModels(cars: CollectorCar[], make: string): Model[] {
   // Convert to Model array
   const models: Model[] = []
   familyMap.forEach((familyCars, familyName) => {
-    const prices = familyCars.map(c => c.currentBid).filter(p => p > 0)
+    const prices = familyCars.map(c => carPriceUsd(c)).filter(p => p > 0)
     const years = familyCars.map(c => c.year)
     const categories = [...new Set(familyCars.map(c => c.category))]
     const liveCount = familyCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
 
     // Get representative car (highest value)
-    const repCar = familyCars.sort((a, b) => b.currentBid - a.currentBid)[0]
+    const repCar = familyCars.sort((a, b) => carPriceUsd(b) - carPriceUsd(a))[0]
     const repMake = repCar.make
 
     // Prefer the actual car's scraped image; fall back to static model image
@@ -114,25 +117,25 @@ export function aggregateModels(cars: CollectorCar[], make: string): Model[] {
 
 // ─── REGIONAL PRICING HELPERS ───
 
-export function aggregateRegionalPricing(modelCars: CollectorCar[]): FairValueByRegion | null {
+export function aggregateRegionalPricing(modelCars: CollectorCar[], rates: Record<string, number> = {}): FairValueByRegion | null {
   const REGIONS = ["US", "EU", "UK", "JP"] as const
   const CURRENCY_MAP: Record<string, "$" | "€" | "£" | "¥"> = {
     US: "$", EU: "€", UK: "£", JP: "¥",
   }
 
-  // Filter cars with valid prices
-  const carsWithPrice = modelCars.filter(c => (c.currentBid > 0 || c.price > 0))
-  if (carsWithPrice.length === 0) return null
+  // Filter cars with valid listing prices (converted to USD)
+  const carPriceUsd = (c: CollectorCar) => toUsd(c.price > 0 ? c.price : c.currentBid, c.originalCurrency, rates)
+  const priced = modelCars.map(c => ({ car: c, usd: carPriceUsd(c) })).filter(x => x.usd > 0)
+  if (priced.length === 0) return null
 
   // Overall median as fallback for regions with no data
-  const allPrices = carsWithPrice.map(c => c.currentBid > 0 ? c.currentBid : c.price)
-  const overallMedian = median(allPrices)
+  const overallMedian = median(priced.map(x => x.usd))
 
   const result = {} as FairValueByRegion
   for (const region of REGIONS) {
-    const regionPrices = carsWithPrice
-      .filter(c => c.region === region)
-      .map(c => c.currentBid > 0 ? c.currentBid : c.price)
+    const regionPrices = priced
+      .filter(x => x.car.region === region)
+      .map(x => x.usd)
 
     const med = regionPrices.length > 0 ? median(regionPrices) : overallMedian
     result[region] = {
