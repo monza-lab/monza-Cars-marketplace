@@ -10,7 +10,7 @@ Current state as of 2026-03-19. Based on full manual run of all scrapers + analy
 |---|---------|--------|-------------|--------------|
 | 1 | Porsche (BaT+C&B+CC) | **FIXED** — 3 sources + backfill | ~36+ new | All 3 auction sources active; LightBackfill enabled |
 | 2 | Ferrari (BaT) | Working (Porsche-only project) | ~75 new | N/A — project is Porsche-only |
-| 3 | AutoTrader UK | Working | ~98 new | Porsche-only; brittle API headers |
+| 3 | AutoTrader UK | **FIXED** — dynamic version detection | ~98 new | Porsche-only; version auto-detected from page source |
 | 4 | BeForward | **FIXED** — image backfill filter | 0 new | Porsche-only; image filter corrected |
 | 5 | Classic.com | **Broken** | 0 | Needs residential proxy |
 | 6 | AutoScout24 | **FIXED** — 100% shards | ~4,979 new | maxListings raised to 7000 |
@@ -67,19 +67,9 @@ Classic.com uses Cloudflare protection. Without a proxy, only page 1 of search r
 
 ## MEDIUM PRIORITY — Enrichment & Quality
 
-### 6. AutoScout24 never fetches detail pages
+### 6. ~~AutoScout24 never fetches detail pages~~ — FIXED (2026-03-19)
 
-**File:** `.github/workflows/autoscout24-collector.yml:64`
-
-The workflow runs with `scrapeDetails=false` (default). All data comes from search result cards. This means these fields are always null for AutoScout24 listings:
-- `transmission` (manual/automatic)
-- `engine` (displacement, cylinders)
-- `body_style`
-- `exterior_color` / `interior_color`
-- `vin`
-- `description`
-
-**Fix:** Consider enabling `--scrapeDetails` for a subset (e.g., new listings only) or running a periodic detail-enrichment job. This adds ~2s per listing, so a full 5000-listing detail scrape would take ~3 hours.
+**Status:** New `/api/cron/enrich-details` cron route created. Processes 25 AS24 listings per run via plain HTTP fetch + `parseDetailHtml()` (cheerio, no Playwright). Enriches: trim, transmission, bodyStyle, engine, colors, VIN, description, images. Circuit-breaks on 403/429. Registered in monitoring dashboard as "AS24 Detail Enrichment".
 
 ---
 
@@ -95,19 +85,9 @@ The workflow runs with `scrapeDetails=false` (default). All data comes from sear
 
 ---
 
-### 9. AutoTrader has brittle hard-coded API headers
+### 9. ~~AutoTrader has brittle hard-coded API headers~~ — FIXED (2026-03-19)
 
-**File:** `src/features/autotrader_collector/collector.ts`
-
-The GraphQL gateway request uses hard-coded headers:
-```
-x-sauron-app-name: sauron-search-ui
-x-sauron-app-version: 6c9dff0561
-```
-
-If AutoTrader rotates their internal app version, the scraper will silently fail (likely 403 or empty results). There is no version-detection mechanism.
-
-**Fix:** Add a pre-flight check that fetches `autotrader.co.uk` and extracts the current app version from the page source, or alert when the gateway returns unexpected responses.
+**Status:** Added `detectAppVersion()` to `discover.ts` with 3 detection strategies (meta tag, JSON metadata, webpack chunk pattern) + fallback to known `"6c9dff0561"`. Result cached for process lifetime. `fetchAutoTraderGatewayPage()` now calls `detectAppVersion()` instead of using hardcoded header. Tests cover all strategies + caching + fallback.
 
 ---
 
@@ -153,5 +133,5 @@ Consider adding price-history tracking: snapshot `asking_price` daily so you can
 | 5 | ~~Raise AutoScout24 maxListings to 7000~~ | 2 min | 100% shard coverage | **FIXED** |
 | 6 | ~~Fix BeForward image backfill filter~~ | 5 min | Images for BeForward listings | **FIXED** |
 | 7 | ~~Ferrari backfill timeout~~ | 30 min | Reliable sold-auction data | **FIXED** |
-| 8 | Enable AutoScout24 detail scraping | 15 min | Rich listing metadata | **OPEN** |
-| 9 | AutoTrader header hardening | 30 min | Prevent silent API breakage | **OPEN** |
+| 8 | ~~Enable AutoScout24 detail scraping~~ | 15 min | Rich listing metadata | **FIXED** |
+| 9 | ~~AutoTrader header hardening~~ | 30 min | Prevent silent API breakage | **FIXED** |
