@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/features/scrapers/common/monitoring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -54,6 +59,16 @@ export async function GET(request: Request) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
+
+  const runId = crypto.randomUUID();
+  const startedAtIso = new Date(startTime).toISOString();
+
+  await markScraperRunStarted({
+    scraperName: "validate",
+    runId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
 
   try {
     const supabase = getSupabaseClient();
@@ -109,6 +124,24 @@ export async function GET(request: Request) {
       JSON.stringify(deletedReasons),
     );
 
+    await recordScraperRun({
+      scraper_name: "validate",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: true,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered: recentListings.length,
+      written: fixed,
+      errors_count: deleted,
+      error_messages: Object.keys(deletedReasons).length > 0
+        ? Object.entries(deletedReasons).map(([r, c]) => `${r}: ${c}`)
+        : undefined,
+    });
+
+    await clearScraperRunActive("validate");
+
     return NextResponse.json({
       success: true,
       scanned: recentListings.length,
@@ -120,6 +153,23 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("[cron/validate] Error:", error);
+
+    await recordScraperRun({
+      scraper_name: "validate",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: false,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered: 0,
+      written: 0,
+      errors_count: 1,
+      error_messages: [error instanceof Error ? error.message : "Validation failed"],
+    });
+
+    await clearScraperRunActive("validate");
+
     return NextResponse.json(
       {
         success: false,
