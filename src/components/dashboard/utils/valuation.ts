@@ -17,6 +17,12 @@ export function computeRegionalValFromAuctions(
   const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
   const result: Record<string, RegionalValuation> = {}
 
+  // Compute overall median as fallback for regions with no listings
+  const allPricesUsd = auctionList
+    .filter(a => a.currentBid > 0)
+    .map(a => a.currentBid)
+  const overallMedianUsd = computeMedian(allPricesUsd)
+
   for (const region of regions) {
     const regionAuctions = auctionList.filter(a => a.region === region)
 
@@ -28,9 +34,14 @@ export function computeRegionalValFromAuctions(
       .filter(a => a.currentBid > 0 && (a.status === "ACTIVE" || a.status === "ENDING_SOON"))
       .map(a => a.currentBid)
 
-    const medianUsd = soldPricesUsd.length > 0
+    let medianUsd = soldPricesUsd.length > 0
       ? computeMedian(soldPricesUsd)
       : computeMedian(activeBidsUsd)
+
+    // Fallback to overall median if no listings in this region
+    if (medianUsd === 0 && overallMedianUsd > 0) {
+      medianUsd = overallMedianUsd
+    }
 
     result[region] = {
       symbol: symbolMap[region],
