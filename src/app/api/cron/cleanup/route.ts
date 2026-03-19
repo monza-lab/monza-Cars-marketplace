@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig";
+import {
+  clearScraperRunActive,
+  markScraperRunStarted,
+  recordScraperRun,
+} from "@/features/scrapers/common/monitoring";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -123,6 +128,16 @@ export async function GET(request: Request) {
     );
   }
 
+  const runId = crypto.randomUUID();
+  const startedAtIso = new Date(startTime).toISOString();
+
+  await markScraperRunStarted({
+    scraperName: "cleanup",
+    runId,
+    startedAt: startedAtIso,
+    runtime: "vercel_cron",
+  });
+
   try {
     const supabase = getSupabaseClient();
 
@@ -217,6 +232,27 @@ export async function GET(request: Request) {
     }
 
     if (junkItems.length === 0 && totalStaleFixed === 0) {
+      const earlyMessages: string[] = [];
+      if (reclassified > 0) earlyMessages.push(`reclassified: ${reclassified}`);
+
+      await recordScraperRun({
+        scraper_name: "cleanup",
+        run_id: runId,
+        started_at: startedAtIso,
+        finished_at: new Date().toISOString(),
+        success: true,
+        runtime: "vercel_cron",
+        duration_ms: Date.now() - startTime,
+        discovered: allListings.length,
+        written: totalStaleFixed + reclassified,
+        errors_count: 0,
+        refresh_checked: allListings.length,
+        refresh_updated: totalStaleFixed,
+        error_messages: earlyMessages.length > 0 ? earlyMessages : undefined,
+      });
+
+      await clearScraperRunActive("cleanup");
+
       return NextResponse.json({
         success: true,
         scanned: allListings.length,
@@ -259,6 +295,31 @@ export async function GET(request: Request) {
       JSON.stringify(byReason)
     );
 
+    const allMessages: string[] = [];
+    if (totalStaleFixed > 0) allMessages.push(`stale: ${staleSoldCount} sold, ${staleUnsoldCount} unsold`);
+    if (reclassified > 0) allMessages.push(`reclassified: ${reclassified}`);
+    if (deletedCount > 0) {
+      allMessages.push(...Object.entries(byReason).map(([r, c]) => `junk-${r}: ${c}`));
+    }
+
+    await recordScraperRun({
+      scraper_name: "cleanup",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: true,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered: allListings.length,
+      written: totalStaleFixed + reclassified,
+      errors_count: deletedCount,
+      refresh_checked: allListings.length,
+      refresh_updated: totalStaleFixed,
+      error_messages: allMessages.length > 0 ? allMessages : undefined,
+    });
+
+    await clearScraperRunActive("cleanup");
+
     return NextResponse.json({
       success: true,
       scanned: allListings.length,
@@ -273,6 +334,23 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("[cron/cleanup] Error:", error);
+
+    await recordScraperRun({
+      scraper_name: "cleanup",
+      run_id: runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: false,
+      runtime: "vercel_cron",
+      duration_ms: Date.now() - startTime,
+      discovered: 0,
+      written: 0,
+      errors_count: 1,
+      error_messages: [error instanceof Error ? error.message : "Cleanup failed"],
+    });
+
+    await clearScraperRunActive("cleanup");
+
     return NextResponse.json(
       {
         success: false,
