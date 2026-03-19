@@ -52,11 +52,17 @@ const nextConfig: NextConfig = {
     "/api/cron/classic": ["./node_modules/@sparticuz/chromium/**/*"],
     "/api/cron/autoscout24": ["./node_modules/@sparticuz/chromium/**/*"],
   },
+  serverExternalPackages: [
+    "rebrowser-playwright",
+    "rebrowser-playwright-core",
+  ],
   outputFileTracingExcludes: {
     "*": [
       "**/node_modules/typescript/**",
       "**/node_modules/@types/**",
       "**/node_modules/@playwright/**",
+      "**/node_modules/rebrowser-playwright/**",
+      "**/node_modules/rebrowser-playwright-core/**",
     ],
   },
   experimental: {

@@ -28,6 +28,11 @@ const ALL_SCRAPERS: ScraperName[] = [
   "classic",
   "autoscout24",
   "backfill-images",
+  "enrich-vin",
+  "enrich-titles",
+  "bat-detail",
+  "validate",
+  "cleanup",
 ];
 
 const SCRAPER_LABELS: Record<ScraperName, string> = {
@@ -38,6 +43,11 @@ const SCRAPER_LABELS: Record<ScraperName, string> = {
   classic: "Classic.com",
   autoscout24: "AutoScout24",
   "backfill-images": "Image Backfill",
+  "enrich-vin": "VIN Enrichment",
+  "enrich-titles": "Title Enrichment",
+  "bat-detail": "BaT Detail",
+  validate: "Validator",
+  cleanup: "Cleanup",
 };
 
 const SCRAPER_RUNTIME: Record<ScraperName, string> = {
@@ -48,6 +58,11 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   classic: "GitHub Actions",
   autoscout24: "GitHub Actions",
   "backfill-images": "Vercel Cron",
+  "enrich-vin": "Vercel Cron",
+  "enrich-titles": "Vercel Cron",
+  "bat-detail": "GitHub Actions",
+  validate: "Vercel Cron",
+  cleanup: "Vercel Cron",
 };
 
 const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
@@ -58,6 +73,11 @@ const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
   classic: 24 * 60 * 60 * 1000,
   autoscout24: 24 * 60 * 60 * 1000,
   "backfill-images": 24 * 60 * 60 * 1000,
+  "enrich-vin": 24 * 60 * 60 * 1000,
+  "enrich-titles": 24 * 60 * 60 * 1000,
+  "bat-detail": 24 * 60 * 60 * 1000,
+  validate: 24 * 60 * 60 * 1000,
+  cleanup: 24 * 60 * 60 * 1000,
 };
 
 const POLL_INTERVAL_MS = 20_000;

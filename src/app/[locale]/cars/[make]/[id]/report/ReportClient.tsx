@@ -469,7 +469,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
       pdf.rect(M, vy - 4, 26, 8, "F")
       pdf.setFontSize(8); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
-      pdf.text(verdict.toUpperCase(), M + 13, vy + 1, { align: "center" })
+      pdf.text((verdict ?? "hold").toUpperCase(), M + 13, vy + 1, { align: "center" })
       gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 24
@@ -917,7 +917,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       const vClr = verdict === "buy" ? [52,211,153] : verdict === "hold" ? [251,191,36] : [pal.primary[0], pal.primary[1], pal.primary[2]]
       pdf.setFillColor(vClr[0], vClr[1], vClr[2]); pdf.rect(M, y, 55, 18, "F")
       pdf.setFontSize(22); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
-      pdf.text(verdict.toUpperCase(), M + 27.5, y + 12.5, { align: "center" })
+      pdf.text((verdict ?? "hold").toUpperCase(), M + 27.5, y + 12.5, { align: "center" })
       y += 25
       // Verdict metrics card (3 cols)
       const vMetrics = [
@@ -1054,7 +1054,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         [""],
         ["INVESTMENT ANALYSIS"],
         ["Investment Grade", car.investmentGrade],
-        ["Verdict", verdict.toUpperCase()],
+        ["Verdict", (verdict ?? "hold").toUpperCase()],
         ["Fair Value Low (USD)", fairLow],
         ["Fair Value High (USD)", fairHigh],
         ["Fair Value Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
@@ -1093,9 +1093,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         [""],
         ["Region", "Currency", "Fair Low", "Fair High", "Fair Avg", "Avg (USD)", "Premium vs Best", "Best Buy?"],
       ]
-      const regions = ["US", "EU", "UK", "JP"] as const
+      const regionKeys = ["US", "EU", "UK", "JP"] as const
       const bestAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
-      for (const r of regions) {
+      for (const r of regionKeys) {
         const rp = pricing[r]
         const avg = (rp.low + rp.high) / 2
         const avgUsd = avg
