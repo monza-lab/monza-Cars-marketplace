@@ -142,6 +142,21 @@ export async function backfillImagesForSource(
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
 
+      // Mark dead URLs so they stop being queried for backfill
+      if (/\b(404|410)\b/.test(msg)) {
+        if (!opts.dryRun) {
+          await client
+            .from("listings")
+            .update({
+              images: ["__dead_url__"],
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
+        }
+        result.errors.push(`Dead URL (${row.id}): ${msg}`);
+        continue;
+      }
+
       // Circuit-break on 403/429/Cloudflare
       if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
         result.errors.push(`Circuit-break (${source}): ${msg}`);
