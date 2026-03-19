@@ -143,6 +143,77 @@ export function parseGatewayListings(payload: GatewayResponse): AutoTraderGatewa
   };
 }
 
+// ─── Dynamic version detection ───
+
+const FALLBACK_APP_VERSION = "6c9dff0561";
+let _cachedAppVersion: string | null = null;
+
+/**
+ * Detects the current AutoTrader app version by parsing the search page HTML
+ * for webpack chunk filenames or build metadata. Falls back to the hardcoded
+ * version if detection fails.
+ *
+ * The result is cached for the lifetime of the process.
+ */
+export async function detectAppVersion(): Promise<string> {
+  if (_cachedAppVersion) return _cachedAppVersion;
+
+  try {
+    const res = await fetch("https://www.autotrader.co.uk/car-search?postcode=SW1A+1AA&make=Porsche", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[AutoTrader] Version detection HTTP ${res.status}, using fallback`);
+      _cachedAppVersion = FALLBACK_APP_VERSION;
+      return _cachedAppVersion;
+    }
+
+    const html = await res.text();
+
+    // Strategy 1: Look for sauron-app-version in inline scripts or meta tags
+    const metaMatch = html.match(/sauron-app-version["']\s*[:,]\s*["']([a-f0-9]{8,12})["']/i);
+    if (metaMatch) {
+      _cachedAppVersion = metaMatch[1];
+      console.log(`[AutoTrader] Detected app version (meta): ${_cachedAppVersion}`);
+      return _cachedAppVersion;
+    }
+
+    // Strategy 2: Look for buildId or appVersion in __NEXT_DATA__ or similar JSON
+    const jsonMatch = html.match(/"(?:buildId|appVersion|version)"\s*:\s*"([a-f0-9]{8,12})"/i);
+    if (jsonMatch) {
+      _cachedAppVersion = jsonMatch[1];
+      console.log(`[AutoTrader] Detected app version (json): ${_cachedAppVersion}`);
+      return _cachedAppVersion;
+    }
+
+    // Strategy 3: Look for webpack chunk patterns like _app-6c9dff0561.js
+    const chunkMatch = html.match(/_app-([a-f0-9]{8,12})\./i);
+    if (chunkMatch) {
+      _cachedAppVersion = chunkMatch[1];
+      console.log(`[AutoTrader] Detected app version (chunk): ${_cachedAppVersion}`);
+      return _cachedAppVersion;
+    }
+
+    console.warn("[AutoTrader] Could not detect app version, using fallback");
+    _cachedAppVersion = FALLBACK_APP_VERSION;
+    return _cachedAppVersion;
+  } catch (err) {
+    console.warn("[AutoTrader] Version detection failed:", err instanceof Error ? err.message : err);
+    _cachedAppVersion = FALLBACK_APP_VERSION;
+    return _cachedAppVersion;
+  }
+}
+
+/** Reset cached version (for testing or forced refresh) */
+export function resetCachedAppVersion(): void {
+  _cachedAppVersion = null;
+}
+
 export async function fetchAutoTraderGatewayPage(input: {
   page: number;
   timeoutMs: number;
@@ -164,12 +235,13 @@ export async function fetchAutoTraderGatewayPage(input: {
   };
 
   const refererUrl = buildSearchUrl({ ...input.filters, postcode: input.filters.postcode ?? "SW1A 1AA" });
+  const appVersion = await detectAppVersion();
   const res = await fetch("https://www.autotrader.co.uk/at-gateway?opname=SearchResultsListingsGridQuery", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-sauron-app-name": "sauron-search-results-app",
-      "x-sauron-app-version": "6c9dff0561",
+      "x-sauron-app-version": appVersion,
       Origin: "https://www.autotrader.co.uk",
       Referer: refererUrl,
       Accept: "*/*",
