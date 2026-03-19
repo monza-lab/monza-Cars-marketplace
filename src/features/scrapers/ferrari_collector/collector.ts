@@ -85,7 +85,7 @@ async function hasTerminalStatus(sourceId: string): Promise<boolean> {
 export async function runFerrariCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
-  const meta: ScrapeMeta = { runId, scrapeTimestamp };
+  const meta: ScrapeMeta = { runId, scrapeTimestamp, _startTime: Date.now() };
   const limiter = new PerDomainRateLimiter(1000);
 
   logEvent({
@@ -115,6 +115,11 @@ export async function runFerrariCollector(config: CollectorRunConfig): Promise<C
   const errors: string[] = [];
 
   for (const source of sources) {
+    if (config.timeBudgetMs && (Date.now() - meta._startTime!) > config.timeBudgetMs) {
+      logEvent({ level: "info", event: "collector.time_budget_reached_source", runId, skippedSource: source });
+      break;
+    }
+
     try {
       const counts = await runSource({
         source,
@@ -166,6 +171,7 @@ export async function runCollector(
     scrapeDetails: overrides.scrapeDetails ?? true,
     checkpointPath: overrides.checkpointPath ?? "/tmp/ferrari_collector/checkpoint.json",
     dryRun: overrides.dryRun ?? false,
+    timeBudgetMs: overrides.timeBudgetMs,
   };
 
   return runFerrariCollector(config);
@@ -202,6 +208,11 @@ async function runSource(input: {
     counts.discovered += active.length;
 
     for (const a of active) {
+      if (config.timeBudgetMs && (Date.now() - meta._startTime!) > config.timeBudgetMs) {
+        logEvent({ level: "info", event: "collector.time_budget_reached", runId, source, processed: counts.written });
+        break;
+      }
+
       const keep = isLuxuryCarListing({ make: a.make, title: a.title, targetMake: config.make });
       if (!keep) continue;
       counts.ferrariKept++;
@@ -269,6 +280,12 @@ async function runSource(input: {
   counts.discovered += urls.length;
 
   for (const url of urls) {
+    // Check time budget before each URL fetch
+    if (config.timeBudgetMs && (Date.now() - meta._startTime!) > config.timeBudgetMs) {
+      logEvent({ level: "info", event: "collector.time_budget_reached", runId, source, processed: counts.written });
+      break;
+    }
+
     try {
       const normalized = await normalizeFromBaseAndUrl({
         source,

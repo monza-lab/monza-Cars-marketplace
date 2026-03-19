@@ -38,11 +38,13 @@ export async function GET(request: Request) {
     const refreshResult = await refreshActiveListings({ timeBudgetMs: 60_000 });
 
     // Step 2: Discover and ingest new active listings (skip detail scraping to fit time budget)
+    const collectorBudget = (maxDuration * 1000) - (Date.now() - startTime) - 60_000; // reserve 60s for backfill+recording
     const result = await runCollector({
       mode: "daily",
       dryRun: false,
       scrapeDetails: false,
       maxEndedPagesPerSource: 2,
+      timeBudgetMs: Math.max(collectorBudget, 30_000),
     });
 
     const totalWritten = Object.values(result.sourceCounts).reduce(

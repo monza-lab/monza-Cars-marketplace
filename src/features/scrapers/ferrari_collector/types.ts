@@ -21,11 +21,13 @@ export interface CollectorRunConfig {
   scrapeDetails: boolean;
   checkpointPath: string;
   dryRun: boolean;
+  timeBudgetMs?: number; // stop processing URLs when time runs out
 }
 
 export interface ScrapeMeta {
   scrapeTimestamp: string; // ISO timestamp
   runId: string;
+  _startTime?: number; // Date.now() at collector start for time budget tracking
 }
 
 export interface NormalizedLocation {
