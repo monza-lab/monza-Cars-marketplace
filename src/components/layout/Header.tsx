@@ -259,7 +259,7 @@ const REGIONS = [
 
 // Menu links - labels will be translated in the component
 const menuLinkKeys = [
-  { href: "/auctions", key: "liveAuctions" },
+  { href: "/auctions", key: "liveListings" },
   { href: "/search", key: "marketSearch" },
   { href: "/pricing", key: "pricing" },
   { href: "/about", key: "about" },
@@ -279,7 +279,7 @@ type OracleChipId =
   | "viewFullDetails"
   | "similarCars"
   | "browseBrand"
-  | "viewLiveAuctions"
+  | "viewLiveListings"
   | "browseAll"
   | "browseByBrand"
   | "viewAllUnderBudget"
@@ -388,20 +388,20 @@ ${carList}
     ).join("\n");
 
     return {
-      answer: `**Most Active Auctions Right Now**
+      answer: `**Most Active Listings Right Now**
 
 ${carList}
 
 **Market Activity:**
-• ${liveCars.length} live auctions being tracked
+• ${liveCars.length} live listings being tracked
 • Total collection: ${CURATED_CARS.filter(c => c.make !== "Ferrari").length} vehicles
-• Platforms: Bring a Trailer, Cars & Bids, Collecting Cars
+• Platforms: Bring a Trailer, Cars & Bids, AutoScout24, AutoTrader
 
 **What's Hot** _(Editorial)_
-JDM vehicles and analog supercars continue to attract strong bidding activity. Manual transmission examples consistently generate more competition.
+JDM vehicles and analog supercars continue to attract strong market activity. Manual transmission examples consistently generate more competition.
 
-_Note: Data from real auction results. Past performance not indicative of future results._`,
-      chips: [{ id: "viewLiveAuctions" }, { id: "setAlerts" }, { id: "browseAll" }],
+_Note: Data from real market results. Past performance not indicative of future results._`,
+      chips: [{ id: "viewLiveListings" }, { id: "setAlerts" }, { id: "browseAll" }],
       carContext: null,
     };
   }
@@ -492,8 +492,8 @@ ${topBidActivity ? `**Most Active:** ${topBidActivity.title} — ${formatPrice(t
 • "What's the price of a Toyota Supra?"
 • "Browse Ferrari collection"
 
-_All prices from real auction results._`,
-    chips: [{ id: "viewLiveAuctions" }, { id: "browseByBrand" }, { id: "setAlerts" }],
+_All prices from real market data._`,
+    chips: [{ id: "viewLiveListings" }, { id: "browseByBrand" }, { id: "setAlerts" }],
     carContext: null,
   };
 }
@@ -533,7 +533,7 @@ function getChipRoute(
     viewFullDetails: "/",
     similarCars: "/",
     browseBrand: "/",
-    viewLiveAuctions: "/auctions",
+    viewLiveListings: "/auctions",
     browseAll: "/auctions",
     browseByBrand: "/cars",
     viewAllUnderBudget: "/",
@@ -930,7 +930,8 @@ export function Header() {
     } else if (item.type === "family") {
       router.push(`/cars/porsche`)
     } else if (item.seriesId) {
-      router.push(`/cars/porsche?family=${item.seriesId}`)
+      const variantParam = item.variantId ? `&variant=${item.variantId}` : ""
+      router.push(`/cars/porsche?family=${item.seriesId}${variantParam}`)
     }
   }, [router])
 

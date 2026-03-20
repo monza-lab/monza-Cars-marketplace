@@ -48,7 +48,7 @@ export function PlatformPartnersSection() {
             Platform Partners
           </span>
           <h2 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
-            The Best Auctions, <span className="font-semibold text-gradient">One Platform</span>
+            The Best Listings, <span className="font-semibold text-gradient">One Platform</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-sm text-[rgba(232,226,222,0.4)] font-light">
             Aggregating the best auctions from the world&apos;s premier platforms.

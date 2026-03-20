@@ -214,7 +214,7 @@ export default function Home() {
 
   return (
     <Suspense fallback={<MonzaInfinityLoader />}>
-      <HomeContent loadingLabel={t("loadingAssets")} emptyLabel={t("noAuctionsFound")} />
+      <HomeContent loadingLabel={t("loadingAssets")} emptyLabel={t("noListingsFound")} />
     </Suspense>
   );
 }

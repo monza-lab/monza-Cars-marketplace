@@ -34,7 +34,7 @@ import {
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
-import { filterAuctionsForRegion } from "./platformMapping"
+import { filterAuctionsForRegion, isAuctionPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions, computeMedian } from "./utils/valuation"
 // FilterSidebar removed — filters now live only on brand detail pages
 
@@ -842,7 +842,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
       <div className="px-4 py-3 flex items-center gap-2">
         <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-          {t("mobileFeed.liveAuctions")}
+          {t("mobileFeed.liveListings")}
         </span>
         <span className="text-[10px] font-display font-medium text-primary">
           {totalLiveCount}
@@ -895,14 +895,22 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                 </div>
               </div>
 
-              {/* Time */}
+              {/* Time / Type badge */}
               <div className="flex items-center gap-1 shrink-0">
-                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
-                <span className={`text-[10px] font-mono font-medium ${
-                  isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
-                }`}>
-                  {remaining}
-                </span>
+                {isAuctionPlatform(auction.platform) ? (
+                  <>
+                    <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
+                    <span className={`text-[10px] font-mono font-medium ${
+                      isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
+                    }`}>
+                      {remaining}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
+                    Listing
+                  </span>
+                )}
               </div>
             </Link>
           )
@@ -1256,7 +1264,7 @@ function DiscoverySidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
-              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveAuctions")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveListings")}</p>
             </div>
           ) : (
             liveAuctions.map((auction) => {
@@ -1299,12 +1307,20 @@ function DiscoverySidebar({
                           {formatPrice(auction.currentBid)}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
-                          <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
-                          <span className={`text-[9px] font-mono font-medium ${
-                            isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
-                          }`}>
-                            {remaining}
-                          </span>
+                          {isAuctionPlatform(auction.platform) ? (
+                            <>
+                              <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
+                              <span className={`text-[9px] font-mono font-medium ${
+                                isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
+                              }`}>
+                                {remaining}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-[8px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
+                              Listing
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -1990,7 +2006,7 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">{t("brandContext.auctionsPerYear")}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.listingsPerYear")}</span>
               <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -2303,7 +2319,7 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
           </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">{t("brandContext.auctionsPerYear")}</span>
+              <span className="text-[11px] text-muted-foreground">{t("brandContext.listingsPerYear")}</span>
               <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">

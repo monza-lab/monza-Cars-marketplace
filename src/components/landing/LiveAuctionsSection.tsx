@@ -48,7 +48,7 @@ export function LiveAuctionsSection() {
         >
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-light tracking-tight text-foreground sm:text-3xl">
-              Featured <span className="font-semibold text-primary">Auctions</span>
+              Featured <span className="font-semibold text-primary">Listings</span>
             </h2>
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
@@ -115,7 +115,7 @@ export function LiveAuctionsSection() {
           href="/auctions"
           className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground"
         >
-          View All Auctions
+          View All Listings
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>

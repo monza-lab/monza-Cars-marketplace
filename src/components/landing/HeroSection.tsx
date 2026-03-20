@@ -28,7 +28,7 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
 
   const displayStats = [
     {
-      label: t("stats.auctionsTracked"),
+      label: t("stats.listingsTracked"),
       value: stats?.totalAuctions ? stats.totalAuctions.toLocaleString() : "0",
       icon: Car,
     },

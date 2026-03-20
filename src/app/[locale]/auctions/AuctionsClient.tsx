@@ -1064,7 +1064,7 @@ export default function AuctionsClient() {
                       <span className="font-medium text-zinc-300">
                         {total}
                       </span>{" "}
-                      {t("results.auctionsLabel", { count: total })}
+                      {t("results.listingsLabel", { count: total })}
                     </>
                   )}
                 </p>

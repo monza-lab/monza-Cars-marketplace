@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 interface MakePageProps {
   params: Promise<{ make: string }>
-  searchParams: Promise<{ family?: string; gen?: string }>
+  searchParams: Promise<{ family?: string; gen?: string; variant?: string }>
 }
 
 export async function generateMetadata({ params }: MakePageProps) {
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: MakePageProps) {
 
 export default async function MakePage({ params, searchParams }: MakePageProps) {
   const { make } = await params
-  const { family: initialFamily, gen: initialGen } = await searchParams
+  const { family: initialFamily, gen: initialGen, variant: initialVariant } = await searchParams
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
   if (!isSupportedLiveMake(decodedMake)) {
@@ -68,6 +68,7 @@ export default async function MakePage({ params, searchParams }: MakePageProps) 
       dbAnalyses={dbAnalyses}
       initialFamily={initialFamily}
       initialGen={initialGen}
+      initialVariant={initialVariant}
     />
   )
 }
