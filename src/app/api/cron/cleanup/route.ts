@@ -182,6 +182,25 @@ export async function GET(request: Request) {
       );
     }
 
+    // ── Step 1c: Mark __dead_url__ listings as unsold ──
+    // Listings whose source URL returned 404/410 during image backfill
+    // were marked with images=['__dead_url__'] but kept status='active'.
+    // Mark them as 'unsold' so they leave the active feed.
+    const { data: deadUrlFixed, error: deadUrlErr } = await supabase
+      .from("listings")
+      .update({ status: "unsold", updated_at: now })
+      .eq("status", "active")
+      .contains("images", ["__dead_url__"])
+      .select("id");
+
+    if (deadUrlErr) {
+      console.error("[cron/cleanup] dead-url→unsold error:", deadUrlErr.message);
+    }
+    const deadUrlFixedCount = deadUrlFixed?.length ?? 0;
+    if (deadUrlFixedCount > 0) {
+      console.log(`[cron/cleanup] Marked ${deadUrlFixedCount} dead-URL listings as unsold`);
+    }
+
     // ── Step 2: Reclassify misclassified listings using title ──
     // Some listings have model="911" but title="1976 Porsche 911 Turbo" — the title
     // reveals a more specific series (930). We detect and fix these by comparing
@@ -234,6 +253,7 @@ export async function GET(request: Request) {
     if (junkItems.length === 0 && totalStaleFixed === 0) {
       const earlyMessages: string[] = [];
       if (reclassified > 0) earlyMessages.push(`reclassified: ${reclassified}`);
+      if (deadUrlFixedCount > 0) earlyMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
 
       await recordScraperRun({
         scraper_name: "cleanup",
@@ -244,10 +264,10 @@ export async function GET(request: Request) {
         runtime: "vercel_cron",
         duration_ms: Date.now() - startTime,
         discovered: allListings.length,
-        written: totalStaleFixed + reclassified,
+        written: totalStaleFixed + reclassified + deadUrlFixedCount,
         errors_count: 0,
         refresh_checked: allListings.length,
-        refresh_updated: totalStaleFixed,
+        refresh_updated: totalStaleFixed + deadUrlFixedCount,
         error_messages: earlyMessages.length > 0 ? earlyMessages : undefined,
       });
 
@@ -258,6 +278,7 @@ export async function GET(request: Request) {
         scanned: allListings.length,
         deleted: 0,
         staleFixed: 0,
+        deadUrlFixed: deadUrlFixedCount,
         reclassified,
         items: [],
         duration: `${Date.now() - startTime}ms`,
@@ -297,6 +318,7 @@ export async function GET(request: Request) {
 
     const allMessages: string[] = [];
     if (totalStaleFixed > 0) allMessages.push(`stale: ${staleSoldCount} sold, ${staleUnsoldCount} unsold`);
+    if (deadUrlFixedCount > 0) allMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
     if (reclassified > 0) allMessages.push(`reclassified: ${reclassified}`);
     if (deletedCount > 0) {
       allMessages.push(...Object.entries(byReason).map(([r, c]) => `junk-${r}: ${c}`));
@@ -311,10 +333,10 @@ export async function GET(request: Request) {
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: allListings.length,
-      written: totalStaleFixed + reclassified,
+      written: totalStaleFixed + reclassified + deadUrlFixedCount,
       errors_count: deletedCount,
       refresh_checked: allListings.length,
-      refresh_updated: totalStaleFixed,
+      refresh_updated: totalStaleFixed + deadUrlFixedCount,
       error_messages: allMessages.length > 0 ? allMessages : undefined,
     });
 
@@ -327,6 +349,7 @@ export async function GET(request: Request) {
       staleFixed: totalStaleFixed,
       staleSold: staleSoldCount,
       staleUnsold: staleUnsoldCount,
+      deadUrlFixed: deadUrlFixedCount,
       reclassified,
       byReason,
       items: junkItems.slice(0, 100), // cap response size
