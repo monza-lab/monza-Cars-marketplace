@@ -133,6 +133,7 @@ type Auction = {
   model: string;
   year: number;
   trim: string | null;
+  price: number;
   currentBid: number;
   bidCount: number;
   viewCount: number;
@@ -161,6 +162,7 @@ type Auction = {
   priceHistory: { price: number; timestamp: string }[];
   fairValueByRegion?: FairValueByRegion;
   category?: string;
+  originalCurrency?: string | null;
 };
 
 

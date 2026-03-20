@@ -32,6 +32,7 @@ export type Auction = {
   model: string
   year: number
   trim: string | null
+  price: number
   currentBid: number
   bidCount: number
   viewCount: number

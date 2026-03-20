@@ -35,6 +35,7 @@ function transformCar(car: CollectorCar) {
     location: car.location,
     platform: car.platform,
     status: car.status,
+    price: car.price,
     currentBid: car.currentBid,
     bidCount: car.bidCount,
     endTime: car.endTime instanceof Date ? car.endTime.toISOString() : car.endTime,
