@@ -149,6 +149,7 @@ export async function backfillImagesForSource(
             .from("listings")
             .update({
               images: ["__dead_url__"],
+              status: "unsold",
               updated_at: new Date().toISOString(),
             })
             .eq("id", row.id);
