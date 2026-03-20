@@ -686,11 +686,11 @@ export function getSeriesVariants(seriesId: string, make: string): VariantConfig
  * Match a car to a variant within its series.
  * Returns the variant ID, or null if no match.
  */
-export function matchVariant(model: string, trim: string | null, seriesId: string, make: string): string | null {
+export function matchVariant(model: string, trim: string | null, seriesId: string, make: string, title?: string): string | null {
   const variants = getSeriesVariants(seriesId, make)
   if (variants.length === 0) return null
 
-  const searchText = [model, trim].filter(Boolean).join(" ").toLowerCase()
+  const searchText = [model, trim, title].filter(Boolean).join(" ").toLowerCase()
 
   // Sort by longest keyword first (most specific match wins)
   const sorted = [...variants].sort(

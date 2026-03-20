@@ -75,7 +75,7 @@ export function CTASection() {
                 href="/auctions"
                 className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground shadow-lg shadow-primary/15 transition-all hover:bg-primary/80 hover:shadow-xl hover:shadow-primary/25"
               >
-                Browse Auctions
+                Browse Listings
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </Link>
 

@@ -50,7 +50,7 @@ import { MobileMakeLiveAuctions } from "@/components/makePage/mobile/MobileMakeL
 import { MobileFilterSheet } from "@/components/makePage/mobile/MobileFilterSheet"
 
 // ─── MAIN COMPONENT ───
-export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [], initialFamily, initialGen }: {
+export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketData = [], dbComparables = [], dbSoldHistory = [], dbAnalyses = [], initialFamily, initialGen, initialVariant }: {
   make: string
   liveRegionTotals?: LiveListingRegionTotals
   liveNowCount?: number
@@ -60,6 +60,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   dbAnalyses?: DbAnalysisRow[]
   initialFamily?: string
   initialGen?: string
+  initialVariant?: string
 }) {
   const locale = useLocale()
   const router = useRouter()
@@ -136,7 +137,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [viewMode, setViewMode] = useState<'families' | 'generations' | 'cars'>(initialFamily ? 'cars' : 'families')
   const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(initialFamily || null)
   const [selectedGeneration, setSelectedGeneration] = useState<string | null>(initialGen || null)
-  const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(null)
+  const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(initialVariant || null)
   const [feedStatusFilter, setFeedStatusFilter] = useState<"all" | "live" | "ended">("all")
   const feedRef = useRef<HTMLDivElement>(null)
   const carIndexRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
@@ -652,7 +653,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     if (variants.length === 0) return []
     const counts = new Map<string, number>()
     for (const car of filteredFeedCars) {
-      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+      const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make, car.title)
       if (vid) counts.set(vid, (counts.get(vid) || 0) + 1)
     }
     return variants
@@ -666,7 +667,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     if (selectedVariantChip) {
       const seriesId = selectedGeneration || selectedFamilyForFeed || ""
       result = result.filter(car => {
-        const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make)
+        const vid = matchVariant(car.model, car.trim, seriesId.toLowerCase(), make, car.title)
         return vid === selectedVariantChip
       })
     }
@@ -692,7 +693,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     let base = filteredFeedCars
     if (selectedVariantChip) {
       const seriesId = selectedGeneration || selectedFamilyForFeed || ""
-      base = base.filter(car => matchVariant(car.model, car.trim, seriesId.toLowerCase(), make) === selectedVariantChip)
+      base = base.filter(car => matchVariant(car.model, car.trim, seriesId.toLowerCase(), make, car.title) === selectedVariantChip)
     }
     const live = base.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON").length
     const ended = base.filter(c => c.status === "ENDED").length

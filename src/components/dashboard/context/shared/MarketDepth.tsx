@@ -27,7 +27,7 @@ export function MarketDepthSection({ depth }: MarketDepthProps) {
       </div>
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-muted-foreground">{t("brandContext.auctionsPerYear")}</span>
+          <span className="text-[11px] text-muted-foreground">{t("brandContext.listingsPerYear")}</span>
           <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
         </div>
         <div className="flex items-center justify-between">

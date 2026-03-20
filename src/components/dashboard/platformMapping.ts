@@ -28,6 +28,39 @@ export const REGION_TO_PLATFORM: Record<string, string> = {
   JP: "BE_FORWARD",
 };
 
+// ─── PLATFORM TYPE: auction vs listing ───
+// Auction platforms: timed bidding events
+const AUCTION_PLATFORMS = new Set(["BRING_A_TRAILER", "CARS_AND_BIDS", "COLLECTING_CARS"])
+// Listing platforms: fixed-price or dealer listings
+const LISTING_PLATFORMS = new Set(["AUTO_SCOUT_24", "AUTO_TRADER", "BE_FORWARD", "CLASSIC_COM"])
+
+export function isAuctionPlatform(platform: string | null | undefined): boolean {
+  const normalized = normalizeAuctionPlatform(platform)
+  return normalized !== null && AUCTION_PLATFORMS.has(normalized)
+}
+
+export function isListingPlatform(platform: string | null | undefined): boolean {
+  const normalized = normalizeAuctionPlatform(platform)
+  return normalized !== null && LISTING_PLATFORMS.has(normalized)
+}
+
+/**
+ * Returns the correct content label for a region:
+ * US → both auctions and listings, EU/UK/JP → listings only
+ */
+export function getRegionContentLabel(region: string | null | undefined): "auctions" | "listings" | "mixed" {
+  if (!region) return "mixed"
+  if (region === "US") return "mixed" // BaT auctions + Classic.com listings
+  return "listings" // EU, UK, JP — all listing platforms
+}
+
+/**
+ * Returns display label for a platform
+ */
+export function getPlatformTypeLabel(platform: string | null | undefined): string {
+  return isAuctionPlatform(platform) ? "Auction" : "Listing"
+}
+
 export function filterAuctionsForRegion<T extends { platform: string | null | undefined }>(
   auctions: T[],
   selectedRegion: string | null | undefined,

@@ -36,7 +36,7 @@ export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: Collect
       <div className="px-4 py-3 flex items-center gap-2">
         <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-          {t("mobileContext.liveAuctions")}
+          {t("mobileContext.liveListings")}
         </span>
         <span className="text-[10px] font-display font-medium text-primary">{totalLiveCount}</span>
       </div>

@@ -119,7 +119,7 @@ export function MobileModelContext({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.auctionsPerYear")}</p>
+            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.listingsPerYear")}</p>
             <p className="text-[14px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</p>
           </div>
           <div>
