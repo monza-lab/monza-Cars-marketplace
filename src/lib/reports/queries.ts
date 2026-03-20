@@ -11,8 +11,7 @@ import type {
   RegionalMarketStats,
   ModelMarketStats,
 } from "./types"
-import { toUsd } from "../regionPricing"
-import { ISO_TO_SYMBOL } from "../marketStats"
+import { toUsd } from "../exchangeRates"
 
 const FREE_CREDITS_PER_MONTH = 3
 
@@ -56,13 +55,15 @@ export async function saveReport(
     const primary = marketStats.regions.find(
       r => r.region === marketStats.primaryRegion && r.tier === marketStats.primaryTier,
     )
-    const sym = primary ? (ISO_TO_SYMBOL[primary.currency] ?? "$") : "$"
+    const { getExchangeRates } = await import("../exchangeRates")
+    const rates = await getExchangeRates()
+    const cur = primary?.currency ?? "USD"
     row.fair_value_low = marketStats.primaryFairValueLow
     row.fair_value_high = marketStats.primaryFairValueHigh
     row.median_price = primary ? Math.round(primary.medianPriceUsd) : null
-    row.avg_price = primary ? Math.round(toUsd(primary.avgPrice, sym)) : null
-    row.min_price = primary ? Math.round(toUsd(primary.minPrice, sym)) : null
-    row.max_price = primary ? Math.round(toUsd(primary.maxPrice, sym)) : null
+    row.avg_price = primary ? Math.round(toUsd(primary.avgPrice, cur, rates)) : null
+    row.min_price = primary ? Math.round(toUsd(primary.minPrice, cur, rates)) : null
+    row.max_price = primary ? Math.round(toUsd(primary.maxPrice, cur, rates)) : null
     row.total_comparable_sales = marketStats.totalDataPoints
     row.trend_percent = primary?.trendPercent ?? null
     row.trend_direction = primary?.trendDirection ?? null

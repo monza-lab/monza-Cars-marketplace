@@ -9,6 +9,7 @@ import {
   fetchPricedListingsForModel,
 } from "@/lib/supabaseLiveListings"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
+import { getExchangeRates } from "@/lib/exchangeRates"
 import { getReportForListing } from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
@@ -86,7 +87,8 @@ export default async function ReportPage({ params }: ReportPageProps) {
   ])
 
   // Filter by series, expand to family if needed, compute regional stats (shared helper)
-  const { marketStats } = computeMarketStatsForCar(car, allPriced)
+  const rates = await getExchangeRates()
+  const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
   return (
     <Suspense

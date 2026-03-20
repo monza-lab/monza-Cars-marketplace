@@ -32,6 +32,8 @@ DECODO_PROXY_PASS=password
 
 ## Overview
 
+### Collectors (Discovery)
+
 | # | Scraper | Source Website | Method | Runtime | Schedule |
 |---|---------|---------------|--------|---------|----------|
 | 1 | [Porsche Collector](#1-porsche-collector) | BringATrailer, CarsAndBids, CollectingCars | HTTP / HTML | Vercel Cron | 01:00 UTC |
@@ -40,7 +42,18 @@ DECODO_PROXY_PASS=password
 | 4 | [BeForward Collector](#4-beforward-collector) | BeForward | HTTP / HTML | Vercel Cron | 03:00 UTC |
 | 5 | [Classic.com Collector](#5-classiccom-collector) | Classic.com (US) | Playwright Browser | GitHub Actions | 04:00 UTC |
 | 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Playwright Browser | GitHub Actions | 05:00 UTC |
-| 7 | [Image Backfill](#7-image-backfill-cross-source) | BaT, BeForward, AutoScout24 | HTTP / HTML | Vercel Cron | 06:30 UTC |
+
+### Enrichment & Maintenance
+
+| # | Cron Job | Purpose | Runtime | Schedule |
+|---|----------|---------|---------|----------|
+| 7 | [Image Backfill](#7-image-backfill-cross-source) | Backfill missing images (BaT, BeForward, AS24) | Vercel Cron | 06:30 UTC |
+| 8 | [BaT Detail Scraper](#8-bat-detail-scraper) | Scrape BaT detail pages for images/specs | GitHub Actions | 01:30 UTC |
+| 9 | [Listing Validator](#9-listing-validator) | Validate recent listings, fix models, delete junk | Vercel Cron | 05:30 UTC |
+| 10 | [Cleanup](#10-cleanup) | Mark stale/dead listings, reclassify, delete junk | Vercel Cron | 06:00 UTC |
+| 11 | [VIN Enrichment](#11-vin-enrichment) | Decode VINs via NHTSA API | Vercel Cron | 07:00 UTC |
+| 12 | [Title Enrichment](#12-title-enrichment) | Parse engine/transmission/body/trim from titles | Vercel Cron | 07:15 UTC |
+| 13 | [AS24 Detail Enrichment](#13-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | Manual |
 
 ---
 
@@ -454,6 +467,18 @@ Go to **Actions > AutoScout24 Collector (Daily) > Run workflow** and optionally 
 4. Circuit-breaks on 403/429/Cloudflare responses
 5. Records run metrics via `recordScraperRun()` monitoring
 
+### Dead URL handling (404/410)
+
+When a listing's source URL returns **404 or 410** (removed from marketplace), the backfill module:
+
+1. Sets `images = ['__dead_url__']` — sentinel value to stop re-querying
+2. Sets `status = 'unsold'` — removes the listing from the active frontend feed
+3. Logs the dead URL as an error for monitoring
+
+The [Cleanup cron](#10-cleanup) (Step 1c) also retroactively catches any older `__dead_url__` listings that were marked before this fix was deployed and sets them to `unsold`.
+
+**Source:** `src/features/scrapers/common/backfillImages.ts:146-158`
+
 ### Run locally (CLI)
 
 ```bash
@@ -505,26 +530,153 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
+## 8. BaT Detail Scraper
+
+**What it does:** Scrapes BaT listing detail pages to extract high-resolution images and additional specs. Runs after the Porsche Collector to enrich newly discovered listings.
+
+**Source:** `scripts/bat-detail-scraper.ts` (Playwright)
+
+### Automated schedule
+
+- **GitHub Actions** at `01:30 UTC` daily (after Porsche Collector at 01:00)
+- Workflow: `.github/workflows/bat-detail-scraper.yml`
+- Config: max 700 listings, 20-minute time budget
+- Timeout: 30 minutes
+
+---
+
+## 9. Listing Validator
+
+**What it does:** Validates recently updated listings (last 25 hours), fixes invalid model names, and deletes junk entries.
+
+**Source:** `src/app/api/cron/validate/route.ts`
+
+### How it works
+
+1. Fetches active listings where `updated_at >= now - 25h`
+2. Runs `validateListing({ make, model, title, year })` on each
+3. **If valid but model fixable:** Updates model to corrected value
+4. **If invalid (junk):** Deletes price_history (FK), then listing
+5. Logs deletion reasons (e.g., "non-porsche-make: 3", "tractor: 1")
+
+### Automated schedule
+
+- **Vercel Cron** at `05:30 UTC` daily (after all collectors finish)
+- Route: `GET /api/cron/validate` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Max duration: 1 minute
+
+---
+
+## 10. Cleanup
+
+**What it does:** Multi-step maintenance job: marks stale/dead listings as sold or unsold, reclassifies misclassified models using title data, and deletes junk.
+
+**Source:** `src/app/api/cron/cleanup/route.ts`
+
+### Steps
+
+| Step | What | Query | Action |
+|------|------|-------|--------|
+| **1a** | Stale auctions with bids | `status='active'` + `end_time < now` + `current_bid > 0` | `status → 'sold'` |
+| **1b** | Stale auctions without bids | `status='active'` + `end_time < now` | `status → 'unsold'` |
+| **1c** | Dead URL listings | `status='active'` + `images contains ['__dead_url__']` | `status → 'unsold'` |
+| **2** | Misclassified models | `extractSeries(model) !== extractSeries(model, title)` | Update `model` to correct series |
+| **3** | Junk detection | 10 rules (tractors, boats, bikes, non-Porsche, etc.) | Delete listing + price_history |
+
+### Automated schedule
+
+- **Vercel Cron** at `06:00 UTC` daily
+- Route: `GET /api/cron/cleanup` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Max duration: 1 minute
+
+### Response fields
+
+| Field | Description |
+|-------|-------------|
+| `staleFixed` | Listings moved from active to sold/unsold (Steps 1a+1b) |
+| `deadUrlFixed` | Dead-URL listings moved to unsold (Step 1c) |
+| `reclassified` | Models corrected via title (Step 2) |
+| `deleted` | Junk listings removed (Step 3) |
+| `byReason` | Breakdown of deletions by junk rule |
+
+---
+
+## 11. VIN Enrichment
+
+**What it does:** Decodes VINs using the NHTSA vPIC API to extract standardized make/model/year/body/engine data.
+
+**Source:** `src/app/api/cron/enrich-vin/route.ts`
+
+### Automated schedule
+
+- **Vercel Cron** at `07:00 UTC` daily
+- Route: `GET /api/cron/enrich-vin` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Max duration: 1 minute
+
+---
+
+## 12. Title Enrichment
+
+**What it does:** Parses listing titles to extract structured metadata (engine size, transmission type, body style, trim level) using regex patterns.
+
+**Source:** `src/app/api/cron/enrich-titles/route.ts`
+
+### Automated schedule
+
+- **Vercel Cron** at `07:15 UTC` daily
+- Route: `GET /api/cron/enrich-titles` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Max duration: 1 minute
+
+---
+
+## 13. AS24 Detail Enrichment
+
+**What it does:** Enriches AutoScout24 listings by fetching their detail pages via plain HTTP + cheerio (no Playwright). Extracts trim, transmission, body style, engine, colors, VIN, description, and images.
+
+**Source:** `src/app/api/cron/enrich-details/route.ts`
+
+### How it works
+
+1. Queries active AS24 listings where `trim IS NULL` (proxy for missing details)
+2. Fetches each listing's `source_url` via HTTP
+3. Parses with `parseDetailHtml()` (cheerio)
+4. Updates listing if at least 1 new field extracted
+5. On 404/410: marks listing as `delisted`
+6. On 403/429/Cloudflare: circuit-breaks
+
+### Automated schedule
+
+- **Not scheduled** in `vercel.json` — run manually or via monitoring dashboard
+- Route: `GET /api/cron/enrich-details` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Config: 25 listings per run, 2s delay, 270s time budget
+- Max duration: 5 minutes
+
+---
+
 ## Daily Schedule Summary
 
 All times in UTC. Staggered to avoid overlapping.
 
 ```
-00:00  Ferrari Collector        (Vercel Cron)
-01:00  Porsche Collector        (Vercel Cron)
-02:00  AutoTrader Collector     (Vercel Cron)
-03:00  BeForward Collector      (Vercel Cron)
-04:00  Classic.com Collector    (GitHub Actions)
-04:30  Classic.com Image Backfill (GitHub Actions)
-05:00  AutoScout24 Collector    (GitHub Actions)
-05:30  Listing Validator        (Vercel Cron)
-06:00  Cleanup                  (Vercel Cron)
-06:30  Image Backfill           (Vercel Cron)
+00:00  Ferrari Collector          (Vercel Cron, 5 min)
+01:00  Porsche Collector          (Vercel Cron, 5 min)
+01:30  BaT Detail Scraper         (GitHub Actions, 30 min)
+02:00  AutoTrader Collector       (Vercel Cron, 5 min)
+03:00  BeForward Collector        (Vercel Cron, 5 min)
+04:00  Classic.com Collector      (GitHub Actions, 45 min)
+04:30  Classic.com Image Backfill (GitHub Actions, 45 min)
+05:00  AutoScout24 Collector      (GitHub Actions, 90 min)
+05:30  Listing Validator          (Vercel Cron, 1 min)
+06:00  Cleanup                    (Vercel Cron, 1 min)
+06:30  Image Backfill             (Vercel Cron, 5 min)
+07:00  VIN Enrichment             (Vercel Cron, 1 min)
+07:15  Title Enrichment           (Vercel Cron, 1 min)
+ --    AS24 Detail Enrichment     (Vercel Cron, manual only)
 ```
 
 **Why two runtimes?**
 - **Vercel Cron** (max 5 min): Lightweight HTTP-based scrapers that fit within serverless limits.
-- **GitHub Actions** (30-60 min): Heavy Playwright browser scrapers that need more time and memory.
+- **GitHub Actions** (30-90 min): Heavy Playwright browser scrapers that need more time and memory.
 
 ---
 
@@ -626,7 +778,7 @@ SELECT * FROM source_data_quality(7);
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | UUID | Primary key |
-| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24`, `backfill-images` |
+| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24`, `backfill-images`, `cleanup`, `validate`, `enrich-vin`, `enrich-titles`, `enrich-details` |
 | `run_id` | TEXT | Collector's own UUID |
 | `started_at` | TIMESTAMPTZ | When the run started |
 | `finished_at` | TIMESTAMPTZ | When the run finished |

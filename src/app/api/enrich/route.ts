@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getExchangeRates } from "@/lib/exchangeRates";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
   });
 
   const errors: string[] = [];
+  const rates = await getExchangeRates();
   let fairValuesComputed = 0;
   let thesesGenerated = 0;
 
@@ -82,10 +84,10 @@ export async function POST(request: Request) {
               listing_id: entry.id,
               fair_value_low_usd: low,
               fair_value_high_usd: high,
-              fair_value_low_eur: Math.round(low * 0.92),
-              fair_value_high_eur: Math.round(high * 0.92),
-              fair_value_low_gbp: Math.round(low * 0.79),
-              fair_value_high_gbp: Math.round(high * 0.79),
+              fair_value_low_eur: Math.round(low * (rates.EUR ?? 0.92)),
+              fair_value_high_eur: Math.round(high * (rates.EUR ?? 0.92)),
+              fair_value_low_gbp: Math.round(low * (rates.GBP ?? 0.79)),
+              fair_value_high_gbp: Math.round(high * (rates.GBP ?? 0.79)),
               updated_at: new Date().toISOString(),
             },
             { onConflict: "listing_id" }

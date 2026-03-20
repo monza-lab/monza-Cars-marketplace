@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { fetchPricedListingsForModel, fetchLiveListingById } from "@/lib/supabaseLiveListings"
 import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
+import { getExchangeRates } from "@/lib/exchangeRates"
 import { analyzeForReport } from "@/lib/ai/analyzer"
 import {
   getReportForListing,
@@ -78,7 +79,8 @@ export async function POST(request: Request) {
 
     // 7. Fetch priced listings and compute market stats (shared helper)
     const allPriced = await fetchPricedListingsForModel(car.make)
-    const { marketStats, pricedRecords } = computeMarketStatsForCar(car, allPriced)
+    const rates = await getExchangeRates()
+    const { marketStats, pricedRecords } = computeMarketStatsForCar(car, allPriced, rates)
     const series = extractSeries(car.model, car.year, car.make)
 
     // 8. Get brand thesis

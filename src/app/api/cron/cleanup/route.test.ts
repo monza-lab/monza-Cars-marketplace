@@ -32,10 +32,21 @@ vi.mock("@supabase/supabase-js", () => {
           }),
         };
 
-        // The eq() return must have lt() and contains()
+        // is() is used by Step 1d (stale dealer → unsold)
+        const isReturn = {
+          lt: vi.fn().mockReturnValue({
+            select: vi.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          }),
+        };
+
+        // The eq() return must have lt(), contains(), and is()
         const eqReturn = {
           lt: vi.fn().mockReturnValue(ltReturn),
           contains: vi.fn().mockReturnValue(containsReturn),
+          is: vi.fn().mockReturnValue(isReturn),
         };
 
         // The update() return must have eq()
@@ -285,5 +296,22 @@ describe("GET /api/cron/cleanup", () => {
     const response = await GET(request);
     // Success case returns 200
     expect([200, 500]).toContain(response.status);
+  });
+
+  it("includes staleDealerFixed count in response (Step 1d)", async () => {
+    const request = new Request("http://localhost:3000/api/cron/cleanup", {
+      method: "GET",
+      headers: {
+        authorization: "Bearer test-secret",
+      },
+    });
+
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body).toHaveProperty("staleDealerFixed");
+    expect(typeof body.staleDealerFixed).toBe("number");
   });
 });

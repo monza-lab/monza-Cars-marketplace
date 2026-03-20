@@ -1,6 +1,6 @@
 # Scrapers: Next Steps for 100% Data Coverage
 
-Current state as of 2026-03-19. Based on full manual run of all scrapers + analysis of GitHub Actions history and cron route code.
+Current state as of 2026-03-20. Based on full manual run of all scrapers + analysis of GitHub Actions history, cron route code, and nightly scraper_runs data.
 
 ---
 
@@ -8,24 +8,24 @@ Current state as of 2026-03-19. Based on full manual run of all scrapers + analy
 
 | # | Scraper | Status | Daily Yield | Coverage Gap |
 |---|---------|--------|-------------|--------------|
-| 1 | Porsche (BaT+C&B+CC) | **FIXED** — 3 sources + backfill | ~36+ new | All 3 auction sources active; LightBackfill enabled |
+| 1 | Porsche (BaT+C&B+CC) | **Working** — 3 sources + backfill | ~1,030 (BaT) | C&B and CC return 403 (Cloudflare/SPA) |
 | 2 | Ferrari (BaT) | Working (Porsche-only project) | ~75 new | N/A — project is Porsche-only |
-| 3 | AutoTrader UK | **FIXED** — dynamic version detection | ~98 new | Porsche-only; version auto-detected from page source |
-| 4 | BeForward | **FIXED** — image backfill filter | 0 new | Porsche-only; image filter corrected |
-| 5 | Classic.com | **Broken** | 0 | Needs residential proxy |
-| 6 | AutoScout24 | **FIXED** — 100% shards | ~4,979 new | maxListings raised to 7000 |
+| 3 | AutoTrader UK | **Working** — dynamic version detection | ~98 new | Porsche-only; version auto-detected |
+| 4 | BeForward | **Working** — image backfill active | ~0 new (stable inventory) | Dead URLs now marked as unsold |
+| 5 | Classic.com | **Broken** — Cloudflare blocks | 0 | Needs residential proxy credentials |
+| 6 | AutoScout24 | **Working** — 100% shards | ~4,979 new | Detail enrichment via enrich-details cron |
+| 7 | Image Backfill | **Working** — dead URL handling | 20/source/run | Dead URLs → unsold on 404/410 |
+| 8 | Cleanup | **Working** — 3-step maintenance | N/A | Stale→sold/unsold, dead URLs→unsold, junk deletion |
+| 9 | Validate | **Working** | N/A | Validates last 25h of listings |
+| 10 | VIN Enrichment | **Working** | N/A | NHTSA vPIC decoding |
+| 11 | Title Enrichment | **Working** | N/A | Regex extraction of specs from titles |
+| 12 | AS24 Detail Enrichment | **Working** (manual) | 25/run | Not on scheduled cron yet |
 
 ---
 
-## ~~CRITICAL — Fix Immediately~~ (Resolved)
+## OPEN — Action Required
 
-### 1. ~~Cleanup cron is deleting all Ferrari listings~~ — N/A
-
-**Status:** Not a bug — project is Porsche-only. The cleanup cron correctly deletes non-Porsche listings. Ferrari scraper exists but the project scope is Porsche only.
-
----
-
-### 2. Classic.com needs a residential proxy
+### 1. Classic.com needs a residential proxy
 
 **File:** `.github/workflows/classic-collector.yml`
 
@@ -43,57 +43,108 @@ Classic.com uses Cloudflare protection. Without a proxy, only page 1 of search r
 
 ---
 
-## HIGH PRIORITY — Significant Data Gaps
+### 2. Cars & Bids and Collecting Cars return 403
 
-### 3. ~~Porsche cron only scrapes BaT~~ — FIXED (2026-03-19)
+**Scrapers:** Porsche Collector, Ferrari Collector
 
-**Status:** All 3 sources enabled (`BaT`, `CarsAndBids`, `CollectingCars`). `maxActivePagesPerSource` reduced to 2 and collector budget to 180s to accommodate LightBackfill step.
+Both Cars & Bids and Collecting Cars are SPA/Cloudflare-protected sites. The HTTP-based scraper gets 403 errors. Currently only BaT works for auction data.
 
----
+**Options:**
+- Add Playwright-based scraping (like Classic.com) for C&B and CC
+- Use a residential proxy with the HTTP scraper
+- Accept BaT-only auction coverage for now
 
-### 4. ~~Porsche cron never calls LightBackfill~~ — FIXED (2026-03-19)
-
-**Status:** Step 3 added to Porsche cron route calling `runLightBackfill({ windowDays: 30, maxListingsPerModel: 1 })`. Time-budgeted with 90s max, skipped if <30s remaining.
-
----
-
-### 5. ~~AutoScout24 only covers 87% of shards~~ — FIXED (2026-03-19)
-
-**Status:** `maxListings` raised from 5000 to 7000 in `.github/workflows/autoscout24-collector.yml`. Should now cover all 52 shards.
-
-**Still open:** `splitSaturatedShard()` in `shards.ts` is dead code — large shards that hit the 20-page AS24 pagination cap silently truncate data.
+**Impact:** MEDIUM — BaT already provides the bulk of auction data (~1,030 listings/night).
 
 ---
 
-## MEDIUM PRIORITY — Enrichment & Quality
+### 3. Schedule AS24 Detail Enrichment
 
-### 6. ~~AutoScout24 never fetches detail pages~~ — FIXED (2026-03-19)
+**File:** `vercel.json`, `src/app/api/cron/enrich-details/route.ts`
 
-**Status:** New `/api/cron/enrich-details` cron route created. Processes 25 AS24 listings per run via plain HTTP fetch + `parseDetailHtml()` (cheerio, no Playwright). Enriches: trim, transmission, bodyStyle, engine, colors, VIN, description, images. Circuit-breaks on 403/429. Registered in monitoring dashboard as "AS24 Detail Enrichment".
+The `/api/cron/enrich-details` route exists and works but is not in the `vercel.json` cron schedule. It enriches AS24 listings with trim, transmission, body style, engine, colors, VIN, description, and images via plain HTTP (no Playwright).
 
----
+**Action:** Add to `vercel.json`:
+```json
+{ "path": "/api/cron/enrich-details", "schedule": "30 7 * * *" }
+```
 
-### 7. ~~BeForward image backfill column type mismatch~~ — FIXED (2026-03-19)
-
-**Status:** Changed `images.eq.{}` to `images.eq.[]` in both `common/backfillImages.ts` and `beforward_porsche_collector/backfill.ts`. The `images` column is `jsonb` storing arrays.
-
----
-
-### 8. ~~Ferrari backfill times out~~ — FIXED (2026-03-19, previous session)
-
-**Status:** Fixed by adding time-budget tracking to the Ferrari collector. `scrapeDetails: false` and `maxEndedPagesPerSource: 2` reduce collector time, leaving ~50-90s for backfill. Concurrent refresh with `Promise.allSettled` further reduced Step 1 time.
+**Impact:** LOW — can be triggered manually, but scheduling would automate AS24 enrichment.
 
 ---
 
-### 9. ~~AutoTrader has brittle hard-coded API headers~~ — FIXED (2026-03-19)
+### 4. AutoScout24 saturated shard splitting is dead code
 
-**Status:** Added `detectAppVersion()` to `discover.ts` with 3 detection strategies (meta tag, JSON metadata, webpack chunk pattern) + fallback to known `"6c9dff0561"`. Result cached for process lifetime. `fetchAutoTraderGatewayPage()` now calls `detectAppVersion()` instead of using hardcoded header. Tests cover all strategies + caching + fallback.
+**File:** `src/features/autoscout24_collector/shards.ts`
+
+`splitSaturatedShard()` exists but is never called. Large shards that hit the 20-page AS24 pagination cap silently truncate data. The fix raised `maxListings` to 7000 which covers most shards, but fundamentally the problem remains for high-volume model/country combinations.
+
+**Impact:** LOW — affects maybe 2-3 shards out of 52.
+
+---
+
+## FIXED (2026-03-20)
+
+### 5. Dead URL listings staying active — FIXED
+
+**Status:** Two-part fix implemented:
+
+1. **Forward fix** — `backfillImages.ts`: on 404/410, now sets `status = 'unsold'` alongside `images = ['__dead_url__']` so the listing immediately leaves the active feed.
+2. **Retroactive fix** — `cleanup/route.ts`: new Step 1c finds existing `__dead_url__` listings still marked `active` and sets them to `unsold`.
+
+**Commits:** `9e389a7`, `6e655d7`
+
+---
+
+### 6. Exchange rates were hardcoded — FIXED
+
+**Status:** Replaced hardcoded `TO_USD = { EUR: 1.09, GBP: 1.27, JPY: 0.0067 }` with live rates from the Frankfurter API across all 4 files that used them:
+- `supabaseLiveListings.ts` (server-side)
+- `makePageHelpers.ts` (server-side)
+- `valuation.ts` (client-side, via CurrencyContext)
+- `DashboardClient.tsx` (client-side, via CurrencyContext)
+
+New shared helper: `src/lib/exchangeRates.ts` — Frankfurter API, 1h memory cache, 5s timeout, fallback rates.
+
+**Commit:** `e3344f9`
+
+---
+
+## FIXED (2026-03-19)
+
+### 7. Porsche cron only scraped BaT — FIXED
+
+All 3 sources enabled (`BaT`, `CarsAndBids`, `CollectingCars`). `maxActivePagesPerSource` reduced to 2 and collector budget to 180s to accommodate LightBackfill step.
+
+### 8. Porsche cron never called LightBackfill — FIXED
+
+Step 3 added to Porsche cron route calling `runLightBackfill({ windowDays: 30, maxListingsPerModel: 1 })`. Time-budgeted with 90s max, skipped if <30s remaining.
+
+### 9. AutoScout24 only covered 87% of shards — FIXED
+
+`maxListings` raised from 5000 to 7000 in `.github/workflows/autoscout24-collector.yml`.
+
+### 10. AutoScout24 detail page enrichment — FIXED
+
+New `/api/cron/enrich-details` cron route. Processes 25 AS24 listings per run via plain HTTP + `parseDetailHtml()` (cheerio, no Playwright).
+
+### 11. BeForward image backfill column type mismatch — FIXED
+
+Changed `images.eq.{}` to `images.eq.[]` in both `common/backfillImages.ts` and `beforward_porsche_collector/backfill.ts`.
+
+### 12. Ferrari backfill timeout — FIXED
+
+Added time-budget tracking. `scrapeDetails: false` and `maxEndedPagesPerSource: 2` reduce collector time, leaving ~50-90s for backfill.
+
+### 13. AutoTrader brittle hard-coded API headers — FIXED
+
+Added `detectAppVersion()` with 3 detection strategies + fallback. Tests cover all strategies + caching + fallback.
 
 ---
 
 ## LOW PRIORITY — Future Expansion
 
-### 10. All scrapers except Ferrari are Porsche-only
+### 14. All scrapers except Ferrari are Porsche-only
 
 | Scraper | Current Makes | Potential |
 |---------|--------------|-----------|
@@ -102,23 +153,15 @@ Classic.com uses Cloudflare protection. Without a proxy, only page 1 of search r
 | Classic.com | Porsche, US only | Ferrari, EU locations |
 | AutoScout24 | Porsche | Ferrari, BMW, Mercedes (needs `make` param in shards) |
 
-Adding Ferrari support to these scrapers would dramatically increase Ferrari listing coverage beyond just BaT auctions.
+### 15. Classic.com only covers US market
 
----
+The cron hard-codes `location: "US"`. Classic.com also has European inventory.
 
-### 11. Classic.com only covers US market
+### 16. No sold-data tracking for dealer listings
 
-**File:** `src/app/api/cron/classic/route.ts`
+BeForward, AutoTrader, AutoScout24, and Classic.com only track active for-sale listings. When a listing disappears, it's now marked as `unsold` (via dead URL detection). The actual sale price is unknown — only BaT tracks hammer prices.
 
-The cron hard-codes `location: "US"`. Classic.com also has European inventory. Consider adding additional runs with `location: "EU"` or removing the location filter entirely.
-
----
-
-### 12. No sold-data tracking for dealer listings
-
-BeForward, AutoTrader, AutoScout24, and Classic.com only track currently active for-sale listings. When a listing disappears, it's marked as `delisted` — but the actual sale price is unknown. Only BaT (via Porsche/Ferrari collectors) tracks hammer prices.
-
-Consider adding price-history tracking: snapshot `asking_price` daily so you can track price drops over time, even without knowing the final sale price.
+Consider: snapshot `asking_price` daily to track price drops over time.
 
 ---
 
@@ -126,12 +169,16 @@ Consider adding price-history tracking: snapshot `asking_price` daily so you can
 
 | Priority | Task | Effort | Impact | Status |
 |----------|------|--------|--------|--------|
-| 1 | ~~Fix cleanup cron~~ | 5 min | N/A | N/A — Porsche-only project |
-| 2 | Get Decodo proxy for Classic.com | Config only | Unlocks entire scraper | **OPEN** |
-| 3 | ~~Enable CarsAndBids + CollectingCars~~ | 10 min | 2 new auction sources | **FIXED** |
-| 4 | ~~Add LightBackfill to Porsche cron~~ | 15 min | Sold auction history | **FIXED** |
-| 5 | ~~Raise AutoScout24 maxListings to 7000~~ | 2 min | 100% shard coverage | **FIXED** |
-| 6 | ~~Fix BeForward image backfill filter~~ | 5 min | Images for BeForward listings | **FIXED** |
-| 7 | ~~Ferrari backfill timeout~~ | 30 min | Reliable sold-auction data | **FIXED** |
-| 8 | ~~Enable AutoScout24 detail scraping~~ | 15 min | Rich listing metadata | **FIXED** |
-| 9 | ~~AutoTrader header hardening~~ | 30 min | Prevent silent API breakage | **FIXED** |
+| 1 | Get Decodo proxy for Classic.com | Config only | Unlocks entire scraper | **OPEN** |
+| 2 | Fix C&B / CC 403s (Playwright or proxy) | 2-4 hours | 2 more auction sources | **OPEN** |
+| 3 | Schedule AS24 Detail Enrichment | 1 line in vercel.json | Automated metadata enrichment | **OPEN** |
+| 4 | Fix saturated shard splitting | 1-2 hours | Complete AS24 coverage | **OPEN** |
+| 5 | ~~Dead URL delisting~~ | 30 min | Clean active feed | **FIXED** |
+| 6 | ~~Exchange rates~~ | 1 hour | Accurate regional valuations | **FIXED** |
+| 7 | ~~Enable CarsAndBids + CollectingCars~~ | 10 min | 2 new auction sources | **FIXED** |
+| 8 | ~~Add LightBackfill to Porsche cron~~ | 15 min | Sold auction history | **FIXED** |
+| 9 | ~~Raise AutoScout24 maxListings~~ | 2 min | 100% shard coverage | **FIXED** |
+| 10 | ~~Fix BeForward image backfill filter~~ | 5 min | Images for BeForward | **FIXED** |
+| 11 | ~~AS24 detail enrichment~~ | 15 min | Rich listing metadata | **FIXED** |
+| 12 | ~~Ferrari backfill timeout~~ | 30 min | Reliable sold-auction data | **FIXED** |
+| 13 | ~~AutoTrader header hardening~~ | 30 min | Prevent silent API breakage | **FIXED** |

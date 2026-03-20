@@ -11,6 +11,9 @@ const NON_CAR_KEYWORDS = [
 
 const INVALID_MODELS = ["porsche", "others", "other"] as const;
 
+const MIN_PRICE_USD = 500;
+const MAX_PRICE_USD = 50_000_000;
+
 const PORSCHE_COLORS = [
   "racing green", "guards red", "speed yellow", "miami blue",
   "gentian blue", "lava orange", "frozen blue", "crayon",
@@ -33,6 +36,7 @@ interface ListingInput {
   model: string;
   title: string;
   year?: number;
+  price?: number;
 }
 
 // ─── Public API ───
@@ -164,6 +168,16 @@ export function validateListing(listing: ListingInput): ValidationResult {
     return { valid: false, reason: `unresolvable-model:${model}` };
   }
 
-  // Rule 4: Model looks OK
+  // Rule 5: Price sanity check (only when price is provided and > 0)
+  if (listing.price != null && listing.price > 0) {
+    if (listing.price < MIN_PRICE_USD) {
+      return { valid: false, reason: `price-too-low:${listing.price}` };
+    }
+    if (listing.price > MAX_PRICE_USD) {
+      return { valid: false, reason: `price-too-high:${listing.price}` };
+    }
+  }
+
+  // Rule 6: Model looks OK
   return { valid: true };
 }

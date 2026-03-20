@@ -99,9 +99,9 @@ describe("computeRegionalStats", () => {
       makeListing({ id: "2", hammerPrice: 100000, originalCurrency: "EUR" }),
       makeListing({ id: "3", hammerPrice: 110000, originalCurrency: "EUR" }),
     ]
-    const stats = computeRegionalStats(listings, "EU", 2, "EUR")!
+    const stats = computeRegionalStats(listings, "EU", 2, "EUR", { EUR: 0.92 })!
     expect(stats.medianPrice).toBe(100000) // native EUR
-    expect(stats.medianPriceUsd).toBeGreaterThan(100000) // EUR → USD, rate > 1
+    expect(stats.medianPriceUsd).toBeGreaterThan(100000) // 100000 / 0.92 ≈ 108696
   })
 
   it("computes trend direction from date splits", () => {
@@ -148,5 +148,22 @@ describe("computeMarketStats", () => {
     const stats = computeMarketStats(listings, "series")!
     expect(stats.primaryTier).toBe(2)
     expect(stats.primaryRegion).toBe("EU")
+  })
+
+  it("accepts rates parameter for USD conversion", () => {
+    const listings = Array.from({ length: 3 }, (_, i) =>
+      makeListing({
+        id: `eur-${i}`,
+        source: "AutoScout24",
+        status: "active",
+        hammerPrice: 90000 + i * 10000,
+        originalCurrency: "EUR",
+      })
+    )
+    // Pass custom rates where 1 USD = 0.50 EUR (i.e. EUR is very strong)
+    const stats = computeMarketStats(listings, "series", { EUR: 0.5 })!
+    expect(stats).not.toBeNull()
+    // median EUR price = 100000, with rate 0.5: 100000 / 0.5 = 200000 USD
+    expect(stats.primaryFairValueLow).toBeGreaterThan(150000)
   })
 })

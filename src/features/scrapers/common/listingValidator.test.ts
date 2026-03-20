@@ -98,6 +98,64 @@ describe("listingValidator", () => {
     });
   });
 
+  describe("price validation", () => {
+    it("rejects price below $500", () => {
+      const result = validateListing({
+        make: "Porsche",
+        model: "911 Carrera",
+        title: "2020 Porsche 911 Carrera",
+        year: 2020,
+        price: 100,
+      });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe("price-too-low:100");
+    });
+
+    it("rejects price above $50M", () => {
+      const result = validateListing({
+        make: "Porsche",
+        model: "911 Carrera",
+        title: "2020 Porsche 911 Carrera",
+        year: 2020,
+        price: 60000000,
+      });
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe("price-too-high:60000000");
+    });
+
+    it("accepts no price (optional)", () => {
+      const result = validateListing({
+        make: "Porsche",
+        model: "911 Carrera",
+        title: "2020 Porsche 911 Carrera",
+        year: 2020,
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts price=0 (means no data yet)", () => {
+      const result = validateListing({
+        make: "Porsche",
+        model: "911 Carrera",
+        title: "2020 Porsche 911 Carrera",
+        year: 2020,
+        price: 0,
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts normal range ($85000)", () => {
+      const result = validateListing({
+        make: "Porsche",
+        model: "911 Carrera",
+        title: "2020 Porsche 911 Carrera",
+        year: 2020,
+        price: 85000,
+      });
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe("isNonCar", () => {
     it("detects tractor", () => {
       expect(isNonCar("tractor", "")).not.toBeNull();

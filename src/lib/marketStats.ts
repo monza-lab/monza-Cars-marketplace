@@ -5,7 +5,7 @@
 // statistics (P25, median, P75, trend). Never mixes tiers.
 // ---------------------------------------------------------------------------
 
-import { toUsd } from "./regionPricing"
+import { toUsd } from "./exchangeRates"
 import { extractSeries, getSeriesConfig } from "./brandConfig"
 import type {
   PricedListingRecord,
@@ -83,6 +83,7 @@ export function computeRegionalStats(
   region: string,
   tier: 1 | 2 | 3,
   currency: string,
+  rates: Record<string, number> = {},
 ): RegionalMarketStats | null {
   if (listings.length < 3) return null
 
@@ -97,8 +98,7 @@ export function computeRegionalStats(
   const max = prices[prices.length - 1]
 
   // USD conversion for cross-region comparison
-  const symbol = ISO_TO_SYMBOL[currency] ?? "$"
-  const medianUsd = Math.round(toUsd(median, symbol))
+  const medianUsd = Math.round(toUsd(median, currency, rates))
 
   // Trend: recent 6 months vs prior 6 months
   const sixMonthsAgo = new Date()
@@ -162,6 +162,7 @@ export function computeRegionalStats(
 export function computeMarketStats(
   listings: PricedListingRecord[],
   scope: "model" | "series" | "family",
+  rates: Record<string, number> = {},
 ): ModelMarketStats | null {
   const groups = segregateByRegion(listings)
 
@@ -172,6 +173,7 @@ export function computeMarketStats(
       group.region,
       group.tier as 1 | 2 | 3,
       group.currency,
+      rates,
     )
     if (stats) regions.push(stats)
   }
@@ -183,9 +185,8 @@ export function computeMarketStats(
   const primary = regions[0]
 
   // Convert primary P25/P75 to USD
-  const symbol = ISO_TO_SYMBOL[primary.currency] ?? "$"
-  const fairLow = Math.round(toUsd(primary.p25Price, symbol))
-  const fairHigh = Math.round(toUsd(primary.p75Price, symbol))
+  const fairLow = Math.round(toUsd(primary.p25Price, primary.currency, rates))
+  const fairHigh = Math.round(toUsd(primary.p75Price, primary.currency, rates))
 
   return {
     scope,
@@ -222,6 +223,7 @@ export interface PricedListingRow {
 export function computeMarketStatsForCar(
   car: { make: string; model: string; year: number },
   allPriced: PricedListingRow[],
+  rates: Record<string, number> = {},
 ): { marketStats: ModelMarketStats | null; pricedRecords: PricedListingRecord[] } {
   const series = extractSeries(car.model, car.year, car.make)
 
@@ -258,6 +260,6 @@ export function computeMarketStatsForCar(
     country: l.country ?? null,
   }))
 
-  const marketStats = computeMarketStats(pricedRecords, scope)
+  const marketStats = computeMarketStats(pricedRecords, scope, rates)
   return { marketStats, pricedRecords }
 }

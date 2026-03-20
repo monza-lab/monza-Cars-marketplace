@@ -9,7 +9,7 @@ import {
 } from "@/features/scrapers/common/monitoring/record";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // VIN decode is fast — 60s is plenty
+export const maxDuration = 120; // VIN decode is fast — 120s for larger batches
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Get up to 500 active listings with VINs but missing fields
+    // Get up to 2000 active listings with VINs but missing fields
     const { data: listings, error } = await supabase
       .from("listings")
       .select("id, vin, engine, transmission, body_style")
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       .neq("vin", "")
       .or("engine.is.null,transmission.is.null,body_style.is.null")
       .eq("status", "active")
-      .limit(500);
+      .limit(2000);
 
     if (error) throw new Error(`Query error: ${error.message}`);
 

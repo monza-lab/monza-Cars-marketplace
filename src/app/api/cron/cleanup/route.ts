@@ -201,6 +201,27 @@ export async function GET(request: Request) {
       console.log(`[cron/cleanup] Marked ${deadUrlFixedCount} dead-URL listings as unsold`);
     }
 
+    // ── Step 1d: Expire stale dealer listings ──
+    // Dealer listings (no end_time) that haven't been updated in >90 days
+    // are almost certainly no longer available. Mark as 'unsold'.
+    const cutoff90d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: staleDealerData, error: staleDealerErr } = await supabase
+      .from("listings")
+      .update({ status: "unsold", updated_at: now })
+      .eq("status", "active")
+      .is("end_time", null)
+      .lt("updated_at", cutoff90d)
+      .select("id");
+
+    if (staleDealerErr) {
+      console.error("[cron/cleanup] stale-dealer→unsold error:", staleDealerErr.message);
+    }
+    const staleDealerCount = staleDealerData?.length ?? 0;
+    if (staleDealerCount > 0) {
+      console.log(`[cron/cleanup] Expired ${staleDealerCount} stale dealer listings (>90d, no end_time)`);
+    }
+
     // ── Step 2: Reclassify misclassified listings using title ──
     // Some listings have model="911" but title="1976 Porsche 911 Turbo" — the title
     // reveals a more specific series (930). We detect and fix these by comparing
@@ -254,6 +275,7 @@ export async function GET(request: Request) {
       const earlyMessages: string[] = [];
       if (reclassified > 0) earlyMessages.push(`reclassified: ${reclassified}`);
       if (deadUrlFixedCount > 0) earlyMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
+      if (staleDealerCount > 0) earlyMessages.push(`stale-dealer-unsold: ${staleDealerCount}`);
 
       await recordScraperRun({
         scraper_name: "cleanup",
@@ -264,10 +286,10 @@ export async function GET(request: Request) {
         runtime: "vercel_cron",
         duration_ms: Date.now() - startTime,
         discovered: allListings.length,
-        written: totalStaleFixed + reclassified + deadUrlFixedCount,
+        written: totalStaleFixed + reclassified + deadUrlFixedCount + staleDealerCount,
         errors_count: 0,
         refresh_checked: allListings.length,
-        refresh_updated: totalStaleFixed + deadUrlFixedCount,
+        refresh_updated: totalStaleFixed + deadUrlFixedCount + staleDealerCount,
         error_messages: earlyMessages.length > 0 ? earlyMessages : undefined,
       });
 
@@ -279,6 +301,7 @@ export async function GET(request: Request) {
         deleted: 0,
         staleFixed: 0,
         deadUrlFixed: deadUrlFixedCount,
+        staleDealerFixed: staleDealerCount,
         reclassified,
         items: [],
         duration: `${Date.now() - startTime}ms`,
@@ -319,6 +342,7 @@ export async function GET(request: Request) {
     const allMessages: string[] = [];
     if (totalStaleFixed > 0) allMessages.push(`stale: ${staleSoldCount} sold, ${staleUnsoldCount} unsold`);
     if (deadUrlFixedCount > 0) allMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
+    if (staleDealerCount > 0) allMessages.push(`stale-dealer-unsold: ${staleDealerCount}`);
     if (reclassified > 0) allMessages.push(`reclassified: ${reclassified}`);
     if (deletedCount > 0) {
       allMessages.push(...Object.entries(byReason).map(([r, c]) => `junk-${r}: ${c}`));
@@ -333,10 +357,10 @@ export async function GET(request: Request) {
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: allListings.length,
-      written: totalStaleFixed + reclassified + deadUrlFixedCount,
+      written: totalStaleFixed + reclassified + deadUrlFixedCount + staleDealerCount,
       errors_count: deletedCount,
       refresh_checked: allListings.length,
-      refresh_updated: totalStaleFixed + deadUrlFixedCount,
+      refresh_updated: totalStaleFixed + deadUrlFixedCount + staleDealerCount,
       error_messages: allMessages.length > 0 ? allMessages : undefined,
     });
 
@@ -350,6 +374,7 @@ export async function GET(request: Request) {
       staleSold: staleSoldCount,
       staleUnsold: staleUnsoldCount,
       deadUrlFixed: deadUrlFixedCount,
+      staleDealerFixed: staleDealerCount,
       reclassified,
       byReason,
       items: junkItems.slice(0, 100), // cap response size
