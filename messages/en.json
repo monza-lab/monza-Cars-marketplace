@@ -1,6 +1,6 @@
 {
   "nav": {
-    "liveAuctions": "Live Auctions",
+    "liveListings": "Live Listings",
     "marketSearch": "Market Search",
     "priceHistory": "Price History",
     "about": "About",
@@ -64,16 +64,16 @@
     "newAccountsCredits": "New accounts receive 3 free analysis credits"
   },
   "hero": {
-    "badge": "Live Auction Intelligence",
+    "badge": "Live Market Intelligence",
     "headline1": "Building",
     "headline2": "Investment-Grade",
     "headline3": "Assets",
-    "subheadline": "AI-powered auction analysis for classic vehicles. Make smarter bids with data-driven insights from top platforms.",
+    "subheadline": "AI-powered market analysis for collector vehicles. Make smarter decisions with data-driven insights from top platforms.",
     "searchPlaceholder": "Search by make, model, or year...",
     "search": "Search",
     "popular": "Popular:",
     "stats": {
-      "auctionsTracked": "Auctions Tracked",
+      "listingsTracked": "Listings Tracked",
       "aiAnalyses": "AI Analyses",
       "platformsActive": "Platforms Active"
     }
@@ -81,12 +81,12 @@
   "howItWorks": {
     "kicker": "How It Works",
     "title1": "Your Unfair Advantage in",
-    "title2": "Every Auction",
-    "subtitle": "Three simple steps between you and smarter bidding decisions.",
+    "title2": "Every Listing",
+    "subtitle": "Three simple steps between you and smarter acquisition decisions.",
     "steps": {
       "track": {
         "title": "We Track",
-        "description": "Monitor live auctions across top platforms in real-time. Every listing, every bid, every detail -- captured and organized for you."
+        "description": "Monitor live listings across top platforms in real-time. Every vehicle, every price, every detail — captured and organized for you."
       },
       "analyzes": {
         "title": "AI Analyzes",
@@ -711,7 +711,7 @@
       "viewFullDetails": "View Full Details",
       "similarCars": "Similar Cars",
       "browseBrand": "Browse Brand",
-      "viewLiveAuctions": "View Live Auctions",
+      "viewLiveListings": "View Live Listings",
       "browseAll": "Browse All",
       "browseByBrand": "Browse by Brand",
       "viewAllUnderBudget": "View All Under Budget",
@@ -732,24 +732,24 @@
   },
   "pages": {
     "auctions": {
-      "loading": "Loading auctions...",
+      "loading": "Loading listings...",
       "meta": {
-        "title": "Live Auctions | Monza Lab",
-        "description": "Browse and analyze collector car auctions across Bring a Trailer, Cars & Bids, RM Sotheby's, and more. Get AI-powered insights before you bid.",
-        "ogTitle": "Live Auctions | Monza Lab",
-        "ogDescription": "Browse and analyze collector car auctions across all major platforms."
+        "title": "Live Listings | Monza Lab",
+        "description": "Browse and analyze collector car listings across Bring a Trailer, Cars & Bids, AutoScout24, and more. Get AI-powered insights before you buy.",
+        "ogTitle": "Live Listings | Monza Lab",
+        "ogDescription": "Browse and analyze collector car listings across all major platforms."
       }
     },
     "search": {
       "meta": {
-        "title": "Search Auctions | Monza Lab",
-        "description": "Search across thousands of live and completed auctions. Filter by make, model, year, platform, and price range."
+        "title": "Search Listings | Monza Lab",
+        "description": "Search across thousands of live and completed listings. Filter by make, model, year, platform, and price range."
       }
     },
     "history": {
       "meta": {
         "title": "Market Trends | Monza Lab",
-        "description": "Explore historical auction results and market trends for classic and collectible vehicles."
+        "description": "Explore historical sales results and market trends for classic and collectible vehicles."
       }
     }
   },
@@ -757,9 +757,9 @@
     "kicker": "Market Intelligence",
     "title1": "Market",
     "title2": "Trends",
-    "subtitle": "Analyze historical auction results, track price movements, and identify trends across makes, models, and platforms.",
+    "subtitle": "Analyze historical sales results, track price movements, and identify trends across makes, models, and platforms.",
     "stats": {
-      "auctionsTracked": "Auctions Tracked",
+      "listingsTracked": "Listings Tracked",
       "makesCovered": "Makes Covered",
       "platforms": "Platforms",
       "dataPoints": "Data Points"
@@ -774,7 +774,7 @@
   },
   "home": {
     "loadingAssets": "Loading assets...",
-    "noAuctionsFound": "No auctions found"
+    "noListingsFound": "No listings found"
   },
   "language": {
     "select": "Language",
@@ -807,7 +807,7 @@
     "c": "C"
   },
   "sections": {
-    "featuredAuctions": "Featured Auctions",
+    "featuredListings": "Featured Listings",
     "howItWorks": "How It Works",
     "platformPartners": "Platform Partners",
     "investmentThesis": "Investment Thesis",
@@ -839,7 +839,7 @@
   "search": {
     "header": {
       "title": "Search",
-      "titleAccent": "Auctions",
+      "titleAccent": "Listings",
       "searchPlaceholder": "Search make, model, year...",
       "results": "{count, plural, one {# result} other {# results}}"
     },
@@ -891,15 +891,15 @@
   },
   "auctionsList": {
     "header": {
-      "title": "Live Auctions",
-      "subtitle": "Track and analyze collector car auctions across platforms",
+      "title": "Live Listings",
+      "subtitle": "Track and analyze collector car listings across platforms",
       "searchPlaceholder": "Search by year, make, model, or keyword..."
     },
     "common": {
       "loading": "Loading..."
     },
     "results": {
-      "auctionsLabel": "{count, plural, one {auction} other {auctions}}"
+      "listingsLabel": "{count, plural, one {listing} other {listings}}"
     },
     "sort": {
       "endingSoon": "Ending Soon",
@@ -910,7 +910,7 @@
     },
     "filters": {
       "title": "Filters",
-      "mobileTitle": "Filter Auctions",
+      "mobileTitle": "Filter Listings",
       "clear": "Clear",
       "clearAll": "Clear all",
       "platform": "Platform",
@@ -921,7 +921,7 @@
       "modelPlaceholder": "e.g. 911, M3, Supra...",
       "status": "Status",
       "allStatuses": "All Statuses",
-      "resultsFound": "{count, plural, one {# auction found} other {# auctions found}}"
+      "resultsFound": "{count, plural, one {# listing found} other {# listings found}}"
     },
     "statuses": {
       "active": "Active",
@@ -929,7 +929,7 @@
       "upcoming": "Upcoming"
     },
     "empty": {
-      "title": "No auctions found",
+      "title": "No listings found",
       "subtitle": "Try adjusting your filters or search terms to discover more vehicles.",
       "clearFilters": "Clear Filters"
     },
@@ -955,8 +955,8 @@
     }
   },
   "dashboard": {
-    "liveAuctions": {
-      "title": "Live Auctions",
+    "liveListings": {
+      "title": "Live Listings",
       "searchPlaceholder": "Search cars...",
       "tabs": {
         "byRegion": "By Region",
@@ -966,9 +966,9 @@
       "allRegions": "All",
       "selectBrand": "Select brand...",
       "allBrands": "All Brands",
-      "resultSummary": "{count, plural, one {# auction} other {# auctions}} • Sorted by price",
+      "resultSummary": "{count, plural, one {# listing} other {# listings}} • Sorted by price",
       "empty": {
-        "title": "No auctions found",
+        "title": "No listings found",
         "subtitle": "Try adjusting your filters"
       },
       "quickAccess": "Quick Access"
@@ -984,7 +984,7 @@
       "noResults": "No cars found",
       "noResultsHint": "Try a different search or region",
       "families": "Families",
-      "noLiveAuctions": "No live auctions right now",
+      "noLiveListings": "No live listings right now",
       "brandsCount": "{count, plural, one {# brand} other {# brands}}"
     },
     "brandNav": {
@@ -1008,7 +1008,7 @@
       "explore": "Explore {brand}"
     },
     "mobileFeed": {
-      "liveAuctions": "Live Auctions",
+      "liveListings": "Live Listings",
       "trending": "Trending",
       "exploreAll": "Explore All",
       "brands": "Brands",
@@ -1016,7 +1016,7 @@
       "ending": "Ending",
       "vehicles": "{count, plural, one {# vehicle} other {# vehicles}}",
       "noBrands": "No brands in this region",
-      "noAuctions": "No live auctions right now"
+      "noListings": "No live listings right now"
     },
     "context": {
       "investmentThesis": "Investment Thesis",
@@ -1066,7 +1066,7 @@
       "topModels": "Top Models",
       "recentSales": "Recent Sales",
       "liquidityDepth": "Liquidity & Market Depth",
-      "auctionsPerYear": "Auctions / Year",
+      "listingsPerYear": "Listings / Year",
       "avgDaysToSell": "Avg Days to Sell",
       "sellThroughRate": "Sell-Through Rate",
       "demandScore": "Demand Score",
@@ -1116,7 +1116,7 @@
       "mostListed": "Most Listed"
     },
     "sidebar": {
-      "dataSource": "Prices from real auction results. {count} listings tracked.",
+      "dataSource": "Prices from real market data. {count} listings tracked.",
       "about": "About {make}",
       "editorial": "Editorial",
       "estimatedAnnualCosts": "Est. Annual Costs",
@@ -1133,7 +1133,7 @@
       "priceTier": "Price Tier",
       "category": "Category",
       "regionalPricing": "Fair Value by Region",
-      "regionalNote": "Fair value ranges based on recent auction results and regional market conditions.",
+      "regionalNote": "Fair value ranges based on recent sales data and regional market conditions.",
       "avgPrice": "Avg Price",
       "grade": "Grade"
     },
@@ -1163,7 +1163,7 @@
       "priceTrend": "Price Trend",
       "recentSales": "Recent Sales",
       "marketDepth": "Market Depth",
-      "auctionsPerYear": "Auctions/Year",
+      "listingsPerYear": "Listings/Year",
       "avgDaysToSell": "Avg Days to Sell",
       "sellThroughRate": "Sell-Through",
       "demandScore": "Demand Score",
@@ -1174,7 +1174,7 @@
       "total": "Total",
       "perYear": "/yr",
       "otherModels": "Other Models",
-      "liveAuctions": "Live Auctions",
+      "liveListings": "Live Listings",
       "models": "Models",
       "noModels": "No models in this region",
       "viewDetails": "View Details"

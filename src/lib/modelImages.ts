@@ -68,12 +68,19 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Porsche|356": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
 
   // ─── PORSCHE (series IDs — fallbacks for family cards) ───
+  // 992: modern 911, angular LED headlights (2019+)
   "Porsche|992": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|991": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|997": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|996": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  // 991: 2012-2019 911, rounded LED headlights
+  "Porsche|991": "https://images.unsplash.com/photo-1611651338412-8403fa8b3153?w=1200&h=800&fit=crop",
+  // 997: 2005-2012 911, round headlights with top-mounted indicators
+  "Porsche|997": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
+  // 996: 1999-2004 911, distinctive "fried egg" headlights
+  "Porsche|996": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  // 993: 1994-1998, last air-cooled 911
   "Porsche|993": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|964": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
+  // 964: 1989-1994, integrated bumpers
+  "Porsche|964": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  // 930: original Turbo, whale tail
   "Porsche|930": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
   "Porsche|g-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
   "Porsche|f-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",

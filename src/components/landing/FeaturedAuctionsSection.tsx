@@ -214,7 +214,7 @@ export function FeaturedAuctionsSection() {
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            {tSections("featuredAuctions")}
+            {tSections("featuredListings")}
           </h2>
           <p className="mt-2 text-[14px] text-[rgba(232,226,222,0.5)] max-w-xl">
             {tFeatured("subtitle")}

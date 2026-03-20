@@ -251,7 +251,7 @@ export function DiscoverySidebar({
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
-              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveAuctions")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveListings")}</p>
             </div>
           ) : (
             liveAuctions.map((auction) => {
