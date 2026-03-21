@@ -1,4 +1,4 @@
-export type ScraperName = 'porsche' | 'ferrari' | 'autotrader' | 'beforward' | 'classic' | 'autoscout24' | 'backfill-images' | 'enrich-vin' | 'enrich-titles' | 'enrich-details' | 'bat-detail' | 'validate' | 'cleanup';
+export type ScraperName = 'porsche' | 'ferrari' | 'autotrader' | 'beforward' | 'classic' | 'autoscout24' | 'backfill-images' | 'enrich-vin' | 'enrich-titles' | 'enrich-details' | 'enrich-autotrader' | 'enrich-beforward' | 'enrich-details-bulk' | 'bat-detail' | 'validate' | 'cleanup';
 export type RuntimeEnv = 'vercel_cron' | 'github_actions' | 'cli';
 
 export interface ScraperRunRecord {
