@@ -61,25 +61,25 @@ DECODO_PROXY_PASS=password
 
 **What it does:** Scrapes Porsche auction listings from 3 auction platforms — Bring a Trailer (BaT), Cars & Bids, and Collecting Cars.
 
-**Source directory:** `src/features/porsche_collector/`
+**Source directory:** `src/features/scrapers/porsche_collector/`
 
 ### Run locally
 
 ```bash
 # Daily mode (discover active + recently ended listings)
-npx tsx src/features/porsche_collector/cli.ts --mode=daily
+npx tsx src/features/scrapers/porsche_collector/cli.ts --mode=daily
 
 # Backfill a specific date range
-npx tsx src/features/porsche_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
+npx tsx src/features/scrapers/porsche_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
 
 # Dry run (no database writes)
-npx tsx src/features/porsche_collector/cli.ts --mode=daily --dryRun
+npx tsx src/features/scrapers/porsche_collector/cli.ts --mode=daily --dryRun
 
 # Skip detail page fetches (faster, less data)
-npx tsx src/features/porsche_collector/cli.ts --mode=daily --noDetails
+npx tsx src/features/scrapers/porsche_collector/cli.ts --mode=daily --noDetails
 
 # Show help
-npx tsx src/features/porsche_collector/cli.ts --help
+npx tsx src/features/scrapers/porsche_collector/cli.ts --help
 ```
 
 ### CLI flags
@@ -120,22 +120,22 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 **What it does:** Same as the Porsche Collector but targets Ferrari listings from the same 3 auction platforms.
 
-**Source directory:** `src/features/ferrari_collector/`
+**Source directory:** `src/features/scrapers/ferrari_collector/`
 
 ### Run locally
 
 ```bash
 # Daily mode
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily
+npx tsx src/features/scrapers/ferrari_collector/cli.ts --mode=daily
 
 # Backfill
-npx tsx src/features/ferrari_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
+npx tsx src/features/scrapers/ferrari_collector/cli.ts --mode=backfill --dateFrom=2026-01-01 --dateTo=2026-01-07
 
 # Dry run
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily --dryRun
+npx tsx src/features/scrapers/ferrari_collector/cli.ts --mode=daily --dryRun
 
 # Show help
-npx tsx src/features/ferrari_collector/cli.ts --help
+npx tsx src/features/scrapers/ferrari_collector/cli.ts --help
 ```
 
 ### CLI flags
@@ -195,22 +195,22 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 **What it does:** Scrapes Porsche listings from BeForward, a Japanese used-car export marketplace.
 
-**Source directory:** `src/features/beforward_porsche_collector/`
+**Source directory:** `src/features/scrapers/beforward_porsche_collector/`
 
 ### Run locally
 
 ```bash
 # Dry run — no database writes
-npx tsx src/features/beforward_porsche_collector/cli.ts --dryRun --maxPages=5
+npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --dryRun --maxPages=5
 
 # Production run (full)
-npx tsx src/features/beforward_porsche_collector/cli.ts --maxPages=200 --maxDetails=10000 --concurrency=6
+npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --maxPages=200 --maxDetails=10000 --concurrency=6
 
 # Summary only (skip detail pages, faster)
-npx tsx src/features/beforward_porsche_collector/cli.ts --summaryOnly --maxPages=10
+npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --summaryOnly --maxPages=10
 
 # Show help
-npx tsx src/features/beforward_porsche_collector/cli.ts --help
+npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --help
 ```
 
 ### CLI flags
@@ -247,7 +247,7 @@ The cron route runs with `summaryOnly=true` to fit the 5-minute Vercel limit, so
 
 **Config:** max 20 listings per run, 2.5s rate limit between fetches. Backfill stats (`backfill_discovered`, `backfill_written`) are recorded in the `scraper_runs` table and returned in the response JSON.
 
-**Source:** `src/features/beforward_porsche_collector/backfill.ts`
+**Source:** `src/features/scrapers/beforward_porsche_collector/backfill.ts`
 
 ### Test the cron route
 
@@ -268,22 +268,22 @@ The response includes a `backfill` object:
 
 **What it does:** Scrapes Porsche for-sale listings from Classic.com (US market) using a headless Playwright browser. Uses Decodo/SmartProxy residential proxies to bypass Cloudflare protection.
 
-**Source directory:** `src/features/classic_collector/`
+**Source directory:** `src/features/scrapers/classic_collector/`
 
 ### Run locally
 
 ```bash
 # Quick dry run — visible browser, 5 listings
-npx tsx src/features/classic_collector/cli.ts --dryRun --headed --maxListings=5
+npx tsx src/features/scrapers/classic_collector/cli.ts --dryRun --headed --maxListings=5
 
 # Production run with defaults (headless)
-npx tsx src/features/classic_collector/cli.ts --maxPages=20
+npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20
 
 # With proxy
-npx tsx src/features/classic_collector/cli.ts --proxyServer=http://gate.smartproxy.com:7000
+npx tsx src/features/scrapers/classic_collector/cli.ts --proxyServer=http://gate.smartproxy.com:7000
 
 # Show help
-npx tsx src/features/classic_collector/cli.ts --help
+npx tsx src/features/scrapers/classic_collector/cli.ts --help
 ```
 
 ### CLI flags
@@ -326,7 +326,7 @@ When running with `summaryOnly=true` (the Vercel cron default), listings are ing
 
 **Config:** max 5 listings per run (Playwright is ~10-15s/listing). Backfill stats are recorded in `scraper_runs` as `backfill_discovered`/`backfill_written`.
 
-**Source:** `src/features/classic_collector/backfill.ts`
+**Source:** `src/features/scrapers/classic_collector/backfill.ts`
 
 ### Dedicated bulk image backfill
 
@@ -369,31 +369,31 @@ Go to **Actions > Classic.com Image Backfill > Run workflow** for dedicated imag
 
 **What it does:** Scrapes Porsche listings from AutoScout24 across 8 European countries (Germany, Austria, Belgium, Spain, France, Italy, Luxembourg, Netherlands). Uses a headless Playwright browser. Shards searches by model + year range + country to overcome the 20-page pagination limit (~31,000 total listings).
 
-**Source directory:** `src/features/autoscout24_collector/`
+**Source directory:** `src/features/scrapers/autoscout24_collector/`
 
 ### Run locally
 
 ```bash
 # Quick test — dry run, Luxembourg only, 10 listings
-npx tsx src/features/autoscout24_collector/cli.ts --dryRun --maxListings=10 --countries=L
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --dryRun --maxListings=10 --countries=L
 
 # Germany only, 100 listings
-npx tsx src/features/autoscout24_collector/cli.ts --dryRun --maxListings=100 --countries=D
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --dryRun --maxListings=100 --countries=D
 
 # All countries, with detail page scraping (slower but richer data)
-npx tsx src/features/autoscout24_collector/cli.ts --countries=D,A,I --scrapeDetails --maxListings=500
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --countries=D,A,I --scrapeDetails --maxListings=500
 
 # Full run, all 8 countries (takes ~1 hour)
-npx tsx src/features/autoscout24_collector/cli.ts --maxListings=50000
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --maxListings=50000
 
 # Debug mode — visible browser, few listings
-npx tsx src/features/autoscout24_collector/cli.ts --headed --dryRun --maxListings=5 --countries=L
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --headed --dryRun --maxListings=5 --countries=L
 
 # Resume an interrupted run (reads checkpoint automatically)
-npx tsx src/features/autoscout24_collector/cli.ts
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts
 
 # Show help
-npx tsx src/features/autoscout24_collector/cli.ts --help
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --help
 ```
 
 ### CLI flags

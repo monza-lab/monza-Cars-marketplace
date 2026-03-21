@@ -39,7 +39,10 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install chromium --with-deps
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install chromium --with-deps
+          npx rebrowser-playwright install chromium || true
 
       - name: Run collector (incremental)
         env:
@@ -49,7 +52,7 @@ jobs:
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
         run: |
-          npx tsx src/features/classic_collector/cli.ts \
+          npx tsx src/features/scrapers/classic_collector/cli.ts \
             --maxPages=${{ github.event.inputs.max_pages || '170' }} \
             --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
             --navigationDelayMs=3000 \

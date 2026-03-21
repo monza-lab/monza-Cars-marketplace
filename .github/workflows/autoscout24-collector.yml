@@ -45,7 +45,10 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install chromium --with-deps
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install chromium --with-deps
+          npx rebrowser-playwright install chromium || true
 
       - name: Run collector
         env:
@@ -55,7 +58,7 @@ jobs:
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
         run: |
-          npx tsx src/features/autoscout24_collector/cli.ts \
+          npx tsx src/features/scrapers/autoscout24_collector/cli.ts \
             --countries=${{ github.event.inputs.countries || 'D,A,B,E,F,I,L,NL' }} \
             --maxListings=${{ github.event.inputs.max_listings || '7000' }} \
             --maxPagesPerShard=${{ github.event.inputs.max_pages_per_shard || '20' }} \

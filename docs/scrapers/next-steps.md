@@ -58,18 +58,13 @@ Both Cars & Bids and Collecting Cars are SPA/Cloudflare-protected sites. The HTT
 
 ---
 
-### 3. Schedule AS24 Detail Enrichment
+### 3. ~~Schedule AS24 Detail Enrichment~~ — FIXED
 
-**File:** `vercel.json`, `src/app/api/cron/enrich-details/route.ts`
+Added to `vercel.json` at `30 7 * * *`. Running successfully (25 listings/run).
 
-The `/api/cron/enrich-details` route exists and works but is not in the `vercel.json` cron schedule. It enriches AS24 listings with trim, transmission, body style, engine, colors, VIN, description, and images via plain HTTP (no Playwright).
+### 3b. GitHub Actions workflows broken — FIXED (2026-03-21)
 
-**Action:** Add to `vercel.json`:
-```json
-{ "path": "/api/cron/enrich-details", "schedule": "30 7 * * *" }
-```
-
-**Impact:** LOW — can be triggered manually, but scheduling would automate AS24 enrichment.
+All three GitHub Actions workflows (AutoScout24, Classic.com, Classic.com Image Backfill) were failing since Mar 18 due to the scraper directory restructure (`src/features/` → `src/features/scrapers/`). Workflow paths updated. Also fixed Playwright browser install to include `rebrowser-playwright` version.
 
 ---
 
