@@ -67,7 +67,7 @@ type PriceHistoryRow = {
   time: string;
 };
 
-const SUPABASE_TIMEOUT_MS = 12_000;
+const SUPABASE_TIMEOUT_MS = 30_000;
 
 function createSupabaseClient(url: string, key: string): SupabaseClient {
   return createClient(url, key, {

@@ -15,7 +15,7 @@ import { getModelPatternsForSeries } from "@/lib/brandConfig";
 // Per-source budget for the non-paginated (dashboard) path.
 // Dashboard only needs enough data for family-level aggregations (counts, sample images).
 // Individual car browsing uses the paginated path instead.
-const PER_SOURCE_BUDGET = 500;
+const PER_SOURCE_BUDGET = 200;
 
 // Maximum page size for paginated requests
 const MAX_PAGE_SIZE = 200;
@@ -155,7 +155,11 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=30",
+      },
+    });
   }
 
   // ─── Non-paginated path (dashboard / legacy) ───
@@ -258,7 +262,7 @@ export async function GET(request: NextRequest) {
   // Transform — keep only first image per listing to reduce payload size
   const transformed = results.map(transformCar);
 
-  return NextResponse.json({
+  const body = {
     auctions: transformed,
     total,
     page: 1,
@@ -268,6 +272,12 @@ export async function GET(request: NextRequest) {
       liveNow: aggregates.liveNow,
       regionTotals: aggregates.regionTotalsByPlatform,
       seriesCounts,
+    },
+  };
+
+  return NextResponse.json(body, {
+    headers: {
+      "Cache-Control": "s-maxage=300, stale-while-revalidate=60",
     },
   });
 }
