@@ -108,4 +108,45 @@ describe("GET /api/cron/enrich-details", () => {
     const data = await response.json();
     expect(data.duration).toMatch(/^\d+ms$/);
   });
+
+  it("marks listing as attempted when no fields extracted", async () => {
+    // Mock returning a listing
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: [{ id: "test-id", source_url: "https://www.autoscout24.com/offers/test" }],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      }),
+    });
+
+    // Mock fetch returning valid HTML
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue("<html><body>empty page</body></html>"),
+    }) as unknown as typeof fetch;
+
+    // Mock parseDetailHtml returning no useful fields
+    const { parseDetailHtml } = await import("@/features/scrapers/autoscout24_collector/detail");
+    vi.mocked(parseDetailHtml).mockReturnValue({
+      title: "", price: null, currency: null, year: null, make: null, model: null,
+      trim: null, mileageKm: null, transmission: null, fuelType: null, engine: null,
+      power: null, bodyStyle: null, exteriorColor: null, interiorColor: null,
+      vin: null, location: null, country: null, region: null, sellerType: null,
+      sellerName: null, description: null, images: [], firstRegistration: null, features: [],
+    });
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+    expect(data.success).toBe(true);
+
+    // Should have called update with trim = '' even though no fields extracted
+    expect(mockUpdate).toHaveBeenCalled();
+  });
 });

@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       .eq("status", "active")
       .is("trim", null)
       .order("updated_at", { ascending: true })
-      .limit(25);
+      .limit(100);
 
     if (fetchErr || !rows) {
       throw new Error(fetchErr?.message ?? "No rows returned");
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     const discovered = rows.length;
     let enriched = 0;
     const errors: string[] = [];
-    const DELAY_MS = 2_000;
+    const DELAY_MS = 1_000;
     const TIME_BUDGET_MS = 270_000;
 
     for (let i = 0; i < rows.length; i++) {
@@ -139,6 +139,15 @@ export async function GET(request: Request) {
             errors.push(`Update failed (${row.id}): ${updateErr.message}`);
           } else {
             enriched++;
+          }
+        } else {
+          // Mark as "attempted" — set trim to empty string to prevent re-processing
+          const { error: markerErr } = await client
+            .from("listings")
+            .update({ trim: "", updated_at: new Date().toISOString() })
+            .eq("id", row.id);
+          if (markerErr) {
+            errors.push(`Marker failed (${row.id}): ${markerErr.message}`);
           }
         }
       } catch (err) {
