@@ -54,6 +54,19 @@ export interface BrandConfig {
   defaultThesis: string
 }
 
+// ─── VARIANT IMPORTS ───
+import {
+  PORSCHE_992_VARIANTS, PORSCHE_991_VARIANTS, PORSCHE_997_VARIANTS,
+  PORSCHE_996_VARIANTS, PORSCHE_993_VARIANTS, PORSCHE_964_VARIANTS,
+  PORSCHE_930_VARIANTS, PORSCHE_GMODEL_VARIANTS, PORSCHE_FMODEL_VARIANTS,
+  PORSCHE_912_VARIANTS, PORSCHE_718_CAYMAN_VARIANTS, PORSCHE_718_BOXSTER_VARIANTS,
+  PORSCHE_CAYMAN_VARIANTS, PORSCHE_BOXSTER_VARIANTS,
+  PORSCHE_914_VARIANTS, PORSCHE_944_VARIANTS, PORSCHE_928_VARIANTS,
+  PORSCHE_968_VARIANTS, PORSCHE_924_VARIANTS, PORSCHE_356_VARIANTS,
+  PORSCHE_918_VARIANTS, PORSCHE_CARRERA_GT_VARIANTS, PORSCHE_959_VARIANTS,
+  PORSCHE_TAYCAN_VARIANTS, PORSCHE_PANAMERA_VARIANTS,
+} from "./brandVariants"
+
 // ─── PORSCHE ───
 
 const PORSCHE_SERIES: SeriesConfig[] = [
@@ -67,20 +80,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["992"],
     yearFallback: [2019, 2026],
     thesis: "The 992 is the current-generation 911. GT3 and GT3 RS are instant collectibles. Turbo S offers hypercar performance. Sport Classic and S/T are limited-edition highlights commanding strong premiums.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
-      { id: "4s", label: "4S", keywords: ["4s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "turbo-s", label: "Turbo S", keywords: ["turbo s"] },
-      { id: "gt3", label: "GT3", keywords: ["gt3"] },
-      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs", "gt3rs"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-      { id: "sport-classic", label: "Sport Classic", keywords: ["sport classic"] },
-      { id: "st", label: "S/T", keywords: ["s/t"] },
-      { id: "dakar", label: "Dakar", keywords: ["dakar"] },
-    ],
+    variants: PORSCHE_992_VARIANTS,
   },
   {
     id: "991",
@@ -91,19 +91,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["991"],
     yearFallback: [2012, 2019],
     thesis: "The 991 introduced turbocharging to the base 911. GT3 RS (4.0L NA flat-six) and 911 R are the collector standouts. 991.1 GT3 manuals are particularly prized. The last generation before full digital dash.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "turbo-s", label: "Turbo S", keywords: ["turbo s"] },
-      { id: "gt3", label: "GT3", keywords: ["gt3"] },
-      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs"] },
-      { id: "gt2-rs", label: "GT2 RS", keywords: ["gt2 rs"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
-      { id: "911-r", label: "911 R", keywords: ["911 r", "911r"] },
-    ],
+    variants: PORSCHE_991_VARIANTS,
   },
   {
     id: "997",
@@ -114,17 +102,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["997"],
     yearFallback: [2005, 2012],
     thesis: "The 997 returned to round headlights and refined the 911 formula. GT3 RS 4.0 is the crown jewel. GT2 RS is the most powerful. 997.2 models benefit from the improved DFI engine. Strong collector demand across all variants.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "gt3", label: "GT3", keywords: ["gt3"] },
-      { id: "gt3-rs", label: "GT3 RS", keywords: ["gt3 rs"] },
-      { id: "gt2", label: "GT2", keywords: ["gt2"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
-    ],
+    variants: PORSCHE_997_VARIANTS,
   },
   {
     id: "996",
@@ -135,14 +113,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["996"],
     yearFallback: [1998, 2005],
     thesis: "The 996 was the first water-cooled 911 — controversial but undervalued. GT3 and GT2 variants are highly collectible. Turbo models offer incredible value. The 996 is the entry point for modern 911 collecting.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "gt3", label: "GT3", keywords: ["gt3"] },
-      { id: "gt2", label: "GT2", keywords: ["gt2"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-      { id: "4s", label: "4S", keywords: ["4s"] },
-    ],
+    variants: PORSCHE_996_VARIANTS,
   },
   {
     id: "993",
@@ -153,15 +124,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["993"],
     yearFallback: [1994, 1998],
     thesis: "The 993 is the last air-cooled 911 and the most sought-after modern Porsche. Turbo, GT2, and RS models command top dollar. Carrera S and 4S are strong performers. Every variant is collectible.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "carrera-s", label: "Carrera S", keywords: ["carrera s"] },
-      { id: "4s", label: "4S", keywords: ["4s"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "gt2", label: "GT2", keywords: ["gt2"] },
-      { id: "rs", label: "RS", keywords: [" rs"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-    ],
+    variants: PORSCHE_993_VARIANTS,
   },
   {
     id: "964",
@@ -172,14 +135,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["964"],
     yearFallback: [1989, 1994],
     thesis: "The 964 modernized the 911 with coil springs and ABS while retaining air-cooled character. RS and RS America are trophy assets. Turbo 3.6 is a powerhouse. Clean Carrera 4 and Carrera 2 examples are rising fast.",
-    variants: [
-      { id: "carrera", label: "Carrera", keywords: ["carrera"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "rs", label: "RS", keywords: [" rs"] },
-      { id: "rs-america", label: "RS America", keywords: ["rs america"] },
-      { id: "speedster", label: "Speedster", keywords: ["speedster"] },
-      { id: "targa", label: "Targa", keywords: ["targa"] },
-    ],
+    variants: PORSCHE_964_VARIANTS,
   },
   {
     id: "930",
@@ -191,6 +147,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     titleKeywords: ["911 turbo", "turbo carrera"],
     turboOnly: false,
     thesis: "The 930 is the original 911 Turbo — widowmaker reputation and iconic whale tail. Flachbau (slantnose) variants are ultra-rare. Early 3.0L models carry the most heritage. A poster-car legend.",
+    variants: PORSCHE_930_VARIANTS,
   },
   {
     id: "g-model",
@@ -201,6 +158,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["911 sc", "911 carrera 3.2", "g-model", "g model"],
     yearFallback: [1974, 1989],
     thesis: "The G-model 911 spans the SC and Carrera 3.2 era. The Carrera 3.2 is considered the last classic 911. SC Targa models offer accessible air-cooled ownership. Club Sport variants are rare finds.",
+    variants: PORSCHE_GMODEL_VARIANTS,
   },
   {
     id: "f-model",
@@ -211,6 +169,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     keywords: ["911s", "911t", "911e", "911l", "f-model", "f model"],
     yearFallback: [1963, 1973],
     thesis: "The original 911 — where the legend began. S, T, E, and L variants each have distinct character. 2.7 RS is the holy grail. Early long-hood cars are the most valuable. Matching-numbers examples command premiums.",
+    variants: PORSCHE_FMODEL_VARIANTS,
   },
   {
     id: "912",
@@ -220,6 +179,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 10,
     keywords: ["912"],
     thesis: "The 912 is the four-cylinder 911. Affordable entry to classic Porsche ownership with identical styling. Values are climbing as 911 prices push buyers toward alternatives. Clean examples are scarce.",
+    variants: PORSCHE_912_VARIANTS,
   },
 
   // ── GT & Hypercars ──
@@ -231,6 +191,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 11,
     keywords: ["918"],
     thesis: "Porsche's hybrid hypercar masterpiece. Only 918 units produced. Weissach Package examples are the most sought after. Values have been on an upward trajectory since production ended in 2015.",
+    variants: PORSCHE_918_VARIANTS,
   },
   {
     id: "carrera-gt",
@@ -240,6 +201,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 12,
     keywords: ["carrera gt"],
     thesis: "The last analog Porsche supercar. V10 engine, manual gearbox, no driver aids. Only 1,270 built. Regarded by many as the greatest driver's car ever made. Values continue to climb.",
+    variants: PORSCHE_CARRERA_GT_VARIANTS,
   },
   {
     id: "959",
@@ -249,6 +211,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 13,
     keywords: ["959"],
     thesis: "The most technologically advanced car of the 1980s. Only 337 built. Twin-turbo flat-six with AWD and adjustable suspension. A cornerstone of any serious Porsche collection.",
+    variants: PORSCHE_959_VARIANTS,
   },
 
   // ── Mid-Engine ──
@@ -260,13 +223,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 14,
     keywords: ["718 cayman"],
     thesis: "Modern mid-engine Porsche carrying the historic 718 name. GT4 RS is the standout collector variant with the 4.0L GT3 engine. Base four-cylinder turbos are driver-focused but less collectible.",
-    variants: [
-      { id: "base", label: "Base", keywords: ["cayman"] },
-      { id: "s", label: "S", keywords: ["cayman s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "gt4", label: "GT4", keywords: ["gt4"] },
-      { id: "gt4-rs", label: "GT4 RS", keywords: ["gt4 rs"] },
-    ],
+    variants: PORSCHE_718_CAYMAN_VARIANTS,
   },
   {
     id: "718-boxster",
@@ -276,12 +233,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 15,
     keywords: ["718 boxster"],
     thesis: "The 718 Boxster Spyder with the 4.0L flat-six is the collector pick. GTS 4.0 offers similar thrills at a lower price. The flat-four base models are focused on driving experience.",
-    variants: [
-      { id: "base", label: "Base", keywords: ["boxster"] },
-      { id: "s", label: "S", keywords: ["boxster s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "spyder", label: "Spyder", keywords: ["spyder"] },
-    ],
+    variants: PORSCHE_718_BOXSTER_VARIANTS,
   },
   {
     id: "cayman",
@@ -291,6 +243,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 16,
     keywords: ["cayman"],
     thesis: "The Cayman is the mid-engine purist's choice. GT4 variants are especially collectible. 981 and 987 six-cylinder cars are increasingly desirable as the 718 went four-cylinder.",
+    variants: PORSCHE_CAYMAN_VARIANTS,
   },
   {
     id: "boxster",
@@ -300,6 +253,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 17,
     keywords: ["boxster"],
     thesis: "The Boxster revived Porsche in the 1990s. Spyder variants are the collector picks. The 987 and 981 generations offer the best balance of analog driving and modern reliability.",
+    variants: PORSCHE_BOXSTER_VARIANTS,
   },
   {
     id: "914",
@@ -309,6 +263,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 18,
     keywords: ["914"],
     thesis: "Porsche's joint venture with VW. Six-cylinder /6 models are rare and valuable. The 2.0L variant offers the best performance. An undervalued classic gaining recognition.",
+    variants: PORSCHE_914_VARIANTS,
   },
 
   // ── Transaxle Classics ──
@@ -320,6 +275,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 19,
     keywords: ["944"],
     thesis: "The quintessential affordable Porsche classic. Turbo and S2 variants are most sought after. Clean, low-mileage examples are becoming scarce and values are trending upward.",
+    variants: PORSCHE_944_VARIANTS,
   },
   {
     id: "928",
@@ -329,6 +285,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 20,
     keywords: ["928"],
     thesis: "Porsche's V8 grand tourer, intended to replace the 911. GTS models are the most collectible. Values have risen significantly as enthusiasts rediscover this front-engine gem.",
+    variants: PORSCHE_928_VARIANTS,
   },
   {
     id: "968",
@@ -338,6 +295,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 21,
     keywords: ["968"],
     thesis: "The final evolution of the transaxle Porsches. Club Sport models are the collector's pick. Only produced for four years, making it one of the rarest modern Porsches.",
+    variants: PORSCHE_968_VARIANTS,
   },
   {
     id: "924",
@@ -347,6 +305,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 22,
     keywords: ["924"],
     thesis: "An entry point into classic Porsche ownership. Carrera GT and Turbo models are the standouts. Values remain accessible but climbing for top examples.",
+    variants: PORSCHE_924_VARIANTS,
   },
 
   // ── Heritage ──
@@ -358,6 +317,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 23,
     keywords: ["356"],
     thesis: "Where it all began — Porsche's first production car. Speedsters and Carreras are the most desirable. Pre-A examples carry the strongest historical significance.",
+    variants: PORSCHE_356_VARIANTS,
   },
 
   // ── SUV & Sedan ──
@@ -396,6 +356,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 26,
     keywords: ["panamera"],
     thesis: "The Panamera proved a four-door Porsche could work. Turbo S and Sport Turismo are most desirable. E-Hybrid models offer a glimpse of the electric future.",
+    variants: PORSCHE_PANAMERA_VARIANTS,
   },
   {
     id: "taycan",
@@ -405,6 +366,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     order: 27,
     keywords: ["taycan"],
     thesis: "Porsche's electric sports sedan. Turbo S delivers hypercar acceleration. Cross Turismo adds versatility. Leading the luxury EV segment with genuine Porsche character.",
+    variants: PORSCHE_TAYCAN_VARIANTS,
   },
 ]
 
