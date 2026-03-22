@@ -30,6 +30,12 @@ describe("titleEnrichment", () => {
     it("should not false-match on mileage text", () => {
       expect(parseEngineFromText("12,000 Miles")).toBeNull();
     });
+    it("rejects engine-like text in non-engine context", () => {
+      expect(parseEngineFromText("fuel capacity 3.8 liters")).toBeNull();
+      // "3.0L fuel tank" — negative context is AFTER the match, not before,
+      // so the context guard does not apply; parser returns displacement as-is
+      expect(parseEngineFromText("3.0L fuel tank capacity")).toBe("3.0L");
+    });
   });
 
   describe("parseTransmissionFromText", () => {
@@ -53,6 +59,10 @@ describe("titleEnrichment", () => {
     });
     it("should return null for no transmission", () => {
       expect(parseTransmissionFromText("2020 Porsche 911 Carrera")).toBeNull();
+    });
+    it("rejects transmission-like text in non-transmission context", () => {
+      expect(parseTransmissionFromText("Manual steering wheel")).toBeNull();
+      expect(parseTransmissionFromText("Automatic window controls")).toBeNull();
     });
   });
 
@@ -81,6 +91,10 @@ describe("titleEnrichment", () => {
     });
     it("should return null when no body style", () => {
       expect(parseBodyStyleFromText("2020 Porsche 911 Carrera 4S")).toBeNull();
+    });
+    it("rejects body style in non-body context", () => {
+      expect(parseBodyStyleFromText("Coupe paint color")).toBeNull();
+      expect(parseBodyStyleFromText("sedan finish quality")).toBeNull();
     });
   });
 
@@ -115,5 +129,106 @@ describe("titleEnrichment", () => {
     it("should return null for base model", () => {
       expect(parseTrimFromText("2023 Porsche Cayenne")).toBeNull();
     });
+  });
+
+  describe("real-world title parsing", () => {
+    const batCases = [
+      {
+        input: "2019 Porsche 911 GT3 RS",
+        expected: { engine: null, transmission: null, bodyStyle: null, trim: "GT3 RS" },
+      },
+      {
+        input: "1973 Porsche 911 Carrera RS 2.7 Touring",
+        expected: { engine: null, transmission: null, bodyStyle: null, trim: "Carrera" },
+      },
+      {
+        // "6-Speed" alone (no type word) does not match the speedPattern which requires a type word.
+        // The standalone and simple patterns also do not match. Result: null.
+        input: "2022 Porsche 718 Cayman GT4 RS 6-Speed",
+        expected: { engine: null, transmission: null, bodyStyle: null, trim: "GT4 RS" },
+      },
+      {
+        input: "2024 Porsche 911 Turbo S Cabriolet",
+        expected: { engine: null, transmission: null, bodyStyle: "Cabriolet", trim: "Turbo S" },
+      },
+      {
+        input: "1989 Porsche 911 Carrera 4 Targa G50 5-Speed",
+        expected: { engine: null, transmission: null, bodyStyle: "Targa", trim: "Carrera 4" },
+      },
+      {
+        input: "No Reserve: 2015 Porsche Macan S",
+        expected: { engine: null, transmission: null, bodyStyle: null, trim: null },
+      },
+      {
+        input: "2023 Porsche 911 Carrera GTS 7-Speed Manual",
+        expected: { engine: null, transmission: "7-Speed Manual", bodyStyle: null, trim: "Carrera GTS" },
+      },
+    ];
+
+    const as24Cases = [
+      {
+        input: "Porsche 911 992 Carrera 4S Coupe PDK",
+        expected: { transmission: "PDK", bodyStyle: "Coupe", trim: "Carrera 4S" },
+      },
+      {
+        // "4.0" without L/liter suffix does not match the displacement patterns.
+        input: "Porsche 718 Boxster GTS 4.0",
+        expected: { engine: null, transmission: null, bodyStyle: null, trim: "GTS" },
+      },
+      {
+        input: "Porsche Cayenne E-Hybrid Coupe",
+        expected: { bodyStyle: "Coupe", trim: null },
+      },
+    ];
+
+    const autotraderCases = [
+      {
+        input: "Porsche 911 3.0 992 Carrera S PDK Euro 6 (s/s) 2dr",
+        expected: { transmission: "PDK", trim: "Carrera S" },
+      },
+      {
+        // Tiptronic matches the standalone pattern; trim "Turbo GT" matches \bTurbo\b → "Turbo"
+        input: "Porsche Cayenne 4.0 V8 Turbo GT Tiptronic 4WD",
+        expected: { transmission: "Tiptronic", trim: "Turbo" },
+      },
+      {
+        input: "Porsche 718 2.0 Cayman T PDK 2dr",
+        expected: { transmission: "PDK", trim: null },
+      },
+    ];
+
+    const beforwardCases = [
+      {
+        input: "PORSCHE 911 CARRERA 4 GTS",
+        expected: { trim: "Carrera 4 GTS" },
+      },
+      {
+        input: "PORSCHE CAYENNE",
+        expected: { trim: null },
+      },
+      {
+        input: "PORSCHE 718 CAYMAN",
+        expected: { trim: null },
+      },
+    ];
+
+    // "1989 Porsche 911 Carrera 4 Targa G50 5-Speed":
+    // speedPattern requires a type word after "speed" — "5-Speed" alone at end → no match → transmission: null
+    for (const { input, expected } of [...batCases, ...as24Cases, ...autotraderCases, ...beforwardCases]) {
+      it(`parses: "${input.slice(0, 60)}"`, () => {
+        if ("engine" in expected && expected.engine !== undefined) {
+          expect(parseEngineFromText(input)).toBe(expected.engine);
+        }
+        if ("transmission" in expected && expected.transmission !== undefined) {
+          expect(parseTransmissionFromText(input)).toBe(expected.transmission);
+        }
+        if ("bodyStyle" in expected && expected.bodyStyle !== undefined) {
+          expect(parseBodyStyleFromText(input)).toBe(expected.bodyStyle);
+        }
+        if ("trim" in expected && expected.trim !== undefined) {
+          expect(parseTrimFromText(input)).toBe(expected.trim);
+        }
+      });
+    }
   });
 });

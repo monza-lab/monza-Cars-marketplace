@@ -3,6 +3,12 @@
  * Best-effort: only fills null fields, never overwrites existing data.
  */
 
+/** Returns true if the match is preceded by a negative-context word */
+function hasNegativeContext(text: string, matchIndex: number, negWords: string[]): boolean {
+  const before = text.slice(Math.max(0, matchIndex - 30), matchIndex).toLowerCase();
+  return negWords.some((w) => before.includes(w));
+}
+
 export function parseEngineFromText(text: string): string | null {
   // Pattern: displacement + optional config + optional forced induction
   const displacementPattern =
@@ -10,6 +16,9 @@ export function parseEngineFromText(text: string): string | null {
 
   const dispMatch = text.match(displacementPattern);
   if (dispMatch) {
+    if (hasNegativeContext(text, dispMatch.index!, ["fuel", "capacity", "tank", "gallon"])) {
+      return null;
+    }
     const displacement = `${dispMatch[1]}L`;
     const config = dispMatch[2].trim();
     return `${displacement} ${config}`;
@@ -36,6 +45,10 @@ export function parseEngineFromText(text: string): string | null {
   }
 
   if (dispOnly) {
+    // Reject if preceded by fuel/capacity context
+    if (hasNegativeContext(text, dispOnly.index!, ["fuel", "capacity", "tank", "gallon"])) {
+      return null;
+    }
     return `${dispOnly[1]}L`;
   }
 
@@ -81,6 +94,16 @@ export function parseBodyStyleFromText(text: string): string | null {
     /\b(Coup[eé]|Cabriolet|Targa|Spider|Spyder|Berlinetta|Roadster|Convertible|Sedan|Saloon|Wagon|Estate|Shooting\s*Brake|SUV|Hatchback|GTB|GTC)\b/i;
   const match = text.match(pattern);
   if (!match) return null;
+
+  // Reject body style words in color/paint context (check both before and after the match)
+  const matchEnd = match.index! + match[0].length;
+  const after = text.slice(matchEnd, matchEnd + 30).toLowerCase();
+  if (
+    hasNegativeContext(text, match.index!, ["color", "paint", "finish", "colour"]) ||
+    ["color", "paint", "finish", "colour"].some((w) => after.includes(w))
+  ) {
+    return null;
+  }
 
   const raw = match[1];
   const lower = raw.toLowerCase();
