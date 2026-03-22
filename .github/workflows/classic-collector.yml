@@ -41,8 +41,8 @@ jobs:
 
       - name: Install Playwright browsers
         run: |
-          npx playwright install chromium --with-deps
-          npx rebrowser-playwright install chromium || true
+          npx playwright install-deps chromium
+          npx rebrowser-playwright install chromium
 
       - name: Run collector (incremental)
         env:
