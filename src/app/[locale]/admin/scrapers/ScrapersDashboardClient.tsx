@@ -27,12 +27,14 @@ const ALL_SCRAPERS: ScraperName[] = [
   "beforward",
   "classic",
   "autoscout24",
+  "elferspot",
   "backfill-images",
   "enrich-vin",
   "enrich-titles",
   "enrich-details",
   "enrich-autotrader",
   "enrich-beforward",
+  "enrich-elferspot",
   "enrich-details-bulk",
   "bat-detail",
   "validate",
@@ -46,12 +48,14 @@ const SCRAPER_LABELS: Record<ScraperName, string> = {
   beforward: "BeForward",
   classic: "Classic.com",
   autoscout24: "AutoScout24",
+  elferspot: "Elferspot",
   "backfill-images": "Image Backfill",
   "enrich-vin": "VIN Enrichment",
   "enrich-titles": "Title Enrichment",
   "enrich-details": "AS24 Detail Enrichment",
   "enrich-autotrader": "AutoTrader Enrichment",
   "enrich-beforward": "BeForward Enrichment",
+  "enrich-elferspot": "Elferspot Enrichment",
   "enrich-details-bulk": "AS24 Bulk Enrichment",
   "bat-detail": "BaT Detail",
   validate: "Validator",
@@ -65,12 +69,14 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   beforward: "Vercel Cron",
   classic: "GitHub Actions",
   autoscout24: "GitHub Actions",
+  elferspot: "Vercel Cron",
   "backfill-images": "Vercel Cron",
   "enrich-vin": "Vercel Cron",
   "enrich-titles": "Vercel Cron",
   "enrich-details": "Vercel Cron",
   "enrich-autotrader": "Vercel Cron",
   "enrich-beforward": "Vercel Cron",
+  "enrich-elferspot": "Vercel Cron",
   "enrich-details-bulk": "GitHub Actions",
   "bat-detail": "GitHub Actions",
   validate: "Vercel Cron",
@@ -84,12 +90,14 @@ const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
   beforward: 24 * 60 * 60 * 1000,
   classic: 24 * 60 * 60 * 1000,
   autoscout24: 24 * 60 * 60 * 1000,
+  elferspot: 24 * 60 * 60 * 1000,
   "backfill-images": 24 * 60 * 60 * 1000,
   "enrich-vin": 24 * 60 * 60 * 1000,
   "enrich-titles": 24 * 60 * 60 * 1000,
   "enrich-details": 24 * 60 * 60 * 1000,
   "enrich-autotrader": 24 * 60 * 60 * 1000,
   "enrich-beforward": 24 * 60 * 60 * 1000,
+  "enrich-elferspot": 24 * 60 * 60 * 1000,
   "enrich-details-bulk": 24 * 60 * 60 * 1000,
   "bat-detail": 24 * 60 * 60 * 1000,
   validate: 24 * 60 * 60 * 1000,
@@ -325,7 +333,7 @@ export default function ScrapersDashboardClient({
             Scraper Monitoring
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
-            <p>6 collectors &middot; 4 Vercel Cron + 2 GitHub Actions</p>
+            <p>7 collectors &middot; 5 Vercel Cron + 2 GitHub Actions</p>
             <span className="text-zinc-700">|</span>
             <p>
               Last updated <span className="text-zinc-300">{formatTimeAgo(lastUpdatedAt)}</span>
