@@ -110,6 +110,7 @@ export const platformLabels: Record<string, { short: string; color: string }> = 
   AUTO_TRADER: { short: "AutoTrader", color: "bg-orange-500/20 text-orange-400" },
   BE_FORWARD: { short: "BeForward", color: "bg-teal-500/20 text-teal-400" },
   CLASSIC_COM: { short: "Classic.com", color: "bg-indigo-500/20 text-indigo-400" },
+  ELFERSPOT: { short: "Elferspot", color: "bg-yellow-500/20 text-yellow-400" },
 }
 
 // ─── AUCTION vs MARKETPLACE DISTINCTION ───
@@ -170,8 +171,8 @@ export const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: st
     { id: "996", label: "996 (1997-2005)" },
     { id: "993", label: "993 (1993-1998)" },
     { id: "964", label: "964 (1989-1994)" },
-    { id: "930", label: "930 Turbo (1975-1989)" },
-    { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)" },
+    { id: "930", label: "930 (1975-1989)" },
+    { id: "g-model", label: "G-Model (1974-1989)" },
     { id: "f-model", label: "F-Model (1963-1973)" },
   ],
   "Cayenne": [

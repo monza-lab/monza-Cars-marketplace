@@ -104,6 +104,7 @@ const SOURCE_ALIASES = {
   CarsAndBids: ["CarsAndBids", "CARS_AND_BIDS", "carsandbids"],
   CollectingCars: ["CollectingCars", "COLLECTING_CARS", "collectingcars"],
   ClassicCom: ["ClassicCom", "CLASSICCOM", "classiccom", "CLASSIC_COM", "classic.com"],
+  Elferspot: ["Elferspot", "ELFERSPOT", "elferspot"],
 } as const;
 
 const PLATFORM_ALIASES = {
@@ -112,6 +113,7 @@ const PLATFORM_ALIASES = {
   AutoTrader: ["AUTO_TRADER", "AUTOTRADER"],
   BeForward: ["BE_FORWARD", "BEFORWARD"],
   ClassicCom: ["CLASSIC_COM", "CLASSICCOM"],
+  Elferspot: ["ELFERSPOT"],
 } as const;
 
 const LIVE_STATUS_ALIASES = [
@@ -125,7 +127,7 @@ const LIVE_STATUS_ALIASES = [
 
 export const LIVE_DB_STATUS_VALUES = ["active"] as const;
 
-type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars" | "ClassicCom";
+type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars" | "ClassicCom" | "Elferspot";
 
 const ALLOWED_IMAGE_HOSTS = [
   "bringatrailer.com",
@@ -154,6 +156,7 @@ const ALLOWED_IMAGE_HOSTS = [
   "image-cdn.beforward.jp",
   "m.atcdn.co.uk",
   "images.classic.com",
+  "elferspot.com",
 ] as const;
 
 function isAllowedImageHost(hostname: string): boolean {
@@ -245,12 +248,14 @@ export function resolveCanonicalSource(source: string | null | undefined, platfo
   if (SOURCE_ALIASES.CarsAndBids.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CarsAndBids";
   if (SOURCE_ALIASES.CollectingCars.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "CollectingCars";
   if (SOURCE_ALIASES.ClassicCom.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "ClassicCom";
+  if (SOURCE_ALIASES.Elferspot.some((candidate) => normalizeToken(candidate) === normalizedSource)) return "Elferspot";
 
   if (PLATFORM_ALIASES.BaT.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BaT";
   if (PLATFORM_ALIASES.AutoScout24.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoScout24";
   if (PLATFORM_ALIASES.AutoTrader.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "AutoTrader";
   if (PLATFORM_ALIASES.BeForward.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "BeForward";
   if (PLATFORM_ALIASES.ClassicCom.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "ClassicCom";
+  if (PLATFORM_ALIASES.Elferspot.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "Elferspot";
 
   return null;
 }
@@ -273,6 +278,8 @@ function mapPlatform(source: string, platform: string | null): Platform {
       return "BE_FORWARD";
     case "ClassicCom":
       return "CLASSIC_COM";
+    case "Elferspot":
+      return "ELFERSPOT";
     default:
       return "BRING_A_TRAILER";
   }
@@ -320,6 +327,7 @@ function mapRegion(country: string | null, source?: string | null): Region {
         return "US";
       case "AutoScout24":
       case "CollectingCars":
+      case "Elferspot":
         return "EU";
       case "AutoTrader":
         return "UK";
@@ -526,12 +534,15 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
             ? "CLASSIC_COM"
             : mapPlatform(row.source, row.platform);
 
-  // Prefer direct end_time; fall back to sale_date
+  // Prefer direct end_time; fall back to sale_date.
+  // Dealer/classified listings (no end_time or sale_date) get endTime 30 days
+  // in the future so they are never filtered out by the "endTime > now" check
+  // in the dashboard live-feed components.
   const endTime = row.end_time
     ? new Date(row.end_time)
     : row.sale_date
       ? new Date(row.sale_date)
-      : new Date();
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   // Prefer direct current_bid column; fall back to price
   const currentBid = row.current_bid ?? price;
@@ -630,7 +641,7 @@ function computeTrend(
 
 // Default sources for lightweight live listing views.
 const DEFAULT_QUERY_SOURCES = ["BaT", "AutoScout24"] as const;
-const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "AutoTrader", "BeForward", "CarsAndBids", "CollectingCars", "ClassicCom"] as const;
+const ALL_QUERY_SOURCES = ["BaT", "AutoScout24", "AutoTrader", "BeForward", "CarsAndBids", "CollectingCars", "ClassicCom", "Elferspot"] as const;
 
 export type LiveListingRegionTotals = {
   all: number;
@@ -724,6 +735,7 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
     const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
     const ukPromise = countLiveListingsForCanonicalSource(supabase, "AutoTrader", targetMake);
     const jpPromise = countLiveListingsForCanonicalSource(supabase, "BeForward", targetMake);
+    const euElferspotPromise = countLiveListingsForCanonicalSource(supabase, "Elferspot", targetMake);
 
     const locationUsPromise = countListingsByQuery(
       supabase
@@ -750,13 +762,14 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
         .in("country", ["JAPAN"])
     );
 
-    const [total, usBat, usClassic, eu, uk, jp, locationUs, locationUk, locationJp] = await Promise.all([
+    const [total, usBat, usClassic, eu, uk, jp, euElferspot, locationUs, locationUk, locationJp] = await Promise.all([
       totalPromise,
       usBatPromise,
       usClassicPromise,
       euPromise,
       ukPromise,
       jpPromise,
+      euElferspotPromise,
       locationUsPromise,
       locationUkPromise,
       locationJpPromise,
@@ -769,7 +782,7 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
       regionTotalsByPlatform: {
         all: total,
         US: usBat + usClassic,
-        EU: eu,
+        EU: eu + euElferspot,
         UK: uk,
         JP: jp,
       },
@@ -1279,7 +1292,7 @@ const REGION_COUNTRY_MAP: Record<string, string[]> = {
 // while `country` may be NULL for some scrapers (e.g. BeForward).
 const REGION_SOURCE_MAP: Record<string, readonly (readonly string[])[]> = {
   US: [SOURCE_ALIASES.BaT, SOURCE_ALIASES.ClassicCom, SOURCE_ALIASES.CarsAndBids],
-  EU: [SOURCE_ALIASES.AutoScout24, SOURCE_ALIASES.CollectingCars],
+  EU: [SOURCE_ALIASES.AutoScout24, SOURCE_ALIASES.CollectingCars, SOURCE_ALIASES.Elferspot],
   UK: [SOURCE_ALIASES.AutoTrader],
   JP: [SOURCE_ALIASES.BeForward],
 };

@@ -114,8 +114,7 @@ export async function GET(request: Request) {
           update.images = detail.images;
           update.photos_count = detail.images.length;
         }
-        if (detail.sellerName) update.seller_name = detail.sellerName;
-        if (detail.sellerType) update.seller_type = detail.sellerType;
+        // seller_name and seller_type columns don't exist in listings table
         if (detail.location) update.location = detail.location;
         if (detail.locationCountry) update.country = detail.locationCountry;
 

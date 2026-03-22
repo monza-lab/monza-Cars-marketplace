@@ -34,9 +34,21 @@ import {
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
-import { filterAuctionsForRegion, isAuctionPlatform } from "./platformMapping"
+import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions, computeMedian } from "./utils/valuation"
 // FilterSidebar removed — filters now live only on brand detail pages
+
+// ─── SORT PRIORITY: dealer/classified platforms first (Elferspot highest) ───
+const PLATFORM_SORT_PRIORITY: Record<string, number> = {
+  ELFERSPOT: 0,
+  AUTO_SCOUT_24: 1,
+  AUTO_TRADER: 2,
+  CLASSIC_COM: 3,
+  BE_FORWARD: 4,
+}
+function getPlatformSortPriority(platform: string): number {
+  return PLATFORM_SORT_PRIORITY[platform] ?? 10
+}
 
 // ─── BRAND TYPE ───
 type Brand = {
@@ -138,6 +150,7 @@ const platformShort: Record<string, string> = {
   AUTO_TRADER: "AT",
   BE_FORWARD: "BF",
   CLASSIC_COM: "Cls",
+  ELFERSPOT: "ES",
 }
 
 // ─── UNIVERSAL MOCK DATA ───
@@ -830,7 +843,12 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
     const now = Date.now()
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+      .sort((a, b) => {
+        const pa = getPlatformSortPriority(a.platform)
+        const pb = getPlatformSortPriority(b.platform)
+        if (pa !== pb) return pa - pb
+        return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
+      })
       .slice(0, 8)
   }, [auctions])
 
@@ -887,30 +905,35 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[12px] font-display font-medium text-primary">
-                    {formatPrice(auction.currentBid)}
+                    {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {tAuction("bids.count", { count: auction.bidCount })}
-                  </span>
+                  {isAuctionPlatform(auction.platform) && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {tAuction("bids.count", { count: auction.bidCount })}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Time / Type badge */}
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Platform + Time/Type badge */}
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
                 {isAuctionPlatform(auction.platform) ? (
-                  <>
+                  <div className="flex items-center gap-1">
                     <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
                     <span className={`text-[10px] font-mono font-medium ${
                       isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
                     }`}>
                       {remaining}
                     </span>
-                  </>
+                  </div>
                 ) : (
                   <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
                     Listing
                   </span>
                 )}
+                <span className="text-[8px] text-muted-foreground">
+                  {platformShort[auction.platform] || auction.platform}
+                </span>
               </div>
             </Link>
           )
@@ -1115,7 +1138,12 @@ function DiscoverySidebar({
         return series === familySlug
       })
     }
-    return filtered.sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+    return filtered.sort((a, b) => {
+      const pa = getPlatformSortPriority(a.platform)
+      const pb = getPlatformSortPriority(b.platform)
+      if (pa !== pb) return pa - pb
+      return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
+    })
   }, [auctions, activeFamilyName])
 
   // Grade badge color
@@ -1304,7 +1332,7 @@ function DiscoverySidebar({
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[12px] font-display font-medium text-primary">
-                          {formatPrice(auction.currentBid)}
+                          {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
                           {isAuctionPlatform(auction.platform) ? (
@@ -1417,7 +1445,7 @@ function AssetCard({ auction }: { auction: Auction }) {
             </div>
             <div className="text-right shrink-0">
               <p className="text-3xl font-bold text-foreground font-mono tabular-nums">
-                {formatPrice(auction.currentBid)}
+                {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
               </p>
               <div className="flex items-center justify-end gap-3 mt-1 text-muted-foreground">
                 <span className="text-[11px]">{tAuction("bids.count", { count: auction.bidCount })}</span>

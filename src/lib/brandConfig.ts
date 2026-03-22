@@ -139,7 +139,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
   },
   {
     id: "930",
-    label: "930 Turbo",
+    label: "930",
     family: "911 Family",
     yearRange: [1975, 1989],
     order: 7,
@@ -151,7 +151,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
   },
   {
     id: "g-model",
-    label: "911 SC/Carrera (G)",
+    label: "G-Model",
     family: "911 Family",
     yearRange: [1974, 1989],
     order: 8,
@@ -162,7 +162,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
   },
   {
     id: "f-model",
-    label: "911 (F-Model)",
+    label: "F-Model",
     family: "911 Family",
     yearRange: [1963, 1973],
     order: 9,
@@ -237,7 +237,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
   },
   {
     id: "cayman",
-    label: "Cayman (981/987)",
+    label: "Cayman",
     family: "Mid-Engine",
     yearRange: [2005, 2016],
     order: 16,
@@ -247,7 +247,7 @@ const PORSCHE_SERIES: SeriesConfig[] = [
   },
   {
     id: "boxster",
-    label: "Boxster (986/987/981)",
+    label: "Boxster",
     family: "Mid-Engine",
     yearRange: [1996, 2016],
     order: 17,

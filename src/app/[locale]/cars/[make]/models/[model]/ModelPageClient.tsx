@@ -99,6 +99,12 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
     color: "#a78bfa",
     market: "US"
   },
+  ELFERSPOT: {
+    label: "Elferspot",
+    shortLabel: "ES",
+    color: "#f59e0b",
+    market: "EU"
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

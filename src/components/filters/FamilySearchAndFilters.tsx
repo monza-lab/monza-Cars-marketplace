@@ -34,8 +34,8 @@ const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>
     { id: "996", label: "996 (1997-2005)" },
     { id: "993", label: "993 (1993-1998)" },
     { id: "964", label: "964 (1989-1994)" },
-    { id: "930", label: "930 Turbo (1975-1989)" },
-    { id: "g-model", label: "G-Model / SC / 3.2 (1974-1989)" },
+    { id: "930", label: "930 (1975-1989)" },
+    { id: "g-model", label: "G-Model (1974-1989)" },
     { id: "f-model", label: "F-Model (1963-1973)" },
   ],
   "Cayenne": [

@@ -5,7 +5,7 @@
 
 export type InvestmentGrade = "AAA" | "AA" | "A" | "B+" | "B" | "C";
 export type AuctionStatus = "ACTIVE" | "ENDING_SOON" | "ENDED";
-export type Platform = "BRING_A_TRAILER" | "RM_SOTHEBYS" | "GOODING" | "BONHAMS" | "CARS_AND_BIDS" | "COLLECTING_CARS" | "AUTO_SCOUT_24" | "AUTO_TRADER" | "BE_FORWARD" | "CLASSIC_COM";
+export type Platform = "BRING_A_TRAILER" | "RM_SOTHEBYS" | "GOODING" | "BONHAMS" | "CARS_AND_BIDS" | "COLLECTING_CARS" | "AUTO_SCOUT_24" | "AUTO_TRADER" | "BE_FORWARD" | "CLASSIC_COM" | "ELFERSPOT";
 export type Region = "US" | "EU" | "UK" | "JP";
 
 // Fair value ranges by region with currency

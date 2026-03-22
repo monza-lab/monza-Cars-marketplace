@@ -30,17 +30,7 @@ export const PORSCHE_992_VARIANTS: VariantConfig[] = [
   { id: "belgian-legend", label: "Belgian Legend Edition", keywords: ["belgian legend"] },
   { id: "sally-special", label: "Sally Special", keywords: ["sally special"] },
   { id: "spirit-70", label: "Spirit 70", keywords: ["spirit 70"] },
-  // 992.2 sub-generation
-  { id: "992.2-carrera", label: "992.2 Carrera", keywords: ["992.2 carrera"] },
-  { id: "992.2-carrera-s", label: "992.2 Carrera S", keywords: ["992.2 carrera s"] },
-  { id: "992.2-carrera-4s", label: "992.2 Carrera 4S", keywords: ["992.2 carrera 4s"] },
-  { id: "992.2-carrera-t", label: "992.2 Carrera T", keywords: ["992.2 carrera t"] },
-  { id: "992.2-carrera-gts", label: "992.2 Carrera GTS", keywords: ["992.2 carrera gts"] },
-  { id: "992.2-carrera-4-gts", label: "992.2 Carrera 4 GTS", keywords: ["992.2 carrera 4 gts"] },
-  { id: "992.2-gt3", label: "992.2 GT3", keywords: ["992.2 gt3"] },
-  { id: "992.2-gt3-touring", label: "992.2 GT3 Touring", keywords: ["992.2 gt3 touring"] },
-  { id: "992.2-turbo-s", label: "992.2 Turbo S", keywords: ["992.2 turbo s"] },
-  { id: "992.2-cuarenta", label: "992.2 Carrera GTS Cuarenta Edition", keywords: ["cuarenta"] },
+  { id: "cuarenta", label: "Cuarenta Edition", keywords: ["cuarenta"] },
 ]
 
 // ── 991 ──
@@ -70,18 +60,6 @@ export const PORSCHE_991_VARIANTS: VariantConfig[] = [
   { id: "gt3-rsr", label: "GT3 RSR", keywords: ["gt3 rsr"] },
   { id: "black-edition", label: "Black Edition", keywords: ["black edition"] },
   { id: "martini-racing", label: "Martini Racing Edition", keywords: ["martini racing"] },
-  // 991.2 sub-generation
-  { id: "991.2-carrera", label: "991.2 Carrera", keywords: ["991.2 carrera"] },
-  { id: "991.2-carrera-s", label: "991.2 Carrera S", keywords: ["991.2 carrera s"] },
-  { id: "991.2-carrera-4", label: "991.2 Carrera 4", keywords: ["991.2 carrera 4"] },
-  { id: "991.2-carrera-4s", label: "991.2 Carrera 4S", keywords: ["991.2 carrera 4s"] },
-  { id: "991.2-carrera-gts", label: "991.2 Carrera GTS", keywords: ["991.2 carrera gts"] },
-  { id: "991.2-carrera-4-gts", label: "991.2 Carrera 4 GTS", keywords: ["991.2 carrera 4 gts"] },
-  { id: "991.2-carrera-t", label: "991.2 Carrera T", keywords: ["991.2 carrera t"] },
-  { id: "991.2-gt3", label: "991.2 GT3", keywords: ["991.2 gt3"] },
-  { id: "991.2-gt3-rs", label: "991.2 GT3 RS", keywords: ["991.2 gt3 rs"] },
-  { id: "991.2-turbo", label: "991.2 Turbo", keywords: ["991.2 turbo"] },
-  { id: "991.2-turbo-s", label: "991.2 Turbo S", keywords: ["991.2 turbo s"] },
 ]
 
 // ── 997 ──
@@ -104,21 +82,6 @@ export const PORSCHE_997_VARIANTS: VariantConfig[] = [
   { id: "sport-classic", label: "Sport Classic", keywords: ["sport classic"] },
   { id: "speedster", label: "Speedster", keywords: ["speedster"] },
   { id: "targa", label: "Targa", keywords: ["targa"] },
-  // 997.2 sub-generation
-  { id: "997.2-carrera", label: "997.2 Carrera", keywords: ["997.2 carrera"] },
-  { id: "997.2-carrera-s", label: "997.2 Carrera S", keywords: ["997.2 carrera s"] },
-  { id: "997.2-carrera-4", label: "997.2 Carrera 4", keywords: ["997.2 carrera 4"] },
-  { id: "997.2-carrera-4s", label: "997.2 Carrera 4S", keywords: ["997.2 carrera 4s"] },
-  { id: "997.2-carrera-gts", label: "997.2 Carrera GTS", keywords: ["997.2 carrera gts"] },
-  { id: "997.2-carrera-4-gts", label: "997.2 Carrera 4 GTS", keywords: ["997.2 carrera 4 gts"] },
-  { id: "997.2-carrera-black", label: "997.2 Carrera Black Edition", keywords: ["997.2 carrera black", "997.2 black edition"] },
-  { id: "997.2-turbo", label: "997.2 Turbo", keywords: ["997.2 turbo"] },
-  { id: "997.2-turbo-s", label: "997.2 Turbo S", keywords: ["997.2 turbo s"] },
-  { id: "997.2-gt3", label: "997.2 GT3", keywords: ["997.2 gt3"] },
-  { id: "997.2-gt3-rs", label: "997.2 GT3 RS", keywords: ["997.2 gt3 rs"] },
-  { id: "997.2-gt3-r", label: "997.2 GT3 R", keywords: ["997.2 gt3 r"] },
-  { id: "997.2-gt3-rsr", label: "997.2 GT3 RSR", keywords: ["997.2 gt3 rsr"] },
-  { id: "997.2-gt3-cup", label: "997.2 GT3 Cup", keywords: ["997.2 gt3 cup"] },
 ]
 
 // ── 996 ──
@@ -142,11 +105,6 @@ export const PORSCHE_996_VARIANTS: VariantConfig[] = [
   { id: "4s", label: "4S", keywords: ["4s"] },
   { id: "40-jahre", label: "40 Jahre 911", keywords: ["40 jahre"] },
   { id: "millennium", label: "Millennium Edition", keywords: ["millennium"] },
-  // 996.2 sub-generation
-  { id: "996.2-carrera", label: "996.2 Carrera", keywords: ["996.2 carrera"] },
-  { id: "996.2-carrera-4", label: "996.2 Carrera 4", keywords: ["996.2 carrera 4"] },
-  { id: "996.2-gt3", label: "996.2 GT3", keywords: ["996.2 gt3"] },
-  { id: "996.2-gt3-clubsport", label: "996.2 GT3 Clubsport", keywords: ["996.2 gt3 clubsport"] },
 ]
 
 // ── 993 ──

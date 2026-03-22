@@ -32,8 +32,8 @@ describe("matchVariant regression tests", () => {
   it("matches F-Model 911 T", () => {
     expect(matchVariant("911 T", null, "f-model", "Porsche")).toBe("911-t")
   })
-  it("matches 992.2 GT3 Touring", () => {
-    expect(matchVariant("992.2 GT3 Touring", null, "992", "Porsche")).toBe("992.2-gt3-touring")
+  it("matches 992.2 GT3 Touring → base gt3-touring variant", () => {
+    expect(matchVariant("992.2 GT3 Touring", null, "992", "Porsche")).toBe("gt3-touring")
   })
 
   // Cross-scraper titles (BaT, AS24, etc.)

@@ -9,13 +9,14 @@ export function normalizeAuctionPlatform(platform: string | null | undefined): s
   if (normalized === "CARSANDBIDS") return "CARS_AND_BIDS";
   if (normalized === "COLLECTINGCARS") return "COLLECTING_CARS";
   if (normalized === "CLASSICCOM") return "CLASSIC_COM";
+  if (normalized === "ELFERSPOT") return "ELFERSPOT";
 
   return platform.toUpperCase();
 }
 
 export const REGION_TO_PLATFORMS: Record<string, string[]> = {
   US: ["BRING_A_TRAILER", "CLASSIC_COM", "CARS_AND_BIDS"],
-  EU: ["AUTO_SCOUT_24", "COLLECTING_CARS"],
+  EU: ["AUTO_SCOUT_24", "COLLECTING_CARS", "ELFERSPOT"],
   UK: ["AUTO_TRADER"],
   JP: ["BE_FORWARD"],
 };
@@ -32,7 +33,7 @@ export const REGION_TO_PLATFORM: Record<string, string> = {
 // Auction platforms: timed bidding events
 const AUCTION_PLATFORMS = new Set(["BRING_A_TRAILER", "CARS_AND_BIDS", "COLLECTING_CARS"])
 // Listing platforms: fixed-price or dealer listings
-const LISTING_PLATFORMS = new Set(["AUTO_SCOUT_24", "AUTO_TRADER", "BE_FORWARD", "CLASSIC_COM"])
+const LISTING_PLATFORMS = new Set(["AUTO_SCOUT_24", "AUTO_TRADER", "BE_FORWARD", "CLASSIC_COM", "ELFERSPOT"])
 
 export function isAuctionPlatform(platform: string | null | undefined): boolean {
   const normalized = normalizeAuctionPlatform(platform)

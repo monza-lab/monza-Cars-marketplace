@@ -37,8 +37,6 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     photos_count: listing.photos_count,
     country: listing.country,
     location: listing.location,
-    seller_type: listing.seller_type,
-    seller_name: listing.seller_name,
     status: listing.status,
     scrape_timestamp: listing.scrape_timestamp,
     updated_at: new Date().toISOString(),
