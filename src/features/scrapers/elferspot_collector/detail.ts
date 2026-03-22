@@ -62,47 +62,91 @@ export function parseDetailPage(html: string): ElferspotDetail {
   const $ = cheerio.load(html)
   const jsonLd = extractJsonLd(html)
 
-  // Images from gallery — filter to CDN URLs only
+  // Vehicle photos only — use a.photoswipe-image hrefs (full-size gallery images)
   const images: string[] = []
-  $("img[src*='cdn.elferspot.com']").each((_i, el) => {
-    const src = $(el).attr("src") || ""
-    if (src && !images.includes(src)) {
-      images.push(src)
-    }
-  })
-  // Also check data-src (lazy loaded)
-  $("img[data-src*='cdn.elferspot.com']").each((_i, el) => {
-    const src = $(el).attr("data-src") || ""
-    if (src && !images.includes(src)) {
-      images.push(src)
+  $("a.photoswipe-image").each((_i, el) => {
+    const href = $(el).attr("href") || ""
+    if (href && !images.includes(href)) {
+      images.push(href)
     }
   })
 
-  // Cheerio fallback for fields not in JSON-LD
-  const bodyText = $("body").text()
+  // Spec table (table.fahrzeugdaten) — reliable structured data
+  const specs: Record<string, string> = {}
+  $("table.fahrzeugdaten tr").each((_i, el) => {
+    const label = $(el).find("td.label").text().replace(/:?\s*$/, "").trim().toLowerCase()
+    const content = $(el).find("td.content").text().trim()
+    if (label && content) specs[label] = content
+  })
 
-  // Engine extraction: look for pattern like "4.0L" or "3.0 Liter" + "510 HP"
-  const engineMatch = bodyText.match(/(\d+\.\d+)\s*(?:L|Liter|l)(?:.*?(\d{2,4})\s*(?:HP|PS|hp|ps|bhp))?/)
-  const engine = engineMatch
-    ? `${engineMatch[1]}L${engineMatch[2] ? ` ${engineMatch[2]} HP` : ""}`
+  // Engine from spec table ("cylinder capacity" or "hubraum")
+  const engineRaw = specs["cylinder capacity"] || specs["hubraum"] || null
+  const engine = engineRaw
+    ? engineRaw.replace(/\s*liter/i, "L").replace(/\s*l$/i, "L")
     : null
 
-  // VIN extraction
+  // Power from spec table
+  const powerRaw = specs["power"] || specs["leistung"] || null
+
+  // VIN from body text
+  const bodyText = $("body").text()
   const vinMatch = bodyText.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i)
   const vin = vinMatch ? vinMatch[0].toUpperCase() : null
 
-  // Fuel type
-  const fuelPatterns = ["Gasoline", "Diesel", "Electric", "Hybrid", "Benzin", "Elektro"]
-  const fuel = fuelPatterns.find(f => bodyText.includes(f)) || null
+  // Fuel type from spec table or JSON-LD
+  const fuel = specs["fuel"] || specs["kraftstoff"] || null
 
-  // Description text
-  const descriptionEl = $(".description, .vehicle-description, [class*='description']").first()
-  const descriptionText = descriptionEl.text().trim() || null
+  // Interior color from spec table
+  const colorInterior = specs["interior color"] || specs["innenfarbe"] || null
+
+  // Condition from spec table
+  const condition = specs["condition"] || specs["zustand"] || null
+
+  // Description: highlights-float paragraphs (excluding translation notice)
+  const descParts: string[] = []
+  $("div.highlights-float p").each((_i, el) => {
+    if ($(el).hasClass("translation-notice")) return
+    const text = $(el).text().trim()
+    if (text) descParts.push(text)
+  })
+  // Also include highlight bullet points
+  $("div.highlights ul.fa-ul li").each((_i, el) => {
+    const text = $(el).text().trim()
+    if (text) descParts.push(text)
+  })
+  const descriptionText = descParts.length > 0 ? descParts.join("\n") : null
+
+  // Seller name from sidebar
+  const sellerName = $(".sidebar-section-heading.sidebar-toggle strong").first().text().trim() || null
+
+  // Seller type heuristic
+  const dealerPatterns = ["GmbH", "AG", "Ltd", "Inc", "B.V.", "S.r.l.", "S.A.", "LLC"]
+  const sellerType = sellerName && dealerPatterns.some(p => sellerName.includes(p))
+    ? "dealer" : (sellerName ? "private" : null)
+
+  // Location from spec table or sidebar
+  const locationCountry = specs["car location"]?.replace(/[^a-zA-Z\s]/g, "").trim()
+    || $(".flag-name-container span.country").first().text().trim()
+    || null
+
+  // Price fallback from sidebar (if JSON-LD price is null)
+  let price = jsonLd?.price ?? null
+  let currency = jsonLd?.currency ?? "EUR"
+  if (!price) {
+    const priceText = $("div.price span.p").first().text().trim()
+    const priceMatch = priceText.match(/([A-Z]{3})\s*([\d.,]+)/)
+    if (priceMatch) {
+      currency = priceMatch[1]
+      const numStr = priceMatch[2].replace(/[.,](?=\d{3})/g, "").replace(",", ".")
+      const parsed = parseFloat(numStr)
+      if (Number.isFinite(parsed) && parsed > 0) price = parsed
+    }
+  }
 
   return {
-    // JSON-LD primary
-    price: jsonLd?.price ?? null,
-    currency: jsonLd?.currency ?? "EUR",
+    // JSON-LD primary, spec table fallback
+    price,
+    currency,
     year: jsonLd?.year ?? null,
     mileageKm: jsonLd?.mileageKm ?? null,
     transmission: jsonLd?.transmission ?? null,
@@ -111,18 +155,18 @@ export function parseDetailPage(html: string): ElferspotDetail {
     colorExterior: jsonLd?.colorExterior ?? null,
     model: jsonLd?.model ?? null,
     firstRegistration: jsonLd?.firstRegistration ?? null,
-    // Cheerio fallback
-    fuel,
-    engine,
-    colorInterior: null, // Extracted from spec table in production
+    // Cheerio enrichment
+    fuel: fuel || null,
+    engine: engine ? `${engine}${powerRaw ? ` ${powerRaw}` : ""}` : null,
+    colorInterior,
     vin,
-    sellerName: null, // Extracted from seller section
-    sellerType: null,
+    sellerName,
+    sellerType,
     location: null,
-    locationCountry: null,
+    locationCountry,
     descriptionText,
     images,
-    condition: null,
+    condition,
   }
 }
 

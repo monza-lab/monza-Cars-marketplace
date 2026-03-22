@@ -24,8 +24,8 @@ export function parseSearchPage(html: string): ElferspotListingSummary[] {
   const $ = cheerio.load(html)
   const listings: ElferspotListingSummary[] = []
 
-  // Elferspot listing cards are links to /en/car/ or /de/fahrzeug/ pages
-  $("a[href*='/car/'], a[href*='/fahrzeug/']").each((_i, el) => {
+  // Elferspot uses a.content-teaser cards linking to /car/ or /fahrzeug/
+  $("a.content-teaser[href*='/car/'], a.content-teaser[href*='/fahrzeug/']").each((_i, el) => {
     const href = $(el).attr("href") ?? ""
     if (!href.includes("elferspot.com")) return
 
@@ -35,23 +35,34 @@ export function parseSearchPage(html: string): ElferspotListingSummary[] {
     // Avoid duplicates within a page
     if (listings.some(l => l.sourceId === sourceId)) return
 
-    const title = $(el).find("h2, h3, .title").first().text().trim()
+    const title = $(el).find("h3").first().text().trim()
       || $(el).attr("title")?.trim()
       || ""
 
-    const yearText = $(el).find(".year, .construction-year").first().text().trim()
-    const yearMatch = yearText.match(/\b(19|20)\d{2}\b/)
-    const year = yearMatch ? parseInt(yearMatch[0], 10) : null
+    // Year is a text node inside div.teaser-atts (next to flag img)
+    const attsText = $(el).find("div.teaser-atts").first().text().trim()
+    const yearMatch = attsText.match(/\b(19|20)\d{2}\b/)
+    let year = yearMatch ? parseInt(yearMatch[0], 10) : null
 
-    const img = $(el).find("img").first()
-    const thumbnailUrl = img.attr("src") || img.attr("data-src") || null
+    // Fallback: extract year from URL slug (e.g., porsche-991-carrera-gts-2015-5857332)
+    if (!year) {
+      const urlYearMatch = href.match(/-((?:19|20)\d{2})-\d{5,}\/?$/)
+      if (urlYearMatch) year = parseInt(urlYearMatch[1], 10)
+    }
+
+    // Country from flag img alt attribute (e.g., "DE", "US", "CH")
+    const flagAlt = $(el).find("img.flag").first().attr("alt") || null
+
+    // Thumbnail: use data-src (lazy-loaded), not src (placeholder SVG)
+    const img = $(el).find("img.content-teaser-image").first()
+    const thumbnailUrl = img.attr("data-src") || img.attr("src") || null
 
     listings.push({
       sourceUrl: href,
       sourceId,
       title: title || `Porsche ${sourceId}`,
       year,
-      country: null,
+      country: flagAlt,
       thumbnailUrl,
     })
   })
