@@ -42,18 +42,20 @@ DECODO_PROXY_PASS=password
 | 4 | [BeForward Collector](#4-beforward-collector) | BeForward | HTTP / HTML | Vercel Cron | 03:00 UTC |
 | 5 | [Classic.com Collector](#5-classiccom-collector) | Classic.com (US) | Playwright Browser | GitHub Actions | 04:00 UTC |
 | 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Playwright Browser | GitHub Actions | 05:00 UTC |
+| 7 | [Elferspot Collector](#7-elferspot-collector) | Elferspot (33 countries) | HTTP / Cheerio + JSON-LD | Vercel Cron | 09:15 UTC |
 
 ### Enrichment & Maintenance
 
 | # | Cron Job | Purpose | Runtime | Schedule |
 |---|----------|---------|---------|----------|
-| 7 | [Image Backfill](#7-image-backfill-cross-source) | Backfill missing images (BaT, BeForward, AS24) | Vercel Cron | 06:30 UTC |
-| 8 | [BaT Detail Scraper](#8-bat-detail-scraper) | Scrape BaT detail pages for images/specs | GitHub Actions | 01:30 UTC |
-| 9 | [Listing Validator](#9-listing-validator) | Validate recent listings, fix models, delete junk | Vercel Cron | 05:30 UTC |
-| 10 | [Cleanup](#10-cleanup) | Mark stale/dead listings, reclassify, delete junk | Vercel Cron | 06:00 UTC |
-| 11 | [VIN Enrichment](#11-vin-enrichment) | Decode VINs via NHTSA API | Vercel Cron | 07:00 UTC |
-| 12 | [Title Enrichment](#12-title-enrichment) | Parse engine/transmission/body/trim from titles | Vercel Cron | 07:15 UTC |
-| 13 | [AS24 Detail Enrichment](#13-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | Manual |
+| 8 | [Image Backfill](#8-image-backfill-cross-source) | Backfill missing images (BaT, BeForward, AS24) | Vercel Cron | 06:30 UTC |
+| 9 | [BaT Detail Scraper](#9-bat-detail-scraper) | Scrape BaT detail pages for images/specs | GitHub Actions | 01:30 UTC |
+| 10 | [Listing Validator](#10-listing-validator) | Validate recent listings, fix models, delete junk | Vercel Cron | 05:30 UTC |
+| 11 | [Cleanup](#11-cleanup) | Mark stale/dead listings, reclassify, delete junk | Vercel Cron | 06:00 UTC |
+| 12 | [VIN Enrichment](#12-vin-enrichment) | Decode VINs via NHTSA API | Vercel Cron | 07:00 UTC |
+| 13 | [Title Enrichment](#13-title-enrichment) | Parse engine/transmission/body/trim from titles | Vercel Cron | 07:15 UTC |
+| 14 | [AS24 Detail Enrichment](#14-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | Manual |
+| 15 | [Elferspot Enrichment](#15-elferspot-enrichment) | Enrich Elferspot listings with detail page data | Vercel Cron | 09:45 UTC |
 
 ---
 
@@ -446,7 +448,104 @@ Go to **Actions > AutoScout24 Collector (Daily) > Run workflow** and optionally 
 
 ---
 
-## 7. Image Backfill (Cross-Source)
+## 7. Elferspot Collector
+
+**What it does:** Scrapes Porsche-only classified listings from Elferspot (elferspot.com), a dedicated Porsche marketplace with ~3,900 active listings across 33 countries. Uses plain HTTP with Cheerio + JSON-LD parsing (no browser needed — the site is server-rendered WordPress).
+
+**Source directory:** `src/features/scrapers/elferspot_collector/`
+
+### Architecture
+
+Elferspot uses a **hybrid two-phase pattern** (same as BeForward/AS24):
+
+1. **Discovery cron** (`/api/cron/elferspot`): Paginates search pages, extracts summary data (title, year, country, thumbnail), upserts to DB
+2. **Enrichment cron** (`/api/cron/enrich-elferspot`): Fetches detail pages for unenriched listings, extracts specs via JSON-LD + spec table + sidebar parsing
+
+**Data extraction layers:**
+- **JSON-LD** (primary): Schema.org `Vehicle` object with price, mileage, transmission, body type, color, year
+- **Spec table** (`table.fahrzeugdaten`): Interior color, fuel, engine, power, condition, location
+- **Sidebar** (`.sidebar-section-heading`): Seller name, seller type (dealer/private heuristic)
+- **Gallery** (`a.photoswipe-image`): Full-resolution vehicle photos only (filters out site chrome)
+- **Description** (`div.highlights-float`): Vehicle description paragraphs (excludes translation notices)
+
+### Run locally
+
+```bash
+# Dry run — no database writes, 5 pages
+npx tsx src/features/scrapers/elferspot_collector/cli.ts --dryRun --maxPages=5
+
+# Full run — all pages, with detail scraping
+npx tsx src/features/scrapers/elferspot_collector/cli.ts --maxPages=100 --scrapeDetails
+
+# Summary only (discovery, no detail pages)
+npx tsx src/features/scrapers/elferspot_collector/cli.ts --maxPages=100
+
+# German language pages
+npx tsx src/features/scrapers/elferspot_collector/cli.ts --language=de --maxPages=5
+
+# Show help
+npx tsx src/features/scrapers/elferspot_collector/cli.ts --help
+```
+
+### CLI flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--maxPages` | `100` | Max search pages to crawl |
+| `--maxListings` | `5000` | Max listings to process |
+| `--scrapeDetails` | `false` | Fetch individual detail pages for enriched data |
+| `--delayMs` | `10000` | Delay between requests (respects robots.txt crawl-delay) |
+| `--language` | `en` | Search language (`en`, `de`, `nl`, `fr`) |
+| `--checkpointPath` | `var/elferspot_collector/checkpoint.json` | Resume checkpoint file |
+| `--outputPath` | `var/elferspot_collector/listings.jsonl` | JSONL output file |
+| `--dryRun` | `false` | Skip database writes |
+
+### Automated schedule
+
+- **Vercel Cron** at `09:15 UTC` daily
+- Route: `GET /api/cron/elferspot` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Config: 100 pages max, summary-only (no detail pages), 10s delay
+- Max duration: 5 minutes
+
+### Enrichment
+
+After discovery, a separate cron enriches listings missing detail data:
+
+- **Vercel Cron** at `09:45 UTC` daily
+- Route: `GET /api/cron/enrich-elferspot` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Queries `WHERE source='Elferspot' AND description_text IS NULL`
+- Config: 50 listings per run, 5s delay, 270s time budget
+- Extracts: price, mileage, transmission, body style, engine, colors, VIN, description, images, seller info, location
+- On 404/410: marks listing as `delisted`
+- On 403/429: circuit-breaks
+
+### Test the cron route
+
+```bash
+# Discovery
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/elferspot
+
+# Enrichment
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/enrich-elferspot
+```
+
+### Site characteristics
+
+| Property | Value |
+|----------|-------|
+| Total active listings | ~3,900 |
+| Listings per search page | 41 |
+| Total search pages | ~95 |
+| Countries represented | 33 (DE 34%, NL 13%, BE 11%, US 9%, FR 9%) |
+| Year range | 1951–2026 |
+| Top series | 911 (27%), 992 (12%), 964 (7%), 991.2 (6%), 993 (6%) |
+| robots.txt crawl-delay | 10 seconds |
+| Anti-bot protection | None (plain HTTP, no Cloudflare/Akamai) |
+| Price availability | On detail page only (search page has no prices) |
+
+---
+
+## 8. Image Backfill (Cross-Source)
 
 **What it does:** Finds active listings with missing images across BaT, BeForward, and AutoScout24, fetches images from each listing's source URL, and updates the database. ClassicCom is excluded (handled by its own Playwright-based backfill inside the Classic.com collector).
 
@@ -530,7 +629,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 8. BaT Detail Scraper
+## 9. BaT Detail Scraper
 
 **What it does:** Scrapes BaT listing detail pages to extract high-resolution images and additional specs. Runs after the Porsche Collector to enrich newly discovered listings.
 
@@ -545,7 +644,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 9. Listing Validator
+## 10. Listing Validator
 
 **What it does:** Validates recently updated listings (last 25 hours), fixes invalid model names, and deletes junk entries.
 
@@ -567,7 +666,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 10. Cleanup
+## 11. Cleanup
 
 **What it does:** Multi-step maintenance job: marks stale/dead listings as sold or unsold, reclassifies misclassified models using title data, and deletes junk.
 
@@ -601,7 +700,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 11. VIN Enrichment
+## 12. VIN Enrichment
 
 **What it does:** Decodes VINs using the NHTSA vPIC API to extract standardized make/model/year/body/engine data.
 
@@ -615,7 +714,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 12. Title Enrichment
+## 13. Title Enrichment
 
 **What it does:** Parses listing titles to extract structured metadata (engine size, transmission type, body style, trim level) using regex patterns.
 
@@ -629,7 +728,7 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
-## 13. AS24 Detail Enrichment
+## 14. AS24 Detail Enrichment
 
 **What it does:** Enriches AutoScout24 listings by fetching their detail pages via plain HTTP + cheerio (no Playwright). Extracts trim, transmission, body style, engine, colors, VIN, description, and images.
 
@@ -653,6 +752,48 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
+## 15. Elferspot Enrichment
+
+**What it does:** Enriches Elferspot listings that were ingested without detail data. Fetches each listing's detail page and extracts specs, images, description, seller info, and pricing via JSON-LD + Cheerio.
+
+**Source:** `src/app/api/cron/enrich-elferspot/route.ts`
+
+### How it works
+
+1. Queries active Elferspot listings where `description_text IS NULL` (proxy for unenriched)
+2. Fetches each listing's `source_url` via HTTP
+3. Parses with `parseDetailPage()` (JSON-LD + spec table + sidebar)
+4. Updates listing if at least 1 new field extracted
+5. On 404/410: marks listing as `delisted`
+6. On 403/429: circuit-breaks
+
+### Fields enriched
+
+| Field | Source |
+|-------|--------|
+| `hammer_price`, `current_bid` | JSON-LD offers or sidebar `div.price span.p` |
+| `mileage` | JSON-LD `mileageFromOdometer` |
+| `transmission` | JSON-LD `vehicleTransmission` |
+| `body_style` | JSON-LD `bodyType` |
+| `engine` | Spec table (`cylinder capacity` + `power`) |
+| `color_exterior` | JSON-LD `color` |
+| `color_interior` | Spec table (`interior color`) |
+| `vin` | Body text regex (17-char VIN) |
+| `description_text` | `div.highlights-float` paragraphs |
+| `images` | `a.photoswipe-image` hrefs (full-size gallery) |
+| `seller_name` | Sidebar `.sidebar-section-heading strong` |
+| `seller_type` | Heuristic (GmbH/AG/Ltd → dealer, else private) |
+| `country` | Spec table (`car location`) or sidebar flag |
+
+### Automated schedule
+
+- **Vercel Cron** at `09:45 UTC` daily (30 min after Elferspot discovery)
+- Route: `GET /api/cron/enrich-elferspot` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Config: 50 listings per run, 5s delay, 270s time budget
+- Max duration: 5 minutes
+
+---
+
 ## Daily Schedule Summary
 
 All times in UTC. Staggered to avoid overlapping.
@@ -671,6 +812,8 @@ All times in UTC. Staggered to avoid overlapping.
 06:30  Image Backfill             (Vercel Cron, 5 min)
 07:00  VIN Enrichment             (Vercel Cron, 1 min)
 07:15  Title Enrichment           (Vercel Cron, 1 min)
+09:15  Elferspot Collector        (Vercel Cron, 5 min)
+09:45  Elferspot Enrichment       (Vercel Cron, 5 min)
  --    AS24 Detail Enrichment     (Vercel Cron, manual only)
 ```
 
@@ -778,7 +921,7 @@ SELECT * FROM source_data_quality(7);
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | UUID | Primary key |
-| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24`, `backfill-images`, `cleanup`, `validate`, `enrich-vin`, `enrich-titles`, `enrich-details` |
+| `scraper_name` | TEXT | `porsche`, `ferrari`, `autotrader`, `beforward`, `classic`, `autoscout24`, `elferspot`, `backfill-images`, `cleanup`, `validate`, `enrich-vin`, `enrich-titles`, `enrich-details`, `enrich-elferspot` |
 | `run_id` | TEXT | Collector's own UUID |
 | `started_at` | TIMESTAMPTZ | When the run started |
 | `finished_at` | TIMESTAMPTZ | When the run finished |
