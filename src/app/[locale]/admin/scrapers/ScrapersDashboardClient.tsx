@@ -168,6 +168,21 @@ const STATUS_DOT = {
   red: "bg-red-500",
 };
 
+interface FieldCompletenessRow {
+  source: string;
+  total: number;
+  vin: number;
+  trim: number;
+  engine: number;
+  transmission: number;
+  mileage_km: number;
+  color_exterior: number;
+  color_interior: number;
+  body_style: number;
+  price: number;
+  images: number;
+}
+
 export default function ScrapersDashboardClient({
   recentRuns,
   dailyAggregates,
@@ -175,6 +190,7 @@ export default function ScrapersDashboardClient({
   latestRuns,
   activeRuns,
 }: Props) {
+  const [fieldCompleteness, setFieldCompleteness] = useState<FieldCompletenessRow[] | null>(null);
   const [scraperFilter, setScraperFilter] = useState<string>("all");
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [liveRecentRuns, setLiveRecentRuns] = useState<ScraperRun[]>(recentRuns);
@@ -258,6 +274,11 @@ export default function ScrapersDashboardClient({
     };
 
     void refresh();
+    // Fetch field completeness data
+    fetch("/api/admin/scrapers/field-completeness")
+      .then((r) => r.json())
+      .then((d) => { if (d.data && isMountedRef.current) setFieldCompleteness(d.data); })
+      .catch(console.error);
     const interval = window.setInterval(refresh, POLL_INTERVAL_MS);
 
     let removeChannel: (() => void) | null = null;
@@ -713,6 +734,47 @@ export default function ScrapersDashboardClient({
           {/* ── Section 4: Data Quality ── */}
           <TabsContent value="quality">
             <DataQualitySection data={liveDataQuality} />
+            {fieldCompleteness && (
+              <Card className="bg-zinc-950 border-zinc-800 mt-6">
+                <CardHeader>
+                  <CardTitle className="text-zinc-200">Field Completeness by Source</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-800">
+                          <th className="text-left p-2 text-zinc-400">Source</th>
+                          <th className="p-2 text-zinc-400">Total</th>
+                          {["VIN","Trim","Engine","Trans.","Mileage","Ext. Color","Int. Color","Body","Price","Images"].map(h => (
+                            <th key={h} className="p-2 text-zinc-400">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fieldCompleteness.map((row) => (
+                          <tr key={row.source} className="border-b border-zinc-800/50">
+                            <td className="p-2 font-medium text-zinc-200">{row.source}</td>
+                            <td className="p-2 text-center text-zinc-300">{row.total.toLocaleString()}</td>
+                            {[row.vin, row.trim, row.engine, row.transmission, row.mileage_km,
+                              row.color_exterior, row.color_interior, row.body_style, row.price, row.images
+                            ].map((pct, i) => (
+                              <td key={i} className={`p-2 text-center font-mono text-xs ${
+                                pct >= 90 ? "bg-emerald-900/30 text-emerald-400" :
+                                pct >= 50 ? "bg-amber-900/30 text-amber-400" :
+                                "bg-red-900/30 text-red-400"
+                              }`}>
+                                {pct}%
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
