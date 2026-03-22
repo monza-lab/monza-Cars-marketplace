@@ -94,6 +94,15 @@ export async function GET(request: Request) {
           updated_at: new Date().toISOString(),
         };
 
+        if (detail.price) {
+          update.hammer_price = detail.price;
+          update.current_bid = detail.price;
+          update.original_currency = detail.currency;
+        }
+        if (detail.mileageKm) {
+          update.mileage = detail.mileageKm;
+          update.mileage_unit = "km";
+        }
         if (detail.transmission) update.transmission = detail.transmission;
         if (detail.bodyType) update.body_style = detail.bodyType;
         if (detail.engine) update.engine = detail.engine;

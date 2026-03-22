@@ -70,7 +70,7 @@ export function parseSearchPage(html: string): ElferspotListingSummary[] {
   return listings
 }
 
-export async function fetchSearchPage(page: number, language: string, delayMs: number): Promise<{
+export async function fetchSearchPage(page: number, language: string): Promise<{
   html: string
   listings: ElferspotListingSummary[]
 }> {

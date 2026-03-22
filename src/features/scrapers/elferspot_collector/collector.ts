@@ -34,7 +34,7 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
 
     try {
       console.log(`[elferspot] Fetching page ${page}...`)
-      const { listings } = await fetchSearchPage(page, config.language, config.delayMs)
+      const { listings } = await fetchSearchPage(page, config.language)
 
       if (listings.length === 0) {
         console.log(`[elferspot] No listings on page ${page}, stopping.`)
