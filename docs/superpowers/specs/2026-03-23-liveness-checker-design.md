@@ -188,7 +188,7 @@ Every collector's upsert implicitly confirms the URL is alive. Add `last_verifie
 - `src/features/scrapers/classic_collector/supabase_writer.ts`
 - `src/features/scrapers/beforward_porsche_collector/supabase_writer.ts`
 - `src/features/scrapers/elferspot_collector/supabase_writer.ts`
-- `src/features/autotrader_collector/supabase_writer.ts`
+- `src/features/scrapers/autotrader_collector/supabase_writer.ts`
 
 **Note:** `src/features/scrapers/porsche_ingest/` is legacy and not actively used — excluded from this change.
 
