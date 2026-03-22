@@ -12,6 +12,7 @@
     { "path": "/api/cron/enrich-vin",      "schedule": "0 7 * * *" },
     { "path": "/api/cron/enrich-titles",   "schedule": "15 7 * * *" },
     { "path": "/api/cron/enrich-details",  "schedule": "30 7 * * *" },
-    { "path": "/api/cron/enrich-autotrader", "schedule": "45 7 * * *" }
+    { "path": "/api/cron/enrich-autotrader", "schedule": "45 7 * * *" },
+    { "path": "/api/cron/enrich-beforward", "schedule": "0 8 * * *" }
   ]
 }
