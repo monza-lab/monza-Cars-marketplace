@@ -1,0 +1,45 @@
+name: Liveness Checker (Daily)
+
+on:
+  schedule:
+    - cron: '30 10 * * *'     # 10:30 UTC daily (after all collectors/enrichments)
+  workflow_dispatch:
+    inputs:
+      max_listings:
+        description: 'Max listings to check'
+        default: '6000'
+      source:
+        description: 'Check only one source (AutoScout24, Elferspot, AutoTrader, BeForward, ClassicCom)'
+        default: ''
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: liveness-checker
+  cancel-in-progress: false
+
+jobs:
+  liveness-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run liveness checker
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx src/features/scrapers/liveness_checker/cli.ts \
+            --maxListings=${{ github.event.inputs.max_listings || '6000' }} \
+            ${{ github.event.inputs.source && format('--source={0}', github.event.inputs.source) || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
