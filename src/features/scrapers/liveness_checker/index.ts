@@ -1,12 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   CHROME_UA,
-  EXCLUDED_SOURCES,
   SOURCE_CONFIGS,
   CIRCUIT_BREAK_THRESHOLD,
   DEFAULT_TIME_BUDGET_MS,
   REQUEST_TIMEOUT_MS,
-  type SourceConfig,
 } from "./sourceConfig";
 
 export interface LivenessResult {
@@ -107,7 +105,7 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
         result.dead++;
         consecutiveBlocks = 0;
         if (!opts.dryRun) {
-          await client
+          const { error: updateErr } = await client
             .from("listings")
             .update({
               status: "unsold",
@@ -115,6 +113,9 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
               updated_at: new Date().toISOString(),
             })
             .eq("id", listing.id);
+          if (updateErr) {
+            result.errors.push(`Update failed for ${listing.id}: ${updateErr.message}`);
+          }
         }
         console.log(`[liveness] ${opts.source}: DEAD ${listing.source_url}`);
       } else if (response.status === 403 || response.status === 429 || response.status === 503) {
@@ -130,10 +131,13 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
         result.alive++;
         consecutiveBlocks = 0;
         if (!opts.dryRun) {
-          await client
+          const { error: updateErr } = await client
             .from("listings")
             .update({ last_verified_at: new Date().toISOString() })
             .eq("id", listing.id);
+          if (updateErr) {
+            result.errors.push(`Update failed for ${listing.id}: ${updateErr.message}`);
+          }
         }
       } else {
         consecutiveBlocks = 0;
@@ -191,12 +195,13 @@ export async function runLivenessCheck(opts: {
   const settled = await Promise.allSettled(promises);
   const results: LivenessResult[] = [];
 
-  for (const s of settled) {
+  for (let i = 0; i < settled.length; i++) {
+    const s = settled[i];
     if (s.status === "fulfilled") {
       results.push(s.value);
     } else {
       results.push({
-        source: "unknown",
+        source: configs[i].source,
         checked: 0,
         alive: 0,
         dead: 0,

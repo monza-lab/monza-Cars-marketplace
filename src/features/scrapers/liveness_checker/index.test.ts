@@ -28,7 +28,7 @@ vi.mock("@supabase/supabase-js", () => ({
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { checkSource, type LivenessResult } from "./index";
+import { checkSource, runLivenessCheck, type LivenessResult } from "./index";
 
 describe("checkSource", () => {
   beforeEach(() => {
@@ -152,5 +152,42 @@ describe("checkSource", () => {
 
     expect(result.dead).toBe(1);
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("runLivenessCheck", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    selectBuilder = createChainBuilder();
+    mockLimit.mockResolvedValue({ data: [], error: null });
+  });
+
+  it("throws on unknown source", async () => {
+    await expect(
+      runLivenessCheck({ source: "UnknownSource", dryRun: true })
+    ).rejects.toThrow("Unknown source: UnknownSource");
+  });
+
+  it("aggregates results from multiple sources", async () => {
+    // Return one listing per source — mockLimit is shared across all queries
+    const listing = {
+      id: "agg-1",
+      source: "AutoScout24",
+      source_url: "https://autoscout24.com/agg/1",
+    };
+    mockLimit.mockResolvedValue({ data: [listing], error: null });
+    mockFetch.mockResolvedValue({ status: 200, ok: true });
+    mockUpdate.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    const run = await runLivenessCheck({ dryRun: true, delayOverrideMs: 0 });
+
+    // 5 sources in SOURCE_CONFIGS, each gets 1 listing → 5 checked, 5 alive
+    expect(run.totalChecked).toBe(5);
+    expect(run.totalAlive).toBe(5);
+    expect(run.totalDead).toBe(0);
+    expect(run.durationMs).toBeGreaterThanOrEqual(0);
+    expect(run.results).toHaveLength(5);
   });
 });

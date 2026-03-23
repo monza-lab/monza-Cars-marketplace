@@ -10,10 +10,6 @@ export interface SourceConfig {
   delayMs: number;
   /** Max listings to check per run (bounded by time budget) */
   maxPerRun: number;
-  /** Custom User-Agent header (defaults to CHROME_UA) */
-  userAgent?: string;
-  /** Custom request headers */
-  headers?: Record<string, string>;
 }
 
 /**
