@@ -104,9 +104,12 @@ describe("backfillImages module", () => {
     // The update should include status: 'unsold'
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        images: ["__dead_url__"],
         status: "unsold",
       })
+    );
+    // Verify __dead_url__ sentinel is NOT set
+    expect(mockUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ images: ["__dead_url__"] })
     );
     expect(result.errors[0]).toContain("Dead URL");
   });

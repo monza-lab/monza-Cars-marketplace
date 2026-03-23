@@ -148,7 +148,6 @@ export async function backfillImagesForSource(
           await client
             .from("listings")
             .update({
-              images: ["__dead_url__"],
               status: "unsold",
               updated_at: new Date().toISOString(),
             })
