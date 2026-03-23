@@ -121,17 +121,23 @@ Create `src/features/scrapers/liveness_checker/index.test.ts`:
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock Supabase
-const mockSelect = vi.fn();
-const mockUpdate = vi.fn();
-const mockEq = vi.fn();
-const mockOrder = vi.fn();
+// Mock Supabase — use a chainable builder that supports all PostgREST methods
 const mockLimit = vi.fn();
-const mockIs = vi.fn();
-const mockNotIn = vi.fn();
+const mockUpdate = vi.fn();
+
+function createChainBuilder() {
+  const builder: Record<string, any> = {};
+  builder.eq = vi.fn().mockReturnValue(builder);
+  builder.not = vi.fn().mockReturnValue(builder);
+  builder.order = vi.fn().mockReturnValue(builder);
+  builder.limit = mockLimit;
+  return builder;
+}
+
+let selectBuilder: ReturnType<typeof createChainBuilder>;
 
 const mockFrom = vi.fn(() => ({
-  select: mockSelect,
+  select: vi.fn().mockImplementation(() => selectBuilder),
   update: mockUpdate,
 }));
 
@@ -148,17 +154,8 @@ import { checkSource, type LivenessResult } from "./index";
 describe("checkSource", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Chain: select → eq → notIn → is → order → limit
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnValue({ not: vi.fn().mockReturnValue({ is: mockIs }) });
-    mockIs.mockReturnValue({ order: mockOrder });
-    mockOrder.mockReturnValue({ limit: mockLimit });
+    selectBuilder = createChainBuilder();
     mockLimit.mockResolvedValue({ data: [], error: null });
-
-    // Chain: update → eq
-    mockUpdate.mockReturnValue({ eq: mockEq });
-    mockEq.mockResolvedValue({ error: null });
   });
 
   it("marks listing as unsold when source returns 404", async () => {
@@ -854,6 +851,7 @@ git commit -m "fix(backfill): remove __dead_url__ sentinel, mark unsold directly
 
 **Files:**
 - Modify: `src/app/api/cron/cleanup/route.ts:185-215`
+- Modify: `src/app/api/cron/cleanup/route.test.ts` (remove Step 1c test)
 
 - [ ] **Step 1: Remove Step 1c (dead URL cleanup)**
 
@@ -897,15 +895,22 @@ To:
 
 And update the query that uses it (line 214) from `cutoff90d` to `cutoff30d`. Update the log message accordingly.
 
-- [ ] **Step 3: Verify it compiles**
+- [ ] **Step 3: Update cleanup test file**
+
+In `src/app/api/cron/cleanup/route.test.ts`, find and delete the test `"includes deadUrlFixed in response (Step 1c)"` (around lines 268-283). This test asserts on `deadUrlFixed` in the response, which no longer exists.
+
+- [ ] **Step 4: Verify it compiles and tests pass**
 
 Run: `npx tsc --noEmit --pretty 2>&1 | grep -i "cleanup" | head -5`
 Expected: No errors
 
-- [ ] **Step 4: Commit**
+Run: `npx vitest run src/app/api/cron/cleanup/`
+Expected: PASS (remaining tests should still pass)
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/app/api/cron/cleanup/route.ts
+git add src/app/api/cron/cleanup/route.ts src/app/api/cron/cleanup/route.test.ts
 git commit -m "fix(cleanup): remove __dead_url__ step, reduce staleness 90d→30d"
 ```
 
