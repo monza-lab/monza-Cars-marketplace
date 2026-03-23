@@ -40,6 +40,7 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     status: listing.status,
     scrape_timestamp: listing.scrape_timestamp,
     updated_at: new Date().toISOString(),
+    last_verified_at: new Date().toISOString(),
   }
 
   const { error } = await client

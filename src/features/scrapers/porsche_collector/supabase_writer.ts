@@ -141,6 +141,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     description_text: listing.descriptionText,
     scrape_timestamp: meta.scrapeTimestamp,
     updated_at: meta.scrapeTimestamp,
+    last_verified_at: new Date().toISOString(),
     data_quality_score: listing.dataQualityScore,
     // New Auction-model aligned columns
     title: listing.title,
