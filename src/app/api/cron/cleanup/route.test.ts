@@ -24,14 +24,6 @@ vi.mock("@supabase/supabase-js", () => {
           }),
         };
 
-        // contains() is used by Step 1c (dead-url → unsold)
-        const containsReturn = {
-          select: vi.fn().mockResolvedValue({
-            data: [],
-            error: null,
-          }),
-        };
-
         // is() is used by Step 1d (stale dealer → unsold)
         const isReturn = {
           lt: vi.fn().mockReturnValue({
@@ -42,10 +34,9 @@ vi.mock("@supabase/supabase-js", () => {
           }),
         };
 
-        // The eq() return must have lt(), contains(), and is()
+        // The eq() return must have lt() and is()
         const eqReturn = {
           lt: vi.fn().mockReturnValue(ltReturn),
-          contains: vi.fn().mockReturnValue(containsReturn),
           is: vi.fn().mockReturnValue(isReturn),
         };
 
@@ -263,23 +254,6 @@ describe("GET /api/cron/cleanup", () => {
 
     // At least one call should happen
     expect(recordScraperRun).toHaveBeenCalled();
-  });
-
-  it("includes deadUrlFixed in response (Step 1c)", async () => {
-    const request = new Request("http://localhost:3000/api/cron/cleanup", {
-      method: "GET",
-      headers: {
-        authorization: "Bearer test-secret",
-      },
-    });
-
-    const response = await GET(request);
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body).toHaveProperty("deadUrlFixed");
-    expect(typeof body.deadUrlFixed).toBe("number");
   });
 
   it("returns 500 when caught exception occurs", async () => {

@@ -182,36 +182,17 @@ export async function GET(request: Request) {
       );
     }
 
-    // ── Step 1c: Mark __dead_url__ listings as unsold ──
-    // Listings whose source URL returned 404/410 during image backfill
-    // were marked with images=['__dead_url__'] but kept status='active'.
-    // Mark them as 'unsold' so they leave the active feed.
-    const { data: deadUrlFixed, error: deadUrlErr } = await supabase
-      .from("listings")
-      .update({ status: "unsold", updated_at: now })
-      .eq("status", "active")
-      .contains("images", ["__dead_url__"])
-      .select("id");
-
-    if (deadUrlErr) {
-      console.error("[cron/cleanup] dead-url→unsold error:", deadUrlErr.message);
-    }
-    const deadUrlFixedCount = deadUrlFixed?.length ?? 0;
-    if (deadUrlFixedCount > 0) {
-      console.log(`[cron/cleanup] Marked ${deadUrlFixedCount} dead-URL listings as unsold`);
-    }
-
     // ── Step 1d: Expire stale dealer listings ──
-    // Dealer listings (no end_time) that haven't been updated in >90 days
+    // Dealer listings (no end_time) that haven't been updated in >30 days
     // are almost certainly no longer available. Mark as 'unsold'.
-    const cutoff90d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const cutoff30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: staleDealerData, error: staleDealerErr } = await supabase
       .from("listings")
       .update({ status: "unsold", updated_at: now })
       .eq("status", "active")
       .is("end_time", null)
-      .lt("updated_at", cutoff90d)
+      .lt("updated_at", cutoff30d)
       .select("id");
 
     if (staleDealerErr) {
@@ -219,7 +200,7 @@ export async function GET(request: Request) {
     }
     const staleDealerCount = staleDealerData?.length ?? 0;
     if (staleDealerCount > 0) {
-      console.log(`[cron/cleanup] Expired ${staleDealerCount} stale dealer listings (>90d, no end_time)`);
+      console.log(`[cron/cleanup] Expired ${staleDealerCount} stale dealer listings (>30d, no end_time)`);
     }
 
     // ── Step 2: Reclassify misclassified listings using title ──
@@ -274,7 +255,6 @@ export async function GET(request: Request) {
     if (junkItems.length === 0 && totalStaleFixed === 0) {
       const earlyMessages: string[] = [];
       if (reclassified > 0) earlyMessages.push(`reclassified: ${reclassified}`);
-      if (deadUrlFixedCount > 0) earlyMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
       if (staleDealerCount > 0) earlyMessages.push(`stale-dealer-unsold: ${staleDealerCount}`);
 
       await recordScraperRun({
@@ -286,10 +266,10 @@ export async function GET(request: Request) {
         runtime: "vercel_cron",
         duration_ms: Date.now() - startTime,
         discovered: allListings.length,
-        written: totalStaleFixed + reclassified + deadUrlFixedCount + staleDealerCount,
+        written: totalStaleFixed + reclassified + staleDealerCount,
         errors_count: 0,
         refresh_checked: allListings.length,
-        refresh_updated: totalStaleFixed + deadUrlFixedCount + staleDealerCount,
+        refresh_updated: totalStaleFixed + staleDealerCount,
         error_messages: earlyMessages.length > 0 ? earlyMessages : undefined,
       });
 
@@ -300,7 +280,6 @@ export async function GET(request: Request) {
         scanned: allListings.length,
         deleted: 0,
         staleFixed: 0,
-        deadUrlFixed: deadUrlFixedCount,
         staleDealerFixed: staleDealerCount,
         reclassified,
         items: [],
@@ -341,7 +320,6 @@ export async function GET(request: Request) {
 
     const allMessages: string[] = [];
     if (totalStaleFixed > 0) allMessages.push(`stale: ${staleSoldCount} sold, ${staleUnsoldCount} unsold`);
-    if (deadUrlFixedCount > 0) allMessages.push(`dead-url-unsold: ${deadUrlFixedCount}`);
     if (staleDealerCount > 0) allMessages.push(`stale-dealer-unsold: ${staleDealerCount}`);
     if (reclassified > 0) allMessages.push(`reclassified: ${reclassified}`);
     if (deletedCount > 0) {
@@ -357,10 +335,10 @@ export async function GET(request: Request) {
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: allListings.length,
-      written: totalStaleFixed + reclassified + deadUrlFixedCount + staleDealerCount,
+      written: totalStaleFixed + reclassified + staleDealerCount,
       errors_count: deletedCount,
       refresh_checked: allListings.length,
-      refresh_updated: totalStaleFixed + deadUrlFixedCount + staleDealerCount,
+      refresh_updated: totalStaleFixed + staleDealerCount,
       error_messages: allMessages.length > 0 ? allMessages : undefined,
     });
 
@@ -373,7 +351,6 @@ export async function GET(request: Request) {
       staleFixed: totalStaleFixed,
       staleSold: staleSoldCount,
       staleUnsold: staleUnsoldCount,
-      deadUrlFixed: deadUrlFixedCount,
       staleDealerFixed: staleDealerCount,
       reclassified,
       byReason,
