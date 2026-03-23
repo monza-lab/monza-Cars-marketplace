@@ -570,11 +570,10 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 When a listing's source URL returns **404 or 410** (removed from marketplace), the backfill module:
 
-1. Sets `images = ['__dead_url__']` — sentinel value to stop re-querying
-2. Sets `status = 'unsold'` — removes the listing from the active frontend feed
-3. Logs the dead URL as an error for monitoring
+1. Sets `status = 'unsold'` — removes the listing from the active frontend feed
+2. Logs the dead URL as an error for monitoring
 
-The [Cleanup cron](#10-cleanup) (Step 1c) also retroactively catches any older `__dead_url__` listings that were marked before this fix was deployed and sets them to `unsold`.
+The [Liveness Checker](#16-liveness-checker) provides comprehensive daily URL verification across all dealer/classified sources.
 
 **Source:** `src/features/scrapers/common/backfillImages.ts:146-158`
 
@@ -794,6 +793,63 @@ This module **does not conflict** with existing per-source backfills:
 
 ---
 
+## 16. Liveness Checker
+
+**What it does:** Verifies that source URLs of active dealer/classified listings still resolve. Listings returning HTTP 404 or 410 are marked as `unsold`. Runs all 5 dealer sources in parallel with per-source rate limiting and circuit breakers.
+
+**Source:** `src/features/scrapers/liveness_checker/`
+
+### How it works
+
+1. Queries active listings ordered by `last_verified_at ASC NULLS FIRST` (FIFO queue)
+2. For each listing, fetches `source_url` via HTTP GET with Chrome User-Agent
+3. HTTP 404/410: marks listing as `unsold`, updates `last_verified_at`
+4. HTTP 200: updates `last_verified_at` (confirms listing is alive)
+5. HTTP 403/429/503: increments circuit breaker (3 consecutive = stop that source)
+6. Time budget: 55 minutes per run (5 min buffer for GitHub Actions 60 min timeout)
+
+### Sources checked
+
+| Source | Delay | Max/Run |
+|--------|-------|---------|
+| AutoScout24 | 2s | 1,650 |
+| Elferspot | 10s | 330 |
+| AutoTrader | 2s | 1,650 |
+| BeForward | 2.5s | 1,320 |
+| ClassicCom | 3s | 1,100 |
+
+Auction sources (BaT, CarsAndBids, CollectingCars) are excluded — they have `end_time` expiry.
+
+### Run locally (CLI)
+
+```bash
+npx tsx src/features/scrapers/liveness_checker/cli.ts --dryRun --maxListings=10 --source=Elferspot
+```
+
+### CLI flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--maxListings=N` | Max total listings to check | 6000 |
+| `--source=NAME` | Check only one source | all |
+| `--delayMs=N` | Override per-source delay (ms) | per-source config |
+| `--timeBudgetMs=N` | Time budget in ms | 3300000 (55 min) |
+| `--dryRun` | Skip DB writes | false |
+| `--help` | Show help | — |
+
+### Automated schedule
+
+- **GitHub Actions** at `10:30 UTC` daily (after all collectors/enrichments)
+- Workflow: `.github/workflows/liveness-checker.yml`
+- Timeout: 60 minutes
+- Can be triggered manually via `workflow_dispatch` with optional inputs
+
+### Trigger manually on GitHub
+
+Go to **Actions → Liveness Checker (Daily) → Run workflow**. Optional inputs: `max_listings`, `source`, `dry_run`.
+
+---
+
 ## Daily Schedule Summary
 
 All times in UTC. Staggered to avoid overlapping.
@@ -814,6 +870,7 @@ All times in UTC. Staggered to avoid overlapping.
 07:15  Title Enrichment           (Vercel Cron, 1 min)
 09:15  Elferspot Collector        (Vercel Cron, 5 min)
 09:45  Elferspot Enrichment       (Vercel Cron, 5 min)
+10:30  Liveness Checker           (GitHub Actions, 60 min)
  --    AS24 Detail Enrichment     (Vercel Cron, manual only)
 ```
 
