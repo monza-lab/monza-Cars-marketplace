@@ -92,6 +92,7 @@ export async function GET(request: Request) {
 
         const update: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
+          last_verified_at: new Date().toISOString(),
         };
 
         if (detail.price) {
@@ -118,7 +119,7 @@ export async function GET(request: Request) {
         if (detail.location) update.location = detail.location;
         if (detail.locationCountry) update.country = detail.locationCountry;
 
-        const newFieldCount = Object.keys(update).length - 1;
+        const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
             .from("listings")

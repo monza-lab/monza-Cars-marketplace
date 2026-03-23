@@ -112,6 +112,7 @@ export async function GET(request: Request) {
         // Build update payload — only set non-null fields from detail
         const update: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
+          last_verified_at: new Date().toISOString(),
         };
 
         if (detail.trim) update.trim = detail.trim;
@@ -128,7 +129,7 @@ export async function GET(request: Request) {
         }
 
         // Only update if we got at least one new field
-        const newFieldCount = Object.keys(update).length - 1; // minus updated_at
+        const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
             .from("listings")
