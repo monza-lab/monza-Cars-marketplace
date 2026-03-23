@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 import { runLivenessCheck } from "./index";
@@ -150,4 +151,8 @@ async function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`[liveness] Fatal (uncaught): ${msg}`);
+  process.exit(1);
+});
