@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { Link, useRouter } from "@/i18n/navigation"
 import Image from "next/image"
 import { useLocale, useTranslations } from "next-intl"
+import { isAuctionPlatform } from "@/components/dashboard/platformMapping"
 import {
   ArrowLeft,
   ExternalLink,
@@ -275,6 +276,8 @@ function ExecutiveSummary({
 }) {
   const { formatPrice } = useCurrency()
   const isLive = auction.status === "active"
+  const isAuction = isAuctionPlatform(auction.platform)
+  const endedLabel = isAuction ? t("time.ended") : t("time.sold")
   const bidTargetLow = auction.analysis?.pricePrediction.low || auction.currentBid! * 1.05
   const bidTargetHigh = auction.analysis?.pricePrediction.high || auction.currentBid! * 1.15
 
@@ -308,7 +311,7 @@ function ExecutiveSummary({
                 <span className="flex items-center gap-1 text-[12px]">
                   <Clock className="size-3" />
                   {timeLeft(auction.endDate, {
-                    ended: t("time.ended"),
+                    ended: endedLabel,
                     day: t("time.units.day"),
                     hour: t("time.units.hour"),
                     minute: t("time.units.minute"),

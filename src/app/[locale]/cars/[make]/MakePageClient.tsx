@@ -22,6 +22,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters } from "@/components/filters/AdvancedFilters"
 import { extractSeries, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { isAuctionPlatform } from "@/components/dashboard/platformMapping"
 import { useInfiniteAuctions } from "@/hooks/useInfiniteAuctions"
 import {
   timeLeft, extractFamily, extractGenerationFromModel, aggregateModels,
@@ -1127,7 +1128,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
                               <Clock className="size-2.5" />
                               {timeLeft(new Date(car.endTime), {
-                                ended: tAuction("time.ended"),
+                                ended: isAuctionPlatform(car.platform) ? tAuction("time.ended") : tAuction("time.sold"),
                                 day: tAuction("time.units.day"),
                                 hour: tAuction("time.units.hour"),
                                 minute: tAuction("time.units.minute"),

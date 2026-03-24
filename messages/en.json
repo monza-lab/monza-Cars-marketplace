@@ -110,6 +110,8 @@
     "endingSoon": "Ending Soon",
     "sold": "Sold",
     "ended": "Ended",
+    "sold": "Sold",
+    "noLongerAvailable": "No Longer Available",
     "noSale": "No Sale",
     "live": "Live"
   },
@@ -444,6 +446,7 @@
     },
     "time": {
       "ended": "Ended",
+      "sold": "Sold",
       "units": {
         "day": "d",
         "hour": "h",
@@ -879,6 +882,7 @@
     },
     "time": {
       "ended": "Ended",
+      "sold": "Sold",
       "units": {
         "day": "d",
         "hour": "h",
@@ -926,6 +930,7 @@
     "statuses": {
       "active": "Active",
       "ended": "Ended",
+      "sold": "Sold",
       "upcoming": "Upcoming"
     },
     "empty": {
@@ -1037,6 +1042,7 @@
       "noImage": "No Image",
       "fullAnalysis": "Full Analysis",
       "ended": "Ended",
+      "sold": "Sold",
       "timeDay": "d",
       "timeHour": "h",
       "timeMin": "m",

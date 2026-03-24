@@ -98,9 +98,10 @@ export function formatRelativeDate(date: Date | string | null | undefined): stri
 
 /**
  * Format time remaining until an end time.
- * Returns human-readable countdown: "2d 5h", "3h 22m", "ending soon", "ended"
+ * Returns human-readable countdown: "2d 5h", "3h 22m", "ending soon", "ended"/"sold"
+ * @param endedLabel — custom label for expired items (e.g. "Sold" for listings, "Ended" for auctions)
  */
-export function formatTimeRemaining(endTime: Date | string | null | undefined): string {
+export function formatTimeRemaining(endTime: Date | string | null | undefined, endedLabel?: string): string {
   if (!endTime) return '--';
 
   const end = typeof endTime === 'string' ? new Date(endTime) : endTime;
@@ -110,7 +111,7 @@ export function formatTimeRemaining(endTime: Date | string | null | undefined): 
   const diffMs = end.getTime() - now.getTime();
 
   // Already ended
-  if (diffMs <= 0) return 'ended';
+  if (diffMs <= 0) return endedLabel ?? 'ended';
 
   const totalSeconds = Math.floor(diffMs / 1000);
   const days = Math.floor(totalSeconds / 86400);

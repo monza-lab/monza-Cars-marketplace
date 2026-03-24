@@ -294,7 +294,7 @@ export const PAGE_SIZE = 20;
 export const AUCTION_STATUSES = [
   { label: 'Active', value: 'ACTIVE' },
   { label: 'Ending Soon', value: 'ENDING_SOON' },
-  { label: 'Ended', value: 'ENDED' },
+  { label: 'Sold / Ended', value: 'ENDED' },
   { label: 'Sold', value: 'SOLD' },
   { label: 'No Sale', value: 'NO_SALE' },
 ] as const;
