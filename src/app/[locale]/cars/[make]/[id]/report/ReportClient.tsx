@@ -362,7 +362,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         pg++
         accentBar()
         pdf.setFontSize(7); dim()
-        pdf.text("MONZA LAB", M, 8)
+        pdf.text("MONZA HAUS", M, 8)
         pdf.text(title.toUpperCase(), W - M, 8, { align: "right" })
         pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
         pdf.line(M, 11, W - M, 11)
@@ -453,18 +453,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       // ═══ PAGE 1: COVER ═══
       bg()
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 2, "F")
-      pdf.setFontSize(8); pink(); pdf.text("MONZA LAB", M, 20)
+      pdf.setFontSize(8); pink(); pdf.text("MONZA HAUS", M, 20)
       pdf.setFontSize(7); dim()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), W - M, 20, { align: "right" })
-      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.5); pdf.line(M, 100, M + 40, 100)
-      pdf.setFontSize(11); pink(); pdf.text("INVESTMENT DOSSIER", M, 112)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.5); pdf.line(M, 60, M + 40, 60)
+      pdf.setFontSize(11); pink(); pdf.text("INVESTMENT DOSSIER", M, 72)
       pdf.setFontSize(30); white()
       const tLines = pdf.splitTextToSize(pdfTitle, CW)
-      pdf.text(tLines, M, 127)
-      const tEnd = 127 + tLines.length * 11
+      pdf.text(tLines, M, 87)
+      const tEnd = 87 + tLines.length * 11
       pdf.setFontSize(9); gray()
-      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}`, M, tEnd + 10)
-      const vy = tEnd + 22
+      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}`, M, tEnd + 8)
+      const vy = tEnd + 18
       const vBadgeClr = verdict === "buy" ? [52, 211, 153] : verdict === "hold" ? [251, 191, 36] : pal.primary
       pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
       pdf.rect(M, vy - 4, 26, 8, "F")
@@ -472,21 +472,21 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.text((verdict ?? "hold").toUpperCase(), M + 13, vy + 1, { align: "center" })
       gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
-      const prepY = vy + 24
+      const prepY = vy + 16
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
       pdf.setFontSize(8); dim(); pdf.text("PREPARED EXCLUSIVELY FOR", M, prepY + 7)
       pdf.setFontSize(18); white(); pdf.text(clientName, M, prepY + 17)
       pdf.setFontSize(8); gray()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), M, prepY + 24)
-      // Financial box
-      const bY = 220
+      // Financial box — dynamic position below "Prepared for" section
+      const bY = Math.max(prepY + 34, 180)
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
       label("CURRENT BID", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
       pdf.setFontSize(12); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 8, bY + 21)
       white(); pdf.text(`$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
       pdf.text(regionLabels[bestRegion]?.short || "US", M + 135, bY + 21)
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
-      pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("monzalab.com", W - M, H - 15, { align: "right" })
+      pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("www.monzahaus.com", W - M, H - 15, { align: "right" })
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
       const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
@@ -498,11 +498,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.line(M, 22, M + 20, 22)
       // Greeting
       pdf.setFontSize(22); white()
-      pdf.text(`Dear ${firstName},`, M, 38)
+      pdf.text(`Dear ${firstName},`, M, 34)
       // Letter body
       pdf.setFontSize(10); pdf.setTextColor(pal.letterBody[0], pal.letterBody[1], pal.letterBody[2])
       const letterBody = [
-        `Thank you for trusting Monza Lab with your investment analysis of the ${pdfTitle}.`,
+        `Thank you for trusting MONZA Haus with your investment analysis of the ${pdfTitle}.`,
         "",
         "We understand that acquiring a collector vehicle is more than a financial decision — it's a deeply personal one. Every car tells a story, and the right one becomes part of yours.",
         "",
@@ -512,7 +512,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         "",
         "We're honored to be part of your journey.",
       ]
-      let ly = 50
+      let ly = 44
       letterBody.forEach(line => {
         if (line === "") { ly += 4; return }
         const wrapped = pdf.splitTextToSize(line, CW)
@@ -525,9 +525,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.line(M, ly, M + 15, ly)
       ly += 8
       pdf.setFontSize(10); pink()
-      pdf.text("The Monza Lab Team", M, ly)
+      pdf.text("The MONZA Haus Team", M, ly)
       pdf.setFontSize(8); gray()
-      pdf.text("monzalab.com", M, ly + 6)
+      pdf.text("www.monzahaus.com", M, ly + 6)
       // Bottom decorative element
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 40, W - M, H - 40)
@@ -954,10 +954,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F")
       // Centered decorative line
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
-      pdf.line(W / 2 - 15, 80, W / 2 + 15, 80)
+      pdf.line(W / 2 - 15, 50, W / 2 + 15, 50)
       // Thank you message
       pdf.setFontSize(24); white()
-      pdf.text(`Thank you, ${firstName}.`, W / 2, 100, { align: "center" })
+      pdf.text(`Thank you, ${firstName}.`, W / 2, 68, { align: "center" })
       // Body text
       pdf.setFontSize(10); pdf.setTextColor(pal.closingText[0], pal.closingText[1], pal.closingText[2])
       const closingLines = [
@@ -965,13 +965,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         "to make the right decision at the right time.",
         "",
         "Whether you choose to bid today or continue exploring,",
-        "Monza Lab is here to support your journey.",
+        "MONZA Haus is here to support your journey.",
         "",
         "Great cars find great owners — and we believe",
         `the ${pdfTitle} deserves someone who truly`,
         "understands its value.",
       ]
-      let cy = 115
+      let cy = 82
       closingLines.forEach(line => {
         if (line === "") { cy += 5; return }
         pdf.text(line, W / 2, cy, { align: "center" })
@@ -1001,10 +1001,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.15)
       pdf.line(M, H - 45, W - M, H - 45)
       pdf.setFontSize(9); pink()
-      pdf.text("MONZA LAB", W / 2, H - 36, { align: "center" })
+      pdf.text("MONZA HAUS", W / 2, H - 36, { align: "center" })
       pdf.setFontSize(7); pdf.setTextColor(pal.footerDim[0], pal.footerDim[1], pal.footerDim[2])
       pdf.text("Collector Vehicle Intelligence", W / 2, H - 30, { align: "center" })
-      pdf.text("monzalab.com", W / 2, H - 24, { align: "center" })
+      pdf.text("www.monzahaus.com", W / 2, H - 24, { align: "center" })
       // Bottom accent
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
@@ -1028,7 +1028,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
 
       // ═══ Sheet 1: Summary ═══
       const coverData: (string | number)[][] = [
-        ["MONZA LAB — Investment Dossier"],
+        ["MONZA HAUS — Investment Dossier"],
         [""],
         ["VEHICLE"],
         ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
@@ -1080,7 +1080,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
         ...(user?.name ? [[`Prepared for: ${user.name}`]] : []),
-        ["CONFIDENTIAL — monzalab.com"],
+        ["CONFIDENTIAL — www.monzahaus.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
       ws1["!cols"] = [{ wch: 28 }, { wch: 50 }]
