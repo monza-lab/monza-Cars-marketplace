@@ -435,20 +435,23 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         ? `${pdfTitle} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}–${fmtPdf(fairHigh, regionRange.currency)}. Investment Grade: ${car.investmentGrade}.`
         : rawThesis
 
-      // Fetch car image for PDF embedding
-      let carImageData: string | null = null
-      if (car.image) {
+      // Fetch car images for PDF embedding (up to 6)
+      const allImageUrls = [...new Set([car.image, ...(car.images || [])].filter(Boolean))].slice(0, 6)
+      const carImagesData: string[] = []
+      for (const imgUrl of allImageUrls) {
         try {
-          const imgResp = await fetch(car.image)
+          const imgResp = await fetch(imgUrl)
           const blob = await imgResp.blob()
-          carImageData = await new Promise<string>((resolve, reject) => {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader()
             reader.onloadend = () => resolve(reader.result as string)
             reader.onerror = reject
             reader.readAsDataURL(blob)
           })
-        } catch { /* skip image if fetch fails (CORS etc.) */ }
+          carImagesData.push(dataUrl)
+        } catch { /* skip if fetch fails (CORS etc.) */ }
       }
+      const carImageData = carImagesData[0] || null
 
       // ═══ PAGE 1: COVER ═══
       bg()
@@ -693,6 +696,40 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         pdf.setFontSize(7.5); white()
         pdf.text(descLines, M + 4, y + 11)
         y += descH + 4
+      }
+
+      // ═══ PHOTO GALLERY PAGE (if multiple images) ═══
+      if (carImagesData.length > 1) {
+        pdf.addPage(); bg(); chrome("Vehicle Gallery")
+        y = 16
+        pdf.setFontSize(14); white(); pdf.text("Vehicle Gallery", M, y + 7)
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.3)
+        pdf.line(M, y + 10, M + 25, y + 10)
+        y += 18
+        // Layout: first image large, rest in 2-col grid
+        const galleryImages = carImagesData.slice(1) // skip first (already shown in identity)
+        galleryImages.forEach((imgData, idx) => {
+          try {
+            const imgFormat = imgData.includes("image/png") ? "PNG" : "JPEG"
+            if (idx === 0) {
+              // Large hero image
+              const imgW = CW
+              const imgH = imgW * (9 / 16)
+              if (y + imgH > H - 20) { pdf.addPage(); bg(); chrome("Vehicle Gallery"); y = 16 }
+              pdf.addImage(imgData, imgFormat, M, y, imgW, imgH)
+              y += imgH + 4
+            } else {
+              // 2-col grid
+              const col = (idx - 1) % 2
+              const gImgW = (CW - 4) / 2
+              const gImgH = gImgW * (9 / 16)
+              if (col === 0 && y + gImgH > H - 20) { pdf.addPage(); bg(); chrome("Vehicle Gallery"); y = 16 }
+              const gx = M + col * (gImgW + 4)
+              pdf.addImage(imgData, imgFormat, gx, y, gImgW, gImgH)
+              if (col === 1 || idx === galleryImages.length - 1) y += gImgH + 4
+            }
+          } catch { /* skip broken image */ }
+        })
       }
 
       // ═══ PAGE 6: REGIONAL VALUATION ═══
