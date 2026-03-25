@@ -625,12 +625,17 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       // ═══ PAGE 5: VEHICLE IDENTITY ═══
       pdf.addPage(); bg(); chrome("Vehicle Identity")
       y = sectionTitle(2, "Vehicle Identity", 16)
-      // Specs card (2 columns)
-      const specs = [
+      // Specs card (2 columns) — include all available fields
+      const specs: [string, string][] = [
         ["Year", String(car.year)], ["Make", car.make], ["Model", car.model], ["Trim", car.trim || "—"],
         ["Engine", car.engine], ["Transmission", car.transmission],
         ["Mileage", `${car.mileage.toLocaleString()} ${car.mileageUnit}`], ["Location", car.location],
       ]
+      if (car.exteriorColor) specs.push(["Exterior", car.exteriorColor])
+      if (car.interiorColor) specs.push(["Interior", car.interiorColor])
+      if (car.vin) specs.push(["VIN", car.vin])
+      // Ensure even number for 2-col layout
+      if (specs.length % 2 !== 0) specs.push(["", ""])
       const halfW = (CW - 4) / 2
       card(M, y, halfW, specs.length / 2 * 5.5 + 6)
       card(M + halfW + 4, y, halfW, specs.length / 2 * 5.5 + 6)
@@ -665,12 +670,30 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       y += 28
 
       // History card
-      card(M, y, CW, 28)
-      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + 28)
+      const histText = stripHtml(car.history) || "—"
+      const histLines = pdf.splitTextToSize(histText, CW - 10)
+      const histH = Math.max(16, 8 + histLines.length * 4)
+      card(M, y, CW, histH)
+      pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, y, M, y + histH)
       pdf.setFontSize(6); dim(); pdf.text("HISTORY & PROVENANCE", M + 5, y + 5)
       pdf.setFontSize(8); white()
-      const histLines = pdf.splitTextToSize(stripHtml(car.history) || "—", CW - 10)
       pdf.text(histLines, M + 5, y + 11)
+      y += histH + 4
+
+      // Description card (from listing — if available)
+      const descText = stripHtml(car.description || car.sellerNotes || "")
+      if (descText && descText.length > 10) {
+        const descTrunc = descText.length > 600 ? descText.slice(0, 600) + "..." : descText
+        const descLines = pdf.splitTextToSize(descTrunc, CW - 10)
+        const descH = Math.max(16, 8 + descLines.length * 4)
+        // New page if not enough space
+        if (y + descH > H - 20) { pdf.addPage(); bg(); chrome("Vehicle Identity"); y = 16 }
+        card(M, y, CW, descH)
+        pdf.setFontSize(6); dim(); pdf.text("LISTING DESCRIPTION", M + 4, y + 5)
+        pdf.setFontSize(7.5); white()
+        pdf.text(descLines, M + 4, y + 11)
+        y += descH + 4
+      }
 
       // ═══ PAGE 6: REGIONAL VALUATION ═══
       pdf.addPage(); bg(); chrome("Regional Valuation")
@@ -811,9 +834,26 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
 
-      // Red flags card
-      card(M, y, CW, 7 + flags.length * 7)
-      pdf.setFontSize(6); dim(); pdf.text("RED FLAGS", M + 4, y + 5)
+      // Key strengths card (Collectibility / Why Buy)
+      const keyStrengths = report?.key_strengths ?? []
+      if (keyStrengths.length > 0) {
+        const ksH = 7 + keyStrengths.length * 7
+        card(M, y, CW, ksH)
+        pdf.setFontSize(6); dim(); pdf.text("INVESTMENT STRENGTHS", M + 4, y + 5)
+        keyStrengths.forEach((s, i) => {
+          const sy2 = y + 11 + i * 7
+          pdf.setFillColor(52, 211, 153); pdf.circle(M + 6, sy2 - 0.5, 0.8, "F")
+          pdf.setFontSize(7.5); white()
+          const sLines = pdf.splitTextToSize(s, CW - 12)
+          pdf.text(sLines, M + 10, sy2)
+        })
+        y += ksH + 4
+      }
+
+      // Red flags card (Model-Specific Concerns)
+      const rfH = 7 + flags.length * 7
+      card(M, y, CW, rfH)
+      pdf.setFontSize(6); dim(); pdf.text("RED FLAGS & MODEL-SPECIFIC CONCERNS", M + 4, y + 5)
       flags.forEach((f, i) => {
         const fy = y + 11 + i * 7
         pdf.setFillColor(248, 113, 113); pdf.circle(M + 6, fy - 0.5, 0.8, "F")
@@ -842,6 +882,27 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(M + 7, qy - 0.5, 2, "F")
         pdf.setFontSize(6); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2]); pdf.text(String(i + 1), M + 7, qy + 0.3, { align: "center" })
         pdf.setFontSize(7.5); white(); pdf.text(q, M + 12, qy)
+      })
+      y += 11 + questions.length * 6.5 + 4
+
+      // Action Items if Purchasing — derived from real data
+      const actionItems: string[] = []
+      if (flags.length > 0) actionItems.push(`Comprehensive inspection focusing on: ${flags[0].toLowerCase()}`)
+      if (isBelowFair) actionItems.push(`Listed below fair value — strong negotiation position at ${pricePosition.toFixed(0)}% of fair range`)
+      else actionItems.push(`Listed at ${pricePosition.toFixed(0)}% of fair range — negotiate toward ${fmtPdf(fairLow, regionRange.currency)}`)
+      if (hasArbitrage) actionItems.push(`Consider buying in ${regionLabels[bestRegion]?.short || bestRegion} to save $${Math.round(arbitrageSavings).toLocaleString()}`)
+      if (car.vin) actionItems.push("Run VIN history report before committing")
+      actionItems.push("Verify service records and maintenance history with authorized dealer")
+
+      const aiH = 7 + actionItems.length * 7
+      card(M, y, CW, aiH)
+      pdf.setFontSize(6); dim(); pdf.text("ACTION ITEMS IF PURCHASING", M + 4, y + 5)
+      actionItems.forEach((item, i) => {
+        const aiy = y + 11 + i * 7
+        pdf.setFontSize(7); pink(); pdf.text(`${i + 1}`, M + 6, aiy)
+        pdf.setFontSize(7.5); white()
+        const aiLines = pdf.splitTextToSize(item, CW - 14)
+        pdf.text(aiLines, M + 12, aiy)
       })
 
       // ═══ PAGE 10: OWNERSHIP ECONOMICS ═══
@@ -878,6 +939,51 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       // ═══ PAGE 11: MARKET CONTEXT ═══
       pdf.addPage(); bg(); chrome("Market Context")
       y = sectionTitle(8, "Market Context", 16)
+
+      // Market overview card — trend + total data points
+      const trendPct = report?.trend_percent ?? 0
+      const trendDir = report?.trend_direction ?? car.trend ?? "stable"
+      const totalComps = report?.total_comparable_sales ?? similarCars.length
+      const mktOverviewH = 28
+      card(M, y, CW, mktOverviewH)
+      pdf.setFontSize(6); dim(); pdf.text("MARKET OVERVIEW", M + 4, y + 5)
+      // Trend
+      const trendClr = trendDir === "up" ? [52, 211, 153] : trendDir === "down" ? [248, 113, 113] : [251, 191, 36]
+      pdf.setFontSize(16); pdf.setTextColor(trendClr[0], trendClr[1], trendClr[2])
+      pdf.text(`${trendPct > 0 ? "+" : ""}${trendPct.toFixed(1)}%`, M + 4, y + 16)
+      pdf.setFontSize(7); gray(); pdf.text("Price Trend", M + 4, y + 21)
+      // Data points
+      pdf.setFontSize(16); white(); pdf.text(`${totalComps}`, M + 55, y + 16)
+      pdf.setFontSize(7); gray(); pdf.text("Comparable Sales", M + 55, y + 21)
+      // Sources
+      const sources = regions.flatMap(r => r.sources || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 4)
+      if (sources.length > 0) {
+        pdf.setFontSize(16); white(); pdf.text(`${sources.length}`, M + 115, y + 16)
+        pdf.setFontSize(7); gray(); pdf.text("Data Sources", M + 115, y + 21)
+      }
+      y += mktOverviewH + 4
+
+      // Current market conditions
+      const mktConditions: string[] = []
+      if (trendDir === "up") mktConditions.push(`Market trending upward at ${trendPct > 0 ? "+" : ""}${trendPct.toFixed(1)}% — rising demand for this model`)
+      else if (trendDir === "down") mktConditions.push(`Market trending downward at ${trendPct.toFixed(1)}% — potential buying opportunity`)
+      else mktConditions.push("Market is stable — prices holding steady across comparable sales")
+      if (totalComps >= 10) mktConditions.push(`Strong data depth with ${totalComps} comparable sales — high confidence in valuation`)
+      else if (totalComps >= 3) mktConditions.push(`${totalComps} comparable sales available — reasonable confidence in pricing`)
+      else mktConditions.push("Limited comparable data — valuations carry higher uncertainty")
+      if (sources.length > 0) mktConditions.push(`Data sourced from: ${sources.join(", ")}`)
+
+      const mktCondH = 7 + mktConditions.length * 7
+      card(M, y, CW, mktCondH)
+      pdf.setFontSize(6); dim(); pdf.text("CURRENT MARKET CONDITIONS", M + 4, y + 5)
+      mktConditions.forEach((cond, i) => {
+        const cy3 = y + 11 + i * 7
+        pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(M + 6, cy3 - 0.5, 0.8, "F")
+        pdf.setFontSize(7.5); white()
+        const condLines = pdf.splitTextToSize(cond, CW - 12)
+        pdf.text(condLines, M + 10, cy3)
+      })
+      y += mktCondH + 4
 
       // Comps card
       card(M, y, CW, 7 + comps.length * 10)
@@ -947,6 +1053,26 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
       }
       sy = cardRow("Similar Vehicles", `${similarCars.length}`, M, sy, CW)
+
+      // Disclaimer card
+      sy += 6
+      const disclaimerText = "This analysis is based on current market data and historical trends. Collector car values can fluctuate based on market conditions, economic factors, and individual vehicle condition. This report represents professional analysis, not financial advice."
+      const disclaimerLines = pdf.splitTextToSize(disclaimerText, CW - 8)
+      const disclaimerH = 8 + disclaimerLines.length * 3.5
+      if (sy + disclaimerH > H - 20) { pdf.addPage(); bg(); chrome("Final Verdict"); sy = 16 }
+      pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2]); pdf.rect(M, sy, CW, disclaimerH, "F")
+      pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.08); pdf.rect(M, sy, CW, disclaimerH, "S")
+      pdf.setFontSize(6); dim(); pdf.text("DISCLAIMER", M + 4, sy + 4)
+      pdf.setFontSize(6.5); pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
+      pdf.text(disclaimerLines, M + 4, sy + 8)
+      // Original listing URL
+      if (car.sourceUrl) {
+        sy += disclaimerH + 3
+        pdf.setFontSize(6); dim(); pdf.text("ORIGINAL LISTING:", M, sy)
+        pdf.setFontSize(5.5); pdf.setTextColor(pal.primary[0], pal.primary[1], pal.primary[2])
+        const urlText = car.sourceUrl.length > 90 ? car.sourceUrl.slice(0, 90) + "..." : car.sourceUrl
+        pdf.text(urlText, M + 25, sy)
+      }
 
       // ═══ CLOSING PAGE: THANK YOU ═══
       pdf.addPage(); bg()
