@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
-const LOCALES = ["en", "es", "de", "ja"]
+const LOCALES = ["en", "es", "de", "ja"] as const
 
 const STATIC_ROUTES = [
   "",            // homepage
@@ -16,10 +16,19 @@ const PORSCHE_SERIES = [
   "cayenne", "macan", "panamera", "taycan",
 ]
 
+/** Build alternates map for a given path across all locales */
+function buildAlternates(path: string) {
+  const languages: Record<string, string> = {}
+  for (const locale of LOCALES) {
+    languages[locale] = `${BASE_URL}/${locale}${path}`
+  }
+  return { languages }
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = []
 
-  // Static routes per locale
+  // Static routes with hreflang alternates
   for (const locale of LOCALES) {
     for (const route of STATIC_ROUTES) {
       entries.push({
@@ -27,6 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: route === "" ? "daily" : "weekly",
         priority: route === "" ? 1.0 : 0.8,
+        alternates: buildAlternates(route),
       })
     }
   }
@@ -38,6 +48,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
+      alternates: buildAlternates("/cars/porsche"),
     })
   }
 
@@ -49,6 +60,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: "daily",
         priority: 0.7,
+        alternates: buildAlternates(`/cars/porsche?series=${series}`),
       })
     }
   }

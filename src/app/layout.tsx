@@ -31,37 +31,67 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "Monza Lab | Investment-Grade Automotive Assets",
-    template: "%s | Monza Lab",
+    default: "MonzaHaus | Investment-Grade Automotive Assets",
+    template: "%s | MonzaHaus",
   },
   description:
-    "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions.",
+    "AI-powered collector car intelligence platform. Track Porsche 911, 992, 997 auction results from Bring a Trailer, Cars & Bids, and AutoScout24. Analyze market trends and discover investment-grade collector vehicles.",
   keywords: [
-    "car auction",
-    "vehicle investment",
-    "Bring a Trailer",
-    "Cars and Bids",
-    "collectible cars",
-    "auction analysis",
-    "classic cars",
-    "Porsche 911",
-    "collector car market",
-    "porsche investment",
+    "collector car market intelligence",
+    "Porsche 911 auction results",
+    "Porsche 992 investment",
+    "Porsche 997 market analysis",
+    "Bring a Trailer auction data",
+    "Cars and Bids results",
+    "AutoScout24 Porsche",
+    "classic car investment",
+    "collector vehicle analysis",
+    "car auction tracker",
+    "Porsche market trends",
+    "investment grade cars",
+    "collectible Porsche prices",
+    "MonzaHaus",
   ],
+  alternates: {
+    canonical: BASE_URL,
+    languages: {
+      en: `${BASE_URL}/en`,
+      es: `${BASE_URL}/es`,
+      de: `${BASE_URL}/de`,
+      ja: `${BASE_URL}/ja`,
+    },
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   openGraph: {
     type: "website",
-    siteName: "Monza Lab",
-    title: "Monza Lab | Investment-Grade Automotive Assets",
+    siteName: "MonzaHaus",
+    title: "MonzaHaus | Collector Car Market Intelligence & Porsche Investment Analysis",
     description:
-      "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions.",
+      "Track Porsche 911, 992, 997 auction results. AI-powered market intelligence from Bring a Trailer, Cars & Bids, and AutoScout24. Discover investment-grade collector vehicles.",
     locale: "en_US",
     alternateLocale: ["es_ES", "de_DE", "ja_JP"],
+    images: [
+      {
+        url: "/og-image.png",
+        width: 2400,
+        height: 1260,
+        alt: "MonzaHaus — AI-powered collector car market intelligence platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Monza Lab | Investment-Grade Automotive Assets",
+    title: "MonzaHaus | Collector Car Market Intelligence",
     description:
-      "AI-powered collector car investment terminal. Analyze Porsche auctions, track market trends, and make smarter acquisitions.",
+      "Track Porsche 911 auction results, analyze collector car market trends, and discover investment-grade vehicles. AI-powered intelligence from BaT, C&B, and AutoScout24.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -77,7 +107,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Monza Lab",
+    title: "MonzaHaus",
   },
 };
 
