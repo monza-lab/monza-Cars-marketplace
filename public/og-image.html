@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MonzaHaus OG Image</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600&family=Karla:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      font-family: 'Karla', sans-serif;
+    }
+
+    .og-card {
+      position: relative;
+      width: 1200px;
+      height: 630px;
+      background: #0E0A0C;
+      overflow: hidden;
+    }
+
+    /* 911 Background */
+    .bg-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+      opacity: 0.35;
+      filter: saturate(0.6) brightness(0.7);
+    }
+
+    /* Dark gradient overlay */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        /* Bottom fade */
+        linear-gradient(to top, #0E0A0C 0%, rgba(14,10,12,0.95) 25%, rgba(14,10,12,0.5) 60%, rgba(14,10,12,0.7) 100%),
+        /* Salon Glow */
+        radial-gradient(80% 50% at 50% 0%, rgba(212,115,138,0.12) 0%, transparent 60%),
+        /* Left vignette */
+        radial-gradient(ellipse at 0% 50%, rgba(14,10,12,0.6) 0%, transparent 50%),
+        /* Right vignette */
+        radial-gradient(ellipse at 100% 50%, rgba(14,10,12,0.6) 0%, transparent 50%);
+    }
+
+    /* Noise texture */
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+    }
+
+    /* Content */
+    .content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 60px 72px;
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: absolute;
+      top: 44px;
+      left: 72px;
+      right: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .label {
+      font-family: 'Karla', sans-serif;
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(232,226,222,0.5);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: rgba(212,115,138,0.10);
+      border: 1px solid rgba(212,115,138,0.20);
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #D4738A;
+    }
+
+    .pill-text {
+      font-family: 'Karla', sans-serif;
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #D4738A;
+    }
+
+    /* Divider line */
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: rgba(212,115,138,0.4);
+      margin-bottom: 24px;
+    }
+
+    /* Main title */
+    .title {
+      font-family: 'Cormorant', serif;
+      font-weight: 400;
+      font-size: 86px;
+      letter-spacing: -0.02em;
+      color: #E8E2DE;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .title span {
+      color: #D4738A;
+    }
+
+    /* Tagline */
+    .tagline {
+      font-family: 'Karla', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(232,226,222,0.55);
+      margin-bottom: 0;
+    }
+
+    /* Bottom border accent */
+    .bottom-accent {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, #D4738A 20%, #D4738A 80%, transparent 100%);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="og-card">
+    <img class="bg-photo" src="911-hero.webp" alt="">
+    <div class="overlay"></div>
+    <div class="noise"></div>
+
+    <div class="content">
+      <div class="top-bar">
+        <div class="label">Collector Car Intelligence</div>
+        <div class="pill">
+          <div class="pill-dot"></div>
+          <span class="pill-text">AI-Powered</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="title">Monza<span>Haus</span></div>
+      <div class="tagline">Investment-Grade Automotive Assets</div>
+    </div>
+
+    <div class="bottom-accent"></div>
+  </div>
+</body>
+</html>
