@@ -219,7 +219,7 @@ export async function fetchAutoTraderGatewayPage(input: {
   timeoutMs: number;
   filters: SearchFilters;
 }): Promise<AutoTraderGatewayPage> {
-  const query = `query SearchResultsListingsGridQuery($filters:[FilterInput!]!,$channel:Channel!,$page:Int,$sortBy:SearchResultsSort,$listingType:[ListingType!],$searchId:String!,$featureFlags:[FeatureFlag]){searchResults(input:{facets:[],filters:$filters,channel:$channel,page:$page,sortBy:$sortBy,listingType:$listingType,searchId:$searchId,featureFlags:$featureFlags}){listings{__typename advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}} ... on SearchListing{advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}}}}page{number results{count}}trackingContext{searchId}}}`;
+  const query = `query SearchResultsListingsGridQuery($filters:[FilterInput!]!,$channel:Channel!,$page:Int,$sortBy:SearchResultsSort,$listingType:[ListingType!],$searchId:String!,$featureFlags:[FeatureFlag]){searchResults(input:{facets:[],filters:$filters,channel:$channel,page:$page,sortBy:$sortBy,listingType:$listingType,searchId:$searchId,featureFlags:$featureFlags}){listings{__typename ... on SearchListing{advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}}}}page{number results{count}}trackingContext{searchId}}}`;
   const body = {
     operationName: "SearchResultsListingsGridQuery",
     query,

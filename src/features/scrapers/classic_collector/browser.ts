@@ -110,7 +110,8 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
 
   try {
     const { chromium } = await import("rebrowser-playwright");
-    return chromium.launch(launchOptions) as unknown as Browser;
+    const browser = await chromium.launch(launchOptions);
+    return browser as unknown as Browser;
   } catch (err) {
     console.warn(
       `[classic_collector] rebrowser-playwright launch failed, falling back to playwright: ${
@@ -118,7 +119,8 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
       }`
     );
     const { chromium } = await import("playwright");
-    return chromium.launch(launchOptions) as unknown as Browser;
+    const browser = await chromium.launch(launchOptions);
+    return browser as unknown as Browser;
   }
 }
 
