@@ -93,8 +93,8 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
     });
   }
 
-  // Local / GitHub Actions: use rebrowser-playwright for Cloudflare CDP bypass
-  const { chromium } = await import("rebrowser-playwright");
+  // Local / GitHub Actions: prefer rebrowser-playwright for Cloudflare CDP bypass,
+  // fall back to regular playwright if the rebrowser binary is missing.
   const launchOptions: Record<string, unknown> = {
     headless: config.headless,
     args: STEALTH_ARGS,
@@ -108,7 +108,18 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
     };
   }
 
-  return chromium.launch(launchOptions) as unknown as Browser;
+  try {
+    const { chromium } = await import("rebrowser-playwright");
+    return chromium.launch(launchOptions) as unknown as Browser;
+  } catch (err) {
+    console.warn(
+      `[classic_collector] rebrowser-playwright launch failed, falling back to playwright: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+    const { chromium } = await import("playwright");
+    return chromium.launch(launchOptions) as unknown as Browser;
+  }
 }
 
 /**

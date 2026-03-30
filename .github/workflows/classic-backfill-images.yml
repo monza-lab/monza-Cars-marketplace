@@ -36,7 +36,8 @@ jobs:
       - name: Install Playwright browsers
         run: |
           npx playwright install-deps chromium
-          npx rebrowser-playwright install chromium
+          npx playwright install chromium
+          npx rebrowser-playwright install chromium || true
 
       - name: Run image backfill
         env:

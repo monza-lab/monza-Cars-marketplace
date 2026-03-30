@@ -39,6 +39,7 @@ const ALL_SCRAPERS: ScraperName[] = [
   "bat-detail",
   "validate",
   "cleanup",
+  "liveness-check",
 ];
 
 const SCRAPER_LABELS: Record<ScraperName, string> = {
@@ -60,6 +61,7 @@ const SCRAPER_LABELS: Record<ScraperName, string> = {
   "bat-detail": "BaT Detail",
   validate: "Validator",
   cleanup: "Cleanup",
+  "liveness-check": "Liveness Checker",
 };
 
 const SCRAPER_RUNTIME: Record<ScraperName, string> = {
@@ -81,6 +83,7 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   "bat-detail": "GitHub Actions",
   validate: "Vercel Cron",
   cleanup: "Vercel Cron",
+  "liveness-check": "GitHub Actions",
 };
 
 const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
@@ -102,6 +105,7 @@ const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
   "bat-detail": 24 * 60 * 60 * 1000,
   validate: 24 * 60 * 60 * 1000,
   cleanup: 24 * 60 * 60 * 1000,
+  "liveness-check": 24 * 60 * 60 * 1000,
 };
 
 const POLL_INTERVAL_MS = 20_000;

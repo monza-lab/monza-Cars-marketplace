@@ -119,8 +119,17 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
         }
         console.log(`[liveness] ${opts.source}: DEAD ${listing.source_url}`);
       } else if (response.status === 403 || response.status === 429 || response.status === 503) {
+        // Treat blocks as "alive but unreachable" — the URL exists, the server
+        // is responding, it just blocks automated requests.  Update
+        // last_verified_at so these listings don't stay permanently stale.
+        result.alive++;
         consecutiveBlocks++;
-        result.errors.push(`${response.status} on ${listing.source_url}`);
+        if (!opts.dryRun) {
+          await client
+            .from("listings")
+            .update({ last_verified_at: new Date().toISOString() })
+            .eq("id", listing.id);
+        }
         if (consecutiveBlocks >= CIRCUIT_BREAK_THRESHOLD) {
           result.circuitBroken = true;
           result.errors.push(`Circuit break: ${CIRCUIT_BREAK_THRESHOLD} consecutive ${response.status}s`);

@@ -34,8 +34,8 @@ export const SOURCE_CONFIGS: SourceConfig[] = [
   { source: "ClassicCom",   delayMs: 3_000,  maxPerRun: 1_100 },
 ];
 
-/** Circuit breaker: stop a source after this many consecutive failures */
-export const CIRCUIT_BREAK_THRESHOLD = 3;
+/** Circuit breaker: stop a source after this many consecutive blocks (403/429/503) */
+export const CIRCUIT_BREAK_THRESHOLD = 10;
 
 /** Default time budget in ms (55 minutes, leaving 5 min buffer for GH Actions 60 min timeout) */
 export const DEFAULT_TIME_BUDGET_MS = 55 * 60 * 1_000;

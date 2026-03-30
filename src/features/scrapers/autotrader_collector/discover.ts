@@ -145,7 +145,7 @@ export function parseGatewayListings(payload: GatewayResponse): AutoTraderGatewa
 
 // ─── Dynamic version detection ───
 
-const FALLBACK_APP_VERSION = "6c9dff0561";
+const FALLBACK_APP_VERSION = "b0f8e3a29c";
 let _cachedAppVersion: string | null = null;
 
 /**
@@ -161,7 +161,7 @@ export async function detectAppVersion(): Promise<string> {
   try {
     const res = await fetch("https://www.autotrader.co.uk/car-search?postcode=SW1A+1AA&make=Porsche", {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
       signal: AbortSignal.timeout(10_000),
@@ -219,7 +219,7 @@ export async function fetchAutoTraderGatewayPage(input: {
   timeoutMs: number;
   filters: SearchFilters;
 }): Promise<AutoTraderGatewayPage> {
-  const query = `query SearchResultsListingsGridQuery($filters:[FilterInput!]!,$channel:Channel!,$page:Int,$sortBy:SearchResultsSort,$listingType:[ListingType!],$searchId:String!,$featureFlags:[FeatureFlag]){searchResults(input:{facets:[],filters:$filters,channel:$channel,page:$page,sortBy:$sortBy,listingType:$listingType,searchId:$searchId,featureFlags:$featureFlags}){listings{... on SearchListing{advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}}}}page{number results{count}}trackingContext{searchId}}}`;
+  const query = `query SearchResultsListingsGridQuery($filters:[FilterInput!]!,$channel:Channel!,$page:Int,$sortBy:SearchResultsSort,$listingType:[ListingType!],$searchId:String!,$featureFlags:[FeatureFlag]){searchResults(input:{facets:[],filters:$filters,channel:$channel,page:$page,sortBy:$sortBy,listingType:$listingType,searchId:$searchId,featureFlags:$featureFlags}){listings{__typename advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}} ... on SearchListing{advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}}}}page{number results{count}}trackingContext{searchId}}}`;
   const body = {
     operationName: "SearchResultsListingsGridQuery",
     query,
@@ -245,7 +245,7 @@ export async function fetchAutoTraderGatewayPage(input: {
       Origin: "https://www.autotrader.co.uk",
       Referer: refererUrl,
       Accept: "*/*",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(input.timeoutMs),
@@ -260,9 +260,17 @@ export async function fetchAutoTraderGatewayPage(input: {
   const payload = (await res.json()) as GatewayResponse;
   const result = parseGatewayListings(payload);
 
-  // Diagnostic: log when 0 listings returned so cron runs show what the API gave us
+  // Diagnostic: log raw response structure for debugging API changes
   if (result.listings.length === 0) {
-    console.warn(`[AutoTrader] Gateway returned 0 listings for page ${input.page}. totalResults=${result.totalResults}, errors=${JSON.stringify(payload.errors ?? [])}, keys=${Object.keys(payload.data?.searchResults ?? {}).join(",")}`);
+    const sr = payload.data?.searchResults;
+    console.warn(`[AutoTrader] Gateway returned 0 listings for page ${input.page}. ` +
+      `totalResults=${result.totalResults}, ` +
+      `errors=${JSON.stringify(payload.errors ?? [])}, ` +
+      `hasData=${!!payload.data}, ` +
+      `searchResultsKeys=${Object.keys(sr ?? {}).join(",")}, ` +
+      `listingsType=${typeof sr?.listings}, ` +
+      `listingsCount=${Array.isArray(sr?.listings) ? sr.listings.length : "N/A"}, ` +
+      `rawFirst=${JSON.stringify((sr?.listings as unknown[])?.[0] ?? null).slice(0, 300)}`);
   }
 
   return result;
