@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select"
 
 import { useCurrency } from "@/lib/CurrencyContext"
+import { isAuctionPlatform } from "@/components/dashboard/platformMapping"
 import { useLocale, useTranslations } from "next-intl"
 
 // ---------------------------------------------------------------------------
@@ -272,6 +273,8 @@ function AuctionCard({
 
   const reserveBadge = getReserveBadge(auction.reserveStatus)
   const hasEnded = auction.status === "ended"
+  const isAuction = isAuctionPlatform(auction.platform)
+  const endedLabel = isAuction ? tStatus("ended") : tStatus("sold")
 
   if (view === "list") {
     return (
@@ -372,7 +375,7 @@ function AuctionCard({
                     >
                       <Clock className="size-3 mr-1" />
                       {formatTimeRemaining(auction.endDate, {
-                        ended: tStatus("ended"),
+                        ended: endedLabel,
                         day: t("time.units.day"),
                         hour: t("time.units.hour"),
                         minute: t("time.units.minute"),
@@ -383,7 +386,7 @@ function AuctionCard({
                       variant="outline"
                       className="text-[10px] bg-zinc-800 text-zinc-500 border-zinc-700"
                     >
-                      {tStatus("ended")}
+                      {endedLabel}
                     </Badge>
                   )}
                 </div>
@@ -442,7 +445,7 @@ function AuctionCard({
               >
                 <Clock className="size-3" />
                 {formatTimeRemaining(auction.endDate, {
-                  ended: tStatus("ended"),
+                  ended: endedLabel,
                   day: t("time.units.day"),
                   hour: t("time.units.hour"),
                   minute: t("time.units.minute"),

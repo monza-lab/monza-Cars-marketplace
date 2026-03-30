@@ -10,6 +10,7 @@ import { CurrencyProvider } from "@/lib/CurrencyContext";
 import { MobileBottomNav } from "@/components/mobile";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AppFooter } from "@/components/layout/AppFooter";
+import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -24,23 +25,35 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
 
+  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+
   const titles: Record<string, string> = {
-    en: "Monza Lab | Investment-Grade Automotive Assets",
-    es: "Monza Lab | Activos Automotrices de Inversión",
-    de: "Monza Lab | Investitionsfähige Automobilwerte",
-    ja: "Monza Lab | 投資級自動車資産",
+    en: "MonzaHaus | Collector Car Market Intelligence & Porsche Investment Analysis",
+    es: "MonzaHaus | Inteligencia de Mercado de Autos de Colección e Inversión en Porsche",
+    de: "MonzaHaus | Sammlerfahrzeug-Marktanalyse & Porsche-Investitionen",
+    ja: "MonzaHaus | コレクターカー市場インテリジェンス＆ポルシェ投資分析",
   };
 
   const descriptions: Record<string, string> = {
-    en: "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions.",
-    es: "La terminal inteligente para la adquisición y análisis de vehículos de colección. Insights impulsados por IA.",
-    de: "Das intelligente Terminal für die Akquisition und Analyse von Sammlerfahrzeugen. KI-gestützte Erkenntnisse.",
-    ja: "コレクター車両の取得と分析のためのインテリジェントターミナル。AI駆動のインサイト。",
+    en: "AI-powered collector car intelligence platform. Track Porsche 911, 992, 997 auction results, analyze market trends, and discover investment-grade vehicles from Bring a Trailer, Cars & Bids, and AutoScout24.",
+    es: "Plataforma de inteligencia de autos de colección impulsada por IA. Seguimiento de subastas Porsche 911, 992, 997, análisis de tendencias de mercado y descubrimiento de vehículos de inversión.",
+    de: "KI-gestützte Sammlerfahrzeug-Plattform. Porsche 911, 992, 997 Auktionsergebnisse verfolgen, Markttrends analysieren und investitionsgeeignete Fahrzeuge entdecken.",
+    ja: "AIを活用したコレクターカーインテリジェンス。ポルシェ911、992、997のオークション結果追跡、市場トレンド分析、投資グレード車両の発見。",
   };
+
+  // Build hreflang alternates for all locales
+  const languages: Record<string, string> = {};
+  for (const loc of ["en", "es", "de", "ja"]) {
+    languages[loc] = `${BASE_URL}/${loc}`;
+  }
 
   return {
     title: titles[locale] || titles.en,
     description: descriptions[locale] || descriptions.en,
+    alternates: {
+      canonical: `${BASE_URL}/${locale}`,
+      languages,
+    },
   };
 }
 
@@ -70,6 +83,7 @@ export default async function LocaleLayout({
         <AuthProvider>
           <RegionProvider>
             <CurrencyProvider>
+              <OrganizationJsonLd />
               <ClientHeader />
               <main>{children}</main>
               <MobileBottomNav />

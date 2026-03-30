@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0E0A0C"/>
+  <!-- Salon Glow -->
+  <radialGradient id="glow" cx="50%" cy="30%" r="60%">
+    <stop offset="0%" stop-color="#D4738A" stop-opacity="0.15"/>
+    <stop offset="100%" stop-color="#D4738A" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="512" height="512" rx="96" fill="url(#glow)"/>
+  <!-- "M" in Cormorant style — elegant serif M -->
+  <text x="256" y="380" text-anchor="middle" font-family="Cormorant, 'Cormorant Garamond', Georgia, serif" font-weight="600" font-size="400" letter-spacing="-8" fill="#E8E2DE">M</text>
+</svg>

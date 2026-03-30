@@ -108,6 +108,8 @@
     "endingSoon": "まもなく終了",
     "sold": "売却済み",
     "ended": "終了",
+    "sold": "売却済み",
+    "noLongerAvailable": "掲載終了",
     "noSale": "不成立",
     "live": "ライブ"
   },
@@ -442,6 +444,7 @@
     },
     "time": {
       "ended": "終了",
+      "sold": "売却済み",
       "units": {
         "day": "日",
         "hour": "時間",
@@ -877,6 +880,7 @@
     },
     "time": {
       "ended": "終了",
+      "sold": "売却済み",
       "units": {
         "day": "日",
         "hour": "時間",
@@ -924,6 +928,7 @@
     "statuses": {
       "active": "開催中",
       "ended": "終了",
+      "sold": "売却済み",
       "upcoming": "予定"
     },
     "empty": {
@@ -1035,6 +1040,7 @@
       "noImage": "画像なし",
       "fullAnalysis": "詳細分析",
       "ended": "終了",
+      "sold": "売却済み",
       "timeDay": "日",
       "timeHour": "時",
       "timeMin": "分",

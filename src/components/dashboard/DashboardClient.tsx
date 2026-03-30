@@ -832,12 +832,13 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
 
-  const timeLabels = {
-    ended: t("asset.ended"),
+  const timeBaseLabels = {
     day: t("asset.timeDay"),
     hour: t("asset.timeHour"),
     minute: t("asset.timeMin"),
   }
+  const endedText = t("asset.ended")
+  const soldText = t("asset.sold")
 
   const liveAuctions = useMemo(() => {
     const now = Date.now()
@@ -871,7 +872,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
       <div className="divide-y divide-border">
         {liveAuctions.map((auction) => {
           const isEndingSoon = auction.status === "ENDING_SOON"
-          const remaining = timeLeft(auction.endTime, timeLabels)
+          const remaining = timeLeft(auction.endTime, { ...timeBaseLabels, ended: isAuctionPlatform(auction.platform) ? endedText : soldText })
 
           return (
             <Link
@@ -1156,8 +1157,9 @@ function DiscoverySidebar({
     }
   }
 
-  const timeLabels = {
-    ended: t("asset.ended"),
+  const endedText2 = t("asset.ended")
+  const soldText2 = t("asset.sold")
+  const timeBaseLabels2 = {
     day: t("asset.timeDay"),
     hour: t("asset.timeHour"),
     minute: t("asset.timeMin"),
@@ -1297,7 +1299,7 @@ function DiscoverySidebar({
           ) : (
             liveAuctions.map((auction) => {
               const isEndingSoon = auction.status === "ENDING_SOON"
-              const remaining = timeLeft(auction.endTime, timeLabels)
+              const remaining = timeLeft(auction.endTime, { ...timeBaseLabels2, ended: isAuctionPlatform(auction.platform) ? endedText2 : soldText2 })
 
               return (
                 <Link
@@ -1453,7 +1455,7 @@ function AssetCard({ auction }: { auction: Auction }) {
                   <span className="flex items-center gap-1 text-[11px] font-mono">
                     <Clock className="size-3" />
                     {timeLeft(auction.endTime, {
-                      ended: tAuction("time.ended"),
+                      ended: isAuctionPlatform(auction.platform) ? tAuction("time.ended") : tAuction("time.sold"),
                       day: tAuction("time.units.day"),
                       hour: tAuction("time.units.hour"),
                       minute: tAuction("time.units.minute"),
