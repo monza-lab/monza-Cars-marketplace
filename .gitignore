@@ -1,6 +1,18 @@
 # worktrees
 .worktrees/
 
+# claude code
+.claude/
+
+# opencode
+.opencode/
+
+# scraper data / temp artifacts
+var/
+
+# windows artifacts
+nul
+
 # dependencies
 node_modules/
 node_modules 2/
