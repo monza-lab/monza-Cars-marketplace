@@ -38,6 +38,17 @@ import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from ".
 import { listingPriceUsd, computeRegionalValFromAuctions, computeMedian } from "./utils/valuation"
 // FilterSidebar removed — filters now live only on brand detail pages
 
+// ─── UPGRADE LOW-RES IMAGE URLS TO HIGH-RES ───
+// Some scraped images (especially older AutoScout24 data) store thumbnail URLs.
+// This upgrades them to high-resolution variants at display time.
+function upgradeImageUrl(url: string): string {
+  // AutoScout24: /250x188.webp or /400x300.webp → /1280x960.webp
+  if (url.includes("autoscout24.net")) {
+    return url.replace(/\/\d+x\d+\.webp$/, "/1280x960.webp")
+  }
+  return url
+}
+
 // ─── SORT PRIORITY: dealer/classified platforms first (Elferspot highest) ───
 const PLATFORM_SORT_PRIORITY: Record<string, number> = {
   ELFERSPOT: 0,
@@ -234,15 +245,24 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
     const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
     const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
 
-    // Get the MOST EXPENSIVE car for the representative image
+    // Pick the best real DB image for this brand:
+    // Prefer listing/dealer platforms (verified photos), then highest price
+    const carsWithImages = cars
+      .filter(c => c.images?.length > 0)
+      .sort((a, b) => {
+        const aListing = isListingPlatform(a.platform) ? 0 : 1
+        const bListing = isListingPlatform(b.platform) ? 0 : 1
+        if (aListing !== bListing) return aListing - bListing
+        return listingPriceUsd(b, rates) - listingPriceUsd(a, rates)
+      })
     const mostExpensiveCar = cars.reduce((max, car) =>
       listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max
     , cars[0])
-    
-    // Use the actual car's image from database, fall back to static brand image only if needed
-    const carImage = mostExpensiveCar.images?.[0]
+
+    const rawHeroImage = carsWithImages[0]?.images?.[0]
+    const heroImage = rawHeroImage ? upgradeImageUrl(rawHeroImage) : null
     const verifiedBrandImage = getBrandImage(name)
-    const representativeImage = carImage || verifiedBrandImage || "/cars/placeholder.svg"
+    const representativeImage = heroImage || verifiedBrandImage || "/cars/placeholder.svg"
 
     // Use DB aggregate count when available and there's a single brand (e.g. Porsche-only dashboard).
     // This shows the true DB total instead of the capped fetched sample.
@@ -317,9 +337,22 @@ function aggregateFamilies(
     const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
 
     const bestCar = cars.reduce((max, car) => listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max, cars[0])
-    const carImage = bestCar.images?.[0]
-    const modelImage = getModelImage("Porsche", bestCar.model)
-    // Static fallback keyed by series ID — guaranteed to resolve for all Porsche series
+
+    // Pick the best real DB image for this family:
+    // 1. Prefer images from trusted listing/dealer platforms (Elferspot, AutoScout24, etc.)
+    //    which have verified, real photos of the actual car
+    // 2. Fall back to any car with images, sorted by price (most expensive = best quality)
+    // 3. Last resort: curated static image for the series
+    const carsWithImages = cars
+      .filter(c => c.images?.length > 0 && c.make === "Porsche")
+      .sort((a, b) => {
+        const aListing = isListingPlatform(a.platform) ? 0 : 1
+        const bListing = isListingPlatform(b.platform) ? 0 : 1
+        if (aListing !== bListing) return aListing - bListing
+        return listingPriceUsd(b, rates) - listingPriceUsd(a, rates)
+      })
+    const rawHeroImage = carsWithImages[0]?.images?.[0]
+    const heroImage = rawHeroImage ? upgradeImageUrl(rawHeroImage) : null
     const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
     let carCount: number
@@ -339,7 +372,7 @@ function aggregateFamilies(
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       yearMin: Math.min(...years),
       yearMax: Math.max(...years),
-      representativeImage: carImage || modelImage || staticFallback,
+      representativeImage: heroImage || staticFallback,
       fallbackImage: staticFallback,
       representativeCar: `${bestCar.year} Porsche ${bestCar.model}`,
       topGrade,

@@ -447,7 +447,8 @@ function CarNavSidebar({
         <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPrice(car.currentBid)}</p>
       </div>
 
-      {/* ── Market Position (always visible) ── */}
+      {/* ── Market Position (hidden when no price data) ── */}
+      {car.currentBid > 0 && (
       <div className="px-4 py-3 shrink-0 border-b border-border">
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
@@ -478,6 +479,7 @@ function CarNavSidebar({
           )}
         </div>
       </div>
+      )}
 
       {/* ── Live Auction block (CONDITIONAL) ── */}
       {isLive && (

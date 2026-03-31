@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       .eq("status", "active")
       .is("description_text", null)
       .order("updated_at", { ascending: true })
-      .limit(50);
+      .limit(100);
 
     if (fetchErr || !rows) {
       throw new Error(fetchErr?.message ?? "No rows returned");
@@ -64,7 +64,7 @@ export async function GET(request: Request) {
     const discovered = rows.length;
     let enriched = 0;
     const errors: string[] = [];
-    const DELAY_MS = 5_000;
+    const DELAY_MS = 2_500;
     const TIME_BUDGET_MS = 270_000;
 
     for (let i = 0; i < rows.length; i++) {

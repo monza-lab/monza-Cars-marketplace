@@ -169,8 +169,8 @@ export function normalizeListingFromSummary(input: {
     auctionDate: null,
     auctionHouse,
     descriptionText: null,
-    photos: [],
-    photosCount: 0,
+    photos: input.summary.thumbnailUrl ? [input.summary.thumbnailUrl] : [],
+    photosCount: input.summary.thumbnailUrl ? 1 : 0,
     location,
     pricing: {
       hammerPrice: null,
@@ -186,7 +186,7 @@ export function normalizeListingFromSummary(input: {
       auctionHouse,
       saleDate: null,
       country: location.country,
-      photosCount: 0,
+      photosCount: input.summary.thumbnailUrl ? 1 : 0,
       hasPrice: price !== null && price > 0,
     }),
   };

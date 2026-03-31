@@ -430,6 +430,23 @@ export function extractSeries(model: string, year: number, make: string, title?:
   const cleanModel = model.replace(new RegExp(`^${make}\\s+`, "i"), "").trim()
   const lowerModel = cleanModel.toLowerCase()
 
+  // Word-boundary keyword match: ensures "carrera gt" matches "Carrera GT" but NOT
+  // "Carrera GT3", "Carrera GTS", etc. Checks that the character after the keyword
+  // (if any) is not alphanumeric.
+  function keywordMatches(text: string, keyword: string): boolean {
+    const lk = keyword.toLowerCase()
+    const idx = text.indexOf(lk)
+    if (idx === -1) return false
+    const afterIdx = idx + lk.length
+    if (afterIdx < text.length) {
+      const charAfter = text[afterIdx]
+      // If keyword ends with a letter/digit and next char is also a letter/digit,
+      // it's a partial match (e.g. "carrera gt" inside "carrera gt3") — reject it
+      if (/[a-z0-9]/i.test(charAfter)) return false
+    }
+    return true
+  }
+
   // Pass 1: Match by explicit keywords (most specific first — longer keywords matched first)
   const sortedByKeywordLength = [...config.series].sort(
     (a, b) => Math.max(...b.keywords.map(k => k.length)) - Math.max(...a.keywords.map(k => k.length))
@@ -437,7 +454,7 @@ export function extractSeries(model: string, year: number, make: string, title?:
 
   for (const series of sortedByKeywordLength) {
     for (const keyword of series.keywords) {
-      if (lowerModel.includes(keyword.toLowerCase())) {
+      if (keywordMatches(lowerModel, keyword)) {
         // Special case: 930 only matches non-turbo when model explicitly says "930"
         if (series.turboOnly && !lowerModel.includes("turbo")) continue
         return series.id
@@ -456,7 +473,7 @@ export function extractSeries(model: string, year: number, make: string, title?:
       }
       const allKeywords = [...series.keywords, ...(series.titleKeywords || [])]
       for (const keyword of allKeywords) {
-        if (lowerTitle.includes(keyword.toLowerCase())) {
+        if (keywordMatches(lowerTitle, keyword)) {
           if (series.turboOnly && !lowerTitle.includes("turbo")) continue
           return series.id
         }

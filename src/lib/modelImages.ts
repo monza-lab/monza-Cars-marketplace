@@ -32,74 +32,93 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Ferrari|Monza SP1": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
   "Ferrari|Monza SP2": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
 
-  // ─── PORSCHE (model names) ───
-  "Porsche|911": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|911 Carrera": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|911 Carrera RS": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|911 GT3": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|911 GT3 RS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|911 GT2": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|911 GT2 RS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|911 Turbo": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|911 Turbo S": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|959": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|918 Spyder": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|Carrera GT": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|Cayenne": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|Panamera": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|Taycan": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|718 Cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|718 Cayman S": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|718 Cayman GT4": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|718 Cayman GT4 RS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|718 Cayman GTS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|Boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|Boxster S": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|Boxster GTS": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|Boxster Spyder": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|718 Boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|718 Boxster S": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|718 Boxster GTS": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|718 Boxster Spyder": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|Cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|Cayman S": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|Cayman GT4": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|Cayman GTS": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|356": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
+  // ─── PORSCHE (model names — VERIFIED Unsplash photos) ───
+  "Porsche|911": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 Carrera": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 Carrera RS": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  "Porsche|911 GT3": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 GT3 RS": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 GT2": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 GT2 RS": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  "Porsche|911 Turbo": "https://images.unsplash.com/photo-1747148749996-d6fd620fdde6?w=1200&h=800&fit=crop",
+  "Porsche|911 Turbo S": "https://images.unsplash.com/photo-1747148749996-d6fd620fdde6?w=1200&h=800&fit=crop",
+  "Porsche|959": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  // 918 Spyder: black 918 Spyder on road
+  "Porsche|918 Spyder": "https://images.unsplash.com/photo-1596450886763-6f9b7f3cbd0a?w=1200&h=800&fit=crop",
+  // Carrera GT: silver Carrera GT
+  "Porsche|Carrera GT": "https://images.unsplash.com/photo-1773142232494-3b5196591d4a?w=1200&h=800&fit=crop",
+  // Cayenne: white Cayenne SUV in parking garage
+  "Porsche|Cayenne": "https://images.unsplash.com/photo-1649296303096-38245976e01e?w=1200&h=800&fit=crop",
+  // Panamera: black Panamera GTS on coastal road
+  "Porsche|Panamera": "https://images.unsplash.com/photo-1770847816156-a4041d979580?w=1200&h=800&fit=crop",
+  // Taycan: silver Taycan electric sedan
+  "Porsche|Taycan": "https://images.unsplash.com/photo-1618213221550-c32da08997db?w=1200&h=800&fit=crop",
+  // 718 Cayman variants: teal 718 Cayman S coupe
+  "Porsche|718 Cayman": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman S": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GT4": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GT4 RS": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  "Porsche|718 Cayman GTS": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  // Boxster variants: black Boxster convertible
+  "Porsche|Boxster": "https://images.unsplash.com/photo-1572281335102-5f780686ee91?w=1200&h=800&fit=crop",
+  "Porsche|Boxster S": "https://images.unsplash.com/photo-1572281335102-5f780686ee91?w=1200&h=800&fit=crop",
+  "Porsche|Boxster GTS": "https://images.unsplash.com/photo-1572281335102-5f780686ee91?w=1200&h=800&fit=crop",
+  "Porsche|Boxster Spyder": "https://images.unsplash.com/photo-1572281335102-5f780686ee91?w=1200&h=800&fit=crop",
+  // 718 Boxster variants: dark 718 Boxster convertible
+  "Porsche|718 Boxster": "https://images.unsplash.com/photo-1721572345790-507985e4317a?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster S": "https://images.unsplash.com/photo-1721572345790-507985e4317a?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster GTS": "https://images.unsplash.com/photo-1721572345790-507985e4317a?w=1200&h=800&fit=crop",
+  "Porsche|718 Boxster Spyder": "https://images.unsplash.com/photo-1721572345790-507985e4317a?w=1200&h=800&fit=crop",
+  // Cayman variants: black Cayman R on road (987/981)
+  "Porsche|Cayman": "https://images.unsplash.com/photo-1607207406690-8d49ad20b430?w=1200&h=800&fit=crop",
+  "Porsche|Cayman S": "https://images.unsplash.com/photo-1607207406690-8d49ad20b430?w=1200&h=800&fit=crop",
+  "Porsche|Cayman GT4": "https://images.unsplash.com/photo-1607207406690-8d49ad20b430?w=1200&h=800&fit=crop",
+  "Porsche|Cayman GTS": "https://images.unsplash.com/photo-1607207406690-8d49ad20b430?w=1200&h=800&fit=crop",
+  "Porsche|356": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
 
-  // ─── PORSCHE (series IDs — fallbacks for family cards) ───
-  // 992: modern 911, angular LED headlights (2019+)
-  "Porsche|992": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  // 991: 2012-2019 911, rounded LED headlights
-  "Porsche|991": "https://images.unsplash.com/photo-1611651338412-8403fa8b3153?w=1200&h=800&fit=crop",
-  // 997: 2005-2012 911, round headlights with top-mounted indicators
-  "Porsche|997": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  // 996: 1999-2004 911, distinctive "fried egg" headlights
-  "Porsche|996": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  // 993: 1994-1998, last air-cooled 911
-  "Porsche|993": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  // 964: 1989-1994, integrated bumpers
-  "Porsche|964": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  // 930: original Turbo, whale tail
-  "Porsche|930": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|g-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|f-model": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|912": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|918": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|carrera-gt": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|718-cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|718-boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|cayman": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1200&h=800&fit=crop",
-  "Porsche|boxster": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
-  "Porsche|914": "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=1200&h=800&fit=crop",
-  "Porsche|944": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|928": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|968": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|924": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|cayenne": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|macan": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=1200&h=800&fit=crop",
-  "Porsche|panamera": "https://images.unsplash.com/photo-1580274455191-1c62238fa333?w=1200&h=800&fit=crop",
-  "Porsche|taycan": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  // ─── PORSCHE (series IDs — VERIFIED model-specific photos for family cards) ───
+  // 992: black 992 911 parked roadside (2019+)
+  "Porsche|992": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
+  // 991: orange 991 911 in front of brick building (2012-2019)
+  "Porsche|991": "https://images.unsplash.com/photo-1715610475231-c5887836a7c9?w=1200&h=800&fit=crop",
+  // 997: white 997 911 in parking lot (2005-2012)
+  "Porsche|997": "https://images.unsplash.com/photo-1672717901304-5ef5480894ca?w=1200&h=800&fit=crop",
+  // 996: silver 996 911 in front of building (1999-2004, "fried egg" headlights)
+  "Porsche|996": "https://images.unsplash.com/photo-1655209437823-80676cb9926c?w=1200&h=800&fit=crop",
+  // 993: silver 993 coupe on street (1994-1998, last air-cooled)
+  "Porsche|993": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  // 964: green 964 coupe parked near building (1989-1994)
+  "Porsche|964": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
+  // 930: silver 930 Turbo showing whale tail spoiler
+  "Porsche|930": "https://images.unsplash.com/photo-1747148749996-d6fd620fdde6?w=1200&h=800&fit=crop",
+  "Porsche|g-model": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
+  "Porsche|f-model": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
+  "Porsche|912": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
+  // 918: black 918 Spyder on road
+  "Porsche|918": "https://images.unsplash.com/photo-1596450886763-6f9b7f3cbd0a?w=1200&h=800&fit=crop",
+  // Carrera GT: silver Carrera GT
+  "Porsche|carrera-gt": "https://images.unsplash.com/photo-1773142232494-3b5196591d4a?w=1200&h=800&fit=crop",
+  // 718 Cayman: teal 718 Cayman S coupe
+  "Porsche|718-cayman": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
+  // 718 Boxster: dark 718 Boxster convertible
+  "Porsche|718-boxster": "https://images.unsplash.com/photo-1721572345790-507985e4317a?w=1200&h=800&fit=crop",
+  // Cayman: black Cayman R on road (987/981)
+  "Porsche|cayman": "https://images.unsplash.com/photo-1607207406690-8d49ad20b430?w=1200&h=800&fit=crop",
+  // Boxster: black Boxster convertible (986/987/981)
+  "Porsche|boxster": "https://images.unsplash.com/photo-1572281335102-5f780686ee91?w=1200&h=800&fit=crop",
+  "Porsche|914": "https://images.unsplash.com/photo-1544736484-ab1711417589?w=1200&h=800&fit=crop",
+  "Porsche|944": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  "Porsche|928": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  "Porsche|968": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  "Porsche|924": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
+  // Cayenne: white Cayenne SUV in parking garage
+  "Porsche|cayenne": "https://images.unsplash.com/photo-1649296303096-38245976e01e?w=1200&h=800&fit=crop",
+  // Macan: black Macan compact SUV
+  "Porsche|macan": "https://images.unsplash.com/photo-1661914132349-095cd34f37aa?w=1200&h=800&fit=crop",
+  // Panamera: black Panamera GTS on coastal road
+  "Porsche|panamera": "https://images.unsplash.com/photo-1770847816156-a4041d979580?w=1200&h=800&fit=crop",
+  // Taycan: silver Taycan electric sedan
+  "Porsche|taycan": "https://images.unsplash.com/photo-1618213221550-c32da08997db?w=1200&h=800&fit=crop",
 
   // ─── LAMBORGHINI ───
   "Lamborghini|Miura": "https://images.unsplash.com/photo-1621135802920-133df287f89c?w=1200&h=800&fit=crop",
@@ -349,7 +368,7 @@ export const MODEL_IMAGES: Record<string, string> = {
 // Used for brand cards on landing page
 export const BRAND_IMAGES: Record<string, string> = {
   "Ferrari": "https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=1200&h=800&fit=crop",
-  "Porsche": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=1200&h=800&fit=crop",
+  "Porsche": "https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop",
   "Lamborghini": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200&h=800&fit=crop",
   "McLaren": "https://images.unsplash.com/photo-1522441040106-2621f423b5eb?w=1200&h=800&fit=crop",
   "Bugatti": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200&h=800&fit=crop",

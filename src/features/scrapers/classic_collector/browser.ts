@@ -179,29 +179,81 @@ export async function isCloudflareChallenge(page: Page): Promise<boolean> {
   const hasChallenge = await page.evaluate(() => {
     return document.querySelector("#challenge-running") !== null ||
            document.querySelector("#challenge-form") !== null ||
-           document.querySelector(".cf-browser-verification") !== null;
+           document.querySelector(".cf-browser-verification") !== null ||
+           document.querySelector("#turnstile-wrapper") !== null ||
+           document.querySelector("[data-ray]") !== null;
   }).catch(() => false);
 
   return hasChallenge;
 }
 
 /**
- * Wait for a Cloudflare JS challenge to auto-resolve.
+ * Attempt to click the Cloudflare Turnstile checkbox if present.
+ * Turnstile is rendered in an iframe — we need to find and click inside it.
+ */
+async function clickTurnstileCheckbox(page: Page): Promise<void> {
+  try {
+    // Turnstile lives inside an iframe with src containing challenges.cloudflare.com
+    const frames = page.frames();
+    for (const frame of frames) {
+      const url = frame.url();
+      if (url.includes("challenges.cloudflare.com") || url.includes("turnstile")) {
+        // Try to click the checkbox inside the challenge iframe
+        const checkbox = await frame.$("input[type='checkbox']");
+        if (checkbox) {
+          await checkbox.click();
+          return;
+        }
+        // Some Turnstile variants use a div/label as the clickable area
+        const clickTarget = await frame.$(".cb-lb") ?? await frame.$("[id^='cf-']");
+        if (clickTarget) {
+          await clickTarget.click();
+          return;
+        }
+        // Last resort: click the body of the iframe (some challenges auto-solve on interaction)
+        const body = await frame.$("body");
+        if (body) {
+          await body.click();
+          return;
+        }
+      }
+    }
+
+    // Fallback: try clicking any visible challenge elements on the main page
+    const challengeBtn = await page.$("#challenge-stage input[type='button']")
+      ?? await page.$(".cf-turnstile")
+      ?? await page.$("[data-sitekey]");
+    if (challengeBtn) {
+      await challengeBtn.click();
+    }
+  } catch {
+    // Clicking failed — the challenge may auto-resolve or we'll time out
+  }
+}
+
+/**
+ * Wait for a Cloudflare challenge to resolve.
+ * Attempts to click Turnstile checkbox and waits for redirect.
  * Returns true if challenge was solved, false if it timed out.
  */
 export async function waitForCloudflareResolution(
   page: Page,
-  timeoutMs = 15_000,
+  timeoutMs = 30_000,
 ): Promise<boolean> {
   const isChallenge = await isCloudflareChallenge(page);
   if (!isChallenge) return true;
+
+  // Wait a moment for Turnstile iframe to load, then attempt click
+  await page.waitForTimeout(2_000);
+  await clickTurnstileCheckbox(page);
 
   try {
     await page.waitForFunction(
       () => {
         const title = document.title;
         return !title.includes("Just a moment") &&
-               document.querySelector("#challenge-running") === null;
+               document.querySelector("#challenge-running") === null &&
+               document.querySelector("#turnstile-wrapper") === null;
       },
       { timeout: timeoutMs },
     );
@@ -209,7 +261,18 @@ export async function waitForCloudflareResolution(
     await page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
     return true;
   } catch {
-    return false;
+    // First attempt failed — try clicking again (iframe may have reloaded)
+    await clickTurnstileCheckbox(page);
+    try {
+      await page.waitForFunction(
+        () => !document.title.includes("Just a moment"),
+        { timeout: 10_000 },
+      );
+      await page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

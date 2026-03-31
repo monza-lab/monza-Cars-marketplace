@@ -64,6 +64,9 @@ export function formatRegionalPrice(value: number, currency: string): string {
   const normalized = Number.isFinite(value) ? value : Number(value)
   const safeValue = Number.isFinite(normalized) ? normalized : 0
 
+  // No price data — show "POA" (Price on Application)
+  if (safeValue <= 0) return "POA"
+
   if (currency === "¥") {
     if (safeValue >= 100_000_000) return `¥${(safeValue / 100_000_000).toFixed(1)}億`
     if (safeValue >= 10_000_000) return `¥${(safeValue / 10_000_000).toFixed(1)}千万`
@@ -87,6 +90,7 @@ export function formatUsd(value: number): string {
   const normalized = Number.isFinite(value) ? value : Number(value)
   const safeValue = Number.isFinite(normalized) ? normalized : 0
 
+  if (safeValue <= 0) return "POA"
   if (safeValue >= 1_000_000) return `$${(safeValue / 1_000_000).toFixed(1)}M`
   if (safeValue >= 1_000) return `$${(safeValue / 1_000).toFixed(0)}K`
   return `$${INTEGER_FORMATTER.format(Math.round(safeValue))}`

@@ -1,6 +1,15 @@
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { isListingPlatform } from "../platformMapping"
 import type { Auction, Brand, PorscheFamily } from "../types"
+
+// Upgrade low-res scraped image URLs to high-resolution variants
+function upgradeImageUrl(url: string): string {
+  if (url.includes("autoscout24.net")) {
+    return url.replace(/\/\d+x\d+\.webp$/, "/1280x960.webp")
+  }
+  return url
+}
 
 // ─── WEIGHTED GRADE CALCULATION ───
 const GRADE_SCORE: Record<string, number> = { AAA: 6, AA: 5, A: 4, "B+": 3, B: 2, C: 1 }
@@ -133,10 +142,21 @@ export function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<s
     const topGrade = computeWeightedGrade(cars, dbCount)
 
     const bestCar = cars.reduce((max, car) => car.currentBid > max.currentBid ? car : max, cars[0])
-    const carImage = bestCar.images?.[0]
-    const modelImage = getModelImage("Porsche", bestCar.model)
-    // Static fallback keyed by series ID — guaranteed to resolve for all Porsche series
-    const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
+    // Pick the best real DB image for this family:
+    // 1. Prefer images from trusted listing/dealer platforms (verified photos)
+    // 2. Fall back to any car with images, sorted by price
+    // 3. Last resort: curated static image for the series
+    const carsWithImages = cars
+      .filter(c => c.images?.length > 0 && c.make === "Porsche")
+      .sort((a, b) => {
+        const aListing = isListingPlatform(a.platform) ? 0 : 1
+        const bListing = isListingPlatform(b.platform) ? 0 : 1
+        if (aListing !== bListing) return aListing - bListing
+        return b.currentBid - a.currentBid
+      })
+    const rawHeroImage = carsWithImages[0]?.images?.[0]
+    const heroImage = rawHeroImage ? upgradeImageUrl(rawHeroImage) : null
+    const brandFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
     // Use exact DB series count if available, otherwise fall back to sample count
     const carCount = dbSeriesCounts?.[familyKey] ?? cars.length
@@ -149,8 +169,8 @@ export function aggregateFamilies(auctions: Auction[], dbSeriesCounts?: Record<s
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       yearMin: Math.min(...years),
       yearMax: Math.max(...years),
-      representativeImage: carImage || modelImage || staticFallback,
-      fallbackImage: staticFallback,
+      representativeImage: heroImage || brandFallback,
+      fallbackImage: brandFallback,
       representativeCar: `${bestCar.year} Porsche ${bestCar.model}`,
       topGrade,
     })

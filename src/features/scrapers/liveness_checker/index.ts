@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { proxyFetch } from "@/features/scrapers/common/proxy-fetch";
 import {
   CHROME_UA,
   SOURCE_CONFIGS,
@@ -92,7 +93,7 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-      const response = await fetch(listing.source_url, {
+      const response = await proxyFetch(listing.source_url, {
         method: "GET",
         headers: { "User-Agent": CHROME_UA },
         redirect: "follow",

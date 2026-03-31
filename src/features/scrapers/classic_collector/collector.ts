@@ -20,7 +20,7 @@ import { createSupabaseWriter, createDryRunWriter, type SupabaseWriter } from ".
 import { logEvent } from "./logging";
 import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 
-const MAX_CONSECUTIVE_CF_BLOCKS = 5;
+const MAX_CONSECUTIVE_CF_BLOCKS = 10;
 const CONTEXT_REFRESH_INTERVAL = 100;
 
 export async function runClassicComCollector(config: CollectorRunConfig): Promise<CollectorResult> {
@@ -232,6 +232,20 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
           consecutiveCfBlocks++;
           counts.cloudflareBlocked++;
           logEvent({ level: "warn", event: "collector.cloudflare_block", runId, index: i, consecutive: consecutiveCfBlocks });
+
+          // Rotate proxy session (new IP) after CF block by refreshing context
+          if (config.proxyServer && consecutiveCfBlocks < MAX_CONSECUTIVE_CF_BLOCKS) {
+            logEvent({ level: "info", event: "collector.context_refresh_cf", runId, index: i });
+            await page.close().catch(() => {});
+            await context.close().catch(() => {});
+            context = await createStealthContext(browser, {
+              headless: config.headless,
+              proxyServer: config.proxyServer,
+              proxyUsername: config.proxyUsername,
+              proxyPassword: config.proxyPassword,
+            });
+            page = await createPage(context, true);
+          }
         } else {
           consecutiveCfBlocks = 0;
           logEvent({ level: "warn", event: "collector.detail_error", runId, index: i, error: msg });
