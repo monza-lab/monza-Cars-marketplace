@@ -481,13 +481,13 @@ function CarNavSidebar({
       </div>
       )}
 
-      {/* ── Live Auction block (CONDITIONAL) ── */}
+      {/* ── Live listing block (CONDITIONAL) ── */}
       {isLive && (
         <div className="mx-3 my-3 shrink-0 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Live Auction</span>
+              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">{isAuctionPlatform(car.platform) ? "Live Auction" : "For Sale"}</span>
             </div>
             {platform && (
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
@@ -496,8 +496,8 @@ function CarNavSidebar({
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>
-            <span className="text-[11px] font-mono text-amber-400">{timeLeft(car.endTime)}</span>
+            {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>}
+            {isAuctionPlatform(car.platform) && <span className="text-[11px] font-mono text-amber-400">{timeLeft(car.endTime)}</span>}
           </div>
           {car.sourceUrl && (
             <a
@@ -523,9 +523,9 @@ function CarNavSidebar({
                   {platform.short}
                 </span>
               )}
-              <span className="text-[10px] text-muted-foreground">{car.bidCount} bids</span>
+              {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[10px] text-muted-foreground">{car.bidCount} bids</span>}
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground">Sold</span>
+            <span className="text-[10px] font-medium text-muted-foreground">{getStatusLabel(car.platform, car.status)}</span>
           </div>
           {car.sourceUrl && (
             <a
@@ -672,7 +672,7 @@ function CarContextPanel({
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
-                {car.status === "ENDED" ? "Sold" : "Bid"}
+                {getPriceLabel(car.platform, car.status)}
               </span>
               <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(car.currentBid)}</p>
             </div>
@@ -1143,7 +1143,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <div>
                 <p className="text-[10px] text-foreground/40 uppercase tracking-wider">
-                  {car.status === "ENDED" ? t("soldFor") : t("currentBid")}
+                  {getPriceLabel(car.platform, car.status)}
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-2xl font-display font-medium text-primary">
@@ -1375,18 +1375,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                  {car.status === "ENDED" ? t("soldFor") : t("currentBid")}
+                  {getPriceLabel(car.platform, car.status)}
                 </p>
                 <p className="text-[14px] font-display font-medium text-primary">{formatPrice(car.currentBid)}</p>
               </div>
+              {isAuctionPlatform(car.platform) && (
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("bids")}</p>
                 <p className="text-[14px] font-semibold text-foreground">{car.bidCount}</p>
               </div>
+              )}
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("status")}</p>
                 <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-emerald-400" : "text-muted-foreground"}`}>
-                  {car.status === "ENDED" ? tStatus("sold") : car.status === "ENDING_SOON" ? tStatus("endingSoon") : tStatus("active")}
+                  {getStatusLabel(car.platform, car.status)}
                 </p>
               </div>
             </div>

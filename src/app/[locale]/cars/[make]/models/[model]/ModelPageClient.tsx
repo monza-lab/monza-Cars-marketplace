@@ -418,7 +418,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
           <div>
             <p className="text-[12px] text-muted-foreground">
               Data from {formatDate(stats.oldestSale)} to {formatDate(stats.newestSale)} ·
-              Sourced from {stats.platforms} auction platform{stats.platforms > 1 ? "s" : ""} ·
+              Sourced from {stats.platforms} platform{stats.platforms > 1 ? "s" : ""} ·
               {stats.soldCount} completed sale{stats.soldCount !== 1 ? "s" : ""}, {stats.activeCount} active listing{stats.activeCount !== 1 ? "s" : ""}
             </p>
           </div>
@@ -434,7 +434,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             Market Activity
           </h2>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            Sales grouped by auction platform
+            Sales grouped by platform
           </p>
         </div>
 

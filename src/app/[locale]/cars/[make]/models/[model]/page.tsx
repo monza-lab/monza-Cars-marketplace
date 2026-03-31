@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: ModelPageProps) {
   const modelName = cars[0].model
   const avgPrice = cars.reduce((sum, c) => sum + c.currentBid, 0) / cars.length
   return {
-    title: `${makeName} ${modelName} Market Analysis | Monza Lab`,
-    description: `Investment analysis for ${makeName} ${modelName}. Average market value $${(avgPrice / 1000).toFixed(0)}K. ${cars.length} vehicles tracked across major auction platforms.`,
+    title: `${makeName} ${modelName} Market Analysis | MonzaHaus`,
+    description: `Investment analysis for ${makeName} ${modelName}. Average market value $${(avgPrice / 1000).toFixed(0)}K. ${cars.length} vehicles tracked across major platforms.`,
   }
 }
 
