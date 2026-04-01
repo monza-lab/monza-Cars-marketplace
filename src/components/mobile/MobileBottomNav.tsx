@@ -262,7 +262,7 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                   Popular
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {["911", "992 GT3", "997 Turbo", "964", "993", "Cayenne", "Taycan"].map(term => (
+                  {buildSearchIndex().filter(i => i.type === "family" || i.type === "series").slice(0, 8).map(i => i.label).map(term => (
                     <button
                       key={term}
                       onClick={() => setQuery(term)}

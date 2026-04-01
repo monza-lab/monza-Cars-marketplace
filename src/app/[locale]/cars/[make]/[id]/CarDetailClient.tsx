@@ -1099,11 +1099,27 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           )}
         </AnimatePresence>
 
-        {/* ═══ HERO SECTION ═══ */}
+        {/* ═══ HERO SECTION — Swipeable gallery ═══ */}
         <div ref={heroRef} className="relative h-[40dvh] min-h-[340px]">
-          <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
+          {car.images && car.images.length > 1 ? (
+            <div className="relative h-full w-full overflow-hidden">
+              <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+                {car.images.slice(0, 8).map((img, i) => (
+                  <div key={i} className="relative h-full w-full shrink-0 snap-center">
+                    <Image src={img} alt={`${car.title} — ${i + 1}`} fill className="object-cover" priority={i === 0} referrerPolicy="no-referrer" unoptimized />
+                  </div>
+                ))}
+              </div>
+              {/* Photo counter */}
+              <div className="absolute bottom-28 right-4 z-10 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-[10px] font-medium text-white/80">
+                {car.images.length} photos
+              </div>
+            </div>
+          ) : (
+            <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
+          )}
           {/* Always-dark gradient for text readability in both themes */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" />
 
           {/* Fixed back button — always visible, large touch target */}
           <div className="absolute top-0 left-0 right-0 pt-safe px-4 pb-2 flex items-center justify-between z-10">

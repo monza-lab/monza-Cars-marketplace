@@ -31,8 +31,8 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
           }
         />
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
+        {/* Gradient overlay — always dark for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" />
 
         {/* Grade badge */}
         <div className="absolute top-4 left-4">
@@ -41,7 +41,7 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
               ? "bg-emerald-500/30 text-emerald-300"
               : brand.topGrade === "AA"
                 ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
+                : "bg-white/20 text-white"
           }`}>
             {brand.topGrade}
           </span>
@@ -49,31 +49,31 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
 
         {/* Car count */}
         <div className="absolute top-4 right-4">
-          <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-foreground">
+          <span className="rounded-full bg-black/40 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-white/80">
             {t("brandCard.carsCount", { count: brand.carCount })}
           </span>
         </div>
 
-        {/* Overlaid info at bottom */}
+        {/* Overlaid info at bottom — white text over dark gradient */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">
+          <h2 className="text-3xl font-bold text-white tracking-tight">
             {brand.name}
           </h2>
-          <p className="text-[13px] text-[rgba(232,226,222,0.5)] mt-0.5">
+          <p className="text-[13px] text-white/50 mt-0.5">
             {brand.representativeCar}
           </p>
           <div className="flex items-center gap-3 mt-2">
             <span className="text-[16px] font-display font-medium text-primary">
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
-            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            <span className="text-[12px] text-emerald-400 font-medium">{brand.avgTrend}</span>
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-3">
             {brand.categories.slice(0, 3).map((cat) => (
               <span
                 key={cat}
-                className="px-2.5 py-1 rounded-full bg-foreground/10 backdrop-blur-sm text-[10px] text-foreground/70"
+                className="px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm text-[10px] text-white/70"
               >
                 {cat}
               </span>

@@ -1630,20 +1630,20 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
               priority
               sizes="(min-width: 768px) 840px, 100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
             <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold border border-primary/20 backdrop-blur-md">
                   {t("title")}
                 </span>
                 {!hasAccess && (
-                  <span className="px-2 py-0.5 rounded-full bg-foreground/10 text-muted-foreground text-[9px] font-medium backdrop-blur-md">
+                  <span className="px-2 py-0.5 rounded-full bg-black/30 text-white/70 text-[9px] font-medium backdrop-blur-md">
                     {t("freePreview")}
                   </span>
                 )}
               </div>
-              <h1 className="text-[20px] md:text-[28px] font-bold text-foreground">{car.title}</h1>
-              <p className="text-[11px] md:text-[13px] text-muted-foreground mt-1">{t("subtitle")}</p>
+              <h1 className="text-[20px] md:text-[28px] font-bold text-white">{car.title}</h1>
+              <p className="text-[11px] md:text-[13px] text-white/60 mt-1">{t("subtitle")}</p>
             </div>
           </div>
 
