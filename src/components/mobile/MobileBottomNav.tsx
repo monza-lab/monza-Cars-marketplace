@@ -1,21 +1,17 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Scale,
   Search,
   Car,
   User,
   X,
-  ArrowRight,
-  TrendingUp,
-  BarChart3,
-  Zap,
   ChevronRight,
   LogOut,
+  Home,
 } from "lucide-react"
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars"
 import { useAuth } from "@/lib/auth/AuthProvider"
@@ -23,6 +19,7 @@ import { AuthModal } from "@/components/auth/AuthModal"
 import { useTranslations } from "next-intl"
 import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { saveSearchQuery } from "@/lib/searchHistory"
+import { getBrandConfig } from "@/lib/brandConfig"
 
 // ─── GET UNIQUE MAKES WITH COUNTS ───
 function getMakesWithCounts() {
@@ -33,7 +30,6 @@ function getMakesWithCounts() {
       makeCounts[car.make] = { count: 0, topCar: car }
     }
     makeCounts[car.make].count++
-    // Keep the most valuable car as the representative
     if (car.currentBid > makeCounts[car.make].topCar.currentBid) {
       makeCounts[car.make].topCar = car
     }
@@ -55,6 +51,58 @@ function formatPrice(value: number): string {
   return `$${value.toLocaleString()}`
 }
 
+// ─── SMART SEARCH INDEX (from brandConfig) ───
+type SearchItem = {
+  type: "family" | "series" | "variant"
+  label: string
+  subtitle: string
+  family?: string
+  seriesId?: string
+  keywords: string[]
+}
+
+function buildSearchIndex(): SearchItem[] {
+  const config = getBrandConfig("porsche")
+  if (!config) return []
+
+  const items: SearchItem[] = []
+
+  for (const group of config.familyGroups) {
+    items.push({
+      type: "family",
+      label: group.label,
+      subtitle: `${group.seriesIds.length} series`,
+      keywords: [group.label.toLowerCase(), ...group.seriesIds],
+    })
+  }
+
+  for (const series of config.series) {
+    items.push({
+      type: "series",
+      label: series.label,
+      subtitle: `${series.yearRange[0]}–${series.yearRange[1]}`,
+      family: series.family,
+      seriesId: series.id,
+      keywords: [series.label.toLowerCase(), series.id, ...series.keywords],
+    })
+
+    if (series.variants) {
+      for (const variant of series.variants) {
+        items.push({
+          type: "variant",
+          label: `${series.label} ${variant.label}`,
+          subtitle: `${series.family} · ${series.yearRange[0]}–${series.yearRange[1]}`,
+          family: series.family,
+          seriesId: series.id,
+          keywords: [variant.label.toLowerCase(), series.id, variant.label.toLowerCase().replace(/\s+/g, "")],
+        })
+      }
+    }
+  }
+
+  return items
+}
+
 // ─── BRAND CARD ───
 function BrandCard({ make, count, topCar }: { make: string; count: number; topCar: CollectorCar }) {
   const t = useTranslations("mobile")
@@ -65,7 +113,6 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
       href={`/cars/${makePath}`}
       className="group relative flex flex-col rounded-2xl bg-card border border-border overflow-hidden active:scale-[0.98] transition-transform"
     >
-      {/* Image */}
       <div className="relative h-28 w-full">
         <Image
           src={topCar.image}
@@ -76,8 +123,6 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card" />
       </div>
-
-      {/* Content */}
       <div className="p-3">
         <div className="flex items-center justify-between">
           <h3 className="text-[14px] font-semibold text-foreground">{make}</h3>
@@ -122,244 +167,174 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
   )
 }
 
-// ─── MOBILE ORACLE OVERLAY ───
-function MobileOracleOverlay({
-  isOpen,
-  onClose,
-  query,
-}: {
-  isOpen: boolean
-  onClose: () => void
-  query: string
-}) {
-  const t = useTranslations()
+// ─── SEARCH SHEET (replaces Oracle — clean, no AI branding) ───
+function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const t = useTranslations("mobile")
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [displayedText, setDisplayedText] = useState("")
+  const [query, setQuery] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  type ChipId = "view_details" | "view_similar" | "view_collection"
-  type Chip = { id: ChipId; label: string }
+  const carResults = query.length > 1 ? searchCars(query) : []
+  const searchIndex = buildSearchIndex()
+  const taxonomyResults = query.length > 1
+    ? searchIndex.filter(item =>
+        item.keywords.some(k => k.includes(query.toLowerCase())) ||
+        item.label.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 8)
+    : []
 
-  const [chips, setChips] = useState<Chip[]>([])
-
-  // Get intelligent response
-  const matchingCars = searchCars(query)
-
-  // Generate response
-  let response = {
-    answer: "",
-    chips: [] as Chip[],
-    carContext: null as { id: string; make: string } | null,
-  }
-
-  if (matchingCars.length === 1) {
-    const car = matchingCars[0]
-    response = {
-      answer: t("oracle.responses.singleCar", {
-        title: car.title,
-        thesis: car.thesis,
-        fairLow: formatPrice(car.fairValueByRegion.US.low),
-        fairHigh: formatPrice(car.fairValueByRegion.US.high),
-        grade: car.investmentGrade,
-        trend: car.trend,
-      }),
-      chips: [
-        { id: "view_details", label: t("oracle.chips.viewCarDetails") },
-        { id: "view_similar", label: t("oracle.chips.similarCars") },
-      ],
-      carContext: { id: car.id, make: car.make },
-    }
-  } else if (matchingCars.length > 1) {
-    const carList = matchingCars.slice(0, 5).map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)}`
-    ).join("\n")
-    response = {
-      answer: `${t("oracle.responses.multipleFound", { count: matchingCars.length })}\n\n${carList}`,
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  } else {
-    const nonFerrari = CURATED_CARS.filter(c => c.make !== "Ferrari")
-    const totalCars = nonFerrari.length
-    const avgAppreciation = nonFerrari.reduce((sum, c) => sum + c.trendValue, 0) / totalCars
-    response = {
-      answer: t("oracle.responses.noMatch", {
-        totalCars,
-        avgAppreciation: avgAppreciation.toFixed(0),
-      }),
-      chips: [
-        { id: "view_collection", label: t("oracle.viewCollection") },
-      ],
-      carContext: null,
-    }
-  }
-
-  // Loading effect
   useEffect(() => {
-    if (!isOpen) {
-      setDisplayedText("")
-      setIsLoading(true)
-      setChips([])
-      return
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100)
     }
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
+    if (!isOpen) setQuery("")
   }, [isOpen])
 
-  // Typewriter effect
-  useEffect(() => {
-    if (isLoading || !isOpen) return
-
-    const fullText = response.answer
-    let charIndex = 0
-
-    const typeInterval = setInterval(() => {
-      if (charIndex <= fullText.length) {
-        setDisplayedText(fullText.slice(0, charIndex))
-        charIndex += 3
-      } else {
-        clearInterval(typeInterval)
-        setChips(response.chips)
-      }
-    }, 8)
-
-    return () => clearInterval(typeInterval)
-  }, [isLoading, isOpen, response.answer, response.chips])
-
-  const handleChipClick = (chip: Chip) => {
-    if (response.carContext && chip.id === "view_details") {
-      const makePath = response.carContext.make.toLowerCase().replace(/\s+/g, "-")
-      router.push(`/cars/${makePath}/${response.carContext.id}`)
-    } else if (response.carContext && chip.id === "view_similar") {
-      const makePath = response.carContext.make.toLowerCase().replace(/\s+/g, "-")
-      router.push(`/cars/${makePath}`)
+  const handleTaxonomyClick = (item: SearchItem) => {
+    if (item.seriesId) {
+      router.push(`/cars/porsche?series=${item.seriesId}`)
     } else {
-      router.push("/")
+      router.push("/cars/porsche")
     }
     onClose()
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (query.trim()) {
+      saveSearchQuery(query.trim())
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`)
+      onClose()
+    }
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] bg-background/98 backdrop-blur-xl"
+          initial={{ opacity: 0, y: "100%" }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: "100%" }}
+          transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          className="fixed inset-0 z-[60] bg-background"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Scale className="size-4 text-primary" />
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
-                {t("oracle.aiAnalysis")}
-              </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
-            >
-              <X className="size-5" />
-            </button>
+          {/* Header with search */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border px-5 py-4">
+            <form onSubmit={handleSubmit} className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                className="w-full bg-foreground/5 border border-border rounded-xl pl-12 pr-12 py-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30"
+              />
+              {query ? (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-foreground/10 text-muted-foreground"
+                >
+                  <X className="size-3" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              )}
+            </form>
           </div>
 
-          {/* Query */}
-          <div className="px-5 pt-4 pb-2">
-            <p className="text-[12px] text-muted-foreground">
-              {t("oracle.youAsked")} <span className="text-foreground">"{query}"</span>
-            </p>
-          </div>
-
-          {/* Content */}
-          <div className="px-5 py-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
-            {isLoading ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[13px] text-muted-foreground">{t("oracle.analyzingMarket")}</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-full" />
-                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-5/6" />
-                  <div className="h-4 bg-foreground/5 rounded animate-pulse w-4/6" />
-                </div>
-              </div>
-            ) : (
-              <div className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
-                {displayedText.split("\n").map((line, i) => {
-                  const parts = line.split(/(\*\*[^*]+\*\*)/g)
-                  return (
-                    <p key={i} className={line.startsWith("•") ? "pl-4 my-1" : "my-2"}>
-                      {parts.map((part, j) => {
-                        if (part.startsWith("**") && part.endsWith("**")) {
-                          return <span key={j} className="font-semibold text-primary">{part.slice(2, -2)}</span>
-                        }
-                        return <span key={j}>{part}</span>
-                      })}
-                    </p>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Chips */}
-          <AnimatePresence>
-            {chips.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-background via-background to-transparent pt-16"
-              >
+          {/* Results */}
+          <div className="overflow-y-auto pb-24" style={{ height: "calc(100vh - 100px)" }}>
+            {query.length < 2 ? (
+              // Empty state — quick links
+              <div className="px-5 py-6">
+                <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-4">
+                  Popular
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {chips.map((chip, i) => (
+                  {["911", "992 GT3", "997 Turbo", "964", "993", "Cayenne", "Taycan"].map(term => (
                     <button
-                      key={chip.id}
-                      onClick={() => handleChipClick(chip)}
-                      className="flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-3 text-[13px] font-medium text-primary active:scale-95 transition-transform"
+                      key={term}
+                      onClick={() => setQuery(term)}
+                      className="px-4 py-2 rounded-full bg-foreground/5 border border-border text-[13px] text-foreground active:bg-primary/10 active:border-primary/20 transition-colors"
                     >
-                      {i === 0 && <Car className="size-4" />}
-                      {i === 1 && <BarChart3 className="size-4" />}
-                      {chip.label}
+                      {term}
                     </button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
+            ) : (
+              <div className="px-5 py-4 space-y-6">
+                {/* Taxonomy matches (series, families, variants) */}
+                {taxonomyResults.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                      Models & Series
+                    </p>
+                    <div className="space-y-1">
+                      {taxonomyResults.map((item, i) => (
+                        <button
+                          key={`${item.type}-${i}`}
+                          onClick={() => handleTaxonomyClick(item)}
+                          className="flex items-center justify-between w-full p-3 rounded-xl active:bg-foreground/5 transition-colors"
+                        >
+                          <div>
+                            <p className="text-[14px] font-medium text-foreground text-left">{item.label}</p>
+                            <p className="text-[11px] text-muted-foreground text-left">{item.subtitle}</p>
+                          </div>
+                          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Car listings */}
+                {carResults.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                      {carResults.length} {carResults.length === 1 ? "Listing" : "Listings"}
+                    </p>
+                    <div className="space-y-3">
+                      {carResults.slice(0, 20).map((car) => (
+                        <SearchResultCard key={car.id} car={car} onSelect={onClose} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No results */}
+                {taxonomyResults.length === 0 && carResults.length === 0 && (
+                  <div className="text-center py-12">
+                    <Search className="size-12 text-muted-foreground mx-auto mb-4 opacity-30" />
+                    <p className="text-[14px] text-muted-foreground">
+                      No results for &ldquo;{query}&rdquo;
+                    </p>
+                    <p className="text-[12px] text-muted-foreground mt-1">
+                      Try a different model or series
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
-          </AnimatePresence>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   )
 }
 
-// ─── MOBILE BROWSE SHEET ───
-function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+// ─── EXPLORE SHEET (Browse brands + search) ───
+function MobileExploreSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const t = useTranslations("mobile")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeSection, setActiveSection] = useState<"brands" | "search">("brands")
-  const inputRef = useRef<HTMLInputElement>(null)
-
   const makes = getMakesWithCounts()
-  const searchResults = searchQuery.length > 0 ? searchCars(searchQuery) : []
-
-  // Focus input when opening search
-  useEffect(() => {
-    if (isOpen && activeSection === "search" && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 100)
-    }
-  }, [isOpen, activeSection])
-
-  // Reset on close
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("")
-      setActiveSection("brands")
-    }
-  }, [isOpen])
 
   return (
     <AnimatePresence>
@@ -375,7 +350,7 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border">
             <div className="flex items-center justify-between px-5 py-4">
               <h2 className="text-[16px] font-semibold text-foreground">
-                {activeSection === "brands" ? t("exploreBrands") : t("search")}
+                {t("exploreBrands")}
               </h2>
               <button
                 onClick={onClose}
@@ -384,102 +359,17 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 <X className="size-5" />
               </button>
             </div>
-
-            {/* Section Tabs */}
-            <div className="flex gap-2 px-5 pb-4">
-              <button
-                onClick={() => setActiveSection("brands")}
-                className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
-                  activeSection === "brands"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-foreground/5 text-muted-foreground"
-                }`}
-              >
-                <Car className="size-4 inline mr-2" />
-                {t("brands")}
-              </button>
-              <button
-                onClick={() => setActiveSection("search")}
-                className={`flex-1 py-2.5 rounded-full text-[12px] font-medium transition-colors ${
-                  activeSection === "search"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-foreground/5 text-muted-foreground"
-                }`}
-              >
-                <Search className="size-4 inline mr-2" />
-                {t("search")}
-              </button>
-            </div>
-
-            {/* Search Input (only in search mode) */}
-            {activeSection === "search" && (
-              <div className="px-5 pb-4">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("searchPlaceholder")}
-                    className="w-full bg-foreground/5 border border-border rounded-xl pl-12 pr-4 py-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full bg-foreground/10 text-muted-foreground"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Content */}
-          <div className="overflow-y-auto pb-24" style={{ height: "calc(100vh - 180px)" }}>
-            {activeSection === "brands" ? (
-              // Brands Grid
-              <div className="grid grid-cols-2 gap-3 p-5">
-                {makes.map(({ make, count, topCar }) => (
-                  <div key={make} onClick={onClose}>
-                    <BrandCard make={make} count={count} topCar={topCar} />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Search Results
-              <div className="px-5 py-4">
-                {searchQuery.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Search className="size-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground text-[14px]">
-                      {t("vehicles", { count: CURATED_CARS.filter(c => c.make !== "Ferrari").length })}
-                    </p>
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Car className="size-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground text-[14px]">
-                      {t("noResults", { query: searchQuery })}
-                    </p>
-                    <p className="text-muted-foreground text-[12px] mt-2">
-                      {t("tryAnother")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-4">
-                      {searchResults.length > 1 ? t("results", { count: searchResults.length }) : t("result", { count: searchResults.length })}
-                    </p>
-                    {searchResults.slice(0, 20).map((car) => (
-                      <SearchResultCard key={car.id} car={car} onSelect={onClose} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Brands Grid */}
+          <div className="overflow-y-auto pb-24" style={{ height: "calc(100vh - 80px)" }}>
+            <div className="grid grid-cols-2 gap-3 p-5">
+              {makes.map(({ make, count, topCar }) => (
+                <div key={make} onClick={onClose}>
+                  <BrandCard make={make} count={count} topCar={topCar} />
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
       )}
@@ -487,12 +377,11 @@ function MobileBrowseSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   )
 }
 
-// ─── MOBILE ACCOUNT SHEET ───
-function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+// ─── PROFILE SHEET (replaces Account — no hamburger duplication) ───
+function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const t = useTranslations()
   const { user, profile, loading, signOut } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false)
   const isAuthenticated = !!user
   const creditsRemaining = profile?.creditsBalance ?? 0
 
@@ -570,7 +459,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     </p>
                   </div>
 
-                  {/* Language Switcher */}
+                  {/* Language */}
                   <div className="py-4 border-t border-border">
                     <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
                       {t("language.select")}
@@ -591,7 +480,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <div className="space-y-6 py-4">
                   <div className="text-center">
                     <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Scale className="size-10 text-primary" />
+                      <User className="size-10 text-primary" />
                     </div>
                     <h3 className="text-[18px] font-semibold text-foreground">
                       {t("auth.welcomeBack")}
@@ -611,7 +500,7 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     {t("auth.createAccount")}
                   </button>
 
-                  {/* Language Switcher for non-authenticated */}
+                  {/* Language */}
                   <div className="py-4 border-t border-border">
                     <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
                       {t("language.select")}
@@ -625,7 +514,6 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         )}
       </AnimatePresence>
 
-      {/* Auth Modal (separate from sheet) */}
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
 
       {/* Backdrop */}
@@ -648,107 +536,67 @@ function MobileAccountSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 export function MobileBottomNav() {
   const t = useTranslations("mobile")
   const pathname = usePathname()
-  const [oracleQuery, setOracleQuery] = useState("")
-  const [showOracle, setShowOracle] = useState(false)
-  const [showBrowse, setShowBrowse] = useState(false)
-  const [showAccount, setShowAccount] = useState(false)
-  const [showOracleInput, setShowOracleInput] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  // Focus input when showing
-  useEffect(() => {
-    if (showOracleInput && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [showOracleInput])
-
-  const handleOracleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (oracleQuery.trim()) {
-      saveSearchQuery(oracleQuery.trim())
-      setShowOracleInput(false)
-      setShowOracle(true)
-    }
-  }
-
-  const handleCloseOracle = () => {
-    setShowOracle(false)
-    setOracleQuery("")
-  }
+  const router = useRouter()
+  const [showSearch, setShowSearch] = useState(false)
+  const [showExplore, setShowExplore] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
 
   // Hide on car detail pages (has its own CTA)
   const isCarDetailPage = pathname?.includes("/cars/") && pathname?.split("/").length > 3
   if (isCarDetailPage) return null
 
+  // Determine active tab
+  const isHome = pathname === "/" || pathname === "/en" || pathname === "/es" || pathname === "/de" || pathname === "/ja"
+
   return (
     <>
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-        {/* Oracle Input (expandable) */}
-        <AnimatePresence>
-          {showOracleInput && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="px-4 pb-3"
-            >
-              <form onSubmit={handleOracleSubmit} className="relative">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={oracleQuery}
-                  onChange={(e) => setOracleQuery(e.target.value)}
-                  placeholder={t("askAnything")}
-                  className="w-full bg-card border border-primary/20 rounded-2xl pl-5 pr-14 py-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-                />
-                <button
-                  type="submit"
-                  disabled={!oracleQuery.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50 disabled:bg-foreground/10 disabled:text-muted-foreground"
-                >
-                  <ArrowRight className="size-5" />
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Nav Bar */}
-        <div className="bg-background/95 backdrop-blur-xl border-t border-border px-6 py-3 pb-safe">
+        <div className="bg-background/95 backdrop-blur-xl border-t border-border px-4 py-2 pb-safe">
           <div className="flex items-center justify-around">
-            {/* AI Oracle Button */}
+            {/* Home */}
             <button
-              onClick={() => setShowOracleInput(!showOracleInput)}
+              onClick={() => router.push("/")}
               className={`flex flex-col items-center gap-1 transition-colors ${
-                showOracleInput ? "text-primary" : "text-muted-foreground"
+                isHome && !showSearch && !showExplore ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              <div className={`size-11 rounded-full flex items-center justify-center transition-colors ${
-                showOracleInput ? "bg-primary text-primary-foreground" : "bg-foreground/5"
+              <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${
+                isHome && !showSearch && !showExplore ? "bg-primary/10" : "bg-foreground/5"
               }`}>
-                <Scale className="size-5" />
+                <Home className="size-5" />
               </div>
-              <span className="text-[10px] font-medium">{t("aiOracle")}</span>
+              <span className="text-[10px] font-medium">Home</span>
             </button>
 
-            {/* Browse */}
+            {/* Explore */}
             <button
-              onClick={() => setShowBrowse(true)}
+              onClick={() => setShowExplore(true)}
               className="flex flex-col items-center gap-1 text-muted-foreground"
             >
-              <div className="size-11 rounded-full bg-foreground/5 flex items-center justify-center">
+              <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
                 <Car className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("explore")}</span>
             </button>
 
-            {/* Account */}
+            {/* Search */}
             <button
-              onClick={() => setShowAccount(true)}
+              onClick={() => setShowSearch(true)}
               className="flex flex-col items-center gap-1 text-muted-foreground"
             >
-              <div className="size-11 rounded-full bg-foreground/5 flex items-center justify-center">
+              <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
+                <Search className="size-5" />
+              </div>
+              <span className="text-[10px] font-medium">{t("search")}</span>
+            </button>
+
+            {/* Profile */}
+            <button
+              onClick={() => setShowProfile(true)}
+              className="flex flex-col items-center gap-1 text-muted-foreground"
+            >
+              <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
                 <User className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("account")}</span>
@@ -757,18 +605,10 @@ export function MobileBottomNav() {
         </div>
       </div>
 
-      {/* Oracle Overlay */}
-      <MobileOracleOverlay
-        isOpen={showOracle}
-        onClose={handleCloseOracle}
-        query={oracleQuery}
-      />
-
-      {/* Browse Sheet */}
-      <MobileBrowseSheet isOpen={showBrowse} onClose={() => setShowBrowse(false)} />
-
-      {/* Account Sheet */}
-      <MobileAccountSheet isOpen={showAccount} onClose={() => setShowAccount(false)} />
+      {/* Sheets */}
+      <MobileSearchSheet isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      <MobileExploreSheet isOpen={showExplore} onClose={() => setShowExplore(false)} />
+      <MobileProfileSheet isOpen={showProfile} onClose={() => setShowProfile(false)} />
     </>
   )
 }

@@ -920,9 +920,9 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         <MobileFilterSheet
           open={showMobileFilters}
           onClose={() => setShowMobileFilters(false)}
-          models={[]}
-          selectedModel=""
-          setSelectedModel={() => { }}
+          models={allModels.map(m => m.name)}
+          selectedModel={selectedFamilyForFeed || "All"}
+          setSelectedModel={(m) => setSelectedFamilyForFeed(m === "All" ? null : m)}
           selectedPriceRange={selectedPriceRange}
           setSelectedPriceRange={setSelectedPriceRange}
           selectedStatus={selectedStatus}
