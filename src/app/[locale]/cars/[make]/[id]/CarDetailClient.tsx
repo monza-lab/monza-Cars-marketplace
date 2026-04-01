@@ -1102,47 +1102,47 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         {/* ═══ HERO SECTION ═══ */}
         <div ref={heroRef} className="relative h-[40dvh] min-h-[340px]">
           <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/70 to-transparent" />
+          {/* Always-dark gradient for text readability in both themes */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
 
-          {/* Navigation */}
-          <div className="absolute top-24 left-0 right-0 px-6">
+          {/* Fixed back button — always visible, large touch target */}
+          <div className="absolute top-0 left-0 right-0 pt-safe px-4 pb-2 flex items-center justify-between z-10">
             <Link
               href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
-              className="inline-flex items-center gap-2 text-[12px] text-foreground/50 hover:text-primary transition-colors"
+              className="flex items-center gap-2 px-3 py-2.5 rounded-full bg-black/40 backdrop-blur-md text-white/80 active:bg-black/60 transition-colors"
             >
-              <ArrowLeft className="size-4" />
-              {t("backTo", { make: car.make })}
+              <ArrowLeft className="size-5" />
+              <span className="text-[12px] font-medium">{t("backTo", { make: car.make })}</span>
             </Link>
           </div>
 
           {/* Badges */}
-          <div className="absolute top-24 right-6 flex items-center gap-2">
-            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
+          <div className="absolute top-0 right-4 pt-safe flex items-center gap-2 z-10">
+            <span className={`px-2.5 py-1.5 rounded-full text-[10px] font-bold backdrop-blur-md ${
               car.investmentGrade === "AAA"
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/30"
-                : "bg-primary/20 text-primary border border-primary/30"
+                ? "bg-emerald-500/30 text-emerald-300"
+                : "bg-primary/30 text-primary"
             }`}>{car.investmentGrade}</span>
             {isLive && (
-              <div className="flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-md px-3 py-1.5">
+              <div className="flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1.5">
                 <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[10px] font-medium text-emerald-400">LIVE</span>
               </div>
             )}
-            <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-foreground/10 text-foreground/70 border border-border">
-              {car.platform.replace(/_/g, " ")}
+            <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-black/40 text-white/70">
+              {getPlatformName(car.platform)}
             </div>
           </div>
 
-          {/* Title & Quick Stats */}
+          {/* Title & Quick Stats — white text over dark gradient */}
           <div className="absolute bottom-0 left-0 right-0 p-6 pb-10">
             <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
               {car.category}
             </span>
-            <h1 className="mt-2 text-3xl font-display font-light text-foreground tracking-tight">{car.title}</h1>
+            <h1 className="mt-2 text-3xl font-display font-light text-white tracking-tight">{car.title}</h1>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               <div>
-                <p className="text-[10px] text-foreground/40 uppercase tracking-wider">
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">
                   {getPriceLabel(car.platform, car.status)}
                 </p>
                 <div className="flex items-baseline gap-2">
@@ -1152,11 +1152,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <span className="text-[12px] font-mono font-semibold text-emerald-400">{car.trend}</span>
                 </div>
               </div>
-              {isLive && (
+              {isLive && isAuctionPlatform(car.platform) && (
                 <>
-                  <div className="h-8 w-px bg-foreground/10" />
+                  <div className="h-8 w-px bg-white/10" />
                   <div>
-                    <p className="text-[10px] text-foreground/40 uppercase tracking-wider">{t("timeLeft")}</p>
+                    <p className="text-[10px] text-white/50 uppercase tracking-wider">{t("timeLeft")}</p>
                     <p className="text-xl font-bold text-amber-400 font-mono">{timeLeft(car.endTime)}</p>
                   </div>
                 </>
