@@ -12,6 +12,8 @@ import {
   ChevronRight,
   LogOut,
   Home,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars"
 import { useAuth } from "@/lib/auth/AuthProvider"
@@ -20,6 +22,7 @@ import { useTranslations } from "next-intl"
 import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { saveSearchQuery } from "@/lib/searchHistory"
 import { getBrandConfig } from "@/lib/brandConfig"
+import { useTheme } from "next-themes"
 
 // ─── GET UNIQUE MAKES WITH COUNTS ───
 function getMakesWithCounts() {
@@ -121,7 +124,7 @@ function BrandCard({ make, count, topCar }: { make: string; count: number; topCa
           className="object-cover"
           sizes="50vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between">
@@ -381,6 +384,7 @@ function MobileExploreSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const t = useTranslations()
   const { user, profile, loading, signOut } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const isAuthenticated = !!user
   const creditsRemaining = profile?.creditsBalance ?? 0
@@ -467,6 +471,37 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     <MobileLanguageSwitcher onSelect={() => {}} />
                   </div>
 
+                  {/* Theme Toggle */}
+                  <div className="py-4 border-t border-border">
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                      Appearance
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
+                          theme === "light"
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-foreground/5 border-border text-muted-foreground"
+                        }`}
+                      >
+                        <Sun className="size-4" />
+                        Light
+                      </button>
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
+                          theme === "dark"
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-foreground/5 border-border text-muted-foreground"
+                        }`}
+                      >
+                        <Moon className="size-4" />
+                        Dark
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Sign Out */}
                   <button
                     onClick={handleSignOut}
@@ -506,6 +541,37 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       {t("language.select")}
                     </p>
                     <MobileLanguageSwitcher onSelect={() => {}} />
+                  </div>
+
+                  {/* Theme Toggle */}
+                  <div className="py-4 border-t border-border">
+                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                      Appearance
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
+                          theme === "light"
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-foreground/5 border-border text-muted-foreground"
+                        }`}
+                      >
+                        <Sun className="size-4" />
+                        Light
+                      </button>
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
+                          theme === "dark"
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-foreground/5 border-border text-muted-foreground"
+                        }`}
+                      >
+                        <Moon className="size-4" />
+                        Dark
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

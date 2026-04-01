@@ -26,11 +26,12 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent dark:from-background dark:via-background/40" />
+        {/* Gradient overlay — always dark since text sits over photo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
 
         {/* Back link */}
         <div className="absolute top-4 left-4">
-          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-[rgba(232,226,222,0.5)] hover:text-[rgba(232,226,222,0.8)] transition-colors cursor-pointer">
+          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white/90 transition-colors cursor-pointer">
             <ArrowLeft className="size-3.5" />
             {t("hero.backToCollection")}
           </button>
@@ -42,7 +43,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
               ? "bg-emerald-500/30 text-emerald-300"
               : model.representativeCar.investmentGrade === "AA"
                 ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
+                : "bg-white/20 text-white"
             }`}>
             {model.representativeCar.investmentGrade}
           </span>
@@ -50,21 +51,21 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
 
         {/* Live badge */}
         {model.liveCount > 0 && (
-          <div className="absolute top-12 right-4 flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md px-2.5 py-1">
+          <div className="absolute top-12 right-4 flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-2.5 py-1">
             <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] font-semibold text-emerald-400">{model.liveCount} LIVE</span>
           </div>
         )}
 
-        {/* Overlaid info */}
+        {/* Overlaid info — always light text over dark gradient */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
           <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
             {t("hero.brandCollection")}
           </span>
-          <h1 className="text-3xl font-bold text-foreground mt-1">
+          <h1 className="text-3xl font-bold text-white mt-1">
             {make} {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
           </h1>
-          <p className="text-[12px] text-[rgba(232,226,222,0.5)] mt-0.5">
+          <p className="text-[12px] text-white/50 mt-0.5">
             {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
           </p>
           <div className="flex items-center gap-3 mt-2">
@@ -75,7 +76,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-2.5">
             {model.categories.slice(0, 3).map((cat) => (
-              <span key={cat} className="px-2.5 py-1 rounded-full bg-foreground/10 backdrop-blur-sm text-[10px] text-foreground/70">
+              <span key={cat} className="px-2.5 py-1 rounded-full bg-black/30 backdrop-blur-sm text-[10px] text-white/70">
                 {cat}
               </span>
             ))}
