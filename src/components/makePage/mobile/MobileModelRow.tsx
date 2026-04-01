@@ -2,9 +2,10 @@
 
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
-import { Info } from "lucide-react"
+import { FileText, Info } from "lucide-react"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { getSeriesConfig } from "@/lib/brandConfig"
+import { platformLabels } from "@/lib/makePageConstants"
 import type { Model } from "@/lib/makePageHelpers"
 
 // ─── MOBILE: MODEL ROW (compact) ───
@@ -27,6 +28,10 @@ export function MobileModelRow({
       default: return "text-muted-foreground"
     }
   }
+
+  // Get platform badge from representative car
+  const carPlatform = model.representativeCar.platform
+  const platformBadge = carPlatform ? platformLabels[carPlatform] : null
 
   return (
     <div className="flex items-center gap-3 px-4 py-3.5">
@@ -65,20 +70,34 @@ export function MobileModelRow({
           <span className="text-[12px] font-mono text-primary">
             {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
           </span>
+          {platformBadge && (
+            <span className={`px-1.5 py-0.5 rounded text-[8px] font-semibold ${platformBadge.color}`}>
+              {platformBadge.short}
+            </span>
+          )}
         </div>
       </Link>
 
-      {/* Right — grade + context expand */}
+      {/* Right — grade + report CTA + context */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <span className={`text-[10px] font-bold ${gradeColor(model.representativeCar.investmentGrade)}`}>
           {model.representativeCar.investmentGrade}
         </span>
-        <button
-          onClick={onTap}
-          className="flex items-center gap-1 text-[10px] text-muted-foreground active:text-primary"
-        >
-          <Info className="size-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/cars/${makeSlug}/${model.representativeCar.id}/report`}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 active:bg-primary/20 transition-colors"
+          >
+            <FileText className="size-3 text-primary" />
+            <span className="text-[9px] font-semibold text-primary">Report</span>
+          </Link>
+          <button
+            onClick={onTap}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground active:text-primary"
+          >
+            <Info className="size-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   )

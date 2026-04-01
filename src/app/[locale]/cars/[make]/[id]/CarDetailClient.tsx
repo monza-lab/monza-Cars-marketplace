@@ -1569,6 +1569,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <MobileCarCTA
           carId={car.id}
           make={car.make}
+          sourceUrl={car.sourceUrl}
+          platform={car.platform}
           onOpenAdvisor={() => setShowAdvisorChat(true)}
         />
       </div>
