@@ -51,6 +51,47 @@ export async function GET(request: Request) {
       0
     );
 
+    if (totalDiscovered === 0 && totalWritten === 0) {
+      const zeroOutputError = "Zero output: AutoTrader discovered and wrote no rows";
+
+      await recordScraperRun({
+        scraper_name: 'autotrader',
+        run_id: result.runId,
+        started_at: startedAtIso,
+        finished_at: new Date().toISOString(),
+        success: false,
+        runtime: 'vercel_cron',
+        duration_ms: Date.now() - startTime,
+        discovered: totalDiscovered,
+        written: totalWritten,
+        errors_count: 1,
+        refresh_checked: refreshResult.checked,
+        refresh_updated: refreshResult.updated,
+        source_counts: result.sourceCounts,
+        error_messages: [zeroOutputError],
+      });
+
+      await clearScraperRunActive("autotrader");
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: zeroOutputError,
+          refresh: {
+            checked: refreshResult.checked,
+            updated: refreshResult.updated,
+            errors: refreshResult.errors,
+          },
+          discovered: totalDiscovered,
+          written: totalWritten,
+          sourceCounts: result.sourceCounts,
+          errors: result.errors,
+          duration: `${Date.now() - startTime}ms`,
+        },
+        { status: 500 }
+      );
+    }
+
     await recordScraperRun({
       scraper_name: 'autotrader',
       run_id: result.runId,

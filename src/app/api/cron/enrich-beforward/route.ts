@@ -16,6 +16,10 @@ const FETCH_HEADERS: Record<string, string> = {
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 };
 
+function fitText(value: string, maxLength: number): string {
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
 export async function GET(request: Request) {
   const startTime = Date.now();
   const startedAtIso = new Date(startTime).toISOString();
@@ -110,13 +114,11 @@ export async function GET(request: Request) {
           last_verified_at: new Date().toISOString(),
         };
 
-        if (detail.trim) update.trim = detail.trim;
-        if (detail.engine) update.engine = detail.engine;
-        if (detail.transmission) update.transmission = detail.transmission;
-        if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
-        if (detail.vin) update.vin = detail.vin;
-        if (detail.fuel) update.fuel_type = detail.fuel;
-
+        if (detail.trim) update.trim = fitText(detail.trim, 17);
+        if (detail.engine) update.engine = fitText(detail.engine, 32);
+        if (detail.transmission) update.transmission = fitText(detail.transmission, 32);
+        if (detail.exteriorColor) update.color_exterior = fitText(detail.exteriorColor, 64);
+        if (detail.vin) update.vin = fitText(detail.vin, 17);
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
@@ -133,7 +135,7 @@ export async function GET(request: Request) {
           // Mark as attempted
           await client
             .from("listings")
-            .update({ trim: "", updated_at: new Date().toISOString() })
+            .update({ updated_at: new Date().toISOString() })
             .eq("id", row.id);
         }
       } catch (err) {
@@ -148,12 +150,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const success = !(discovered > 0 && enriched === 0) && errors.length === 0;
+
     await recordScraperRun({
       scraper_name: "enrich-beforward",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -164,14 +168,17 @@ export async function GET(request: Request) {
 
     await clearScraperRunActive("enrich-beforward");
 
-    return NextResponse.json({
-      success: true,
-      runId,
-      discovered,
-      enriched,
-      errors,
-      duration: `${Date.now() - startTime}ms`,
-    });
+    return NextResponse.json(
+      {
+        success,
+        runId,
+        discovered,
+        enriched,
+        errors,
+        duration: `${Date.now() - startTime}ms`,
+      },
+      { status: success ? 200 : 500 }
+    );
   } catch (error) {
     console.error("[cron/enrich-beforward] Error:", error);
 

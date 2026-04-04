@@ -138,12 +138,18 @@ export async function GET(request: Request) {
       }
     }
 
+    if (discovered > 0 && enriched === 0 && errors.length === 0) {
+      errors.push("Zero output: AutoTrader enrichment discovered rows but wrote none");
+    }
+
+    const success = errors.length === 0 && !(discovered > 0 && enriched === 0);
+
     await recordScraperRun({
       scraper_name: "enrich-autotrader",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -154,14 +160,17 @@ export async function GET(request: Request) {
 
     await clearScraperRunActive("enrich-autotrader");
 
-    return NextResponse.json({
-      success: true,
-      runId,
-      discovered,
-      enriched,
-      errors,
-      duration: `${Date.now() - startTime}ms`,
-    });
+    return NextResponse.json(
+      {
+        success,
+        runId,
+        discovered,
+        enriched,
+        errors,
+        duration: `${Date.now() - startTime}ms`,
+      },
+      { status: success ? 200 : 500 }
+    );
   } catch (error) {
     console.error("[cron/enrich-autotrader] Error:", error);
 
