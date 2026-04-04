@@ -47,8 +47,6 @@ function mockDefaults() {
     runId: "test-porsche-run",
     sourceCounts: {
       BaT: { discovered: 30, porscheKept: 30, skippedMissingRequired: 0, written: 8, errored: 0, retried: 0 },
-      CarsAndBids: { discovered: 10, porscheKept: 10, skippedMissingRequired: 0, written: 3, errored: 0, retried: 0 },
-      CollectingCars: { discovered: 5, porscheKept: 5, skippedMissingRequired: 0, written: 2, errored: 0, retried: 0 },
     },
     errors: [],
   } as any);
@@ -93,7 +91,7 @@ describe("GET /api/cron/porsche", () => {
 
   // ─── Happy path ───
 
-  it("runs full pipeline: refresh + collect (3 sources) + backfill", async () => {
+  it("runs full pipeline: refresh + collect (BaT only) + backfill", async () => {
     mockDefaults();
 
     const response = await GET(makeRequest());
@@ -102,8 +100,8 @@ describe("GET /api/cron/porsche", () => {
     const data = await response.json();
     expect(data.success).toBe(true);
     expect(data.runId).toBe("test-porsche-run");
-    expect(data.discovered).toBe(45); // 30 + 10 + 5
-    expect(data.written).toBe(13);    // 8 + 3 + 2
+    expect(data.discovered).toBe(30);
+    expect(data.written).toBe(8);
 
     // Refresh metrics
     expect(data.refresh.checked).toBe(15);
@@ -115,14 +113,14 @@ describe("GET /api/cron/porsche", () => {
     expect(data.backfill.modelsSearched).toEqual(["911", "Cayenne", "Boxster"]);
   });
 
-  it("calls runCollector with all 3 sources", async () => {
+  it("calls runCollector with BaT only", async () => {
     mockDefaults();
     await GET(makeRequest());
 
     expect(runCollector).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: "daily",
-        sources: ["BaT", "CarsAndBids", "CollectingCars"],
+        sources: ["BaT"],
         maxActivePagesPerSource: 2,
         scrapeDetails: false,
         dryRun: false,
@@ -151,8 +149,8 @@ describe("GET /api/cron/porsche", () => {
       expect.objectContaining({
         scraper_name: "porsche",
         success: true,
-        discovered: 45,
-        written: 13,
+        discovered: 30,
+        written: 8,
         refresh_checked: 15,
         refresh_updated: 3,
         backfill_discovered: 12,

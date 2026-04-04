@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     const remainingBudgetMs = Math.max(180_000 - refreshDurationMs, 30_000);
     const result = await runCollector({
       mode: "daily",
-      sources: ["BaT", "CarsAndBids", "CollectingCars"],
+      sources: ["BaT"],
       maxActivePagesPerSource: 2,
       maxEndedPagesPerSource: 0,
       scrapeDetails: false,
