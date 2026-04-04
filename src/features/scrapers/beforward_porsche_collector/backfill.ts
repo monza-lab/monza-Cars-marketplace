@@ -25,6 +25,9 @@ export async function backfillMissingImages(opts: {
   const rateLimitMs = opts.rateLimitMs ?? 2500;
   const timeoutMs = opts.timeoutMs ?? 20_000;
   const safetyMarginMs = 15_000;
+  const RATE_LIMIT_BACKOFF_MS = 6_000;
+  const MAX_RATE_LIMITS = 3;
+  let consecutiveRateLimits = 0;
 
   const result: BackfillResult = { discovered: 0, backfilled: 0, errors: [] };
 
@@ -45,7 +48,7 @@ export async function backfillMissingImages(opts: {
     .select("id,source_url")
     .eq("source", "BeForward")
     .eq("status", "active")
-    .or("images.is.null,images.eq.[]")
+    .or("images.is.null,images.eq.{}")
     .order("scrape_timestamp", { ascending: true })
     .limit(maxListings);
 
@@ -91,16 +94,24 @@ export async function backfillMissingImages(opts: {
         result.errors.push(`Update failed for ${row.source_url}: ${updateErr.message}`);
       } else {
         result.backfilled++;
+        consecutiveRateLimits = 0;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
 
       // Circuit-break on 403/429 — site is blocking us
       if (/\b(403|429)\b/.test(msg)) {
-        result.errors.push(`Circuit-break: ${msg}`);
-        break;
+        consecutiveRateLimits++;
+        result.errors.push(`Rate limited (${consecutiveRateLimits}/${MAX_RATE_LIMITS}): ${msg}`);
+        if (consecutiveRateLimits >= MAX_RATE_LIMITS) {
+          result.errors.push(`Circuit-break: ${msg}`);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, RATE_LIMIT_BACKOFF_MS));
+        continue;
       }
 
+      consecutiveRateLimits = 0;
       result.errors.push(`Backfill failed for ${row.source_url}: ${msg}`);
     }
   }

@@ -72,6 +72,10 @@ describe("beforward backfillMissingImages", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("backfills listings that have images on their detail page", async () => {
     setupSupabaseMock(SAMPLE_ROWS);
     mockFetch
@@ -116,34 +120,73 @@ describe("beforward backfillMissingImages", () => {
     expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 
-  it("circuit-breaks on 403 response", async () => {
+  it("backs off on 403 and continues when below the limit", async () => {
+    vi.useFakeTimers();
     setupSupabaseMock(SAMPLE_ROWS);
-    mockFetch.mockRejectedValueOnce(new Error("HTTP 403 Forbidden"));
+    mockFetch
+      .mockRejectedValueOnce(new Error("HTTP 403 Forbidden"))
+      .mockResolvedValueOnce({
+        images: ["https://img.beforward.jp/photo.jpg"],
+      } as any);
 
-    const result = await backfillMissingImages({
+    const promise = backfillMissingImages({
       timeBudgetMs: 60_000,
       runId: "test-run",
     });
+    await vi.runAllTimersAsync();
+    const result = await promise;
 
     expect(result.discovered).toBe(2);
-    expect(result.backfilled).toBe(0);
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toMatch(/Circuit-break/);
-    // Should NOT attempt the second listing
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.backfilled).toBe(1);
+    expect(result.errors[0]).toMatch(/Rate limited/);
+    // Should attempt the second listing after backoff
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
   });
 
-  it("circuit-breaks on 429 response", async () => {
+  it("backs off on 429 and continues when below the limit", async () => {
+    vi.useFakeTimers();
     setupSupabaseMock(SAMPLE_ROWS);
-    mockFetch.mockRejectedValueOnce(new Error("HTTP 429 Too Many Requests"));
+    mockFetch
+      .mockRejectedValueOnce(new Error("HTTP 429 Too Many Requests"))
+      .mockResolvedValueOnce({
+        images: ["https://img.beforward.jp/photo.jpg"],
+      } as any);
 
-    const result = await backfillMissingImages({
+    const promise = backfillMissingImages({
       timeBudgetMs: 60_000,
       runId: "test-run",
     });
+    await vi.runAllTimersAsync();
+    const result = await promise;
 
-    expect(result.errors[0]).toMatch(/Circuit-break/);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.errors[0]).toMatch(/Rate limited/);
+    expect(result.backfilled).toBe(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("circuit-breaks after repeated rate limits", async () => {
+    vi.useFakeTimers();
+    setupSupabaseMock([
+      { id: "row-1", source_url: "https://www.beforward.jp/porsche/911/id/1/" },
+      { id: "row-2", source_url: "https://www.beforward.jp/porsche/cayenne/id/2/" },
+      { id: "row-3", source_url: "https://www.beforward.jp/porsche/boxster/id/3/" },
+    ]);
+    mockFetch
+      .mockRejectedValueOnce(new Error("HTTP 429 Too Many Requests"))
+      .mockRejectedValueOnce(new Error("HTTP 429 Too Many Requests"))
+      .mockRejectedValueOnce(new Error("HTTP 429 Too Many Requests"));
+
+    const promise = backfillMissingImages({
+      timeBudgetMs: 60_000,
+      runId: "test-run",
+    });
+    await vi.runAllTimersAsync();
+    const result = await promise;
+
+    expect(result.errors.some((e) => e.includes("Circuit-break"))).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
   });
 
   it("stops when time budget is exhausted", async () => {

@@ -72,9 +72,14 @@ export async function GET(request: Request) {
 
     const discovered = rows.length;
     let enriched = 0;
+    let delisted = 0;
     const errors: string[] = [];
+    const warnings: string[] = [];
     const DELAY_MS = 2_000;
     const TIME_BUDGET_MS = 270_000;
+    const RATE_LIMIT_BACKOFF_MS = 6_000;
+    const MAX_RATE_LIMITS = 3;
+    let consecutiveRateLimits = 0;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -100,7 +105,8 @@ export async function GET(request: Request) {
               .from("listings")
               .update({ status: "delisted", updated_at: new Date().toISOString() })
               .eq("id", row.id);
-            errors.push(`Dead URL (${row.id}): HTTP ${response.status}`);
+            delisted++;
+            warnings.push(`Dead URL (${row.id}): HTTP ${response.status}`);
             continue;
           }
           throw new Error(`HTTP ${response.status} for ${row.source_url}`);
@@ -130,6 +136,7 @@ export async function GET(request: Request) {
             errors.push(`Update failed (${row.id}): ${updateErr.message}`);
           } else {
             enriched++;
+            consecutiveRateLimits = 0;
           }
         } else {
           // Mark as attempted
@@ -137,20 +144,28 @@ export async function GET(request: Request) {
             .from("listings")
             .update({ updated_at: new Date().toISOString() })
             .eq("id", row.id);
+          consecutiveRateLimits = 0;
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
 
         if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
-          errors.push(`Circuit-break: ${msg}`);
-          break;
+          consecutiveRateLimits++;
+          warnings.push(`Rate limited (${consecutiveRateLimits}/${MAX_RATE_LIMITS}): ${msg}`);
+          if (consecutiveRateLimits >= MAX_RATE_LIMITS) {
+            errors.push(`Circuit-break: ${msg}`);
+            break;
+          }
+          await new Promise((r) => setTimeout(r, RATE_LIMIT_BACKOFF_MS));
+          continue;
         }
 
         errors.push(`Failed ${row.source_url}: ${msg}`);
       }
     }
 
-    const success = !(discovered > 0 && enriched === 0) && errors.length === 0;
+    const touched = enriched + delisted;
+    const success = discovered === 0 ? errors.length === 0 : touched > 0;
 
     await recordScraperRun({
       scraper_name: "enrich-beforward",
@@ -161,9 +176,9 @@ export async function GET(request: Request) {
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
-      written: enriched,
+      written: touched,
       errors_count: errors.length,
-      error_messages: errors.length > 0 ? errors : undefined,
+      error_messages: errors.length > 0 ? errors : warnings.length > 0 ? warnings : undefined,
     });
 
     await clearScraperRunActive("enrich-beforward");
@@ -174,6 +189,8 @@ export async function GET(request: Request) {
         runId,
         discovered,
         enriched,
+        delisted,
+        warnings,
         errors,
         duration: `${Date.now() - startTime}ms`,
       },

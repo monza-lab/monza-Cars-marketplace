@@ -24,8 +24,19 @@ import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 const MAX_CONSECUTIVE_CF_BLOCKS = 10;
 const CONTEXT_REFRESH_INTERVAL = 100;
 
-async function preflightProxy(config: CollectorRunConfig, runId: string): Promise<void> {
-  if (!config.proxyServer) return;
+type ProxyPreflightResult = {
+  config: CollectorRunConfig;
+  usedProxy: boolean;
+  fallbackReason?: string;
+};
+
+export async function preflightProxy(
+  config: CollectorRunConfig,
+  runId: string
+): Promise<ProxyPreflightResult> {
+  if (!config.proxyServer) {
+    return { config, usedProxy: false };
+  }
 
   if (!config.proxyUsername || !config.proxyPassword) {
     throw new Error("Proxy server configured but missing proxy username/password");
@@ -55,16 +66,37 @@ async function preflightProxy(config: CollectorRunConfig, runId: string): Promis
       const e: any = err;
       const causeMsg = String(e?.cause?.cause?.message ?? e?.cause?.message ?? e?.message ?? err);
       if (causeMsg.includes("Proxy response (407)")) {
-        throw new Error(
-          "Proxy CONNECT rejected (407). Decodo/Smartproxy credentials are invalid or the account traffic limit is exhausted."
-        );
+        const reason =
+          "Proxy CONNECT rejected (407). Decodo/Smartproxy credentials are invalid or the account traffic limit is exhausted.";
+        logEvent({ level: "warn", event: "proxy.preflight_fallback", runId, reason });
+        return {
+          config: {
+            ...config,
+            proxyServer: undefined,
+            proxyUsername: undefined,
+            proxyPassword: undefined,
+          },
+          usedProxy: false,
+          fallbackReason: reason,
+        };
       }
       throw err;
     }
 
     if (res.status === 407) {
       const body = await res.text().catch(() => "");
-      throw new Error(`Proxy rejected CONNECT (407). ${body}`.trim());
+      const reason = `Proxy rejected CONNECT (407). ${body}`.trim();
+      logEvent({ level: "warn", event: "proxy.preflight_fallback", runId, reason });
+      return {
+        config: {
+          ...config,
+          proxyServer: undefined,
+          proxyUsername: undefined,
+          proxyPassword: undefined,
+        },
+        usedProxy: false,
+        fallbackReason: reason,
+      };
     }
 
     if (!res.ok) {
@@ -77,6 +109,8 @@ async function preflightProxy(config: CollectorRunConfig, runId: string): Promis
     } else {
       logEvent({ level: "info", event: "proxy.preflight_ok", runId });
     }
+
+    return { config, usedProxy: true };
   } finally {
     clearTimeout(timeout);
     // ProxyAgent doesn't require explicit close for single-use, but keep this guarded.
@@ -106,34 +140,44 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
 
   // Fail fast if a configured proxy cannot be used (auth/traffic limit/etc),
   // otherwise the run will waste time on Playwright timeouts.
-  await preflightProxy(config, runId);
+  const preflight = await preflightProxy(config, runId);
+  const runConfig = preflight?.config ?? config;
+  if (preflight?.fallbackReason) {
+    errors.push(`Proxy fallback: ${preflight.fallbackReason}`);
+    logEvent({
+      level: "warn",
+      event: "proxy.disabled_fallback",
+      runId,
+      reason: preflight.fallbackReason,
+    });
+  }
 
   // Load checkpoint
-  const checkpoint = await loadCheckpoint(config.checkpointPath);
+  const checkpoint = await loadCheckpoint(runConfig.checkpointPath);
 
   // Create writer
-  const writer: SupabaseWriter = config.dryRun ? createDryRunWriter() : createSupabaseWriter();
+  const writer: SupabaseWriter = runConfig.dryRun ? createDryRunWriter() : createSupabaseWriter();
 
   // Ensure output directory exists
-  const outputDir = path.dirname(config.outputPath);
+  const outputDir = path.dirname(runConfig.outputPath);
   await fs.mkdir(outputDir, { recursive: true });
 
   // Launch browser
   const browser = await launchStealthBrowser({
-    headless: config.headless,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
+    headless: runConfig.headless,
+    proxyServer: runConfig.proxyServer,
+    proxyUsername: runConfig.proxyUsername,
+    proxyPassword: runConfig.proxyPassword,
   });
 
   let context = await createStealthContext(browser, {
-    headless: config.headless,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
+    headless: runConfig.headless,
+    proxyServer: runConfig.proxyServer,
+    proxyUsername: runConfig.proxyUsername,
+    proxyPassword: runConfig.proxyPassword,
   });
   let page = await createPage(context);
-  const rateLimiter = new NavigationRateLimiter(config.navigationDelayMs);
+  const rateLimiter = new NavigationRateLimiter(runConfig.navigationDelayMs);
 
   try {
     /* ---------------------------------------------------------------- */
@@ -144,13 +188,13 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
 
     const discoverResult = await discoverAllListings({
       page,
-      make: config.make,
-      location: config.location,
-      status: config.status,
-      maxPages: config.maxPages,
-      maxListings: config.maxListings,
-      navigationDelayMs: config.navigationDelayMs,
-      pageTimeoutMs: config.pageTimeoutMs,
+      make: runConfig.make,
+      location: runConfig.location,
+      status: runConfig.status,
+      maxPages: runConfig.maxPages,
+      maxListings: runConfig.maxListings,
+      navigationDelayMs: runConfig.navigationDelayMs,
+      pageTimeoutMs: runConfig.pageTimeoutMs,
       runId,
     });
 
@@ -181,9 +225,9 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
         if (normalized) {
           counts.normalized++;
           try {
-            const { wrote } = await writer.upsertAll(normalized, meta, config.dryRun);
+            const { wrote } = await writer.upsertAll(normalized, meta, runConfig.dryRun);
             if (wrote) counts.written++;
-            await fs.appendFile(config.outputPath, JSON.stringify(normalized) + "\n", "utf8");
+            await fs.appendFile(runConfig.outputPath, JSON.stringify(normalized) + "\n", "utf8");
           } catch (err) {
             counts.errors++;
             const msg = err instanceof Error ? err.message : String(err);
@@ -196,9 +240,9 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
       }
 
       // Backfill images for listings missing them (using leftover time)
-      if (config.timeBudgetMs) {
+      if (runConfig.timeBudgetMs) {
         const elapsedMs = Date.now() - startMs;
-        const remainingMs = config.timeBudgetMs - elapsedMs;
+        const remainingMs = runConfig.timeBudgetMs - elapsedMs;
         if (remainingMs > 40_000) {
           try {
             const { backfillMissingImages } = await import("./backfill");
@@ -206,8 +250,8 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
               page,
               timeBudgetMs: remainingMs,
               maxListings: 5,
-              navigationDelayMs: config.navigationDelayMs,
-              pageTimeoutMs: config.pageTimeoutMs,
+              navigationDelayMs: runConfig.navigationDelayMs,
+              pageTimeoutMs: runConfig.pageTimeoutMs,
               runId,
             });
             counts.backfillDiscovered = backfillResult.discovered;
@@ -232,7 +276,7 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
 
     for (let i = startIndex; i < allListings.length; i++) {
       // Time-budget guard: stop if less than 15s remaining
-      if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+      if (runConfig.timeBudgetMs && (Date.now() - startMs) > (runConfig.timeBudgetMs - 15_000)) {
         logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, elapsedMs: Date.now() - startMs });
         break;
       }
@@ -251,10 +295,10 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
         await page.close().catch(() => {});
         await context.close().catch(() => {});
         context = await createStealthContext(browser, {
-          headless: config.headless,
-          proxyServer: config.proxyServer,
-          proxyUsername: config.proxyUsername,
-          proxyPassword: config.proxyPassword,
+          headless: runConfig.headless,
+          proxyServer: runConfig.proxyServer,
+          proxyUsername: runConfig.proxyUsername,
+          proxyPassword: runConfig.proxyPassword,
         });
         page = await createPage(context);
       }
@@ -280,7 +324,7 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
           async () => fetchAndParseDetail({
             page,
             url: summary.sourceUrl,
-            pageTimeoutMs: config.pageTimeoutMs,
+            pageTimeoutMs: runConfig.pageTimeoutMs,
             runId,
           }),
           { retries: 2, baseDelayMs: 3000 },
@@ -300,15 +344,15 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
           logEvent({ level: "warn", event: "collector.cloudflare_block", runId, index: i, consecutive: consecutiveCfBlocks });
 
           // Rotate proxy session (new IP) after CF block by refreshing context
-          if (config.proxyServer && consecutiveCfBlocks < MAX_CONSECUTIVE_CF_BLOCKS) {
+          if (runConfig.proxyServer && consecutiveCfBlocks < MAX_CONSECUTIVE_CF_BLOCKS) {
             logEvent({ level: "info", event: "collector.context_refresh_cf", runId, index: i });
             await page.close().catch(() => {});
             await context.close().catch(() => {});
             context = await createStealthContext(browser, {
-              headless: config.headless,
-              proxyServer: config.proxyServer,
-              proxyUsername: config.proxyUsername,
-              proxyPassword: config.proxyPassword,
+              headless: runConfig.headless,
+              proxyServer: runConfig.proxyServer,
+              proxyUsername: runConfig.proxyUsername,
+              proxyPassword: runConfig.proxyPassword,
             });
             page = await createPage(context, true);
           }
@@ -325,11 +369,11 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
       if (normalized) {
         counts.normalized++;
         try {
-          const { wrote } = await writer.upsertAll(normalized, meta, config.dryRun);
+          const { wrote } = await writer.upsertAll(normalized, meta, runConfig.dryRun);
           if (wrote) counts.written++;
 
           // Append to JSONL output
-          await fs.appendFile(config.outputPath, JSON.stringify(normalized) + "\n", "utf8");
+          await fs.appendFile(runConfig.outputPath, JSON.stringify(normalized) + "\n", "utf8");
         } catch (err) {
           counts.errors++;
           const msg = err instanceof Error ? err.message : String(err);
@@ -350,7 +394,7 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
         written: counts.written,
         errors: counts.errors,
       };
-      await saveCheckpoint(config.checkpointPath, cp);
+      await saveCheckpoint(runConfig.checkpointPath, cp);
 
       // Progress log every 10 listings
       if ((i + 1) % 10 === 0 || i === allListings.length - 1) {
@@ -405,7 +449,7 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
     totalResults: counts.discovered,
     counts,
     errors,
-    outputPath: config.outputPath,
+    outputPath: runConfig.outputPath,
   };
 }
 

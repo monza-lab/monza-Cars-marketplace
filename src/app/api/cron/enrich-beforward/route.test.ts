@@ -4,17 +4,27 @@ import { GET } from "./route";
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
-const mockSelect = vi.fn().mockReturnValue({
-  eq: vi.fn().mockReturnValue({
+let mockRows: Array<{ id: string; source_url: string }> = [];
+let mockSelectError: string | null = null;
+const mockSelect = vi.fn();
+
+function setMockRows(rows: Array<{ id: string; source_url: string }>) {
+  mockRows = rows;
+  mockSelect.mockReturnValue({
     eq: vi.fn().mockReturnValue({
-      is: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn().mockReturnValue({
+        is: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({
+              data: mockRows,
+              error: mockSelectError ? { message: mockSelectError } : null,
+            }),
+          }),
         }),
       }),
     }),
-  }),
-});
+  });
+}
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
@@ -51,6 +61,8 @@ function makeRequest(secret = "test-secret") {
 describe("GET /api/cron/enrich-beforward", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setMockRows([]);
+    mockSelectError = null;
     process.env.CRON_SECRET = "test-secret";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
@@ -102,5 +114,27 @@ describe("GET /api/cron/enrich-beforward", () => {
     const response = await GET(makeRequest());
     const data = await response.json();
     expect(data.duration).toMatch(/^\d+ms$/);
+  });
+
+  it("treats dead URLs as warnings and still succeeds", async () => {
+    setMockRows([
+      { id: "row-1", source_url: "https://www.beforward.jp/porsche/911/id/1/" },
+    ]);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as any);
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.delisted).toBe(1);
+    expect(data.warnings?.length ?? 0).toBeGreaterThan(0);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    fetchSpy.mockRestore();
   });
 });
