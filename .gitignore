@@ -7,6 +7,9 @@
 # opencode
 .opencode/
 
+# superpowers brainstorming
+.superpowers/
+
 # scraper data / temp artifacts
 var/
 

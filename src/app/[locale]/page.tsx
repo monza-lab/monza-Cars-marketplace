@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
+import { ViewPreferenceRedirect } from "@/components/layout/ViewPreferenceRedirect";
 import { getCachedDashboardData, type DashboardData } from "@/lib/dashboardCache";
 
 async function loadDashboardData(): Promise<DashboardData> {
@@ -32,11 +33,14 @@ export default async function Home({
   }
 
   return (
-    <DashboardClient
-      auctions={data.auctions}
-      liveRegionTotals={data.regionTotals}
-      liveNowTotal={data.liveNow}
-      seriesCounts={data.seriesCounts}
-    />
+    <>
+      <ViewPreferenceRedirect current="monza" />
+      <DashboardClient
+        auctions={data.auctions}
+        liveRegionTotals={data.regionTotals}
+        liveNowTotal={data.liveNow}
+        seriesCounts={data.seriesCounts}
+      />
+    </>
   );
 }

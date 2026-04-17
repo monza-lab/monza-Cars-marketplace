@@ -19,6 +19,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { CurrencyDropdown } from "./CurrencyDropdown";
@@ -971,6 +972,9 @@ export function Header() {
               MONZA
             </span>
           </a>
+
+          {/* View Toggle: Monza | Classic */}
+          <ViewToggle />
 
           {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
           <div className="hidden md:block flex-1 max-w-xl relative">
