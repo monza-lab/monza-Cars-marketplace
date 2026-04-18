@@ -139,7 +139,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
             )}
           </div>
 
-          {fairUs && (
+          {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
             <p className="mt-1.5 text-[10px] text-muted-foreground/80">
               Fair value {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
             </p>
