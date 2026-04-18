@@ -1082,11 +1082,12 @@ export async function fetchSoldListingsForMake(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,sale_date,status")
+      // Project canonical sold_price as hammer_price to keep the consumer
+      // shape identical. status='sold' is enforced by the sold_price column
+      // generator itself (NULL otherwise), so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:sold_price,sale_date,status")
       .ilike("make", normalizedMake)
-      .eq("status", "sold")
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("sold_price", 0)
       .order("sale_date", { ascending: true })
       .limit(limit);
 
@@ -1142,10 +1143,12 @@ export async function fetchPricedListingsForModel(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
+      // Project canonical listing_price as hammer_price to keep the consumer
+      // shape identical. listing_price is the COALESCE of all raw price
+      // columns, so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,country")
       .ilike("make", normalizedMake)
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("listing_price", 0)
       .order("sale_date", { ascending: false })
       .limit(limit);
 
@@ -1186,8 +1189,8 @@ export async function fetchValuationListingsForMake(
         .from("listings")
         .select(SELECT_NARROW)
         .ilike("make", normalizedMake)
-        .not("hammer_price", "is", null)
-        .gt("hammer_price", 0)
+        // Canonical: listing_price = COALESCE of raw price columns.
+        .gt("listing_price", 0)
         .order("sale_date", { ascending: false, nullsFirst: false })
         .order("end_time", { ascending: false, nullsFirst: false })
         .order("id", { ascending: false })
@@ -1254,7 +1257,11 @@ export async function fetchValuationCorpusForMake(
           "source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
         )
         .ilike("make", normalizedMake)
-        .gt("hammer_price", 0)
+        // listing_price is a generated column on listings that COALESCEs
+        // hammer_price/final_price/current_bid — the single source of truth
+        // for "this listing has a price". See migration
+        // 20260419_listings_canonical_price_columns.sql.
+        .gt("listing_price", 0)
         .range(from, to);
 
       if (error) {
