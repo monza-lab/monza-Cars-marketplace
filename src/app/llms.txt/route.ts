@@ -19,6 +19,17 @@ MonzaHaus publishes proprietary quarterly market indices aggregating public auct
 - [Water-Cooled 911 Index](${BASE_URL}/en/index/water-cooled-911): 996, 997, 991, 992. Modern 911 family.
 - [Porsche Turbo Index](${BASE_URL}/en/index/porsche-turbo): 50 years of 911 Turbo — 930 through 992 Turbo S (cross-generational).
 
+## Model Buyer's Guides
+
+In-depth buyer's guides for each Porsche 911 generation, with FAQ coverage, variant breakdowns, buyer considerations, and live market data from the MonzaHaus Index.
+
+- [911 (964) Buyer's Guide](${BASE_URL}/en/models/porsche/964): 1989–1994 — the bridge generation.
+- [911 (993) Buyer's Guide](${BASE_URL}/en/models/porsche/993): 1995–1998 — last air-cooled 911.
+- [911 (996) Buyer's Guide](${BASE_URL}/en/models/porsche/996): 1998–2005 — first water-cooled 911, IMS bearing explained.
+- [911 (997) Buyer's Guide](${BASE_URL}/en/models/porsche/997): 2005–2012 — last Mezger, peak analog water-cooled.
+- [911 (991) Buyer's Guide](${BASE_URL}/en/models/porsche/991): 2012–2019 — NA to turbo transition, 911 R, Speedster.
+- [911 (992) Buyer's Guide](${BASE_URL}/en/models/porsche/992): 2019–present — current generation, Sport Classic, Dakar.
+
 ## Key Sections
 
 - [Porsche Collection](${BASE_URL}/en/cars/porsche): Full Porsche marketplace with live listings and historical results.

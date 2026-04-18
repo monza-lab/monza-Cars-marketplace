@@ -16,6 +16,8 @@ const PORSCHE_SERIES = [
   "cayenne", "macan", "panamera", "taycan",
 ]
 
+const PORSCHE_MODEL_SLUGS = ["964", "991", "992", "993", "996", "997"]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -76,6 +78,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "weekly",
         priority: slug === "" ? 0.95 : 0.9,
         alternates: buildAlternates(`/index${slug}`),
+      })
+    }
+  }
+
+  // Model pages (buyer guides with FAQ schema)
+  for (const locale of LOCALES) {
+    for (const slug of PORSCHE_MODEL_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/models/porsche/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly",
+        priority: 0.85,
+        alternates: buildAlternates(`/models/porsche/${slug}`),
       })
     }
   }
