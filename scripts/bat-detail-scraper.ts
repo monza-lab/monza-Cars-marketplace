@@ -124,10 +124,10 @@ async function main() {
   // Query BaT listings needing enrichment
   const { data: listings, error } = await supabase
     .from("listings")
-    .select("id, source_url, title, images, engine, mileage, vin, transmission, color_exterior, color_interior")
+    .select("id, source_url, title, images, engine, mileage, vin, transmission, color_exterior, color_interior, body_style")
     .eq("source", "BaT")
     .eq("status", "active")
-    .or("engine.is.null,mileage.is.null,vin.is.null,images.eq.{}")
+    .or("engine.is.null,mileage.is.null,vin.is.null,transmission.is.null,color_exterior.is.null,color_interior.is.null,body_style.is.null,images.eq.{}")
     .order("scrape_timestamp", { ascending: true })
     .limit(opts.limit);
 
@@ -208,7 +208,7 @@ async function main() {
       if (!listing.transmission && detail.transmission) updates.transmission = detail.transmission;
       if (detail.exteriorColor && !listing.color_exterior) updates.color_exterior = detail.exteriorColor;
       if (detail.interiorColor && !listing.color_interior) updates.color_interior = detail.interiorColor;
-      if (detail.bodyStyle) updates.body_style = detail.bodyStyle;
+      if (!listing.body_style && detail.bodyStyle) updates.body_style = detail.bodyStyle;
       if (detail.description) updates.description_text = detail.description;
       if (detail.sellerNotes) updates.seller_notes = detail.sellerNotes;
 
