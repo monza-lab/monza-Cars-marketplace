@@ -33,7 +33,6 @@ type ListingRow = {
   city: string | null;
   hammer_price: string | number | null;
   original_currency: string | null;
-  listing_price: string | number | null;
   // Enriched fields from detail scraping
   mileage: number | null;
   mileage_unit: string | null;
@@ -89,11 +88,11 @@ function createSupabaseClient(url: string, key: string): SupabaseClient {
 
 // ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,listing_price,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
 
 // ─── Narrow select (without joins — fallback if photos_media join fails) ───
 const SELECT_NARROW =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,listing_price,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
 
 // ─── Mappers ───
 
@@ -483,8 +482,7 @@ function computeGrade(
 // ─── Row → CollectorCar ───
 
 export function rowToCollectorCar(row: ListingRow): CollectorCar {
-  const price = row.listing_price
-    ?? row.current_bid
+  const price = row.current_bid
     ?? row.final_price
     ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
 
@@ -1055,20 +1053,20 @@ export async function fetchSoldListingsForMake(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,listing_price,sale_date,status")
+      .select("id,year,make,model,trim,hammer_price,sale_date,status")
       .ilike("make", normalizedMake)
       .eq("status", "sold")
-      .not("listing_price", "is", null)
-      .gt("listing_price", 0)
+      .not("hammer_price", "is", null)
+      .gt("hammer_price", 0)
       .order("sale_date", { ascending: true })
       .limit(limit);
 
     if (error || !data) return [];
 
     return data
-      .filter((r: { listing_price: string | number | null; sale_date: string | null }) => r.listing_price != null && r.sale_date != null)
-      .map((r: { year: number; make: string; model: string; trim: string | null; listing_price: string | number; sale_date: string }) => ({
-        price: Number(r.listing_price),
+      .filter((r: { hammer_price: string | number | null; sale_date: string | null }) => r.hammer_price != null && r.sale_date != null)
+      .map((r: { year: number; make: string; model: string; trim: string | null; hammer_price: string | number; sale_date: string }) => ({
+        price: Number(r.hammer_price),
         date: r.sale_date,
         model: r.model,
         year: r.year,
@@ -1080,7 +1078,7 @@ export async function fetchSoldListingsForMake(
   }
 }
 
-// ─── Priced listings for model (all statuses with listing_price) ───
+// ─── Priced listings for model (all statuses with hammer_price) ───
 
 export interface PricedListingRow {
   id: string
@@ -1088,7 +1086,7 @@ export interface PricedListingRow {
   make: string
   model: string
   trim: string | null
-  listing_price: number
+  hammer_price: number
   original_currency: string | null
   sale_date: string | null
   status: string
@@ -1115,17 +1113,17 @@ export async function fetchPricedListingsForModel(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,listing_price,original_currency,sale_date,status,mileage,source,country")
+      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
       .ilike("make", normalizedMake)
-      .not("listing_price", "is", null)
-      .gt("listing_price", 0)
+      .not("hammer_price", "is", null)
+      .gt("hammer_price", 0)
       .order("sale_date", { ascending: false })
       .limit(limit);
 
     if (error || !data) return [];
 
     return data.filter(
-      (r: { listing_price: string | number | null }) => r.listing_price != null && Number(r.listing_price) > 0
+      (r: { hammer_price: string | number | null }) => r.hammer_price != null && Number(r.hammer_price) > 0
     ) as PricedListingRow[];
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
@@ -1303,11 +1301,11 @@ function resolveSourceAliasesForPlatform(platformKey: string): string[] {
 
 const SORT_COLUMN_MAP: Record<string, string> = {
   endTime: "end_time",
-  price: "listing_price",
+  price: "hammer_price",
   currentBid: "current_bid",
   year: "year",
   bidCount: "bid_count",
-  trendValue: "listing_price",
+  trendValue: "hammer_price",
 };
 
 export async function fetchPaginatedListings(options: {

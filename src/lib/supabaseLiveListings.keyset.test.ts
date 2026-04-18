@@ -44,7 +44,7 @@ function makeRow(id: string, end_time: string | null = null) {
     city: null,
     hammer_price: null,
     original_currency: null,
-    listing_price: 50000,
+    hammer_price: 50000,
     mileage: null,
     mileage_unit: null,
     vin: null,
