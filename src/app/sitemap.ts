@@ -40,6 +40,13 @@ const VARIANT_SLUGS = [
 
 const IMPORT_COUNTRIES = ["us", "germany", "uk", "japan"]
 
+const KNOWLEDGE_SLUGS = [
+  "ims-bearing",
+  "mezger-engine",
+  "porsche-certificate-of-authenticity",
+  "porsche-pre-purchase-inspection",
+]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -166,6 +173,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "monthly",
         priority: 0.85,
         alternates: buildAlternates(`/guides/import/${country}`),
+      })
+    }
+
+    // Knowledge hub + articles
+    entries.push({
+      url: `${BASE_URL}/${locale}/knowledge`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.85,
+      alternates: buildAlternates("/knowledge"),
+    })
+    for (const slug of KNOWLEDGE_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/knowledge/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.82,
+        alternates: buildAlternates(`/knowledge/${slug}`),
       })
     }
   }

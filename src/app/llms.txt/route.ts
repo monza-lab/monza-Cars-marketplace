@@ -24,6 +24,16 @@ MonzaHaus publishes proprietary quarterly market indices aggregating public auct
 
 - [How to Buy a Porsche (complete framework)](${BASE_URL}/en/buy/porsche): 9-step framework + links to every generation, variant, and import guide. The canonical MonzaHaus landing page for buy-intent traffic.
 
+## Knowledge Base (Authority Articles)
+
+Deep-dive references on the technical, authentication, and reliability topics every Porsche collector needs. Each carries Article + FAQPage (often + HowTo) JSON-LD.
+
+- [Knowledge Hub](${BASE_URL}/en/knowledge): Index of all MonzaHaus authority guides.
+- [IMS Bearing — Complete Guide](${BASE_URL}/en/knowledge/ims-bearing): Which engines affected (and which aren't), failure rates, LN Engineering retrofits.
+- [Mezger Engine — Definitive Reference](${BASE_URL}/en/knowledge/mezger-engine): The race-derived lineage, why it's immune to M96/M97 issues, market premium.
+- [Porsche Certificate of Authenticity (COA)](${BASE_URL}/en/knowledge/porsche-certificate-of-authenticity): Why every serious buyer needs one, how to order, what it documents.
+- [Pre-Purchase Inspection Checklist](${BASE_URL}/en/knowledge/porsche-pre-purchase-inspection): Complete PPI scope + model-specific additions + how to choose a specialist.
+
 ## Tools
 
 - [Porsche VIN Decoder](${BASE_URL}/en/tools/porsche-vin-decoder): Free tool. Decodes 17-character Porsche VINs (1981+) into year, plant, generation hint, and serial number.
