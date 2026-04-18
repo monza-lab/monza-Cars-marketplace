@@ -709,132 +709,68 @@ async function countLiveListingsForCanonicalSource(
   return countListingsByQuery(query);
 }
 
-const _aggregateCountsCache = new Map<string, { data: LiveListingAggregateCounts; expiresAt: number }>();
-const _aggregateCountsInflight = new Map<string, Promise<LiveListingAggregateCounts>>();
-const AGGREGATE_COUNTS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+export async function fetchLiveListingAggregateCounts(
+  options?: { make?: string | null },
+): Promise<LiveListingAggregateCounts> {
+  const empty: LiveListingAggregateCounts = {
+    liveNow: 0,
+    regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+    regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+  };
 
-export async function fetchLiveListingAggregateCounts(options?: { make?: string | null }): Promise<LiveListingAggregateCounts> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return empty;
 
-  if (!url || !key) {
-    return {
-      liveNow: 0,
-      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-    };
-  }
-
-  const targetMake = resolveRequestedMake(options?.make);
-  const cacheKey = targetMake;
-
-  const cached = _aggregateCountsCache.get(cacheKey);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.data;
-  }
-
-  // Deduplicate concurrent callers so a dashboard + MakePage SSR + paginated
-  // /api/mock-auctions all share a single underlying Supabase fan-out instead
-  // of firing 30 count queries in parallel.
-  const inflight = _aggregateCountsInflight.get(cacheKey);
-  if (inflight) return inflight;
-
-  const run = (async (): Promise<LiveListingAggregateCounts> => {
+  const targetMake = resolveRequestedMake(options?.make).toLowerCase();
 
   try {
     const supabase = createSupabaseClient(url, key);
+    const { data, error } = await supabase
+      .from("listings_active_counts")
+      .select("source,region_by_country,live_count")
+      .eq("make", targetMake);
 
-    const totalPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-    );
+    if (error) {
+      if (/(relation.*listings_active_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_counts MV missing — apply the migration + run refresh_listings_active_counts().",
+        );
+        return empty;
+      }
+      console.error("[supabaseLiveListings] aggregate MV query failed:", error.message);
+      return empty;
+    }
 
-    const usBatPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
-    const usClassicPromise = countLiveListingsForCanonicalSource(supabase, "ClassicCom", targetMake);
-    const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
-    const ukPromise = countLiveListingsForCanonicalSource(supabase, "AutoTrader", targetMake);
-    const jpPromise = countLiveListingsForCanonicalSource(supabase, "BeForward", targetMake);
-    const euElferspotPromise = countLiveListingsForCanonicalSource(supabase, "Elferspot", targetMake);
+    const platform = { all: 0, US: 0, UK: 0, EU: 0, JP: 0 };
+    const location = { all: 0, US: 0, UK: 0, EU: 0, JP: 0 };
 
-    const locationUsPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .or(`country.is.null,country.in.(${encodePostgrestInValues(["USA", "US", "UNITED STATES"])})`)
-    );
-    const locationUkPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .in("country", ["UK", "UNITED KINGDOM"])
-    );
-    const locationJpPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .in("country", ["JAPAN"])
-    );
+    for (const row of (data ?? []) as { source: string; region_by_country: string | null; live_count: number }[]) {
+      const n = Number(row.live_count);
+      platform.all += n;
+      location.all += n;
 
-    const [total, usBat, usClassic, eu, uk, jp, euElferspot, locationUs, locationUk, locationJp] = await Promise.all([
-      totalPromise,
-      usBatPromise,
-      usClassicPromise,
-      euPromise,
-      ukPromise,
-      jpPromise,
-      euElferspotPromise,
-      locationUsPromise,
-      locationUkPromise,
-      locationJpPromise,
-    ]);
+      const canonical = resolveCanonicalSource(row.source, null);
+      if (canonical === "BaT" || canonical === "CarsAndBids" || canonical === "ClassicCom") platform.US += n;
+      else if (canonical === "AutoScout24" || canonical === "CollectingCars" || canonical === "Elferspot") platform.EU += n;
+      else if (canonical === "AutoTrader") platform.UK += n;
+      else if (canonical === "BeForward") platform.JP += n;
 
-    const locationEu = Math.max(0, total - locationUs - locationUk - locationJp);
+      if (row.region_by_country === "US" || row.region_by_country === null) location.US += n;
+      else if (row.region_by_country === "UK") location.UK += n;
+      else if (row.region_by_country === "JP") location.JP += n;
+      else if (row.region_by_country === "EU") location.EU += n;
+    }
 
     return {
-      liveNow: total,
-      regionTotalsByPlatform: {
-        all: total,
-        US: usBat + usClassic,
-        EU: eu + euElferspot,
-        UK: uk,
-        JP: jp,
-      },
-      regionTotalsByLocation: {
-        all: total,
-        US: locationUs,
-        UK: locationUk,
-        JP: locationJp,
-        EU: locationEu,
-      },
+      liveNow: platform.all,
+      regionTotalsByPlatform: platform,
+      regionTotalsByLocation: location,
     };
-  } catch (error) {
-    console.error("[supabaseLiveListings] fetchLiveListingAggregateCounts failed:", error);
-    return {
-      liveNow: 0,
-      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-    };
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchLiveListingAggregateCounts threw:", err);
+    return empty;
   }
-  })().then((data) => {
-    _aggregateCountsCache.set(cacheKey, { data, expiresAt: Date.now() + AGGREGATE_COUNTS_TTL_MS });
-    _aggregateCountsInflight.delete(cacheKey);
-    return data;
-  }).catch((error) => {
-    _aggregateCountsInflight.delete(cacheKey);
-    throw error;
-  });
-
-  _aggregateCountsInflight.set(cacheKey, run);
-  return run;
 }
 
 export function interleaveResultsBySource<T>(resultsBySource: T[][], limit: number): T[] {
