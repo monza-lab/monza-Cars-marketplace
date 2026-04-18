@@ -1260,7 +1260,7 @@ const SORT_COLUMN_MAP: Record<string, string> = {
 export async function fetchPaginatedListings(options: {
   make: string;
   pageSize?: number;
-  offset?: number;
+  cursor?: { endTime: string | null; id: string } | null;
   region?: string | null;
   platform?: string | null;
   query?: string | null;
@@ -1272,18 +1272,17 @@ export async function fetchPaginatedListings(options: {
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
-  totalCount?: number;
+  nextCursor: { endTime: string | null; id: string } | null;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { cars: [], hasMore: false };
+    return { cars: [], hasMore: false, nextCursor: null };
   }
 
   const pageSize = options.pageSize ?? 50;
-  const offset = options.offset ?? 0;
   const targetMake = resolveRequestedMake(options.make);
 
   try {
@@ -1364,25 +1363,35 @@ export async function fetchPaginatedListings(options: {
       );
     }
 
-    // Sorting
-    const sortColumn = SORT_COLUMN_MAP[options.sortBy ?? "endTime"] ?? "end_time";
-    const ascending = (options.sortOrder ?? "asc") === "asc";
-    query = query.order(sortColumn, { ascending, nullsFirst: false });
-
-    // Secondary sort for stable pagination
-    if (sortColumn !== "id") {
-      query = query.order("id", { ascending: false });
+    // Keyset cursor filter — applied AFTER all other filters.
+    // Uses the partial index: listings_active_endtime_id_idx ON (end_time ASC NULLS LAST, id DESC)
+    if (options.cursor) {
+      const { endTime, id } = options.cursor;
+      if (endTime !== null) {
+        // Rows with (end_time > cursor.endTime) OR (end_time == cursor.endTime AND id < cursor.id)
+        query = query.or(
+          `end_time.gt.${endTime},and(end_time.eq.${endTime},id.lt.${id})`,
+        );
+      } else {
+        // endTime null means we're past all non-null rows; paginate by id among the nulls.
+        query = query.is("end_time", null).lt("id", id);
+      }
     }
 
+    // TODO: sortBy / sortOrder params are accepted for API compatibility but ignored here.
+    // Keyset pagination requires a FIXED ORDER BY that matches the cursor comparison.
+    // Client-side sort of the loaded pages covers the sort UX for now.
+    query = query.order("end_time", { ascending: true, nullsFirst: false });
+    query = query.order("id", { ascending: false });
+
     // Fetch pageSize + 1 to determine hasMore
-    const fetchCount = pageSize + 1;
-    query = query.range(offset, offset + fetchCount - 1);
+    query = query.limit(pageSize + 1);
 
     const { data, error } = await query;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
-      return { cars: [], hasMore: false };
+      return { cars: [], hasMore: false, nextCursor: null };
     }
 
     const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
@@ -1391,10 +1400,15 @@ export async function fetchPaginatedListings(options: {
 
     const cars = pageRows.map((row) => rowToCollectorCar(row));
 
-    return { cars, hasMore };
+    const lastRow = pageRows[pageRows.length - 1] ?? null;
+    const nextCursor = hasMore && lastRow
+      ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
+      : null;
+
+    return { cars, hasMore, nextCursor };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
-    return { cars: [], hasMore: false };
+    return { cars: [], hasMore: false, nextCursor: null };
   }
 }
 
