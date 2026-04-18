@@ -1,5 +1,6 @@
 {
   "nav": {
+    "liveListings": "Anuncios en Vivo",
     "liveAuctions": "Subastas en Vivo",
     "marketSearch": "Búsqueda de Mercado",
     "priceHistory": "Historial de Precios",
@@ -24,6 +25,25 @@
     "tryAnother": "Intenta con otra marca o modelo",
     "searchPlaceholder": "Buscar por marca, modelo, año...",
     "cancel": "Cancelar"
+  },
+  "menu": {
+    "profile": {
+      "welcome": "Bienvenido",
+      "signInHint": "Inicia sesión para comenzar a analizar"
+    },
+    "credits": {
+      "label": "Créditos",
+      "perReport": "1 crédito por análisis",
+      "buy": "Comprar más"
+    },
+    "watchlist": {
+      "title": "Lista de Seguimiento",
+      "empty": "Aún no has guardado vehículos"
+    },
+    "recentAnalyses": {
+      "title": "Análisis Recientes",
+      "empty": "Aún no hay análisis"
+    }
   },
   "auth": {
     "signIn": "Iniciar Sesión",
@@ -713,6 +733,7 @@
       "similarCars": "Autos similares",
       "browseBrand": "Explorar marca",
       "viewLiveAuctions": "Ver subastas en vivo",
+      "viewLiveListings": "Ver anuncios en vivo",
       "browseAll": "Ver todo",
       "browseByBrand": "Explorar por marca",
       "viewAllUnderBudget": "Ver todo bajo presupuesto",
@@ -889,6 +910,18 @@
     },
     "common": {
       "none": "—"
+    },
+    "poweredBy": "Impulsado por Monza Lab",
+    "hint": {
+      "navigate": "para navegar",
+      "select": "para seleccionar",
+      "close": "para cerrar"
+    },
+    "resultType": {
+      "family": "Familia",
+      "series": "Serie",
+      "variant": "Variante",
+      "link": "Enlace"
     }
   },
   "auctionsList": {
