@@ -3,22 +3,26 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock Supabase
 const mockUpdate = vi.fn();
 const mockLimit = vi.fn();
+const orCalls: string[] = [];
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            // When source !== "all", .eq("source", x) is called after .or()
-            eq: vi.fn().mockReturnValue({
+          or: vi.fn((expr: string) => {
+            orCalls.push(expr);
+            return {
+              // When source !== "all", .eq("source", x) is called after .or()
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  limit: mockLimit,
+                }),
+              }),
               order: vi.fn().mockReturnValue({
                 limit: mockLimit,
               }),
-            }),
-            order: vi.fn().mockReturnValue({
-              limit: mockLimit,
-            }),
+            };
           }),
         }),
       }),
@@ -42,6 +46,7 @@ describe("backfillImages module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
+    orCalls.length = 0;
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
@@ -112,5 +117,18 @@ describe("backfillImages module", () => {
       expect.objectContaining({ images: ["__dead_url__"] })
     );
     expect(result.errors[0]).toContain("Dead URL");
+  });
+
+  it("queries with photos_count.lt.2 in addition to empty images", async () => {
+    orCalls.length = 0;
+    mockLimit.mockResolvedValueOnce({ data: [], error: null });
+    const { backfillImagesForSource } = await import("./backfillImages");
+    await backfillImagesForSource({
+      source: "BaT",
+      maxListings: 1,
+      delayMs: 0,
+      timeBudgetMs: 5000,
+    });
+    expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.2");
   });
 });
