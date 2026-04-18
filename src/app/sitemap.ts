@@ -22,6 +22,7 @@ function buildAlternates(path: string) {
   for (const locale of LOCALES) {
     languages[locale] = `${BASE_URL}/${locale}${path}`
   }
+  languages["x-default"] = `${BASE_URL}/en${path}`
   return { languages }
 }
 
