@@ -164,7 +164,7 @@ export function AdvancedFilters({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">${(priceRange[0] / 1000).toFixed(0)}k</span>
-              <span className="text-foreground font-mono">${(priceRange[1] / 1000).toFixed(0)}k</span>
+              <span className="text-foreground tabular-nums">${(priceRange[1] / 1000).toFixed(0)}k</span>
             </div>
             <input
               type="range"
@@ -183,7 +183,7 @@ export function AdvancedFilters({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">{yearRange[0]}</span>
-              <span className="text-foreground font-mono">{yearRange[1]}</span>
+              <span className="text-foreground tabular-nums">{yearRange[1]}</span>
             </div>
             <input
               type="range"
@@ -292,10 +292,10 @@ export function AdvancedFilters({
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all ${
                   selectedGrades.includes(grade.id)
                     ? grade.id === "AAA"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      ? "bg-positive/20 text-positive border border-positive/30"
                       : grade.id === "AA"
                         ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                        : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "bg-amber-500/20 text-destructive border border-amber-500/30"
                     : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                 }`}
               >

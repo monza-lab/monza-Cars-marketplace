@@ -26,7 +26,6 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
           sizes="80px"
           loading="lazy"
           referrerPolicy="no-referrer"
-          unoptimized
           fallback={
             <div className="absolute inset-0 flex items-center justify-center">
               <Car className="size-5 text-muted-foreground" />
@@ -44,7 +43,7 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
           {t("mobileFeed.vehicles", { count: brand.carCount })}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] font-mono text-primary">
+          <span className="text-[12px] tabular-nums text-primary">
             {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
           <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
@@ -55,7 +54,7 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <span className={`text-[10px] font-bold ${
           brand.topGrade === "AAA"
-            ? "text-emerald-400"
+            ? "text-positive"
             : brand.topGrade === "AA"
               ? "text-primary"
               : "text-muted-foreground"

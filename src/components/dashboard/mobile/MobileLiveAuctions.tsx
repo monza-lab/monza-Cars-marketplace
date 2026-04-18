@@ -35,7 +35,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
     <div className="mt-6">
       {/* Section header */}
       <div className="px-4 py-3 flex items-center gap-2">
-        <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="size-2 rounded-full bg-positive animate-pulse" />
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
           {t("mobileFeed.liveListings")}
         </span>
@@ -66,7 +66,6 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
                   sizes="64px"
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  unoptimized
                   fallback={
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Car className="size-3.5 text-muted-foreground" />
@@ -92,9 +91,9 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
 
               {/* Time */}
               <div className="flex items-center gap-1 shrink-0">
-                <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
-                <span className={`text-[10px] font-mono font-medium ${
-                  isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
+                <Clock className={`size-3 ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`} />
+                <span className={`text-[10px] tabular-nums font-medium ${
+                  isEndingSoon ? "text-destructive" : "text-muted-foreground"
                 }`}>
                   {remaining}
                 </span>

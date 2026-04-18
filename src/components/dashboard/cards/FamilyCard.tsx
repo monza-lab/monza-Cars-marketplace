@@ -32,7 +32,6 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
             priority={index === 0}
             loading={index === 0 ? "eager" : "lazy"}
             referrerPolicy="no-referrer"
-            unoptimized
             fallbackSrc={family.fallbackImage}
             fallback={
               <div className="absolute inset-0 bg-card flex items-center justify-center">
@@ -55,7 +54,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
           <div className="absolute top-4 left-4">
             <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
               family.topGrade === "AAA"
-                ? "bg-emerald-500/30 text-emerald-300"
+                ? "bg-positive/30 text-positive"
                 : family.topGrade === "AA"
                 ? "bg-primary/30 text-primary"
                 : "bg-foreground/20 text-white"
@@ -86,7 +85,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-foreground">
+              <p className="text-[13px] tabular-nums text-foreground">
                 {formatPrice(family.priceMin)}–{formatPrice(family.priceMax)}
               </p>
             </div>
@@ -96,7 +95,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
                 <Calendar className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Years</span>
               </div>
-              <p className="text-[13px] font-mono text-foreground">{yearLabel}</p>
+              <p className="text-[13px] tabular-nums text-foreground">{yearLabel}</p>
             </div>
 
             <div className="space-y-1">

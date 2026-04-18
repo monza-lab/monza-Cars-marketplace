@@ -106,7 +106,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 priority={selectedIndex === 0}
                 onLoad={() => setMainLoaded(true)}
                 referrerPolicy="no-referrer"
-                unoptimized
               />
             </motion.div>
           </AnimatePresence>
@@ -114,7 +113,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
           {/* Fullscreen button */}
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 opacity-0 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-amber-400 group-hover:opacity-100"
+            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 opacity-0 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
             aria-label="View fullscreen"
           >
             <Expand className="size-4" />
@@ -129,7 +128,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 className={cn(
                   "absolute left-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm transition-all",
                   hasPrev
-                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-amber-400 group-hover:opacity-100"
+                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
                     : "pointer-events-none opacity-0"
                 )}
                 aria-label="Previous image"
@@ -142,7 +141,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 className={cn(
                   "absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm transition-all",
                   hasNext
-                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-amber-400 group-hover:opacity-100"
+                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
                     : "pointer-events-none opacity-0"
                 )}
                 aria-label="Next image"
@@ -193,7 +192,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     setThumbnailsLoaded((prev) => ({ ...prev, [index]: true }))
                   }
                   referrerPolicy="no-referrer"
-                  unoptimized
                 />
               </div>
 
@@ -220,7 +218,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
             {/* Close button */}
             <button
               onClick={() => setLightboxOpen(false)}
-              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-amber-400"
+              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-destructive"
               aria-label="Close lightbox"
             >
               <X className="size-5" />
@@ -245,7 +243,6 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     sizes="90vw"
                     priority
                     referrerPolicy="no-referrer"
-                    unoptimized
                   />
                 </motion.div>
               </AnimatePresence>
@@ -262,7 +259,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   className={cn(
                     "absolute left-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm",
                     hasPrev
-                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-amber-400"
+                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-destructive"
                       : "pointer-events-none opacity-30"
                   )}
                   aria-label="Previous image"
@@ -277,7 +274,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   className={cn(
                     "absolute right-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm",
                     hasNext
-                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-amber-400"
+                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-destructive"
                       : "pointer-events-none opacity-30"
                   )}
                   aria-label="Next image"

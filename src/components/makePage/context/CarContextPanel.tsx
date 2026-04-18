@@ -67,9 +67,9 @@ export function CarContextPanel({
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
               <p className={`text-[16px] font-bold ${
-                grade === "AAA" ? "text-emerald-400"
+                grade === "AAA" ? "text-positive"
                   : grade === "AA" ? "text-blue-400"
-                    : grade === "A" ? "text-amber-400"
+                    : grade === "A" ? "text-destructive"
                       : "text-muted-foreground"
               }`}>{grade}</p>
             </div>
@@ -82,7 +82,7 @@ export function CarContextPanel({
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Status</span>
               <p className={`text-[13px] font-semibold ${
-                isEndingSoon ? "text-orange-400" : car.status === "ACTIVE" ? "text-emerald-400" : "text-muted-foreground"
+                isEndingSoon ? "text-destructive" : car.status === "ACTIVE" ? "text-positive" : "text-muted-foreground"
               }`}>
                 {isEndingSoon ? "Ending Soon" : getStatusLabel(car.platform, car.status)}
               </p>
@@ -102,7 +102,7 @@ export function CarContextPanel({
             {car.mileage && (
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">Mileage</span>
-                <span className="text-[12px] font-mono font-semibold text-foreground">{car.mileage.toLocaleString()} mi</span>
+                <span className="text-[12px] tabular-nums font-semibold text-foreground">{car.mileage.toLocaleString()} mi</span>
               </div>
             )}
             {car.transmission && (
@@ -132,7 +132,7 @@ export function CarContextPanel({
             {car.endTime && isAuctionPlatform(car.platform) && (
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">Time Left</span>
-                <span className={`text-[12px] font-mono font-semibold ${isEndingSoon ? "text-orange-400" : "text-foreground"}`}>
+                <span className={`text-[12px] tabular-nums font-semibold ${isEndingSoon ? "text-destructive" : "text-foreground"}`}>
                   {timeLeft(new Date(car.endTime), {
                     ended: tAuction("time.ended"),
                     day: tAuction("time.units.day"),
@@ -183,7 +183,7 @@ export function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">

@@ -162,7 +162,7 @@ function ResultItem({ result, onSelect, isActive }: { result: SearchResult; onSe
             {result.name}
           </span>
           {result.generation && (
-            <span className="text-[9px] text-muted-foreground font-mono">
+            <span className="text-[9px] text-muted-foreground tabular-nums">
               {result.generation}
             </span>
           )}
@@ -174,7 +174,7 @@ function ResultItem({ result, onSelect, isActive }: { result: SearchResult; onSe
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-mono text-muted-foreground">
+        <span className="text-[10px] tabular-nums text-muted-foreground">
           {result.count}
         </span>
         <ArrowRight className="size-3 text-muted-foreground" />

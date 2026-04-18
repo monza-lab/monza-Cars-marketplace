@@ -61,7 +61,7 @@ export function LiveAuctionsSection() {
 
           <Link
             href="/auctions"
-            className="group inline-flex items-center gap-1.5 text-[11px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)] transition-colors hover:text-primary"
+            className="group inline-flex items-center gap-1.5 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground transition-colors hover:text-primary"
           >
             View All
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

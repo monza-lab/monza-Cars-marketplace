@@ -156,7 +156,7 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                   <div>
                     <h3 className="text-[13px] font-semibold text-foreground">Monza Advisor</h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="size-1.5 rounded-full bg-positive animate-pulse" />
                       <span className="text-[10px] text-muted-foreground">
                         {profile?.name
                           ? `Helping ${profile.name.split(" ")[0]}`
@@ -186,10 +186,10 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                   </span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
                     car.investmentGrade === "AAA"
-                      ? "bg-emerald-500/15 text-emerald-400"
+                      ? "bg-positive/15 text-positive"
                       : car.investmentGrade === "AA"
                         ? "bg-blue-500/15 text-blue-400"
-                        : "bg-amber-500/15 text-amber-400"
+                        : "bg-amber-500/15 text-destructive"
                   }`}>
                     {car.investmentGrade}
                   </span>

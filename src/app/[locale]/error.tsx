@@ -21,8 +21,8 @@ export default function Error({
 
       <div className="relative text-center max-w-md">
         {/* Icon */}
-        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-[#FB923C]/10">
-          <AlertTriangle className="size-8 text-[#FB923C]" />
+        <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-destructive/10">
+          <AlertTriangle className="size-8 text-destructive" />
         </div>
 
         {/* Heading */}
@@ -36,7 +36,7 @@ export default function Error({
 
         {/* Error digest (dev info) */}
         {error.digest && (
-          <p className="mt-3 text-[11px] font-mono text-muted-foreground">
+          <p className="mt-3 text-[11px] tabular-nums text-muted-foreground">
             Error ID: {error.digest}
           </p>
         )}
@@ -44,7 +44,7 @@ export default function Error({
         {/* Decorative separator */}
         <div className="mx-auto my-8 flex items-center gap-3">
           <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/10" />
-          <div className="size-1.5 rounded-full bg-[#FB923C]/50" />
+          <div className="size-1.5 rounded-full bg-destructive/50" />
           <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/10" />
         </div>
 

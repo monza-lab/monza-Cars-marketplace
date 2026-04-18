@@ -41,9 +41,9 @@ export function ModelNavSidebar({
   // Grade color helper
   const gradeColor = (g: string) => {
     switch (g) {
-      case "AAA": return "text-emerald-400"
+      case "AAA": return "text-positive"
       case "AA": return "text-blue-400"
-      case "A": return "text-amber-400"
+      case "A": return "text-destructive"
       default: return "text-muted-foreground"
     }
   }
@@ -61,11 +61,11 @@ export function ModelNavSidebar({
             <h1 className="text-[13px] font-bold text-foreground tracking-wide uppercase hover:text-primary transition-colors">{make}</h1>
           </a>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-primary">{cars.length}</span>
+            <span className="text-[10px] tabular-nums text-primary">{cars.length}</span>
             {liveCount > 0 && (
               <span className="flex items-center gap-1">
-                <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[9px] text-emerald-400">{liveCount}</span>
+                <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+                <span className="text-[9px] text-positive">{liveCount}</span>
               </span>
             )}
           </div>
@@ -107,7 +107,7 @@ export function ModelNavSidebar({
                     sizes="56px"
                   />
                   {model.liveCount > 0 && (
-                    <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-positive animate-pulse" />
                   )}
                 </div>
                 {/* Model info */}
@@ -125,7 +125,7 @@ export function ModelNavSidebar({
                     <span className="text-[10px] text-muted-foreground">{model.years}</span>
                     <span className="text-[10px] text-muted-foreground">{model.carCount} cars</span>
                   </div>
-                  <span className="text-[11px] font-mono text-primary mt-0.5 block">
+                  <span className="text-[11px] tabular-nums text-primary mt-0.5 block">
                     {formatPrice(model.priceMin)}-{formatPrice(model.priceMax)}
                   </span>
                 </div>
@@ -139,14 +139,14 @@ export function ModelNavSidebar({
           {/* Live header */}
           <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-background/40">
             <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-positive" />
             </span>
-            <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
+            <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-positive">
               LATEST LISTINGS
             </span>
             {liveCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
+              <span className="px-1.5 py-0.5 rounded-full bg-positive/10 text-[9px] font-bold text-positive">
                 {liveCount}
               </span>
             )}
@@ -177,7 +177,7 @@ export function ModelNavSidebar({
                         className="object-cover"
                         sizes="56px"
                       />
-                      <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-positive animate-pulse" />
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -188,7 +188,7 @@ export function ModelNavSidebar({
                         <span className="text-[11px] font-display font-medium text-primary">
                           {formatPrice(car.currentBid)}
                         </span>
-                        <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
+                        <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`}>
                           <Clock className="size-2.5" />
                           {timeLeft(new Date(car.endTime), {
                             ended: tAuction("time.ended"),

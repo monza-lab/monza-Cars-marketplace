@@ -13,7 +13,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
-  --font-mono: var(--font-geist-mono);
 
   /* Semantic Colors */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -55,6 +54,17 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
+  /* Typography Scale (~1.25× step) */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.625rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.625rem;
+  --text-5xl: 3.5rem;
+
   /* ═══════════════════════════════════════════════════════════════════════════
      SALON — Design Tokens
      ═══════════════════════════════════════════════════════════════════════════ */
@@ -78,6 +88,7 @@
   --color-warning: #FBBF24;
 
   /* Legacy aliases for compatibility */
+  /* @deprecated — use --color-salon-* directly */
   --color-obsidian: #0E0A0C;
   --color-obsidian-card: #161113;
   --color-obsidian-surface: rgba(22, 17, 19, 0.9);
@@ -111,7 +122,7 @@
 
   /* ─── SECONDARY ─── */
   --secondary: rgba(122, 46, 74, 0.06);
-  --secondary-foreground: #9A8E88;
+  --secondary-foreground: #6B5F5A;
 
   /* ─── MUTED ─── */
   --muted: rgba(42, 35, 32, 0.04);
@@ -345,37 +356,6 @@
     border-color: rgba(251, 146, 60, 0.2);
   }
 
-  /* ─── ROSE GRADIENT TEXT ─── */
-  .text-gradient {
-    background: linear-gradient(
-      90deg,
-      #5C1A33 0%,
-      #7A2E4A 30%,
-      #5C1A33 60%,
-      #4A1228 80%,
-      #5C1A33 100%
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: text-gradient-shimmer 8s ease-in-out infinite;
-  }
-  .dark .text-gradient {
-    background: linear-gradient(
-      90deg,
-      #D4738A 0%,
-      #e091a8 30%,
-      #D4738A 60%,
-      #c45f7a 80%,
-      #D4738A 100%
-    );
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
   /* ─── GLASSMORPHISM CARD ─── */
   .glass-card {
     background: rgba(255, 255, 255, 0.7);
@@ -508,12 +488,6 @@
 /* ═════════════════════════════════════════════════════════════════════════════
    Animations
    ═════════════════════════════════════════════════════════════════════════════ */
-
-@keyframes text-gradient-shimmer {
-  0% { background-position: 0% center; }
-  50% { background-position: 100% center; }
-  100% { background-position: 0% center; }
-}
 
 @keyframes blink {
   0%, 100% { opacity: 1; }

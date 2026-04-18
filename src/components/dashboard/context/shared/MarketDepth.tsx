@@ -28,15 +28,15 @@ export function MarketDepthSection({ depth }: MarketDepthProps) {
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-muted-foreground">{t("brandContext.listingsPerYear")}</span>
-          <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
+          <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-muted-foreground">{t("brandContext.avgDaysToSell")}</span>
-          <span className="text-[12px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</span>
+          <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[11px] text-muted-foreground">{t("brandContext.sellThroughRate")}</span>
-          <span className="text-[12px] font-mono font-semibold text-positive">{depth.sellThroughRate}%</span>
+          <span className="text-[12px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</span>
         </div>
         {/* Demand score visual */}
         <div>

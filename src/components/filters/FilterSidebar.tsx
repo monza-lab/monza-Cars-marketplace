@@ -333,7 +333,7 @@ export function FilterSidebar() {
                     {family.label}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground">
+                <span className="text-[10px] tabular-nums text-muted-foreground">
                   {family.count}
                 </span>
               </button>
@@ -368,7 +368,7 @@ export function FilterSidebar() {
                     {gen.label}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground">
+                <span className="text-[10px] tabular-nums text-muted-foreground">
                   {gen.count}
                 </span>
               </button>
@@ -404,7 +404,7 @@ export function FilterSidebar() {
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                   Caballos de fuerza
                 </span>
-                <span className="text-[10px] font-mono text-primary">
+                <span className="text-[10px] tabular-nums text-primary">
                   {hpRange[0]} - {hpRange[1]} HP
                 </span>
               </div>
@@ -429,7 +429,7 @@ export function FilterSidebar() {
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                   0-60 mph
                 </span>
-                <span className="text-[10px] font-mono text-primary">
+                <span className="text-[10px] tabular-nums text-primary">
                   2.5s - 6.0s
                 </span>
               </div>
@@ -451,7 +451,7 @@ export function FilterSidebar() {
               <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                 Rango de precio
               </span>
-              <span className="text-[10px] font-mono text-primary">
+              <span className="text-[10px] tabular-nums text-primary">
                 ${priceRange[0]}K - ${priceRange[1]}K
               </span>
             </div>
@@ -518,13 +518,13 @@ export function FilterSidebar() {
               onClick={() => setOnlyInvestmentGrade(!onlyInvestmentGrade)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 onlyInvestmentGrade
-                  ? "bg-emerald-400/10 border border-emerald-400/30"
+                  ? "bg-positive/10 border border-positive/30"
                   : "bg-foreground/2 border border-transparent hover:bg-foreground/4"
               }`}
             >
               <div className={`size-4 rounded border flex items-center justify-center ${
                 onlyInvestmentGrade
-                  ? "bg-emerald-400 border-emerald-400"
+                  ? "bg-positive border-positive"
                   : "border-border/80"
               }`}>
                 {onlyInvestmentGrade && <Check className="size-3 text-primary-foreground" />}
@@ -540,7 +540,7 @@ export function FilterSidebar() {
       {/* FOOTER CON BOTONES */}
       <div className="px-5 py-4 border-t border-border bg-background/95 backdrop-blur-sm space-y-3">
         <div className="text-center">
-          <span className="text-[10px] font-mono text-muted-foreground">
+          <span className="text-[10px] tabular-nums text-muted-foreground">
             45 modelos encontrados
           </span>
         </div>

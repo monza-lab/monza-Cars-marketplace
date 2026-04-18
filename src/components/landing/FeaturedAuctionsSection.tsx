@@ -14,11 +14,11 @@ import { useTranslations } from "next-intl"
 function getGradeBadgeStyle(grade: FeaturedAuction["investmentGrade"]): string {
   switch (grade) {
     case "AAA":
-      return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+      return "bg-positive/15 text-positive border-positive/30"
     case "AA":
       return "bg-primary/15 text-primary border-primary/30"
     case "A":
-      return "bg-amber-500/15 text-amber-400 border-amber-500/30"
+      return "bg-amber-500/15 text-destructive border-amber-500/30"
     default:
       return "bg-zinc-500/15 text-zinc-400 border-zinc-500/30"
   }
@@ -68,7 +68,6 @@ function FeaturedCard({
           sizes={isHero ? "(max-width: 1024px) 100vw, 66vw" : "(max-width: 1024px) 100vw, 33vw"}
           priority={index < 2}
           referrerPolicy="no-referrer"
-          unoptimized
         />
 
         {/* Gradient overlay */}
@@ -80,9 +79,9 @@ function FeaturedCard({
             {getPlatformDisplayName(auction.platform)}
           </span>
           {auction.verified && (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 backdrop-blur-md px-2.5 py-1.5 border border-emerald-500/30">
-              <BadgeCheck className="size-3 text-emerald-400" />
-              <span className="text-[9px] font-semibold tracking-wider uppercase text-emerald-400">
+            <span className="flex items-center gap-1 rounded-full bg-positive/20 backdrop-blur-md px-2.5 py-1.5 border border-positive/30">
+              <BadgeCheck className="size-3 text-positive" />
+              <span className="text-[9px] font-semibold tracking-wider uppercase text-positive">
                 {labels.verified}
               </span>
             </span>
@@ -96,8 +95,8 @@ function FeaturedCard({
               auction.status === "SOLD"
                 ? "bg-primary/20 text-primary border border-primary/30"
                 : auction.status === "ACTIVE"
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                ? "bg-positive/20 text-positive border border-positive/30"
+                : "bg-amber-500/20 text-destructive border border-amber-500/30"
             }`}
           >
             {auction.status === "SOLD"
@@ -120,7 +119,7 @@ function FeaturedCard({
               <TrendingUp className="size-2.5" />
               {auction.investmentGrade}
             </span>
-            <span className="text-[10px] text-[rgba(232,226,222,0.5)]">
+            <span className="text-[10px] text-muted-foreground">
               {auction.mileage.toLocaleString()} {auction.mileageUnit}
             </span>
           </div>
@@ -135,14 +134,14 @@ function FeaturedCard({
           </h3>
 
           {/* Color & Engine */}
-          <p className="text-[12px] text-[rgba(232,226,222,0.5)] mt-1">
+          <p className="text-[12px] text-muted-foreground mt-1">
             {auction.exteriorColor} · {auction.engine}
           </p>
 
           {/* Price */}
           <div className="flex items-end justify-between mt-3">
             <div>
-              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
+              <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
                 {auction.status === "SOLD" ? labels.hammerPrice : labels.currentBid}
               </p>
               <p className={`font-display font-medium text-primary ${isHero ? "text-3xl" : "text-xl"}`}>
@@ -167,7 +166,7 @@ function FeaturedCard({
       {/* Highlight text (Hero only) */}
       {isHero && (
         <div className="px-5 py-4 border-t border-border">
-          <p className="text-[13px] text-[rgba(232,226,222,0.6)] leading-relaxed">
+          <p className="text-[13px] text-foreground/70 leading-relaxed">
             {auction.highlight}
           </p>
         </div>
@@ -216,7 +215,7 @@ export function FeaturedAuctionsSection() {
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             {tSections("featuredListings")}
           </h2>
-          <p className="mt-2 text-[14px] text-[rgba(232,226,222,0.5)] max-w-xl">
+          <p className="mt-2 text-[14px] text-muted-foreground max-w-xl">
             {tFeatured("subtitle")}
           </p>
         </motion.div>
@@ -239,7 +238,7 @@ export function FeaturedAuctionsSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          className="mt-6 text-center text-[10px] text-[rgba(232,226,222,0.25)]"
+          className="mt-6 text-center text-[10px] text-muted-foreground/60"
         >
           {tFeatured("dataNote")}
         </motion.p>

@@ -54,7 +54,7 @@ export function BillingDashboard() {
         <div className="mb-5">
           <span
             className={`text-4xl font-bold ${
-              credits > 0 ? "text-primary" : "text-[#FB923C]"
+              credits > 0 ? "text-primary" : "text-destructive"
             }`}
           >
             {credits}

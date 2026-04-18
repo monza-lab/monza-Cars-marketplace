@@ -61,9 +61,9 @@ export class ErrorBoundary extends React.Component<
               {/* Icon */}
               <div className="mb-6 flex justify-center">
                 <div className="relative">
-                  <div className="absolute -inset-3 rounded-full bg-red-500/10 blur-md" />
-                  <div className="relative flex size-14 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
-                    <AlertTriangle className="size-7 text-red-400" />
+                  <div className="absolute -inset-3 rounded-full bg-destructive/10 blur-md" />
+                  <div className="relative flex size-14 items-center justify-center rounded-full border border-destructive/20 bg-destructive/10">
+                    <AlertTriangle className="size-7 text-destructive" />
                   </div>
                 </div>
               </div>
@@ -82,11 +82,11 @@ export class ErrorBoundary extends React.Component<
               {/* Error details (collapsible) */}
               {this.state.error && (
                 <details className="mb-6 group">
-                  <summary className="cursor-pointer text-xs font-medium text-zinc-500 transition-colors hover:text-amber-500">
+                  <summary className="cursor-pointer text-xs font-medium text-zinc-500 transition-colors hover:text-destructive">
                     View error details
                   </summary>
                   <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-                    <code className="block overflow-x-auto whitespace-pre-wrap text-xs text-red-400/80">
+                    <code className="block overflow-x-auto whitespace-pre-wrap text-xs text-destructive/80">
                       {this.state.error.message}
                     </code>
                   </div>

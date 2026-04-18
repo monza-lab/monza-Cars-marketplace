@@ -158,12 +158,12 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           </div>
 
           {error && (
-            <p className="text-sm text-[#FB923C]">{error}</p>
+            <p className="text-sm text-destructive">{error}</p>
           )}
 
           {success && (
             <div className="space-y-2">
-              <p className="text-sm text-[#34D399]">{success}</p>
+              <p className="text-sm text-positive">{success}</p>
               {mode === 'signup' && (
                 <button
                   type="button"

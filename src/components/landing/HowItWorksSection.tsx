@@ -54,9 +54,9 @@ export function HowItWorksSection() {
           </span>
           <h2 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
             {t("title1")}{" "}
-            <span className="font-semibold text-gradient">{t("title2")}</span>
+            <span className="font-semibold text-primary">{t("title2")}</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-[rgba(232,226,222,0.45)] font-light">
+          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground font-light">
             {t("subtitle")}
           </p>
         </motion.div>
@@ -80,7 +80,7 @@ export function HowItWorksSection() {
               <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/8 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
 
               {/* Step number */}
-              <span className="mb-6 inline-block font-mono text-[11px] font-medium tracking-[0.1em] text-[rgba(232,226,222,0.2)]">
+              <span className="mb-6 inline-block tabular-nums text-[11px] font-medium tracking-[0.1em] text-muted-foreground/60">
                 {step.number}
               </span>
 
@@ -93,7 +93,7 @@ export function HowItWorksSection() {
               <h3 className="mb-3 text-lg font-semibold text-foreground">
                 {t(step.titleKey)}
               </h3>
-              <p className="text-sm leading-relaxed text-[rgba(232,226,222,0.4)] font-light">
+              <p className="text-sm leading-relaxed text-muted-foreground font-light">
                 {t(step.descriptionKey)}
               </p>
 

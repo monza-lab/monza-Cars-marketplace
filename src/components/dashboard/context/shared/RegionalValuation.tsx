@@ -48,7 +48,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
                 )}
               </div>
               <div className="flex items-baseline justify-between mb-1.5">
-                <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
+                <span className={`text-[13px] tabular-nums font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
                   {formatRegionalVal(localCurrent, currencySymbol)}
                 </span>
               </div>
@@ -59,7 +59,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
                 />
               </div>
               <div className="flex justify-end">
-                <span className="text-[8px] font-mono text-muted-foreground">
+                <span className="text-[8px] tabular-nums text-muted-foreground">
                   {formatUsdEquiv(val.usdCurrent)} USD
                 </span>
               </div>

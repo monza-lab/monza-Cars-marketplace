@@ -49,12 +49,12 @@ import { stripHtml } from "@/lib/stripHtml"
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
-  GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
+  GOODING: { short: "Gooding", color: "bg-positive/20 text-positive" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
 }
 
@@ -1489,7 +1489,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
           <Icon className="size-4 text-primary" />
         </div>
         <div>
-          <span className="text-[9px] font-mono text-muted-foreground tracking-wider">SECTION {String(sectionNumber).padStart(2, "0")}</span>
+          <span className="text-[9px] tabular-nums text-muted-foreground tracking-wider">SECTION {String(sectionNumber).padStart(2, "0")}</span>
           <h2 className="text-[16px] md:text-[18px] font-bold text-foreground leading-tight">{title}</h2>
         </div>
       </div>
@@ -1549,10 +1549,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
           <div className="flex items-center gap-2 mt-1.5">
             <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
               car.investmentGrade === "AAA"
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-400/20"
+                ? "bg-positive/15 text-positive border border-positive/20"
                 : car.investmentGrade === "AA"
                   ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                  : "bg-amber-500/15 text-amber-400 border border-amber-400/20"
+                  : "bg-amber-500/15 text-destructive border border-amber-400/20"
             }`}>{car.investmentGrade}</span>
             <span className="text-[10px] text-muted-foreground">{t("title")}</span>
           </div>
@@ -1573,7 +1573,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     : "text-muted-foreground hover:text-muted-foreground hover:bg-foreground/2"
                 }`}
               >
-                <span className="text-[9px] font-mono w-4 text-right">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[9px] tabular-nums w-4 text-right">{String(i + 1).padStart(2, "0")}</span>
                 {isLocked ? <Lock className="size-3.5 shrink-0" /> : <Icon className="size-3.5 shrink-0" />}
                 <span className="text-[11px] font-medium">{t(`sections.${id}`)}</span>
               </button>
@@ -1661,32 +1661,32 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.investmentGrade")}</span>
                   <p className={`text-[28px] font-black mt-1 ${
-                    car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
+                    car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
                   }`}>{car.investmentGrade}</p>
                 </div>
                 {/* Current Price */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                  <p className="text-[20px] font-bold font-mono text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                  <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
                 </div>
                 {/* Fair Value */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
-                  <p className="text-[14px] font-mono font-semibold text-foreground mt-2">
+                  <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
                     {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
                   </p>
                 </div>
                 {/* Market Position */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
-                  <p className={`text-[24px] font-bold font-mono mt-1 ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>
+                  <p className={`text-[24px] font-bold tabular-nums mt-1 ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>
                     {pricePosition}%
                   </p>
                 </div>
                 {/* Similar Cars */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
-                  <p className="text-[24px] font-bold font-mono text-foreground mt-1">{similarCars.length}</p>
+                  <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
                 </div>
                 {/* Risk Score */}
                 <div className="rounded-xl bg-card border border-border p-4">
@@ -1694,11 +1694,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${riskScore <= 30 ? "bg-emerald-400" : riskScore <= 50 ? "bg-amber-400" : "bg-red-400"}`}
+                        className={`h-full rounded-full ${riskScore <= 30 ? "bg-positive" : riskScore <= 50 ? "bg-amber-400" : "bg-destructive"}`}
                         style={{ width: `${riskScore}%` }}
                       />
                     </div>
-                    <span className={`text-[12px] font-bold ${riskScore <= 30 ? "text-emerald-400" : riskScore <= 50 ? "text-amber-400" : "text-red-400"}`}>
+                    <span className={`text-[12px] font-bold ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>
                       {riskScore}/100
                     </span>
                   </div>
@@ -1770,7 +1770,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     </div>
                     <div>
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
-                      <p className="text-[16px] font-mono font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                      <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
                     </div>
                     <div>
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
@@ -1779,8 +1779,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     <div>
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
                       <div className="flex items-center gap-1.5 mt-1">
-                        {isLive && <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-                        <span className={`text-[12px] font-semibold ${isLive ? "text-emerald-400" : "text-muted-foreground"}`}>
+                        {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
+                        <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
                           {car.status === "ENDED" ? "Ended" : isLive ? `Live · ${timeLeft(car.endTime)}` : car.status}
                         </span>
                       </div>
@@ -1814,7 +1814,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                               <span className="text-[14px]">{regionLabels[r].flag}</span>
                               <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
                               {isBest && (
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-400/20">
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-positive/15 text-positive border border-positive/20">
                                   {t("valuation.bestBuy")}
                                 </span>
                               )}
@@ -1824,7 +1824,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                                 </span>
                               )}
                             </div>
-                            <span className="text-[12px] font-mono text-muted-foreground">
+                            <span className="text-[12px] tabular-nums text-muted-foreground">
                               {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)} – {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
                             </span>
                           </div>
@@ -1833,7 +1833,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                               initial={{ width: 0 }}
                               animate={{ width: `${barWidth}%` }}
                               transition={{ duration: 0.8, delay: 0.1 }}
-                              className={`h-full rounded-full ${isBest ? "bg-emerald-400" : "bg-primary/40"}`}
+                              className={`h-full rounded-full ${isBest ? "bg-positive" : "bg-primary/40"}`}
                             />
                           </div>
                         </div>
@@ -1846,9 +1846,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
                     <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
                   </div>
                   <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
@@ -1860,18 +1860,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <div className="mt-2 flex items-center gap-1.5">
                     {isBelowFair ? (
                       <>
-                        <CheckCircle2 className="size-3.5 text-emerald-400" />
-                        <span className="text-[11px] font-medium text-emerald-400">{t("valuation.belowFair")}</span>
+                        <CheckCircle2 className="size-3.5 text-positive" />
+                        <span className="text-[11px] font-medium text-positive">{t("valuation.belowFair")}</span>
                       </>
                     ) : pricePosition > 80 ? (
                       <>
-                        <AlertTriangle className="size-3.5 text-red-400" />
-                        <span className="text-[11px] font-medium text-red-400">{t("valuation.aboveFair")}</span>
+                        <AlertTriangle className="size-3.5 text-destructive" />
+                        <span className="text-[11px] font-medium text-destructive">{t("valuation.aboveFair")}</span>
                       </>
                     ) : (
                       <>
-                        <Target className="size-3.5 text-amber-400" />
-                        <span className="text-[11px] font-medium text-amber-400">{t("valuation.atFair")}</span>
+                        <Target className="size-3.5 text-destructive" />
+                        <span className="text-[11px] font-medium text-destructive">{t("valuation.atFair")}</span>
                       </>
                     )}
                   </div>
@@ -1879,13 +1879,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
 
                 {/* Arbitrage alert */}
                 {hasArbitrage && (
-                  <div className="rounded-xl bg-emerald-400/[0.05] border border-emerald-400/20 p-5 mb-4">
+                  <div className="rounded-xl bg-positive/[0.05] border border-positive/20 p-5 mb-4">
                     <div className="flex items-start gap-3">
-                      <div className="size-8 rounded-lg bg-emerald-400/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <Globe className="size-4 text-emerald-400" />
+                      <div className="size-8 rounded-lg bg-positive/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <Globe className="size-4 text-positive" />
                       </div>
                       <div>
-                        <p className="text-[13px] font-semibold text-emerald-400 mb-1">{t("valuation.arbitrageAlert")}</p>
+                        <p className="text-[13px] font-semibold text-positive mb-1">{t("valuation.arbitrageAlert")}</p>
                         <p className="text-[12px] text-muted-foreground leading-relaxed">
                           {t("valuation.arbitrageDesc", { region: regionLabels[bestRegion]?.short || bestRegion, amount: formatUsd(arbitrageSavings) })}
                         </p>
@@ -1905,8 +1905,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                           <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                         </div>
                         <div className="text-right shrink-0 ml-3">
-                          <p className="text-[16px] font-bold font-mono text-foreground">{formatPrice(sale.price)}</p>
-                          <span className={`text-[10px] font-mono font-semibold ${sale.delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          <p className="text-[16px] font-bold tabular-nums text-foreground">{formatPrice(sale.price)}</p>
+                          <span className={`text-[10px] tabular-nums font-semibold ${sale.delta > 0 ? "text-positive" : "text-destructive"}`}>
                             {sale.delta > 0 ? "+" : ""}{sale.delta}%
                           </span>
                         </div>
@@ -1933,7 +1933,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[12px] font-semibold text-primary">Current Bid vs Fair Value</span>
-                        <span className={`text-[14px] font-mono font-bold ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>{pricePosition}%</span>
+                        <span className={`text-[14px] tabular-nums font-bold ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition}%</span>
                       </div>
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <motion.div
@@ -1950,9 +1950,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     </div>
                   </div>
                   {isBelowFair && (
-                    <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/[0.05] border border-emerald-400/10">
-                      <TrendingUp className="size-3.5 text-emerald-400" />
-                      <span className="text-[11px] text-emerald-400">Priced below fair value — potential opportunity</span>
+                    <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-positive/[0.05] border border-positive/10">
+                      <TrendingUp className="size-3.5 text-positive" />
+                      <span className="text-[11px] text-positive">Priced below fair value — potential opportunity</span>
                     </div>
                   )}
                 </div>
@@ -1984,15 +1984,15 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                                   )}
                                   <span className={`shrink-0 px-1.5 py-0.5 rounded text-[7px] font-bold ${
                                     c.investmentGrade === "AAA"
-                                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-400/20"
+                                      ? "bg-positive/15 text-positive border border-positive/20"
                                       : c.investmentGrade === "AA"
                                         ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                                        : "bg-amber-500/15 text-amber-400 border border-amber-400/20"
+                                        : "bg-amber-500/15 text-destructive border border-amber-400/20"
                                   }`}>
                                     {c.investmentGrade}
                                   </span>
                                 </div>
-                                <span className={`text-[12px] font-mono font-semibold shrink-0 ml-3 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
+                                <span className={`text-[12px] tabular-nums font-semibold shrink-0 ml-3 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
                                   {formatPrice(c.currentBid)}
                                 </span>
                               </div>
@@ -2005,7 +2005,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                                 />
                               </div>
                               <div className="flex items-center gap-3 mt-1">
-                                <span className={`text-[9px] ${c.trend === "Appreciating" ? "text-emerald-400" : c.trend === "Stable" ? "text-amber-400" : "text-red-400"}`}>
+                                <span className={`text-[9px] ${c.trend === "Appreciating" ? "text-positive" : c.trend === "Stable" ? "text-destructive" : "text-destructive"}`}>
                                   {c.trend}
                                 </span>
                                 <span className="text-[9px] text-muted-foreground">{c.category}</span>
@@ -2019,13 +2019,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                       <div className="mt-5 pt-4 border-t border-border grid grid-cols-3 gap-3">
                         <div className="text-center">
                           <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.avgPrice")}</span>
-                          <span className="text-[13px] font-mono font-bold text-foreground mt-0.5 block">
+                          <span className="text-[13px] tabular-nums font-bold text-foreground mt-0.5 block">
                             {formatPrice(Math.round(allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length))}
                           </span>
                         </div>
                         <div className="text-center">
                           <span className="text-[8px] font-medium tracking-[0.1em] uppercase text-muted-foreground block">{t("performance.priceRank")}</span>
-                          <span className="text-[13px] font-mono font-bold text-primary mt-0.5 block">
+                          <span className="text-[13px] tabular-nums font-bold text-primary mt-0.5 block">
                             #{[...allCars].sort((a, b) => b.currentBid - a.currentBid).findIndex(c => "isCurrent" in c && c.isCurrent) + 1}/{allCars.length}
                           </span>
                         </div>
@@ -2035,7 +2035,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                             const avg = similarCars.reduce((s, c) => s + c.car.currentBid, 0) / similarCars.length
                             const diff = ((car.currentBid - avg) / avg) * 100
                             return (
-                              <span className={`text-[13px] font-mono font-bold mt-0.5 block ${diff > 0 ? "text-primary" : "text-emerald-400"}`}>
+                              <span className={`text-[13px] tabular-nums font-bold mt-0.5 block ${diff > 0 ? "text-primary" : "text-positive"}`}>
                                 {diff > 0 ? "+" : ""}{diff.toFixed(0)}%
                               </span>
                             )
@@ -2071,13 +2071,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                         />
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-[9px] text-emerald-400">{t("risk.low")}</span>
-                        <span className="text-[9px] text-amber-400">{t("risk.moderate")}</span>
-                        <span className="text-[9px] text-red-400">{t("risk.high")}</span>
+                        <span className="text-[9px] text-positive">{t("risk.low")}</span>
+                        <span className="text-[9px] text-destructive">{t("risk.moderate")}</span>
+                        <span className="text-[9px] text-destructive">{t("risk.high")}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`text-[28px] font-black ${riskScore <= 30 ? "text-emerald-400" : riskScore <= 50 ? "text-amber-400" : "text-red-400"}`}>
+                      <span className={`text-[28px] font-black ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>
                         {riskScore}
                       </span>
                       <span className="text-[12px] text-muted-foreground">/100</span>
@@ -2130,7 +2130,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                       onClick={handleCopyQuestions}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
                     >
-                      {copiedQuestions ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                      {copiedQuestions ? <Check className="size-3 text-positive" /> : <Copy className="size-3" />}
                       {copiedQuestions ? t("dueDiligence.copied") : t("dueDiligence.copyAll")}
                     </button>
                   </div>
@@ -2202,7 +2202,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                                   {item.icon}
                                   <span className="text-[12px] text-muted-foreground">{item.label}</span>
                                 </div>
-                                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(item.value)}</span>
+                                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(item.value)}</span>
                               </div>
                               <div className="relative h-[4px] rounded-full bg-foreground/[0.04] overflow-hidden">
                                 <motion.div
@@ -2217,7 +2217,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                         })}
                         <div className="flex items-center justify-between pt-3 border-t border-border">
                           <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
-                          <span className="text-[20px] font-mono font-bold text-primary">{formatPrice(totalAnnualCost)}/yr</span>
+                          <span className="text-[20px] tabular-nums font-bold text-primary">{formatPrice(totalAnnualCost)}/yr</span>
                         </div>
                       </div>
                     </div>
@@ -2232,7 +2232,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                           const barHeight = (cumulative / maxCumulative) * 100
                           return (
                             <div key={year} className="flex-1 flex flex-col items-center gap-1">
-                              <span className="text-[9px] font-mono text-muted-foreground">{formatPrice(cumulative)}</span>
+                              <span className="text-[9px] tabular-nums text-muted-foreground">{formatPrice(cumulative)}</span>
                               <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: `${barHeight}%` }}
@@ -2303,11 +2303,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] font-mono font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
+                          <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
                           <span className={`text-[9px] font-bold ${
-                            sc.car.investmentGrade === "AAA" ? "text-emerald-400" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
+                            sc.car.investmentGrade === "AAA" ? "text-positive" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
                           }`}>{sc.car.investmentGrade}</span>
-                          <span className="text-[10px] text-emerald-400">{sc.car.trend}</span>
+                          <span className="text-[10px] text-positive">{sc.car.trend}</span>
                         </div>
                         {sc.matchReasons.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
@@ -2338,7 +2338,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <div className="text-center mb-6">
                     <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
                     <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
-                      verdict === "buy" ? "text-emerald-400" : verdict === "hold" ? "text-amber-400" : "text-primary"
+                      verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-destructive" : "text-primary"
                     }`}>
                       {t(`verdict.${verdict}`)}
                     </p>
@@ -2348,18 +2348,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Grade</span>
                       <p className={`text-[20px] font-black ${
-                        car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
+                        car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
                       }`}>{car.investmentGrade}</p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Fair Value</span>
-                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-emerald-400" : "text-primary"}`}>{pricePosition}%</p>
+                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition}%</p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
-                      <p className={`text-[20px] font-black ${riskScore <= 30 ? "text-emerald-400" : riskScore <= 50 ? "text-amber-400" : "text-red-400"}`}>{riskScore}/100</p>
+                      <p className={`text-[20px] font-black ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>{riskScore}/100</p>
                     </div>
                   </div>
 
@@ -2541,9 +2541,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", damping: 15, stiffness: 200, delay: 0.1 }}
-                    className="size-16 rounded-full bg-emerald-400/10 flex items-center justify-center mx-auto mb-4"
+                    className="size-16 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-4"
                   >
-                    <Check className="size-8 text-emerald-400" />
+                    <Check className="size-8 text-positive" />
                   </motion.div>
                   <h3 className="text-[20px] font-bold text-foreground">{tPricing("successTitle")}</h3>
                   <p className="text-[13px] text-muted-foreground mt-2">{tPricing("successDesc")}</p>
@@ -2608,7 +2608,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                         <span className="text-[32px] font-black text-foreground">{tPricing("explorer.price")}</span>
                         <span className="text-[11px] text-muted-foreground ml-1.5">{tPricing("explorer.period")}</span>
                       </div>
-                      <p className="text-[10px] text-primary font-mono font-semibold mb-4">{tPricing("explorer.perReport")}</p>
+                      <p className="text-[10px] text-primary tabular-nums font-semibold mb-4">{tPricing("explorer.perReport")}</p>
                       <div className="space-y-2 mb-5 flex-1">
                         {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
                           <div key={key} className="flex items-center gap-2">
@@ -2669,7 +2669,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <Coins className="size-3.5 text-primary" />
                       <span className="text-[11px] text-muted-foreground">
-                        {tPricing("currentBalance")}: <span className="font-mono font-semibold text-foreground">{tokens.toLocaleString()}</span> {tPricing("tokens")}
+                        {tPricing("currentBalance")}: <span className="tabular-nums font-semibold text-foreground">{tokens.toLocaleString()}</span> {tPricing("tokens")}
                       </span>
                     </div>
                     <p className="text-[10px] text-muted-foreground text-center">

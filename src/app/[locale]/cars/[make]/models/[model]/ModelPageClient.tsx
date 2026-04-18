@@ -154,7 +154,7 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
                 "absolute right-3 top-3 rounded-full border px-2.5 py-0.5 text-[10px] font-medium backdrop-blur-sm",
                 isEnded
                   ? "bg-foreground/5 border-border text-muted-foreground"
-                  : "bg-[#34D399]/10 border-[#34D399]/20 text-[#34D399]"
+                  : "bg-positive/10 border-positive/20 text-positive"
               )}
             >
               {isEnded ? "Sold" : "Active"}
@@ -373,7 +373,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
             {/* Title */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground">
               {make}{" "}
-              <span className="text-gradient font-normal">{model}</span>
+              <span className="font-semibold font-normal">{model}</span>
             </h1>
 
             {/* Real stats only */}

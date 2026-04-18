@@ -56,9 +56,9 @@ export default async function HistoryPage({
             <span className="text-[11px] font-medium tracking-[0.2em] uppercase">{t("kicker")}</span>
           </div>
           <h1 className="mt-4 text-3xl font-light tracking-tight text-foreground sm:text-4xl">
-            {t("title1")} <span className="font-semibold text-gradient">{t("title2")}</span>
+            {t("title1")} <span className="font-semibold font-semibold">{t("title2")}</span>
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-[rgba(232,226,222,0.45)] font-light">
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground/70 font-light">
             {t("subtitle")}
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -73,7 +73,7 @@ export default async function HistoryPage({
                 <div key={stat.id} className="rounded-2xl border border-primary/8 bg-card px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Icon className="size-3 text-primary" />
-                    <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.35)]">{t(`stats.${stat.id}`)}</span>
+                    <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">{t(`stats.${stat.id}`)}</span>
                   </div>
                   <p className="mt-1.5 text-xl font-light text-foreground">{stat.value}</p>
                 </div>

@@ -49,12 +49,12 @@ export function CTASection() {
               transition={{ duration: 0.5, delay: 0.1 }}
             >
               Start Making{" "}
-              <span className="font-semibold text-gradient">Smarter Bids</span>{" "}
+              <span className="font-semibold text-primary">Smarter Bids</span>{" "}
               Today
             </motion.h2>
 
             <motion.p
-              className="mx-auto mt-5 max-w-lg text-sm text-[rgba(232,226,222,0.45)] sm:text-base font-light"
+              className="mx-auto mt-5 max-w-lg text-sm text-muted-foreground sm:text-base font-light"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -88,7 +88,7 @@ export function CTASection() {
             </motion.div>
 
             <motion.p
-              className="mt-8 text-[10px] tracking-[0.15em] uppercase text-[rgba(232,226,222,0.25)]"
+              className="mt-8 text-[10px] tracking-[0.15em] uppercase text-muted-foreground/60"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}

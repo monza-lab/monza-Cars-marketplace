@@ -23,7 +23,6 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
           sizes="100vw"
           priority
           referrerPolicy="no-referrer"
-          unoptimized
           fallback={
             <div className="absolute inset-0 bg-card flex items-center justify-center">
               <span className="text-muted-foreground text-2xl font-bold">{brand.name}</span>
@@ -38,7 +37,7 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
         <div className="absolute top-4 left-4">
           <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
             brand.topGrade === "AAA"
-              ? "bg-emerald-500/30 text-emerald-300"
+              ? "bg-positive/30 text-positive"
               : brand.topGrade === "AA"
                 ? "bg-primary/30 text-primary"
                 : "bg-white/20 text-white"
@@ -66,7 +65,7 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
             <span className="text-[16px] font-display font-medium text-primary">
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
-            <span className="text-[12px] text-emerald-400 font-medium">{brand.avgTrend}</span>
+            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-3">
