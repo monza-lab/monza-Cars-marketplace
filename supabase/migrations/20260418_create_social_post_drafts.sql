@@ -4,7 +4,8 @@
 create table if not exists social_post_drafts (
   id uuid primary key default gen_random_uuid(),
   listing_id uuid not null references listings(id) on delete cascade,
-  status text not null default 'pending_review',
+  status text not null default 'pending_review'
+    check (status in ('pending_review','generating','ready','approved','publishing','published','discarded','failed')),
     -- pending_review | generating | ready | approved | publishing | published | discarded | failed
   quality_score int,
   vision_score int,
@@ -20,9 +21,9 @@ create table if not exists social_post_drafts (
   published_at timestamptz,
   reviewed_at timestamptz,
   discarded_reason text,
-  error_log jsonb default '[]'::jsonb,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
+  error_log jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   unique (listing_id)
 );
 
