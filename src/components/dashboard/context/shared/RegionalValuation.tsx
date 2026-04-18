@@ -8,6 +8,12 @@ import { REGION_FLAGS, REGION_LABEL_KEYS } from "../../constants"
 import { formatUsdValue } from "../../utils/valuation"
 import type { SegmentStats, ConfidenceTier, CanonicalMarket } from "@/lib/pricing/types"
 
+// Locale-stable integer formatter. toLocaleString() uses the host locale,
+// which differs between Node (server render: en-US → "199,999") and the
+// browser (/de page → "199.999"), causing React hydration mismatches. Pin
+// to en-US so the thousands separator is identical on both sides.
+const INTEGER_FMT = new Intl.NumberFormat("en-US")
+
 const TIER_DOT: Record<ConfidenceTier, string> = {
   high: "bg-emerald-500",
   medium: "bg-amber-400",
@@ -113,7 +119,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
               <div className="flex items-baseline justify-between mb-1.5">
                 <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
                   {hasData && localHeadline != null
-                    ? `${currencySymbol}${Math.round(localHeadline).toLocaleString()}`
+                    ? `${currencySymbol}${INTEGER_FMT.format(Math.round(localHeadline))}`
                     : "—"}
                 </span>
                 <span className="text-[8px] font-mono text-muted-foreground">

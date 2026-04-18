@@ -230,11 +230,16 @@ const REGION_LABEL_KEYS = {
   JP: "brandContext.regionJP",
 } as const
 
+// Locale-stable integer formatter — pinned to en-US so SSR (Node) and the
+// browser (which may be on /de or /ja) produce the same thousand separator,
+// avoiding React hydration mismatches.
+const FMT_REGIONAL_INT = new Intl.NumberFormat("en-US")
+
 // Local helper: format a price already in a regional currency (e.g. fairValueByRegion data)
 function fmtRegional(amount: number, symbol: string) {
   if (amount >= 1_000_000) return `${symbol}${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `${symbol}${Math.round(amount / 1_000).toLocaleString()}K`
-  return `${symbol}${Math.round(amount).toLocaleString()}`
+  if (amount >= 1_000) return `${symbol}${FMT_REGIONAL_INT.format(Math.round(amount / 1_000))}K`
+  return `${symbol}${FMT_REGIONAL_INT.format(Math.round(amount))}`
 }
 
 // ─── AGGREGATE AUCTIONS BY BRAND ───
@@ -1028,7 +1033,7 @@ function BrandNavigationPanel({
               {t("brandNav.totalCars")}
             </span>
             <p className="text-[14px] font-bold text-foreground mt-0.5">
-              {brands.reduce((sum, b) => sum + b.carCount, 0).toLocaleString()}
+              {FMT_REGIONAL_INT.format(brands.reduce((sum, b) => sum + b.carCount, 0))}
             </p>
           </div>
           <div>
