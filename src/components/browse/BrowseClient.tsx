@@ -48,7 +48,7 @@ export function BrowseClient({
         onReset={resetFilters}
       />
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 md:py-8">
+      <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="size-14 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
@@ -96,10 +96,10 @@ export function BrowseClient({
             </div>
 
             {hasMore && (
-              <div className="mt-10 flex justify-center">
+              <div className="mt-8 md:mt-10 flex justify-center">
                 <button
                   onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                  className="px-6 py-2.5 rounded-full border border-border text-[12px] font-medium text-foreground hover:border-primary/40 hover:bg-foreground/[0.03] transition-colors"
+                  className="w-full md:w-auto h-12 md:h-auto px-6 md:py-2.5 rounded-full border border-border text-[13px] md:text-[12px] font-medium text-foreground active:bg-foreground/5 md:hover:border-primary/40 md:hover:bg-foreground/[0.03] transition-colors"
                 >
                   Load more ({(filtered.length - visibleCount).toLocaleString()} remaining)
                 </button>

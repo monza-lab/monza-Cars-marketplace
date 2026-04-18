@@ -70,7 +70,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
         href={`/cars/${makeSlug}/${car.id}`}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300"
       >
-        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
           <Image
             src={image}
             alt={car.title}
@@ -99,8 +99,8 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
           </div>
         </div>
 
-        <div className="p-3">
-          <h3 className="text-[13px] font-display font-normal text-foreground group-hover:text-primary transition-colors line-clamp-1">
+        <div className="p-3 sm:p-3">
+          <h3 className="text-[14px] sm:text-[13px] font-display font-normal text-foreground group-hover:text-primary transition-colors line-clamp-1">
             {car.title}
           </h3>
 
@@ -109,7 +109,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
               <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
                 Price
               </p>
-              <p className="text-[16px] font-display font-medium text-primary tabular-nums leading-tight">
+              <p className="text-[18px] sm:text-[16px] font-display font-medium text-primary tabular-nums leading-tight">
                 {formatPrice(car.currentBid)}
               </p>
             </div>

@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { FilterPill } from "./FilterPill";
 import { RangeFilter } from "./RangeFilter";
 import { CheckboxFilter } from "./CheckboxFilter";
 import { ModelFilter } from "./ModelFilter";
 import { MoreFilters } from "./MoreFilters";
+import { MobileFilterSheet } from "./MobileFilterSheet";
 import {
   BODY_OPTIONS,
   REGION_OPTIONS,
@@ -21,6 +22,7 @@ import {
   type StatusFilter,
 } from "./types";
 import { getSeriesConfig } from "@/lib/brandConfig";
+import { cn } from "@/lib/utils";
 
 type FilterBarProps = {
   filters: ClassicFilters;
@@ -63,6 +65,7 @@ export function FilterBar({
 }: FilterBarProps) {
   const { formatPrice } = useCurrency();
   const [showSort, setShowSort] = useState(false);
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
   const activeCount = countActiveFilters(filters);
 
   const modelLabel = useMemo(() => {
@@ -129,25 +132,25 @@ export function FilterBar({
     <div
       className="sticky top-14 z-30 bg-background/90 backdrop-blur-md border-b border-border"
     >
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-2.5 md:py-3 space-y-2">
+      <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-2 md:py-3 space-y-2">
         {/* Row 1: search + counter + sort */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-2xl">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="relative flex-1 md:max-w-2xl">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
               type="text"
               value={filters.q}
               onChange={(e) => onChange({ q: e.target.value })}
-              placeholder="Search acquisitions — 992 GT3, 964 Turbo, Manual Carrera…"
-              className="w-full h-9 pl-9 pr-9 rounded-full bg-foreground/[0.03] border border-border text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.05] transition-colors"
+              placeholder="Search — 992 GT3, 964 Turbo, Manual…"
+              className="w-full h-11 md:h-9 pl-9 pr-9 rounded-full bg-foreground/[0.03] border border-border text-[16px] md:text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.05] transition-colors"
             />
             {filters.q && (
               <button
                 onClick={() => onChange({ q: "" })}
-                className="absolute right-2 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 size-8 md:size-6 flex items-center justify-center rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Clear search"
               >
-                <X className="size-3.5" />
+                <X className="size-4 md:size-3.5" />
               </button>
             )}
           </div>
@@ -181,9 +184,10 @@ export function FilterBar({
             <button
               type="button"
               onClick={() => setShowSort((v) => !v)}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-foreground/[0.03] text-[11px] font-medium text-foreground hover:border-primary/30 transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 h-11 md:h-9 px-3 rounded-full border border-border bg-foreground/[0.03] text-[11px] font-medium text-foreground hover:border-primary/30 transition-colors whitespace-nowrap"
             >
-              {SORT_LABELS[filters.sort]}
+              <span className="hidden sm:inline">{SORT_LABELS[filters.sort]}</span>
+              <span className="sm:hidden">Sort</span>
             </button>
             {showSort && (
               <>
@@ -214,8 +218,57 @@ export function FilterBar({
           </div>
         </div>
 
-        {/* Row 2: filter pills */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Row 2 — mobile: single Filters CTA + Status + counter */}
+        <div className="flex md:hidden items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMobileSheet(true)}
+            className={cn(
+              "inline-flex items-center gap-2 h-11 px-4 rounded-full border text-[13px] font-medium transition-colors active:bg-foreground/5",
+              activeCount > 0
+                ? "bg-primary/10 border-primary/30 text-primary"
+                : "bg-foreground/[0.03] border-border text-foreground",
+            )}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            Filters
+            {activeCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+                {activeCount}
+              </span>
+            )}
+          </button>
+
+          <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-foreground/[0.03] p-0.5 shrink-0">
+            {STATUS_OPTIONS.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => onChange({ status: s.id })}
+                className={`px-2.5 h-9 rounded-full text-[11px] font-medium tracking-wide transition-colors ${
+                  filters.status === s.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="ml-auto text-[11px] whitespace-nowrap">
+            <span className="tabular-nums text-foreground font-semibold">
+              {activeCount === 0
+                ? (totalTracked || matchCount).toLocaleString()
+                : matchCount.toLocaleString()}
+            </span>
+            {activeCount > 0 && totalTracked > 0 && (
+              <span className="text-muted-foreground/70">/{totalTracked.toLocaleString()}</span>
+            )}
+          </span>
+        </div>
+
+        {/* Row 2 — desktop: filter pills */}
+        <div className="hidden md:flex items-center gap-1.5 flex-wrap">
           {/* Status quick-toggle */}
           <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-foreground/[0.03] p-0.5">
             {STATUS_OPTIONS.map((s) => (
@@ -368,20 +421,18 @@ export function FilterBar({
               Reset · {activeCount}
             </button>
           )}
-
-          <div className="md:hidden ml-auto">
-            <span className="text-[11px] text-muted-foreground tabular-nums">
-              <span className="text-foreground font-semibold">{matchCount.toLocaleString()}</span>
-              {totalTracked > 0 && (
-                <span className="text-muted-foreground/70">
-                  /{totalTracked.toLocaleString()}
-                </span>
-              )}
-            </span>
-          </div>
         </div>
       </div>
 
+      <MobileFilterSheet
+        open={showMobileSheet}
+        onOpenChange={setShowMobileSheet}
+        filters={filters}
+        matchCount={matchCount}
+        seriesCounts={seriesCounts}
+        onChange={onChange}
+        onReset={onReset}
+      />
     </div>
   );
 }
