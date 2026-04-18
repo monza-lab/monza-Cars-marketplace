@@ -18,6 +18,14 @@ const PORSCHE_SERIES = [
 
 const PORSCHE_MODEL_SLUGS = ["964", "991", "992", "993", "996", "997"]
 
+const COMPARISON_SLUGS = [
+  "964-vs-993",
+  "993-vs-996",
+  "996-vs-997",
+  "997-vs-991",
+  "991-vs-992",
+]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -69,7 +77,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
 
   // MonzaHaus Index pages
-  const INDEX_SLUGS = ["", "/air-cooled-911", "/water-cooled-911", "/porsche-turbo"]
+  const INDEX_SLUGS = ["", "/air-cooled-911", "/water-cooled-911", "/porsche-turbo", "/porsche-gt"]
   for (const locale of LOCALES) {
     for (const slug of INDEX_SLUGS) {
       entries.push({
@@ -91,6 +99,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "weekly",
         priority: 0.85,
         alternates: buildAlternates(`/models/porsche/${slug}`),
+      })
+    }
+  }
+
+  // Comparison pages (high-intent queries with FAQ schema)
+  for (const locale of LOCALES) {
+    for (const slug of COMPARISON_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/compare/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.85,
+        alternates: buildAlternates(`/compare/${slug}`),
       })
     }
   }

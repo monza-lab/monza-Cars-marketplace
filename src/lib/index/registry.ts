@@ -1,6 +1,7 @@
 import { airCooled911IndexConfig } from "./airCooled911";
 import { waterCooled911IndexConfig } from "./waterCooled911";
 import { porscheTurboIndexConfig } from "./porscheTurbo";
+import { porscheGtIndexConfig } from "./porscheGt";
 
 export interface IndexRegistryEntry {
   slug: string;
@@ -33,12 +34,11 @@ export const INDEX_REGISTRY: IndexRegistryEntry[] = [
     status: "live",
   },
   {
-    slug: "porsche-gt",
+    slug: porscheGtIndexConfig.slug,
     name: "Porsche GT Index",
-    description:
-      "GT2, GT3, GT4 track-bred Porsche variants — market values across generations.",
-    tagline: "GT2, GT3, GT3 RS, GT4 — coming soon.",
-    status: "upcoming",
+    description: porscheGtIndexConfig.description,
+    tagline: "GT2, GT3, GT3 RS, GT4 and air-cooled RS — track-bred lineage.",
+    status: "live",
   },
   {
     slug: "ferrari-modern-classics",

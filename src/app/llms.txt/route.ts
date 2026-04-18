@@ -18,6 +18,17 @@ MonzaHaus publishes proprietary quarterly market indices aggregating public auct
 - [Air-Cooled 911 Index](${BASE_URL}/en/index/air-cooled-911): 993, 964, G-Body, 930, early 911. Pre-1998 era.
 - [Water-Cooled 911 Index](${BASE_URL}/en/index/water-cooled-911): 996, 997, 991, 992. Modern 911 family.
 - [Porsche Turbo Index](${BASE_URL}/en/index/porsche-turbo): 50 years of 911 Turbo — 930 through 992 Turbo S (cross-generational).
+- [Porsche GT Index](${BASE_URL}/en/index/porsche-gt): GT2, GT3, GT3 RS, GT4 + air-cooled 964/993 RS — the track-bred lineage.
+
+## Generation Comparisons
+
+Head-to-head comparisons for buyers deciding between adjacent 911 generations. Each includes Article + FAQPage schemas with high-intent Q&A on investment, driving character, reliability, and ownership cost.
+
+- [964 vs 993](${BASE_URL}/en/compare/964-vs-993): Bridge generation vs last air-cooled.
+- [993 vs 996](${BASE_URL}/en/compare/993-vs-996): Last air-cooled vs first water-cooled.
+- [996 vs 997](${BASE_URL}/en/compare/996-vs-997): Early water-cooled vs the refined platform.
+- [997 vs 991](${BASE_URL}/en/compare/997-vs-991): Last analog water-cooled vs all-new platform.
+- [991 vs 992](${BASE_URL}/en/compare/991-vs-992): Current-gen vs predecessor.
 
 ## Model Buyer's Guides
 
