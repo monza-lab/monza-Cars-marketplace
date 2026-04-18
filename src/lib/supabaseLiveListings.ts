@@ -15,6 +15,7 @@ import {
 import { buildRegionalFairValue } from "./regionPricing";
 import { extractSeries, getSeriesConfig } from "./brandConfig";
 import { getExchangeRates, toUsd } from "./exchangeRates";
+import { derivePrice } from "./pricing/derivePrice";
 
 // ─── Row types ───
 
@@ -481,10 +482,25 @@ function computeGrade(
 
 // ─── Row → CollectorCar ───
 
-export function rowToCollectorCar(row: ListingRow): CollectorCar {
+export function rowToCollectorCar(row: ListingRow, rates: Record<string, number> = {}): CollectorCar {
   const price = row.current_bid
     ?? row.final_price
     ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
+
+  const derived = derivePrice(
+    {
+      source: row.source ?? "",
+      status: row.status ?? null,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      hammer_price: row.hammer_price != null ? Number(row.hammer_price) : null,
+      final_price: row.final_price != null ? Number(row.final_price) : null,
+      current_bid: row.current_bid != null ? Number(row.current_bid) : null,
+      original_currency: row.original_currency ?? null,
+    },
+    { rates },
+  );
 
   // Prefer direct images column; fall back to photos_media join
   const directImages = (row.images ?? []).map(normalizeListingImageUrl).filter((u): u is string => u !== null);
@@ -586,6 +602,11 @@ export function rowToCollectorCar(row: ListingRow): CollectorCar {
     description: desc,
     sellerNotes: row.seller_notes ?? null,
     originalCurrency: row.original_currency ?? null,
+    soldPriceUsd: derived.soldPriceUsd,
+    askingPriceUsd: derived.askingPriceUsd,
+    valuationBasis: derived.basis,
+    canonicalMarket: derived.canonicalMarket,
+    family: derived.family,
   };
 }
 
