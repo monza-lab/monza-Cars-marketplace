@@ -34,11 +34,25 @@ export function parseEndTimeMs(value: string): number | null {
 }
 
 function formatTransmission(raw: string | null): string | null {
-  if (!raw) return null;
+  if (!raw || raw === "—") return null;
   const low = raw.toLowerCase();
-  if (low.includes("pdk")) return "PDK";
-  if (low.includes("manual") || low.includes("m/t")) return "Manual";
-  if (low.includes("tiptronic") || low.includes("automatic") || low.includes("auto")) return "Auto";
+  // Mirror applyFilters.normalizeTransmission — PDK first, auto before manual.
+  if (low.includes("pdk") || low.includes("dual-clutch") || low.includes("dual clutch")) {
+    return "PDK";
+  }
+  if (
+    low.includes("automated") ||
+    low.includes("automatic") ||
+    low.includes("tiptronic") ||
+    low.includes("semi-auto") ||
+    low === "a/t" ||
+    low === "auto"
+  ) {
+    return "Auto";
+  }
+  if (low.includes("manual") || low.includes("m/t") || low === "mt" || low.includes("-speed")) {
+    return "Manual";
+  }
   return null;
 }
 

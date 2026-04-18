@@ -1,7 +1,12 @@
 import type { DashboardAuction } from "@/lib/dashboardCache";
-import { extractSeries, matchVariant, deriveBodyType } from "@/lib/brandConfig";
 import {
-  TRANSMISSION_OPTIONS,
+  extractSeries,
+  matchVariant,
+  deriveBodyType,
+  getSeriesConfig,
+  getSeriesVariants,
+} from "@/lib/brandConfig";
+import {
   DRIVE_OPTIONS,
   type ClassicFilters,
   type SortOption,
@@ -17,11 +22,32 @@ function parseEndTimeMs(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function normalizeTransmission(raw: string | null): string | null {
-  if (!raw) return null;
+/**
+ * Normalize a raw transmission string into a canonical filter value.
+ *
+ * Order matters:
+ *  - PDK first (dual-clutch transaxles may contain "manual" in marketing copy).
+ *  - Automatic next (AMT = "Automated Manual Transmission" is driver-wise auto).
+ *  - Manual last (catches "-speed" phrasing like "Six-Speed Manual Transaxle").
+ */
+export function normalizeTransmission(raw: string | null): string | null {
+  if (!raw || raw === "—") return null;
   const low = raw.toLowerCase();
-  for (const opt of TRANSMISSION_OPTIONS) {
-    if (opt.keywords.some((k) => low.includes(k))) return opt.id;
+  if (low.includes("pdk") || low.includes("dual-clutch") || low.includes("dual clutch")) {
+    return "pdk";
+  }
+  if (
+    low.includes("automated") ||
+    low.includes("automatic") ||
+    low.includes("tiptronic") ||
+    low.includes("semi-auto") ||
+    low === "a/t" ||
+    low === "auto"
+  ) {
+    return "automatic";
+  }
+  if (low.includes("manual") || low.includes("m/t") || low === "mt" || low.includes("-speed")) {
+    return "manual";
   }
   return null;
 }
@@ -34,78 +60,109 @@ function inferDrive(model: string, trim: string | null, title: string): string |
   return null;
 }
 
+/**
+ * Enriched haystack: title + series label + variant label/keywords +
+ * transmission + body type + region. Lets text search match semantic
+ * concepts ("GT3 Touring", "manual", "coupe") even when they don't
+ * appear verbatim in the title/model fields.
+ */
+function buildSearchHaystack(car: DashboardAuction): string {
+  const parts: string[] = [
+    car.title,
+    car.make,
+    car.model,
+    String(car.year),
+    car.trim ?? "",
+  ];
+
+  const seriesId = extractSeries(car.model, car.year, car.make, car.title);
+  const seriesCfg = getSeriesConfig(seriesId, car.make);
+  if (seriesCfg) {
+    parts.push(seriesCfg.label, seriesCfg.family);
+  }
+
+  const variantId = matchVariant(car.model, car.trim, seriesId, car.make, car.title);
+  if (variantId) {
+    const variants = getSeriesVariants(seriesId, car.make);
+    const v = variants.find((x) => x.id === variantId);
+    if (v) {
+      parts.push(v.label, ...v.keywords);
+    }
+  }
+
+  const trans = normalizeTransmission(car.transmission);
+  if (trans) parts.push(trans);
+
+  const body = deriveBodyType(car.model, car.trim, car.category, car.make, car.year);
+  if (body !== "Unknown") parts.push(body);
+
+  if (car.region) parts.push(car.region);
+
+  return parts.join(" ").toLowerCase();
+}
+
 export function applyFilters(
   auctions: DashboardAuction[],
   f: ClassicFilters,
 ): DashboardAuction[] {
   const q = f.q.trim().toLowerCase();
+  const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
 
   let out = auctions.filter((car) => {
-    // Status
     if (f.status === "live" && !isLiveStatus(car.status)) return false;
     if (f.status === "sold" && isLiveStatus(car.status)) return false;
 
-    // Series
     if (f.series.length > 0) {
       const s = extractSeries(car.model, car.year, car.make, car.title);
       if (!f.series.includes(s)) return false;
     }
 
-    // Variants
     if (f.variants.length > 0) {
       const seriesId = extractSeries(car.model, car.year, car.make, car.title);
       const variantId = matchVariant(car.model, car.trim, seriesId, car.make, car.title);
       if (!variantId || !f.variants.includes(variantId)) return false;
     }
 
-    // Year
     if (f.yearMin !== null && car.year < f.yearMin) return false;
     if (f.yearMax !== null && car.year > f.yearMax) return false;
 
-    // Price
     const price = car.currentBid || car.price || 0;
     if (f.priceMin !== null && price < f.priceMin) return false;
     if (f.priceMax !== null && price > f.priceMax) return false;
 
-    // Mileage
     if (f.mileageMin !== null && (car.mileage ?? 0) < f.mileageMin) return false;
     if (f.mileageMax !== null && car.mileage !== null && car.mileage > f.mileageMax) return false;
 
-    // Transmission
     if (f.transmission.length > 0) {
       const t = normalizeTransmission(car.transmission);
       if (!t || !f.transmission.includes(t)) return false;
     }
 
-    // Body
     if (f.body.length > 0) {
       const body = deriveBodyType(car.model, car.trim, car.category, car.make, car.year);
       if (!f.body.includes(body)) return false;
     }
 
-    // Region
     if (f.region.length > 0) {
       if (!car.region || !f.region.includes(car.region)) return false;
     }
 
-    // Drive (derived from title)
     if (f.drive.length > 0) {
       const d = inferDrive(car.model, car.trim, car.title);
       if (!d || !f.drive.includes(d)) return false;
     }
 
-    // Steering: field not consistently available — treat as pass-through if data missing.
-    // When steering info is added to the schema, wire it here.
+    // Steering: not consistently available — pass-through when missing.
 
-    // Platform
     if (f.platform.length > 0) {
       if (!f.platform.includes(car.platform)) return false;
     }
 
-    // Text search
-    if (q) {
-      const haystack = `${car.title} ${car.make} ${car.model} ${car.year} ${car.trim ?? ""}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
+    if (tokens.length > 0) {
+      const haystack = buildSearchHaystack(car);
+      for (const t of tokens) {
+        if (!haystack.includes(t)) return false;
+      }
     }
 
     return true;
