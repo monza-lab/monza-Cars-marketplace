@@ -373,7 +373,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
   const $ = cheerio.load(html);
 
   const essentialTexts: string[] = [];
-  const essentialsKeyed = new Map<string, string>();
+  const keyedEssentials = new Map<string, string>();
 
   $('.essentials li').each((_i, el) => {
     const text = $(el).text().trim();
@@ -383,7 +383,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
       const key = text.slice(0, colonIdx).trim().toLowerCase();
       const val = text.slice(colonIdx + 1).trim();
       if (key && val) {
-        essentialsKeyed.set(key, val);
+        keyedEssentials.set(key, val);
         essentialTexts.push(val);
       }
     } else {
@@ -397,7 +397,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
       const key = $(cells[0]).text().trim().toLowerCase();
       const val = $(cells[1]).text().trim();
       if (key && val) {
-        essentialsKeyed.set(key, val);
+        keyedEssentials.set(key, val);
         essentialTexts.push(val);
       }
     }
@@ -445,7 +445,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
     }
   };
 
-  for (const [key, value] of essentialsKeyed.entries()) {
+  for (const [key, value] of keyedEssentials.entries()) {
     considerText(value, 95);
     if (key === 'mileage' || key === 'miles' || key === 'kilometers' || key === 'km') {
       const candidate = extractMileageCandidate(value);
