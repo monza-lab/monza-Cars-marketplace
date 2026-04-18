@@ -22,6 +22,7 @@
     "db:audit:porsche": "tsx scripts/db-porsche.ts --cmd=audit",
     "db:quality:porsche": "tsx scripts/db-porsche.ts --cmd=quality",
     "db:security:advisors": "tsx scripts/db-porsche.ts --cmd=security",
+    "generate:factors": "tsx scripts/generate-family-factors.ts",
     "postinstall": "node -e \"process.exit(0)\""
   },
   "dependencies": {

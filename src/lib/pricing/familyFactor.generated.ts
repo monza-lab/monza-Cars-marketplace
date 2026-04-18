@@ -2,7 +2,66 @@
 import type { FamilyFactorTable } from "./types";
 
 export const FAMILY_FACTOR_TABLE: FamilyFactorTable = {
-  porscheWide: { factor: 0.9, soldN: 0, askingN: 0 },
-  byFamily: {},
-  generatedAt: "1970-01-01T00:00:00Z",
+  "porscheWide": {
+    "factor": 0.6363246753246753,
+    "soldN": 777,
+    "askingN": 218
+  },
+  "byFamily": {
+    "991": {
+      "family": "991",
+      "factor": 0.7633587786259542,
+      "soldN": 50,
+      "askingN": 11
+    },
+    "992": {
+      "family": "992",
+      "factor": 1.3704735376044568,
+      "soldN": 45,
+      "askingN": 36
+    },
+    "993": {
+      "family": "993",
+      "factor": 0.6885245901639344,
+      "soldN": 39,
+      "askingN": 7
+    },
+    "996": {
+      "family": "996",
+      "factor": 1.0775862068965518,
+      "soldN": 70,
+      "askingN": 20
+    },
+    "997": {
+      "family": "997",
+      "factor": 0.9151258736931156,
+      "soldN": 63,
+      "askingN": 22
+    },
+    "boxster": {
+      "family": "boxster",
+      "factor": 0.9605263157894737,
+      "soldN": 57,
+      "askingN": 13
+    },
+    "cayenne": {
+      "family": "cayenne",
+      "factor": 1.0705882352941176,
+      "soldN": 114,
+      "askingN": 9
+    },
+    "g-model": {
+      "family": "g-model",
+      "factor": 1.1959521619135234,
+      "soldN": 51,
+      "askingN": 14
+    },
+    "cayman": {
+      "family": "cayman",
+      "factor": 0.6828778429188248,
+      "soldN": 42,
+      "askingN": 6
+    }
+  },
+  "generatedAt": "2026-04-18T11:45:22.850Z"
 };
