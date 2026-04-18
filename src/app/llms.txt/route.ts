@@ -20,6 +20,23 @@ MonzaHaus publishes proprietary quarterly market indices aggregating public auct
 - [Porsche Turbo Index](${BASE_URL}/en/index/porsche-turbo): 50 years of 911 Turbo — 930 through 992 Turbo S (cross-generational).
 - [Porsche GT Index](${BASE_URL}/en/index/porsche-gt): GT2, GT3, GT3 RS, GT4 + air-cooled 964/993 RS — the track-bred lineage.
 
+## Buy a Porsche — Primary Commercial Intent Page
+
+- [How to Buy a Porsche (complete framework)](${BASE_URL}/en/buy/porsche): 9-step framework + links to every generation, variant, and import guide. The canonical MonzaHaus landing page for buy-intent traffic.
+
+## Tools
+
+- [Porsche VIN Decoder](${BASE_URL}/en/tools/porsche-vin-decoder): Free tool. Decodes 17-character Porsche VINs (1981+) into year, plant, generation hint, and serial number.
+
+## Import Guides (Country-Specific)
+
+In-depth import procedures with HowTo + FAQPage schemas for cross-border Porsche purchases.
+
+- [Import to USA](${BASE_URL}/en/guides/import/us): 25-year rule, EPA/DOT exemptions, CBP clearance.
+- [Import to Germany](${BASE_URL}/en/guides/import/germany): TÜV, H-Kennzeichen, EU vs non-EU origin.
+- [Import to UK](${BASE_URL}/en/guides/import/uk): Post-Brexit customs, NOVA, 5% VAT for historic cars.
+- [Import to Japan](${BASE_URL}/en/guides/import/japan): Permissive regime, Shaken inspection, Historical Plate.
+
 ## Variant Deep-Dives (Blue-Chip Authority Pages)
 
 Authoritative buyer's-guide pages for the most collector-valuable Porsche variants. Each page carries Article + FAQPage + Vehicle JSON-LD with production numbers, identifiers (VIN / engine codes / option codes), price bands by condition, and 8-10 high-intent Q&As. These are the canonical MonzaHaus references for each variant.

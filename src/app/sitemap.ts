@@ -38,6 +38,8 @@ const VARIANT_SLUGS = [
   "992-sport-classic",
 ]
 
+const IMPORT_COUNTRIES = ["us", "germany", "uk", "japan"]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -137,6 +139,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "monthly",
         priority: 0.88,
         alternates: buildAlternates(`/variants/porsche/${slug}`),
+      })
+    }
+  }
+
+  // Import guides + buy hub + VIN decoder (buy-intent pages)
+  for (const locale of LOCALES) {
+    entries.push({
+      url: `${BASE_URL}/${locale}/buy/porsche`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: buildAlternates("/buy/porsche"),
+    })
+    entries.push({
+      url: `${BASE_URL}/${locale}/tools/porsche-vin-decoder`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.85,
+      alternates: buildAlternates("/tools/porsche-vin-decoder"),
+    })
+    for (const country of IMPORT_COUNTRIES) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/guides/import/${country}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.85,
+        alternates: buildAlternates(`/guides/import/${country}`),
       })
     }
   }

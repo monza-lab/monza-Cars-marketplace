@@ -287,6 +287,50 @@ export function CollectionPageJsonLd({
   );
 }
 
+/** HowTo — step-by-step instruction schema (high AEO value for "how to X" queries) */
+export function HowToJsonLd({
+  name,
+  description,
+  totalTimeISO,
+  estimatedCostUsd,
+  steps,
+}: {
+  name: string;
+  description: string;
+  totalTimeISO?: string;
+  estimatedCostUsd?: number;
+  steps: { name: string; text: string; url?: string }[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description,
+    totalTime: totalTimeISO,
+    estimatedCost: estimatedCostUsd
+      ? {
+          "@type": "MonetaryAmount",
+          currency: "USD",
+          value: estimatedCostUsd,
+        }
+      : undefined,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: s.url,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 /** Vehicle listing — use on car detail pages */
 export function VehicleJsonLd({
   name,
