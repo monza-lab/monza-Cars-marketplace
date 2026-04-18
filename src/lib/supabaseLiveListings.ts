@@ -872,85 +872,49 @@ async function queryListingsMany(
     return query;
   };
 
-  const querySourceBucket = async (source: CanonicalSource) => {
+  const querySourceBucket = async (source: CanonicalSource): Promise<ListingRow[]> => {
     const sourceAliases = SOURCE_ALIASES[source] ?? [source];
     const platformAliases = source in PLATFORM_ALIASES
       ? PLATFORM_ALIASES[source as keyof typeof PLATFORM_ALIASES]
       : [];
 
-    const runBucketQuery = async (label: "source" | "platform", builder: () => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>) => {
-      try {
-        const result = await builder();
-        if (result.error) {
-          console.error(`[supabaseLiveListings] ${source} ${label} query failed:`, result.error.message);
-          return [] as ListingRow[];
-        }
-        return (result.data ?? []) as ListingRow[];
-      } catch (error) {
-        console.error(`[supabaseLiveListings] ${source} ${label} query threw:`, error);
-        return [] as ListingRow[];
-      }
-    };
+    const orClause = platformAliases.length > 0
+      ? `source.in.(${encodePostgrestInValues([...sourceAliases])}),platform.in.(${encodePostgrestInValues([...platformAliases])})`
+      : `source.in.(${encodePostgrestInValues([...sourceAliases])})`;
 
-    const fetchBucketRows = async (
-      label: "source" | "platform",
-      build: (from: number, to: number) => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>
-    ) => {
-      // Always paginate in chunks to avoid Supabase PostgREST max_rows
-      // silent truncation (default 1000). A single .range(0, 3999) would
-      // silently return only 1000 rows with no error.
-      const rows: ListingRow[] = [];
-      const pageSize = 1000;
-      let from = 0;
-
-      while (rows.length < maxRowsPerSource) {
-        const pageRows = await runBucketQuery(label, () => build(from, from + pageSize - 1));
-        if (pageRows.length === 0) break;
-        rows.push(...pageRows);
-        if (pageRows.length < pageSize) break;
-        from += pageSize;
-      }
-
-      return rows;
-    };
-
-    const sourceRows = await fetchBucketRows("source", (from, to) =>
-      buildBaseQuery()
-        .in("source", [...sourceAliases])
+    // Single query (pagination retained — PostgREST hard-caps range() at 1000).
+    const rows: ListingRow[] = [];
+    let from = 0;
+    while (rows.length < maxRowsPerSource) {
+      const to = from + 1000 - 1;
+      const { data, error } = await buildBaseQuery()
+        .or(orClause)
         .order("sale_date", { ascending: false, nullsFirst: false })
-        .order("end_time", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .range(from, to)
-    );
+        .order("end_time",  { ascending: false, nullsFirst: false })
+        .order("id",        { ascending: false })
+        .range(from, to);
 
-    const platformRows = platformAliases.length > 0
-      ? await fetchBucketRows("platform", (from, to) =>
-          buildBaseQuery()
-            .in("platform", [...platformAliases])
-            .order("sale_date", { ascending: false, nullsFirst: false })
-            .order("end_time", { ascending: false, nullsFirst: false })
-            .order("id", { ascending: false })
-            .range(from, to)
-        )
-      : [];
-
-    const merged = [...sourceRows, ...platformRows].sort((a, b) => {
-      const aPrimary = a.sale_date ?? a.end_time ?? "";
-      const bPrimary = b.sale_date ?? b.end_time ?? "";
-      if (aPrimary !== bPrimary) return bPrimary.localeCompare(aPrimary);
-      const aSecondary = a.end_time ?? "";
-      const bSecondary = b.end_time ?? "";
-      if (aSecondary !== bSecondary) return bSecondary.localeCompare(aSecondary);
-      return b.id.localeCompare(a.id);
-    });
-    const byId = new Map<string, ListingRow>();
-      for (const row of merged) {
-        const canonicalSource = resolveCanonicalSource(row.source, row.platform);
-        if (canonicalSource !== source) continue;
-        if (statusFilter && statusFilter.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
-        byId.set(row.id, row);
+      if (error) {
+        console.error(`[supabaseLiveListings] ${source} query failed:`, error.message);
+        break;
       }
+      const page = (data ?? []) as ListingRow[];
+      if (page.length === 0) break;
+      rows.push(...page);
+      if (page.length < 1000) break;
+      from += 1000;
+    }
 
+    // Post-filter to drop cross-source matches (e.g. ClassicCom aliases that overlap
+    // BaT's platform value). The alias tables allow multiple sources to share tokens,
+    // so the OR query is permissive — resolveCanonicalSource narrows it back down.
+    const byId = new Map<string, ListingRow>();
+    for (const row of rows) {
+      const canonicalSource = resolveCanonicalSource(row.source, row.platform);
+      if (canonicalSource !== source) continue;
+      if (statusFilter?.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
+      byId.set(row.id, row);
+    }
     return Array.from(byId.values());
   };
 
