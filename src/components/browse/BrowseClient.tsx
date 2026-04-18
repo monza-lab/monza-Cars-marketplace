@@ -134,9 +134,11 @@ function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
 export function BrowseClient({
   auctions,
   seriesCounts,
+  liveNow,
 }: {
   auctions: DashboardAuction[];
   seriesCounts: Record<string, number>;
+  liveNow: number;
 }) {
   const [query, setQuery] = useState("");
   const [seriesFilter, setSeriesFilter] = useState<string>("all");
@@ -201,6 +203,20 @@ export function BrowseClient({
     return result;
   }, [auctions, query, seriesFilter, statusFilter, sortBy]);
 
+  const filteredTotal = useMemo(() => {
+    // No filter → absolute total from DB.
+    if (statusFilter === "all" && seriesFilter === "all" && !query.trim()) {
+      return liveNow;
+    }
+    // Series-only filter → DB per-series count.
+    if (statusFilter === "all" && seriesFilter !== "all" && !query.trim()) {
+      return seriesCounts[seriesFilter] ?? filtered.length;
+    }
+    // Status or search filter → DB aggregates don't cover these.
+    // Fall back to the loaded-batch count.
+    return filtered.length;
+  }, [statusFilter, seriesFilter, query, liveNow, seriesCounts, filtered.length]);
+
   const visible = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
 
@@ -232,9 +248,9 @@ export function BrowseClient({
               </p>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="tabular-nums text-foreground font-medium">{filtered.length}</span>
+              <span className="tabular-nums text-foreground font-medium">{filteredTotal}</span>
               <span>of</span>
-              <span className="tabular-nums">{auctions.length}</span>
+              <span className="tabular-nums">{liveNow}</span>
               <span>vehicles</span>
             </div>
           </div>
