@@ -15,6 +15,10 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("@/lib/dashboardCache", () => ({
+  invalidateDashboardCache: vi.fn(),
+}))
+
 import { markScraperRunStarted, recordScraperRun, clearScraperRunActive } from "@/features/scrapers/common/monitoring"
 
 function makeRequest(secret = "test-secret") {

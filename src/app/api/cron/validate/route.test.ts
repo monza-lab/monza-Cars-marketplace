@@ -15,6 +15,14 @@ vi.mock('@/features/scrapers/common/monitoring', () => ({
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/features/scrapers/common/refreshCounts', () => ({
+  refreshListingsActiveCounts: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/dashboardCache', () => ({
+  invalidateDashboardCache: vi.fn(),
+}));
+
 // Mock the listing validator
 vi.mock('@/features/scrapers/common/listingValidator', () => ({
   validateListing: vi.fn((listing) => {

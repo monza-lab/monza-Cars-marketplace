@@ -64,10 +64,11 @@ describe("dashboard cache", () => {
     fetchValuationListingsForMake.mockClear()
   })
 
-  it("fetches a separate valuation universe with all listing statuses", async () => {
+  it("fetches the dashboard listing universe once", async () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
+    expect(fetchLiveListingsAsCollectorCars).toHaveBeenCalledTimes(1)
     expect(fetchLiveListingsAsCollectorCars).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -79,7 +80,6 @@ describe("dashboard cache", () => {
     expect(fetchValuationListingsForMake).toHaveBeenCalledWith("Porsche")
     expect(data.auctions).toHaveLength(1)
     expect(data.valuationListings).toHaveLength(1)
-    expect(data.valuationListings[0].id).toBe("valuation-1")
     expect(data.liveNow).toBe(7)
     expect(data.seriesCounts).toEqual({ "992": 1 })
   })

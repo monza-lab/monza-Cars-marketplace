@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import type { NormalizedElferspot } from "./normalize"
+import { computeSeries } from "@/features/scrapers/common/seriesEnrichment"
 
 export async function upsertListing(listing: NormalizedElferspot, dryRun: boolean): Promise<boolean> {
   if (dryRun) return false
@@ -41,6 +42,7 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     scrape_timestamp: listing.scrape_timestamp,
     updated_at: new Date().toISOString(),
     last_verified_at: new Date().toISOString(),
+    series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   }
 
   const { error } = await client

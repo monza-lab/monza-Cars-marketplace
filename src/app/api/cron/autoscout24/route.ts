@@ -7,6 +7,7 @@ import {
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
 import type { AS24CountryCode } from "@/features/scrapers/autoscout24_collector/types";
+import { invalidateDashboardCache } from "@/lib/dashboardCache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel Pro
@@ -105,6 +106,7 @@ export async function GET(request: Request) {
     });
 
     await clearScraperRunActive("autoscout24");
+    invalidateDashboardCache();
 
     return NextResponse.json({
       success: true,

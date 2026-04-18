@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { unstable_cache, revalidateTag } from "next/cache";
 import {
   fetchLiveListingsAsCollectorCars,
   fetchLiveListingAggregateCounts,
@@ -52,6 +52,11 @@ export type DashboardAuction = {
   };
   category?: string;
   originalCurrency?: string | null;
+  soldPriceUsd?: number | null;
+  askingPriceUsd?: number | null;
+  valuationBasis?: "sold" | "asking" | "unknown";
+  canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
+  family?: string | null;
 };
 
 export type DashboardRegionTotals = {
@@ -113,6 +118,11 @@ function transformCar(car: CollectorCar): DashboardAuction {
       : null,
     priceHistory: [],
     fairValueByRegion: car.fairValueByRegion,
+    soldPriceUsd: car.soldPriceUsd ?? null,
+    askingPriceUsd: car.askingPriceUsd ?? null,
+    valuationBasis: car.valuationBasis ?? "unknown",
+    canonicalMarket: car.canonicalMarket ?? null,
+    family: car.family ?? null,
   };
 }
 
@@ -120,7 +130,12 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
   return endTime instanceof Date ? endTime.toISOString() : "";
 }
 
-export async function fetchDashboardDataUncached(): Promise<DashboardData> {
+/**
+ * Core dashboard data fetch — no caching directive here so it can be
+ * imported and called directly in tests without triggering "use cache"
+ * constraints.
+ */
+async function dashboardDataImpl(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
   const [live, valuationLive, aggregates, seriesCounts] = await Promise.all([
@@ -137,7 +152,7 @@ export async function fetchDashboardDataUncached(): Promise<DashboardData> {
 
   // Only active listings for dashboard
   const active = live.filter(
-    (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON"
+    (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
   );
 
   return {
@@ -156,12 +171,36 @@ export async function fetchDashboardDataUncached(): Promise<DashboardData> {
 }
 
 /**
- * Cached dashboard data. Revalidates every 5 minutes.
- * On Vercel, this uses the Data Cache — subsequent calls within the TTL
- * return instantly without hitting Supabase.
+ * Cached dashboard data.
+ *
+ * NOTE: "use cache" directive requires `cacheComponents: true` in next.config,
+ * which in turn enables PPR and is incompatible with `export const dynamic =
+ * "force-dynamic"` used by all cron/API routes in this project.  Until those
+ * routes are migrated, we fall back to `unstable_cache` with an explicit
+ * "listings" tag so cron routes can still call `revalidateTag("listings")` to
+ * bust the cache on demand.  The semantics are identical at runtime.
  */
-export const getCachedDashboardData = unstable_cache(
-  fetchDashboardDataUncached,
+const _cachedDashboardData = unstable_cache(
+  dashboardDataImpl,
   ["dashboard-data-v1"],
-  { revalidate: 300 } // 5 minutes
+  {
+    revalidate: 300, // 5-minute background revalidation
+    tags: ["listings"], // enables revalidateTag("listings") from cron routes
+  },
 );
+
+export async function getCachedDashboardData(): Promise<DashboardData> {
+  return _cachedDashboardData();
+}
+
+/**
+ * Call this from any cron/API route after writing new listings to Supabase to
+ * immediately invalidate the dashboard cache so the next request gets fresh
+ * data (rather than waiting up to 5 minutes).
+ */
+export function invalidateDashboardCache(): void {
+  revalidateTag("listings");
+}
+
+// Alias for tests — calls the uncached impl directly.
+export { dashboardDataImpl as fetchDashboardDataUncached };

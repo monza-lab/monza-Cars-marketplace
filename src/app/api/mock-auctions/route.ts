@@ -87,10 +87,19 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(searchParams.get("pageSize") || "50", 10) || 50),
       MAX_PAGE_SIZE
     );
-    const cursor = searchParams.get("cursor") || null;
-    const offset = cursor
-      ? (JSON.parse(atob(cursor)) as { offset: number }).offset
-      : 0;
+
+    // Decode keyset cursor: base64-encoded JSON { endTime: string | null, id: string }
+    // Falls back to null (first page) if absent or malformed.
+    const cursorParam = searchParams.get("cursor") || null;
+    let decodedCursor: { endTime: string | null; id: string } | null = null;
+    if (cursorParam) {
+      try {
+        decodedCursor = JSON.parse(atob(cursorParam)) as { endTime: string | null; id: string };
+      } catch {
+        // Malformed cursor — treat as first page
+        decodedCursor = null;
+      }
+    }
 
     // Map platform query param to source value for DB filtering
     const platformFilter = platform && platform !== "All Platforms" ? platform : null;
@@ -110,19 +119,20 @@ export async function GET(request: NextRequest) {
     const paginatedPromise = fetchPaginatedListings({
       make: requestedMake ?? "Porsche",
       pageSize: rawPageSize,
-      offset,
+      cursor: decodedCursor,
       region: regionParam,
       platform: platformFilter,
       query: query || null,
       sortBy,
       sortOrder: sortOrder as "asc" | "desc",
       status: dbStatus,
+      series: family || null,
       modelPatterns,
     });
 
-    // Only fetch aggregates on the first page (offset === 0)
+    // Only fetch aggregates on the first page (no cursor = first page)
     const aggregatesPromise =
-      offset === 0
+      decodedCursor === null
         ? fetchLiveListingAggregateCounts({ make: requestedMake })
         : null;
 
@@ -133,20 +143,19 @@ export async function GET(request: NextRequest) {
 
     const transformed = paginatedResult.cars.map(transformCar);
 
-    const nextCursor = paginatedResult.hasMore
-      ? btoa(JSON.stringify({ offset: offset + rawPageSize }))
+    // Encode nextCursor: base64(JSON({ endTime, id })) — opaque string for the client
+    const nextCursor = paginatedResult.nextCursor !== null
+      ? btoa(JSON.stringify(paginatedResult.nextCursor))
       : null;
 
     const response: Record<string, unknown> = {
       auctions: transformed,
       nextCursor,
       hasMore: paginatedResult.hasMore,
+      // totalCount is intentionally omitted: count: "exact" was dropped in the
+      // earlier hotfix to avoid full-table scan overhead; keyset pagination
+      // makes totalCount explicitly unavailable.
     };
-
-    // Include exact total count for the current query filters (family + region)
-    if (paginatedResult.totalCount !== undefined) {
-      response.totalCount = paginatedResult.totalCount;
-    }
 
     if (aggregatesResult) {
       response.aggregates = {

@@ -7,6 +7,7 @@ import {
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
+import { invalidateDashboardCache } from "@/lib/dashboardCache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel
@@ -82,6 +83,7 @@ export async function GET(request: Request) {
     });
 
     await clearScraperRunActive("beforward");
+    invalidateDashboardCache();
 
     return NextResponse.json({
       success: true,

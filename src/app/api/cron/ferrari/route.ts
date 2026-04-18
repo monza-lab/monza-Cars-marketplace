@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { runCollector } from "@/features/scrapers/ferrari_collector/collector";
 import { refreshActiveListings } from "@/features/scrapers/ferrari_collector/supabase_writer";
 import { runLightBackfill, type LightBackfillResult } from "@/features/scrapers/ferrari_collector/historical_backfill";
@@ -7,6 +8,8 @@ import {
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
+import { refreshListingsActiveCounts } from "@/features/scrapers/common/refreshCounts";
+import { invalidateDashboardCache } from "@/lib/dashboardCache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel
@@ -104,6 +107,14 @@ export async function GET(request: Request) {
     });
 
     await clearScraperRunActive("ferrari");
+
+    const supabaseForRefresh = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
+    await refreshListingsActiveCounts(supabaseForRefresh);
+    invalidateDashboardCache();
 
     return NextResponse.json({
       success: true,

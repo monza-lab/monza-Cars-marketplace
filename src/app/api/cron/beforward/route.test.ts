@@ -20,6 +20,10 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   clearScraperRunActive: vi.fn(),
 }));
 
+vi.mock("@/lib/dashboardCache", () => ({
+  invalidateDashboardCache: vi.fn(),
+}));
+
 import { runCollector } from "@/features/scrapers/beforward_porsche_collector/collector";
 import { refreshActiveListings } from "@/features/scrapers/beforward_porsche_collector/supabase_writer";
 import { backfillMissingImages } from "@/features/scrapers/beforward_porsche_collector/backfill";
