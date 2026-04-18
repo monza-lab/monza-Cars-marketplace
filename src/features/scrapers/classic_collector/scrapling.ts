@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 export interface ClassicScraplingDetailContent {
@@ -19,6 +21,9 @@ export function canUseScraplingFallback(): boolean {
   return isScraplingEnabled();
 }
 
+export function shouldPreferScraplingFirst(): boolean {
+  return isScraplingEnabled() && process.env.CLASSIC_FORCE_SCRAPLING === "1";
+}
 export async function fetchClassicDetailWithScrapling(url: string): Promise<ClassicScraplingDetailContent | null> {
   if (!isScraplingEnabled()) return null;
 
@@ -48,6 +53,31 @@ export async function fetchClassicDetailWithScrapling(url: string): Promise<Clas
       bodyText: parsed.bodyText ?? "",
       images: Array.isArray(parsed.images) ? parsed.images : [],
     };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchClassicPageHtmlWithScrapling(url: string): Promise<string | null> {
+  if (!isScraplingEnabled()) return null;
+
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "classic-scrapling-"));
+  const htmlPath = path.join(tempDir, "page.html");
+  const result = spawnSync("scrapling", ["extract", "stealthy-fetch", url, htmlPath, "--solve-cloudflare"], {
+    encoding: "utf8",
+    timeout: 180_000,
+    env: {
+      ...process.env,
+      PYTHONUNBUFFERED: "1",
+    },
+  });
+
+  if (result.error || result.status !== 0) {
+    return null;
+  }
+
+  try {
+    return readFileSync(htmlPath, "utf8");
   } catch {
     return null;
   }

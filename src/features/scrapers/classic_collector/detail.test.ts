@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("./browser", () => ({
@@ -10,10 +13,11 @@ vi.mock("./scrapling", () => ({
   fetchClassicDetailWithScrapling: vi.fn(),
 }));
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
-import { extractClassicVehicleImagesFromHtml, fetchAndParseDetail, parseClassicDetailContent } from "./detail";
+import {
+  extractClassicVehicleImagesFromHtml,
+  fetchAndParseDetail,
+  parseClassicDetailContent,
+} from "./detail";
 import { extractVinFromUrl } from "./id";
 import { fetchClassicDetailWithScrapling } from "./scrapling";
 
@@ -111,12 +115,44 @@ describe("classic detail parsing", () => {
   });
 });
 
+describe("extractClassicVehicleImagesFromHtml", () => {
+  const fixture = readFileSync(
+    resolve(__dirname, "../../../../tests/fixtures/classic-com-gallery.html"),
+    "utf-8",
+  );
+
+  it("extracts images from src, data-src, data-lazy-src, data-lazy, data-zoom-image and <source srcset>", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+
+    expect(images.length).toBeGreaterThanOrEqual(7);
+    for (const url of images) {
+      expect(url).toMatch(/^https?:\/\/images\.classic\.com\/vehicles\//);
+    }
+  });
+
+  it("ignores non-vehicle classic.com assets (brand logos, etc.)", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(images.some((u) => u.includes("/brand-logo"))).toBe(false);
+  });
+
+  it("ignores non-classic.com hosts", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(images.some((u) => u.includes("cloudflare.com"))).toBe(false);
+    expect(images.some((u) => u.includes("example.com"))).toBe(false);
+  });
+
+  it("returns no duplicates", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(new Set(images).size).toBe(images.length);
+  });
+});
+
 describe("fetchAndParseDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("falls back to Scrapling when the rendered page is empty", async () => {
+  it("prefers Scrapling when it is available", async () => {
     mockScrapling.mockResolvedValueOnce({
       title: "2018 Porsche 911 GT3",
       bodyText: [
@@ -169,12 +205,15 @@ describe("fetchAndParseDetail", () => {
     });
 
     expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).not.toHaveBeenCalled();
     expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/fallback.jpg"]);
     expect(parsed.raw.auctionHouse).toBe("Bonhams");
   });
 
-  it("falls back to Scrapling if Playwright navigation fails", async () => {
-    mockScrapling.mockResolvedValueOnce({
+  it("falls back to Playwright when Scrapling is unavailable", async () => {
+    mockScrapling.mockResolvedValueOnce(null as unknown as never);
+
+    const page = createMockPage({
       title: "2020 Porsche 911 Turbo S",
       bodyText: [
         "FOR SALE",
@@ -192,12 +231,8 @@ describe("fetchAndParseDetail", () => {
         "VIN:",
         "WP0AD2A95LS185001",
       ].join("\n"),
-      images: ["https://images.classic.com/vehicles/scrapling.jpg"],
+      images: ["https://images.classic.com/vehicles/playwright.jpg"],
     });
-
-    const page = {
-      goto: vi.fn().mockRejectedValue(new Error("Cloudflare challenge not resolved")),
-    } as any;
 
     const parsed = await fetchAndParseDetail({
       page,
@@ -207,43 +242,8 @@ describe("fetchAndParseDetail", () => {
     });
 
     expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).toHaveBeenCalledTimes(1);
     expect(parsed.raw.title).toBe("2020 Porsche 911 Turbo S");
-    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/scrapling.jpg"]);
-  });
-});
-
-describe("extractClassicVehicleImagesFromHtml", () => {
-  const fixture = readFileSync(
-    resolve(__dirname, "../../../../tests/fixtures/classic-com-gallery.html"),
-    "utf-8",
-  );
-
-  it("extracts images from src, data-src, data-lazy-src, data-lazy, data-zoom-image and <source srcset>", () => {
-    const images = extractClassicVehicleImagesFromHtml(fixture);
-
-    // Fixture contains 8 distinct classic.com vehicle URLs across all the
-    // attributes the selector must cover (hero + 5 slides + srcset 1x + 2x
-    // + zoom variant — see tests/fixtures/classic-com-gallery.html).
-    expect(images.length).toBeGreaterThanOrEqual(7);
-
-    for (const url of images) {
-      expect(url).toMatch(/^https?:\/\/images\.classic\.com\/vehicles\//);
-    }
-  });
-
-  it("ignores non-vehicle classic.com assets (brand logos, etc.)", () => {
-    const images = extractClassicVehicleImagesFromHtml(fixture);
-    expect(images.some((u) => u.includes("/brand-logo"))).toBe(false);
-  });
-
-  it("ignores non-classic.com hosts", () => {
-    const images = extractClassicVehicleImagesFromHtml(fixture);
-    expect(images.some((u) => u.includes("cloudflare.com"))).toBe(false);
-    expect(images.some((u) => u.includes("example.com"))).toBe(false);
-  });
-
-  it("returns no duplicates", () => {
-    const images = extractClassicVehicleImagesFromHtml(fixture);
-    expect(new Set(images).size).toBe(images.length);
+    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/playwright.jpg"]);
   });
 });

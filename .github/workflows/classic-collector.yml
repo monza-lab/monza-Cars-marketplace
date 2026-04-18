@@ -14,6 +14,12 @@ on:
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
+      summary_only:
+        description: 'Skip detail fetches'
+        default: 'true'
+      force_scrapling:
+        description: 'Force Scrapling on the search page'
+        default: 'false'
 
 concurrency:
   group: classic-collector
@@ -63,13 +69,14 @@ jobs:
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
           SCRAPLING_FETCH_MODE: stealthy-fetch
+          CLASSIC_FORCE_SCRAPLING: ${{ github.event.inputs.force_scrapling == 'true' && '1' || '' }}
         run: |
           npx tsx src/features/scrapers/classic_collector/cli.ts \
             --maxPages=${{ github.event.inputs.max_pages || '170' }} \
             --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \
-            --summaryOnly \
+            ${{ github.event.inputs.summary_only != 'false' && '--summaryOnly' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Verify scraper quality gate
