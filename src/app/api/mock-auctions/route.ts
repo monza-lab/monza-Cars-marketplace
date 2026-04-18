@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder: sortOrder as "asc" | "desc",
       status: dbStatus,
+      series: family || null,
       modelPatterns,
     });
 

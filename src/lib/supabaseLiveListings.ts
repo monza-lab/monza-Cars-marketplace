@@ -1303,6 +1303,7 @@ export async function fetchPaginatedListings(options: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   status?: "active" | "all";
+  series?: string | null;
   modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
 }): Promise<{
   cars: CollectorCar[];
@@ -1331,7 +1332,7 @@ export async function fetchPaginatedListings(options: {
     let query = supabase
       .from("listings")
       .select(SELECT_NARROW)
-      .ilike("make", targetMake);
+      .eq("make", targetMake);
 
     // Status filter
     if (options.status !== "all") {
@@ -1340,8 +1341,18 @@ export async function fetchPaginatedListings(options: {
       query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
     }
 
-    // Model pattern filter (series-level, e.g. "992" → model ILIKE %992%)
-    if (options.modelPatterns) {
+    // Series / model filter.
+    // Prefer the indexed `series` column when provided (post-backfill rows).
+    // Fall back to keyword-OR on `model` for rows where series IS NULL
+    // (pre-backfill rows).
+    if (options.series) {
+      query = query.eq("series", options.series);
+      // Also apply year range from modelPatterns when available, so results
+      // are still scoped to the correct generation even on the indexed path.
+      const patterns = options.modelPatterns;
+      if (patterns?.yearMin !== undefined) query = query.gte("year", patterns.yearMin);
+      if (patterns?.yearMax !== undefined) query = query.lte("year", patterns.yearMax);
+    } else if (options.modelPatterns) {
       const { keywords, yearMin, yearMax } = options.modelPatterns;
       if (keywords.length > 0) {
         const orClauses = keywords
