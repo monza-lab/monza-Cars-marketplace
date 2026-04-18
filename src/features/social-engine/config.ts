@@ -32,6 +32,7 @@ export const WORKER = {
 
 // Collector-grade Porsche series allowlist (subset of brandConfig)
 // Used as an explicit positive list beyond brandConfig to avoid Cayenne/Taycan/etc.
+// Series IDs that extractSeries() can actually return (no trim variants — those are caught by COLLECTOR_TRIM_REGEX instead).
 export const COLLECTOR_SERIES_IDS = [
   "964",
   "993",
@@ -39,8 +40,6 @@ export const COLLECTOR_SERIES_IDS = [
   "991",
   "992",
   "930",
-  "964-rs",
-  "993-rs",
   "718-cayman-gt4",
   "carrera-gt",
 ] as const;

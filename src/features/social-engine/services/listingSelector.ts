@@ -3,14 +3,13 @@ import type { ListingRow } from "../types";
 import {
   ALLOWED_PLATFORMS,
   COLLECTOR_TRIM_REGEX,
+  COLLECTOR_SERIES_IDS,
   GATE_1,
   WORKER,
 } from "../config";
 import { extractSeries } from "@/lib/brandConfig";
 
-const COLLECTOR_SERIES_IDS_SET = new Set([
-  "964", "993", "997", "991", "992", "930", "718-cayman-gt4", "carrera-gt",
-]);
+const COLLECTOR_SERIES_IDS_SET = new Set<string>(COLLECTOR_SERIES_IDS);
 
 export function matchesCollectorThesis(l: ListingRow): boolean {
   const trim = (l.trim ?? "").trim();
