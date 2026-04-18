@@ -13,6 +13,7 @@ import { CarDetailClient } from "./CarDetailClient"
 import { stripHtml } from "@/lib/stripHtml"
 import { findSimilarCars } from "@/lib/similarCars"
 import { VehicleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd"
+import { buildCarDetailMetadata } from "@/lib/seo/carDetailMetadata"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
@@ -21,7 +22,7 @@ interface CarDetailPageProps {
 }
 
 export async function generateMetadata({ params }: CarDetailPageProps) {
-  const { id } = await params
+  const { id, make, locale } = await params
 
   let car = CURATED_CARS.find(c => c.id === id && c.make !== "Ferrari") ?? null
 
@@ -29,19 +30,12 @@ export async function generateMetadata({ params }: CarDetailPageProps) {
     car = await fetchLiveListingById(id)
   }
 
-  if (!car) {
-    return { title: "Not Found | Monza Lab" }
-  }
-
-  return {
-    title: `${car.title} | Monza Lab`,
-    description: `${stripHtml(car.thesis).slice(0, 160)}...`,
-    openGraph: {
-      title: `${car.title} | Monza Lab`,
-      description: stripHtml(car.thesis),
-      images: [{ url: car.image }],
-    },
-  }
+  return buildCarDetailMetadata({
+    locale: locale as "en" | "es" | "de" | "ja",
+    make,
+    id,
+    car,
+  })
 }
 
 export async function generateStaticParams() {
