@@ -1,143 +1,68 @@
-import { describe, expect, it } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest";
+import { computeRegionalValFromAuctions, formatUsdValue } from "./valuation";
+import { _setTableForTest } from "@/lib/pricing/familyFactor";
+import type { Auction } from "../types";
 
-import { getSeriesConfig, extractSeries } from "@/lib/brandConfig"
-import { computeRegionalValFromAuctions, getValuationConfidence } from "./valuation"
-import type { Auction } from "../types"
-
-function makeAuction(overrides: Partial<Auction>): Auction {
+function a(over: Partial<Auction>): Auction {
   return {
-    id: "a1",
-    title: "2023 Porsche 992 GT3",
-    make: "Porsche",
-    model: "992 GT3",
-    year: 2023,
-    trim: null,
-    price: 300000,
-    currentBid: 0,
-    bidCount: 0,
-    viewCount: 0,
-    watchCount: 0,
-    status: "ACTIVE",
-    endTime: "2026-04-18T00:00:00.000Z",
-    platform: "AUTO_SCOUT_24",
-    engine: null,
-    transmission: null,
-    exteriorColor: null,
-    mileage: null,
-    mileageUnit: null,
-    location: null,
-    region: "US",
-    description: null,
-    images: [],
-    analysis: null,
-    priceHistory: [],
-    originalCurrency: "USD",
-    ...overrides,
-  }
+    id: "x", year: 2015, make: "Porsche", model: "911",
+    soldPriceUsd: null, askingPriceUsd: null,
+    valuationBasis: "unknown",
+    canonicalMarket: "US",
+    family: "991",
+    ...over,
+  } as Auction;
 }
 
-describe("dashboard valuation helpers", () => {
-  it("computes median, average, and sample count per market", () => {
-    const listings = [
-      makeAuction({
-        id: "us-1",
-        title: "2023 Porsche 992 GT3",
-        model: "992 GT3",
-        price: 300000,
-        region: "US",
-        status: "SOLD",
-        platform: "BRING_A_TRAILER",
-      }),
-      makeAuction({
-        id: "us-2",
-        title: "2017 Porsche 991 Turbo S",
-        model: "991 Turbo S",
-        year: 2017,
-        price: 280000,
-        region: "US",
-        status: "ACTIVE",
-        platform: "CARS_AND_BIDS",
-      }),
-      makeAuction({
-        id: "eu-1",
-        title: "2023 Porsche 992 GT3",
-        model: "992 GT3",
-        price: 250000,
-        currentBid: 0,
-        originalCurrency: "EUR",
-        region: "EU",
-        status: "ACTIVE",
-        platform: "AUTO_SCOUT_24",
-      }),
-    ]
+describe("computeRegionalValFromAuctions", () => {
+  beforeEach(() => {
+    _setTableForTest({
+      porscheWide: { factor: 0.9, soldN: 1000, askingN: 5000 },
+      byFamily: { "991": { family: "991", factor: 0.92, soldN: 150, askingN: 2800 } },
+      generatedAt: "2026-04-18T00:00:00Z",
+    });
+  });
 
-    const all = computeRegionalValFromAuctions(listings, { EUR: 1.1 })
+  it("returns only markets/families present in the corpus", () => {
+    const auctions = Array.from({ length: 25 }, (_, i) =>
+      a({ soldPriceUsd: 100000 + i * 1000, valuationBasis: "sold", canonicalMarket: "US", family: "991" })
+    );
+    const r = computeRegionalValFromAuctions(auctions);
+    expect(r.US.marketValue.tier).toBe("high");
+    expect(r.US.marketValue.valueUsd).toBeGreaterThan(0);
+    expect(r.EU.marketValue.tier).toBe("insufficient");
+    expect(r.EU.marketValue.valueUsd).toBeNull();
+  });
 
-    expect(extractSeries("992 GT3", 2023, "Porsche", "2023 Porsche 992 GT3")).toBe("992")
-    expect(getSeriesConfig("992", "Porsche")?.family).toBe("911 Family")
+  it("never falls back to another market", () => {
+    const auctions = Array.from({ length: 30 }, (_, i) =>
+      a({ soldPriceUsd: 100000 + i * 1000, valuationBasis: "sold", canonicalMarket: "US" })
+    );
+    const r = computeRegionalValFromAuctions(auctions);
+    expect(r.JP.marketValue.valueUsd).toBeNull();
+    expect(r.JP.askMedian.valueUsd).toBeNull();
+  });
 
-    expect(all.US.sampleCount).toBe(2)
-    expect(all.US.usdCurrent).toBeCloseTo(0.29, 2)
-    expect(all.US.usdAverage).toBeCloseTo(0.29, 2)
+  it("ask median populated with adjusted value", () => {
+    const auctions = Array.from({ length: 300 }, (_, i) =>
+      a({ askingPriceUsd: 90000 + i * 100, valuationBasis: "asking", canonicalMarket: "EU", family: "991" })
+    );
+    const r = computeRegionalValFromAuctions(auctions);
+    expect(r.EU.askMedian.tier).toBe("high");
+    expect(r.EU.askMedian.valueUsd).toBeGreaterThan(0);
+    expect(r.EU.askMedian.factorApplied).toBe(0.92);
+  });
+});
 
-    expect(all.EU.sampleCount).toBe(1)
-    expect(all.EU.usdCurrent).toBeCloseTo(0.227, 3)
-    expect(all.EU.usdAverage).toBeCloseTo(0.227, 3)
-
-    expect(all.JP.sampleCount).toBe(0)
-  })
-
-  it("does not invent a regional value when no local listings exist", () => {
-    const listings = [
-      makeAuction({
-        id: "uk-1",
-        title: "2010 Porsche 997 Carrera S",
-        model: "997 Carrera S",
-        year: 2010,
-        price: 160000,
-        region: "UK",
-        status: "SOLD",
-        platform: "AUTO_TRADER",
-      }),
-    ]
-
-    const all = computeRegionalValFromAuctions(listings, {})
-
-    expect(all.UK.sampleCount).toBe(1)
-    expect(all.UK.usdCurrent).toBeCloseTo(0.16, 3)
-    expect(all.UK.usdAverage).toBeCloseTo(0.16, 3)
-    expect(all.US.sampleCount).toBe(0)
-    expect(all.US.usdCurrent).toBe(0)
-    expect(getValuationConfidence(all.US.sampleCount, all.US.minUsd, all.US.maxUsd).label).toBe("NO LOCAL DATA")
-  })
-
-  it("uses a median-first view that is resistant to trophy-car outliers", () => {
-    const listings = [
-      makeAuction({ id: "us-1", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 90000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-2", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 94000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-3", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 98000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-4", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 101000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-5", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 104000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-6", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 108000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-7", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 111000, region: "US", status: "SOLD" }),
-      makeAuction({ id: "us-8", title: "2008 Porsche 997 Carrera S", model: "997 Carrera S", year: 2008, price: 115000, region: "US", status: "SOLD" }),
-      makeAuction({
-        id: "us-outlier",
-        title: "2008 Porsche 997 Carrera S Sonderwunsch",
-        model: "997 Carrera S",
-        year: 2008,
-        price: 2500000,
-        region: "US",
-        status: "SOLD",
-      }),
-    ]
-
-    const all = computeRegionalValFromAuctions(listings, {})
-
-    expect(all.US.sampleCount).toBe(8)
-    expect(all.US.usdCurrent).toBeCloseTo(0.1025, 3)
-    expect(all.US.usdAverage).toBeCloseTo(0.102625, 3)
-    expect(all.US.minUsd).toBeCloseTo(0.09, 3)
-    expect(all.US.maxUsd).toBeCloseTo(0.115, 3)
-  })
-})
+describe("formatUsdValue", () => {
+  it("formats millions", () => {
+    expect(formatUsdValue(1_200_000)).toBe("$1.2M");
+    expect(formatUsdValue(1_000_000)).toBe("$1M");
+  });
+  it("formats thousands", () => {
+    expect(formatUsdValue(120_000)).toBe("$120K");
+  });
+  it("handles null", () => {
+    expect(formatUsdValue(null)).toBe("—");
+  });
+});
