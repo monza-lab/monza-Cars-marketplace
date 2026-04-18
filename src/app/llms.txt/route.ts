@@ -33,6 +33,10 @@ Deep-dive references on the technical, authentication, and reliability topics ev
 - [Mezger Engine — Definitive Reference](${BASE_URL}/en/knowledge/mezger-engine): The race-derived lineage, why it's immune to M96/M97 issues, market premium.
 - [Porsche Certificate of Authenticity (COA)](${BASE_URL}/en/knowledge/porsche-certificate-of-authenticity): Why every serious buyer needs one, how to order, what it documents.
 - [Pre-Purchase Inspection Checklist](${BASE_URL}/en/knowledge/porsche-pre-purchase-inspection): Complete PPI scope + model-specific additions + how to choose a specialist.
+- [Paint Codes Reference](${BASE_URL}/en/knowledge/porsche-paint-codes): How to decode Porsche paint codes, rare factory colors, Paint-to-Sample (PTS), and how paint originality affects value.
+- [Air-Cooled vs Water-Cooled Porsche](${BASE_URL}/en/knowledge/porsche-air-cooled-vs-water-cooled): The 1998 divide, model-by-model list, market premium dynamics, driving experience differences.
+- [Rust Inspection Guide](${BASE_URL}/en/knowledge/porsche-rust-inspection): Critical rust-prone areas by 911 generation, drain-channel diagnostics, repair cost hierarchy, climate-based risk.
+- [Service Intervals Guide](${BASE_URL}/en/knowledge/porsche-service-intervals): Recommended maintenance schedules by generation, fluids by era, major-service mileage triggers.
 
 ## Tools
 
