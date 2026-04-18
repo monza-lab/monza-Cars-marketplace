@@ -23,7 +23,9 @@ Return ONLY a JSON object, no prose, no code fences:
 
 export function parseVisionResponse(raw: string, photoCount: number): VisionScore {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
-  const parsed = JSON.parse(cleaned) as Partial<VisionScore>;
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("vision: no JSON object found in response");
+  const parsed = JSON.parse(match[0]) as Partial<VisionScore>;
 
   if (typeof parsed.score !== "number") throw new Error("vision: missing score");
   const clamp = (i: number) => Math.max(0, Math.min(photoCount - 1, Math.floor(i)));

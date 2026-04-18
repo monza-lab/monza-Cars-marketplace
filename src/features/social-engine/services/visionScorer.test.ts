@@ -38,4 +38,14 @@ describe("parseVisionResponse", () => {
   it("throws on invalid JSON", () => {
     expect(() => parseVisionResponse("not json", 3)).toThrow();
   });
+
+  it("extracts JSON object from surrounding prose", () => {
+    const raw = 'Here is the result: {"score": 70, "reasons": [], "best_photo_index": 0, "recommended_indices": [0]}. Hope this helps!';
+    const out = parseVisionResponse(raw, 3);
+    expect(out.score).toBe(70);
+  });
+
+  it("throws when no JSON object present", () => {
+    expect(() => parseVisionResponse("just text, no json here", 3)).toThrow("no JSON object");
+  });
 });
