@@ -1,0 +1,67 @@
+<!--
+  Synthetic fixture mirroring the gallery markup patterns observed on
+  classic.com detail pages (their live HTML cannot be fetched with curl
+  because the site is Cloudflare-gated). Structure is intentionally
+  minimal and exercises every attribute the broadened selector needs to
+  read: src, data-src, data-lazy-src, data-lazy, data-zoom-image, and
+  <source srcset>.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>1996 Porsche 911 Turbo — classic.com</title>
+  </head>
+  <body>
+    <main>
+      <section class="gallery">
+        <img
+          class="hero"
+          src="https://images.classic.com/vehicles/hero-1.jpeg?ar=16%3A9&fit=crop&h=338&w=600"
+          alt="hero"
+        />
+
+        <img
+          class="slide"
+          src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+          data-src="https://images.classic.com/vehicles/slide-2.jpg?w=1200"
+          alt="slide 2"
+        />
+        <img
+          class="slide"
+          data-lazy-src="https://images.classic.com/vehicles/slide-3.jpg?w=1200"
+          alt="slide 3"
+        />
+        <img
+          class="slide"
+          data-lazy="https://images.classic.com/vehicles/slide-4.jpg?w=1200"
+          alt="slide 4"
+        />
+
+        <img
+          class="slide"
+          src="https://images.classic.com/vehicles/slide-5-thumb.jpg?w=200"
+          data-zoom-image="https://images.classic.com/vehicles/slide-5-full.jpg?w=2400"
+          alt="slide 5"
+        />
+
+        <picture>
+          <source
+            srcset="https://images.classic.com/vehicles/slide-6.webp?w=1200 1x, https://images.classic.com/vehicles/slide-6@2x.webp?w=2400 2x"
+            type="image/webp"
+          />
+          <img
+            src="https://images.classic.com/vehicles/slide-6.jpg?w=1200"
+            alt="slide 6"
+          />
+        </picture>
+      </section>
+
+      <img src="https://cdn.cloudflare.com/icons/play.svg" alt="play" />
+      <img src="https://example.com/tracking.gif" alt="tracking" />
+      <img
+        src="https://images.classic.com/brand-logo.svg"
+        alt="site logo not a vehicle"
+      />
+    </main>
+  </body>
+</html>
