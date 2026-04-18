@@ -1281,5 +1281,19 @@
     "copyright": "© 2025 Monza Lab",
     "privacy": "Privacy",
     "terms": "Terms"
+  },
+  "seo": {
+    "make": {
+      "title": "{make} Collection — Investment Grade Collector Cars | MonzaHaus",
+      "description": "Explore investment-grade {make} vehicles with live and historical collector-market insights, auction data, and AI-powered market analysis."
+    },
+    "makeWithSeries": {
+      "title": "{make} {series} — Auction Results, Market Values & Investment Analysis | MonzaHaus",
+      "description": "Live and historical auction data for {make} {series}. Track market trends, compare specs, and discover investment-grade {series} vehicles."
+    },
+    "car": {
+      "titleTemplate": "{year} {make} {model} | MonzaHaus",
+      "descriptionFallback": "Collector-grade {year} {make} {model}. Market analysis, comparables, and investment thesis."
+    }
   }
 }

@@ -51,3 +51,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# social engine v0.5 — generated daily carousels (manual upload artifacts)
+posts/

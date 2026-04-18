@@ -1280,5 +1280,19 @@
     "copyright": "© 2025 Monza Lab",
     "privacy": "Datenschutz",
     "terms": "Nutzungsbedingungen"
+  },
+  "seo": {
+    "make": {
+      "title": "{make} Kollektion — Sammlerfahrzeuge in Investmentqualität | MonzaHaus",
+      "description": "Entdecken Sie {make}-Fahrzeuge in Investmentqualität mit Live-Marktdaten, Auktionsergebnissen und KI-gestützter Marktanalyse."
+    },
+    "makeWithSeries": {
+      "title": "{make} {series} — Auktionsergebnisse, Marktwerte und Investmentanalyse | MonzaHaus",
+      "description": "Live- und historische Auktionsdaten für {make} {series}. Markttrends, Spezifikationen und Sammlerfahrzeuge in Investmentqualität."
+    },
+    "car": {
+      "titleTemplate": "{year} {make} {model} | MonzaHaus",
+      "descriptionFallback": "{year} {make} {model} — Sammlerqualität. Marktanalyse, Vergleichswerte und Investmentthese."
+    }
   }
 }

@@ -108,6 +108,185 @@ export function BreadcrumbJsonLd({
   );
 }
 
+/** Article — use on guide/editorial pages */
+export function ArticleJsonLd({
+  headline,
+  description,
+  url,
+  image,
+  datePublished,
+  dateModified,
+  authorName = "MonzaHaus Editorial",
+  inLanguage = "en",
+}: {
+  headline: string;
+  description: string;
+  url: string;
+  image?: string;
+  datePublished: string;
+  dateModified?: string;
+  authorName?: string;
+  inLanguage?: string;
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline,
+    description,
+    url,
+    image,
+    datePublished,
+    dateModified: dateModified || datePublished,
+    inLanguage,
+    author: {
+      "@type": "Organization",
+      name: authorName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "MonzaHaus",
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/favicon-512.png`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/** FAQPage — use on pages with Q&A sections (high AEO value) */
+export function FAQPageJsonLd({
+  questions,
+}: {
+  questions: { question: string; answer: string }[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: q.answer,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/** Dataset — use on Monza Haus Index pages (critical for LLM citation) */
+export function DatasetJsonLd({
+  name,
+  description,
+  url,
+  keywords,
+  license = "https://creativecommons.org/licenses/by/4.0/",
+  datePublished,
+  dateModified,
+  spatialCoverage,
+  temporalCoverage,
+  distribution,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  keywords: string[];
+  license?: string;
+  datePublished?: string;
+  dateModified?: string;
+  spatialCoverage?: string;
+  temporalCoverage?: string;
+  distribution?: { contentUrl: string; encodingFormat: string }[];
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name,
+    description,
+    url,
+    keywords,
+    license,
+    datePublished,
+    dateModified,
+    spatialCoverage,
+    temporalCoverage,
+    creator: {
+      "@type": "Organization",
+      name: "MonzaHaus",
+      url: BASE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "MonzaHaus",
+      url: BASE_URL,
+    },
+    distribution: distribution?.map((d) => ({
+      "@type": "DataDownload",
+      contentUrl: d.contentUrl,
+      encodingFormat: d.encodingFormat,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+/** CollectionPage — use on make/series listing pages */
+export function CollectionPageJsonLd({
+  name,
+  description,
+  url,
+  numberOfItems,
+  inLanguage = "en",
+}: {
+  name: string;
+  description: string;
+  url: string;
+  numberOfItems: number;
+  inLanguage?: string;
+}) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    description,
+    url,
+    inLanguage,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 /** Vehicle listing — use on car detail pages */
 export function VehicleJsonLd({
   name,

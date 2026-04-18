@@ -1280,5 +1280,19 @@
     "copyright": "© 2025 Monza Lab",
     "privacy": "プライバシー",
     "terms": "利用規約"
+  },
+  "seo": {
+    "make": {
+      "title": "{make} コレクション — 投資グレード・コレクターカー | MonzaHaus",
+      "description": "投資グレードの{make}車両を、ライブ市場データ、オークション結果、AIによる市場分析とともに紹介。"
+    },
+    "makeWithSeries": {
+      "title": "{make} {series} — オークション結果・市場相場・投資分析 | MonzaHaus",
+      "description": "{make} {series}のライブおよび過去のオークションデータ。市場動向、スペック比較、投資グレード車両の発見。"
+    },
+    "car": {
+      "titleTemplate": "{year} {make} {model} | MonzaHaus",
+      "descriptionFallback": "{year} {make} {model} — コレクターグレード。市場分析、比較データ、投資テーゼ。"
+    }
   }
 }

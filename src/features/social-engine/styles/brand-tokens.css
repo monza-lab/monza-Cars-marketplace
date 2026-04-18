@@ -1,0 +1,377 @@
+/* ============================================
+   MONZAHAUS — DESIGN TOKENS v1.0
+   The Salon Aesthetic
+   "Would this feel at home in a contemporary art gallery?"
+   ============================================ */
+
+:root {
+  /* ── CORE COLORS ── */
+  --warm-cream: #FDFBF9;        /* Light mode background */
+  --dark-espresso: #2A2320;     /* Primary text (light mode) */
+  --salon-burgundy: #7A2E4A;    /* Primary accent, CTAs */
+  --salon-rose: #D4738A;        /* Primary accent (dark mode) */
+  --soft-beige: #F5F2EE;        /* Card backgrounds */
+  --warm-border: #E8E2DC;       /* Borders, dividers (light) */
+  --museum-gray: #9A8E88;       /* Muted text, secondary labels */
+  --bone: #E8E2DE;              /* Primary text (dark mode) */
+
+  /* ── DARK MODE SURFACES ── */
+  --obsidian: #0E0A0C;          /* Dark mode background */
+  --obsidian-card: #161113;     /* Card background (dark) */
+  --dark-border: #2A2226;       /* Borders (dark mode) */
+  --cool-gray: #6B6365;         /* Muted text (dark mode) */
+
+  /* ── SEMANTIC / FINANCIAL ── */
+  --positive: #34D399;          /* Emerald Mint — appreciation, growth */
+  --negative: #FB923C;          /* Burnt Orange — depreciation, risk (NEVER red) */
+  --warning: #FBBF24;           /* Amber — advisory only */
+
+  /* ── CHART PALETTE ── */
+  --chart-burgundy: #7A2E4A;
+  --chart-rose: #D4738A;
+  --chart-purple: #c084fc;
+  --chart-cyan: #67e8f9;
+  --chart-positive: #34D399;
+  --chart-negative: #FB923C;
+
+  /* ── LIGHT THEME (default) ── */
+  --bg: #FDFBF9;
+  --fg: #2A2320;
+  --card: #F5F2EE;
+  --primary: #7A2E4A;
+  --primary-fg: #FDFBF9;
+  --primary-hover: #5C1A33;
+  --rose: #D4738A;
+  --muted: #9A8E88;
+  --border: #E8E2DC;
+
+  /* ── TYPOGRAPHY ── */
+  --font-serif: 'Cormorant', Georgia, serif;
+  --font-sans: 'Karla', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* ── TYPE SCALE ── */
+  --text-h1: clamp(2.5rem, 5vw, 4rem);
+  --text-h2: clamp(1.75rem, 3vw, 2.5rem);
+  --text-h3: 1.25rem;
+  --text-body: 0.95rem;
+  --text-label: 0.6875rem;
+  --text-data: 0.7rem;
+  --text-price: 1.25rem;
+
+  /* ── FONT WEIGHTS ── */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ── TRACKING (letter-spacing) ── */
+  --tracking-heading: -0.02em;
+  --tracking-label: 0.25em;
+  --tracking-label-alt: 0.2em;
+  --tracking-normal: normal;
+
+  /* ── LINE HEIGHTS ── */
+  --leading-tight: 1.1;        /* H1 */
+  --leading-snug: 1.2;         /* H2 */
+  --leading-relaxed: 1.6;      /* Body */
+
+  /* ── RADIUS SCALE (base: 10px) ── */
+  --radius-sm: 6px;            /* Tags, chips */
+  --radius-md: 8px;            /* Inputs, small cards */
+  --radius-lg: 10px;           /* Buttons, standard cards */
+  --radius-xl: 14px;           /* Large cards, modals */
+  --radius-2xl: 18px;          /* Hero cards, feature blocks */
+  --radius-3xl: 22px;          /* Panels, sections */
+
+  /* ── SPACING ── */
+  --container-max: 1100px;
+  --padding-desktop: 0 2rem;
+  --padding-tablet: 0 1.25rem;
+  --padding-mobile: 0 1rem;
+  --section-padding-desktop: 5rem;
+  --section-padding-tablet: 3rem;
+  --section-padding-mobile: 2.5rem;
+
+  /* ── TRANSITIONS ── */
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-float: 6s ease-in-out infinite;
+  --transition-shimmer: 8s ease-in-out infinite;
+
+  /* ── EFFECTS ── */
+  --salon-glow-light: rgba(92, 26, 51, 0.04);
+  --salon-glow-dark: rgba(212, 115, 138, 0.12);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(24px) saturate(1.3);
+  --glass-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 40px rgba(0,0,0,0.08);
+
+  --selection-color: rgba(122, 46, 74, 0.2);
+  --focus-ring: rgba(122, 46, 74, 0.3);
+
+  /* ── NOISE TEXTURE ── */
+  --noise-opacity-light: 0.01;
+  --noise-opacity-dark: 0.02;
+
+  /* ── SCROLLBAR ── */
+  --scrollbar-width: 4px;
+}
+
+/* ── DARK THEME ── */
+[data-theme="dark"],
+.dark {
+  --bg: #0E0A0C;
+  --fg: #E8E2DE;
+  --card: #161113;
+  --primary: #D4738A;
+  --primary-fg: #0E0A0C;
+  --primary-hover: #E8919F;
+  --muted: #6B6365;
+  --border: #2A2226;
+}
+
+/* ── BASE STYLES ── */
+::selection {
+  background: var(--selection-color);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: var(--radius-lg);
+}
+
+/* ── TYPOGRAPHY CLASSES ── */
+.heading-1 {
+  font-family: var(--font-serif);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-tight);
+}
+
+.heading-2 {
+  font-family: var(--font-serif);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-snug);
+}
+
+.heading-3 {
+  font-family: var(--font-serif);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.body-text {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+}
+
+.salon-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.data-text {
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: var(--weight-regular);
+}
+
+.price-text {
+  font-family: var(--font-serif);
+  font-size: var(--text-price);
+  font-weight: var(--weight-medium);
+  color: var(--primary);
+}
+
+/* ── BUTTON COMPONENTS ── */
+.btn-primary {
+  background: var(--salon-burgundy);
+  color: var(--warm-cream);
+  padding: 0.625rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: var(--weight-medium);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(122, 46, 74, 0.25);
+}
+
+.btn-secondary {
+  background: rgba(122, 46, 74, 0.06);
+  color: var(--dark-espresso);
+  padding: 0.625rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: var(--weight-medium);
+  border: 1px solid var(--warm-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-secondary:hover {
+  background: rgba(122, 46, 74, 0.1);
+  border-color: rgba(122, 46, 74, 0.2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--museum-gray);
+  padding: 0.625rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: var(--weight-medium);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-ghost:hover {
+  color: var(--dark-espresso);
+  background: rgba(42, 35, 32, 0.04);
+}
+
+/* ── GLASSMORPHISM CARD ── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ── SALON GLOW EFFECT ── */
+.salon-glow {
+  position: relative;
+}
+
+.salon-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 50%;
+  background: radial-gradient(
+    ellipse 80% 50% at center top,
+    var(--salon-glow-light) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+[data-theme="dark"] .salon-glow::before,
+.dark .salon-glow::before {
+  background: radial-gradient(
+    ellipse 80% 50% at center top,
+    var(--salon-glow-dark) 0%,
+    transparent 60%
+  );
+}
+
+/* ── TEXT GRADIENT SHIMMER ── */
+@keyframes shimmer {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 200% center; }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    #5C1A33, #7A2E4A, #5C1A33, #4A1228, #5C1A33
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer var(--transition-shimmer);
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+.noise-overlay::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: var(--noise-opacity-light);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+[data-theme="dark"] .noise-overlay::after,
+.dark .noise-overlay::after {
+  opacity: var(--noise-opacity-dark);
+}
+
+/* ── FINANCIAL INDICATORS ── */
+.indicator-positive {
+  color: var(--positive);
+}
+
+.indicator-negative {
+  color: var(--negative);
+}
+
+.indicator-warning {
+  color: var(--warning);
+}
+
+/* ── TAG / CHIP ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label-alt);
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  background: rgba(122, 46, 74, 0.08);
+  color: var(--primary);
+}
+
+.tag-active {
+  background: var(--salon-burgundy);
+  color: var(--warm-cream);
+}

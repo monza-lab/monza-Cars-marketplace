@@ -6,31 +6,30 @@ import {
 } from "@/lib/supabaseLiveListings"
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
+import { BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/seo/JsonLd"
+import { buildMakePageMetadata } from "@/lib/seo/makePageMetadata"
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
 export const dynamic = 'force-dynamic'
 
 interface MakePageProps {
-  params: Promise<{ make: string }>
-  searchParams: Promise<{ family?: string; gen?: string; variant?: string }>
+  params: Promise<{ make: string; locale: string }>
+  searchParams: Promise<{ family?: string; gen?: string; variant?: string; series?: string }>
 }
 
-export async function generateMetadata({ params }: MakePageProps) {
-  const { make } = await params
-  const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
-  // Capitalize each word for display
-  const makeName = decodedMake
-    .split(" ")
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ")
-
-  return {
-    title: `${makeName} Collection | Monza Lab`,
-    description: `Explore investment-grade ${makeName} vehicles with live and historical collector-market insights.`,
-  }
+export async function generateMetadata({ params, searchParams }: MakePageProps) {
+  const { make, locale } = await params
+  const { series } = await searchParams
+  return buildMakePageMetadata({
+    locale: locale as "en" | "es" | "de" | "ja",
+    make,
+    series,
+  })
 }
 
 export default async function MakePage({ params, searchParams }: MakePageProps) {
-  const { make } = await params
+  const { make, locale } = await params
   const { family: initialFamily, gen: initialGen, variant: initialVariant } = await searchParams
   const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
 
@@ -57,18 +56,39 @@ export default async function MakePage({ params, searchParams }: MakePageProps) 
     ? supabaseSoldHistory
     : await getSoldAuctionsForMake(makeName)
 
+  const totalItems =
+    (liveCounts.liveNow ?? 0) +
+    (Array.isArray(dbSoldHistory) ? dbSoldHistory.length : 0)
+
+  const pageUrl = `${BASE_URL}/${locale}/cars/${make}`
+
   return (
-    <MakePageClient
-      make={makeName}
-      liveRegionTotals={liveCounts.regionTotalsByLocation}
-      liveNowCount={liveCounts.liveNow}
-      dbMarketData={dbMarketData}
-      dbComparables={dbComparables}
-      dbSoldHistory={dbSoldHistory}
-      dbAnalyses={dbAnalyses}
-      initialFamily={initialFamily}
-      initialGen={initialGen}
-      initialVariant={initialVariant}
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: `${BASE_URL}/${locale}` },
+          { name: makeName, url: pageUrl },
+        ]}
+      />
+      <CollectionPageJsonLd
+        name={`${makeName} Collection`}
+        description={`Investment-grade ${makeName} vehicles with live and historical collector-market insights.`}
+        url={pageUrl}
+        numberOfItems={totalItems}
+        inLanguage={locale}
+      />
+      <MakePageClient
+        make={makeName}
+        liveRegionTotals={liveCounts.regionTotalsByLocation}
+        liveNowCount={liveCounts.liveNow}
+        dbMarketData={dbMarketData}
+        dbComparables={dbComparables}
+        dbSoldHistory={dbSoldHistory}
+        dbAnalyses={dbAnalyses}
+        initialFamily={initialFamily}
+        initialGen={initialGen}
+        initialVariant={initialVariant}
+      />
+    </>
   )
 }
