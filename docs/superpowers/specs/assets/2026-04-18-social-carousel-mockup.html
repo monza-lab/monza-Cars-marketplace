@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MonzaHaus Carousel Mockup — 40k-Mile 2004 Porsche 911 GT3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600&family=Karla:wght@300;400;500;600;700&family=Geist+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FDFBF9;
+    --espresso: #2A2320;
+    --burgundy: #7A2E4A;
+    --burgundy-deep: #5C1A33;
+    --beige: #F5F2EE;
+    --border: #E8E2DC;
+    --museum: #9A8E88;
+    --obsidian: #0E0A0C;
+    --bone: #E8E2DE;
+    --rose: #D4738A;
+    --obsidian-card: #161113;
+    --dark-border: #2A2226;
+    --mint: #34D399;
+    --orange: #FB923C;
+    --font-serif: 'Cormorant', serif;
+    --font-sans: 'Karla', sans-serif;
+    --font-mono: 'Geist Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { font-family: var(--font-sans); background: #1a1715; color: #e0d8d2; min-height: 100vh; }
+  .page-header {
+    padding: 40px 60px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--dark-border);
+  }
+  .page-header h1 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--bone);
+  }
+  .page-header p {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--museum);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .carousel-container {
+    display: flex;
+    gap: 32px;
+    padding: 40px 60px 80px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+  .slide-wrapper {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .slide-label {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--museum);
+    text-align: center;
+  }
+  .slide {
+    width: 432px;   /* 1080 * 0.4 */
+    height: 540px;  /* 1350 * 0.4 */
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  /* -------- SLIDE 1: COVER (dark) -------- */
+  .slide-1 {
+    background: var(--obsidian);
+  }
+  .slide-1 .photo {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+  }
+  .slide-1 .photo::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 50%, rgba(14,10,12,0.85) 100%);
+  }
+  .slide-1 .label-top {
+    position: absolute;
+    top: 32px; left: 32px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--rose);
+    z-index: 2;
+  }
+  .slide-1 .brand {
+    position: absolute;
+    top: 32px; right: 32px;
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--bone);
+    letter-spacing: -0.02em;
+    z-index: 2;
+  }
+  .slide-1 .title-block {
+    position: absolute;
+    bottom: 36px; left: 32px; right: 32px;
+    z-index: 2;
+  }
+  .slide-1 .title {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 44px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--bone);
+  }
+  .slide-1 .subtitle {
+    margin-top: 10px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--museum);
+  }
+
+  /* -------- SLIDE 2: SPECS (dark) -------- */
+  .slide-2 {
+    background: var(--obsidian);
+    display: flex;
+  }
+  .slide-2 .photo-col {
+    flex: 0 0 50%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .slide-2 .photo-col::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(14,10,12,0) 70%, rgba(14,10,12,0.9) 100%);
+  }
+  .slide-2 .data-col {
+    flex: 1;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .slide-2 .top-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--rose);
+  }
+  .slide-2 .specs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 28px;
+  }
+  .slide-2 .spec-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--dark-border);
+  }
+  .slide-2 .spec-row:last-child {
+    border: none;
+  }
+  .slide-2 .spec-label {
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--museum);
+  }
+  .slide-2 .spec-value {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--bone);
+    letter-spacing: -0.01em;
+  }
+  .slide-2 .footer {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--museum);
+  }
+
+  /* -------- SLIDE 3: MARKET POSITION (rosa attention) -------- */
+  .slide-3 {
+    background: linear-gradient(140deg, var(--burgundy-deep) 0%, var(--burgundy) 50%, #8d3a56 100%);
+    padding: 44px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-3::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(60% 40% at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 60%);
+  }
+  .slide-3 .top-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    position: relative;
+  }
+  .slide-3 .main-stat {
+    position: relative;
+  }
+  .slide-3 .stat-kicker {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+  }
+  .slide-3 .stat-value {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 56px;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .slide-3 .stat-caption {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+  .slide-3 .range-bar {
+    position: relative;
+    margin-top: 24px;
+  }
+  .slide-3 .range-track {
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .slide-3 .range-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 65%;
+    background: rgba(255,255,255,0.5);
+  }
+  .slide-3 .range-marker {
+    position: absolute;
+    top: -6px;
+    left: 75%;
+    width: 2px;
+    height: 14px;
+    background: var(--mint);
+  }
+  .slide-3 .range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+  }
+  .slide-3 .delta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding: 6px 12px;
+    background: rgba(52,211,153,0.15);
+    border: 1px solid rgba(52,211,153,0.4);
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--mint);
+  }
+  .slide-3 .footer-note {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    position: relative;
+  }
+
+  /* -------- SLIDE 4: STORY (light) -------- */
+  .slide-4 {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+  }
+  .slide-4 .photo {
+    height: 45%;
+    background-size: cover;
+    background-position: center;
+  }
+  .slide-4 .content {
+    flex: 1;
+    padding: 28px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .slide-4 .top-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+  }
+  .slide-4 .story-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--espresso);
+    margin-top: 14px;
+  }
+  .slide-4 .story-body {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #4a4038;
+    margin-top: 16px;
+  }
+  .slide-4 .facts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .slide-4 .fact {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--espresso);
+    padding-left: 14px;
+    position: relative;
+  }
+  .slide-4 .fact::before {
+    content: '—';
+    position: absolute; left: 0;
+    color: var(--burgundy);
+    font-weight: 500;
+  }
+
+  /* -------- SLIDE 5: CTA (dark) -------- */
+  .slide-5 {
+    background: var(--obsidian);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide-5 .photo {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.45;
+  }
+  .slide-5 .photo::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at center, rgba(14,10,12,0.3) 0%, rgba(14,10,12,0.9) 100%);
+  }
+  .slide-5 .cta-content {
+    position: relative;
+    text-align: center;
+    z-index: 2;
+  }
+  .slide-5 .cta-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--rose);
+  }
+  .slide-5 .cta-main {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    color: var(--bone);
+    margin-top: 24px;
+  }
+  .slide-5 .cta-url {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--rose);
+    margin-top: 20px;
+    letter-spacing: 0.05em;
+  }
+  .slide-5 .cta-logo {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 28px;
+    color: var(--bone);
+    letter-spacing: -0.04em;
+    z-index: 2;
+  }
+
+  /* CAPTION preview */
+  .caption-block {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px;
+    background: var(--obsidian-card);
+    border: 1px solid var(--dark-border);
+    border-radius: 10px;
+  }
+  .caption-block h3 {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--museum);
+    margin-bottom: 16px;
+  }
+  .caption-block p {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--bone);
+    white-space: pre-wrap;
+  }
+  .caption-block .hashtags {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--museum);
+  }
+  .meta-bar {
+    max-width: 720px;
+    margin: 20px auto 0;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--museum);
+    border-top: 1px solid var(--dark-border);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Carousel Preview — MonzaHaus Social Engine</h1>
+  <p>Mockup from real DB listing · 5 slides at 1080×1350 (shown at 40%)</p>
+</div>
+
+<div class="carousel-container">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide-wrapper">
+    <div class="slide-label">01 · Cover</div>
+    <div class="slide slide-1">
+      <div class="photo" style="background-image: url('https://bringatrailer.com/wp-content/uploads/2026/04/2004_porsche_911-gt3_dsc_0433-72159.jpg?fit=940%2C627')"></div>
+      <div class="label-top">New Listing</div>
+      <div class="brand">MonzaHaus</div>
+      <div class="title-block">
+        <div class="title">2004 Porsche 911 GT3<br/><em style="font-style: italic; font-weight: 400; opacity: 0.85;">40k miles · Mezger</em></div>
+        <div class="subtitle">via Bring a Trailer · United States</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SPECS -->
+  <div class="slide-wrapper">
+    <div class="slide-label">02 · Specs</div>
+    <div class="slide slide-2">
+      <div class="photo-col" style="background-image: url('https://bringatrailer.com/wp-content/uploads/2026/04/DSC_0285-85951.jpg?w=620&resize=620%2C414')"></div>
+      <div class="data-col">
+        <div class="top-label">The Car</div>
+        <div class="specs-grid">
+          <div class="spec-row">
+            <div class="spec-label">Engine</div>
+            <div class="spec-value">3.6-Liter Mezger Flat-Six</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Gearbox</div>
+            <div class="spec-value">Six-Speed Manual Transaxle</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Mileage</div>
+            <div class="spec-value">40,000 mi</div>
+          </div>
+          <div class="spec-row">
+            <div class="spec-label">Exterior</div>
+            <div class="spec-value">Cobalt Blue</div>
+          </div>
+        </div>
+        <div class="footer">Listing live · BaT</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: MARKET POSITION -->
+  <div class="slide-wrapper">
+    <div class="slide-label">03 · Market · attention anchor</div>
+    <div class="slide slide-3">
+      <div class="top-label">Market Position</div>
+      <div class="main-stat">
+        <div class="stat-kicker">Last 12 months · 14 comparables</div>
+        <div class="stat-value">$152k</div>
+        <div class="stat-caption">Average clearing price for 996.1 GT3s with similar mileage and condition.</div>
+        <div class="range-bar">
+          <div class="range-track">
+            <div class="range-fill"></div>
+            <div class="range-marker"></div>
+          </div>
+          <div class="range-labels">
+            <span>$128k</span>
+            <span>$195k</span>
+          </div>
+        </div>
+        <div class="delta-pill">▲ 8.5% vs 12-mo avg</div>
+      </div>
+      <div class="footer-note">Mezger appreciation curve</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: STORY -->
+  <div class="slide-wrapper">
+    <div class="slide-label">04 · Story</div>
+    <div class="slide slide-4">
+      <div class="photo" style="background-image: url('https://bringatrailer.com/wp-content/uploads/2026/04/DSC_0239-86039.jpg?w=620&resize=620%2C414')"></div>
+      <div class="content">
+        <div>
+          <div class="top-label">Why this one matters</div>
+          <div class="story-title">The last mechanical GT3.</div>
+          <div class="story-body">The 996.1 GT3 remains the purest expression of the Mezger-era GT program — naturally aspirated 3.6, six-speed manual, no turbo, no PDK. The last GT3 before electronics started filtering the driver from the car.</div>
+        </div>
+        <div class="facts">
+          <div class="fact">40,000 documented miles</div>
+          <div class="fact">Original paint · Cobalt Blue</div>
+          <div class="fact">Mezger 3.6 · six-speed manual</div>
+          <div class="fact">Pre-DFI · pre-PDK · pre-PCCB</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: CTA -->
+  <div class="slide-wrapper">
+    <div class="slide-label">05 · CTA</div>
+    <div class="slide slide-5">
+      <div class="photo" style="background-image: url('https://bringatrailer.com/wp-content/uploads/2025/09/MichelinWidgetDesktop-24568.png?w=620&resize=620%2C89')"></div>
+      <div class="cta-content">
+        <div class="cta-label">Visítanos</div>
+        <div class="cta-main">Full report on<br/>MonzaHaus</div>
+        <div class="cta-url">monzahaus.com</div>
+      </div>
+      <div class="cta-logo">M</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CAPTION -->
+<div class="caption-block">
+  <h3>Instagram / Facebook Caption</h3>
+  <p>A 40k-mile 2004 GT3 in Cobalt Blue — Mezger, six-speed, naturally aspirated.
+
+The 996.1 GT3 sits at an inflection point the market hasn't fully priced. Clean examples clearing $152k average in the last twelve months.
+
+Full report at monzahaus.com/cars/porsche/64b50a94-eed8-4076-9eda-b3aabde02843/report</p>
+  <div class="hashtags">#aircooled — no, this one's water-cooled · #porsche #mezger #gt3</div>
+</div>
+
+<div class="meta-bar">
+  <span>Listing ID: 64b50a94</span>
+  <span>Source: BRING_A_TRAILER</span>
+  <span>Photos used: 4 of 10</span>
+</div>
+
+</body>
+</html>
