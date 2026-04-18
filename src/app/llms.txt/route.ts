@@ -20,6 +20,20 @@ MonzaHaus publishes proprietary quarterly market indices aggregating public auct
 - [Porsche Turbo Index](${BASE_URL}/en/index/porsche-turbo): 50 years of 911 Turbo — 930 through 992 Turbo S (cross-generational).
 - [Porsche GT Index](${BASE_URL}/en/index/porsche-gt): GT2, GT3, GT3 RS, GT4 + air-cooled 964/993 RS — the track-bred lineage.
 
+## Variant Deep-Dives (Blue-Chip Authority Pages)
+
+Authoritative buyer's-guide pages for the most collector-valuable Porsche variants. Each page carries Article + FAQPage + Vehicle JSON-LD with production numbers, identifiers (VIN / engine codes / option codes), price bands by condition, and 8-10 high-intent Q&As. These are the canonical MonzaHaus references for each variant.
+
+- [964 RS](${BASE_URL}/en/variants/porsche/964-rs) — Euro lightweight, 1992–1993, ≈2,051 units.
+- [964 Turbo 3.6](${BASE_URL}/en/variants/porsche/964-turbo-36) — last analog turbo, 1993–1994, ≈1,437 units.
+- [993 RS](${BASE_URL}/en/variants/porsche/993-rs) — Euro lightweight, 1995–1996, ≈1,014 units.
+- [993 Turbo S](${BASE_URL}/en/variants/porsche/993-turbo-s) — scarcest modern air-cooled, 1997–1998, ~528 units.
+- [996 GT3 RS](${BASE_URL}/en/variants/porsche/996-gt3-rs) — 2004, ≈682 units, Europe+RoW only (never sold in US).
+- [997 GT3 RS 4.0](${BASE_URL}/en/variants/porsche/997-gt3-rs-40) — last NA Mezger, 2011, exactly 600 units.
+- [991 R](${BASE_URL}/en/variants/porsche/991-r) — manual-only NA 4.0, 2016, exactly 991 units.
+- [991 GT2 RS](${BASE_URL}/en/variants/porsche/991-gt2-rs) — post-Mezger apex, 2017–2019, ≈1,000 units + Weissach + MR.
+- [992 Sport Classic](${BASE_URL}/en/variants/porsche/992-sport-classic) — Turbo S engine + manual + narrow body, 2022–2023, exactly 1,250 units.
+
 ## Generation Comparisons
 
 Head-to-head comparisons for buyers deciding between adjacent 911 generations. Each includes Article + FAQPage schemas with high-intent Q&A on investment, driving character, reliability, and ownership cost.

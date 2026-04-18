@@ -26,6 +26,18 @@ const COMPARISON_SLUGS = [
   "991-vs-992",
 ]
 
+const VARIANT_SLUGS = [
+  "964-rs",
+  "964-turbo-36",
+  "993-rs",
+  "993-turbo-s",
+  "996-gt3-rs",
+  "997-gt3-rs-40",
+  "991-gt2-rs",
+  "991-r",
+  "992-sport-classic",
+]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -112,6 +124,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "monthly",
         priority: 0.85,
         alternates: buildAlternates(`/compare/${slug}`),
+      })
+    }
+  }
+
+  // Variant deep-dive pages (blue-chip-specific queries)
+  for (const locale of LOCALES) {
+    for (const slug of VARIANT_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/variants/porsche/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.88,
+        alternates: buildAlternates(`/variants/porsche/${slug}`),
       })
     }
   }

@@ -3,6 +3,7 @@ import type { PorscheModelPage } from "@/lib/models/types";
 import type { IndexSummary } from "@/lib/index/factory";
 import { getModelAdjacency } from "@/lib/models/adjacency";
 import { getPorscheModel } from "@/lib/models/registry";
+import { getVariantsForModel } from "@/lib/variants/registry";
 
 function formatUsd(n: number | null) {
   if (n == null) return "—";
@@ -152,6 +153,33 @@ export function ModelPageLayout({
             ))}
           </ul>
         </section>
+
+        {(() => {
+          const variants = getVariantsForModel(model.slug);
+          if (variants.length === 0) return null;
+          return (
+            <section>
+              <h2 className="text-2xl font-serif mb-4">Variant deep-dives</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {variants.map((v) => (
+                  <Link
+                    key={v.slug}
+                    href={`/${locale}/variants/porsche/${v.slug}`}
+                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  >
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">
+                      {v.yearRange}
+                    </p>
+                    <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                      {v.shortName}
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-2">{v.tagline}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         <section className="border-l-2 border-amber-500 pl-6 py-2">
           <h2 className="text-xl font-serif mb-2 text-zinc-100">MonzaHaus thesis</h2>
