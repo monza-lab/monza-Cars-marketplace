@@ -19,6 +19,10 @@ import { derivePrice } from "./pricing/derivePrice";
 import { computeSegmentStats } from "./pricing/segmentStats";
 import type { DerivedPrice, CanonicalMarket } from "./pricing/types";
 
+// NOTE: columns listings.price_usd / price_eur / price_gbp are 100% NULL in production
+// as of 2026-04-18. All USD conversion happens in TS via pricing/derivePrice.
+// See docs/porsche/listings-distribution-overview.md for the diagnostic that confirmed this.
+
 // ─── Row types ───
 
 type ListingRow = {
