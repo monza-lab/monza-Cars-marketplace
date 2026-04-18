@@ -26,18 +26,7 @@ const activeCar = {
   trend: "Stable",
 } as const
 
-const valuationCar = {
-  ...activeCar,
-  id: "valuation-1",
-  status: "SOLD",
-  currentBid: 0,
-  price: 280000,
-  platform: "AUTO_SCOUT_24",
-  region: "EU",
-  originalCurrency: "EUR",
-} as const
-
-const fetchLiveListingsAsCollectorCars = vi.fn((options?: { status?: string }) => {
+const fetchLiveListingsAsCollectorCars = vi.fn(() => {
   return Promise.resolve([activeCar])
 })
 
@@ -85,6 +74,7 @@ describe("dashboard cache", () => {
         make: "Porsche",
         includeAllSources: true,
         includePriceHistory: false,
+        limit: 50,
       })
     )
     expect(fetchValuationCorpusForMake).toHaveBeenCalledWith("Porsche")

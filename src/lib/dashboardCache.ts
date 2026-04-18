@@ -110,7 +110,9 @@ export type DashboardData = {
 };
 
 // ─── PER_SOURCE_BUDGET for dashboard path (matches API route) ───
-const DASHBOARD_SOURCE_BUDGET = 200;
+// Keep this intentionally smaller than the API route budget so the cached
+// dashboard payload stays under Next.js's 2 MB data cache limit.
+const DASHBOARD_SOURCE_BUDGET = 50;
 
 function transformCar(car: CollectorCar): DashboardAuction {
   return {
@@ -226,8 +228,24 @@ const _cachedDashboardData = unstable_cache(
   },
 );
 
+function isNextCachePayloadTooLargeError(err: unknown): boolean {
+  const message =
+    err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  return /items over 2MB can not be cached/i.test(message);
+}
+
 export async function getCachedDashboardData(): Promise<DashboardData> {
-  return _cachedDashboardData();
+  try {
+    return await _cachedDashboardData();
+  } catch (err) {
+    if (isNextCachePayloadTooLargeError(err)) {
+      console.warn(
+        "[dashboardCache] cached dashboard payload exceeded Next.js limit; returning uncached data",
+      );
+      return dashboardDataImpl();
+    }
+    throw err;
+  }
 }
 
 /**
