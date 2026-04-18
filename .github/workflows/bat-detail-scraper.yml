@@ -31,6 +31,16 @@ jobs:
         with:
           node-version: '20'
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
       - run: npm ci
 
       - name: Run BaT Detail Scraper
