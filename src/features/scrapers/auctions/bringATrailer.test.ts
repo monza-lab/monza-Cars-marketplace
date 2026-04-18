@@ -72,6 +72,20 @@ const fallbackHtml = `
   </body></html>
 `;
 
+const fallbackDescriptionHtml = `
+  <html><body>
+    <div class="post-excerpt">Showing 36,000 miles on the odometer.</div>
+    <div class="essentials">
+      <li>Chassis: WP0AA299XYS123456</li>
+      <li>Guards Red Paint</li>
+      <li>Black Leather Upholstery</li>
+      <li>4.9L Flat-12</li>
+      <li>6-Speed Manual</li>
+      <li>Spider</li>
+    </div>
+  </body></html>
+`;
+
 describe("BaT detail recovery", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -127,5 +141,23 @@ describe("BaT detail recovery", () => {
     expect(out.transmission).toBe("6-Speed Manual");
     expect(out.bodyStyle).toBe("Spider");
     expect(out.currentBid).toBe(175000);
+  });
+
+  it("lets higher-confidence Scrapling mileage replace weaker primary mileage", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(`
+      <html><body>
+        <h1>17k-Mile 1998 Ferrari 550 Maranello Spider</h1>
+        <div class="post-excerpt">Auction notes only.</div>
+      </body></html>
+    `, { status: 200 })) as any);
+    mocks.fetchBaTDetailHtmlWithScrapling.mockResolvedValueOnce(fallbackDescriptionHtml);
+
+    const pending = scrapeDetail(baseAuction as any);
+    await vi.advanceTimersByTimeAsync(2500);
+    const out = await pending;
+
+    expect(mocks.fetchBaTDetailHtmlWithScrapling).toHaveBeenCalledTimes(1);
+    expect(out.mileage).toBe(36000);
+    expect(out.mileageUnit).toBe("miles");
   });
 });

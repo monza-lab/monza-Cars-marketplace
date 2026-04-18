@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -16,22 +16,24 @@ export async function fetchBaTDetailHtmlWithScrapling(url: string): Promise<stri
 
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "bat-scrapling-"));
   const htmlPath = path.join(tempDir, "page.html");
-  const result = spawnSync("scrapling", ["extract", "stealthy-fetch", url, htmlPath, "--solve-cloudflare"], {
-    encoding: "utf8",
-    timeout: 180_000,
-    env: {
-      ...process.env,
-      PYTHONUNBUFFERED: "1",
-    },
-  });
-
-  if (result.error || result.status !== 0) {
-    return null;
-  }
-
   try {
+    const result = spawnSync("scrapling", ["extract", "stealthy-fetch", url, htmlPath, "--solve-cloudflare"], {
+      encoding: "utf8",
+      timeout: 180_000,
+      env: {
+        ...process.env,
+        PYTHONUNBUFFERED: "1",
+      },
+    });
+
+    if (result.error || result.status !== 0) {
+      return null;
+    }
+
     return readFileSync(htmlPath, "utf8");
   } catch {
     return null;
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
   }
 }

@@ -368,6 +368,16 @@ function hasLowConfidenceDetailField(signal: ScoredValue<unknown>): boolean {
   return signal.value === null || signal.score < 80;
 }
 
+function extractDescriptionFromHtml(html: string): string | null {
+  const $ = cheerio.load(html);
+  return (
+    $('.post-excerpt, .listing-description, .post-content, article .entry-content')
+      .first()
+      .text()
+      .trim() || null
+  );
+}
+
 function extractBaTDetailSignals(html: string, title: string, description: string | null): BaTDetailSignals {
   const signals = createEmptyBaTDetailSignals();
   const $ = cheerio.load(html);
@@ -505,17 +515,23 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
   return signals;
 }
 
+function mergeScoredSignal<T>(primary: ScoredValue<T>, fallback: ScoredValue<T>): ScoredValue<T> {
+  if (fallback.value === null) return primary;
+  if (primary.value === null) return fallback;
+  return fallback.score > primary.score ? fallback : primary;
+}
+
 function mergeBaTDetailSignals(primary: BaTDetailSignals, fallback: BaTDetailSignals | null): BaTDetailSignals {
   if (!fallback) return primary;
   return {
-    mileage: primary.mileage.value !== null ? primary.mileage : fallback.mileage,
-    mileageUnit: primary.mileage.value !== null ? primary.mileageUnit : fallback.mileageUnit,
-    vin: primary.vin.value !== null ? primary.vin : fallback.vin,
-    colorExterior: primary.colorExterior.value !== null ? primary.colorExterior : fallback.colorExterior,
-    colorInterior: primary.colorInterior.value !== null ? primary.colorInterior : fallback.colorInterior,
-    engine: primary.engine.value !== null ? primary.engine : fallback.engine,
-    transmission: primary.transmission.value !== null ? primary.transmission : fallback.transmission,
-    bodyStyle: primary.bodyStyle.value !== null ? primary.bodyStyle : fallback.bodyStyle,
+    mileage: mergeScoredSignal(primary.mileage, fallback.mileage),
+    mileageUnit: mergeScoredSignal(primary.mileageUnit, fallback.mileageUnit),
+    vin: mergeScoredSignal(primary.vin, fallback.vin),
+    colorExterior: mergeScoredSignal(primary.colorExterior, fallback.colorExterior),
+    colorInterior: mergeScoredSignal(primary.colorInterior, fallback.colorInterior),
+    engine: mergeScoredSignal(primary.engine, fallback.engine),
+    transmission: mergeScoredSignal(primary.transmission, fallback.transmission),
+    bodyStyle: mergeScoredSignal(primary.bodyStyle, fallback.bodyStyle),
   };
 }
 
@@ -733,11 +749,7 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     const $ = cheerio.load(html);
 
     // Description
-    const description =
-      $('.post-excerpt, .listing-description, .post-content, article .entry-content')
-        .first()
-        .text()
-        .trim() || null;
+    const description = extractDescriptionFromHtml(html);
 
     // Seller notes — BaT has no CSS class; look for headings containing "seller"
     let sellerNotes: string | null = null;
@@ -775,7 +787,8 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     if (needsFallback && canUseBaTScraplingFallback()) {
       const fallbackHtml = await fetchBaTDetailHtmlWithScrapling(auction.url);
       if (fallbackHtml) {
-        const fallbackSignals = extractBaTDetailSignals(fallbackHtml, auction.title, description);
+        const fallbackDescription = extractDescriptionFromHtml(fallbackHtml);
+        const fallbackSignals = extractBaTDetailSignals(fallbackHtml, auction.title, fallbackDescription);
         detailSignals = mergeBaTDetailSignals(primarySignals, fallbackSignals);
       }
     }
