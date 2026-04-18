@@ -25,7 +25,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
   // Compute regional fair values from ALL auctions (unfiltered by region)
   const allBrandAuctions = useMemo(() =>
-    (allAuctions || auctions).filter(a => a.make === brand.name),
+    (allAuctions ?? auctions).filter(a => a.make === brand.name),
     [allAuctions, auctions, brand.name]
   )
   const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])

@@ -43,6 +43,7 @@ export default async function Home({
       <ViewPreferenceRedirect current="monza" />
       <DashboardClient
         auctions={data.auctions}
+        valuationListings={data.valuationListings}
         liveRegionTotals={data.regionTotals}
         liveNowTotal={data.liveNow}
         seriesCounts={data.seriesCounts}

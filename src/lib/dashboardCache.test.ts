@@ -38,14 +38,14 @@ const valuationCar = {
 } as const
 
 const fetchLiveListingsAsCollectorCars = vi.fn((options?: { status?: string }) => {
-  if (options?.status === "all") {
-    return Promise.resolve([valuationCar])
-  }
   return Promise.resolve([activeCar])
 })
 
+const fetchValuationListingsForMake = vi.fn(() => Promise.resolve([valuationCar]))
+
 vi.mock("./supabaseLiveListings", () => ({
   fetchLiveListingsAsCollectorCars,
+  fetchValuationListingsForMake,
   fetchLiveListingAggregateCounts: vi.fn(async () => ({
     liveNow: 7,
     regionTotalsByPlatform: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
@@ -61,6 +61,7 @@ vi.mock("./makeProfiles", () => ({
 describe("dashboard cache", () => {
   beforeEach(() => {
     fetchLiveListingsAsCollectorCars.mockClear()
+    fetchValuationListingsForMake.mockClear()
   })
 
   it("fetches a separate valuation universe with all listing statuses", async () => {
@@ -75,16 +76,7 @@ describe("dashboard cache", () => {
         includePriceHistory: false,
       })
     )
-    expect(fetchLiveListingsAsCollectorCars).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        make: "Porsche",
-        includeAllSources: true,
-        includePriceHistory: false,
-        status: "all",
-      })
-    )
-
+    expect(fetchValuationListingsForMake).toHaveBeenCalledWith("Porsche")
     expect(data.auctions).toHaveLength(1)
     expect(data.valuationListings).toHaveLength(1)
     expect(data.valuationListings[0].id).toBe("valuation-1")

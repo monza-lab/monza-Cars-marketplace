@@ -35,7 +35,8 @@ import {
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
-import { listingPriceUsd, computeRegionalValFromAuctions, computeMedian } from "./utils/valuation"
+import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
+import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── UPGRADE LOW-RES IMAGE URLS TO HIGH-RES ───
@@ -204,23 +205,6 @@ function fmtRegional(amount: number, symbol: string) {
   return `${symbol}${Math.round(amount).toLocaleString()}`
 }
 
-function formatRegionalVal(v: number, symbol: string) {
-  if (symbol === "¥") return `¥${Math.round(v)}M`
-  if (v >= 1) {
-    const s = v.toFixed(1)
-    return s.endsWith(".0") ? `${symbol}${v.toFixed(0)}M` : `${symbol}${s}M`
-  }
-  const k = Math.round(v * 1000)
-  return `${symbol}${k.toLocaleString()}K`
-}
-
-function formatUsdEquiv(v: number) {
-  if (v >= 1) {
-    const s = v.toFixed(1)
-    return s.endsWith(".0") ? `$${v.toFixed(0)}M` : `$${s}M`
-  }
-  return `$${Math.round(v * 1000).toLocaleString()}K`
-}
 // ─── AGGREGATE AUCTIONS BY BRAND ───
 function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbTotalOverride?: number): Brand[] {
   const brandMap = new Map<string, Auction[]>()
@@ -1782,12 +1766,12 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 }
 
 // ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
-function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions: Auction[]; allFamilies: PorscheFamily[] }) {
+function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; valuationAuctions?: Auction[]; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
-  const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
+  const valuationSource = valuationAuctions ?? auctions
 
   // Get auctions for this family — all derived data depends on this
   const familyAuctions = useMemo(() => {
@@ -1798,14 +1782,14 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
+  // ─── DYNAMIC: Valuation by Market from the valuation universe ───
   const allFamilyAuctions = useMemo(() => {
     const familyKey = family.slug
-    return allAuctions.filter(a => {
+    return valuationSource.filter(a => {
       const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
       return series === familyKey
     })
-  }, [allAuctions, family.slug])
+  }, [valuationSource, family.slug])
   const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions, rates), [allFamilyAuctions, rates])
 
   // ─── DYNAMIC: Market Depth from real listing counts ───
@@ -1952,57 +1936,7 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
           </div>
         </div>
 
-        {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="mb-4">
-            <div className="flex items-center gap-2">
-              <Globe className="size-4 text-primary" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                {t("brandContext.valuationByMarket")}
-              </span>
-            </div>
-            <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair Value by Market</p>
-          </div>
-          <div className="space-y-1">
-            {(["US", "UK", "EU", "JP"] as const).map((region) => {
-              const val = regionalVal[region]
-              if (!val || val.usdCurrent <= 0) return null
-              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
-              const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
-              const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
-              const isSelected = region === effectiveRegion
-              return (
-                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-primary/6 border border-primary/10" : "border border-transparent"}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[13px]">{REGION_FLAGS[region]}</span>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{t(REGION_LABEL_KEYS[region])}</span>
-                    {isSelected && (
-                      <span className="text-[7px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
-                        {t("brandContext.yourMarket")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, currencySymbol)}
-                    </span>
-                  </div>
-                  <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
-                    <div
-                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-primary/50 to-primary/80" : "bg-gradient-to-r from-primary/20 to-primary/45"}`}
-                      style={{ width: `${barWidth}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <span className="text-[8px] font-mono text-muted-foreground">
-                      {formatUsdEquiv(val.usdCurrent)} USD
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <RegionalValuationSection regionalVal={regionalVal} />
 
         {/* 4. TOP VARIANTS */}
         {topVariants.length > 0 && (
@@ -2143,20 +2077,20 @@ function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { fa
 }
 
 // ─── BRAND CONTEXT PANEL ───
-function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions: Auction[] }) {
+function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; valuationAuctions?: Auction[] }) {
   const t = useTranslations("dashboard")
-  const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
+  const { formatPrice, rates } = useCurrency()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  // Compute regional fair values from ALL auctions (unfiltered by region)
+  const valuationSource = valuationAuctions ?? auctions
+  // Compute regional fair values from the valuation universe
   const allBrandAuctions = useMemo(() =>
-    allAuctions.filter(a => a.make === brand.name),
-    [allAuctions, brand.name]
+    valuationSource.filter(a => a.make === brand.name),
+    [valuationSource, brand.name]
   )
   const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
   const recentSales = useMemo(() => {
@@ -2295,57 +2229,7 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
           </div>
         </div>
 
-        {/* 3. VALUATION BY MARKET — all values in user's currency, USD equiv below */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="mb-4">
-            <div className="flex items-center gap-2">
-              <Globe className="size-4 text-primary" />
-              <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                {t("brandContext.valuationByMarket")}
-              </span>
-            </div>
-            <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair Value by Market</p>
-          </div>
-          <div className="space-y-1">
-            {(["US", "UK", "EU", "JP"] as const).map((region) => {
-              const val = regionalVal[region]
-              if (!val || val.usdCurrent <= 0) return null
-              const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
-              const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
-              const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
-              const isSelected = region === effectiveRegion
-              return (
-                <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-primary/6 border border-primary/10" : "border border-transparent"}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[13px]">{REGION_FLAGS[region]}</span>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{t(REGION_LABEL_KEYS[region])}</span>
-                    {isSelected && (
-                      <span className="text-[7px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full tracking-wider uppercase">
-                        {t("brandContext.yourMarket")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {formatRegionalVal(localCurrent, currencySymbol)}
-                    </span>
-                  </div>
-                  <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
-                    <div
-                      className={`h-full rounded-full transition-all ${isSelected ? "bg-gradient-to-r from-primary/50 to-primary/80" : "bg-gradient-to-r from-primary/20 to-primary/45"}`}
-                      style={{ width: `${barWidth}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <span className="text-[8px] font-mono text-muted-foreground">
-                      {formatUsdEquiv(val.usdCurrent)} USD
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <RegionalValuationSection regionalVal={regionalVal} />
 
         {/* 4. TOP MODELS — removed: duplicates family navigation in Column B */}
 
@@ -2488,12 +2372,13 @@ function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand:
 }
 
 // ─── MAIN COMPONENT ───
-export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
+export function DashboardClient({ auctions, valuationListings, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; valuationListings?: Auction[]; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
   const { rates } = useCurrency()
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
+  const valuationAuctions = valuationListings ?? auctions
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
@@ -2661,11 +2546,11 @@ export function DashboardClient({ auctions, liveRegionTotals, liveNowTotal, seri
                 key={activeFamily.slug}
                 family={activeFamily}
                 auctions={filteredAuctions}
-                allAuctions={auctions}
+                valuationAuctions={valuationAuctions}
                 allFamilies={porscheFamilies}
               />
             ) : (
-              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} allAuctions={auctions} />
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} valuationAuctions={valuationAuctions} />
             )}
           </div>
         </div>

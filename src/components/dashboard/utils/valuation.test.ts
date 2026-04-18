@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { getSeriesConfig, extractSeries } from "@/lib/brandConfig"
-import { computeRegionalValFromAuctions } from "./valuation"
+import { computeRegionalValFromAuctions, getValuationConfidence } from "./valuation"
 import type { Auction } from "../types"
 
 function makeAuction(overrides: Partial<Auction>): Auction {
@@ -87,7 +87,7 @@ describe("dashboard valuation helpers", () => {
     expect(all.JP.sampleCount).toBe(0)
   })
 
-  it("keeps the region fallback stable when only one listing exists", () => {
+  it("does not invent a regional value when no local listings exist", () => {
     const listings = [
       makeAuction({
         id: "uk-1",
@@ -107,7 +107,8 @@ describe("dashboard valuation helpers", () => {
     expect(all.UK.usdCurrent).toBeCloseTo(0.16, 3)
     expect(all.UK.usdAverage).toBeCloseTo(0.16, 3)
     expect(all.US.sampleCount).toBe(0)
-    expect(all.US.usdCurrent).toBeCloseTo(0.16, 3)
+    expect(all.US.usdCurrent).toBe(0)
+    expect(getValuationConfidence(all.US.sampleCount, all.US.minUsd, all.US.maxUsd).label).toBe("NO LOCAL DATA")
   })
 
   it("uses a median-first view that is resistant to trophy-car outliers", () => {

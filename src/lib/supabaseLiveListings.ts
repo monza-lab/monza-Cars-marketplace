@@ -481,7 +481,7 @@ function computeGrade(
 
 // ─── Row → CollectorCar ───
 
-function rowToCollectorCar(row: ListingRow): CollectorCar {
+export function rowToCollectorCar(row: ListingRow): CollectorCar {
   const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
 
   // Prefer direct images column; fall back to photos_media join
@@ -1196,6 +1196,59 @@ export async function fetchPricedListingsForModel(
     ) as PricedListingRow[];
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
+    return [];
+  }
+}
+
+export async function fetchValuationListingsForMake(
+  make: string,
+  limit = 50_000
+): Promise<CollectorCar[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) return [];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+    const pageSize = 1000;
+    const maxRows = limit > 0 ? limit : 50_000;
+    const rows: ListingRow[] = [];
+    let from = 0;
+
+    while (rows.length < maxRows) {
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await supabase
+        .from("listings")
+        .select(SELECT_NARROW)
+        .ilike("make", normalizedMake)
+        .not("hammer_price", "is", null)
+        .gt("hammer_price", 0)
+        .order("sale_date", { ascending: false, nullsFirst: false })
+        .order("end_time", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error("[supabaseLiveListings] fetchValuationListingsForMake page failed:", error.message);
+        break;
+      }
+
+      const page = ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
+      if (page.length === 0) break;
+
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    return rows.map((row) => rowToCollectorCar(row));
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchValuationListingsForMake failed:", err);
     return [];
   }
 }

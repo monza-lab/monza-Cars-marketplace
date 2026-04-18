@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import {
   fetchLiveListingsAsCollectorCars,
   fetchLiveListingAggregateCounts,
+  fetchValuationListingsForMake,
   fetchSeriesCounts,
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
@@ -129,13 +130,7 @@ export async function fetchDashboardDataUncached(): Promise<DashboardData> {
       make: requestedMake,
       includeAllSources: true,
     }),
-    fetchLiveListingsAsCollectorCars({
-      limit: DASHBOARD_SOURCE_BUDGET,
-      includePriceHistory: false,
-      make: requestedMake,
-      includeAllSources: true,
-      status: "all",
-    }),
+    fetchValuationListingsForMake(requestedMake ?? "Porsche"),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
     fetchSeriesCounts(requestedMake ?? "Porsche"),
   ]);

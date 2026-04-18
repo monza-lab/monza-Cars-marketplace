@@ -30,7 +30,7 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
 
   // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
   const allFamilyAuctions = useMemo(() => {
-    const source = allAuctions || auctions
+    const source = allAuctions ?? auctions
     const familyKey = family.slug
     return source.filter(a => {
       const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()

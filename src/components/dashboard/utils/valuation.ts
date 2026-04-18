@@ -11,6 +11,11 @@ export type RegionalValuation = {
   maxUsd: number
 }
 
+export type ValuationConfidence = {
+  label: string
+  className: string
+}
+
 export function computeMedian(values: number[]): number {
   if (values.length === 0) return 0
   const sorted = [...values].sort((a, b) => a - b)
@@ -63,12 +68,6 @@ export function computeRegionalValFromAuctions(
   const symbolMap: Record<string, string> = { US: "$", UK: "£", EU: "€", JP: "¥" }
   const result: Record<string, RegionalValuation> = {}
 
-  // Compute overall median as fallback for regions with no listings
-  const allPricesUsd = auctionList
-    .map(a => listingPriceUsd(a, rates))
-    .filter(p => p > 0)
-  const overallMedianUsd = computeMedian(filterOutliers(allPricesUsd))
-
   for (const region of regions) {
     const regionAuctions = auctionList.filter(a => a.region === region)
 
@@ -84,11 +83,6 @@ export function computeRegionalValFromAuctions(
     const minUsd = sampleCount > 0 ? Math.min(...trimmedPrices) : 0
     const maxUsd = sampleCount > 0 ? Math.max(...trimmedPrices) : 0
 
-    // Fallback to overall median if no listings in this region
-    if (medianUsd === 0 && overallMedianUsd > 0) {
-      medianUsd = overallMedianUsd
-    }
-
     result[region] = {
       symbol: symbolMap[region],
       usdCurrent: medianUsd / 1_000_000,
@@ -99,6 +93,36 @@ export function computeRegionalValFromAuctions(
     }
   }
   return result
+}
+
+export function getValuationConfidence(sampleCount: number, minUsd: number, maxUsd: number): ValuationConfidence {
+  if (sampleCount <= 0) {
+    return {
+      label: "NO LOCAL DATA",
+      className: "border border-border bg-foreground/4 text-muted-foreground",
+    }
+  }
+
+  const spread = minUsd > 0 ? (maxUsd - minUsd) / minUsd : 0
+
+  if (sampleCount < 5 || spread > 1.25) {
+    return {
+      label: "LOW CONFIDENCE",
+      className: "border border-amber-500/20 bg-amber-500/10 text-amber-500",
+    }
+  }
+
+  if (sampleCount < 12 || spread > 0.75) {
+    return {
+      label: "MEDIUM CONFIDENCE",
+      className: "border border-sky-500/20 bg-sky-500/10 text-sky-500",
+    }
+  }
+
+  return {
+    label: "HIGH CONFIDENCE",
+    className: "border border-emerald-500/20 bg-emerald-500/10 text-emerald-500",
+  }
 }
 
 export function formatRegionalVal(v: number, symbol: string) {

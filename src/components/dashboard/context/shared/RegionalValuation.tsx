@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { REGION_FLAGS, REGION_LABEL_KEYS } from "../../constants"
-import { formatRegionalVal, formatUsdEquiv } from "../../utils/valuation"
+import { formatRegionalVal, formatUsdEquiv, getValuationConfidence } from "../../utils/valuation"
 import type { RegionalValuation } from "../../utils/valuation"
 
 interface RegionalValuationProps {
@@ -31,11 +31,15 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
       <div className="space-y-1">
         {(["US", "UK", "EU", "JP"] as const).map((region) => {
           const val = regionalVal[region]
-          if (!val || val.usdCurrent <= 0) return null
+          if (!val) return null
           const localCurrent = convertFromUsd(val.usdCurrent * 1_000_000) / 1_000_000
           const maxUsdCurrent = Math.max(...Object.values(regionalVal).map(v => v.usdCurrent))
           const barWidth = maxUsdCurrent > 0 ? (val.usdCurrent / maxUsdCurrent) * 100 : 0
           const isSelected = region === effectiveRegion
+          const confidence = getValuationConfidence(val.sampleCount, val.minUsd, val.maxUsd)
+          const hasLocalData = val.sampleCount > 0
+          const localValue = hasLocalData ? formatRegionalVal(localCurrent, currencySymbol) : "—"
+          const usdValue = hasLocalData ? `${formatUsdEquiv(val.usdCurrent)} USD` : "No local data"
           return (
             <div key={region} className={`rounded-xl py-2.5 px-3 transition-all ${isSelected ? "bg-primary/6 border border-primary/10" : "border border-transparent"}`}>
               <div className="flex items-center gap-2 mb-2">
@@ -46,10 +50,16 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
                     {t("brandContext.yourMarket")}
                   </span>
                 )}
+                <span className="text-[8px] font-mono text-muted-foreground">
+                  {val.sampleCount} listings
+                </span>
+                <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full tracking-wider uppercase ${confidence.className}`}>
+                  {confidence.label}
+                </span>
               </div>
               <div className="flex items-baseline justify-between mb-1.5">
                 <span className={`text-[13px] font-mono font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                  {formatRegionalVal(localCurrent, currencySymbol)}
+                  {localValue}
                 </span>
               </div>
               <div className="h-[4px] rounded-full bg-foreground/4 overflow-hidden mb-1.5">
@@ -60,7 +70,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
               </div>
               <div className="flex justify-end">
                 <span className="text-[8px] font-mono text-muted-foreground">
-                  {formatUsdEquiv(val.usdCurrent)} USD
+                  {usdValue}
                 </span>
               </div>
             </div>
