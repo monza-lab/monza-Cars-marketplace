@@ -48,6 +48,13 @@ function transformCar(car: CollectorCar) {
     category: car.category,
     region: car.region,
     originalCurrency: car.originalCurrency ?? null,
+    // Derived valuation fields (golden standard — see docs/porsche/listings-distribution-overview.md)
+    soldPriceUsd: car.soldPriceUsd ?? null,
+    askingPriceUsd: car.askingPriceUsd ?? null,
+    valuationBasis: car.valuationBasis ?? "unknown",
+    canonicalMarket: car.canonicalMarket ?? null,
+    family: car.family ?? null,
+    fairValueByRegion: car.fairValueByRegion ?? null,
   };
 }
 

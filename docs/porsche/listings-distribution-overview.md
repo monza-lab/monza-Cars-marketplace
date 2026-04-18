@@ -162,3 +162,26 @@ What is actually happening:
 - Should JP be excluded until pricing coverage is fixed?
 - Should the dashboard show market confidence and sample count by default?
 
+## Current Valuation Standard (2026-04-18)
+
+All price numbers on the platform flow through `src/lib/pricing/*`. Contract:
+
+- **Two canonical concepts.** `sold_price` is set only when `status='sold'` AND source ∈ {BaT, ClassicCom, BeForward-sold}. Everything else is `asking_price`.
+- **Canonical market from source.** Grouping uses `sourceToCanonicalMarket(source)`, never the raw `region` column (40,215 NULLs and noisy).
+- **Two parallel outputs per segment.** `MarketValue` (sold median) and `AskMedian` (asking × family factor) shown side by side. Never blended into a single number.
+- **Family adjustment factors** measured globally from the BaT/ClassicCom sold anchor. Regenerated manually via `npm run generate:factors` (writes `src/lib/pricing/familyFactor.generated.ts`). Nightly cron at 10:30 UTC logs drift for observability (`/api/cron/refresh-valuation-factors`).
+- **Confidence tiers.** Sold: high ≥20, medium 8–19, low 1–7, else insufficient. Asking: high ≥200 + family factor, medium 50–199 OR porsche-wide factor, low <50, else insufficient. Every UI number carries a tier dot and sample count.
+- **No silent fallbacks.** Segments with no data render `—`. No fabricated `±15%` bands. No falling back to overall median.
+- **Traceability.** Every market-value tile exposes `basis mix / sample counts / factor applied / tier` via tooltip.
+
+See `docs/superpowers/plans/2026-04-18-golden-standard-valuation.md` for the implementation plan.
+
+### Current measured factors (regenerated 2026-04-18)
+
+From 53,015 listings → 5,390 sold (BaT-dominated) + 39,203 asking (AutoScout24-dominated):
+
+- porsche-wide: 0.63 (sold median is 63% of asking median — blended across era/family)
+- per-family (examples): 991 → 0.90 (n=394 sold / 2,947 asking), 964 → 0.92, 930 → 0.88, 992 → 1.37 (tiny sample, sold skews GT/Turbo)
+
+The per-family factors are the meaningful numbers. Porsche-wide is only a fallback for families with <30 sold rows.
+
