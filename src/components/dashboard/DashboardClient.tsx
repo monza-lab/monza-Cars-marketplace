@@ -37,6 +37,7 @@ import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from 
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
+import type { CanonicalMarket } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── UPGRADE LOW-RES IMAGE URLS TO HIGH-RES ───
@@ -126,6 +127,37 @@ type Auction = {
   fairValueByRegion?: FairValueByRegion
   category?: string
   originalCurrency?: string | null
+  canonicalMarket?: CanonicalMarket | null
+  family?: string | null
+  soldPriceUsd?: number | null
+  askingPriceUsd?: number | null
+  valuationBasis?: "sold" | "asking" | "unknown"
+}
+
+/**
+ * Resolve the fair-value low/high USD range for an auction, using real segment IQR bands.
+ * Returns null when there's insufficient data in the corresponding (market, family) segment.
+ */
+function resolveFairValueBand(
+  auction: Auction,
+  familyAuctions: Auction[],
+): { low: number; high: number } | null {
+  // Prefer an explicit analysis band if present (upstream scoring system).
+  const lo = auction.analysis?.bidTargetLow
+  const hi = auction.analysis?.bidTargetHigh
+  if (lo != null && hi != null && lo > 0 && hi > 0) return { low: lo, high: hi }
+
+  const market: CanonicalMarket | null = auction.canonicalMarket ?? null
+  const family = auction.family ?? null
+  if (!market || !family) return null
+
+  const regionalVal = computeRegionalValFromAuctions(familyAuctions)
+  const segment = regionalVal[market]
+  if (!segment) return null
+  const low = segment.marketValue.p25Usd ?? segment.askMedian.p25Usd
+  const high = segment.marketValue.p75Usd ?? segment.askMedian.p75Usd
+  if (low == null || high == null || low <= 0 || high <= 0) return null
+  return { low: Math.round(low), high: Math.round(high) }
 }
 
 // ─── PORSCHE FAMILY TYPE (for family-based landing scroll) ───
@@ -1393,7 +1425,7 @@ function DiscoverySidebar({
 }
 
 // ─── COLUMN B: THE BTW-STYLE ASSET CARD (DESKTOP) ───
-function AssetCard({ auction }: { auction: Auction }) {
+function AssetCard({ auction, allAuctions = [] }: { auction: Auction; allAuctions?: Auction[] }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
@@ -1491,9 +1523,10 @@ function AssetCard({ auction }: { auction: Auction }) {
               : auction.analysis?.appreciationPotential === "DECLINING"
               ? "Low Demand"
               : (grade === "AAA" ? "Premium Demand" : grade === "AA" ? "Strong Demand" : "Growing Demand")
-            const bidFallback = auction.currentBid || 50_000
-            const lowRange = auction.analysis?.bidTargetLow || Math.round(bidFallback * 0.85)
-            const highRange = auction.analysis?.bidTargetHigh || Math.round(bidFallback * 1.15)
+            const familyAuctions = allAuctions.filter(
+              (a) => a.make === auction.make && a.family === auction.family,
+            )
+            const band = resolveFairValueBand(auction, familyAuctions)
 
             return (
               <div className="mt-auto grid grid-cols-4 gap-4 pt-4 border-t border-border">
@@ -1526,7 +1559,7 @@ function AssetCard({ auction }: { auction: Auction }) {
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.fairValue")}</span>
                   </div>
                   <p className="text-[13px] text-foreground font-mono">
-                    {formatPrice(lowRange)}–{formatPrice(highRange)}
+                    {band ? `${formatPrice(band.low)}–${formatPrice(band.high)}` : "—"}
                   </p>
                 </div>
 
@@ -1594,10 +1627,11 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       maintenance: Math.round(base.maintenance * scale),
     }
   }, [auction.make, auction.currentBid])
-  // Fair value range — use analysis if available, otherwise derive from current bid
-  const bidFallback = auction.currentBid || 50_000
-  const lowRange = auction.analysis?.bidTargetLow || Math.round(bidFallback * 0.85)
-  const highRange = auction.analysis?.bidTargetHigh || Math.round(bidFallback * 1.15)
+  // Fair value range — real segment IQR band from same family auctions.
+  const familyAuctions = allAuctions.filter(
+    (a) => a.make === auction.make && a.family === auction.family,
+  )
+  const band = resolveFairValueBand(auction, familyAuctions)
 
   // Find similar cars (same category, different car)
   const similarCars = allAuctions
@@ -1653,7 +1687,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         ) : (
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-display font-medium text-primary">
-              {formatPrice(lowRange)} — {formatPrice(highRange)}
+              {band ? `${formatPrice(band.low)} — ${formatPrice(band.high)}` : "—"}
             </span>
           </div>
         )}
