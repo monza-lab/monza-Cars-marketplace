@@ -2,8 +2,21 @@
 
 **Date**: 2026-04-18
 **Author**: Edgar (@edgar@monzalab.com) + Claude
-**Status**: Approved v1
+**Status**: v1 **implemented and archived**. Current operating mode is **v0.5 (local semi-auto batch)** — see the "Operating Modes" section below.
+
 **Visual reference**: [`assets/2026-04-18-social-carousel-mockup.html`](./assets/2026-04-18-social-carousel-mockup.html) — static HTML mockup of the 5-slide carousel rendered with real DB data (2004 Porsche 911 GT3 from BaT). Opens in any browser. Used as the visual truth for template implementation.
+
+## Operating Modes
+
+### v0.5 — Local semi-auto batch (current)
+A daily CLI script generates 10 carousels + captions to a local folder. Edgar uploads manually to Meta Business. No Meta API, no dashboard, no cron, no Storage bucket needed. Fast to operate, zero external setup beyond the Supabase migration. Output lives in `producto/posts/YYYY-MM-DD/`.
+
+### v1 — Fully automated (archived, re-enable later)
+All code below (worker cron, admin dashboard with approval, Meta Graph API publisher, Supabase Storage) is implemented and committed but **inactive** until Edgar chooses to promote. Re-enabling requires: Meta App setup + long-lived token, Supabase Storage bucket + policies, `ADMIN_DASHBOARD_TOKEN` env var. See `docs/social-engine-setup.md`. The Vercel Cron entry for `/api/cron/social-engine` in `vercel.json` can stay disabled (comment it out) until then.
+
+**The rest of this document describes v1.** It is preserved intact for reference and future re-activation.
+
+---
 
 ---
 
