@@ -91,7 +91,7 @@ function transformCar(car: CollectorCar): DashboardAuction {
     bidCount: car.bidCount,
     viewCount: 0,
     watchCount: 0,
-    endTime: car.endTime instanceof Date ? car.endTime.toISOString() : String(car.endTime),
+    endTime: serializeEndTime(car.endTime),
     exteriorColor: null,
     description: null,
     images: car.images.slice(0, 1),
@@ -112,6 +112,10 @@ function transformCar(car: CollectorCar): DashboardAuction {
     priceHistory: [],
     fairValueByRegion: car.fairValueByRegion,
   };
+}
+
+export function serializeEndTime(endTime: Date | null | undefined): string {
+  return endTime instanceof Date ? endTime.toISOString() : "";
 }
 
 async function fetchDashboardDataUncached(): Promise<DashboardData> {

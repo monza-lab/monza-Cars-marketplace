@@ -32,6 +32,12 @@ function isLiveStatus(status: string): boolean {
   return status === "ACTIVE" || status === "ENDING_SOON";
 }
 
+export function parseEndTimeMs(value: string): number | null {
+  if (!value) return null;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
   const locale = useLocale();
   const { formatPrice } = useCurrency();
@@ -101,7 +107,7 @@ function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
 
           <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-              {live && car.endTime && (
+              {live && parseEndTimeMs(car.endTime) !== null && (
                 <span className="flex items-center gap-1">
                   <Clock className="size-3" />
                   {timeLeft(new Date(car.endTime), {
@@ -174,7 +180,12 @@ export function BrowseClient({
           const aLive = isLiveStatus(a.status);
           const bLive = isLiveStatus(b.status);
           if (aLive !== bLive) return aLive ? -1 : 1;
-          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+          const aEnd = parseEndTimeMs(a.endTime);
+          const bEnd = parseEndTimeMs(b.endTime);
+          if (aEnd === null && bEnd === null) return 0;
+          if (aEnd === null) return 1;
+          if (bEnd === null) return -1;
+          return aEnd - bEnd;
         });
         break;
       case "newest":
@@ -217,7 +228,7 @@ export function BrowseClient({
                 Browse Collection
               </h1>
               <p className="mt-2 text-[13px] md:text-[14px] text-muted-foreground max-w-2xl">
-                Every Porsche we're tracking — live auctions, recent sales, and dealer listings in one grid.
+                Every Porsche we&apos;re tracking — live auctions, recent sales, and dealer listings in one grid.
               </p>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
