@@ -52,6 +52,7 @@ export type DashboardAuction = {
   };
   category?: string;
   originalCurrency?: string | null;
+  // Derived valuation fields (golden standard — see docs/porsche/listings-distribution-overview.md).
   soldPriceUsd?: number | null;
   askingPriceUsd?: number | null;
   valuationBasis?: "sold" | "asking" | "unknown";

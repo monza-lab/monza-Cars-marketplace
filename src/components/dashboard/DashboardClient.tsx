@@ -1824,7 +1824,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }
   const { formatPrice, rates } = useCurrency()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
-  const valuationSource = valuationAuctions ?? auctions
+  const valuationSource = valuationAuctions && valuationAuctions.length > 0 ? valuationAuctions : auctions
 
   // Get auctions for this family — all derived data depends on this
   const familyAuctions = useMemo(() => {
@@ -2154,7 +2154,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions }: { 
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  const valuationSource = valuationAuctions ?? auctions
+  const valuationSource = valuationAuctions && valuationAuctions.length > 0 ? valuationAuctions : auctions
   // Compute regional fair values from the valuation universe
   const allBrandAuctions = useMemo(() =>
     valuationSource.filter(a => a.make === brand.name),
@@ -2446,7 +2446,7 @@ export function DashboardClient({ auctions, valuationListings, liveRegionTotals,
   const { rates } = useCurrency()
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
-  const valuationAuctions = valuationListings ?? auctions
+  const valuationAuctions = valuationListings && valuationListings.length > 0 ? valuationListings : auctions
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
