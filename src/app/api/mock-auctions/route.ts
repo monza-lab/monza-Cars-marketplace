@@ -159,9 +159,8 @@ export async function GET(request: NextRequest) {
       auctions: transformed,
       nextCursor,
       hasMore: paginatedResult.hasMore,
-      // totalCount is intentionally omitted: count: "exact" was dropped in the
-      // earlier hotfix to avoid full-table scan overhead; keyset pagination
-      // makes totalCount explicitly unavailable.
+      totalCount: paginatedResult.totalCount,
+      totalLiveCount: paginatedResult.totalLiveCount,
     };
 
     if (aggregatesResult) {
