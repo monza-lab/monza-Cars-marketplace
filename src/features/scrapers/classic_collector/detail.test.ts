@@ -110,7 +110,7 @@ describe("fetchAndParseDetail", () => {
     vi.clearAllMocks();
   });
 
-  it("falls back to Scrapling when the rendered page is empty", async () => {
+  it("prefers Scrapling when it is available", async () => {
     mockScrapling.mockResolvedValueOnce({
       title: "2018 Porsche 911 GT3",
       bodyText: [
@@ -163,12 +163,15 @@ describe("fetchAndParseDetail", () => {
     });
 
     expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).not.toHaveBeenCalled();
     expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/fallback.jpg"]);
     expect(parsed.raw.auctionHouse).toBe("Bonhams");
   });
 
-  it("falls back to Scrapling if Playwright navigation fails", async () => {
-    mockScrapling.mockResolvedValueOnce({
+  it("falls back to Playwright when Scrapling is unavailable", async () => {
+    mockScrapling.mockResolvedValueOnce(null as unknown as never);
+
+    const page = createMockPage({
       title: "2020 Porsche 911 Turbo S",
       bodyText: [
         "FOR SALE",
@@ -186,12 +189,8 @@ describe("fetchAndParseDetail", () => {
         "VIN:",
         "WP0AD2A95LS185001",
       ].join("\n"),
-      images: ["https://images.classic.com/vehicles/scrapling.jpg"],
+      images: ["https://images.classic.com/vehicles/playwright.jpg"],
     });
-
-    const page = {
-      goto: vi.fn().mockRejectedValue(new Error("Cloudflare challenge not resolved")),
-    } as any;
 
     const parsed = await fetchAndParseDetail({
       page,
@@ -201,7 +200,8 @@ describe("fetchAndParseDetail", () => {
     });
 
     expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).toHaveBeenCalledTimes(1);
     expect(parsed.raw.title).toBe("2020 Porsche 911 Turbo S");
-    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/scrapling.jpg"]);
+    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/playwright.jpg"]);
   });
 });

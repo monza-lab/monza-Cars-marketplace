@@ -163,6 +163,13 @@ async function extractClassicDetailContentFromPage(page: Page): Promise<ClassicD
 }
 
 export async function fetchAndParseDetail(opts: DetailFetchOptions): Promise<DetailParsed> {
+  if (canUseScraplingFallback()) {
+    const fallback = await fetchClassicDetailWithScrapling(opts.url);
+    if (fallback) {
+      return buildDetailParsed(fallback, opts.url);
+    }
+  }
+
   const navigateAndParse = async (): Promise<DetailParsed> => {
     await opts.page.goto(opts.url, {
       waitUntil: "domcontentloaded",
@@ -197,10 +204,6 @@ export async function fetchAndParseDetail(opts: DetailFetchOptions): Promise<Det
   try {
     return await navigateAndParse();
   } catch (error) {
-    if (canUseScraplingFallback()) {
-      const fallback = await fetchClassicDetailWithScrapling(opts.url);
-      if (fallback) return buildDetailParsed(fallback, opts.url);
-    }
     throw error;
   }
 }
