@@ -82,6 +82,10 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/features/scrapers/common/refreshCounts", () => ({
+  refreshListingsActiveCounts: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock brandConfig
 vi.mock("@/lib/brandConfig", () => ({
   extractSeries: vi.fn(() => "992"),

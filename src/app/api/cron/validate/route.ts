@@ -6,6 +6,7 @@ import {
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
+import { refreshListingsActiveCounts } from "@/features/scrapers/common/refreshCounts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -141,6 +142,7 @@ export async function GET(request: Request) {
     });
 
     await clearScraperRunActive("validate");
+    await refreshListingsActiveCounts(supabase);
 
     return NextResponse.json({
       success: true,

@@ -20,6 +20,14 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   clearScraperRunActive: vi.fn(),
 }));
 
+vi.mock("@/features/scrapers/common/refreshCounts", () => ({
+  refreshListingsActiveCounts: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({})),
+}));
+
 import { runCollector } from "@/features/scrapers/ferrari_collector/collector";
 import { refreshActiveListings } from "@/features/scrapers/ferrari_collector/supabase_writer";
 import { runLightBackfill } from "@/features/scrapers/ferrari_collector/historical_backfill";
