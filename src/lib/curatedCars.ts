@@ -57,6 +57,17 @@ export interface CollectorCar {
   description?: string | null;
   sellerNotes?: string | null;
   originalCurrency?: string | null;
+  // ── Derived valuation fields (Rule 1–3 of golden standard) ──
+  /** Transaction price in USD. Set only when status='sold' AND source is auction. */
+  soldPriceUsd?: number | null;
+  /** Asking price in USD. Set for active/unsold/delisted classifieds and live bids. */
+  askingPriceUsd?: number | null;
+  /** Which concept this row represents. */
+  valuationBasis?: "sold" | "asking" | "unknown";
+  /** Market derived from source, never from raw `region`. */
+  canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
+  /** Series id (e.g. "992"). */
+  family?: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
