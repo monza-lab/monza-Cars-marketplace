@@ -87,40 +87,22 @@ function buildCoverHtml(letter: string, label: string): string {
     position: relative;
     z-index: 2;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    width: 650px;  /* safe area */
+    justify-content: center;
   }
   .letter {
     font-family: 'Cormorant', serif;
     font-weight: 300;
-    font-size: 340px;
+    font-size: 540px;
     color: #E8E2DE;
-    line-height: 0.9;
+    line-height: 1;
     letter-spacing: -0.02em;
-    margin-bottom: 44px;
-  }
-  .separator {
-    width: 64px;
-    height: 1.5px;
-    background: #7A2E4A;
-    margin-bottom: 30px;
-  }
-  .label {
-    font-family: 'Karla', sans-serif;
-    font-weight: 500;
-    font-size: 26px;
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    color: #9A8E88;
   }
 </style>
 </head>
 <body>
   <div class="content">
     <div class="letter">${letter}</div>
-    <div class="separator"></div>
-    <div class="label">${label}</div>
   </div>
 </body>
 </html>`;
