@@ -11,19 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type {
-  IndexBucket,
-  AirCooledSeries,
-} from "@/lib/index/airCooled911";
-import { AIR_COOLED_SERIES, AIR_COOLED_SERIES_LABELS } from "@/lib/index/airCooled911";
-
-const SERIES_COLORS: Record<AirCooledSeries, string> = {
-  "993": "#d4a017",
-  "964": "#c0392b",
-  "g-body": "#2c7a7b",
-  "930": "#6b46c1",
-  "early-911": "#374151",
-};
+import type { IndexBucket, IndexSeriesDef } from "@/lib/index/factory";
 
 function formatUsd(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
@@ -31,13 +19,28 @@ function formatUsd(n: number) {
   return `$${n.toFixed(0)}`;
 }
 
-export function IndexChartClient({ buckets }: { buckets: IndexBucket[] }) {
-  const [enabled, setEnabled] = useState<Record<AirCooledSeries, boolean>>(() =>
-    AIR_COOLED_SERIES.reduce(
-      (acc, s) => ({ ...acc, [s]: true }),
-      {} as Record<AirCooledSeries, boolean>
-    )
+export function IndexChart<ID extends string>({
+  buckets,
+  series,
+}: {
+  buckets: IndexBucket<ID>[];
+  series: readonly IndexSeriesDef<ID>[];
+}) {
+  const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
+    series.reduce((acc, s) => ({ ...acc, [s.id]: true }), {} as Record<string, boolean>)
   );
+
+  const labelFor = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of series) map[s.id] = s.label;
+    return map;
+  }, [series]);
+
+  const colorFor = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of series) map[s.id] = s.color;
+    return map;
+  }, [series]);
 
   const rows = useMemo(() => {
     const byQuarter = new Map<string, Record<string, number | string>>();
@@ -54,18 +57,18 @@ export function IndexChartClient({ buckets }: { buckets: IndexBucket[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {AIR_COOLED_SERIES.map((s) => (
+        {series.map((s) => (
           <button
-            key={s}
-            onClick={() => setEnabled((e) => ({ ...e, [s]: !e[s] }))}
+            key={s.id}
+            onClick={() => setEnabled((e) => ({ ...e, [s.id]: !e[s.id] }))}
             className={`px-3 py-1.5 text-xs rounded-full border transition ${
-              enabled[s]
-                ? "border-amber-500 text-amber-100 bg-amber-500/10"
+              enabled[s.id]
+                ? "text-zinc-100 bg-zinc-900"
                 : "border-zinc-700 text-zinc-500 bg-transparent"
             }`}
-            style={enabled[s] ? { borderColor: SERIES_COLORS[s] } : undefined}
+            style={enabled[s.id] ? { borderColor: s.color } : undefined}
           >
-            {AIR_COOLED_SERIES_LABELS[s]}
+            {s.label}
           </button>
         ))}
       </div>
@@ -96,20 +99,20 @@ export function IndexChartClient({ buckets }: { buckets: IndexBucket[] }) {
               }}
               formatter={((value: number, name: string) => [
                 formatUsd(value),
-                AIR_COOLED_SERIES_LABELS[name as AirCooledSeries] ?? name,
+                labelFor[name] ?? name,
               ]) as unknown as undefined}
             />
             <Legend
               wrapperStyle={{ fontSize: "11px", color: "#a1a1aa" }}
-              formatter={(value: string) => AIR_COOLED_SERIES_LABELS[value as AirCooledSeries] ?? value}
+              formatter={(value: string) => labelFor[value] ?? value}
             />
-            {AIR_COOLED_SERIES.map((s) =>
-              enabled[s] ? (
+            {series.map((s) =>
+              enabled[s.id] ? (
                 <Line
-                  key={s}
+                  key={s.id}
                   type="monotone"
-                  dataKey={s}
-                  stroke={SERIES_COLORS[s]}
+                  dataKey={s.id}
+                  stroke={colorFor[s.id]}
                   strokeWidth={2}
                   dot={{ r: 2 }}
                   activeDot={{ r: 4 }}

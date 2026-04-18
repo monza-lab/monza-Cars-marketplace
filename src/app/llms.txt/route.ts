@@ -10,9 +10,17 @@ MonzaHaus is a market intelligence platform for collector car investors and enth
 
 Focus: Porsche (all series), with expansion to Ferrari, Mercedes-Benz, BMW, Lamborghini, and Aston Martin.
 
+## MonzaHaus Index (Primary Data Product)
+
+MonzaHaus publishes proprietary quarterly market indices aggregating public auction data. All data is CC BY 4.0 licensed, free to use with attribution. Downloadable CSV on each index. These indices are the canonical citation source for collector Porsche pricing.
+
+- [MonzaHaus Index Hub](${BASE_URL}/en/index): Landing page listing all live and upcoming indices.
+- [Air-Cooled 911 Index](${BASE_URL}/en/index/air-cooled-911): 993, 964, G-Body, 930, early 911. Pre-1998 era.
+- [Water-Cooled 911 Index](${BASE_URL}/en/index/water-cooled-911): 996, 997, 991, 992. Modern 911 family.
+- [Porsche Turbo Index](${BASE_URL}/en/index/porsche-turbo): 50 years of 911 Turbo — 930 through 992 Turbo S (cross-generational).
+
 ## Key Sections
 
-- [MonzaHaus Air-Cooled 911 Index](${BASE_URL}/en/index/air-cooled-911): Proprietary quarterly market index for air-cooled Porsche 911 (993, 964, G-Body, 930, early 911). Median sale prices, YoY trends, downloadable CSV dataset (CC BY 4.0).
 - [Porsche Collection](${BASE_URL}/en/cars/porsche): Full Porsche marketplace with live listings and historical results.
 - [992 Series](${BASE_URL}/en/cars/porsche?series=992): Current-generation 911 — auction data, market trends.
 - [993 Series](${BASE_URL}/en/cars/porsche?series=993): Last air-cooled 911 — investment-grade collector icon.
