@@ -29,7 +29,7 @@ function makeChain() {
   const wrap =
     (spy: ReturnType<typeof vi.fn>) =>
     (...args: unknown[]) => {
-      spy(...args);
+      (spy as (...a: unknown[]) => void)(...args);
       return chain;
     };
 
@@ -188,8 +188,8 @@ describe("fetchPaginatedListings", () => {
     expect(lteCall?.[1]).toBe(2019);
 
     // Legacy .or() with model.ilike. must NOT be called
-    const modelOrCall = spyOr.mock.calls.find(([clause]: [string]) =>
-      clause.includes("model.ilike."),
+    const modelOrCall = spyOr.mock.calls.find(
+      (call) => typeof call[0] === "string" && call[0].includes("model.ilike."),
     );
     expect(modelOrCall).toBeUndefined();
   });
