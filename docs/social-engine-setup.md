@@ -1,3 +1,48 @@
+# Social Engine — Operating Modes
+
+## Current mode: v0.5 (local semi-auto batch)
+
+Generates 10 carousels + captions per day to a local folder. Edgar uploads manually to Meta Business Suite.
+
+### Prerequisites
+1. `producto/supabase/migrations/20260418_create_social_post_drafts.sql` **applied to Supabase** (the migration creates `social_post_drafts`; v0.5 doesn't write to it but other tools may).
+2. Env vars in `producto/.env.local`:
+   - `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `ANTHROPIC_API_KEY` (for Claude caption generation)
+   - Optional: `GOOGLE_GENERATIVE_AI_API_KEY` (not used in v0.5 unless vision is re-enabled)
+
+### Daily run
+
+```bash
+cd producto
+npx tsx scripts/generate-daily-batch.ts
+# or with custom count
+npx tsx scripts/generate-daily-batch.ts 15
+```
+
+Output lands in `producto/posts/YYYY-MM-DD/`. Open `INDEX.md` for a summary + upload checklist.
+
+### Per-post folder contents
+- `slide-1.png` … `slide-5.png` — 1080×1350 PNGs, ready for Instagram 4:5 / Facebook
+- `caption.txt` — copy into the Meta post
+- `listing-info.md` — metadata reference (VIN, price, source URL)
+
+### Upload workflow
+1. Open `posts/YYYY-MM-DD/INDEX.md`
+2. For each post folder:
+   - Copy `caption.txt`
+   - In Meta Business Suite → Create post → Carousel
+   - Upload the 5 slides in order
+   - Paste caption
+   - Select Facebook Page + Instagram → Publish (or Schedule)
+
+### Regenerating a single post
+Delete the folder inside `posts/YYYY-MM-DD/` and re-run the script — it skips folders that already exist.
+
+---
+
+## Future mode: v1 (fully automated IG + FB publisher)
+
 # Social Engine — One-Time Setup Guide
 
 Complete these steps before enabling the Vercel Cron entry for `/api/cron/social-engine`.
