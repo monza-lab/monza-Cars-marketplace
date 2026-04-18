@@ -21,7 +21,7 @@ export async function backfillMissingImages(opts: {
   timeoutMs?: number;
   runId: string;
 }): Promise<BackfillResult> {
-  const maxListings = opts.maxListings ?? 20;
+  const maxListings = opts.maxListings ?? 60;
   const rateLimitMs = opts.rateLimitMs ?? 2500;
   const timeoutMs = opts.timeoutMs ?? 20_000;
   const safetyMarginMs = 15_000;
@@ -48,7 +48,7 @@ export async function backfillMissingImages(opts: {
     .select("id,source_url")
     .eq("source", "BeForward")
     .eq("status", "active")
-    .or("images.is.null,images.eq.{}")
+    .or("images.is.null,images.eq.{},photos_count.lt.2")
     .order("scrape_timestamp", { ascending: true })
     .limit(maxListings);
 

@@ -32,6 +32,12 @@ export async function GET(request: Request) {
   });
 
   try {
+    const MAX_LISTINGS_BY_SOURCE: Record<"BaT" | "BeForward" | "AutoScout24", number> = {
+      BaT: 20,
+      BeForward: 60,
+      AutoScout24: 20,
+    };
+
     // Process BaT first (biggest backlog), then BeForward, then AutoScout24
     const sources = ["BaT", "BeForward", "AutoScout24"] as const;
     const results = [];
@@ -50,7 +56,7 @@ export async function GET(request: Request) {
 
       const result = await backfillImagesForSource({
         source,
-        maxListings: 20,
+        maxListings: MAX_LISTINGS_BY_SOURCE[source],
         delayMs: 2000,
         timeBudgetMs: budget,
       });

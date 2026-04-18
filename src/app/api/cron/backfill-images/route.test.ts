@@ -114,7 +114,7 @@ describe("GET /api/cron/backfill-images", () => {
     });
     expect(backfillImagesForSource).toHaveBeenNthCalledWith(2, {
       source: "BeForward",
-      maxListings: 20,
+      maxListings: 60,
       delayMs: 2000,
       timeBudgetMs: expect.any(Number),
     });

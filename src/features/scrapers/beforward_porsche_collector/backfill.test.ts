@@ -58,6 +58,37 @@ function setupSupabaseMock(rows: Array<{ id: string; source_url: string }> | nul
   });
 }
 
+const orCalls: string[] = [];
+function setupSupabaseMockCapturingOr(rows: Array<{ id: string; source_url: string }> | null) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "listings") {
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              or: (expr: string) => {
+                orCalls.push(expr);
+                return {
+                  order: () => ({
+                    limit: () => Promise.resolve({ data: rows, error: null }),
+                  }),
+                };
+              },
+            }),
+          }),
+        }),
+        update: (data: Record<string, unknown>) => {
+          mockUpdate(data);
+          return {
+            eq: () => Promise.resolve({ error: null }),
+          };
+        },
+      };
+    }
+    return {};
+  });
+}
+
 const SAMPLE_ROWS = [
   { id: "row-1", source_url: "https://www.beforward.jp/porsche/911/id/1/" },
   { id: "row-2", source_url: "https://www.beforward.jp/porsche/cayenne/id/2/" },
@@ -236,6 +267,13 @@ describe("beforward backfillMissingImages", () => {
 
     expect(result.errors).toContain("Connection timeout");
     expect(result.discovered).toBe(0);
+  });
+
+  it("queries with photos_count.lt.2 in addition to empty images", async () => {
+    orCalls.length = 0;
+    setupSupabaseMockCapturingOr([]);
+    await backfillMissingImages({ timeBudgetMs: 5000, runId: "test" });
+    expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.2");
   });
 
   it("continues on non-blocking fetch errors", async () => {
