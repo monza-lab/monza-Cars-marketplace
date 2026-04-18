@@ -120,7 +120,7 @@
     "kicker": "検証済み売買",
     "subtitle": "直近の高額取引をキュレーション。実車体、検証済みプロヴェナンス、実際の落札価格。",
     "viewListing": "出品を見る",
-    "hammerPrice": "落札価格",
+    "hammerPrice": "価格",
     "dataNote": "データはBring a TrailerおよびRM Sotheby'sから取得。販売時点で価格を検証済み。"
   },
   "status": {
@@ -151,8 +151,8 @@
     "aboutThisVehicle": "この車について",
     "editorial": "編集部",
     "timeLeft": "残り時間",
-    "soldFor": "落札価格",
-    "currentBid": "現在価格",
+    "soldFor": "価格",
+    "currentBid": "価格",
     "bids": "入札",
     "status": "ステータス",
     "sellersDescription": "売り手の説明",
@@ -242,7 +242,7 @@
       "provenance": "来歴と履歴",
       "platformData": "プラットフォームデータ",
       "platform": "プラットフォーム",
-      "currentBid": "現在の入札",
+      "currentBid": "価格",
       "bidCount": "入札数",
       "status": "ステータス",
       "timeRemaining": "残り時間"
@@ -422,8 +422,8 @@
       "hide": "非表示"
     },
     "labels": {
-      "currentBid": "現在の入札額",
-      "finalPrice": "最終価格",
+      "currentBid": "価格",
+      "finalPrice": "出品価格",
       "recommendedCap": "推奨上限",
       "basedOnMarketAnalysis": "市場分析に基づく",
       "grade": "グレード:",
@@ -853,7 +853,7 @@
     "transportationShipping": "輸送・配送"
   },
   "common": {
-    "currentBid": "現在の入札",
+    "currentBid": "価格",
     "bids": "入札",
     "bid": "入札",
     "years": "年",
@@ -903,8 +903,8 @@
       "clearSearch": "検索をクリア"
     },
     "card": {
-      "currentBid": "現在価格",
-      "soldFor": "落札価格",
+      "currentBid": "価格",
+      "soldFor": "価格",
       "bids": "{count, plural, one {# 件の入札} other {# 件の入札}}",
       "noBids": "入札なし"
     },
@@ -1226,8 +1226,8 @@
       "viewDetails": "詳細を見る"
     },
     "card": {
-      "currentBid": "現在価格",
-      "soldFor": "落札価格"
+      "currentBid": "価格",
+      "soldFor": "価格"
     }
   },
   "metadata": {

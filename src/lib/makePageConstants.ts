@@ -130,12 +130,9 @@ export function isAuctionPlatform(platform?: string | null): boolean {
   return !!platform && AUCTION_PLATFORMS.has(platform)
 }
 
-/** Smart price label: "Current Bid" for live auctions, "Sold for" for ended auctions, "Price" for marketplace. */
-export function getPriceLabel(platform?: string | null, status?: string | null): string {
-  if (isAuctionPlatform(platform)) {
-    return status === "ENDED" ? "Sold for" : "Current Bid"
-  }
-  return status === "ENDED" ? "Last Listed" : "Price"
+/** Price label — always "Price". Kept as a function so callers pass platform/status consistently. */
+export function getPriceLabel(_platform?: string | null, _status?: string | null): string {
+  return "Price"
 }
 
 /** Smart status label: "Ended" for auctions, "Sold" for ended marketplace, "For Sale" for active marketplace. */

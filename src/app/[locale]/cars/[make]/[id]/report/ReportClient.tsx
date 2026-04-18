@@ -484,7 +484,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       // Financial box — dynamic position below "Prepared for" section
       const bY = Math.max(prepY + 34, 180)
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
-      label("CURRENT BID", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
+      label("LISTING PRICE", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
       pdf.setFontSize(12); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 8, bY + 21)
       white(); pdf.text(`$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
       pdf.text(regionLabels[bestRegion]?.short || "US", M + 135, bY + 21)
@@ -809,7 +809,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       card(M, y, CW, 36)
       pdf.setFontSize(6); dim(); pdf.text("PRICE vs FAIR VALUE", M + 4, y + 5)
       const pvLabels = [
-        { lbl: "CURRENT BID", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0], pal.primary[1], pal.primary[2]] },
+        { lbl: "LISTING PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0], pal.primary[1], pal.primary[2]] },
         { lbl: "FAIR LOW", val: fmtPdf(fairLow, regionRange.currency), clr: [52, 211, 153] },
         { lbl: "FAIR HIGH", val: fmtPdf(fairHigh, regionRange.currency), clr: [248, 113, 113] },
       ]
@@ -1209,7 +1209,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         ["LISTING"],
         ["Platform", car.platform.replace(/_/g, " ")],
         ["Status", car.status],
-        ["Current Bid (USD)", car.currentBid],
+        ["Listing Price (USD)", car.currentBid],
         ["Bid Count", car.bidCount],
         ["Location", car.location],
         ["Region", car.region],
@@ -1278,7 +1278,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       valuationRows.push(
         [""],
         ["PRICE ANALYSIS"],
-        ["Current Bid (USD)", car.currentBid],
+        ["Listing Price (USD)", car.currentBid],
         ["Fair Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
         ["Price Position (%)", pricePosition],
         ["Discount/Premium (USD)", Math.round(car.currentBid - (fairLow + fairHigh) / 2)],
@@ -1932,7 +1932,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] font-semibold text-primary">Current Bid vs Fair Value</span>
+                        <span className="text-[12px] font-semibold text-primary">Listing Price vs Fair Value</span>
                         <span className={`text-[14px] tabular-nums font-bold ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition}%</span>
                       </div>
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">

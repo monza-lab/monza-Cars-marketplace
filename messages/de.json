@@ -120,7 +120,7 @@
     "kicker": "Verifizierte Verkäufe",
     "subtitle": "Kuratiere Auswahl aktueller, hochpreisiger Transaktionen. Echte Fahrgestellnummern, verifizierte Herkunft, echte Zuschlagpreise.",
     "viewListing": "Inserat ansehen",
-    "hammerPrice": "Zuschlagpreis",
+    "hammerPrice": "Preis",
     "dataNote": "Daten direkt von Bring a Trailer und RM Sotheby's. Preise zum Zeitpunkt des Verkaufs verifiziert."
   },
   "status": {
@@ -151,8 +151,8 @@
     "aboutThisVehicle": "Über dieses Fahrzeug",
     "editorial": "Editorial",
     "timeLeft": "Verbleibende Zeit",
-    "soldFor": "Verkauft für",
-    "currentBid": "Aktuelles Gebot",
+    "soldFor": "Preis",
+    "currentBid": "Preis",
     "bids": "Gebote",
     "status": "Status",
     "sellersDescription": "Beschreibung des Verkäufers",
@@ -242,7 +242,7 @@
       "provenance": "Provenienz & Geschichte",
       "platformData": "Plattformdaten",
       "platform": "Plattform",
-      "currentBid": "Aktuelles Gebot",
+      "currentBid": "Preis",
       "bidCount": "Gebote",
       "status": "Status",
       "timeRemaining": "Verbleibende Zeit"
@@ -422,8 +422,8 @@
       "hide": "Ausblenden"
     },
     "labels": {
-      "currentBid": "Aktuelles Gebot",
-      "finalPrice": "Endpreis",
+      "currentBid": "Preis",
+      "finalPrice": "Listenpreis",
       "recommendedCap": "Empfohlene Obergrenze",
       "basedOnMarketAnalysis": "Basierend auf Marktanalyse",
       "grade": "Bewertung:",
@@ -853,7 +853,7 @@
     "transportationShipping": "Transport & Versand"
   },
   "common": {
-    "currentBid": "aktuelles Gebot",
+    "currentBid": "preis",
     "bids": "Gebote",
     "bid": "Gebot",
     "years": "Jahre",
@@ -903,8 +903,8 @@
       "clearSearch": "Suche löschen"
     },
     "card": {
-      "currentBid": "Aktuelles Gebot",
-      "soldFor": "Verkauft für",
+      "currentBid": "Preis",
+      "soldFor": "Preis",
       "bids": "{count, plural, one {# Gebot} other {# Gebote}}",
       "noBids": "Keine Gebote"
     },
@@ -1226,8 +1226,8 @@
       "viewDetails": "Details ansehen"
     },
     "card": {
-      "currentBid": "Aktuelles Gebot",
-      "soldFor": "Verkauft für"
+      "currentBid": "Preis",
+      "soldFor": "Preis"
     }
   },
   "metadata": {

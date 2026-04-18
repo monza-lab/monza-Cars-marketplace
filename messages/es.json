@@ -120,7 +120,7 @@
     "kicker": "Ventas verificadas",
     "subtitle": "Selección curada de transacciones recientes de alto valor. Chasis reales, procedencia verificada y precios finales reales.",
     "viewListing": "Ver anuncio",
-    "hammerPrice": "Precio de martillo",
+    "hammerPrice": "Precio",
     "dataNote": "Datos obtenidos directamente de Bring a Trailer y RM Sotheby's. Precios verificados al momento de la venta."
   },
   "status": {
@@ -151,8 +151,8 @@
     "aboutThisVehicle": "Sobre este vehículo",
     "editorial": "Editorial",
     "timeLeft": "Tiempo restante",
-    "soldFor": "Vendido por",
-    "currentBid": "Oferta actual",
+    "soldFor": "Precio",
+    "currentBid": "Precio",
     "bids": "Ofertas",
     "status": "Estado",
     "sellersDescription": "Descripción del vendedor",
@@ -242,7 +242,7 @@
       "provenance": "Procedencia e Historia",
       "platformData": "Datos de Plataforma",
       "platform": "Plataforma",
-      "currentBid": "Oferta Actual",
+      "currentBid": "Precio",
       "bidCount": "Ofertas",
       "status": "Estado",
       "timeRemaining": "Tiempo Restante"
@@ -422,8 +422,8 @@
       "hide": "Ocultar"
     },
     "labels": {
-      "currentBid": "Oferta actual",
-      "finalPrice": "Precio final",
+      "currentBid": "Precio",
+      "finalPrice": "Precio de lista",
       "recommendedCap": "Tope recomendado",
       "basedOnMarketAnalysis": "Basado en análisis de mercado",
       "grade": "Calificación:",
@@ -853,7 +853,7 @@
     "transportationShipping": "Transporte y Envío"
   },
   "common": {
-    "currentBid": "oferta actual",
+    "currentBid": "precio",
     "bids": "ofertas",
     "bid": "oferta",
     "years": "años",
@@ -903,8 +903,8 @@
       "clearSearch": "Borrar búsqueda"
     },
     "card": {
-      "currentBid": "Oferta actual",
-      "soldFor": "Vendido por",
+      "currentBid": "Precio",
+      "soldFor": "Precio",
       "bids": "{count, plural, one {# oferta} other {# ofertas}}",
       "noBids": "Sin ofertas"
     },
@@ -1226,8 +1226,8 @@
       "viewDetails": "Ver detalles"
     },
     "card": {
-      "currentBid": "Oferta actual",
-      "soldFor": "Vendido por"
+      "currentBid": "Precio",
+      "soldFor": "Precio"
     }
   },
   "metadata": {

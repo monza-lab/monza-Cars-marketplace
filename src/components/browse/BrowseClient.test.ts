@@ -32,7 +32,7 @@ vi.mock("@/lib/brandConfig", () => ({
   getFamilyGroupsWithSeries: () => [],
 }));
 
-import { parseEndTimeMs } from "./BrowseClient";
+import { parseEndTimeMs } from "./BrowseCard";
 import { serializeEndTime } from "@/lib/dashboardCache";
 
 describe("browse end-time helpers", () => {

@@ -121,7 +121,7 @@
     "kicker": "Verified Sales",
     "subtitle": "Curated selection of recent high-value transactions. Real chassis, verified provenance, actual hammer prices.",
     "viewListing": "View Listing",
-    "hammerPrice": "Hammer Price",
+    "hammerPrice": "Price",
     "dataNote": "Data sourced directly from Bring a Trailer and RM Sotheby's. Prices verified at time of sale."
   },
   "status": {
@@ -152,8 +152,8 @@
     "aboutThisVehicle": "About This Vehicle",
     "editorial": "Editorial",
     "timeLeft": "Time Left",
-    "soldFor": "Sold For",
-    "currentBid": "Current Bid",
+    "soldFor": "Price",
+    "currentBid": "Price",
     "bids": "Bids",
     "status": "Status",
     "sellersDescription": "Seller's Description",
@@ -243,7 +243,7 @@
       "provenance": "Provenance & History",
       "platformData": "Platform Data",
       "platform": "Platform",
-      "currentBid": "Current Bid",
+      "currentBid": "Price",
       "bidCount": "Bids",
       "status": "Status",
       "timeRemaining": "Time Remaining"
@@ -423,8 +423,8 @@
       "hide": "Hide"
     },
     "labels": {
-      "currentBid": "Current Bid",
-      "finalPrice": "Final Price",
+      "currentBid": "Price",
+      "finalPrice": "Listing Price",
       "recommendedCap": "Recommended Cap",
       "basedOnMarketAnalysis": "Based on market analysis",
       "grade": "Grade:",
@@ -854,7 +854,7 @@
     "transportationShipping": "Transportation & Shipping"
   },
   "common": {
-    "currentBid": "current bid",
+    "currentBid": "price",
     "bids": "bids",
     "bid": "bid",
     "years": "years",
@@ -904,8 +904,8 @@
       "clearSearch": "Clear Search"
     },
     "card": {
-      "currentBid": "Current Bid",
-      "soldFor": "Sold For",
+      "currentBid": "Price",
+      "soldFor": "Price",
       "bids": "{count, plural, one {# bid} other {# bids}}",
       "noBids": "No bids"
     },
@@ -1227,8 +1227,8 @@
       "viewDetails": "View Details"
     },
     "card": {
-      "currentBid": "Current Bid",
-      "soldFor": "Sold For"
+      "currentBid": "Price",
+      "soldFor": "Price"
     }
   },
   "metadata": {

@@ -1,8 +1,9 @@
 "use client";
 
-import { Sparkles, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { setPreferredView, type MarketplaceView } from "@/lib/viewPreference";
+import { MonzaHelmet } from "@/components/icons/MonzaHelmet";
 
 export function ViewToggle() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export function ViewToggle() {
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Sparkles className="size-3" />
+        <MonzaHelmet className="size-3.5 -mt-px" />
         <span>Monza</span>
       </button>
       <button

@@ -329,9 +329,7 @@ function getResponseForQuery(
       answer: `**${car.title}**
 
 **Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
+• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
 • Platform: ${car.platform.replace(/_/g, " ")}
 • Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
 • Location: ${car.location}
@@ -447,9 +445,7 @@ _Data from real auction results._`,
       answer: `**${car.title}**
 
 **Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
+• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
 • Platform: ${car.platform.replace(/_/g, " ")}
 • Location: ${car.location}
 
