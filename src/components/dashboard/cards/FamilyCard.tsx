@@ -9,6 +9,7 @@ import type { PorscheFamily } from "../types"
 
 export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: number }) {
   const t = useTranslations("dashboard")
+  const tv = useTranslations("valuation")
   const { formatPrice } = useCurrency()
 
   const yearLabel = family.yearMin === family.yearMax
@@ -84,7 +85,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{tv("askingRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
                 {formatPrice(family.priceMin)}–{formatPrice(family.priceMax)}

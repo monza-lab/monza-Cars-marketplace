@@ -809,6 +809,15 @@
     "b": "B",
     "c": "C"
   },
+  "valuation": {
+    "marketValue": "Market value",
+    "askMedian": "Ask median",
+    "byMarket": "Valuation by market",
+    "askingRange": "Asking range",
+    "soldSamples": "sold",
+    "askingSamples": "asking",
+    "insufficient": "Insufficient data"
+  },
   "sections": {
     "featuredListings": "Featured Listings",
     "howItWorks": "How It Works",

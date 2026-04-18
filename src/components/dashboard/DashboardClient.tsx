@@ -449,6 +449,7 @@ function SafeImage({
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
 function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
   const t = useTranslations("dashboard")
+  const tv = useTranslations("valuation")
   const { formatPrice } = useCurrency()
 
   return (
@@ -518,7 +519,7 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{tv("askingRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
                 {formatPrice(brand.priceMin)}–{formatPrice(brand.priceMax)}
@@ -579,6 +580,7 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
 // ─── FAMILY CARD (full-screen scroll card for Porsche families) ───
 function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: number }) {
   const t = useTranslations("dashboard")
+  const tv = useTranslations("valuation")
   const { formatPrice } = useCurrency()
 
   const yearLabel = family.yearMin === family.yearMax
@@ -654,7 +656,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.priceRange")}</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{tv("askingRange")}</span>
               </div>
               <p className="text-[13px] font-mono text-foreground">
                 {formatPrice(family.priceMin)}–{formatPrice(family.priceMax)}

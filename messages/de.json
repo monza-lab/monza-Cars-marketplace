@@ -807,6 +807,15 @@
     "b": "B",
     "c": "C"
   },
+  "valuation": {
+    "marketValue": "Marktwert",
+    "askMedian": "Median Angebotspreis",
+    "byMarket": "Bewertung nach Markt",
+    "askingRange": "Preisspanne",
+    "soldSamples": "verkauft",
+    "askingSamples": "Angebote",
+    "insufficient": "Unzureichende Daten"
+  },
   "sections": {
     "featuredAuctions": "Ausgewählte Auktionen",
     "howItWorks": "So Funktioniert's",

@@ -807,6 +807,15 @@
     "b": "B",
     "c": "C"
   },
+  "valuation": {
+    "marketValue": "市場価値",
+    "askMedian": "希望価格中央値",
+    "byMarket": "市場別評価",
+    "askingRange": "価格帯",
+    "soldSamples": "売却済み",
+    "askingSamples": "出品中",
+    "insufficient": "データ不足"
+  },
   "sections": {
     "featuredAuctions": "注目のオークション",
     "howItWorks": "使い方",
