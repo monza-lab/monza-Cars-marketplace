@@ -588,7 +588,7 @@ export default function ScrapersDashboardClient({
                           <div className="px-3 py-3 bg-zinc-900/30 border-b border-zinc-800/50 text-xs space-y-2">
                             <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-zinc-400 max-w-md">
                               <span>Run ID</span>
-                              <span className="text-zinc-300 font-mono truncate">
+                              <span className="text-zinc-300 tabular-nums truncate">
                                 {run.run_id}
                               </span>
                               <span>Runtime</span>
@@ -724,7 +724,7 @@ export default function ScrapersDashboardClient({
                                     {run.error_messages.map((msg, i) => (
                                       <p
                                         key={i}
-                                        className="text-red-300/80 font-mono text-[11px] truncate"
+                                        className="text-red-300/80 tabular-nums text-[11px] truncate"
                                       >
                                         {msg}
                                       </p>
@@ -775,7 +775,7 @@ export default function ScrapersDashboardClient({
                             {[row.vin, row.trim, row.engine, row.transmission, row.mileage_km,
                               row.color_exterior, row.color_interior, row.body_style, row.price, row.images
                             ].map((pct, i) => (
-                              <td key={i} className={`p-2 text-center font-mono text-xs ${
+                              <td key={i} className={`p-2 text-center tabular-nums text-xs ${
                                 pct >= 90 ? "bg-emerald-900/30 text-emerald-400" :
                                 pct >= 50 ? "bg-amber-900/30 text-amber-400" :
                                 "bg-red-900/30 text-red-400"

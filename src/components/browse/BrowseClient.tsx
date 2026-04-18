@@ -69,8 +69,8 @@ function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
 
           {live && (
             <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-md px-2.5 py-1">
-              <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-medium text-emerald-400">LIVE</span>
+              <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+              <span className="text-[10px] font-medium text-positive">LIVE</span>
             </div>
           )}
 

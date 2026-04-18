@@ -87,7 +87,7 @@ export function SearchBar({
           <Search
             className={cn(
               "size-4 transition-colors duration-300",
-              isFocused ? "text-amber-500" : "text-zinc-500"
+              isFocused ? "text-destructive" : "text-zinc-500"
             )}
           />
         </div>

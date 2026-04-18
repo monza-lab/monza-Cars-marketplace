@@ -478,8 +478,8 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                   <Icon
                     className={cn(
                       "size-3.5",
-                      status.id === "active" && "text-emerald-500",
-                      status.id === "ending-soon" && "text-amber-500",
+                      status.id === "active" && "text-positive",
+                      status.id === "ending-soon" && "text-destructive",
                       status.id === "sold" && "text-zinc-500"
                     )}
                   />

@@ -68,10 +68,10 @@ interface AnalysisReportProps {
 // ---------------------------------------------------------------------------
 
 const GRADE_STYLES: Record<InvestmentGrade, string> = {
-  EXCELLENT: "bg-amber-500/20 text-amber-400 border-amber-500/40",
-  GOOD: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+  EXCELLENT: "bg-amber-500/20 text-destructive border-amber-500/40",
+  GOOD: "bg-positive/20 text-positive border-positive/40",
   FAIR: "bg-blue-500/20 text-blue-400 border-blue-500/40",
-  SPECULATIVE: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+  SPECULATIVE: "bg-destructive/20 text-destructive border-destructive/40",
 };
 
 const TREND_CONFIG: Record<
@@ -81,13 +81,13 @@ const TREND_CONFIG: Record<
   RISING: {
     icon: TrendingUp,
     label: "Rising Market",
-    color: "text-emerald-400",
+    color: "text-positive",
   },
   STABLE: { icon: Minus, label: "Stable Market", color: "text-blue-400" },
   DECLINING: {
     icon: TrendingDown,
     label: "Declining Market",
-    color: "text-red-400",
+    color: "text-destructive",
   },
 };
 
@@ -124,7 +124,7 @@ function CollapsibleSection({
         )}
       >
         <span className="flex items-center gap-2">
-          <Icon className={cn("size-4", accentClass ?? "text-amber-500")} />
+          <Icon className={cn("size-4", accentClass ?? "text-destructive")} />
           {title}
           {count !== undefined && (
             <Badge
@@ -170,7 +170,7 @@ function KeyStrengthsList({ strengths }: { strengths: string[] }) {
     <ul className="space-y-2">
       {strengths.map((s, i) => (
         <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
-          <Shield className="size-4 mt-0.5 shrink-0 text-emerald-500" />
+          <Shield className="size-4 mt-0.5 shrink-0 text-positive" />
           <span>{s}</span>
         </li>
       ))}
@@ -250,7 +250,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="size-5 text-amber-500" />
+            <Brain className="size-5 text-destructive" />
             <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent font-bold">
               AI Analysis
             </span>
@@ -260,10 +260,10 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             <Badge
               variant="outline"
               className={cn(
-                "border-amber-500/40 text-amber-400 font-mono text-xs",
+                "border-amber-500/40 text-destructive tabular-nums text-xs",
                 confidenceScore >= 80 &&
-                  "border-emerald-500/40 text-emerald-400",
-                confidenceScore < 50 && "border-red-500/40 text-red-400"
+                  "border-positive/40 text-positive",
+                confidenceScore < 50 && "border-destructive/40 text-destructive"
               )}
             >
               {confidenceScore}% confidence
@@ -275,7 +275,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
       <CardContent className="space-y-5">
         {/* Bid Target */}
         <div className="rounded-lg bg-gradient-to-br from-amber-500/10 via-zinc-900 to-zinc-900 border border-amber-500/20 p-5">
-          <p className="text-[11px] uppercase tracking-widest text-amber-500/80 mb-2 font-medium">
+          <p className="text-[11px] uppercase tracking-widest text-destructive/80 mb-2 font-medium">
             Recommended Bid Range
           </p>
           <div className="flex items-baseline gap-2 flex-wrap">
@@ -323,7 +323,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
               icon={Scale}
               defaultOpen
               count={criticalQuestions.length}
-              accentClass="text-amber-500"
+              accentClass="text-destructive"
             >
               <CriticalQuestions questions={criticalQuestions} />
             </CollapsibleSection>
@@ -350,7 +350,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
               )}
               defaultOpen={redFlags.length > 0}
               count={redFlags.length}
-              accentClass="text-red-500"
+              accentClass="text-destructive"
             >
               <RedFlags redFlags={redFlags} />
             </CollapsibleSection>
@@ -361,7 +361,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
               title="Key Strengths"
               icon={Shield}
               count={keyStrengths.length}
-              accentClass="text-emerald-500"
+              accentClass="text-positive"
             >
               <KeyStrengthsList strengths={keyStrengths} />
             </CollapsibleSection>
@@ -384,7 +384,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             )}
-            accentClass="text-amber-500"
+            accentClass="text-destructive"
           >
             <OwnershipCosts {...ownershipCosts} />
           </CollapsibleSection>
@@ -392,7 +392,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           <CollapsibleSection
             title="Investment Outlook"
             icon={TrendingUp}
-            accentClass="text-amber-500"
+            accentClass="text-destructive"
           >
             <InvestmentOutlookSection outlook={investmentOutlook} />
           </CollapsibleSection>
@@ -404,7 +404,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             variant="outline"
             className="border-zinc-700 text-zinc-500 text-[10px] gap-1.5 font-normal"
           >
-            <Scale className="size-3 text-amber-600" />
+            <Scale className="size-3 text-destructive" />
             Powered by Claude AI
           </Badge>
         </div>

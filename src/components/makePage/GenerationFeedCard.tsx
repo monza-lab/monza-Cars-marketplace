@@ -39,7 +39,6 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
               sizes="50vw"
               loading="lazy"
               referrerPolicy="no-referrer"
-              unoptimized
             />
           ) : (
             <div className="absolute inset-0 bg-card flex items-center justify-center">
@@ -54,7 +53,7 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
           <div className="absolute top-4 left-4">
             <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
               gen.topGrade === "AAA"
-                ? "bg-emerald-500/30 text-emerald-300"
+                ? "bg-positive/30 text-positive"
                 : gen.topGrade === "AA"
                   ? "bg-primary/30 text-primary"
                   : "bg-foreground/20 text-white"
@@ -92,7 +91,7 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Price Range</span>
               </div>
-              <p className="text-[13px] font-mono text-foreground">
+              <p className="text-[13px] tabular-nums text-foreground">
                 {formatPrice(gen.priceMin)}&ndash;{formatPrice(gen.priceMax)}
               </p>
             </div>
@@ -111,9 +110,9 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Grade</span>
               </div>
               <p className={`text-[13px] font-semibold ${
-                gen.topGrade === "AAA" ? "text-emerald-400"
+                gen.topGrade === "AAA" ? "text-positive"
                   : gen.topGrade === "AA" ? "text-blue-400"
-                    : gen.topGrade === "A" ? "text-amber-400"
+                    : gen.topGrade === "A" ? "text-destructive"
                       : "text-muted-foreground"
               }`}>{gen.topGrade}</p>
             </div>

@@ -80,11 +80,11 @@ export function AuctionTimer({ endTime, className }: AuctionTimerProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 text-sm font-mono tabular-nums",
+        "inline-flex items-center gap-1.5 text-sm tabular-nums tabular-nums",
         isUrgent
-          ? "text-red-400 animate-pulse"
+          ? "text-destructive animate-pulse"
           : isWarning
-            ? "text-amber-400"
+            ? "text-destructive"
             : "text-zinc-400",
         className
       )}

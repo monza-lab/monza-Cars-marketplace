@@ -88,9 +88,9 @@ export function GenerationContextPanel({
 
   const gradeColor = (g: string) => {
     switch (g) {
-      case "AAA": return "text-emerald-400"
+      case "AAA": return "text-positive"
       case "AA": return "text-blue-400"
-      case "A": return "text-amber-400"
+      case "A": return "text-destructive"
       default: return "text-muted-foreground"
     }
   }
@@ -127,13 +127,13 @@ export function GenerationContextPanel({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
-              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-emerald-400" : "text-primary"}`}>
+              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-positive" : "text-primary"}`}>
                 {gen.topGrade}
               </p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">
                 {formatPrice(gen.priceMin)}
               </p>
             </div>
@@ -187,7 +187,7 @@ export function GenerationContextPanel({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Active Listings</span>
-              <span className="text-[12px] font-mono font-semibold text-foreground">{gen.carCount}</span>
+              <span className="text-[12px] tabular-nums font-semibold text-foreground">{gen.carCount}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Avg. Price</span>
@@ -201,7 +201,7 @@ export function GenerationContextPanel({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
-              <span className="text-[12px] font-mono font-semibold text-emerald-400">{Math.min(85 + Math.floor(gen.carCount / 3), 98)}%</span>
+              <span className="text-[12px] tabular-nums font-semibold text-positive">{Math.min(85 + Math.floor(gen.carCount / 3), 98)}%</span>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -238,7 +238,7 @@ export function GenerationContextPanel({
                       {sale.platform?.replace(/_/g, " ") || "Listing"} · {sale.region}
                     </p>
                   </div>
-                  <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
+                  <span className="text-[12px] tabular-nums font-semibold text-foreground shrink-0">
                     {formatPrice(sale.currentBid)}
                   </span>
                 </div>
@@ -263,7 +263,7 @@ export function GenerationContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">

@@ -85,20 +85,20 @@ export function MobileModelContext({
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px]">{regionLabels[region]?.flag}</span>
                       <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
-                      {isBest && <span className="text-[7px] font-bold text-emerald-400">{t("mobileContext.best")}</span>}
+                      {isBest && <span className="text-[7px] font-bold text-positive">{t("mobileContext.best")}</span>}
                       {isSelected && <span className="text-[7px] font-bold text-primary">{t("mobileContext.yourMarket")}</span>}
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] font-mono text-foreground">{fmtRegional(convertFromUsd(pricing.low), currencySymbol)}</span>
+                      <span className="text-[10px] tabular-nums text-foreground">{fmtRegional(convertFromUsd(pricing.low), currencySymbol)}</span>
                       <span className="text-[8px] text-muted-foreground">→</span>
-                      <span className={`text-[10px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
+                      <span className={`text-[10px] tabular-nums font-semibold ${isBest ? "text-positive" : "text-primary"}`}>
                         {fmtRegional(convertFromUsd(pricing.high), currencySymbol)}
                       </span>
                     </div>
                   </div>
                   <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${isBest ? "bg-emerald-400/50" : isSelected ? "bg-primary/60" : "bg-primary/30"}`}
+                      className={`h-full rounded-full ${isBest ? "bg-positive/50" : isSelected ? "bg-primary/60" : "bg-primary/30"}`}
                       style={{ width: `${barWidth}%` }}
                     />
                   </div>
@@ -120,15 +120,15 @@ export function MobileModelContext({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.listingsPerYear")}</p>
-            <p className="text-[14px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</p>
+            <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</p>
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.avgDaysToSell")}</p>
-            <p className="text-[14px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</p>
+            <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</p>
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.sellThroughRate")}</p>
-            <p className="text-[14px] font-mono font-semibold text-emerald-400">{depth.sellThroughRate}%</p>
+            <p className="text-[14px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</p>
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.demandScore")}</p>
@@ -153,7 +153,7 @@ export function MobileModelContext({
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">{item.label}</span>
-              <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+              <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
             </div>
           ))}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">

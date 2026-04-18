@@ -183,7 +183,7 @@ export function SearchClient() {
           {/* Title */}
           <div className="shrink-0">
             <h1 className="text-xl font-semibold text-foreground tracking-tight">
-              {t("header.title")} <span className="text-gradient">{t("header.titleAccent")}</span>
+              {t("header.title")} <span className="font-semibold">{t("header.titleAccent")}</span>
             </h1>
           </div>
 
@@ -472,7 +472,7 @@ function InvestmentCard({
               {isLive && result.endTime && (
                 <div className="flex items-center gap-1 text-foreground">
                   <Clock className="size-3" />
-                  <span className="text-[12px] font-mono font-medium tabular-nums">
+                  <span className="text-[12px] tabular-nums font-medium tabular-nums">
                     {timeLeft(result.endTime, {
                       none: t("common.none"),
                       ended: t("time.ended"),

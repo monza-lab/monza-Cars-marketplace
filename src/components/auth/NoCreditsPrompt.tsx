@@ -14,9 +14,9 @@ export function NoCreditsPrompt({
   className = '',
 }: NoCreditsPromptProps) {
   return (
-    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border border-[#FB923C]/20 bg-card backdrop-blur-xl ${className}`}>
-      <div className="w-12 h-12 rounded-full bg-[#FB923C]/10 flex items-center justify-center mb-4">
-        <Coins className="w-6 h-6 text-[#FB923C]" />
+    <div className={`flex flex-col items-center justify-center p-8 rounded-lg border border-destructive/20 bg-card backdrop-blur-xl ${className}`}>
+      <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+        <Coins className="w-6 h-6 text-destructive" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">
         No Credits Remaining
@@ -78,7 +78,7 @@ function CreditPackage({
       )}
       <div className="text-xl font-bold text-foreground">{amount}</div>
       <div className="text-[10px] text-muted-foreground">{label}</div>
-      <div className="text-sm font-semibold text-[#34D399] mt-1">${price}</div>
+      <div className="text-sm font-semibold text-positive mt-1">${price}</div>
     </div>
   )
 }

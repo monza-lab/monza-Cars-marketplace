@@ -119,7 +119,7 @@ export function LoadingSpinner({
       {showText && (
         <motion.p
           className={cn(
-            "font-medium tracking-wide text-amber-500/80",
+            "font-medium tracking-wide text-destructive/80",
             textSizeMap[size]
           )}
           animate={{ opacity: [0.5, 1, 0.5] }}

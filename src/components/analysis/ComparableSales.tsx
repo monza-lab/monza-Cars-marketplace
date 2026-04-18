@@ -42,14 +42,14 @@ function formatMileage(miles: number) {
 }
 
 const PLATFORM_STYLES: Record<string, string> = {
-  "Bring a Trailer": "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  BaT: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  "Bring a Trailer": "bg-amber-500/15 text-destructive border-amber-500/30",
+  BaT: "bg-amber-500/15 text-destructive border-amber-500/30",
   "Cars & Bids": "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  Hemmings: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  Hemmings: "bg-positive/15 text-positive border-positive/30",
   "RM Sotheby's": "bg-purple-500/15 text-purple-400 border-purple-500/30",
   Bonhams: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-  Mecum: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-  "Barrett-Jackson": "bg-red-500/15 text-red-400 border-red-500/30",
+  Mecum: "bg-destructive/15 text-destructive border-destructive/30",
+  "Barrett-Jackson": "bg-destructive/15 text-destructive border-destructive/30",
   eBay: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
 };
 
@@ -87,7 +87,7 @@ function PriceComparison({
 
   if (diff > 0) {
     return (
-      <span className="flex items-center gap-1 text-xs text-emerald-400">
+      <span className="flex items-center gap-1 text-xs text-positive">
         <ArrowUpRight className="size-3" />
         +{formatPrice(diff ?? 0)} ({pctDiff}%)
       </span>
@@ -95,7 +95,7 @@ function PriceComparison({
   }
 
   return (
-    <span className="flex items-center gap-1 text-xs text-red-400">
+    <span className="flex items-center gap-1 text-xs text-destructive">
       <ArrowDownRight className="size-3" />
       {formatPrice(diff ?? 0)} ({pctDiff}%)
     </span>
@@ -171,7 +171,7 @@ export function ComparableSales({
                       href={comp.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-amber-400"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-destructive"
                       title="View listing"
                     >
                       <ExternalLink className="size-3" />
@@ -199,7 +199,7 @@ export function ComparableSales({
 
               {/* Right: Price + comparison */}
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-amber-400">
+                <p className="text-sm font-bold text-destructive">
                   {formatPrice(comp.soldPrice ?? 0)}
                 </p>
                 {currentPrice !== undefined && (

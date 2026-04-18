@@ -34,7 +34,7 @@ export function OwnershipCostSection({ ownershipCost }: OwnershipCostProps) {
         ].map((item) => (
           <div key={item.label} className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">{item.label}</span>
-            <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+            <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
           </div>
         ))}
         <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">

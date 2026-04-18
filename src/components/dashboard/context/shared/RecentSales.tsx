@@ -36,7 +36,7 @@ export function RecentSalesSection({ sales }: RecentSalesProps) {
               <p className="text-[11px] text-muted-foreground truncate">{sale.title}</p>
               <p className="text-[9px] text-muted-foreground mt-0.5">{sale.platform} · {sale.date}</p>
             </div>
-            <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
+            <span className="text-[12px] tabular-nums font-semibold text-foreground shrink-0">
               {formatPrice(sale.price)}
             </span>
           </div>

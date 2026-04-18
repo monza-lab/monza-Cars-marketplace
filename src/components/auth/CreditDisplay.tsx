@@ -30,7 +30,7 @@ export function CreditDisplay({ onClick }: CreditDisplayProps) {
       onClick={onClick}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 transition-colors border border-border"
     >
-      <Coins className={`w-3.5 h-3.5 ${credits > 0 ? 'text-primary' : 'text-[#FB923C]'}`} />
+      <Coins className={`w-3.5 h-3.5 ${credits > 0 ? 'text-primary' : 'text-destructive'}`} />
       <span className="text-sm font-medium text-foreground">
         {credits}
       </span>

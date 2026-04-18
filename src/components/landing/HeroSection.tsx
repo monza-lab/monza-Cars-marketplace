@@ -125,13 +125,13 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
           transition={{ duration: 0.8, delay: 0.2 }}
         >
           <span className="block text-foreground">{t("headline1")}</span>
-          <span className="block text-gradient font-semibold">{t("headline2")}</span>
+          <span className="block text-primary font-semibold">{t("headline2")}</span>
           <span className="block text-foreground">{t("headline3")}</span>
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
-          className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-[rgba(232,226,222,0.5)] sm:text-lg font-light"
+          className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg font-light"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
@@ -148,13 +148,13 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <div className="flex flex-1 items-center gap-3 px-6">
-            <Search className="h-4 w-4 shrink-0 text-[rgba(232,226,222,0.3)]" />
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground/60" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="h-14 w-full bg-transparent text-sm text-foreground placeholder:text-[rgba(232,226,222,0.3)] focus:outline-none"
+              className="h-14 w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
           <button
@@ -172,14 +172,14 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.7 }}
         >
-          <span className="mr-1 text-[11px] tracking-[0.15em] uppercase text-[rgba(232,226,222,0.3)]">
+          <span className="mr-1 text-[11px] tracking-[0.15em] uppercase text-muted-foreground/60">
             {t("popular")}
           </span>
           {popularMakes.map((make) => (
             <Link
               key={make.slug}
               href={`/auctions?search=${make.slug}`}
-              className="rounded-full border border-primary/8 bg-primary/3 px-3.5 py-1 text-[11px] font-medium tracking-[0.1em] text-[rgba(232,226,222,0.4)] transition-all hover:border-primary/20 hover:bg-primary/6 hover:text-primary"
+              className="rounded-full border border-primary/8 bg-primary/3 px-3.5 py-1 text-[11px] font-medium tracking-[0.1em] text-muted-foreground transition-all hover:border-primary/20 hover:bg-primary/6 hover:text-primary"
             >
               {make.name}
             </Link>
@@ -198,33 +198,13 @@ export function HeroSection({ stats }: { stats?: HeroStats }) {
               <span className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
                 {stat.value}
               </span>
-              <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.35)]">
+              <span className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/60">
                 {stat.label}
               </span>
             </div>
           ))}
         </motion.div>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 0.5 }}
-      >
-        <motion.div
-          className="flex h-8 w-5 items-start justify-center rounded-full border border-primary/15 p-1"
-          animate={{ opacity: [0.3, 0.8, 0.3] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        >
-          <motion.div
-            className="h-1.5 w-1 rounded-full bg-primary/50"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-          />
-        </motion.div>
-      </motion.div>
     </section>
   )
 }

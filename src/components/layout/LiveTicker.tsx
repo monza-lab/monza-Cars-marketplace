@@ -38,16 +38,16 @@ function formatPrice(n: number): string {
 function TrendIndicator({ trend }: { trend: "up" | "neutral" | "hot" }) {
   if (trend === "hot") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-emerald-400">
+      <span className="inline-flex items-center gap-0.5 text-positive">
         <Activity className="size-3 animate-pulse" />
         <span className="text-[10px] font-bold">LIVE</span>
       </span>
     );
   }
   if (trend === "up") {
-    return <TrendingUp className="size-3 text-emerald-400" />;
+    return <TrendingUp className="size-3 text-positive" />;
   }
-  return <Minus className="size-3 text-[rgba(232,226,222,0.3)]" />;
+  return <Minus className="size-3 text-muted-foreground/50" />;
 }
 
 interface LiveTickerProps {
@@ -90,10 +90,10 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
         {/* Live indicator pill */}
         <div className="absolute left-3 z-20 flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/15 px-2.5 py-1">
           <span className="relative flex size-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-positive" />
           </span>
-          <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-[rgba(232,226,222,0.6)]">
+          <span className="text-[9px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             Live
           </span>
         </div>
@@ -115,7 +115,7 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
                 className="inline-flex items-center gap-3 px-4 py-1 rounded-lg hover:bg-primary/6 transition-colors group"
               >
                 {/* Make + Model */}
-                <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-[rgba(232,226,222,0.5)] group-hover:text-[rgba(232,226,222,0.8)] transition-colors">
+                <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-foreground/80 transition-colors">
                   {item.make}{" "}
                   <span className="text-foreground/70 group-hover:text-foreground">
                     {item.model}
@@ -126,12 +126,12 @@ export function LiveTicker({ onItemClick }: LiveTickerProps) {
                 <TrendIndicator trend={item.trend} />
 
                 {/* Price */}
-                <span className="text-[12px] font-mono font-medium tabular-nums text-foreground group-hover:text-primary transition-colors">
+                <span className="text-[12px] tabular-nums font-medium tabular-nums text-foreground group-hover:text-primary transition-colors">
                   {formatPrice(item.price)}
                 </span>
 
                 {/* Separator */}
-                <span className="text-[rgba(232,226,222,0.15)] mx-2">/</span>
+                <span className="text-muted-foreground/25 mx-2">/</span>
               </button>
             ))}
           </div>

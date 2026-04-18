@@ -98,9 +98,9 @@ export function ModelContextPanel({
   // Grade color helper
   const gradeColor = (g: string) => {
     switch (g) {
-      case "AAA": return "text-emerald-400"
+      case "AAA": return "text-positive"
       case "AA": return "text-blue-400"
-      case "A": return "text-amber-400"
+      case "A": return "text-destructive"
       default: return "text-muted-foreground"
     }
   }
@@ -142,16 +142,16 @@ export function ModelContextPanel({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("sidebar.grade")}</span>
-              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-emerald-400" : "text-primary"
+              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-positive" : "text-primary"
                 }`}>{model.representativeCar.investmentGrade}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(model.priceMin)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(model.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Max Price</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(model.priceMax)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(model.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -182,25 +182,25 @@ export function ModelContextPanel({
                         <span className="text-[12px]">{regionLabels[region].flag}</span>
                         <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                         {isBest && (
-                          <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>
+                          <span className="text-[8px] font-bold text-positive tracking-wide">BEST</span>
                         )}
                         {isSelected && (
                           <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>
                         )}
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-[11px] font-mono font-semibold text-foreground">
+                        <span className="text-[11px] tabular-nums font-semibold text-foreground">
                           {fmtRegional(convertFromUsd(pricing.low), currencySymbol)}
                         </span>
                         <span className="text-[9px] text-muted-foreground">→</span>
-                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
+                        <span className={`text-[11px] tabular-nums font-semibold ${isBest ? "text-positive" : "text-primary"}`}>
                           {fmtRegional(convertFromUsd(pricing.high), currencySymbol)}
                         </span>
                       </div>
                     </div>
                     {region !== effectiveRegion && (
                       <div className="flex justify-end mb-1">
-                        <span className="text-[9px] font-mono text-muted-foreground">
+                        <span className="text-[9px] tabular-nums text-muted-foreground">
                           ≈ {formatPrice(pricing.high)}
                         </span>
                       </div>
@@ -238,7 +238,7 @@ export function ModelContextPanel({
                         {platform?.short || sale.platform} · {regionLabels[sale.region]?.flag} {sale.region}
                       </p>
                     </div>
-                    <span className="text-[12px] font-mono font-semibold text-foreground shrink-0">
+                    <span className="text-[12px] tabular-nums font-semibold text-foreground shrink-0">
                       {formatPrice(sale.currentBid)}
                     </span>
                   </div>
@@ -259,15 +259,15 @@ export function ModelContextPanel({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Auctions / Year</span>
-              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.auctionsPerYear}</span>
+              <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Avg Days to Sell</span>
-              <span className="text-[12px] font-mono font-semibold text-foreground">{depth.avgDaysToSell}d</span>
+              <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
-              <span className="text-[12px] font-mono font-semibold text-emerald-400">{depth.sellThroughRate}%</span>
+              <span className="text-[12px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</span>
             </div>
             {/* Demand score visual */}
             <div>
@@ -304,7 +304,7 @@ export function ModelContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
@@ -333,7 +333,7 @@ export function ModelContextPanel({
                     {m.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                    <span className="text-[10px] tabular-nums text-muted-foreground">
                       {formatPrice(m.priceMin)}-{formatPrice(m.priceMax)}
                     </span>
                     <span className={`text-[9px] font-bold ${gradeColor(m.representativeCar.investmentGrade)}`}>

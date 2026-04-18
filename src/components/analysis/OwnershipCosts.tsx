@@ -168,7 +168,7 @@ export function OwnershipCosts({
         label: "Annual Maintenance",
         amount: yearlyMaintenance,
         icon: Wrench,
-        color: "text-amber-500",
+        color: "text-destructive",
         barColor: "bg-gradient-to-r from-amber-600 to-amber-400",
       },
       {
@@ -182,7 +182,7 @@ export function OwnershipCosts({
         label: "Major Service",
         amount: majorServiceCost,
         icon: Settings,
-        color: "text-orange-400",
+        color: "text-destructive",
         barColor: "bg-gradient-to-r from-orange-600 to-orange-400",
       },
     ],
@@ -216,7 +216,7 @@ export function OwnershipCosts({
       {/* Annual total */}
       <div className="flex items-center justify-between rounded-md bg-amber-500/8 border border-amber-500/20 p-3">
         <span className="flex items-center gap-2 text-sm font-medium text-zinc-200">
-          <DollarSign className="size-4 text-amber-500" />
+          <DollarSign className="size-4 text-destructive" />
           Total Annual Cost
         </span>
         <span className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">

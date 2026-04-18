@@ -189,7 +189,7 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
     return (
       <div className="sticky top-[100px] h-[calc(100vh-120px)]">
         <div className="h-full rounded-2xl bg-card border border-primary/10 flex items-center justify-center">
-          <Car className="size-20 text-[rgba(232,226,222,0.1)]" />
+          <Car className="size-20 text-muted-foreground/60" />
         </div>
       </div>
     )
@@ -207,7 +207,6 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
           sizes="50vw"
           priority
           referrerPolicy="no-referrer"
-          unoptimized
         />
 
         {/* Navigation */}
@@ -247,12 +246,12 @@ function StickyGallery({ images, title }: { images: string[]; title: string }) {
                   : "border-primary/10 opacity-60 hover:opacity-100"
               }`}
             >
-              <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" sizes="96px" referrerPolicy="no-referrer" unoptimized />
+              <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" sizes="96px" referrerPolicy="no-referrer" />
             </button>
           ))}
           {images.length > 6 && (
             <div className="h-16 w-24 shrink-0 rounded-lg bg-card border border-primary/10 flex items-center justify-center">
-              <span className="text-[12px] text-[rgba(232,226,222,0.5)]">+{images.length - 6}</span>
+              <span className="text-[12px] text-muted-foreground">+{images.length - 6}</span>
             </div>
           )}
         </div>
@@ -288,7 +287,7 @@ function ExecutiveSummary({
         {auction.year} {auction.make} {auction.model}
       </h1>
       {auction.trim && (
-        <p className="text-[15px] text-[rgba(232,226,222,0.5)] mt-1">{auction.trim}</p>
+        <p className="text-[15px] text-muted-foreground mt-1">{auction.trim}</p>
       )}
 
       {/* The Buy Box */}
@@ -296,13 +295,13 @@ function ExecutiveSummary({
         <div className="flex items-start justify-between gap-4">
           {/* Current Bid */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
               {isLive ? t("labels.currentBid") : t("labels.finalPrice")}
             </p>
-            <p className="text-4xl font-bold text-foreground font-mono mt-1">
+            <p className="text-4xl font-bold text-foreground tabular-nums mt-1">
               {formatPrice(auction.currentBid ?? 0)}
             </p>
-            <div className="flex items-center gap-3 mt-2 text-[rgba(232,226,222,0.5)]">
+            <div className="flex items-center gap-3 mt-2 text-muted-foreground">
               <span className="flex items-center gap-1 text-[12px]">
                 <Gavel className="size-3" />
                 {t("bids.count", { count: auction.bidCount })}
@@ -326,10 +325,10 @@ function ExecutiveSummary({
             <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-primary">
               {t("labels.recommendedCap")}
             </p>
-            <p className="text-2xl font-bold text-primary font-mono mt-1">
+            <p className="text-2xl font-bold text-primary tabular-nums mt-1">
               {formatPrice(bidTargetLow ?? 0)} — {formatPrice(bidTargetHigh ?? 0)}
             </p>
-            <p className="text-[11px] text-[rgba(232,226,222,0.4)] mt-1">
+            <p className="text-[11px] text-muted-foreground/70 mt-1">
               {t("labels.basedOnMarketAnalysis")}
             </p>
           </div>
@@ -386,7 +385,7 @@ function ExecutiveSummary({
           { label: t("specs.location"), value: auction.location || "—", icon: MapPin },
         ].map((spec) => (
           <div key={spec.label} className="space-y-1">
-            <div className="flex items-center gap-1 text-[rgba(232,226,222,0.4)]">
+            <div className="flex items-center gap-1 text-muted-foreground/70">
               <spec.icon className="size-3" />
               <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{spec.label}</span>
             </div>
@@ -421,24 +420,24 @@ function StrategyModule({
         </h2>
       </div>
 
-      <p className="text-[14px] leading-relaxed text-[rgba(232,226,222,0.8)]">
+      <p className="text-[14px] leading-relaxed text-foreground/80">
         {t(`mock.strategy.${makeKey}.strategy`)}
       </p>
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2 mt-4">
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase ${
-          score >= 80 ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" :
+          score >= 80 ? "bg-positive/15 text-positive border border-positive/30" :
           score >= 60 ? "bg-primary/10 text-primary border border-primary/20" :
-          "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+          "bg-amber-500/15 text-destructive border border-amber-500/30"
         }`}>
           <Target className="size-3" />
           {t("labels.grade")} {score >= 80 ? "AAA" : score >= 60 ? "AA" : "A"}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-[rgba(232,226,222,0.6)] border border-border">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-muted-foreground border border-border">
           {t("labels.complexity")}: {t(`mock.strategy.${makeKey}.complexity`)}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-[rgba(232,226,222,0.6)] border border-border">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-muted-foreground border border-border">
           {t("labels.demand")}: {t(`mock.strategy.${makeKey}.demand`)}
         </span>
       </div>
@@ -489,7 +488,7 @@ function FinancialsModule({
               className={`px-3 py-1 rounded-full text-[10px] font-medium transition-all ${
                 period === y
                   ? "bg-primary text-primary-foreground"
-                  : "text-[rgba(232,226,222,0.5)] hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {y}Y
@@ -502,30 +501,30 @@ function FinancialsModule({
       <div className="space-y-2">
         <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
               Holding Cost ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-foreground font-mono">
+            <p className="text-[14px] font-bold text-foreground tabular-nums">
               {formatPrice(totalHolding ?? 0)}
             </p>
           </div>
         </div>
         <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
               Insurance ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-foreground font-mono">
+            <p className="text-[14px] font-bold text-foreground tabular-nums">
               {formatPrice(totalInsurance ?? 0)}
             </p>
           </div>
         </div>
         <div className="rounded-lg bg-foreground/2 border border-border p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
+            <p className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
               Maintenance ({period}Y)
             </p>
-            <p className="text-[14px] font-bold text-foreground font-mono">
+            <p className="text-[14px] font-bold text-foreground tabular-nums">
               {formatPrice(totalMaintenance ?? 0)}
             </p>
           </div>
@@ -535,18 +534,18 @@ function FinancialsModule({
       {/* Total Cost Summary */}
       <div className="mt-3 rounded-lg bg-foreground/4 border border-border p-3">
         <div className="flex items-center justify-between">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.5)]">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
             Total Cost ({period}Y)
           </span>
-          <span className="text-[18px] font-bold text-foreground font-mono">
+          <span className="text-[18px] font-bold text-foreground tabular-nums">
             {formatPrice(totalCost ?? 0)}
           </span>
         </div>
         <div className="flex items-center justify-between mt-2">
-          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)]">
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
             Cost as % of Vehicle Value
           </span>
-          <span className="text-[12px] font-medium text-[rgba(232,226,222,0.6)] font-mono">
+          <span className="text-[12px] font-medium text-muted-foreground tabular-nums">
             {costPercent}%
           </span>
         </div>
@@ -574,8 +573,8 @@ function RiskModule({
   return (
     <div className="border-b border-border py-5">
       <div className="flex items-center gap-2 mb-4">
-        <AlertTriangle className="size-4 text-amber-400" />
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-amber-400">
+        <AlertTriangle className="size-4 text-destructive" />
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-destructive">
           {t("modules.dueDiligence")}
         </h2>
       </div>
@@ -584,7 +583,7 @@ function RiskModule({
       <div className="space-y-2">
         {redFlags.map((flag: string, i: number) => (
           <div key={i} className="flex items-start gap-2 text-[13px] text-foreground/70">
-            <AlertCircle className="size-3.5 text-amber-400 mt-0.5 shrink-0" />
+            <AlertCircle className="size-3.5 text-destructive mt-0.5 shrink-0" />
             <span>{flag}</span>
           </div>
         ))}
@@ -602,7 +601,7 @@ function RiskModule({
       {showQuestions && (
         <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
           {questions.map((q: string, i: number) => (
-            <p key={i} className="text-[12px] text-[rgba(232,226,222,0.6)]">
+            <p key={i} className="text-[12px] text-muted-foreground">
               {q}
             </p>
           ))}
@@ -652,11 +651,11 @@ function ComparablesModule({
           >
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
-              <p className="text-[10px] text-[rgba(232,226,222,0.4)] mt-0.5">
+              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
                 {sale.date} · {sale.platform}
               </p>
             </div>
-            <span className="text-[14px] font-bold font-mono text-foreground ml-4">
+            <span className="text-[14px] font-bold tabular-nums text-foreground ml-4">
               {formatPrice(sale.price ?? 0)}
             </span>
           </div>
@@ -696,9 +695,9 @@ function RegistryIntelligenceModule({
           </h2>
         </div>
         {registryData.verified && (
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1">
-            <BadgeCheck className="size-3 text-emerald-400" />
-            <span className="text-[9px] font-semibold tracking-wider uppercase text-emerald-400">
+          <div className="flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/20 px-2.5 py-1">
+            <BadgeCheck className="size-3 text-positive" />
+            <span className="text-[9px] font-semibold tracking-wider uppercase text-positive">
               {t("labels.verified")}
             </span>
           </div>
@@ -708,21 +707,21 @@ function RegistryIntelligenceModule({
       {/* Chassis Identity - Terminal Style */}
       <div className="rounded-lg bg-background border border-border p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <Fingerprint className="size-3.5 text-[rgba(232,226,222,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
+          <Fingerprint className="size-3.5 text-muted-foreground/70" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
             {t("labels.chassisIdentity")}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.vinOrChassis")}</p>
-            <p className="text-[15px] font-mono font-medium text-foreground tracking-wide">{chassisNumber}</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mb-1">{t("labels.vinOrChassis")}</p>
+            <p className="text-[15px] tabular-nums font-medium text-foreground tracking-wide">{chassisNumber}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.production")}</p>
-            <p className="text-[13px] font-mono text-primary">{registryData.productionSequence}</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mb-1">{t("labels.production")}</p>
+            <p className="text-[13px] tabular-nums text-primary">{registryData.productionSequence}</p>
             {registryData.totalProduced > 0 && (
-              <p className="text-[10px] text-[rgba(232,226,222,0.4)] mt-0.5">
+              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
                 {t("labels.totalProduced")}: {registryData.totalProduced.toLocaleString(locale)}
               </p>
             )}
@@ -733,28 +732,28 @@ function RegistryIntelligenceModule({
       {/* Configuration - The Spec */}
       <div className="rounded-lg bg-card border border-border/50 p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <Palette className="size-3.5 text-[rgba(232,226,222,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
+          <Palette className="size-3.5 text-muted-foreground/70" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
             {t("labels.factoryConfiguration")}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-4">
           <div>
-            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.exterior")}</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mb-1">{t("labels.exterior")}</p>
             <p className="text-[12px] text-foreground">{registryData.config.exteriorColor}</p>
-            <p className="text-[10px] font-mono text-[rgba(232,226,222,0.4)]">{registryData.config.exteriorCode}</p>
+            <p className="text-[10px] tabular-nums text-muted-foreground/70">{registryData.config.exteriorCode}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-1">{t("labels.interior")}</p>
+            <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mb-1">{t("labels.interior")}</p>
             <p className="text-[12px] text-foreground">{registryData.config.interiorColor}</p>
-            <p className="text-[10px] text-[rgba(232,226,222,0.4)]">{registryData.config.interiorMaterial}</p>
+            <p className="text-[10px] text-muted-foreground/70">{registryData.config.interiorMaterial}</p>
           </div>
         </div>
 
         {/* Key Options */}
         <div>
-          <p className="text-[9px] text-[rgba(232,226,222,0.35)] uppercase tracking-wider mb-2">{t("labels.keyOptions")}</p>
+          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider mb-2">{t("labels.keyOptions")}</p>
           <div className="flex flex-wrap gap-1.5">
             {registryData.config.keyOptions.map((option, i) => (
               <span
@@ -771,8 +770,8 @@ function RegistryIntelligenceModule({
       {/* Asset Lifecycle - Spotting Timeline */}
       <div className="rounded-lg bg-card border border-border/50 p-4">
         <div className="flex items-center gap-2 mb-4">
-          <History className="size-3.5 text-[rgba(232,226,222,0.4)]" />
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
+          <History className="size-3.5 text-muted-foreground/70" />
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
             {t("labels.assetLifecycle")}
           </span>
         </div>
@@ -780,7 +779,7 @@ function RegistryIntelligenceModule({
         {/* Timeline */}
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-[5px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-[rgba(255,255,255,0.1)] to-transparent" />
+          <div className="absolute left-[5px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-border to-transparent" />
 
           <div className="space-y-3">
             {registryData.spottings.map((spot, i) => (
@@ -795,15 +794,15 @@ function RegistryIntelligenceModule({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[11px] font-mono font-semibold text-foreground">{spot.year}</span>
+                    <span className="text-[11px] tabular-nums font-semibold text-foreground">{spot.year}</span>
                     <span className="text-[11px] text-foreground/70">{spot.event}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <MapPin className="size-2.5 text-[rgba(232,226,222,0.3)]" />
-                    <span className="text-[10px] text-[rgba(232,226,222,0.4)]">{spot.location}</span>
+                    <MapPin className="size-2.5 text-muted-foreground/50" />
+                    <span className="text-[10px] text-muted-foreground/70">{spot.location}</span>
                     {spot.source && (
                       <>
-                        <span className="text-[rgba(232,226,222,0.2)]">·</span>
+                        <span className="text-muted-foreground/30">·</span>
                         <span className="text-[10px] text-primary/60">{spot.source}</span>
                       </>
                     )}
@@ -816,7 +815,7 @@ function RegistryIntelligenceModule({
       </div>
 
       {/* Registry Data Source */}
-      <p className="mt-3 text-[9px] text-[rgba(232,226,222,0.25)] text-center">
+      <p className="mt-3 text-[9px] text-muted-foreground/40 text-center">
         {t("registry.dataSource", {
           date: new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" }).format(new Date()),
         })}
@@ -1016,8 +1015,8 @@ export default function AuctionDetailClient() {
     return (
       <div className="min-h-screen bg-background pt-[100px] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="mx-auto rounded-full bg-red-500/10 p-4 w-fit">
-            <AlertCircle className="size-8 text-red-400" />
+          <div className="mx-auto rounded-full bg-destructive/10 p-4 w-fit">
+            <AlertCircle className="size-8 text-destructive" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <button
@@ -1040,14 +1039,14 @@ export default function AuctionDetailClient() {
           <div className="flex items-center justify-between h-12">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1.5 text-[12px] text-[rgba(232,226,222,0.5)] hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-primary transition-colors"
             >
               <ArrowLeft className="size-4" />
               {t("actions.backToFeed")}
             </button>
             {auction.status === "active" && (
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-                <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-[11px] text-positive">
+                <div className="size-2 rounded-full bg-positive animate-pulse" />
                 {t("labels.liveAuction")}
               </div>
             )}
@@ -1097,10 +1096,10 @@ export default function AuctionDetailClient() {
             {/* VIN */}
             {auction.vin && (
               <div className="py-5 border-t border-border">
-                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.4)]">
+                <p className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70">
                   {t("labels.vin")}
                 </p>
-                <p className="text-[12px] font-mono text-[rgba(232,226,222,0.6)] mt-1">{auction.vin}</p>
+                <p className="text-[12px] tabular-nums text-muted-foreground mt-1">{auction.vin}</p>
               </div>
             )}
           </div>

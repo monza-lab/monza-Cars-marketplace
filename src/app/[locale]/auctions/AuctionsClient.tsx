@@ -161,17 +161,17 @@ function getReserveBadge(
     case "no_reserve":
       return {
         key: "noReserve",
-        className: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+        className: "bg-amber-500/20 text-destructive border-amber-500/30",
       }
     case "met":
       return {
         key: "reserveMet",
-        className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+        className: "bg-positive/20 text-positive border-positive/30",
       }
     case "not_met":
       return {
         key: "reserveNotMet",
-        className: "bg-red-500/20 text-red-400 border-red-500/30",
+        className: "bg-destructive/20 text-destructive border-destructive/30",
       }
     default:
       return null
@@ -181,11 +181,11 @@ function getReserveBadge(
 function getPlatformColor(platform: string): string {
   switch (platform) {
     case "bring-a-trailer":
-      return "bg-orange-500/20 text-orange-400 border-orange-500/30"
+      return "bg-destructive/20 text-destructive border-destructive/30"
     case "cars-and-bids":
       return "bg-blue-500/20 text-blue-400 border-blue-500/30"
     case "pcarmarket":
-      return "bg-red-500/20 text-red-400 border-red-500/30"
+      return "bg-destructive/20 text-destructive border-destructive/30"
     case "hemmings":
       return "bg-green-500/20 text-green-400 border-green-500/30"
     case "collectingcars":
@@ -291,7 +291,6 @@ function AuctionCard({
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, 256px"
                   referrerPolicy="no-referrer"
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-zinc-800">
@@ -319,7 +318,7 @@ function AuctionCard({
             {/* Content */}
             <CardContent className="flex flex-1 flex-col justify-between gap-3 p-4">
               <div>
-                <h3 className="font-semibold text-zinc-100 text-base leading-tight mb-1 group-hover:text-amber-400 transition-colors">
+                <h3 className="font-semibold text-zinc-100 text-base leading-tight mb-1 group-hover:text-destructive transition-colors">
                   {auction.title}
                 </h3>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
@@ -340,7 +339,7 @@ function AuctionCard({
                     <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
                       {hasEnded ? t("card.soldFor") : t("card.currentBid")}
                     </p>
-                    <p className="text-lg font-bold text-amber-400">
+                    <p className="text-lg font-bold text-destructive">
                       {auction.currentBid !== null ? formatPrice(auction.currentBid) : t("card.noBids")}
                     </p>
                   </div>
@@ -369,7 +368,7 @@ function AuctionCard({
                       variant="outline"
                       className={`text-[10px] ${
                         isEnding
-                          ? "bg-red-500/20 text-red-400 border-red-500/30 animate-pulse"
+                          ? "bg-destructive/20 text-destructive border-destructive/30 animate-pulse"
                           : "bg-zinc-800 text-zinc-400 border-zinc-700"
                       }`}
                     >
@@ -412,7 +411,6 @@ function AuctionCard({
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               referrerPolicy="no-referrer"
-              unoptimized
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-zinc-800">
@@ -440,7 +438,7 @@ function AuctionCard({
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6">
               <div
                 className={`flex items-center gap-1 text-xs font-medium ${
-                  isEnding ? "text-red-400" : "text-zinc-300"
+                  isEnding ? "text-destructive" : "text-zinc-300"
                 }`}
               >
                 <Clock className="size-3" />
@@ -459,7 +457,7 @@ function AuctionCard({
         {/* Content */}
         <CardContent className="flex flex-1 flex-col justify-between gap-3 p-4">
           <div>
-            <h3 className="font-semibold text-zinc-100 text-sm leading-tight mb-1.5 line-clamp-2 group-hover:text-amber-400 transition-colors">
+            <h3 className="font-semibold text-zinc-100 text-sm leading-tight mb-1.5 line-clamp-2 group-hover:text-destructive transition-colors">
               {auction.title}
             </h3>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500">
@@ -490,7 +488,7 @@ function AuctionCard({
               <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
                 {hasEnded ? t("card.soldFor") : t("card.currentBid")}
               </p>
-              <p className="text-lg font-bold text-amber-400">
+              <p className="text-lg font-bold text-destructive">
                 {auction.currentBid !== null ? formatPrice(auction.currentBid) : t("card.noBids")}
               </p>
             </div>
@@ -544,7 +542,7 @@ function FilterSidebar({
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+            className="text-xs text-destructive hover:text-destructive transition-colors"
           >
             {t("filters.clearAll")}
           </button>
@@ -567,7 +565,7 @@ function FilterSidebar({
             <SelectItem
               key={ALL}
               value={ALL}
-              className="text-zinc-200 focus:bg-zinc-800 focus:text-amber-400"
+              className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
             >
               {t("filters.allPlatforms")}
             </SelectItem>
@@ -575,7 +573,7 @@ function FilterSidebar({
               <SelectItem
                 key={p.value}
                 value={p.value}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-amber-400"
+                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
               >
                 {p.label}
               </SelectItem>
@@ -601,7 +599,7 @@ function FilterSidebar({
               <SelectItem
                 key={m || "__all__"}
                 value={m || ALL}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-amber-400"
+                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
               >
                 {m || t("filters.allMakes")}
               </SelectItem>
@@ -639,7 +637,7 @@ function FilterSidebar({
             <SelectItem
               key={ALL}
               value={ALL}
-              className="text-zinc-200 focus:bg-zinc-800 focus:text-amber-400"
+              className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
             >
               {t("filters.allStatuses")}
             </SelectItem>
@@ -647,7 +645,7 @@ function FilterSidebar({
               <SelectItem
                 key={s.value || "__all__"}
                 value={s.value}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-amber-400"
+                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
               >
                 {t(`statuses.${s.key}`)}
               </SelectItem>
@@ -699,12 +697,12 @@ function MobileFilters({
         variant="outline"
         size="sm"
         onClick={onToggle}
-        className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-amber-400"
+        className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive"
       >
         <SlidersHorizontal className="size-4 mr-1.5" />
         {t("filters.title")}
         {activeCount > 0 && (
-          <Badge className="ml-1.5 bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] px-1.5">
+          <Badge className="ml-1.5 bg-amber-500/20 text-destructive border-amber-500/30 text-[10px] px-1.5">
             {activeCount}
           </Badge>
         )}
@@ -720,7 +718,7 @@ function MobileFilters({
               {hasActiveFilters && (
                 <button
                   onClick={onReset}
-                  className="text-xs text-amber-400 hover:text-amber-300"
+                  className="text-xs text-destructive hover:text-destructive"
                 >
                   {t("filters.clear")}
                 </button>
@@ -832,7 +830,7 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <Button
         variant="outline"
         onClick={onReset}
-        className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-amber-400"
+        className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive"
       >
         {t("empty.clearFilters")}
       </Button>
@@ -1017,7 +1015,7 @@ export default function AuctionsClient() {
                 </p>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-600">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-positive animate-pulse" />
                 {tStatus("live")}
               </div>
             </div>
@@ -1088,7 +1086,7 @@ export default function AuctionsClient() {
                       <SelectItem
                         key={s.value}
                         value={s.value}
-                        className="text-zinc-200 text-xs focus:bg-zinc-800 focus:text-amber-400"
+                        className="text-zinc-200 text-xs focus:bg-zinc-800 focus:text-destructive"
                       >
                         {t(`sort.${s.key}`)}
                       </SelectItem>
@@ -1102,7 +1100,7 @@ export default function AuctionsClient() {
                     onClick={() => setView("grid")}
                     className={`p-1.5 rounded-l-md transition-colors ${
                       view === "grid"
-                        ? "bg-amber-500/20 text-amber-400"
+                        ? "bg-amber-500/20 text-destructive"
                         : "text-zinc-500 hover:text-zinc-300"
                     }`}
                   >
@@ -1112,7 +1110,7 @@ export default function AuctionsClient() {
                     onClick={() => setView("list")}
                     className={`p-1.5 rounded-r-md transition-colors ${
                       view === "list"
-                        ? "bg-amber-500/20 text-amber-400"
+                        ? "bg-amber-500/20 text-destructive"
                         : "text-zinc-500 hover:text-zinc-300"
                     }`}
                   >
@@ -1146,19 +1144,19 @@ export default function AuctionsClient() {
           <main className="flex-1 min-w-0">
             {/* Error state */}
             {error && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 mb-6 flex items-center gap-3">
-                <AlertCircle className="size-5 text-red-400 shrink-0" />
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 mb-6 flex items-center gap-3">
+                <AlertCircle className="size-5 text-destructive shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-red-400">
+                  <p className="text-sm font-medium text-destructive">
                     Failed to load auctions
                   </p>
-                  <p className="text-xs text-red-400/70 mt-0.5">{error}</p>
+                  <p className="text-xs text-destructive/70 mt-0.5">{error}</p>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => window.location.reload()}
-                  className="ml-auto border-red-500/30 text-red-400 hover:bg-red-500/20"
+                  className="ml-auto border-destructive/30 text-destructive hover:bg-destructive/20"
                 >
                   Retry
                 </Button>
@@ -1208,7 +1206,7 @@ export default function AuctionsClient() {
                   size="sm"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page <= 1}
-                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-amber-400 disabled:opacity-30"
+                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive disabled:opacity-30"
                 >
                   <ChevronLeft className="size-4 mr-1" />
                   Previous
@@ -1224,7 +1222,7 @@ export default function AuctionsClient() {
                   size="sm"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page >= totalPages}
-                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-amber-400 disabled:opacity-30"
+                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive disabled:opacity-30"
                 >
                   Next
                   <ChevronRight className="size-4 ml-1" />
