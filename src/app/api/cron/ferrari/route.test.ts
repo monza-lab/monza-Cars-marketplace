@@ -24,6 +24,10 @@ vi.mock("@/features/scrapers/common/refreshCounts", () => ({
   refreshListingsActiveCounts: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/dashboardCache", () => ({
+  invalidateDashboardCache: vi.fn(),
+}));
+
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({})),
 }));

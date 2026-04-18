@@ -9,6 +9,7 @@ import {
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
 import { refreshListingsActiveCounts } from "@/features/scrapers/common/refreshCounts";
+import { invalidateDashboardCache } from "@/lib/dashboardCache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 minutes max for Vercel
@@ -128,6 +129,7 @@ export async function GET(request: Request) {
       { auth: { persistSession: false, autoRefreshToken: false } }
     );
     await refreshListingsActiveCounts(supabaseForRefresh);
+    invalidateDashboardCache();
 
     return NextResponse.json({
       success: true,
