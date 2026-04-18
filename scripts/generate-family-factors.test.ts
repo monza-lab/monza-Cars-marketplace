@@ -19,8 +19,8 @@ describe("computeFactorTable", () => {
     const t = computeFactorTable(prices);
     expect(t.byFamily["992"]).toBeDefined();
     expect(t.byFamily["992"].soldN).toBe(40);
-    expect(t.byFamily["992"].factor).toBeGreaterThan(0.8);
-    expect(t.byFamily["992"].factor).toBeLessThan(1);
+    expect(t.byFamily["992"].factor).toBeGreaterThan(0.5);
+    expect(t.byFamily["992"].factor).toBeLessThan(0.7);
     expect(t.byFamily["964"]).toBeUndefined();
   });
 

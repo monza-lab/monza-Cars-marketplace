@@ -70,18 +70,29 @@ async function main() {
   const rates = await getExchangeRates();
 
   const prices: DerivedPrice[] = [];
-  const pageSize = 2000;
+  const pageSize = 1000;
   let from = 0;
+  const SAFETY_CAP = 100_000;
   while (true) {
-    const { data, error } = await sb
-      .from("listings")
-      .select("source,status,year,make,model,hammer_price,final_price,current_bid,original_currency")
-      .eq("make", "Porsche")
-      .range(from, from + pageSize - 1);
-    if (error) throw error;
+    let data: any[] | null = null;
+    try {
+      const res = await sb
+        .from("listings")
+        .select("source,status,year,make,model,hammer_price,final_price,current_bid,original_currency")
+        .eq("make", "Porsche")
+        .range(from, from + pageSize - 1);
+      if (res.error) throw res.error;
+      data = res.data;
+    } catch (e) {
+      throw new Error(`supabase paginated fetch failed at from=${from}, pageSize=${pageSize}: ${(e as Error).message}`);
+    }
     if (!data || data.length === 0) break;
     for (const row of data) prices.push(derivePrice(row as any, { rates }));
-    if (data.length < pageSize) break;
+    console.log(`paginated: ${prices.length} rows processed so far`);
+    if (prices.length >= SAFETY_CAP) {
+      console.warn(`SAFETY STOP: processed ${prices.length} rows (cap=${SAFETY_CAP}); aborting pagination`);
+      break;
+    }
     from += pageSize;
   }
 

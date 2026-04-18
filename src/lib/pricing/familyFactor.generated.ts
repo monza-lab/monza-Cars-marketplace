@@ -3,65 +3,143 @@ import type { FamilyFactorTable } from "./types";
 
 export const FAMILY_FACTOR_TABLE: FamilyFactorTable = {
   "porscheWide": {
-    "factor": 0.6363246753246753,
-    "soldN": 777,
-    "askingN": 218
+    "factor": 0.6305985693848355,
+    "soldN": 5390,
+    "askingN": 39203
   },
   "byFamily": {
+    "912": {
+      "family": "912",
+      "factor": 0.6742829545454546,
+      "soldN": 75,
+      "askingN": 65
+    },
+    "914": {
+      "family": "914",
+      "factor": 0.6124914279685604,
+      "soldN": 115,
+      "askingN": 72
+    },
+    "928": {
+      "family": "928",
+      "factor": 0.7142623259052925,
+      "soldN": 97,
+      "askingN": 319
+    },
+    "930": {
+      "family": "930",
+      "factor": 0.8759256666666667,
+      "soldN": 94,
+      "askingN": 157
+    },
+    "944": {
+      "family": "944",
+      "factor": 0.5639739919354838,
+      "soldN": 141,
+      "askingN": 295
+    },
+    "964": {
+      "family": "964",
+      "factor": 0.924941122982496,
+      "soldN": 135,
+      "askingN": 520
+    },
+    "968": {
+      "family": "968",
+      "factor": 0.611764705882353,
+      "soldN": 46,
+      "askingN": 109
+    },
     "991": {
       "family": "991",
-      "factor": 0.7633587786259542,
-      "soldN": 50,
-      "askingN": 11
+      "factor": 0.8966516333144215,
+      "soldN": 394,
+      "askingN": 2947
     },
     "992": {
       "family": "992",
-      "factor": 1.3704735376044568,
-      "soldN": 45,
-      "askingN": 36
+      "factor": 1.226838285651353,
+      "soldN": 348,
+      "askingN": 5558
     },
     "993": {
       "family": "993",
-      "factor": 0.6885245901639344,
-      "soldN": 39,
-      "askingN": 7
+      "factor": 0.8561544131028208,
+      "soldN": 233,
+      "askingN": 464
     },
     "996": {
       "family": "996",
-      "factor": 1.0775862068965518,
-      "soldN": 70,
-      "askingN": 20
+      "factor": 0.7152215625,
+      "soldN": 550,
+      "askingN": 1285
     },
     "997": {
       "family": "997",
-      "factor": 0.9151258736931156,
-      "soldN": 63,
-      "askingN": 22
+      "factor": 0.8447022418436443,
+      "soldN": 530,
+      "askingN": 2137
     },
-    "boxster": {
-      "family": "boxster",
-      "factor": 0.9605263157894737,
-      "soldN": 57,
-      "askingN": 13
+    "f-model": {
+      "family": "f-model",
+      "factor": 0.5302356130108424,
+      "soldN": 205,
+      "askingN": 806
     },
     "cayenne": {
       "family": "cayenne",
-      "factor": 1.0705882352941176,
-      "soldN": 114,
-      "askingN": 9
+      "factor": 0.32983474922975903,
+      "soldN": 718,
+      "askingN": 7172
+    },
+    "panamera": {
+      "family": "panamera",
+      "factor": 0.536311423550088,
+      "soldN": 131,
+      "askingN": 3056
     },
     "g-model": {
       "family": "g-model",
-      "factor": 1.1959521619135234,
-      "soldN": 51,
-      "askingN": 14
+      "factor": 0.7582259955944057,
+      "soldN": 390,
+      "askingN": 1039
+    },
+    "macan": {
+      "family": "macan",
+      "factor": 0.4326630748607961,
+      "soldN": 108,
+      "askingN": 5014
+    },
+    "boxster": {
+      "family": "boxster",
+      "factor": 0.5226987797643027,
+      "soldN": 399,
+      "askingN": 2154
     },
     "cayman": {
       "family": "cayman",
-      "factor": 0.6828778429188248,
-      "soldN": 42,
-      "askingN": 6
+      "factor": 0.6592005741127349,
+      "soldN": 223,
+      "askingN": 1520
+    },
+    "718-cayman": {
+      "family": "718-cayman",
+      "factor": 1.3518397385620917,
+      "soldN": 70,
+      "askingN": 652
+    },
+    "356B": {
+      "family": "356B",
+      "factor": 0.8325242718446602,
+      "soldN": 30,
+      "askingN": 19
+    },
+    "356C": {
+      "family": "356C",
+      "factor": 1.4647835204144566,
+      "soldN": 31,
+      "askingN": 11
     }
   },
-  "generatedAt": "2026-04-18T11:45:22.850Z"
+  "generatedAt": "2026-04-18T11:47:32.806Z"
 };
