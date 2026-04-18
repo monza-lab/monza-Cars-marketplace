@@ -1,0 +1,3627 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - generic [ref=e8]: Beliebt
+            - generic [ref=e9]: 1 Marke
+          - generic [ref=e11]:
+            - button "Porsche AAA 19683 $2K – $872K Premium Demand" [ref=e12]:
+              - generic [ref=e13]:
+                - generic [ref=e14]: Porsche
+                - generic [ref=e15]:
+                  - generic [ref=e16]: AAA
+                  - generic [ref=e17]: "19683"
+                  - img [ref=e18]
+              - generic [ref=e20]:
+                - generic [ref=e21]: $2K – $872K
+                - generic [ref=e22]: Premium Demand
+            - generic [ref=e23]:
+              - generic [ref=e24]: Familien
+              - button "992 3310 2019–2026" [ref=e25]:
+                - generic [ref=e26]: "992"
+                - generic [ref=e27]:
+                  - generic [ref=e28]: "3310"
+                  - generic [ref=e29]: 2019–2026
+              - button "991 1974 2003–2020" [ref=e30]:
+                - generic [ref=e31]: "991"
+                - generic [ref=e32]:
+                  - generic [ref=e33]: "1974"
+                  - generic [ref=e34]: 2003–2020
+              - button "997 1370 2004–2012" [ref=e35]:
+                - generic [ref=e36]: "997"
+                - generic [ref=e37]:
+                  - generic [ref=e38]: "1370"
+                  - generic [ref=e39]: 2004–2012
+              - button "996 844 1997–2005" [ref=e40]:
+                - generic [ref=e41]: "996"
+                - generic [ref=e42]:
+                  - generic [ref=e43]: "844"
+                  - generic [ref=e44]: 1997–2005
+              - button "993 384 1993–1998" [ref=e45]:
+                - generic [ref=e46]: "993"
+                - generic [ref=e47]:
+                  - generic [ref=e48]: "384"
+                  - generic [ref=e49]: 1993–1998
+              - button "964 476 1989–1993" [ref=e50]:
+                - generic [ref=e51]: "964"
+                - generic [ref=e52]:
+                  - generic [ref=e53]: "476"
+                  - generic [ref=e54]: 1989–1993
+              - button "930 122 1978–1989" [ref=e55]:
+                - generic [ref=e56]: "930"
+                - generic [ref=e57]:
+                  - generic [ref=e58]: "122"
+                  - generic [ref=e59]: 1978–1989
+              - button "G-Model 964 1974–1989" [ref=e60]:
+                - generic [ref=e61]: G-Model
+                - generic [ref=e62]:
+                  - generic [ref=e63]: "964"
+                  - generic [ref=e64]: 1974–1989
+              - button "F-Model 690 1965–1973" [ref=e65]:
+                - generic [ref=e66]: F-Model
+                - generic [ref=e67]:
+                  - generic [ref=e68]: "690"
+                  - generic [ref=e69]: 1965–1973
+              - button "912 51 1965–1976" [ref=e70]:
+                - generic [ref=e71]: "912"
+                - generic [ref=e72]:
+                  - generic [ref=e73]: "51"
+                  - generic [ref=e74]: 1965–1976
+              - button "Carrera GT 10 2006" [ref=e75]:
+                - generic [ref=e76]: Carrera GT
+                - generic [ref=e77]:
+                  - generic [ref=e78]: "10"
+                  - generic [ref=e79]: "2006"
+              - button "959 5 1966" [ref=e80]:
+                - generic [ref=e81]: "959"
+                - generic [ref=e82]:
+                  - generic [ref=e83]: "5"
+                  - generic [ref=e84]: "1966"
+              - button "718 Cayman 331 2017–2025" [ref=e85]:
+                - generic [ref=e86]: 718 Cayman
+                - generic [ref=e87]:
+                  - generic [ref=e88]: "331"
+                  - generic [ref=e89]: 2017–2025
+              - button "718 Boxster 289 2018–2025" [ref=e90]:
+                - generic [ref=e91]: 718 Boxster
+                - generic [ref=e92]:
+                  - generic [ref=e93]: "289"
+                  - generic [ref=e94]: 2018–2025
+              - button "Cayman 733 2006–2025" [ref=e95]:
+                - generic [ref=e96]: Cayman
+                - generic [ref=e97]:
+                  - generic [ref=e98]: "733"
+                  - generic [ref=e99]: 2006–2025
+              - button "Boxster 931 1998–2022" [ref=e100]:
+                - generic [ref=e101]: Boxster
+                - generic [ref=e102]:
+                  - generic [ref=e103]: "931"
+                  - generic [ref=e104]: 1998–2022
+              - button "914 26 1970–1974" [ref=e105]:
+                - generic [ref=e106]: "914"
+                - generic [ref=e107]:
+                  - generic [ref=e108]: "26"
+                  - generic [ref=e109]: 1970–1974
+              - button "944 229 1986–1991" [ref=e110]:
+                - generic [ref=e111]: "944"
+                - generic [ref=e112]:
+                  - generic [ref=e113]: "229"
+                  - generic [ref=e114]: 1986–1991
+              - button "928 233 1980–1994" [ref=e115]:
+                - generic [ref=e116]: "928"
+                - generic [ref=e117]:
+                  - generic [ref=e118]: "233"
+                  - generic [ref=e119]: 1980–1994
+              - button "968 92 1991–1994" [ref=e120]:
+                - generic [ref=e121]: "968"
+                - generic [ref=e122]:
+                  - generic [ref=e123]: "92"
+                  - generic [ref=e124]: 1991–1994
+              - button "924 26 1980–1984" [ref=e125]:
+                - generic [ref=e126]: "924"
+                - generic [ref=e127]:
+                  - generic [ref=e128]: "26"
+                  - generic [ref=e129]: 1980–1984
+              - button "356 451 1953–1965" [ref=e130]:
+                - generic [ref=e131]: "356"
+                - generic [ref=e132]:
+                  - generic [ref=e133]: "451"
+                  - generic [ref=e134]: 1953–1965
+              - button "Cayenne 1934 2004–2026" [ref=e135]:
+                - generic [ref=e136]: Cayenne
+                - generic [ref=e137]:
+                  - generic [ref=e138]: "1934"
+                  - generic [ref=e139]: 2004–2026
+              - button "Macan 1909 2014–2026" [ref=e140]:
+                - generic [ref=e141]: Macan
+                - generic [ref=e142]:
+                  - generic [ref=e143]: "1909"
+                  - generic [ref=e144]: 2014–2026
+              - button "Panamera 1092 2010–2026" [ref=e145]:
+                - generic [ref=e146]: Panamera
+                - generic [ref=e147]:
+                  - generic [ref=e148]: "1092"
+                  - generic [ref=e149]: 2010–2026
+              - button "Taycan 912 2020–2026" [ref=e150]:
+                - generic [ref=e151]: Taycan
+                - generic [ref=e152]:
+                  - generic [ref=e153]: "912"
+                  - generic [ref=e154]: 2020–2026
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e158]: Jetzt live
+            - generic [ref=e159]: "210"
+          - generic [ref=e160]:
+            - link "Porsche 992 GT3 Touring 2022 Porsche 992 GT3 Touring POA Listing ES B" [ref=e161] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ff9a6585-a203-497a-b8c0-d37b83c471d6
+              - generic [ref=e162]:
+                - img "Porsche 992 GT3 Touring" [ref=e164]
+                - generic [ref=e165]:
+                  - paragraph [ref=e166]: 2022 Porsche 992 GT3 Touring
+                  - generic [ref=e167]:
+                    - generic [ref=e168]: POA
+                    - generic [ref=e170]: Listing
+                  - generic [ref=e171]:
+                    - generic [ref=e172]: ES
+                    - generic [ref=e173]: B
+            - link "Porsche 992 GT3 2023 Porsche 992 GT3 $210K Listing ES A" [ref=e174] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fea1ec25-21e1-4b48-bdcd-23be8c5f5fc1
+              - generic [ref=e175]:
+                - img "Porsche 992 GT3" [ref=e177]
+                - generic [ref=e178]:
+                  - paragraph [ref=e179]: 2023 Porsche 992 GT3
+                  - generic [ref=e180]:
+                    - generic [ref=e181]: $210K
+                    - generic [ref=e183]: Listing
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: ES
+                    - generic [ref=e186]: A
+            - link "Porsche 992 Turbo S 2021 Porsche 992 Turbo S $180K Listing ES A" [ref=e187] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe671c92-7fd9-4770-9ecd-68d62327ce5a
+              - generic [ref=e188]:
+                - img "Porsche 992 Turbo S" [ref=e190]
+                - generic [ref=e191]:
+                  - paragraph [ref=e192]: 2021 Porsche 992 Turbo S
+                  - generic [ref=e193]:
+                    - generic [ref=e194]: $180K
+                    - generic [ref=e196]: Listing
+                  - generic [ref=e197]:
+                    - generic [ref=e198]: ES
+                    - generic [ref=e199]: A
+            - link "Porsche 992 Turbo S 2022 Porsche 992 Turbo S $219K Listing ES A" [ref=e200] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe5c0413-8784-4572-9d35-60a9ecc5c1e8
+              - generic [ref=e201]:
+                - img "Porsche 992 Turbo S" [ref=e203]
+                - generic [ref=e204]:
+                  - paragraph [ref=e205]: 2022 Porsche 992 Turbo S
+                  - generic [ref=e206]:
+                    - generic [ref=e207]: $219K
+                    - generic [ref=e209]: Listing
+                  - generic [ref=e210]:
+                    - generic [ref=e211]: ES
+                    - generic [ref=e212]: A
+            - link "Porsche 992 GT3 RS 2025 Porsche 992 GT3 RS POA Listing ES B" [ref=e213] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe590cd9-896d-4501-992c-4aea77f1e42f
+              - generic [ref=e214]:
+                - img "Porsche 992 GT3 RS" [ref=e216]
+                - generic [ref=e217]:
+                  - paragraph [ref=e218]: 2025 Porsche 992 GT3 RS
+                  - generic [ref=e219]:
+                    - generic [ref=e220]: POA
+                    - generic [ref=e222]: Listing
+                  - generic [ref=e223]:
+                    - generic [ref=e224]: ES
+                    - generic [ref=e225]: B
+            - link "Porsche 992 GT3 2022 Porsche 992 GT3 POA Listing ES B" [ref=e226] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe4e687a-1099-4a32-b90b-74e1579ac462
+              - generic [ref=e227]:
+                - img "Porsche 992 GT3" [ref=e229]
+                - generic [ref=e230]:
+                  - paragraph [ref=e231]: 2022 Porsche 992 GT3
+                  - generic [ref=e232]:
+                    - generic [ref=e233]: POA
+                    - generic [ref=e235]: Listing
+                  - generic [ref=e236]:
+                    - generic [ref=e237]: ES
+                    - generic [ref=e238]: B
+            - link "Porsche 911 Backdate 2024 Porsche 911 Backdate POA Listing ES B" [ref=e239] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe19d6a1-9e78-49cb-8150-f14ce627dffb
+              - generic [ref=e240]:
+                - img "Porsche 911 Backdate" [ref=e242]
+                - generic [ref=e243]:
+                  - paragraph [ref=e244]: 2024 Porsche 911 Backdate
+                  - generic [ref=e245]:
+                    - generic [ref=e246]: POA
+                    - generic [ref=e248]: Listing
+                  - generic [ref=e249]:
+                    - generic [ref=e250]: ES
+                    - generic [ref=e251]: B
+            - link "Porsche 992 GT3 RS 2025 Porsche 992 GT3 RS POA Listing ES B" [ref=e252] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fc66e194-fe7a-450c-9c3c-9782bb53d9b3
+              - generic [ref=e253]:
+                - img "Porsche 992 GT3 RS" [ref=e255]
+                - generic [ref=e256]:
+                  - paragraph [ref=e257]: 2025 Porsche 992 GT3 RS
+                  - generic [ref=e258]:
+                    - generic [ref=e259]: POA
+                    - generic [ref=e261]: Listing
+                  - generic [ref=e262]:
+                    - generic [ref=e263]: ES
+                    - generic [ref=e264]: B
+            - link "Porsche 911 Dakar 2023 Porsche 911 Dakar $330K Listing ES A" [ref=e265] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fc2b8d54-6b4d-4b96-9e00-c2bff28baf66
+              - generic [ref=e266]:
+                - img "Porsche 911 Dakar" [ref=e268]
+                - generic [ref=e269]:
+                  - paragraph [ref=e270]: 2023 Porsche 911 Dakar
+                  - generic [ref=e271]:
+                    - generic [ref=e272]: $330K
+                    - generic [ref=e274]: Listing
+                  - generic [ref=e275]:
+                    - generic [ref=e276]: ES
+                    - generic [ref=e277]: A
+            - link "Porsche 911 S/T 2024 Porsche 911 S/T $650K Listing ES A" [ref=e278] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fbe7f0ed-db63-49cc-a6df-ea53b703dc28
+              - generic [ref=e279]:
+                - img "Porsche 911 S/T" [ref=e281]
+                - generic [ref=e282]:
+                  - paragraph [ref=e283]: 2024 Porsche 911 S/T
+                  - generic [ref=e284]:
+                    - generic [ref=e285]: $650K
+                    - generic [ref=e287]: Listing
+                  - generic [ref=e288]:
+                    - generic [ref=e289]: ES
+                    - generic [ref=e290]: A
+            - link "Porsche 992 Carrera 4 GTS 2021 Porsche 992 Carrera 4 GTS $118K Listing ES A" [ref=e291] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fa7245ac-3245-4224-8de3-f628b5419d0c
+              - generic [ref=e292]:
+                - img "Porsche 992 Carrera 4 GTS" [ref=e294]
+                - generic [ref=e295]:
+                  - paragraph [ref=e296]: 2021 Porsche 992 Carrera 4 GTS
+                  - generic [ref=e297]:
+                    - generic [ref=e298]: $118K
+                    - generic [ref=e300]: Listing
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: ES
+                    - generic [ref=e303]: A
+            - link "Porsche 992 GT3 2021 Porsche 992 GT3 $217K Listing ES A" [ref=e304] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f9f49128-0fa5-4c7b-b3cf-a7771b4d1746
+              - generic [ref=e305]:
+                - img "Porsche 992 GT3" [ref=e307]
+                - generic [ref=e308]:
+                  - paragraph [ref=e309]: 2021 Porsche 992 GT3
+                  - generic [ref=e310]:
+                    - generic [ref=e311]: $217K
+                    - generic [ref=e313]: Listing
+                  - generic [ref=e314]:
+                    - generic [ref=e315]: ES
+                    - generic [ref=e316]: A
+            - link "Porsche 992.2 Carrera S 2025 Porsche 992.2 Carrera S $170K Listing ES A" [ref=e317] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f99e1933-e405-46e8-b962-6048359d065c
+              - generic [ref=e318]:
+                - img "Porsche 992.2 Carrera S" [ref=e320]
+                - generic [ref=e321]:
+                  - paragraph [ref=e322]: 2025 Porsche 992.2 Carrera S
+                  - generic [ref=e323]:
+                    - generic [ref=e324]: $170K
+                    - generic [ref=e326]: Listing
+                  - generic [ref=e327]:
+                    - generic [ref=e328]: ES
+                    - generic [ref=e329]: A
+            - link "Porsche 992 Turbo 2021 Porsche 992 Turbo POA Listing ES B" [ref=e330] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f99d3b21-bf4a-44c3-9fbb-beefaa48d020
+              - generic [ref=e331]:
+                - img "Porsche 992 Turbo" [ref=e333]
+                - generic [ref=e334]:
+                  - paragraph [ref=e335]: 2021 Porsche 992 Turbo
+                  - generic [ref=e336]:
+                    - generic [ref=e337]: POA
+                    - generic [ref=e339]: Listing
+                  - generic [ref=e340]:
+                    - generic [ref=e341]: ES
+                    - generic [ref=e342]: B
+            - link "Porsche 992 Carrera S 2019 Porsche 992 Carrera S POA Listing ES B" [ref=e343] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f87540c1-0047-4488-93bc-1382a77995de
+              - generic [ref=e344]:
+                - img "Porsche 992 Carrera S" [ref=e346]
+                - generic [ref=e347]:
+                  - paragraph [ref=e348]: 2019 Porsche 992 Carrera S
+                  - generic [ref=e349]:
+                    - generic [ref=e350]: POA
+                    - generic [ref=e352]: Listing
+                  - generic [ref=e353]:
+                    - generic [ref=e354]: ES
+                    - generic [ref=e355]: B
+            - link "Porsche 992 Targa 4 2021 Porsche 992 Targa 4 $145K Listing ES A" [ref=e356] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8688bb2-c548-401a-910f-2829f1c0a10d
+              - generic [ref=e357]:
+                - img "Porsche 992 Targa 4" [ref=e359]
+                - generic [ref=e360]:
+                  - paragraph [ref=e361]: 2021 Porsche 992 Targa 4
+                  - generic [ref=e362]:
+                    - generic [ref=e363]: $145K
+                    - generic [ref=e365]: Listing
+                  - generic [ref=e366]:
+                    - generic [ref=e367]: ES
+                    - generic [ref=e368]: A
+            - link "Porsche 992.2 GT3 Touring 2025 Porsche 992.2 GT3 Touring $219K Listing ES A" [ref=e369] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f850095c-eac0-40c1-ac1b-e5031f582f8a
+              - generic [ref=e370]:
+                - img "Porsche 992.2 GT3 Touring" [ref=e372]
+                - generic [ref=e373]:
+                  - paragraph [ref=e374]: 2025 Porsche 992.2 GT3 Touring
+                  - generic [ref=e375]:
+                    - generic [ref=e376]: $219K
+                    - generic [ref=e378]: Listing
+                  - generic [ref=e379]:
+                    - generic [ref=e380]: ES
+                    - generic [ref=e381]: A
+            - link "Porsche 992 GT3 RS 2025 Porsche 992 GT3 RS POA Listing ES B" [ref=e382] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f813e9ce-c23f-401d-89da-79d901b522b3
+              - generic [ref=e383]:
+                - img "Porsche 992 GT3 RS" [ref=e385]
+                - generic [ref=e386]:
+                  - paragraph [ref=e387]: 2025 Porsche 992 GT3 RS
+                  - generic [ref=e388]:
+                    - generic [ref=e389]: POA
+                    - generic [ref=e391]: Listing
+                  - generic [ref=e392]:
+                    - generic [ref=e393]: ES
+                    - generic [ref=e394]: B
+            - link "Porsche 992 GT3 RS 2023 Porsche 992 GT3 RS $309K Listing ES A" [ref=e395] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f7c0a19b-6dce-436d-a821-a0422c4f244b
+              - generic [ref=e396]:
+                - img "Porsche 992 GT3 RS" [ref=e398]
+                - generic [ref=e399]:
+                  - paragraph [ref=e400]: 2023 Porsche 992 GT3 RS
+                  - generic [ref=e401]:
+                    - generic [ref=e402]: $309K
+                    - generic [ref=e404]: Listing
+                  - generic [ref=e405]:
+                    - generic [ref=e406]: ES
+                    - generic [ref=e407]: A
+            - link "Porsche 992.2 Carrera GTS 2025 Porsche 992.2 Carrera GTS $188K Listing ES A" [ref=e408] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f7364ed4-e5d9-4c70-a8a7-6ce5ba67e5f9
+              - generic [ref=e409]:
+                - img "Porsche 992.2 Carrera GTS" [ref=e411]
+                - generic [ref=e412]:
+                  - paragraph [ref=e413]: 2025 Porsche 992.2 Carrera GTS
+                  - generic [ref=e414]:
+                    - generic [ref=e415]: $188K
+                    - generic [ref=e417]: Listing
+                  - generic [ref=e418]:
+                    - generic [ref=e419]: ES
+                    - generic [ref=e420]: A
+            - link "Porsche 992 Turbo S 2024 Porsche 992 Turbo S POA Listing ES B" [ref=e421] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f61a6830-6a72-4258-9dec-37f023b11415
+              - generic [ref=e422]:
+                - img "Porsche 992 Turbo S" [ref=e424]
+                - generic [ref=e425]:
+                  - paragraph [ref=e426]: 2024 Porsche 992 Turbo S
+                  - generic [ref=e427]:
+                    - generic [ref=e428]: POA
+                    - generic [ref=e430]: Listing
+                  - generic [ref=e431]:
+                    - generic [ref=e432]: ES
+                    - generic [ref=e433]: B
+            - link "Porsche 992 Carrera 4S 2019 Porsche 992 Carrera 4S $105K Listing ES A" [ref=e434] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f60f247b-7283-488f-9e5f-76403424c19d
+              - generic [ref=e435]:
+                - img "Porsche 992 Carrera 4S" [ref=e437]
+                - generic [ref=e438]:
+                  - paragraph [ref=e439]: 2019 Porsche 992 Carrera 4S
+                  - generic [ref=e440]:
+                    - generic [ref=e441]: $105K
+                    - generic [ref=e443]: Listing
+                  - generic [ref=e444]:
+                    - generic [ref=e445]: ES
+                    - generic [ref=e446]: A
+            - link "Porsche 992 Carrera 4S 2019 Porsche 992 Carrera 4S $128K Listing ES A" [ref=e447] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f5cc52e0-7070-47ef-9687-898ee7988c3e
+              - generic [ref=e448]:
+                - img "Porsche 992 Carrera 4S" [ref=e450]
+                - generic [ref=e451]:
+                  - paragraph [ref=e452]: 2019 Porsche 992 Carrera 4S
+                  - generic [ref=e453]:
+                    - generic [ref=e454]: $128K
+                    - generic [ref=e456]: Listing
+                  - generic [ref=e457]:
+                    - generic [ref=e458]: ES
+                    - generic [ref=e459]: A
+            - link "Porsche 992 GT3 Touring 2022 Porsche 992 GT3 Touring $212K Listing ES A" [ref=e460] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f53bf980-2fa2-4fc6-894a-9fb34ac74353
+              - generic [ref=e461]:
+                - img "Porsche 992 GT3 Touring" [ref=e463]
+                - generic [ref=e464]:
+                  - paragraph [ref=e465]: 2022 Porsche 992 GT3 Touring
+                  - generic [ref=e466]:
+                    - generic [ref=e467]: $212K
+                    - generic [ref=e469]: Listing
+                  - generic [ref=e470]:
+                    - generic [ref=e471]: ES
+                    - generic [ref=e472]: A
+            - link "Porsche 992 Turbo S 2022 Porsche 992 Turbo S $218K Listing ES A" [ref=e473] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f531e629-efe7-451b-a84c-76bc4fd79dd8
+              - generic [ref=e474]:
+                - img "Porsche 992 Turbo S" [ref=e476]
+                - generic [ref=e477]:
+                  - paragraph [ref=e478]: 2022 Porsche 992 Turbo S
+                  - generic [ref=e479]:
+                    - generic [ref=e480]: $218K
+                    - generic [ref=e482]: Listing
+                  - generic [ref=e483]:
+                    - generic [ref=e484]: ES
+                    - generic [ref=e485]: A
+            - link "Porsche 992.2 Carrera 4 GTS 2025 Porsche 992.2 Carrera 4 GTS $185K Listing ES A" [ref=e486] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f5153f7f-a84e-4f22-a978-363ba3649542
+              - generic [ref=e487]:
+                - img "Porsche 992.2 Carrera 4 GTS" [ref=e489]
+                - generic [ref=e490]:
+                  - paragraph [ref=e491]: 2025 Porsche 992.2 Carrera 4 GTS
+                  - generic [ref=e492]:
+                    - generic [ref=e493]: $185K
+                    - generic [ref=e495]: Listing
+                  - generic [ref=e496]:
+                    - generic [ref=e497]: ES
+                    - generic [ref=e498]: A
+            - link "Porsche 992 GT3 Touring 2022 Porsche 992 GT3 Touring $350K Listing ES A" [ref=e499] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f4f502ef-4916-4c8b-9d30-777611cb9d7a
+              - generic [ref=e500]:
+                - img "Porsche 992 GT3 Touring" [ref=e502]
+                - generic [ref=e503]:
+                  - paragraph [ref=e504]: 2022 Porsche 992 GT3 Touring
+                  - generic [ref=e505]:
+                    - generic [ref=e506]: $350K
+                    - generic [ref=e508]: Listing
+                  - generic [ref=e509]:
+                    - generic [ref=e510]: ES
+                    - generic [ref=e511]: A
+            - link "Porsche 992 GT3 RS 2025 Porsche 992 GT3 RS POA Listing ES B" [ref=e512] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f4cf519f-1f1d-4e4a-9ada-9b12ea7853ee
+              - generic [ref=e513]:
+                - img "Porsche 992 GT3 RS" [ref=e515]
+                - generic [ref=e516]:
+                  - paragraph [ref=e517]: 2025 Porsche 992 GT3 RS
+                  - generic [ref=e518]:
+                    - generic [ref=e519]: POA
+                    - generic [ref=e521]: Listing
+                  - generic [ref=e522]:
+                    - generic [ref=e523]: ES
+                    - generic [ref=e524]: B
+            - link "Porsche 992 Turbo S 2020 Porsche 992 Turbo S $215K Listing ES A" [ref=e525] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f4bfad8b-2838-4a95-8092-fe58ea409bb9
+              - generic [ref=e526]:
+                - img "Porsche 992 Turbo S" [ref=e528]
+                - generic [ref=e529]:
+                  - paragraph [ref=e530]: 2020 Porsche 992 Turbo S
+                  - generic [ref=e531]:
+                    - generic [ref=e532]: $215K
+                    - generic [ref=e534]: Listing
+                  - generic [ref=e535]:
+                    - generic [ref=e536]: ES
+                    - generic [ref=e537]: A
+            - link "Porsche 992.2 Targa 4 GTS 2025 Porsche 992.2 Targa 4 GTS POA Listing ES B" [ref=e538] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f49b1f48-3e71-436e-9df9-d29e3413835b
+              - generic [ref=e539]:
+                - img "Porsche 992.2 Targa 4 GTS" [ref=e541]
+                - generic [ref=e542]:
+                  - paragraph [ref=e543]: 2025 Porsche 992.2 Targa 4 GTS
+                  - generic [ref=e544]:
+                    - generic [ref=e545]: POA
+                    - generic [ref=e547]: Listing
+                  - generic [ref=e548]:
+                    - generic [ref=e549]: ES
+                    - generic [ref=e550]: B
+            - link "Porsche 911 Spirit 70 2025 Porsche 911 Spirit 70 POA Listing ES B" [ref=e551] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3e42ca5-ebd1-4bce-92bc-7c34715d1ad1
+              - generic [ref=e552]:
+                - img "Porsche 911 Spirit 70" [ref=e554]
+                - generic [ref=e555]:
+                  - paragraph [ref=e556]: 2025 Porsche 911 Spirit 70
+                  - generic [ref=e557]:
+                    - generic [ref=e558]: POA
+                    - generic [ref=e560]: Listing
+                  - generic [ref=e561]:
+                    - generic [ref=e562]: ES
+                    - generic [ref=e563]: B
+            - link "Porsche 992 GT3 2021 Porsche 992 GT3 POA Listing ES B" [ref=e564] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3dff895-dd8d-4a7d-8f24-d580f67f2554
+              - generic [ref=e565]:
+                - img "Porsche 992 GT3" [ref=e567]
+                - generic [ref=e568]:
+                  - paragraph [ref=e569]: 2021 Porsche 992 GT3
+                  - generic [ref=e570]:
+                    - generic [ref=e571]: POA
+                    - generic [ref=e573]: Listing
+                  - generic [ref=e574]:
+                    - generic [ref=e575]: ES
+                    - generic [ref=e576]: B
+            - link "Porsche 992 Targa 4S 2024 Porsche 992 Targa 4S $189K Listing ES A" [ref=e577] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3da2f21-3463-47b8-9daa-9c534439cafc
+              - generic [ref=e578]:
+                - img "Porsche 992 Targa 4S" [ref=e580]
+                - generic [ref=e581]:
+                  - paragraph [ref=e582]: 2024 Porsche 992 Targa 4S
+                  - generic [ref=e583]:
+                    - generic [ref=e584]: $189K
+                    - generic [ref=e586]: Listing
+                  - generic [ref=e587]:
+                    - generic [ref=e588]: ES
+                    - generic [ref=e589]: A
+            - link "Porsche 992 Carrera 4S 2019 Porsche 992 Carrera 4S POA Listing ES B" [ref=e590] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3500e24-1b36-4c89-86b1-faa6546f4232
+              - generic [ref=e591]:
+                - img "Porsche 992 Carrera 4S" [ref=e593]
+                - generic [ref=e594]:
+                  - paragraph [ref=e595]: 2019 Porsche 992 Carrera 4S
+                  - generic [ref=e596]:
+                    - generic [ref=e597]: POA
+                    - generic [ref=e599]: Listing
+                  - generic [ref=e600]:
+                    - generic [ref=e601]: ES
+                    - generic [ref=e602]: B
+            - link "Porsche 992 Targa 4 GTS 2024 Porsche 992 Targa 4 GTS $290K Listing ES A" [ref=e603] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f29dd99b-e890-44d9-bdb2-353507e0528b
+              - generic [ref=e604]:
+                - img "Porsche 992 Targa 4 GTS" [ref=e606]
+                - generic [ref=e607]:
+                  - paragraph [ref=e608]: 2024 Porsche 992 Targa 4 GTS
+                  - generic [ref=e609]:
+                    - generic [ref=e610]: $290K
+                    - generic [ref=e612]: Listing
+                  - generic [ref=e613]:
+                    - generic [ref=e614]: ES
+                    - generic [ref=e615]: A
+            - link "Porsche 992 Carrera S 2019 Porsche 992 Carrera S $108K Listing ES A" [ref=e616] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f29c3ef1-0356-4d7c-9ac0-02ef4bea10b4
+              - generic [ref=e617]:
+                - img "Porsche 992 Carrera S" [ref=e619]
+                - generic [ref=e620]:
+                  - paragraph [ref=e621]: 2019 Porsche 992 Carrera S
+                  - generic [ref=e622]:
+                    - generic [ref=e623]: $108K
+                    - generic [ref=e625]: Listing
+                  - generic [ref=e626]:
+                    - generic [ref=e627]: ES
+                    - generic [ref=e628]: A
+            - link "Porsche 992.2 GT3 Touring 2025 Porsche 992.2 GT3 Touring $220K Listing ES A" [ref=e629] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f295639f-b737-43d5-bc40-0262ec866167
+              - generic [ref=e630]:
+                - img "Porsche 992.2 GT3 Touring" [ref=e632]
+                - generic [ref=e633]:
+                  - paragraph [ref=e634]: 2025 Porsche 992.2 GT3 Touring
+                  - generic [ref=e635]:
+                    - generic [ref=e636]: $220K
+                    - generic [ref=e638]: Listing
+                  - generic [ref=e639]:
+                    - generic [ref=e640]: ES
+                    - generic [ref=e641]: A
+            - link "Porsche 992 Turbo S 2022 Porsche 992 Turbo S POA Listing ES B" [ref=e642] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f1dc918c-1674-455c-a9d0-e95c53d34303
+              - generic [ref=e643]:
+                - img "Porsche 992 Turbo S" [ref=e645]
+                - generic [ref=e646]:
+                  - paragraph [ref=e647]: 2022 Porsche 992 Turbo S
+                  - generic [ref=e648]:
+                    - generic [ref=e649]: POA
+                    - generic [ref=e651]: Listing
+                  - generic [ref=e652]:
+                    - generic [ref=e653]: ES
+                    - generic [ref=e654]: B
+            - link "Porsche 992 Carrera GTS 2023 Porsche 992 Carrera GTS $189K Listing ES A" [ref=e655] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f185d26b-eb26-418d-ac30-c50c375d5e33
+              - generic [ref=e656]:
+                - img "Porsche 992 Carrera GTS" [ref=e658]
+                - generic [ref=e659]:
+                  - paragraph [ref=e660]: 2023 Porsche 992 Carrera GTS
+                  - generic [ref=e661]:
+                    - generic [ref=e662]: $189K
+                    - generic [ref=e664]: Listing
+                  - generic [ref=e665]:
+                    - generic [ref=e666]: ES
+                    - generic [ref=e667]: A
+            - link "Porsche 992 GT3 RS 2023 Porsche 992 GT3 RS POA Listing ES B" [ref=e668] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f180afce-08e3-415d-94f0-dc89c3d3ea3b
+              - generic [ref=e669]:
+                - img "Porsche 992 GT3 RS" [ref=e671]
+                - generic [ref=e672]:
+                  - paragraph [ref=e673]: 2023 Porsche 992 GT3 RS
+                  - generic [ref=e674]:
+                    - generic [ref=e675]: POA
+                    - generic [ref=e677]: Listing
+                  - generic [ref=e678]:
+                    - generic [ref=e679]: ES
+                    - generic [ref=e680]: B
+            - link "Porsche 992 GT3 RS 2023 Porsche 992 GT3 RS $297K Listing ES A" [ref=e681] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f0d2a977-76d2-41e4-8992-f9ccf04ea3f5
+              - generic [ref=e682]:
+                - img "Porsche 992 GT3 RS" [ref=e684]
+                - generic [ref=e685]:
+                  - paragraph [ref=e686]: 2023 Porsche 992 GT3 RS
+                  - generic [ref=e687]:
+                    - generic [ref=e688]: $297K
+                    - generic [ref=e690]: Listing
+                  - generic [ref=e691]:
+                    - generic [ref=e692]: ES
+                    - generic [ref=e693]: A
+            - link "Porsche 992.2 GT3 2025 Porsche 992.2 GT3 $235K Listing ES A" [ref=e694] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f0bde8bb-3191-4a18-a54d-432a59497ddc
+              - generic [ref=e695]:
+                - img "Porsche 992.2 GT3" [ref=e697]
+                - generic [ref=e698]:
+                  - paragraph [ref=e699]: 2025 Porsche 992.2 GT3
+                  - generic [ref=e700]:
+                    - generic [ref=e701]: $235K
+                    - generic [ref=e703]: Listing
+                  - generic [ref=e704]:
+                    - generic [ref=e705]: ES
+                    - generic [ref=e706]: A
+            - link "Porsche 992 Turbo S 2023 Porsche 992 Turbo S POA Listing ES B" [ref=e707] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f002b95b-8871-4b2d-9518-a10738804b31
+              - generic [ref=e708]:
+                - img "Porsche 992 Turbo S" [ref=e710]
+                - generic [ref=e711]:
+                  - paragraph [ref=e712]: 2023 Porsche 992 Turbo S
+                  - generic [ref=e713]:
+                    - generic [ref=e714]: POA
+                    - generic [ref=e716]: Listing
+                  - generic [ref=e717]:
+                    - generic [ref=e718]: ES
+                    - generic [ref=e719]: B
+            - link "Porsche 992 Carrera 4 GTS 2023 Porsche 992 Carrera 4 GTS $162K Listing ES A" [ref=e720] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef5d45af-b0f1-4e28-b1d5-088913667bcb
+              - generic [ref=e721]:
+                - img "Porsche 992 Carrera 4 GTS" [ref=e723]
+                - generic [ref=e724]:
+                  - paragraph [ref=e725]: 2023 Porsche 992 Carrera 4 GTS
+                  - generic [ref=e726]:
+                    - generic [ref=e727]: $162K
+                    - generic [ref=e729]: Listing
+                  - generic [ref=e730]:
+                    - generic [ref=e731]: ES
+                    - generic [ref=e732]: A
+            - link "Porsche 992 Turbo S 2023 Porsche 992 Turbo S $216K Listing ES A" [ref=e733] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ee32431f-5350-42a4-8718-f1efc0a14954
+              - generic [ref=e734]:
+                - img "Porsche 992 Turbo S" [ref=e736]
+                - generic [ref=e737]:
+                  - paragraph [ref=e738]: 2023 Porsche 992 Turbo S
+                  - generic [ref=e739]:
+                    - generic [ref=e740]: $216K
+                    - generic [ref=e742]: Listing
+                  - generic [ref=e743]:
+                    - generic [ref=e744]: ES
+                    - generic [ref=e745]: A
+            - link "Porsche 992 GT3 RS 2023 Porsche 992 GT3 RS POA Listing ES B" [ref=e746] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eda96fda-aed3-4021-a72c-5a00f31eda16
+              - generic [ref=e747]:
+                - img "Porsche 992 GT3 RS" [ref=e749]
+                - generic [ref=e750]:
+                  - paragraph [ref=e751]: 2023 Porsche 992 GT3 RS
+                  - generic [ref=e752]:
+                    - generic [ref=e753]: POA
+                    - generic [ref=e755]: Listing
+                  - generic [ref=e756]:
+                    - generic [ref=e757]: ES
+                    - generic [ref=e758]: B
+            - link "Porsche 992 Targa 4 GTS 2023 Porsche 992 Targa 4 GTS POA Listing ES B" [ref=e759] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ecfadb4f-6e4b-436d-9a98-05001e8acda3
+              - generic [ref=e760]:
+                - img "Porsche 992 Targa 4 GTS" [ref=e762]
+                - generic [ref=e763]:
+                  - paragraph [ref=e764]: 2023 Porsche 992 Targa 4 GTS
+                  - generic [ref=e765]:
+                    - generic [ref=e766]: POA
+                    - generic [ref=e768]: Listing
+                  - generic [ref=e769]:
+                    - generic [ref=e770]: ES
+                    - generic [ref=e771]: B
+            - link "Porsche 992 Carrera S 2021 Porsche 992 Carrera S $135K Listing ES A" [ref=e772] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec869495-bb9d-4c3f-84ee-1fb422873acb
+              - generic [ref=e773]:
+                - img "Porsche 992 Carrera S" [ref=e775]
+                - generic [ref=e776]:
+                  - paragraph [ref=e777]: 2021 Porsche 992 Carrera S
+                  - generic [ref=e778]:
+                    - generic [ref=e779]: $135K
+                    - generic [ref=e781]: Listing
+                  - generic [ref=e782]:
+                    - generic [ref=e783]: ES
+                    - generic [ref=e784]: A
+            - link "Porsche 992 GT3 Touring 2024 Porsche 992 GT3 Touring POA Listing ES B" [ref=e785] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ebcea736-12bd-4aa5-9062-10057e204a63
+              - generic [ref=e786]:
+                - img "Porsche 992 GT3 Touring" [ref=e788]
+                - generic [ref=e789]:
+                  - paragraph [ref=e790]: 2024 Porsche 992 GT3 Touring
+                  - generic [ref=e791]:
+                    - generic [ref=e792]: POA
+                    - generic [ref=e794]: Listing
+                  - generic [ref=e795]:
+                    - generic [ref=e796]: ES
+                    - generic [ref=e797]: B
+            - link "Porsche 992 Belgian Legend Edition 2020 Porsche 992 Belgian Legend Edition $185K Listing ES A" [ref=e798] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ebc508c7-8051-4fd0-839d-b27ae9f0d7c6
+              - generic [ref=e799]:
+                - img "Porsche 992 Belgian Legend Edition" [ref=e801]
+                - generic [ref=e802]:
+                  - paragraph [ref=e803]: 2020 Porsche 992 Belgian Legend Edition
+                  - generic [ref=e804]:
+                    - generic [ref=e805]: $185K
+                    - generic [ref=e807]: Listing
+                  - generic [ref=e808]:
+                    - generic [ref=e809]: ES
+                    - generic [ref=e810]: A
+            - link "Porsche 992.2 Targa 4 GTS 2025 Porsche 992.2 Targa 4 GTS $219K Listing ES A" [ref=e811] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb664215-349b-4c14-b0bf-a6179aff61a1
+              - generic [ref=e812]:
+                - img "Porsche 992.2 Targa 4 GTS" [ref=e814]
+                - generic [ref=e815]:
+                  - paragraph [ref=e816]: 2025 Porsche 992.2 Targa 4 GTS
+                  - generic [ref=e817]:
+                    - generic [ref=e818]: $219K
+                    - generic [ref=e820]: Listing
+                  - generic [ref=e821]:
+                    - generic [ref=e822]: ES
+                    - generic [ref=e823]: A
+            - link "Porsche 992 Turbo S 2020 Porsche 992 Turbo S $220K Listing ES A" [ref=e824] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb1d2254-46a3-452b-b329-994155278bc8
+              - generic [ref=e825]:
+                - img "Porsche 992 Turbo S" [ref=e827]
+                - generic [ref=e828]:
+                  - paragraph [ref=e829]: 2020 Porsche 992 Turbo S
+                  - generic [ref=e830]:
+                    - generic [ref=e831]: $220K
+                    - generic [ref=e833]: Listing
+                  - generic [ref=e834]:
+                    - generic [ref=e835]: ES
+                    - generic [ref=e836]: A
+            - link "Porsche 992 GT3 Touring 2024 Porsche 992 GT3 Touring POA Listing ES B" [ref=e837] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ea6578ca-3632-47cb-a221-a20a37a42bca
+              - generic [ref=e838]:
+                - img "Porsche 992 GT3 Touring" [ref=e840]
+                - generic [ref=e841]:
+                  - paragraph [ref=e842]: 2024 Porsche 992 GT3 Touring
+                  - generic [ref=e843]:
+                    - generic [ref=e844]: POA
+                    - generic [ref=e846]: Listing
+                  - generic [ref=e847]:
+                    - generic [ref=e848]: ES
+                    - generic [ref=e849]: B
+            - link "Porsche 992 Carrera S 2021 Porsche 992 Carrera S $155K Listing ES A" [ref=e850] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ea16674f-c1f4-4208-86ba-b1285bdf2693
+              - generic [ref=e851]:
+                - img "Porsche 992 Carrera S" [ref=e853]
+                - generic [ref=e854]:
+                  - paragraph [ref=e855]: 2021 Porsche 992 Carrera S
+                  - generic [ref=e856]:
+                    - generic [ref=e857]: $155K
+                    - generic [ref=e859]: Listing
+                  - generic [ref=e860]:
+                    - generic [ref=e861]: ES
+                    - generic [ref=e862]: A
+            - link "Porsche 992 GT3 2022 Porsche 992 GT3 $190K Listing ES A" [ref=e863] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e9eaec74-159f-40d7-a198-09c6d9cc0349
+              - generic [ref=e864]:
+                - img "Porsche 992 GT3" [ref=e866]
+                - generic [ref=e867]:
+                  - paragraph [ref=e868]: 2022 Porsche 992 GT3
+                  - generic [ref=e869]:
+                    - generic [ref=e870]: $190K
+                    - generic [ref=e872]: Listing
+                  - generic [ref=e873]:
+                    - generic [ref=e874]: ES
+                    - generic [ref=e875]: A
+            - link "Porsche 992 Turbo S 2024 Porsche 992 Turbo S $242K Listing ES A" [ref=e876] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e9ddd30c-eb3b-4994-876d-b22f6321fd09
+              - generic [ref=e877]:
+                - img "Porsche 992 Turbo S" [ref=e879]
+                - generic [ref=e880]:
+                  - paragraph [ref=e881]: 2024 Porsche 992 Turbo S
+                  - generic [ref=e882]:
+                    - generic [ref=e883]: $242K
+                    - generic [ref=e885]: Listing
+                  - generic [ref=e886]:
+                    - generic [ref=e887]: ES
+                    - generic [ref=e888]: A
+            - link "Porsche 992 Sport Classic 2023 Porsche 992 Sport Classic POA Listing ES B" [ref=e889] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e9c0ec32-da2e-4a55-9bc0-e7b216c8c5fe
+              - generic [ref=e890]:
+                - img "Porsche 992 Sport Classic" [ref=e892]
+                - generic [ref=e893]:
+                  - paragraph [ref=e894]: 2023 Porsche 992 Sport Classic
+                  - generic [ref=e895]:
+                    - generic [ref=e896]: POA
+                    - generic [ref=e898]: Listing
+                  - generic [ref=e899]:
+                    - generic [ref=e900]: ES
+                    - generic [ref=e901]: B
+            - link "Porsche 992 Carrera 4 2020 Porsche 992 Carrera 4 $118K Listing ES A" [ref=e902] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e818396a-263b-4e88-8be4-45dd9300d3e0
+              - generic [ref=e903]:
+                - img "Porsche 992 Carrera 4" [ref=e905]
+                - generic [ref=e906]:
+                  - paragraph [ref=e907]: 2020 Porsche 992 Carrera 4
+                  - generic [ref=e908]:
+                    - generic [ref=e909]: $118K
+                    - generic [ref=e911]: Listing
+                  - generic [ref=e912]:
+                    - generic [ref=e913]: ES
+                    - generic [ref=e914]: A
+            - link "Porsche 911 2019 Porsche 911 $80K Listing AT B+" [ref=e915] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ffeab620-991b-43c7-8dae-a956a355e75c
+              - generic [ref=e916]:
+                - img "Porsche 911" [ref=e918]
+                - generic [ref=e919]:
+                  - paragraph [ref=e920]: 2019 Porsche 911
+                  - generic [ref=e921]:
+                    - generic [ref=e922]: $80K
+                    - generic [ref=e924]: Listing
+                  - generic [ref=e925]:
+                    - generic [ref=e926]: AT
+                    - generic [ref=e927]: B+
+            - link "Porsche 911 2025 Porsche 911 $130K Listing AT A" [ref=e928] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fce312d1-fc07-4d55-8a74-029fabd958d1
+              - generic [ref=e929]:
+                - img "Porsche 911" [ref=e931]
+                - generic [ref=e932]:
+                  - paragraph [ref=e933]: 2025 Porsche 911
+                  - generic [ref=e934]:
+                    - generic [ref=e935]: $130K
+                    - generic [ref=e937]: Listing
+                  - generic [ref=e938]:
+                    - generic [ref=e939]: AT
+                    - generic [ref=e940]: A
+            - link "Porsche 911 2025 Porsche 911 $133K Listing AT A" [ref=e941] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fc62c442-6105-4fd3-89b4-c8dcf4e583ca
+              - generic [ref=e942]:
+                - img "Porsche 911" [ref=e944]
+                - generic [ref=e945]:
+                  - paragraph [ref=e946]: 2025 Porsche 911
+                  - generic [ref=e947]:
+                    - generic [ref=e948]: $133K
+                    - generic [ref=e950]: Listing
+                  - generic [ref=e951]:
+                    - generic [ref=e952]: AT
+                    - generic [ref=e953]: A
+            - link "Porsche 911 2025 Porsche 911 $139K Listing AT A" [ref=e954] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f918d72d-7afc-4e4c-aad7-710316b04766
+              - generic [ref=e955]:
+                - img "Porsche 911" [ref=e957]
+                - generic [ref=e958]:
+                  - paragraph [ref=e959]: 2025 Porsche 911
+                  - generic [ref=e960]:
+                    - generic [ref=e961]: $139K
+                    - generic [ref=e963]: Listing
+                  - generic [ref=e964]:
+                    - generic [ref=e965]: AT
+                    - generic [ref=e966]: A
+            - link "Porsche 911 2022 Porsche 911 $90K Listing AT B+" [ref=e967] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8d492b8-4ba2-464e-b7d4-af3ad0803372
+              - generic [ref=e968]:
+                - img "Porsche 911" [ref=e970]
+                - generic [ref=e971]:
+                  - paragraph [ref=e972]: 2022 Porsche 911
+                  - generic [ref=e973]:
+                    - generic [ref=e974]: $90K
+                    - generic [ref=e976]: Listing
+                  - generic [ref=e977]:
+                    - generic [ref=e978]: AT
+                    - generic [ref=e979]: B+
+            - link "Porsche 911 2025 Porsche 911 $219K Listing AT A" [ref=e980] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8cab70e-8320-405c-8d69-1a63272fbd59
+              - generic [ref=e981]:
+                - img "Porsche 911" [ref=e983]
+                - generic [ref=e984]:
+                  - paragraph [ref=e985]: 2025 Porsche 911
+                  - generic [ref=e986]:
+                    - generic [ref=e987]: $219K
+                    - generic [ref=e989]: Listing
+                  - generic [ref=e990]:
+                    - generic [ref=e991]: AT
+                    - generic [ref=e992]: A
+            - link "Porsche 911 2022 Porsche 911 $109K Listing AT A" [ref=e993] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f63ac3d7-a9f5-4ebb-acfd-f43dcb93dd8a
+              - generic [ref=e994]:
+                - img "Porsche 911" [ref=e996]
+                - generic [ref=e997]:
+                  - paragraph [ref=e998]: 2022 Porsche 911
+                  - generic [ref=e999]:
+                    - generic [ref=e1000]: $109K
+                    - generic [ref=e1002]: Listing
+                  - generic [ref=e1003]:
+                    - generic [ref=e1004]: AT
+                    - generic [ref=e1005]: A
+            - link "Porsche 911 2021 Porsche 911 $98K Listing AT B+" [ref=e1006] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f6140049-82e5-477f-bd6e-d389a5cc8e16
+              - generic [ref=e1007]:
+                - img "Porsche 911" [ref=e1009]
+                - generic [ref=e1010]:
+                  - paragraph [ref=e1011]: 2021 Porsche 911
+                  - generic [ref=e1012]:
+                    - generic [ref=e1013]: $98K
+                    - generic [ref=e1015]: Listing
+                  - generic [ref=e1016]:
+                    - generic [ref=e1017]: AT
+                    - generic [ref=e1018]: B+
+            - link "Porsche 911 2019 Porsche 911 $84K Listing AT B+" [ref=e1019] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f56f2687-812e-4bf1-beb3-096919209f18
+              - generic [ref=e1020]:
+                - img "Porsche 911" [ref=e1022]
+                - generic [ref=e1023]:
+                  - paragraph [ref=e1024]: 2019 Porsche 911
+                  - generic [ref=e1025]:
+                    - generic [ref=e1026]: $84K
+                    - generic [ref=e1028]: Listing
+                  - generic [ref=e1029]:
+                    - generic [ref=e1030]: AT
+                    - generic [ref=e1031]: B+
+            - link "Porsche 911 2022 Porsche 911 $150K Listing AT A" [ref=e1032] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3ef44b0-5a6c-4009-82c3-333b6fe2f378
+              - generic [ref=e1033]:
+                - img "Porsche 911" [ref=e1035]
+                - generic [ref=e1036]:
+                  - paragraph [ref=e1037]: 2022 Porsche 911
+                  - generic [ref=e1038]:
+                    - generic [ref=e1039]: $150K
+                    - generic [ref=e1041]: Listing
+                  - generic [ref=e1042]:
+                    - generic [ref=e1043]: AT
+                    - generic [ref=e1044]: A
+            - link "Porsche 911 2019 Porsche 911 $87K Listing AT B+" [ref=e1045] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f34b5cb8-72ea-4ac0-be26-36060971466b
+              - generic [ref=e1046]:
+                - img "Porsche 911" [ref=e1048]
+                - generic [ref=e1049]:
+                  - paragraph [ref=e1050]: 2019 Porsche 911
+                  - generic [ref=e1051]:
+                    - generic [ref=e1052]: $87K
+                    - generic [ref=e1054]: Listing
+                  - generic [ref=e1055]:
+                    - generic [ref=e1056]: AT
+                    - generic [ref=e1057]: B+
+            - link "Porsche 911 2023 Porsche 911 $165K Listing AT A" [ref=e1058] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f1a0e378-514a-4c74-a6cf-ab16f6050d2f
+              - generic [ref=e1059]:
+                - img "Porsche 911" [ref=e1061]
+                - generic [ref=e1062]:
+                  - paragraph [ref=e1063]: 2023 Porsche 911
+                  - generic [ref=e1064]:
+                    - generic [ref=e1065]: $165K
+                    - generic [ref=e1067]: Listing
+                  - generic [ref=e1068]:
+                    - generic [ref=e1069]: AT
+                    - generic [ref=e1070]: A
+            - link "Porsche 911 2020 Porsche 911 $92K Listing AT B+" [ref=e1071] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f15de490-4686-4834-866c-cfa9440022b7
+              - generic [ref=e1072]:
+                - img "Porsche 911" [ref=e1074]
+                - generic [ref=e1075]:
+                  - paragraph [ref=e1076]: 2020 Porsche 911
+                  - generic [ref=e1077]:
+                    - generic [ref=e1078]: $92K
+                    - generic [ref=e1080]: Listing
+                  - generic [ref=e1081]:
+                    - generic [ref=e1082]: AT
+                    - generic [ref=e1083]: B+
+            - link "Porsche 911 2025 Porsche 911 $224K Listing AT A" [ref=e1084] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f0c9cdf9-adbe-4932-b942-e5bccc565839
+              - generic [ref=e1085]:
+                - img "Porsche 911" [ref=e1087]
+                - generic [ref=e1088]:
+                  - paragraph [ref=e1089]: 2025 Porsche 911
+                  - generic [ref=e1090]:
+                    - generic [ref=e1091]: $224K
+                    - generic [ref=e1093]: Listing
+                  - generic [ref=e1094]:
+                    - generic [ref=e1095]: AT
+                    - generic [ref=e1096]: A
+            - link "Porsche 911 2025 Porsche 911 $108K Listing AT A" [ref=e1097] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f09986ee-53db-4bad-9283-7d69751a9e4d
+              - generic [ref=e1098]:
+                - img "Porsche 911" [ref=e1100]
+                - generic [ref=e1101]:
+                  - paragraph [ref=e1102]: 2025 Porsche 911
+                  - generic [ref=e1103]:
+                    - generic [ref=e1104]: $108K
+                    - generic [ref=e1106]: Listing
+                  - generic [ref=e1107]:
+                    - generic [ref=e1108]: AT
+                    - generic [ref=e1109]: A
+            - link "Porsche 911 2026 Porsche 911 $155K Listing AT A" [ref=e1110] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef705be0-bedf-4cca-8b75-f7f2aa07cb7b
+              - generic [ref=e1111]:
+                - img "Porsche 911" [ref=e1113]
+                - generic [ref=e1114]:
+                  - paragraph [ref=e1115]: 2026 Porsche 911
+                  - generic [ref=e1116]:
+                    - generic [ref=e1117]: $155K
+                    - generic [ref=e1119]: Listing
+                  - generic [ref=e1120]:
+                    - generic [ref=e1121]: AT
+                    - generic [ref=e1122]: A
+            - link "Porsche 911 2025 Porsche 911 $145K Listing AT A" [ref=e1123] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eea0cf8e-93de-436c-92bf-71ffea0b6eb7
+              - generic [ref=e1124]:
+                - img "Porsche 911" [ref=e1126]
+                - generic [ref=e1127]:
+                  - paragraph [ref=e1128]: 2025 Porsche 911
+                  - generic [ref=e1129]:
+                    - generic [ref=e1130]: $145K
+                    - generic [ref=e1132]: Listing
+                  - generic [ref=e1133]:
+                    - generic [ref=e1134]: AT
+                    - generic [ref=e1135]: A
+            - link "Porsche 911 2020 Porsche 911 $87K Listing AT B+" [ref=e1136] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec072827-8643-4402-a58f-fb254e6d95f8
+              - generic [ref=e1137]:
+                - img "Porsche 911" [ref=e1139]
+                - generic [ref=e1140]:
+                  - paragraph [ref=e1141]: 2020 Porsche 911
+                  - generic [ref=e1142]:
+                    - generic [ref=e1143]: $87K
+                    - generic [ref=e1145]: Listing
+                  - generic [ref=e1146]:
+                    - generic [ref=e1147]: AT
+                    - generic [ref=e1148]: B+
+            - link "Porsche 911 2022 Porsche 911 $107K Listing AT A" [ref=e1149] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb17a681-b3dc-4227-b546-b0d0b5e4fe42
+              - generic [ref=e1150]:
+                - img "Porsche 911" [ref=e1152]
+                - generic [ref=e1153]:
+                  - paragraph [ref=e1154]: 2022 Porsche 911
+                  - generic [ref=e1155]:
+                    - generic [ref=e1156]: $107K
+                    - generic [ref=e1158]: Listing
+                  - generic [ref=e1159]:
+                    - generic [ref=e1160]: AT
+                    - generic [ref=e1161]: A
+            - link "Porsche 911 2024 Porsche 911 $140K Listing AT A" [ref=e1162] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb16a7ca-48c1-458e-b65f-ed8aee5ce4fa
+              - generic [ref=e1163]:
+                - img "Porsche 911" [ref=e1165]
+                - generic [ref=e1166]:
+                  - paragraph [ref=e1167]: 2024 Porsche 911
+                  - generic [ref=e1168]:
+                    - generic [ref=e1169]: $140K
+                    - generic [ref=e1171]: Listing
+                  - generic [ref=e1172]:
+                    - generic [ref=e1173]: AT
+                    - generic [ref=e1174]: A
+            - link "Porsche 911 2024 Porsche 911 $95K Listing AT B+" [ref=e1175] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eaaa6e6b-c2d0-4918-9582-ada8bb0fc2ef
+              - generic [ref=e1176]:
+                - img "Porsche 911" [ref=e1178]
+                - generic [ref=e1179]:
+                  - paragraph [ref=e1180]: 2024 Porsche 911
+                  - generic [ref=e1181]:
+                    - generic [ref=e1182]: $95K
+                    - generic [ref=e1184]: Listing
+                  - generic [ref=e1185]:
+                    - generic [ref=e1186]: AT
+                    - generic [ref=e1187]: B+
+            - link "Porsche 911 2025 Porsche 911 $102K Listing AT A" [ref=e1188] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ea652918-66a0-4a86-957c-0321c02afb90
+              - generic [ref=e1189]:
+                - img "Porsche 911" [ref=e1191]
+                - generic [ref=e1192]:
+                  - paragraph [ref=e1193]: 2025 Porsche 911
+                  - generic [ref=e1194]:
+                    - generic [ref=e1195]: $102K
+                    - generic [ref=e1197]: Listing
+                  - generic [ref=e1198]:
+                    - generic [ref=e1199]: AT
+                    - generic [ref=e1200]: A
+            - link "Porsche 911 2025 Porsche 911 $137K Listing AT A" [ref=e1201] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ea4a9b23-b29d-4700-b36b-02734eb6f36c
+              - generic [ref=e1202]:
+                - img "Porsche 911" [ref=e1204]
+                - generic [ref=e1205]:
+                  - paragraph [ref=e1206]: 2025 Porsche 911
+                  - generic [ref=e1207]:
+                    - generic [ref=e1208]: $137K
+                    - generic [ref=e1210]: Listing
+                  - generic [ref=e1211]:
+                    - generic [ref=e1212]: AT
+                    - generic [ref=e1213]: A
+            - link "Porsche 911 2024 Porsche 911 $106K Listing AT A" [ref=e1214] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e96c9dad-cb8c-440f-b451-ee6cbc5fa5c8
+              - generic [ref=e1215]:
+                - img "Porsche 911" [ref=e1217]
+                - generic [ref=e1218]:
+                  - paragraph [ref=e1219]: 2024 Porsche 911
+                  - generic [ref=e1220]:
+                    - generic [ref=e1221]: $106K
+                    - generic [ref=e1223]: Listing
+                  - generic [ref=e1224]:
+                    - generic [ref=e1225]: AT
+                    - generic [ref=e1226]: A
+            - link "Porsche 911 2023 Porsche 911 $150K Listing AT A" [ref=e1227] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e96059ec-2e96-4ea2-9364-8c83949ec31b
+              - generic [ref=e1228]:
+                - img "Porsche 911" [ref=e1230]
+                - generic [ref=e1231]:
+                  - paragraph [ref=e1232]: 2023 Porsche 911
+                  - generic [ref=e1233]:
+                    - generic [ref=e1234]: $150K
+                    - generic [ref=e1236]: Listing
+                  - generic [ref=e1237]:
+                    - generic [ref=e1238]: AT
+                    - generic [ref=e1239]: A
+            - link "Porsche 911 2024 Porsche 911 $92K Listing AT B+" [ref=e1240] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e9591b73-0e44-42b3-a4f1-9a754e8c3647
+              - generic [ref=e1241]:
+                - img "Porsche 911" [ref=e1243]
+                - generic [ref=e1244]:
+                  - paragraph [ref=e1245]: 2024 Porsche 911
+                  - generic [ref=e1246]:
+                    - generic [ref=e1247]: $92K
+                    - generic [ref=e1249]: Listing
+                  - generic [ref=e1250]:
+                    - generic [ref=e1251]: AT
+                    - generic [ref=e1252]: B+
+            - link "Porsche 911 2025 Porsche 911 $220K Listing AT A" [ref=e1253] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e8ca6dc1-4494-456f-82f9-f2dfcbf5aba4
+              - generic [ref=e1254]:
+                - img "Porsche 911" [ref=e1256]
+                - generic [ref=e1257]:
+                  - paragraph [ref=e1258]: 2025 Porsche 911
+                  - generic [ref=e1259]:
+                    - generic [ref=e1260]: $220K
+                    - generic [ref=e1262]: Listing
+                  - generic [ref=e1263]:
+                    - generic [ref=e1264]: AT
+                    - generic [ref=e1265]: A
+            - link "Porsche 911 2021 Porsche 911 $114K Listing AT A" [ref=e1266] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e85840d6-5551-4e3f-8daf-cc3e7493ef83
+              - generic [ref=e1267]:
+                - img "Porsche 911" [ref=e1269]
+                - generic [ref=e1270]:
+                  - paragraph [ref=e1271]: 2021 Porsche 911
+                  - generic [ref=e1272]:
+                    - generic [ref=e1273]: $114K
+                    - generic [ref=e1275]: Listing
+                  - generic [ref=e1276]:
+                    - generic [ref=e1277]: AT
+                    - generic [ref=e1278]: A
+            - link "Porsche 911 2023 Porsche 911 $238K Listing AT A" [ref=e1279] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e6ee4fb4-e659-4403-a508-b5d6bbb264a2
+              - generic [ref=e1280]:
+                - img "Porsche 911" [ref=e1282]
+                - generic [ref=e1283]:
+                  - paragraph [ref=e1284]: 2023 Porsche 911
+                  - generic [ref=e1285]:
+                    - generic [ref=e1286]: $238K
+                    - generic [ref=e1288]: Listing
+                  - generic [ref=e1289]:
+                    - generic [ref=e1290]: AT
+                    - generic [ref=e1291]: A
+            - link "Porsche 911 2024 Porsche 911 $105K Listing AT A" [ref=e1292] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e5e8cb13-8046-40e4-8de1-328fc90c7160
+              - generic [ref=e1293]:
+                - img "Porsche 911" [ref=e1295]
+                - generic [ref=e1296]:
+                  - paragraph [ref=e1297]: 2024 Porsche 911
+                  - generic [ref=e1298]:
+                    - generic [ref=e1299]: $105K
+                    - generic [ref=e1301]: Listing
+                  - generic [ref=e1302]:
+                    - generic [ref=e1303]: AT
+                    - generic [ref=e1304]: A
+            - link "Porsche 911 2022 Porsche 911 $106K Listing AT A" [ref=e1305] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e5e2ac63-83ab-455f-98c6-377b85816b1b
+              - generic [ref=e1306]:
+                - img "Porsche 911" [ref=e1308]
+                - generic [ref=e1309]:
+                  - paragraph [ref=e1310]: 2022 Porsche 911
+                  - generic [ref=e1311]:
+                    - generic [ref=e1312]: $106K
+                    - generic [ref=e1314]: Listing
+                  - generic [ref=e1315]:
+                    - generic [ref=e1316]: AT
+                    - generic [ref=e1317]: A
+            - link "Porsche 911 2019 Porsche 911 $82K Listing AT B+" [ref=e1318] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e5cf920c-d784-4b3f-b048-2718f8fb6438
+              - generic [ref=e1319]:
+                - img "Porsche 911" [ref=e1321]
+                - generic [ref=e1322]:
+                  - paragraph [ref=e1323]: 2019 Porsche 911
+                  - generic [ref=e1324]:
+                    - generic [ref=e1325]: $82K
+                    - generic [ref=e1327]: Listing
+                  - generic [ref=e1328]:
+                    - generic [ref=e1329]: AT
+                    - generic [ref=e1330]: B+
+            - link "Porsche 911 2024 Porsche 911 $105K Listing AT A" [ref=e1331] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e55996c0-1288-4e7d-a2c9-e804b18e10a9
+              - generic [ref=e1332]:
+                - img "Porsche 911" [ref=e1334]
+                - generic [ref=e1335]:
+                  - paragraph [ref=e1336]: 2024 Porsche 911
+                  - generic [ref=e1337]:
+                    - generic [ref=e1338]: $105K
+                    - generic [ref=e1340]: Listing
+                  - generic [ref=e1341]:
+                    - generic [ref=e1342]: AT
+                    - generic [ref=e1343]: A
+            - link "Porsche 911 2021 Porsche 911 $100K Listing AT B+" [ref=e1344] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e5265021-6b58-4726-8db9-e0ad16d4a000
+              - generic [ref=e1345]:
+                - img "Porsche 911" [ref=e1347]
+                - generic [ref=e1348]:
+                  - paragraph [ref=e1349]: 2021 Porsche 911
+                  - generic [ref=e1350]:
+                    - generic [ref=e1351]: $100K
+                    - generic [ref=e1353]: Listing
+                  - generic [ref=e1354]:
+                    - generic [ref=e1355]: AT
+                    - generic [ref=e1356]: B+
+            - link "Porsche 911 2025 Porsche 911 $105K Listing AT A" [ref=e1357] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e45fb649-9230-43ef-968e-27546fd32bca
+              - generic [ref=e1358]:
+                - img "Porsche 911" [ref=e1360]
+                - generic [ref=e1361]:
+                  - paragraph [ref=e1362]: 2025 Porsche 911
+                  - generic [ref=e1363]:
+                    - generic [ref=e1364]: $105K
+                    - generic [ref=e1366]: Listing
+                  - generic [ref=e1367]:
+                    - generic [ref=e1368]: AT
+                    - generic [ref=e1369]: A
+            - link "Porsche 911 2024 Porsche 911 $98K Listing AT B+" [ref=e1370] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e3131b11-f43b-4424-8e38-fcaedf8cfac4
+              - generic [ref=e1371]:
+                - img "Porsche 911" [ref=e1373]
+                - generic [ref=e1374]:
+                  - paragraph [ref=e1375]: 2024 Porsche 911
+                  - generic [ref=e1376]:
+                    - generic [ref=e1377]: $98K
+                    - generic [ref=e1379]: Listing
+                  - generic [ref=e1380]:
+                    - generic [ref=e1381]: AT
+                    - generic [ref=e1382]: B+
+            - link "Porsche 911 2023 Porsche 911 $225K Listing AT A" [ref=e1383] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e30caaef-2a81-43c1-a07e-0f37bcbbc1b5
+              - generic [ref=e1384]:
+                - img "Porsche 911" [ref=e1386]
+                - generic [ref=e1387]:
+                  - paragraph [ref=e1388]: 2023 Porsche 911
+                  - generic [ref=e1389]:
+                    - generic [ref=e1390]: $225K
+                    - generic [ref=e1392]: Listing
+                  - generic [ref=e1393]:
+                    - generic [ref=e1394]: AT
+                    - generic [ref=e1395]: A
+            - link "Porsche 911 2019 Porsche 911 $80K Listing AT B+" [ref=e1396] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e1b46198-4443-4460-a42d-08f29f441fa4
+              - generic [ref=e1397]:
+                - img "Porsche 911" [ref=e1399]
+                - generic [ref=e1400]:
+                  - paragraph [ref=e1401]: 2019 Porsche 911
+                  - generic [ref=e1402]:
+                    - generic [ref=e1403]: $80K
+                    - generic [ref=e1405]: Listing
+                  - generic [ref=e1406]:
+                    - generic [ref=e1407]: AT
+                    - generic [ref=e1408]: B+
+            - link "Porsche 911 2022 Porsche 911 $88K Listing AT B+" [ref=e1409] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e14294c7-e145-4a6c-8304-34b7cee50f8b
+              - generic [ref=e1410]:
+                - img "Porsche 911" [ref=e1412]
+                - generic [ref=e1413]:
+                  - paragraph [ref=e1414]: 2022 Porsche 911
+                  - generic [ref=e1415]:
+                    - generic [ref=e1416]: $88K
+                    - generic [ref=e1418]: Listing
+                  - generic [ref=e1419]:
+                    - generic [ref=e1420]: AT
+                    - generic [ref=e1421]: B+
+            - link "Porsche 911 2022 Porsche 911 $90K Listing AT B+" [ref=e1422] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e1140187-52c7-47bc-a811-4ecc9fac6180
+              - generic [ref=e1423]:
+                - img "Porsche 911" [ref=e1425]
+                - generic [ref=e1426]:
+                  - paragraph [ref=e1427]: 2022 Porsche 911
+                  - generic [ref=e1428]:
+                    - generic [ref=e1429]: $90K
+                    - generic [ref=e1431]: Listing
+                  - generic [ref=e1432]:
+                    - generic [ref=e1433]: AT
+                    - generic [ref=e1434]: B+
+            - link "Porsche 911 2023 Porsche 911 $95K Listing AT B+" [ref=e1435] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ddad3008-f143-449e-893a-c9d2e624e77f
+              - generic [ref=e1436]:
+                - img "Porsche 911" [ref=e1438]
+                - generic [ref=e1439]:
+                  - paragraph [ref=e1440]: 2023 Porsche 911
+                  - generic [ref=e1441]:
+                    - generic [ref=e1442]: $95K
+                    - generic [ref=e1444]: Listing
+                  - generic [ref=e1445]:
+                    - generic [ref=e1446]: AT
+                    - generic [ref=e1447]: B+
+            - link "Porsche 911 2022 Porsche 911 $170K Listing AT A" [ref=e1448] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-dccc6c2a-fe5b-41f6-9637-3c9d8996c0d1
+              - generic [ref=e1449]:
+                - img "Porsche 911" [ref=e1451]
+                - generic [ref=e1452]:
+                  - paragraph [ref=e1453]: 2022 Porsche 911
+                  - generic [ref=e1454]:
+                    - generic [ref=e1455]: $170K
+                    - generic [ref=e1457]: Listing
+                  - generic [ref=e1458]:
+                    - generic [ref=e1459]: AT
+                    - generic [ref=e1460]: A
+            - link "Porsche 911 2023 Porsche 911 $112K Listing AT A" [ref=e1461] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-daa54555-0c82-4e88-a7f5-aa8478e47f2a
+              - generic [ref=e1462]:
+                - img "Porsche 911" [ref=e1464]
+                - generic [ref=e1465]:
+                  - paragraph [ref=e1466]: 2023 Porsche 911
+                  - generic [ref=e1467]:
+                    - generic [ref=e1468]: $112K
+                    - generic [ref=e1470]: Listing
+                  - generic [ref=e1471]:
+                    - generic [ref=e1472]: AT
+                    - generic [ref=e1473]: A
+            - link "Porsche 911 2023 Porsche 911 $117K Listing AT A" [ref=e1474] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-da3d68ae-14a4-49bd-a6b9-81b97be79ddc
+              - generic [ref=e1475]:
+                - img "Porsche 911" [ref=e1477]
+                - generic [ref=e1478]:
+                  - paragraph [ref=e1479]: 2023 Porsche 911
+                  - generic [ref=e1480]:
+                    - generic [ref=e1481]: $117K
+                    - generic [ref=e1483]: Listing
+                  - generic [ref=e1484]:
+                    - generic [ref=e1485]: AT
+                    - generic [ref=e1486]: A
+            - link "Porsche 911 2022 Porsche 911 $105K Listing AT A" [ref=e1487] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-da1ae9fb-e1c4-46b5-8ca1-0a39a5486441
+              - generic [ref=e1488]:
+                - img "Porsche 911" [ref=e1490]
+                - generic [ref=e1491]:
+                  - paragraph [ref=e1492]: 2022 Porsche 911
+                  - generic [ref=e1493]:
+                    - generic [ref=e1494]: $105K
+                    - generic [ref=e1496]: Listing
+                  - generic [ref=e1497]:
+                    - generic [ref=e1498]: AT
+                    - generic [ref=e1499]: A
+            - link "Porsche 911 2024 Porsche 911 $95K Listing AT B+" [ref=e1500] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d9a77ac7-2fd5-4878-9875-9d4520313e72
+              - generic [ref=e1501]:
+                - img "Porsche 911" [ref=e1503]
+                - generic [ref=e1504]:
+                  - paragraph [ref=e1505]: 2024 Porsche 911
+                  - generic [ref=e1506]:
+                    - generic [ref=e1507]: $95K
+                    - generic [ref=e1509]: Listing
+                  - generic [ref=e1510]:
+                    - generic [ref=e1511]: AT
+                    - generic [ref=e1512]: B+
+            - link "Porsche 911 2022 Porsche 911 $108K Listing AT A" [ref=e1513] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d89be4f7-68fe-4505-9091-3ff7e005b59c
+              - generic [ref=e1514]:
+                - img "Porsche 911" [ref=e1516]
+                - generic [ref=e1517]:
+                  - paragraph [ref=e1518]: 2022 Porsche 911
+                  - generic [ref=e1519]:
+                    - generic [ref=e1520]: $108K
+                    - generic [ref=e1522]: Listing
+                  - generic [ref=e1523]:
+                    - generic [ref=e1524]: AT
+                    - generic [ref=e1525]: A
+            - link "Porsche 911 2022 Porsche 911 $170K Listing AT A" [ref=e1526] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d871fa2b-5e24-497d-b613-29dd5c9f63cd
+              - generic [ref=e1527]:
+                - img "Porsche 911" [ref=e1529]
+                - generic [ref=e1530]:
+                  - paragraph [ref=e1531]: 2022 Porsche 911
+                  - generic [ref=e1532]:
+                    - generic [ref=e1533]: $170K
+                    - generic [ref=e1535]: Listing
+                  - generic [ref=e1536]:
+                    - generic [ref=e1537]: AT
+                    - generic [ref=e1538]: A
+            - link "Porsche 911 2019 Porsche 911 $74K Listing AT B+" [ref=e1539] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d7fa7775-53e1-44aa-9cf7-d4c131608362
+              - generic [ref=e1540]:
+                - img "Porsche 911" [ref=e1542]
+                - generic [ref=e1543]:
+                  - paragraph [ref=e1544]: 2019 Porsche 911
+                  - generic [ref=e1545]:
+                    - generic [ref=e1546]: $74K
+                    - generic [ref=e1548]: Listing
+                  - generic [ref=e1549]:
+                    - generic [ref=e1550]: AT
+                    - generic [ref=e1551]: B+
+            - link "Porsche 911 2023 Porsche 911 $110K Listing AT A" [ref=e1552] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d73e659e-ee50-4faa-8a71-7653c24c7b5f
+              - generic [ref=e1553]:
+                - img "Porsche 911" [ref=e1555]
+                - generic [ref=e1556]:
+                  - paragraph [ref=e1557]: 2023 Porsche 911
+                  - generic [ref=e1558]:
+                    - generic [ref=e1559]: $110K
+                    - generic [ref=e1561]: Listing
+                  - generic [ref=e1562]:
+                    - generic [ref=e1563]: AT
+                    - generic [ref=e1564]: A
+            - link "Porsche 911 2024 Porsche 911 $92K Listing AT B+" [ref=e1565] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d6f0e613-6b3d-4202-9c0c-33b182b23fa3
+              - generic [ref=e1566]:
+                - img "Porsche 911" [ref=e1568]
+                - generic [ref=e1569]:
+                  - paragraph [ref=e1570]: 2024 Porsche 911
+                  - generic [ref=e1571]:
+                    - generic [ref=e1572]: $92K
+                    - generic [ref=e1574]: Listing
+                  - generic [ref=e1575]:
+                    - generic [ref=e1576]: AT
+                    - generic [ref=e1577]: B+
+            - link "Porsche 911 2023 Porsche 911 $159K Listing AT A" [ref=e1578] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-d16f6f72-a6c1-4fce-a3e5-786eecab1a0b
+              - generic [ref=e1579]:
+                - img "Porsche 911" [ref=e1581]
+                - generic [ref=e1582]:
+                  - paragraph [ref=e1583]: 2023 Porsche 911
+                  - generic [ref=e1584]:
+                    - generic [ref=e1585]: $159K
+                    - generic [ref=e1587]: Listing
+                  - generic [ref=e1588]:
+                    - generic [ref=e1589]: AT
+                    - generic [ref=e1590]: A
+            - link "Porsche 911 2024 Porsche 911 $99K Listing AT B+" [ref=e1591] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cf42f566-1fb6-4a83-8b09-e53d09ed9f2d
+              - generic [ref=e1592]:
+                - img "Porsche 911" [ref=e1594]
+                - generic [ref=e1595]:
+                  - paragraph [ref=e1596]: 2024 Porsche 911
+                  - generic [ref=e1597]:
+                    - generic [ref=e1598]: $99K
+                    - generic [ref=e1600]: Listing
+                  - generic [ref=e1601]:
+                    - generic [ref=e1602]: AT
+                    - generic [ref=e1603]: B+
+            - link "Porsche 911 2019 Porsche 911 $85K Listing AT B+" [ref=e1604] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cdb2614f-62e7-44b4-bb69-2ab185c9de14
+              - generic [ref=e1605]:
+                - img "Porsche 911" [ref=e1607]
+                - generic [ref=e1608]:
+                  - paragraph [ref=e1609]: 2019 Porsche 911
+                  - generic [ref=e1610]:
+                    - generic [ref=e1611]: $85K
+                    - generic [ref=e1613]: Listing
+                  - generic [ref=e1614]:
+                    - generic [ref=e1615]: AT
+                    - generic [ref=e1616]: B+
+            - link "Porsche 911 2019 Porsche 911 $84K Listing AT B+" [ref=e1617] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ccf36386-1a35-47d5-b405-97a1225745a9
+              - generic [ref=e1618]:
+                - img "Porsche 911" [ref=e1620]
+                - generic [ref=e1621]:
+                  - paragraph [ref=e1622]: 2019 Porsche 911
+                  - generic [ref=e1623]:
+                    - generic [ref=e1624]: $84K
+                    - generic [ref=e1626]: Listing
+                  - generic [ref=e1627]:
+                    - generic [ref=e1628]: AT
+                    - generic [ref=e1629]: B+
+            - link "Porsche 911 2024 Porsche 911 $147K Listing AT A" [ref=e1630] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ccb41b73-9ef1-4e26-9e1a-7b74106933b5
+              - generic [ref=e1631]:
+                - img "Porsche 911" [ref=e1633]
+                - generic [ref=e1634]:
+                  - paragraph [ref=e1635]: 2024 Porsche 911
+                  - generic [ref=e1636]:
+                    - generic [ref=e1637]: $147K
+                    - generic [ref=e1639]: Listing
+                  - generic [ref=e1640]:
+                    - generic [ref=e1641]: AT
+                    - generic [ref=e1642]: A
+            - link "Porsche 911 2025 Porsche 911 $140K Listing AT A" [ref=e1643] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cc97c4bc-9297-454a-92b7-0b89aa4e2b64
+              - generic [ref=e1644]:
+                - img "Porsche 911" [ref=e1646]
+                - generic [ref=e1647]:
+                  - paragraph [ref=e1648]: 2025 Porsche 911
+                  - generic [ref=e1649]:
+                    - generic [ref=e1650]: $140K
+                    - generic [ref=e1652]: Listing
+                  - generic [ref=e1653]:
+                    - generic [ref=e1654]: AT
+                    - generic [ref=e1655]: A
+            - link "Porsche 911 2023 Porsche 911 $154K Listing AT A" [ref=e1656] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cbf6fc84-aafe-44a8-b045-15b25e83c3e0
+              - generic [ref=e1657]:
+                - img "Porsche 911" [ref=e1659]
+                - generic [ref=e1660]:
+                  - paragraph [ref=e1661]: 2023 Porsche 911
+                  - generic [ref=e1662]:
+                    - generic [ref=e1663]: $154K
+                    - generic [ref=e1665]: Listing
+                  - generic [ref=e1666]:
+                    - generic [ref=e1667]: AT
+                    - generic [ref=e1668]: A
+            - link "Porsche 911 2023 Porsche 911 $112K Listing AT A" [ref=e1669] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cbafe18a-b71a-41b4-8a2f-2d14a511ddcb
+              - generic [ref=e1670]:
+                - img "Porsche 911" [ref=e1672]
+                - generic [ref=e1673]:
+                  - paragraph [ref=e1674]: 2023 Porsche 911
+                  - generic [ref=e1675]:
+                    - generic [ref=e1676]: $112K
+                    - generic [ref=e1678]: Listing
+                  - generic [ref=e1679]:
+                    - generic [ref=e1680]: AT
+                    - generic [ref=e1681]: A
+            - link "Porsche 911 2025 Porsche 911 $115K Listing AT A" [ref=e1682] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-cb378806-8cbb-44b7-bbd7-9ab0ee8d108f
+              - generic [ref=e1683]:
+                - img "Porsche 911" [ref=e1685]
+                - generic [ref=e1686]:
+                  - paragraph [ref=e1687]: 2025 Porsche 911
+                  - generic [ref=e1688]:
+                    - generic [ref=e1689]: $115K
+                    - generic [ref=e1691]: Listing
+                  - generic [ref=e1692]:
+                    - generic [ref=e1693]: AT
+                    - generic [ref=e1694]: A
+            - link "Porsche 911 2025 Porsche 911 $131K Listing AT A" [ref=e1695] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ca6bdf45-5aaf-4b33-81a9-03985bfe002d
+              - generic [ref=e1696]:
+                - img "Porsche 911" [ref=e1698]
+                - generic [ref=e1699]:
+                  - paragraph [ref=e1700]: 2025 Porsche 911
+                  - generic [ref=e1701]:
+                    - generic [ref=e1702]: $131K
+                    - generic [ref=e1704]: Listing
+                  - generic [ref=e1705]:
+                    - generic [ref=e1706]: AT
+                    - generic [ref=e1707]: A
+            - link "Porsche 911 2025 Porsche 911 $190K Listing AT A" [ref=e1708] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c9362bdc-ab04-40bf-a349-0fe588b234ea
+              - generic [ref=e1709]:
+                - img "Porsche 911" [ref=e1711]
+                - generic [ref=e1712]:
+                  - paragraph [ref=e1713]: 2025 Porsche 911
+                  - generic [ref=e1714]:
+                    - generic [ref=e1715]: $190K
+                    - generic [ref=e1717]: Listing
+                  - generic [ref=e1718]:
+                    - generic [ref=e1719]: AT
+                    - generic [ref=e1720]: A
+            - link "Porsche 911 2023 Porsche 911 $93K Listing AT B+" [ref=e1721] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c901d699-db90-47b8-b50a-7e7c40711043
+              - generic [ref=e1722]:
+                - img "Porsche 911" [ref=e1724]
+                - generic [ref=e1725]:
+                  - paragraph [ref=e1726]: 2023 Porsche 911
+                  - generic [ref=e1727]:
+                    - generic [ref=e1728]: $93K
+                    - generic [ref=e1730]: Listing
+                  - generic [ref=e1731]:
+                    - generic [ref=e1732]: AT
+                    - generic [ref=e1733]: B+
+            - link "Porsche 911 2022 Porsche 911 $100K Listing AT B+" [ref=e1734] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c7494c34-8e82-4254-8d7e-1eb3c8a00e5e
+              - generic [ref=e1735]:
+                - img "Porsche 911" [ref=e1737]
+                - generic [ref=e1738]:
+                  - paragraph [ref=e1739]: 2022 Porsche 911
+                  - generic [ref=e1740]:
+                    - generic [ref=e1741]: $100K
+                    - generic [ref=e1743]: Listing
+                  - generic [ref=e1744]:
+                    - generic [ref=e1745]: AT
+                    - generic [ref=e1746]: B+
+            - link "Porsche 911 2025 Porsche 911 $115K Listing AT A" [ref=e1747] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c4f5a5c7-ba33-4225-8723-ddf8803269e1
+              - generic [ref=e1748]:
+                - img "Porsche 911" [ref=e1750]
+                - generic [ref=e1751]:
+                  - paragraph [ref=e1752]: 2025 Porsche 911
+                  - generic [ref=e1753]:
+                    - generic [ref=e1754]: $115K
+                    - generic [ref=e1756]: Listing
+                  - generic [ref=e1757]:
+                    - generic [ref=e1758]: AT
+                    - generic [ref=e1759]: A
+            - link "Porsche 911 2026 Porsche 911 $153K Listing AT A" [ref=e1760] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c4a918e9-db3a-4c0a-94ad-24edd0b3d31a
+              - generic [ref=e1761]:
+                - img "Porsche 911" [ref=e1763]
+                - generic [ref=e1764]:
+                  - paragraph [ref=e1765]: 2026 Porsche 911
+                  - generic [ref=e1766]:
+                    - generic [ref=e1767]: $153K
+                    - generic [ref=e1769]: Listing
+                  - generic [ref=e1770]:
+                    - generic [ref=e1771]: AT
+                    - generic [ref=e1772]: A
+            - link "Porsche 911 2023 Porsche 911 $110K Listing AT A" [ref=e1773] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c403c5c5-cd84-46cc-9f74-77e5cbbf7a0c
+              - generic [ref=e1774]:
+                - img "Porsche 911" [ref=e1776]
+                - generic [ref=e1777]:
+                  - paragraph [ref=e1778]: 2023 Porsche 911
+                  - generic [ref=e1779]:
+                    - generic [ref=e1780]: $110K
+                    - generic [ref=e1782]: Listing
+                  - generic [ref=e1783]:
+                    - generic [ref=e1784]: AT
+                    - generic [ref=e1785]: A
+            - link "Porsche 911 2023 Porsche 911 $164K Listing AT A" [ref=e1786] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c3f9994a-3d4e-4703-9505-d46233e030a7
+              - generic [ref=e1787]:
+                - img "Porsche 911" [ref=e1789]
+                - generic [ref=e1790]:
+                  - paragraph [ref=e1791]: 2023 Porsche 911
+                  - generic [ref=e1792]:
+                    - generic [ref=e1793]: $164K
+                    - generic [ref=e1795]: Listing
+                  - generic [ref=e1796]:
+                    - generic [ref=e1797]: AT
+                    - generic [ref=e1798]: A
+            - link "Porsche 911 2024 Porsche 911 $137K Listing AT A" [ref=e1799] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c224d26e-4c6b-4624-a9c3-d34b24c403a7
+              - generic [ref=e1800]:
+                - img "Porsche 911" [ref=e1802]
+                - generic [ref=e1803]:
+                  - paragraph [ref=e1804]: 2024 Porsche 911
+                  - generic [ref=e1805]:
+                    - generic [ref=e1806]: $137K
+                    - generic [ref=e1808]: Listing
+                  - generic [ref=e1809]:
+                    - generic [ref=e1810]: AT
+                    - generic [ref=e1811]: A
+            - link "Porsche 911 2022 Porsche 911 $100K Listing AT B+" [ref=e1812] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c156393f-9b5d-4e8e-beb2-a7dbc048efd4
+              - generic [ref=e1813]:
+                - img "Porsche 911" [ref=e1815]
+                - generic [ref=e1816]:
+                  - paragraph [ref=e1817]: 2022 Porsche 911
+                  - generic [ref=e1818]:
+                    - generic [ref=e1819]: $100K
+                    - generic [ref=e1821]: Listing
+                  - generic [ref=e1822]:
+                    - generic [ref=e1823]: AT
+                    - generic [ref=e1824]: B+
+            - link "Porsche 911 2025 Porsche 911 $180K Listing AT A" [ref=e1825] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-c030b077-b886-41b5-bde7-c971dc38353a
+              - generic [ref=e1826]:
+                - img "Porsche 911" [ref=e1828]
+                - generic [ref=e1829]:
+                  - paragraph [ref=e1830]: 2025 Porsche 911
+                  - generic [ref=e1831]:
+                    - generic [ref=e1832]: $180K
+                    - generic [ref=e1834]: Listing
+                  - generic [ref=e1835]:
+                    - generic [ref=e1836]: AT
+                    - generic [ref=e1837]: A
+            - link "Porsche 911 2023 Porsche 911 $93K Listing AT B+" [ref=e1838] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-be2c5200-65ca-43f1-a761-b0b93900f647
+              - generic [ref=e1839]:
+                - img "Porsche 911" [ref=e1841]
+                - generic [ref=e1842]:
+                  - paragraph [ref=e1843]: 2023 Porsche 911
+                  - generic [ref=e1844]:
+                    - generic [ref=e1845]: $93K
+                    - generic [ref=e1847]: Listing
+                  - generic [ref=e1848]:
+                    - generic [ref=e1849]: AT
+                    - generic [ref=e1850]: B+
+            - link "Porsche 911 2019 Porsche 911 $85K Listing AT B+" [ref=e1851] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-bde19431-9f99-4ea6-8b10-e6f9d77dc62a
+              - generic [ref=e1852]:
+                - img "Porsche 911" [ref=e1854]
+                - generic [ref=e1855]:
+                  - paragraph [ref=e1856]: 2019 Porsche 911
+                  - generic [ref=e1857]:
+                    - generic [ref=e1858]: $85K
+                    - generic [ref=e1860]: Listing
+                  - generic [ref=e1861]:
+                    - generic [ref=e1862]: AT
+                    - generic [ref=e1863]: B+
+            - link "Porsche 911 2023 Porsche 911 $159K Listing AT A" [ref=e1864] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-bdbb74d9-2001-45e3-b1b5-91a96e012edf
+              - generic [ref=e1865]:
+                - img "Porsche 911" [ref=e1867]
+                - generic [ref=e1868]:
+                  - paragraph [ref=e1869]: 2023 Porsche 911
+                  - generic [ref=e1870]:
+                    - generic [ref=e1871]: $159K
+                    - generic [ref=e1873]: Listing
+                  - generic [ref=e1874]:
+                    - generic [ref=e1875]: AT
+                    - generic [ref=e1876]: A
+            - link "Porsche 911 2025 Porsche 911 $135K Listing AT A" [ref=e1877] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-bd35119b-aba2-468d-bdb6-526ce8fab30b
+              - generic [ref=e1878]:
+                - img "Porsche 911" [ref=e1880]
+                - generic [ref=e1881]:
+                  - paragraph [ref=e1882]: 2025 Porsche 911
+                  - generic [ref=e1883]:
+                    - generic [ref=e1884]: $135K
+                    - generic [ref=e1886]: Listing
+                  - generic [ref=e1887]:
+                    - generic [ref=e1888]: AT
+                    - generic [ref=e1889]: A
+            - link "Porsche 911 2021 Porsche 911 $97K Listing AT B+" [ref=e1890] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-bce9afb7-2ebb-4f50-a7bc-95256bea6a90
+              - generic [ref=e1891]:
+                - img "Porsche 911" [ref=e1893]
+                - generic [ref=e1894]:
+                  - paragraph [ref=e1895]: 2021 Porsche 911
+                  - generic [ref=e1896]:
+                    - generic [ref=e1897]: $97K
+                    - generic [ref=e1899]: Listing
+                  - generic [ref=e1900]:
+                    - generic [ref=e1901]: AT
+                    - generic [ref=e1902]: B+
+            - link "2023 Porsche 911 carrera 4s 2023 Porsche 911 carrera 4s POA Listing Cls B" [ref=e1903] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fff1fb46-0e76-45eb-9ffb-7664a46a9c49
+              - generic [ref=e1904]:
+                - img "2023 Porsche 911 carrera 4s" [ref=e1906]
+                - generic [ref=e1907]:
+                  - paragraph [ref=e1908]: 2023 Porsche 911 carrera 4s
+                  - generic [ref=e1909]:
+                    - generic [ref=e1910]: POA
+                    - generic [ref=e1912]: Listing
+                  - generic [ref=e1913]:
+                    - generic [ref=e1914]: Cls
+                    - generic [ref=e1915]: B
+            - link "2023 Porsche 911 carrera 2023 Porsche 911 carrera POA Listing Cls B" [ref=e1916] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ff846553-d633-47d5-a4b4-5a5b63afd5f8
+              - generic [ref=e1917]:
+                - img "2023 Porsche 911 carrera" [ref=e1919]
+                - generic [ref=e1920]:
+                  - paragraph [ref=e1921]: 2023 Porsche 911 carrera
+                  - generic [ref=e1922]:
+                    - generic [ref=e1923]: POA
+                    - generic [ref=e1925]: Listing
+                  - generic [ref=e1926]:
+                    - generic [ref=e1927]: Cls
+                    - generic [ref=e1928]: B
+            - link "2020 Porsche 911 carrera 2020 Porsche 911 carrera POA Listing Cls B" [ref=e1929] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ff48a6a4-48a0-4fc8-9b67-c404ac51c628
+              - generic [ref=e1930]:
+                - img "2020 Porsche 911 carrera" [ref=e1932]
+                - generic [ref=e1933]:
+                  - paragraph [ref=e1934]: 2020 Porsche 911 carrera
+                  - generic [ref=e1935]:
+                    - generic [ref=e1936]: POA
+                    - generic [ref=e1938]: Listing
+                  - generic [ref=e1939]:
+                    - generic [ref=e1940]: Cls
+                    - generic [ref=e1941]: B
+            - link "2023 Porsche 911 sport classic 2023 Porsche 911 sport classic POA Listing Cls B" [ref=e1942] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe517b04-dbe3-4757-9e8a-63631c3228bd
+              - generic [ref=e1943]:
+                - img "2023 Porsche 911 sport classic" [ref=e1945]
+                - generic [ref=e1946]:
+                  - paragraph [ref=e1947]: 2023 Porsche 911 sport classic
+                  - generic [ref=e1948]:
+                    - generic [ref=e1949]: POA
+                    - generic [ref=e1951]: Listing
+                  - generic [ref=e1952]:
+                    - generic [ref=e1953]: Cls
+                    - generic [ref=e1954]: B
+            - link "2019 Porsche 911 speedster 2019 Porsche 911 speedster POA Listing Cls B" [ref=e1955] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe41d038-20bc-4e87-a0cc-196651f9acdf
+              - generic [ref=e1956]:
+                - img "2019 Porsche 911 speedster" [ref=e1958]
+                - generic [ref=e1959]:
+                  - paragraph [ref=e1960]: 2019 Porsche 911 speedster
+                  - generic [ref=e1961]:
+                    - generic [ref=e1962]: POA
+                    - generic [ref=e1964]: Listing
+                  - generic [ref=e1965]:
+                    - generic [ref=e1966]: Cls
+                    - generic [ref=e1967]: B
+            - link "2022 Porsche 911 gt3 2022 Porsche 911 gt3 POA Listing Cls B" [ref=e1968] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fe2c849f-2a9f-4eeb-9006-a6092c77cb65
+              - generic [ref=e1969]:
+                - img "2022 Porsche 911 gt3" [ref=e1971]
+                - generic [ref=e1972]:
+                  - paragraph [ref=e1973]: 2022 Porsche 911 gt3
+                  - generic [ref=e1974]:
+                    - generic [ref=e1975]: POA
+                    - generic [ref=e1977]: Listing
+                  - generic [ref=e1978]:
+                    - generic [ref=e1979]: Cls
+                    - generic [ref=e1980]: B
+            - link "2020 Porsche 911 carrera 2020 Porsche 911 carrera POA Listing Cls B" [ref=e1981] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fdfbeabf-6a76-44d9-94f3-987afa316a33
+              - generic [ref=e1982]:
+                - img "2020 Porsche 911 carrera" [ref=e1984]
+                - generic [ref=e1985]:
+                  - paragraph [ref=e1986]: 2020 Porsche 911 carrera
+                  - generic [ref=e1987]:
+                    - generic [ref=e1988]: POA
+                    - generic [ref=e1990]: Listing
+                  - generic [ref=e1991]:
+                    - generic [ref=e1992]: Cls
+                    - generic [ref=e1993]: B
+            - link "2019 Porsche 911 carrera 2019 Porsche 911 carrera POA Listing Cls B" [ref=e1994] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fdb33a17-f7de-4dfc-8c2d-5b59274ad184
+              - generic [ref=e1995]:
+                - img "2019 Porsche 911 carrera" [ref=e1997]
+                - generic [ref=e1998]:
+                  - paragraph [ref=e1999]: 2019 Porsche 911 carrera
+                  - generic [ref=e2000]:
+                    - generic [ref=e2001]: POA
+                    - generic [ref=e2003]: Listing
+                  - generic [ref=e2004]:
+                    - generic [ref=e2005]: Cls
+                    - generic [ref=e2006]: B
+            - link "2021 Porsche 911 turbo s 2021 Porsche 911 turbo s POA Listing Cls B" [ref=e2007] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fd426728-27bb-4de6-b2f1-8638415220d8
+              - generic [ref=e2008]:
+                - img "2021 Porsche 911 turbo s" [ref=e2010]
+                - generic [ref=e2011]:
+                  - paragraph [ref=e2012]: 2021 Porsche 911 turbo s
+                  - generic [ref=e2013]:
+                    - generic [ref=e2014]: POA
+                    - generic [ref=e2016]: Listing
+                  - generic [ref=e2017]:
+                    - generic [ref=e2018]: Cls
+                    - generic [ref=e2019]: B
+            - link "2024 Porsche 911 turbo 2024 Porsche 911 turbo POA Listing Cls B" [ref=e2020] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fcd34e54-bb63-48d7-a814-75af9aa154c5
+              - generic [ref=e2021]:
+                - img "2024 Porsche 911 turbo" [ref=e2023]
+                - generic [ref=e2024]:
+                  - paragraph [ref=e2025]: 2024 Porsche 911 turbo
+                  - generic [ref=e2026]:
+                    - generic [ref=e2027]: POA
+                    - generic [ref=e2029]: Listing
+                  - generic [ref=e2030]:
+                    - generic [ref=e2031]: Cls
+                    - generic [ref=e2032]: B
+            - link "2022 Porsche 911 gt3 touring 2022 Porsche 911 gt3 touring POA Listing Cls B" [ref=e2033] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fcb3e7e0-2ebe-4994-b43c-f635459003e1
+              - generic [ref=e2034]:
+                - img "2022 Porsche 911 gt3 touring" [ref=e2036]
+                - generic [ref=e2037]:
+                  - paragraph [ref=e2038]: 2022 Porsche 911 gt3 touring
+                  - generic [ref=e2039]:
+                    - generic [ref=e2040]: POA
+                    - generic [ref=e2042]: Listing
+                  - generic [ref=e2043]:
+                    - generic [ref=e2044]: Cls
+                    - generic [ref=e2045]: B
+            - link "2024 Porsche 911 gt3 touring 2024 Porsche 911 gt3 touring POA Listing Cls B" [ref=e2046] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fc47f42a-739e-479c-bf14-9e9461e1f49c
+              - generic [ref=e2047]:
+                - img "2024 Porsche 911 gt3 touring" [ref=e2049]
+                - generic [ref=e2050]:
+                  - paragraph [ref=e2051]: 2024 Porsche 911 gt3 touring
+                  - generic [ref=e2052]:
+                    - generic [ref=e2053]: POA
+                    - generic [ref=e2055]: Listing
+                  - generic [ref=e2056]:
+                    - generic [ref=e2057]: Cls
+                    - generic [ref=e2058]: B
+            - link "2024 Porsche 911 turbo s 2024 Porsche 911 turbo s POA Listing Cls B" [ref=e2059] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fbd0ee9b-bf76-4052-aca4-8d9f6363c3ba
+              - generic [ref=e2060]:
+                - img "2024 Porsche 911 turbo s" [ref=e2062]
+                - generic [ref=e2063]:
+                  - paragraph [ref=e2064]: 2024 Porsche 911 turbo s
+                  - generic [ref=e2065]:
+                    - generic [ref=e2066]: POA
+                    - generic [ref=e2068]: Listing
+                  - generic [ref=e2069]:
+                    - generic [ref=e2070]: Cls
+                    - generic [ref=e2071]: B
+            - link "2024 Porsche 911 carrera 4s 2024 Porsche 911 carrera 4s POA Listing Cls B" [ref=e2072] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fb7e095d-8d90-4e39-b783-d10a7458154d
+              - generic [ref=e2073]:
+                - img "2024 Porsche 911 carrera 4s" [ref=e2075]
+                - generic [ref=e2076]:
+                  - paragraph [ref=e2077]: 2024 Porsche 911 carrera 4s
+                  - generic [ref=e2078]:
+                    - generic [ref=e2079]: POA
+                    - generic [ref=e2081]: Listing
+                  - generic [ref=e2082]:
+                    - generic [ref=e2083]: Cls
+                    - generic [ref=e2084]: B
+            - link "2024 Porsche 911 gt3 rs 2024 Porsche 911 gt3 rs POA Listing Cls B" [ref=e2085] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-faa1aee7-11e0-4228-b42e-2cba27afffe0
+              - generic [ref=e2086]:
+                - img "2024 Porsche 911 gt3 rs" [ref=e2088]
+                - generic [ref=e2089]:
+                  - paragraph [ref=e2090]: 2024 Porsche 911 gt3 rs
+                  - generic [ref=e2091]:
+                    - generic [ref=e2092]: POA
+                    - generic [ref=e2094]: Listing
+                  - generic [ref=e2095]:
+                    - generic [ref=e2096]: Cls
+                    - generic [ref=e2097]: B
+            - link "2024 Porsche 911 carrera 4s 2024 Porsche 911 carrera 4s POA Listing Cls B" [ref=e2098] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fa790962-b12f-4169-9846-31697ef4d3eb
+              - generic [ref=e2099]:
+                - img "2024 Porsche 911 carrera 4s" [ref=e2101]
+                - generic [ref=e2102]:
+                  - paragraph [ref=e2103]: 2024 Porsche 911 carrera 4s
+                  - generic [ref=e2104]:
+                    - generic [ref=e2105]: POA
+                    - generic [ref=e2107]: Listing
+                  - generic [ref=e2108]:
+                    - generic [ref=e2109]: Cls
+                    - generic [ref=e2110]: B
+            - link "2024 Porsche 911 st 2024 Porsche 911 st POA Listing Cls B" [ref=e2111] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fa5f57d0-aa54-44c3-b1aa-d3e44b4fb00e
+              - generic [ref=e2112]:
+                - img "2024 Porsche 911 st" [ref=e2114]
+                - generic [ref=e2115]:
+                  - paragraph [ref=e2116]: 2024 Porsche 911 st
+                  - generic [ref=e2117]:
+                    - generic [ref=e2118]: POA
+                    - generic [ref=e2120]: Listing
+                  - generic [ref=e2121]:
+                    - generic [ref=e2122]: Cls
+                    - generic [ref=e2123]: B
+            - link "2026 Porsche 911 spirit 70 2026 Porsche 911 spirit 70 POA Listing Cls B" [ref=e2124] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-fa23b6a0-4183-4c8e-8f6c-ac35941f3f5d
+              - generic [ref=e2125]:
+                - img "2026 Porsche 911 spirit 70" [ref=e2127]
+                - generic [ref=e2128]:
+                  - paragraph [ref=e2129]: 2026 Porsche 911 spirit 70
+                  - generic [ref=e2130]:
+                    - generic [ref=e2131]: POA
+                    - generic [ref=e2133]: Listing
+                  - generic [ref=e2134]:
+                    - generic [ref=e2135]: Cls
+                    - generic [ref=e2136]: B
+            - link "2022 Porsche 911 gt3 2022 Porsche 911 gt3 POA Listing Cls B" [ref=e2137] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8f2ef69-3f93-400e-8307-bf696d9ba2a9
+              - generic [ref=e2138]:
+                - img "2022 Porsche 911 gt3" [ref=e2140]
+                - generic [ref=e2141]:
+                  - paragraph [ref=e2142]: 2022 Porsche 911 gt3
+                  - generic [ref=e2143]:
+                    - generic [ref=e2144]: POA
+                    - generic [ref=e2146]: Listing
+                  - generic [ref=e2147]:
+                    - generic [ref=e2148]: Cls
+                    - generic [ref=e2149]: B
+            - link "2023 Porsche 911 sport classic 2023 Porsche 911 sport classic POA Listing Cls B" [ref=e2150] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8949e81-e1a8-4862-b41c-ee478bc7fc86
+              - generic [ref=e2151]:
+                - img "2023 Porsche 911 sport classic" [ref=e2153]
+                - generic [ref=e2154]:
+                  - paragraph [ref=e2155]: 2023 Porsche 911 sport classic
+                  - generic [ref=e2156]:
+                    - generic [ref=e2157]: POA
+                    - generic [ref=e2159]: Listing
+                  - generic [ref=e2160]:
+                    - generic [ref=e2161]: Cls
+                    - generic [ref=e2162]: B
+            - link "2024 Porsche 911 carrera 2024 Porsche 911 carrera POA Listing Cls B" [ref=e2163] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f855c6ee-ec26-4e4b-9571-53924beb11af
+              - generic [ref=e2164]:
+                - img "2024 Porsche 911 carrera" [ref=e2166]
+                - generic [ref=e2167]:
+                  - paragraph [ref=e2168]: 2024 Porsche 911 carrera
+                  - generic [ref=e2169]:
+                    - generic [ref=e2170]: POA
+                    - generic [ref=e2172]: Listing
+                  - generic [ref=e2173]:
+                    - generic [ref=e2174]: Cls
+                    - generic [ref=e2175]: B
+            - link "2023 Porsche 911 carrera t 2023 Porsche 911 carrera t POA Listing Cls B" [ref=e2176] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f8420922-da9e-4907-9210-cb22b092f399
+              - generic [ref=e2177]:
+                - img "2023 Porsche 911 carrera t" [ref=e2179]
+                - generic [ref=e2180]:
+                  - paragraph [ref=e2181]: 2023 Porsche 911 carrera t
+                  - generic [ref=e2182]:
+                    - generic [ref=e2183]: POA
+                    - generic [ref=e2185]: Listing
+                  - generic [ref=e2186]:
+                    - generic [ref=e2187]: Cls
+                    - generic [ref=e2188]: B
+            - link "2022 Porsche 911 carrera gts 2022 Porsche 911 carrera gts POA Listing Cls B" [ref=e2189] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f79c4d6c-19d5-47e3-ae34-0c354d193401
+              - generic [ref=e2190]:
+                - img "2022 Porsche 911 carrera gts" [ref=e2192]
+                - generic [ref=e2193]:
+                  - paragraph [ref=e2194]: 2022 Porsche 911 carrera gts
+                  - generic [ref=e2195]:
+                    - generic [ref=e2196]: POA
+                    - generic [ref=e2198]: Listing
+                  - generic [ref=e2199]:
+                    - generic [ref=e2200]: Cls
+                    - generic [ref=e2201]: B
+            - link "2024 Porsche 911 gt3 standard 2024 Porsche 911 gt3 standard POA Listing Cls B" [ref=e2202] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f7398c72-1e7a-4121-889a-02c23b3e69f5
+              - generic [ref=e2203]:
+                - img "2024 Porsche 911 gt3 standard" [ref=e2205]
+                - generic [ref=e2206]:
+                  - paragraph [ref=e2207]: 2024 Porsche 911 gt3 standard
+                  - generic [ref=e2208]:
+                    - generic [ref=e2209]: POA
+                    - generic [ref=e2211]: Listing
+                  - generic [ref=e2212]:
+                    - generic [ref=e2213]: Cls
+                    - generic [ref=e2214]: B
+            - link "2026 Porsche 911 gt3 touring 2026 Porsche 911 gt3 touring POA Listing Cls B" [ref=e2215] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f72be8dd-b34f-465c-b028-2aba2b2b4662
+              - generic [ref=e2216]:
+                - img "2026 Porsche 911 gt3 touring" [ref=e2218]
+                - generic [ref=e2219]:
+                  - paragraph [ref=e2220]: 2026 Porsche 911 gt3 touring
+                  - generic [ref=e2221]:
+                    - generic [ref=e2222]: POA
+                    - generic [ref=e2224]: Listing
+                  - generic [ref=e2225]:
+                    - generic [ref=e2226]: Cls
+                    - generic [ref=e2227]: B
+            - link "2019 Porsche 911 carrera s 2019 Porsche 911 carrera s POA Listing Cls B" [ref=e2228] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f69fa2e1-c586-4cfb-88dd-c7421b2c64bb
+              - generic [ref=e2229]:
+                - img "2019 Porsche 911 carrera s" [ref=e2231]
+                - generic [ref=e2232]:
+                  - paragraph [ref=e2233]: 2019 Porsche 911 carrera s
+                  - generic [ref=e2234]:
+                    - generic [ref=e2235]: POA
+                    - generic [ref=e2237]: Listing
+                  - generic [ref=e2238]:
+                    - generic [ref=e2239]: Cls
+                    - generic [ref=e2240]: B
+            - link "2023 Porsche 911 sport classic 2023 Porsche 911 sport classic POA Listing Cls B" [ref=e2241] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f653fc81-f4a3-43cf-8039-d60a3cd7edf7
+              - generic [ref=e2242]:
+                - img "2023 Porsche 911 sport classic" [ref=e2244]
+                - generic [ref=e2245]:
+                  - paragraph [ref=e2246]: 2023 Porsche 911 sport classic
+                  - generic [ref=e2247]:
+                    - generic [ref=e2248]: POA
+                    - generic [ref=e2250]: Listing
+                  - generic [ref=e2251]:
+                    - generic [ref=e2252]: Cls
+                    - generic [ref=e2253]: B
+            - link "2023 Porsche 911 carrera 2023 Porsche 911 carrera POA Listing Cls B" [ref=e2254] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f62fa479-81a6-4483-abdd-3b64d2d7bb94
+              - generic [ref=e2255]:
+                - img "2023 Porsche 911 carrera" [ref=e2257]
+                - generic [ref=e2258]:
+                  - paragraph [ref=e2259]: 2023 Porsche 911 carrera
+                  - generic [ref=e2260]:
+                    - generic [ref=e2261]: POA
+                    - generic [ref=e2263]: Listing
+                  - generic [ref=e2264]:
+                    - generic [ref=e2265]: Cls
+                    - generic [ref=e2266]: B
+            - link "2025 Porsche 911 carrera gts 2025 Porsche 911 carrera gts POA Listing Cls B" [ref=e2267] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f5c64067-d65e-4509-a814-eae3eb19fc06
+              - generic [ref=e2268]:
+                - img "2025 Porsche 911 carrera gts" [ref=e2270]
+                - generic [ref=e2271]:
+                  - paragraph [ref=e2272]: 2025 Porsche 911 carrera gts
+                  - generic [ref=e2273]:
+                    - generic [ref=e2274]: POA
+                    - generic [ref=e2276]: Listing
+                  - generic [ref=e2277]:
+                    - generic [ref=e2278]: Cls
+                    - generic [ref=e2279]: B
+            - link "2022 Porsche 911 turbo s 2022 Porsche 911 turbo s POA Listing Cls B" [ref=e2280] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f57d8cf6-8c04-41bd-8fbe-8af0b920f14e
+              - generic [ref=e2281]:
+                - img "2022 Porsche 911 turbo s" [ref=e2283]
+                - generic [ref=e2284]:
+                  - paragraph [ref=e2285]: 2022 Porsche 911 turbo s
+                  - generic [ref=e2286]:
+                    - generic [ref=e2287]: POA
+                    - generic [ref=e2289]: Listing
+                  - generic [ref=e2290]:
+                    - generic [ref=e2291]: Cls
+                    - generic [ref=e2292]: B
+            - link "2022 Porsche 911 targa 4s 2022 Porsche 911 targa 4s POA Listing Cls B" [ref=e2293] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f4e79625-e539-43c8-ab0d-03a3ddcf2ba7
+              - generic [ref=e2294]:
+                - img "2022 Porsche 911 targa 4s" [ref=e2296]
+                - generic [ref=e2297]:
+                  - paragraph [ref=e2298]: 2022 Porsche 911 targa 4s
+                  - generic [ref=e2299]:
+                    - generic [ref=e2300]: POA
+                    - generic [ref=e2302]: Listing
+                  - generic [ref=e2303]:
+                    - generic [ref=e2304]: Cls
+                    - generic [ref=e2305]: B
+            - link "2025 Porsche 911 carrera 2025 Porsche 911 carrera POA Listing Cls B" [ref=e2306] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3c76e9a-2aea-4191-bece-c50c49aaac49
+              - generic [ref=e2307]:
+                - img "2025 Porsche 911 carrera" [ref=e2309]
+                - generic [ref=e2310]:
+                  - paragraph [ref=e2311]: 2025 Porsche 911 carrera
+                  - generic [ref=e2312]:
+                    - generic [ref=e2313]: POA
+                    - generic [ref=e2315]: Listing
+                  - generic [ref=e2316]:
+                    - generic [ref=e2317]: Cls
+                    - generic [ref=e2318]: B
+            - link "2020 Porsche 911 targa 4s 2020 Porsche 911 targa 4s POA Listing Cls B" [ref=e2319] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f3161769-61d4-4e07-8505-7320c2e92a85
+              - generic [ref=e2320]:
+                - img "2020 Porsche 911 targa 4s" [ref=e2322]
+                - generic [ref=e2323]:
+                  - paragraph [ref=e2324]: 2020 Porsche 911 targa 4s
+                  - generic [ref=e2325]:
+                    - generic [ref=e2326]: POA
+                    - generic [ref=e2328]: Listing
+                  - generic [ref=e2329]:
+                    - generic [ref=e2330]: Cls
+                    - generic [ref=e2331]: B
+            - link "2024 Porsche 911 gt3 standard 2024 Porsche 911 gt3 standard POA Listing Cls B" [ref=e2332] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f2acd8d8-917d-4681-abaf-a0271371f252
+              - generic [ref=e2333]:
+                - img "2024 Porsche 911 gt3 standard" [ref=e2335]
+                - generic [ref=e2336]:
+                  - paragraph [ref=e2337]: 2024 Porsche 911 gt3 standard
+                  - generic [ref=e2338]:
+                    - generic [ref=e2339]: POA
+                    - generic [ref=e2341]: Listing
+                  - generic [ref=e2342]:
+                    - generic [ref=e2343]: Cls
+                    - generic [ref=e2344]: B
+            - link "2024 Porsche 911 gt3 2024 Porsche 911 gt3 POA Listing Cls B" [ref=e2345] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f295ee1f-f4b8-44ad-9b5b-e202e7dad67e
+              - generic [ref=e2346]:
+                - img "2024 Porsche 911 gt3" [ref=e2348]
+                - generic [ref=e2349]:
+                  - paragraph [ref=e2350]: 2024 Porsche 911 gt3
+                  - generic [ref=e2351]:
+                    - generic [ref=e2352]: POA
+                    - generic [ref=e2354]: Listing
+                  - generic [ref=e2355]:
+                    - generic [ref=e2356]: Cls
+                    - generic [ref=e2357]: B
+            - link "2024 Porsche 911 gt3 2024 Porsche 911 gt3 POA Listing Cls B" [ref=e2358] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f282f3b5-2ebd-419f-829b-4ed9c07b51e4
+              - generic [ref=e2359]:
+                - img "2024 Porsche 911 gt3" [ref=e2361]
+                - generic [ref=e2362]:
+                  - paragraph [ref=e2363]: 2024 Porsche 911 gt3
+                  - generic [ref=e2364]:
+                    - generic [ref=e2365]: POA
+                    - generic [ref=e2367]: Listing
+                  - generic [ref=e2368]:
+                    - generic [ref=e2369]: Cls
+                    - generic [ref=e2370]: B
+            - link "2022 Porsche 911 turbo s 2022 Porsche 911 turbo s POA Listing Cls B" [ref=e2371] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f1c309c9-e2cd-4aa0-bb78-5920948c8336
+              - generic [ref=e2372]:
+                - img "2022 Porsche 911 turbo s" [ref=e2374]
+                - generic [ref=e2375]:
+                  - paragraph [ref=e2376]: 2022 Porsche 911 turbo s
+                  - generic [ref=e2377]:
+                    - generic [ref=e2378]: POA
+                    - generic [ref=e2380]: Listing
+                  - generic [ref=e2381]:
+                    - generic [ref=e2382]: Cls
+                    - generic [ref=e2383]: B
+            - link "2022 Porsche 911 gt3 2022 Porsche 911 gt3 POA Listing Cls B" [ref=e2384] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f1ace39c-31f0-46e5-b11f-01e960f64847
+              - generic [ref=e2385]:
+                - img "2022 Porsche 911 gt3" [ref=e2387]
+                - generic [ref=e2388]:
+                  - paragraph [ref=e2389]: 2022 Porsche 911 gt3
+                  - generic [ref=e2390]:
+                    - generic [ref=e2391]: POA
+                    - generic [ref=e2393]: Listing
+                  - generic [ref=e2394]:
+                    - generic [ref=e2395]: Cls
+                    - generic [ref=e2396]: B
+            - link "2021 Porsche 911 turbo s 2021 Porsche 911 turbo s POA Listing Cls B" [ref=e2397] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f192f1d3-58fa-4bff-9a15-1becfff0824e
+              - generic [ref=e2398]:
+                - img "2021 Porsche 911 turbo s" [ref=e2400]
+                - generic [ref=e2401]:
+                  - paragraph [ref=e2402]: 2021 Porsche 911 turbo s
+                  - generic [ref=e2403]:
+                    - generic [ref=e2404]: POA
+                    - generic [ref=e2406]: Listing
+                  - generic [ref=e2407]:
+                    - generic [ref=e2408]: Cls
+                    - generic [ref=e2409]: B
+            - link "2022 Porsche 911 gt3 standard 2022 Porsche 911 gt3 standard POA Listing Cls B" [ref=e2410] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f14ad8fc-92c9-4a37-9743-016ee2ef3582
+              - generic [ref=e2411]:
+                - img "2022 Porsche 911 gt3 standard" [ref=e2413]
+                - generic [ref=e2414]:
+                  - paragraph [ref=e2415]: 2022 Porsche 911 gt3 standard
+                  - generic [ref=e2416]:
+                    - generic [ref=e2417]: POA
+                    - generic [ref=e2419]: Listing
+                  - generic [ref=e2420]:
+                    - generic [ref=e2421]: Cls
+                    - generic [ref=e2422]: B
+            - link "2024 Porsche 911 dakar 2024 Porsche 911 dakar POA Listing Cls B" [ref=e2423] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f04c8c77-5fa7-40bd-8f6a-e4e16a55c2d0
+              - generic [ref=e2424]:
+                - img "2024 Porsche 911 dakar" [ref=e2426]
+                - generic [ref=e2427]:
+                  - paragraph [ref=e2428]: 2024 Porsche 911 dakar
+                  - generic [ref=e2429]:
+                    - generic [ref=e2430]: POA
+                    - generic [ref=e2432]: Listing
+                  - generic [ref=e2433]:
+                    - generic [ref=e2434]: Cls
+                    - generic [ref=e2435]: B
+            - link "2022 Porsche 911 gt3 standard 2022 Porsche 911 gt3 standard POA Listing Cls B" [ref=e2436] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-f0181f37-581a-4937-9195-21b44e6fc32f
+              - generic [ref=e2437]:
+                - img "2022 Porsche 911 gt3 standard" [ref=e2439]
+                - generic [ref=e2440]:
+                  - paragraph [ref=e2441]: 2022 Porsche 911 gt3 standard
+                  - generic [ref=e2442]:
+                    - generic [ref=e2443]: POA
+                    - generic [ref=e2445]: Listing
+                  - generic [ref=e2446]:
+                    - generic [ref=e2447]: Cls
+                    - generic [ref=e2448]: B
+            - link "2025 Porsche 911 gt3 2025 Porsche 911 gt3 POA Listing Cls B" [ref=e2449] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-efcdee74-d244-4c70-82e9-631bf2392c32
+              - generic [ref=e2450]:
+                - img "2025 Porsche 911 gt3" [ref=e2452]
+                - generic [ref=e2453]:
+                  - paragraph [ref=e2454]: 2025 Porsche 911 gt3
+                  - generic [ref=e2455]:
+                    - generic [ref=e2456]: POA
+                    - generic [ref=e2458]: Listing
+                  - generic [ref=e2459]:
+                    - generic [ref=e2460]: Cls
+                    - generic [ref=e2461]: B
+            - link "2025 Porsche 911 gt3 rs 2025 Porsche 911 gt3 rs POA Listing Cls B" [ref=e2462] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef898575-bbec-4668-887a-4b9b8e1c749b
+              - generic [ref=e2463]:
+                - img "2025 Porsche 911 gt3 rs" [ref=e2465]
+                - generic [ref=e2466]:
+                  - paragraph [ref=e2467]: 2025 Porsche 911 gt3 rs
+                  - generic [ref=e2468]:
+                    - generic [ref=e2469]: POA
+                    - generic [ref=e2471]: Listing
+                  - generic [ref=e2472]:
+                    - generic [ref=e2473]: Cls
+                    - generic [ref=e2474]: B
+            - link "2024 Porsche 911 carrera 2024 Porsche 911 carrera POA Listing Cls B" [ref=e2475] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef4e23d7-f35a-49b0-9038-8985dabf0869
+              - generic [ref=e2476]:
+                - img "2024 Porsche 911 carrera" [ref=e2478]
+                - generic [ref=e2479]:
+                  - paragraph [ref=e2480]: 2024 Porsche 911 carrera
+                  - generic [ref=e2481]:
+                    - generic [ref=e2482]: POA
+                    - generic [ref=e2484]: Listing
+                  - generic [ref=e2485]:
+                    - generic [ref=e2486]: Cls
+                    - generic [ref=e2487]: B
+            - link "2024 Porsche 911 carrera s 2024 Porsche 911 carrera s POA Listing Cls B" [ref=e2488] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef0c86f5-e83d-463d-8840-550c22a64a6d
+              - generic [ref=e2489]:
+                - img "2024 Porsche 911 carrera s" [ref=e2491]
+                - generic [ref=e2492]:
+                  - paragraph [ref=e2493]: 2024 Porsche 911 carrera s
+                  - generic [ref=e2494]:
+                    - generic [ref=e2495]: POA
+                    - generic [ref=e2497]: Listing
+                  - generic [ref=e2498]:
+                    - generic [ref=e2499]: Cls
+                    - generic [ref=e2500]: B
+            - link "2022 Porsche 911 turbo s 2022 Porsche 911 turbo s POA Listing Cls B" [ref=e2501] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ef003b67-0706-462d-874a-491dbd53dfd9
+              - generic [ref=e2502]:
+                - img "2022 Porsche 911 turbo s" [ref=e2504]
+                - generic [ref=e2505]:
+                  - paragraph [ref=e2506]: 2022 Porsche 911 turbo s
+                  - generic [ref=e2507]:
+                    - generic [ref=e2508]: POA
+                    - generic [ref=e2510]: Listing
+                  - generic [ref=e2511]:
+                    - generic [ref=e2512]: Cls
+                    - generic [ref=e2513]: B
+            - link "2024 Porsche 911 carrera gts 2024 Porsche 911 carrera gts POA Listing Cls B" [ref=e2514] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ee965165-4fed-456c-86a2-a4e1f272191b
+              - generic [ref=e2515]:
+                - img "2024 Porsche 911 carrera gts" [ref=e2517]
+                - generic [ref=e2518]:
+                  - paragraph [ref=e2519]: 2024 Porsche 911 carrera gts
+                  - generic [ref=e2520]:
+                    - generic [ref=e2521]: POA
+                    - generic [ref=e2523]: Listing
+                  - generic [ref=e2524]:
+                    - generic [ref=e2525]: Cls
+                    - generic [ref=e2526]: B
+            - link "2026 Porsche 911 targa 4 gts 2026 Porsche 911 targa 4 gts POA Listing Cls B" [ref=e2527] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ed76c260-b5e2-4d11-bb33-3890c241f1a1
+              - generic [ref=e2528]:
+                - img "2026 Porsche 911 targa 4 gts" [ref=e2530]
+                - generic [ref=e2531]:
+                  - paragraph [ref=e2532]: 2026 Porsche 911 targa 4 gts
+                  - generic [ref=e2533]:
+                    - generic [ref=e2534]: POA
+                    - generic [ref=e2536]: Listing
+                  - generic [ref=e2537]:
+                    - generic [ref=e2538]: Cls
+                    - generic [ref=e2539]: B
+            - link "2022 Porsche 911 gt3 2022 Porsche 911 gt3 POA Listing Cls B" [ref=e2540] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec426b11-23fa-4262-bf2f-271b5e299d30
+              - generic [ref=e2541]:
+                - img "2022 Porsche 911 gt3" [ref=e2543]
+                - generic [ref=e2544]:
+                  - paragraph [ref=e2545]: 2022 Porsche 911 gt3
+                  - generic [ref=e2546]:
+                    - generic [ref=e2547]: POA
+                    - generic [ref=e2549]: Listing
+                  - generic [ref=e2550]:
+                    - generic [ref=e2551]: Cls
+                    - generic [ref=e2552]: B
+            - link "2023 Porsche 911 turbo coupe 2023 Porsche 911 turbo coupe POA Listing Cls B" [ref=e2553] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec317800-49ae-499c-8354-6bf3a3f2fb97
+              - generic [ref=e2554]:
+                - img "2023 Porsche 911 turbo coupe" [ref=e2556]
+                - generic [ref=e2557]:
+                  - paragraph [ref=e2558]: 2023 Porsche 911 turbo coupe
+                  - generic [ref=e2559]:
+                    - generic [ref=e2560]: POA
+                    - generic [ref=e2562]: Listing
+                  - generic [ref=e2563]:
+                    - generic [ref=e2564]: Cls
+                    - generic [ref=e2565]: B
+            - link "2024 Porsche 911 turbo s 2024 Porsche 911 turbo s POA Listing Cls B" [ref=e2566] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec10cc8f-90f5-49c5-a324-651b71f3cedb
+              - generic [ref=e2567]:
+                - img "2024 Porsche 911 turbo s" [ref=e2569]
+                - generic [ref=e2570]:
+                  - paragraph [ref=e2571]: 2024 Porsche 911 turbo s
+                  - generic [ref=e2572]:
+                    - generic [ref=e2573]: POA
+                    - generic [ref=e2575]: Listing
+                  - generic [ref=e2576]:
+                    - generic [ref=e2577]: Cls
+                    - generic [ref=e2578]: B
+            - link "2022 Porsche 911 2022 Porsche 911 POA Listing Cls B" [ref=e2579] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ec04c6f3-aeae-4065-8580-b3b57459a6ca
+              - generic [ref=e2580]:
+                - img "2022 Porsche 911" [ref=e2582]
+                - generic [ref=e2583]:
+                  - paragraph [ref=e2584]: 2022 Porsche 911
+                  - generic [ref=e2585]:
+                    - generic [ref=e2586]: POA
+                    - generic [ref=e2588]: Listing
+                  - generic [ref=e2589]:
+                    - generic [ref=e2590]: Cls
+                    - generic [ref=e2591]: B
+            - link "2022 Porsche 911 gt3 standard 2022 Porsche 911 gt3 standard POA Listing Cls B" [ref=e2592] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ebc75f4c-2b93-4a42-b9c5-3371c2a1a158
+              - generic [ref=e2593]:
+                - img "2022 Porsche 911 gt3 standard" [ref=e2595]
+                - generic [ref=e2596]:
+                  - paragraph [ref=e2597]: 2022 Porsche 911 gt3 standard
+                  - generic [ref=e2598]:
+                    - generic [ref=e2599]: POA
+                    - generic [ref=e2601]: Listing
+                  - generic [ref=e2602]:
+                    - generic [ref=e2603]: Cls
+                    - generic [ref=e2604]: B
+            - link "2024 Porsche 911 st 2024 Porsche 911 st POA Listing Cls B" [ref=e2605] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb1953b0-5cc4-4829-a6d5-047ed846c9a5
+              - generic [ref=e2606]:
+                - img "2024 Porsche 911 st" [ref=e2608]
+                - generic [ref=e2609]:
+                  - paragraph [ref=e2610]: 2024 Porsche 911 st
+                  - generic [ref=e2611]:
+                    - generic [ref=e2612]: POA
+                    - generic [ref=e2614]: Listing
+                  - generic [ref=e2615]:
+                    - generic [ref=e2616]: Cls
+                    - generic [ref=e2617]: B
+            - link "2025 Porsche 911 carrera 4 gts 2025 Porsche 911 carrera 4 gts POA Listing Cls B" [ref=e2618] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eb0c1902-1c30-4151-82c3-4814e5481f79
+              - generic [ref=e2619]:
+                - img "2025 Porsche 911 carrera 4 gts" [ref=e2621]
+                - generic [ref=e2622]:
+                  - paragraph [ref=e2623]: 2025 Porsche 911 carrera 4 gts
+                  - generic [ref=e2624]:
+                    - generic [ref=e2625]: POA
+                    - generic [ref=e2627]: Listing
+                  - generic [ref=e2628]:
+                    - generic [ref=e2629]: Cls
+                    - generic [ref=e2630]: B
+            - link "2024 Porsche 911 targa 4 gts 2024 Porsche 911 targa 4 gts POA Listing Cls B" [ref=e2631] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-eac6bb9b-d2ea-4607-9298-06de6b3653cc
+              - generic [ref=e2632]:
+                - img "2024 Porsche 911 targa 4 gts" [ref=e2634]
+                - generic [ref=e2635]:
+                  - paragraph [ref=e2636]: 2024 Porsche 911 targa 4 gts
+                  - generic [ref=e2637]:
+                    - generic [ref=e2638]: POA
+                    - generic [ref=e2640]: Listing
+                  - generic [ref=e2641]:
+                    - generic [ref=e2642]: Cls
+                    - generic [ref=e2643]: B
+            - link "2024 Porsche 911 carrera gts 2024 Porsche 911 carrera gts POA Listing Cls B" [ref=e2644] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-ea3ff017-bb97-4972-93f7-3ae701bcb022
+              - generic [ref=e2645]:
+                - img "2024 Porsche 911 carrera gts" [ref=e2647]
+                - generic [ref=e2648]:
+                  - paragraph [ref=e2649]: 2024 Porsche 911 carrera gts
+                  - generic [ref=e2650]:
+                    - generic [ref=e2651]: POA
+                    - generic [ref=e2653]: Listing
+                  - generic [ref=e2654]:
+                    - generic [ref=e2655]: Cls
+                    - generic [ref=e2656]: B
+            - link "2024 Porsche 911 targa 4 2024 Porsche 911 targa 4 POA Listing Cls B" [ref=e2657] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e9b8aab2-e1d1-415d-949a-9fd52ee4a235
+              - generic [ref=e2658]:
+                - img "2024 Porsche 911 targa 4" [ref=e2660]
+                - generic [ref=e2661]:
+                  - paragraph [ref=e2662]: 2024 Porsche 911 targa 4
+                  - generic [ref=e2663]:
+                    - generic [ref=e2664]: POA
+                    - generic [ref=e2666]: Listing
+                  - generic [ref=e2667]:
+                    - generic [ref=e2668]: Cls
+                    - generic [ref=e2669]: B
+            - link "2019 Porsche 911 carrera 2019 Porsche 911 carrera POA Listing Cls B" [ref=e2670] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e8fd929f-f17b-4a18-9c43-85525c2e7adf
+              - generic [ref=e2671]:
+                - img "2019 Porsche 911 carrera" [ref=e2673]
+                - generic [ref=e2674]:
+                  - paragraph [ref=e2675]: 2019 Porsche 911 carrera
+                  - generic [ref=e2676]:
+                    - generic [ref=e2677]: POA
+                    - generic [ref=e2679]: Listing
+                  - generic [ref=e2680]:
+                    - generic [ref=e2681]: Cls
+                    - generic [ref=e2682]: B
+            - link "2024 Porsche 911 gt3 rs weissach 2024 Porsche 911 gt3 rs weissa POA Listing Cls B" [ref=e2683] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e85e9948-5aed-43f7-bbe8-19acd6017653
+              - generic [ref=e2684]:
+                - img "2024 Porsche 911 gt3 rs weissach" [ref=e2686]
+                - generic [ref=e2687]:
+                  - paragraph [ref=e2688]: 2024 Porsche 911 gt3 rs weissa
+                  - generic [ref=e2689]:
+                    - generic [ref=e2690]: POA
+                    - generic [ref=e2692]: Listing
+                  - generic [ref=e2693]:
+                    - generic [ref=e2694]: Cls
+                    - generic [ref=e2695]: B
+            - link "2025 Porsche 911 gt3 2025 Porsche 911 gt3 POA Listing Cls B" [ref=e2696] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e85984d3-7d5c-4db3-ac65-74a250b298c3
+              - generic [ref=e2697]:
+                - img "2025 Porsche 911 gt3" [ref=e2699]
+                - generic [ref=e2700]:
+                  - paragraph [ref=e2701]: 2025 Porsche 911 gt3
+                  - generic [ref=e2702]:
+                    - generic [ref=e2703]: POA
+                    - generic [ref=e2705]: Listing
+                  - generic [ref=e2706]:
+                    - generic [ref=e2707]: Cls
+                    - generic [ref=e2708]: B
+            - link "2026 Porsche 911 targa 4 gts 2026 Porsche 911 targa 4 gts POA Listing Cls B" [ref=e2709] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e743867c-628f-4b30-9637-3c518170c50a
+              - generic [ref=e2710]:
+                - img "2026 Porsche 911 targa 4 gts" [ref=e2712]
+                - generic [ref=e2713]:
+                  - paragraph [ref=e2714]: 2026 Porsche 911 targa 4 gts
+                  - generic [ref=e2715]:
+                    - generic [ref=e2716]: POA
+                    - generic [ref=e2718]: Listing
+                  - generic [ref=e2719]:
+                    - generic [ref=e2720]: Cls
+                    - generic [ref=e2721]: B
+            - link "2024 Porsche 911 carrera s 2024 Porsche 911 carrera s POA Listing Cls B" [ref=e2722] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e6bf22e6-b21e-4977-a915-c3cc17516afd
+              - generic [ref=e2723]:
+                - img "2024 Porsche 911 carrera s" [ref=e2725]
+                - generic [ref=e2726]:
+                  - paragraph [ref=e2727]: 2024 Porsche 911 carrera s
+                  - generic [ref=e2728]:
+                    - generic [ref=e2729]: POA
+                    - generic [ref=e2731]: Listing
+                  - generic [ref=e2732]:
+                    - generic [ref=e2733]: Cls
+                    - generic [ref=e2734]: B
+            - link "2026 Porsche 911 gt3 2026 Porsche 911 gt3 POA Listing Cls B" [ref=e2735] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e4df105a-b281-4f58-a3b7-2f149ec8ab48
+              - generic [ref=e2736]:
+                - img "2026 Porsche 911 gt3" [ref=e2738]
+                - generic [ref=e2739]:
+                  - paragraph [ref=e2740]: 2026 Porsche 911 gt3
+                  - generic [ref=e2741]:
+                    - generic [ref=e2742]: POA
+                    - generic [ref=e2744]: Listing
+                  - generic [ref=e2745]:
+                    - generic [ref=e2746]: Cls
+                    - generic [ref=e2747]: B
+            - link "2026 Porsche 911 carrera gts 2026 Porsche 911 carrera gts POA Listing Cls B" [ref=e2748] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e39a6d6d-6326-4f42-a3d7-093bc9a65dc5
+              - generic [ref=e2749]:
+                - img "2026 Porsche 911 carrera gts" [ref=e2751]
+                - generic [ref=e2752]:
+                  - paragraph [ref=e2753]: 2026 Porsche 911 carrera gts
+                  - generic [ref=e2754]:
+                    - generic [ref=e2755]: POA
+                    - generic [ref=e2757]: Listing
+                  - generic [ref=e2758]:
+                    - generic [ref=e2759]: Cls
+                    - generic [ref=e2760]: B
+            - link "2020 Porsche 911 carrera s 2020 Porsche 911 carrera s POA Listing Cls B" [ref=e2761] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e35bea83-afda-4b8f-b805-4a15183b5f30
+              - generic [ref=e2762]:
+                - img "2020 Porsche 911 carrera s" [ref=e2764]
+                - generic [ref=e2765]:
+                  - paragraph [ref=e2766]: 2020 Porsche 911 carrera s
+                  - generic [ref=e2767]:
+                    - generic [ref=e2768]: POA
+                    - generic [ref=e2770]: Listing
+                  - generic [ref=e2771]:
+                    - generic [ref=e2772]: Cls
+                    - generic [ref=e2773]: B
+            - link "2021 Porsche 911 turbo s 2021 Porsche 911 turbo s POA Listing Cls B" [ref=e2774] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e32620f6-3ffb-469b-9415-74ff8726a27b
+              - generic [ref=e2775]:
+                - img "2021 Porsche 911 turbo s" [ref=e2777]
+                - generic [ref=e2778]:
+                  - paragraph [ref=e2779]: 2021 Porsche 911 turbo s
+                  - generic [ref=e2780]:
+                    - generic [ref=e2781]: POA
+                    - generic [ref=e2783]: Listing
+                  - generic [ref=e2784]:
+                    - generic [ref=e2785]: Cls
+                    - generic [ref=e2786]: B
+            - link "2021 Porsche 911 turbo s 2021 Porsche 911 turbo s POA Listing Cls B" [ref=e2787] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e2c552a7-9152-4a2c-994a-28c5422b5d21
+              - generic [ref=e2788]:
+                - img "2021 Porsche 911 turbo s" [ref=e2790]
+                - generic [ref=e2791]:
+                  - paragraph [ref=e2792]: 2021 Porsche 911 turbo s
+                  - generic [ref=e2793]:
+                    - generic [ref=e2794]: POA
+                    - generic [ref=e2796]: Listing
+                  - generic [ref=e2797]:
+                    - generic [ref=e2798]: Cls
+                    - generic [ref=e2799]: B
+            - link "2025 Porsche 911 carrera 4 gts 2025 Porsche 911 carrera 4 gts POA Listing Cls B" [ref=e2800] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e2c245f9-1f8e-486c-952e-736be67a77ed
+              - generic [ref=e2801]:
+                - img "2025 Porsche 911 carrera 4 gts" [ref=e2803]
+                - generic [ref=e2804]:
+                  - paragraph [ref=e2805]: 2025 Porsche 911 carrera 4 gts
+                  - generic [ref=e2806]:
+                    - generic [ref=e2807]: POA
+                    - generic [ref=e2809]: Listing
+                  - generic [ref=e2810]:
+                    - generic [ref=e2811]: Cls
+                    - generic [ref=e2812]: B
+            - link "2019 Porsche 911 carrera 4 gts 2019 Porsche 911 carrera 4 gts POA Listing Cls B" [ref=e2813] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e29fc4d8-daa0-48fa-9bed-275cc06764d1
+              - generic [ref=e2814]:
+                - img "2019 Porsche 911 carrera 4 gts" [ref=e2816]
+                - generic [ref=e2817]:
+                  - paragraph [ref=e2818]: 2019 Porsche 911 carrera 4 gts
+                  - generic [ref=e2819]:
+                    - generic [ref=e2820]: POA
+                    - generic [ref=e2822]: Listing
+                  - generic [ref=e2823]:
+                    - generic [ref=e2824]: Cls
+                    - generic [ref=e2825]: B
+            - link "2020 Porsche 911 carrera 4s 2020 Porsche 911 carrera 4s POA Listing Cls B" [ref=e2826] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e29e5a2b-381a-4923-9066-1d67f723edd0
+              - generic [ref=e2827]:
+                - img "2020 Porsche 911 carrera 4s" [ref=e2829]
+                - generic [ref=e2830]:
+                  - paragraph [ref=e2831]: 2020 Porsche 911 carrera 4s
+                  - generic [ref=e2832]:
+                    - generic [ref=e2833]: POA
+                    - generic [ref=e2835]: Listing
+                  - generic [ref=e2836]:
+                    - generic [ref=e2837]: Cls
+                    - generic [ref=e2838]: B
+            - link "2023 Porsche 911 turbo cabriolet 2023 Porsche 911 turbo cabriol POA Listing Cls B" [ref=e2839] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e232e26a-f907-4b6a-b8a6-4190139a9b63
+              - generic [ref=e2840]:
+                - img "2023 Porsche 911 turbo cabriolet" [ref=e2842]
+                - generic [ref=e2843]:
+                  - paragraph [ref=e2844]: 2023 Porsche 911 turbo cabriol
+                  - generic [ref=e2845]:
+                    - generic [ref=e2846]: POA
+                    - generic [ref=e2848]: Listing
+                  - generic [ref=e2849]:
+                    - generic [ref=e2850]: Cls
+                    - generic [ref=e2851]: B
+            - link "2025 Porsche 911 gt3 rs 2025 Porsche 911 gt3 rs POA Listing Cls B" [ref=e2852] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e2173e54-5009-41a5-96f8-06dcbc06fc4e
+              - generic [ref=e2853]:
+                - img "2025 Porsche 911 gt3 rs" [ref=e2855]
+                - generic [ref=e2856]:
+                  - paragraph [ref=e2857]: 2025 Porsche 911 gt3 rs
+                  - generic [ref=e2858]:
+                    - generic [ref=e2859]: POA
+                    - generic [ref=e2861]: Listing
+                  - generic [ref=e2862]:
+                    - generic [ref=e2863]: Cls
+                    - generic [ref=e2864]: B
+            - link "2025 Porsche 911 touring gt3 2025 Porsche 911 touring gt3 POA Listing Cls B" [ref=e2865] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e1c81fae-db83-4950-860c-b1365fb07d8a
+              - generic [ref=e2866]:
+                - img "2025 Porsche 911 touring gt3" [ref=e2868]
+                - generic [ref=e2869]:
+                  - paragraph [ref=e2870]: 2025 Porsche 911 touring gt3
+                  - generic [ref=e2871]:
+                    - generic [ref=e2872]: POA
+                    - generic [ref=e2874]: Listing
+                  - generic [ref=e2875]:
+                    - generic [ref=e2876]: Cls
+                    - generic [ref=e2877]: B
+            - link "2022 Porsche 911 turbo s 2022 Porsche 911 turbo s POA Listing Cls B" [ref=e2878] [cursor=pointer]:
+              - /url: /de/cars/porsche/live-e1a3b490-aa84-40c7-997b-c7c543b7a626
+              - generic [ref=e2879]:
+                - img "2022 Porsche 911 turbo s" [ref=e2881]
+                - generic [ref=e2882]:
+                  - paragraph [ref=e2883]: 2022 Porsche 911 turbo s
+                  - generic [ref=e2884]:
+                    - generic [ref=e2885]: POA
+                    - generic [ref=e2887]: Listing
+                  - generic [ref=e2888]:
+                    - generic [ref=e2889]: Cls
+                    - generic [ref=e2890]: B
+      - generic [ref=e2891]:
+        - link "992 3310 cars A Porsche 992 2024 Porsche 911 S/T Preisbereich $50K–$650K Years 2019–2026 Kollektion 3310 listings Explore 992" [ref=e2893] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=992
+          - generic [ref=e2894]:
+            - img "992" [ref=e2895]
+            - generic [ref=e2897]: 3310 cars
+            - generic [ref=e2898]: A
+          - generic [ref=e2899]:
+            - generic [ref=e2900]:
+              - paragraph [ref=e2901]: Porsche
+              - heading "992" [level=2] [ref=e2902]
+              - paragraph [ref=e2903]: 2024 Porsche 911 S/T
+            - generic [ref=e2904]:
+              - generic [ref=e2905]:
+                - generic [ref=e2906]:
+                  - img [ref=e2907]
+                  - generic [ref=e2909]: Preisbereich
+                - paragraph [ref=e2910]: $50K–$650K
+              - generic [ref=e2911]:
+                - generic [ref=e2912]:
+                  - img [ref=e2913]
+                  - generic [ref=e2915]: Years
+                - paragraph [ref=e2916]: 2019–2026
+              - generic [ref=e2917]:
+                - generic [ref=e2918]:
+                  - img [ref=e2919]
+                  - generic [ref=e2923]: Kollektion
+                - paragraph [ref=e2924]: 3310 listings
+            - generic [ref=e2925]:
+              - generic [ref=e2926]: Explore 992
+              - img [ref=e2927]
+        - link "991 1974 cars A Porsche 991 2018 Porsche 991.2 GT2 RS Clubsport Preisbereich $42K–$517K Years 2003–2020 Kollektion 1974 listings Explore 991" [ref=e2930] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=991
+          - generic [ref=e2931]:
+            - img "991" [ref=e2932]
+            - generic [ref=e2934]: 1974 cars
+            - generic [ref=e2935]: A
+          - generic [ref=e2936]:
+            - generic [ref=e2937]:
+              - paragraph [ref=e2938]: Porsche
+              - heading "991" [level=2] [ref=e2939]
+              - paragraph [ref=e2940]: 2018 Porsche 991.2 GT2 RS Clubsport
+            - generic [ref=e2941]:
+              - generic [ref=e2942]:
+                - generic [ref=e2943]:
+                  - img [ref=e2944]
+                  - generic [ref=e2946]: Preisbereich
+                - paragraph [ref=e2947]: $42K–$517K
+              - generic [ref=e2948]:
+                - generic [ref=e2949]:
+                  - img [ref=e2950]
+                  - generic [ref=e2952]: Years
+                - paragraph [ref=e2953]: 2003–2020
+              - generic [ref=e2954]:
+                - generic [ref=e2955]:
+                  - img [ref=e2956]
+                  - generic [ref=e2960]: Kollektion
+                - paragraph [ref=e2961]: 1974 listings
+            - generic [ref=e2962]:
+              - generic [ref=e2963]: Explore 991
+              - img [ref=e2964]
+        - link "997 1370 cars AA Porsche 997 2011 Porsche 911 Preisbereich $31K–$872K Years 2004–2012 Kollektion 1370 listings Explore 997" [ref=e2967] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=997
+          - generic [ref=e2968]:
+            - img "997" [ref=e2969]
+            - generic [ref=e2971]: 1370 cars
+            - generic [ref=e2972]: AA
+          - generic [ref=e2973]:
+            - generic [ref=e2974]:
+              - paragraph [ref=e2975]: Porsche
+              - heading "997" [level=2] [ref=e2976]
+              - paragraph [ref=e2977]: 2011 Porsche 911
+            - generic [ref=e2978]:
+              - generic [ref=e2979]:
+                - generic [ref=e2980]:
+                  - img [ref=e2981]
+                  - generic [ref=e2983]: Preisbereich
+                - paragraph [ref=e2984]: $31K–$872K
+              - generic [ref=e2985]:
+                - generic [ref=e2986]:
+                  - img [ref=e2987]
+                  - generic [ref=e2989]: Years
+                - paragraph [ref=e2990]: 2004–2012
+              - generic [ref=e2991]:
+                - generic [ref=e2992]:
+                  - img [ref=e2993]
+                  - generic [ref=e2997]: Kollektion
+                - paragraph [ref=e2998]: 1370 listings
+            - generic [ref=e2999]:
+              - generic [ref=e3000]: Explore 997
+              - img [ref=e3001]
+        - link "996 844 cars AA Porsche 996 2001 Porsche 911 Preisbereich $12K–$146K Years 1997–2005 Kollektion 844 listings Explore 996" [ref=e3004] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=996
+          - generic [ref=e3005]:
+            - img "996" [ref=e3006]
+            - generic [ref=e3008]: 844 cars
+            - generic [ref=e3009]: AA
+          - generic [ref=e3010]:
+            - generic [ref=e3011]:
+              - paragraph [ref=e3012]: Porsche
+              - heading "996" [level=2] [ref=e3013]
+              - paragraph [ref=e3014]: 2001 Porsche 911
+            - generic [ref=e3015]:
+              - generic [ref=e3016]:
+                - generic [ref=e3017]:
+                  - img [ref=e3018]
+                  - generic [ref=e3020]: Preisbereich
+                - paragraph [ref=e3021]: $12K–$146K
+              - generic [ref=e3022]:
+                - generic [ref=e3023]:
+                  - img [ref=e3024]
+                  - generic [ref=e3026]: Years
+                - paragraph [ref=e3027]: 1997–2005
+              - generic [ref=e3028]:
+                - generic [ref=e3029]:
+                  - img [ref=e3030]
+                  - generic [ref=e3034]: Kollektion
+                - paragraph [ref=e3035]: 844 listings
+            - generic [ref=e3036]:
+              - generic [ref=e3037]: Explore 996
+              - img [ref=e3038]
+        - link "993 384 cars AAA Porsche 993 1997 Porsche 993 Preisbereich $74K–$462K Years 1993–1998 Kollektion 384 listings Explore 993" [ref=e3041] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=993
+          - generic [ref=e3042]:
+            - img "993" [ref=e3043]
+            - generic [ref=e3045]: 384 cars
+            - generic [ref=e3046]: AAA
+          - generic [ref=e3047]:
+            - generic [ref=e3048]:
+              - paragraph [ref=e3049]: Porsche
+              - heading "993" [level=2] [ref=e3050]
+              - paragraph [ref=e3051]: 1997 Porsche 993
+            - generic [ref=e3052]:
+              - generic [ref=e3053]:
+                - generic [ref=e3054]:
+                  - img [ref=e3055]
+                  - generic [ref=e3057]: Preisbereich
+                - paragraph [ref=e3058]: $74K–$462K
+              - generic [ref=e3059]:
+                - generic [ref=e3060]:
+                  - img [ref=e3061]
+                  - generic [ref=e3063]: Years
+                - paragraph [ref=e3064]: 1993–1998
+              - generic [ref=e3065]:
+                - generic [ref=e3066]:
+                  - img [ref=e3067]
+                  - generic [ref=e3071]: Kollektion
+                - paragraph [ref=e3072]: 384 listings
+            - generic [ref=e3073]:
+              - generic [ref=e3074]: Explore 993
+              - img [ref=e3075]
+        - link "964 476 cars AAA Porsche 964 1991 Porsche 911 Backdate Preisbereich $53K–$565K Years 1989–1993 Kollektion 476 listings Explore 964" [ref=e3078] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=964
+          - generic [ref=e3079]:
+            - img "964" [ref=e3080]
+            - generic [ref=e3082]: 476 cars
+            - generic [ref=e3083]: AAA
+          - generic [ref=e3084]:
+            - generic [ref=e3085]:
+              - paragraph [ref=e3086]: Porsche
+              - heading "964" [level=2] [ref=e3087]
+              - paragraph [ref=e3088]: 1991 Porsche 911 Backdate
+            - generic [ref=e3089]:
+              - generic [ref=e3090]:
+                - generic [ref=e3091]:
+                  - img [ref=e3092]
+                  - generic [ref=e3094]: Preisbereich
+                - paragraph [ref=e3095]: $53K–$565K
+              - generic [ref=e3096]:
+                - generic [ref=e3097]:
+                  - img [ref=e3098]
+                  - generic [ref=e3100]: Years
+                - paragraph [ref=e3101]: 1989–1993
+              - generic [ref=e3102]:
+                - generic [ref=e3103]:
+                  - img [ref=e3104]
+                  - generic [ref=e3108]: Kollektion
+                - paragraph [ref=e3109]: 476 listings
+            - generic [ref=e3110]:
+              - generic [ref=e3111]: Explore 964
+              - img [ref=e3112]
+        - link "930 122 cars AAA Porsche 930 1985 Porsche 930 Turbo Preisbereich $158K–$456K Years 1978–1989 Kollektion 122 listings Explore 930" [ref=e3115] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=930
+          - generic [ref=e3116]:
+            - img "930" [ref=e3117]
+            - generic [ref=e3119]: 122 cars
+            - generic [ref=e3120]: AAA
+          - generic [ref=e3121]:
+            - generic [ref=e3122]:
+              - paragraph [ref=e3123]: Porsche
+              - heading "930" [level=2] [ref=e3124]
+              - paragraph [ref=e3125]: 1985 Porsche 930 Turbo
+            - generic [ref=e3126]:
+              - generic [ref=e3127]:
+                - generic [ref=e3128]:
+                  - img [ref=e3129]
+                  - generic [ref=e3131]: Preisbereich
+                - paragraph [ref=e3132]: $158K–$456K
+              - generic [ref=e3133]:
+                - generic [ref=e3134]:
+                  - img [ref=e3135]
+                  - generic [ref=e3137]: Years
+                - paragraph [ref=e3138]: 1978–1989
+              - generic [ref=e3139]:
+                - generic [ref=e3140]:
+                  - img [ref=e3141]
+                  - generic [ref=e3145]: Kollektion
+                - paragraph [ref=e3146]: 122 listings
+            - generic [ref=e3147]:
+              - generic [ref=e3148]: Explore 930
+              - img [ref=e3149]
+        - link "G-Model 964 cars AAA Porsche G-Model 1989 Porsche 911 Carrera 3.2 Speedster Preisbereich $49K–$260K Years 1974–1989 Kollektion 964 listings Explore G-Model" [ref=e3152] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=g-model
+          - generic [ref=e3153]:
+            - img "G-Model" [ref=e3154]
+            - generic [ref=e3156]: 964 cars
+            - generic [ref=e3157]: AAA
+          - generic [ref=e3158]:
+            - generic [ref=e3159]:
+              - paragraph [ref=e3160]: Porsche
+              - heading "G-Model" [level=2] [ref=e3161]
+              - paragraph [ref=e3162]: 1989 Porsche 911 Carrera 3.2 Speedster
+            - generic [ref=e3163]:
+              - generic [ref=e3164]:
+                - generic [ref=e3165]:
+                  - img [ref=e3166]
+                  - generic [ref=e3168]: Preisbereich
+                - paragraph [ref=e3169]: $49K–$260K
+              - generic [ref=e3170]:
+                - generic [ref=e3171]:
+                  - img [ref=e3172]
+                  - generic [ref=e3174]: Years
+                - paragraph [ref=e3175]: 1974–1989
+              - generic [ref=e3176]:
+                - generic [ref=e3177]:
+                  - img [ref=e3178]
+                  - generic [ref=e3182]: Kollektion
+                - paragraph [ref=e3183]: 964 listings
+            - generic [ref=e3184]:
+              - generic [ref=e3185]: Explore G-Model
+              - img [ref=e3186]
+        - link "F-Model 690 cars AAA Porsche F-Model 1972 Porsche 911 S Preisbereich $60K–$292K Years 1965–1973 Kollektion 690 listings Explore F-Model" [ref=e3189] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=f-model
+          - generic [ref=e3190]:
+            - img "F-Model" [ref=e3191]
+            - generic [ref=e3193]: 690 cars
+            - generic [ref=e3194]: AAA
+          - generic [ref=e3195]:
+            - generic [ref=e3196]:
+              - paragraph [ref=e3197]: Porsche
+              - heading "F-Model" [level=2] [ref=e3198]
+              - paragraph [ref=e3199]: 1972 Porsche 911 S
+            - generic [ref=e3200]:
+              - generic [ref=e3201]:
+                - generic [ref=e3202]:
+                  - img [ref=e3203]
+                  - generic [ref=e3205]: Preisbereich
+                - paragraph [ref=e3206]: $60K–$292K
+              - generic [ref=e3207]:
+                - generic [ref=e3208]:
+                  - img [ref=e3209]
+                  - generic [ref=e3211]: Years
+                - paragraph [ref=e3212]: 1965–1973
+              - generic [ref=e3213]:
+                - generic [ref=e3214]:
+                  - img [ref=e3215]
+                  - generic [ref=e3219]: Kollektion
+                - paragraph [ref=e3220]: 690 listings
+            - generic [ref=e3221]:
+              - generic [ref=e3222]: Explore F-Model
+              - img [ref=e3223]
+        - link "912 51 cars AA Porsche 912 1966 Porsche 912 Preisbereich $65K–$65K Years 1965–1976 Kollektion 51 listings Explore 912" [ref=e3226] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=912
+          - generic [ref=e3227]:
+            - img "912" [ref=e3228]
+            - generic [ref=e3230]: 51 cars
+            - generic [ref=e3231]: AA
+          - generic [ref=e3232]:
+            - generic [ref=e3233]:
+              - paragraph [ref=e3234]: Porsche
+              - heading "912" [level=2] [ref=e3235]
+              - paragraph [ref=e3236]: 1966 Porsche 912
+            - generic [ref=e3237]:
+              - generic [ref=e3238]:
+                - generic [ref=e3239]:
+                  - img [ref=e3240]
+                  - generic [ref=e3242]: Preisbereich
+                - paragraph [ref=e3243]: $65K–$65K
+              - generic [ref=e3244]:
+                - generic [ref=e3245]:
+                  - img [ref=e3246]
+                  - generic [ref=e3248]: Years
+                - paragraph [ref=e3249]: 1965–1976
+              - generic [ref=e3250]:
+                - generic [ref=e3251]:
+                  - img [ref=e3252]
+                  - generic [ref=e3256]: Kollektion
+                - paragraph [ref=e3257]: 51 listings
+            - generic [ref=e3258]:
+              - generic [ref=e3259]: Explore 912
+              - img [ref=e3260]
+        - link "Carrera GT 10 cars A Porsche Carrera GT 2006 Porsche Carrera GT Preisbereich POA–POA Years 2006 Kollektion 10 listings Explore Carrera GT" [ref=e3263] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=carrera-gt
+          - generic [ref=e3264]:
+            - img "Carrera GT" [ref=e3265]
+            - generic [ref=e3267]: 10 cars
+            - generic [ref=e3268]: A
+          - generic [ref=e3269]:
+            - generic [ref=e3270]:
+              - paragraph [ref=e3271]: Porsche
+              - heading "Carrera GT" [level=2] [ref=e3272]
+              - paragraph [ref=e3273]: 2006 Porsche Carrera GT
+            - generic [ref=e3274]:
+              - generic [ref=e3275]:
+                - generic [ref=e3276]:
+                  - img [ref=e3277]
+                  - generic [ref=e3279]: Preisbereich
+                - paragraph [ref=e3280]: POA–POA
+              - generic [ref=e3281]:
+                - generic [ref=e3282]:
+                  - img [ref=e3283]
+                  - generic [ref=e3285]: Years
+                - paragraph [ref=e3286]: "2006"
+              - generic [ref=e3287]:
+                - generic [ref=e3288]:
+                  - img [ref=e3289]
+                  - generic [ref=e3293]: Kollektion
+                - paragraph [ref=e3294]: 10 listings
+            - generic [ref=e3295]:
+              - generic [ref=e3296]: Explore Carrera GT
+              - img [ref=e3297]
+        - link "959 5 cars AA Porsche 959 1966 Porsche 959 Preisbereich $62K–$62K Years 1966 Kollektion 5 listings Explore 959" [ref=e3300] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=959
+          - generic [ref=e3301]:
+            - img "959" [ref=e3302]
+            - generic [ref=e3304]: 5 cars
+            - generic [ref=e3305]: AA
+          - generic [ref=e3306]:
+            - generic [ref=e3307]:
+              - paragraph [ref=e3308]: Porsche
+              - heading "959" [level=2] [ref=e3309]
+              - paragraph [ref=e3310]: 1966 Porsche 959
+            - generic [ref=e3311]:
+              - generic [ref=e3312]:
+                - generic [ref=e3313]:
+                  - img [ref=e3314]
+                  - generic [ref=e3316]: Preisbereich
+                - paragraph [ref=e3317]: $62K–$62K
+              - generic [ref=e3318]:
+                - generic [ref=e3319]:
+                  - img [ref=e3320]
+                  - generic [ref=e3322]: Years
+                - paragraph [ref=e3323]: "1966"
+              - generic [ref=e3324]:
+                - generic [ref=e3325]:
+                  - img [ref=e3326]
+                  - generic [ref=e3330]: Kollektion
+                - paragraph [ref=e3331]: 5 listings
+            - generic [ref=e3332]:
+              - generic [ref=e3333]: Explore 959
+              - img [ref=e3334]
+        - link "718 Cayman 331 cars A Porsche 718 Cayman 2023 Porsche 718 Cayman Preisbereich $42K–$152K Years 2017–2025 Kollektion 331 listings Explore 718 Cayman" [ref=e3337] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=718-cayman
+          - generic [ref=e3338]:
+            - img "718 Cayman" [ref=e3339]
+            - generic [ref=e3341]: 331 cars
+            - generic [ref=e3342]: A
+          - generic [ref=e3343]:
+            - generic [ref=e3344]:
+              - paragraph [ref=e3345]: Porsche
+              - heading "718 Cayman" [level=2] [ref=e3346]
+              - paragraph [ref=e3347]: 2023 Porsche 718 Cayman
+            - generic [ref=e3348]:
+              - generic [ref=e3349]:
+                - generic [ref=e3350]:
+                  - img [ref=e3351]
+                  - generic [ref=e3353]: Preisbereich
+                - paragraph [ref=e3354]: $42K–$152K
+              - generic [ref=e3355]:
+                - generic [ref=e3356]:
+                  - img [ref=e3357]
+                  - generic [ref=e3359]: Years
+                - paragraph [ref=e3360]: 2017–2025
+              - generic [ref=e3361]:
+                - generic [ref=e3362]:
+                  - img [ref=e3363]
+                  - generic [ref=e3367]: Kollektion
+                - paragraph [ref=e3368]: 331 listings
+            - generic [ref=e3369]:
+              - generic [ref=e3370]: Explore 718 Cayman
+              - img [ref=e3371]
+        - link "718 Boxster 289 cars A Porsche 718 Boxster 2025 Porsche 718 Boxster Preisbereich $84K–$190K Years 2018–2025 Kollektion 289 listings Explore 718 Boxster" [ref=e3374] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=718-boxster
+          - generic [ref=e3375]:
+            - img "718 Boxster" [ref=e3376]
+            - generic [ref=e3378]: 289 cars
+            - generic [ref=e3379]: A
+          - generic [ref=e3380]:
+            - generic [ref=e3381]:
+              - paragraph [ref=e3382]: Porsche
+              - heading "718 Boxster" [level=2] [ref=e3383]
+              - paragraph [ref=e3384]: 2025 Porsche 718 Boxster
+            - generic [ref=e3385]:
+              - generic [ref=e3386]:
+                - generic [ref=e3387]:
+                  - img [ref=e3388]
+                  - generic [ref=e3390]: Preisbereich
+                - paragraph [ref=e3391]: $84K–$190K
+              - generic [ref=e3392]:
+                - generic [ref=e3393]:
+                  - img [ref=e3394]
+                  - generic [ref=e3396]: Years
+                - paragraph [ref=e3397]: 2018–2025
+              - generic [ref=e3398]:
+                - generic [ref=e3399]:
+                  - img [ref=e3400]
+                  - generic [ref=e3404]: Kollektion
+                - paragraph [ref=e3405]: 289 listings
+            - generic [ref=e3406]:
+              - generic [ref=e3407]: Explore 718 Boxster
+              - img [ref=e3408]
+        - link "Cayman 733 cars A Porsche Cayman 2025 Porsche Cayman Preisbereich $10K–$220K Years 2006–2025 Kollektion 733 listings Explore Cayman" [ref=e3411] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=cayman
+          - generic [ref=e3412]:
+            - img "Cayman" [ref=e3413]
+            - generic [ref=e3415]: 733 cars
+            - generic [ref=e3416]: A
+          - generic [ref=e3417]:
+            - generic [ref=e3418]:
+              - paragraph [ref=e3419]: Porsche
+              - heading "Cayman" [level=2] [ref=e3420]
+              - paragraph [ref=e3421]: 2025 Porsche Cayman
+            - generic [ref=e3422]:
+              - generic [ref=e3423]:
+                - generic [ref=e3424]:
+                  - img [ref=e3425]
+                  - generic [ref=e3427]: Preisbereich
+                - paragraph [ref=e3428]: $10K–$220K
+              - generic [ref=e3429]:
+                - generic [ref=e3430]:
+                  - img [ref=e3431]
+                  - generic [ref=e3433]: Years
+                - paragraph [ref=e3434]: 2006–2025
+              - generic [ref=e3435]:
+                - generic [ref=e3436]:
+                  - img [ref=e3437]
+                  - generic [ref=e3441]: Kollektion
+                - paragraph [ref=e3442]: 733 listings
+            - generic [ref=e3443]:
+              - generic [ref=e3444]: Explore Cayman
+              - img [ref=e3445]
+        - link "Boxster 931 cars A Porsche Boxster 2022 Porsche Boxster Preisbereich $6K–$109K Years 1998–2022 Kollektion 931 listings Explore Boxster" [ref=e3448] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=boxster
+          - generic [ref=e3449]:
+            - img "Boxster" [ref=e3450]
+            - generic [ref=e3452]: 931 cars
+            - generic [ref=e3453]: A
+          - generic [ref=e3454]:
+            - generic [ref=e3455]:
+              - paragraph [ref=e3456]: Porsche
+              - heading "Boxster" [level=2] [ref=e3457]
+              - paragraph [ref=e3458]: 2022 Porsche Boxster
+            - generic [ref=e3459]:
+              - generic [ref=e3460]:
+                - generic [ref=e3461]:
+                  - img [ref=e3462]
+                  - generic [ref=e3464]: Preisbereich
+                - paragraph [ref=e3465]: $6K–$109K
+              - generic [ref=e3466]:
+                - generic [ref=e3467]:
+                  - img [ref=e3468]
+                  - generic [ref=e3470]: Years
+                - paragraph [ref=e3471]: 1998–2022
+              - generic [ref=e3472]:
+                - generic [ref=e3473]:
+                  - img [ref=e3474]
+                  - generic [ref=e3478]: Kollektion
+                - paragraph [ref=e3479]: 931 listings
+            - generic [ref=e3480]:
+              - generic [ref=e3481]: Explore Boxster
+              - img [ref=e3482]
+        - link "914 26 cars AA Porsche 914 1970 Porsche 914/6 Preisbereich $30K–$92K Years 1970–1974 Kollektion 26 listings Explore 914" [ref=e3485] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=914
+          - generic [ref=e3486]:
+            - img "914" [ref=e3487]
+            - generic [ref=e3489]: 26 cars
+            - generic [ref=e3490]: AA
+          - generic [ref=e3491]:
+            - generic [ref=e3492]:
+              - paragraph [ref=e3493]: Porsche
+              - heading "914" [level=2] [ref=e3494]
+              - paragraph [ref=e3495]: 1970 Porsche 914/6
+            - generic [ref=e3496]:
+              - generic [ref=e3497]:
+                - generic [ref=e3498]:
+                  - img [ref=e3499]
+                  - generic [ref=e3501]: Preisbereich
+                - paragraph [ref=e3502]: $30K–$92K
+              - generic [ref=e3503]:
+                - generic [ref=e3504]:
+                  - img [ref=e3505]
+                  - generic [ref=e3507]: Years
+                - paragraph [ref=e3508]: 1970–1974
+              - generic [ref=e3509]:
+                - generic [ref=e3510]:
+                  - img [ref=e3511]
+                  - generic [ref=e3515]: Kollektion
+                - paragraph [ref=e3516]: 26 listings
+            - generic [ref=e3517]:
+              - generic [ref=e3518]: Explore 914
+              - img [ref=e3519]
+        - link "944 229 cars AA Porsche 944 1991 Porsche 944 Turbo Cabriolet Preisbereich $9K–$60K Years 1986–1991 Kollektion 229 listings Explore 944" [ref=e3522] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=944
+          - generic [ref=e3523]:
+            - img "944" [ref=e3524]
+            - generic [ref=e3526]: 229 cars
+            - generic [ref=e3527]: AA
+          - generic [ref=e3528]:
+            - generic [ref=e3529]:
+              - paragraph [ref=e3530]: Porsche
+              - heading "944" [level=2] [ref=e3531]
+              - paragraph [ref=e3532]: 1991 Porsche 944 Turbo Cabriolet
+            - generic [ref=e3533]:
+              - generic [ref=e3534]:
+                - generic [ref=e3535]:
+                  - img [ref=e3536]
+                  - generic [ref=e3538]: Preisbereich
+                - paragraph [ref=e3539]: $9K–$60K
+              - generic [ref=e3540]:
+                - generic [ref=e3541]:
+                  - img [ref=e3542]
+                  - generic [ref=e3544]: Years
+                - paragraph [ref=e3545]: 1986–1991
+              - generic [ref=e3546]:
+                - generic [ref=e3547]:
+                  - img [ref=e3548]
+                  - generic [ref=e3552]: Kollektion
+                - paragraph [ref=e3553]: 229 listings
+            - generic [ref=e3554]:
+              - generic [ref=e3555]: Explore 944
+              - img [ref=e3556]
+        - link "928 233 cars AAA Porsche 928 1993 Porsche 928 GTS Preisbereich $33K–$220K Years 1980–1994 Kollektion 233 listings Explore 928" [ref=e3559] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=928
+          - generic [ref=e3560]:
+            - img "928" [ref=e3561]
+            - generic [ref=e3563]: 233 cars
+            - generic [ref=e3564]: AAA
+          - generic [ref=e3565]:
+            - generic [ref=e3566]:
+              - paragraph [ref=e3567]: Porsche
+              - heading "928" [level=2] [ref=e3568]
+              - paragraph [ref=e3569]: 1993 Porsche 928 GTS
+            - generic [ref=e3570]:
+              - generic [ref=e3571]:
+                - generic [ref=e3572]:
+                  - img [ref=e3573]
+                  - generic [ref=e3575]: Preisbereich
+                - paragraph [ref=e3576]: $33K–$220K
+              - generic [ref=e3577]:
+                - generic [ref=e3578]:
+                  - img [ref=e3579]
+                  - generic [ref=e3581]: Years
+                - paragraph [ref=e3582]: 1980–1994
+              - generic [ref=e3583]:
+                - generic [ref=e3584]:
+                  - img [ref=e3585]
+                  - generic [ref=e3589]: Kollektion
+                - paragraph [ref=e3590]: 233 listings
+            - generic [ref=e3591]:
+              - generic [ref=e3592]: Explore 928
+              - img [ref=e3593]
+        - link "968 92 cars AA Porsche 968 1992 Porsche 968 Preisbereich $33K–$50K Years 1991–1994 Kollektion 92 listings Explore 968" [ref=e3596] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=968
+          - generic [ref=e3597]:
+            - img "968" [ref=e3598]
+            - generic [ref=e3600]: 92 cars
+            - generic [ref=e3601]: AA
+          - generic [ref=e3602]:
+            - generic [ref=e3603]:
+              - paragraph [ref=e3604]: Porsche
+              - heading "968" [level=2] [ref=e3605]
+              - paragraph [ref=e3606]: 1992 Porsche 968
+            - generic [ref=e3607]:
+              - generic [ref=e3608]:
+                - generic [ref=e3609]:
+                  - img [ref=e3610]
+                  - generic [ref=e3612]: Preisbereich
+                - paragraph [ref=e3613]: $33K–$50K
+              - generic [ref=e3614]:
+                - generic [ref=e3615]:
+                  - img [ref=e3616]
+                  - generic [ref=e3618]: Years
+                - paragraph [ref=e3619]: 1991–1994
+              - generic [ref=e3620]:
+                - generic [ref=e3621]:
+                  - img [ref=e3622]
+                  - generic [ref=e3626]: Kollektion
+                - paragraph [ref=e3627]: 92 listings
+            - generic [ref=e3628]:
+              - generic [ref=e3629]: Explore 968
+              - img [ref=e3630]
+        - link "924 26 cars AA Porsche 924 1983 Porsche 924 Preisbereich $10K–$11K Years 1980–1984 Kollektion 26 listings Explore 924" [ref=e3633] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=924
+          - generic [ref=e3634]:
+            - img "924" [ref=e3635]
+            - generic [ref=e3637]: 26 cars
+            - generic [ref=e3638]: AA
+          - generic [ref=e3639]:
+            - generic [ref=e3640]:
+              - paragraph [ref=e3641]: Porsche
+              - heading "924" [level=2] [ref=e3642]
+              - paragraph [ref=e3643]: 1983 Porsche 924
+            - generic [ref=e3644]:
+              - generic [ref=e3645]:
+                - generic [ref=e3646]:
+                  - img [ref=e3647]
+                  - generic [ref=e3649]: Preisbereich
+                - paragraph [ref=e3650]: $10K–$11K
+              - generic [ref=e3651]:
+                - generic [ref=e3652]:
+                  - img [ref=e3653]
+                  - generic [ref=e3655]: Years
+                - paragraph [ref=e3656]: 1980–1984
+              - generic [ref=e3657]:
+                - generic [ref=e3658]:
+                  - img [ref=e3659]
+                  - generic [ref=e3663]: Kollektion
+                - paragraph [ref=e3664]: 26 listings
+            - generic [ref=e3665]:
+              - generic [ref=e3666]: Explore 924
+              - img [ref=e3667]
+        - link "356 451 cars AAA Porsche 356 1959 Porsche 356 A 1600 Convertible D Preisbereich $76K–$260K Years 1953–1965 Kollektion 451 listings Explore 356" [ref=e3670] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=356
+          - generic [ref=e3671]:
+            - img "356" [ref=e3672]
+            - generic [ref=e3674]: 451 cars
+            - generic [ref=e3675]: AAA
+          - generic [ref=e3676]:
+            - generic [ref=e3677]:
+              - paragraph [ref=e3678]: Porsche
+              - heading "356" [level=2] [ref=e3679]
+              - paragraph [ref=e3680]: 1959 Porsche 356 A 1600 Convertible D
+            - generic [ref=e3681]:
+              - generic [ref=e3682]:
+                - generic [ref=e3683]:
+                  - img [ref=e3684]
+                  - generic [ref=e3686]: Preisbereich
+                - paragraph [ref=e3687]: $76K–$260K
+              - generic [ref=e3688]:
+                - generic [ref=e3689]:
+                  - img [ref=e3690]
+                  - generic [ref=e3692]: Years
+                - paragraph [ref=e3693]: 1953–1965
+              - generic [ref=e3694]:
+                - generic [ref=e3695]:
+                  - img [ref=e3696]
+                  - generic [ref=e3700]: Kollektion
+                - paragraph [ref=e3701]: 451 listings
+            - generic [ref=e3702]:
+              - generic [ref=e3703]: Explore 356
+              - img [ref=e3704]
+        - link "Cayenne 1934 cars A Porsche Cayenne 2025 Porsche Cayenne Preisbereich $2K–$217K Years 2004–2026 Kollektion 1934 listings Explore Cayenne" [ref=e3707] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=cayenne
+          - generic [ref=e3708]:
+            - img "Cayenne" [ref=e3709]
+            - generic [ref=e3711]: 1934 cars
+            - generic [ref=e3712]: A
+          - generic [ref=e3713]:
+            - generic [ref=e3714]:
+              - paragraph [ref=e3715]: Porsche
+              - heading "Cayenne" [level=2] [ref=e3716]
+              - paragraph [ref=e3717]: 2025 Porsche Cayenne
+            - generic [ref=e3718]:
+              - generic [ref=e3719]:
+                - generic [ref=e3720]:
+                  - img [ref=e3721]
+                  - generic [ref=e3723]: Preisbereich
+                - paragraph [ref=e3724]: $2K–$217K
+              - generic [ref=e3725]:
+                - generic [ref=e3726]:
+                  - img [ref=e3727]
+                  - generic [ref=e3729]: Years
+                - paragraph [ref=e3730]: 2004–2026
+              - generic [ref=e3731]:
+                - generic [ref=e3732]:
+                  - img [ref=e3733]
+                  - generic [ref=e3737]: Kollektion
+                - paragraph [ref=e3738]: 1934 listings
+            - generic [ref=e3739]:
+              - generic [ref=e3740]: Explore Cayenne
+              - img [ref=e3741]
+        - link "Macan 1909 cars A Porsche Macan 2026 Porsche Macan Preisbereich $10K–$141K Years 2014–2026 Kollektion 1909 listings Explore Macan" [ref=e3744] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=macan
+          - generic [ref=e3745]:
+            - img "Macan" [ref=e3746]
+            - generic [ref=e3748]: 1909 cars
+            - generic [ref=e3749]: A
+          - generic [ref=e3750]:
+            - generic [ref=e3751]:
+              - paragraph [ref=e3752]: Porsche
+              - heading "Macan" [level=2] [ref=e3753]
+              - paragraph [ref=e3754]: 2026 Porsche Macan
+            - generic [ref=e3755]:
+              - generic [ref=e3756]:
+                - generic [ref=e3757]:
+                  - img [ref=e3758]
+                  - generic [ref=e3760]: Preisbereich
+                - paragraph [ref=e3761]: $10K–$141K
+              - generic [ref=e3762]:
+                - generic [ref=e3763]:
+                  - img [ref=e3764]
+                  - generic [ref=e3766]: Years
+                - paragraph [ref=e3767]: 2014–2026
+              - generic [ref=e3768]:
+                - generic [ref=e3769]:
+                  - img [ref=e3770]
+                  - generic [ref=e3774]: Kollektion
+                - paragraph [ref=e3775]: 1909 listings
+            - generic [ref=e3776]:
+              - generic [ref=e3777]: Explore Macan
+              - img [ref=e3778]
+        - link "Panamera 1092 cars A Porsche Panamera 2024 Porsche Panamera Preisbereich $9K–$179K Years 2010–2026 Kollektion 1092 listings Explore Panamera" [ref=e3781] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=panamera
+          - generic [ref=e3782]:
+            - img "Panamera" [ref=e3783]
+            - generic [ref=e3785]: 1092 cars
+            - generic [ref=e3786]: A
+          - generic [ref=e3787]:
+            - generic [ref=e3788]:
+              - paragraph [ref=e3789]: Porsche
+              - heading "Panamera" [level=2] [ref=e3790]
+              - paragraph [ref=e3791]: 2024 Porsche Panamera
+            - generic [ref=e3792]:
+              - generic [ref=e3793]:
+                - generic [ref=e3794]:
+                  - img [ref=e3795]
+                  - generic [ref=e3797]: Preisbereich
+                - paragraph [ref=e3798]: $9K–$179K
+              - generic [ref=e3799]:
+                - generic [ref=e3800]:
+                  - img [ref=e3801]
+                  - generic [ref=e3803]: Years
+                - paragraph [ref=e3804]: 2010–2026
+              - generic [ref=e3805]:
+                - generic [ref=e3806]:
+                  - img [ref=e3807]
+                  - generic [ref=e3811]: Kollektion
+                - paragraph [ref=e3812]: 1092 listings
+            - generic [ref=e3813]:
+              - generic [ref=e3814]: Explore Panamera
+              - img [ref=e3815]
+        - link "Taycan 912 cars A Porsche Taycan 2024 Porsche Taycan 4S Cross Turismo Preisbereich $34K–$130K Years 2020–2026 Kollektion 912 listings Explore Taycan" [ref=e3818] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=taycan
+          - generic [ref=e3819]:
+            - img "Taycan" [ref=e3820]
+            - generic [ref=e3822]: 912 cars
+            - generic [ref=e3823]: A
+          - generic [ref=e3824]:
+            - generic [ref=e3825]:
+              - paragraph [ref=e3826]: Porsche
+              - heading "Taycan" [level=2] [ref=e3827]
+              - paragraph [ref=e3828]: 2024 Porsche Taycan 4S Cross Turismo
+            - generic [ref=e3829]:
+              - generic [ref=e3830]:
+                - generic [ref=e3831]:
+                  - img [ref=e3832]
+                  - generic [ref=e3834]: Preisbereich
+                - paragraph [ref=e3835]: $34K–$130K
+              - generic [ref=e3836]:
+                - generic [ref=e3837]:
+                  - img [ref=e3838]
+                  - generic [ref=e3840]: Years
+                - paragraph [ref=e3841]: 2020–2026
+              - generic [ref=e3842]:
+                - generic [ref=e3843]:
+                  - img [ref=e3844]
+                  - generic [ref=e3848]: Kollektion
+                - paragraph [ref=e3849]: 912 listings
+            - generic [ref=e3850]:
+              - generic [ref=e3851]: Explore Taycan
+              - img [ref=e3852]
+      - generic [ref=e3855]:
+        - generic [ref=e3856]:
+          - generic [ref=e3857]:
+            - generic [ref=e3858]:
+              - img [ref=e3859]
+              - generic [ref=e3861]: Marken-Überblick
+            - paragraph [ref=e3862]: Porsche
+            - heading "992" [level=3] [ref=e3863]
+            - paragraph [ref=e3864]: The 992 is the current-generation 911. GT3 and GT3 RS are instant collectibles. Turbo S offers hypercar performance. Sport Classic and S/T are limited-edition highlights commanding strong premiums.
+          - generic [ref=e3866]:
+            - generic [ref=e3867]:
+              - text: Bewertung
+              - paragraph [ref=e3868]: A
+            - generic [ref=e3869]:
+              - text: Min. Preis
+              - paragraph [ref=e3870]: $50K
+            - generic [ref=e3871]:
+              - text: Max. Preis
+              - paragraph [ref=e3872]: $650K
+          - generic [ref=e3873]:
+            - generic [ref=e3874]:
+              - generic [ref=e3875]:
+                - img [ref=e3876]
+                - generic [ref=e3879]: Bewertung nach Markt
+              - paragraph [ref=e3880]: Fair Value by Market
+            - generic [ref=e3881]:
+              - generic [ref=e3882]:
+                - generic [ref=e3883]:
+                  - generic [ref=e3884]: 🇺🇸
+                  - generic [ref=e3885]: US-Markt
+                  - generic [ref=e3886]: IHR MARKT
+                - generic [ref=e3888]: $350K
+                - generic [ref=e3892]: $350K USD
+              - generic [ref=e3893]:
+                - generic [ref=e3894]:
+                  - generic [ref=e3895]: 🇬🇧
+                  - generic [ref=e3896]: UK-Markt
+                - generic [ref=e3898]: $138K
+                - generic [ref=e3902]: $138K USD
+              - generic [ref=e3903]:
+                - generic [ref=e3904]:
+                  - generic [ref=e3905]: 🇪🇺
+                  - generic [ref=e3906]: EU-Markt
+                - generic [ref=e3908]: $199K
+                - generic [ref=e3912]: $199K USD
+              - generic [ref=e3913]:
+                - generic [ref=e3914]:
+                  - generic [ref=e3915]: 🇯🇵
+                  - generic [ref=e3916]: Japan
+                - generic [ref=e3918]: $120K
+                - generic [ref=e3922]: $120K USD
+          - generic [ref=e3923]:
+            - generic [ref=e3924]:
+              - img [ref=e3925]
+              - generic [ref=e3929]: Top-Modelle
+            - generic [ref=e3930]:
+              - generic [ref=e3931]:
+                - generic [ref=e3932]:
+                  - generic [ref=e3933]: 911 S/T
+                  - generic [ref=e3934]: 1 listings
+                - generic [ref=e3935]:
+                  - generic [ref=e3936]: $650K
+                  - generic [ref=e3937]: B
+              - generic [ref=e3938]:
+                - generic [ref=e3939]:
+                  - generic [ref=e3940]: 911 Dakar
+                  - generic [ref=e3941]: 1 listings
+                - generic [ref=e3942]:
+                  - generic [ref=e3943]: $359K
+                  - generic [ref=e3944]: B
+              - generic [ref=e3945]:
+                - generic [ref=e3946]:
+                  - generic [ref=e3947]: 992 GT3 RS
+                  - generic [ref=e3948]: 8 listings
+                - generic [ref=e3949]:
+                  - generic [ref=e3950]: $329K
+                  - generic [ref=e3951]: B
+              - generic [ref=e3952]:
+                - generic [ref=e3953]:
+                  - generic [ref=e3954]: 992 GT3 Touring
+                  - generic [ref=e3955]: 5 listings
+                - generic [ref=e3956]:
+                  - generic [ref=e3957]: $290K
+                  - generic [ref=e3958]: B
+              - generic [ref=e3959]:
+                - generic [ref=e3960]:
+                  - generic [ref=e3961]: 992 Targa 4 GTS
+                  - generic [ref=e3962]: 2 listings
+                - generic [ref=e3963]:
+                  - generic [ref=e3964]: $290K
+                  - generic [ref=e3965]: B
+          - generic [ref=e3966]:
+            - generic [ref=e3967]:
+              - img [ref=e3968]
+              - generic [ref=e3970]: Letzte Verkäufe
+            - generic [ref=e3971]:
+              - generic [ref=e3972]:
+                - generic [ref=e3973]:
+                  - paragraph [ref=e3974]: 2020 992 Carrera 4
+                  - paragraph [ref=e3975]: ELFERSPOT · May 2026
+                - generic [ref=e3976]: $128K
+              - generic [ref=e3977]:
+                - generic [ref=e3978]:
+                  - paragraph [ref=e3979]: 2021 911
+                  - paragraph [ref=e3980]: AUTO TRADER · May 2026
+                - generic [ref=e3981]: $123K
+              - generic [ref=e3982]:
+                - generic [ref=e3983]:
+                  - paragraph [ref=e3984]: 2025 911
+                  - paragraph [ref=e3985]: AUTO TRADER · May 2026
+                - generic [ref=e3986]: $171K
+              - generic [ref=e3987]:
+                - generic [ref=e3988]:
+                  - paragraph [ref=e3989]: 2023 911
+                  - paragraph [ref=e3990]: AUTO TRADER · May 2026
+                - generic [ref=e3991]: $201K
+              - generic [ref=e3992]:
+                - generic [ref=e3993]:
+                  - paragraph [ref=e3994]: 2019 911
+                  - paragraph [ref=e3995]: AUTO TRADER · May 2026
+                - generic [ref=e3996]: $108K
+          - generic [ref=e3997]:
+            - generic [ref=e3998]:
+              - img [ref=e3999]
+              - generic [ref=e4002]: Liquidität & Markttiefe
+            - generic [ref=e4003]:
+              - generic [ref=e4004]:
+                - generic [ref=e4005]: Listings / Year
+                - generic [ref=e4006]: "1200"
+              - generic [ref=e4007]:
+                - generic [ref=e4008]: Ø Tage bis Verkauf
+                - generic [ref=e4009]: 7d
+              - generic [ref=e4010]:
+                - generic [ref=e4011]: Verkaufsquote
+                - generic [ref=e4012]: 100%
+              - generic [ref=e4014]:
+                - generic [ref=e4015]: Nachfrage-Score
+                - generic [ref=e4016]: 9/10
+          - generic [ref=e4028]:
+            - generic [ref=e4029]:
+              - img [ref=e4030]
+              - generic [ref=e4032]: Jährliche Besitzkosten
+            - generic [ref=e4033]:
+              - generic [ref=e4034]:
+                - generic [ref=e4035]: Versicherung
+                - generic [ref=e4036]: $9K
+              - generic [ref=e4037]:
+                - generic [ref=e4038]: Lagerung
+                - generic [ref=e4039]: $6K
+              - generic [ref=e4040]:
+                - generic [ref=e4041]: Wartung
+                - generic [ref=e4042]: $8K
+              - generic [ref=e4043]:
+                - generic [ref=e4044]: Gesamt
+                - generic [ref=e4045]: $23K/Jahr
+        - link "Explore 992 Collection" [ref=e4047] [cursor=pointer]:
+          - /url: /de/cars/porsche?family=992
+          - text: Explore 992 Collection
+          - img [ref=e4048]
+  - contentinfo [ref=e4050]:
+    - generic [ref=e4051]: © 2025 Monza Lab
+    - generic [ref=e4052]: ·
+    - link "Datenschutz" [ref=e4053] [cursor=pointer]:
+      - /url: /de/legal/privacy
+    - generic [ref=e4054]: ·
+    - link "Nutzungsbedingungen" [ref=e4055] [cursor=pointer]:
+      - /url: /de/legal/terms
+  - button "Open Next.js Dev Tools" [ref=e4061] [cursor=pointer]:
+    - img [ref=e4062]
+  - alert [ref=e4065]

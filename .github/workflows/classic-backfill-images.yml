@@ -31,6 +31,16 @@ jobs:
         with:
           node-version: '20'
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
       - run: npm ci
 
       - name: Install Playwright browsers
@@ -46,6 +56,7 @@ jobs:
           DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
+          SCRAPLING_FETCH_MODE: stealthy-fetch
         run: |
           npx tsx scripts/backfill-classic-images.ts \
             --maxListings=${{ github.event.inputs.max_listings || '200' }} \

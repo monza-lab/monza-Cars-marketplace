@@ -557,14 +557,15 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 ### How it works
 
-1. Queries Supabase for active listings where `images = '{}'` (empty array)
+1. Queries Supabase for active listings where `images IS NULL OR images = '{}' OR photos_count < 2`, ordered by `photos_count ASC` so the rows with the weakest image coverage are handled first
 2. For each listing, fetches the source URL and extracts images:
    - **BaT**: cheerio HTML parse (gallery/CDN images, filters thumbnails)
    - **BeForward**: `parseDetailHtml()` from BeForward collector (cheerio)
    - **AutoScout24**: `parseDetailHtml()` from AutoScout24 collector (cheerio)
 3. Updates only `images`, `photos_count`, `updated_at` in the database
-4. Circuit-breaks on 403/429/Cloudflare responses
-5. Records run metrics via `recordScraperRun()` monitoring
+4. Marks 404/410 source URLs as `unsold` and skips them in future backfills
+5. Circuit-breaks on 403/429/Cloudflare responses
+6. Records run metrics via `recordScraperRun()` monitoring, including per-source image coverage and partial-success runs
 
 ### Dead URL handling (404/410)
 
@@ -572,6 +573,7 @@ When a listing's source URL returns **404 or 410** (removed from marketplace), t
 
 1. Sets `status = 'unsold'` — removes the listing from the active frontend feed
 2. Logs the dead URL as an error for monitoring
+3. Keeps the source-specific coverage summary so the dashboard/reporting path can show which sources still have image deficits
 
 The [Liveness Checker](#16-liveness-checker) provides comprehensive daily URL verification across all dealer/classified sources.
 
@@ -612,6 +614,7 @@ npx tsx scripts/backfill-images.ts --help
 - Processes BaT → BeForward → AutoScout24 sequentially
 - Max 20 listings per source, 2s delay, 270s total time budget
 - Max duration: 5 minutes
+- Response includes `partialSuccess` plus `imageCoverageBySource` for reporting
 
 ### Test the cron route
 
@@ -935,6 +938,20 @@ Each scraper calls `recordScraperRun()` after completing (success or failure). T
 - Uses `SUPABASE_SERVICE_ROLE_KEY` to write to the `scraper_runs` table
 - Is **non-throwing** — if recording fails (missing env var, network error), the scraper run itself is not affected
 - Records: scraper name, run ID, start/finish time, duration, discovered/written counts, errors, source breakdown, bot blocks
+
+### Quality gate
+
+The GitHub Actions workflows run a post-scrape quality check immediately after the scraper step. The gate reads the latest `scraper_runs` row for the workflow's scraper and fails the workflow on:
+
+- `zero_output` runs where listings were discovered but nothing was written
+- `image_gap` runs where the run recorded missing image coverage
+
+Dry-run mode is supported with `--dryRun` so you can inspect the gate result without forcing a non-zero exit code.
+
+```bash
+npx tsx scripts/verify-scraper-quality.mjs --scraper=autoscout24
+npx tsx scripts/verify-scraper-quality.mjs --scraper=autoscout24 --dryRun
+```
 
 ### Required environment variables for monitoring
 

@@ -4,6 +4,12 @@ export interface BackfillResult {
   source: string;
   discovered: number;
   backfilled: number;
+  partialSuccess?: boolean;
+  imageCoverage?: {
+    withImages: number;
+    missingImages: number;
+    deadUrls: number;
+  };
   errors: string[];
   durationMs: number;
 }
@@ -34,6 +40,12 @@ export async function backfillImagesForSource(
     source: opts.source,
     discovered: 0,
     backfilled: 0,
+    partialSuccess: false,
+    imageCoverage: {
+      withImages: 0,
+      missingImages: 0,
+      deadUrls: 0,
+    },
     errors: [],
     durationMs: 0,
   };
@@ -64,6 +76,7 @@ export async function backfillImagesForSource(
   }
 
   const { data: rows, error: fetchErr } = await query
+    .order("photos_count", { ascending: true, nullsFirst: true })
     .order("updated_at", { ascending: true })
     .limit(maxListings);
 
@@ -109,6 +122,7 @@ export async function backfillImagesForSource(
       const images = await fetcher(row.source_url);
 
       if (!images || images.length === 0) {
+        result.imageCoverage.missingImages++;
         continue; // No images found — skip, don't update
       }
 
@@ -117,6 +131,7 @@ export async function backfillImagesForSource(
           `[backfill-images][dry-run] ${row.id} (${source}): ${images.length} images found`
         );
         result.backfilled++;
+        result.imageCoverage.withImages++;
         continue;
       }
 
@@ -135,6 +150,7 @@ export async function backfillImagesForSource(
         );
       } else {
         result.backfilled++;
+        result.imageCoverage.withImages++;
         console.log(
           `[backfill-images] [${i + 1}/${rows.length}] ${row.id} (${source}): ${images.length} images`
         );
@@ -153,6 +169,7 @@ export async function backfillImagesForSource(
             })
             .eq("id", row.id);
         }
+        result.imageCoverage.deadUrls++;
         result.errors.push(`Dead URL (${row.id}): ${msg}`);
         continue;
       }
@@ -163,10 +180,16 @@ export async function backfillImagesForSource(
         break;
       }
 
+      result.imageCoverage.missingImages++;
       result.errors.push(`Failed ${row.source_url}: ${msg}`);
     }
   }
 
+  result.partialSuccess =
+    result.backfilled > 0 &&
+    (result.errors.length > 0 ||
+      result.imageCoverage.missingImages > 0 ||
+      result.imageCoverage.deadUrls > 0);
   result.durationMs = Date.now() - startMs;
   return result;
 }

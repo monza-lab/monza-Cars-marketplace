@@ -15,6 +15,10 @@ export {
 } from './record';
 
 export {
+  classifyScraperRun,
+} from './health';
+
+export {
   getRecentRuns,
   getDailyAggregates,
   getDataQuality,

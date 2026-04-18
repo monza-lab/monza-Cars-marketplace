@@ -96,6 +96,7 @@ export async function recordScraperRun(record: ScraperRunRecord): Promise<void> 
       bot_blocked: record.bot_blocked ?? null,
       backfill_discovered: record.backfill_discovered ?? null,
       backfill_written: record.backfill_written ?? null,
+      image_coverage: record.image_coverage ?? null,
       source_counts: record.source_counts ?? null,
       error_messages: record.error_messages ?? null,
     });

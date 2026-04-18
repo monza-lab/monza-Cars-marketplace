@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { aggregateSourceImageCompleteness } from "@/components/dashboard/utils/aggregation";
 
 const ADMIN_EMAILS = ["caposk8@hotmail.com"];
 
@@ -38,6 +39,10 @@ export async function GET() {
     );
   }
 
+  const imageCompletenessBySource = new Map(
+    aggregateSourceImageCompleteness(rows ?? []).map((row) => [row.source, row])
+  );
+
   // Aggregate by source
   const bySource: Record<string, {
     total: number;
@@ -64,13 +69,27 @@ export async function GET() {
   }
 
   // Convert to percentages
-  const result = Object.entries(bySource).map(([source, { total, fields }]) => ({
-    source,
-    total,
-    ...Object.fromEntries(
-      Object.entries(fields).map(([k, v]) => [k, total > 0 ? Math.round((v / total) * 1000) / 10 : 0])
-    ),
-  }));
+  const result = Object.entries(bySource).map(([source, { total, fields }]) => {
+    const imageCompleteness = imageCompletenessBySource.get(source);
+    return {
+      source,
+      total,
+      ...Object.fromEntries(
+        Object.entries(fields).map(([k, v]) => [k, total > 0 ? Math.round((v / total) * 1000) / 10 : 0])
+      ),
+      imageCompleteness: imageCompleteness
+        ? {
+            withImages: imageCompleteness.withImages,
+            missingImages: imageCompleteness.missingImages,
+            percentage: imageCompleteness.percentage,
+          }
+        : {
+            withImages: 0,
+            missingImages: total,
+            percentage: 0,
+          },
+    };
+  });
 
   result.sort((a, b) => a.source.localeCompare(b.source));
 

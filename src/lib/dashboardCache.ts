@@ -63,6 +63,7 @@ export type DashboardRegionTotals = {
 
 export type DashboardData = {
   auctions: DashboardAuction[];
+  valuationListings: DashboardAuction[];
   liveNow: number;
   regionTotals: DashboardRegionTotals;
   seriesCounts: Record<string, number>;
@@ -118,15 +119,22 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
   return endTime instanceof Date ? endTime.toISOString() : "";
 }
 
-async function fetchDashboardDataUncached(): Promise<DashboardData> {
+export async function fetchDashboardDataUncached(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
-  const [live, aggregates, seriesCounts] = await Promise.all([
+  const [live, valuationLive, aggregates, seriesCounts] = await Promise.all([
     fetchLiveListingsAsCollectorCars({
       limit: DASHBOARD_SOURCE_BUDGET,
       includePriceHistory: false,
       make: requestedMake,
       includeAllSources: true,
+    }),
+    fetchLiveListingsAsCollectorCars({
+      limit: DASHBOARD_SOURCE_BUDGET,
+      includePriceHistory: false,
+      make: requestedMake,
+      includeAllSources: true,
+      status: "all",
     }),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
     fetchSeriesCounts(requestedMake ?? "Porsche"),
@@ -139,6 +147,7 @@ async function fetchDashboardDataUncached(): Promise<DashboardData> {
 
   return {
     auctions: active.map(transformCar),
+    valuationListings: valuationLive.map(transformCar),
     liveNow: aggregates.liveNow,
     regionTotals: {
       all: aggregates.regionTotalsByPlatform.all,

@@ -8,7 +8,13 @@ async function loadDashboardData(): Promise<DashboardData> {
     return await getCachedDashboardData();
   } catch (err) {
     console.error("[Home] getCachedDashboardData failed:", err);
-    return { auctions: [], liveNow: 0, regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 }, seriesCounts: {} };
+    return {
+      auctions: [],
+      valuationListings: [],
+      liveNow: 0,
+      regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+      seriesCounts: {},
+    };
   }
 }
 

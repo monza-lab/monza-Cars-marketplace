@@ -3,12 +3,49 @@ import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import { isListingPlatform } from "../platformMapping"
 import type { Auction, Brand, PorscheFamily } from "../types"
 
+export type SourceImageCompleteness = {
+  source: string
+  total: number
+  withImages: number
+  missingImages: number
+  percentage: number
+}
+
 // Upgrade low-res scraped image URLs to high-resolution variants
 function upgradeImageUrl(url: string): string {
   if (url.includes("autoscout24.net")) {
     return url.replace(/\/\d+x\d+\.webp$/, "/1280x960.webp")
   }
   return url
+}
+
+export function aggregateSourceImageCompleteness(
+  rows: Array<{ source: string | null | undefined; images?: unknown[] | null }>
+): SourceImageCompleteness[] {
+  const bySource = new Map<string, { total: number; withImages: number }>()
+
+  for (const row of rows) {
+    const source = row.source || "Unknown"
+    const bucket = bySource.get(source) || { total: 0, withImages: 0 }
+    bucket.total += 1
+    if (Array.isArray(row.images) && row.images.length > 0) {
+      bucket.withImages += 1
+    }
+    bySource.set(source, bucket)
+  }
+
+  return [...bySource.entries()]
+    .map(([source, bucket]) => {
+      const missingImages = Math.max(0, bucket.total - bucket.withImages)
+      return {
+        source,
+        total: bucket.total,
+        withImages: bucket.withImages,
+        missingImages,
+        percentage: bucket.total > 0 ? Math.round((bucket.withImages / bucket.total) * 1000) / 10 : 0,
+      }
+    })
+    .sort((a, b) => a.source.localeCompare(b.source))
 }
 
 // ─── WEIGHTED GRADE CALCULATION ───

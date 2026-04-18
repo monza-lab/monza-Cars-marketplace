@@ -4,6 +4,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockUpdate = vi.fn();
 const mockLimit = vi.fn();
 const orCalls: string[] = [];
+const orderCalls: Array<{ column: string; options?: Record<string, unknown> }> = [];
+const orderedQuery = {
+  order: vi.fn((column: string, options?: Record<string, unknown>) => {
+    orderCalls.push({ column, options });
+    return orderedQuery;
+  }),
+  limit: mockLimit,
+};
+const queryAfterOr = {
+  eq: vi.fn().mockReturnValue(orderedQuery),
+  order: orderedQuery.order,
+  limit: mockLimit,
+};
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
@@ -12,17 +25,7 @@ vi.mock("@supabase/supabase-js", () => ({
         eq: vi.fn().mockReturnValue({
           or: vi.fn((expr: string) => {
             orCalls.push(expr);
-            return {
-              // When source !== "all", .eq("source", x) is called after .or()
-              eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockReturnValue({
-                  limit: mockLimit,
-                }),
-              }),
-              order: vi.fn().mockReturnValue({
-                limit: mockLimit,
-              }),
-            };
+            return queryAfterOr;
           }),
         }),
       }),
@@ -47,6 +50,7 @@ describe("backfillImages module", () => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
     orCalls.length = 0;
+    orderCalls.length = 0;
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
@@ -130,5 +134,15 @@ describe("backfillImages module", () => {
       timeBudgetMs: 5000,
     });
     expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.2");
+    expect(orderCalls).toEqual([
+      {
+        column: "photos_count",
+        options: { ascending: true, nullsFirst: true },
+      },
+      {
+        column: "updated_at",
+        options: { ascending: true },
+      },
+    ]);
   });
 });

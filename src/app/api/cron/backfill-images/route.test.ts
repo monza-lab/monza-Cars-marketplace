@@ -100,8 +100,16 @@ describe("GET /api/cron/backfill-images", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
+    expect(data.partialSuccess).toBe(false);
     expect(data.totalDiscovered).toBe(18);
     expect(data.totalBackfilled).toBe(16);
+    expect(data.imageCoverageBySource).toEqual(
+      expect.objectContaining({
+        BaT: expect.objectContaining({ withImages: 8, missingImages: 0, deadUrls: 0 }),
+        BeForward: expect.objectContaining({ withImages: 5, missingImages: 0, deadUrls: 0 }),
+        AutoScout24: expect.objectContaining({ withImages: 3, missingImages: 0, deadUrls: 0 }),
+      })
+    );
     expect((data.results as unknown[])).toHaveLength(3);
 
     // Verify backfillImagesForSource was called for each source
@@ -140,6 +148,13 @@ describe("GET /api/cron/backfill-images", () => {
         discovered: 18,
         written: 16,
         errors_count: 0,
+        image_coverage: expect.objectContaining({
+          BaT: expect.objectContaining({
+            withImages: 8,
+            missingImages: 0,
+            deadUrls: 0,
+          }),
+        }),
       })
     );
 
@@ -216,7 +231,8 @@ describe("GET /api/cron/backfill-images", () => {
     const data = await response.json() as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+    expect(data.success).toBe(false);
+    expect(data.partialSuccess).toBe(true);
     expect(data.totalDiscovered).toBe(18);
     expect(data.totalBackfilled).toBe(15);
 
@@ -232,7 +248,7 @@ describe("GET /api/cron/backfill-images", () => {
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({
         scraper_name: "backfill-images",
-        success: true,
+        success: false,
         discovered: 18,
         written: 15,
         errors_count: 2,
@@ -281,6 +297,7 @@ describe("GET /api/cron/backfill-images", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
+    expect(data.partialSuccess).toBe(false);
 
     // Should have processed all sources
     expect(backfillImagesForSource).toHaveBeenCalledTimes(3);
@@ -323,6 +340,7 @@ describe("GET /api/cron/backfill-images", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
+    expect(data.partialSuccess).toBe(false);
     expect(data.runId).toBeDefined();
     expect(typeof data.runId).toBe("string");
     expect((data.runId as string).length).toBeGreaterThan(0);
