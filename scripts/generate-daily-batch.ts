@@ -57,7 +57,7 @@ import {
   matchesCollectorThesis,
   computeQualityScore,
 } from "../src/features/social-engine/services/listingSelector";
-import { filterRealPhotoUrls } from "../src/features/social-engine/services/photoValidator";
+import { filterRealPhotoUrls, filterHighQualityPhotos } from "../src/features/social-engine/services/photoValidator";
 import { fetchComparablesSummary } from "../src/features/social-engine/services/comparablesService";
 import { generateCaption } from "../src/features/social-engine/services/captionGenerator";
 import { extractSeries, getSeriesThesis } from "../src/lib/brandConfig";
@@ -110,7 +110,7 @@ async function fetchCandidateListings(): Promise<ListingRow[]> {
   return thesisMatches
     .map((r) => ({ row: r as ListingRow, score: computeQualityScore(r as ListingRow) }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, COUNT)
+    .slice(0, COUNT * 3) // fetch 3x to allow photo-quality drop-offs
     .map((x) => x.row);
 }
 
@@ -232,26 +232,31 @@ async function main() {
   const browser = await launchBrowser();
   const indexEntries: string[] = [];
 
+  let produced = 0;
   try {
     for (let i = 0; i < listings.length; i++) {
+      if (produced >= COUNT) break;
       const listing = listings[i];
-      const idx = String(i + 1).padStart(2, "0");
       const slug = sanitizeForPath(`${listing.year}-${listing.model}-${listing.trim ?? ""}`);
       const shortId = listing.id.slice(0, 8);
+
+      const rawPhotos = filterRealPhotoUrls(listing.images ?? []);
+      // Quality check: HEAD each, prefer upscaled variants, only keep >=150KB.
+      const photoUrls = await filterHighQualityPhotos(rawPhotos.slice(0, 12), 150_000);
+      if (photoUrls.length < 4) {
+        console.log(`  [skip] ${slug} — only ${photoUrls.length}/${rawPhotos.length} high-quality photos`);
+        continue;
+      }
+
+      produced += 1;
+      const idx = String(produced).padStart(2, "0");
       const postDir = path.join(outDir, `${idx}-${slug}-${shortId}`);
 
       if (await fs.stat(postDir).then(() => true).catch(() => false)) {
-        console.log(`[${idx}/${listings.length}] ${slug} — already exists, skipping`);
+        console.log(`[${idx}/${COUNT}] ${slug} — already exists, skipping`);
         continue;
       }
       await fs.mkdir(postDir, { recursive: true });
-
-      const photoUrls = filterRealPhotoUrls(listing.images ?? []);
-      if (photoUrls.length < 4) {
-        console.log(`[${idx}] ${slug} — not enough real photos (${photoUrls.length}), skipping`);
-        await fs.rmdir(postDir).catch(() => {});
-        continue;
-      }
 
       const comps = await fetchComparablesSummary(listing).catch(() => null);
 
@@ -272,7 +277,7 @@ async function main() {
         selectedIndices: [0, 1, 2, 3],
       };
 
-      console.log(`[${idx}/${listings.length}] ${slug} — generating caption + 5 slides...`);
+      console.log(`[${idx}/${COUNT}] ${slug} — generating caption + 5 slides...`);
 
       let caption;
       try {
