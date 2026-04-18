@@ -66,5 +66,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
   }
 
+  // MonzaHaus Index pages
+  for (const locale of LOCALES) {
+    entries.push({
+      url: `${BASE_URL}/${locale}/index/air-cooled-911`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: buildAlternates("/index/air-cooled-911"),
+    })
+  }
+
   return entries
 }
