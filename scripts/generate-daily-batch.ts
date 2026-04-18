@@ -18,9 +18,31 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { promises as fs } from "fs";
+import { promises as fs, existsSync, readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
+// Load .env.local before any module that reads process.env.
+// Matches the convention used by other scripts (env-check.ts, db-porsche.ts).
+function loadEnvFromFile(filePath: string): void {
+  if (!existsSync(filePath)) return;
+  const raw = readFileSync(filePath, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const idx = trimmed.indexOf("=");
+    if (idx === -1) continue;
+    const key = trimmed.slice(0, idx).trim();
+    if (!key || process.env[key] !== undefined) continue;
+    let value = trimmed.slice(idx + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
+loadEnvFromFile(path.resolve(process.cwd(), ".env.local"));
+loadEnvFromFile(path.resolve(process.cwd(), ".env"));
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import chromium from "@sparticuz/chromium";
@@ -126,9 +148,22 @@ html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; 
 </html>`;
 }
 
+const MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+
 async function launchBrowser(): Promise<Browser> {
-  const executablePath = process.env.CHROMIUM_PATH ?? (await chromium.executablePath());
-  return pw.launch({ executablePath, args: chromium.args, headless: true });
+  // On macOS, @sparticuz/chromium ships a Linux binary that won't run. Prefer
+  // the system Chrome; fall back to the sparticuz binary on Linux/Lambda.
+  let executablePath = process.env.CHROMIUM_PATH;
+  if (!executablePath) {
+    if (process.platform === "darwin" && existsSync(MAC_CHROME)) {
+      executablePath = MAC_CHROME;
+    } else {
+      executablePath = await chromium.executablePath();
+    }
+  }
+  // On local, skip the aggressive sparticuz args (they're Lambda-specific).
+  const args = process.platform === "darwin" ? ["--no-sandbox"] : chromium.args;
+  return pw.launch({ executablePath, args, headless: true });
 }
 
 async function renderSlideToPng(browser: Browser, slideIdx: number, data: SlideData, outPath: string): Promise<void> {
@@ -179,7 +214,12 @@ async function main() {
   console.log(`[v0.5] Generating daily batch — count=${COUNT}`);
 
   const today = new Date().toISOString().slice(0, 10);
-  const outDir = path.join(process.cwd(), "posts", today);
+  // Output lives in ~/Downloads/monzahaus-posts/YYYY-MM-DD/ so it's easy for
+  // Edgar to reach from Finder and from phone cloud-sync. Override with
+  // SOCIAL_OUTPUT_DIR env var if needed.
+  const defaultRoot = path.join(process.env.HOME ?? process.cwd(), "Downloads", "monzahaus-posts");
+  const rootDir = process.env.SOCIAL_OUTPUT_DIR ?? defaultRoot;
+  const outDir = path.join(rootDir, today);
   await fs.mkdir(outDir, { recursive: true });
 
   const listings = await fetchCandidateListings();

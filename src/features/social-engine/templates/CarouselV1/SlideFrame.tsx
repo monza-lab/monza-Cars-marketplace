@@ -1,4 +1,7 @@
-import "../../styles/brand-tokens.css";
+// Note: brand-tokens.css is loaded via `src/app/internal/carousel/layout.tsx` for
+// the Next.js render path, and inlined directly into the HTML wrapper by
+// `scripts/generate-daily-batch.ts` for the v0.5 CLI path. We intentionally
+// do NOT import the CSS here because tsx (used by the CLI) cannot parse CSS.
 import type { ReactNode } from "react";
 
 export function SlideFrame({ children, theme = "dark" }: { children: ReactNode; theme?: "dark" | "light" | "rose" }) {
