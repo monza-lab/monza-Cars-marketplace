@@ -40,6 +40,23 @@ export function computeRegionalValFromAuctions(
   return out;
 }
 
+/**
+ * Compute per-market segment stats for a specific family using a pre-derived
+ * corpus. Use this path (over computeRegionalValFromAuctions) whenever the
+ * full 18k+ valuation corpus is available — it avoids the 200-per-source
+ * budget limit of the dashboard live feed.
+ */
+export function computeRegionalValFromCorpus(
+  corpus: DerivedPrice[],
+  family: string,
+): RegionalValuations {
+  const out = {} as RegionalValuations;
+  for (const m of MARKETS) {
+    out[m] = computeSegmentStats(corpus, { market: m, family });
+  }
+  return out;
+}
+
 export function formatUsdValue(v: number | null | undefined): string {
   if (v == null || !isFinite(v) || v <= 0) return "—";
   if (v >= 1_000_000) {

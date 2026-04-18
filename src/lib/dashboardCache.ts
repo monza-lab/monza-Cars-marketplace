@@ -2,11 +2,40 @@ import { unstable_cache, revalidateTag } from "next/cache";
 import {
   fetchLiveListingsAsCollectorCars,
   fetchLiveListingAggregateCounts,
-  fetchValuationListingsForMake,
+  fetchValuationCorpusForMake,
   fetchSeriesCounts,
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
 import type { CollectorCar } from "./curatedCars";
+import type { DerivedPrice, SegmentStats, CanonicalMarket } from "./pricing/types";
+import { computeSegmentStats } from "./pricing/segmentStats";
+
+const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
+
+/**
+ * Pre-aggregate the full valuation corpus into { family → market → SegmentStats }.
+ * This is much smaller than the raw corpus (~22 families × 4 markets × ~400 bytes
+ * = a few hundred KB, well under Next.js's 2MB cache limit) and lets the client
+ * render tiles directly without shipping 40k rows.
+ */
+function aggregateValuationByFamily(
+  corpus: DerivedPrice[],
+): Record<string, Record<CanonicalMarket, SegmentStats>> {
+  const families = Array.from(
+    new Set(corpus.map((p) => p.family).filter((f): f is string => !!f)),
+  );
+  const out: Record<string, Record<CanonicalMarket, SegmentStats>> = {};
+  for (const fam of families) {
+    const perMarket = {} as Record<CanonicalMarket, SegmentStats>;
+    for (const m of VALUATION_MARKETS) {
+      perMarket[m] = computeSegmentStats(corpus, { market: m, family: fam });
+    }
+    out[fam] = perMarket;
+  }
+  return out;
+}
+
+export type RegionalValByFamily = Record<string, Record<CanonicalMarket, SegmentStats>>;
 
 // ─── Shape expected by DashboardClient ───
 
@@ -71,6 +100,10 @@ export type DashboardRegionTotals = {
 export type DashboardData = {
   auctions: DashboardAuction[];
   valuationListings: DashboardAuction[];
+  /** Pre-aggregated segment stats: family → market → SegmentStats.
+   * Computed on the server from the full 40k-row valuation corpus so the
+   * client doesn't have to ship or re-aggregate the raw rows. */
+  regionalValByFamily: RegionalValByFamily;
   liveNow: number;
   regionTotals: DashboardRegionTotals;
   seriesCounts: Record<string, number>;
@@ -139,14 +172,14 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
 async function dashboardDataImpl(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
-  const [live, valuationLive, aggregates, seriesCounts] = await Promise.all([
+  const [live, valuationCorpus, aggregates, seriesCounts] = await Promise.all([
     fetchLiveListingsAsCollectorCars({
       limit: DASHBOARD_SOURCE_BUDGET,
       includePriceHistory: false,
       make: requestedMake,
       includeAllSources: true,
     }),
-    fetchValuationListingsForMake(requestedMake ?? "Porsche"),
+    fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
     fetchSeriesCounts(requestedMake ?? "Porsche"),
   ]);
@@ -156,9 +189,12 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
   );
 
+  const regionalValByFamily = aggregateValuationByFamily(valuationCorpus);
+
   return {
     auctions: active.map(transformCar),
-    valuationListings: valuationLive.map(transformCar),
+    valuationListings: [], // superseded by regionalValByFamily
+    regionalValByFamily,
     liveNow: aggregates.liveNow,
     regionTotals: {
       all: aggregates.regionTotalsByPlatform.all,

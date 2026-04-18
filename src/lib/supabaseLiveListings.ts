@@ -1205,6 +1205,100 @@ export async function fetchValuationListingsForMake(
   }
 }
 
+/**
+ * Lightweight valuation corpus: returns DerivedPrice[] for every priced
+ * listing of the given make, with no ORDER BY, no image joins, and only the
+ * columns derivePrice actually needs. Safe to run against the full ~35k
+ * priced Porsche rows without timing out.
+ *
+ * Unlike fetchValuationListingsForMake (which builds CollectorCar objects with
+ * image resolution, grade computation, status mapping, etc.), this function
+ * emits only the data the valuation aggregation pipeline consumes — so the
+ * dashboard can aggregate medians over the full corpus, not just the 200-per
+ * source budget used for the live feed.
+ */
+export async function fetchValuationCorpusForMake(
+  make: string,
+  limit = 40_000,
+): Promise<import("./pricing/types").DerivedPrice[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) return [];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createSupabaseClient(url, key);
+  const rates = await getExchangeRates();
+
+  const out: import("./pricing/types").DerivedPrice[] = [];
+  const pageSize = 1000;
+  const maxRows = limit > 0 ? limit : 40_000;
+  let from = 0;
+
+  try {
+    while (out.length < maxRows) {
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await supabase
+        .from("listings")
+        .select(
+          "source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
+        )
+        .ilike("make", normalizedMake)
+        .gt("hammer_price", 0)
+        .range(from, to);
+
+      if (error) {
+        console.error(
+          "[supabaseLiveListings] fetchValuationCorpusForMake page failed:",
+          error.message,
+        );
+        break;
+      }
+
+      const rows = (data ?? []) as Array<{
+        source: string | null;
+        status: string | null;
+        year: number;
+        make: string;
+        model: string;
+        hammer_price: string | number | null;
+        final_price: number | null;
+        current_bid: number | null;
+        original_currency: string | null;
+      }>;
+      if (rows.length === 0) break;
+
+      for (const row of rows) {
+        out.push(
+          derivePrice(
+            {
+              source: row.source ?? "",
+              status: row.status ?? null,
+              year: row.year,
+              make: row.make,
+              model: row.model,
+              hammer_price:
+                row.hammer_price != null ? Number(row.hammer_price) || null : null,
+              final_price: row.final_price ?? null,
+              current_bid: row.current_bid ?? null,
+              original_currency: row.original_currency ?? null,
+            },
+            { rates },
+          ),
+        );
+      }
+      from += rows.length;
+      if (rows.length < pageSize) break;
+    }
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchValuationCorpusForMake failed:", err);
+  }
+
+  return out;
+}
+
 export async function fetchLiveListingsAsCollectorCars(options?: {
   limit?: number;
   includePriceHistory?: boolean;

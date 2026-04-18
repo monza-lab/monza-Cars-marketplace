@@ -35,7 +35,7 @@ import {
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
-import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
+import { listingPriceUsd, computeRegionalValFromAuctions, computeRegionalValFromCorpus } from "./utils/valuation"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
@@ -1819,7 +1819,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 }
 
 // ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
-function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; valuationAuctions?: Auction[]; allFamilies: PorscheFamily[] }) {
+function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValByFamily, allFamilies }: { family: PorscheFamily; auctions: Auction[]; valuationAuctions?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
 
@@ -1843,7 +1843,14 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }
       return series === familyKey
     })
   }, [valuationSource, family.slug])
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions, rates), [allFamilyAuctions, rates])
+  // Prefer the pre-aggregated regionalValByFamily computed server-side from
+  // the full 18k+ valuation corpus. Fall back to the filtered auction feed
+  // only when the server-side aggregation is missing (pagination error etc.).
+  const regionalVal = useMemo(() => {
+    const pre = regionalValByFamily?.[family.slug]
+    if (pre) return pre
+    return computeRegionalValFromAuctions(allFamilyAuctions, rates)
+  }, [regionalValByFamily, family.slug, allFamilyAuctions, rates])
 
   // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {
@@ -2145,7 +2152,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }
 }
 
 // ─── BRAND CONTEXT PANEL ───
-function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; valuationAuctions?: Auction[] }) {
+function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regionalValByFamily }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; valuationAuctions?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
   const brandAuctions = useMemo(() =>
@@ -2160,7 +2167,21 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions }: { 
     valuationSource.filter(a => a.make === brand.name),
     [valuationSource, brand.name]
   )
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
+  // Prefer the pre-aggregated regionalValByFamily (computed server-side from
+  // the full 18k+ valuation corpus). Pick dominant family from the brand's
+  // filtered auctions to stay consistent with the on-screen context.
+  const regionalVal = useMemo(() => {
+    if (regionalValByFamily) {
+      const counts = new Map<string, number>()
+      for (const a of brandAuctions) if (a.family) counts.set(a.family, (counts.get(a.family) ?? 0) + 1)
+      let best: [string, number] | null = null
+      for (const entry of counts.entries()) if (!best || entry[1] > best[1]) best = entry
+      const fam = best?.[0]
+      const pre = fam ? regionalValByFamily[fam] : undefined
+      if (pre) return pre
+    }
+    return computeRegionalValFromAuctions(allBrandAuctions, rates)
+  }, [regionalValByFamily, brandAuctions, allBrandAuctions, rates])
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => (a.price > 0 || a.currentBid > 0))
@@ -2440,7 +2461,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions }: { 
 }
 
 // ─── MAIN COMPONENT ───
-export function DashboardClient({ auctions, valuationListings, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; valuationListings?: Auction[]; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
+export function DashboardClient({ auctions, valuationListings, regionalValByFamily, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; valuationListings?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
   const { rates } = useCurrency()
@@ -2615,10 +2636,11 @@ export function DashboardClient({ auctions, valuationListings, liveRegionTotals,
                 family={activeFamily}
                 auctions={filteredAuctions}
                 valuationAuctions={valuationAuctions}
+                regionalValByFamily={regionalValByFamily}
                 allFamilies={porscheFamilies}
               />
             ) : (
-              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} valuationAuctions={valuationAuctions} />
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} valuationAuctions={valuationAuctions} regionalValByFamily={regionalValByFamily} />
             )}
           </div>
         </div>

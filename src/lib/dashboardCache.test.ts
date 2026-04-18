@@ -41,11 +41,21 @@ const fetchLiveListingsAsCollectorCars = vi.fn((options?: { status?: string }) =
   return Promise.resolve([activeCar])
 })
 
-const fetchValuationListingsForMake = vi.fn(() => Promise.resolve([valuationCar]))
+const fetchValuationCorpusForMake = vi.fn(() =>
+  Promise.resolve([
+    {
+      soldPriceUsd: null,
+      askingPriceUsd: 280000,
+      basis: "asking" as const,
+      canonicalMarket: "EU" as const,
+      family: "992",
+    },
+  ])
+)
 
 vi.mock("./supabaseLiveListings", () => ({
   fetchLiveListingsAsCollectorCars,
-  fetchValuationListingsForMake,
+  fetchValuationCorpusForMake,
   fetchLiveListingAggregateCounts: vi.fn(async () => ({
     liveNow: 7,
     regionTotalsByPlatform: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
@@ -61,10 +71,10 @@ vi.mock("./makeProfiles", () => ({
 describe("dashboard cache", () => {
   beforeEach(() => {
     fetchLiveListingsAsCollectorCars.mockClear()
-    fetchValuationListingsForMake.mockClear()
+    fetchValuationCorpusForMake.mockClear()
   })
 
-  it("fetches the dashboard listing universe once", async () => {
+  it("fetches the active feed plus the lightweight valuation corpus", async () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
@@ -77,9 +87,11 @@ describe("dashboard cache", () => {
         includePriceHistory: false,
       })
     )
-    expect(fetchValuationListingsForMake).toHaveBeenCalledWith("Porsche")
+    expect(fetchValuationCorpusForMake).toHaveBeenCalledWith("Porsche")
     expect(data.auctions).toHaveLength(1)
-    expect(data.valuationListings).toHaveLength(1)
+    expect(data.regionalValByFamily).toBeDefined()
+    expect(data.regionalValByFamily["992"]).toBeDefined()
+    expect(data.regionalValByFamily["992"].EU).toBeDefined()
     expect(data.liveNow).toBe(7)
     expect(data.seriesCounts).toEqual({ "992": 1 })
   })

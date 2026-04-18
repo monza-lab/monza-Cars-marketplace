@@ -11,6 +11,7 @@ async function loadDashboardData(): Promise<DashboardData> {
     return {
       auctions: [],
       valuationListings: [],
+      regionalValByFamily: {},
       liveNow: 0,
       regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
       seriesCounts: {},
@@ -44,6 +45,7 @@ export default async function Home({
       <DashboardClient
         auctions={data.auctions}
         valuationListings={data.valuationListings}
+        regionalValByFamily={data.regionalValByFamily}
         liveRegionTotals={data.regionTotals}
         liveNowTotal={data.liveNow}
         seriesCounts={data.seriesCounts}
