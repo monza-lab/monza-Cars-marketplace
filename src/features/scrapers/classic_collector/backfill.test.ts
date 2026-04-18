@@ -26,6 +26,8 @@ const mockFetch = vi.mocked(fetchAndParseDetail);
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
+const orCalls: string[] = [];
+
 function setupSupabaseMock(rows: Array<{ id: string; source_url: string }> | null, error?: string) {
   mockFrom.mockImplementation((table: string) => {
     if (table === "listings") {
@@ -33,14 +35,17 @@ function setupSupabaseMock(rows: Array<{ id: string; source_url: string }> | nul
         select: () => ({
           eq: () => ({
             eq: () => ({
-              or: () => ({
-                order: () => ({
-                  limit: () => Promise.resolve({
-                    data: rows,
-                    error: error ? { message: error } : null,
+              or: (expr: string) => {
+                orCalls.push(expr);
+                return {
+                  order: () => ({
+                    limit: () => Promise.resolve({
+                      data: rows,
+                      error: error ? { message: error } : null,
+                    }),
                   }),
-                }),
-              }),
+                };
+              },
             }),
           }),
         }),
@@ -68,8 +73,15 @@ const SAMPLE_ROWS = [
 describe("classic backfillMissingImages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    orCalls.length = 0;
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+  });
+
+  it("queries with photos_count.lt.2 in addition to empty images", async () => {
+    setupSupabaseMock([]);
+    await backfillMissingImages({ page: mockPage, timeBudgetMs: 5000, runId: "test" });
+    expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.2");
   });
 
   it("backfills listings that have images on their detail page", async () => {

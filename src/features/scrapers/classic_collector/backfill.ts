@@ -47,7 +47,7 @@ export async function backfillMissingImages(opts: {
     .select("id,source_url")
     .eq("source", "ClassicCom")
     .eq("status", "active")
-    .or("images.is.null,images.eq.{}")
+    .or("images.is.null,images.eq.{},photos_count.lt.2")
     .order("scrape_timestamp", { ascending: true })
     .limit(maxListings);
 
