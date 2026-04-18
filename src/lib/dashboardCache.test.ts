@@ -26,8 +26,12 @@ const activeCar = {
   trend: "Stable",
 } as const
 
-const fetchLiveListingsAsCollectorCars = vi.fn(() => {
-  return Promise.resolve([activeCar])
+const fetchPaginatedListings = vi.fn(() => {
+  return Promise.resolve({
+    cars: [activeCar],
+    hasMore: false,
+    nextCursor: null,
+  })
 })
 
 const fetchValuationCorpusForMake = vi.fn(() =>
@@ -43,7 +47,7 @@ const fetchValuationCorpusForMake = vi.fn(() =>
 )
 
 vi.mock("./supabaseLiveListings", () => ({
-  fetchLiveListingsAsCollectorCars,
+  fetchPaginatedListings,
   fetchValuationCorpusForMake,
   fetchLiveListingAggregateCounts: vi.fn(async () => ({
     liveNow: 7,
@@ -59,23 +63,22 @@ vi.mock("./makeProfiles", () => ({
 
 describe("dashboard cache", () => {
   beforeEach(() => {
-    fetchLiveListingsAsCollectorCars.mockClear()
+    fetchPaginatedListings.mockClear()
     fetchValuationCorpusForMake.mockClear()
   })
 
-  it("fetches the active feed plus the lightweight valuation corpus", async () => {
+  it("fetches dashboard listings from the direct paginated query path", async () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
-    expect(fetchLiveListingsAsCollectorCars).toHaveBeenCalledTimes(1)
-    expect(fetchLiveListingsAsCollectorCars).toHaveBeenNthCalledWith(
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(1)
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         make: "Porsche",
-        includeAllSources: true,
-        includePriceHistory: false,
-        limit: 50,
-      })
+        pageSize: 200,
+        status: "active",
+      }),
     )
     expect(fetchValuationCorpusForMake).toHaveBeenCalledWith("Porsche")
     expect(data.auctions).toHaveLength(1)
@@ -84,5 +87,20 @@ describe("dashboard cache", () => {
     expect(data.regionalValByFamily["992"].EU).toBeDefined()
     expect(data.liveNow).toBe(7)
     expect(data.seriesCounts).toEqual({ "992": 1 })
+  })
+
+  it("keeps listings when ancillary dashboard queries fail", async () => {
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: [activeCar],
+      hasMore: false,
+      nextCursor: null,
+    })
+    fetchValuationCorpusForMake.mockRejectedValueOnce(new Error("timeout"))
+
+    const { fetchDashboardDataUncached } = await import("./dashboardCache")
+    const data = await fetchDashboardDataUncached()
+
+    expect(data.auctions).toHaveLength(1)
+    expect(data.regionalValByFamily).toEqual({})
   })
 })
