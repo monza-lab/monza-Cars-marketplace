@@ -189,6 +189,10 @@ function normalizeAutoTraderResizePathname(pathname: string): string {
     .replace(/\/+/g, "/");
 }
 
+function hasAutoTraderMediaPathname(pathname: string): boolean {
+  return /\/a\/media\/.+\.(?:jpe?g|png|webp|gif)$/i.test(pathname);
+}
+
 export function normalizeListingImageUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
@@ -225,6 +229,10 @@ export function normalizeListingImageUrl(value: unknown): string | null {
     if (decodedAfterNormalization.includes("{") || decodedAfterNormalization.includes("}")) {
       return null;
     }
+  }
+
+  if (isAutoTraderCdnHost(parsed.hostname) && !hasAutoTraderMediaPathname(parsed.pathname)) {
+    return null;
   }
 
   return parsed.toString();
@@ -1445,13 +1453,15 @@ export async function fetchPaginatedListings(options: {
   cars: CollectorCar[];
   hasMore: boolean;
   nextCursor: { endTime: string | null; id: string } | null;
+  totalCount: number | null;
+  totalLiveCount: number | null;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { cars: [], hasMore: false, nextCursor: null };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 
   const pageSize = options.pageSize ?? 50;
@@ -1460,13 +1470,14 @@ export async function fetchPaginatedListings(options: {
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Build base query. Count omitted on purpose: `count: "exact"` forces
-    // a full-table scan alongside every page fetch which collides with the
-    // Supabase statement_timeout when multiple sources / tabs query in
-    // parallel. `hasMore` is already derived from fetching pageSize + 1.
+    // Build base query. Using `count: "planned"` — Postgres returns its
+    // planner-estimated row count for the filtered query without executing
+    // a full table scan. Accuracy is approximate (statistics freshness),
+    // which is acceptable for visual counters. See
+    // docs/superpowers/specs/2026-04-18-absolute-car-counts-design.md.
     let query = supabase
       .from("listings")
-      .select(SELECT_NARROW)
+      .select(SELECT_NARROW, { count: "planned" })
       .eq("make", targetMake);
 
     // Status filter
@@ -1559,11 +1570,11 @@ export async function fetchPaginatedListings(options: {
     // Fetch pageSize + 1 to determine hasMore
     query = query.limit(pageSize + 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
-      return { cars: [], hasMore: false, nextCursor: null };
+      return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
     }
 
     const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
@@ -1577,10 +1588,11 @@ export async function fetchPaginatedListings(options: {
       ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
       : null;
 
-    return { cars, hasMore, nextCursor };
+    const totalCount = typeof count === "number" ? count : null;
+    return { cars, hasMore, nextCursor, totalCount, totalLiveCount: null };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
-    return { cars: [], hasMore: false, nextCursor: null };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 }
 
