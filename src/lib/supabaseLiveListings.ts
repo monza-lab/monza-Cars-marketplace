@@ -33,6 +33,7 @@ type ListingRow = {
   city: string | null;
   hammer_price: string | number | null;
   original_currency: string | null;
+  listing_price: string | number | null;
   // Enriched fields from detail scraping
   mileage: number | null;
   mileage_unit: string | null;
@@ -88,11 +89,11 @@ function createSupabaseClient(url: string, key: string): SupabaseClient {
 
 // ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,listing_price,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
 
 // ─── Narrow select (without joins — fallback if photos_media join fails) ───
 const SELECT_NARROW =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,listing_price,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
 
 // ─── Mappers ───
 
@@ -482,7 +483,10 @@ function computeGrade(
 // ─── Row → CollectorCar ───
 
 function rowToCollectorCar(row: ListingRow): CollectorCar {
-  const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
+  const price = row.listing_price
+    ?? row.current_bid
+    ?? row.final_price
+    ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
 
   // Prefer direct images column; fall back to photos_media join
   const directImages = (row.images ?? []).map(normalizeListingImageUrl).filter((u): u is string => u !== null);
@@ -1151,20 +1155,20 @@ export async function fetchSoldListingsForMake(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,sale_date,status")
+      .select("id,year,make,model,trim,listing_price,sale_date,status")
       .ilike("make", normalizedMake)
       .eq("status", "sold")
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .not("listing_price", "is", null)
+      .gt("listing_price", 0)
       .order("sale_date", { ascending: true })
       .limit(limit);
 
     if (error || !data) return [];
 
     return data
-      .filter((r: { hammer_price: string | number | null; sale_date: string | null }) => r.hammer_price != null && r.sale_date != null)
-      .map((r: { year: number; make: string; model: string; trim: string | null; hammer_price: string | number; sale_date: string }) => ({
-        price: Number(r.hammer_price),
+      .filter((r: { listing_price: string | number | null; sale_date: string | null }) => r.listing_price != null && r.sale_date != null)
+      .map((r: { year: number; make: string; model: string; trim: string | null; listing_price: string | number; sale_date: string }) => ({
+        price: Number(r.listing_price),
         date: r.sale_date,
         model: r.model,
         year: r.year,
@@ -1176,7 +1180,7 @@ export async function fetchSoldListingsForMake(
   }
 }
 
-// ─── Priced listings for model (all statuses with hammer_price) ───
+// ─── Priced listings for model (all statuses with listing_price) ───
 
 export interface PricedListingRow {
   id: string
@@ -1184,7 +1188,7 @@ export interface PricedListingRow {
   make: string
   model: string
   trim: string | null
-  hammer_price: number
+  listing_price: number
   original_currency: string | null
   sale_date: string | null
   status: string
@@ -1211,17 +1215,17 @@ export async function fetchPricedListingsForModel(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
+      .select("id,year,make,model,trim,listing_price,original_currency,sale_date,status,mileage,source,country")
       .ilike("make", normalizedMake)
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .not("listing_price", "is", null)
+      .gt("listing_price", 0)
       .order("sale_date", { ascending: false })
       .limit(limit);
 
     if (error || !data) return [];
 
     return data.filter(
-      (r: { hammer_price: string | number | null }) => r.hammer_price != null && Number(r.hammer_price) > 0
+      (r: { listing_price: string | number | null }) => r.listing_price != null && Number(r.listing_price) > 0
     ) as PricedListingRow[];
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
@@ -1283,7 +1287,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       const car = rowToCollectorCar(row);
       const history = historyByListing.get(row.id);
 
-      // Use latest price_history as currentBid when hammer_price is 0 (active listings)
+      // Use latest price_history as currentBid when the live bid is still unavailable.
       if (car.currentBid === 0 && history && history.length > 0) {
         const latest = history[history.length - 1];
         const latestPrice = latest.price_usd ?? latest.price_eur ?? latest.price_gbp ?? 0;
@@ -1346,11 +1350,11 @@ function resolveSourceAliasesForPlatform(platformKey: string): string[] {
 
 const SORT_COLUMN_MAP: Record<string, string> = {
   endTime: "end_time",
-  price: "hammer_price",
-  currentBid: "hammer_price",
+  price: "listing_price",
+  currentBid: "current_bid",
   year: "year",
   bidCount: "bid_count",
-  trendValue: "hammer_price",
+  trendValue: "listing_price",
 };
 
 export async function fetchPaginatedListings(options: {
@@ -1483,78 +1487,47 @@ export async function fetchPaginatedListings(options: {
   }
 }
 
-// ─── Per-series counts (accurate, fetches only model+year) ───
+// ─── Per-series counts (reads from listings_active_counts materialized view) ───
 
 /**
- * Returns exact listing counts per Porsche series by fetching all model+year
- * pairs and running extractSeries() on each. Only model+year are fetched so
- * the payload is tiny (~600KB for 26K rows) even though we paginate through all.
- * Results are cached in memory for 10 minutes to avoid repeating 27 parallel
- * Supabase requests on every page load.
+ * Returns listing counts per series by querying the `listings_active_counts`
+ * materialized view with a single request. Aggregation is done by Postgres,
+ * eliminating the previous keyset-paginated client-side approach.
+ *
+ * Graceful fallback: if the MV hasn't been created yet (migration pending),
+ * returns {} and emits a console.warn pointing at the migration file.
  */
-const _seriesCountsCache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();
-const SERIES_COUNTS_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-export async function fetchSeriesCounts(
-  make: string,
-): Promise<Record<string, number>> {
-  const cacheKey = make.toLowerCase();
-  const cached = _seriesCountsCache.get(cacheKey);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.counts;
-  }
-
+export async function fetchSeriesCounts(make: string): Promise<Record<string, number>> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return {};
 
-  const targetMake = resolveRequestedMake(make);
+  const targetMake = resolveRequestedMake(make).toLowerCase();
 
   try {
     const supabase = createSupabaseClient(url, key);
-    const PAGE = 1000; // Supabase PostgREST hard-caps .range() at 1000 rows per request
-    const MAX_PAGES = 50; // Hard cap (50K rows) to bound worst-case runtime
-    const counts: Record<string, number> = {};
+    const { data, error } = await supabase
+      .from("listings_active_counts")
+      .select("series,live_count")
+      .eq("make", targetMake);
 
-    // Sequential keyset pagination: each request uses `id > lastId` so
-    // Postgres walks the primary-key index instead of re-scanning with
-    // OFFSET. Running pages serially keeps the connection pool free for
-    // other dashboard queries and stays well inside the statement timeout.
-    let lastId: string | null = null;
-    for (let page = 0; page < MAX_PAGES; page++) {
-      let query = supabase
-        .from("listings")
-        .select("id,model,year,title")
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .order("id", { ascending: true })
-        .limit(PAGE);
-
-      if (lastId !== null) {
-        query = query.gt("id", lastId);
+    if (error) {
+      if (/(relation.*listings_active_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_counts MV missing — " +
+          "apply supabase/migrations/20260419_listings_active_counts_mv.sql and run refresh_listings_active_counts()."
+        );
+        return {};
       }
-
-      const { data, error } = await query;
-      if (error) {
-        console.error("[supabaseLiveListings] fetchSeriesCounts page failed:", error.message);
-        break;
-      }
-
-      const rows = (data ?? []) as { id: string; model: string; year: number; title: string | null }[];
-      if (rows.length === 0) break;
-
-      for (const row of rows) {
-        if (isJunkListing({ make, model: row.model, year: row.year })) continue;
-        const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make, row.title ?? undefined);
-        if (!getSeriesConfig(seriesId, make)) continue;
-        counts[seriesId] = (counts[seriesId] ?? 0) + 1;
-      }
-
-      if (rows.length < PAGE) break;
-      lastId = rows[rows.length - 1].id;
+      console.error("[supabaseLiveListings] fetchSeriesCounts MV query failed:", error.message);
+      return {};
     }
 
-    _seriesCountsCache.set(cacheKey, { counts, expiresAt: Date.now() + SERIES_COUNTS_TTL_MS });
+    const counts: Record<string, number> = {};
+    for (const row of (data ?? []) as { series: string; live_count: number }[]) {
+      if (row.series === "__null") continue;
+      counts[row.series] = (counts[row.series] ?? 0) + Number(row.live_count);
+    }
     return counts;
   } catch (err) {
     console.error("[supabaseLiveListings] fetchSeriesCounts threw:", err);
