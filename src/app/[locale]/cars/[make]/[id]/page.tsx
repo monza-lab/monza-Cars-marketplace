@@ -12,9 +12,12 @@ import { getMarketDataForModel, getComparablesForModel, getAnalysisForCar, getSo
 import { CarDetailClient } from "./CarDetailClient"
 import { stripHtml } from "@/lib/stripHtml"
 import { findSimilarCars } from "@/lib/similarCars"
+import { VehicleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd"
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
 interface CarDetailPageProps {
-  params: Promise<{ make: string; id: string }>
+  params: Promise<{ make: string; id: string; locale: string }>
 }
 
 export async function generateMetadata({ params }: CarDetailPageProps) {
@@ -49,7 +52,7 @@ export async function generateStaticParams() {
 }
 
 export default async function CarDetailPage({ params }: CarDetailPageProps) {
-  const { id } = await params
+  const { id, make, locale } = await params
   const isLiveId = id.startsWith("live-")
 
   let car = CURATED_CARS.find(c => c.id === id && c.make !== "Ferrari") ?? null
@@ -111,28 +114,52 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     ? supabaseSoldHistory
     : await getSoldAuctionsForMake(car.make)
 
+  const carUrl = `${BASE_URL}/${locale}/cars/${make}/${id}`
+  const mileageUnitCode = car.mileageUnit === "km" ? "KMT" : "SMI"
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
-              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-            </div>
-            <p className="text-sm text-zinc-500">Loading...</p>
-          </div>
-        </div>
-      }
-    >
-      <CarDetailClient
-        car={car}
-        similarCars={similarCars}
-        dbMarketData={dbMarketData}
-        dbComparables={dbComparables}
-        dbAnalysis={dbAnalysis}
-        dbSoldHistory={soldHistory}
+    <>
+      <VehicleJsonLd
+        name={car.title}
+        description={stripHtml(car.thesis).slice(0, 300)}
+        url={carUrl}
+        brand={car.make}
+        model={car.model ?? ""}
+        year={car.year}
+        mileage={car.mileage ? `${car.mileage} ${mileageUnitCode}` : undefined}
+        price={typeof car.price === "number" ? car.price : undefined}
+        currency={car.originalCurrency ?? "USD"}
+        image={car.image}
       />
-    </Suspense>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: `${BASE_URL}/${locale}` },
+          { name: car.make, url: `${BASE_URL}/${locale}/cars/${make}` },
+          { name: car.title, url: carUrl },
+        ]}
+      />
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
+                <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+              </div>
+              <p className="text-sm text-zinc-500">Loading...</p>
+            </div>
+          </div>
+        }
+      >
+        <CarDetailClient
+          car={car}
+          similarCars={similarCars}
+          dbMarketData={dbMarketData}
+          dbComparables={dbComparables}
+          dbAnalysis={dbAnalysis}
+          dbSoldHistory={soldHistory}
+        />
+      </Suspense>
+    </>
   )
 }

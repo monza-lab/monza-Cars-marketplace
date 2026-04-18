@@ -11,7 +11,7 @@ import {
 } from "./JsonLd";
 
 function extract(html: string): Record<string, unknown>[] {
-  const re = /<script type="application\/ld\+json">(.*?)<\/script>/gs;
+  const re = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g;
   return Array.from(html.matchAll(re)).map((m) => JSON.parse(m[1]));
 }
 
