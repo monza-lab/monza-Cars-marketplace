@@ -7,6 +7,7 @@ import {
 import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, getAnalysesForMake } from "@/lib/db/queries"
 import { MakePageClient } from "./MakePageClient"
 import { BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/seo/JsonLd"
+import { buildMakePageMetadata } from "@/lib/seo/makePageMetadata"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
@@ -17,19 +18,14 @@ interface MakePageProps {
   searchParams: Promise<{ family?: string; gen?: string; variant?: string; series?: string }>
 }
 
-export async function generateMetadata({ params }: MakePageProps) {
-  const { make } = await params
-  const decodedMake = decodeURIComponent(make).replace(/-/g, " ")
-  // Capitalize each word for display
-  const makeName = decodedMake
-    .split(" ")
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ")
-
-  return {
-    title: `${makeName} Collection | Monza Lab`,
-    description: `Explore investment-grade ${makeName} vehicles with live and historical collector-market insights.`,
-  }
+export async function generateMetadata({ params, searchParams }: MakePageProps) {
+  const { make, locale } = await params
+  const { series } = await searchParams
+  return buildMakePageMetadata({
+    locale: locale as "en" | "es" | "de" | "ja",
+    make,
+    series,
+  })
 }
 
 export default async function MakePage({ params, searchParams }: MakePageProps) {

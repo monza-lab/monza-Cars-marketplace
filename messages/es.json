@@ -1271,5 +1271,19 @@
     "copyright": "© 2025 Monza Lab",
     "privacy": "Privacidad",
     "terms": "Términos"
+  },
+  "seo": {
+    "make": {
+      "title": "Colección {make} — Autos de Colección Grado Inversión | MonzaHaus",
+      "description": "Explora vehículos {make} grado inversión con inteligencia de mercado en vivo, datos de subastas y análisis con IA."
+    },
+    "makeWithSeries": {
+      "title": "{make} {series} — Resultados de Subastas, Valores de Mercado y Análisis de Inversión | MonzaHaus",
+      "description": "Datos de subastas en vivo e históricas para {make} {series}. Tendencias de mercado, specs y vehículos grado inversión."
+    },
+    "car": {
+      "titleTemplate": "{make} {model} {year} | MonzaHaus",
+      "descriptionFallback": "{make} {model} {year} de colección. Análisis de mercado, comparables y tesis de inversión."
+    }
   }
 }
