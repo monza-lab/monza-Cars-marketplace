@@ -1621,14 +1621,31 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const ownershipCost = useMemo(() => {
     const config = getBrandConfig(auction.make)
     const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const price = listingPriceUsd(auction, rates) || 100_000
-    const scale = price < 100_000 ? 0.7 : price < 250_000 ? 1.0 : price < 500_000 ? 1.3 : 1.6
+
+    // Pivot off segment market value; fall back to per-auction derived USD; final fallback 100k.
+    const famAuctions = allAuctions.filter(
+      (a) => a.make === auction.make && a.family === auction.family,
+    )
+    const regionalVal = computeRegionalValFromAuctions(famAuctions)
+    const segment = auction.canonicalMarket ? regionalVal[auction.canonicalMarket] : null
+    const marketPivot =
+      segment?.marketValue.valueUsd ??
+      segment?.askMedian.valueUsd ??
+      auction.soldPriceUsd ??
+      auction.askingPriceUsd ??
+      100_000
+
+    const scale =
+      marketPivot < 100_000 ? 0.7 :
+      marketPivot < 250_000 ? 1.0 :
+      marketPivot < 500_000 ? 1.3 : 1.6
+
     return {
       insurance: Math.round(base.insurance * scale),
       storage: Math.round(base.storage * scale),
       maintenance: Math.round(base.maintenance * scale),
     }
-  }, [auction.make, auction.currentBid])
+  }, [auction.make, auction.canonicalMarket, auction.family, auction.soldPriceUsd, auction.askingPriceUsd, allAuctions])
   // Fair value range — real segment IQR band from same family auctions.
   const familyAuctions = allAuctions.filter(
     (a) => a.make === auction.make && a.family === auction.family,
@@ -1854,19 +1871,34 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, allFamilies }
     }
   }, [familyAuctions])
 
-  // ─── DYNAMIC: Ownership Cost scaled by family avg listing price (in USD) ───
+  // ─── DYNAMIC: Ownership Cost scaled by market value from segment with most sold data ───
   const ownershipCost = useMemo(() => {
-    const prices = familyAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
-    const avgPrice = prices.length > 0
-      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
-      : (family.priceMin + family.priceMax) / 2
-    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
-    return {
-      insurance: Math.round(8500 * scale),
-      storage: Math.round(6000 * scale),
-      maintenance: Math.round(8000 * scale),
+    const base = getBrandConfig("Porsche")?.ownershipCosts ?? { insurance: 8500, storage: 6000, maintenance: 8000 }
+
+    // Pivot = market value from the segment with the most sold data; else family min/max midpoint.
+    const regionalVal = computeRegionalValFromAuctions(allFamilyAuctions)
+    let bestSegment: ReturnType<typeof computeRegionalValFromAuctions>[keyof ReturnType<typeof computeRegionalValFromAuctions>] | null = null
+    for (const m of ["US", "EU", "UK", "JP"] as const) {
+      const s = regionalVal[m]
+      if (!s) continue
+      if (!bestSegment || s.marketValue.soldN > bestSegment.marketValue.soldN) bestSegment = s
     }
-  }, [familyAuctions, family.priceMin, family.priceMax])
+    const pivot =
+      bestSegment?.marketValue.valueUsd ??
+      bestSegment?.askMedian.valueUsd ??
+      (family.priceMin + family.priceMax) / 2
+
+    const scale =
+      pivot < 100_000 ? 0.7 :
+      pivot < 250_000 ? 1.0 :
+      pivot < 500_000 ? 1.3 : 1.6
+
+    return {
+      insurance: Math.round(base.insurance * scale),
+      storage: Math.round(base.storage * scale),
+      maintenance: Math.round(base.maintenance * scale),
+    }
+  }, [allFamilyAuctions, family.priceMin, family.priceMax])
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
