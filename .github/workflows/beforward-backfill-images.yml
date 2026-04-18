@@ -1,0 +1,77 @@
+name: BeForward Image Backfill
+
+on:
+  schedule:
+    # 04:30 UTC daily — after the Vercel beforward cron discovers new listings.
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max active listings to process'
+        default: '400'
+      concurrency:
+        description: 'Parallel workers'
+        default: '3'
+      rate_ms:
+        description: 'Min ms between requests per domain'
+        default: '3000'
+      force_scrapling:
+        description: 'Force Scrapling from start'
+        type: boolean
+        default: true
+
+concurrency:
+  group: beforward-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
+      - run: npm ci
+
+      - name: Install Playwright browsers (for Scrapling dynamic mode)
+        run: |
+          npx playwright install-deps chromium
+          npx playwright install chromium
+
+      - name: Run BeForward image backfill
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPLING_PYTHON: /opt/hostedtoolcache/Python/3.13.0/x64/bin/python
+        run: |
+          # Resolve the actual python path from setup-python
+          SCRAPLING_PYTHON="$(which python3)"
+          export SCRAPLING_PYTHON
+          echo "Using Scrapling Python: $SCRAPLING_PYTHON"
+
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force_scrapling || 'true' }}" = "true" ]; then
+            FORCE_FLAG="--scrapling"
+          fi
+
+          npx tsx scripts/bf-bulk-backfill-images.ts \
+            --limit=${{ github.event.inputs.limit || '400' }} \
+            --concurrency=${{ github.event.inputs.concurrency || '3' }} \
+            --rate-ms=${{ github.event.inputs.rate_ms || '3000' }} \
+            $FORCE_FLAG
