@@ -705,6 +705,10 @@ async function countLiveListingsForCanonicalSource(
   return countListingsByQuery(query);
 }
 
+const _aggregateCountsCache = new Map<string, { data: LiveListingAggregateCounts; expiresAt: number }>();
+const _aggregateCountsInflight = new Map<string, Promise<LiveListingAggregateCounts>>();
+const AGGREGATE_COUNTS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function fetchLiveListingAggregateCounts(options?: { make?: string | null }): Promise<LiveListingAggregateCounts> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -718,6 +722,20 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
   }
 
   const targetMake = resolveRequestedMake(options?.make);
+  const cacheKey = targetMake;
+
+  const cached = _aggregateCountsCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data;
+  }
+
+  // Deduplicate concurrent callers so a dashboard + MakePage SSR + paginated
+  // /api/mock-auctions all share a single underlying Supabase fan-out instead
+  // of firing 30 count queries in parallel.
+  const inflight = _aggregateCountsInflight.get(cacheKey);
+  if (inflight) return inflight;
+
+  const run = (async (): Promise<LiveListingAggregateCounts> => {
 
   try {
     const supabase = createSupabaseClient(url, key);
@@ -802,6 +820,17 @@ export async function fetchLiveListingAggregateCounts(options?: { make?: string 
       regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
     };
   }
+  })().then((data) => {
+    _aggregateCountsCache.set(cacheKey, { data, expiresAt: Date.now() + AGGREGATE_COUNTS_TTL_MS });
+    _aggregateCountsInflight.delete(cacheKey);
+    return data;
+  }).catch((error) => {
+    _aggregateCountsInflight.delete(cacheKey);
+    throw error;
+  });
+
+  _aggregateCountsInflight.set(cacheKey, run);
+  return run;
 }
 
 export function interleaveResultsBySource<T>(resultsBySource: T[][], limit: number): T[] {
@@ -1355,10 +1384,13 @@ export async function fetchPaginatedListings(options: {
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Build base query — use count: "exact" to get total matching rows
+    // Build base query. Count omitted on purpose: `count: "exact"` forces
+    // a full-table scan alongside every page fetch which collides with the
+    // Supabase statement_timeout when multiple sources / tabs query in
+    // parallel. `hasMore` is already derived from fetching pageSize + 1.
     let query = supabase
       .from("listings")
-      .select(SELECT_NARROW, { count: "exact" })
+      .select(SELECT_NARROW)
       .ilike("make", targetMake);
 
     // Status filter
@@ -1431,7 +1463,7 @@ export async function fetchPaginatedListings(options: {
     const fetchCount = pageSize + 1;
     query = query.range(offset, offset + fetchCount - 1);
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
@@ -1444,7 +1476,7 @@ export async function fetchPaginatedListings(options: {
 
     const cars = pageRows.map((row) => rowToCollectorCar(row));
 
-    return { cars, hasMore, totalCount: count ?? undefined };
+    return { cars, hasMore };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
     return { cars: [], hasMore: false };
@@ -1481,38 +1513,45 @@ export async function fetchSeriesCounts(
   try {
     const supabase = createSupabaseClient(url, key);
     const PAGE = 1000; // Supabase PostgREST hard-caps .range() at 1000 rows per request
+    const MAX_PAGES = 50; // Hard cap (50K rows) to bound worst-case runtime
     const counts: Record<string, number> = {};
 
-    // First, get total count to know how many parallel pages to fetch
-    const { count: total, error: countErr } = await supabase
-      .from("listings")
-      .select("id", { count: "exact", head: true })
-      .ilike("make", targetMake)
-      .eq("status", LIVE_DB_STATUS_VALUES[0]);
-
-    if (countErr || !total) return {};
-
-    // Fetch all model+year pairs in parallel pages of 1000
-    const pageCount = Math.ceil(total / PAGE);
-    const pagePromises = Array.from({ length: pageCount }, (_, i) =>
-      supabase
+    // Sequential keyset pagination: each request uses `id > lastId` so
+    // Postgres walks the primary-key index instead of re-scanning with
+    // OFFSET. Running pages serially keeps the connection pool free for
+    // other dashboard queries and stays well inside the statement timeout.
+    let lastId: string | null = null;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      let query = supabase
         .from("listings")
-        .select("model,year,title")
+        .select("id,model,year,title")
         .ilike("make", targetMake)
         .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .range(i * PAGE, (i + 1) * PAGE - 1)
-        .then(({ data }) => data ?? [])
-    );
+        .order("id", { ascending: true })
+        .limit(PAGE);
 
-    const pages = await Promise.all(pagePromises);
+      if (lastId !== null) {
+        query = query.gt("id", lastId);
+      }
 
-    for (const page of pages) {
-      for (const row of page as { model: string; year: number; title: string | null }[]) {
+      const { data, error } = await query;
+      if (error) {
+        console.error("[supabaseLiveListings] fetchSeriesCounts page failed:", error.message);
+        break;
+      }
+
+      const rows = (data ?? []) as { id: string; model: string; year: number; title: string | null }[];
+      if (rows.length === 0) break;
+
+      for (const row of rows) {
         if (isJunkListing({ make, model: row.model, year: row.year })) continue;
         const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make, row.title ?? undefined);
         if (!getSeriesConfig(seriesId, make)) continue;
         counts[seriesId] = (counts[seriesId] ?? 0) + 1;
       }
+
+      if (rows.length < PAGE) break;
+      lastId = rows[rows.length - 1].id;
     }
 
     _seriesCountsCache.set(cacheKey, { counts, expiresAt: Date.now() + SERIES_COUNTS_TTL_MS });

@@ -122,19 +122,12 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
 export async function fetchDashboardDataUncached(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
-  const [live, valuationLive, aggregates, seriesCounts] = await Promise.all([
+  const [live, aggregates, seriesCounts] = await Promise.all([
     fetchLiveListingsAsCollectorCars({
       limit: DASHBOARD_SOURCE_BUDGET,
       includePriceHistory: false,
       make: requestedMake,
       includeAllSources: true,
-    }),
-    fetchLiveListingsAsCollectorCars({
-      limit: DASHBOARD_SOURCE_BUDGET,
-      includePriceHistory: false,
-      make: requestedMake,
-      includeAllSources: true,
-      status: "all",
     }),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
     fetchSeriesCounts(requestedMake ?? "Porsche"),
@@ -147,7 +140,7 @@ export async function fetchDashboardDataUncached(): Promise<DashboardData> {
 
   return {
     auctions: active.map(transformCar),
-    valuationListings: valuationLive.map(transformCar),
+    valuationListings: [],
     liveNow: aggregates.liveNow,
     regionTotals: {
       all: aggregates.regionTotalsByPlatform.all,
