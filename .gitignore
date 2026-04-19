@@ -61,9 +61,10 @@ posts/
 # python bytecode
 __pycache__/
 
-# video renders
-videos/
-**/videos/**
+# video binary outputs + fetched media (source HTML/MD/TS tracked)
+videos/**/renders/
+videos/**/assets/
+videos/**/work-*/
 **/.venv/**
 **/venv/**
 **/.venv/
