@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { fetchHtml } from "./net";
+import { extractAutoTraderImages, normalizeAutoTraderImageUrl } from "./imageUrls";
 
 export interface AutoTraderDetailParsed {
   title: string | null;
@@ -18,6 +19,66 @@ export interface AutoTraderDetailParsed {
   bodyStyle: string | null;
 }
 
+interface AutoTraderProductPageImage {
+  url?: string | null;
+  classificationTags?: Array<{
+    label?: string | null;
+    category?: string | null;
+  }> | null;
+}
+
+interface AutoTraderProductPagePayload {
+  id?: string | null;
+  gallery?: {
+    title?: string | null;
+    price?: string | null;
+    images?: AutoTraderProductPageImage[] | null;
+  } | null;
+  heading?: {
+    title?: string | null;
+  } | null;
+}
+
+function extractAdvertId(url: string): string | null {
+  const match = url.match(/\/car-details\/(\d+)(?:[/?#]|$)/i);
+  return match?.[1] ?? null;
+}
+
+async function fetchAutoTraderProductPageGallery(
+  url: string,
+  timeoutMs: number,
+): Promise<{ title: string | null; images: string[] }> {
+  const advertId = extractAdvertId(url);
+  if (!advertId) return { title: null, images: [] };
+
+  const endpoint = new URL(`https://www.autotrader.co.uk/product-page/v1/advert/${advertId}`);
+  endpoint.searchParams.set("channel", "cars");
+  endpoint.searchParams.set("postcode", "SW1A 1AA");
+
+  const response = await fetch(endpoint.toString(), {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      Referer: url,
+    },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (!response.ok) {
+    return { title: null, images: [] };
+  }
+
+  const payload = (await response.json()) as AutoTraderProductPagePayload;
+  const title = payload.heading?.title?.trim() || payload.gallery?.title?.trim() || null;
+  const images = (payload.gallery?.images ?? [])
+    .map((image) => image?.url ?? null)
+    .map((image) => (typeof image === "string" ? normalizeAutoTraderImageUrl(image) : null))
+    .filter((image): image is string => image !== null);
+
+  return { title, images };
+}
+
 /**
  * Fetch an AutoTrader listing detail page and extract structured data via Cheerio.
  * Returns all-null fields on any error (does not throw).
@@ -33,8 +94,25 @@ export async function fetchAutoTraderDetail(
   };
 
   try {
-    const html = await fetchHtml(url, timeoutMs);
-    return parseAutoTraderHtml(html);
+    const [gallery, html] = await Promise.all([
+      fetchAutoTraderProductPageGallery(url, timeoutMs),
+      fetchHtml(url, timeoutMs).catch(() => null),
+    ]);
+
+    if (html) {
+      const parsed = parseAutoTraderHtml(html);
+      return {
+        ...parsed,
+        title: parsed.title ?? gallery.title,
+        images: gallery.images.length > 0 ? gallery.images : parsed.images,
+      };
+    }
+
+    return {
+      ...empty,
+      title: gallery.title,
+      images: gallery.images,
+    };
   } catch {
     return empty;
   }
@@ -85,15 +163,7 @@ export function parseAutoTraderHtml(html: string): AutoTraderDetailParsed {
   const vinMatch = bodyText.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i);
   const vin = vinMatch ? vinMatch[0].toUpperCase() : null;
 
-  // Images: collect up to 20 image URLs
-  const images: string[] = [];
-  $("img").each((_, el) => {
-    if (images.length >= 20) return false;
-    const src = $(el).attr("src") || $(el).attr("data-src");
-    if (src && src.includes("autotrader")) {
-      images.push(src);
-    }
-  });
+  const images = extractAutoTraderImages(html);
 
   return {
     title: title || null,

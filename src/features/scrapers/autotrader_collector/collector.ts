@@ -9,6 +9,7 @@ import { discoverListingUrls, fetchAutoTraderGatewayPage } from "./discover";
 import { canonicalizeUrl, deriveSourceId } from "./id";
 import { logEvent } from "./logging";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry, fetchHtml } from "./net";
+import { fetchAutoTraderDetail } from "./detail";
 import {
   buildLocationString,
   isLuxuryCarListing,
@@ -704,80 +705,24 @@ interface ScrapedAutoTraderData {
  */
 async function fetchAutoTraderData(url: string, forceRefresh: boolean = false): Promise<ScrapedAutoTraderData> {
   try {
-    const html = await fetchHtml(url, 15000);
-    const $ = cheerio.load(html);
-    
-    // Extract title
-    const title = $("h1").first().text().trim() || 
-                  $("[data-testid='vehicle-title']").text().trim() || 
-                  $(".vehicle-title").text().trim() || 
-                  $("title").text().trim() || "";
-    
-    // Extract price
-    const priceText = $("[data-testid='price']").first().text().trim() ||
-                     $(".price").first().text().trim() ||
-                     $('[class*="price"]').first().text().trim() || "";
-    const price = parsePrice(priceText);
-    
-    // Extract mileage
-    const mileageText = $("[data-testid='mileage']").text().trim() ||
-                       $(".mileage").text().trim() ||
-                       $('[class*="mileage"]').text().trim() || "";
-    const mileage = parseMileage(mileageText);
-    const mileageUnit = mileageText.toLowerCase().includes("km") ? "km" : 
-                       mileageText.toLowerCase().includes("mile") ? "miles" : null;
-    
-    // Extract location
-    const location = $("[data-testid='location']").text().trim() ||
-                    $(".location").text().trim() ||
-                    $('[class*="location"]').text().trim() || null;
-    
-    // Extract description
-    const description = $("[data-testid='description']").text().trim() ||
-                       $(".description").text().trim() ||
-                       $('[class*="description"]').text().trim() || null;
-    
-    // Extract images
-    const images: string[] = [];
-    $("img").each((_i: number, el: any) => {
-      const src = $(el).attr("src") || $(el).attr("data-src");
-      if (src && src.includes("autotrader")) {
-        images.push(src);
-      }
-    });
-    
-    // Extract VIN
-    const vinMatch = $("text").text().match(/\b[A-HJ-NPR-Z0-9]{17}\b/i);
-    const vin = vinMatch ? vinMatch[0] : null;
-    
-    // Extract exterior color
-    const exteriorColor = $("[data-testid='exterior-color']").text().trim() ||
-                         $('[class*="exterior"]').text().trim() || null;
-    
-    // Extract transmission
-    const transmission = $("[data-testid='transmission']").text().trim() ||
-                        $('[class*="transmission"]').text().trim() || null;
-    
-    // Extract engine
-    const engine = $("[data-testid='engine']").text().trim() ||
-                   $('[class*="engine"]').text().trim() || null;
+    const detail = await fetchAutoTraderDetail(url, 15000);
     
     return {
-      title: title || null,
-      price,
-      priceText: priceText || null,
+      title: detail.title,
+      price: detail.price,
+      priceText: detail.priceText,
       status: "active",
-      mileage,
-      mileageUnit,
-      location: location || null,
-      description: description || null,
-      images: images.slice(0, 20), // Limit to 20 images
-      vin,
-      exteriorColor,
-      interiorColor: null,
-      transmission: transmission || null,
-      engine: engine || null,
-      bodyStyle: null,
+      mileage: detail.mileage,
+      mileageUnit: detail.mileageUnit,
+      location: detail.location,
+      description: detail.description,
+      images: detail.images.slice(0, 20), // Limit to 20 images
+      vin: detail.vin,
+      exteriorColor: detail.exteriorColor,
+      interiorColor: detail.interiorColor,
+      transmission: detail.transmission,
+      engine: detail.engine,
+      bodyStyle: detail.bodyStyle,
       priceIndicator: null,
     };
   } catch (err) {

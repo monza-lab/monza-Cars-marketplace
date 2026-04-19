@@ -15,7 +15,7 @@ export interface BackfillResult {
 }
 
 export interface BackfillOptions {
-  source: "BaT" | "BeForward" | "AutoScout24" | "all";
+  source: "BaT" | "BeForward" | "AutoScout24" | "AutoTrader" | "all";
   maxListings?: number;
   delayMs?: number;
   timeBudgetMs?: number;
@@ -226,6 +226,14 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
     return detail.images ?? [];
   };
 
+  const fetchAutoTraderImages: ImageFetcher = async (url) => {
+    const { fetchAutoTraderDetail } = await import(
+      "@/features/scrapers/autotrader_collector/detail"
+    );
+    const detail = await fetchAutoTraderDetail(url);
+    return detail.images ?? [];
+  };
+
   // BeForward: use parseDetailHtml (cheerio-only export) with a simple fetch
   const fetchBeForwardImages: ImageFetcher = async (url) => {
     const { parseDetailHtml } = await import(
@@ -239,6 +247,7 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
   return {
     BaT: fetchBaTImages,
     AutoScout24: fetchAutoScout24Images,
+    AutoTrader: fetchAutoTraderImages,
     BeForward: fetchBeForwardImages,
     // ClassicCom requires Playwright — already handled by its own backfill
     // module in classic_collector/backfill.ts (runs as part of /api/cron/classic)

@@ -333,32 +333,32 @@ export default function ScrapersDashboardClient({
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-foreground">
                 Scraper Monitoring
               </h1>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Ops console — run history, per-scraper detail, raw diagnostics.
               </p>
             </div>
             <a
               href="./data-quality"
-              className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-300 hover:text-amber-300 hover:border-amber-500/50 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded border border-border bg-muted/50 text-xs text-foreground hover:text-amber-700 dark:hover:text-amber-300 hover:border-amber-500/50 transition-colors whitespace-nowrap"
               title="Source-centric, ingestion-truth view"
             >
               Data Quality →
             </a>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <p>7 collectors &middot; 5 Vercel Cron + 2 GitHub Actions</p>
-            <span className="text-zinc-700">|</span>
+            <span className="text-muted-foreground/50">|</span>
             <p>
-              Last updated <span className="text-zinc-300">{formatTimeAgo(lastUpdatedAt)}</span>
+              Last updated <span className="text-foreground">{formatTimeAgo(lastUpdatedAt)}</span>
             </p>
             <Badge variant={isRefreshing ? "secondary" : "outline"} className="text-[11px]">
               {isRefreshing ? "Refreshing" : "Live"}
@@ -368,12 +368,12 @@ export default function ScrapersDashboardClient({
                 {issueCount} issues
               </Badge>
             )}
-            {liveError && <span className="text-amber-400 text-xs">{liveError}</span>}
+            {liveError && <span className="text-amber-600 dark:text-amber-400 text-xs">{liveError}</span>}
           </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-zinc-900 border border-zinc-800">
+          <TabsList className="bg-muted border border-border">
             <TabsTrigger value="overview">Status</TabsTrigger>
             <TabsTrigger value="history">Run History</TabsTrigger>
             <TabsTrigger value="trends">Daily Trends</TabsTrigger>
@@ -392,11 +392,11 @@ export default function ScrapersDashboardClient({
                 return (
                   <Card
                     key={name}
-                    className={`bg-zinc-950 border ${STATUS_STYLES[status]}`}
+                    className={`bg-card border ${STATUS_STYLES[status]}`}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base font-medium text-zinc-200">
+                        <CardTitle className="text-base font-medium text-foreground">
                           {SCRAPER_LABELS[name]}
                         </CardTitle>
                         <div className="flex items-center gap-2">
@@ -427,7 +427,7 @@ export default function ScrapersDashboardClient({
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-xs text-zinc-600">
+                      <p className="text-xs text-muted-foreground/60">
                         {SCRAPER_RUNTIME[name]}
                       </p>
                     </CardHeader>
@@ -435,68 +435,68 @@ export default function ScrapersDashboardClient({
                       {run ? (
                         <div className="space-y-2 text-sm">
                           {activeRun && (
-                            <div className="flex justify-between text-zinc-400">
+                            <div className="flex justify-between text-muted-foreground">
                               <span>Live run</span>
-                              <span className={stalled ? "text-red-400" : "text-sky-300"}>
+                              <span className={stalled ? "text-red-600 dark:text-red-400" : "text-sky-700 dark:text-sky-300"}>
                                 {stalled
                                   ? `Stalled (${formatTimeAgo(activeRun.started_at)})`
                                   : `Running (${formatTimeAgo(activeRun.started_at)})`}
                               </span>
                             </div>
                           )}
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>Last run</span>
-                            <span className="text-zinc-300">
+                            <span className="text-foreground">
                               {formatTimeAgo(run.finished_at)}
                             </span>
                           </div>
                           {stale && (
-                            <div className="text-amber-300 text-xs">
+                            <div className="text-amber-700 dark:text-amber-300 text-xs">
                               Expected cadence missed ({Math.round(SCRAPER_CADENCE_MS[name] / (60 * 60 * 1000))}h)
                             </div>
                           )}
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>Duration</span>
-                            <span className="text-zinc-300">
+                            <span className="text-foreground">
                               {formatDuration(run.duration_ms)}
                             </span>
                           </div>
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>Discovered</span>
-                            <span className="text-zinc-300">
+                            <span className="text-foreground">
                               {run.discovered}
                             </span>
                           </div>
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-muted-foreground">
                             <span>Written</span>
-                            <span className="text-emerald-400 font-medium">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                               {run.written}
                             </span>
                           </div>
                           {run.errors_count > 0 && (
-                            <div className="flex justify-between text-zinc-400">
+                            <div className="flex justify-between text-muted-foreground">
                               <span>Errors</span>
-                              <span className="text-red-400">
+                              <span className="text-red-600 dark:text-red-400">
                                 {run.errors_count}
                               </span>
                             </div>
                           )}
                           {run.error_messages && run.error_messages.length > 0 && (
-                            <p className="text-red-300/90 text-xs truncate" title={run.error_messages[0]}>
+                            <p className="text-red-700/90 dark:text-red-300/90 text-xs truncate" title={run.error_messages[0]}>
                               {run.error_messages[0]}
                             </p>
                           )}
                           {run.bot_blocked != null && run.bot_blocked > 0 && (
-                            <div className="flex justify-between text-zinc-400">
+                            <div className="flex justify-between text-muted-foreground">
                               <span>Bot blocked</span>
-                              <span className="text-amber-400">
+                              <span className="text-amber-600 dark:text-amber-400">
                                 {run.bot_blocked}
                               </span>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-zinc-600">
+                        <p className="text-sm text-muted-foreground/60">
                           No runs recorded yet
                         </p>
                       )}
@@ -509,20 +509,20 @@ export default function ScrapersDashboardClient({
 
           {/* ── Section 2: Run History ── */}
           <TabsContent value="history">
-            <Card className="bg-zinc-950 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base text-zinc-200">
+                  <CardTitle className="text-base text-foreground">
                     Recent Runs
                   </CardTitle>
                   <Select
                     value={scraperFilter}
                     onValueChange={setScraperFilter}
                   >
-                    <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-700 text-zinc-300">
+                    <SelectTrigger className="w-[180px] bg-muted border-border text-foreground">
                       <SelectValue placeholder="All scrapers" />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                    <SelectContent className="bg-muted border-border">
                       <SelectItem value="all">All scrapers</SelectItem>
                       {ALL_SCRAPERS.map((name) => (
                         <SelectItem key={name} value={name}>
@@ -535,13 +535,13 @@ export default function ScrapersDashboardClient({
               </CardHeader>
               <CardContent>
                 {filteredRuns.length === 0 ? (
-                  <p className="text-sm text-zinc-600 py-8 text-center">
+                  <p className="text-sm text-muted-foreground/60 py-8 text-center">
                     No runs found
                   </p>
                 ) : (
                   <div className="space-y-0">
                     {/* Table header */}
-                    <div className="grid grid-cols-[120px_80px_100px_70px_80px_80px_60px_60px] gap-2 px-3 py-2 text-xs text-zinc-500 border-b border-zinc-800 font-medium">
+                    <div className="grid grid-cols-[120px_80px_100px_70px_80px_80px_60px_60px] gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border font-medium">
                       <span>Scraper</span>
                       <span>Status</span>
                       <span>Time</span>
@@ -555,14 +555,14 @@ export default function ScrapersDashboardClient({
                     {filteredRuns.map((run) => (
                       <div key={run.id}>
                         <div
-                          className="grid grid-cols-[120px_80px_100px_70px_80px_80px_60px_60px] gap-2 px-3 py-2.5 text-sm border-b border-zinc-800/50 hover:bg-zinc-900/50 cursor-pointer"
+                          className="grid grid-cols-[120px_80px_100px_70px_80px_80px_60px_60px] gap-2 px-3 py-2.5 text-sm border-b border-border/60 hover:bg-muted/50 cursor-pointer"
                           onClick={() =>
                             setExpandedRunId(
                               expandedRunId === run.id ? null : run.id
                             )
                           }
                         >
-                          <span className="text-zinc-300 truncate">
+                          <span className="text-foreground truncate">
                             {SCRAPER_LABELS[run.scraper_name]}
                           </span>
                           <span>
@@ -575,52 +575,52 @@ export default function ScrapersDashboardClient({
                               {run.success ? "OK" : "FAIL"}
                             </Badge>
                           </span>
-                          <span className="text-zinc-500 text-xs">
+                          <span className="text-muted-foreground text-xs">
                             {formatTimeAgo(run.finished_at)}
                           </span>
-                          <span className="text-zinc-400 text-xs">
+                          <span className="text-muted-foreground text-xs">
                             {formatDuration(run.duration_ms)}
                           </span>
-                          <span className="text-right text-zinc-300">
+                          <span className="text-right text-foreground">
                             {run.discovered}
                           </span>
-                          <span className="text-right text-emerald-400">
+                          <span className="text-right text-emerald-600 dark:text-emerald-400">
                             {run.written}
                           </span>
                           <span
-                            className={`text-right ${run.errors_count > 0 ? "text-red-400" : "text-zinc-600"}`}
+                            className={`text-right ${run.errors_count > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground/60"}`}
                           >
                             {run.errors_count}
                           </span>
-                          <span className="text-right text-zinc-600 text-xs">
+                          <span className="text-right text-muted-foreground/60 text-xs">
                             {expandedRunId === run.id ? "▲" : "▼"}
                           </span>
                         </div>
 
                         {/* Expanded detail */}
                         {expandedRunId === run.id && (
-                          <div className="px-3 py-3 bg-zinc-900/30 border-b border-zinc-800/50 text-xs space-y-2">
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-zinc-400 max-w-md">
+                          <div className="px-3 py-3 bg-muted/30 border-b border-border/60 text-xs space-y-2">
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-muted-foreground max-w-md">
                               <span>Run ID</span>
-                              <span className="text-zinc-300 tabular-nums truncate">
+                              <span className="text-foreground tabular-nums truncate">
                                 {run.run_id}
                               </span>
                               <span>Runtime</span>
-                              <span className="text-zinc-300">
+                              <span className="text-foreground">
                                 {run.runtime}
                               </span>
                               <span>Started</span>
-                              <span className="text-zinc-300">
+                              <span className="text-foreground">
                                 {new Date(run.started_at).toLocaleString()}
                               </span>
                               <span>Finished</span>
-                              <span className="text-zinc-300">
+                              <span className="text-foreground">
                                 {new Date(run.finished_at).toLocaleString()}
                               </span>
                               {run.refresh_checked != null && (
                                 <>
                                   <span>Refresh checked</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.refresh_checked}
                                   </span>
                                 </>
@@ -628,7 +628,7 @@ export default function ScrapersDashboardClient({
                               {run.refresh_updated != null && (
                                 <>
                                   <span>Refresh updated</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.refresh_updated}
                                   </span>
                                 </>
@@ -636,7 +636,7 @@ export default function ScrapersDashboardClient({
                               {run.details_fetched != null && (
                                 <>
                                   <span>Details fetched</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.details_fetched}
                                   </span>
                                 </>
@@ -644,7 +644,7 @@ export default function ScrapersDashboardClient({
                               {run.normalized != null && (
                                 <>
                                   <span>Normalized</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.normalized}
                                   </span>
                                 </>
@@ -653,7 +653,7 @@ export default function ScrapersDashboardClient({
                                 run.skipped_duplicate > 0 && (
                                   <>
                                     <span>Skipped duplicate</span>
-                                    <span className="text-zinc-300">
+                                    <span className="text-foreground">
                                       {run.skipped_duplicate}
                                     </span>
                                   </>
@@ -662,7 +662,7 @@ export default function ScrapersDashboardClient({
                                 run.bot_blocked > 0 && (
                                   <>
                                     <span>Bot blocked</span>
-                                    <span className="text-amber-400">
+                                    <span className="text-amber-600 dark:text-amber-400">
                                       {run.bot_blocked}
                                     </span>
                                   </>
@@ -670,7 +670,7 @@ export default function ScrapersDashboardClient({
                               {run.backfill_discovered != null && (
                                 <>
                                   <span>Backfill discovered</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.backfill_discovered}
                                   </span>
                                 </>
@@ -678,7 +678,7 @@ export default function ScrapersDashboardClient({
                               {run.backfill_written != null && (
                                 <>
                                   <span>Backfill written</span>
-                                  <span className="text-zinc-300">
+                                  <span className="text-foreground">
                                     {run.backfill_written}
                                   </span>
                                 </>
@@ -689,17 +689,17 @@ export default function ScrapersDashboardClient({
                             {run.source_counts &&
                               Object.keys(run.source_counts).length > 0 && (
                                 <div className="mt-2">
-                                  <p className="text-zinc-500 mb-1 font-medium">
+                                  <p className="text-muted-foreground mb-1 font-medium">
                                     Source breakdown
                                   </p>
                                   <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 max-w-sm">
-                                    <span className="text-zinc-600">
+                                    <span className="text-muted-foreground/60">
                                       Source
                                     </span>
-                                    <span className="text-zinc-600 text-right">
+                                    <span className="text-muted-foreground/60 text-right">
                                       Disc.
                                     </span>
-                                    <span className="text-zinc-600 text-right">
+                                    <span className="text-muted-foreground/60 text-right">
                                       Written
                                     </span>
                                     {Object.entries(
@@ -712,13 +712,13 @@ export default function ScrapersDashboardClient({
                                         key={src}
                                         className="contents"
                                       >
-                                        <span className="text-zinc-300">
+                                        <span className="text-foreground">
                                           {src}
                                         </span>
-                                        <span className="text-zinc-400 text-right">
+                                        <span className="text-muted-foreground text-right">
                                           {c.discovered}
                                         </span>
-                                        <span className="text-emerald-400 text-right">
+                                        <span className="text-emerald-600 dark:text-emerald-400 text-right">
                                           {c.written}
                                         </span>
                                       </div>
@@ -731,14 +731,14 @@ export default function ScrapersDashboardClient({
                             {run.error_messages &&
                               run.error_messages.length > 0 && (
                                 <div className="mt-2">
-                                  <p className="text-red-400 mb-1 font-medium">
+                                  <p className="text-red-600 dark:text-red-400 mb-1 font-medium">
                                     Errors
                                   </p>
                                   <div className="space-y-0.5">
                                     {run.error_messages.map((msg, i) => (
                                       <p
                                         key={i}
-                                        className="text-red-300/80 tabular-nums text-[11px] truncate"
+                                        className="text-red-700/80 dark:text-red-300/80 tabular-nums text-[11px] truncate"
                                       >
                                         {msg}
                                       </p>
@@ -765,34 +765,34 @@ export default function ScrapersDashboardClient({
           <TabsContent value="quality">
             <DataQualitySection data={liveDataQuality} />
             {fieldCompleteness && (
-              <Card className="bg-zinc-950 border-zinc-800 mt-6">
+              <Card className="bg-card border-border mt-6">
                 <CardHeader>
-                  <CardTitle className="text-zinc-200">Field Completeness by Source</CardTitle>
+                  <CardTitle className="text-foreground">Field Completeness by Source</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-zinc-800">
-                          <th className="text-left p-2 text-zinc-400">Source</th>
-                          <th className="p-2 text-zinc-400">Total</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left p-2 text-muted-foreground">Source</th>
+                          <th className="p-2 text-muted-foreground">Total</th>
                           {["VIN","Trim","Engine","Trans.","Mileage","Ext. Color","Int. Color","Body","Price","Images"].map(h => (
-                            <th key={h} className="p-2 text-zinc-400">{h}</th>
+                            <th key={h} className="p-2 text-muted-foreground">{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {fieldCompleteness.map((row) => (
-                          <tr key={row.source} className="border-b border-zinc-800/50">
-                            <td className="p-2 font-medium text-zinc-200">{row.source}</td>
-                            <td className="p-2 text-center text-zinc-300">{row.total.toLocaleString()}</td>
+                          <tr key={row.source} className="border-b border-border/60">
+                            <td className="p-2 font-medium text-foreground">{row.source}</td>
+                            <td className="p-2 text-center text-foreground">{row.total.toLocaleString()}</td>
                             {[row.vin, row.trim, row.engine, row.transmission, row.mileage_km,
                               row.color_exterior, row.color_interior, row.body_style, row.price, row.images
                             ].map((pct, i) => (
                               <td key={i} className={`p-2 text-center tabular-nums text-xs ${
-                                pct >= 90 ? "bg-emerald-900/30 text-emerald-400" :
-                                pct >= 50 ? "bg-amber-900/30 text-amber-400" :
-                                "bg-red-900/30 text-red-400"
+                                pct >= 90 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" :
+                                pct >= 50 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" :
+                                "bg-red-500/10 text-red-700 dark:text-red-400"
                               }`}>
                                 {pct}%
                               </td>
@@ -849,17 +849,17 @@ function DailyTrendsSection({
   );
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base text-zinc-200">
+          <CardTitle className="text-base text-foreground">
             Daily Trends (30 days)
           </CardTitle>
           <Select value={selectedScraper} onValueChange={setSelectedScraper}>
-            <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-700 text-zinc-300">
+            <SelectTrigger className="w-[180px] bg-muted border-border text-foreground">
               <SelectValue placeholder="All scrapers" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700">
+            <SelectContent className="bg-muted border-border">
               <SelectItem value="all">All scrapers</SelectItem>
               {ALL_SCRAPERS.map((name) => (
                 <SelectItem key={name} value={name}>
@@ -872,12 +872,12 @@ function DailyTrendsSection({
       </CardHeader>
       <CardContent>
         {filteredDates.length === 0 ? (
-          <p className="text-sm text-zinc-600 py-8 text-center">
+          <p className="text-sm text-muted-foreground/60 py-8 text-center">
             No aggregate data available
           </p>
         ) : (
           <div className="space-y-0">
-            <div className="grid grid-cols-[100px_100px_60px_60px_60px_80px_80px_60px_80px] gap-2 px-3 py-2 text-xs text-zinc-500 border-b border-zinc-800 font-medium">
+            <div className="grid grid-cols-[100px_100px_60px_60px_60px_80px_80px_60px_80px] gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border font-medium">
               <span>Date</span>
               <span>Scraper</span>
               <span className="text-right">Runs</span>
@@ -892,41 +892,41 @@ function DailyTrendsSection({
               (filteredDateMap.get(date) ?? []).map((agg) => (
                 <div
                   key={`${date}-${agg.scraper_name}`}
-                  className="grid grid-cols-[100px_100px_60px_60px_60px_80px_80px_60px_80px] gap-2 px-3 py-2 text-sm border-b border-zinc-800/50 hover:bg-zinc-900/50"
+                  className="grid grid-cols-[100px_100px_60px_60px_60px_80px_80px_60px_80px] gap-2 px-3 py-2 text-sm border-b border-border/60 hover:bg-muted/50"
                 >
-                  <span className="text-zinc-500 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                     })}
                   </span>
-                  <span className="text-zinc-300 text-xs">
+                  <span className="text-foreground text-xs">
                     {SCRAPER_LABELS[agg.scraper_name as ScraperName] ??
                       agg.scraper_name}
                   </span>
-                  <span className="text-right text-zinc-400">
+                  <span className="text-right text-muted-foreground">
                     {agg.total_runs}
                   </span>
-                  <span className="text-right text-emerald-400">
+                  <span className="text-right text-emerald-600 dark:text-emerald-400">
                     {agg.successful_runs}
                   </span>
                   <span
-                    className={`text-right ${agg.failed_runs > 0 ? "text-red-400" : "text-zinc-600"}`}
+                    className={`text-right ${agg.failed_runs > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground/60"}`}
                   >
                     {agg.failed_runs}
                   </span>
-                  <span className="text-right text-zinc-300">
+                  <span className="text-right text-foreground">
                     {agg.total_discovered}
                   </span>
-                  <span className="text-right text-emerald-400">
+                  <span className="text-right text-emerald-600 dark:text-emerald-400">
                     {agg.total_written}
                   </span>
                   <span
-                    className={`text-right ${agg.total_errors > 0 ? "text-amber-400" : "text-zinc-600"}`}
+                    className={`text-right ${agg.total_errors > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground/60"}`}
                   >
                     {agg.total_errors}
                   </span>
-                  <span className="text-right text-zinc-400 text-xs">
+                  <span className="text-right text-muted-foreground text-xs">
                     {formatDuration(Math.round(agg.avg_duration_ms))}
                   </span>
                 </div>
@@ -945,20 +945,20 @@ function DailyTrendsSection({
 
 function DataQualitySection({ data }: { data: DataQuality[] }) {
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-base text-zinc-200">
+        <CardTitle className="text-base text-foreground">
           Data Quality (last 7 days)
         </CardTitle>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <p className="text-sm text-zinc-600 py-8 text-center">
+          <p className="text-sm text-muted-foreground/60 py-8 text-center">
             No quality data available
           </p>
         ) : (
           <div className="space-y-0">
-            <div className="grid grid-cols-[140px_100px_100px_100px_100px] gap-2 px-3 py-2 text-xs text-zinc-500 border-b border-zinc-800 font-medium">
+            <div className="grid grid-cols-[140px_100px_100px_100px_100px] gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border font-medium">
               <span>Source</span>
               <span className="text-right">Avg Quality</span>
               <span className="text-right">Listings</span>
@@ -982,42 +982,42 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
               return (
                 <div
                   key={row.source}
-                  className="grid grid-cols-[140px_100px_100px_100px_100px] gap-2 px-3 py-2.5 text-sm border-b border-zinc-800/50 hover:bg-zinc-900/50"
+                  className="grid grid-cols-[140px_100px_100px_100px_100px] gap-2 px-3 py-2.5 text-sm border-b border-border/60 hover:bg-muted/50"
                 >
-                  <span className="text-zinc-300">{row.source}</span>
+                  <span className="text-foreground">{row.source}</span>
                   <span className="text-right">
                     {row.avg_quality != null ? (
                       <span
                         className={
                           row.avg_quality >= 70
-                            ? "text-emerald-400"
+                            ? "text-emerald-600 dark:text-emerald-400"
                             : row.avg_quality >= 40
-                              ? "text-amber-400"
-                              : "text-red-400"
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-red-600 dark:text-red-400"
                         }
                       >
                         {row.avg_quality.toFixed(0)}%
                       </span>
                     ) : (
-                      <span className="text-zinc-600">—</span>
+                      <span className="text-muted-foreground/60">—</span>
                     )}
                   </span>
-                  <span className="text-right text-zinc-400">
+                  <span className="text-right text-muted-foreground">
                     {row.total_listings}
                   </span>
                   <span className="text-right">
                     <span
                       className={
                         imgPct >= 80
-                          ? "text-emerald-400"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : imgPct >= 50
-                            ? "text-amber-400"
-                            : "text-red-400"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-red-600 dark:text-red-400"
                       }
                     >
                       {imgPct}%
                     </span>
-                    <span className="text-zinc-600 ml-1 text-xs">
+                    <span className="text-muted-foreground/60 ml-1 text-xs">
                       ({row.listings_with_images})
                     </span>
                   </span>
@@ -1025,15 +1025,15 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
                     <span
                       className={
                         pricePct >= 80
-                          ? "text-emerald-400"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : pricePct >= 50
-                            ? "text-amber-400"
-                            : "text-red-400"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-red-600 dark:text-red-400"
                       }
                     >
                       {pricePct}%
                     </span>
-                    <span className="text-zinc-600 ml-1 text-xs">
+                    <span className="text-muted-foreground/60 ml-1 text-xs">
                       ({row.listings_with_price})
                     </span>
                   </span>

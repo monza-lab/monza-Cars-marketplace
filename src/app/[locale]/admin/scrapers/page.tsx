@@ -14,6 +14,9 @@ import ScrapersDashboardClient from "./ScrapersDashboardClient";
 
 const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Scraper Monitoring — Monza",
@@ -50,22 +53,24 @@ export default async function ScrapersPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
-    redirect(`/${locale}`);
+  if (process.env.NODE_ENV !== "development") {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+      redirect(`/${locale}`);
+    }
   }
 
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
+              <div className="h-10 w-10 rounded-full border-2 border-border" />
               <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
             </div>
-            <p className="text-sm text-zinc-500">Loading scraper data...</p>
+            <p className="text-sm text-muted-foreground">Loading scraper data...</p>
           </div>
         </div>
       }

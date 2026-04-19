@@ -54,3 +54,13 @@ next-env.d.ts
 
 # social engine v0.5 — generated daily carousels (manual upload artifacts)
 posts/
+
+# video renders
+videos/
+**/videos/**
+**/.venv/**
+**/venv/**
+**/.venv/
+**/venv/
+.venv/
+venv/

@@ -8,7 +8,7 @@ const mockUpdate = vi.fn().mockReturnValue({
 const mockSelect = vi.fn().mockReturnValue({
   eq: vi.fn().mockReturnValue({
     eq: vi.fn().mockReturnValue({
-      is: vi.fn().mockReturnValue({
+      or: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
           limit: vi.fn().mockResolvedValue({ data: [], error: null }),
         }),
@@ -38,11 +38,13 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { createClient } from "@supabase/supabase-js";
 import {
   markScraperRunStarted,
   recordScraperRun,
   clearScraperRunActive,
 } from "@/features/scrapers/common/monitoring";
+import { fetchAutoTraderDetail } from "@/features/scrapers/autotrader_collector/detail";
 
 function makeRequest(secret = "test-secret") {
   return new Request("http://localhost:3000/api/cron/enrich-autotrader", {
@@ -105,5 +107,56 @@ describe("GET /api/cron/enrich-autotrader", () => {
     const response = await GET(makeRequest());
     const data = await response.json();
     expect(data.duration).toMatch(/^\d+ms$/);
+  });
+
+  it("writes images and photos_count when detail pages return a gallery", async () => {
+    const limit = vi.fn().mockResolvedValue({
+      data: [{ id: "row-1", source_url: "https://www.autotrader.co.uk/car-details/202602099784872" }],
+      error: null,
+    });
+    const order = vi.fn().mockReturnValue({ limit });
+    const or = vi.fn().mockReturnValue({ order });
+    const eq2 = vi.fn().mockReturnValue({ or });
+    const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+    const select = vi.fn().mockReturnValue({ eq: eq1 });
+
+    vi.mocked(fetchAutoTraderDetail).mockResolvedValue({
+      title: "2020 Porsche 911 Carrera S",
+      price: 89950,
+      priceText: "£89,950",
+      mileage: 12450,
+      mileageUnit: "miles",
+      location: "London",
+      description: "Example",
+      images: [
+        "https://m.atcdn.co.uk/a/media/hero.jpg",
+        "https://m.atcdn.co.uk/a/media/one.jpg",
+      ],
+      vin: null,
+      exteriorColor: null,
+      interiorColor: null,
+      transmission: null,
+      engine: null,
+      bodyStyle: null,
+    });
+
+    vi.mocked(createClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select,
+        update: mockUpdate,
+      })),
+    } as never);
+
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(200);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        images: [
+          "https://m.atcdn.co.uk/a/media/hero.jpg",
+          "https://m.atcdn.co.uk/a/media/one.jpg",
+        ],
+        photos_count: 2,
+      })
+    );
   });
 });

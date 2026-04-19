@@ -22,6 +22,10 @@ export interface ClassicDetailContent {
   images: string[];
 }
 
+function shouldSkipPlaywrightFallback(): boolean {
+  return process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK === "1";
+}
+
 function buildDetailParsed(content: ClassicDetailContent, url: string): DetailParsed {
   const { title, bodyText, images } = content;
 
@@ -47,6 +51,13 @@ function buildDetailParsed(content: ClassicDetailContent, url: string): DetailPa
     const low = parseInt(priceRangeMatch[1].replace(/,/g, ""), 10);
     const high = parseInt(priceRangeMatch[2].replace(/,/g, ""), 10);
     price = Math.round((low + high) / 2);
+  }
+
+  if (price === null) {
+    const lastAskingMatch = bodyText.match(/last asking(?: price)?[\s\S]*?\$([\d,]+)/i);
+    if (lastAskingMatch) {
+      price = parseInt(lastAskingMatch[1].replace(/,/g, ""), 10);
+    }
   }
 
   const soldPriceMatch = bodyText.match(/Sold at\s+[\s\S]*?for \$([\d,]+)/i);
@@ -131,7 +142,7 @@ function buildDetailParsed(content: ClassicDetailContent, url: string): DetailPa
     location,
     images,
     url,
-    description: null,
+    description: bodyText.trim() || null,
     exteriorColor: specs.ExtColor || null,
     interiorColor: specs.IntColor || null,
     engine: specs.Engine || null,
@@ -211,6 +222,9 @@ export async function fetchAndParseDetail(opts: DetailFetchOptions): Promise<Det
     const fallback = await fetchClassicDetailWithScrapling(opts.url);
     if (fallback) {
       return buildDetailParsed(fallback, opts.url);
+    }
+    if (shouldSkipPlaywrightFallback()) {
+      throw new Error(`Scrapling-only Classic detail fetch failed for ${opts.url}`);
     }
   }
 

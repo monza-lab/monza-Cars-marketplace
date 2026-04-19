@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       .select("id,source_url")
       .eq("source", "AutoTrader")
       .eq("status", "active")
-      .is("engine", null)
+      .or("engine.is.null,images.is.null,images.eq.{},photos_count.lt.2")
       .order("updated_at", { ascending: true })
       .limit(100);
 
@@ -102,6 +102,10 @@ export async function GET(request: Request) {
         if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
         if (detail.vin) update.vin = detail.vin;
         if (detail.description) update.description_text = detail.description;
+        if (detail.images && detail.images.length > 0) {
+          update.images = detail.images;
+          update.photos_count = detail.images.length;
+        }
 
         const newFieldCount = Object.keys(update).length - 1;
         if (newFieldCount > 0) {

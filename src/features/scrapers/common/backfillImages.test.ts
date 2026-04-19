@@ -41,6 +41,9 @@ vi.mock("@/features/scrapers/auctions/bringATrailerImages", () => ({
 vi.mock("@/features/scrapers/autoscout24_collector/detail", () => ({
   parseDetailHtml: vi.fn(),
 }));
+vi.mock("@/features/scrapers/autotrader_collector/detail", () => ({
+  fetchAutoTraderDetail: vi.fn(),
+}));
 vi.mock("@/features/scrapers/beforward_porsche_collector/detail", () => ({
   parseDetailHtml: vi.fn(),
 }));
@@ -144,5 +147,76 @@ describe("backfillImages module", () => {
         options: { ascending: true },
       },
     ]);
+  });
+
+  it("accepts AutoTrader as a backfill source", async () => {
+    orCalls.length = 0;
+    mockLimit.mockResolvedValueOnce({ data: [], error: null });
+    const { backfillImagesForSource } = await import("./backfillImages");
+    const result = await backfillImagesForSource({
+      source: "AutoTrader",
+      maxListings: 1,
+      delayMs: 0,
+      timeBudgetMs: 30000,
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.2");
+  });
+
+  it("uses the AutoTrader detail helper when backfilling AutoTrader images", async () => {
+    const { fetchAutoTraderDetail } = await import("@/features/scrapers/autotrader_collector/detail");
+    vi.mocked(fetchAutoTraderDetail).mockResolvedValue({
+      title: "2020 Porsche 911 Carrera S",
+      price: 89950,
+      priceText: "£89,950",
+      mileage: 12450,
+      mileageUnit: "miles",
+      location: "London",
+      description: "Example",
+      images: [
+        "https://m.atcdn.co.uk/a/media/{resize}/hero.jpg",
+        "https://m.atcdn.co.uk/a/media/{resize}/one.jpg",
+      ],
+      vin: null,
+      exteriorColor: null,
+      interiorColor: null,
+      transmission: null,
+      engine: null,
+      bodyStyle: null,
+    });
+
+    mockLimit.mockResolvedValueOnce({
+      data: [
+        {
+          id: "auto-1",
+          source: "AutoTrader",
+          source_url: "https://www.autotrader.co.uk/car-details/202602099784872",
+        },
+      ],
+      error: null,
+    });
+
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    mockUpdate.mockReturnValue({ eq: updateEq });
+
+    const { backfillImagesForSource } = await import("./backfillImages");
+    const result = await backfillImagesForSource({
+      source: "AutoTrader",
+      maxListings: 1,
+      delayMs: 0,
+      timeBudgetMs: 30000,
+    });
+
+    expect(result.backfilled).toBe(1);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        images: [
+          "https://m.atcdn.co.uk/a/media/{resize}/hero.jpg",
+          "https://m.atcdn.co.uk/a/media/{resize}/one.jpg",
+        ],
+        photos_count: 2,
+      })
+    );
   });
 });
