@@ -25,6 +25,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
   resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>
   signInWithGoogle: () => Promise<{ error: Error | null }>
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -214,6 +215,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
+  const signInWithMagicLink = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // Magic link lands on /auth/confirm, which verifies the token_hash
+        // and establishes the session. Existing users sign in; new accounts
+        // are created on first click (shouldCreateUser defaults to true).
+        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+      },
+    })
+    return { error }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -230,6 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp,
         resendConfirmationEmail,
         signInWithGoogle,
+        signInWithMagicLink,
         signOut,
         refreshProfile,
       }}

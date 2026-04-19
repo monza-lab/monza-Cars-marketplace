@@ -80,7 +80,12 @@
     "switchToSignIn": "Already have an account? Sign in",
     "analysisRequiresSignInTitle": "Analysis Requires Sign In",
     "analysisRequiresSignInDesc": "Sign in to analyze this vehicle",
-    "newAccountsCredits": "New accounts receive 3 free analysis credits"
+    "newAccountsCredits": "New accounts receive 3 free analysis credits",
+    "signInMethod": "Sign-In Method",
+    "magicLink": "Magic Link",
+    "magicLinkDesc": "We will email you a one-tap sign-in link. No password needed.",
+    "sendMagicLink": "Send Magic Link",
+    "magicLinkSent": "Check your inbox for the sign-in link."
   },
   "hero": {
     "badge": "Live Market Intelligence",

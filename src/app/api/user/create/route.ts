@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getOrCreateUser } from '@/lib/credits'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 
-const CREATE_USER_DB_TIMEOUT_MS = 2_500
+const CREATE_USER_DB_TIMEOUT_MS = 15_000
 
 function withDbTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined

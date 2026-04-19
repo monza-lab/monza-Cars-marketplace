@@ -79,7 +79,12 @@
     "switchToSignIn": "¿Ya tienes una cuenta? Inicia sesión",
     "analysisRequiresSignInTitle": "El análisis requiere iniciar sesión",
     "analysisRequiresSignInDesc": "Inicia sesión para analizar este vehículo",
-    "newAccountsCredits": "Las cuentas nuevas reciben 3 créditos de análisis gratis"
+    "newAccountsCredits": "Las cuentas nuevas reciben 3 créditos de análisis gratis",
+    "signInMethod": "Método de Inicio",
+    "magicLink": "Enlace Mágico",
+    "magicLinkDesc": "Te enviaremos un enlace de inicio de sesión por correo. Sin contraseña.",
+    "sendMagicLink": "Enviar Enlace Mágico",
+    "magicLinkSent": "Revisa tu correo para el enlace de acceso."
   },
   "hero": {
     "badge": "Inteligencia de Subastas en Vivo",

@@ -79,7 +79,12 @@
     "switchToSignIn": "Haben Sie bereits ein Konto? Anmelden",
     "analysisRequiresSignInTitle": "Analyse erfordert Anmeldung",
     "analysisRequiresSignInDesc": "Melden Sie sich an, um dieses Fahrzeug zu analysieren",
-    "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits"
+    "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits",
+    "signInMethod": "Anmeldemethode",
+    "magicLink": "Magic Link",
+    "magicLinkDesc": "Wir senden Ihnen einen Anmeldelink per E-Mail — ganz ohne Passwort.",
+    "sendMagicLink": "Magic Link senden",
+    "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink."
   },
   "hero": {
     "badge": "Live-Auktions-Intelligenz",
