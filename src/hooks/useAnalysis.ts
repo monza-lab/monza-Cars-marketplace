@@ -31,12 +31,18 @@ export function useReport(listingId: string): UseReportResult {
         body: JSON.stringify({ listingId }),
       })
       const data = await res.json()
-      if (data.success) {
-        setReport(data.data)
-        setCreditUsed(data.creditUsed ?? 0)
-        setCreditsRemaining(data.creditsRemaining ?? null)
-      } else {
+      // Task 30 response shape: { ok, report, cached } and legacy { success, data, creditUsed }
+      const succeeded = data.ok === true || data.success === true
+      if (!succeeded) {
         setError(data.error || "Report generation failed")
+        return
+      }
+      if (data.data) setReport(data.data)
+      setCreditUsed(data.creditUsed ?? 0)
+      setCreditsRemaining(data.creditsRemaining ?? null)
+      // Reload so the server component re-fetches the now-persisted HausReport.
+      if (typeof window !== "undefined") {
+        window.location.reload()
       }
     } catch {
       setError("Failed to generate report")

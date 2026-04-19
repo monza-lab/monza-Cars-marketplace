@@ -10,7 +10,11 @@ import {
 } from "@/lib/supabaseLiveListings"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { getExchangeRates } from "@/lib/exchangeRates"
-import { getReportForListing } from "@/lib/reports/queries"
+import {
+  getReportForListing,
+  fetchSignalsForListing,
+  assembleHausReportFromDB,
+} from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
@@ -103,8 +107,18 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     existingReport = fixture as HausReport
   } else {
     try {
-      // Legacy DB report shape differs from HausReport; cast until Task 29 backfills new columns.
-      existingReport = (await getReportForListing(car.id)) as unknown as HausReport | null
+      // Task 31: assemble HausReport from the `listing_reports` row + `listing_signals` rows.
+      // Task 29's saveHausReport/saveSignals now populate these columns during /api/analyze.
+      const reportRow = await getReportForListing(car.id)
+      if (reportRow) {
+        const signalRows = await fetchSignalsForListing(car.id)
+        existingReport = assembleHausReportFromDB(
+          reportRow as unknown as Record<string, unknown>,
+          signalRows,
+        )
+      } else {
+        existingReport = null
+      }
     } catch {
       existingReport = null
     }

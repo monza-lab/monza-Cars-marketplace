@@ -133,10 +133,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   marketStats: ModelMarketStats | null
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
+  void generating
+  void creditsRemaining
 
-  // Use existing report or the one just generated
-  // TODO(Task 31): useReport hook still returns legacy ListingReport; cast for now until refactor.
-  const report: HausReport | null = (generatedReport as unknown as HausReport | null) ?? existingReport
+  // Prefer the server-fetched HausReport; fall back to any report the hook just produced.
+  // The hook's triggerGeneration now reloads the page on success, so the server component
+  // re-fetches the persisted HausReport via assembleHausReportFromDB.
+  const report: HausReport | null = existingReport ?? (generatedReport as unknown as HausReport | null)
   const hasSignals = !!(report?.signals_extracted_at)
   const hasStats = !!(marketStats && marketStats.totalDataPoints > 0)
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
@@ -195,11 +198,16 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   const handleUnlock = () => {
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
+      // If we already unlocked locally but the DB has no HausReport yet, kick off
+      // the real generation pipeline so the server component can reload a populated report.
+      if (!existingReport) void triggerGeneration()
       return
     }
     const success = consumeForAnalysis(car.id)
     if (success) {
       setHasAccess(true)
+      // Fire /api/analyze → persist HausReport → hook reloads the page on success.
+      if (!existingReport) void triggerGeneration()
     } else {
       setShowPricing(true)
     }

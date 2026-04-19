@@ -11,7 +11,12 @@ import type {
   RegionalMarketStats,
   ModelMarketStats,
 } from "./types"
-import type { HausReport, DetectedSignal } from "@/lib/fairValue/types"
+import type {
+  HausReport,
+  DetectedSignal,
+  MissingSignal,
+  AppliedModifier,
+} from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
 
 const FREE_CREDITS_PER_MONTH = 3
@@ -368,6 +373,93 @@ export async function saveHausReport(
   )
 
   if (error) throw new Error(`saveHausReport failed: ${error.message}`)
+}
+
+// Signals we actively look for — used to derive `signals_missing` when assembling
+// a HausReport from the DB. Keep in sync with the orchestrator's EXPECTED_SIGNAL_KEYS.
+const EXPECTED_SIGNAL_KEYS = [
+  "paint_to_sample",
+  "service_records",
+  "previous_owners",
+  "original_paint",
+  "accident_history",
+  "documentation",
+  "warranty",
+  "seller_tier",
+  "transmission",
+  "mileage",
+]
+
+export interface ListingSignalRow {
+  signal_key: string
+  signal_value_json: { value_display?: string; name_i18n_key?: string } | null
+  evidence_source_type: string
+  evidence_source_ref: string | null
+  evidence_raw_excerpt: string | null
+  evidence_confidence: string
+}
+
+export async function fetchSignalsForListing(
+  listingId: string,
+): Promise<ListingSignalRow[]> {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from("listing_signals")
+    .select(
+      "signal_key, signal_value_json, evidence_source_type, evidence_source_ref, evidence_raw_excerpt, evidence_confidence",
+    )
+    .eq("listing_id", listingId)
+    .order("extracted_at", { ascending: false })
+  if (error) throw new Error(`fetchSignalsForListing failed: ${error.message}`)
+  return (data ?? []) as ListingSignalRow[]
+}
+
+export function assembleHausReportFromDB(
+  row: Record<string, unknown>,
+  signalRows: ListingSignalRow[],
+): HausReport {
+  const detected: DetectedSignal[] = signalRows.map((r) => ({
+    key: r.signal_key,
+    name_i18n_key:
+      r.signal_value_json?.name_i18n_key ?? `report.signals.${r.signal_key}`,
+    value_display: r.signal_value_json?.value_display ?? "",
+    evidence: {
+      source_type: r.evidence_source_type as DetectedSignal["evidence"]["source_type"],
+      source_ref: r.evidence_source_ref ?? "",
+      raw_excerpt: r.evidence_raw_excerpt,
+      confidence: r.evidence_confidence as DetectedSignal["evidence"]["confidence"],
+    },
+  }))
+
+  const detectedKeys = new Set(detected.map((s) => s.key))
+  const missing: MissingSignal[] = EXPECTED_SIGNAL_KEYS
+    .filter((k) => !detectedKeys.has(k))
+    .map((k) => ({
+      key: k,
+      name_i18n_key: `report.signals.${k}`,
+      question_for_seller_i18n_key: `report.questions.${k}_question`,
+    }))
+
+  const num = (v: unknown, fallback = 0) =>
+    v === null || v === undefined ? fallback : Number(v)
+
+  return {
+    listing_id: String(row.listing_id ?? ""),
+    fair_value_low: num(row.fair_value_low),
+    fair_value_high: num(row.fair_value_high),
+    median_price: num(row.median_price),
+    specific_car_fair_value_low: num(row.specific_car_fair_value_low),
+    specific_car_fair_value_mid: num(row.specific_car_fair_value_mid),
+    specific_car_fair_value_high: num(row.specific_car_fair_value_high),
+    comparable_layer_used: (row.comparable_layer_used ?? "strict") as HausReport["comparable_layer_used"],
+    comparables_count: num(row.comparables_count),
+    signals_detected: detected,
+    signals_missing: missing,
+    modifiers_applied: (row.modifiers_applied_json ?? []) as AppliedModifier[],
+    modifiers_total_percent: num(row.modifiers_total_percent),
+    signals_extracted_at: (row.signals_extracted_at as string | null) ?? null,
+    extraction_version: (row.extraction_version as string | undefined) ?? "v1.0",
+  }
 }
 
 export async function saveSignals(
