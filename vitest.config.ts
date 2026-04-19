@@ -5,7 +5,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts', 'scripts/**/*.test.ts'],
+    environmentMatchGlobs: [
+      ['src/**/*.test.tsx', 'jsdom'],
+      ['tests/**/*.test.tsx', 'jsdom'],
+    ],
+    include: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'tests/**/*.test.ts',
+      'tests/**/*.test.tsx',
+      'scripts/**/*.test.ts',
+    ],
     exclude: ['node_modules', '.next'],
     coverage: {
       provider: 'v8',
