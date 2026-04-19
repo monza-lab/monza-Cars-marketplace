@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio"
 import { proxyFetch } from "@/features/scrapers/common/proxy-fetch"
+import { canUseScraplingFallback, fetchHtmlWithScrapling } from "./scrapling"
 import type { ElferspotListingSummary } from "./types"
 
 const SEARCH_PATHS: Record<string, string> = {
@@ -76,20 +77,33 @@ export async function fetchSearchPage(page: number, language: string): Promise<{
   listings: ElferspotListingSummary[]
 }> {
   const url = buildSearchUrl(page, language)
-  const response = await proxyFetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-    },
-    signal: AbortSignal.timeout(15_000),
-  })
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for ${url}`)
+  // Try proxyFetch first, fall back to scrapling on failure
+  let html: string
+  try {
+    const response = await proxyFetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: AbortSignal.timeout(15_000),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} for ${url}`)
+    }
+
+    html = await response.text()
+  } catch (fetchErr) {
+    if (!canUseScraplingFallback()) throw fetchErr
+
+    const scraplingHtml = await fetchHtmlWithScrapling(url)
+    if (!scraplingHtml) throw fetchErr
+    console.log(`[elferspot] Scrapling fallback succeeded for ${url}`)
+    html = scraplingHtml
   }
 
-  const html = await response.text()
   const listings = parseSearchPage(html)
   return { html, listings }
 }
