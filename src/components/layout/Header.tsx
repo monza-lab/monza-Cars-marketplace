@@ -961,6 +961,22 @@ export function Header() {
         {/* Glass background — Obsidian */}
         <div className="absolute inset-0 h-full bg-background/85 backdrop-blur-xl border-b border-border" />
 
+        {/* Free user CTA banner */}
+        {profile && profile.tier === "FREE" && creditsRemaining <= 3 && (
+          <div className="relative bg-primary/[0.06] border-b border-primary/20 px-4 py-2 text-center">
+            <span className="text-[11px] text-foreground">
+              <strong>{creditsRemaining}</strong>{" "}
+              Free Reports left this month ·{" "}
+              <Link
+                href="/pricing"
+                className="text-primary font-semibold hover:underline"
+              >
+                Upgrade to Monthly →
+              </Link>
+            </span>
+          </div>
+        )}
+
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
