@@ -57,6 +57,17 @@ export function CheckoutModal({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || !json.url) {
+        // Dev-mode fallback: when the backend endpoint is not yet implemented
+        // (or returns an error), navigate to a local preview of the Stripe-style
+        // card form so the full checkout UX can be reviewed end-to-end.
+        const isLocal =
+          typeof window !== "undefined" &&
+          (window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1")
+        if (isLocal) {
+          window.location.href = `/checkout/payment?plan=${plan.id}`
+          return
+        }
         throw new Error(json.error ?? "Failed to start checkout")
       }
       window.location.href = json.url
