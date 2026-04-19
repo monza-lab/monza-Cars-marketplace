@@ -52,7 +52,6 @@ export type Auction = {
     bidTargetLow: number | null
     bidTargetHigh: number | null
     confidence: string | null
-    investmentGrade: string | null
     appreciationPotential: string | null
     keyStrengths: string[]
     redFlags: string[]

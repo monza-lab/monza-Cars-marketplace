@@ -13,7 +13,6 @@ function mkCar(over: Partial<CollectorCar>): CollectorCar {
     price: 0,
     trend: "",
     trendValue: 0,
-    investmentGrade: "A",
     thesis: "",
     image: "",
     images: [],

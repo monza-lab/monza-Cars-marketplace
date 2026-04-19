@@ -22,7 +22,6 @@ const activeCar = {
   region: "US",
   category: "911",
   originalCurrency: "USD",
-  investmentGrade: "AA",
   trend: "Stable",
 } as const
 

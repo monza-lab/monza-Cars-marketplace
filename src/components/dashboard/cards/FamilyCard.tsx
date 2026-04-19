@@ -51,18 +51,6 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
             </span>
           </div>
 
-          {/* Grade badge */}
-          <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              family.topGrade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : family.topGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
-            }`}>
-              {family.topGrade}
-            </span>
-          </div>
         </div>
 
         {/* BOTTOM: FAMILY INFO */}

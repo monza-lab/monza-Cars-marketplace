@@ -38,16 +38,6 @@ export function ModelNavSidebar({
     [cars]
   )
 
-  // Grade color helper
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": return "text-positive"
-      case "AA": return "text-blue-400"
-      case "A": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
-
   return (
     <div className="h-full flex flex-col border-r border-border overflow-hidden">
       {/* Compact brand header */}
@@ -117,9 +107,6 @@ export function ModelNavSidebar({
                       }`}>
                       {getSeriesConfig(model.slug || model.name.toLowerCase(), make)?.label || model.name}
                     </p>
-                    <span className={`text-[10px] font-bold shrink-0 ${gradeColor(model.representativeCar.investmentGrade)}`}>
-                      {model.representativeCar.investmentGrade}
-                    </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-muted-foreground">{model.years}</span>

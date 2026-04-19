@@ -318,7 +318,6 @@ INSTRUCTIONS:
 Analyze this vehicle and respond with ONLY a valid JSON object (no markdown fences). Use this exact structure:
 
 {
-  "investmentGrade": "<AAA|AA|A|BBB|BB|B or null if insufficient data>",
   "confidence": "<HIGH|MEDIUM|LOW>",
   "redFlags": ["<string — potential concern identified from listing or market data>"],
   "keyStrengths": ["<string — positive aspect of this vehicle>"],

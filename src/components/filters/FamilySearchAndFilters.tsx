@@ -22,7 +22,6 @@ export type FamilyFilters = {
   bodyTypes?: string[]
   colors?: string[]
   statuses?: string[]
-  grades?: string[]
 }
 
 // Generaciones por familia (mismo data que FilterSidebar)

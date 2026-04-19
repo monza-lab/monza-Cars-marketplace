@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     // 4. Check existing report
     const existingReport = await getReportForListing(body.listingId)
-    if (existingReport && existingReport.investment_grade) {
+    if (existingReport && existingReport.fair_value_low != null) {
       return NextResponse.json({
         success: true,
         data: existingReport,

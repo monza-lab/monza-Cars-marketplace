@@ -308,12 +308,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
       )
     }
 
-    if (activeFilters.grades && activeFilters.grades.length > 0) {
-      result = result.filter(car =>
-        activeFilters.grades!.includes(car.investmentGrade)
-      )
-    }
-
     return result
   }, [familyCars, activeFilters])
 
@@ -449,8 +443,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
       const years = cars.map(c => c.year)
       const repCar = cars.sort((a, b) => b.currentBid - a.currentBid)[0]
       const carImage = repCar.images?.[0] || repCar.image
-      const grades = cars.map(c => c.investmentGrade).filter(Boolean)
-      const topGrade = grades.includes("AAA") ? "AAA" : grades.includes("AA") ? "AA" : grades.includes("A") ? "A" : "B"
 
       result.push({
         id: def.id,
@@ -462,7 +454,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         yearMax: Math.max(...years),
         representativeImage: carImage || "/cars/placeholder.svg",
         representativeCar: `${repCar.year} ${repCar.model}`,
-        topGrade,
       })
     }
 
@@ -473,8 +464,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
       const years = cars.map(c => c.year)
       const repCar = cars.sort((a, b) => b.currentBid - a.currentBid)[0]
       const carImage = repCar.images?.[0] || repCar.image
-      const grades = cars.map(c => c.investmentGrade).filter(Boolean)
-      const topGrade = grades.includes("AAA") ? "AAA" : grades.includes("AA") ? "AA" : grades.includes("A") ? "A" : "B"
 
       result.push({
         id: genId,
@@ -486,7 +475,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         yearMax: Math.max(...years),
         representativeImage: carImage || "/cars/placeholder.svg",
         representativeCar: `${repCar.year} ${repCar.model}`,
-        topGrade,
       })
     })
 
@@ -506,7 +494,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         yearMax: Math.max(...years),
         representativeImage: carImage || "/cars/placeholder.svg",
         representativeCar: `${repCar.year} ${repCar.model}`,
-        topGrade: "B",
       })
     }
 
@@ -633,13 +620,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     if (activeFilters.statuses && activeFilters.statuses.length > 0) {
       result = result.filter(car =>
         activeFilters.statuses!.includes(car.status)
-      )
-    }
-
-    // Grade filter
-    if (activeFilters.grades && activeFilters.grades.length > 0) {
-      result = result.filter(car =>
-        activeFilters.grades!.includes(car.investmentGrade)
       )
     }
 
@@ -1060,7 +1040,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                         bodyTypes: advFilters.bodyTypes,
                         colors: advFilters.colors,
                         statuses: advFilters.statuses,
-                        grades: advFilters.grades,
                       }))
                     }}
                     minPrice={selectedModel.priceMin}
