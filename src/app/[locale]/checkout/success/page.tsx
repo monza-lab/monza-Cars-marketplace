@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
@@ -8,19 +8,25 @@ import { track } from "@/lib/analytics/events"
 
 export default function CheckoutSuccessPage() {
   const { profile, refreshProfile } = useAuth()
-  const [ready, setReady] = useState(false)
-  const [trackedCompletion, setTrackedCompletion] = useState(false)
+  const [timeoutFired, setTimeoutFired] = useState(false)
+  const trackedRef = useRef(false)
+
+  const profileLoaded =
+    profile?.tier === "MONTHLY" ||
+    profile?.tier === "ANNUAL" ||
+    profile?.tier === "PACK_OWNER"
+  const ready = profileLoaded || timeoutFired
 
   useEffect(() => {
     // Stripe webhook may land before or after the user returns.
-    // Poll profile up to 10 seconds, then give up and show the success view anyway.
-    const interval = setInterval(async () => {
-      await refreshProfile()
+    // Poll profile up to 10 seconds, then stop and show the success view anyway.
+    const interval = setInterval(() => {
+      void refreshProfile()
     }, 1500)
 
     const timeout = setTimeout(() => {
       clearInterval(interval)
-      setReady(true)
+      setTimeoutFired(true)
     }, 10_000)
 
     return () => {
@@ -30,18 +36,8 @@ export default function CheckoutSuccessPage() {
   }, [refreshProfile])
 
   useEffect(() => {
-    if (!profile) return
-    if (
-      profile.tier === "MONTHLY" ||
-      profile.tier === "ANNUAL" ||
-      profile.tier === "PACK_OWNER"
-    ) {
-      setReady(true)
-    }
-  }, [profile])
-
-  useEffect(() => {
-    if (!ready || trackedCompletion) return
+    if (!ready || trackedRef.current) return
+    trackedRef.current = true
     const sessionId =
       typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("session_id") ?? ""
@@ -50,8 +46,7 @@ export default function CheckoutSuccessPage() {
       event: "checkout_completed",
       payload: { planId: profile?.tier ?? "unknown", amount: 0, sessionId },
     })
-    setTrackedCompletion(true)
-  }, [ready, profile, trackedCompletion])
+  }, [ready, profile])
 
   const isSubscription = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL"
 
