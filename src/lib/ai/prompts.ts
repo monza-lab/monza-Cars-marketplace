@@ -134,7 +134,6 @@ Analyze this listing thoroughly and respond with ONLY a valid JSON object (no ma
     }
   },
   "investmentOutlook": {
-    "grade": "<EXCELLENT|GOOD|FAIR|SPECULATIVE>",
     "trend": "<APPRECIATING|STABLE|DECLINING>",
     "reasoning": "<string - 2-3 sentences explaining the investment outlook>"
   },

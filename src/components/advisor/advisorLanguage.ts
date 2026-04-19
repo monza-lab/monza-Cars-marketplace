@@ -41,7 +41,7 @@ export const GREETINGS: Record<DetectedLanguage, { morning: string; afternoon: s
 
 type PhraseKey =
   | "advisorName" | "helping" | "analyzing" | "market"
-  | "fairValue" | "currentBid" | "grade" | "risks" | "strengths"
+  | "fairValue" | "currentBid" | "risks" | "strengths"
   | "comparables" | "ownershipCost" | "bestRegion"
   | "reportTitle" | "reportDesc" | "generateReport" | "viewReport" | "upgradeNeeded"
   | "askMore" | "showComps" | "getReport"
@@ -56,7 +56,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "market",
     fairValue: "Fair Value",
     currentBid: "Current bid",
-    grade: "Investment Grade",
     risks: "Risk Factors",
     strengths: "Strengths",
     comparables: "Comparable Sales",
@@ -86,7 +85,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "mercado",
     fairValue: "Valor Justo",
     currentBid: "Oferta actual",
-    grade: "Grado de Inversión",
     risks: "Factores de Riesgo",
     strengths: "Fortalezas",
     comparables: "Ventas Comparables",
@@ -116,7 +114,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "marché",
     fairValue: "Juste Valeur",
     currentBid: "Offre actuelle",
-    grade: "Note d'Investissement",
     risks: "Facteurs de Risque",
     strengths: "Points Forts",
     comparables: "Ventes Comparables",
@@ -146,7 +143,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "mercado",
     fairValue: "Valor Justo",
     currentBid: "Oferta atual",
-    grade: "Nota de Investimento",
     risks: "Fatores de Risco",
     strengths: "Pontos Fortes",
     comparables: "Vendas Comparáveis",
@@ -176,7 +172,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "Markt",
     fairValue: "Fairer Wert",
     currentBid: "Aktuelles Gebot",
-    grade: "Investitionsnote",
     risks: "Risikofaktoren",
     strengths: "Stärken",
     comparables: "Vergleichsverkäufe",
@@ -206,7 +201,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "mercato",
     fairValue: "Valore Giusto",
     currentBid: "Offerta attuale",
-    grade: "Grado di Investimento",
     risks: "Fattori di Rischio",
     strengths: "Punti di Forza",
     comparables: "Vendite Comparabili",
@@ -236,7 +230,6 @@ const PHRASES: Record<DetectedLanguage, Record<PhraseKey, string>> = {
     market: "マーケット",
     fairValue: "適正価格",
     currentBid: "現在の入札",
-    grade: "投資グレード",
     risks: "リスク要因",
     strengths: "強み",
     comparables: "類似取引",

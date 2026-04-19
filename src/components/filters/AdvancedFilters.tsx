@@ -8,7 +8,6 @@ import {
   Gauge,
   Cog,
   Palette,
-  Award,
   Car,
   X,
   ChevronDown,
@@ -23,7 +22,6 @@ export type AdvancedFilterValues = {
   bodyTypes: string[]     // ["Coupe", "Convertible", "Targa", etc.]
   colors: string[]
   statuses: string[] // ["ACTIVE", "ENDING_SOON", "ENDED"]
-  grades: string[] // ["AAA", "AA", "A"]
 }
 
 type AdvancedFiltersProps = {
@@ -65,12 +63,6 @@ const STATUS_OPTIONS = [
   { id: "ENDED", label: "Sold / Ended" },
 ]
 
-const GRADE_OPTIONS = [
-  { id: "AAA", label: "AAA" },
-  { id: "AA", label: "AA" },
-  { id: "A", label: "A" },
-]
-
 export function AdvancedFilters({
   familyName,
   onFiltersChange,
@@ -86,7 +78,6 @@ export function AdvancedFilters({
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([])
-  const [selectedGrades, setSelectedGrades] = useState<string[]>([])
   const onFiltersChangeRef = useRef(onFiltersChange)
   onFiltersChangeRef.current = onFiltersChange
 
@@ -101,10 +92,9 @@ export function AdvancedFilters({
         bodyTypes: selectedBodyTypes,
         colors: selectedColors,
         statuses: selectedStatuses,
-        grades: selectedGrades,
       })
     }
-  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedBodyTypes, selectedColors, selectedStatuses, selectedGrades, minPrice, maxPrice, minYear, maxYear])
+  }, [priceRange, yearRange, selectedMileage, selectedTransmissions, selectedBodyTypes, selectedColors, selectedStatuses, minPrice, maxPrice, minYear, maxYear])
 
   const hasActiveFilters =
     priceRange[0] !== minPrice ||
@@ -115,8 +105,7 @@ export function AdvancedFilters({
     selectedTransmissions.length > 0 ||
     selectedBodyTypes.length > 0 ||
     selectedColors.length > 0 ||
-    selectedStatuses.length > 0 ||
-    selectedGrades.length > 0
+    selectedStatuses.length > 0
 
   const clearAllFilters = () => {
     setPriceRange([minPrice, maxPrice])
@@ -126,7 +115,6 @@ export function AdvancedFilters({
     setSelectedBodyTypes([])
     setSelectedColors([])
     setSelectedStatuses([])
-    setSelectedGrades([])
   }
 
   const toggleItem = (item: string, list: string[], setter: (list: string[]) => void) => {
@@ -282,28 +270,6 @@ export function AdvancedFilters({
           </div>
         </FilterSection>
 
-        {/* Investment Grade */}
-        <FilterSection icon={Award} title="Investment Grade" hasSelection={selectedGrades.length > 0}>
-          <div className="flex flex-wrap gap-2">
-            {GRADE_OPTIONS.map((grade) => (
-              <button
-                key={grade.id}
-                onClick={() => toggleItem(grade.id, selectedGrades, setSelectedGrades)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider transition-all ${
-                  selectedGrades.includes(grade.id)
-                    ? grade.id === "AAA"
-                      ? "bg-positive/20 text-positive border border-positive/30"
-                      : grade.id === "AA"
-                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                        : "bg-amber-500/20 text-destructive border border-amber-500/30"
-                    : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
-                }`}
-              >
-                {grade.label}
-              </button>
-            ))}
-          </div>
-        </FilterSection>
       </div>
     </div>
   )

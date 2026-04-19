@@ -24,7 +24,6 @@ import { OwnershipCosts } from "./OwnershipCosts";
 // Types
 // ---------------------------------------------------------------------------
 
-export type InvestmentGrade = "EXCELLENT" | "GOOD" | "FAIR" | "SPECULATIVE";
 export type MarketTrend = "RISING" | "STABLE" | "DECLINING";
 
 export interface BidTarget {
@@ -34,7 +33,6 @@ export interface BidTarget {
 }
 
 export interface InvestmentOutlook {
-  grade: InvestmentGrade;
   summary: string;
   appreciationPotential?: string;
   liquidityRating?: string;
@@ -66,13 +64,6 @@ interface AnalysisReportProps {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const GRADE_STYLES: Record<InvestmentGrade, string> = {
-  EXCELLENT: "bg-amber-500/20 text-destructive border-amber-500/40",
-  GOOD: "bg-positive/20 text-positive border-positive/40",
-  FAIR: "bg-blue-500/20 text-blue-400 border-blue-500/40",
-  SPECULATIVE: "bg-destructive/20 text-destructive border-destructive/40",
-};
 
 const TREND_CONFIG: Record<
   MarketTrend,
@@ -288,18 +279,9 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             </span>
           </div>
 
-          {/* Grade + Trend row */}
-          <div className="flex items-center gap-3 mt-4">
-            <Badge
-              className={cn(
-                "text-xs font-semibold border px-2.5 py-0.5",
-                GRADE_STYLES[investmentOutlook.grade]
-              )}
-            >
-              {investmentOutlook.grade}
-            </Badge>
-
-            {trend && TrendIcon && (
+          {/* Trend row */}
+          {trend && TrendIcon && (
+            <div className="flex items-center gap-3 mt-4">
               <span
                 className={cn(
                   "flex items-center gap-1 text-xs font-medium",
@@ -309,8 +291,8 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
                 <TrendIcon className="size-3.5" />
                 {trend.label}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         <Separator className="bg-zinc-800" />
