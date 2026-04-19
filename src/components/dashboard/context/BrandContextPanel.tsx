@@ -7,14 +7,15 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, Award, ChevronRight } from "lucide-react"
 import { getBrandConfig } from "@/lib/brandConfig"
 import { mockWhyBuy } from "../constants"
-import { computeRegionalValFromAuctions, listingPriceUsd, formatUsdValue } from "../utils/valuation"
+import { listingPriceUsd, formatUsdValue } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
 import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { Brand, Auction } from "../types"
+import type { RegionalValByFamily } from "@/lib/dashboardCache"
 
-export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; allAuctions?: Auction[] }) {
+export function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; regionalValByFamily?: RegionalValByFamily }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
   const brandAuctions = useMemo(() =>
@@ -23,12 +24,24 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  // Compute regional fair values from ALL auctions (unfiltered by region)
-  const allBrandAuctions = useMemo(() =>
-    (allAuctions ?? auctions).filter(a => a.make === brand.name),
-    [allAuctions, auctions, brand.name]
+  const dominantFamily = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const auction of brandAuctions) {
+      if (!auction.family) continue
+      counts.set(auction.family, (counts.get(auction.family) ?? 0) + 1)
+    }
+
+    let best: [string, number] | null = null
+    for (const entry of counts.entries()) {
+      if (!best || entry[1] > best[1]) best = entry
+    }
+
+    return best?.[0] ?? null
+  }, [brandAuctions])
+  const regionalVal = useMemo(
+    () => (dominantFamily ? regionalValByFamily?.[dominantFamily] ?? {} : {}),
+    [regionalValByFamily, dominantFamily],
   )
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => (a.price > 0 || a.currentBid > 0))

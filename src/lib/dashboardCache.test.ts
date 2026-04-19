@@ -268,7 +268,7 @@ describe("dashboard cache", () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const pending = fetchDashboardDataUncached()
 
-    await vi.advanceTimersByTimeAsync(5_000)
+    await vi.advanceTimersByTimeAsync(45_000)
 
     await expect(pending).resolves.toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],

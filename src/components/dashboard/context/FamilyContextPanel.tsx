@@ -6,14 +6,15 @@ import { useTranslations } from "next-intl"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, ChevronRight } from "lucide-react"
 import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
-import { computeRegionalValFromAuctions, listingPriceUsd } from "../utils/valuation"
+import { listingPriceUsd } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
 import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { PorscheFamily, Auction } from "../types"
+import type { RegionalValByFamily } from "@/lib/dashboardCache"
 
-export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies }: { family: PorscheFamily; auctions: Auction[]; allAuctions?: Auction[]; allFamilies: PorscheFamily[] }) {
+export function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies }: { family: PorscheFamily; auctions: Auction[]; regionalValByFamily?: RegionalValByFamily; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
 
@@ -28,16 +29,7 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
-  const allFamilyAuctions = useMemo(() => {
-    const source = allAuctions ?? auctions
-    const familyKey = family.slug
-    return source.filter(a => {
-      const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
-      return series === familyKey
-    })
-  }, [allAuctions, auctions, family.slug])
-  const regionalVal = useMemo(() => computeRegionalValFromAuctions(allFamilyAuctions, rates), [allFamilyAuctions, rates])
+  const regionalVal = useMemo(() => regionalValByFamily?.[family.slug] ?? {}, [regionalValByFamily, family.slug])
 
   // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {

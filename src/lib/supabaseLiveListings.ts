@@ -132,7 +132,9 @@ const LIVE_STATUS_ALIASES = [
   "ENDING_SOON",
 ] as const;
 
-export const LIVE_DB_STATUS_VALUES = [...LIVE_STATUS_ALIASES] as const;
+// Enum-safe DB filter: public.listings.status is monza_listing_status,
+// and only `active` is guaranteed to match the enum value for live rows.
+export const LIVE_DB_STATUS_VALUES = ["active"] as const;
 
 type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars" | "ClassicCom" | "Elferspot";
 

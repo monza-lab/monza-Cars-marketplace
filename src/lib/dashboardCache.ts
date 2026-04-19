@@ -12,6 +12,7 @@ import { computeSegmentStats } from "./pricing/segmentStats";
 
 const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
+const DASHBOARD_VALUATION_QUERY_TIMEOUT_MS = 45_000;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 
 /**
@@ -265,7 +266,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
   const [valuationCorpus, aggregates, seriesCounts] = await Promise.all([
     withSoftTimeout(
       fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
-      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      DASHBOARD_VALUATION_QUERY_TIMEOUT_MS,
       "valuation corpus query",
       [],
     ),

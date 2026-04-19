@@ -1771,14 +1771,8 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
       return series === familyKey
     })
   }, [valuationSource, family.slug])
-  // Prefer the pre-aggregated regionalValByFamily computed server-side from
-  // the full 18k+ valuation corpus. Fall back to the filtered auction feed
-  // only when the server-side aggregation is missing (pagination error etc.).
-  const regionalVal = useMemo(() => {
-    const pre = regionalValByFamily?.[family.slug]
-    if (pre) return pre
-    return computeRegionalValFromAuctions(allFamilyAuctions, rates)
-  }, [regionalValByFamily, family.slug, allFamilyAuctions, rates])
+  // Valuation must come from the pre-aggregated corpus only.
+  const regionalVal = useMemo(() => regionalValByFamily?.[family.slug] ?? {}, [regionalValByFamily, family.slug])
 
   // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {
@@ -2073,26 +2067,28 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
   const valuationSource = valuationAuctions && valuationAuctions.length > 0 ? valuationAuctions : auctions
-  // Compute regional fair values from the valuation universe
   const allBrandAuctions = useMemo(() =>
     valuationSource.filter(a => a.make === brand.name),
     [valuationSource, brand.name]
   )
-  // Prefer the pre-aggregated regionalValByFamily (computed server-side from
-  // the full 18k+ valuation corpus). Pick dominant family from the brand's
-  // filtered auctions to stay consistent with the on-screen context.
-  const regionalVal = useMemo(() => {
-    if (regionalValByFamily) {
-      const counts = new Map<string, number>()
-      for (const a of brandAuctions) if (a.family) counts.set(a.family, (counts.get(a.family) ?? 0) + 1)
-      let best: [string, number] | null = null
-      for (const entry of counts.entries()) if (!best || entry[1] > best[1]) best = entry
-      const fam = best?.[0]
-      const pre = fam ? regionalValByFamily[fam] : undefined
-      if (pre) return pre
+  const dominantFamily = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const auction of allBrandAuctions) {
+      if (!auction.family) continue
+      counts.set(auction.family, (counts.get(auction.family) ?? 0) + 1)
     }
-    return computeRegionalValFromAuctions(allBrandAuctions, rates)
-  }, [regionalValByFamily, brandAuctions, allBrandAuctions, rates])
+
+    let best: [string, number] | null = null
+    for (const entry of counts.entries()) {
+      if (!best || entry[1] > best[1]) best = entry
+    }
+
+    return best?.[0] ?? null
+  }, [allBrandAuctions])
+  const regionalVal = useMemo(
+    () => (dominantFamily ? regionalValByFamily?.[dominantFamily] ?? {} : {}),
+    [regionalValByFamily, dominantFamily],
+  )
   const recentSales = useMemo(() => {
     return brandAuctions
       .filter(a => (a.price > 0 || a.currentBid > 0))
