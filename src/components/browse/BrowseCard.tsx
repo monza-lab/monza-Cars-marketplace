@@ -8,6 +8,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
 import { timeLeft } from "@/lib/makePageHelpers";
 import type { DashboardAuction } from "@/lib/dashboardCache";
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill";
 
 const PLATFORM_SHORT: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
@@ -70,7 +71,6 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-");
   const trans = formatTransmission(car.transmission);
   const region = regionCode(car.region);
-  const grade = car.analysis?.investmentGrade ?? null;
   const fairUs = car.fairValueByRegion?.US;
 
   return (
@@ -102,11 +102,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
           )}
 
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
-            {grade && (
-              <span className="rounded-full px-2 py-0.5 text-[9px] font-semibold bg-primary/15 text-primary border border-primary/25 backdrop-blur-md">
-                {grade}
-              </span>
-            )}
+            <MarketDeltaPill priceUsd={car.currentBid} medianUsd={null} />
             <span className="rounded-full px-2 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/80 border border-border backdrop-blur-md">
               {platformLabel}
             </span>

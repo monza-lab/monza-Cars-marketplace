@@ -2,22 +2,21 @@
 
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
-import { Clock, Gavel, Shield, ChevronRight } from "lucide-react"
+import { Clock, Gavel, ChevronRight } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { platformLabels, getPriceLabel, isAuctionPlatform, getStatusLabel } from "@/lib/makePageConstants"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 
 // ─── CAR FEED CARD (Full-height card for individual cars) ───
 export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
-  const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
 
   const isEndingSoon = car.status === "ENDING_SOON"
-  const grade = car.investmentGrade
 
   return (
     <div className="h-[calc(100dvh-140px)] w-full flex flex-col snap-start p-4">
@@ -46,17 +45,9 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
           {/* Vignette gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
-          {/* Grade badge — top left */}
+          {/* Market delta pill — top left */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              grade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : grade === "AA"
-                  ? "bg-primary/30 text-primary"
-                  : "bg-foreground/20 text-white"
-            }`}>
-              {grade}
-            </span>
+            <MarketDeltaPill priceUsd={car.currentBid} medianUsd={null} className="text-[10px] font-bold tracking-[0.1em]" />
           </div>
 
           {/* Status badge — top right */}
@@ -89,7 +80,7 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-border">
+          <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
             {/* Price / Current Bid */}
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -121,19 +112,6 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
               </p>
             </div>
 
-            {/* Grade */}
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Shield className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
-              </div>
-              <p className={`text-[13px] font-semibold ${
-                grade === "AAA" ? "text-positive"
-                  : grade === "AA" ? "text-blue-400"
-                    : grade === "A" ? "text-destructive"
-                      : "text-muted-foreground"
-              }`}>{grade}</p>
-            </div>
           </div>
 
           {/* Category */}
