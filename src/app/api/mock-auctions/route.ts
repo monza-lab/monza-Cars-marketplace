@@ -18,6 +18,7 @@ const PER_SOURCE_BUDGET = 200;
 
 // Maximum page size for paginated requests
 const MAX_PAGE_SIZE = 200;
+const MOCK_AUCTIONS_TIMEOUT_MS = 10_000;
 
 function transformCar(car: CollectorCar) {
   return {
@@ -132,6 +133,7 @@ export async function GET(request: NextRequest) {
       status: dbStatus,
       series: family || null,
       modelPatterns,
+      timeoutMs: MOCK_AUCTIONS_TIMEOUT_MS,
     });
 
     // Only fetch aggregates on the first page (no cursor = first page)
@@ -184,6 +186,7 @@ export async function GET(request: NextRequest) {
       includePriceHistory: false,
       make: requestedMake,
       includeAllSources: true,
+      timeoutMs: MOCK_AUCTIONS_TIMEOUT_MS,
     }),
     fetchLiveListingAggregateCounts({ make: requestedMake }),
     fetchSeriesCounts(requestedMake ?? "Porsche"),

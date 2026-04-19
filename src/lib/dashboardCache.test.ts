@@ -57,12 +57,20 @@ const fetchLiveListingAggregateCounts = vi.fn(async () => ({
 }))
 
 const fetchSeriesCounts = vi.fn(async () => ({ "992": 1 }))
+const fetchSeriesCountsByRegion = vi.fn(async () => ({
+  all: { "992": 1 },
+  US: { "992": 1 },
+  UK: {},
+  EU: {},
+  JP: {},
+}))
 
 vi.mock("./supabaseLiveListings", () => ({
   fetchPaginatedListings,
   fetchValuationCorpusForMake,
   fetchLiveListingAggregateCounts,
   fetchSeriesCounts,
+  fetchSeriesCountsByRegion,
 }))
 
 vi.mock("next/cache", () => ({
@@ -81,6 +89,7 @@ describe("dashboard cache", () => {
     fetchValuationCorpusForMake.mockClear()
     fetchLiveListingAggregateCounts.mockClear()
     fetchSeriesCounts.mockClear()
+    fetchSeriesCountsByRegion.mockClear()
     unstableCache.mockClear()
     revalidateTag.mockClear()
     vi.useRealTimers()
@@ -140,13 +149,26 @@ describe("dashboard cache", () => {
         includeCount: false,
       }),
     )
-    expect(fetchValuationCorpusForMake).toHaveBeenCalledWith("Porsche")
+    expect(fetchValuationCorpusForMake).toHaveBeenCalledWith(
+      "Porsche",
+      40_000,
+      expect.objectContaining({
+        signal: expect.any(Object),
+      }),
+    )
     expect(data.auctions).toHaveLength(1)
     expect(data.regionalValByFamily).toBeDefined()
     expect(data.regionalValByFamily["992"]).toBeDefined()
     expect(data.regionalValByFamily["992"].EU).toBeDefined()
     expect(data.liveNow).toBe(7)
     expect(data.seriesCounts).toEqual({ "992": 1 })
+    expect(fetchSeriesCountsByRegion).toHaveBeenCalledWith(
+      "Porsche",
+      expect.objectContaining({
+        signal: expect.any(Object),
+      }),
+    )
+    expect(data.seriesCountsByRegion.US).toEqual({ "992": 1 })
   })
 
   it("caps dashboard auctions at the dashboard page size even if regional buckets over-return", async () => {
@@ -354,9 +376,9 @@ describe("dashboard cache", () => {
 
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
 
-    await expect(fetchDashboardDataUncached()).rejects.toThrow(
-      /inconsistent empty live snapshot/,
-    )
+    const data = await fetchDashboardDataUncached()
+    expect(data.auctions).toHaveLength(0)
+    expect(data.liveNow).toBe(7)
     expect(fetchPaginatedListings).toHaveBeenCalledTimes(5)
   })
 
@@ -419,6 +441,7 @@ describe("dashboard cache", () => {
       liveNow: 1,
       seriesCounts: {},
       regionalValByFamily: {},
+      seriesCountsByRegion: { all: {}, US: {}, UK: {}, EU: {}, JP: {} },
     })
   })
 

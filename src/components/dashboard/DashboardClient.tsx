@@ -183,6 +183,14 @@ type LiveRegionTotals = {
   JP: number
 }
 
+type SeriesCountsByRegion = {
+  all: Record<string, number>
+  US: Record<string, number>
+  UK: Record<string, number>
+  EU: Record<string, number>
+  JP: Record<string, number>
+}
+
 const platformShort: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
   RM_SOTHEBYS: "RM",
@@ -1066,7 +1074,8 @@ function DiscoverySidebar({
   activeBrandSlug,
   activeFamilyName,
   seriesCounts,
-  liveRegionTotals,
+  seriesCountsByRegion,
+  liveRegionTotals: _liveRegionTotals,
 }: {
   auctions: Auction[]
   brands: Brand[]
@@ -1075,6 +1084,7 @@ function DiscoverySidebar({
   activeBrandSlug?: string
   activeFamilyName?: string
   seriesCounts?: Record<string, number>
+  seriesCountsByRegion?: SeriesCountsByRegion
   liveRegionTotals?: LiveRegionTotals
 }) {
   const t = useTranslations("dashboard")
@@ -1087,44 +1097,30 @@ function DiscoverySidebar({
     const brandName = brands.find(b => b.slug === activeBrandSlug)?.name
     if (!brandName) return []
 
-    const brandAuctions = auctions.filter(
-      a => a.make === brandName &&
-           (a.status === "ACTIVE" || a.status === "ENDING_SOON")
-    )
-    const familyMap = new Map<string, { count: number; years: number[] }>()
+    const regionKey: keyof SeriesCountsByRegion =
+      selectedRegion === "US" ||
+      selectedRegion === "UK" ||
+      selectedRegion === "EU" ||
+      selectedRegion === "JP"
+        ? selectedRegion
+        : "all"
 
-    brandAuctions.forEach(a => {
-      const series = extractSeries(a.model, a.year, a.make || brandName, a.title)
-      // Skip models that don't match any known series in brandConfig
-      if (!getSeriesConfig(series, a.make || brandName)) return
-      const existing = familyMap.get(series) || { count: 0, years: [] }
-      existing.count++
-      existing.years.push(a.year)
-      familyMap.set(series, existing)
-    })
+    const brandSeries = getBrandConfig(brandName)?.series ?? []
 
-    // Determine which DB total to use for scaling
-    const dbTotal = selectedRegion && liveRegionTotals
-      ? (liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all)
-      : liveRegionTotals?.all
-    const sampleTotal = brandAuctions.length
+    return brandSeries
+      .map((series) => {
+        const count =
+          seriesCountsByRegion?.[regionKey]?.[series.id] ??
+          (regionKey === "all" ? seriesCounts?.[series.id] : seriesCountsByRegion?.all?.[series.id]) ??
+          seriesCounts?.[series.id] ??
+          0
 
-    return Array.from(familyMap.entries())
-      .map(([seriesId, data]) => {
-        let count: number
-        if (selectedRegion && dbTotal && sampleTotal > 0) {
-          // Region selected: scale sample distribution by DB regional total
-          count = Math.round(data.count / sampleTotal * dbTotal)
-        } else {
-          // All regions: use exact DB count from fetchSeriesCounts
-          count = seriesCounts?.[seriesId] ?? data.count
-        }
         return {
-          name: getSeriesConfig(seriesId.toLowerCase(), brandName)?.label || seriesId,
-          slug: seriesId.toLowerCase(),
+          name: series.label,
+          slug: series.id,
           count,
-          yearMin: Math.min(...data.years),
-          yearMax: Math.max(...data.years),
+          yearMin: series.yearRange[0],
+          yearMax: series.yearRange[1],
         }
       })
       .sort((a, b) => {
@@ -1133,7 +1129,7 @@ function DiscoverySidebar({
         if (orderA !== orderB) return orderA - orderB
         return b.count - a.count
       })
-  }, [auctions, activeBrandSlug, brands, seriesCounts, selectedRegion, liveRegionTotals])
+  }, [activeBrandSlug, brands, seriesCounts, seriesCountsByRegion, selectedRegion])
 
   // Live auctions sorted by ending soonest — filtered by active family when scrolling
   const liveAuctions = useMemo(() => {
@@ -2354,7 +2350,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
 }
 
 // ─── MAIN COMPONENT ───
-export function DashboardClient({ auctions, valuationListings, regionalValByFamily, liveRegionTotals, liveNowTotal, seriesCounts }: { auctions: Auction[]; valuationListings?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number> }) {
+export function DashboardClient({ auctions, valuationListings, regionalValByFamily, liveRegionTotals, liveNowTotal, seriesCounts, seriesCountsByRegion }: { auctions: Auction[]; valuationListings?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; liveRegionTotals?: LiveRegionTotals; liveNowTotal?: number; seriesCounts?: Record<string, number>; seriesCountsByRegion?: SeriesCountsByRegion }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { selectedRegion } = useRegion()
   const { rates } = useCurrency()
@@ -2508,6 +2504,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
               activeBrandSlug={selectedBrand?.slug}
               activeFamilyName={activeFamilyName}
               seriesCounts={seriesCounts}
+              seriesCountsByRegion={seriesCountsByRegion}
               liveRegionTotals={liveRegionTotals}
             />
 

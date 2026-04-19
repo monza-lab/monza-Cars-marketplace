@@ -76,21 +76,48 @@ type PriceHistoryRow = {
 
 const SUPABASE_TIMEOUT_MS = 30_000;
 
-function createSupabaseClient(url: string, key: string): SupabaseClient {
+type SupabaseClientOptions = {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+};
+
+function createSupabaseClient(url: string, key: string, options: SupabaseClientOptions = {}): SupabaseClient {
+  const timeoutMs = options.timeoutMs ?? SUPABASE_TIMEOUT_MS;
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       fetch: (input, init) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const externalAbort = () => controller.abort();
+
+        if (options.signal) {
+          if (options.signal.aborted) {
+            controller.abort();
+          } else {
+            options.signal.addEventListener("abort", externalAbort, { once: true });
+          }
+        }
 
         return fetch(input, {
           ...init,
           signal: controller.signal,
-        }).finally(() => clearTimeout(timeoutId));
+        }).finally(() => {
+          clearTimeout(timeoutId);
+          if (options.signal) {
+            options.signal.removeEventListener("abort", externalAbort);
+          }
+        });
       },
     },
   });
+}
+
+function normalizeDbStatusFilter(statusFilter?: string): string | undefined {
+  if (statusFilter == null) return undefined;
+  const normalized = statusFilter.trim().toLowerCase();
+  if (normalized.length === 0) return undefined;
+  return normalized;
 }
 
 // ─── Broad select (with photos_media join for legacy rows) ───
@@ -716,7 +743,7 @@ function isTransientSupabaseFailure(error: unknown): boolean {
 }
 
 export async function fetchLiveListingAggregateCounts(
-  options?: { make?: string | null },
+  options?: { make?: string | null; timeoutMs?: number; signal?: AbortSignal },
 ): Promise<LiveListingAggregateCounts> {
   const empty: LiveListingAggregateCounts = {
     liveNow: 0,
@@ -731,7 +758,10 @@ export async function fetchLiveListingAggregateCounts(
   const targetMake = resolveRequestedMake(options?.make).toLowerCase();
 
   try {
-    const supabase = createSupabaseClient(url, key);
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
+    });
     const { data, error } = await supabase
       .from("listings_active_counts")
       .select("source,region_by_country,live_count")
@@ -803,6 +833,7 @@ async function queryAllListingsDirect(
   statusFilter?: string,
 ): Promise<ListingRow[]> {
   const boundedLimit = limit > 0 ? limit : 200;
+  const dbStatusFilter = normalizeDbStatusFilter(statusFilter);
 
   try {
     let query = supabase
@@ -810,13 +841,13 @@ async function queryAllListingsDirect(
       .select(SELECT_NARROW)
       .eq("make", targetMake);
 
-    if (statusFilter && statusFilter.toLowerCase() === "active") {
+    if (dbStatusFilter === "active") {
       query = applyLiveStatusFilter(query);
       query = query.order("end_time", { ascending: true, nullsFirst: false });
       query = query.order("id", { ascending: false });
     } else {
-      if (statusFilter) {
-        query = query.eq("status", statusFilter);
+      if (dbStatusFilter) {
+        query = query.eq("status", dbStatusFilter);
       }
       query = query.order("sale_date", { ascending: false, nullsFirst: false });
       query = query.order("end_time", { ascending: false, nullsFirst: false });
@@ -851,6 +882,7 @@ async function queryListingsMany(
   const hasLimit = limit > 0;
   const perSourceLimit = Math.max(1, Math.ceil((hasLimit ? limit : 200) / Math.max(1, sources.length)));
   const nowIso = new Date().toISOString();
+  const dbStatusFilter = normalizeDbStatusFilter(statusFilter);
 
   const buildBaseQuery = () => {
     let query = supabase
@@ -858,13 +890,13 @@ async function queryListingsMany(
       .select(SELECT_NARROW)
       .eq("make", targetMake);
 
-    if (statusFilter && statusFilter.toLowerCase() === "active") {
+    if (dbStatusFilter === "active") {
       query = applyLiveStatusFilter(query, nowIso);
       query = query.order("end_time", { ascending: true, nullsFirst: false });
       query = query.order("id", { ascending: false });
     } else {
-      if (statusFilter) {
-        query = query.eq("status", statusFilter);
+      if (dbStatusFilter) {
+        query = query.eq("status", dbStatusFilter);
       }
       query = query.order("sale_date", { ascending: false, nullsFirst: false });
       query = query.order("end_time", { ascending: false, nullsFirst: false });
@@ -902,7 +934,7 @@ async function queryListingsMany(
     for (const row of rows) {
       const canonicalSource = resolveCanonicalSource(row.source, row.platform);
       if (canonicalSource !== source) continue;
-      if (statusFilter?.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
+      if (dbStatusFilter === "active" && !isLiveListingStatus(row.status)) continue;
       byId.set(row.id, row);
     }
     return Array.from(byId.values());
@@ -1195,6 +1227,7 @@ export async function fetchValuationListingsForMake(
 export async function fetchValuationCorpusForMake(
   make: string,
   limit = 40_000,
+  options?: { timeoutMs?: number; signal?: AbortSignal },
 ): Promise<import("./pricing/types").DerivedPrice[]> {
   const normalizedMake = normalizeSupportedMake(make);
   if (!normalizedMake) return [];
@@ -1204,7 +1237,10 @@ export async function fetchValuationCorpusForMake(
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return [];
 
-  const supabase = createSupabaseClient(url, key);
+  const supabase = createSupabaseClient(url, key, {
+    timeoutMs: options?.timeoutMs,
+    signal: options?.signal,
+  });
   const rates = await getExchangeRates();
 
   const out: import("./pricing/types").DerivedPrice[] = [];
@@ -1291,6 +1327,8 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
   make?: string | null;
   status?: "active" | "all";
   includeAllSources?: boolean;
+  timeoutMs?: number;
+  signal?: AbortSignal;
 }): Promise<CollectorCar[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
@@ -1305,7 +1343,10 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
   const sources = options?.includeAllSources === false ? DEFAULT_QUERY_SOURCES : ALL_QUERY_SOURCES;
 
   try {
-    const supabase = createSupabaseClient(url, key);
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
+    });
     const rawRows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
     const rows = rawRows.filter((r) => !isJunkListing(r));
     if (rows.length === 0) return [];
@@ -1482,6 +1523,8 @@ export async function fetchPaginatedListings(options: {
   series?: string | null;
   modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
   includeCount?: boolean;
+  timeoutMs?: number;
+  signal?: AbortSignal;
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
@@ -1510,7 +1553,10 @@ export async function fetchPaginatedListings(options: {
   const includeCount = options.includeCount ?? true;
 
   try {
-    const supabase = createSupabaseClient(url, key);
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options.timeoutMs,
+      signal: options.signal,
+    });
 
     // Build base query. Using `count: "planned"` — Postgres returns its
     // planner-estimated row count for the filtered query without executing
@@ -1621,7 +1667,10 @@ export async function fetchPaginatedListings(options: {
  * Graceful fallback: if the MV hasn't been created yet (migration pending),
  * returns {} and emits a console.warn pointing at the migration file.
  */
-export async function fetchSeriesCounts(make: string): Promise<Record<string, number>> {
+export async function fetchSeriesCounts(
+  make: string,
+  options?: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<Record<string, number>> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return {};
@@ -1629,7 +1678,10 @@ export async function fetchSeriesCounts(make: string): Promise<Record<string, nu
   const targetMake = resolveRequestedMake(make).toLowerCase();
 
   try {
-    const supabase = createSupabaseClient(url, key);
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
+    });
     const { data, error } = await supabase
       .from("listings_active_counts")
       .select("series,live_count")
@@ -1656,5 +1708,91 @@ export async function fetchSeriesCounts(make: string): Promise<Record<string, nu
   } catch (err) {
     console.error("[supabaseLiveListings] fetchSeriesCounts threw:", err);
     return {};
+  }
+}
+
+export type SeriesCountsByRegion = {
+  all: Record<string, number>;
+  US: Record<string, number>;
+  UK: Record<string, number>;
+  EU: Record<string, number>;
+  JP: Record<string, number>;
+};
+
+function emptySeriesCountsByRegion(): SeriesCountsByRegion {
+  return {
+    all: {},
+    US: {},
+    UK: {},
+    EU: {},
+    JP: {},
+  };
+}
+
+function incrementSeriesCount(
+  bucket: Record<string, number>,
+  series: string,
+  liveCount: number,
+): void {
+  bucket[series] = (bucket[series] ?? 0) + liveCount;
+}
+
+export async function fetchSeriesCountsByRegion(
+  make: string,
+  options?: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<SeriesCountsByRegion> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return emptySeriesCountsByRegion();
+
+  const targetMake = resolveRequestedMake(make).toLowerCase();
+
+  try {
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
+    });
+    const { data, error } = await supabase
+      .from("listings_active_counts")
+      .select("series,region_by_country,live_count")
+      .eq("make", targetMake);
+
+    if (error) {
+      if (/(relation.*listings_active_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_counts MV missing — " +
+          "apply supabase/migrations/20260419_listings_active_counts_mv.sql and run refresh_listings_active_counts().",
+        );
+        return emptySeriesCountsByRegion();
+      }
+      console.error("[supabaseLiveListings] fetchSeriesCountsByRegion MV query failed:", error.message);
+      return emptySeriesCountsByRegion();
+    }
+
+    const counts = emptySeriesCountsByRegion();
+
+    for (const row of (data ?? []) as { series: string; region_by_country: string | null; live_count: number }[]) {
+      if (row.series === "__null") continue;
+
+      const liveCount = Number(row.live_count);
+      if (!Number.isFinite(liveCount) || liveCount <= 0) continue;
+
+      incrementSeriesCount(counts.all, row.series, liveCount);
+
+      const region =
+        row.region_by_country === "US" || row.region_by_country === null
+          ? "US"
+          : row.region_by_country === "UK"
+            ? "UK"
+            : row.region_by_country === "JP"
+              ? "JP"
+              : "EU";
+      incrementSeriesCount(counts[region], row.series, liveCount);
+    }
+
+    return counts;
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchSeriesCountsByRegion threw:", err);
+    return emptySeriesCountsByRegion();
   }
 }

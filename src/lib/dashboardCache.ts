@@ -4,6 +4,8 @@ import {
   fetchLiveListingAggregateCounts,
   fetchValuationCorpusForMake,
   fetchSeriesCounts,
+  fetchSeriesCountsByRegion,
+  type SeriesCountsByRegion,
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
 import type { CollectorCar } from "./curatedCars";
@@ -13,6 +15,7 @@ import { computeSegmentStats } from "./pricing/segmentStats";
 const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_QUERY_TIMEOUT_MS = 45_000;
+const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
 const DASHBOARD_REGION_SAMPLE_SIZE = 6;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 const DASHBOARD_REGION_ORDER: readonly ("US" | "EU" | "UK" | "JP")[] = ["US", "EU", "UK", "JP"] as const;
@@ -111,6 +114,7 @@ export type DashboardData = {
   liveNow: number;
   regionTotals: DashboardRegionTotals;
   seriesCounts: Record<string, number>;
+  seriesCountsByRegion: SeriesCountsByRegion;
 };
 
 let lastSuccessfulDashboardData: DashboardData | null = null;
@@ -126,20 +130,32 @@ function buildAggregateFallback(liveCount: number) {
   };
 }
 
+function buildSeriesCountsByRegionFallback(): SeriesCountsByRegion {
+  return {
+    all: {},
+    US: {},
+    UK: {},
+    EU: {},
+    JP: {},
+  };
+}
+
 async function withSoftTimeout<T>(
-  promise: Promise<T>,
+  run: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
   label: string,
   fallback: T,
 ): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const controller = new AbortController();
 
   try {
     return await Promise.race([
-      promise,
+      run(controller.signal),
       new Promise<T>((resolve) => {
         timeoutId = setTimeout(() => {
           console.warn(`[dashboardCache] ${label} exceeded ${timeoutMs}ms; using fallback`);
+          controller.abort();
           resolve(fallback);
         }, timeoutMs);
       }),
@@ -225,6 +241,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
         pageSize: DASHBOARD_REGION_SAMPLE_SIZE,
         status: "active",
         includeCount: false,
+        timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
       }),
     ),
   );
@@ -250,6 +267,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
       pageSize: DASHBOARD_DISPLAY_LIMIT,
       status: "active",
       includeCount: false,
+      timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
     });
     if (fill.transientError) {
       console.warn(
@@ -274,6 +292,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
     pageSize: DASHBOARD_DISPLAY_LIMIT,
     status: "active",
     includeCount: false,
+    timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
   });
   if (primary.cars.length > 0) {
     return primary.cars;
@@ -298,6 +317,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
         platform,
         status: "active",
         includeCount: false,
+        timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
       }),
     ),
   );
@@ -331,24 +351,47 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     console.error("[dashboardCache] live listings query failed:", error);
   }
 
-  const [valuationCorpus, aggregates, seriesCounts] = await Promise.all([
+  const [valuationCorpus, aggregates, seriesCounts, seriesCountsByRegion] = await Promise.all([
     withSoftTimeout(
-      fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
+      (signal) =>
+        fetchValuationCorpusForMake(requestedMake ?? "Porsche", 40_000, {
+          timeoutMs: DASHBOARD_VALUATION_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
       DASHBOARD_VALUATION_QUERY_TIMEOUT_MS,
       "valuation corpus query",
       [],
     ),
     withSoftTimeout(
-      fetchLiveListingAggregateCounts({ make: requestedMake }),
+      (signal) =>
+        fetchLiveListingAggregateCounts({
+          make: requestedMake,
+          timeoutMs: DASHBOARD_AUX_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
       DASHBOARD_AUX_QUERY_TIMEOUT_MS,
       "aggregate counts query",
       buildAggregateFallback(live.length),
     ),
     withSoftTimeout(
-      fetchSeriesCounts(requestedMake ?? "Porsche"),
+      (signal) =>
+        fetchSeriesCounts(requestedMake ?? "Porsche", {
+          timeoutMs: DASHBOARD_AUX_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
       DASHBOARD_AUX_QUERY_TIMEOUT_MS,
       "series counts query",
       {},
+    ),
+    withSoftTimeout(
+      (signal) =>
+        fetchSeriesCountsByRegion(requestedMake ?? "Porsche", {
+          timeoutMs: DASHBOARD_AUX_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
+      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      "series counts by region query",
+      buildSeriesCountsByRegionFallback(),
     ),
   ]);
 
@@ -372,9 +415,12 @@ async function dashboardDataImpl(): Promise<DashboardData> {
       JP: aggregates.regionTotalsByPlatform.JP,
     },
     seriesCounts,
+    seriesCountsByRegion,
   };
 
-  if (result.auctions.length > 0) {
+  const hasValuationData = Object.keys(regionalValByFamily).length > 0;
+
+  if (result.auctions.length > 0 && hasValuationData) {
     lastSuccessfulDashboardData = result;
     return result;
   }
@@ -386,10 +432,19 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     return lastSuccessfulDashboardData;
   }
 
-  if (result.liveNow > 0) {
-    throw new Error(
-      "[dashboardCache] inconsistent empty live snapshot detected with non-zero liveNow",
+  if (result.auctions.length > 0) {
+    console.warn(
+      "[dashboardCache] returning partial dashboard snapshot because valuation data is not yet available",
     );
+    lastSuccessfulDashboardData = result;
+    return result;
+  }
+
+  if (result.liveNow > 0) {
+    console.warn(
+      "[dashboardCache] returning empty live snapshot because live listings did not load in time",
+    );
+    return result;
   }
 
   return result;

@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
-import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { extractSeries, getBrandConfig, getSeriesConfig } from "@/lib/brandConfig"
 import { Clock, Car, ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
@@ -20,6 +20,13 @@ interface DiscoverySidebarProps {
   activeBrandSlug?: string
   activeFamilyName?: string
   seriesCounts?: Record<string, number>
+  seriesCountsByRegion?: {
+    all: Record<string, number>
+    US: Record<string, number>
+    UK: Record<string, number>
+    EU: Record<string, number>
+    JP: Record<string, number>
+  }
   liveRegionTotals?: LiveRegionTotals
 }
 
@@ -31,7 +38,8 @@ export function DiscoverySidebar({
   activeBrandSlug,
   activeFamilyName,
   seriesCounts,
-  liveRegionTotals,
+  seriesCountsByRegion,
+  liveRegionTotals: _liveRegionTotals,
 }: DiscoverySidebarProps) {
   const t = useTranslations("dashboard")
   const { selectedRegion } = useRegion()
@@ -43,44 +51,29 @@ export function DiscoverySidebar({
     const brandName = brands.find(b => b.slug === activeBrandSlug)?.name
     if (!brandName) return []
 
-    const brandAuctions = auctions.filter(
-      a => a.make === brandName &&
-           (a.status === "ACTIVE" || a.status === "ENDING_SOON")
-    )
-    const familyMap = new Map<string, { count: number; years: number[] }>()
+    const regionKey =
+      selectedRegion === "US" ||
+      selectedRegion === "UK" ||
+      selectedRegion === "EU" ||
+      selectedRegion === "JP"
+        ? selectedRegion
+        : "all"
 
-    brandAuctions.forEach(a => {
-      const series = extractSeries(a.model, a.year, a.make || brandName, a.title)
-      // Skip models that don't match any known series in brandConfig
-      if (!getSeriesConfig(series, a.make || brandName)) return
-      const existing = familyMap.get(series) || { count: 0, years: [] }
-      existing.count++
-      existing.years.push(a.year)
-      familyMap.set(series, existing)
-    })
+    const brandSeries = getBrandConfig(brandName)?.series ?? []
 
-    // Determine which DB total to use for scaling
-    const dbTotal = selectedRegion && liveRegionTotals
-      ? (liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all)
-      : liveRegionTotals?.all
-    const sampleTotal = brandAuctions.length
-
-    return Array.from(familyMap.entries())
-      .map(([seriesId, data]) => {
-        let count: number
-        if (selectedRegion && dbTotal && sampleTotal > 0) {
-          // Region selected: scale sample distribution by DB regional total
-          count = Math.round(data.count / sampleTotal * dbTotal)
-        } else {
-          // All regions: use exact DB count from fetchSeriesCounts
-          count = seriesCounts?.[seriesId] ?? data.count
-        }
+    return brandSeries
+      .map((series) => {
+        const count =
+          seriesCountsByRegion?.[regionKey]?.[series.id] ??
+          (regionKey === "all" ? seriesCounts?.[series.id] : seriesCountsByRegion?.all?.[series.id]) ??
+          seriesCounts?.[series.id] ??
+          0
         return {
-          name: getSeriesConfig(seriesId.toLowerCase(), brandName)?.label || seriesId,
-          slug: seriesId.toLowerCase(),
+          name: series.label,
+          slug: series.id,
           count,
-          yearMin: Math.min(...data.years),
-          yearMax: Math.max(...data.years),
+          yearMin: series.yearRange[0],
+          yearMax: series.yearRange[1],
         }
       })
       .sort((a, b) => {
@@ -89,7 +82,7 @@ export function DiscoverySidebar({
         if (orderA !== orderB) return orderA - orderB
         return b.count - a.count
       })
-  }, [auctions, activeBrandSlug, brands, seriesCounts, selectedRegion, liveRegionTotals])
+  }, [activeBrandSlug, brands, seriesCounts, seriesCountsByRegion, selectedRegion])
 
   // Live auctions sorted by ending soonest — filtered by active family when scrolling
   const liveAuctions = useMemo(() => {

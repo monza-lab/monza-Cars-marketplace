@@ -92,4 +92,27 @@ describe("fetchSeriesCounts", () => {
     // eq should never have been called
     expect(eq).not.toHaveBeenCalled();
   });
+
+  it("aggregates counts by region and preserves the full series list", async () => {
+    eq.mockResolvedValueOnce({
+      data: [
+        { series: "992", region_by_country: "US", live_count: 3 },
+        { series: "992", region_by_country: "EU", live_count: 2 },
+        { series: "991", region_by_country: null, live_count: 4 },
+        { series: "__null", region_by_country: "US", live_count: 99 },
+      ],
+      error: null,
+    });
+
+    const { fetchSeriesCountsByRegion } = await import("./supabaseLiveListings");
+    const result = await fetchSeriesCountsByRegion("porsche");
+
+    expect(result).toEqual({
+      all: { "992": 5, "991": 4 },
+      US: { "992": 3, "991": 4 },
+      UK: {},
+      EU: { "992": 2 },
+      JP: {},
+    });
+  });
 });

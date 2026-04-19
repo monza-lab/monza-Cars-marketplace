@@ -23,6 +23,7 @@ async function loadDashboardData(): Promise<DashboardData> {
         liveNow: 0,
         regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
         seriesCounts: {},
+        seriesCountsByRegion: { all: {}, US: {}, UK: {}, EU: {}, JP: {} },
       };
     }
   }
@@ -58,6 +59,7 @@ export default async function Home({
         liveRegionTotals={data.regionTotals}
         liveNowTotal={data.liveNow}
         seriesCounts={data.seriesCounts}
+        seriesCountsByRegion={data.seriesCountsByRegion}
       />
     </>
   );
