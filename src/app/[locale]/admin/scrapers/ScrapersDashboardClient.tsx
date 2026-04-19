@@ -337,10 +337,24 @@ export default function ScrapersDashboardClient({
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">
-            Scraper Monitoring
-          </h1>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                Scraper Monitoring
+              </h1>
+              <p className="text-xs text-zinc-500 mt-1">
+                Ops console — run history, per-scraper detail, raw diagnostics.
+              </p>
+            </div>
+            <a
+              href="./data-quality"
+              className="px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-300 hover:text-amber-300 hover:border-amber-500/50 transition-colors whitespace-nowrap"
+              title="Source-centric, ingestion-truth view"
+            >
+              Data Quality →
+            </a>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
             <p>7 collectors &middot; 5 Vercel Cron + 2 GitHub Actions</p>
             <span className="text-zinc-700">|</span>
             <p>
