@@ -20,6 +20,7 @@ export interface ScraperRunRecord {
   bot_blocked?: number;
   backfill_discovered?: number;
   backfill_written?: number;
+  image_coverage?: number;
   source_counts?: Record<string, { discovered: number; written: number }>;
   error_messages?: string[];
 }

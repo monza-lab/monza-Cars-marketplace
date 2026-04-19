@@ -29,6 +29,12 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
   const checkpoint = await loadCheckpoint(config.checkpointPath);
   const writer = config.dryRun ? createDryRunWriter() : createSupabaseWriter();
 
+  if (!config.dryRun) {
+    logEvent({ level: "info", event: "collector.db_health_check", runId });
+    await writer.healthCheck();
+    logEvent({ level: "info", event: "collector.db_health_ok", runId });
+  }
+
   const counts: CollectorCounts = {
     discovered: 0,
     detailsFetched: 0,
@@ -88,49 +94,59 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
       : remainingDetails > 0
         ? pageListings.slice(0, remainingDetails)
         : [];
-    const normalizedRows = await mapWithConcurrency(toProcess, config.concurrency, async (summary) => {
+
+    // Phase 1: Fetch and normalize in parallel (HTTP concurrency)
+    const fetchResults = await mapWithConcurrency(toProcess, config.concurrency, async (summary) => {
       try {
         if (config.summaryOnly) {
-          const normalized = normalizeListingFromSummary({ summary, meta });
-          if (!normalized) return null;
-          counts.normalized++;
-          await writer.upsertAll(normalized, meta, config.dryRun);
-          counts.written++;
-          return normalized;
+          return normalizeListingFromSummary({ summary, meta });
         }
-
         const detail = await fetchAndParseDetail({
           url: summary.sourceUrl,
           timeoutMs: config.timeoutMs,
           limiter,
         });
         counts.detailsFetched++;
-        const normalized = normalizeListing({ summary, detail, meta }) ?? normalizeListingFromSummary({ summary, meta });
-        if (!normalized) return null;
-        counts.normalized++;
-        await writer.upsertAll(normalized, meta, config.dryRun);
-        counts.written++;
-        return normalized;
+        return normalizeListing({ summary, detail, meta }) ?? normalizeListingFromSummary({ summary, meta });
       } catch (err) {
-        counts.errors++;
         const msg = err instanceof Error ? err.message : String(err);
         errors.push(`${summary.sourceUrl}: ${msg}`);
         logEvent({
-          level: "error",
-          event: "collector.detail_error",
+          level: "warn",
+          event: "collector.fetch_error",
           runId,
           page,
           url: summary.sourceUrl,
           message: msg,
         });
-        const fallback = normalizeListingFromSummary({ summary, meta });
-        if (!fallback) return null;
-        counts.normalized++;
-        await writer.upsertAll(fallback, meta, config.dryRun);
-        counts.written++;
-        return fallback;
+        return normalizeListingFromSummary({ summary, meta });
       }
     });
+
+    // Phase 2: Write to DB sequentially (avoids connection/lock contention)
+    const normalizedRows: (NormalizedListing | null)[] = [];
+    for (const row of fetchResults) {
+      if (!row) { normalizedRows.push(null); continue; }
+      counts.normalized++;
+      try {
+        await writer.upsertAll(row, meta, config.dryRun);
+        counts.written++;
+        normalizedRows.push(row);
+      } catch (err) {
+        counts.errors++;
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`DB write ${row.sourceUrl}: ${msg}`);
+        logEvent({
+          level: "error",
+          event: "collector.db_write_error",
+          runId,
+          page,
+          url: row.sourceUrl,
+          message: msg,
+        });
+        normalizedRows.push(row); // still include in JSONL output
+      }
+    }
 
     await appendJsonl(
       config.outputPath,

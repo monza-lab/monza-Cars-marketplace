@@ -398,7 +398,7 @@ export async function getCachedDashboardData(): Promise<DashboardData> {
  */
 export function invalidateDashboardCache(): void {
   try {
-    revalidateTag("listings");
+    revalidateTag("listings", "default");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (

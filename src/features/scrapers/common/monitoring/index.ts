@@ -14,17 +14,8 @@ export {
   clearScraperRunActive,
 } from './record';
 
-export {
-  classifyScraperRun,
-} from './health';
-
-export {
-  getRecentRuns,
-  getDailyAggregates,
-  getDataQuality,
-  getLatestRunPerScraper,
-  getActiveRuns,
-} from './queries';
+// Server-only query functions (use next/headers) are NOT re-exported here.
+// Import directly from './queries' in server components / API routes.
 
 export {
   getScraperHealthState,

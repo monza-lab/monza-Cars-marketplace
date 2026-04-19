@@ -48,36 +48,7 @@ export async function backfillMissingImages(opts: {
   });
 
   const backfillFilter = buildBackfillFilter();
-  const selectColumns = [
-    "id",
-    "source_url",
-    "title",
-    "year",
-    "make",
-    "model",
-    "current_bid",
-    "mileage",
-    "engine",
-    "transmission",
-    "images",
-    "photos_count",
-    "description_text",
-    "seller_notes",
-    "vin",
-    "location",
-    "city",
-    "region",
-    "country",
-    "auction_house",
-    "auction_date",
-    "body_style",
-    "color_exterior",
-    "color_interior",
-    "end_time",
-    "start_time",
-    "bid_count",
-    "series",
-  ].join(",");
+  const selectColumns = "id,source_url,title,year,make,model,current_bid,mileage,engine,transmission,images,photos_count,description_text,seller_notes,vin,location,city,region,country,auction_house,auction_date,body_style,color_exterior,color_interior,end_time,start_time,bid_count,series" as const;
 
   const useScraplingOnly = process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK === "1";
   const scraplingParallelism = Math.max(
@@ -329,7 +300,7 @@ function buildBackfillPatch(
   }
 
   const computedSeries = computeSeries({
-    make: row.make ?? null,
+    make: row.make ?? "",
     model: row.model ?? null,
     year: row.year ?? null,
     title: row.title ?? null,

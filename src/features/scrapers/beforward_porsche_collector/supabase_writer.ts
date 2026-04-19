@@ -10,11 +10,13 @@ import { mapStatus } from "./normalize";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
+  healthCheck(): Promise<void>;
 }
 
 export function createDryRunWriter(): SupabaseWriter {
   return {
     upsertAll: async () => ({ listingId: "dry_run", wrote: false }),
+    healthCheck: async () => {},
   };
 }
 
@@ -31,6 +33,13 @@ export function createSupabaseWriter(): SupabaseWriter {
   });
 
   return {
+    healthCheck: async () => {
+      const { error } = await Promise.race([
+        client.from("listings").select("id").limit(1),
+        sleep(15_000).then(() => ({ error: { message: "DB health check timed out after 15s — is the Supabase project paused?" } })),
+      ]);
+      if (error) throw new Error(`Supabase health check failed: ${error.message}`);
+    },
     upsertAll: async (listing, meta, dryRun) => {
       if (dryRun) return { listingId: "dry_run", wrote: false };
 

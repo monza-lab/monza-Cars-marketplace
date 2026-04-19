@@ -1,5 +1,22 @@
-import { classifyScraperRun } from './health';
-import type { ScraperRunHealth, ScraperRunHealthInput } from './types';
+/**
+ * Scraper quality gate — placeholder for future implementation.
+ * classifyScraperRun / ScraperRunHealth types are not yet implemented.
+ */
+
+export interface ScraperRunHealth {
+  state: 'healthy' | 'degraded' | 'failed';
+  reason: string;
+  flags: string[];
+}
+
+export interface ScraperRunHealthInput {
+  success: boolean;
+  discovered: number;
+  written: number;
+  errorsCount: number;
+  photosCount: number;
+  expectedPhotosMin?: number;
+}
 
 export interface ScraperQualityGateResult {
   health: ScraperRunHealth;
@@ -12,6 +29,23 @@ export interface ScraperQualityGateResult {
 
 export interface ScraperQualityGateOptions {
   dryRun?: boolean;
+}
+
+function classifyScraperRun(input: ScraperRunHealthInput): ScraperRunHealth {
+  if (!input.success) {
+    return { state: 'failed', reason: 'run_failed', flags: [] };
+  }
+  const flags: string[] = [];
+  if (input.expectedPhotosMin && input.photosCount < input.expectedPhotosMin) {
+    flags.push('image_gap');
+  }
+  if (input.discovered === 0 && input.written === 0) {
+    return { state: 'degraded', reason: 'zero_output', flags };
+  }
+  if (input.errorsCount > 0) {
+    return { state: 'degraded', reason: 'errors', flags };
+  }
+  return { state: 'healthy', reason: 'ok', flags };
 }
 
 export function evaluateScraperQualityGate(

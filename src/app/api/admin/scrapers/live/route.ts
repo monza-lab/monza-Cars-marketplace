@@ -6,7 +6,7 @@ import {
   getDataQuality,
   getLatestRunPerScraper,
   getActiveRuns,
-} from "@/features/scrapers/common/monitoring";
+} from "@/features/scrapers/common/monitoring/queries";
 
 const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
