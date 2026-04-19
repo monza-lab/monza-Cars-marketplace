@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import type { Brand } from "../types"
 
 export function MobileHeroBrand({ brand }: { brand: Brand }) {
@@ -33,17 +34,9 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
         {/* Gradient overlay — always dark for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" />
 
-        {/* Grade badge */}
+        {/* Market delta pill */}
         <div className="absolute top-4 left-4">
-          <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-            brand.topGrade === "AAA"
-              ? "bg-positive/30 text-positive"
-              : brand.topGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-white/20 text-white"
-          }`}>
-            {brand.topGrade}
-          </span>
+          <MarketDeltaPill priceUsd={null} medianUsd={null} />
         </div>
 
         {/* Car count */}

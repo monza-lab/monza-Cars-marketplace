@@ -52,15 +52,6 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
 
       {/* Right side */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <span className={`text-[10px] font-bold ${
-          brand.topGrade === "AAA"
-            ? "text-positive"
-            : brand.topGrade === "AA"
-              ? "text-primary"
-              : "text-muted-foreground"
-        }`}>
-          {brand.topGrade}
-        </span>
         <ChevronRight className="size-4 text-muted-foreground" />
       </div>
     </Link>
