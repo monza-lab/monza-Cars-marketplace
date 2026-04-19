@@ -18,6 +18,35 @@ const PORSCHE_SERIES = [
 
 const PORSCHE_MODEL_SLUGS = ["964", "991", "992", "993", "996", "997"]
 
+const COMPARISON_SLUGS = [
+  "964-vs-993",
+  "993-vs-996",
+  "996-vs-997",
+  "997-vs-991",
+  "991-vs-992",
+]
+
+const VARIANT_SLUGS = [
+  "964-rs",
+  "964-turbo-36",
+  "993-rs",
+  "993-turbo-s",
+  "996-gt3-rs",
+  "997-gt3-rs-40",
+  "991-gt2-rs",
+  "991-r",
+  "992-sport-classic",
+]
+
+const IMPORT_COUNTRIES = ["us", "germany", "uk", "japan"]
+
+const KNOWLEDGE_SLUGS = [
+  "ims-bearing",
+  "mezger-engine",
+  "porsche-certificate-of-authenticity",
+  "porsche-pre-purchase-inspection",
+]
+
 /** Build alternates map for a given path across all locales */
 function buildAlternates(path: string) {
   const languages: Record<string, string> = {}
@@ -69,7 +98,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }
 
   // MonzaHaus Index pages
-  const INDEX_SLUGS = ["", "/air-cooled-911", "/water-cooled-911", "/porsche-turbo"]
+  const INDEX_SLUGS = ["", "/air-cooled-911", "/water-cooled-911", "/porsche-turbo", "/porsche-gt"]
   for (const locale of LOCALES) {
     for (const slug of INDEX_SLUGS) {
       entries.push({
@@ -91,6 +120,77 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "weekly",
         priority: 0.85,
         alternates: buildAlternates(`/models/porsche/${slug}`),
+      })
+    }
+  }
+
+  // Comparison pages (high-intent queries with FAQ schema)
+  for (const locale of LOCALES) {
+    for (const slug of COMPARISON_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/compare/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.85,
+        alternates: buildAlternates(`/compare/${slug}`),
+      })
+    }
+  }
+
+  // Variant deep-dive pages (blue-chip-specific queries)
+  for (const locale of LOCALES) {
+    for (const slug of VARIANT_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/variants/porsche/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.88,
+        alternates: buildAlternates(`/variants/porsche/${slug}`),
+      })
+    }
+  }
+
+  // Import guides + buy hub + VIN decoder (buy-intent pages)
+  for (const locale of LOCALES) {
+    entries.push({
+      url: `${BASE_URL}/${locale}/buy/porsche`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+      alternates: buildAlternates("/buy/porsche"),
+    })
+    entries.push({
+      url: `${BASE_URL}/${locale}/tools/porsche-vin-decoder`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.85,
+      alternates: buildAlternates("/tools/porsche-vin-decoder"),
+    })
+    for (const country of IMPORT_COUNTRIES) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/guides/import/${country}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.85,
+        alternates: buildAlternates(`/guides/import/${country}`),
+      })
+    }
+
+    // Knowledge hub + articles
+    entries.push({
+      url: `${BASE_URL}/${locale}/knowledge`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.85,
+      alternates: buildAlternates("/knowledge"),
+    })
+    for (const slug of KNOWLEDGE_SLUGS) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/knowledge/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.82,
+        alternates: buildAlternates(`/knowledge/${slug}`),
       })
     }
   }

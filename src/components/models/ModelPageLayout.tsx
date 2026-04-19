@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { PorscheModelPage } from "@/lib/models/types";
 import type { IndexSummary } from "@/lib/index/factory";
+import { getModelAdjacency } from "@/lib/models/adjacency";
+import { getPorscheModel } from "@/lib/models/registry";
+import { getVariantsForModel } from "@/lib/variants/registry";
 
 function formatUsd(n: number | null) {
   if (n == null) return "—";
@@ -151,10 +154,95 @@ export function ModelPageLayout({
           </ul>
         </section>
 
+        {(() => {
+          const variants = getVariantsForModel(model.slug);
+          if (variants.length === 0) return null;
+          return (
+            <section>
+              <h2 className="text-2xl font-serif mb-4">Variant deep-dives</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {variants.map((v) => (
+                  <Link
+                    key={v.slug}
+                    href={`/${locale}/variants/porsche/${v.slug}`}
+                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  >
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">
+                      {v.yearRange}
+                    </p>
+                    <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                      {v.shortName}
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-2">{v.tagline}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         <section className="border-l-2 border-amber-500 pl-6 py-2">
           <h2 className="text-xl font-serif mb-2 text-zinc-100">MonzaHaus thesis</h2>
           <p className="text-sm text-zinc-400 leading-relaxed">{model.thesis}</p>
         </section>
+
+        {(() => {
+          const adj = getModelAdjacency(model.slug);
+          const prevModel = adj.prev ? getPorscheModel(adj.prev) : null;
+          const nextModel = adj.next ? getPorscheModel(adj.next) : null;
+          if (!prevModel && !nextModel && !adj.comparisonPrev && !adj.comparisonNext) return null;
+          return (
+            <section>
+              <h2 className="text-2xl font-serif mb-4">Related generations</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {prevModel && (
+                  <Link
+                    href={`/${locale}/models/porsche/${prevModel.slug}`}
+                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  >
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Previous generation</p>
+                    <p className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                      ← {prevModel.fullName}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{prevModel.specs.yearRange}</p>
+                  </Link>
+                )}
+                {nextModel && (
+                  <Link
+                    href={`/${locale}/models/porsche/${nextModel.slug}`}
+                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  >
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Next generation</p>
+                    <p className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                      {nextModel.fullName} →
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{nextModel.specs.yearRange}</p>
+                  </Link>
+                )}
+              </div>
+              {(adj.comparisonPrev || adj.comparisonNext) && (
+                <div className="mt-4 flex flex-wrap gap-3 text-sm">
+                  {adj.comparisonPrev && prevModel && (
+                    <Link
+                      href={`/${locale}/compare/${adj.comparisonPrev}`}
+                      className="text-amber-400 hover:underline"
+                    >
+                      Compare: {prevModel.shortName} vs {model.shortName} →
+                    </Link>
+                  )}
+                  {adj.comparisonNext && nextModel && (
+                    <Link
+                      href={`/${locale}/compare/${adj.comparisonNext}`}
+                      className="text-amber-400 hover:underline"
+                    >
+                      Compare: {model.shortName} vs {nextModel.shortName} →
+                    </Link>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
           Market data and commentary are provided for informational purposes and do
