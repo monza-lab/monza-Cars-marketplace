@@ -45,6 +45,8 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
+import { useAuth } from "@/lib/auth/AuthProvider"
+import { OutOfReportsModal } from "@/components/payments/OutOfReportsModal"
 
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
@@ -162,6 +164,15 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
+  const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
+  const { profile: authProfile } = useAuth()
+
+  // Show paywall when API returns INSUFFICIENT_CREDITS
+  useEffect(() => {
+    if (reportError === "INSUFFICIENT_CREDITS") {
+      setOutOfReportsOpen(true)
+    }
+  }, [reportError])
   const [purchaseSuccess, setPurchaseSuccess] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingExcel, setDownloadingExcel] = useState(false)
@@ -2682,6 +2693,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
           </motion.div>
         )}
       </AnimatePresence>
+
+      <OutOfReportsModal
+        open={outOfReportsOpen}
+        onOpenChange={setOutOfReportsOpen}
+        nextResetDate={authProfile?.creditResetDate}
+      />
     </div>
   )
 }
