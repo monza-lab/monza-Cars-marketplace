@@ -47,3 +47,73 @@ export async function analyzeWithGemini(
 
   throw lastError ?? new Error("Gemini API call failed")
 }
+
+// ---------------------------------------------------------------------------
+// JSON client — Haus Report Phase 4 (Task 25)
+// Thin wrapper that enforces responseMimeType: application/json and returns
+// a parsed, typed payload. Callers validate the returned T against a schema.
+// ---------------------------------------------------------------------------
+
+const JSON_API_KEY = process.env.GEMINI_API_KEY
+const JSON_MODEL_ID = process.env.GEMINI_MODEL ?? "gemini-2.5-flash"
+
+if (!JSON_API_KEY) {
+  // Don't throw at module load — allow build-time/test-time imports without the key.
+  console.warn("[gemini] GEMINI_API_KEY is not set; calls will fail at runtime.")
+}
+
+interface GenerateJsonOptions {
+  systemPrompt?: string
+  userPrompt: string
+  temperature?: number      // default 0
+  maxOutputTokens?: number  // default 2048
+}
+
+export interface GeminiJsonResponse<T> {
+  ok: true
+  data: T
+  raw: string
+}
+
+export interface GeminiErrorResponse {
+  ok: false
+  error: string
+  raw: string | null
+}
+
+/**
+ * Generate a JSON response from Gemini. Enforces responseMimeType: application/json.
+ * The caller is responsible for validating the returned T matches its schema.
+ */
+export async function generateJson<T>(
+  opts: GenerateJsonOptions,
+): Promise<GeminiJsonResponse<T> | GeminiErrorResponse> {
+  if (!JSON_API_KEY) {
+    return { ok: false, error: "GEMINI_API_KEY is not configured", raw: null }
+  }
+
+  const client = new GoogleGenerativeAI(JSON_API_KEY)
+  const model = client.getGenerativeModel({
+    model: JSON_MODEL_ID,
+    systemInstruction: opts.systemPrompt,
+    generationConfig: {
+      temperature: opts.temperature ?? 0,
+      maxOutputTokens: opts.maxOutputTokens ?? 2048,
+      responseMimeType: "application/json",
+    },
+  })
+
+  let raw = ""
+  try {
+    const res = await model.generateContent(opts.userPrompt)
+    raw = res.response.text()
+    const parsed = JSON.parse(raw) as T
+    return { ok: true, data: parsed, raw }
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      raw,
+    }
+  }
+}
