@@ -4,9 +4,9 @@
   "fair_value_high": 285000,
   "median_price": 265000,
 
-  "specific_car_fair_value_low": 281000,
-  "specific_car_fair_value_mid": 302000,
-  "specific_car_fair_value_high": 323000,
+  "specific_car_fair_value_low": 310527,
+  "specific_car_fair_value_mid": 333900,
+  "specific_car_fair_value_high": 357273,
   "comparable_layer_used": "strict",
   "comparables_count": 7,
 
@@ -158,7 +158,7 @@
       "version": "v1.0"
     }
   ],
-  "modifiers_total_percent": 14,
+  "modifiers_total_percent": 26,
 
   "signals_extracted_at": "2026-04-19T12:00:00.000Z",
   "extraction_version": "v1.0"
