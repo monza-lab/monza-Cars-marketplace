@@ -1559,12 +1559,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
           <h1 className="text-[13px] font-bold text-foreground mt-2 leading-tight">{car.title}</h1>
           <div className="flex items-center gap-2 mt-1.5">
             <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-              car.investmentGrade === "AAA"
+              investmentGrade === "AAA" || investmentGrade === "AA"
                 ? "bg-positive/15 text-positive border border-positive/20"
-                : car.investmentGrade === "AA"
-                  ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                  : "bg-amber-500/15 text-destructive border border-amber-400/20"
-            }`}>{car.investmentGrade}</span>
+                : investmentGrade === "A" || investmentGrade === "BBB"
+                  ? "bg-primary/15 text-primary border border-primary/20"
+                  : investmentGrade === "BB" || investmentGrade === "B"
+                    ? "bg-yellow-500/15 text-yellow-500 border border-yellow-500/20"
+                    : "bg-destructive/15 text-destructive border border-destructive/20"
+            }`}>{investmentGrade}</span>
             <span className="text-[10px] text-muted-foreground">{t("title")}</span>
           </div>
         </div>
@@ -1672,8 +1674,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.investmentGrade")}</span>
                   <p className={`text-[28px] font-black mt-1 ${
-                    car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
-                  }`}>{car.investmentGrade}</p>
+                    investmentGrade === "AAA" || investmentGrade === "AA" ? "text-positive" :
+                    investmentGrade === "A" || investmentGrade === "BBB" ? "text-primary" :
+                    investmentGrade === "BB" || investmentGrade === "B" ? "text-yellow-500" :
+                    "text-destructive"
+                  }`}>{investmentGrade}</p>
                 </div>
                 {/* Current Price */}
                 <div className="rounded-xl bg-card border border-border p-4">
@@ -1691,7 +1696,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
                   <p className={`text-[24px] font-bold tabular-nums mt-1 ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>
-                    {pricePosition}%
+                    {pricePosition.toFixed(0)}%
                   </p>
                 </div>
                 {/* Similar Cars */}
@@ -1944,7 +1949,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[12px] font-semibold text-primary">Listing Price vs Fair Value</span>
-                        <span className={`text-[14px] tabular-nums font-bold ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition}%</span>
+                        <span className={`text-[14px] tabular-nums font-bold ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition.toFixed(0)}%</span>
                       </div>
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <motion.div
@@ -2316,7 +2321,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
                           <span className={`text-[9px] font-bold ${
-                            sc.car.investmentGrade === "AAA" ? "text-positive" : sc.car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
+                            sc.car.investmentGrade === "AAA" || sc.car.investmentGrade === "AA" ? "text-positive" :
+                            sc.car.investmentGrade === "A" || sc.car.investmentGrade === "BBB" ? "text-primary" :
+                            sc.car.investmentGrade === "BB" || sc.car.investmentGrade === "B" ? "text-yellow-500" :
+                            "text-destructive"
                           }`}>{sc.car.investmentGrade}</span>
                           <span className="text-[10px] text-positive">{sc.car.trend}</span>
                         </div>
@@ -2347,39 +2355,68 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 {/* Verdict card */}
                 <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
                   <div className="text-center mb-6">
-                    <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
-                    <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
-                      verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-destructive" : "text-primary"
-                    }`}>
-                      {t(`verdict.${verdict}`)}
-                    </p>
+                    {verdict ? (
+                      <>
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
+                        <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
+                          verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-primary" : "text-destructive"
+                        }`}>
+                          {t(`verdict.${verdict}`)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
+                          Analysis Pending
+                        </span>
+                        <p className="text-[26px] md:text-[32px] font-semibold text-muted-foreground mt-2">
+                          Awaiting full analysis
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Investment verdict unlocks when deep analysis completes.
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-center gap-4 mb-6">
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Grade</span>
                       <p className={`text-[20px] font-black ${
-                        car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
-                      }`}>{car.investmentGrade}</p>
+                        investmentGrade === "AAA" || investmentGrade === "AA" ? "text-positive" :
+                        investmentGrade === "A" || investmentGrade === "BBB" ? "text-primary" :
+                        investmentGrade === "BB" || investmentGrade === "B" ? "text-yellow-500" :
+                        "text-destructive"
+                      }`}>{investmentGrade}</p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Fair Value</span>
-                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition}%</p>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
+                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition.toFixed(0)}%</p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
-                      <p className={`text-[20px] font-black ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>{riskScore}/100</p>
+                      <p className={`text-[20px] font-black ${
+                        riskScore < 35 ? "text-positive" :
+                        riskScore < 55 ? "text-primary" :
+                        "text-destructive"
+                      }`}>{riskScore}/100</p>
                     </div>
                   </div>
 
                   {/* Strategy */}
                   <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
                     <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
-                    <p className="text-[12px] text-muted-foreground leading-relaxed">
-                      {t(`verdict.${verdict}Strategy`)}
-                    </p>
+                    {verdict ? (
+                      <p className="text-[12px] text-muted-foreground leading-relaxed">
+                        {t(`verdict.${verdict}Strategy`)}
+                      </p>
+                    ) : (
+                      <p className="text-[12px] text-muted-foreground leading-relaxed italic">
+                        Strategy recommendation will appear once the full investment analysis is generated.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -2388,7 +2425,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
                   <div className="space-y-2">
                     {[
-                      `${car.investmentGrade} investment grade — ${pricePosition}% of fair value`,
+                      `${investmentGrade} investment grade — priced at ${pricePosition.toFixed(0)}% of the fair value range`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
                       ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPrice(totalAnnualCost)}`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
