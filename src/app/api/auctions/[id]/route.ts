@@ -30,6 +30,7 @@ async function fetchListingPriceHistory(liveId: string): Promise<Array<{ id: str
     .select('time,status,price_usd,price_eur,price_gbp')
     .eq('listing_id', listingId)
     .order('time', { ascending: true })
+    .limit(500)
 
   if (error || !data) return []
 
@@ -262,8 +263,8 @@ export async function GET(
     }
 
     const analysisResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Analysis" WHERE "auctionId" = $1 LIMIT 1', [id])
-    const comparablesResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST', [id])
-    const historyResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "PriceHistory" WHERE "auctionId" = $1 ORDER BY timestamp ASC', [id])
+    const comparablesResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "Comparable" WHERE "auctionId" = $1 ORDER BY "soldDate" DESC NULLS LAST LIMIT 100', [id])
+    const historyResult = await dbQuery<Record<string, unknown>>('SELECT * FROM "PriceHistory" WHERE "auctionId" = $1 ORDER BY timestamp ASC LIMIT 500', [id])
 
     return NextResponse.json({
       success: true,

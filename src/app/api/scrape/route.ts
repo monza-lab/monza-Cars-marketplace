@@ -157,7 +157,12 @@ export async function GET(request: NextRequest) {
 }
 
 // ─── DELETE: Clear cache ───
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const removed = cleanCache()
     return NextResponse.json({

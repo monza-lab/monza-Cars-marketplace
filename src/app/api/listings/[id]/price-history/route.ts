@@ -47,7 +47,8 @@ export async function GET(
       .from("price_history")
       .select("time,status,price_usd,price_eur,price_gbp")
       .eq("listing_id", listingId)
-      .order("time", { ascending: true });
+      .order("time", { ascending: true })
+      .limit(500);
 
     if (error) {
       console.error("[price-history] Query error:", error.message);
