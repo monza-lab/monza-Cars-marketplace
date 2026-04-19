@@ -336,3 +336,69 @@ Analyze this vehicle and respond with ONLY a valid JSON object (no markdown fenc
 
 Be specific to THIS exact vehicle. Weight verified sales (Tier 1) more heavily than asking prices (Tier 2). If data is limited, lower the confidence and explain why.`
 }
+
+// -------------------------------------------------------------------------
+// Signal Extraction Prompt (Haus Report pipeline — see specs/2026-04-19-*)
+// -------------------------------------------------------------------------
+export const SIGNAL_EXTRACTION_SYSTEM_PROMPT = `You are a deterministic Porsche fact extractor. You extract ONLY facts explicitly (or near-explicitly) stated in listing descriptions. You NEVER infer, NEVER guess, NEVER use marketing adjectives (like "beautiful", "stunning") as facts. If a field is not stated in the text, return null (or false for booleans). Return ONLY valid JSON matching the requested schema. No prose, no markdown.`
+
+export function buildSignalExtractionPrompt(description: string): string {
+  return `Extract structured facts from this Porsche listing description. Return ONLY valid JSON matching this exact schema:
+
+{
+  "options": {
+    "sport_chrono": boolean | null,
+    "pccb": boolean | null,
+    "burmester": boolean | null,
+    "lwb_seats": boolean | null,
+    "carbon_roof": boolean | null,
+    "paint_to_sample": { "present": boolean, "color_name": string | null, "pts_code": string | null } | null,
+    "factory_rear_spoiler_delete": boolean | null
+  },
+  "service": {
+    "records_mentioned": boolean,
+    "stamps_count": number | null,
+    "last_major_service_year": number | null,
+    "intervals_respected": boolean | null,
+    "dealer_serviced": boolean | null
+  },
+  "ownership": {
+    "previous_owners_count": number | null,
+    "one_owner_claim": boolean,
+    "years_current_owner": number | null,
+    "collector_owned_claim": boolean,
+    "garage_kept_claim": boolean
+  },
+  "originality": {
+    "matching_numbers_claim": boolean,
+    "original_paint_claim": boolean,
+    "repaint_disclosed": { "repainted": boolean, "panels_mentioned": string[] } | null,
+    "accident_disclosure": "none_mentioned" | "no_accidents_claim" | "prior_accident_disclosed",
+    "modifications_disclosed": string[]
+  },
+  "documentation": {
+    "ppi_available": boolean,
+    "carfax_linked": boolean,
+    "window_sticker_shown": boolean,
+    "build_sheet_shown": boolean
+  },
+  "warranty": {
+    "remaining_factory_warranty": boolean | null,
+    "cpo_status": boolean
+  },
+  "listing_completeness": "high" | "medium" | "low",
+  "extraction_confidence": "high" | "medium" | "low"
+}
+
+Rules:
+- Return null (or false) for any field not explicitly mentioned.
+- For numeric fields (like stamps_count), extract only if a specific number appears in the text.
+- For paint_to_sample, set present=true ONLY if the text explicitly says "paint-to-sample" or "PTS" (case-insensitive). Otherwise present=false.
+- Ignore marketing adjectives: "beautiful", "pristine", "stunning" are NOT facts.
+- Do not infer matching_numbers_claim unless the text literally says "matching numbers".
+
+Listing description:
+"""
+${description}
+"""`
+}
