@@ -41,10 +41,14 @@ describe("supabaseLiveListings source and status normalization", () => {
   });
 
   it("keeps DB live status filter enum-safe", () => {
-    expect(LIVE_DB_STATUS_VALUES).toEqual(["active"]);
-    expect(LIVE_DB_STATUS_VALUES).not.toContain("ACTIVE");
-    expect(LIVE_DB_STATUS_VALUES).not.toContain("live");
-    expect(LIVE_DB_STATUS_VALUES).not.toContain("ending_soon");
+    expect(LIVE_DB_STATUS_VALUES).toEqual([
+      "active",
+      "ACTIVE",
+      "live",
+      "LIVE",
+      "ending_soon",
+      "ENDING_SOON",
+    ]);
   });
 });
 

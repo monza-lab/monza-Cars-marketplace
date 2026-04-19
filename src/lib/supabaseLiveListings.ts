@@ -132,7 +132,7 @@ const LIVE_STATUS_ALIASES = [
   "ENDING_SOON",
 ] as const;
 
-export const LIVE_DB_STATUS_VALUES = ["active"] as const;
+export const LIVE_DB_STATUS_VALUES = [...LIVE_STATUS_ALIASES] as const;
 
 type CanonicalSource = "BaT" | "AutoScout24" | "AutoTrader" | "BeForward" | "CarsAndBids" | "CollectingCars" | "ClassicCom" | "Elferspot";
 
@@ -722,8 +722,8 @@ async function countLiveListingsForCanonicalSource(
   let query = supabase
     .from("listings")
     .select("id", { count: "exact", head: true })
-    .ilike("make", targetMake)
-    .eq("status", LIVE_DB_STATUS_VALUES[0]);
+    .eq("make", targetMake)
+    .in("status", [...LIVE_DB_STATUS_VALUES]);
 
   if (platformAliases.length > 0) {
     query = query.or(
@@ -734,6 +734,27 @@ async function countLiveListingsForCanonicalSource(
   }
 
   return countListingsByQuery(query);
+}
+
+function applyLiveStatusFilter<T>(query: T, nowIso = new Date().toISOString()): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = query;
+  q = q.in("status", [...LIVE_DB_STATUS_VALUES]);
+  q = q.or(`end_time.is.null,end_time.gt.${nowIso}`);
+  return q as T;
+}
+
+function isTransientSupabaseFailure(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+
+  return /aborterror|statement timeout|connection timeout|timed out|failed to fetch|522|504/i.test(
+    message,
+  );
 }
 
 export async function fetchLiveListingAggregateCounts(
@@ -823,52 +844,38 @@ async function queryAllListingsDirect(
   targetMake: SupportedLiveMake,
   statusFilter?: string,
 ): Promise<ListingRow[]> {
-  const pageSize = 500;
-  const maxRows = limit > 0 ? limit : 5000;
-  const rows: ListingRow[] = [];
-  let from = 0;
+  const boundedLimit = limit > 0 ? limit : 200;
 
-  while (rows.length < maxRows) {
-    try {
-      let query = supabase
-        .from("listings")
-        .select(SELECT_NARROW)
-        .ilike("make", targetMake);
+  try {
+    let query = supabase
+      .from("listings")
+      .select(SELECT_NARROW)
+      .eq("make", targetMake);
 
-      if (statusFilter && statusFilter.toLowerCase() === "active") {
-        query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
-      } else if (statusFilter) {
+    if (statusFilter && statusFilter.toLowerCase() === "active") {
+      query = applyLiveStatusFilter(query);
+      query = query.order("end_time", { ascending: true, nullsFirst: false });
+      query = query.order("id", { ascending: false });
+    } else {
+      if (statusFilter) {
         query = query.eq("status", statusFilter);
       }
-
-      const to = Math.min(from + pageSize - 1, maxRows - 1);
-      const { data, error } = await query
-        .order("sale_date", { ascending: false, nullsFirst: false })
-        .order("end_time", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .range(from, to);
-
-      if (error) {
-        console.error("[supabaseLiveListings] queryAllListingsDirect failed:", error.message);
-        break;
-      }
-
-      const page = (data ?? []) as ListingRow[];
-      if (page.length === 0) break;
-
-      for (const row of page) {
-        rows.push(row);
-      }
-
-      if (page.length < pageSize) break;
-      from += pageSize;
-    } catch (err) {
-      console.error("[supabaseLiveListings] queryAllListingsDirect threw:", err);
-      break;
+      query = query.order("sale_date", { ascending: false, nullsFirst: false });
+      query = query.order("end_time", { ascending: false, nullsFirst: false });
+      query = query.order("id", { ascending: false });
     }
-  }
 
-  return rows;
+    const { data, error } = await query.limit(boundedLimit);
+    if (error) {
+      console.error("[supabaseLiveListings] queryAllListingsDirect failed:", error.message);
+      return [];
+    }
+
+    return ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
+  } catch (err) {
+    console.error("[supabaseLiveListings] queryAllListingsDirect threw:", err);
+    return [];
+  }
 }
 
 async function queryListingsMany(
@@ -878,22 +885,32 @@ async function queryListingsMany(
   statusFilter?: string,
   sources: readonly CanonicalSource[] = DEFAULT_QUERY_SOURCES,
 ): Promise<ListingRow[]> {
+  const directRows = await queryAllListingsDirect(supabase, limit, targetMake, statusFilter);
+  if (directRows.length > 0) {
+    return directRows;
+  }
+
   const hasLimit = limit > 0;
-  const sourceQueryLimit = hasLimit ? limit : 1000;
-  const maxRowsPerSource = hasLimit ? sourceQueryLimit : 5000;
+  const perSourceLimit = Math.max(1, Math.ceil((hasLimit ? limit : 200) / Math.max(1, sources.length)));
+  const nowIso = new Date().toISOString();
 
   const buildBaseQuery = () => {
     let query = supabase
       .from("listings")
       .select(SELECT_NARROW)
-      .ilike("make", targetMake);
+      .eq("make", targetMake);
 
     if (statusFilter && statusFilter.toLowerCase() === "active") {
-      query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
-      // Exclude stale auction listings whose end_time has already passed
-      query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
-    } else if (statusFilter) {
-      query = query.eq("status", statusFilter);
+      query = applyLiveStatusFilter(query, nowIso);
+      query = query.order("end_time", { ascending: true, nullsFirst: false });
+      query = query.order("id", { ascending: false });
+    } else {
+      if (statusFilter) {
+        query = query.eq("status", statusFilter);
+      }
+      query = query.order("sale_date", { ascending: false, nullsFirst: false });
+      query = query.order("end_time", { ascending: false, nullsFirst: false });
+      query = query.order("id", { ascending: false });
     }
 
     return query;
@@ -909,28 +926,16 @@ async function queryListingsMany(
       ? `source.in.(${encodePostgrestInValues([...sourceAliases])}),platform.in.(${encodePostgrestInValues([...platformAliases])})`
       : `source.in.(${encodePostgrestInValues([...sourceAliases])})`;
 
-    // Single query (pagination retained — PostgREST hard-caps range() at 1000).
-    const rows: ListingRow[] = [];
-    let from = 0;
-    while (rows.length < maxRowsPerSource) {
-      const to = from + 1000 - 1;
-      const { data, error } = await buildBaseQuery()
-        .or(orClause)
-        .order("sale_date", { ascending: false, nullsFirst: false })
-        .order("end_time",  { ascending: false, nullsFirst: false })
-        .order("id",        { ascending: false })
-        .range(from, to);
+    const { data, error } = await buildBaseQuery()
+      .or(orClause)
+      .limit(perSourceLimit);
 
-      if (error) {
-        console.error(`[supabaseLiveListings] ${source} query failed:`, error.message);
-        break;
-      }
-      const page = (data ?? []) as ListingRow[];
-      if (page.length === 0) break;
-      rows.push(...page);
-      if (page.length < 1000) break;
-      from += 1000;
+    if (error) {
+      console.error(`[supabaseLiveListings] ${source} query failed:`, error.message);
+      return [];
     }
+
+    const rows = ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
 
     // Post-filter to drop cross-source matches (e.g. ClassicCom aliases that overlap
     // BaT's platform value). The alias tables allow multiple sources to share tokens,
@@ -955,9 +960,7 @@ async function queryListingsMany(
     return [] as ListingRow[];
   });
 
-  // Treat `limit` as per-source retrieval budget so tab-level source views
-  // (US=BaT, EU=AutoScout24) are not truncated by cross-source mixing.
-  const interleaveLimit = hasLimit ? limit * sources.length : Number.MAX_SAFE_INTEGER;
+  const interleaveLimit = hasLimit ? limit : Number.MAX_SAFE_INTEGER;
   return interleaveResultsBySource(resultsBySource, interleaveLimit);
 }
 
@@ -1178,23 +1181,26 @@ export async function fetchValuationListingsForMake(
 
   try {
     const supabase = createSupabaseClient(url, key);
-    const pageSize = 1000;
+    const pageSize = 500;
     const maxRows = limit > 0 ? limit : 50_000;
     const rows: ListingRow[] = [];
-    let from = 0;
+    let cursorId: string | null = null;
 
     while (rows.length < maxRows) {
-      const to = Math.min(from + pageSize - 1, maxRows - 1);
-      const { data, error } = await supabase
+      let query = supabase
         .from("listings")
         .select(SELECT_NARROW)
-        .ilike("make", normalizedMake)
+        .eq("make", normalizedMake)
         // Canonical: listing_price = COALESCE of raw price columns.
         .gt("listing_price", 0)
-        .order("sale_date", { ascending: false, nullsFirst: false })
-        .order("end_time", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .range(from, to);
+        .order("id", { ascending: true })
+        .limit(Math.min(pageSize, maxRows - rows.length));
+
+      if (cursorId !== null) {
+        query = query.gt("id", cursorId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("[supabaseLiveListings] fetchValuationListingsForMake page failed:", error.message);
@@ -1206,7 +1212,7 @@ export async function fetchValuationListingsForMake(
 
       rows.push(...page);
       if (page.length < pageSize) break;
-      from += pageSize;
+      cursorId = page[page.length - 1]?.id ?? null;
     }
 
     return rows.map((row) => rowToCollectorCar(row));
@@ -1244,25 +1250,31 @@ export async function fetchValuationCorpusForMake(
   const rates = await getExchangeRates();
 
   const out: import("./pricing/types").DerivedPrice[] = [];
-  const pageSize = 1000;
+  const pageSize = 500;
   const maxRows = limit > 0 ? limit : 40_000;
-  let from = 0;
+  let cursorId: string | null = null;
 
   try {
     while (out.length < maxRows) {
-      const to = Math.min(from + pageSize - 1, maxRows - 1);
-      const { data, error } = await supabase
+      let query = supabase
         .from("listings")
         .select(
-          "source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
+          "id,source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
         )
-        .ilike("make", normalizedMake)
+        .eq("make", normalizedMake)
         // listing_price is a generated column on listings that COALESCEs
         // hammer_price/final_price/current_bid — the single source of truth
         // for "this listing has a price". See migration
         // 20260419_listings_canonical_price_columns.sql.
         .gt("listing_price", 0)
-        .range(from, to);
+        .order("id", { ascending: true })
+        .limit(Math.min(pageSize, maxRows - out.length));
+
+      if (cursorId !== null) {
+        query = query.gt("id", cursorId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error(
@@ -1273,6 +1285,7 @@ export async function fetchValuationCorpusForMake(
       }
 
       const rows = (data ?? []) as Array<{
+        id: string;
         source: string | null;
         status: string | null;
         year: number;
@@ -1304,7 +1317,7 @@ export async function fetchValuationCorpusForMake(
           ),
         );
       }
-      from += rows.length;
+      cursorId = rows[rows.length - 1]?.id ?? null;
       if (rows.length < pageSize) break;
     }
   } catch (err) {
@@ -1331,16 +1344,10 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
   const includePriceHistory = options?.includePriceHistory ?? true;
   const targetMake = resolveRequestedMake(options?.make);
   const statusFilter = options?.status === "all" ? undefined : "active";
-  // Always query all 7 sources so every region tab has data.
-  // includeAllSources is kept for backwards compat but defaults to all.
   const sources = options?.includeAllSources === false ? DEFAULT_QUERY_SOURCES : ALL_QUERY_SOURCES;
 
   try {
     const supabase = createSupabaseClient(url, key);
-
-    // Per-source bucketed query ensures balanced representation across all regions.
-    // queryAllListingsDirect is kept as a fallback but queryListingsMany handles
-    // source-level interleaving so EU/UK/JP tabs always have data.
     const rawRows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
     const rows = rawRows.filter((r) => !isJunkListing(r));
     if (rows.length === 0) return [];
@@ -1516,23 +1523,33 @@ export async function fetchPaginatedListings(options: {
   status?: "active" | "all";
   series?: string | null;
   modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
+  includeCount?: boolean;
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
   nextCursor: { endTime: string | null; id: string } | null;
   totalCount: number | null;
   totalLiveCount: number | null;
+  transientError?: boolean;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
+    return {
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: false,
+    };
   }
 
   const pageSize = options.pageSize ?? 50;
   const targetMake = resolveRequestedMake(options.make);
+  const includeCount = options.includeCount ?? true;
 
   try {
     const supabase = createSupabaseClient(url, key);
@@ -1542,16 +1559,19 @@ export async function fetchPaginatedListings(options: {
     // a full table scan. Accuracy is approximate (statistics freshness),
     // which is acceptable for visual counters. See
     // docs/superpowers/specs/2026-04-18-absolute-car-counts-design.md.
-    let query = supabase
-      .from("listings")
-      .select(SELECT_NARROW, { count: "planned" })
-      .eq("make", targetMake);
+    let query = includeCount
+      ? supabase
+          .from("listings")
+          .select(SELECT_NARROW, { count: "planned" })
+          .eq("make", targetMake)
+      : supabase
+          .from("listings")
+          .select(SELECT_NARROW)
+          .eq("make", targetMake);
 
     // Status filter
     if (options.status !== "all") {
-      query = query.eq("status", LIVE_DB_STATUS_VALUES[0]);
-      // Exclude stale auction listings whose end_time has already passed
-      query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
+      query = applyLiveStatusFilter(query);
     }
 
     // Series / model / region / platform / search filters — shared with the
@@ -1593,7 +1613,14 @@ export async function fetchPaginatedListings(options: {
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
-      return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
+      return {
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: null,
+        totalLiveCount: null,
+        transientError: isTransientSupabaseFailure(error.message),
+      };
     }
 
     const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
@@ -1607,7 +1634,7 @@ export async function fetchPaginatedListings(options: {
       ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
       : null;
 
-    const totalCount = typeof count === "number" ? count : null;
+    const totalCount = includeCount && typeof count === "number" ? count : null;
     const totalLiveCount =
       options.status === "all"
         ? null
@@ -1615,7 +1642,14 @@ export async function fetchPaginatedListings(options: {
     return { cars, hasMore, nextCursor, totalCount, totalLiveCount };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
-    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
+    return {
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: isTransientSupabaseFailure(err),
+    };
   }
 }
 

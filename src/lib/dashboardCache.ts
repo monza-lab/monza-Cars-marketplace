@@ -12,6 +12,7 @@ import { computeSegmentStats } from "./pricing/segmentStats";
 
 const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
+const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 
 /**
  * Pre-aggregate the full valuation corpus into { family → market → SegmentStats }.
@@ -110,11 +111,11 @@ export type DashboardData = {
   seriesCounts: Record<string, number>;
 };
 
-// Keep the dashboard listings feed on the same direct-query path as the
-// paginated API route. That path is materially more resilient than the older
-// per-source dashboard fan-out query and still returns enough cars for the
-// Monza and Classic views.
-const DASHBOARD_LISTING_LIMIT = 200;
+let lastSuccessfulDashboardData: DashboardData | null = null;
+
+const DASHBOARD_DISPLAY_LIMIT = 24;
+const DASHBOARD_QUERY_PAGE_SIZE = 25;
+const DASHBOARD_FALLBACK_PAGE_SIZE = 8;
 
 function buildAggregateFallback(liveCount: number) {
   return {
@@ -202,6 +203,61 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
   return endTime instanceof Date ? endTime.toISOString() : "";
 }
 
+function sortDashboardCars(a: CollectorCar, b: CollectorCar): number {
+  const aTime = a.endTime instanceof Date ? a.endTime.getTime() : Number.MAX_SAFE_INTEGER;
+  const bTime = b.endTime instanceof Date ? b.endTime.getTime() : Number.MAX_SAFE_INTEGER;
+  if (aTime !== bTime) return aTime - bTime;
+  return b.id.localeCompare(a.id);
+}
+
+async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]> {
+  const primary = await fetchPaginatedListings({
+    make,
+    pageSize: DASHBOARD_QUERY_PAGE_SIZE,
+    status: "active",
+    includeCount: false,
+  });
+  if (primary.cars.length > 0) {
+    return primary.cars;
+  }
+
+  if (primary.transientError) {
+    console.warn(
+      "[dashboardCache] primary live listings query hit a transient Supabase failure; skipping source-scoped fallback",
+    );
+    return [];
+  }
+
+  console.warn(
+    "[dashboardCache] primary live listings query returned no cars; falling back to source-scoped queries",
+  );
+
+  const fallbackResults = await Promise.all(
+    DASHBOARD_FALLBACK_PLATFORMS.map((platform) =>
+      fetchPaginatedListings({
+        make,
+        pageSize: DASHBOARD_FALLBACK_PAGE_SIZE,
+        platform,
+        status: "active",
+        includeCount: false,
+      }),
+    ),
+  );
+
+  const deduped = new Map<string, CollectorCar>();
+  const merged = fallbackResults
+    .flatMap((result) => result.cars)
+    .sort(sortDashboardCars);
+
+  for (const car of merged) {
+    if (!deduped.has(car.id)) {
+      deduped.set(car.id, car);
+    }
+  }
+
+  return Array.from(deduped.values()).slice(0, DASHBOARD_DISPLAY_LIMIT);
+}
+
 /**
  * Core dashboard data fetch — no caching directive here so it can be
  * imported and called directly in tests without triggering "use cache"
@@ -212,12 +268,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
 
   let live: CollectorCar[] = [];
   try {
-    const liveResult = await fetchPaginatedListings({
-      make: requestedMake ?? "Porsche",
-      pageSize: DASHBOARD_LISTING_LIMIT,
-      status: "active",
-    });
-    live = liveResult.cars;
+    live = await fetchDashboardLiveListings(requestedMake ?? "Porsche");
   } catch (error) {
     console.error("[dashboardCache] live listings query failed:", error);
   }
@@ -246,11 +297,11 @@ async function dashboardDataImpl(): Promise<DashboardData> {
   // Only active listings for dashboard
   const active = live.filter(
     (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
-  );
+  ).slice(0, DASHBOARD_DISPLAY_LIMIT);
 
   const regionalValByFamily = aggregateValuationByFamily(valuationCorpus);
 
-  return {
+  const result: DashboardData = {
     auctions: active.map(transformCar),
     valuationListings: [], // superseded by regionalValByFamily
     regionalValByFamily,
@@ -264,6 +315,26 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     },
     seriesCounts,
   };
+
+  if (result.auctions.length > 0) {
+    lastSuccessfulDashboardData = result;
+    return result;
+  }
+
+  if (lastSuccessfulDashboardData) {
+    console.warn(
+      "[dashboardCache] empty live snapshot detected; serving last successful dashboard data",
+    );
+    return lastSuccessfulDashboardData;
+  }
+
+  if (result.liveNow > 0) {
+    throw new Error(
+      "[dashboardCache] inconsistent empty live snapshot detected with non-zero liveNow",
+    );
+  }
+
+  return result;
 }
 
 /**
@@ -278,7 +349,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
  */
 const _cachedDashboardData = unstable_cache(
   dashboardDataImpl,
-  ["dashboard-data-v1"],
+  ["dashboard-data-v2"],
   {
     revalidate: 300, // 5-minute background revalidation
     tags: ["listings"], // enables revalidateTag("listings") from cron routes
@@ -293,7 +364,22 @@ function isNextCachePayloadTooLargeError(err: unknown): boolean {
 
 export async function getCachedDashboardData(): Promise<DashboardData> {
   try {
-    return await _cachedDashboardData();
+    const data = await _cachedDashboardData();
+
+    if (data.auctions.length === 0 && lastSuccessfulDashboardData) {
+      console.warn(
+        "[dashboardCache] cached empty live snapshot detected; serving last successful dashboard data",
+      );
+      return lastSuccessfulDashboardData;
+    }
+
+    if (data.auctions.length === 0 && data.liveNow > 0) {
+      throw new Error(
+        "[dashboardCache] cached empty live snapshot detected with non-zero liveNow",
+      );
+    }
+
+    return data;
   } catch (err) {
     if (isNextCachePayloadTooLargeError(err)) {
       console.warn(

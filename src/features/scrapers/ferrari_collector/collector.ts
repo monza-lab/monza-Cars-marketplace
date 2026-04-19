@@ -1,10 +1,13 @@
 import crypto from "node:crypto";
 
-import { createClient } from "@supabase/supabase-js";
 import { fetchAuctionData, type ScrapedAuctionData } from "@/features/scrapers/common/scraper";
 import { scrapeBringATrailer } from "@/features/scrapers/auctions/bringATrailer";
 import { scrapeCarsAndBids } from "@/features/scrapers/auctions/carsAndBids";
 import { scrapeCollectingCars } from "@/features/scrapers/auctions/collectingCars";
+import {
+  createTerminalStatusClient,
+  fetchTerminalStatusSourceIds,
+} from "@/features/scrapers/common/terminalStatus";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
 import { discoverListingUrls } from "./discover";
@@ -54,32 +57,6 @@ export interface CollectorResult {
   runId: string;
   sourceCounts: Record<string, SourceScrapeCounts>;
   errors: string[];
-}
-
-const TERMINAL_STATUSES = new Set(["sold", "unsold", "delisted"]);
-
-/**
- * Checks if a listing already exists in Supabase with a terminal status
- * (sold/unsold/delisted). Prevents the collector from reverting a corrected
- * status back to "active" when the BaT scraper mis-detects an ended auction.
- */
-async function hasTerminalStatus(sourceId: string): Promise<boolean> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return false;
-
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data } = await client
-    .from("listings")
-    .select("status")
-    .eq("source_id", sourceId)
-    .limit(1);
-
-  const existing = data?.[0]?.status;
-  return typeof existing === "string" && TERMINAL_STATUSES.has(existing);
 }
 
 export async function runFerrariCollector(config: CollectorRunConfig): Promise<CollectorResult> {
@@ -199,6 +176,7 @@ async function runSource(input: {
   };
 
   const writer = input.writer;
+  const terminalStatusClient = createTerminalStatusClient();
 
   const endedRange = computeEndedRange(config, meta.scrapeTimestamp);
 
@@ -206,6 +184,8 @@ async function runSource(input: {
   if (config.mode === "daily") {
     const active = await scrapeActiveListings(source, config.maxActivePagesPerSource);
     counts.discovered += active.length;
+
+    const normalizedActive: Array<{ normalized: NormalizedListing; url: string }> = [];
 
     for (const a of active) {
       if (config.timeBudgetMs && (Date.now() - meta._startTime!) > config.timeBudgetMs) {
@@ -233,9 +213,29 @@ async function runSource(input: {
           continue;
         }
 
-        // Never revert a listing that was already marked as sold/unsold/delisted
-        if (await hasTerminalStatus(normalized.sourceId)) {
-          logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url: a.url, sourceId: normalized.sourceId });
+        normalizedActive.push({ normalized, url: a.url });
+      } catch (err) {
+        counts.errored++;
+        logEvent({
+          level: "error",
+          event: "collector.listing_error",
+          runId,
+          source,
+          url: a.url,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const terminalActiveSourceIds = await fetchTerminalStatusSourceIds(
+      terminalStatusClient,
+      normalizedActive.map(({ normalized }) => normalized.sourceId),
+    );
+
+    for (const { normalized, url } of normalizedActive) {
+      try {
+        if (terminalActiveSourceIds.has(normalized.sourceId)) {
+          logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url, sourceId: normalized.sourceId });
           continue;
         }
 
@@ -248,7 +248,7 @@ async function runSource(input: {
           event: "collector.listing_error",
           runId,
           source,
-          url: a.url,
+          url,
           message: err instanceof Error ? err.message : String(err),
         });
       }
@@ -278,6 +278,8 @@ async function runSource(input: {
   });
 
   counts.discovered += urls.length;
+
+  const normalizedDiscovered: Array<{ normalized: NormalizedListing; url: string; requiresTerminalCheck: boolean }> = [];
 
   for (const url of urls) {
     // Check time budget before each URL fetch
@@ -319,8 +321,30 @@ async function runSource(input: {
 
       if (!isLuxuryCarListing({ make: config.make, title: normalized.title, targetMake: config.make })) continue;
 
-      // Never revert a listing that was already marked as sold/unsold/delisted
-      if (isActive && await hasTerminalStatus(normalized.sourceId)) {
+      normalizedDiscovered.push({ normalized, url, requiresTerminalCheck: isActive });
+    } catch (err) {
+      counts.errored++;
+      logEvent({
+        level: "error",
+        event: "collector.ended_listing_error",
+        runId,
+        source,
+        url,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  const terminalDiscoveredSourceIds = await fetchTerminalStatusSourceIds(
+    terminalStatusClient,
+    normalizedDiscovered
+      .filter(({ requiresTerminalCheck }) => requiresTerminalCheck)
+      .map(({ normalized }) => normalized.sourceId),
+  );
+
+  for (const { normalized, url, requiresTerminalCheck } of normalizedDiscovered) {
+    try {
+      if (requiresTerminalCheck && terminalDiscoveredSourceIds.has(normalized.sourceId)) {
         logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url, sourceId: normalized.sourceId });
         continue;
       }
