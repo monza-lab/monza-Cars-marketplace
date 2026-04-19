@@ -50,7 +50,7 @@ export function normalizeListing(input: {
 
   const photos = raw.images ?? [];
   const finalPrice = status === "sold" ? price : null;
-  const currentBid = price;
+  const currentBid = price ?? -1;
 
   return {
     source: "ClassicCom",
@@ -174,7 +174,7 @@ export function normalizeListingFromSummary(input: {
     location,
     pricing: {
       hammerPrice: null,
-      currentBid: price,
+    currentBid,
       bidCount: null,
       originalCurrency: price ? "USD" : null,
       rawPriceText: price ? `$${price.toLocaleString("en-US")}` : null,

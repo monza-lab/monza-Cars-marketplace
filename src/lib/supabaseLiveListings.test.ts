@@ -94,6 +94,12 @@ describe("supabaseLiveListings image url normalization", () => {
     );
   });
 
+  it("rejects AutoTrader non-photo assets even when the host matches", () => {
+    expect(
+      normalizeListingImageUrl("https://apm-assets.prod.atcdn.co.uk/elastic-apm-rum.umd.min.js")
+    ).toBeNull();
+  });
+
   it("rejects unknown template tokens", () => {
     expect(normalizeListingImageUrl("https://m.atcdn.co.uk/a/media/{badtoken}/abc.jpg")).toBeNull();
   });

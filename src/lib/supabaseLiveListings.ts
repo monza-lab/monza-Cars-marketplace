@@ -189,6 +189,10 @@ function normalizeAutoTraderResizePathname(pathname: string): string {
     .replace(/\/+/g, "/");
 }
 
+function hasAutoTraderMediaPathname(pathname: string): boolean {
+  return /\/a\/media\/.+\.(?:jpe?g|png|webp|gif)$/i.test(pathname);
+}
+
 export function normalizeListingImageUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
@@ -225,6 +229,10 @@ export function normalizeListingImageUrl(value: unknown): string | null {
     if (decodedAfterNormalization.includes("{") || decodedAfterNormalization.includes("}")) {
       return null;
     }
+  }
+
+  if (isAutoTraderCdnHost(parsed.hostname) && !hasAutoTraderMediaPathname(parsed.pathname)) {
+    return null;
   }
 
   return parsed.toString();
@@ -1074,11 +1082,12 @@ export async function fetchSoldListingsForMake(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,sale_date,status")
+      // Project canonical sold_price as hammer_price to keep the consumer
+      // shape identical. status='sold' is enforced by the sold_price column
+      // generator itself (NULL otherwise), so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:sold_price,sale_date,status")
       .ilike("make", normalizedMake)
-      .eq("status", "sold")
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("sold_price", 0)
       .order("sale_date", { ascending: true })
       .limit(limit);
 
@@ -1134,10 +1143,12 @@ export async function fetchPricedListingsForModel(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
+      // Project canonical listing_price as hammer_price to keep the consumer
+      // shape identical. listing_price is the COALESCE of all raw price
+      // columns, so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,country")
       .ilike("make", normalizedMake)
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("listing_price", 0)
       .order("sale_date", { ascending: false })
       .limit(limit);
 
@@ -1178,8 +1189,8 @@ export async function fetchValuationListingsForMake(
         .from("listings")
         .select(SELECT_NARROW)
         .ilike("make", normalizedMake)
-        .not("hammer_price", "is", null)
-        .gt("hammer_price", 0)
+        // Canonical: listing_price = COALESCE of raw price columns.
+        .gt("listing_price", 0)
         .order("sale_date", { ascending: false, nullsFirst: false })
         .order("end_time", { ascending: false, nullsFirst: false })
         .order("id", { ascending: false })
@@ -1246,7 +1257,11 @@ export async function fetchValuationCorpusForMake(
           "source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
         )
         .ilike("make", normalizedMake)
-        .gt("hammer_price", 0)
+        // listing_price is a generated column on listings that COALESCEs
+        // hammer_price/final_price/current_bid — the single source of truth
+        // for "this listing has a price". See migration
+        // 20260419_listings_canonical_price_columns.sql.
+        .gt("listing_price", 0)
         .range(from, to);
 
       if (error) {
@@ -1429,6 +1444,66 @@ const SORT_COLUMN_MAP: Record<string, string> = {
   trendValue: "hammer_price",
 };
 
+/**
+ * Apply the filters shared by the paginated rows query and the live-count
+ * HEAD query. Keeps the two queries in sync so the counts always describe
+ * the same logical set (aside from the status filter, which differs).
+ */
+function applyPaginatedListingFilters<T>(
+  query: T,
+  options: {
+    series?: string | null;
+    modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
+    region?: string | null;
+    platform?: string | null;
+    query?: string | null;
+  },
+): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = query;
+
+  if (options.series) {
+    q = q.eq("series", options.series);
+    const patterns = options.modelPatterns;
+    if (patterns?.yearMin !== undefined) q = q.gte("year", patterns.yearMin);
+    if (patterns?.yearMax !== undefined) q = q.lte("year", patterns.yearMax);
+  } else if (options.modelPatterns) {
+    const { keywords, yearMin, yearMax } = options.modelPatterns;
+    if (keywords.length > 0) {
+      const orClauses = keywords
+        .map((kw) => `model.ilike.%${kw.replace(/[%_]/g, "")}%`)
+        .join(",");
+      q = q.or(orClauses);
+    }
+    if (yearMin !== undefined) q = q.gte("year", yearMin);
+    if (yearMax !== undefined) q = q.lte("year", yearMax);
+  }
+
+  if (options.region) {
+    const regionUpper = options.region.toUpperCase();
+    const sourceGroups = REGION_SOURCE_MAP[regionUpper];
+    if (sourceGroups) {
+      const allAliases = sourceGroups.flat();
+      q = q.in("source", allAliases);
+    } else {
+      const countryValues = REGION_COUNTRY_MAP[regionUpper];
+      if (countryValues) q = q.in("country", countryValues);
+    }
+  }
+
+  if (options.platform) {
+    const sourceAliases = resolveSourceAliasesForPlatform(options.platform);
+    q = q.in("source", sourceAliases);
+  }
+
+  if (options.query) {
+    const escaped = options.query.replace(/[%_]/g, "");
+    q = q.or(`title.ilike.%${escaped}%,model.ilike.%${escaped}%`);
+  }
+
+  return q as T;
+}
+
 export async function fetchPaginatedListings(options: {
   make: string;
   pageSize?: number;
@@ -1445,13 +1520,15 @@ export async function fetchPaginatedListings(options: {
   cars: CollectorCar[];
   hasMore: boolean;
   nextCursor: { endTime: string | null; id: string } | null;
+  totalCount: number | null;
+  totalLiveCount: number | null;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { cars: [], hasMore: false, nextCursor: null };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 
   const pageSize = options.pageSize ?? 50;
@@ -1460,13 +1537,14 @@ export async function fetchPaginatedListings(options: {
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Build base query. Count omitted on purpose: `count: "exact"` forces
-    // a full-table scan alongside every page fetch which collides with the
-    // Supabase statement_timeout when multiple sources / tabs query in
-    // parallel. `hasMore` is already derived from fetching pageSize + 1.
+    // Build base query. Using `count: "planned"` — Postgres returns its
+    // planner-estimated row count for the filtered query without executing
+    // a full table scan. Accuracy is approximate (statistics freshness),
+    // which is acceptable for visual counters. See
+    // docs/superpowers/specs/2026-04-18-absolute-car-counts-design.md.
     let query = supabase
       .from("listings")
-      .select(SELECT_NARROW)
+      .select(SELECT_NARROW, { count: "planned" })
       .eq("make", targetMake);
 
     // Status filter
@@ -1476,64 +1554,15 @@ export async function fetchPaginatedListings(options: {
       query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
     }
 
-    // Series / model filter.
-    // Prefer the indexed `series` column when provided (post-backfill rows).
-    // Fall back to keyword-OR on `model` for rows where series IS NULL
-    // (pre-backfill rows).
-    if (options.series) {
-      query = query.eq("series", options.series);
-      // Also apply year range from modelPatterns when available, so results
-      // are still scoped to the correct generation even on the indexed path.
-      const patterns = options.modelPatterns;
-      if (patterns?.yearMin !== undefined) query = query.gte("year", patterns.yearMin);
-      if (patterns?.yearMax !== undefined) query = query.lte("year", patterns.yearMax);
-    } else if (options.modelPatterns) {
-      const { keywords, yearMin, yearMax } = options.modelPatterns;
-      if (keywords.length > 0) {
-        const orClauses = keywords
-          .map((kw) => `model.ilike.%${kw.replace(/[%_]/g, "")}%`)
-          .join(",");
-        query = query.or(orClauses);
-      }
-      if (yearMin !== undefined) {
-        query = query.gte("year", yearMin);
-      }
-      if (yearMax !== undefined) {
-        query = query.lte("year", yearMax);
-      }
-    }
-
-    // Region filter — use source/platform mapping (reliable) instead of country
-    // column which may be NULL for some scrapers (e.g. BeForward for JP).
-    if (options.region) {
-      const regionUpper = options.region.toUpperCase();
-      const sourceGroups = REGION_SOURCE_MAP[regionUpper];
-
-      if (sourceGroups) {
-        const allAliases = sourceGroups.flat();
-        query = query.in("source", allAliases);
-      } else {
-        // Unknown region — fall back to country-based filtering
-        const countryValues = REGION_COUNTRY_MAP[regionUpper];
-        if (countryValues) {
-          query = query.in("country", countryValues);
-        }
-      }
-    }
-
-    // Platform filter
-    if (options.platform) {
-      const sourceAliases = resolveSourceAliasesForPlatform(options.platform);
-      query = query.in("source", sourceAliases);
-    }
-
-    // Text search filter
-    if (options.query) {
-      const escaped = options.query.replace(/[%_]/g, "");
-      query = query.or(
-        `title.ilike.%${escaped}%,model.ilike.%${escaped}%`
-      );
-    }
+    // Series / model / region / platform / search filters — shared with the
+    // parallel HEAD count query below so both describe the same logical set.
+    query = applyPaginatedListingFilters(query, {
+      series: options.series,
+      modelPatterns: options.modelPatterns,
+      region: options.region,
+      platform: options.platform,
+      query: options.query,
+    });
 
     // Keyset cursor filter — applied AFTER all other filters.
     // Uses the partial index: listings_active_endtime_id_idx ON (end_time ASC NULLS LAST, id DESC)
@@ -1559,11 +1588,42 @@ export async function fetchPaginatedListings(options: {
     // Fetch pageSize + 1 to determine hasMore
     query = query.limit(pageSize + 1);
 
-    const { data, error } = await query;
+    // Parallel HEAD count query for live-only subset (status='active').
+    // This count ignores the main query's status filter and always
+    // restricts to live listings — matches the "Latest Listings" semantics.
+    let liveCountQuery = supabase
+      .from("listings")
+      .select("id", { count: "planned", head: true })
+      .eq("make", targetMake)
+      .eq("status", LIVE_DB_STATUS_VALUES[0]);
+
+    liveCountQuery = applyPaginatedListingFilters(liveCountQuery, {
+      series: options.series,
+      modelPatterns: options.modelPatterns,
+      region: options.region,
+      platform: options.platform,
+      query: options.query,
+    });
+
+    // Exclude stale auction rows whose end_time passed (mirrors main query).
+    liveCountQuery = liveCountQuery.or(
+      "end_time.is.null,end_time.gt." + new Date().toISOString(),
+    );
+
+    const [rowsResult, liveCountResult] = await Promise.all([
+      query,
+      liveCountQuery,
+    ]);
+
+    const { data, error, count } = rowsResult;
+    const totalLiveCount =
+      liveCountResult.error || typeof liveCountResult.count !== "number"
+        ? null
+        : liveCountResult.count;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
-      return { cars: [], hasMore: false, nextCursor: null };
+      return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
     }
 
     const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
@@ -1577,10 +1637,11 @@ export async function fetchPaginatedListings(options: {
       ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
       : null;
 
-    return { cars, hasMore, nextCursor };
+    const totalCount = typeof count === "number" ? count : null;
+    return { cars, hasMore, nextCursor, totalCount, totalLiveCount };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
-    return { cars: [], hasMore: false, nextCursor: null };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 }
 

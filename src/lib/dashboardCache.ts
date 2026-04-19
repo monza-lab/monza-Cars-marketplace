@@ -1,6 +1,6 @@
 import { unstable_cache, revalidateTag } from "next/cache";
 import {
-  fetchLiveListingsAsCollectorCars,
+  fetchPaginatedListings,
   fetchLiveListingAggregateCounts,
   fetchValuationCorpusForMake,
   fetchSeriesCounts,
@@ -109,12 +109,13 @@ export type DashboardData = {
   seriesCounts: Record<string, number>;
 };
 
-// ─── PER_SOURCE_BUDGET for dashboard path (matches API route) ───
-// Keep this intentionally smaller than the API route budget so the cached
-// dashboard payload stays under Next.js's 2 MB data cache limit.
-const DASHBOARD_SOURCE_BUDGET = 50;
+// Keep the dashboard listings feed on the same direct-query path as the
+// paginated API route. That path is materially more resilient than the older
+// per-source dashboard fan-out query and still returns enough cars for the
+// Monza and Classic views.
+const DASHBOARD_LISTING_LIMIT = 200;
 
-function transformCar(car: CollectorCar): DashboardAuction {
+export function transformCar(car: CollectorCar): DashboardAuction {
   return {
     id: car.id,
     title: car.title,
@@ -174,17 +175,38 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
 async function dashboardDataImpl(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
-  const [live, valuationCorpus, aggregates, seriesCounts] = await Promise.all([
-    fetchLiveListingsAsCollectorCars({
-      limit: DASHBOARD_SOURCE_BUDGET,
-      includePriceHistory: false,
-      make: requestedMake,
-      includeAllSources: true,
-    }),
-    fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
-    fetchLiveListingAggregateCounts({ make: requestedMake }),
-    fetchSeriesCounts(requestedMake ?? "Porsche"),
-  ]);
+  const [liveResult, valuationResult, aggregatesResult, seriesCountsResult] =
+    await Promise.allSettled([
+      fetchPaginatedListings({
+        make: requestedMake ?? "Porsche",
+        pageSize: DASHBOARD_LISTING_LIMIT,
+        status: "active",
+      }),
+      fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
+      fetchLiveListingAggregateCounts({ make: requestedMake }),
+      fetchSeriesCounts(requestedMake ?? "Porsche"),
+    ]);
+
+  const live =
+    liveResult.status === "fulfilled"
+      ? liveResult.value.cars
+      : [];
+  const valuationCorpus =
+    valuationResult.status === "fulfilled"
+      ? valuationResult.value
+      : [];
+  const aggregates =
+    aggregatesResult.status === "fulfilled"
+      ? aggregatesResult.value
+      : {
+          liveNow: live.length,
+          regionTotalsByPlatform: { all: live.length, US: 0, UK: 0, EU: 0, JP: 0 },
+          regionTotalsByLocation: { all: live.length, US: 0, UK: 0, EU: 0, JP: 0 },
+        };
+  const seriesCounts =
+    seriesCountsResult.status === "fulfilled"
+      ? seriesCountsResult.value
+      : {};
 
   // Only active listings for dashboard
   const active = live.filter(

@@ -54,3 +54,20 @@ next-env.d.ts
 
 # social engine v0.5 — generated daily carousels (manual upload artifacts)
 posts/
+
+# playwright debug artifacts
+.playwright-cli/
+
+# python bytecode
+__pycache__/
+
+# video binary outputs + fetched media (source HTML/MD/TS tracked)
+videos/**/renders/
+videos/**/assets/
+videos/**/work-*/
+**/.venv/**
+**/venv/**
+**/.venv/
+**/venv/
+.venv/
+venv/

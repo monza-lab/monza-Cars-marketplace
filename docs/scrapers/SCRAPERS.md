@@ -633,9 +633,9 @@ This module **does not conflict** with existing per-source backfills:
 
 ## 9. BaT Detail Scraper
 
-**What it does:** Scrapes BaT listing detail pages to extract high-resolution images and additional specs. Runs after the Porsche Collector to enrich newly discovered listings.
+**What it does:** Scrapes BaT listing detail pages to extract high-resolution images plus the high-value fields that are often missing from the card view: mileage, VIN, exterior color, interior color, engine, transmission, and body style. It uses a field-scored HTML parser first and only falls back to Scrapling when the primary page still leaves key fields missing.
 
-**Source:** `scripts/bat-detail-scraper.ts` (Playwright)
+**Source:** `scripts/bat-detail-scraper.ts` (HTTP + Scrapling fallback)
 
 ### Automated schedule
 
@@ -643,6 +643,14 @@ This module **does not conflict** with existing per-source backfills:
 - Workflow: `.github/workflows/bat-detail-scraper.yml`
 - Config: max 700 listings, 20-minute time budget
 - Timeout: 30 minutes
+
+### Manual validation
+
+```bash
+npx vitest run src/features/scrapers/auctions/bringATrailer.test.ts -v
+npx tsx scripts/bat-detail-scraper.ts --preflight --limit=5 --dryRun
+npx tsx scripts/bat-detail-scraper.ts --limit=100 --timeBudgetMs=1800000
+```
 
 ---
 

@@ -8,21 +8,23 @@ import {
   getActiveRuns,
 } from "@/features/scrapers/common/monitoring";
 
-const ADMIN_EMAILS = ["caposk8@hotmail.com"];
+const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (process.env.NODE_ENV !== "development") {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
-    return NextResponse.json(
-      { status: 401, code: "AUTH_REQUIRED", message: "Admin access required" },
-      { status: 401 }
-    );
+    if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+      return NextResponse.json(
+        { status: 401, code: "AUTH_REQUIRED", message: "Admin access required" },
+        { status: 401 }
+      );
+    }
   }
 
   const [recentRuns, dailyAggregates, dataQuality, latestRuns, activeRuns] =

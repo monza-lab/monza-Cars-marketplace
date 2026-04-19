@@ -1,0 +1,174 @@
+<template id="continents-template">
+  <div data-composition-id="continents" data-width="1080" data-height="1920" data-start="0" data-duration="5.0">
+    <img class="market-photo" id="s3-p1" src="../assets/photos/market_DE_b5230632.jpg" />
+    <img class="market-photo" id="s3-p2" src="../assets/photos/market_NL_1afdbbcc.jpg" />
+    <img class="market-photo" id="s3-p3" src="../assets/photos/market_BE_948a4e6b.jpeg" />
+    <img class="market-photo" id="s3-p4" src="../assets/photos/market_IT_29aa11d8.jpg" />
+    <img class="market-photo" id="s3-p5" src="../assets/photos/market_UK_a0678c59.jpg" />
+    <img class="market-photo" id="s3-p6" src="../assets/photos/market_US_cbc87afc.jpg" />
+    <div class="warm-tint"></div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="top-tag" id="s3-tag">Every market &middot; Every signal</div>
+
+    <div class="market-card" id="s3-m1">
+      <div class="flag">DE</div>
+      <div class="city">Stuttgart</div>
+      <div class="stat">&euro; 1,795,000</div>
+    </div>
+    <div class="market-card" id="s3-m2">
+      <div class="flag">NL</div>
+      <div class="city">Amsterdam</div>
+      <div class="stat">&euro; 849,900</div>
+    </div>
+    <div class="market-card" id="s3-m3">
+      <div class="flag">BE</div>
+      <div class="city">Antwerp</div>
+      <div class="stat">&euro; 484,500</div>
+    </div>
+    <div class="market-card" id="s3-m4">
+      <div class="flag">IT</div>
+      <div class="city">Milan</div>
+      <div class="stat">&euro; 950,000</div>
+    </div>
+    <div class="market-card" id="s3-m5">
+      <div class="flag">UK</div>
+      <div class="city">London</div>
+      <div class="stat">&pound; 995,000</div>
+    </div>
+    <div class="market-card" id="s3-m6">
+      <div class="flag">US</div>
+      <div class="city">Monterey</div>
+      <div class="stat">$ 1,299,995</div>
+    </div>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600;700&family=Karla:wght@300;400;500;600;700;800&display=swap');
+
+      [data-composition-id="continents"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: #0A0608;
+        overflow: hidden;
+      }
+      [data-composition-id="continents"] .market-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 45%;
+        opacity: 0;
+        filter: saturate(0.92) brightness(0.88);
+        will-change: opacity, transform;
+      }
+      [data-composition-id="continents"] .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at center, transparent 42%, rgba(10,6,8,0.38) 82%, rgba(10,6,8,0.82) 100%),
+          linear-gradient(to top, rgba(10,6,8,0.82) 0%, rgba(10,6,8,0.18) 30%, transparent 50%, transparent 78%, rgba(10,6,8,0.45) 100%);
+      }
+      [data-composition-id="continents"] .warm-tint {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 50% 30%, rgba(122,46,74,0.20), transparent 70%);
+        mix-blend-mode: screen;
+      }
+      [data-composition-id="continents"] .grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.14;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91  0 0 0 0 0.89  0 0 0 0 0.87  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        mix-blend-mode: overlay;
+      }
+      [data-composition-id="continents"] .top-tag {
+        position: absolute;
+        left: 80px;
+        top: 120px;
+        font-family: 'Karla', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.36em;
+        font-size: 20px;
+        color: #D4738A;
+        opacity: 0;
+      }
+      [data-composition-id="continents"] .market-card {
+        position: absolute;
+        left: 80px;
+        bottom: 180px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+      [data-composition-id="continents"] .flag {
+        font-family: 'Karla', sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.42em;
+        font-size: 22px;
+        color: #D4738A;
+      }
+      [data-composition-id="continents"] .city {
+        font-family: 'Cormorant', serif;
+        font-weight: 400;
+        font-style: italic;
+        font-size: 148px;
+        line-height: 0.9;
+        color: #FDFBF9;
+        letter-spacing: -0.01em;
+        text-shadow: 0 12px 42px rgba(0,0,0,0.85);
+      }
+      [data-composition-id="continents"] .stat {
+        font-family: 'Karla', sans-serif;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.08em;
+        font-size: 36px;
+        color: rgba(232,226,222,0.94);
+        margin-top: 4px;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        const sel = (s) => '[data-composition-id="continents"] ' + s;
+
+        // 6 markets, 0.80s each = 4.8s + intro.
+        const beat = 0.80;
+        const photos = ['#s3-p1','#s3-p2','#s3-p3','#s3-p4','#s3-p5','#s3-p6'];
+        const cards  = ['#s3-m1','#s3-m2','#s3-m3','#s3-m4','#s3-m5','#s3-m6'];
+
+        tl.from(sel('#s3-tag'), { y: 12, opacity: 0, duration: 0.4, ease: 'expo.out' }, 0.05);
+
+        for (let i = 0; i < photos.length; i++) {
+          const tIn = i * beat;
+          if (i > 0) {
+            tl.to(sel(photos[i - 1]), { opacity: 0, duration: 0.28, ease: 'power1.inOut' }, tIn);
+            tl.to(sel(cards[i - 1]), { opacity: 0, duration: 0.24, ease: 'power1.inOut' }, tIn);
+          }
+          tl.fromTo(sel(photos[i]),
+            { opacity: 0, scale: 1.06 },
+            { opacity: 1, scale: 1.0, duration: 0.45, ease: 'power2.inOut' },
+          tIn);
+          tl.fromTo(sel(cards[i]),
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out' },
+          tIn + 0.08);
+        }
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines['continents'] = tl;
+      })();
+    </script>
+  </div>
+</template>

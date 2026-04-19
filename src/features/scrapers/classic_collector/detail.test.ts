@@ -112,6 +112,41 @@ describe("classic detail parsing", () => {
     expect(parsed.raw.price).toBe(220000);
     expect(parsed.raw.hammerPrice).toBe(228500);
     expect(parsed.raw.images).toHaveLength(2);
+    expect(parsed.raw.description).toContain("Specs");
+  });
+
+  it("uses Last Asking as the current price when no active bid range is present", () => {
+    const parsed = parseClassicDetailContent(
+      {
+        title: "2022 Porsche 911 GT3 Standard",
+        bodyText: [
+          "Last Asking",
+          "$258,900",
+          "by",
+          "iLusso Costa Mesa",
+          "Specs",
+          "Year",
+          "2022",
+          "Make",
+          "Porsche",
+          "Model Family",
+          "911",
+          "Model Trim",
+          "Standard",
+          "Engine",
+          "4.0L H6",
+          "Transmission",
+          "Manual",
+          "VIN:",
+          "WP0AC2A98NS270142",
+        ].join("\n"),
+        images: [],
+      },
+      "https://www.classic.com/veh/2022-porsche-911-gt3-standard-wp0ac2a98ns270142-pPLakrp",
+    );
+
+    expect(parsed.raw.price).toBe(258900);
+    expect(parsed.raw.hammerPrice).toBeNull();
   });
 });
 
@@ -245,5 +280,40 @@ describe("fetchAndParseDetail", () => {
     expect(page.goto).toHaveBeenCalledTimes(1);
     expect(parsed.raw.title).toBe("2020 Porsche 911 Turbo S");
     expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/playwright.jpg"]);
+  });
+
+  it("fails fast when scrapling-only mode is enabled and Scrapling misses", async () => {
+    mockScrapling.mockResolvedValueOnce(null as unknown as never);
+    process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK = "1";
+
+    const page = createMockPage({
+      title: "2020 Porsche 911 Turbo S",
+      bodyText: [
+        "FOR SALE",
+        "by",
+        "RM Sotheby's",
+        "Specs",
+        "Year",
+        "2020",
+        "Make",
+        "Porsche",
+        "Model Family",
+        "911",
+        "Model Trim",
+        "Turbo S",
+        "VIN:",
+        "WP0AD2A95LS185001",
+      ].join("\n"),
+      images: ["https://images.classic.com/vehicles/playwright.jpg"],
+    });
+
+    await expect(fetchAndParseDetail({
+      page,
+      url: "https://www.classic.com/veh/2020-porsche-911-turbo-s-wp0ad2a95ls185001-abc123",
+      pageTimeoutMs: 10_000,
+      runId: "test-run",
+    })).rejects.toThrow(/Scrapling-only/i);
+
+    expect(page.goto).not.toHaveBeenCalled();
   });
 });

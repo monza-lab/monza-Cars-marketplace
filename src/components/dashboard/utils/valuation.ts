@@ -57,6 +57,10 @@ export function computeRegionalValFromCorpus(
   return out;
 }
 
+// Pin to en-US so SSR (Node) and browser (/de, /ja, …) produce identical
+// thousand separators — otherwise React hydration fails on every tile.
+const FMT_USD_INT = new Intl.NumberFormat("en-US");
+
 export function formatUsdValue(v: number | null | undefined): string {
   if (v == null || !isFinite(v) || v <= 0) return "—";
   if (v >= 1_000_000) {
@@ -64,7 +68,7 @@ export function formatUsdValue(v: number | null | undefined): string {
     const s = m.toFixed(1);
     return s.endsWith(".0") ? `$${m.toFixed(0)}M` : `$${s}M`;
   }
-  return `$${Math.round(v / 1000).toLocaleString()}K`;
+  return `$${FMT_USD_INT.format(Math.round(v / 1000))}K`;
 }
 
 // Legacy helpers kept for callers not yet migrated. To be removed in Task 18 once unused.

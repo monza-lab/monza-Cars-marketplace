@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import { runCollector } from "./collector";
 import { selectBackfillUrls } from "./collector";
+import { extractAutoTraderImages } from "./imageUrls";
 
 describe("collector", () => {
   describe("runCollector", () => {
@@ -56,6 +59,20 @@ describe("collector", () => {
       expect(selected).toHaveLength(60);
       expect(selected[0]).toBe(urls[0]);
       expect(selected[59]).toBe(urls[59]);
+    });
+
+    it("extracts normalized AutoTrader gallery images from recorded HTML", () => {
+      const html = readFileSync(
+        resolve(process.cwd(), "tests/fixtures/autotrader-gallery-detail.html"),
+        "utf8",
+      );
+
+      expect(extractAutoTraderImages(html)).toEqual([
+        "https://m.atcdn.co.uk/a/media/hero.jpg",
+        "https://m.atcdn.co.uk/a/media/one.jpg",
+        "https://m.atcdn.co.uk/a/media/two.jpg",
+        "https://m.atcdn.co.uk/a/media/three.jpg",
+      ]);
     });
   });
 });

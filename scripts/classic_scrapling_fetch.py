@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
-"""Fetch a Classic.com page through Scrapling and emit parsed JSON.
+"""Fetch Classic.com pages through Scrapling and emit parsed JSON.
 
 The TypeScript collector expects a stable JSON payload:
 { ok: true, title, bodyText, images }
 
-This script shells out to Scrapling's CLI so we can keep the Node side thin and
-reuse the same parsing logic for Playwright and Scrapling fetches.
+This script uses Scrapling's Python fetcher directly so we can keep the Node
+side thin and avoid depending on the CLI entrypoint.
 """
 
 from __future__ import annotations
 
-import argparse
 import html
 import json
-import os
-import subprocess
 import sys
-import tempfile
 from html.parser import HTMLParser
-from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
+
+from scrapling.fetchers.requests import Fetcher
 
 
 BLOCK_TAGS = {
@@ -137,44 +135,19 @@ class ClassicDetailParser(HTMLParser):
         return title, body_text, self._images
 
 
-def run_scrapling_fetch(url: str, html_path: Path, fetch_mode: str) -> None:
-    cmd = [
-        "scrapling",
-        "extract",
-        fetch_mode,
-        url,
-        str(html_path),
-    ]
-    if fetch_mode == "stealthy-fetch":
-        cmd.append("--solve-cloudflare")
-    if os.environ.get("SCRAPLING_NO_HEADLESS") == "1":
-        cmd.append("--no-headless")
-
-    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-
 def fetch_html(url: str) -> str:
-    fetch_modes = [os.environ.get("SCRAPLING_FETCH_MODE", "stealthy-fetch"), "fetch"]
-    if "dynamic-fetch" not in fetch_modes:
-        fetch_modes.append("dynamic-fetch")
+    try:
+        # Scrapling treats `retries` as the number of attempts. Zero means
+        # "do not enter the request loop", which falls through to
+        # "No active session available." Use at least one attempt.
+        response = Fetcher.get(url, impersonate="chrome", timeout=10, retries=1)
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"Scrapling fetch failed: {exc}") from exc
 
-    with tempfile.TemporaryDirectory(prefix="classic-scrapling-") as tmp_dir:
-        html_path = Path(tmp_dir) / "page.html"
-        errors: list[str] = []
-
-        for mode in dict.fromkeys(fetch_modes):
-            try:
-                run_scrapling_fetch(url, html_path, mode)
-                if html_path.exists():
-                    return html_path.read_text(encoding="utf-8", errors="replace")
-            except subprocess.CalledProcessError as exc:
-                stderr = (exc.stderr or "").strip()
-                stdout = (exc.stdout or "").strip()
-                details = stderr or stdout or f"exit status {exc.returncode}"
-                errors.append(f"{mode}: {details}")
-                continue
-
-        raise RuntimeError("Scrapling fetch failed: " + " | ".join(errors))
+    html = getattr(response, "html_content", "") or getattr(response, "body", "") or ""
+    if not html:
+        raise RuntimeError("Scrapling fetch returned empty HTML")
+    return html
 
 
 def parse_html(html_text: str) -> dict[str, object]:
@@ -189,20 +162,46 @@ def parse_html(html_text: str) -> dict[str, object]:
     }
 
 
+def parse_single_url(url: str) -> dict[str, object]:
+    html_text = fetch_html(url)
+    return parse_html(html_text)
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="Classic.com listing URL")
-    args = parser.parse_args()
+    urls = sys.argv[1:]
+    if not urls:
+      sys.stderr.write("Classic.com URL required\n")
+      sys.stdout.write(json.dumps({"ok": False, "error": "Classic.com URL required"}))
+      return 1
 
     try:
-        html_text = fetch_html(args.url)
-        payload = parse_html(html_text)
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False))
+        if len(urls) == 1:
+            payload = parse_single_url(urls[0])
+            sys.stdout.write(json.dumps(payload, ensure_ascii=False))
+            return 0
+
+        results: list[dict[str, object]] = []
+        workers = min(6, len(urls))
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            for url, parsed in zip(urls, executor.map(_parse_single_url_safe, urls)):
+                if parsed["ok"]:
+                    results.append({**parsed, "url": url})
+                else:
+                    results.append({"ok": False, "error": parsed["error"], "url": url})
+
+        sys.stdout.write(json.dumps({"ok": True, "results": results}, ensure_ascii=False))
         return 0
     except Exception as exc:  # noqa: BLE001
         sys.stderr.write(str(exc) + "\n")
         sys.stdout.write(json.dumps({"ok": False, "error": str(exc)}))
         return 1
+
+
+def _parse_single_url_safe(url: str) -> dict[str, object]:
+    try:
+        return parse_single_url(url)
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": str(exc)}
 
 
 if __name__ == "__main__":

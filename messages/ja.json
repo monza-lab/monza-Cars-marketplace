@@ -79,7 +79,12 @@
     "switchToSignIn": "すでにアカウントをお持ちですか？ ログイン",
     "analysisRequiresSignInTitle": "分析にはログインが必要です",
     "analysisRequiresSignInDesc": "この車両を分析するにはログインしてください",
-    "newAccountsCredits": "新規アカウントは分析クレジットを3つ無料で受け取れます"
+    "newAccountsCredits": "新規アカウントは分析クレジットを3つ無料で受け取れます",
+    "signInMethod": "サインイン方法",
+    "magicLink": "マジックリンク",
+    "magicLinkDesc": "ログイン用のリンクをメールで送ります。パスワードは不要です。",
+    "sendMagicLink": "マジックリンクを送信",
+    "magicLinkSent": "受信トレイを確認し、ログインリンクをクリックしてください。"
   },
   "hero": {
     "badge": "ライブオークションインテリジェンス",

@@ -52,5 +52,5 @@ export default async function BrowsePage({
 
   const data = await loadData();
 
-  return <BrowseClient auctions={data.auctions} seriesCounts={data.seriesCounts} />;
+  return <BrowseClient auctions={data.auctions} seriesCounts={data.seriesCounts} liveNow={data.liveNow} />;
 }

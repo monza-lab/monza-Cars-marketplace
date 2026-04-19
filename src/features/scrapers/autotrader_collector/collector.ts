@@ -10,6 +10,7 @@ import { fetchAutoTraderDetail } from "./detail";
 import { canonicalizeUrl, deriveSourceId } from "./id";
 import { logEvent } from "./logging";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry, fetchHtml } from "./net";
+import { fetchAutoTraderDetail } from "./detail";
 import {
   buildLocationString,
   isLuxuryCarListing,

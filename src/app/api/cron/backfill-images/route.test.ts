@@ -65,6 +65,7 @@ describe("GET /api/cron/backfill-images", () => {
         source: "BaT",
         discovered: 10,
         backfilled: 8,
+        imageCoverage: { withImages: 8, missingImages: 0, deadUrls: 0 },
         errors: [],
         durationMs: 1000,
       },
@@ -72,6 +73,7 @@ describe("GET /api/cron/backfill-images", () => {
         source: "BeForward",
         discovered: 5,
         backfilled: 5,
+        imageCoverage: { withImages: 5, missingImages: 0, deadUrls: 0 },
         errors: [],
         durationMs: 800,
       },
@@ -79,6 +81,7 @@ describe("GET /api/cron/backfill-images", () => {
         source: "AutoScout24",
         discovered: 3,
         backfilled: 3,
+        imageCoverage: { withImages: 3, missingImages: 0, deadUrls: 0 },
         errors: [],
         durationMs: 600,
       },
@@ -86,6 +89,7 @@ describe("GET /api/cron/backfill-images", () => {
         source: "AutoTrader",
         discovered: 4,
         backfilled: 4,
+        imageCoverage: { withImages: 4, missingImages: 0, deadUrls: 0 },
         errors: [],
         durationMs: 700,
       },
@@ -368,7 +372,7 @@ describe("GET /api/cron/backfill-images", () => {
         discovered: 4,
         backfilled: 4,
         errors: [],
-        durationMs: 700,
+        durationMs: 400,
       });
 
     const request = new Request("http://localhost:3000/api/cron/backfill-images", {

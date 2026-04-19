@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>MonzaHaus — 21s</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #0E0A0C;
+      font-family: 'Karla', sans-serif;
+      color: #E8E2DE;
+    }
+    .scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div
+    id="root"
+    data-composition-id="root"
+    data-start="0"
+    data-duration="21"
+    data-width="1080"
+    data-height="1920"
+  >
+
+    <!-- Scene 1: Hook (0.0 – 2.2s) -->
+    <div
+      class="scene"
+      data-composition-id="cold-open"
+      data-composition-src="compositions/cold-open.html"
+      data-start="0"
+      data-duration="2.2"
+      data-track-index="1"
+      data-width="1080"
+      data-height="1920"
+    ></div>
+
+    <!-- Scene 2: Lineage, 8 families (2.2 – 8.7s) -->
+    <div
+      class="scene"
+      data-composition-id="lineage"
+      data-composition-src="compositions/lineage.html"
+      data-start="2.2"
+      data-duration="6.5"
+      data-track-index="1"
+      data-width="1080"
+      data-height="1920"
+    ></div>
+
+    <!-- Scene 3: Markets, 6 cards (8.7 – 13.7s) -->
+    <div
+      class="scene"
+      data-composition-id="continents"
+      data-composition-src="compositions/continents.html"
+      data-start="8.7"
+      data-duration="5.0"
+      data-track-index="1"
+      data-width="1080"
+      data-height="1920"
+    ></div>
+
+    <!-- Scene 4: Conviction (13.7 – 17.0s) -->
+    <div
+      class="scene"
+      data-composition-id="conviction"
+      data-composition-src="compositions/conviction.html"
+      data-start="13.7"
+      data-duration="3.3"
+      data-track-index="1"
+      data-width="1080"
+      data-height="1920"
+    ></div>
+
+    <!-- Scene 5: Finale (17.0 – 21.0s) -->
+    <div
+      class="scene"
+      data-composition-id="finale"
+      data-composition-src="compositions/finale.html"
+      data-start="17.0"
+      data-duration="4.0"
+      data-track-index="1"
+      data-width="1080"
+      data-height="1920"
+    ></div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const rootTl = gsap.timeline({ paused: true });
+      window.__timelines["root"] = rootTl;
+    </script>
+  </div>
+</body>
+</html>

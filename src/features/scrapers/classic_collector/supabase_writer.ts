@@ -61,7 +61,38 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
     .select("id")
     .limit(1);
 
-  if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
+  const message = error?.message ?? "";
+  const isSourceUrlConflict = /listings_source_url_key|duplicate key value violates unique constraint/i.test(message);
+  if (isSourceUrlConflict) {
+    const byUrl = await client
+      .from("listings")
+      .select("id,images")
+      .eq("source_url", listing.sourceUrl)
+      .limit(1);
+    if (byUrl.error) throw new Error(`Supabase listings source_url lookup failed: ${byUrl.error.message}`);
+    const existing = (byUrl.data as Array<{ id: string; images: string[] | null }> | null)?.[0];
+    if (!existing?.id) throw new Error(`Supabase listings upsert failed: ${message}`);
+
+    const patchedRow = {
+      ...row,
+      images: mergeImages(existing.images, listing.photos),
+      photos_count: mergeImages(existing.images, listing.photos).length,
+    };
+
+    const patched = await client
+      .from("listings")
+      .update(patchedRow)
+      .eq("id", existing.id)
+      .select("id")
+      .limit(1);
+    if (patched.error) throw new Error(`Supabase listings update by source_url failed: ${patched.error.message}`);
+    const patchedId = (patched.data as Array<{ id: string }> | null)?.[0]?.id ?? existing.id;
+    return patchedId;
+  }
+
+  if (error) {
+    throw new Error(`Supabase listings upsert failed: ${message}`);
+  }
   const id = (data as Array<{ id: string }> | null)?.[0]?.id;
   if (id) return id;
 
@@ -76,6 +107,19 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
   const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
   if (!fallback) throw new Error("Supabase listings upsert returned no id");
   return fallback;
+}
+
+function mergeImages(existingImages: string[] | null, nextImages: string[]): string[] {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+
+  for (const image of [...(existingImages ?? []), ...nextImages]) {
+    if (!image || seen.has(image)) continue;
+    seen.add(image);
+    merged.push(image);
+  }
+
+  return merged;
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {

@@ -32,13 +32,14 @@ export async function GET(request: Request) {
   });
 
   try {
-    const MAX_LISTINGS_BY_SOURCE: Record<"BaT" | "BeForward" | "AutoScout24", number> = {
+    const MAX_LISTINGS_BY_SOURCE: Record<"BaT" | "BeForward" | "AutoScout24" | "AutoTrader", number> = {
       BaT: 20,
       BeForward: 60,
       AutoScout24: 20,
+      AutoTrader: 40,
     };
 
-    // Process BaT first (biggest backlog), then BeForward, AutoScout24, then AutoTrader
+    // Process the established backfills first, then AutoTrader.
     const sources = ["BaT", "BeForward", "AutoScout24", "AutoTrader"] as const;
     const results = [];
     let totalBackfilled = 0;
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
 
       const result = await backfillImagesForSource({
         source,
-        maxListings: source === "AutoTrader" ? 40 : MAX_LISTINGS_BY_SOURCE[source as keyof typeof MAX_LISTINGS_BY_SOURCE],
+        maxListings: MAX_LISTINGS_BY_SOURCE[source],
         delayMs: 2000,
         timeBudgetMs: budget,
       });
@@ -67,20 +68,8 @@ export async function GET(request: Request) {
       allErrors.push(...result.errors);
     }
 
-    const partialSuccess = results.some(
-      (result) => result.partialSuccess || result.errors.length > 0,
-    );
-    const success = allErrors.length === 0;
-      const imageCoverageBySource = Object.fromEntries(
-        results.map((result) => [
-          result.source,
-          {
-            withImages: result.imageCoverage?.withImages ?? result.backfilled,
-          missingImages: result.imageCoverage?.missingImages ?? 0,
-          deadUrls: result.imageCoverage?.deadUrls ?? 0,
-        },
-      ]),
-    );
+    const partialSuccess = allErrors.length > 0;
+    const success = !partialSuccess;
 
     await recordScraperRun({
       scraper_name: "backfill-images",
@@ -89,13 +78,22 @@ export async function GET(request: Request) {
       finished_at: new Date().toISOString(),
       success,
       runtime: "vercel_cron",
-        duration_ms: Date.now() - startTime,
-        discovered: totalDiscovered,
-        written: totalBackfilled,
-        errors_count: allErrors.length,
-        image_coverage: imageCoverageBySource,
-        error_messages: allErrors.length > 0 ? allErrors : undefined,
-      });
+      duration_ms: Date.now() - startTime,
+      discovered: totalDiscovered,
+      written: totalBackfilled,
+      errors_count: allErrors.length,
+      image_coverage: Object.fromEntries(
+        results.map((r) => [
+          r.source,
+          {
+            withImages: r.imageCoverage?.withImages ?? 0,
+            missingImages: r.imageCoverage?.missingImages ?? 0,
+            deadUrls: r.imageCoverage?.deadUrls ?? 0,
+          },
+        ])
+      ),
+      error_messages: allErrors.length > 0 ? allErrors : undefined,
+    });
 
     await clearScraperRunActive("backfill-images");
 
@@ -105,7 +103,16 @@ export async function GET(request: Request) {
       runId,
       totalDiscovered,
       totalBackfilled,
-      imageCoverageBySource,
+      imageCoverageBySource: Object.fromEntries(
+        results.map((r) => [
+          r.source,
+          {
+            withImages: r.imageCoverage?.withImages ?? 0,
+            missingImages: r.imageCoverage?.missingImages ?? 0,
+            deadUrls: r.imageCoverage?.deadUrls ?? 0,
+          },
+        ])
+      ),
       results: results.map((r) => ({
         source: r.source,
         discovered: r.discovered,
