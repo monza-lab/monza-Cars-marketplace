@@ -15,7 +15,7 @@ export interface BackfillResult {
 }
 
 export interface BackfillOptions {
-  source: "BaT" | "BeForward" | "AutoScout24" | "all";
+  source: "BaT" | "BeForward" | "AutoScout24" | "AutoTrader" | "all";
   maxListings?: number;
   delayMs?: number;
   timeBudgetMs?: number;
@@ -69,7 +69,9 @@ export async function backfillImagesForSource(
     .from("listings")
     .select("id,source,source_url")
     .eq("status", "active")
-    .or("images.is.null,images.eq.{},photos_count.lt.2");
+    .or(opts.source === "AutoTrader"
+      ? "images.is.null,images.eq.{},photos_count.lt.10"
+      : "images.is.null,images.eq.{},photos_count.lt.2");
 
   if (opts.source !== "all") {
     query = query.eq("source", opts.source);
@@ -215,6 +217,9 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
   const { fetchBaTImages } = await import(
     "@/features/scrapers/auctions/bringATrailerImages"
   );
+  const { fetchAutoTraderDetail } = await import(
+    "@/features/scrapers/autotrader_collector/detail"
+  );
 
   // AutoScout24: use parseDetailHtml (cheerio-only export) with a simple fetch
   const fetchAutoScout24Images: ImageFetcher = async (url) => {
@@ -223,6 +228,11 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
     );
     const html = await fetchHtml(url);
     const detail = parseDetailHtml(html);
+    return detail.images ?? [];
+  };
+
+  const fetchAutoTraderImages: ImageFetcher = async (url) => {
+    const detail = await fetchAutoTraderDetail(url);
     return detail.images ?? [];
   };
 
@@ -239,9 +249,9 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
   return {
     BaT: fetchBaTImages,
     AutoScout24: fetchAutoScout24Images,
+    AutoTrader: fetchAutoTraderImages,
     BeForward: fetchBeForwardImages,
     // ClassicCom requires Playwright — already handled by its own backfill
     // module in classic_collector/backfill.ts (runs as part of /api/cron/classic)
-    // AutoTrader has very few missing (14) — not worth adding
   };
 }

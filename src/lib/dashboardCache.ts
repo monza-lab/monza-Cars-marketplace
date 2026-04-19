@@ -254,7 +254,19 @@ export async function getCachedDashboardData(): Promise<DashboardData> {
  * data (rather than waiting up to 5 minutes).
  */
 export function invalidateDashboardCache(): void {
-  revalidateTag("listings");
+  try {
+    revalidateTag("listings");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      message.includes("static generation store missing") ||
+      message.includes("revalidateTag")
+    ) {
+      console.warn("[dashboardCache] Skipping cache invalidation outside Next runtime");
+      return;
+    }
+    throw error;
+  }
 }
 
 // Alias for tests — calls the uncached impl directly.

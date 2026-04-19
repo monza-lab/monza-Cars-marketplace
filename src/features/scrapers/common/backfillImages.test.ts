@@ -41,6 +41,9 @@ vi.mock("@/features/scrapers/auctions/bringATrailerImages", () => ({
 vi.mock("@/features/scrapers/autoscout24_collector/detail", () => ({
   parseDetailHtml: vi.fn(),
 }));
+vi.mock("@/features/scrapers/autotrader_collector/detail", () => ({
+  fetchAutoTraderDetail: vi.fn(),
+}));
 vi.mock("@/features/scrapers/beforward_porsche_collector/detail", () => ({
   parseDetailHtml: vi.fn(),
 }));
@@ -144,5 +147,18 @@ describe("backfillImages module", () => {
         options: { ascending: true },
       },
     ]);
+  });
+
+  it("uses a looser image retry threshold for AutoTrader", async () => {
+    orCalls.length = 0;
+    mockLimit.mockResolvedValueOnce({ data: [], error: null });
+    const { backfillImagesForSource } = await import("./backfillImages");
+    await backfillImagesForSource({
+      source: "AutoTrader",
+      maxListings: 1,
+      delayMs: 0,
+      timeBudgetMs: 5000,
+    });
+    expect(orCalls).toContain("images.is.null,images.eq.{},photos_count.lt.10");
   });
 });

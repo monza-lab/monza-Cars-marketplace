@@ -59,7 +59,7 @@ describe("GET /api/cron/backfill-images", () => {
     expect(data.success).toBe(false);
   });
 
-  it("processes all three sources and records success", async () => {
+  it("processes all four sources and records success", async () => {
     const mockResults = [
       {
         source: "BaT",
@@ -82,11 +82,19 @@ describe("GET /api/cron/backfill-images", () => {
         errors: [],
         durationMs: 600,
       },
+      {
+        source: "AutoTrader",
+        discovered: 4,
+        backfilled: 4,
+        errors: [],
+        durationMs: 700,
+      },
     ];
 
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[0]);
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[1]);
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[2]);
+    vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[3]);
 
     const request = new Request("http://localhost:3000/api/cron/backfill-images", {
       method: "GET",
@@ -101,19 +109,20 @@ describe("GET /api/cron/backfill-images", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.partialSuccess).toBe(false);
-    expect(data.totalDiscovered).toBe(18);
-    expect(data.totalBackfilled).toBe(16);
+    expect(data.totalDiscovered).toBe(22);
+    expect(data.totalBackfilled).toBe(20);
     expect(data.imageCoverageBySource).toEqual(
       expect.objectContaining({
         BaT: expect.objectContaining({ withImages: 8, missingImages: 0, deadUrls: 0 }),
         BeForward: expect.objectContaining({ withImages: 5, missingImages: 0, deadUrls: 0 }),
         AutoScout24: expect.objectContaining({ withImages: 3, missingImages: 0, deadUrls: 0 }),
+        AutoTrader: expect.objectContaining({ withImages: 4, missingImages: 0, deadUrls: 0 }),
       })
     );
-    expect((data.results as unknown[])).toHaveLength(3);
+    expect((data.results as unknown[])).toHaveLength(4);
 
     // Verify backfillImagesForSource was called for each source
-    expect(backfillImagesForSource).toHaveBeenCalledTimes(3);
+    expect(backfillImagesForSource).toHaveBeenCalledTimes(4);
     expect(backfillImagesForSource).toHaveBeenNthCalledWith(1, {
       source: "BaT",
       maxListings: 20,
@@ -132,6 +141,12 @@ describe("GET /api/cron/backfill-images", () => {
       delayMs: 2000,
       timeBudgetMs: expect.any(Number),
     });
+    expect(backfillImagesForSource).toHaveBeenNthCalledWith(4, {
+      source: "AutoTrader",
+      maxListings: 40,
+      delayMs: 2000,
+      timeBudgetMs: expect.any(Number),
+    });
 
     // Verify monitoring was called
     expect(markScraperRunStarted).toHaveBeenCalledWith(
@@ -145,16 +160,21 @@ describe("GET /api/cron/backfill-images", () => {
       expect.objectContaining({
         scraper_name: "backfill-images",
         success: true,
-        discovered: 18,
-        written: 16,
+        discovered: 22,
+        written: 20,
         errors_count: 0,
         image_coverage: expect.objectContaining({
-          BaT: expect.objectContaining({
-            withImages: 8,
-            missingImages: 0,
-            deadUrls: 0,
+            BaT: expect.objectContaining({
+              withImages: 8,
+              missingImages: 0,
+              deadUrls: 0,
+            }),
+            AutoTrader: expect.objectContaining({
+              withImages: 4,
+              missingImages: 0,
+              deadUrls: 0,
+            }),
           }),
-        }),
       })
     );
 
@@ -214,11 +234,19 @@ describe("GET /api/cron/backfill-images", () => {
         errors: [],
         durationMs: 600,
       },
+      {
+        source: "AutoTrader",
+        discovered: 4,
+        backfilled: 4,
+        errors: [],
+        durationMs: 700,
+      },
     ];
 
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[0]);
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[1]);
     vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[2]);
+    vi.mocked(backfillImagesForSource).mockResolvedValueOnce(mockResults[3]);
 
     const request = new Request("http://localhost:3000/api/cron/backfill-images", {
       method: "GET",
@@ -233,8 +261,8 @@ describe("GET /api/cron/backfill-images", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(false);
     expect(data.partialSuccess).toBe(true);
-    expect(data.totalDiscovered).toBe(18);
-    expect(data.totalBackfilled).toBe(15);
+    expect(data.totalDiscovered).toBe(22);
+    expect(data.totalBackfilled).toBe(19);
 
     // Verify partial results are in response
     const results = data.results as Array<{
@@ -243,14 +271,15 @@ describe("GET /api/cron/backfill-images", () => {
     expect(results[0].errors).toEqual(["Failed to process listing 123"]);
     expect(results[1].errors).toEqual(["Connection timeout for listing 456"]);
     expect(results[2].errors).toEqual([]);
+    expect(results[3].errors).toEqual([]);
 
     // Verify errors were recorded
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({
         scraper_name: "backfill-images",
         success: false,
-        discovered: 18,
-        written: 15,
+        discovered: 22,
+        written: 19,
         errors_count: 2,
         error_messages: [
           "Failed to process listing 123",
@@ -261,7 +290,7 @@ describe("GET /api/cron/backfill-images", () => {
   });
 
   it("respects time budget and stops processing if exceeded", async () => {
-    // All three sources process without hitting time limit
+    // All four sources process without hitting time limit
     vi.mocked(backfillImagesForSource)
       .mockResolvedValueOnce({
         source: "BaT",
@@ -283,6 +312,13 @@ describe("GET /api/cron/backfill-images", () => {
         backfilled: 3,
         errors: [],
         durationMs: 50000,
+      })
+      .mockResolvedValueOnce({
+        source: "AutoTrader",
+        discovered: 4,
+        backfilled: 4,
+        errors: [],
+        durationMs: 50000,
       });
 
     const request = new Request("http://localhost:3000/api/cron/backfill-images", {
@@ -300,8 +336,8 @@ describe("GET /api/cron/backfill-images", () => {
     expect(data.partialSuccess).toBe(false);
 
     // Should have processed all sources
-    expect(backfillImagesForSource).toHaveBeenCalledTimes(3);
-    expect((data.results as unknown[])).toHaveLength(3);
+    expect(backfillImagesForSource).toHaveBeenCalledTimes(4);
+    expect((data.results as unknown[])).toHaveLength(4);
   });
 
   it("includes runId in success response", async () => {
@@ -326,6 +362,13 @@ describe("GET /api/cron/backfill-images", () => {
         backfilled: 3,
         errors: [],
         durationMs: 600,
+      })
+      .mockResolvedValueOnce({
+        source: "AutoTrader",
+        discovered: 4,
+        backfilled: 4,
+        errors: [],
+        durationMs: 700,
       });
 
     const request = new Request("http://localhost:3000/api/cron/backfill-images", {

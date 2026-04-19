@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { runCollector } from "@/features/scrapers/autotrader_collector/collector";
 import { refreshActiveListings } from "@/features/scrapers/autotrader_collector/supabase_writer";
+import { GET as enrichAutoTrader } from "@/app/api/cron/enrich-autotrader/route";
+import { backfillImagesForSource } from "@/features/scrapers/common/backfillImages";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -43,6 +45,27 @@ export async function GET(request: Request) {
       dryRun: false,
     });
 
+    const backfillResult = await backfillImagesForSource({
+      source: "AutoTrader",
+      maxListings: 40,
+      delayMs: 1000,
+      timeBudgetMs: 90_000,
+    });
+
+    const enrichResponse = await enrichAutoTrader(
+      new Request("http://localhost/api/cron/enrich-autotrader", {
+        method: "GET",
+        headers: { authorization: authHeader ?? "" },
+      })
+    );
+    const enrichText = await enrichResponse.text();
+    let enrichment: Record<string, unknown> | null = null;
+    try {
+      enrichment = JSON.parse(enrichText) as Record<string, unknown>;
+    } catch {
+      enrichment = { status: enrichResponse.status, body: enrichText.slice(0, 1000) };
+    }
+
     const totalWritten = Object.values(result.sourceCounts).reduce(
       (sum, c) => sum + c.written,
       0
@@ -65,11 +88,11 @@ export async function GET(request: Request) {
         duration_ms: Date.now() - startTime,
         discovered: totalDiscovered,
         written: totalWritten,
-        errors_count: 1,
+        errors_count: 1 + backfillResult.errors.length,
         refresh_checked: refreshResult.checked,
         refresh_updated: refreshResult.updated,
         source_counts: result.sourceCounts,
-        error_messages: [zeroOutputError],
+        error_messages: [zeroOutputError, ...backfillResult.errors],
       });
 
       await clearScraperRunActive("autotrader");
@@ -78,10 +101,18 @@ export async function GET(request: Request) {
         {
           success: false,
           error: zeroOutputError,
+          enrichment,
           refresh: {
             checked: refreshResult.checked,
             updated: refreshResult.updated,
             errors: refreshResult.errors,
+          },
+          backfill: {
+            source: backfillResult.source,
+            discovered: backfillResult.discovered,
+            backfilled: backfillResult.backfilled,
+            errors: backfillResult.errors,
+            durationMs: backfillResult.durationMs,
           },
           discovered: totalDiscovered,
           written: totalWritten,
@@ -103,11 +134,13 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startTime,
       discovered: totalDiscovered,
       written: totalWritten,
-      errors_count: result.errors.length,
+      errors_count: result.errors.length + backfillResult.errors.length,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
       source_counts: result.sourceCounts,
-      error_messages: result.errors.length > 0 ? result.errors : undefined,
+      error_messages: result.errors.length > 0 || backfillResult.errors.length > 0
+        ? [...result.errors, ...backfillResult.errors]
+        : undefined,
     });
 
     await clearScraperRunActive("autotrader");
@@ -116,16 +149,23 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       runId: result.runId,
+      enrichment,
       refresh: {
         checked: refreshResult.checked,
         updated: refreshResult.updated,
         errors: refreshResult.errors,
       },
+      backfill: {
+        source: backfillResult.source,
+        discovered: backfillResult.discovered,
+        backfilled: backfillResult.backfilled,
+        errors: backfillResult.errors,
+        durationMs: backfillResult.durationMs,
+      },
       discovered: totalDiscovered,
       written: totalWritten,
       sourceCounts: result.sourceCounts,
       errors: result.errors,
-      backfill: { skipped: true, reason: "Not implemented for AutoTrader" },
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

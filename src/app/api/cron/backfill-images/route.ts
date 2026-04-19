@@ -38,8 +38,8 @@ export async function GET(request: Request) {
       AutoScout24: 20,
     };
 
-    // Process BaT first (biggest backlog), then BeForward, then AutoScout24
-    const sources = ["BaT", "BeForward", "AutoScout24"] as const;
+    // Process BaT first (biggest backlog), then BeForward, AutoScout24, then AutoTrader
+    const sources = ["BaT", "BeForward", "AutoScout24", "AutoTrader"] as const;
     const results = [];
     let totalBackfilled = 0;
     let totalDiscovered = 0;
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
 
       const result = await backfillImagesForSource({
         source,
-        maxListings: MAX_LISTINGS_BY_SOURCE[source],
+        maxListings: source === "AutoTrader" ? 40 : MAX_LISTINGS_BY_SOURCE[source as keyof typeof MAX_LISTINGS_BY_SOURCE],
         delayMs: 2000,
         timeBudgetMs: budget,
       });
@@ -67,27 +67,45 @@ export async function GET(request: Request) {
       allErrors.push(...result.errors);
     }
 
+    const partialSuccess = results.some(
+      (result) => result.partialSuccess || result.errors.length > 0,
+    );
+    const success = allErrors.length === 0;
+      const imageCoverageBySource = Object.fromEntries(
+        results.map((result) => [
+          result.source,
+          {
+            withImages: result.imageCoverage?.withImages ?? result.backfilled,
+          missingImages: result.imageCoverage?.missingImages ?? 0,
+          deadUrls: result.imageCoverage?.deadUrls ?? 0,
+        },
+      ]),
+    );
+
     await recordScraperRun({
       scraper_name: "backfill-images",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
-      duration_ms: Date.now() - startTime,
-      discovered: totalDiscovered,
-      written: totalBackfilled,
-      errors_count: allErrors.length,
-      error_messages: allErrors.length > 0 ? allErrors : undefined,
-    });
+        duration_ms: Date.now() - startTime,
+        discovered: totalDiscovered,
+        written: totalBackfilled,
+        errors_count: allErrors.length,
+        image_coverage: imageCoverageBySource,
+        error_messages: allErrors.length > 0 ? allErrors : undefined,
+      });
 
     await clearScraperRunActive("backfill-images");
 
     return NextResponse.json({
-      success: true,
+      success,
+      partialSuccess,
       runId,
       totalDiscovered,
       totalBackfilled,
+      imageCoverageBySource,
       results: results.map((r) => ({
         source: r.source,
         discovered: r.discovered,

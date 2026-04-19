@@ -7,7 +7,7 @@ const ADMIN_EMAILS = ["caposk8@hotmail.com"];
 export const dynamic = "force-dynamic";
 
 const FIELDS = [
-  "vin", "trim", "engine", "transmission", "mileage_km",
+  "vin", "trim", "engine", "transmission", "mileage",
   "color_exterior", "color_interior", "body_style",
 ] as const;
 
@@ -29,7 +29,7 @@ export async function GET() {
   // migrate to a Supabase RPC function (see spec Section 6A).
   const { data: rows, error } = await supabase
     .from("listings")
-    .select("source,vin,trim,engine,transmission,mileage_km,color_exterior,color_interior,body_style,current_bid,images")
+    .select("source,vin,trim,engine,transmission,mileage,mileage_km,color_exterior,color_interior,body_style,current_bid,images")
     .eq("status", "active");
 
   if (error) {
@@ -60,6 +60,12 @@ export async function GET() {
     bySource[src].total++;
 
     for (const f of FIELDS) {
+      if (f === "mileage") {
+        if ((row.mileage != null && row.mileage !== "") || (row.mileage_km != null && row.mileage_km !== "")) {
+          bySource[src].fields[f]++;
+        }
+        continue;
+      }
       if (row[f] != null && row[f] !== "") bySource[src].fields[f]++;
     }
     if (row.current_bid != null && row.current_bid > 0) bySource[src].fields.price++;

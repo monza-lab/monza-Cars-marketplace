@@ -77,7 +77,7 @@ export async function recordScraperRun(record: ScraperRunRecord): Promise<void> 
     const supabase = getMonitoringClient();
     if (!supabase) return;
 
-    const { error } = await supabase.from('scraper_runs').insert({
+    const payload = {
       scraper_name: record.scraper_name,
       run_id: record.run_id,
       started_at: record.started_at,
@@ -99,7 +99,19 @@ export async function recordScraperRun(record: ScraperRunRecord): Promise<void> 
       image_coverage: record.image_coverage ?? null,
       source_counts: record.source_counts ?? null,
       error_messages: record.error_messages ?? null,
-    });
+    };
+
+    let { error } = await supabase.from('scraper_runs').insert(payload);
+
+    if (
+      error &&
+      /image_coverage/i.test(error.message) &&
+      /does not exist|schema cache/i.test(error.message)
+    ) {
+      const { image_coverage: _ignored, ...fallbackPayload } = payload;
+      const retry = await supabase.from('scraper_runs').insert(fallbackPayload);
+      error = retry.error;
+    }
 
     if (error) {
       console.error('[scraper-monitoring] Failed to record run:', error.message);
