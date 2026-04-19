@@ -251,11 +251,11 @@ function searchItems(query: string): SearchItem[] {
 const SEARCH_TYPE_ICON = { family: Award, series: Calendar, variant: ShieldCheck, link: LinkIcon } as const
 
 const REGIONS = [
-  { id: "all", label: "All", flag: "\u{1F30D}" },
-  { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
-  { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
-  { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
-  { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+  { id: "all", label: "ALL" },
+  { id: "US", label: "US" },
+  { id: "UK", label: "UK" },
+  { id: "EU", label: "EU" },
+  { id: "JP", label: "JP" },
 ];
 
 // Menu links - labels will be translated in the component
@@ -1152,14 +1152,13 @@ export function Header() {
                   )}
                   <button
                     onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.1em] transition-all ${
                       isActive
                         ? "bg-primary/15 text-primary border border-primary/25"
-                        : "text-muted-foreground hover:text-muted-foreground hover:bg-foreground/3"
+                        : "text-muted-foreground hover:text-foreground hover:bg-foreground/3"
                     }`}
                   >
-                    <span className="text-[12px] leading-none">{region.flag}</span>
-                    <span>{region.label}</span>
+                    {region.label}
                   </button>
                 </div>
               )
