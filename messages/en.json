@@ -744,10 +744,10 @@
       "setAlerts": "Set Alerts"
     },
     "responses": {
-      "singleCar": "**{title}**\n\n{thesis}\n\n**Fair price:** {fairLow} — {fairHigh}\n\n**Investment:** Grade {grade} | {trend}",
+      "singleCar": "**{title}**\n\n{thesis}\n\n**Fair price:** {fairLow} — {fairHigh}\n\n**Median:** {median} | {comparables} comparables",
       "multipleFound": "Found {count} vehicles:",
       "noMatch": "**Monza Lab Collection**\n\nWe have {totalCars} curated investment vehicles.\n\n**Average Appreciation:** +{avgAppreciation}% per year\n\nTry searching brands like \"Porsche\" or \"Ferrari\" — or a specific model.",
-      "currentCar": "**{title}**\n\n**Investment Analysis:**\n• Grade: **{grade}**\n• Trend: **{trend}**\n\n**Fair Value by Region:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**Thesis:**\n{thesis}",
+      "currentCar": "**{title}**\n\n**Market Analysis:**\n• Median: {median} | {comparables} comparables\n• Trend: **{trend}**\n\n**Fair Value by Region:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**Thesis:**\n{thesis}",
       "currentCarFallback": "**{title}**\n\nCurrent price: {price}\n\nFor a complete analysis, explore the Investment and Due Diligence tabs above.",
       "noMatchForQuery": "I couldn't find specific info for \"{query}\".\n\nWant me to analyze the **{title}** you're viewing? I can estimate value, investment outlook, or history."
     }
@@ -820,14 +820,6 @@
     "jdm": "JDM",
     "preWar": "Pre-War",
     "americanMuscle": "American Muscle"
-  },
-  "grades": {
-    "aaa": "AAA",
-    "aa": "AA",
-    "a": "A",
-    "bPlus": "B+",
-    "b": "B",
-    "c": "C"
   },
   "valuation": {
     "marketValue": "Market value",
@@ -1033,11 +1025,11 @@
       "noLiveListings": "No live listings right now",
       "brandsCount": "{count, plural, one {# brand} other {# brands}}"
     },
+    "featuredBrands": "Featured Brands",
     "brandNav": {
       "title": "Explore Brands",
       "manufacturers": "{count, plural, one {# manufacturer} other {# manufacturers}}",
       "totalCars": "Total Cars",
-      "aaaBrands": "AAA Brands",
       "carsCount": "{count, plural, one {# car} other {# cars}}"
     },
     "brandCard": {
@@ -1088,7 +1080,6 @@
       "timeHour": "h",
       "timeMin": "m",
       "metrics": {
-        "grade": "Grade",
         "trend": "Trend",
         "fairValue": "Fair Value",
         "category": "Category",
@@ -1100,13 +1091,12 @@
       "fiveYearTrend": "5-Year Trend",
       "collectionStats": "Collection Stats",
       "vehicles": "Vehicles",
-      "topGrade": "Top Grade",
       "minPrice": "Min Price",
       "maxPrice": "Max Price",
       "categories": "Categories",
       "similarBrands": "Similar Brands",
       "explore": "Explore {brand}",
-      "grade": "Grade",
+      "medianSold": "Median Sold",
       "valuationByMarket": "Valuation by Market",
       "yourMarket": "YOUR MARKET",
       "fiveYearReturnComparison": "5-Year Return Comparison",
@@ -1181,8 +1171,7 @@
       "category": "Category",
       "regionalPricing": "Fair Value by Region",
       "regionalNote": "Fair value ranges based on recent sales data and regional market conditions.",
-      "avgPrice": "Avg Price",
-      "grade": "Grade"
+      "avgPrice": "Avg Price"
     },
     "results": {
       "modelsTitle": "{make} Models",
@@ -1285,15 +1274,63 @@
   "seo": {
     "make": {
       "title": "{make} Collection — Investment Grade Collector Cars | MonzaHaus",
-      "description": "Explore investment-grade {make} vehicles with live and historical collector-market insights, auction data, and AI-powered market analysis."
+      "description": "Explore collector-grade {make} vehicles with live and historical collector-market insights, auction data, and AI-powered market analysis."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Auction Results, Market Values & Investment Analysis | MonzaHaus",
-      "description": "Live and historical auction data for {make} {series}. Track market trends, compare specs, and discover investment-grade {series} vehicles."
+      "description": "Live and historical auction data for {make} {series}. Track market trends, compare specs, and discover collector-grade {series} vehicles."
     },
     "car": {
       "titleTemplate": "{year} {make} {model} | MonzaHaus",
       "descriptionFallback": "Collector-grade {year} {make} {model}. Market analysis, comparables, and investment thesis."
+    }
+  },
+  "report": {
+    "hausReport": {
+      "title": "Haus Report",
+      "available": "Haus Report available",
+      "teaserBody": "Specific-car fair value, service history analysis, and the questions to ask before you buy. Unlock for 1 credit.",
+      "ctaGenerate": "Generate Haus Report",
+      "ctaView": "View Haus Report",
+      "cached": "Already generated — cached"
+    },
+    "fairValue": {
+      "specificCarTitle": "Specific-Car Fair Value",
+      "baselineSubtitle": "Based on {count} comparable sales",
+      "modifiersTitle": "Modifiers applied to this car",
+      "noModifiers": "No adjustments applied — this car sits at the comparable baseline"
+    },
+    "signalsDetected": {
+      "title": "Signals Detected",
+      "empty": "No signals extracted — see missing signals below"
+    },
+    "signalsMissing": {
+      "title": "Data we couldn't verify",
+      "subtitle": "Ask the seller about these before you buy",
+      "empty": "All high-value signals were detected in this listing"
+    },
+    "questions": {
+      "ask_for_service_records": "Ask the seller for documented service history (dates, mileage, and stamps).",
+      "remaining_factory_warranty": "Confirm any remaining factory or extended warranty coverage.",
+      "accident_disclosure_in_writing": "Request a written statement confirming no prior accidents.",
+      "share_carfax_report": "Request a shareable Carfax or Autocheck report link.",
+      "is_paint_factory_or_pts": "Confirm whether the paint is a factory color or Paint-to-Sample (code).",
+      "how_many_previous_owners": "Confirm the number of previous owners and whether a one-owner claim is verifiable.",
+      "confirm_original_paint": "Request confirmation and paint meter readings at the PPI."
+    },
+    "modifiers": {
+      "mileage_delta": { "name": "Mileage vs. comparables", "description": "Adjustment based on mileage relative to comparable sales" },
+      "transmission_manual": { "name": "Transmission preference", "description": "Manual vs. PDK premium in this series" },
+      "year_within_generation": { "name": "Model year premium", "description": "Position within the generation's production run" },
+      "paint_to_sample": { "name": "Paint-to-Sample", "description": "Factory special-order paint color" },
+      "service_records_complete": { "name": "Complete service records", "description": "Documented service history with stamps" },
+      "low_previous_owners": { "name": "Ownership history", "description": "Low number of previous owners" },
+      "original_paint": { "name": "Original paint", "description": "No repaint disclosed, original factory finish" },
+      "accident_disclosed": { "name": "Accident disclosure", "description": "Prior accident history disclosed by seller" },
+      "modifications_disclosed": { "name": "Aftermarket modifications", "description": "Non-factory parts or modifications disclosed" },
+      "documentation_provided": { "name": "Documentation provided", "description": "Window sticker, PPI, or Carfax available" },
+      "warranty_remaining": { "name": "Warranty remaining", "description": "Factory or CPO warranty still active" },
+      "seller_tier_specialist": { "name": "Porsche specialist seller", "description": "Sold by a curated specialist dealer" }
     }
   }
 }

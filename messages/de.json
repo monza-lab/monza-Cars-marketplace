@@ -744,10 +744,10 @@
       "setAlerts": "Alarme setzen"
     },
     "responses": {
-      "singleCar": "**{title}**\n\n{thesis}\n\n**Fairer Preis:** {fairLow} — {fairHigh}\n\n**Investment:** Bewertung {grade} | {trend}",
+      "singleCar": "**{title}**\n\n{thesis}\n\n**Fairer Preis:** {fairLow} — {fairHigh}\n\n**Median:** {median} | {comparables} Vergleichbare",
       "multipleFound": "{count} Fahrzeuge gefunden:",
       "noMatch": "**Monza Lab Collection**\n\nWir haben {totalCars} kuratierte Investment-Fahrzeuge.\n\n**Durchschnittliche Wertentwicklung:** +{avgAppreciation}% pro Jahr\n\nVersuche Marken wie \"Porsche\" oder \"Ferrari\" — oder ein konkretes Modell.",
-      "currentCar": "**{title}**\n\n**Investment-Analyse:**\n• Bewertung: **{grade}**\n• Trend: **{trend}**\n\n**Fair Value nach Region:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**These:**\n{thesis}",
+      "currentCar": "**{title}**\n\n**Marktanalyse:**\n• Median: {median} | {comparables} Vergleichbare\n• Trend: **{trend}**\n\n**Fair Value nach Region:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**These:**\n{thesis}",
       "currentCarFallback": "**{title}**\n\nAktueller Preis: {price}\n\nFür eine vollständige Analyse, nutze oben die Tabs Investment und Due Diligence.",
       "noMatchForQuery": "Ich konnte keine spezifischen Infos zu \"{query}\" finden.\n\nSoll ich das **{title}** analysieren, das du gerade ansiehst? Ich kann Wert, Investment-Ausblick oder Historie einschätzen."
     }
@@ -819,14 +819,6 @@
     "jdm": "JDM",
     "preWar": "Vorkrieg",
     "americanMuscle": "American Muscle"
-  },
-  "grades": {
-    "aaa": "AAA",
-    "aa": "AA",
-    "a": "A",
-    "bPlus": "B+",
-    "b": "B",
-    "c": "C"
   },
   "valuation": {
     "marketValue": "Marktwert",
@@ -1032,11 +1024,11 @@
       "noLiveAuctions": "Aktuell keine Live-Auktionen",
       "brandsCount": "{count, plural, one {# Marke} other {# Marken}}"
     },
+    "featuredBrands": "Ausgewählte Marken",
     "brandNav": {
       "title": "Marken entdecken",
       "manufacturers": "{count, plural, one {# Hersteller} other {# Hersteller}}",
       "totalCars": "Fahrzeuge gesamt",
-      "aaaBrands": "AAA-Marken",
       "carsCount": "{count, plural, one {# Auto} other {# Autos}}"
     },
     "brandCard": {
@@ -1087,7 +1079,6 @@
       "timeHour": "Std",
       "timeMin": "Min",
       "metrics": {
-        "grade": "Bewertung",
         "trend": "Trend",
         "fairValue": "Fair Value",
         "category": "Kategorie",
@@ -1099,13 +1090,12 @@
       "fiveYearTrend": "5-Jahres-Trend",
       "collectionStats": "Kollektion-Statistiken",
       "vehicles": "Fahrzeuge",
-      "topGrade": "Top-Bewertung",
       "minPrice": "Min. Preis",
       "maxPrice": "Max. Preis",
       "categories": "Kategorien",
       "similarBrands": "Ähnliche Marken",
       "explore": "{brand} entdecken",
-      "grade": "Bewertung",
+      "medianSold": "Median Verkaufspreis",
       "valuationByMarket": "Bewertung nach Markt",
       "yourMarket": "IHR MARKT",
       "fiveYearReturnComparison": "5-Jahres-Rendite im Vergleich",
@@ -1180,8 +1170,7 @@
       "category": "Kategorie",
       "regionalPricing": "Marktwert nach Region",
       "regionalNote": "Marktwertbereiche basierend auf aktuellen Auktionsergebnissen und regionalen Marktbedingungen.",
-      "avgPrice": "Ø Preis",
-      "grade": "Bewertung"
+      "avgPrice": "Ø Preis"
     },
     "results": {
       "modelsTitle": "{make}-Modelle",
@@ -1283,16 +1272,64 @@
   },
   "seo": {
     "make": {
-      "title": "{make} Kollektion — Sammlerfahrzeuge in Investmentqualität | MonzaHaus",
-      "description": "Entdecken Sie {make}-Fahrzeuge in Investmentqualität mit Live-Marktdaten, Auktionsergebnissen und KI-gestützter Marktanalyse."
+      "title": "{make} Kollektion — Sammler-Fahrzeuge | MonzaHaus",
+      "description": "Entdecken Sie {make}-Sammler-Fahrzeuge mit Live-Marktdaten, Auktionsergebnissen und KI-gestützter Marktanalyse."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Auktionsergebnisse, Marktwerte und Investmentanalyse | MonzaHaus",
-      "description": "Live- und historische Auktionsdaten für {make} {series}. Markttrends, Spezifikationen und Sammlerfahrzeuge in Investmentqualität."
+      "description": "Live- und historische Auktionsdaten für {make} {series}. Markttrends, Spezifikationen und Sammler-Fahrzeuge."
     },
     "car": {
       "titleTemplate": "{year} {make} {model} | MonzaHaus",
       "descriptionFallback": "{year} {make} {model} — Sammlerqualität. Marktanalyse, Vergleichswerte und Investmentthese."
+    }
+  },
+  "report": {
+    "hausReport": {
+      "title": "Haus Report",
+      "available": "Haus Report verfügbar",
+      "teaserBody": "Fahrzeugspezifischer fairer Wert, Analyse der Servicehistorie und die Fragen, die Sie vor dem Kauf stellen sollten. Für 1 Credit freischalten.",
+      "ctaGenerate": "Haus Report erstellen",
+      "ctaView": "Haus Report ansehen",
+      "cached": "Bereits erstellt — im Cache"
+    },
+    "fairValue": {
+      "specificCarTitle": "Fahrzeugspezifischer Fair Value",
+      "baselineSubtitle": "Basierend auf {count} vergleichbaren Verkäufen",
+      "modifiersTitle": "Auf dieses Fahrzeug angewandte Modifikatoren",
+      "noModifiers": "Keine Anpassungen — dieses Fahrzeug liegt auf der Vergleichs-Baseline"
+    },
+    "signalsDetected": {
+      "title": "Erkannte Signale",
+      "empty": "Keine Signale extrahiert — siehe fehlende Signale unten"
+    },
+    "signalsMissing": {
+      "title": "Daten, die wir nicht verifizieren konnten",
+      "subtitle": "Fragen Sie den Verkäufer vor dem Kauf danach",
+      "empty": "Alle wichtigen Signale wurden in diesem Inserat erkannt"
+    },
+    "questions": {
+      "ask_for_service_records": "Bitten Sie den Verkäufer um dokumentierte Servicehistorie (Daten, Laufleistung und Stempel).",
+      "remaining_factory_warranty": "Bestätigen Sie eine verbleibende Werks- oder verlängerte Garantie.",
+      "accident_disclosure_in_writing": "Fordern Sie eine schriftliche Bestätigung, dass keine Vorunfälle vorliegen.",
+      "share_carfax_report": "Bitten Sie um einen teilbaren Carfax- oder Autocheck-Link.",
+      "is_paint_factory_or_pts": "Klären Sie, ob die Lackierung eine Werksfarbe oder Paint-to-Sample (Code) ist.",
+      "how_many_previous_owners": "Bestätigen Sie die Anzahl der Vorbesitzer und ob ein Ein-Besitzer-Nachweis verifizierbar ist.",
+      "confirm_original_paint": "Bitten Sie um Bestätigung und Lackdicken-Messungen bei der PPI."
+    },
+    "modifiers": {
+      "mileage_delta": { "name": "Laufleistung vs. Vergleichbare", "description": "Anpassung basierend auf Laufleistung im Vergleich zu ähnlichen Verkäufen" },
+      "transmission_manual": { "name": "Getriebe-Präferenz", "description": "Aufschlag für Schaltgetriebe vs. PDK in dieser Serie" },
+      "year_within_generation": { "name": "Modelljahr-Aufschlag", "description": "Position innerhalb des Produktionszeitraums der Generation" },
+      "paint_to_sample": { "name": "Paint-to-Sample", "description": "Werksseitige Sonderfarbe auf Bestellung" },
+      "service_records_complete": { "name": "Vollständige Servicehistorie", "description": "Dokumentierte Servicehistorie mit Stempeln" },
+      "low_previous_owners": { "name": "Besitzhistorie", "description": "Geringe Anzahl von Vorbesitzern" },
+      "original_paint": { "name": "Originallack", "description": "Keine Neulackierung angegeben, originaler Werkslack" },
+      "accident_disclosed": { "name": "Unfalloffenlegung", "description": "Vorheriger Unfall vom Verkäufer angegeben" },
+      "modifications_disclosed": { "name": "Aftermarket-Modifikationen", "description": "Nicht werksseitige Teile oder Modifikationen angegeben" },
+      "documentation_provided": { "name": "Dokumentation vorhanden", "description": "Window Sticker, PPI oder Carfax verfügbar" },
+      "warranty_remaining": { "name": "Restgarantie", "description": "Werks- oder CPO-Garantie noch aktiv" },
+      "seller_tier_specialist": { "name": "Porsche-Spezialist als Verkäufer", "description": "Verkauft von einem kuratierten Spezialisten-Händler" }
     }
   }
 }
