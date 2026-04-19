@@ -1,0 +1,165 @@
+{
+  "listing_id": "mock-992-gt3-pts-12345",
+  "fair_value_low": 245000,
+  "fair_value_high": 285000,
+  "median_price": 265000,
+
+  "specific_car_fair_value_low": 281000,
+  "specific_car_fair_value_mid": 302000,
+  "specific_car_fair_value_high": 323000,
+  "comparable_layer_used": "strict",
+  "comparables_count": 7,
+
+  "signals_detected": [
+    {
+      "key": "paint_to_sample",
+      "name_i18n_key": "report.signals.paint_to_sample",
+      "value_display": "Gulf Blue (PTS code Y5C)",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text:char_244-311",
+        "raw_excerpt": "Finished in Paint-to-Sample Gulf Blue (code Y5C)",
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "transmission",
+      "name_i18n_key": "report.signals.transmission_manual",
+      "value_display": "6-speed manual",
+      "evidence": {
+        "source_type": "structured_field",
+        "source_ref": "listings.transmission",
+        "raw_excerpt": null,
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "service_records",
+      "name_i18n_key": "report.signals.service_records",
+      "value_display": "14 service stamps, last major service 2025",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text:char_412-478",
+        "raw_excerpt": "Complete service history with 14 stamps through 2025",
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "previous_owners",
+      "name_i18n_key": "report.signals.previous_owners",
+      "value_display": "1 previous owner",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text:char_580-605",
+        "raw_excerpt": "Sold by the original owner",
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "original_paint",
+      "name_i18n_key": "report.signals.original_paint",
+      "value_display": "Original paint, no repaint disclosed",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text:char_712-760",
+        "raw_excerpt": "All original paint, no accidents or repaints",
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "documentation",
+      "name_i18n_key": "report.signals.documentation",
+      "value_display": "Window sticker and PPI available",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text:char_890-935",
+        "raw_excerpt": "Window sticker included, recent PPI available",
+        "confidence": "high"
+      }
+    },
+    {
+      "key": "seller_tier",
+      "name_i18n_key": "report.signals.seller_tier_specialist",
+      "value_display": "Porsche specialist (Canepa)",
+      "evidence": {
+        "source_type": "seller_context",
+        "source_ref": "seller_whitelist",
+        "raw_excerpt": null,
+        "confidence": "high"
+      }
+    }
+  ],
+
+  "signals_missing": [
+    {
+      "key": "warranty",
+      "name_i18n_key": "report.signals.warranty",
+      "question_for_seller_i18n_key": "report.questions.remaining_factory_warranty"
+    },
+    {
+      "key": "accident_history",
+      "name_i18n_key": "report.signals.accident_history",
+      "question_for_seller_i18n_key": "report.questions.accident_disclosure_in_writing"
+    },
+    {
+      "key": "carfax",
+      "name_i18n_key": "report.signals.carfax",
+      "question_for_seller_i18n_key": "report.questions.share_carfax_report"
+    }
+  ],
+
+  "modifiers_applied": [
+    {
+      "key": "paint_to_sample",
+      "signal_key": "paint_to_sample",
+      "delta_percent": 10,
+      "baseline_contribution_usd": 26500,
+      "citation_url": "https://www.hagerty.com/media/market-trends/porsche-paint-to-sample-values/",
+      "version": "v1.0"
+    },
+    {
+      "key": "service_records_complete",
+      "signal_key": "service_records",
+      "delta_percent": 4,
+      "baseline_contribution_usd": 10600,
+      "citation_url": "https://www.pca.org/panorama/technical-q-and-as-importance-service-records",
+      "version": "v1.0"
+    },
+    {
+      "key": "low_previous_owners",
+      "signal_key": "previous_owners",
+      "delta_percent": 3,
+      "baseline_contribution_usd": 7950,
+      "citation_url": "https://www.hagerty.com/media/buying-and-selling/ownership-history-matters/",
+      "version": "v1.0"
+    },
+    {
+      "key": "original_paint",
+      "signal_key": "original_paint",
+      "delta_percent": 4,
+      "baseline_contribution_usd": 10600,
+      "citation_url": "https://www.hagerty.com/media/buying-and-selling/originality-and-collector-cars/",
+      "version": "v1.0"
+    },
+    {
+      "key": "documentation_provided",
+      "signal_key": "documentation",
+      "delta_percent": 2,
+      "baseline_contribution_usd": 5300,
+      "citation_url": "https://www.hagerty.com/media/buying-and-selling/documentation-adds-value/",
+      "version": "v1.0"
+    },
+    {
+      "key": "seller_tier_specialist",
+      "signal_key": "seller_tier",
+      "delta_percent": 3,
+      "baseline_contribution_usd": 7950,
+      "citation_url": null,
+      "version": "v1.0"
+    }
+  ],
+  "modifiers_total_percent": 14,
+
+  "signals_extracted_at": "2026-04-19T12:00:00.000Z",
+  "extraction_version": "v1.0"
+}
