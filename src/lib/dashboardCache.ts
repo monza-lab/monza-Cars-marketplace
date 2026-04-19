@@ -11,6 +11,7 @@ import type { DerivedPrice, SegmentStats, CanonicalMarket } from "./pricing/type
 import { computeSegmentStats } from "./pricing/segmentStats";
 
 const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
+const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 
 /**
  * Pre-aggregate the full valuation corpus into { family → market → SegmentStats }.
@@ -115,6 +116,40 @@ export type DashboardData = {
 // Monza and Classic views.
 const DASHBOARD_LISTING_LIMIT = 200;
 
+function buildAggregateFallback(liveCount: number) {
+  return {
+    liveNow: liveCount,
+    regionTotalsByPlatform: { all: liveCount, US: 0, UK: 0, EU: 0, JP: 0 },
+    regionTotalsByLocation: { all: liveCount, US: 0, UK: 0, EU: 0, JP: 0 },
+  };
+}
+
+async function withSoftTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string,
+  fallback: T,
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(`[dashboardCache] ${label} exceeded ${timeoutMs}ms; using fallback`);
+          resolve(fallback);
+        }, timeoutMs);
+      }),
+    ]);
+  } catch (error) {
+    console.error(`[dashboardCache] ${label} failed:`, error);
+    return fallback;
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
 export function transformCar(car: CollectorCar): DashboardAuction {
   return {
     id: car.id,
@@ -175,38 +210,38 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
 async function dashboardDataImpl(): Promise<DashboardData> {
   const requestedMake = resolveRequestedMake(null); // Porsche default
 
-  const [liveResult, valuationResult, aggregatesResult, seriesCountsResult] =
-    await Promise.allSettled([
-      fetchPaginatedListings({
-        make: requestedMake ?? "Porsche",
-        pageSize: DASHBOARD_LISTING_LIMIT,
-        status: "active",
-      }),
-      fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
-      fetchLiveListingAggregateCounts({ make: requestedMake }),
-      fetchSeriesCounts(requestedMake ?? "Porsche"),
-    ]);
+  let live: CollectorCar[] = [];
+  try {
+    const liveResult = await fetchPaginatedListings({
+      make: requestedMake ?? "Porsche",
+      pageSize: DASHBOARD_LISTING_LIMIT,
+      status: "active",
+    });
+    live = liveResult.cars;
+  } catch (error) {
+    console.error("[dashboardCache] live listings query failed:", error);
+  }
 
-  const live =
-    liveResult.status === "fulfilled"
-      ? liveResult.value.cars
-      : [];
-  const valuationCorpus =
-    valuationResult.status === "fulfilled"
-      ? valuationResult.value
-      : [];
-  const aggregates =
-    aggregatesResult.status === "fulfilled"
-      ? aggregatesResult.value
-      : {
-          liveNow: live.length,
-          regionTotalsByPlatform: { all: live.length, US: 0, UK: 0, EU: 0, JP: 0 },
-          regionTotalsByLocation: { all: live.length, US: 0, UK: 0, EU: 0, JP: 0 },
-        };
-  const seriesCounts =
-    seriesCountsResult.status === "fulfilled"
-      ? seriesCountsResult.value
-      : {};
+  const [valuationCorpus, aggregates, seriesCounts] = await Promise.all([
+    withSoftTimeout(
+      fetchValuationCorpusForMake(requestedMake ?? "Porsche"),
+      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      "valuation corpus query",
+      [],
+    ),
+    withSoftTimeout(
+      fetchLiveListingAggregateCounts({ make: requestedMake }),
+      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      "aggregate counts query",
+      buildAggregateFallback(live.length),
+    ),
+    withSoftTimeout(
+      fetchSeriesCounts(requestedMake ?? "Porsche"),
+      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      "series counts query",
+      {},
+    ),
+  ]);
 
   // Only active listings for dashboard
   const active = live.filter(
