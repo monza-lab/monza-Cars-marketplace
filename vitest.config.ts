@@ -5,10 +5,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    environmentMatchGlobs: [
-      ['src/**/*.test.tsx', 'jsdom'],
-      ['tests/**/*.test.tsx', 'jsdom'],
-    ],
+    environmentOptions: {},
+    // Note: environmentMatchGlobs was removed in vitest 4. Per-file environment
+    // is now controlled via the `// @vitest-environment jsdom` docblock at the
+    // top of individual .test.tsx files that need the DOM.
     include: [
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
