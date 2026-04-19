@@ -1,0 +1,73 @@
+{
+  "listing_id": "38c0f512-1eeb-43b7-a73c-1f81af1534ca",
+  "listing_label": "rich",
+  "listing_meta": {
+    "year": 2024,
+    "model": "911 gt3 rs",
+    "description_chars": 28558,
+    "description_truncated_to": 20000
+  },
+  "extracted_at": "2026-04-19T10:49:27.912Z",
+  "signals_count": 1,
+  "signals": [
+    {
+      "key": "original_paint",
+      "name_i18n_key": "report.signals.original_paint",
+      "value_display": "Original paint, no repaint disclosed",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text",
+        "raw_excerpt": null,
+        "confidence": "high"
+      }
+    }
+  ],
+  "raw_payload": {
+    "options": {
+      "sport_chrono": false,
+      "pccb": false,
+      "burmester": false,
+      "lwb_seats": false,
+      "carbon_roof": false,
+      "paint_to_sample": {
+        "present": false,
+        "color_name": null,
+        "pts_code": null
+      },
+      "factory_rear_spoiler_delete": false
+    },
+    "service": {
+      "records_mentioned": false,
+      "stamps_count": null,
+      "last_major_service_year": null,
+      "intervals_respected": null,
+      "dealer_serviced": null
+    },
+    "ownership": {
+      "previous_owners_count": null,
+      "one_owner_claim": false,
+      "years_current_owner": null,
+      "collector_owned_claim": false,
+      "garage_kept_claim": false
+    },
+    "originality": {
+      "matching_numbers_claim": false,
+      "original_paint_claim": true,
+      "repaint_disclosed": null,
+      "accident_disclosure": "none_mentioned",
+      "modifications_disclosed": []
+    },
+    "documentation": {
+      "ppi_available": false,
+      "carfax_linked": false,
+      "window_sticker_shown": false,
+      "build_sheet_shown": false
+    },
+    "warranty": {
+      "remaining_factory_warranty": null,
+      "cpo_status": false
+    },
+    "listing_completeness": "low",
+    "extraction_confidence": "high"
+  }
+}

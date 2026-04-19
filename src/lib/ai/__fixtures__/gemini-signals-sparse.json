@@ -1,0 +1,69 @@
+{
+  "listing_id": "2cd90406-5857-47cb-b593-4a497bbddec7",
+  "listing_label": "sparse",
+  "listing_meta": {
+    "year": 2012,
+    "model": "991 Carrera",
+    "description_chars": 37,
+    "description_truncated_to": null
+  },
+  "extracted_at": "2026-04-19T10:49:32.506Z",
+  "signals_count": 1,
+  "signals": [
+    {
+      "key": "original_paint",
+      "name_i18n_key": "report.signals.original_paint",
+      "value_display": "Original paint, no repaint disclosed",
+      "evidence": {
+        "source_type": "listing_text",
+        "source_ref": "description_text",
+        "raw_excerpt": null,
+        "confidence": "high"
+      }
+    }
+  ],
+  "raw_payload": {
+    "options": {
+      "sport_chrono": true,
+      "pccb": null,
+      "burmester": null,
+      "lwb_seats": null,
+      "carbon_roof": null,
+      "paint_to_sample": null,
+      "factory_rear_spoiler_delete": null
+    },
+    "service": {
+      "records_mentioned": false,
+      "stamps_count": null,
+      "last_major_service_year": null,
+      "intervals_respected": null,
+      "dealer_serviced": null
+    },
+    "ownership": {
+      "previous_owners_count": null,
+      "one_owner_claim": false,
+      "years_current_owner": null,
+      "collector_owned_claim": false,
+      "garage_kept_claim": false
+    },
+    "originality": {
+      "matching_numbers_claim": false,
+      "original_paint_claim": true,
+      "repaint_disclosed": null,
+      "accident_disclosure": "none_mentioned",
+      "modifications_disclosed": []
+    },
+    "documentation": {
+      "ppi_available": false,
+      "carfax_linked": false,
+      "window_sticker_shown": false,
+      "build_sheet_shown": false
+    },
+    "warranty": {
+      "remaining_factory_warranty": null,
+      "cpo_status": false
+    },
+    "listing_completeness": "low",
+    "extraction_confidence": "high"
+  }
+}

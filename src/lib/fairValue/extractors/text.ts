@@ -49,6 +49,12 @@ interface ExtractedPayload {
 
 export interface TextExtractionInput {
   description: string
+  /**
+   * Optional cap on Gemini output tokens. Defaults to the generateJson default
+   * (2048). Long descriptions with many modifications/panels may need more
+   * headroom — validation fixtures (Task 28) pass 4096.
+   */
+  maxOutputTokens?: number
 }
 
 export interface TextExtractionResult {
@@ -63,6 +69,7 @@ export async function extractTextSignals(input: TextExtractionInput): Promise<Te
     systemPrompt: SIGNAL_EXTRACTION_SYSTEM_PROMPT,
     userPrompt: buildSignalExtractionPrompt(input.description),
     temperature: 0,
+    maxOutputTokens: input.maxOutputTokens,
   })
 
   if (!response.ok) {
