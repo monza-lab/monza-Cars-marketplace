@@ -110,12 +110,19 @@ describe("checkSource", () => {
     expect(result.dead).toBe(0);
   });
 
-  it("circuit-breaks after 3 consecutive 403s", async () => {
+  it("circuit-breaks after the configured consecutive 403 threshold", async () => {
     const listings = [
       { id: "a", source: "AutoScout24", source_url: "https://as24.com/1" },
       { id: "b", source: "AutoScout24", source_url: "https://as24.com/2" },
       { id: "c", source: "AutoScout24", source_url: "https://as24.com/3" },
       { id: "d", source: "AutoScout24", source_url: "https://as24.com/4" },
+      { id: "e", source: "AutoScout24", source_url: "https://as24.com/5" },
+      { id: "f", source: "AutoScout24", source_url: "https://as24.com/6" },
+      { id: "g", source: "AutoScout24", source_url: "https://as24.com/7" },
+      { id: "h", source: "AutoScout24", source_url: "https://as24.com/8" },
+      { id: "i", source: "AutoScout24", source_url: "https://as24.com/9" },
+      { id: "j", source: "AutoScout24", source_url: "https://as24.com/10" },
+      { id: "k", source: "AutoScout24", source_url: "https://as24.com/11" },
     ];
     mockLimit.mockResolvedValue({ data: listings, error: null });
     mockFetch.mockResolvedValue({ status: 403, ok: false });
@@ -128,8 +135,8 @@ describe("checkSource", () => {
       dryRun: false,
     });
 
-    // Should stop after 3, not check the 4th
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    // Should stop once the threshold is reached, without checking the last listing.
+    expect(mockFetch).toHaveBeenCalledTimes(10);
     expect(result.circuitBroken).toBe(true);
   });
 

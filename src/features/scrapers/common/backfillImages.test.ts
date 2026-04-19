@@ -1,29 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Supabase
+const mockOr = vi.fn();
+const mockEq = vi.fn();
+const mockOrder = vi.fn();
 const mockUpdate = vi.fn();
 const mockLimit = vi.fn();
+const mockSelect = vi.fn();
+const mockFrom = vi.fn();
+const mockQuery = {
+  eq: mockEq,
+  or: mockOr,
+  order: mockOrder,
+  limit: mockLimit,
+};
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            // When source !== "all", .eq("source", x) is called after .or()
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: mockLimit,
-              }),
-            }),
-            order: vi.fn().mockReturnValue({
-              limit: mockLimit,
-            }),
-          }),
-        }),
-      }),
-      update: mockUpdate,
-    })),
+    from: mockFrom,
   })),
 }));
 
@@ -42,6 +36,14 @@ describe("backfillImages module", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
+    mockEq.mockReturnValue(mockQuery);
+    mockOr.mockReturnValue(mockQuery);
+    mockOrder.mockReturnValue(mockQuery);
+    mockSelect.mockReturnValue(mockQuery);
+    mockFrom.mockReturnValue({
+      select: mockSelect,
+      update: mockUpdate,
+    });
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
   });
@@ -112,5 +114,19 @@ describe("backfillImages module", () => {
       expect.objectContaining({ images: ["__dead_url__"] })
     );
     expect(result.errors[0]).toContain("Dead URL");
+  });
+
+  it("queries empty image arrays with the Supabase array literal syntax", async () => {
+    mockLimit.mockResolvedValueOnce({ data: [], error: null });
+
+    const { backfillImagesForSource } = await import("./backfillImages");
+    await backfillImagesForSource({
+      source: "BeForward",
+      maxListings: 1,
+      delayMs: 0,
+      timeBudgetMs: 5000,
+    });
+
+    expect(mockOr).toHaveBeenCalledWith("images.is.null,images.eq.{}");
   });
 });

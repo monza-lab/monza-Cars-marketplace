@@ -204,6 +204,72 @@ describe("GET /api/cron/porsche", () => {
     expect(clearScraperRunActive).toHaveBeenCalledWith("porsche");
   });
 
+  it("marks the run unsuccessful when sources are returning 403s", async () => {
+    vi.mocked(refreshActiveListings).mockResolvedValue({
+      checked: 5,
+      updated: 0,
+      errors: ["Refresh failed for https://example.com: HTTP 403"],
+    });
+    vi.mocked(runCollector).mockResolvedValue({
+      runId: "403-run",
+      sourceCounts: {
+        BaT: { discovered: 10, porscheKept: 10, skippedMissingRequired: 0, written: 0, errored: 1, retried: 0 },
+        CarsAndBids: { discovered: 8, porscheKept: 8, skippedMissingRequired: 0, written: 0, errored: 1, retried: 0 },
+        CollectingCars: { discovered: 6, porscheKept: 6, skippedMissingRequired: 0, written: 0, errored: 1, retried: 0 },
+      },
+      errors: ["CarsAndBids: HTTP 403", "CollectingCars: HTTP 403"],
+    } as any);
+    vi.mocked(runLightBackfill).mockResolvedValue({
+      modelsSearched: ["911"],
+      newModelsFound: [],
+      discovered: 0,
+      written: 0,
+      skippedExisting: 0,
+      errors: [],
+      timedOut: false,
+      durationMs: 0,
+    });
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(false);
+    expect(data.successReason).toBe("source_errors_present");
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: "porsche",
+        success: false,
+        errors_count: expect.any(Number),
+      })
+    );
+  });
+
+  it("marks the run unsuccessful when source errors are present", async () => {
+    mockDefaults();
+    vi.mocked(runCollector).mockResolvedValueOnce({
+      runId: "test-porsche-run",
+      sourceCounts: {
+        BaT: { discovered: 30, porscheKept: 30, skippedMissingRequired: 0, written: 8, errored: 1, retried: 0 },
+        CarsAndBids: { discovered: 10, porscheKept: 10, skippedMissingRequired: 0, written: 3, errored: 0, retried: 0 },
+        CollectingCars: { discovered: 5, porscheKept: 5, skippedMissingRequired: 0, written: 2, errored: 0, retried: 0 },
+      },
+      errors: ["CarsAndBids 403"],
+    } as any);
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(false);
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: "porsche",
+        success: false,
+      })
+    );
+  });
+
   it("handles backfill error as non-fatal — still returns 200", async () => {
     mockDefaults();
     vi.mocked(runLightBackfill).mockRejectedValue(new Error("Backfill timeout"));

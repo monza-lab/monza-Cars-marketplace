@@ -19,6 +19,10 @@ import type {
   DataQuality,
   ActiveScraperRun,
 } from "@/features/scrapers/common/monitoring";
+import {
+  getScraperHealthLabel,
+  getScraperHealthState,
+} from "@/features/scrapers/common/monitoring";
 
 const ALL_SCRAPERS: ScraperName[] = [
   "porsche",
@@ -112,7 +116,12 @@ const POLL_INTERVAL_MS = 20_000;
 const STALE_MULTIPLIER = 1.5;
 const RUNNING_STALLED_AFTER_MS = 20 * 60 * 1000;
 
-type CardStatus = "running" | "green" | "yellow" | "red";
+type CardStatus =
+  | "running"
+  | "healthy"
+  | "degraded"
+  | "zero-output-success"
+  | "failed";
 
 type LivePayload = {
   recentRuns: ScraperRun[];
@@ -159,25 +168,27 @@ function getStatusColor(
   run: ScraperRun | undefined,
   activeRun: ActiveScraperRun | undefined
 ): CardStatus {
-  if (activeRun && !isActiveRunStalled(activeRun)) return "running";
-  if (!run) return "red";
-  if (!run.success) return "red";
-  if (isRunStale(scraperName, run.finished_at)) return "yellow";
-  return "green";
+  return getScraperHealthState(
+    run,
+    activeRun,
+    SCRAPER_CADENCE_MS[scraperName]
+  );
 }
 
 const STATUS_STYLES = {
   running: "border-sky-500/40 bg-sky-500/10",
-  green: "border-emerald-500/30 bg-emerald-500/5",
-  yellow: "border-amber-500/30 bg-amber-500/5",
-  red: "border-red-500/30 bg-red-500/5",
+  healthy: "border-emerald-500/30 bg-emerald-500/5",
+  "zero-output-success": "border-amber-500/30 bg-amber-500/5",
+  degraded: "border-orange-500/30 bg-orange-500/5",
+  failed: "border-red-500/30 bg-red-500/5",
 };
 
 const STATUS_DOT = {
   running: "bg-sky-400 animate-pulse",
-  green: "bg-emerald-500",
-  yellow: "bg-amber-500",
-  red: "bg-red-500",
+  healthy: "bg-emerald-500",
+  "zero-output-success": "bg-amber-400",
+  degraded: "bg-orange-400",
+  failed: "bg-red-500",
 };
 
 interface FieldCompletenessRow {
@@ -227,13 +238,12 @@ export default function ScrapersDashboardClient({
     return ALL_SCRAPERS.reduce((count, scraperName) => {
       const run = liveLatestRuns[scraperName];
       const activeRun = liveActiveRuns[scraperName];
-
-      if (!run) return count + 1;
-      if (activeRun && isActiveRunStalled(activeRun)) return count + 1;
-      if (!run.success || run.errors_count > 0 || isRunStale(scraperName, run.finished_at)) {
-        return count + 1;
-      }
-      return count;
+      const state = getScraperHealthState(
+        run,
+        activeRun,
+        SCRAPER_CADENCE_MS[scraperName]
+      );
+      return state === "healthy" || state === "running" ? count : count + 1;
     }, 0);
   }, [liveActiveRuns, liveLatestRuns]);
 
@@ -389,8 +399,12 @@ export default function ScrapersDashboardClient({
                             variant={
                               status === "running"
                                 ? "secondary"
-                                : run?.success
+                                : status === "healthy"
                                   ? "default"
+                                  : status === "zero-output-success"
+                                    ? "secondary"
+                                    : status === "degraded"
+                                      ? "outline"
                                   : "destructive"
                             }
                             className="text-xs"
@@ -399,13 +413,7 @@ export default function ScrapersDashboardClient({
                               ? stalled
                                 ? "RUN STALLED"
                                 : "RUNNING"
-                              : run
-                                ? run.success
-                                  ? stale
-                                    ? "STALE"
-                                    : "OK"
-                                  : "FAIL"
-                                : "NO DATA"}
+                              : getScraperHealthLabel(status)}
                           </Badge>
                         </div>
                       </div>
@@ -536,6 +544,14 @@ export default function ScrapersDashboardClient({
                     {/* Rows */}
                     {filteredRuns.map((run) => (
                       <div key={run.id}>
+                        {(() => {
+                          const runState = getScraperHealthState(
+                            run,
+                            undefined,
+                            SCRAPER_CADENCE_MS[run.scraper_name]
+                          );
+
+                          return (
                         <div
                           className="grid grid-cols-[120px_80px_100px_70px_80px_80px_60px_60px] gap-2 px-3 py-2.5 text-sm border-b border-zinc-800/50 hover:bg-zinc-900/50 cursor-pointer"
                           onClick={() =>
@@ -550,11 +566,17 @@ export default function ScrapersDashboardClient({
                           <span>
                             <Badge
                               variant={
-                                run.success ? "default" : "destructive"
+                                runState === "healthy"
+                                  ? "default"
+                                  : runState === "zero-output-success"
+                                      ? "secondary"
+                                      : runState === "degraded"
+                                          ? "outline"
+                                          : "destructive"
                               }
                               className="text-xs"
                             >
-                              {run.success ? "OK" : "FAIL"}
+                              {getScraperHealthLabel(runState)}
                             </Badge>
                           </span>
                           <span className="text-zinc-500 text-xs">
@@ -578,6 +600,8 @@ export default function ScrapersDashboardClient({
                             {expandedRunId === run.id ? "▲" : "▼"}
                           </span>
                         </div>
+                          );
+                        })()}
 
                         {/* Expanded detail */}
                         {expandedRunId === run.id && (

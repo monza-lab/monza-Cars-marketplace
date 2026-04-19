@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       .eq("status", "active")
       .is("description_text", null)
       .order("updated_at", { ascending: true })
-      .limit(100);
+      .limit(50);
 
     if (fetchErr || !rows) {
       throw new Error(fetchErr?.message ?? "No rows returned");

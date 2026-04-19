@@ -61,12 +61,14 @@ export async function GET(request: Request) {
       allErrors.push(...result.errors);
     }
 
+    const success = allErrors.length === 0;
+
     await recordScraperRun({
       scraper_name: "backfill-images",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: totalDiscovered,
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
     await clearScraperRunActive("backfill-images");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       totalDiscovered,
       totalBackfilled,

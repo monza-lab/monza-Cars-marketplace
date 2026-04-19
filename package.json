@@ -18,6 +18,7 @@
     "ingest:bat:sold-history": "tsx scripts/ingest-bat-sold-history.ts",
     "diag:bat:retrieval": "tsx scripts/diag-bat-retrieval.ts",
     "env:check": "tsx scripts/env-check.ts",
+    "scrapers:audit": "tsx scripts/scraper-health-audit.ts",
     "verify:api-routes": "node scripts/verify-api-routes.mjs",
     "db:audit:porsche": "tsx scripts/db-porsche.ts --cmd=audit",
     "db:quality:porsche": "tsx scripts/db-porsche.ts --cmd=quality",

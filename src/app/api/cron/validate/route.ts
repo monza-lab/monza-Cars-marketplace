@@ -30,7 +30,7 @@ function getSupabaseClient() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchRecentListings(client: SupabaseClient<any>) {
   const rows: ListingRow[] = [];
-  const pageSize = 1000;
+  const pageSize = 250;
   let from = 0;
 
   const cutoff = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
@@ -40,6 +40,7 @@ async function fetchRecentListings(client: SupabaseClient<any>) {
       .from("listings")
       .select("id, make, model, year, title")
       .gte("updated_at", cutoff)
+      .order("updated_at", { ascending: true })
       .range(from, from + pageSize - 1);
 
     if (error) throw new Error(`Fetch error: ${error.message}`);

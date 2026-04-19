@@ -50,28 +50,39 @@ export async function GET(request: Request) {
       (sum, c) => sum + c.discovered,
       0
     );
+    const hasCollectorOutput = totalDiscovered > 0 || totalWritten > 0;
+    const allErrors = [...result.errors, ...refreshResult.errors];
+    const success = hasCollectorOutput && allErrors.length === 0;
+    const successReason = !hasCollectorOutput
+      ? "no_collector_output"
+      : allErrors.length > 0
+        ? "collector_errors"
+        : "collector_output_present";
+    const errorMessages = !hasCollectorOutput && allErrors.length === 0
+      ? ["AutoTrader cron produced no discovered or written listings; verify the upstream gateway and filters."]
+      : allErrors;
 
     await recordScraperRun({
       scraper_name: 'autotrader',
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: 'vercel_cron',
       duration_ms: Date.now() - startTime,
       discovered: totalDiscovered,
       written: totalWritten,
-      errors_count: result.errors.length,
+      errors_count: errorMessages.length,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
       source_counts: result.sourceCounts,
-      error_messages: result.errors.length > 0 ? result.errors : undefined,
+      error_messages: errorMessages.length > 0 ? errorMessages : undefined,
     });
 
     await clearScraperRunActive("autotrader");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId: result.runId,
       refresh: {
         checked: refreshResult.checked,
@@ -82,6 +93,7 @@ export async function GET(request: Request) {
       written: totalWritten,
       sourceCounts: result.sourceCounts,
       errors: result.errors,
+      successReason,
       backfill: { skipped: true, reason: "Not implemented for AutoTrader" },
       duration: `${Date.now() - startTime}ms`,
     });

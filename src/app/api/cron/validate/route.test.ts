@@ -51,9 +51,11 @@ describe('GET /api/cron/validate', () => {
         return {
           select: vi.fn().mockReturnValue({
             gte: vi.fn().mockReturnValue({
-              range: vi.fn().mockResolvedValue({
-                data: [],
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
               }),
             }),
           }),
@@ -64,14 +66,12 @@ describe('GET /api/cron/validate', () => {
             }),
           }),
           delete: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({
-              data: null,
-              error: null,
-            }),
-            select: vi.fn().mockResolvedValue({
-              data: [],
-              error: null,
-            }),
+            in: vi.fn((_field: string, ids: any[]) => ({
+              select: vi.fn().mockResolvedValue({
+                data: ids.map((id) => ({ id })),
+                error: null,
+              }),
+            })),
           }),
         };
       }
@@ -135,35 +135,34 @@ describe('GET /api/cron/validate', () => {
       { id: 'l2', make: 'Porsche', model: 'Cayenne', year: 2021, title: '2021 Cayenne' },
     ];
 
-    const { createClient } = await import('@supabase/supabase-js');
-    (createClient as any).mockImplementationOnce(() => ({
-      from: vi.fn((table: string) => {
-        if (table === 'listings') {
-          return {
-            select: vi.fn().mockReturnValue({
-              gte: vi.fn().mockReturnValue({
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'listings') {
+        return {
+          select: vi.fn().mockReturnValue({
+            gte: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
                 range: vi.fn().mockResolvedValue({
                   data: mockListings,
                   error: null,
                 }),
               }),
             }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-            delete: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({ data: null, error: null }),
-              select: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          };
-        }
-        return {
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
           delete: vi.fn().mockReturnValue({
             in: vi.fn().mockResolvedValue({ data: null, error: null }),
+            select: vi.fn().mockResolvedValue({ data: [], error: null }),
           }),
         };
-      }),
-    }));
+      }
+      return {
+        delete: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      };
+    });
 
     const request = new Request('http://localhost:3000/api/cron/validate', {
       headers: { authorization: 'Bearer test-secret' },
@@ -171,6 +170,7 @@ describe('GET /api/cron/validate', () => {
     const response = await GET(request);
     const json = await response.json();
 
+    console.error("validate batch response", response.status, json);
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
     expect(json.scanned).toBe(2);
@@ -196,14 +196,16 @@ describe('GET /api/cron/validate', () => {
       { id: 'l1', make: 'Porsche', model: 'Guards Red', year: 1987, title: '1987 911 Turbo Guards Red' },
     ];
 
-    mockFrom.mockImplementationOnce((table: string) => {
-      if (table === 'listings') {
-        return {
-          select: vi.fn().mockReturnValue({
-            gte: vi.fn().mockReturnValue({
-              range: vi.fn().mockResolvedValue({
-                data: mockListings,
-                error: null,
+    mockFrom.mockImplementation((table: string) => {
+        if (table === 'listings') {
+          return {
+            select: vi.fn().mockReturnValue({
+              gte: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                  data: mockListings,
+                  error: null,
+                }),
               }),
             }),
           }),
@@ -253,9 +255,11 @@ describe('GET /api/cron/validate', () => {
           return {
             select: vi.fn().mockReturnValue({
               gte: vi.fn().mockReturnValue({
-                range: vi.fn().mockResolvedValue({
-                  data: null,
-                  error: { message: 'Connection failed' },
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { message: 'Connection failed' },
+                  }),
                 }),
               }),
             }),
@@ -298,9 +302,11 @@ describe('GET /api/cron/validate', () => {
           return {
             select: vi.fn().mockReturnValue({
               gte: vi.fn().mockReturnValue({
-                range: vi.fn().mockResolvedValue({
-                  data: [],
-                  error: null,
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: [],
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -373,50 +379,50 @@ describe('GET /api/cron/validate', () => {
     let priceHistoryDeleteCount = 0;
     let listingsDeleteCount = 0;
 
-    (createClient as any).mockImplementationOnce(() => ({
-      from: vi.fn((table: string) => {
-        if (table === 'listings') {
-          return {
-            select: vi.fn().mockReturnValue({
-              gte: vi.fn().mockReturnValue({
+    mockFrom.mockImplementationOnce((table: string) => {
+      if (table === 'listings') {
+        return {
+          select: vi.fn().mockReturnValue({
+            gte: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
                 range: vi.fn().mockResolvedValue({
                   data: mockListings,
                   error: null,
                 }),
               }),
             }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-            delete: vi.fn().mockReturnValue({
-              in: vi.fn((_field: string, ids: any[]) => {
-                listingsDeleteCount++;
-                return {
-                  select: vi.fn().mockResolvedValue({
-                    data: ids.map((id) => ({ id })),
-                    error: null,
-                  }),
-                };
-              }),
-            }),
-          };
-        }
-        if (table === 'price_history') {
-          return {
-            delete: vi.fn().mockReturnValue({
-              in: vi.fn((_field: string, _ids: any[]) => {
-                priceHistoryDeleteCount++;
-                return {
-                  data: null,
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+          delete: vi.fn().mockReturnValue({
+            in: vi.fn((_field: string, ids: any[]) => {
+              listingsDeleteCount++;
+              return {
+                select: vi.fn().mockResolvedValue({
+                  data: ids.map((id) => ({ id })),
                   error: null,
-                };
-              }),
+                }),
+              };
             }),
-          };
-        }
-        return null;
-      }),
-    }));
+          }),
+        };
+      }
+      if (table === 'price_history') {
+        return {
+          delete: vi.fn().mockReturnValue({
+            in: vi.fn((_field: string, _ids: any[]) => {
+              priceHistoryDeleteCount++;
+              return {
+                data: null,
+                error: null,
+              };
+            }),
+          }),
+        };
+      }
+      return null;
+    });
 
     const request = new Request('http://localhost:3000/api/cron/validate', {
       headers: { authorization: 'Bearer test-secret' },
@@ -441,11 +447,13 @@ describe('GET /api/cron/validate', () => {
       from: vi.fn((table: string) => {
         if (table === 'listings') {
           return {
-            select: vi.fn().mockReturnValue({
-              gte: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            gte: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
                 range: vi.fn().mockRejectedValue(new Error('Database connection lost')),
               }),
             }),
+          }),
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ data: null, error: null }),
             }),

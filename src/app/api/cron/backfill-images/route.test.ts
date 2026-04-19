@@ -216,7 +216,7 @@ describe("GET /api/cron/backfill-images", () => {
     const data = await response.json() as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+    expect(data.success).toBe(false);
     expect(data.totalDiscovered).toBe(18);
     expect(data.totalBackfilled).toBe(15);
 
@@ -232,7 +232,7 @@ describe("GET /api/cron/backfill-images", () => {
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({
         scraper_name: "backfill-images",
-        success: true,
+        success: false,
         discovered: 18,
         written: 15,
         errors_count: 2,
@@ -242,6 +242,43 @@ describe("GET /api/cron/backfill-images", () => {
         ],
       })
     );
+  });
+
+  it("marks the run unsuccessful when a source returns errors", async () => {
+    vi.mocked(backfillImagesForSource).mockResolvedValueOnce({
+      source: "BaT",
+      discovered: 1,
+      backfilled: 1,
+      errors: [],
+      durationMs: 100,
+    });
+    vi.mocked(backfillImagesForSource).mockResolvedValueOnce({
+      source: "BeForward",
+      discovered: 1,
+      backfilled: 0,
+      errors: ["Circuit-break: HTTP 403"],
+      durationMs: 100,
+    });
+    vi.mocked(backfillImagesForSource).mockResolvedValueOnce({
+      source: "AutoScout24",
+      discovered: 0,
+      backfilled: 0,
+      errors: [],
+      durationMs: 100,
+    });
+
+    const request = new Request("http://localhost:3000/api/cron/backfill-images", {
+      method: "GET",
+      headers: {
+        authorization: "Bearer test-secret",
+      },
+    });
+
+    const response = await GET(request);
+    const data = await response.json() as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(false);
   });
 
   it("respects time budget and stops processing if exceeded", async () => {

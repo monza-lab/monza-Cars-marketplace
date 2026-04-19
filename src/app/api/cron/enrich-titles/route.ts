@@ -47,7 +47,8 @@ export async function GET(request: Request) {
       .or("engine.is.null,transmission.is.null,body_style.is.null,trim.is.null")
       .eq("status", "active")
       .not("title", "is", null)
-      .limit(5000);
+      .order("updated_at", { ascending: true })
+      .limit(1000);
 
     if (error) throw new Error(`Query error: ${error.message}`);
 

@@ -26,7 +26,14 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 vi.mock("@/features/scrapers/beforward_porsche_collector/detail", () => ({
-  parseDetailHtml: vi.fn(),
+  parseDetailHtml: vi.fn(() => ({
+    trim: "Sport Classic",
+    engine: "3.0L Flat-6",
+    transmission: "Manual",
+    exteriorColor: "Guards Red",
+    vin: "WP0ZZZ99Z",
+    fuel: "Gasoline",
+  })),
 }));
 
 vi.mock("@/features/scrapers/common/monitoring", () => ({
@@ -54,6 +61,9 @@ describe("GET /api/cron/enrich-beforward", () => {
     process.env.CRON_SECRET = "test-secret";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response("<html><body>ok</body></html>", { status: 200 })
+    );
   });
 
   it("returns 401 without valid auth", async () => {
@@ -102,5 +112,39 @@ describe("GET /api/cron/enrich-beforward", () => {
     const response = await GET(makeRequest());
     const data = await response.json();
     expect(data.duration).toMatch(/^\d+ms$/);
+  });
+
+  it("does not write a missing fuel column", async () => {
+    const row = {
+      id: "bef-1",
+      source_url: "https://example.com/be-forward/1",
+    };
+
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [row], error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(200);
+
+    const updatePayload = mockUpdate.mock.calls.at(-1)?.[0];
+    expect(updatePayload).toBeDefined();
+    expect(updatePayload).not.toHaveProperty("fuel_type");
+    expect(updatePayload).not.toHaveProperty("fuel");
+    expect(updatePayload).toMatchObject({
+      trim: "Sport Classic",
+      engine: "3.0L Flat-6",
+      transmission: "Manual",
+      color_exterior: "Guards Red",
+      vin: "WP0ZZZ99Z",
+    });
   });
 });

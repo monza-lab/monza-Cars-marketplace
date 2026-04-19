@@ -43,6 +43,7 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "@/features/scrapers/common/monitoring";
+import { fetchAutoTraderDetail } from "@/features/scrapers/autotrader_collector/detail";
 
 function makeRequest(secret = "test-secret") {
   return new Request("http://localhost:3000/api/cron/enrich-autotrader", {
@@ -71,6 +72,7 @@ describe("GET /api/cron/enrich-autotrader", () => {
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.success).toBe(true);
+    expect(data.successReason).toBe("enrichment_progress");
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
   });
@@ -91,6 +93,38 @@ describe("GET /api/cron/enrich-autotrader", () => {
       })
     );
     expect(clearScraperRunActive).toHaveBeenCalledWith("enrich-autotrader");
+  });
+
+  it("marks runs unsuccessful when rows are discovered but nothing is written", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: [{ id: "at-1", source_url: "https://example.com/1" }],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      }),
+    });
+    vi.mocked(fetchAutoTraderDetail).mockResolvedValueOnce({} as any);
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(false);
+    expect(data.successReason).toBe("no_written_rows");
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: "enrich-autotrader",
+        success: false,
+        errors_count: 1,
+      })
+    );
   });
 
   it("returns 500 when Supabase env vars missing", async () => {

@@ -310,6 +310,8 @@ describe("getTotalPages", () => {
 });
 
 describe("detectAppVersion", () => {
+  const FALLBACK_APP_VERSION = "b0f8e3a29c";
+
   beforeEach(() => {
     resetCachedAppVersion();
     vi.restoreAllMocks();
@@ -318,7 +320,7 @@ describe("detectAppVersion", () => {
   it("returns fallback version when fetch fails", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("Network error"));
     const version = await detectAppVersion();
-    expect(version).toBe("6c9dff0561");
+    expect(version).toBe(FALLBACK_APP_VERSION);
   });
 
   it("returns fallback version when page returns non-200", async () => {
@@ -326,7 +328,7 @@ describe("detectAppVersion", () => {
       new Response("Forbidden", { status: 403 })
     );
     const version = await detectAppVersion();
-    expect(version).toBe("6c9dff0561");
+    expect(version).toBe(FALLBACK_APP_VERSION);
   });
 
   it("detects version from webpack chunk pattern", async () => {
@@ -364,6 +366,6 @@ describe("detectAppVersion", () => {
       new Response(html, { status: 200 })
     );
     const version = await detectAppVersion();
-    expect(version).toBe("6c9dff0561");
+    expect(version).toBe(FALLBACK_APP_VERSION);
   });
 });

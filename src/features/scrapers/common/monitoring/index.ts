@@ -21,3 +21,12 @@ export {
   getLatestRunPerScraper,
   getActiveRuns,
 } from './queries';
+
+export {
+  getScraperHealthState,
+  getScraperHealthLabel,
+} from './health';
+
+export {
+  summarizeScraperHealth,
+} from './audit';

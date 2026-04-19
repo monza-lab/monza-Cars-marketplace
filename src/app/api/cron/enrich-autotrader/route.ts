@@ -138,28 +138,39 @@ export async function GET(request: Request) {
       }
     }
 
+    const success = errors.length === 0 && !(discovered > 0 && enriched === 0);
+    const errorMessages = success
+      ? (errors.length > 0 ? errors : undefined)
+      : [
+          ...errors,
+          ...(discovered > 0 && enriched === 0
+            ? ["AutoTrader enrichment discovered listings but wrote nothing."]
+            : []),
+        ];
+
     await recordScraperRun({
       scraper_name: "enrich-autotrader",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
       written: enriched,
-      errors_count: errors.length,
-      error_messages: errors.length > 0 ? errors : undefined,
+      errors_count: errorMessages?.length ?? 0,
+      error_messages: errorMessages,
     });
 
     await clearScraperRunActive("enrich-autotrader");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       discovered,
       enriched,
       errors,
+      successReason: success ? "enrichment_progress" : "no_written_rows",
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

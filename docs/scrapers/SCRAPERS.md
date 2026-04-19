@@ -54,8 +54,29 @@ DECODO_PROXY_PASS=password
 | 11 | [Cleanup](#11-cleanup) | Mark stale/dead listings, reclassify, delete junk | Vercel Cron | 06:00 UTC |
 | 12 | [VIN Enrichment](#12-vin-enrichment) | Decode VINs via NHTSA API | Vercel Cron | 07:00 UTC |
 | 13 | [Title Enrichment](#13-title-enrichment) | Parse engine/transmission/body/trim from titles | Vercel Cron | 07:15 UTC |
-| 14 | [AS24 Detail Enrichment](#14-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | Manual |
+| 14 | [AS24 Detail Enrichment](#14-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | 07:30 UTC |
 | 15 | [Elferspot Enrichment](#15-elferspot-enrichment) | Enrich Elferspot listings with detail page data | Vercel Cron | 09:45 UTC |
+
+### Monitoring & Audit
+
+- The authoritative Vercel cron schedule is [`vercel.json`](/Users/camiloecheverri/Documents/AI/Monza/monza-Cars-marketplace/vercel.json).
+- Use `npm run scrapers:audit -- --days=3` to generate a Supabase-backed health report for the last few days.
+- Add `--strict` to fail the command when it finds `FAILED`, `STALE`, `STUCK`, or `ZERO-WRITE` jobs.
+- The audit command also writes a JSON artifact under `agents/testscripts/artifacts/`.
+- Jobs tracked in Supabase but not scheduled in Vercel include `classic`, `autoscout24`, `bat-detail`, `enrich-details-bulk`, and `liveness-check`.
+- Dashboard status labels now mean:
+  - `HEALTHY`: completed with writes and no errors
+  - `ZERO OUTPUT`: completed without errors but wrote nothing
+  - `DEGRADED`: completed with errors or stale results
+  - `FAILED`: the latest run failed
+
+## Operational Notes
+
+- AutoTrader cron runs now surface a failed status when discovery/writes are zero so the dashboard does not show a false green.
+- Porsche cron now treats upstream source 403/429/timeout failures as non-green runs while still allowing a skipped backfill window to pass.
+- BeForward enrichment no longer writes a `fuel_type` field because that column is not present in the current `listings` schema.
+- Image backfill now uses the empty-array filter syntax that Supabase/PostgREST accepts for array columns.
+- The validation and enrichment jobs are intentionally batch-limited to reduce statement timeouts on large listing sets.
 
 ---
 
@@ -168,7 +189,7 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 **What it does:** Scrapes Porsche dealer listings from AutoTrader UK using their internal GraphQL API. No browser required.
 
-**Source directory:** `src/features/autotrader_collector/`
+**Source directory:** `src/features/scrapers/autotrader_collector/`
 
 ### Run locally
 

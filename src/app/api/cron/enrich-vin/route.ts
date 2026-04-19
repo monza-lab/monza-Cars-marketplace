@@ -44,7 +44,8 @@ export async function GET(request: Request) {
       .neq("vin", "")
       .or("engine.is.null,transmission.is.null,body_style.is.null")
       .eq("status", "active")
-      .limit(2000);
+      .order("updated_at", { ascending: true })
+      .limit(500);
 
     if (error) throw new Error(`Query error: ${error.message}`);
 

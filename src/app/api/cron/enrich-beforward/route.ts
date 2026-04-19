@@ -115,8 +115,6 @@ export async function GET(request: Request) {
         if (detail.transmission) update.transmission = detail.transmission;
         if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
         if (detail.vin) update.vin = detail.vin;
-        if (detail.fuel) update.fuel_type = detail.fuel;
-
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
@@ -148,12 +146,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const success = errors.length === 0;
+
     await recordScraperRun({
       scraper_name: "enrich-beforward",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -165,11 +165,12 @@ export async function GET(request: Request) {
     await clearScraperRunActive("enrich-beforward");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       discovered,
       enriched,
       errors,
+      successReason: success ? "all_rows_enriched" : "errors_present",
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {
