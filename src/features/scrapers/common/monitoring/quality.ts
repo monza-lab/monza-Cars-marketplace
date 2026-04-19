@@ -13,8 +13,10 @@ export interface ScraperRunHealthInput {
   success: boolean;
   discovered: number;
   written: number;
-  errorsCount: number;
-  photosCount: number;
+  errorsCount?: number;
+  errors_count?: number;
+  photosCount?: number;
+  image_coverage?: Record<string, { withImages: number; missingImages: number; deadUrls?: number }>;
   expectedPhotosMin?: number;
 }
 
@@ -36,13 +38,22 @@ function classifyScraperRun(input: ScraperRunHealthInput): ScraperRunHealth {
     return { state: 'failed', reason: 'run_failed', flags: [] };
   }
   const flags: string[] = [];
-  if (input.expectedPhotosMin && input.photosCount < input.expectedPhotosMin) {
+  const photosCount = input.photosCount ?? 0;
+  const errorsCount = input.errorsCount ?? input.errors_count ?? 0;
+  const imageCoverage = input.image_coverage ? Object.values(input.image_coverage) : [];
+  const hasImageGap =
+    (input.expectedPhotosMin !== undefined && photosCount < input.expectedPhotosMin) ||
+    imageCoverage.some((coverage) => coverage.withImages > 0 && (coverage.missingImages > 0 || (coverage.deadUrls ?? 0) > 0));
+  if (hasImageGap) {
     flags.push('image_gap');
   }
-  if (input.discovered === 0 && input.written === 0) {
+  if (input.written === 0) {
     return { state: 'degraded', reason: 'zero_output', flags };
   }
-  if (input.errorsCount > 0) {
+  if (hasImageGap) {
+    return { state: 'degraded', reason: 'image_gap', flags };
+  }
+  if (errorsCount > 0) {
     return { state: 'degraded', reason: 'errors', flags };
   }
   return { state: 'healthy', reason: 'ok', flags };

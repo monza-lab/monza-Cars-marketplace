@@ -31,6 +31,55 @@ import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 const MAX_CONSECUTIVE_BLOCKS = 5;
 const CONTEXT_REFRESH_INTERVAL = 100;
 
+export interface HardFailureErrorInput {
+  counts: CollectorCounts;
+  errors: string[];
+  shardsCompleted: number;
+  shardsTotal: number;
+}
+
+export function buildHardFailureError(input: HardFailureErrorInput): Error | null {
+  const { counts, errors, shardsCompleted, shardsTotal } = input;
+
+  const repeatedAkamaiBlocks =
+    counts.akamaiBlocked >= MAX_CONSECUTIVE_BLOCKS ||
+    errors.some((message) => /consecutive Akamai blocks/i.test(message));
+
+  if (repeatedAkamaiBlocks) {
+    return new Error(
+      [
+        "repeated Akamai blocks",
+        `discovered=${counts.discovered}`,
+        `detailsFetched=${counts.detailsFetched}`,
+        `normalized=${counts.normalized}`,
+        `written=${counts.written}`,
+        `errors=${counts.errors}`,
+        `skippedDuplicate=${counts.skippedDuplicate}`,
+        `akamaiBlocked=${counts.akamaiBlocked}`,
+        `shardsCompleted=${shardsCompleted}/${shardsTotal}`,
+      ].join(" | "),
+    );
+  }
+
+  if (counts.discovered === 0 && counts.written === 0) {
+    return new Error(
+      [
+        "zero output",
+        `discovered=${counts.discovered}`,
+        `detailsFetched=${counts.detailsFetched}`,
+        `normalized=${counts.normalized}`,
+        `written=${counts.written}`,
+        `errors=${counts.errors}`,
+        `skippedDuplicate=${counts.skippedDuplicate}`,
+        `akamaiBlocked=${counts.akamaiBlocked}`,
+        `shardsCompleted=${shardsCompleted}/${shardsTotal}`,
+      ].join(" | "),
+    );
+  }
+
+  return null;
+}
+
 export async function runAutoScout24Collector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();

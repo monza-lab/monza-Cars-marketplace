@@ -13,10 +13,10 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: mocks.createClient,
 }));
 
-vi.mock("@/features/scrapers/common/monitoring", async () => {
+vi.mock("@/features/scrapers/common/monitoring/queries", async () => {
   const actual = await vi.importActual<
-    typeof import("@/features/scrapers/common/monitoring")
-  >("@/features/scrapers/common/monitoring");
+    typeof import("@/features/scrapers/common/monitoring/queries")
+  >("@/features/scrapers/common/monitoring/queries");
 
   return {
     ...actual,

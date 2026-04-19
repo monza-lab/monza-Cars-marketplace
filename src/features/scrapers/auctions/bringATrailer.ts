@@ -108,6 +108,14 @@ export function parsePrice(text: string | undefined): number | null {
   return isNaN(num) ? null : num;
 }
 
+function parseBidCount(text: string | undefined): number | null {
+  if (!text) return null;
+  const match = text.match(/(\d[\d,]*)/);
+  if (!match) return null;
+  const count = parseInt(match[1].replace(/,/g, ''), 10);
+  return Number.isFinite(count) ? count : null;
+}
+
 /**
  * Detect auction status (SOLD vs ACTIVE) from HTML element.
  * Evidence-based detection using multiple signals.
@@ -332,9 +340,42 @@ function extractMileageCandidate(text: string): { mileage: number; unit: 'miles'
   return { mileage: Math.round(mileage), unit, score: contextScore };
 }
 
+function extractMileageFromKeyedValue(
+  key: string,
+  value: string,
+): { mileage: number; unit: 'miles' | 'km'; score: number } | null {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+
+  const inferredUnit = /\b(km|kilometer|kilometre)\b/i.test(key) ? 'km' : 'miles';
+  const withUnit = extractMileageCandidate(`${trimmedValue} ${inferredUnit}`);
+  if (withUnit) return { ...withUnit, score: 200 };
+
+  const normalized = trimmedValue.replace(/,/g, '').trim();
+  const match = normalized.match(/^(\d+(?:\.\d+)?)(k)?$/i);
+  if (!match) return null;
+
+  let mileage = parseFloat(match[1]);
+  if (match[2]) mileage *= 1000;
+  if (!Number.isFinite(mileage) || mileage <= 0) return null;
+
+  return { mileage: Math.round(mileage), unit: inferredUnit, score: 200 };
+}
+
 function extractVinCandidate(text: string): string | null {
   const match = text.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
   return match ? match[1].toUpperCase() : null;
+}
+
+function extractKeyedVinCandidate(key: string, value: string): string | null {
+  const candidate = extractVinCandidate(value);
+  if (candidate) return candidate;
+
+  if (!/\b(vin|chassis|serial|frame)\b/i.test(key)) return null;
+
+  const normalized = value.replace(/[^A-Za-z0-9]/g, "").trim();
+  if (normalized.length < 6 || normalized.length > 20) return null;
+  return normalized.toUpperCase();
 }
 
 function extractExteriorColorCandidate(text: string): string | null {
@@ -456,14 +497,13 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
   };
 
   for (const [key, value] of keyedEssentials.entries()) {
-    considerText(value, 95);
-    if (key === 'mileage' || key === 'miles' || key === 'kilometers' || key === 'km') {
-      const candidate = extractMileageCandidate(value);
-      if (candidate) {
-        signals.mileage = updateSignal(signals.mileage, candidate.mileage, 100);
-        signals.mileageUnit = updateSignal(signals.mileageUnit, candidate.unit, 100);
-      }
+    const mileageCandidate = extractMileageFromKeyedValue(key, value);
+    if (mileageCandidate) {
+      signals.mileage = updateSignal(signals.mileage, mileageCandidate.mileage, mileageCandidate.score);
+      signals.mileageUnit = updateSignal(signals.mileageUnit, mileageCandidate.unit, mileageCandidate.score);
     }
+
+    considerText(value, 95);
     if (key === 'transmission') {
       const candidate = parseTransmissionFromText(value);
       if (candidate) signals.transmission = updateSignal(signals.transmission, candidate, 100);
@@ -473,7 +513,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
       if (candidate) signals.engine = updateSignal(signals.engine, candidate, 100);
     }
     if (key === 'vin' || key === 'chassis' || key === 'serial' || key === 'frame') {
-      const candidate = extractVinCandidate(value);
+      const candidate = extractKeyedVinCandidate(key, value);
       if (candidate) signals.vin = updateSignal(signals.vin, candidate, 100);
     }
     if (key === 'exterior color' || key === 'colour' || key === 'color') {
@@ -562,82 +602,104 @@ export async function scrapeListings(
 ): Promise<{ auctions: BaTAuction[]; errors: string[] }> {
   const auctions: BaTAuction[] = [];
   const errors: string[] = [];
+  const seenExternalIds = new Set<string>();
 
-  // BaT loads auction cards dynamically via JS. The initial data is embedded
-  // in a <script> tag as `var auctionsCurrentInitialData = {"items":[...]}`.
-  // We parse this JSON directly — no need for multiple pages since all active
-  // auctions are in the initial data payload.
-  try {
-    console.log(`[BaT] Fetching auctions page for embedded JSON data...`);
-    const html = await fetchPage(AUCTIONS_URL);
+  if (maxPages <= 0) {
+    return { auctions, errors };
+  }
 
-    // Diagnostic: always report HTML size so cron response shows what we got
-    errors.push(`[BaT:diag] HTML=${html.length}b, title="${html.match(/<title>([^<]*)<\/title>/)?.[1]?.slice(0, 60) ?? 'none'}"`);
+  const parseListingPage = (html: string): BaTAuction[] => {
+    const parsed: BaTAuction[] = [];
 
-    // Extract embedded JSON: find `auctionsCurrentInitialData = {...}` and
-    // use brace-matching to extract the full JSON object reliably.
-    const marker = 'auctionsCurrentInitialData';
-    const markerIdx = html.indexOf(marker);
+    // BaT loads auction cards dynamically via JS. The initial data is embedded
+    // in a <script> tag as `var auctionsCurrentInitialData = {"items":[...]}`.
+    try {
+      const marker = 'auctionsCurrentInitialData';
+      const markerIdx = html.indexOf(marker);
 
-    if (markerIdx >= 0) {
-      const jsonStart = html.indexOf('{', markerIdx);
-      if (jsonStart >= 0) {
-        let depth = 0;
-        let jsonEnd = -1;
-        for (let i = jsonStart; i < html.length; i++) {
-          if (html[i] === '{') depth++;
-          else if (html[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
-        }
-
-        if (jsonEnd > 0) {
-          try {
-            const data = JSON.parse(html.substring(jsonStart, jsonEnd + 1));
-            const items = data.items ?? [];
-            errors.push(`[BaT:diag] marker=true, jsonLen=${jsonEnd - jsonStart + 1}, items=${items.length}`);
-            console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
-
-            for (const item of items) {
-              try {
-                const auction = parseEmbeddedItem(item);
-                if (auction) auctions.push(auction);
-              } catch (err) {
-                const message = err instanceof Error ? err.message : 'Unknown parse error';
-                errors.push(`[BaT] Failed to parse embedded item: ${message}`);
-              }
-            }
-          } catch (parseErr) {
-            errors.push(`[BaT] Failed to parse embedded JSON: ${parseErr instanceof Error ? parseErr.message : 'Unknown'}`);
+      if (markerIdx >= 0) {
+        const jsonStart = html.indexOf('{', markerIdx);
+        if (jsonStart >= 0) {
+          let depth = 0;
+          let jsonEnd = -1;
+          for (let i = jsonStart; i < html.length; i++) {
+            if (html[i] === '{') depth++;
+            else if (html[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
           }
-        } else {
-          errors.push(`[BaT] Found marker but could not match braces for JSON extraction`);
+
+          if (jsonEnd > 0) {
+            try {
+              const data = JSON.parse(html.substring(jsonStart, jsonEnd + 1));
+              const items = data.items ?? [];
+              console.log(`[BaT] Found ${items.length} auctions in embedded JSON data`);
+
+              for (const item of items) {
+                try {
+                  const auction = parseEmbeddedItem(item);
+                  if (auction) parsed.push(auction);
+                } catch (err) {
+                  console.warn(`[BaT] Failed to parse embedded item: ${err instanceof Error ? err.message : 'Unknown parse error'}`);
+                }
+              }
+            } catch (parseErr) {
+              console.warn(`[BaT] Failed to parse embedded JSON: ${parseErr instanceof Error ? parseErr.message : 'Unknown'}`);
+            }
+          }
         }
       }
-    } else {
-      console.log(`[BaT] Embedded JSON marker not found in ${html.length} bytes of HTML`);
-      errors.push(`[BaT] No embedded auction data found (${html.length} bytes fetched). Server may be blocking datacenter IPs.`);
-    }
 
-    // Fallback: try parsing HTML if JSON extraction failed
-    if (auctions.length === 0) {
-      const $ = cheerio.load(html);
-      const listingLinks = $('a[href*="/listing/"]');
-      const seen = new Set<string>();
-      listingLinks.each((_i, el) => {
-        const href = $(el).attr('href') || '';
-        if (!href || seen.has(href)) return;
-        if (!/\/listing\/[a-z0-9]/.test(href)) return;
-        seen.add(href);
-        const card = $(el).closest('li, article, div');
-        const auction = parseAuctionCard($, card.length > 0 ? card[0] : el);
-        if (auction) auctions.push(auction);
-      });
-    }
+      if (parsed.length === 0) {
+        const $ = cheerio.load(html);
+        const listingLinks = $('a[href*="/listing/"]');
+        const seen = new Set<string>();
+        listingLinks.each((_i, el) => {
+          const href = $(el).attr('href') || '';
+          if (!href || seen.has(href)) return;
+          if (!/\/listing\/[a-z0-9]/.test(href)) return;
+          seen.add(href);
+          const card = $(el).closest('li, article, div');
+          const auction = parseAuctionCard($, card.length > 0 ? card[0] : el);
+          if (auction) parsed.push(auction);
+        });
+      }
 
-    if (auctions.length === 0) {
-      errors.push(`[BaT] No auctions found. Site structure may have changed.`);
+      return parsed;
+    } catch {
+      return parsed;
     }
+  };
 
-    console.log(`[BaT] Total: ${auctions.length} auctions parsed`);
+  try {
+    for (let page = 1; page <= maxPages; page++) {
+      const url = page === 1 ? AUCTIONS_URL : `${AUCTIONS_URL}/?page=${page}`;
+      console.log(`[BaT] Fetching auctions page ${page}: ${url}`);
+
+      let html: string;
+      try {
+        html = await fetchPage(url);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        errors.push(`[BaT] Error scraping page ${page}: ${message}`);
+        if (page === 1) break;
+        continue;
+      }
+
+      const pageAuctions = parseListingPage(html);
+      if (pageAuctions.length === 0) {
+        if (page === 1) {
+          errors.push(`[BaT] No auction cards found on page 1`);
+        }
+        break;
+      }
+
+      for (const auction of pageAuctions) {
+        if (seenExternalIds.has(auction.externalId)) continue;
+        seenExternalIds.add(auction.externalId);
+        auctions.push(auction);
+      }
+
+      console.log(`[BaT] Total: ${auctions.length} auctions parsed`);
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     errors.push(`[BaT] Error fetching auctions page: ${message}`);
@@ -717,6 +779,19 @@ export function parseAuctionCard(
   const imageUrl = $el.find('img').first().attr('src') || $el.find('img').first().attr('data-src') || null;
   const bidText = $el.find('.current-bid, [class*="bid"], [class*="price"]').first().text().trim();
   const currentBid = parsePrice(bidText);
+  const bidCountText = $el.find('.bid-count, [class*="bid-count"]').first().text().trim();
+  const bidCount = parseBidCount(bidCountText) ?? 0;
+
+  let endTime: Date | null = null;
+  const timeEl = $el.find('time[datetime], .auction-end, [class*="auction-end"]').first();
+  if (timeEl.length) {
+    const timeAttr = timeEl.attr('datetime') || timeEl.attr('data-end-time') || timeEl.attr('data-endtime');
+    const timeText = timeAttr || timeEl.text().trim();
+    if (timeText) {
+      const parsed = new Date(timeText);
+      if (!isNaN(parsed.getTime())) endTime = parsed;
+    }
+  }
 
   return {
     externalId,
@@ -726,7 +801,7 @@ export function parseAuctionCard(
     transmission: null, engine: null,
     exteriorColor: null, interiorColor: null,
     location: null,
-    currentBid, bidCount: 0, endTime: null,
+    currentBid, bidCount, endTime,
     url, imageUrl,
     description: null, sellerNotes: null,
     status: 'active',
