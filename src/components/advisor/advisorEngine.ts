@@ -72,7 +72,6 @@ export function generateWelcome(ctx: AdvisorContext, lang: DetectedLanguage = "e
     content = `${greeting}${name}.\n\n` +
       `I see you're looking at the **${car.year} ${car.make} ${car.model}${car.trim ? ` ${car.trim}` : ""}**.\n\n` +
       `- ${t(lang, "currentBid")}: **${price}**\n` +
-      `- ${t(lang, "grade")}: **${car.investmentGrade}**\n` +
       `- Status: **${car.status === "ENDED" ? "Sold" : car.status === "ENDING_SOON" ? "Ending Soon" : "Live"}**\n\n` +
       `How can I help you with this vehicle?`
     quickActions = [
@@ -150,8 +149,13 @@ function buildInvestmentResponse(ctx: AdvisorContext, lang: DetectedLanguage): s
   const thesis = getSeriesThesis(series, car.make) || car.thesis
   const strengths = ctx.dbAnalysis?.keyStrengths || []
   const redFlags = ctx.dbAnalysis?.redFlags || []
+  const md = ctx.dbMarketData
+  const compsLine = md?.medianPrice && md?.totalSales
+    ? `Median sold: **${fmtPrice(ctx, md.medianPrice)}** across ${md.totalSales} comparables.\n\n`
+    : ""
 
-  return `**${t(lang, "grade")}: ${car.investmentGrade}** — ${car.year} ${car.make} ${car.model}\n\n` +
+  return `**Investment Outlook — ${car.year} ${car.make} ${car.model}**\n\n` +
+    compsLine +
     `**Thesis:**\n${thesis}\n\n` +
     (strengths.length > 0 ? `**${t(lang, "strengths")}:**\n${strengths.map(s => `- ${s}`).join("\n")}\n\n` : "") +
     (redFlags.length > 0 ? `**${t(lang, "risks")}:**\n${redFlags.map(f => `- ${f}`).join("\n")}\n\n` : "") +
@@ -185,11 +189,17 @@ function buildStrengthsResponse(ctx: AdvisorContext, lang: DetectedLanguage): st
 
   const strengths = ctx.dbAnalysis?.keyStrengths || []
 
+  const md = ctx.dbMarketData
+  const compsLine = md?.medianPrice && md?.totalSales
+    ? `\n\nMedian sold: **${fmtPrice(ctx, md.medianPrice)}** across ${md.totalSales} comparables.`
+    : ""
+
   return `**${t(lang, "strengths")} — ${car.year} ${car.make} ${car.model}**\n\n` +
     (strengths.length > 0
       ? strengths.map(s => `- ${s}`).join("\n")
-      : `- ${car.investmentGrade} investment grade\n- ${car.make} heritage and brand desirability\n- Active collector market with strong demand`) +
-    `\n\n**Grade: ${car.investmentGrade}** | **Trend: ${car.trend}**`
+      : `- ${car.make} heritage and brand desirability\n- Active collector market with strong demand`) +
+    (car.trend ? `\n\n**Trend:** ${car.trend}` : "") +
+    compsLine
 }
 
 function buildSpecsResponse(ctx: AdvisorContext, lang: DetectedLanguage): string {
@@ -205,8 +215,7 @@ function buildSpecsResponse(ctx: AdvisorContext, lang: DetectedLanguage): string
     (car.interiorColor ? `- **Interior:** ${car.interiorColor}\n` : "") +
     `- **Platform:** ${car.platform.replace(/_/g, " ")}\n` +
     `- **${t(lang, "currentBid")}:** ${fmtPrice(ctx, car.currentBid)}\n` +
-    `- **Bids:** ${car.bidCount}\n\n` +
-    `**${t(lang, "grade")}:** ${car.investmentGrade}`
+    `- **Bids:** ${car.bidCount}`
 }
 
 function buildOwnershipResponse(ctx: AdvisorContext, lang: DetectedLanguage): string {
@@ -269,7 +278,7 @@ function buildComparablesResponse(ctx: AdvisorContext, lang: DetectedLanguage): 
   const comps = ctx.dbComparables
 
   if (!comps || comps.length === 0) {
-    return `No comparable sales data currently available for this model. I can still provide analysis based on regional pricing and investment grade.`
+    return `No comparable sales data currently available for this model. I can still provide analysis based on regional pricing and market trends.`
   }
 
   const lines = comps.slice(0, 5).map((c, i) => {
@@ -299,7 +308,7 @@ function buildReportResponse(ctx: AdvisorContext, lang: DetectedLanguage): { con
         `- Comparable sales and market positioning\n` +
         `- Risk factors and inspection checklist\n` +
         `- Ownership cost breakdown\n` +
-        `- Investment grade analysis\n\n` +
+        `- Investment outlook and market trend\n\n` +
         `**Cost:** 1,000 tokens (you have ${(ctx.tokens ?? 0).toLocaleString()} tokens)`
       : `The ${t(lang, "reportTitle")} requires tokens. You currently have **${ctx.tokens ?? 0}** tokens. Upgrade your plan to generate reports.`
 
@@ -319,7 +328,6 @@ function buildReportResponse(ctx: AdvisorContext, lang: DetectedLanguage): { con
 function buildHelpResponse(lang: DetectedLanguage): string {
   return `${t(lang, "helpIntro")}\n\n` +
     `- **${t(lang, "fairValue")}** — Fair value analysis with regional pricing\n` +
-    `- **${t(lang, "grade")}** — Grade, thesis, and market outlook\n` +
     `- **${t(lang, "risks")}** — Red flags, inspection points, critical questions\n` +
     `- **${t(lang, "ownershipCost")}** — Insurance, storage, maintenance estimates\n` +
     `- **${t(lang, "bestRegion")}** — Where to find the best deal (US, EU, UK, JP)\n` +

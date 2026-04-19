@@ -330,14 +330,13 @@ function buildSummary(
   analysis: AIAnalysisResponse,
 ): string {
   const bidRange = `$${analysis.bidTarget.low.toLocaleString()}-$${analysis.bidTarget.high.toLocaleString()}`;
-  const grade = analysis.investmentOutlook?.grade || 'N/A';
   const trend = analysis.investmentOutlook?.trend || 'STABLE';
   const strengthCount = analysis.keyStrengths?.length || 0;
   const flagCount = analysis.redFlags?.length || 0;
 
   return (
     `Fair value estimate for this ${vehicleData.year} ${vehicleData.make} ${vehicleData.model}: ${bidRange}. ` +
-    `Investment grade: ${grade} (${trend.toLowerCase()} market). ` +
+    `Market outlook: ${trend.toLowerCase()}. ` +
     `${strengthCount} key strength${strengthCount !== 1 ? 's' : ''} identified, ` +
     `${flagCount} potential concern${flagCount !== 1 ? 's' : ''} flagged. ` +
     `${analysis.bidTarget.reasoning}`
@@ -349,7 +348,6 @@ function buildRecommendation(
   analysis: AIAnalysisResponse,
 ): string {
   const confidence = analysis.bidTarget.confidence;
-  const grade = analysis.investmentOutlook?.grade || 'FAIR';
   const currentBid = vehicleData.currentBid;
   const highValue = analysis.bidTarget.high;
 
@@ -368,12 +366,6 @@ function buildRecommendation(
     recommendation =
       `Current bidding appears within fair market range. ` +
       `Consider bidding up to $${highValue.toLocaleString()} based on our analysis.`;
-  }
-
-  if (grade === 'EXCELLENT' || grade === 'GOOD') {
-    recommendation += ` Investment outlook is ${grade.toLowerCase()} - this model has strong long-term potential.`;
-  } else if (grade === 'SPECULATIVE') {
-    recommendation += ` Investment outlook is speculative - buy for enjoyment rather than appreciation.`;
   }
 
   if (analysis.redFlags && analysis.redFlags.length > 0) {
@@ -417,7 +409,6 @@ export async function analyzeMarket(
 
 /** LLM fields from listing_reports that Gemini fills */
 export interface ReportLLMFields {
-  investment_grade: string | null
   confidence: string | null
   red_flags: string[]
   key_strengths: string[]
@@ -457,7 +448,6 @@ export async function analyzeForReport(
   const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
   return {
-    investment_grade: typeof parsed.investmentGrade === 'string' ? parsed.investmentGrade : null,
     confidence: typeof parsed.confidence === 'string' ? parsed.confidence : null,
     red_flags: Array.isArray(parsed.redFlags) ? parsed.redFlags.filter((s: unknown) => typeof s === 'string') : [],
     key_strengths: Array.isArray(parsed.keyStrengths) ? parsed.keyStrengths.filter((s: unknown) => typeof s === 'string') : [],

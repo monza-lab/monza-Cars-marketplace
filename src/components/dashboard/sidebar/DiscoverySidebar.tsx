@@ -105,16 +105,6 @@ export function DiscoverySidebar({
     return filtered.sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
   }, [auctions, activeFamilyName])
 
-  // Grade badge color
-  const gradeColor = (grade: string) => {
-    switch (grade) {
-      case "AAA": case "EXCELLENT": return "text-positive"
-      case "AA": case "GOOD": return "text-blue-400"
-      case "A": case "FAIR": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
-
   const timeLabels = {
     ended: t("asset.ended"),
     day: t("asset.timeDay"),
@@ -164,9 +154,6 @@ export function DiscoverySidebar({
                         {brand.name}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
-                          {brand.topGrade}
-                        </span>
                         <span className="text-[10px] text-muted-foreground tabular-nums">
                           {brand.carCount}
                         </span>
@@ -305,11 +292,6 @@ export function DiscoverySidebar({
                         <span className="text-[8px] text-muted-foreground">
                           {platformShort[auction.platform] || auction.platform}
                         </span>
-                        {auction.analysis?.investmentGrade && (
-                          <span className={`text-[8px] font-bold ${gradeColor(auction.analysis.investmentGrade)}`}>
-                            {auction.analysis.investmentGrade}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

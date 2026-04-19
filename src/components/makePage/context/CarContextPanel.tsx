@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { ownershipCosts, getPriceLabel, isAuctionPlatform, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { stripHtml } from "@/lib/stripHtml"
+import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
 // ─── CAR CONTEXT PANEL (right panel for individual car view) ───
 export function CarContextPanel({
@@ -29,8 +30,12 @@ export function CarContextPanel({
 }) {
   const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
-  const grade = car.investmentGrade
   const isEndingSoon = car.status === "ENDING_SOON"
+
+  // Fair Value range: use US market from fairValueByRegion if available
+  const fvUS = car.fairValueByRegion?.US
+  const fairValueLow = fvUS?.low ?? null
+  const fairValueHigh = fvUS?.high ?? null
 
   const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
   const priceRatio = car.currentBid > 0 ? Math.max(car.currentBid / 100000, 0.5) : 1
@@ -63,16 +68,13 @@ export function CarContextPanel({
 
         {/* 2. KEY METRICS */}
         <div className="px-5 py-3 border-b border-border bg-primary/3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
-              <p className={`text-[16px] font-bold ${
-                grade === "AAA" ? "text-positive"
-                  : grade === "AA" ? "text-blue-400"
-                    : grade === "A" ? "text-destructive"
-                      : "text-muted-foreground"
-              }`}>{grade}</p>
-            </div>
+          <div className="mb-3">
+            <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Fair Value</span>
+            <p className="text-[16px] font-bold text-foreground">
+              {formatUsdValue(fairValueLow)} – {formatUsdValue(fairValueHigh)}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{getPriceLabel(car.platform, car.status)}</span>
               <p className="text-[13px] font-display font-medium text-primary">

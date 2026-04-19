@@ -3,7 +3,6 @@
 // 1000 Investment-Grade Vehicles with Verified Data
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type InvestmentGrade = "AAA" | "AA" | "A" | "B+" | "B" | "C";
 export type AuctionStatus = "ACTIVE" | "ENDING_SOON" | "ENDED";
 export type Platform = "BRING_A_TRAILER" | "RM_SOTHEBYS" | "GOODING" | "BONHAMS" | "CARS_AND_BIDS" | "COLLECTING_CARS" | "AUTO_SCOUT_24" | "AUTO_TRADER" | "BE_FORWARD" | "CLASSIC_COM" | "ELFERSPOT";
 export type Region = "US" | "EU" | "UK" | "JP";
@@ -32,7 +31,6 @@ export interface CollectorCar {
   price: number;
   trend: string;
   trendValue: number;
-  investmentGrade: InvestmentGrade;
   thesis: string;
   image: string;
   images: string[];
@@ -90,10 +88,6 @@ export function searchCars(query: string): CollectorCar[] {
   );
 }
 
-export function getTopPicks(): CollectorCar[] {
-  return CURATED_CARS.filter(car => car.investmentGrade === "AAA");
-}
-
 export function getLiveAuctions(): CollectorCar[] {
   return CURATED_CARS.filter(car => car.status === "ACTIVE" || car.status === "ENDING_SOON");
 }
@@ -104,10 +98,6 @@ export function getEndingSoon(): CollectorCar[] {
 
 export function getCarsByMake(make: string): CollectorCar[] {
   return CURATED_CARS.filter(car => car.make === make);
-}
-
-export function getCarsByGrade(grade: InvestmentGrade): CollectorCar[] {
-  return CURATED_CARS.filter(car => car.investmentGrade === grade);
 }
 
 export function getCarsByRegion(region: Region | "ALL"): CollectorCar[] {

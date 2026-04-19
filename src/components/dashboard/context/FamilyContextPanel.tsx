@@ -121,13 +121,7 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
 
         {/* 2. KEY METRICS */}
         <div className="px-5 py-3 border-b border-border bg-primary/3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
-              <p className={`text-[16px] font-bold ${
-                family.topGrade === "AAA" ? "text-positive" : "text-primary"
-              }`}>{family.topGrade}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
               <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(family.priceMin)}</p>

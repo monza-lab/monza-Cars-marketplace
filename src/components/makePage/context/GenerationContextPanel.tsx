@@ -14,6 +14,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { extractGenerationFromModel } from "@/lib/makePageHelpers"
 import { ownershipCosts } from "@/lib/makePageConstants"
 import type { GenerationAggregate } from "@/components/makePage/GenerationFeedCard"
+import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
 // ─── GENERATION CONTEXT PANEL (right panel for generation drill-down view) ───
 export function GenerationContextPanel({
@@ -39,18 +40,14 @@ export function GenerationContextPanel({
     })
   }, [familyCars, gen.id])
 
-  // Top variants within this generation
+  // Top variants within this generation — sorted by avg price descending (most expensive first)
   const topVariants = useMemo(() => {
-    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    const variantMap = new Map<string, { count: number; prices: number[] }>()
     genCars.forEach(car => {
       const variant = car.model
-      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      const existing = variantMap.get(variant) || { count: 0, prices: [] }
       existing.count++
       if (car.currentBid > 0) existing.prices.push(car.currentBid)
-      const g = car.investmentGrade || "B"
-      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
-        existing.grade = g
-      }
       variantMap.set(variant, existing)
     })
     return Array.from(variantMap.entries())
@@ -59,7 +56,6 @@ export function GenerationContextPanel({
         name,
         avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
         count: data.count,
-        grade: data.grade,
       }))
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 6)
@@ -86,14 +82,13 @@ export function GenerationContextPanel({
     maintenance: Math.round(fallbackCosts.maintenance * genScaleFactor),
   }
 
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": return "text-positive"
-      case "AA": return "text-blue-400"
-      case "A": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
+  // Median sold across this generation (avg of known currentBids)
+  const medianSold = useMemo(() => {
+    const prices = genCars.map(c => c.currentBid).filter(p => p > 0).sort((a, b) => a - b)
+    if (prices.length === 0) return null
+    const mid = Math.floor(prices.length / 2)
+    return prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2
+  }, [genCars])
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -126,9 +121,9 @@ export function GenerationContextPanel({
         <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
-              <p className={`text-[16px] font-bold ${gen.topGrade === "AAA" ? "text-positive" : "text-primary"}`}>
-                {gen.topGrade}
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Median Sold</span>
+              <p className="text-[16px] font-bold text-foreground">
+                {formatUsdValue(medianSold)}
               </p>
             </div>
             <div>
@@ -165,9 +160,6 @@ export function GenerationContextPanel({
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-[11px] font-display font-medium text-primary">
                       {formatPrice(variant.avgPrice)}
-                    </span>
-                    <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
-                      {variant.grade}
                     </span>
                   </div>
                 </div>

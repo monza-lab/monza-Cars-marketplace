@@ -1,8 +1,9 @@
 "use client"
 
 import Image from "next/image"
-import { DollarSign, Car, Shield, ChevronRight } from "lucide-react"
+import { DollarSign, Car, ChevronRight } from "lucide-react"
 import { useCurrency } from "@/lib/CurrencyContext"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 
 // ─── GENERATION AGGREGATE TYPE ───
 export type GenerationAggregate = {
@@ -15,7 +16,6 @@ export type GenerationAggregate = {
   yearMax: number
   representativeImage: string
   representativeCar: string
-  topGrade: string
 }
 
 // ─── GENERATION FEED CARD (Full-height card for generation drill-down) ───
@@ -49,17 +49,9 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
           {/* Vignette gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
-          {/* Grade badge — top left */}
+          {/* Market delta pill — top left */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              gen.topGrade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : gen.topGrade === "AA"
-                  ? "bg-primary/30 text-primary"
-                  : "bg-foreground/20 text-white"
-            }`}>
-              {gen.topGrade}
-            </span>
+            <MarketDeltaPill priceUsd={null} medianUsd={null} className="text-[10px] font-bold tracking-[0.1em]" />
           </div>
 
           {/* Car count badge — top right */}
@@ -85,7 +77,7 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
+          <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-border">
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <DollarSign className="size-3" />
@@ -104,18 +96,6 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
               <p className="text-[13px] text-foreground">{gen.carCount} vehicles</p>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Shield className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Grade</span>
-              </div>
-              <p className={`text-[13px] font-semibold ${
-                gen.topGrade === "AAA" ? "text-positive"
-                  : gen.topGrade === "AA" ? "text-blue-400"
-                    : gen.topGrade === "A" ? "text-destructive"
-                      : "text-muted-foreground"
-              }`}>{gen.topGrade}</p>
-            </div>
           </div>
 
           {/* CTA */}

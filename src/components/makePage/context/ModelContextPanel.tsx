@@ -30,6 +30,7 @@ import {
   platformLabels,
   regionLabels,
 } from "@/lib/makePageConstants"
+import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
 export function ModelContextPanel({
   model,
@@ -95,16 +96,6 @@ export function ModelContextPanel({
     .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
     .slice(0, 4)
 
-  // Grade color helper
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": return "text-positive"
-      case "AA": return "text-blue-400"
-      case "A": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
-
   // Regional price bar max value for relative widths
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
@@ -141,9 +132,10 @@ export function ModelContextPanel({
         <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("sidebar.grade")}</span>
-              <p className={`text-[16px] font-bold ${model.representativeCar.investmentGrade === "AAA" ? "text-positive" : "text-primary"
-                }`}>{model.representativeCar.investmentGrade}</p>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Median Sold</span>
+              <p className="text-[16px] font-bold text-foreground">
+                {formatUsdValue(model.avgPrice)}
+              </p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Min Price</span>
@@ -335,9 +327,6 @@ export function ModelContextPanel({
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] tabular-nums text-muted-foreground">
                       {formatPrice(m.priceMin)}-{formatPrice(m.priceMax)}
-                    </span>
-                    <span className={`text-[9px] font-bold ${gradeColor(m.representativeCar.investmentGrade)}`}>
-                      {m.representativeCar.investmentGrade}
                     </span>
                   </div>
                 </div>

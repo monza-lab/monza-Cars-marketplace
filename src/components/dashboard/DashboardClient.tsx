@@ -36,11 +36,12 @@ import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions, computeRegionalValFromCorpus } from "./utils/valuation"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
 
-// ─── UPGRADE LOW-RES IMAGE URLS TO HIGH-RES ───
+// ─── Upgrade low-res image URLs to high-res ───
 // Some scraped images (especially older AutoScout24 data) store thumbnail URLs.
 // This upgrades them to high-resolution variants at display time.
 function upgradeImageUrl(url: string): string {
@@ -70,8 +71,8 @@ type Brand = {
   carCount: number
   priceMin: number
   priceMax: number
+  medianPriceUsd: number
   avgTrend: string
-  topGrade: string
   representativeImage: string
   representativeCar: string
   categories: string[]
@@ -118,7 +119,6 @@ type Auction = {
     bidTargetLow: number | null
     bidTargetHigh: number | null
     confidence: string | null
-    investmentGrade: string | null
     appreciationPotential: string | null
     keyStrengths: string[]
     redFlags: string[]
@@ -167,12 +167,12 @@ type PorscheFamily = {
   carCount: number
   priceMin: number
   priceMax: number
+  medianPriceUsd: number
   yearMin: number
   yearMax: number
   representativeImage: string
   fallbackImage: string
   representativeCar: string
-  topGrade: string
 }
 
 type LiveRegionTotals = {
@@ -259,12 +259,13 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
   const brands: Brand[] = []
   brandMap.forEach((cars, name) => {
     const prices = cars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
-    const grades = cars.map(c => c.analysis?.investmentGrade || "B+")
     const categories = [...new Set(cars.map(c => c.category).filter(Boolean))]
 
-    // Find best grade
-    const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
-    const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
+    // Median price (factual metric, replaces grade for ranking)
+    const sortedPrices = [...prices].sort((a, b) => a - b)
+    const medianPriceUsd = sortedPrices.length > 0
+      ? sortedPrices[Math.floor(sortedPrices.length / 2)]
+      : 0
 
     // Pick the best real DB image for this brand:
     // Prefer listing/dealer platforms (verified photos), then highest price
@@ -295,8 +296,8 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
       carCount: count,
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
-      avgTrend: topGrade === "AAA" ? "Premium Demand" : topGrade === "AA" ? "Strong Demand" : topGrade === "A" ? "High Demand" : "Growing Demand",
-      topGrade,
+      medianPriceUsd,
+      avgTrend: "Active Market",
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],
@@ -353,9 +354,12 @@ function aggregateFamilies(
   familyMap.forEach((cars, familyKey) => {
     const prices = cars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
     const years = cars.map(c => c.year)
-    const grades = cars.map(c => c.analysis?.investmentGrade || "B+")
-    const gradeOrder = ["AAA", "AA", "A", "B+", "B", "C"]
-    const topGrade = grades.sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b))[0]
+
+    // Median price (factual metric, replaces grade for ranking)
+    const sortedPrices = [...prices].sort((a, b) => a - b)
+    const medianPriceUsd = sortedPrices.length > 0
+      ? sortedPrices[Math.floor(sortedPrices.length / 2)]
+      : 0
 
     const bestCar = cars.reduce((max, car) => listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max, cars[0])
 
@@ -391,12 +395,12 @@ function aggregateFamilies(
       carCount,
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
+      medianPriceUsd,
       yearMin: Math.min(...years),
       yearMax: Math.max(...years),
       representativeImage: heroImage || staticFallback,
       fallbackImage: staticFallback,
       representativeCar: `${bestCar.year} Porsche ${bestCar.model}`,
-      topGrade,
     })
   })
 
@@ -491,17 +495,9 @@ function BrandCard({ brand, index = 0 }: { brand: Brand; index?: number }) {
             </span>
           </div>
 
-          {/* Grade badge */}
+          {/* Market delta pill */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              brand.topGrade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : brand.topGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
-            }`}>
-              {brand.topGrade}
-            </span>
+            <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
           </div>
         </div>
 
@@ -626,17 +622,9 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
             </span>
           </div>
 
-          {/* Grade badge */}
+          {/* Market delta pill */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-              family.topGrade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : family.topGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
-            }`}>
-              {family.topGrade}
-            </span>
+            <MarketDeltaPill priceUsd={family.priceMax} medianUsd={family.medianPriceUsd} />
           </div>
         </div>
 
@@ -759,17 +747,9 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
 
-        {/* Grade badge */}
+        {/* Market delta pill */}
         <div className="absolute top-4 left-4">
-          <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${
-            brand.topGrade === "AAA"
-              ? "bg-positive/30 text-positive"
-              : brand.topGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-foreground/20 text-white"
-          }`}>
-            {brand.topGrade}
-          </span>
+          <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
         </div>
 
         {/* Car count */}
@@ -863,15 +843,7 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
 
       {/* Right side */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <span className={`text-[10px] font-bold ${
-          brand.topGrade === "AAA"
-            ? "text-positive"
-            : brand.topGrade === "AA"
-              ? "text-primary"
-              : "text-muted-foreground"
-        }`}>
-          {brand.topGrade}
-        </span>
+        <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
         <ChevronRight className="size-4 text-muted-foreground" />
       </div>
     </Link>
@@ -1022,23 +994,13 @@ function BrandNavigationPanel({
 
       {/* Quick Stats */}
       <div className="shrink-0 px-4 py-3 border-b border-border bg-primary/2">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
-              {t("brandNav.totalCars")}
-            </span>
-            <p className="text-[14px] font-bold text-foreground mt-0.5">
-              {FMT_REGIONAL_INT.format(brands.reduce((sum, b) => sum + b.carCount, 0))}
-            </p>
-          </div>
-          <div>
-            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
-              {t("brandNav.aaaBrands")}
-            </span>
-            <p className="text-[14px] font-bold text-positive mt-0.5">
-              {brands.filter(b => b.topGrade === "AAA").length}
-            </p>
-          </div>
+        <div>
+          <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
+            {t("brandNav.totalCars")}
+          </span>
+          <p className="text-[14px] font-bold text-foreground mt-0.5">
+            {FMT_REGIONAL_INT.format(brands.reduce((sum, b) => sum + b.carCount, 0))}
+          </p>
         </div>
       </div>
 
@@ -1084,14 +1046,8 @@ function BrandNavigationPanel({
                   </div>
                 </div>
 
-                {/* Grade badge */}
-                <span className={`text-[10px] font-bold ${
-                  brand.topGrade === "AAA" ? "text-positive" :
-                  brand.topGrade === "AA" ? "text-primary" :
-                  "text-muted-foreground"
-                }`}>
-                  {brand.topGrade}
-                </span>
+                {/* Market delta pill */}
+                <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
               </div>
             </button>
           )
@@ -1198,16 +1154,6 @@ function DiscoverySidebar({
     })
   }, [auctions, activeFamilyName])
 
-  // Grade badge color
-  const gradeColor = (grade: string) => {
-    switch (grade) {
-      case "AAA": case "EXCELLENT": return "text-positive"
-      case "AA": case "GOOD": return "text-blue-400"
-      case "A": case "FAIR": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
-
   const endedText2 = t("asset.ended")
   const soldText2 = t("asset.sold")
   const timeBaseLabels2 = {
@@ -1258,9 +1204,7 @@ function DiscoverySidebar({
                         {brand.name}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
-                          {brand.topGrade}
-                        </span>
+                        <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
                         <span className="text-[10px] text-muted-foreground tabular-nums">
                           {brand.carCount}
                         </span>
@@ -1407,11 +1351,6 @@ function DiscoverySidebar({
                         <span className="text-[8px] text-muted-foreground">
                           {platformShort[auction.platform] || auction.platform}
                         </span>
-                        {auction.analysis?.investmentGrade && (
-                          <span className={`text-[8px] font-bold ${gradeColor(auction.analysis.investmentGrade)}`}>
-                            {auction.analysis.investmentGrade}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1517,39 +1456,30 @@ function AssetCard({ auction, allAuctions = [] }: { auction: Auction; allAuction
 
           {/* Investment Metrics Grid */}
           {(() => {
-            const grade = auction.analysis?.investmentGrade || "B+"
             const trend = auction.analysis?.appreciationPotential === "APPRECIATING"
-              ? (grade === "AAA" ? "Premium Demand" : grade === "AA" ? "Strong Demand" : "High Demand")
+              ? "High Demand"
               : auction.analysis?.appreciationPotential === "DECLINING"
               ? "Low Demand"
-              : (grade === "AAA" ? "Premium Demand" : grade === "AA" ? "Strong Demand" : "Growing Demand")
+              : "Growing Demand"
             const familyAuctions = allAuctions.filter(
               (a) => a.make === auction.make && a.family === auction.family,
             )
             const band = resolveFairValueBand(auction, familyAuctions)
+            const priceUsd = listingPriceUsd(auction, {})
+            const medianUsd = band ? (band.low + band.high) / 2 : null
 
             return (
-              <div className="mt-auto grid grid-cols-4 gap-4 pt-4 border-t border-border">
-                {/* Grade */}
+              <div className="mt-auto grid grid-cols-3 gap-4 pt-4 border-t border-border">
+                {/* Market delta */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Award className="size-3" />
-                    <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.grade")}</span>
-                  </div>
-                  <p className={`text-[15px] font-bold ${
-                    grade === "AAA" || grade === "EXCELLENT" ? "text-positive" :
-                    grade === "AA" || grade === "A" || grade === "GOOD" ? "text-primary" :
-                    "text-foreground"
-                  }`}>{grade}</p>
-                </div>
-
-                {/* Trend */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <TrendingUp className="size-3" />
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.trend")}</span>
                   </div>
-                  <p className="text-[13px] font-semibold text-positive">{trend}</p>
+                  <div className="flex items-center gap-2">
+                    <MarketDeltaPill priceUsd={priceUsd} medianUsd={medianUsd} />
+                    <p className="text-[13px] font-semibold text-positive">{trend}</p>
+                  </div>
                 </div>
 
                 {/* Fair Value */}
@@ -1909,28 +1839,28 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
 
   // Top variants: group by model variant name, sorted by avg listing price (USD)
   const topVariants = useMemo(() => {
-    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    const variantMap = new Map<string, { count: number; prices: number[] }>()
     familyAuctions.forEach(a => {
       const variant = a.model
-      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      const existing = variantMap.get(variant) || { count: 0, prices: [] }
       existing.count++
       const usd = listingPriceUsd(a, rates)
       if (usd > 0) existing.prices.push(usd)
-      const g = a.analysis?.investmentGrade || "B"
-      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
-        existing.grade = g
-      }
       variantMap.set(variant, existing)
     })
 
     return Array.from(variantMap.entries())
       .filter(([, data]) => data.prices.length > 0)
-      .map(([name, data]) => ({
-        name,
-        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
-        count: data.count,
-        grade: data.grade,
-      }))
+      .map(([name, data]) => {
+        const sorted = [...data.prices].sort((a, b) => a - b)
+        const medianPrice = sorted[Math.floor(sorted.length / 2)]
+        return {
+          name,
+          avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
+          medianPrice,
+          count: data.count,
+        }
+      })
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
   }, [familyAuctions])
@@ -1953,15 +1883,6 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
   const similarFamilies = allFamilies
     .filter(f => f.slug !== family.slug)
     .slice(0, 3)
-
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": case "EXCELLENT": return "text-positive"
-      case "AA": case "GOOD": return "text-blue-400"
-      case "A": case "FAIR": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
 
   const yearLabel = family.yearMin === family.yearMax
     ? `${family.yearMin}`
@@ -1991,13 +1912,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
 
         {/* 2. KEY METRICS */}
         <div className="px-5 py-3 border-b border-border bg-primary/3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
-              <p className={`text-[16px] font-bold ${
-                family.topGrade === "AAA" ? "text-positive" : "text-primary"
-              }`}>{family.topGrade}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
               <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(family.priceMin)}</p>
@@ -2031,9 +1946,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
                     <span className="text-[11px] font-display font-medium text-primary">
                       {formatPrice(variant.avgPrice)}
                     </span>
-                    <span className={`text-[9px] font-bold ${gradeColor(variant.grade)}`}>
-                      {variant.grade}
-                    </span>
+                    <MarketDeltaPill priceUsd={variant.avgPrice} medianUsd={variant.medianPrice} />
                   </div>
                 </div>
               ))}
@@ -2207,29 +2120,29 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
     }
   }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
   const topModels = useMemo(() => {
-    const variantMap = new Map<string, { count: number; prices: number[]; grade: string }>()
+    const variantMap = new Map<string, { count: number; prices: number[] }>()
     brandAuctions.forEach(a => {
       const variant = a.model
-      const existing = variantMap.get(variant) || { count: 0, prices: [], grade: "B" }
+      const existing = variantMap.get(variant) || { count: 0, prices: [] }
       existing.count++
       const usd = listingPriceUsd(a, rates)
       if (usd > 0) existing.prices.push(usd)
-      const g = a.analysis?.investmentGrade || "B"
-      if (["AAA", "AA", "A"].indexOf(g) < ["AAA", "AA", "A"].indexOf(existing.grade)) {
-        existing.grade = g
-      }
       variantMap.set(variant, existing)
     })
 
     return Array.from(variantMap.entries())
       .filter(([, data]) => data.prices.length > 0)
-      .map(([name, data]) => ({
-        name,
-        avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
-        count: data.count,
-        grade: data.grade,
-        trend: data.grade === "AAA" ? "Premium" : data.grade === "AA" ? "Strong" : "Stable",
-      }))
+      .map(([name, data]) => {
+        const sorted = [...data.prices].sort((a, b) => a - b)
+        const medianPrice = sorted[Math.floor(sorted.length / 2)]
+        return {
+          name,
+          avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
+          medianPrice,
+          count: data.count,
+          trend: "Stable",
+        }
+      })
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
   }, [brandAuctions])
@@ -2264,20 +2177,14 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
-  // Similar brands (same grade tier)
+  // Similar brands (different brand, ranked by proximity of median price)
   const similarBrands = allBrands
-    .filter(b => b.topGrade === brand.topGrade && b.slug !== brand.slug)
+    .filter(b => b.slug !== brand.slug)
+    .slice()
+    .sort((a, b) =>
+      Math.abs(a.medianPriceUsd - brand.medianPriceUsd) - Math.abs(b.medianPriceUsd - brand.medianPriceUsd)
+    )
     .slice(0, 3)
-
-  // Grade color helper
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": case "EXCELLENT": return "text-positive"
-      case "AA": case "GOOD": return "text-blue-400"
-      case "A": case "FAIR": return "text-destructive"
-      default: return "text-muted-foreground"
-    }
-  }
 
   return (
     <div className="h-full flex flex-col overflow-y-auto no-scrollbar">
@@ -2298,13 +2205,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
 
         {/* 2. PRICE SUMMARY */}
         <div className="px-5 py-3 border-b border-border bg-primary/3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
-              <p className={`text-[16px] font-bold ${
-                brand.topGrade === "AAA" ? "text-positive" : "text-primary"
-              }`}>{brand.topGrade}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
               <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(brand.priceMin)}</p>
@@ -2433,9 +2334,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
                     <span className="text-[10px] tabular-nums text-muted-foreground">
                       {formatPrice(b.priceMin)}–{formatPrice(b.priceMax)}
                     </span>
-                    <span className={`text-[9px] font-bold ${
-                      b.topGrade === "AAA" ? "text-positive" : "text-primary"
-                    }`}>{b.topGrade}</span>
+                    <MarketDeltaPill priceUsd={b.priceMax} medianUsd={b.medianPriceUsd} />
                   </div>
                 </Link>
               ))}

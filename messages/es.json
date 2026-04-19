@@ -125,7 +125,7 @@
     "kicker": "Ventas verificadas",
     "subtitle": "Selección curada de transacciones recientes de alto valor. Chasis reales, procedencia verificada y precios finales reales.",
     "viewListing": "Ver anuncio",
-    "hammerPrice": "Precio de martillo",
+    "hammerPrice": "Precio",
     "dataNote": "Datos obtenidos directamente de Bring a Trailer y RM Sotheby's. Precios verificados al momento de la venta."
   },
   "status": {
@@ -156,8 +156,8 @@
     "aboutThisVehicle": "Sobre este vehículo",
     "editorial": "Editorial",
     "timeLeft": "Tiempo restante",
-    "soldFor": "Vendido por",
-    "currentBid": "Oferta actual",
+    "soldFor": "Precio",
+    "currentBid": "Precio",
     "bids": "Ofertas",
     "status": "Estado",
     "sellersDescription": "Descripción del vendedor",
@@ -247,7 +247,7 @@
       "provenance": "Procedencia e Historia",
       "platformData": "Datos de Plataforma",
       "platform": "Plataforma",
-      "currentBid": "Oferta Actual",
+      "currentBid": "Precio",
       "bidCount": "Ofertas",
       "status": "Estado",
       "timeRemaining": "Tiempo Restante"
@@ -427,8 +427,8 @@
       "hide": "Ocultar"
     },
     "labels": {
-      "currentBid": "Oferta actual",
-      "finalPrice": "Precio final",
+      "currentBid": "Precio",
+      "finalPrice": "Precio de lista",
       "recommendedCap": "Tope recomendado",
       "basedOnMarketAnalysis": "Basado en análisis de mercado",
       "grade": "Calificación:",
@@ -749,10 +749,10 @@
       "setAlerts": "Configurar alertas"
     },
     "responses": {
-      "singleCar": "**{title}**\n\n{thesis}\n\n**Precio justo:** {fairLow} — {fairHigh}\n\n**Inversión:** Grado {grade} | {trend}",
+      "singleCar": "**{title}**\n\n{thesis}\n\n**Precio justo:** {fairLow} — {fairHigh}\n\n**Mediana:** {median} | {comparables} comparables",
       "multipleFound": "Encontré {count} vehículos:",
       "noMatch": "**Monza Lab Collection**\n\nTenemos {totalCars} vehículos de inversión curados.\n\n**Apreciación promedio:** +{avgAppreciation}% anual\n\nPrueba buscar marcas como \"Porsche\" o \"Ferrari\" — o un modelo específico.",
-      "currentCar": "**{title}**\n\n**Análisis de inversión:**\n• Grado: **{grade}**\n• Tendencia: **{trend}**\n\n**Valor justo por región:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**Tesis:**\n{thesis}",
+      "currentCar": "**{title}**\n\n**Análisis de mercado:**\n• Mediana: {median} | {comparables} comparables\n• Tendencia: **{trend}**\n\n**Valor justo por región:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**Tesis:**\n{thesis}",
       "currentCarFallback": "**{title}**\n\nPrecio actual: {price}\n\nPara un análisis completo, explora las pestañas de Inversión y Due Diligence arriba.",
       "noMatchForQuery": "No encontré información específica sobre \"{query}\".\n\n¿Quieres que analice el **{title}** que estás viendo? Puedo estimar valor, perspectiva de inversión o historial."
     }
@@ -825,14 +825,6 @@
     "preWar": "Pre-Guerra",
     "americanMuscle": "Muscle Americano"
   },
-  "grades": {
-    "aaa": "AAA",
-    "aa": "AA",
-    "a": "A",
-    "bPlus": "B+",
-    "b": "B",
-    "c": "C"
-  },
   "valuation": {
     "marketValue": "Valor de mercado",
     "askMedian": "Precio solicitado mediano",
@@ -858,7 +850,7 @@
     "transportationShipping": "Transporte y Envío"
   },
   "common": {
-    "currentBid": "oferta actual",
+    "currentBid": "precio",
     "bids": "ofertas",
     "bid": "oferta",
     "years": "años",
@@ -908,8 +900,8 @@
       "clearSearch": "Borrar búsqueda"
     },
     "card": {
-      "currentBid": "Oferta actual",
-      "soldFor": "Vendido por",
+      "currentBid": "Precio",
+      "soldFor": "Precio",
       "bids": "{count, plural, one {# oferta} other {# ofertas}}",
       "noBids": "Sin ofertas"
     },
@@ -1037,11 +1029,11 @@
       "noLiveAuctions": "No hay subastas en vivo ahora",
       "brandsCount": "{count, plural, one {# marca} other {# marcas}}"
     },
+    "featuredBrands": "Marcas destacadas",
     "brandNav": {
       "title": "Explorar marcas",
       "manufacturers": "{count, plural, one {# fabricante} other {# fabricantes}}",
       "totalCars": "Total de autos",
-      "aaaBrands": "Marcas AAA",
       "carsCount": "{count, plural, one {# auto} other {# autos}}"
     },
     "brandCard": {
@@ -1092,7 +1084,6 @@
       "timeHour": "h",
       "timeMin": "m",
       "metrics": {
-        "grade": "Grado",
         "trend": "Tendencia",
         "fairValue": "Valor justo",
         "category": "Categoría",
@@ -1104,13 +1095,12 @@
       "fiveYearTrend": "Tendencia a 5 años",
       "collectionStats": "Estadísticas de colección",
       "vehicles": "Vehículos",
-      "topGrade": "Mejor grado",
       "minPrice": "Precio mín.",
       "maxPrice": "Precio máx.",
       "categories": "Categorías",
       "similarBrands": "Marcas similares",
       "explore": "Explorar {brand}",
-      "grade": "Grado",
+      "medianSold": "Mediana vendida",
       "valuationByMarket": "Valoración por Mercado",
       "yourMarket": "TU MERCADO",
       "fiveYearReturnComparison": "Comparación de Retorno a 5 Años",
@@ -1185,8 +1175,7 @@
       "category": "Categoría",
       "regionalPricing": "Valor justo por región",
       "regionalNote": "Rangos de valor justo basados en resultados recientes de subastas y condiciones regionales del mercado.",
-      "avgPrice": "Precio prom.",
-      "grade": "Grado"
+      "avgPrice": "Precio prom."
     },
     "results": {
       "modelsTitle": "Modelos de {make}",
@@ -1231,8 +1220,8 @@
       "viewDetails": "Ver detalles"
     },
     "card": {
-      "currentBid": "Oferta actual",
-      "soldFor": "Vendido por"
+      "currentBid": "Precio",
+      "soldFor": "Precio"
     }
   },
   "metadata": {
@@ -1289,15 +1278,66 @@
   "seo": {
     "make": {
       "title": "Colección {make} — Autos de Colección Grado Inversión | MonzaHaus",
-      "description": "Explora vehículos {make} grado inversión con inteligencia de mercado en vivo, datos de subastas y análisis con IA."
+      "description": "Explora vehículos {make} de colección con inteligencia de mercado en vivo, datos de subastas y análisis con IA."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Resultados de Subastas, Valores de Mercado y Análisis de Inversión | MonzaHaus",
-      "description": "Datos de subastas en vivo e históricas para {make} {series}. Tendencias de mercado, specs y vehículos grado inversión."
+      "description": "Datos de subastas en vivo e históricas para {make} {series}. Tendencias de mercado, specs y vehículos de colección."
     },
     "car": {
       "titleTemplate": "{make} {model} {year} | MonzaHaus",
       "descriptionFallback": "{make} {model} {year} de colección. Análisis de mercado, comparables y tesis de inversión."
+    }
+  },
+  "report": {
+    "hausReport": {
+      "title": "Haus Report",
+      "available": "Haus Report disponible",
+      "teaserBody": "Fair value específico para este carro, análisis de historial de servicio y las preguntas correctas antes de comprar. Desbloquea por 1 crédito.",
+      "ctaGenerate": "Generar Haus Report",
+      "ctaView": "Ver Haus Report",
+      "cached": "Ya generado — en caché"
+    },
+    "fairValue": {
+      "specificCarTitle": "Fair Value específico",
+      "baselineSubtitle": "Basado en {count} ventas comparables",
+      "modifiersTitle": "Modificadores aplicados a este carro",
+      "noModifiers": "Sin ajustes — este carro está en la línea base de comparables"
+    },
+    "signalsDetected": {
+      "title": "Señales detectadas",
+      "empty": "No se extrajeron señales — ver lista de faltantes"
+    },
+    "signalsMissing": {
+      "title": "Datos que no pudimos verificar",
+      "subtitle": "Pregúntale al vendedor antes de comprar",
+      "empty": "Todas las señales de alto valor fueron detectadas"
+    },
+    "verdict": {
+      "factualSummary": "El precio está {deltaPercent}% vs. el valor justo específico del vehículo. {detected} de {total} señales de alto valor detectadas."
+    },
+    "questions": {
+      "ask_for_service_records": "Pídele al vendedor historial de servicio documentado (fechas, kilometraje y sellos).",
+      "remaining_factory_warranty": "Confirma cualquier garantía de fábrica o extendida vigente.",
+      "accident_disclosure_in_writing": "Solicita una declaración escrita confirmando que no hubo accidentes previos.",
+      "share_carfax_report": "Pide un link compartible de Carfax o Autocheck.",
+      "is_paint_factory_or_pts": "Confirma si la pintura es color de fábrica o Paint-to-Sample (código).",
+      "how_many_previous_owners": "Confirma el número de dueños anteriores y si es verificable que sea de un solo dueño.",
+      "confirm_original_paint": "Solicita confirmación y lecturas de medidor de pintura en la PPI."
+    },
+    "modifiers": {
+      "mileage_delta": { "name": "Kilometraje vs. comparables", "description": "Ajuste según kilometraje relativo a ventas comparables" },
+      "transmission_manual": { "name": "Preferencia de transmisión", "description": "Premium de manual vs. PDK en esta serie" },
+      "year_within_generation": { "name": "Premium por año del modelo", "description": "Posición dentro del ciclo de producción de la generación" },
+      "paint_to_sample": { "name": "Paint-to-Sample", "description": "Color de pintura especial por pedido de fábrica" },
+      "service_records_complete": { "name": "Historial de servicio completo", "description": "Historial documentado con sellos" },
+      "low_previous_owners": { "name": "Historial de propiedad", "description": "Bajo número de dueños anteriores" },
+      "original_paint": { "name": "Pintura original", "description": "Sin repintado declarado, acabado de fábrica original" },
+      "accident_disclosed": { "name": "Accidente declarado", "description": "Historial de accidente previo declarado por el vendedor" },
+      "modifications_disclosed": { "name": "Modificaciones aftermarket", "description": "Partes o modificaciones no de fábrica declaradas" },
+      "documentation_provided": { "name": "Documentación provista", "description": "Window sticker, PPI o Carfax disponible" },
+      "warranty_remaining": { "name": "Garantía vigente", "description": "Garantía de fábrica o CPO aún activa" },
+      "seller_tier_specialist": { "name": "Vendedor especialista Porsche", "description": "Vendido por un dealer especialista curado" }
     }
   }
 }

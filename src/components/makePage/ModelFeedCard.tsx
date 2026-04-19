@@ -2,20 +2,18 @@
 
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
-import { DollarSign, Car, Shield, ChevronRight } from "lucide-react"
+import { DollarSign, Car, ChevronRight } from "lucide-react"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import type { Model } from "@/lib/makePageHelpers"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 
 // ─── MODEL FEED CARD (Full-height card for center column) ───
 export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Model; make: string; onClick?: () => void; index?: number }) {
   const t = useTranslations("makePage")
   const { formatPrice } = useCurrency()
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
-
-  // Investment grade from representative car
-  const grade = model.representativeCar.investmentGrade
 
   const cardContent = (
     <>
@@ -41,16 +39,9 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           {/* Vignette gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
 
-          {/* Grade badge — top left */}
+          {/* Market delta pill — top left */}
           <div className="absolute top-4 left-4">
-            <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${grade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : grade === "AA"
-                  ? "bg-primary/30 text-primary"
-                  : "bg-foreground/20 text-white"
-              }`}>
-              {grade}
-            </span>
+            <MarketDeltaPill priceUsd={model.representativeCar.currentBid} medianUsd={null} className="text-[10px] font-bold tracking-[0.1em]" />
           </div>
 
           {/* Car count badge — top right */}
@@ -80,7 +71,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
+          <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-border">
             {/* Price Range */}
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -101,18 +92,6 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
               <p className="text-[13px] text-foreground">{model.carCount} vehicles</p>
             </div>
 
-            {/* Grade */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Shield className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
-              </div>
-              <p className={`text-[13px] font-semibold ${grade === "AAA" ? "text-positive"
-                  : grade === "AA" ? "text-blue-400"
-                    : grade === "A" ? "text-destructive"
-                      : "text-muted-foreground"
-                }`}>{grade}</p>
-            </div>
           </div>
 
           {/* Categories */}

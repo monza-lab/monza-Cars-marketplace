@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { PricingCards, type PlanId } from "@/components/payments/PricingCards"
 import { CheckoutModal } from "@/components/payments/CheckoutModal"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { Shield, BarChart3, Globe, TrendingUp, Coins, FileBarChart } from "lucide-react"
+import { track } from "@/lib/analytics/events"
 
 // ─── REPORT FEATURES ───
 
@@ -45,20 +46,28 @@ const REPORT_FEATURES = [
 
 const FAQ_ITEMS = [
   {
-    q: "Do credits expire?",
-    a: "One-time credit packs never expire. Free monthly credits reset on the 1st of each month. Pro Unlimited is active as long as your subscription is active.",
+    q: "Do reports expire?",
+    a: "Single and Pack purchases never expire — use them whenever you want. Monthly is an unlimited subscription as long as it's active.",
   },
   {
     q: "What's included in each report?",
-    a: "Every report includes a 10-section investment dossier: investment grade, price trends, regional arbitrage, comparable sales, risk assessment, bid targets, ownership costs, market depth, and more.",
+    a: "Every Monza Haus Report is a 10-section investment dossier: investment grade (AAA to C), regional fair value across US/EU/UK/JP markets, comparable sales, risk assessment, bid targets, ownership costs, market depth, and more.",
   },
   {
-    q: "Can I cancel my Pro subscription?",
-    a: "Yes, cancel anytime. You'll keep access until the end of your billing period. No questions asked.",
+    q: "What's the difference between Pack and Monthly?",
+    a: "The Reports Pack gives you 5 reports to use at your own pace, forever. Monthly gives you unlimited Reports, plus Watchlist, Email Alerts on matching cars, Saved Searches, priority report generation, and PDF + CSV export. Monthly is for active hunters; Pack is for pausing between purchases.",
+  },
+  {
+    q: "Why is Monthly the obvious choice?",
+    a: "Two Reports Packs cost $78 combined. Monthly is $59 — cheaper than two packs, and you get unlimited reports instead of 10, plus Watchlist and Alerts on top.",
+  },
+  {
+    q: "Can I cancel my subscription?",
+    a: "Yes — cancel anytime from Billing. You'll keep access until the end of your current billing period. No questions asked.",
   },
   {
     q: "Is there a money-back guarantee?",
-    a: "Yes. If you're not satisfied with your purchase, contact us within 30 days for a full refund.",
+    a: "Yes. If you're not satisfied, contact us within 30 days for a full refund.",
   },
 ]
 
@@ -68,14 +77,12 @@ export default function PricingPage() {
   const { profile } = useAuth()
   const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null)
 
+  useEffect(() => {
+    track({ event: "pricing_page_viewed", payload: { source: "direct" } })
+  }, [])
+
   const handleSelectPlan = (planId: PlanId) => {
     setCheckoutPlan(planId)
-  }
-
-  const handleConfirmPurchase = (planId: PlanId) => {
-    // TODO: Backend replaces with Stripe createCheckoutSession()
-    console.log("[Checkout] Plan selected:", planId)
-    setCheckoutPlan(null)
   }
 
   return (
@@ -89,11 +96,11 @@ export default function PricingPage() {
           </span>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Choose Your Plan
+          Due Diligence for Porsche Buyers
         </h1>
-        <p className="text-[15px] text-muted-foreground max-w-lg mx-auto">
-          Unlock comprehensive investment analysis for smarter buying decisions.
-          Every report is a 10-section dossier powered by real auction data.
+        <p className="text-[15px] text-muted-foreground max-w-xl mx-auto">
+          A PPI costs $300. An official Porsche PPS, $150. Unlimited investment
+          analyses for $59 a month is due diligence, not an expense.
         </p>
       </div>
 
@@ -161,7 +168,7 @@ export default function PricingPage() {
           <p className="text-[11px] text-muted-foreground">
             Current balance:{" "}
             <span className="text-primary font-semibold">
-              {profile.creditsBalance} credits
+              {profile.creditsBalance} Reports
             </span>
           </p>
         )}
@@ -172,7 +179,7 @@ export default function PricingPage() {
         open={checkoutPlan !== null}
         onOpenChange={(open) => !open && setCheckoutPlan(null)}
         planId={checkoutPlan}
-        onConfirm={handleConfirmPurchase}
+        onSwitchPlan={(newPlan) => setCheckoutPlan(newPlan)}
       />
     </div>
   )

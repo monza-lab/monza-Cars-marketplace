@@ -11,9 +11,11 @@ export interface UserProfile {
   name: string | null
   avatarUrl: string | null
   creditsBalance: number
+  packCreditsBalance: number
   freeCreditsUsed: number
-  tier: 'FREE' | 'PRO'
+  tier: 'FREE' | 'PACK_OWNER' | 'MONTHLY' | 'ANNUAL' | 'PRO'
   creditResetDate: string
+  subscriptionPeriodEnd: string | null
 }
 
 interface AuthContextType {

@@ -2,26 +2,24 @@
 
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { BadgeCheck, Clock, Gavel, ExternalLink, TrendingUp } from "lucide-react"
+import { BadgeCheck, Gavel, ExternalLink } from "lucide-react"
 import { featuredAuctions, getPlatformDisplayName, type FeaturedAuction } from "@/lib/featuredAuctions"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
+import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getGradeBadgeStyle(grade: FeaturedAuction["investmentGrade"]): string {
-  switch (grade) {
-    case "AAA":
-      return "bg-positive/15 text-positive border-positive/30"
-    case "AA":
-      return "bg-primary/15 text-primary border-primary/30"
-    case "A":
-      return "bg-amber-500/15 text-destructive border-amber-500/30"
-    default:
-      return "bg-zinc-500/15 text-zinc-400 border-zinc-500/30"
-  }
+function formatRelativeTime(when: string | Date): string {
+  const end = typeof when === "string" ? new Date(when) : when
+  const diffMs = end.getTime() - Date.now()
+  if (diffMs <= 0) return "soon"
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (days >= 1) return `in ${days}d`
+  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  return `in ${hours}h`
 }
 
 // ---------------------------------------------------------------------------
@@ -109,16 +107,21 @@ function FeaturedCard({
 
         {/* Content overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-5">
-          {/* Investment Grade */}
+          {/* Listing Status */}
           <div className="flex items-center gap-2 mb-2">
-            <span
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wider ${getGradeBadgeStyle(
-                auction.investmentGrade
-              )}`}
-            >
-              <TrendingUp className="size-2.5" />
-              {auction.investmentGrade}
-            </span>
+            {auction.status === "SOLD" && auction.currentBid ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-positive">
+                Sold at {formatUsdValue(auction.currentBid)}
+              </span>
+            ) : auction.endTime ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-primary">
+                Ends {formatRelativeTime(auction.endTime)}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-foreground/10 px-2 py-0.5 text-[9px] font-bold tracking-wider text-muted-foreground">
+                Upcoming
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground">
               {auction.mileage.toLocaleString()} {auction.mileageUnit}
             </span>

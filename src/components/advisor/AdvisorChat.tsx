@@ -184,15 +184,6 @@ export function AdvisorChat({ open, onOpenChange, initialContext }: AdvisorChatP
                   <span className="text-[10px] font-display font-medium text-primary shrink-0">
                     {formatPrice(car.currentBid)}
                   </span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                    car.investmentGrade === "AAA"
-                      ? "bg-positive/15 text-positive"
-                      : car.investmentGrade === "AA"
-                        ? "bg-blue-500/15 text-blue-400"
-                        : "bg-amber-500/15 text-destructive"
-                  }`}>
-                    {car.investmentGrade}
-                  </span>
                 </div>
               )}
             </div>

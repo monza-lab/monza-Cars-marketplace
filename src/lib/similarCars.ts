@@ -9,17 +9,6 @@ export interface SimilarCarResult {
   matchReasons: string[]
 }
 
-// ─── GRADE HIERARCHY ───
-
-const GRADE_ORDER = ["AAA", "AA", "A", "B+", "B", "C"] as const
-
-function gradeDistance(a: string, b: string): number {
-  const idxA = GRADE_ORDER.indexOf(a as typeof GRADE_ORDER[number])
-  const idxB = GRADE_ORDER.indexOf(b as typeof GRADE_ORDER[number])
-  if (idxA === -1 || idxB === -1) return 99
-  return Math.abs(idxA - idxB)
-}
-
 // ─── TRANSMISSION NORMALIZATION ───
 
 function isManual(transmission: string): boolean {
@@ -47,7 +36,7 @@ function scoreSimilarity(target: CollectorCar, candidate: CollectorCar): { score
     const candidateConfig = candidateSeries ? getSeriesConfig(candidateSeries, candidate.make) : null
 
     if (targetConfig && candidateConfig && targetConfig.family === candidateConfig.family) {
-      score += 25
+      score += 29
       reasons.push(`Same lineage (${targetConfig.family})`)
     }
   }
@@ -79,13 +68,15 @@ function scoreSimilarity(target: CollectorCar, candidate: CollectorCar): { score
     }
   }
 
-  // 6. Investment grade match
-  const gDist = gradeDistance(target.investmentGrade, candidate.investmentGrade)
-  if (gDist === 0) {
-    score += 15
-    reasons.push(`${candidate.investmentGrade} grade`)
-  } else if (gDist === 1) {
-    score += 8
+  // 6. Price band match (replaces prior investment grade match)
+  const targetBandPrice = target.currentBid || target.price
+  const candidateBandPrice = candidate.currentBid || candidate.price
+  if (targetBandPrice > 0 && candidateBandPrice > 0) {
+    const delta = Math.abs(candidateBandPrice - targetBandPrice) / targetBandPrice
+    if (delta <= 0.15) {
+      score += 8
+      reasons.push("similar price range")
+    }
   }
 
   // 7. Transmission match
@@ -102,7 +93,7 @@ function scoreSimilarity(target: CollectorCar, candidate: CollectorCar): { score
   if (target.mileage > 0 && candidate.mileage > 0) {
     const mileageRatio = candidate.mileage / target.mileage
     if (mileageRatio >= 0.7 && mileageRatio <= 1.3) {
-      score += 5
+      score += 8
       reasons.push("Similar mileage")
     }
   }

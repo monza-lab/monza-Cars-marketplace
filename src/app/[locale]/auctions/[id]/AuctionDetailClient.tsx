@@ -29,7 +29,6 @@ import {
   HelpCircle,
   DollarSign,
   BarChart3,
-  Target,
   Coins,
   FileText,
   MessageCircle,
@@ -75,7 +74,6 @@ interface AuctionAnalysis {
   }[]
   riskFactors: string[]
   recommendation: string
-  score: number
   createdAt: string
 }
 
@@ -409,7 +407,6 @@ function StrategyModule({
   t: ReturnType<typeof useTranslations>
 }) {
   const makeKey = getMakeKey(auction.make)
-  const score = auction.analysis?.score || 75
 
   return (
     <div className="border-b border-border py-5">
@@ -426,14 +423,6 @@ function StrategyModule({
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2 mt-4">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase ${
-          score >= 80 ? "bg-positive/15 text-positive border border-positive/30" :
-          score >= 60 ? "bg-primary/10 text-primary border border-primary/20" :
-          "bg-amber-500/15 text-destructive border border-amber-500/30"
-        }`}>
-          <Target className="size-3" />
-          {t("labels.grade")} {score >= 80 ? "AAA" : score >= 60 ? "AA" : "A"}
-        </span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground/4 px-3 py-1.5 text-[10px] font-medium text-muted-foreground border border-border">
           {t("labels.complexity")}: {t(`mock.strategy.${makeKey}.complexity`)}
         </span>
@@ -964,7 +953,6 @@ export default function AuctionDetailClient() {
             })),
             riskFactors: rawAuction.analysis.redFlags ?? [],
             recommendation: rawAuction.analysis.rawAnalysis?.recommendation ?? "",
-            score: rawAuction.analysis.investmentGrade === "EXCELLENT" ? 95 : rawAuction.analysis.investmentGrade === "GOOD" ? 80 : rawAuction.analysis.investmentGrade === "FAIR" ? 65 : 50,
             createdAt: rawAuction.analysis.createdAt,
           } : null,
           createdAt: rawAuction.createdAt,

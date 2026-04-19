@@ -125,7 +125,7 @@
     "kicker": "検証済み売買",
     "subtitle": "直近の高額取引をキュレーション。実車体、検証済みプロヴェナンス、実際の落札価格。",
     "viewListing": "出品を見る",
-    "hammerPrice": "落札価格",
+    "hammerPrice": "価格",
     "dataNote": "データはBring a TrailerおよびRM Sotheby'sから取得。販売時点で価格を検証済み。"
   },
   "status": {
@@ -156,8 +156,8 @@
     "aboutThisVehicle": "この車について",
     "editorial": "編集部",
     "timeLeft": "残り時間",
-    "soldFor": "落札価格",
-    "currentBid": "現在価格",
+    "soldFor": "価格",
+    "currentBid": "価格",
     "bids": "入札",
     "status": "ステータス",
     "sellersDescription": "売り手の説明",
@@ -247,7 +247,7 @@
       "provenance": "来歴と履歴",
       "platformData": "プラットフォームデータ",
       "platform": "プラットフォーム",
-      "currentBid": "現在の入札",
+      "currentBid": "価格",
       "bidCount": "入札数",
       "status": "ステータス",
       "timeRemaining": "残り時間"
@@ -427,8 +427,8 @@
       "hide": "非表示"
     },
     "labels": {
-      "currentBid": "現在の入札額",
-      "finalPrice": "最終価格",
+      "currentBid": "価格",
+      "finalPrice": "出品価格",
       "recommendedCap": "推奨上限",
       "basedOnMarketAnalysis": "市場分析に基づく",
       "grade": "グレード:",
@@ -749,10 +749,10 @@
       "setAlerts": "アラートを設定"
     },
     "responses": {
-      "singleCar": "**{title}**\n\n{thesis}\n\n**フェア価格:** {fairLow} — {fairHigh}\n\n**投資:** グレード {grade} | {trend}",
+      "singleCar": "**{title}**\n\n{thesis}\n\n**フェア価格:** {fairLow} — {fairHigh}\n\n**中央値:** {median} | {comparables}件の類似",
       "multipleFound": "{count}件見つかりました:",
       "noMatch": "**Monza Lab Collection**\n\n投資向けにキュレーションされた車両が{totalCars}件あります。\n\n**平均上昇率:** +{avgAppreciation}%/年\n\n\"Porsche\"や\"Ferrari\"などのメーカー、または具体的なモデル名で検索してみてください。",
-      "currentCar": "**{title}**\n\n**投資分析:**\n• グレード: **{grade}**\n• トレンド: **{trend}**\n\n**地域別フェアバリュー:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**ポイント:**\n{thesis}",
+      "currentCar": "**{title}**\n\n**市場分析:**\n• 中央値: {median} | {comparables}件の類似\n• トレンド: **{trend}**\n\n**地域別フェアバリュー:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**ポイント:**\n{thesis}",
       "currentCarFallback": "**{title}**\n\n現在価格: {price}\n\n詳しい分析は上部の投資(Investment)とデューデリジェンス(Due Diligence)をご覧ください。",
       "noMatchForQuery": "\"{query}\"に関する具体的な情報が見つかりませんでした。\n\n閲覧中の**{title}**を分析しますか？価値、投資見通し、履歴などを推定できます。"
     }
@@ -825,14 +825,6 @@
     "preWar": "戦前",
     "americanMuscle": "アメリカンマッスル"
   },
-  "grades": {
-    "aaa": "AAA",
-    "aa": "AA",
-    "a": "A",
-    "bPlus": "B+",
-    "b": "B",
-    "c": "C"
-  },
   "valuation": {
     "marketValue": "市場価値",
     "askMedian": "希望価格中央値",
@@ -858,7 +850,7 @@
     "transportationShipping": "輸送・配送"
   },
   "common": {
-    "currentBid": "現在の入札",
+    "currentBid": "価格",
     "bids": "入札",
     "bid": "入札",
     "years": "年",
@@ -908,8 +900,8 @@
       "clearSearch": "検索をクリア"
     },
     "card": {
-      "currentBid": "現在価格",
-      "soldFor": "落札価格",
+      "currentBid": "価格",
+      "soldFor": "価格",
       "bids": "{count, plural, one {# 件の入札} other {# 件の入札}}",
       "noBids": "入札なし"
     },
@@ -1037,11 +1029,11 @@
       "noLiveAuctions": "ライブオークションはありません",
       "brandsCount": "{count, plural, one {# ブランド} other {# ブランド}}"
     },
+    "featuredBrands": "注目のブランド",
     "brandNav": {
       "title": "メーカーを探す",
       "manufacturers": "{count, plural, one {# 社} other {# 社}}",
       "totalCars": "総車両数",
-      "aaaBrands": "AAAメーカー",
       "carsCount": "{count, plural, one {# 台} other {# 台}}"
     },
     "brandCard": {
@@ -1092,7 +1084,6 @@
       "timeHour": "時",
       "timeMin": "分",
       "metrics": {
-        "grade": "グレード",
         "trend": "トレンド",
         "fairValue": "フェアバリュー",
         "category": "カテゴリー",
@@ -1104,13 +1095,12 @@
       "fiveYearTrend": "5年トレンド",
       "collectionStats": "コレクション統計",
       "vehicles": "台数",
-      "topGrade": "トップグレード",
       "minPrice": "最小価格",
       "maxPrice": "最大価格",
       "categories": "カテゴリー",
       "similarBrands": "類似メーカー",
       "explore": "{brand}を見る",
-      "grade": "グレード",
+      "medianSold": "中央値",
       "valuationByMarket": "市場別評価",
       "yourMarket": "お客様の市場",
       "fiveYearReturnComparison": "5年間リターン比較",
@@ -1185,8 +1175,7 @@
       "category": "カテゴリー",
       "regionalPricing": "地域別適正価格",
       "regionalNote": "最近のオークション結果と地域の市場状況に基づく適正価格帯。",
-      "avgPrice": "平均価格",
-      "grade": "評価"
+      "avgPrice": "平均価格"
     },
     "results": {
       "modelsTitle": "{make} モデル",
@@ -1231,8 +1220,8 @@
       "viewDetails": "詳細を見る"
     },
     "card": {
-      "currentBid": "現在価格",
-      "soldFor": "落札価格"
+      "currentBid": "価格",
+      "soldFor": "価格"
     }
   },
   "metadata": {
@@ -1288,16 +1277,67 @@
   },
   "seo": {
     "make": {
-      "title": "{make} コレクション — 投資グレード・コレクターカー | MonzaHaus",
-      "description": "投資グレードの{make}車両を、ライブ市場データ、オークション結果、AIによる市場分析とともに紹介。"
+      "title": "{make} コレクション — コレクター向けコレクターカー | MonzaHaus",
+      "description": "コレクター向けの{make}車両を、ライブ市場データ、オークション結果、AIによる市場分析とともに紹介。"
     },
     "makeWithSeries": {
       "title": "{make} {series} — オークション結果・市場相場・投資分析 | MonzaHaus",
-      "description": "{make} {series}のライブおよび過去のオークションデータ。市場動向、スペック比較、投資グレード車両の発見。"
+      "description": "{make} {series}のライブおよび過去のオークションデータ。市場動向、スペック比較、コレクター向け車両の発見。"
     },
     "car": {
       "titleTemplate": "{year} {make} {model} | MonzaHaus",
       "descriptionFallback": "{year} {make} {model} — コレクターグレード。市場分析、比較データ、投資テーゼ。"
+    }
+  },
+  "report": {
+    "hausReport": {
+      "title": "Haus Report",
+      "available": "Haus Report 利用可能",
+      "teaserBody": "この車両固有の適正価格、サービス履歴の分析、購入前に確認すべき質問。1クレジットでアンロック。",
+      "ctaGenerate": "Haus Report を生成",
+      "ctaView": "Haus Report を見る",
+      "cached": "既に生成済み — キャッシュから"
+    },
+    "fairValue": {
+      "specificCarTitle": "車両固有の適正価格",
+      "baselineSubtitle": "{count}件の類似販売に基づく",
+      "modifiersTitle": "この車両に適用された修正要素",
+      "noModifiers": "調整なし — この車両は類似比較のベースラインに位置しています"
+    },
+    "signalsDetected": {
+      "title": "検出されたシグナル",
+      "empty": "シグナルは抽出されませんでした — 下記の不足項目をご確認ください"
+    },
+    "signalsMissing": {
+      "title": "確認できなかったデータ",
+      "subtitle": "購入前に売り手に確認してください",
+      "empty": "この出品からすべての主要シグナルが検出されました"
+    },
+    "verdict": {
+      "factualSummary": "価格は車両固有フェアバリューに対して {deltaPercent}%。高価値シグナル {total} 件のうち {detected} 件を検出。"
+    },
+    "questions": {
+      "ask_for_service_records": "売り手に整備履歴（日付、走行距離、スタンプ）の提示を依頼してください。",
+      "remaining_factory_warranty": "メーカー保証や延長保証の残りを確認してください。",
+      "accident_disclosure_in_writing": "事故歴がないことを書面で確認するよう依頼してください。",
+      "share_carfax_report": "共有可能な Carfax または Autocheck のリンクを依頼してください。",
+      "is_paint_factory_or_pts": "塗装が工場色か Paint-to-Sample（コード）かを確認してください。",
+      "how_many_previous_owners": "前オーナーの人数と、ワンオーナーの主張が検証可能か確認してください。",
+      "confirm_original_paint": "PPI時に塗装メーターの測定と確認を依頼してください。"
+    },
+    "modifiers": {
+      "mileage_delta": { "name": "走行距離 vs 類似比較", "description": "類似販売に対する走行距離に基づく調整" },
+      "transmission_manual": { "name": "トランスミッションの嗜好", "description": "このシリーズにおける マニュアル vs PDK のプレミアム" },
+      "year_within_generation": { "name": "モデルイヤーのプレミアム", "description": "世代の生産期間内での位置付け" },
+      "paint_to_sample": { "name": "Paint-to-Sample", "description": "工場の特別注文塗装色" },
+      "service_records_complete": { "name": "整備履歴完備", "description": "スタンプ付きの整備履歴が文書化されている" },
+      "low_previous_owners": { "name": "所有履歴", "description": "前オーナーの人数が少ない" },
+      "original_paint": { "name": "オリジナルペイント", "description": "再塗装なし、オリジナルの工場仕上げ" },
+      "accident_disclosed": { "name": "事故歴の開示", "description": "売り手が過去の事故歴を開示" },
+      "modifications_disclosed": { "name": "アフターマーケットの改造", "description": "純正以外のパーツや改造が開示されている" },
+      "documentation_provided": { "name": "書類の提供", "description": "ウィンドウスティッカー、PPI、または Carfax が利用可能" },
+      "warranty_remaining": { "name": "保証残存", "description": "メーカー保証または CPO 保証が有効" },
+      "seller_tier_specialist": { "name": "Porsche スペシャリスト販売", "description": "厳選されたスペシャリストディーラーによる販売" }
     }
   }
 }

@@ -10,12 +10,18 @@ import {
 } from "@/lib/supabaseLiveListings"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { getExchangeRates } from "@/lib/exchangeRates"
-import { getReportForListing } from "@/lib/reports/queries"
+import {
+  getReportForListing,
+  fetchSignalsForListing,
+  assembleHausReportFromDB,
+} from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
+import type { HausReport } from "@/lib/fairValue/types"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
+  searchParams?: Promise<{ mock?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -41,8 +47,10 @@ export async function generateStaticParams() {
   }))
 }
 
-export default async function ReportPage({ params }: ReportPageProps) {
+export default async function ReportPage({ params, searchParams }: ReportPageProps) {
   const { locale, id } = await params
+  const resolvedSearch = (await searchParams) ?? {}
+  const mockName = resolvedSearch.mock
   setRequestLocale(locale)
 
   const isLiveId = id.startsWith("live-")
@@ -80,15 +88,41 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
   const similarCars = findSimilarCars(car, allCandidates, 6)
 
-  // Fetch priced listings + compute market stats + check for existing report
-  const [allPriced, existingReport] = await Promise.all([
+  // Fetch priced listings + compute market stats in parallel
+  const [allPriced] = await Promise.all([
     fetchPricedListingsForModel(car.make),
-    getReportForListing(car.id),
   ])
 
   // Filter by series, expand to family if needed, compute regional stats (shared helper)
   const rates = await getExchangeRates()
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
+
+  // Resolve HausReport — via mock fixture (?mock=992gt3|sparse) or DB.
+  let existingReport: HausReport | null = null
+  if (mockName === "992gt3") {
+    const fixture = (await import("@/lib/fairValue/__fixtures__/992-gt3-pts-mock.json")).default
+    existingReport = fixture as HausReport
+  } else if (mockName === "sparse") {
+    const fixture = (await import("@/lib/fairValue/__fixtures__/991-carrera-sparse-mock.json")).default
+    existingReport = fixture as HausReport
+  } else {
+    try {
+      // Task 31: assemble HausReport from the `listing_reports` row + `listing_signals` rows.
+      // Task 29's saveHausReport/saveSignals now populate these columns during /api/analyze.
+      const reportRow = await getReportForListing(car.id)
+      if (reportRow) {
+        const signalRows = await fetchSignalsForListing(car.id)
+        existingReport = assembleHausReportFromDB(
+          reportRow as unknown as Record<string, unknown>,
+          signalRows,
+        )
+      } else {
+        existingReport = null
+      }
+    } catch {
+      existingReport = null
+    }
+  }
 
   return (
     <Suspense

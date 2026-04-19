@@ -21,14 +21,6 @@ export function MobileModelRow({
   const makeSlug = make.toLowerCase().replace(/\s+/g, "-")
   const { formatPrice } = useCurrency()
 
-  const gradeColor = (g: string) => {
-    switch (g) {
-      case "AAA": return "text-positive"
-      case "AA": return "text-primary"
-      default: return "text-muted-foreground"
-    }
-  }
-
   // Get platform badge from representative car
   const carPlatform = model.representativeCar.platform
   const platformBadge = carPlatform ? platformLabels[carPlatform] : null
@@ -78,11 +70,8 @@ export function MobileModelRow({
         </div>
       </Link>
 
-      {/* Right — grade + report CTA + context */}
+      {/* Right — report CTA + context */}
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <span className={`text-[10px] font-bold ${gradeColor(model.representativeCar.investmentGrade)}`}>
-          {model.representativeCar.investmentGrade}
-        </span>
         <div className="flex items-center gap-2">
           <Link
             href={`/cars/${makeSlug}/${model.representativeCar.id}/report`}

@@ -1,21 +1,92 @@
 import { NextResponse } from "next/server"
+import { randomUUID } from "crypto"
 import { createClient } from "@/lib/supabase/server"
 import { fetchPricedListingsForModel, fetchLiveListingById } from "@/lib/supabaseLiveListings"
-import { extractSeries, getSeriesThesis } from "@/lib/brandConfig"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { getExchangeRates } from "@/lib/exchangeRates"
-import { analyzeForReport } from "@/lib/ai/analyzer"
 import {
   getReportForListing,
   saveReport,
+  saveHausReport,
+  saveSignals,
   getOrCreateUser,
   hasAlreadyGenerated,
   deductCredit,
   checkAndResetFreeCredits,
 } from "@/lib/reports/queries"
+import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
+import { extractSellerSignal } from "@/lib/fairValue/extractors/seller"
+import { extractTextSignals } from "@/lib/fairValue/extractors/text"
+import { applyModifiers, computeSpecificCarFairValue } from "@/lib/fairValue/engine"
+import { MODIFIER_LIBRARY_VERSION } from "@/lib/fairValue/modifiers"
+import type {
+  HausReport,
+  DetectedSignal,
+  MissingSignal,
+  ComparableLayer,
+} from "@/lib/fairValue/types"
 
 interface AnalyzeRequestBody {
   listingId: string
+}
+
+// Signals we actively look for. Anything in this set that's not detected →
+// becomes a MissingSignal (rendered as a "question for the seller" prompt).
+const EXPECTED_SIGNAL_KEYS = [
+  "paint_to_sample",
+  "service_records",
+  "previous_owners",
+  "original_paint",
+  "accident_history",
+  "documentation",
+  "warranty",
+  "seller_tier",
+  "transmission",
+  "mileage",
+]
+
+function deriveMissing(detected: DetectedSignal[]): MissingSignal[] {
+  const detectedKeys = new Set(detected.map((s) => s.key))
+  return EXPECTED_SIGNAL_KEYS
+    .filter((k) => !detectedKeys.has(k))
+    .map<MissingSignal>((k) => ({
+      key: k,
+      name_i18n_key: `report.signals.${k}`,
+      question_for_seller_i18n_key: `report.questions.${k}_question`,
+    }))
+}
+
+function extractDomainFromUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    return new URL(url).hostname.toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+// Given the market stats struct, returns the baseline USD price (primary
+// region median, converted to USD) plus the comparable-layer label.
+function deriveBaseline(marketStats: NonNullable<ReturnType<typeof computeMarketStatsForCar>["marketStats"]>): {
+  baselineUsd: number
+  layer: ComparableLayer
+} {
+  const primary = marketStats.regions.find(
+    (r) => r.region === marketStats.primaryRegion && r.tier === marketStats.primaryTier,
+  )
+  const baselineUsd = primary ? Math.round(primary.medianPriceUsd) : 0
+
+  // computeMarketStatsForCar returns stats_scope as "model" | "series" | "family".
+  // HausReport.comparable_layer_used uses "strict" | "series" | "family".
+  // Map "model" → "strict" (= match on exact series), "series" → "series", "family" → "family".
+  const layer: ComparableLayer =
+    marketStats.scope === "family"
+      ? "family"
+      : marketStats.scope === "series"
+        ? "strict"
+        : "strict" // TODO: refine once computeMarketStats exposes a real comparable-layer enum
+
+  return { baselineUsd, layer }
 }
 
 export async function POST(request: Request) {
@@ -46,12 +117,27 @@ export async function POST(request: Request) {
     // 3. Check if user already generated this report (free re-access)
     const alreadyGenerated = await hasAlreadyGenerated(user.id, body.listingId)
 
-    // 4. Check existing report
+    // 4. Cache hit? A previously-generated Haus Report has signals_extracted_at set.
+    //    (Legacy rows with only fair_value_low/high but no signal extraction are not
+    //    treated as a cache hit — they need to be re-run through the new pipeline.)
     const existingReport = await getReportForListing(body.listingId)
-    if (existingReport && existingReport.investment_grade) {
+    const cachedHausRow = existingReport as (typeof existingReport & {
+      signals_extracted_at?: string | null
+      specific_car_fair_value_low?: number | null
+      specific_car_fair_value_mid?: number | null
+      specific_car_fair_value_high?: number | null
+      comparable_layer_used?: ComparableLayer | null
+      comparables_count?: number | null
+      modifiers_applied_json?: unknown
+      modifiers_total_percent?: number | null
+      extraction_version?: string | null
+    }) | null
+    if (cachedHausRow && cachedHausRow.signals_extracted_at) {
       return NextResponse.json({
         success: true,
-        data: existingReport,
+        ok: true,
+        data: cachedHausRow,
+        report: cachedHausRow,
         cached: true,
         creditUsed: 0,
         creditsRemaining: user.credits_balance,
@@ -80,52 +166,96 @@ export async function POST(request: Request) {
     // 7. Fetch priced listings and compute market stats (shared helper)
     const allPriced = await fetchPricedListingsForModel(car.make)
     const rates = await getExchangeRates()
-    const { marketStats, pricedRecords } = computeMarketStatsForCar(car, allPriced, rates)
-    const series = extractSeries(car.model, car.year, car.make)
+    const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
-    // 8. Get brand thesis
-    const brandThesis = getSeriesThesis(series, car.make)
-
-    // 9. Call Gemini
-    let llmData = null
-    try {
-      llmData = await analyzeForReport(
-        {
-          title: car.title,
-          year: car.year,
-          make: car.make,
-          model: car.model,
-          trim: car.trim,
-          mileage: car.mileage,
-          mileageUnit: car.mileageUnit,
-          transmission: car.transmission,
-          engine: car.engine,
-          exteriorColor: car.exteriorColor,
-          interiorColor: car.interiorColor,
-          location: car.location,
-          price: car.price,
-          vin: car.vin,
-          description: car.description,
-          sellerNotes: car.sellerNotes,
-          platform: car.platform,
-          sourceUrl: car.sourceUrl,
-        },
-        marketStats?.regions ?? [],
-        pricedRecords.slice(0, 60),
-        brandThesis,
+    if (!marketStats) {
+      return NextResponse.json(
+        { success: false, error: "INSUFFICIENT_MARKET_DATA", message: "Not enough comparables to build a fair-value baseline." },
+        { status: 422 },
       )
-    } catch (geminiError) {
-      console.error("[analyze] Gemini failed:", geminiError)
-      // Continue with market stats only
     }
 
-    // 10. Save report
-    const report = await saveReport(body.listingId, marketStats, llmData)
+    const { baselineUsd, layer } = deriveBaseline(marketStats)
+    const fairValueLowUsd = marketStats.primaryFairValueLow
+    const fairValueHighUsd = marketStats.primaryFairValueHigh
+    const comparablesCount = marketStats.totalDataPoints
 
-    // 11. Deduct credit
+    // 8. Extractors — structured + seller (sync) + text (Gemini, async)
+    const structuredSignals = extractStructuredSignals({
+      year: car.year ?? null,
+      mileage: car.mileage ?? null,
+      transmission: car.transmission ?? null,
+    })
+
+    const sellerSignal = extractSellerSignal({
+      sellerName: null, // CollectorCar doesn't expose a seller name; future: thread through from ListingRow
+      sellerDomain: extractDomainFromUrl(car.sourceUrl ?? null),
+    })
+
+    // Task 28 flagged that maxOutputTokens=2048 can truncate JSON on long
+    // descriptions. The extractor now accepts maxOutputTokens — pass 4096 here.
+    let textResult: Awaited<ReturnType<typeof extractTextSignals>> = { ok: false, signals: [] }
+    try {
+      textResult = await extractTextSignals({
+        description: car.description ?? "",
+        maxOutputTokens: 4096,
+      })
+    } catch (geminiError) {
+      console.error("[analyze] Gemini signal extraction failed:", geminiError)
+      textResult = { ok: false, signals: [] }
+    }
+
+    const detected: DetectedSignal[] = [
+      ...structuredSignals,
+      ...(sellerSignal ? [sellerSignal] : []),
+      ...(textResult.ok ? textResult.signals : []),
+    ]
+
+    // 9. Modifiers + specific-car fair value
+    const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
+    const specific = computeSpecificCarFairValue({ baselineUsd, totalPercent })
+
+    // 10. Compose HausReport
+    const runId = randomUUID()
+    const now = new Date().toISOString()
+    const report: HausReport = {
+      listing_id: body.listingId,
+      fair_value_low: fairValueLowUsd,
+      fair_value_high: fairValueHighUsd,
+      median_price: baselineUsd,
+      specific_car_fair_value_low: specific.low,
+      specific_car_fair_value_mid: specific.mid,
+      specific_car_fair_value_high: specific.high,
+      comparable_layer_used: layer,
+      comparables_count: comparablesCount,
+      signals_detected: detected,
+      signals_missing: deriveMissing(detected),
+      modifiers_applied: appliedModifiers,
+      modifiers_total_percent: totalPercent,
+      signals_extracted_at: textResult.ok ? now : null,
+      extraction_version: MODIFIER_LIBRARY_VERSION,
+    }
+
+    // 11. Persist
+    //     — saveReport writes the legacy market-stats columns (avg/min/max,
+    //       regional_stats, trend_percent, stats_scope, etc.) that the old
+    //       ReportClient + analytics still read.
+    //     — saveHausReport overlays the Haus-specific columns (specific-car
+    //       fair values, comparable layer, modifiers_applied_json, etc.).
+    //     — saveSignals writes one row per DetectedSignal to listing_signals.
+    await saveReport(body.listingId, marketStats, null)
+    await saveHausReport(body.listingId, report)
+    if (detected.length > 0) {
+      await saveSignals(body.listingId, runId, MODIFIER_LIBRARY_VERSION, detected)
+    }
+
+    // 12. Deduct credit
     let creditUsed = 0
     if (!alreadyGenerated) {
-      const creditResult = await deductCredit(user.id, body.listingId, report.id)
+      // Use the listing id as a stable "report_id" surrogate since saveHausReport
+      // is upsert-on-listing_id (no separate id returned). The deduct path only
+      // uses report_id for the user_reports audit row.
+      const creditResult = await deductCredit(user.id, body.listingId, body.listingId)
       if (creditResult.success) {
         creditUsed = creditResult.creditUsed
       }
@@ -133,11 +263,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      ok: true,
       data: report,
+      report,
       cached: false,
       creditUsed,
       creditsRemaining: user.credits_balance - creditUsed,
-      geminiUsed: !!llmData,
+      geminiUsed: textResult.ok,
     })
   } catch (error) {
     console.error("Error analyzing listing:", error)

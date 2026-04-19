@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
+import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import type { Model } from "@/lib/makePageHelpers"
 
 // ─── MOBILE: HERO MODEL (first model) ───
@@ -37,16 +38,9 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
           </button>
         </div>
 
-        {/* Grade badge */}
+        {/* Market delta pill */}
         <div className="absolute top-4 right-4">
-          <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${model.representativeCar.investmentGrade === "AAA"
-              ? "bg-positive/30 text-positive"
-              : model.representativeCar.investmentGrade === "AA"
-                ? "bg-primary/30 text-primary"
-                : "bg-white/20 text-white"
-            }`}>
-            {model.representativeCar.investmentGrade}
-          </span>
+          <MarketDeltaPill priceUsd={model.representativeCar.currentBid} medianUsd={null} />
         </div>
 
         {/* Live badge */}

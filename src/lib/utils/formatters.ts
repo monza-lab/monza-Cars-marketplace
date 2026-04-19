@@ -204,33 +204,6 @@ export function platformColor(platform: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Investment grade display
-// ---------------------------------------------------------------------------
-
-/**
- * Get a color for an investment grade.
- */
-export function investmentGradeColor(grade: string): string {
-  switch (grade?.toUpperCase()) {
-    case 'EXCELLENT':
-    case 'A':
-      return '#16A34A'; // green
-    case 'GOOD':
-    case 'B':
-      return '#2563EB'; // blue
-    case 'FAIR':
-    case 'C':
-      return '#D97706'; // amber
-    case 'SPECULATIVE':
-    case 'D':
-    case 'F':
-      return '#DC2626'; // red
-    default:
-      return '#6B6365'; // gray
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Market trend display
 // ---------------------------------------------------------------------------
 

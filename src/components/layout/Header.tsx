@@ -251,11 +251,11 @@ function searchItems(query: string): SearchItem[] {
 const SEARCH_TYPE_ICON = { family: Award, series: Calendar, variant: ShieldCheck, link: LinkIcon } as const
 
 const REGIONS = [
-  { id: "all", label: "All", flag: "\u{1F30D}" },
-  { id: "US", label: "US", flag: "\u{1F1FA}\u{1F1F8}" },
-  { id: "UK", label: "UK", flag: "\u{1F1EC}\u{1F1E7}" },
-  { id: "EU", label: "EU", flag: "\u{1F1EA}\u{1F1FA}" },
-  { id: "JP", label: "JP", flag: "\u{1F1EF}\u{1F1F5}" },
+  { id: "all", label: "ALL" },
+  { id: "US", label: "US" },
+  { id: "UK", label: "UK" },
+  { id: "EU", label: "EU" },
+  { id: "JP", label: "JP" },
 ];
 
 // Menu links - labels will be translated in the component
@@ -329,9 +329,7 @@ function getResponseForQuery(
       answer: `**${car.title}**
 
 **Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
+• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
 • Platform: ${car.platform.replace(/_/g, " ")}
 • Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
 • Location: ${car.location}
@@ -447,9 +445,7 @@ _Data from real auction results._`,
       answer: `**${car.title}**
 
 **Market Data:**
-${car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  ? `• Current bid: **${formatPrice(car.currentBid)}** with ${car.bidCount} bids`
-  : `• Sold for: **${formatPrice(car.currentBid)}**`}
+• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
 • Platform: ${car.platform.replace(/_/g, " ")}
 • Location: ${car.location}
 
@@ -897,6 +893,7 @@ export function Header() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const creditsRemaining = profile?.creditsBalance ?? 0;
   const isAuthenticated = !!user;
+  const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
 
   // Translated menu links
   const menuLinks = menuLinkKeys.map((link) => ({
@@ -964,6 +961,22 @@ export function Header() {
       <div className="fixed top-0 left-0 right-0 z-50">
         {/* Glass background — Obsidian */}
         <div className="absolute inset-0 h-full bg-background/85 backdrop-blur-xl border-b border-border" />
+
+        {/* Free user CTA banner */}
+        {profile && profile.tier === "FREE" && creditsRemaining <= 3 && (
+          <div className="relative bg-primary/[0.06] border-b border-primary/20 px-4 py-2 text-center">
+            <span className="text-[11px] text-foreground">
+              <strong>{creditsRemaining}</strong>{" "}
+              Free Reports left this month ·{" "}
+              <Link
+                href="/pricing"
+                className="text-primary font-semibold hover:underline"
+              >
+                Go Unlimited — $59/mo →
+              </Link>
+            </span>
+          </div>
+        )}
 
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
@@ -1139,14 +1152,13 @@ export function Header() {
                   )}
                   <button
                     onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.1em] transition-all ${
                       isActive
                         ? "bg-primary/15 text-primary border border-primary/25"
-                        : "text-muted-foreground hover:text-muted-foreground hover:bg-foreground/3"
+                        : "text-muted-foreground hover:text-foreground hover:bg-foreground/3"
                     }`}
                   >
-                    <span className="text-[12px] leading-none">{region.flag}</span>
-                    <span>{region.label}</span>
+                    {region.label}
                   </button>
                 </div>
               )
@@ -1167,9 +1179,15 @@ export function Header() {
                 onClick={() => router.push('/account')}
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
               >
-                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
-                <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                <Coins className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
+                {hasUnlimited ? (
+                  <span className="text-[12px] font-medium text-foreground">Unlimited</span>
+                ) : (
+                  <>
+                    <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
+                    <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                  </>
+                )}
               </button>
             )}
 

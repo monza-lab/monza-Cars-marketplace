@@ -14,6 +14,7 @@ import { stripHtml } from "@/lib/stripHtml"
 import { findSimilarCars } from "@/lib/similarCars"
 import { VehicleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd"
 import { buildCarDetailMetadata } from "@/lib/seo/carDetailMetadata"
+import type { HausReport } from "@/lib/fairValue/types"
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
 
@@ -108,6 +109,22 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     ? supabaseSoldHistory
     : await getSoldAuctionsForMake(car.make)
 
+  // Haus Report: load existing report (if any) + user-paid status.
+  let existingReport: HausReport | null = null
+  let userAlreadyPaid = false
+
+  try {
+    const { getReportForListing } = await import("@/lib/reports/queries")
+    if (typeof getReportForListing === "function") {
+      existingReport = (await getReportForListing(id)) as unknown as HausReport | null
+    }
+  } catch {
+    // helper not present yet — leave null
+  }
+
+  // TODO: once a user-level paid check is wired in Task 31, replace this stub
+  // with a real check against user_reports. For now, default to false.
+
   const carUrl = `${BASE_URL}/${locale}/cars/${make}/${id}`
   const mileageUnitCode = car.mileageUnit === "km" ? "KMT" : "SMI"
 
@@ -152,6 +169,8 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
           dbComparables={dbComparables}
           dbAnalysis={dbAnalysis}
           dbSoldHistory={soldHistory}
+          existingReport={existingReport}
+          userAlreadyPaid={userAlreadyPaid}
         />
       </Suspense>
     </>

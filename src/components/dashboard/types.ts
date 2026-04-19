@@ -6,7 +6,6 @@ export type Brand = {
   priceMin: number
   priceMax: number
   avgTrend: string
-  topGrade: string
   representativeImage: string
   representativeCar: string
   categories: string[]
@@ -53,7 +52,6 @@ export type Auction = {
     bidTargetLow: number | null
     bidTargetHigh: number | null
     confidence: string | null
-    investmentGrade: string | null
     appreciationPotential: string | null
     keyStrengths: string[]
     redFlags: string[]
@@ -87,7 +85,6 @@ export type PorscheFamily = {
   representativeImage: string
   fallbackImage: string
   representativeCar: string
-  topGrade: string
 }
 
 export type LiveRegionTotals = {

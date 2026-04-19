@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { stripHtml } from "@/lib/stripHtml"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
@@ -39,6 +39,7 @@ import {
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
+import type { HausReport } from "@/lib/fairValue/types"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
@@ -46,6 +47,7 @@ import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } fro
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
+import { HausReportTeaser } from "@/components/report/HausReportTeaser"
 
 // ─── MOCK DATA ───
 const redFlags: Record<string, string[]> = {
@@ -305,12 +307,6 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
           sizes="80px"
           referrerPolicy="no-referrer"
         />
-        {/* Grade badge */}
-        <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 py-0.5 rounded ${
-          car.investmentGrade === "AAA" ? "bg-positive/80 text-white"
-          : car.investmentGrade === "AA" ? "bg-primary/80 text-primary-foreground"
-          : "bg-amber-500/80 text-white"
-        }`}>{car.investmentGrade}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
@@ -367,9 +363,6 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
           <span className="text-[11px] font-display font-medium text-primary">
             {formatPrice(car.currentBid)}
           </span>
-          <span className={`text-[9px] font-bold ${
-            car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
-          }`}>{car.investmentGrade}</span>
         </div>
       </div>
     </Link>
@@ -420,17 +413,10 @@ function CarNavSidebar({
         </Link>
       </div>
 
-      {/* ── Identity: title + grade + trend ── */}
+      {/* ── Identity: title + trend ── */}
       <div className="px-4 pb-3 shrink-0 border-b border-border">
         <h2 className="text-[12px] font-semibold text-foreground leading-tight">{car.title}</h2>
         <div className="flex items-center gap-2 mt-2">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-            car.investmentGrade === "AAA"
-              ? "bg-positive/15 text-positive border border-positive/20"
-              : car.investmentGrade === "AA"
-                ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                : "bg-amber-500/15 text-destructive border border-amber-400/20"
-          }`}>{car.investmentGrade}</span>
           <span className={`text-[11px] tabular-nums font-semibold ${
             car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"
           }`}>
@@ -659,15 +645,9 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 1. INVESTMENT GRADE + PRICE */}
+        {/* 1. PRICE + TREND */}
         <div className="px-5 py-3 border-b border-border bg-primary/3">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
-              <p className={`text-[16px] font-bold ${
-                car.investmentGrade === "AAA" ? "text-positive" : "text-primary"
-              }`}>{car.investmentGrade}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
                 {getPriceLabel(car.platform, car.status)}
@@ -896,13 +876,15 @@ function CarContextPanel({
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [] }: {
+export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [], existingReport = null, userAlreadyPaid = false }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   dbMarketData?: DbMarketDataRow | null
   dbComparables?: DbComparableRow[]
   dbAnalysis?: DbAnalysisRow | null
   dbSoldHistory?: DbSoldRecord[]
+  existingReport?: HausReport | null
+  userAlreadyPaid?: boolean
 }) {
   const locale = useLocale()
   const t = useTranslations("carDetail")
@@ -910,6 +892,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const tStatus = useTranslations("status")
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd } = useCurrency()
+  const router = useRouter()
+  const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
+  const handleOpenReport = () => router.push(`/cars/${makeSlug}/${car.id}/report`)
 
   const [showSticky, setShowSticky] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
@@ -1132,11 +1117,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* Badges */}
           <div className="absolute top-0 right-4 pt-safe flex items-center gap-2 z-10">
-            <span className={`px-2.5 py-1.5 rounded-full text-[10px] font-bold backdrop-blur-md ${
-              car.investmentGrade === "AAA"
-                ? "bg-positive/30 text-positive"
-                : "bg-primary/30 text-primary"
-            }`}>{car.investmentGrade}</span>
             {isLive && (
               <div className="flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1.5">
                 <div className="size-2 rounded-full bg-positive animate-pulse" />
@@ -1189,16 +1169,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {/* Cell 1: Grade */}
+              {/* Cell 1: Trend */}
               <div className="rounded-xl bg-foreground/3 border border-border p-3">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
-                  {t("investmentPassport.grade")}
+                  Trend
                 </span>
-                <span className={`text-[28px] font-bold ${
-                  car.investmentGrade === "AAA" ? "text-positive"
-                  : car.investmentGrade === "AA" ? "text-primary"
-                  : "text-destructive"
-                }`}>{car.investmentGrade}</span>
+                <span className={`text-[28px] font-bold tabular-nums ${
+                  car.trendValue > 0 ? "text-positive"
+                  : car.trendValue < 0 ? "text-destructive"
+                  : "text-muted-foreground"
+                }`}>{car.trend}</span>
               </div>
 
               {/* Cell 2: Market Position */}
@@ -1240,6 +1220,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ═══ HAUS REPORT TEASER ═══ */}
+        <div className="mx-4 mt-4">
+          <HausReportTeaser
+            reportExists={!!existingReport}
+            userAlreadyPaid={userAlreadyPaid}
+            onClick={handleOpenReport}
+          />
         </div>
 
         {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
@@ -1616,11 +1605,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 {/* Overlays on hero */}
                 <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
-                    car.investmentGrade === "AAA"
-                      ? "bg-positive/20 text-positive border border-positive/30"
-                      : "bg-primary/20 text-primary border border-primary/30"
-                  }`}>{car.investmentGrade}</span>
                   {isLive && (
                     <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-positive/30">
                       <div className="size-1.5 rounded-full bg-positive animate-pulse" />
@@ -1648,6 +1632,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
                 <p className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
               </div>
+
+              {/* HAUS REPORT TEASER */}
+              <HausReportTeaser
+                reportExists={!!existingReport}
+                userAlreadyPaid={userAlreadyPaid}
+                onClick={handleOpenReport}
+              />
 
               {/* PROVENANCE */}
               <div className="rounded-xl bg-card border border-border p-5">

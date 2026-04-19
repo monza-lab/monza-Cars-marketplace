@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   type CollectorCar,
-  type InvestmentGrade
 } from "@/lib/curatedCars";
 import {
   fetchLiveListingAggregateCounts,
@@ -42,7 +41,6 @@ function transformCar(car: CollectorCar) {
     image: car.images?.[0] || car.image || "/cars/placeholder.svg",
     images: car.images.slice(0, 1),
     sourceUrl: car.sourceUrl ?? null,
-    investmentGrade: car.investmentGrade,
     trend: car.trend,
     trendValue: car.trendValue,
     category: car.category,
@@ -64,7 +62,6 @@ export async function GET(request: NextRequest) {
   const query = searchParams.get("query") || "";
   const filter = searchParams.get("filter") || "";
   const make = searchParams.get("make") || "";
-  const grade = searchParams.get("grade") || "";
   const status = searchParams.get("status") || "";
   const platform = searchParams.get("platform") || "";
   const category = searchParams.get("category") || "";
@@ -208,9 +205,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (filter === "top-picks") {
-    results = results.filter(car => car.investmentGrade === "AAA");
-  } else if (filter === "live") {
+  if (filter === "live") {
     results = results.filter(car => car.status === "ACTIVE" || car.status === "ENDING_SOON");
   } else if (filter === "ending-soon") {
     results = results.filter(car => car.status === "ENDING_SOON");
@@ -218,10 +213,6 @@ export async function GET(request: NextRequest) {
 
   if (make && make !== "All Makes") {
     results = results.filter(car => car.make === make);
-  }
-
-  if (grade) {
-    results = results.filter(car => car.investmentGrade === grade as InvestmentGrade);
   }
 
   if (status && status !== "All Statuses") {
