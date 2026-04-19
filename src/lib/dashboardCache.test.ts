@@ -90,13 +90,54 @@ describe("dashboard cache", () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
-    expect(fetchPaginatedListings).toHaveBeenCalledTimes(1)
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(5)
     expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 25,
+        pageSize: 6,
+        region: "US",
         status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 6,
+        region: "EU",
+        status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 6,
+        region: "UK",
+        status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 6,
+        region: "JP",
+        status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 24,
+        status: "active",
+        includeCount: false,
       }),
     )
     expect(fetchValuationCorpusForMake).toHaveBeenCalledWith("Porsche")
@@ -108,29 +149,81 @@ describe("dashboard cache", () => {
     expect(data.seriesCounts).toEqual({ "992": 1 })
   })
 
-  it("caps dashboard auctions at the dashboard page size even if the loader over-returns", async () => {
-    fetchPaginatedListings.mockResolvedValueOnce({
-      cars: Array.from({ length: 30 }, (_, index) => ({
+  it("caps dashboard auctions at the dashboard page size even if regional buckets over-return", async () => {
+    const makeCars = (prefix: string) =>
+      Array.from({ length: 10 }, (_, index) => ({
         ...activeCar,
-        id: `active-${index + 1}`,
-        title: `2023 Porsche 992 GT3 #${index + 1}`,
-      })),
+        id: `${prefix}-${index + 1}`,
+        title: `2023 Porsche 992 GT3 #${prefix}-${index + 1}`,
+      }))
+
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: makeCars("us"),
       hasMore: true,
-      nextCursor: { endTime: "2026-04-18T00:00:00.000Z", id: "active-30" },
-      totalCount: 30,
-      totalLiveCount: 30,
+      nextCursor: { endTime: "2026-04-18T00:00:00.000Z", id: "us-10" },
+      totalCount: 10,
+      totalLiveCount: 10,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: makeCars("eu"),
+      hasMore: true,
+      nextCursor: { endTime: "2026-04-18T00:00:00.000Z", id: "eu-10" },
+      totalCount: 10,
+      totalLiveCount: 10,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: makeCars("uk"),
+      hasMore: true,
+      nextCursor: { endTime: "2026-04-18T00:00:00.000Z", id: "uk-10" },
+      totalCount: 10,
+      totalLiveCount: 10,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: makeCars("jp"),
+      hasMore: true,
+      nextCursor: { endTime: "2026-04-18T00:00:00.000Z", id: "jp-10" },
+      totalCount: 10,
+      totalLiveCount: 10,
     })
 
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
     expect(data.auctions).toHaveLength(24)
-    expect(data.auctions[0]?.id).toBe("active-1")
-    expect(data.auctions[23]?.id).toBe("active-24")
+    expect(new Set(data.auctions.map((auction) => auction.id)).size).toBe(24)
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(4)
   })
 
-  it("falls back to source-scoped queries when the primary live query returns no cars", async () => {
+  it("falls back to source-scoped queries when regional buckets and the fill query return no cars", async () => {
     fetchPaginatedListings
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
       .mockResolvedValueOnce({
         cars: [],
         hasMore: false,
@@ -163,9 +256,28 @@ describe("dashboard cache", () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
-    expect(fetchPaginatedListings).toHaveBeenCalledTimes(4)
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(8)
     expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
-      2,
+      1,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 6,
+        region: "US",
+        status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        make: "Porsche",
+        pageSize: 24,
+        status: "active",
+        includeCount: false,
+      }),
+    )
+    expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
+      6,
       expect.objectContaining({
         make: "Porsche",
         pageSize: 8,
@@ -174,7 +286,7 @@ describe("dashboard cache", () => {
       }),
     )
     expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
-      3,
+      7,
       expect.objectContaining({
         make: "Porsche",
         pageSize: 8,
@@ -183,7 +295,7 @@ describe("dashboard cache", () => {
       }),
     )
     expect(fetchPaginatedListings).toHaveBeenNthCalledWith(
-      4,
+      8,
       expect.objectContaining({
         make: "Porsche",
         pageSize: 8,
@@ -207,13 +319,45 @@ describe("dashboard cache", () => {
       totalLiveCount: null,
       transientError: true,
     })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: true,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: true,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: true,
+    })
+    fetchPaginatedListings.mockResolvedValueOnce({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: null,
+      totalLiveCount: null,
+      transientError: true,
+    })
 
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
 
     await expect(fetchDashboardDataUncached()).rejects.toThrow(
       /inconsistent empty live snapshot/,
     )
-    expect(fetchPaginatedListings).toHaveBeenCalledTimes(1)
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(5)
   })
 
   it("bumps the cached dashboard key after recovery", async () => {
@@ -281,89 +425,49 @@ describe("dashboard cache", () => {
   it("reuses the last successful dashboard snapshot when a later live query returns empty with non-zero liveNow", async () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
 
-    await expect(fetchDashboardDataUncached()).resolves.toMatchObject({
+    const first = await fetchDashboardDataUncached()
+    expect(first).toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],
-      liveNow: 7,
+    })
+    expect(first.liveNow).toBeGreaterThan(0)
+
+    fetchPaginatedListings.mockReset()
+    fetchPaginatedListings.mockResolvedValue({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: 0,
+      totalLiveCount: 0,
     })
 
-    fetchPaginatedListings
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-
     await expect(fetchDashboardDataUncached()).resolves.toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],
-      liveNow: 7,
+      liveNow: first.liveNow,
     })
   })
 
   it("reuses the last successful dashboard snapshot when later live and aggregate queries both fail empty", async () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
 
-    await expect(fetchDashboardDataUncached()).resolves.toMatchObject({
+    const first = await fetchDashboardDataUncached()
+    expect(first).toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],
-      liveNow: 7,
     })
+    expect(first.liveNow).toBeGreaterThan(0)
 
-    fetchPaginatedListings
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
-      .mockResolvedValueOnce({
-        cars: [],
-        hasMore: false,
-        nextCursor: null,
-        totalCount: 0,
-        totalLiveCount: 0,
-      })
+    fetchPaginatedListings.mockReset()
+    fetchPaginatedListings.mockResolvedValue({
+      cars: [],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: 0,
+      totalLiveCount: 0,
+    })
     fetchLiveListingAggregateCounts.mockRejectedValueOnce(new Error("timeout"))
 
     await expect(fetchDashboardDataUncached()).resolves.toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],
-      liveNow: 7,
+      liveNow: first.liveNow,
     })
   })
 })

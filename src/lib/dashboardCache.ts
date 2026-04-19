@@ -13,7 +13,9 @@ import { computeSegmentStats } from "./pricing/segmentStats";
 const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_QUERY_TIMEOUT_MS = 45_000;
+const DASHBOARD_REGION_SAMPLE_SIZE = 6;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
+const DASHBOARD_REGION_ORDER: readonly ("US" | "EU" | "UK" | "JP")[] = ["US", "EU", "UK", "JP"] as const;
 
 /**
  * Pre-aggregate the full valuation corpus into { family → market → SegmentStats }.
@@ -200,10 +202,77 @@ function sortDashboardCars(a: CollectorCar, b: CollectorCar): number {
   return b.id.localeCompare(a.id);
 }
 
+function interleaveBuckets<T>(buckets: T[][], limit: number): T[] {
+  const interleaved: T[] = [];
+  const maxLen = Math.max(0, ...buckets.map((bucket) => bucket.length));
+
+  for (let i = 0; i < maxLen && interleaved.length < limit; i++) {
+    for (const bucket of buckets) {
+      if (i < bucket.length && interleaved.length < limit) {
+        interleaved.push(bucket[i]);
+      }
+    }
+  }
+
+  return interleaved;
+}
+
 async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]> {
+  const regionalResults = await Promise.all(
+    DASHBOARD_REGION_ORDER.map((region) =>
+      fetchPaginatedListings({
+        make,
+        region,
+        pageSize: DASHBOARD_REGION_SAMPLE_SIZE,
+        status: "active",
+        includeCount: false,
+      }),
+    ),
+  );
+
+  const regionalBuckets = regionalResults.map((result) => result.cars.sort(sortDashboardCars));
+  const regionalRows = interleaveBuckets(regionalBuckets, DASHBOARD_DISPLAY_LIMIT);
+  const regionalDeduped = new Map<string, CollectorCar>();
+
+  for (const car of regionalRows) {
+    if (!regionalDeduped.has(car.id)) {
+      regionalDeduped.set(car.id, car);
+    }
+  }
+
+  const balancedRows = Array.from(regionalDeduped.values()).slice(0, DASHBOARD_DISPLAY_LIMIT);
+  if (balancedRows.length > 0) {
+    if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) {
+      return balancedRows;
+    }
+
+    const fill = await fetchPaginatedListings({
+      make,
+      pageSize: DASHBOARD_DISPLAY_LIMIT,
+      status: "active",
+      includeCount: false,
+    });
+    if (fill.transientError) {
+      console.warn(
+        "[dashboardCache] regional live sample was partial and the fill query failed transiently; using regional sample only",
+      );
+      return balancedRows;
+    }
+
+    const seen = new Set(balancedRows.map((car) => car.id));
+    for (const car of fill.cars.sort(sortDashboardCars)) {
+      if (seen.has(car.id)) continue;
+      balancedRows.push(car);
+      seen.add(car.id);
+      if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) break;
+    }
+
+    return balancedRows.slice(0, DASHBOARD_DISPLAY_LIMIT);
+  }
+
   const primary = await fetchPaginatedListings({
     make,
-    pageSize: DASHBOARD_QUERY_PAGE_SIZE,
+    pageSize: DASHBOARD_DISPLAY_LIMIT,
     status: "active",
     includeCount: false,
   });
