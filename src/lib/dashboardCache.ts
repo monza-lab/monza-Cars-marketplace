@@ -116,7 +116,6 @@ export type DashboardData = {
 let lastSuccessfulDashboardData: DashboardData | null = null;
 
 const DASHBOARD_DISPLAY_LIMIT = 24;
-const DASHBOARD_QUERY_PAGE_SIZE = 25;
 const DASHBOARD_FALLBACK_PAGE_SIZE = 8;
 
 function buildAggregateFallback(liveCount: number) {

@@ -444,6 +444,15 @@ describe("dashboard cache", () => {
       auctions: [expect.objectContaining({ id: "active-1" })],
       liveNow: first.liveNow,
     })
+
+    fetchPaginatedListings.mockReset()
+    fetchPaginatedListings.mockResolvedValue({
+      cars: [activeCar],
+      hasMore: false,
+      nextCursor: null,
+      totalCount: 1,
+      totalLiveCount: 1,
+    })
   })
 
   it("reuses the last successful dashboard snapshot when later live and aggregate queries both fail empty", async () => {
