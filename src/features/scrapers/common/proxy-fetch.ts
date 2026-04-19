@@ -24,8 +24,10 @@ function getProxyConfig(): ProxyConfig | null {
 }
 
 let cachedAgent: ProxyAgent | null = null
+let proxyDisabled = false
 
 function getProxyAgent(): ProxyAgent | null {
+  if (proxyDisabled) return null
   if (cachedAgent) return cachedAgent
   const config = getProxyConfig()
   if (!config) return null
@@ -64,14 +66,11 @@ export async function proxyFetch(
       dispatcher: agent as any,
     } as RequestInit)
   } catch {
-    // Proxy unreachable — fall back to direct fetch so local runs
-    // still work when the proxy is down.
-    if (!proxyFallbackLogged) {
-      console.warn("[proxy-fetch] Proxy failed, falling back to direct fetch")
-      proxyFallbackLogged = true
-    }
+    // Proxy unreachable — disable it for the rest of this process
+    // so every subsequent request goes direct immediately.
+    proxyDisabled = true
+    cachedAgent = null
+    console.warn("[proxy-fetch] Proxy unreachable, switching to direct fetch for this session")
     return fetch(url, init)
   }
 }
-
-let proxyFallbackLogged = false
