@@ -43,9 +43,11 @@ export async function getOrCreateUser(supabaseId: string, email: string, name?: 
     const inserted = await dbQuery<UserRow>(
       `
         INSERT INTO "User" (
-          "supabaseId", email, name, "creditsBalance", "freeCreditsUsed", "creditResetDate", tier
+          id, "supabaseId", email, name,
+          "creditsBalance", "freeCreditsUsed", "creditResetDate", tier,
+          "createdAt", "updatedAt"
         )
-        VALUES ($1, $2, $3, $4, 0, NOW(), 'FREE')
+        VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 0, NOW(), 'FREE', NOW(), NOW())
         RETURNING *
       `,
       [supabaseId, email, name ?? null, FREE_CREDITS_PER_MONTH],

@@ -5,6 +5,11 @@ import type { ListingSummary, DiscoverPageResult } from "./types";
 import { isCloudflareChallenge, waitForCloudflareResolution } from "./browser";
 import { extractVinFromUrl, extractClassicComId } from "./id";
 import { logEvent } from "./logging";
+import {
+  canUseScraplingFallback,
+  fetchClassicPageHtmlWithScrapling,
+  shouldPreferScraplingFirst,
+} from "./scrapling";
 
 export interface DiscoverOptions {
   page: Page;
@@ -101,6 +106,47 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
     logEvent({ level: "info", event: "discover.page_start", runId: opts.runId, page: pageNum, url });
 
     const graphqlPayloads: unknown[] = [];
+    let pageError: string | null = null;
+
+    if (shouldPreferScraplingFirst()) {
+      const scraplingHtml = await fetchClassicPageHtmlWithScrapling(url);
+      if (scraplingHtml) {
+        const scraplingListings = parseSearchResultsFromDOM(scraplingHtml);
+        if (scraplingListings.length > 0) {
+          const newListings: ListingSummary[] = [];
+          for (const listing of scraplingListings) {
+            if (!seenUrls.has(listing.sourceUrl)) {
+              seenUrls.add(listing.sourceUrl);
+              newListings.push(listing);
+            }
+          }
+
+          allListings.push(...newListings);
+          logEvent({
+            level: "warn",
+            event: "discover.scrapling_forced",
+            runId: opts.runId,
+            page: pageNum,
+            found: newListings.length,
+          });
+          logEvent({
+            level: "info",
+            event: "discover.page_done",
+            runId: opts.runId,
+            page: pageNum,
+            found: newListings.length,
+            total: allListings.length,
+            source: "scrapling",
+          });
+          await opts.onPageDone?.(pageNum, newListings);
+
+          if (newListings.length === 0) {
+            hasNextPage = false;
+          }
+          continue;
+        }
+      }
+    }
 
     // Set up GraphQL response interception
     const responseHandler = async (response: { url: () => string; json: () => Promise<unknown> }) => {
@@ -169,6 +215,24 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
         pageListings = parseSearchResultsFromDOM(html);
       }
 
+      // Strategy 4: Scrapling fallback for the search page itself.
+      if (pageListings.length === 0 && canUseScraplingFallback()) {
+        const scraplingHtml = await fetchClassicPageHtmlWithScrapling(url);
+        if (scraplingHtml) {
+          const scraplingListings = parseSearchResultsFromDOM(scraplingHtml);
+          if (scraplingListings.length > 0) {
+            logEvent({
+              level: "warn",
+              event: "discover.scrapling_fallback",
+              runId: opts.runId,
+              page: pageNum,
+              found: scraplingListings.length,
+            });
+            pageListings = scraplingListings;
+          }
+        }
+      }
+
       // Deduplicate
       const newListings: ListingSummary[] = [];
       for (const listing of pageListings) {
@@ -196,12 +260,51 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
 
       await opts.onPageDone?.(pageNum, newListings);
     } catch (err) {
+      pageError = err instanceof Error ? err.message : String(err);
+      if (canUseScraplingFallback()) {
+        const scraplingHtml = await fetchClassicPageHtmlWithScrapling(url);
+        if (scraplingHtml) {
+          const scraplingListings = parseSearchResultsFromDOM(scraplingHtml);
+          if (scraplingListings.length > 0) {
+            const newListings: ListingSummary[] = [];
+            for (const listing of scraplingListings) {
+              if (!seenUrls.has(listing.sourceUrl)) {
+                seenUrls.add(listing.sourceUrl);
+                newListings.push(listing);
+              }
+            }
+
+            allListings.push(...newListings);
+            if (newListings.length > 0) {
+              logEvent({
+                level: "warn",
+                event: "discover.scrapling_fallback",
+                runId: opts.runId,
+                page: pageNum,
+                found: newListings.length,
+              });
+              logEvent({
+                level: "info",
+                event: "discover.page_done",
+                runId: opts.runId,
+                page: pageNum,
+                found: newListings.length,
+                total: allListings.length,
+                source: "scrapling",
+              });
+              await opts.onPageDone?.(pageNum, newListings);
+              continue;
+            }
+          }
+        }
+      }
+
       logEvent({
         level: "error",
         event: "discover.page_error",
         runId: opts.runId,
         page: pageNum,
-        error: err instanceof Error ? err.message : String(err),
+        error: pageError,
       });
       // Continue to next page on error
     } finally {

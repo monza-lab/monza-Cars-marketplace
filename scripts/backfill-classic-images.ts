@@ -1,10 +1,10 @@
 /**
- * CLI script for bulk ClassicCom image backfill using Playwright.
+ * CLI script for bulk ClassicCom detail backfill using Playwright/Scrapling.
  *
  * Usage:
- *   npx tsx scripts/backfill-classic-images.ts
- *   npx tsx scripts/backfill-classic-images.ts --maxListings=50 --headed
- *   npx tsx scripts/backfill-classic-images.ts --navigationDelayMs=5000
+  *   npx tsx scripts/backfill-classic-images.ts
+  *   npx tsx scripts/backfill-classic-images.ts --maxListings=50 --headed
+  *   npx tsx scripts/backfill-classic-images.ts --navigationDelayMs=5000
  */
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
@@ -27,7 +27,8 @@ if (existsSync(envPath)) {
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts = {
-    maxListings: 50,
+    maxListings: undefined as number | undefined,
+    batchSize: 100,
     navigationDelayMs: 3000,
     pageTimeoutMs: 20000,
     headed: false,
@@ -44,6 +45,9 @@ function parseArgs() {
         switch (key) {
           case "maxListings":
             opts.maxListings = parseInt(val, 10);
+            break;
+          case "batchSize":
+            opts.batchSize = parseInt(val, 10);
             break;
           case "navigationDelayMs":
             opts.navigationDelayMs = parseInt(val, 10);
@@ -63,7 +67,8 @@ function parseArgs() {
 Usage: npx tsx scripts/backfill-classic-images.ts [options]
 
 Options:
-  --maxListings=<n>          Max listings to process (default: 50)
+  --maxListings=<n>          Total listings to process (omit for full sweep)
+  --batchSize=<n>            Batch size per query (default: 100)
   --navigationDelayMs=<ms>   Delay between page navigations (default: 3000)
   --pageTimeoutMs=<ms>       Page load timeout (default: 20000)
   --timeBudgetMs=<ms>        Total time budget (default: 1800000 = 30 min)
@@ -80,45 +85,56 @@ Options:
 
 async function main() {
   const opts = parseArgs();
+  process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK ??= "1";
+  const useScraplingOnly = process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK === "1";
 
-  console.log(`\n=== ClassicCom Image Backfill ===`);
-  console.log(`Max listings: ${opts.maxListings}`);
+  console.log(`\n=== ClassicCom Detail Backfill ===`);
+  console.log(`Max listings: ${opts.maxListings ?? "all"}`);
+  console.log(`Batch size: ${opts.batchSize}`);
   console.log(`Navigation delay: ${opts.navigationDelayMs}ms`);
   console.log(`Time budget: ${Math.round(opts.timeBudgetMs / 1000)}s`);
+  console.log(`Scrapling-only fallback: ${useScraplingOnly}`);
   console.log(`Headed: ${opts.headed}\n`);
 
   // Dynamic imports to avoid loading Playwright at parse time
-  const { launchStealthBrowser, createStealthContext, createPage, closeBrowser } =
-    await import("../src/features/scrapers/classic_collector/browser");
   const { backfillMissingImages } =
     await import("../src/features/scrapers/classic_collector/backfill");
 
   const runId = crypto.randomUUID();
   let browser;
+  let page: any = undefined;
 
   try {
-    console.log("Launching stealth browser...");
-    browser = await launchStealthBrowser({
-      headless: !opts.headed,
-      proxyServer: process.env.DECODO_PROXY_URL,
-      proxyUsername: process.env.DECODO_PROXY_USER,
-      proxyPassword: process.env.DECODO_PROXY_PASS,
-    });
+    if (!useScraplingOnly) {
+      const { launchStealthBrowser, createStealthContext, createPage, closeBrowser } =
+        await import("../src/features/scrapers/classic_collector/browser");
 
-    const context = await createStealthContext(browser, {
-      headless: !opts.headed,
-      proxyServer: process.env.DECODO_PROXY_URL,
-      proxyUsername: process.env.DECODO_PROXY_USER,
-      proxyPassword: process.env.DECODO_PROXY_PASS,
-    });
+      console.log("Launching stealth browser...");
+      browser = await launchStealthBrowser({
+        headless: !opts.headed,
+        proxyServer: process.env.DECODO_PROXY_URL,
+        proxyUsername: process.env.DECODO_PROXY_USER,
+        proxyPassword: process.env.DECODO_PROXY_PASS,
+      });
 
-    const page = await createPage(context, true); // blockMedia=true for speed
-    console.log("Browser ready.\n");
+      const context = await createStealthContext(browser, {
+        headless: !opts.headed,
+        proxyServer: process.env.DECODO_PROXY_URL,
+        proxyUsername: process.env.DECODO_PROXY_USER,
+        proxyPassword: process.env.DECODO_PROXY_PASS,
+      });
+
+      page = await createPage(context, true); // blockMedia=true for speed
+      console.log("Browser ready.\n");
+    } else {
+      console.log("Skipping browser launch in scrapling-only mode.\n");
+    }
 
     const result = await backfillMissingImages({
       page,
       timeBudgetMs: opts.timeBudgetMs,
       maxListings: opts.maxListings,
+      batchSize: opts.batchSize,
       navigationDelayMs: opts.navigationDelayMs,
       pageTimeoutMs: opts.pageTimeoutMs,
       runId,
@@ -143,6 +159,7 @@ async function main() {
   } finally {
     if (browser) {
       console.log("Closing browser...");
+      const { closeBrowser } = await import("../src/features/scrapers/classic_collector/browser");
       await closeBrowser(browser);
     }
   }

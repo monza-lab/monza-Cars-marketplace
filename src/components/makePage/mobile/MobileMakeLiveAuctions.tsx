@@ -36,7 +36,7 @@ export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: Collect
     <div className="mt-6">
       {/* Section header */}
       <div className="px-4 py-3 flex items-center gap-2">
-        <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="size-2 rounded-full bg-positive animate-pulse" />
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
           {t("mobileContext.liveListings")}
         </span>
@@ -76,12 +76,12 @@ export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: Collect
                     </span>
                   )}
                   {isAuction ? (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 backdrop-blur-md">
-                      <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[8px] font-bold text-emerald-400">LIVE</span>
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-positive/20 backdrop-blur-md">
+                      <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+                      <span className="text-[8px] font-bold text-positive">LIVE</span>
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 backdrop-blur-md text-[8px] font-bold text-emerald-400">
+                    <span className="px-2 py-0.5 rounded-full bg-positive/20 backdrop-blur-md text-[8px] font-bold text-positive">
                       For Sale
                     </span>
                   )}
@@ -90,8 +90,8 @@ export function MobileMakeLiveAuctions({ cars, totalLiveCount }: { cars: Collect
                 {/* Time left (auctions only) */}
                 {isAuction && (
                   <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/70 backdrop-blur-md">
-                    <Clock className={`size-3 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
-                    <span className={`text-[9px] font-mono font-medium ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`}>
+                    <Clock className={`size-3 ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`} />
+                    <span className={`text-[9px] tabular-nums font-medium ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`}>
                       {remaining}
                     </span>
                   </div>

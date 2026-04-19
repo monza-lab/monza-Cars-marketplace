@@ -31,7 +31,6 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
               priority={index === 0}
               loading={index === 0 ? "eager" : "lazy"}
               referrerPolicy="no-referrer"
-              unoptimized
             />
           ) : (
             <div className="absolute inset-0 bg-card flex items-center justify-center">
@@ -45,7 +44,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           {/* Grade badge — top left */}
           <div className="absolute top-4 left-4">
             <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${grade === "AAA"
-                ? "bg-emerald-500/30 text-emerald-300"
+                ? "bg-positive/30 text-positive"
                 : grade === "AA"
                   ? "bg-primary/30 text-primary"
                   : "bg-foreground/20 text-white"
@@ -57,8 +56,8 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           {/* Car count badge — top right */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
             {model.liveCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-emerald-400">
-                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="flex items-center gap-1.5 rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-positive">
+                <span className="size-1.5 rounded-full bg-positive animate-pulse" />
                 {t("hero.liveCount", { count: model.liveCount })}
               </span>
             )}
@@ -88,7 +87,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
                 <DollarSign className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("model.priceRange")}</span>
               </div>
-              <p className="text-[13px] font-mono text-foreground">
+              <p className="text-[13px] tabular-nums text-foreground">
                 {formatPrice(model.priceMin)}&ndash;{formatPrice(model.priceMax)}
               </p>
             </div>
@@ -108,9 +107,9 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
                 <Shield className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("sidebar.grade")}</span>
               </div>
-              <p className={`text-[13px] font-semibold ${grade === "AAA" ? "text-emerald-400"
+              <p className={`text-[13px] font-semibold ${grade === "AAA" ? "text-positive"
                   : grade === "AA" ? "text-blue-400"
-                    : grade === "A" ? "text-amber-400"
+                    : grade === "A" ? "text-destructive"
                       : "text-muted-foreground"
                 }`}>{grade}</p>
             </div>

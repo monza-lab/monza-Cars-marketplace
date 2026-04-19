@@ -150,12 +150,12 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
           <SlidersHorizontal
             className={cn(
               "size-4",
-              isExpanded ? "text-amber-500" : "text-zinc-400"
+              isExpanded ? "text-destructive" : "text-zinc-400"
             )}
           />
           <span className="text-sm font-medium text-zinc-200">Filters</span>
           {activeFilterCount > 0 && (
-            <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-400">
+            <Badge className="border-amber-500/30 bg-amber-500/10 text-destructive">
               {activeFilterCount}
             </Badge>
           )}
@@ -195,7 +195,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                         className={cn(
                           "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-200",
                           isSelected
-                            ? "border-amber-500/40 bg-amber-500/10 text-amber-400 shadow-sm shadow-amber-500/5"
+                            ? "border-amber-500/40 bg-amber-500/10 text-destructive shadow-sm shadow-amber-500/5"
                             : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
                         )}
                       >
@@ -280,7 +280,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                       <SelectItem
                         key={status.value}
                         value={status.value}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-amber-400"
+                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
                       >
                         {status.label}
                       </SelectItem>
@@ -303,7 +303,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                       <SelectItem
                         key={make}
                         value={make.toLowerCase()}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-amber-400"
+                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
                       >
                         {make}
                       </SelectItem>
@@ -326,7 +326,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                       <SelectItem
                         key={t.value}
                         value={t.value}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-amber-400"
+                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
                       >
                         {t.label}
                       </SelectItem>

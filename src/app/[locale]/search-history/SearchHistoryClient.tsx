@@ -86,7 +86,7 @@ export default function SearchHistoryClient() {
             <Clock className="size-7 text-primary" />
           </div>
           <h1 className="text-2xl font-light text-foreground">{t("title")}</h1>
-          <p className="mt-3 text-sm text-[rgba(232,226,222,0.45)]">
+          <p className="mt-3 text-sm text-muted-foreground/70">
             {t("signInRequired")}
           </p>
           <button
@@ -120,7 +120,7 @@ export default function SearchHistoryClient() {
           {entries.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-red-400 hover:border-red-400/30 transition-colors"
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
             >
               <Trash2 className="size-3" />
               {t("clearAll")}
@@ -134,10 +134,10 @@ export default function SearchHistoryClient() {
             <div className="mx-auto size-16 rounded-2xl bg-primary/6 flex items-center justify-center mb-5">
               <Search className="size-7 text-primary/40" />
             </div>
-            <p className="text-[15px] text-[rgba(232,226,222,0.5)]">
+            <p className="text-[15px] text-muted-foreground">
               {t("empty")}
             </p>
-            <p className="mt-2 text-[13px] text-[rgba(232,226,222,0.25)]">
+            <p className="mt-2 text-[13px] text-muted-foreground/40">
               {t("emptyHint")}
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function SearchHistoryClient() {
         {/* Grouped history */}
         {orderedGroups.map((group) => (
           <div key={group} className="mb-6">
-            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[rgba(232,226,222,0.3)] mb-3 px-1">
+            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/50 mb-3 px-1">
               {group}
             </p>
             <div className="space-y-1">
@@ -161,12 +161,12 @@ export default function SearchHistoryClient() {
                       {entry.query}
                     </p>
                   </div>
-                  <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
+                  <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
                     {timeAgo(entry.timestamp, t)}
                   </span>
                   <button
                     onClick={() => handleRemove(entry.timestamp)}
-                    className="opacity-0 group-hover:opacity-100 size-7 flex items-center justify-center rounded-lg hover:bg-white/[0.05] text-muted-foreground hover:text-red-400 transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 size-7 flex items-center justify-center rounded-lg hover:bg-white/[0.05] text-muted-foreground hover:text-destructive transition-all shrink-0"
                     title={t("remove")}
                   >
                     <X className="size-3.5" />

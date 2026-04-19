@@ -120,6 +120,20 @@ async function main(): Promise<void> {
     summaryOnly: hasFlag(args, "summaryOnly"),
   };
 
+  const hasProxyCreds = Boolean(config.proxyUsername || config.proxyPassword);
+  if (hasProxyCreds && !config.proxyServer) {
+    console.warn(
+      "[classic_collector] Proxy credentials are set but proxyServer is missing. " +
+      "Set DECODO_PROXY_URL in .env.local or pass --proxyServer=..."
+    );
+  }
+  if (config.proxyServer && (!config.proxyUsername || !config.proxyPassword)) {
+    console.warn(
+      "[classic_collector] proxyServer is set but proxyUsername/proxyPassword is missing. " +
+      "Set DECODO_PROXY_USER/DECODO_PROXY_PASS or pass --proxyUsername/--proxyPassword."
+    );
+  }
+
   console.log(`[classic_collector] Starting with config:`, {
     ...config,
     proxyPassword: config.proxyPassword ? "***" : undefined,

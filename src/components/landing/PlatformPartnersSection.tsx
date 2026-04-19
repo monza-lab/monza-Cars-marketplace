@@ -48,9 +48,9 @@ export function PlatformPartnersSection() {
             Platform Partners
           </span>
           <h2 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">
-            The Best Listings, <span className="font-semibold text-gradient">One Platform</span>
+            The Best Listings, <span className="font-semibold text-primary">One Platform</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-[rgba(232,226,222,0.4)] font-light">
+          <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground font-light">
             Aggregating the best auctions from the world&apos;s premier platforms.
           </p>
         </motion.div>
@@ -79,7 +79,7 @@ export function PlatformPartnersSection() {
                 {platform.name}
               </h3>
 
-              <p className="text-sm text-[rgba(232,226,222,0.4)] font-light">
+              <p className="text-sm text-muted-foreground font-light">
                 {platform.description}
               </p>
             </motion.div>
@@ -95,7 +95,7 @@ export function PlatformPartnersSection() {
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/10" />
-          <span className="shrink-0 text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.25)]">
+          <span className="shrink-0 text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground/60">
             Unified in Monza Lab
           </span>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/10" />

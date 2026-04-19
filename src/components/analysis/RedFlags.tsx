@@ -25,32 +25,32 @@ function getSeverityStyles(index: number, total: number) {
     // High severity
     return {
       container:
-        "bg-red-500/10 border-red-500/30 hover:bg-red-500/15",
-      icon: "text-red-400",
-      dot: "bg-red-400",
+        "bg-destructive/10 border-destructive/30 hover:bg-destructive/15",
+      icon: "text-destructive",
+      dot: "bg-destructive",
       label: "High",
-      labelClass: "text-red-400 bg-red-500/15",
+      labelClass: "text-destructive bg-destructive/15",
     };
   }
   if (ratio <= 0.66) {
     // Medium severity
     return {
       container:
-        "bg-orange-500/8 border-orange-500/25 hover:bg-orange-500/12",
-      icon: "text-orange-400",
-      dot: "bg-orange-400",
+        "bg-destructive/8 border-destructive/25 hover:bg-destructive/12",
+      icon: "text-destructive",
+      dot: "bg-destructive",
       label: "Medium",
-      labelClass: "text-orange-400 bg-orange-500/15",
+      labelClass: "text-destructive bg-destructive/15",
     };
   }
   // Lower severity
   return {
     container:
       "bg-amber-500/6 border-amber-500/20 hover:bg-amber-500/10",
-    icon: "text-amber-400",
+    icon: "text-destructive",
     dot: "bg-amber-400",
     label: "Monitor",
-    labelClass: "text-amber-400 bg-amber-500/15",
+    labelClass: "text-destructive bg-amber-500/15",
   };
 }
 

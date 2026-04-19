@@ -67,6 +67,15 @@ jobs:
             ${{ github.event.inputs.scrape_details == 'true' && '--scrapeDetails' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
+      - name: Verify scraper quality gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx scripts/verify-scraper-quality.mjs \
+            --scraper=autoscout24 \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
       - name: Upload output artifact
         if: always()
         uses: actions/upload-artifact@v4

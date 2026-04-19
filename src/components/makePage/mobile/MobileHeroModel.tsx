@@ -40,7 +40,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
         {/* Grade badge */}
         <div className="absolute top-4 right-4">
           <span className={`rounded-full backdrop-blur-md px-3 py-1.5 text-[10px] font-bold tracking-[0.1em] uppercase ${model.representativeCar.investmentGrade === "AAA"
-              ? "bg-emerald-500/30 text-emerald-300"
+              ? "bg-positive/30 text-positive"
               : model.representativeCar.investmentGrade === "AA"
                 ? "bg-primary/30 text-primary"
                 : "bg-white/20 text-white"
@@ -52,8 +52,8 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
         {/* Live badge */}
         {model.liveCount > 0 && (
           <div className="absolute top-12 right-4 flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-2.5 py-1">
-            <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-semibold text-emerald-400">{model.liveCount} LIVE</span>
+            <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+            <span className="text-[10px] font-semibold text-positive">{model.liveCount} LIVE</span>
           </div>
         )}
 

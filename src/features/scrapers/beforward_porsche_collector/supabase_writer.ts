@@ -3,6 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
+import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
 import { fetchHtml } from "./net";
 import { parseDetailHtml } from "./detail";
 import { mapStatus } from "./normalize";
@@ -126,6 +127,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     start_time: listing.startTime?.toISOString() ?? null,
     final_price: listing.finalPrice,
     location: listing.locationString,
+    series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   };
 }
 

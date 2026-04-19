@@ -91,7 +91,7 @@ export function CriticalQuestions({
           onClick={handleCopyAll}
           className={cn(
             "text-zinc-500 hover:text-zinc-300 gap-1.5",
-            allCopied && "text-emerald-400 hover:text-emerald-400"
+            allCopied && "text-positive hover:text-positive"
           )}
         >
           {allCopied ? (
@@ -123,13 +123,13 @@ export function CriticalQuestions({
             )}
           >
             {/* Number badge */}
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 text-xs font-semibold mt-0.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-destructive text-xs font-semibold mt-0.5">
               {i + 1}
             </span>
 
             {/* Icon + Text */}
             <div className="flex-1 flex items-start gap-2 min-w-0">
-              <HelpCircle className="size-4 mt-0.5 shrink-0 text-amber-500/70" />
+              <HelpCircle className="size-4 mt-0.5 shrink-0 text-destructive/70" />
               <p className="text-sm text-zinc-300 leading-relaxed">{question}</p>
             </div>
 
@@ -141,7 +141,7 @@ export function CriticalQuestions({
               className={cn(
                 "opacity-0 group-hover:opacity-100 transition-opacity shrink-0",
                 "text-zinc-500 hover:text-zinc-300",
-                copiedIndex === i && "opacity-100 text-emerald-400 hover:text-emerald-400"
+                copiedIndex === i && "opacity-100 text-positive hover:text-positive"
               )}
               title="Copy question"
             >

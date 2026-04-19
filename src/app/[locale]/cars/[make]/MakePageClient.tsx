@@ -148,6 +148,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     cars: infiniteScrollCars,
     total: infiniteTotal,
     totalCount: infiniteTotalCount,
+    totalLiveCount: infiniteTotalLiveCount,
     aggregates: infiniteAggregates,
     isLoading: isLoadingCars,
     isFetchingMore,
@@ -160,6 +161,12 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     region: selectedRegion && selectedRegion !== "all" ? selectedRegion : undefined,
     query: searchQuery || undefined,
   })
+
+  // Derived counts for visible labels. Null while the first page is
+  // in flight — UI renders '—' rather than a misleading array length.
+  const displayTotal: number | null = infiniteTotalCount
+  const displayLiveTotal: number | null = infiniteTotalLiveCount
+  const formatCount = (n: number | null): string => (n === null ? "—" : String(n))
 
   // Region filtering is already handled server-side by the API (source-based).
   // No client-side re-filter needed — the API returns only cars for the selected region.
@@ -900,7 +907,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   ? regionFilteredCars.filter(c => extractFamily(c.model, c.year, make) === selectedFamilyForFeed)
                   : regionFilteredCars
                 }
-                totalLiveCount={liveCars.length}
+                totalLiveCount={displayLiveTotal ?? 0}
               />
             </>
           )}
@@ -953,7 +960,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   </button>
                   <div className="flex items-center justify-between">
                     <h3 className="text-[14px] font-semibold text-foreground">{currentSeriesLabel}</h3>
-                    <span className="text-[10px] text-muted-foreground font-mono">{infiniteTotalCount ?? familyCars.length} cars</span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">{formatCount(displayTotal)} cars</span>
                   </div>
                 </div>
 
@@ -983,7 +990,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             }`}>
                               {s.label}
                             </span>
-                            <span className={`text-[9px] font-mono ${
+                            <span className={`text-[9px] tabular-nums ${
                               isActive ? "text-primary" : "text-muted-foreground"
                             }`}>
                               {s.carCount}
@@ -1001,8 +1008,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                       <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                         Cars
                       </span>
-                      <span className="text-[9px] font-mono text-muted-foreground">
-                        {activeCarIndex + 1}/{variantFilteredFeedCars.length}
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {activeCarIndex + 1}/{formatCount(displayTotal)}
                       </span>
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
@@ -1019,7 +1026,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                                 : "border-l-2 border-l-transparent hover:bg-foreground/2"
                             }`}
                           >
-                            <span className={`text-[9px] font-mono w-4 shrink-0 ${
+                            <span className={`text-[9px] tabular-nums w-4 shrink-0 ${
                               isActive ? "text-primary" : "text-muted-foreground"
                             }`}>
                               {i + 1}
@@ -1030,7 +1037,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                               {car.year} {car.model?.replace(/^Porsche\s*/i, "")}
                             </span>
                             {car.currentBid > 0 && (
-                              <span className={`text-[9px] font-mono shrink-0 ${
+                              <span className={`text-[9px] tabular-nums shrink-0 ${
                                 isActive ? "text-primary" : "text-muted-foreground"
                               }`}>
                                 ${(car.currentBid / 1000).toFixed(0)}k
@@ -1079,15 +1086,15 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
               {/* Live header */}
               <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-background/40">
                 <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-positive" />
                 </span>
-                <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-emerald-400">
+                <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-positive">
                   LATEST LISTINGS
                 </span>
-                {liveCars.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/10 text-[9px] font-bold text-emerald-400">
-                    {liveCars.length}
+                {displayLiveTotal !== null && displayLiveTotal > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-positive/10 text-[9px] font-bold text-positive">
+                    {displayLiveTotal}
                   </span>
                 )}
               </div>
@@ -1115,7 +1122,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             className="object-cover"
                             sizes="56px"
                           />
-                          <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-positive animate-pulse" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[11px] font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -1125,7 +1132,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             <span className="text-[11px] font-display font-medium text-primary">
                               {formatPrice(car.currentBid)}
                             </span>
-                            <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-orange-400" : "text-muted-foreground"}`}>
+                            <span className={`flex items-center gap-1 text-[9px] ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`}>
                               <Clock className="size-2.5" />
                               {timeLeft(new Date(car.endTime), {
                                 ended: isAuctionPlatform(car.platform) ? tAuction("time.ended") : tAuction("time.sold"),
@@ -1165,7 +1172,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                       </span>
                     </button>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-muted-foreground font-mono">{variantFilteredFeedCars.length} cars</span>
+                      <span className="text-[9px] text-muted-foreground tabular-nums">{formatCount(displayTotal)} cars</span>
                       <SortSelector sortBy={sortBy} setSortBy={setSortBy} options={carSortOptions} />
                     </div>
                   </div>
@@ -1205,11 +1212,11 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                         onClick={() => setFeedStatusFilter(feedStatusFilter === "live" ? "all" : "live")}
                         className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all inline-flex items-center gap-1 ${
                           feedStatusFilter === "live"
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            ? "bg-positive/15 text-positive border border-positive/30"
                             : "bg-foreground/3 text-muted-foreground border border-border hover:border-border/80"
                         }`}
                       >
-                        <span className="size-1.5 rounded-full bg-emerald-400" />
+                        <span className="size-1.5 rounded-full bg-positive" />
                         Live {feedStatusCounts.live}
                       </button>
                     )}

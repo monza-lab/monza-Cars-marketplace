@@ -1,5 +1,6 @@
 {
   "nav": {
+    "liveListings": "Live-Inserate",
     "liveAuctions": "Live-Auktionen",
     "marketSearch": "Marktsuche",
     "priceHistory": "Preisverlauf",
@@ -24,6 +25,25 @@
     "tryAnother": "Versuchen Sie eine andere Marke oder ein anderes Modell",
     "searchPlaceholder": "Nach Marke, Modell, Jahr suchen...",
     "cancel": "Abbrechen"
+  },
+  "menu": {
+    "profile": {
+      "welcome": "Willkommen",
+      "signInHint": "Anmelden, um mit der Analyse zu beginnen"
+    },
+    "credits": {
+      "label": "Credits",
+      "perReport": "1 Credit pro Analyse",
+      "buy": "Mehr kaufen"
+    },
+    "watchlist": {
+      "title": "Merkliste",
+      "empty": "Noch keine Fahrzeuge gespeichert"
+    },
+    "recentAnalyses": {
+      "title": "Letzte Analysen",
+      "empty": "Noch keine Analysen"
+    }
   },
   "auth": {
     "signIn": "Anmelden",
@@ -59,7 +79,12 @@
     "switchToSignIn": "Haben Sie bereits ein Konto? Anmelden",
     "analysisRequiresSignInTitle": "Analyse erfordert Anmeldung",
     "analysisRequiresSignInDesc": "Melden Sie sich an, um dieses Fahrzeug zu analysieren",
-    "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits"
+    "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits",
+    "signInMethod": "Anmeldemethode",
+    "magicLink": "Magic Link",
+    "magicLinkDesc": "Wir senden Ihnen einen Anmeldelink per E-Mail — ganz ohne Passwort.",
+    "sendMagicLink": "Magic Link senden",
+    "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink."
   },
   "hero": {
     "badge": "Live-Auktions-Intelligenz",
@@ -713,6 +738,7 @@
       "similarCars": "Ähnliche Autos",
       "browseBrand": "Marke durchsuchen",
       "viewLiveAuctions": "Live-Auktionen ansehen",
+      "viewLiveListings": "Live-Inserate ansehen",
       "browseAll": "Alle anzeigen",
       "browseByBrand": "Nach Marke",
       "viewAllUnderBudget": "Alle unter Budget",
@@ -807,6 +833,15 @@
     "b": "B",
     "c": "C"
   },
+  "valuation": {
+    "marketValue": "Marktwert",
+    "askMedian": "Median Angebotspreis",
+    "byMarket": "Bewertung nach Markt",
+    "askingRange": "Preisspanne",
+    "soldSamples": "verkauft",
+    "askingSamples": "Angebote",
+    "insufficient": "Unzureichende Daten"
+  },
   "sections": {
     "featuredAuctions": "Ausgewählte Auktionen",
     "howItWorks": "So Funktioniert's",
@@ -889,6 +924,18 @@
     },
     "common": {
       "none": "—"
+    },
+    "poweredBy": "Powered by Monza Lab",
+    "hint": {
+      "navigate": "zum Navigieren",
+      "select": "zum Auswählen",
+      "close": "zum Schließen"
+    },
+    "resultType": {
+      "family": "Familie",
+      "series": "Serie",
+      "variant": "Variante",
+      "link": "Link"
     }
   },
   "auctionsList": {
@@ -1238,5 +1285,19 @@
     "copyright": "© 2025 Monza Lab",
     "privacy": "Datenschutz",
     "terms": "Nutzungsbedingungen"
+  },
+  "seo": {
+    "make": {
+      "title": "{make} Kollektion — Sammlerfahrzeuge in Investmentqualität | MonzaHaus",
+      "description": "Entdecken Sie {make}-Fahrzeuge in Investmentqualität mit Live-Marktdaten, Auktionsergebnissen und KI-gestützter Marktanalyse."
+    },
+    "makeWithSeries": {
+      "title": "{make} {series} — Auktionsergebnisse, Marktwerte und Investmentanalyse | MonzaHaus",
+      "description": "Live- und historische Auktionsdaten für {make} {series}. Markttrends, Spezifikationen und Sammlerfahrzeuge in Investmentqualität."
+    },
+    "car": {
+      "titleTemplate": "{year} {make} {model} | MonzaHaus",
+      "descriptionFallback": "{year} {make} {model} — Sammlerqualität. Marktanalyse, Vergleichswerte und Investmentthese."
+    }
   }
 }

@@ -1,9 +1,39 @@
-import { describe, it, expect } from "vitest";
-import { extractVinFromUrl } from "./id";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-// Note: fetchAndParseDetail requires a real Playwright Page, so we test
-// the VIN extraction and normalization logic separately.
-// Integration tests for the full detail flow require a browser context.
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("./browser", () => ({
+  isCloudflareChallenge: vi.fn(async () => false),
+  waitForCloudflareResolution: vi.fn(async () => true),
+}));
+
+vi.mock("./scrapling", () => ({
+  canUseScraplingFallback: () => true,
+  fetchClassicDetailWithScrapling: vi.fn(),
+}));
+
+import {
+  extractClassicVehicleImagesFromHtml,
+  fetchAndParseDetail,
+  parseClassicDetailContent,
+} from "./detail";
+import { extractVinFromUrl } from "./id";
+import { fetchClassicDetailWithScrapling } from "./scrapling";
+
+const mockScrapling = vi.mocked(fetchClassicDetailWithScrapling);
+
+function createMockPage(extracted: { title: string; bodyText: string; images: string[] }) {
+  return {
+    goto: vi.fn().mockResolvedValue(undefined),
+    waitForSelector: vi.fn().mockResolvedValue(undefined),
+    waitForLoadState: vi.fn().mockResolvedValue(undefined),
+    evaluate: vi.fn().mockResolvedValue({ title: extracted.title, bodyText: extracted.bodyText }),
+    content: vi.fn().mockResolvedValue(
+      extracted.images.map((u) => `<img src="${u}" />`).join("\n"),
+    ),
+  } as any;
+}
 
 describe("detail VIN extraction from URL", () => {
   it("extracts VIN from standard classic.com vehicle URL", () => {
@@ -23,5 +53,267 @@ describe("detail VIN extraction from URL", () => {
 
   it("returns null for non-vehicle URLs", () => {
     expect(extractVinFromUrl("https://www.classic.com/m/porsche/911/")).toBeNull();
+  });
+});
+
+describe("classic detail parsing", () => {
+  it("parses the main listing fields from rendered content", () => {
+    const parsed = parseClassicDetailContent(
+      {
+        title: "2015 Porsche 911 GT3 RS",
+        bodyText: [
+          "FOR SALE",
+          "by",
+          "Gooding & Company",
+          "Specs",
+          "Year",
+          "2015",
+          "Make",
+          "Porsche",
+          "Model Family",
+          "911",
+          "Model Variant",
+          "GT3 RS",
+          "Model Trim",
+          "RS",
+          "Engine",
+          "4.0L Flat-6",
+          "Transmission",
+          "7-Speed PDK",
+          "Ext. Color Group",
+          "White",
+          "Int. Color Group",
+          "Black",
+          "VIN:",
+          "WP0AF2A99FS183941",
+          "21,004 mi",
+          "price range from $200,000 - $240,000",
+          "Jan 4, 2026",
+          "Sold at",
+          "Gooding & Company Auctions",
+          "for $228,500",
+        ].join("\n"),
+        images: [
+          "https://images.classic.com/vehicles/one.jpg",
+          "https://images.classic.com/vehicles/two.jpg",
+        ],
+      },
+      "https://www.classic.com/veh/2015-porsche-911-gt3-rs-wp0af2a99fs183941-abc123",
+    );
+
+    expect(parsed.raw.title).toBe("2015 Porsche 911 GT3 RS");
+    expect(parsed.raw.year).toBe(2015);
+    expect(parsed.raw.make).toBe("Porsche");
+    expect(parsed.raw.model).toBe("911");
+    expect(parsed.raw.trim).toBe("RS");
+    expect(parsed.raw.vin).toBe("WP0AF2A99FS183941");
+    expect(parsed.raw.mileage).toBe(21004);
+    expect(parsed.raw.auctionHouse).toBe("Gooding & Company");
+    expect(parsed.raw.price).toBe(220000);
+    expect(parsed.raw.hammerPrice).toBe(228500);
+    expect(parsed.raw.images).toHaveLength(2);
+    expect(parsed.raw.description).toContain("Specs");
+  });
+
+  it("uses Last Asking as the current price when no active bid range is present", () => {
+    const parsed = parseClassicDetailContent(
+      {
+        title: "2022 Porsche 911 GT3 Standard",
+        bodyText: [
+          "Last Asking",
+          "$258,900",
+          "by",
+          "iLusso Costa Mesa",
+          "Specs",
+          "Year",
+          "2022",
+          "Make",
+          "Porsche",
+          "Model Family",
+          "911",
+          "Model Trim",
+          "Standard",
+          "Engine",
+          "4.0L H6",
+          "Transmission",
+          "Manual",
+          "VIN:",
+          "WP0AC2A98NS270142",
+        ].join("\n"),
+        images: [],
+      },
+      "https://www.classic.com/veh/2022-porsche-911-gt3-standard-wp0ac2a98ns270142-pPLakrp",
+    );
+
+    expect(parsed.raw.price).toBe(258900);
+    expect(parsed.raw.hammerPrice).toBeNull();
+  });
+});
+
+describe("extractClassicVehicleImagesFromHtml", () => {
+  const fixture = readFileSync(
+    resolve(__dirname, "../../../../tests/fixtures/classic-com-gallery.html"),
+    "utf-8",
+  );
+
+  it("extracts images from src, data-src, data-lazy-src, data-lazy, data-zoom-image and <source srcset>", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+
+    expect(images.length).toBeGreaterThanOrEqual(7);
+    for (const url of images) {
+      expect(url).toMatch(/^https?:\/\/images\.classic\.com\/vehicles\//);
+    }
+  });
+
+  it("ignores non-vehicle classic.com assets (brand logos, etc.)", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(images.some((u) => u.includes("/brand-logo"))).toBe(false);
+  });
+
+  it("ignores non-classic.com hosts", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(images.some((u) => u.includes("cloudflare.com"))).toBe(false);
+    expect(images.some((u) => u.includes("example.com"))).toBe(false);
+  });
+
+  it("returns no duplicates", () => {
+    const images = extractClassicVehicleImagesFromHtml(fixture);
+    expect(new Set(images).size).toBe(images.length);
+  });
+});
+
+describe("fetchAndParseDetail", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("prefers Scrapling when it is available", async () => {
+    mockScrapling.mockResolvedValueOnce({
+      title: "2018 Porsche 911 GT3",
+      bodyText: [
+        "FOR SALE",
+        "by",
+        "Bonhams",
+        "Specs",
+        "Year",
+        "2018",
+        "Make",
+        "Porsche",
+        "Model Family",
+        "911",
+        "Model Trim",
+        "GT3",
+        "VIN:",
+        "WP0AC2A90JS175001",
+        "15,120 mi",
+      ].join("\n"),
+      images: ["https://images.classic.com/vehicles/fallback.jpg"],
+    });
+
+    const page = createMockPage({
+      title: "2018 Porsche 911 GT3",
+      bodyText: [
+        "FOR SALE",
+        "by",
+        "Bonhams",
+        "Specs",
+        "Year",
+        "2018",
+        "Make",
+        "Porsche",
+        "Model Family",
+        "911",
+        "Model Trim",
+        "GT3",
+        "VIN:",
+        "WP0AC2A90JS175001",
+        "15,120 mi",
+      ].join("\n"),
+      images: [],
+    });
+
+    const parsed = await fetchAndParseDetail({
+      page,
+      url: "https://www.classic.com/veh/2018-porsche-911-gt3-wp0ac2a90js175001-abc123",
+      pageTimeoutMs: 10_000,
+      runId: "test-run",
+    });
+
+    expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).not.toHaveBeenCalled();
+    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/fallback.jpg"]);
+    expect(parsed.raw.auctionHouse).toBe("Bonhams");
+  });
+
+  it("falls back to Playwright when Scrapling is unavailable", async () => {
+    mockScrapling.mockResolvedValueOnce(null as unknown as never);
+
+    const page = createMockPage({
+      title: "2020 Porsche 911 Turbo S",
+      bodyText: [
+        "FOR SALE",
+        "by",
+        "RM Sotheby's",
+        "Specs",
+        "Year",
+        "2020",
+        "Make",
+        "Porsche",
+        "Model Family",
+        "911",
+        "Model Trim",
+        "Turbo S",
+        "VIN:",
+        "WP0AD2A95LS185001",
+      ].join("\n"),
+      images: ["https://images.classic.com/vehicles/playwright.jpg"],
+    });
+
+    const parsed = await fetchAndParseDetail({
+      page,
+      url: "https://www.classic.com/veh/2020-porsche-911-turbo-s-wp0ad2a95ls185001-abc123",
+      pageTimeoutMs: 10_000,
+      runId: "test-run",
+    });
+
+    expect(mockScrapling).toHaveBeenCalledTimes(1);
+    expect(page.goto).toHaveBeenCalledTimes(1);
+    expect(parsed.raw.title).toBe("2020 Porsche 911 Turbo S");
+    expect(parsed.raw.images).toEqual(["https://images.classic.com/vehicles/playwright.jpg"]);
+  });
+
+  it("fails fast when scrapling-only mode is enabled and Scrapling misses", async () => {
+    mockScrapling.mockResolvedValueOnce(null as unknown as never);
+    process.env.CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK = "1";
+
+    const page = createMockPage({
+      title: "2020 Porsche 911 Turbo S",
+      bodyText: [
+        "FOR SALE",
+        "by",
+        "RM Sotheby's",
+        "Specs",
+        "Year",
+        "2020",
+        "Make",
+        "Porsche",
+        "Model Family",
+        "911",
+        "Model Trim",
+        "Turbo S",
+        "VIN:",
+        "WP0AD2A95LS185001",
+      ].join("\n"),
+      images: ["https://images.classic.com/vehicles/playwright.jpg"],
+    });
+
+    await expect(fetchAndParseDetail({
+      page,
+      url: "https://www.classic.com/veh/2020-porsche-911-turbo-s-wp0ad2a95ls185001-abc123",
+      pageTimeoutMs: 10_000,
+      runId: "test-run",
+    })).rejects.toThrow(/Scrapling-only/i);
+
+    expect(page.goto).not.toHaveBeenCalled();
   });
 });

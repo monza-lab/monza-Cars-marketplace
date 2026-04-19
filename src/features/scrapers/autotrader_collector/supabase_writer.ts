@@ -4,6 +4,7 @@ import * as cheerio from "cheerio";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
+import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
 import { fetchHtml } from "./net";
 import { mapAuctionStatus } from "./normalize";
 import { logEvent } from "./logging";
@@ -143,6 +144,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     start_time: listing.startTime?.toISOString() ?? null,
     final_price: listing.finalPrice,
     location: listing.locationString,
+    series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   };
 }
 

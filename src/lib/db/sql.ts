@@ -1,7 +1,4 @@
-import { setDefaultResultOrder } from 'node:dns'
 import { Pool } from 'pg'
-
-setDefaultResultOrder('ipv4first')
 
 type GlobalPool = {
   dbPool?: InstanceType<typeof Pool>
@@ -17,9 +14,13 @@ function createPool() {
 
   const sslDisabled = /sslmode=disable/i.test(connectionString)
 
+  // NOTE: Do NOT pin `family: 4`. Supabase direct connections now only publish
+  // an AAAA (IPv6) record for `db.<ref>.supabase.co`, so forcing IPv4 causes
+  // every connection to time out. Use whatever address family DNS returns.
+  // For environments without IPv6 egress (e.g. Vercel), set DATABASE_URL to
+  // the Transaction Pooler URL (`aws-0-<region>.pooler.supabase.com:6543`).
   return new Pool({
     connectionString,
-    family: 4,
     max: 5,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,

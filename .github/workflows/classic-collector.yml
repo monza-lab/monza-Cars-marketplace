@@ -14,6 +14,12 @@ on:
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
+      summary_only:
+        description: 'Skip detail fetches'
+        default: 'true'
+      force_scrapling:
+        description: 'Force Scrapling on the search page'
+        default: 'false'
 
 concurrency:
   group: classic-collector
@@ -31,11 +37,21 @@ jobs:
         with:
           node-version: '20'
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Verify environment
         run: |
           node --version
           npm --version
           ls -la package-lock.json
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
 
       - run: npm ci
 
@@ -52,13 +68,24 @@ jobs:
           DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
+          SCRAPLING_FETCH_MODE: stealthy-fetch
+          CLASSIC_FORCE_SCRAPLING: ${{ github.event.inputs.force_scrapling == 'true' && '1' || '' }}
         run: |
           npx tsx src/features/scrapers/classic_collector/cli.ts \
             --maxPages=${{ github.event.inputs.max_pages || '170' }} \
             --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \
-            --summaryOnly \
+            ${{ github.event.inputs.summary_only != 'false' && '--summaryOnly' || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Verify scraper quality gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx scripts/verify-scraper-quality.mjs \
+            --scraper=classic \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Upload output artifact

@@ -108,9 +108,9 @@ export function DiscoverySidebar({
   // Grade badge color
   const gradeColor = (grade: string) => {
     switch (grade) {
-      case "AAA": case "EXCELLENT": return "text-emerald-400"
+      case "AAA": case "EXCELLENT": return "text-positive"
       case "AA": case "GOOD": return "text-blue-400"
-      case "A": case "FAIR": return "text-amber-400"
+      case "A": case "FAIR": return "text-destructive"
       default: return "text-muted-foreground"
     }
   }
@@ -133,7 +133,7 @@ export function DiscoverySidebar({
           <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
             {t("sidebar.popular")}
           </span>
-          <span className="text-[9px] font-mono text-muted-foreground">
+          <span className="text-[9px] tabular-nums text-muted-foreground">
             {t("sidebar.brandsCount", { count: brands.length })}
           </span>
         </div>
@@ -167,7 +167,7 @@ export function DiscoverySidebar({
                         <span className={`text-[9px] font-bold ${gradeColor(brand.topGrade)}`}>
                           {brand.topGrade}
                         </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
                           {brand.carCount}
                         </span>
                         <ChevronRight className={`size-3 transition-all ${
@@ -176,7 +176,7 @@ export function DiscoverySidebar({
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-[10px] font-mono text-muted-foreground">
+                      <span className="text-[10px] tabular-nums text-muted-foreground">
                         {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
                       </span>
                       <span className="text-[9px] text-positive font-medium">
@@ -212,7 +212,7 @@ export function DiscoverySidebar({
                             {family.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-mono text-primary">
+                            <span className="text-[9px] tabular-nums text-primary">
                               {family.count}
                             </span>
                             <span className="text-[8px] text-muted-foreground">
@@ -238,7 +238,7 @@ export function DiscoverySidebar({
 
         {/* Live header */}
         <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-card">
-          <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="size-2 rounded-full bg-positive animate-pulse" />
           <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
             {t("sidebar.liveNow")}
           </span>
@@ -275,7 +275,6 @@ export function DiscoverySidebar({
                         sizes="56px"
                         loading="lazy"
                         referrerPolicy="no-referrer"
-                        unoptimized
                         fallback={
                           <div className="absolute inset-0 flex items-center justify-center">
                             <Car className="size-3.5 text-muted-foreground" />
@@ -294,9 +293,9 @@ export function DiscoverySidebar({
                           {formatPrice(auction.currentBid)}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
-                          <Clock className={`size-2.5 ${isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"}`} />
-                          <span className={`text-[9px] font-mono font-medium ${
-                            isEndingSoon ? "text-[#FB923C]" : "text-muted-foreground"
+                          <Clock className={`size-2.5 ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`} />
+                          <span className={`text-[9px] tabular-nums font-medium ${
+                            isEndingSoon ? "text-destructive" : "text-muted-foreground"
                           }`}>
                             {remaining}
                           </span>

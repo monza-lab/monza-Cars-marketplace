@@ -9,6 +9,8 @@
 // ---------------------------------------------------------------------------
 
 import * as cheerio from 'cheerio';
+import { parseBodyStyleFromText, parseEngineFromText, parseTransmissionFromText } from '../common/titleEnrichment';
+import { canUseBaTScraplingFallback, fetchBaTDetailHtmlWithScrapling } from './batScrapling';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -76,33 +78,14 @@ function randomDelay(minMs: number, maxMs: number): Promise<void> {
   return delay(ms);
 }
 
-async function getProxyAgent(): Promise<unknown | undefined> {
-  const proxyUrl = process.env.DECODO_PROXY_URL;
-  const user = process.env.DECODO_PROXY_USER;
-  const pass = process.env.DECODO_PROXY_PASS;
-  if (!proxyUrl) return undefined;
-
-  try {
-    const { HttpsProxyAgent } = await import('https-proxy-agent');
-    const url = new URL(proxyUrl);
-    if (user) url.username = user;
-    if (pass) url.password = pass;
-    return new HttpsProxyAgent(url.toString());
-  } catch {
-    return undefined;
-  }
-}
-
 async function fetchPage(url: string): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  const agent = await getProxyAgent();
 
   try {
     const response = await fetch(url, {
       headers: DEFAULT_HEADERS,
       signal: controller.signal,
-      ...(agent ? { dispatcher: agent } as Record<string, unknown> : {}),
     });
 
     if (!response.ok) {
@@ -291,6 +274,265 @@ export function parseMileageFromDescription(description: string): { mileage: num
 export function parseBodyStyleFromTitle(title: string): string | null {
   const m = title.match(/\b(coupe|coupé|spider|spyder|berlinetta|targa|roadster|cabriolet|convertible|GTB|GTS|GTC|GT4)\b/i);
   return m ? m[1] : null;
+}
+
+type ScoredValue<T> = {
+  value: T | null;
+  score: number;
+};
+
+type BaTDetailSignals = {
+  mileage: ScoredValue<number>;
+  mileageUnit: ScoredValue<'miles' | 'km'>;
+  vin: ScoredValue<string>;
+  colorExterior: ScoredValue<string>;
+  colorInterior: ScoredValue<string>;
+  engine: ScoredValue<string>;
+  transmission: ScoredValue<string>;
+  bodyStyle: ScoredValue<string>;
+};
+
+function createEmptyBaTDetailSignals(): BaTDetailSignals {
+  return {
+    mileage: { value: null, score: 0 },
+    mileageUnit: { value: 'miles', score: 0 },
+    vin: { value: null, score: 0 },
+    colorExterior: { value: null, score: 0 },
+    colorInterior: { value: null, score: 0 },
+    engine: { value: null, score: 0 },
+    transmission: { value: null, score: 0 },
+    bodyStyle: { value: null, score: 0 },
+  };
+}
+
+function updateSignal<T>(signal: ScoredValue<T>, value: T | null, score: number): ScoredValue<T> {
+  if (value === null) return signal;
+  if (score > signal.score || (score === signal.score && signal.value === null)) {
+    return { value, score };
+  }
+  return signal;
+}
+
+function extractMileageCandidate(text: string): { mileage: number; unit: 'miles' | 'km'; score: number } | null {
+  const normalized = text.trim();
+  if (!normalized) return null;
+
+  const match = normalized.match(/\b(\d{1,3}(?:,\d{3})*|\d+(?:\.\d+)?k?)\s*(miles?|mi|kilometers?|kms?|km)\b/i);
+  if (!match) return null;
+
+  const raw = match[1].replace(/,/g, '');
+  const unit = /km|kilometer/i.test(match[2]) ? 'km' : 'miles';
+  const mileage = raw.toLowerCase().endsWith('k')
+    ? parseFloat(raw.slice(0, -1)) * 1000
+    : parseInt(raw, 10);
+
+  if (!Number.isFinite(mileage) || mileage <= 0) return null;
+
+  const contextScore = /\b(shown|showing|indicated|reads?|odometer|speedometer)\b/i.test(normalized) ? 100 : 90;
+  return { mileage: Math.round(mileage), unit, score: contextScore };
+}
+
+function extractVinCandidate(text: string): string | null {
+  const match = text.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function extractExteriorColorCandidate(text: string): string | null {
+  const normalized = text.trim();
+  if (!normalized) return null;
+  if (/\b(miles?|km|kilometers?|odometer|speedometer)\b/i.test(normalized)) return null;
+  if (/\b(leather|upholstery|alcantara|suede|nappa|interior)\b/i.test(normalized)) return null;
+  if (/\b(engine|motor|liter|litre|v\d{1,2}|flat[-\s]?\d|inline[-\s]?\d|turbo|supercharged|transmission|manual|automatic|clutch|pdk|gearbox)\b/i.test(normalized)) return null;
+
+  const stripped = normalized.replace(/\s*paint$/i, '').trim();
+  if (/\b(metallic|pearl|micalizzato)\b/i.test(stripped)) return stripped;
+  if (/\b(rosso|nero|grigio|bianco|giallo|blu|azzurro|argento|verde|marrone|avorio|crema|nocciola|red|black|white|silver|gray|grey|blue|green|yellow|gold|beige|tan|brown|orange)\b/i.test(stripped)) {
+    return stripped;
+  }
+  return null;
+}
+
+function extractInteriorColorCandidate(text: string): string | null {
+  const normalized = text.trim();
+  if (!normalized) return null;
+  if (/\b(miles?|km|kilometers?|odometer|speedometer)\b/i.test(normalized)) return null;
+  if (/\b(engine|motor|liter|litre|v\d{1,2}|flat[-\s]?\d|inline[-\s]?\d|turbo|supercharged|transmission|manual|automatic|clutch|pdk|gearbox)\b/i.test(normalized)) return null;
+
+  if (/\b(upholstery|leather|alcantara|cloth|suede|nappa|interior)\b/i.test(normalized)) {
+    return normalized.replace(/\s*upholstery$/i, '').trim();
+  }
+  return null;
+}
+
+function hasLowConfidenceDetailField(signal: ScoredValue<unknown>): boolean {
+  return signal.value === null || signal.score < 80;
+}
+
+function extractDescriptionFromHtml(html: string): string | null {
+  const $ = cheerio.load(html);
+  return (
+    $('.post-excerpt, .listing-description, .post-content, article .entry-content')
+      .first()
+      .text()
+      .trim() || null
+  );
+}
+
+function extractBaTDetailSignals(html: string, title: string, description: string | null): BaTDetailSignals {
+  const signals = createEmptyBaTDetailSignals();
+  const $ = cheerio.load(html);
+
+  const essentialTexts: string[] = [];
+  const keyedEssentials = new Map<string, string>();
+
+  $('.essentials li').each((_i, el) => {
+    const text = $(el).text().trim();
+    if (!text) return;
+    const colonIdx = text.indexOf(':');
+    if (colonIdx > 0 && colonIdx < 30) {
+      const key = text.slice(0, colonIdx).trim().toLowerCase();
+      const val = text.slice(colonIdx + 1).trim();
+      if (key && val) {
+        keyedEssentials.set(key, val);
+        essentialTexts.push(val);
+      }
+    } else {
+      essentialTexts.push(text);
+    }
+  });
+
+  $('table.essentials tr, .essentials table tr').each((_i, el) => {
+    const cells = $(el).find('td');
+    if (cells.length >= 2) {
+      const key = $(cells[0]).text().trim().toLowerCase();
+      const val = $(cells[1]).text().trim();
+      if (key && val) {
+        keyedEssentials.set(key, val);
+        essentialTexts.push(val);
+      }
+    }
+  });
+
+  const considerText = (text: string, scoreBias: number) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    const mileageCandidate = extractMileageCandidate(trimmed);
+    if (mileageCandidate) {
+      signals.mileage = updateSignal(signals.mileage, mileageCandidate.mileage, scoreBias + mileageCandidate.score);
+      signals.mileageUnit = updateSignal(signals.mileageUnit, mileageCandidate.unit, scoreBias + mileageCandidate.score);
+    }
+
+    const vinCandidate = extractVinCandidate(trimmed);
+    if (vinCandidate) {
+      const vinScore = /\b(chassis|vin|serial)\b/i.test(trimmed) ? scoreBias + 15 : scoreBias + 5;
+      signals.vin = updateSignal(signals.vin, vinCandidate, vinScore);
+    }
+
+    const engineCandidate = parseEngineFromText(trimmed);
+    if (engineCandidate) {
+      signals.engine = updateSignal(signals.engine, engineCandidate, scoreBias + 10);
+    }
+
+    const transmissionCandidate = parseTransmissionFromText(trimmed);
+    if (transmissionCandidate) {
+      signals.transmission = updateSignal(signals.transmission, transmissionCandidate, scoreBias + 10);
+    }
+
+    const exteriorColorCandidate = extractExteriorColorCandidate(trimmed);
+    if (exteriorColorCandidate) {
+      signals.colorExterior = updateSignal(signals.colorExterior, exteriorColorCandidate, scoreBias + 5);
+    }
+
+    const interiorColorCandidate = extractInteriorColorCandidate(trimmed);
+    if (interiorColorCandidate) {
+      signals.colorInterior = updateSignal(signals.colorInterior, interiorColorCandidate, scoreBias + 5);
+    }
+
+    const bodyStyleCandidate = parseBodyStyleFromText(trimmed);
+    if (bodyStyleCandidate) {
+      signals.bodyStyle = updateSignal(signals.bodyStyle, bodyStyleCandidate, scoreBias + 5);
+    }
+  };
+
+  for (const [key, value] of keyedEssentials.entries()) {
+    considerText(value, 95);
+    if (key === 'mileage' || key === 'miles' || key === 'kilometers' || key === 'km') {
+      const candidate = extractMileageCandidate(value);
+      if (candidate) {
+        signals.mileage = updateSignal(signals.mileage, candidate.mileage, 100);
+        signals.mileageUnit = updateSignal(signals.mileageUnit, candidate.unit, 100);
+      }
+    }
+    if (key === 'transmission') {
+      const candidate = parseTransmissionFromText(value);
+      if (candidate) signals.transmission = updateSignal(signals.transmission, candidate, 100);
+    }
+    if (key === 'engine') {
+      const candidate = parseEngineFromText(value);
+      if (candidate) signals.engine = updateSignal(signals.engine, candidate, 100);
+    }
+    if (key === 'vin' || key === 'chassis' || key === 'serial' || key === 'frame') {
+      const candidate = extractVinCandidate(value);
+      if (candidate) signals.vin = updateSignal(signals.vin, candidate, 100);
+    }
+    if (key === 'exterior color' || key === 'colour' || key === 'color') {
+      signals.colorExterior = updateSignal(signals.colorExterior, value.trim(), 100);
+    }
+    if (key === 'interior color' || key === 'interior') {
+      signals.colorInterior = updateSignal(signals.colorInterior, value.trim(), 100);
+    }
+    if (key === 'body style' || key === 'body type') {
+      const candidate = parseBodyStyleFromText(value) || value.trim();
+      signals.bodyStyle = updateSignal(signals.bodyStyle, candidate, 100);
+    }
+  }
+
+  for (const text of essentialTexts) {
+    considerText(text, 85);
+  }
+
+  if (description) {
+    considerText(description, 60);
+    const descMileage = parseMileageFromDescription(description);
+    if (descMileage) {
+      signals.mileage = updateSignal(signals.mileage, descMileage.mileage, 70);
+      signals.mileageUnit = updateSignal(signals.mileageUnit, descMileage.unit, 70);
+    }
+  }
+
+  considerText(title, 55);
+  const titleMileage = parseMileageFromTitle(title);
+  if (titleMileage) {
+    signals.mileage = updateSignal(signals.mileage, titleMileage.mileage, 65);
+    signals.mileageUnit = updateSignal(signals.mileageUnit, titleMileage.unit, 65);
+  }
+  const titleBodyStyle = parseBodyStyleFromTitle(title);
+  if (titleBodyStyle) {
+    signals.bodyStyle = updateSignal(signals.bodyStyle, titleBodyStyle, 65);
+  }
+
+  return signals;
+}
+
+function mergeScoredSignal<T>(primary: ScoredValue<T>, fallback: ScoredValue<T>): ScoredValue<T> {
+  if (fallback.value === null) return primary;
+  if (primary.value === null) return fallback;
+  return fallback.score > primary.score ? fallback : primary;
+}
+
+function mergeBaTDetailSignals(primary: BaTDetailSignals, fallback: BaTDetailSignals | null): BaTDetailSignals {
+  if (!fallback) return primary;
+  return {
+    mileage: mergeScoredSignal(primary.mileage, fallback.mileage),
+    mileageUnit: mergeScoredSignal(primary.mileageUnit, fallback.mileageUnit),
+    vin: mergeScoredSignal(primary.vin, fallback.vin),
+    colorExterior: mergeScoredSignal(primary.colorExterior, fallback.colorExterior),
+    colorInterior: mergeScoredSignal(primary.colorInterior, fallback.colorInterior),
+    engine: mergeScoredSignal(primary.engine, fallback.engine),
+    transmission: mergeScoredSignal(primary.transmission, fallback.transmission),
+    bodyStyle: mergeScoredSignal(primary.bodyStyle, fallback.bodyStyle),
+  };
 }
 
 /**
@@ -507,11 +749,7 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     const $ = cheerio.load(html);
 
     // Description
-    const description =
-      $('.post-excerpt, .listing-description, .post-content, article .entry-content')
-        .first()
-        .text()
-        .trim() || null;
+    const description = extractDescriptionFromHtml(html);
 
     // Seller notes — BaT has no CSS class; look for headings containing "seller"
     let sellerNotes: string | null = null;
@@ -535,180 +773,24 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       sellerNotes = $('[class*="seller-note"], [class*="seller_note"], .seller-description, .seller-story').first().text().trim() || null;
     }
 
-    // ── BaT Essentials Section ──
-    // BaT essentials are <li> items inside div.essentials.
-    // Most items have NO key:value format — they're plain text like:
-    //   "33k Miles", "6.3-Liter F140 V12", "Seven-Speed Dual-Clutch Transaxle",
-    //   "Rubino Micalizzato Paint", "Tan Leather and Alcantara Upholstery"
-    // Only a few have colons: "Chassis: ZFF73SKAXD0194941"
+    const primarySignals = extractBaTDetailSignals(html, auction.title, description);
+    const needsFallback =
+      hasLowConfidenceDetailField(primarySignals.mileage) ||
+      hasLowConfidenceDetailField(primarySignals.vin) ||
+      hasLowConfidenceDetailField(primarySignals.colorExterior) ||
+      hasLowConfidenceDetailField(primarySignals.colorInterior) ||
+      hasLowConfidenceDetailField(primarySignals.engine) ||
+      hasLowConfidenceDetailField(primarySignals.transmission) ||
+      hasLowConfidenceDetailField(primarySignals.bodyStyle);
 
-    const essentialTexts: string[] = [];
-    const essentialsKeyed = new Map<string, string>();
-
-    // Parse <li> items inside .essentials
-    $('.essentials li').each((_i, el) => {
-      const text = $(el).text().trim();
-      if (!text) return;
-      const colonIdx = text.indexOf(':');
-      if (colonIdx > 0 && colonIdx < 30) {
-        const key = text.slice(0, colonIdx).trim().toLowerCase();
-        const val = text.slice(colonIdx + 1).trim();
-        essentialsKeyed.set(key, val);
-        // Push only the value so regex patterns match cleanly
-        if (val) essentialTexts.push(val);
-      } else {
-        essentialTexts.push(text);
+    let detailSignals = primarySignals;
+    if (needsFallback && canUseBaTScraplingFallback()) {
+      const fallbackHtml = await fetchBaTDetailHtmlWithScrapling(auction.url);
+      if (fallbackHtml) {
+        const fallbackDescription = extractDescriptionFromHtml(fallbackHtml);
+        const fallbackSignals = extractBaTDetailSignals(fallbackHtml, auction.title, fallbackDescription);
+        detailSignals = mergeBaTDetailSignals(primarySignals, fallbackSignals);
       }
-    });
-
-    // Also parse <table class="essentials"> rows (alternate BaT layout)
-    $('table.essentials tr, .essentials table tr').each((_i, el) => {
-      const cells = $(el).find('td');
-      if (cells.length >= 2) {
-        const key = $(cells[0]).text().trim().toLowerCase();
-        const val = $(cells[1]).text().trim();
-        if (key && val) {
-          essentialsKeyed.set(key, val);
-          // Push plain value to essentialTexts so regex patterns can match
-          essentialTexts.push(val);
-        }
-      }
-    });
-
-    // VIN — from "Chassis: ..." keyed item
-    const vin = essentialsKeyed.get('chassis') || essentialsKeyed.get('vin') || null;
-
-    // Mileage — match patterns like "33k Miles", "~12,345 Miles", "Showing 8k Kilometers"
-    let mileage: number | null = null;
-    let mileageUnit = 'miles';
-    for (const text of essentialTexts) {
-      const mileageMatch = text.match(/^~?\s*(?:showing\s+|indicated\s+)?([\d,]+k?)\s*(miles?|kilometers?|km)\b/i);
-      if (mileageMatch) {
-        let raw = mileageMatch[1].replace(/,/g, '');
-        if (raw.toLowerCase().endsWith('k')) {
-          mileage = parseFloat(raw.slice(0, -1)) * 1000;
-        } else {
-          mileage = parseInt(raw, 10);
-        }
-        mileageUnit = /km|kilometer/i.test(mileageMatch[2]) ? 'km' : 'miles';
-        break;
-      }
-    }
-    // Fallback: keyed format "Miles: 45,230" or "Kilometers: 8,000"
-    if (mileage === null) {
-      const keyedMiles = essentialsKeyed.get('miles') || essentialsKeyed.get('mileage');
-      const keyedKm = essentialsKeyed.get('kilometers') || essentialsKeyed.get('km');
-      const keyedVal = keyedMiles || keyedKm;
-      if (keyedVal) {
-        const cleaned = keyedVal.replace(/[^0-9]/g, '');
-        const num = parseInt(cleaned, 10);
-        if (!isNaN(num)) {
-          mileage = num;
-          mileageUnit = keyedKm ? 'km' : 'miles';
-        }
-      }
-    }
-
-    // Pass 3: Title fallback — "10k-Mile 2003 Ferrari 360"
-    if (mileage === null) {
-      const titleMileage = parseMileageFromTitle(auction.title);
-      if (titleMileage) {
-        mileage = titleMileage.mileage;
-        mileageUnit = titleMileage.unit;
-      }
-    }
-
-    // Pass 4: Description fallback — "showing 10,000 miles on the odometer"
-    if (mileage === null && description) {
-      const descMileage = parseMileageFromDescription(description);
-      if (descMileage) {
-        mileage = descMileage.mileage;
-        mileageUnit = descMileage.unit;
-      }
-    }
-
-    // Engine — match patterns containing liter/L, V-config, cylinder count, etc.
-    let engine: string | null = null;
-    for (const text of essentialTexts) {
-      if (/\d[\d.]*[\s-]?liter|[vV]\d{1,2}\b|flat[\s-]?\d|inline[\s-]?\d|twin[\s-]?turbo|turbo(charged)?|supercharged|boxer|rotary/i.test(text)) {
-        engine = text;
-        break;
-      }
-    }
-    // Fallback: keyed "Engine: 3.6L Flat-6"
-    if (!engine) {
-      engine = essentialsKeyed.get('engine') || null;
-    }
-
-    // Transmission — match patterns with speed/manual/automatic/clutch/transaxle/PDK
-    // Note: \bF1\b avoids matching "F140" engine codes
-    // Guard: skip items that are actually mileage descriptions (e.g. "17k Miles Shown on Replacement Speedometer")
-    let transmission: string | null = null;
-    for (const text of essentialTexts) {
-      if (/speed|manual|automatic|dual[\s-]?clutch|transaxle|\bPDK\b|tiptronic|sequential|\bF1\b|SMG|gearbox|CVT/i.test(text)) {
-        // Transmission guard: if text contains mileage/odometer words, it's not a transmission
-        if (/\b(miles?|km|kilometers?|speedometer|odometer)\b/i.test(text)) {
-          // Rescue mileage from this text if we still need it
-          if (mileage === null) {
-            const rescueMatch = text.match(/\b([\d,]+k?)\s*(miles?|kilometers?|km)\b/i);
-            if (rescueMatch) {
-              let raw = rescueMatch[1].replace(/,/g, '');
-              if (raw.toLowerCase().endsWith('k')) {
-                mileage = parseFloat(raw.slice(0, -1)) * 1000;
-              } else {
-                mileage = parseInt(raw, 10);
-              }
-              mileageUnit = /km|kilometer/i.test(rescueMatch[2]) ? 'km' : 'miles';
-            }
-          }
-          continue; // Skip — not a real transmission
-        }
-        transmission = text;
-        break;
-      }
-    }
-    // Fallback: keyed "Transmission: 5-Speed Manual"
-    if (!transmission) {
-      transmission = essentialsKeyed.get('transmission') || null;
-    }
-
-    // Exterior color — items ending with "Paint", containing metallic/pearl, or Italian color names
-    const INTERIOR_KEYWORDS = /\b(leather|upholstery|alcantara|interior|cloth|suede|nappa)\b/i;
-    let exteriorColor: string | null = null;
-    for (const text of essentialTexts) {
-      // Skip items that look like interior descriptions
-      if (INTERIOR_KEYWORDS.test(text)) continue;
-      if (/paint$/i.test(text) || /\b(metallic|micalizzato|pearl)\b/i.test(text)) {
-        exteriorColor = text.replace(/\s*paint$/i, '').trim();
-        break;
-      }
-      // Match Italian/common Ferrari color names (standalone, not inside engine/transmission text)
-      if (/\b(rosso|nero|grigio|bianco|giallo|blu|azzurro|argento|verde|marrone|avorio|crema|nocciola)\b/i.test(text)) {
-        // Guard: skip if this looks like an engine, transmission, or mileage item
-        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK|miles?|km/i.test(text)) continue;
-        exteriorColor = text.trim();
-        break;
-      }
-    }
-
-    // Fallback: keyed "Exterior Color: Guards Red"
-    if (!exteriorColor) {
-      exteriorColor = essentialsKeyed.get('exterior color') || essentialsKeyed.get('color') || null;
-    }
-
-    // Interior color — items containing upholstery, leather, alcantara, suede, nappa, etc.
-    let interiorColor: string | null = null;
-    for (const text of essentialTexts) {
-      if (/\b(upholstery|leather|alcantara|cloth|suede|nappa|interior)\b/i.test(text)) {
-        // Guard: skip if this looks like an engine, transmission, or mileage item
-        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK|miles?|km/i.test(text)) continue;
-        interiorColor = text.replace(/\s*upholstery$/i, '').trim();
-        break;
-      }
-    }
-    // Fallback: keyed "Interior Color: Black Leather"
-    if (!interiorColor) {
-      interiorColor = essentialsKeyed.get('interior color') || essentialsKeyed.get('interior') || null;
     }
 
     // Location — BaT has: <strong>Location</strong> <a>City, State ZIP</a>
@@ -724,7 +806,29 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     });
     // Fallback: keyed "Location: San Francisco, CA"
     if (!location) {
-      location = essentialsKeyed.get('location') || null;
+      $('.essentials li, .essentials tr').each((_i, el) => {
+        if (location) return false;
+        const text = $(el).text().trim();
+        const colonIdx = text.indexOf(':');
+        if (colonIdx > 0) {
+          const key = text.slice(0, colonIdx).trim().toLowerCase();
+          if (key === 'location') {
+            const val = text.slice(colonIdx + 1).trim();
+            if (val) {
+              location = val;
+              return false;
+            }
+          }
+        }
+        const cells = $(el).find('td');
+        if (cells.length >= 2 && $(cells[0]).text().trim().toLowerCase() === 'location') {
+          const val = $(cells[1]).text().trim();
+          if (val) {
+            location = val;
+            return false;
+          }
+        }
+      });
     }
 
     // Images — BaT photos are img tags with wp-content/uploads or CDN URLs
@@ -771,11 +875,9 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
 
     // Reserve status — check essentials, badges, and listing info area
     let reserveStatus: string | null = null;
-    for (const text of essentialTexts) {
-      if (/^no\s+reserve$/i.test(text)) {
-        reserveStatus = 'NO_RESERVE';
-        break;
-      }
+    const essentialsText = $('.essentials').text();
+    if (/^no\s+reserve$/i.test(essentialsText) || /\bno\s+reserve\b/i.test(essentialsText)) {
+      reserveStatus = 'NO_RESERVE';
     }
     if (!reserveStatus) {
       // Check for reserve badges/labels in the page
@@ -791,22 +893,6 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       } else if (/reserve\s+met/i.test(listingInfo)) {
         reserveStatus = 'RESERVE_MET';
       }
-    }
-
-    // Body style — check essentials for known body type keywords
-    let bodyStyle: string | null = null;
-    for (const text of essentialTexts) {
-      const bodyMatch = text.match(/\b(coupe|coupé|spider|spyder|convertible|berlinetta|targa|roadster|cabriolet|sedan|wagon|hatchback|SUV)\b/i);
-      if (bodyMatch) {
-        // Skip if this item is clearly about engine or transmission
-        if (/liter|[vV]\d|turbo|speed|manual|automatic|clutch|transaxle|PDK/i.test(text)) continue;
-        bodyStyle = bodyMatch[1];
-        break;
-      }
-    }
-    // Body style title fallback — "2003 Ferrari 360 Spider"
-    if (!bodyStyle) {
-      bodyStyle = parseBodyStyleFromTitle(auction.title);
     }
 
     // Current bid — from ".current-bid-value" or ".current-bid"
@@ -830,21 +916,21 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
 
     return {
       ...auction,
-      mileage: mileage ?? auction.mileage,
-      mileageUnit: mileageUnit || auction.mileageUnit,
-      transmission: transmission ?? auction.transmission,
-      engine: engine ?? auction.engine,
-      exteriorColor: exteriorColor ?? auction.exteriorColor,
-      interiorColor: interiorColor ?? auction.interiorColor,
+      mileage: detailSignals.mileage.value ?? auction.mileage,
+      mileageUnit: detailSignals.mileage.value !== null ? detailSignals.mileageUnit.value ?? auction.mileageUnit : auction.mileageUnit,
+      transmission: detailSignals.transmission.value ?? auction.transmission,
+      engine: detailSignals.engine.value ?? auction.engine,
+      exteriorColor: detailSignals.colorExterior.value ?? auction.exteriorColor,
+      interiorColor: detailSignals.colorInterior.value ?? auction.interiorColor,
       location: location ?? auction.location,
       currentBid: detailBid ?? auction.currentBid,
       bidCount: detailBidCount || auction.bidCount,
       description: description ?? auction.description,
       sellerNotes: sellerNotes ?? auction.sellerNotes,
-      vin: vin ?? auction.vin,
+      vin: detailSignals.vin.value ?? auction.vin,
       images: finalImages.length > 0 ? finalImages : auction.images,
       reserveStatus: reserveStatus ?? auction.reserveStatus,
-      bodyStyle: bodyStyle ?? auction.bodyStyle,
+      bodyStyle: detailSignals.bodyStyle.value ?? auction.bodyStyle,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

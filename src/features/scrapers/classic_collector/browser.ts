@@ -35,6 +35,23 @@ function pickUserAgent(): string {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
+export function buildLaunchOptions(config: BrowserConfig): Record<string, unknown> {
+  const launchOptions: Record<string, unknown> = {
+    headless: config.headless,
+    args: STEALTH_ARGS,
+  };
+
+  if (config.proxyServer) {
+    launchOptions.proxy = {
+      server: config.proxyServer,
+      username: config.proxyUsername,
+      password: config.proxyPassword,
+    };
+  }
+
+  return launchOptions;
+}
+
 /**
  * Init script injected into every page to remove automation fingerprints.
  */
@@ -95,18 +112,7 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
 
   // Local / GitHub Actions: prefer rebrowser-playwright for Cloudflare CDP bypass,
   // fall back to regular playwright if the rebrowser binary is missing.
-  const launchOptions: Record<string, unknown> = {
-    headless: config.headless,
-    args: STEALTH_ARGS,
-  };
-
-  if (config.proxyServer) {
-    launchOptions.proxy = {
-      server: config.proxyServer,
-      username: config.proxyUsername,
-      password: config.proxyPassword,
-    };
-  }
+  const launchOptions = buildLaunchOptions(config);
 
   try {
     const { chromium } = await import("rebrowser-playwright");

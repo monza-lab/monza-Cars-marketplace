@@ -184,12 +184,12 @@ const shippingCosts: Record<string, { domestic: number; euImport: number; ukImpo
 
 // ─── PLATFORM LABELS ───
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
-  GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
+  GOODING: { short: "Gooding", color: "bg-positive/20 text-positive" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
 }
 
@@ -304,11 +304,10 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
           className="object-cover"
           sizes="80px"
           referrerPolicy="no-referrer"
-          unoptimized
         />
         {/* Grade badge */}
         <span className={`absolute top-1 left-1 text-[8px] font-bold px-1 py-0.5 rounded ${
-          car.investmentGrade === "AAA" ? "bg-emerald-500/80 text-white"
+          car.investmentGrade === "AAA" ? "bg-positive/80 text-white"
           : car.investmentGrade === "AA" ? "bg-primary/80 text-primary-foreground"
           : "bg-amber-500/80 text-white"
         }`}>{car.investmentGrade}</span>
@@ -358,7 +357,6 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
           className="object-cover"
           sizes="56px"
           referrerPolicy="no-referrer"
-          unoptimized
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -370,7 +368,7 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
             {formatPrice(car.currentBid)}
           </span>
           <span className={`text-[9px] font-bold ${
-            car.investmentGrade === "AAA" ? "text-emerald-400" : car.investmentGrade === "AA" ? "text-blue-400" : "text-amber-400"
+            car.investmentGrade === "AAA" ? "text-positive" : car.investmentGrade === "AA" ? "text-blue-400" : "text-destructive"
           }`}>{car.investmentGrade}</span>
         </div>
       </div>
@@ -428,13 +426,13 @@ function CarNavSidebar({
         <div className="flex items-center gap-2 mt-2">
           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
             car.investmentGrade === "AAA"
-              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-400/20"
+              ? "bg-positive/15 text-positive border border-positive/20"
               : car.investmentGrade === "AA"
                 ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                : "bg-amber-500/15 text-amber-400 border border-amber-400/20"
+                : "bg-amber-500/15 text-destructive border border-amber-400/20"
           }`}>{car.investmentGrade}</span>
-          <span className={`text-[11px] font-mono font-semibold ${
-            car.trendValue > 0 ? "text-emerald-400" : car.trendValue < 0 ? "text-red-400" : "text-muted-foreground"
+          <span className={`text-[11px] tabular-nums font-semibold ${
+            car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"
           }`}>
             {car.trendValue > 0 ? "+" : ""}{car.trendValue}% {car.trendValue > 0 ? "↑" : car.trendValue < 0 ? "↓" : "→"}
           </span>
@@ -452,9 +450,9 @@ function CarNavSidebar({
       <div className="px-4 py-3 shrink-0 border-b border-border">
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
           <span className="text-[9px] text-muted-foreground">Fair Value Range ({effectiveRegion})</span>
-          <span className="text-[10px] font-mono text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
         </div>
         {/* Position bar */}
         <div className="relative h-[8px] rounded-full bg-foreground/4 overflow-hidden">
@@ -468,13 +466,13 @@ function CarNavSidebar({
         <div className="mt-1.5 flex items-center gap-1.5">
           {isBelowFair ? (
             <>
-              <CheckCircle2 className="size-3 text-emerald-400" />
-              <span className="text-[10px] font-medium text-emerald-400">Below market average</span>
+              <CheckCircle2 className="size-3 text-positive" />
+              <span className="text-[10px] font-medium text-positive">Below market average</span>
             </>
           ) : (
             <>
-              <TrendingUp className="size-3 text-amber-400" />
-              <span className="text-[10px] font-medium text-amber-400">Above market average</span>
+              <TrendingUp className="size-3 text-destructive" />
+              <span className="text-[10px] font-medium text-destructive">Above market average</span>
             </>
           )}
         </div>
@@ -483,11 +481,11 @@ function CarNavSidebar({
 
       {/* ── Live listing block (CONDITIONAL) ── */}
       {isLive && (
-        <div className="mx-3 my-3 shrink-0 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] p-3">
+        <div className="mx-3 my-3 shrink-0 rounded-lg border border-positive/20 bg-positive/[0.04] p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">{isAuctionPlatform(car.platform) ? "Live Auction" : "For Sale"}</span>
+              <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+              <span className="text-[10px] font-semibold text-positive uppercase tracking-wider">{isAuctionPlatform(car.platform) ? "Live Auction" : "For Sale"}</span>
             </div>
             {platform && (
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
@@ -497,7 +495,7 @@ function CarNavSidebar({
           </div>
           <div className="flex items-center justify-between">
             {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>}
-            {isAuctionPlatform(car.platform) && <span className="text-[11px] font-mono text-amber-400">{timeLeft(car.endTime)}</span>}
+            {isAuctionPlatform(car.platform) && <span className="text-[11px] tabular-nums text-destructive">{timeLeft(car.endTime)}</span>}
           </div>
           {car.sourceUrl && (
             <a
@@ -559,7 +557,7 @@ function CarNavSidebar({
           {car.vin && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground"><FileText className="size-3.5" /></span>
-              <span className="text-[11px] text-muted-foreground font-mono">{car.vin}</span>
+              <span className="text-[11px] text-muted-foreground tabular-nums">{car.vin}</span>
             </div>
           )}
         </div>
@@ -568,7 +566,7 @@ function CarNavSidebar({
       {/* ── Risk / Inspection ── */}
       <div className="px-4 py-3 shrink-0 border-b border-border">
         <div className="flex items-center gap-2 mb-1">
-          <AlertTriangle className="size-3.5 text-amber-400" />
+          <AlertTriangle className="size-3.5 text-destructive" />
           <span className="text-[10px] font-semibold text-muted-foreground">{flags.length} inspection points</span>
         </div>
         <p className="text-[10px] text-muted-foreground leading-relaxed pl-[22px]">
@@ -655,7 +653,7 @@ function CarContextPanel({
             {car.vin && (
               <>
                 <span>·</span>
-                <span className="font-mono">{car.vin}</span>
+                <span className="tabular-nums">{car.vin}</span>
               </>
             )}
           </div>
@@ -667,18 +665,18 @@ function CarContextPanel({
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Grade</span>
               <p className={`text-[16px] font-bold ${
-                car.investmentGrade === "AAA" ? "text-emerald-400" : "text-primary"
+                car.investmentGrade === "AAA" ? "text-positive" : "text-primary"
               }`}>{car.investmentGrade}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
                 {getPriceLabel(car.platform, car.status)}
               </span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(car.currentBid)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(car.currentBid)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
-              <p className="text-[13px] font-mono font-semibold text-emerald-400">{car.trend}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-positive">{car.trend}</p>
             </div>
           </div>
         </div>
@@ -708,25 +706,25 @@ function CarContextPanel({
                       <span className="text-[12px]">{regionLabels[region].flag}</span>
                       <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                       {isBest && (
-                        <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>
+                        <span className="text-[8px] font-bold text-positive tracking-wide">BEST</span>
                       )}
                       {isSelected && (
                         <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[11px] font-mono font-semibold text-foreground">
+                      <span className="text-[11px] tabular-nums font-semibold text-foreground">
                         {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)}
                       </span>
                       <span className="text-[9px] text-muted-foreground">→</span>
-                      <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
+                      <span className={`text-[11px] tabular-nums font-semibold ${isBest ? "text-positive" : "text-primary"}`}>
                         {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
                       </span>
                     </div>
                   </div>
                   {region !== effectiveRegion && (
                     <div className="flex justify-end mb-1">
-                      <span className="text-[9px] font-mono text-muted-foreground">
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
                         ≈ {formatPrice(rp.high)}
                       </span>
                     </div>
@@ -755,13 +753,13 @@ function CarContextPanel({
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-              <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-primary" : "text-orange-400"}`}>
+              <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
                 {pricePosition}%
               </span>
             </div>
             <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
               <div
-                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-orange-400/50"}`}
+                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
                 style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
               />
             </div>
@@ -800,7 +798,7 @@ function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
@@ -826,7 +824,7 @@ function CarContextPanel({
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] font-mono text-muted-foreground">{formatPrice(item.value)}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
               </div>
             ))}
           </div>
@@ -845,14 +843,14 @@ function CarContextPanel({
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`size-1.5 rounded-full ${
-                    event.impact === "positive" ? "bg-emerald-400" :
-                    event.impact === "negative" ? "bg-red-400" : "bg-muted-foreground"
+                    event.impact === "positive" ? "bg-positive" :
+                    event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
                   }`} />
                   <span className="text-[11px] text-muted-foreground">{event.name}</span>
                 </div>
                 <span className={`text-[9px] font-semibold ${
-                  event.impact === "positive" ? "text-emerald-400" :
-                  event.impact === "negative" ? "text-red-400" : "text-muted-foreground"
+                  event.impact === "positive" ? "text-positive" :
+                  event.impact === "negative" ? "text-destructive" : "text-muted-foreground"
                 }`}>
                   {event.impact === "positive" ? "+" : event.impact === "negative" ? "−" : "~"}
                 </span>
@@ -1106,7 +1104,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
                 {car.images.slice(0, 8).map((img, i) => (
                   <div key={i} className="relative h-full w-full shrink-0 snap-center">
-                    <Image src={img} alt={`${car.title} — ${i + 1}`} fill className="object-cover" priority={i === 0} referrerPolicy="no-referrer" unoptimized />
+                    <Image src={img} alt={`${car.title} — ${i + 1}`} fill className="object-cover" priority={i === 0} referrerPolicy="no-referrer" />
                   </div>
                 ))}
               </div>
@@ -1116,7 +1114,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
             </div>
           ) : (
-            <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" unoptimized />
+            <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" />
           )}
           {/* Always-dark gradient for text readability in both themes */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" />
@@ -1136,13 +1134,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <div className="absolute top-0 right-4 pt-safe flex items-center gap-2 z-10">
             <span className={`px-2.5 py-1.5 rounded-full text-[10px] font-bold backdrop-blur-md ${
               car.investmentGrade === "AAA"
-                ? "bg-emerald-500/30 text-emerald-300"
+                ? "bg-positive/30 text-positive"
                 : "bg-primary/30 text-primary"
             }`}>{car.investmentGrade}</span>
             {isLive && (
               <div className="flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1.5">
-                <div className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-medium text-emerald-400">LIVE</span>
+                <div className="size-2 rounded-full bg-positive animate-pulse" />
+                <span className="text-[10px] font-medium text-positive">LIVE</span>
               </div>
             )}
             <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-black/40 text-white/70">
@@ -1165,7 +1163,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <p className="text-2xl font-display font-medium text-primary">
                     {formatPrice(car.currentBid)}
                   </p>
-                  <span className="text-[12px] font-mono font-semibold text-emerald-400">{car.trend}</span>
+                  <span className="text-[12px] tabular-nums font-semibold text-positive">{car.trend}</span>
                 </div>
               </div>
               {isLive && isAuctionPlatform(car.platform) && (
@@ -1173,7 +1171,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <div className="h-8 w-px bg-white/10" />
                   <div>
                     <p className="text-[10px] text-white/50 uppercase tracking-wider">{t("timeLeft")}</p>
-                    <p className="text-xl font-bold text-amber-400 font-mono">{timeLeft(car.endTime)}</p>
+                    <p className="text-xl font-bold text-destructive tabular-nums">{timeLeft(car.endTime)}</p>
                   </div>
                 </>
               )}
@@ -1197,9 +1195,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   {t("investmentPassport.grade")}
                 </span>
                 <span className={`text-[28px] font-bold ${
-                  car.investmentGrade === "AAA" ? "text-emerald-400"
+                  car.investmentGrade === "AAA" ? "text-positive"
                   : car.investmentGrade === "AA" ? "text-primary"
-                  : "text-amber-400"
+                  : "text-destructive"
                 }`}>{car.investmentGrade}</span>
               </div>
 
@@ -1215,7 +1213,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     style={{ left: `calc(${pricePosition}% - 4px)` }}
                   />
                 </div>
-                <span className={`text-[11px] font-medium ${isBelowFair ? "text-emerald-400" : "text-amber-400"}`}>
+                <span className={`text-[11px] font-medium ${isBelowFair ? "text-positive" : "text-destructive"}`}>
                   {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
                 </span>
               </div>
@@ -1225,7 +1223,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
-                <span className="text-[22px] font-bold font-mono text-foreground">
+                <span className="text-[22px] font-bold tabular-nums text-foreground">
                   {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
                 </span>
               </div>
@@ -1235,7 +1233,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.annualCost")}
                 </span>
-                <span className="text-[22px] font-bold font-mono text-foreground">
+                <span className="text-[22px] font-bold tabular-nums text-foreground">
                   {formatPrice(totalAnnualCost)}
                 </span>
                 <span className="text-[11px] text-muted-foreground">/yr</span>
@@ -1314,15 +1312,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px]">{regionLabels[region].flag}</span>
                         <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
-                        {isBest && <span className="text-[8px] font-bold text-emerald-400 tracking-wide">BEST</span>}
+                        {isBest && <span className="text-[8px] font-bold text-positive tracking-wide">BEST</span>}
                         {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>}
                       </div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-[11px] font-mono font-semibold text-foreground">
+                        <span className="text-[11px] tabular-nums font-semibold text-foreground">
                           {formatRegionalPrice(rp.low, rp.currency)}
                         </span>
                         <span className="text-[9px] text-muted-foreground">→</span>
-                        <span className={`text-[11px] font-mono font-semibold ${isBest ? "text-emerald-400" : "text-primary"}`}>
+                        <span className={`text-[11px] tabular-nums font-semibold ${isBest ? "text-positive" : "text-primary"}`}>
                           {formatRegionalPrice(rp.high, rp.currency)}
                         </span>
                       </div>
@@ -1350,13 +1348,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-                <span className={`text-[11px] font-mono font-bold ${pricePosition <= 90 ? "text-emerald-400" : pricePosition <= 110 ? "text-primary" : "text-orange-400"}`}>
+                <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
                   {pricePosition}%
                 </span>
               </div>
               <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-emerald-400/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-orange-400/50"}`}
+                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
                   style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
                 />
               </div>
@@ -1403,7 +1401,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               )}
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("status")}</p>
-                <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-emerald-400" : "text-muted-foreground"}`}>
+                <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-positive" : "text-muted-foreground"}`}>
                   {getStatusLabel(car.platform, car.status)}
                 </p>
               </div>
@@ -1482,7 +1480,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                   </div>
-                  <p className="text-[16px] font-bold font-mono text-foreground shrink-0 ml-3">{formatPrice(sale.price)}</p>
+                  <p className="text-[16px] font-bold tabular-nums text-foreground shrink-0 ml-3">{formatPrice(sale.price)}</p>
                 </div>
               ))}
             </div>
@@ -1496,21 +1494,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <Shield className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.insurance)}</span>
+                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.insurance)}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
                   <MapPin className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.storage)}</span>
+                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.storage)}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border">
                 <div className="flex items-center gap-3">
                   <Wrench className="size-4 text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
                 </div>
-                <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(costs.maintenance)}</span>
+                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.maintenance)}</span>
               </div>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
@@ -1526,15 +1524,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
+                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
+                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                     <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
-                    <span className="text-[14px] font-mono font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
+                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
                   </div>
                 </div>
               </div>
@@ -1548,8 +1546,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                   <div className="flex items-center gap-3">
                     <span className={`size-2 rounded-full ${
-                      event.impact === "positive" ? "bg-emerald-400" :
-                      event.impact === "negative" ? "bg-red-400" : "bg-muted-foreground"
+                      event.impact === "positive" ? "bg-positive" :
+                      event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
                     }`} />
                     <div>
                       <p className="text-[13px] text-foreground">{event.name}</p>
@@ -1557,8 +1555,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     </div>
                   </div>
                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                    event.impact === "positive" ? "bg-emerald-500/10 text-emerald-400" :
-                    event.impact === "negative" ? "bg-red-500/10 text-red-400" :
+                    event.impact === "positive" ? "bg-positive/10 text-positive" :
+                    event.impact === "negative" ? "bg-destructive/10 text-destructive" :
                     "bg-foreground/5 text-muted-foreground"
                   }`}>
                     {event.impact === "positive" ? "Value +" : event.impact === "negative" ? "Value -" : "Neutral"}
@@ -1614,20 +1612,19 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   priority
                   sizes="(min-width: 768px) 50vw, 100vw"
                   referrerPolicy="no-referrer"
-                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 {/* Overlays on hero */}
                 <div className="absolute top-4 left-4 flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${
                     car.investmentGrade === "AAA"
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/30"
+                      ? "bg-positive/20 text-positive border border-positive/30"
                       : "bg-primary/20 text-primary border border-primary/30"
                   }`}>{car.investmentGrade}</span>
                   {isLive && (
-                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30">
-                      <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] font-semibold text-emerald-400">LIVE</span>
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-positive/30">
+                      <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+                      <span className="text-[10px] font-semibold text-positive">LIVE</span>
                     </span>
                   )}
                 </div>
@@ -1742,7 +1739,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         <p className="text-[12px] font-medium text-foreground">{sale.title}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
                       </div>
-                      <span className="text-[14px] font-mono font-bold text-foreground">{formatPrice(sale.price)}</span>
+                      <span className="text-[14px] tabular-nums font-bold text-foreground">{formatPrice(sale.price)}</span>
                     </div>
                   ))}
                 </div>
@@ -1843,11 +1840,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       onChange={(e) => { setGateName(e.target.value); setGateErrors(prev => ({ ...prev, name: false })) }}
                       placeholder="Your name"
                       className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
-                        gateErrors.name ? "border-red-500/50" : "border-border focus:border-primary/50"
+                        gateErrors.name ? "border-destructive/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
-                  {gateErrors.name && <p className="text-[10px] text-red-400 mt-1 pl-1">Enter your name</p>}
+                  {gateErrors.name && <p className="text-[10px] text-destructive mt-1 pl-1">Enter your name</p>}
                 </div>
 
                 <div>
@@ -1859,11 +1856,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       onChange={(e) => { setGateEmail(e.target.value); setGateErrors(prev => ({ ...prev, email: false })) }}
                       placeholder="your@email.com"
                       className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
-                        gateErrors.email ? "border-red-500/50" : "border-border focus:border-primary/50"
+                        gateErrors.email ? "border-destructive/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
-                  {gateErrors.email && <p className="text-[10px] text-red-400 mt-1 pl-1">Enter a valid email</p>}
+                  {gateErrors.email && <p className="text-[10px] text-destructive mt-1 pl-1">Enter a valid email</p>}
                 </div>
 
                 <button
@@ -1908,7 +1905,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <h3 className="text-lg font-bold text-foreground">
                   Welcome to Monza
                 </h3>
-                <p className="text-3xl font-mono font-black text-primary mt-2">
+                <p className="text-3xl tabular-nums font-black text-primary mt-2">
                   3,000 tokens
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
@@ -1991,9 +1988,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", damping: 15 }}
-                    className="size-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4"
+                    className="size-14 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-4"
                   >
-                    <CheckCircle2 className="size-7 text-emerald-400" />
+                    <CheckCircle2 className="size-7 text-positive" />
                   </motion.div>
                   <h3 className="text-lg font-bold text-foreground">Analysis sent!</h3>
                   <p className="text-[12px] text-muted-foreground mt-1">

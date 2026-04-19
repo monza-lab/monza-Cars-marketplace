@@ -19,6 +19,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { CurrencyDropdown } from "./CurrencyDropdown";
@@ -293,6 +294,7 @@ type OracleChip = {
   id: OracleChipId;
 };
 
+// TODO(i18n): move to messages/*.json — oracle responses currently English-only
 // Generate intelligent response based on query and car data
 function getResponseForQuery(
   query: string,
@@ -691,7 +693,7 @@ function OracleOverlay({
                 </div>
                 <button
                   onClick={onClose}
-                  className="size-8 flex items-center justify-center rounded-full hover:bg-foreground/5 text-[rgba(232,226,222,0.5)] hover:text-foreground transition-colors"
+                  className="size-8 flex items-center justify-center rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="size-4" />
                 </button>
@@ -699,8 +701,8 @@ function OracleOverlay({
 
               {/* Query Echo */}
               <div className="px-6 pt-4">
-                <p className="text-[13px] text-[rgba(232,226,222,0.5)]">
-                  <span className="text-[rgba(232,226,222,0.3)]">{t("oracle.youAsked")}</span>{" "}
+                <p className="text-[13px] text-muted-foreground">
+                  <span className="text-muted-foreground/60">{t("oracle.youAsked")}</span>{" "}
                   <span className="text-foreground">"{query}"</span>
                 </p>
               </div>
@@ -712,7 +714,7 @@ function OracleOverlay({
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="size-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[14px] text-[rgba(232,226,222,0.6)]">
+                      <span className="text-[14px] text-foreground/70">
                         {t("oracle.analyzingMarket")}
                       </span>
                     </div>
@@ -751,7 +753,7 @@ function OracleOverlay({
               {/* Follow-up Chips */}
               {response && response.chips.length > 0 && (
                 <div className="px-6 pb-5 pt-2 border-t border-primary/8">
-                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.4)] mb-3">
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-3">
                     {t("oracle.relatedActions")}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -966,11 +968,14 @@ export function Header() {
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
-          <a href="/" className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
+          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
             <span className="font-display font-light text-[18px] md:text-[22px] tracking-[0.35em] uppercase text-foreground">
               MONZA
             </span>
-          </a>
+          </Link>
+
+          {/* View Toggle: Monza | Classic */}
+          <ViewToggle />
 
           {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
           <div className="hidden md:block flex-1 max-w-xl relative">
@@ -1063,8 +1068,8 @@ export function Header() {
                           onMouseEnter={() => setActiveIndex(idx)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
                             isActive
-                              ? "bg-primary/10 border-l-2 border-l-primary"
-                              : "border-l-2 border-l-transparent hover:bg-foreground/3"
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-foreground/5"
                           }`}
                         >
                           <div className={`flex items-center justify-center size-7 rounded-lg ${
@@ -1080,7 +1085,7 @@ export function Header() {
                                 {item.label}
                               </span>
                               {item.yearRange && (
-                                <span className="text-[9px] font-mono text-muted-foreground shrink-0">
+                                <span className="text-[9px] tabular-nums text-muted-foreground shrink-0">
                                   {item.yearRange}
                                 </span>
                               )}
@@ -1090,12 +1095,12 @@ export function Header() {
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
+                            <span className={`text-[9px] tabular-nums px-1.5 py-0.5 rounded-full ${
                               isActive
                                 ? "bg-primary/15 text-primary"
                                 : "bg-foreground/4 text-muted-foreground"
                             }`}>
-                              {item.type === "family" ? "Family" : item.type === "series" ? "Series" : item.type === "link" ? "Analyze" : "Variant"}
+                              {item.type === "family" ? t("search.resultType.family") : item.type === "series" ? t("search.resultType.series") : item.type === "link" ? t("search.resultType.link") : t("search.resultType.variant")}
                             </span>
                             <ChevronRight className={`size-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                           </div>
@@ -1107,15 +1112,15 @@ export function Header() {
                   {/* Footer hint */}
                   <div className="px-4 py-2 border-t border-border flex items-center justify-between">
                     <span className="text-[9px] text-muted-foreground">
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mr-1">↑↓</kbd>
-                      navigate
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mx-1">↵</kbd>
-                      select
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] font-mono mx-1">esc</kbd>
-                      close
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mr-1">↑↓</kbd>
+                      {t("search.hint.navigate")}
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mx-1">↵</kbd>
+                      {t("search.hint.select")}
+                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mx-1">esc</kbd>
+                      {t("search.hint.close")}
                     </span>
                     <span className="text-[9px] text-muted-foreground">
-                      Powered by brandConfig
+                      {t("search.poweredBy")}
                     </span>
                   </div>
                 </motion.div>
@@ -1162,7 +1167,7 @@ export function Header() {
                 onClick={() => router.push('/account')}
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
               >
-                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-primary' : 'text-[#FB923C]'}`} />
+                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
                 <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
                 <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
               </button>
@@ -1245,8 +1250,8 @@ export function Header() {
                           <User className="size-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground">Welcome</p>
-                          <p className="text-[11px] text-muted-foreground">Sign in to track your portfolio</p>
+                          <p className="text-[14px] font-semibold text-foreground">{t("menu.profile.welcome")}</p>
+                          <p className="text-[11px] text-muted-foreground">{t("menu.profile.signInHint")}</p>
                         </div>
                       </div>
                       <button
@@ -1262,10 +1267,10 @@ export function Header() {
                   <div className="mx-5 rounded-xl bg-primary/4 border border-primary/8 p-4">
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-[#FB923C]"}`} />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Credits</span>
+                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.credits.label")}</span>
                       </div>
-                      <span className="text-[14px] font-mono font-bold text-foreground">
+                      <span className="text-[14px] tabular-nums font-bold text-foreground">
                         {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
                         <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 3,000</span>
                       </span>
@@ -1278,70 +1283,42 @@ export function Header() {
                       />
                     </div>
                     <div className="flex items-center justify-between mt-2.5">
-                      <span className="text-[10px] text-muted-foreground">1 report = 1,000 credits</span>
+                      <span className="text-[10px] text-muted-foreground">{t("menu.credits.perReport")}</span>
                       <button className="text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors">
-                        {t('auth.buyCredits')}
+                        {t("menu.credits.buy")}
                       </button>
                     </div>
                   </div>
 
                   {/* ── Watchlist ── */}
-                  <div className="px-5 pt-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Bookmark className="size-3.5 text-primary" />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Watchlist</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground">3 cars</span>
-                    </div>
-                    <div className="space-y-1">
-                      {[
-                        { name: "Ferrari F40", price: "$1.35M", trend: "+12%", grade: "AAA" },
-                        { name: "Porsche 959", price: "$890K", trend: "+8%", grade: "AA" },
-                        { name: "Toyota Supra MK4", price: "$185K", trend: "+22%", grade: "A" },
-                      ].map((car) => (
-                        <div key={car.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-foreground/2 transition-colors cursor-pointer group">
-                          <Bookmark className="size-3 text-primary/40 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{car.name}</p>
-                          </div>
-                          <span className="text-[11px] font-mono text-foreground shrink-0">{car.price}</span>
-                          <span className="text-[9px] font-mono text-emerald-400 shrink-0 w-8 text-right">{car.trend}</span>
+                  {isAuthenticated && (
+                    <div className="px-5 pt-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Bookmark className="size-3.5 text-primary" />
+                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.watchlist.title")}</span>
                         </div>
-                      ))}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground px-2 py-3">
+                        {t("menu.watchlist.empty")}
+                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {/* ── Recent Analyses ── */}
-                  <div className="px-5 pt-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <FileText className="size-3.5 text-primary" />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">Recent Analyses</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {[
-                        { name: "Ferrari 250 GTO", time: "2d ago", cost: "1,000 cr" },
-                        { name: "McLaren F1", time: "5d ago", cost: "1,000 cr" },
-                        { name: "Porsche 911 GT1", time: "1w ago", cost: "1,000 cr" },
-                      ].map((report) => (
-                        <div key={report.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-foreground/2 transition-colors cursor-pointer group">
-                          <div className="size-7 rounded-lg bg-primary/6 flex items-center justify-center shrink-0">
-                            <BarChart3 className="size-3 text-primary/60" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{report.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{report.cost}</p>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Clock className="size-2.5 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">{report.time}</span>
-                          </div>
+                  {isAuthenticated && (
+                    <div className="px-5 pt-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <FileText className="size-3.5 text-primary" />
+                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.recentAnalyses.title")}</span>
                         </div>
-                      ))}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground px-2 py-3">
+                        {t("menu.recentAnalyses.empty")}
+                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {/* ── Quick Links ── */}
                   <div className="px-5 pt-6 pb-2">
@@ -1354,11 +1331,11 @@ export function Header() {
                           href="/search-history"
                           className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
                         >
-                          <Clock className="size-4 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                          <Clock className="size-4 text-muted-foreground transition-colors" />
                           <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">
                             {t("nav.searchHistory")}
                           </span>
-                          <ChevronRight className="size-3.5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                          <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
                         </Link>
                       </SheetClose>
                     )}
@@ -1372,14 +1349,14 @@ export function Header() {
                         key={item.label}
                         className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
                       >
-                        <item.icon className="size-4 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                        <item.icon className="size-4 text-muted-foreground transition-colors" />
                         <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
                         {item.badge && (
                           <span className="size-4.5 flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground leading-none px-1.5 py-0.5">
                             {item.badge}
                           </span>
                         )}
-                        <ChevronRight className="size-3.5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                        <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
                       </button>
                     ))}
 
@@ -1398,7 +1375,7 @@ export function Header() {
                     <SheetClose asChild>
                       <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-[#FB923C] hover:bg-foreground/2 transition-colors"
+                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-destructive hover:bg-foreground/2 transition-colors"
                       >
                         <LogOut className="size-4" />
                         {t('auth.signOut')}

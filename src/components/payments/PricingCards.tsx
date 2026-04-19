@@ -130,7 +130,7 @@ function PricingCard({
           <li key={feature} className="flex items-start gap-2.5">
             <Check
               className={`size-4 mt-0.5 shrink-0 ${
-                isPopular ? "text-primary" : "text-[#34D399]"
+                isPopular ? "text-primary" : "text-positive"
               }`}
             />
             <span className="text-[12px] text-muted-foreground">{feature}</span>

@@ -30,7 +30,7 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
 
   // ─── DYNAMIC: Valuation by Market from ALL auctions (unfiltered by region) ───
   const allFamilyAuctions = useMemo(() => {
-    const source = allAuctions || auctions
+    const source = allAuctions ?? auctions
     const familyKey = family.slug
     return source.filter(a => {
       const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
@@ -130,11 +130,11 @@ export function FamilyContextPanel({ family, auctions, allAuctions, allFamilies 
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMin)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(family.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(family.priceMax)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(family.priceMax)}</p>
             </div>
           </div>
         </div>

@@ -56,6 +56,7 @@ DECODO_PROXY_PASS=password
 | 13 | [Title Enrichment](#13-title-enrichment) | Parse engine/transmission/body/trim from titles | Vercel Cron | 07:15 UTC |
 | 14 | [AS24 Detail Enrichment](#14-as24-detail-enrichment) | Scrape AS24 detail pages for trim/VIN/colors | Vercel Cron | 07:30 UTC |
 | 15 | [Elferspot Enrichment](#15-elferspot-enrichment) | Enrich Elferspot listings with detail page data | Vercel Cron | 09:45 UTC |
+| 16 | [AutoTrader Enrichment](#16-autotrader-enrichment) | Recover price, mileage, images, VIN, colors, engine, transmission, and body facts | Vercel Cron | 07:45 UTC |
 
 ### Monitoring & Audit
 
@@ -72,7 +73,7 @@ DECODO_PROXY_PASS=password
 
 ## Operational Notes
 
-- AutoTrader cron runs now surface a failed status when discovery/writes are zero so the dashboard does not show a false green.
+- AutoTrader enrichment now returns `200` for true no-op sweeps and `500` when rows were discovered but nothing was written, so the dashboard can distinguish an empty pass from a real scrape failure.
 - Porsche cron now treats upstream source 403/429/timeout failures as non-green runs while still allowing a skipped backfill window to pass.
 - BeForward enrichment no longer writes a `fuel_type` field because that column is not present in the current `listings` schema.
 - Image backfill now uses the empty-array filter syntax that Supabase/PostgREST accepts for array columns.
@@ -210,6 +211,38 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 - **Vercel Cron** at `02:00 UTC` daily
 - Route: `GET /api/cron/autotrader` (requires `Authorization: Bearer <CRON_SECRET>`)
 - Steps: refresh active listings → discover new listings
+- Max duration: 5 minutes
+
+The enrichment sweep runs separately at `07:45 UTC`:
+
+- Route: `GET /api/cron/enrich-autotrader`
+- Recovery order: product-page JSON → HTML fallback → search-gateway fallback
+- Fields recovered: price, mileage, images, VIN, exterior color, interior color, engine, transmission, body style, and description
+- Response contract: `200` for true no-op or successful writes, `500` when rows are discovered but nothing is written
+
+## 16. AutoTrader Enrichment
+
+**What it does:** Re-visits AutoTrader listings to recover missing price, mileage, images, VIN, color, engine, transmission, body style, and description data.
+
+**Source directory:** `src/app/api/cron/enrich-autotrader/`
+
+### Run locally
+
+```bash
+# Start dev server
+npm run dev
+
+# Trigger the enrichment sweep
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/enrich-autotrader
+```
+
+### Automated schedule
+
+- **Vercel Cron** at `07:45 UTC` daily
+- Route: `GET /api/cron/enrich-autotrader` (requires `Authorization: Bearer <CRON_SECRET>`)
+- Response status:
+  - `200` when no rows need work or when recoverable rows are successfully written
+  - `500` when rows are discovered but the sweep writes nothing
 - Max duration: 5 minutes
 
 ---
@@ -578,14 +611,15 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 ### How it works
 
-1. Queries Supabase for active listings where `images = '{}'` (empty array)
+1. Queries Supabase for active listings where `images IS NULL OR images = '{}' OR photos_count < 2`, ordered by `photos_count ASC` so the rows with the weakest image coverage are handled first
 2. For each listing, fetches the source URL and extracts images:
    - **BaT**: cheerio HTML parse (gallery/CDN images, filters thumbnails)
    - **BeForward**: `parseDetailHtml()` from BeForward collector (cheerio)
    - **AutoScout24**: `parseDetailHtml()` from AutoScout24 collector (cheerio)
 3. Updates only `images`, `photos_count`, `updated_at` in the database
-4. Circuit-breaks on 403/429/Cloudflare responses
-5. Records run metrics via `recordScraperRun()` monitoring
+4. Marks 404/410 source URLs as `unsold` and skips them in future backfills
+5. Circuit-breaks on 403/429/Cloudflare responses
+6. Records run metrics via `recordScraperRun()` monitoring, including per-source image coverage and partial-success runs
 
 ### Dead URL handling (404/410)
 
@@ -593,6 +627,7 @@ When a listing's source URL returns **404 or 410** (removed from marketplace), t
 
 1. Sets `status = 'unsold'` — removes the listing from the active frontend feed
 2. Logs the dead URL as an error for monitoring
+3. Keeps the source-specific coverage summary so the dashboard/reporting path can show which sources still have image deficits
 
 The [Liveness Checker](#16-liveness-checker) provides comprehensive daily URL verification across all dealer/classified sources.
 
@@ -633,6 +668,7 @@ npx tsx scripts/backfill-images.ts --help
 - Processes BaT → BeForward → AutoScout24 sequentially
 - Max 20 listings per source, 2s delay, 270s total time budget
 - Max duration: 5 minutes
+- Response includes `partialSuccess` plus `imageCoverageBySource` for reporting
 
 ### Test the cron route
 
@@ -651,9 +687,9 @@ This module **does not conflict** with existing per-source backfills:
 
 ## 9. BaT Detail Scraper
 
-**What it does:** Scrapes BaT listing detail pages to extract high-resolution images and additional specs. Runs after the Porsche Collector to enrich newly discovered listings.
+**What it does:** Scrapes BaT listing detail pages to extract high-resolution images plus the high-value fields that are often missing from the card view: mileage, VIN, exterior color, interior color, engine, transmission, and body style. It uses a field-scored HTML parser first and only falls back to Scrapling when the primary page still leaves key fields missing.
 
-**Source:** `scripts/bat-detail-scraper.ts` (Playwright)
+**Source:** `scripts/bat-detail-scraper.ts` (HTTP + Scrapling fallback)
 
 ### Automated schedule
 
@@ -661,6 +697,14 @@ This module **does not conflict** with existing per-source backfills:
 - Workflow: `.github/workflows/bat-detail-scraper.yml`
 - Config: max 700 listings, 20-minute time budget
 - Timeout: 30 minutes
+
+### Manual validation
+
+```bash
+npx vitest run src/features/scrapers/auctions/bringATrailer.test.ts -v
+npx tsx scripts/bat-detail-scraper.ts --preflight --limit=5 --dryRun
+npx tsx scripts/bat-detail-scraper.ts --limit=100 --timeBudgetMs=1800000
+```
 
 ---
 
@@ -956,6 +1000,20 @@ Each scraper calls `recordScraperRun()` after completing (success or failure). T
 - Uses `SUPABASE_SERVICE_ROLE_KEY` to write to the `scraper_runs` table
 - Is **non-throwing** — if recording fails (missing env var, network error), the scraper run itself is not affected
 - Records: scraper name, run ID, start/finish time, duration, discovered/written counts, errors, source breakdown, bot blocks
+
+### Quality gate
+
+The GitHub Actions workflows run a post-scrape quality check immediately after the scraper step. The gate reads the latest `scraper_runs` row for the workflow's scraper and fails the workflow on:
+
+- `zero_output` runs where listings were discovered but nothing was written
+- `image_gap` runs where the run recorded missing image coverage
+
+Dry-run mode is supported with `--dryRun` so you can inspect the gate result without forcing a non-zero exit code.
+
+```bash
+npx tsx scripts/verify-scraper-quality.mjs --scraper=autoscout24
+npx tsx scripts/verify-scraper-quality.mjs --scraper=autoscout24 --dryRun
+```
 
 ### Required environment variables for monitoring
 

@@ -24,7 +24,8 @@ interface Aggregates {
 interface UseInfiniteAuctionsResult {
   cars: any[];                    // accumulated auction objects across pages
   total: number;                  // aggregates.liveNow (DB count)
-  totalCount: number | null;      // exact DB count for current filters (family + region)
+  totalCount: number | null;      // planned DB count for current filters (all statuses the query returns)
+  totalLiveCount: number | null;  // planned DB count restricted to status='active'
   aggregates: Aggregates | null;
   isLoading: boolean;             // first page loading
   isFetchingMore: boolean;        // subsequent page loading
@@ -62,6 +63,7 @@ export function useInfiniteAuctions(
   const [hasMore, setHasMore] = useState(true);
   const [aggregates, setAggregates] = useState<Aggregates | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [totalLiveCount, setTotalLiveCount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +134,9 @@ export function useInfiniteAuctions(
       }
       if (data.totalCount !== undefined) {
         setTotalCount(data.totalCount);
+      }
+      if (data.totalLiveCount !== undefined) {
+        setTotalLiveCount(data.totalLiveCount);
       }
 
       const rawAuctions: any[] = data.auctions ?? [];
@@ -241,6 +246,7 @@ export function useInfiniteAuctions(
     setHasMore(true);
     setAggregates(null);
     setTotalCount(null);
+    setTotalLiveCount(null);
     setError(null);
     // Keep isLoading=true during reset→refetch transition to prevent
     // a flash of the "no listings" empty state before new data loads.
@@ -342,6 +348,7 @@ export function useInfiniteAuctions(
     cars: visibleCars,
     total: aggregates?.liveNow ?? 0,
     totalCount,
+    totalLiveCount,
     aggregates,
     isLoading,
     isFetchingMore,

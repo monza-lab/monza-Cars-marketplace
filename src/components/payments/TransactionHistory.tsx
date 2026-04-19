@@ -68,8 +68,8 @@ const TYPE_CONFIG: Record<
 > = {
   FREE_MONTHLY: {
     label: "Free",
-    color: "text-[#34D399]",
-    bg: "bg-[#34D399]/10",
+    color: "text-positive",
+    bg: "bg-positive/10",
   },
   PURCHASE: {
     label: "Purchase",
@@ -88,8 +88,8 @@ const TYPE_CONFIG: Record<
   },
   REFUND: {
     label: "Refund",
-    color: "text-[#FB923C]",
-    bg: "bg-[#FB923C]/10",
+    color: "text-destructive",
+    bg: "bg-destructive/10",
   },
 }
 
@@ -121,7 +121,7 @@ export function TransactionHistory() {
               className="flex items-center justify-between px-5 py-3.5 hover:bg-foreground/2 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-[11px] text-muted-foreground font-mono shrink-0 w-16">
+                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0 w-16">
                   {new Date(tx.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -138,7 +138,7 @@ export function TransactionHistory() {
               </div>
               <span
                 className={`text-[13px] font-semibold shrink-0 ml-3 ${
-                  isPositive ? "text-[#34D399]" : "text-muted-foreground"
+                  isPositive ? "text-positive" : "text-muted-foreground"
                 }`}
               >
                 {isPositive ? "+" : ""}

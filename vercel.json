@@ -15,6 +15,8 @@
     { "path": "/api/cron/enrich-autotrader", "schedule": "45 7 * * *" },
     { "path": "/api/cron/enrich-beforward", "schedule": "0 8 * * *" },
     { "path": "/api/cron/elferspot",        "schedule": "15 9 * * *" },
-    { "path": "/api/cron/enrich-elferspot", "schedule": "45 9 * * *" }
+    { "path": "/api/cron/enrich-elferspot", "schedule": "45 9 * * *" },
+    { "path": "/api/cron/backfill-photos-elferspot", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/refresh-valuation-factors", "schedule": "30 10 * * *" }
   ]
 }

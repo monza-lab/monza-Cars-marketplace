@@ -25,7 +25,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
   // Compute regional fair values from ALL auctions (unfiltered by region)
   const allBrandAuctions = useMemo(() =>
-    (allAuctions || auctions).filter(a => a.make === brand.name),
+    (allAuctions ?? auctions).filter(a => a.make === brand.name),
     [allAuctions, auctions, brand.name]
   )
   const regionalVal = useMemo(() => computeRegionalValFromAuctions(allBrandAuctions, rates), [allBrandAuctions, rates])
@@ -117,11 +117,11 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMin)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(brand.priceMin)}</p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.maxPrice")}</span>
-              <p className="text-[13px] font-mono font-semibold text-foreground">{formatPrice(brand.priceMax)}</p>
+              <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(brand.priceMax)}</p>
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
                     {b.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-muted-foreground">
+                    <span className="text-[10px] tabular-nums text-muted-foreground">
                       {formatPrice(b.priceMin)}–{formatPrice(b.priceMax)}
                     </span>
                     <span className={`text-[9px] font-bold ${

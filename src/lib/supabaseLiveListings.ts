@@ -14,7 +14,14 @@ import {
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
 import { extractSeries, getSeriesConfig } from "./brandConfig";
-import { getExchangeRates, toUsd } from "./exchangeRates";
+import { getExchangeRates } from "./exchangeRates";
+import { derivePrice } from "./pricing/derivePrice";
+import { computeSegmentStats } from "./pricing/segmentStats";
+import type { DerivedPrice, CanonicalMarket } from "./pricing/types";
+
+// NOTE: columns listings.price_usd / price_eur / price_gbp are 100% NULL in production
+// as of 2026-04-18. All USD conversion happens in TS via pricing/derivePrice.
+// See docs/porsche/listings-distribution-overview.md for the diagnostic that confirmed this.
 
 // ─── Row types ───
 
@@ -182,6 +189,10 @@ function normalizeAutoTraderResizePathname(pathname: string): string {
     .replace(/\/+/g, "/");
 }
 
+function hasAutoTraderMediaPathname(pathname: string): boolean {
+  return /\/a\/media\/.+\.(?:jpe?g|png|webp|gif)$/i.test(pathname);
+}
+
 export function normalizeListingImageUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
@@ -218,6 +229,10 @@ export function normalizeListingImageUrl(value: unknown): string | null {
     if (decodedAfterNormalization.includes("{") || decodedAfterNormalization.includes("}")) {
       return null;
     }
+  }
+
+  if (isAutoTraderCdnHost(parsed.hostname) && !hasAutoTraderMediaPathname(parsed.pathname)) {
+    return null;
   }
 
   return parsed.toString();
@@ -342,75 +357,69 @@ function buildFairValue(price: number): FairValueByRegion {
   return buildRegionalFairValue(price);
 }
 
-// ─── Median helper ───
-function computeMedian(values: number[]): number {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
+// ─── Enrich cars with real per-region fair values (segment-stats based) ───
+// Rule 1–3: fair value comes from sold IQR (marketValue) or adjusted-asking IQR
+// (askMedian) of the car's family/market segment. No silent fallback (Rule 8) —
+// insufficient data yields {low: 0, high: 0} so the UI can render "—".
 
-// ─── Enrich cars with real per-region fair values ───
-// Groups cars by make|model, computes per-region median listing prices (in USD),
-// and replaces the fake ±20% band with real data.
-export async function enrichFairValues(cars: CollectorCar[]): Promise<CollectorCar[]> {
+const MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
+const MARKET_CURRENCY: Record<CanonicalMarket, "$" | "€" | "£" | "¥"> = {
+  US: "$",
+  EU: "€",
+  UK: "£",
+  JP: "¥",
+};
+
+export async function enrichFairValues(
+  cars: CollectorCar[],
+  passedRates?: Record<string, number>,
+): Promise<CollectorCar[]> {
   if (cars.length === 0) return cars;
 
-  const rates = await getExchangeRates();
+  // Accept passed rates to avoid a second fetch; otherwise fetch ourselves for
+  // backwards compatibility. Cars are expected to already carry derived fields
+  // set upstream (rowToCollectorCar + derivePrice); rates are not used here.
+  const rates = passedRates ?? (await getExchangeRates());
+  void rates;
 
-  const REGIONS = ["US", "EU", "UK", "JP"] as const;
-  const CURRENCY_MAP: Record<string, "$" | "€" | "£" | "¥"> = {
-    US: "$", EU: "€", UK: "£", JP: "¥",
-  };
+  const corpus: DerivedPrice[] = cars
+    .filter((c) => c.canonicalMarket && c.family)
+    .map((c) => ({
+      soldPriceUsd: c.soldPriceUsd ?? null,
+      askingPriceUsd: c.askingPriceUsd ?? null,
+      basis: (c.valuationBasis ?? "unknown") as DerivedPrice["basis"],
+      canonicalMarket: c.canonicalMarket as CanonicalMarket,
+      family: c.family as string,
+    }));
 
-  // Group USD-converted prices by model key → region
-  const modelRegionPrices = new Map<string, Map<string, number[]>>();
+  const families = Array.from(new Set(corpus.map((p) => p.family!).filter(Boolean)));
+  const cache = new Map<string, Record<CanonicalMarket, ReturnType<typeof computeSegmentStats>>>();
 
-  for (const car of cars) {
-    const key = `${car.make}|${car.model}`;
-    if (!modelRegionPrices.has(key)) {
-      modelRegionPrices.set(key, new Map());
+  for (const fam of families) {
+    const perMarket = {} as Record<CanonicalMarket, ReturnType<typeof computeSegmentStats>>;
+    for (const market of MARKETS) {
+      perMarket[market] = computeSegmentStats(corpus, { market, family: fam });
     }
-    const regionMap = modelRegionPrices.get(key)!;
-    const raw = car.price > 0 ? car.price : car.currentBid;
-    const usdPrice = toUsd(raw, car.originalCurrency, rates);
-    if (usdPrice > 0) {
-      if (!regionMap.has(car.region)) {
-        regionMap.set(car.region, []);
-      }
-      regionMap.get(car.region)!.push(usdPrice);
-    }
+    cache.set(fam, perMarket);
   }
 
-  // Pre-compute fair values per model
-  const modelFairValues = new Map<string, FairValueByRegion>();
-
-  for (const [modelKey, regionMap] of modelRegionPrices) {
-    // Overall median for this model (fallback for regions with no data)
-    const allPrices: number[] = [];
-    for (const prices of regionMap.values()) allPrices.push(...prices);
-    const overallMedian = computeMedian(allPrices);
-
-    const result = {} as FairValueByRegion;
-    for (const region of REGIONS) {
-      const prices = regionMap.get(region) || [];
-      const median = prices.length > 0 ? computeMedian(prices) : overallMedian;
-      result[region] = {
-        currency: CURRENCY_MAP[region],
-        low: Math.round(median * 0.85),
-        high: Math.round(median * 1.15),
+  for (const car of cars) {
+    const fam = car.family;
+    if (!fam || !cache.has(fam)) continue;
+    const perMarket = cache.get(fam)!;
+    const fv = {} as FairValueByRegion;
+    for (const m of MARKETS) {
+      const s = perMarket[m];
+      // Prefer sold IQR band; else adjusted-asking IQR band; else 0/0 (Rule 8).
+      const lo = s.marketValue.p25Usd ?? s.askMedian.p25Usd ?? 0;
+      const hi = s.marketValue.p75Usd ?? s.askMedian.p75Usd ?? 0;
+      fv[m] = {
+        currency: MARKET_CURRENCY[m],
+        low: Math.round(lo),
+        high: Math.round(hi),
       };
     }
-    modelFairValues.set(modelKey, result);
-  }
-
-  // Apply real fair values to each car
-  for (const car of cars) {
-    const key = `${car.make}|${car.model}`;
-    const fairValue = modelFairValues.get(key);
-    if (fairValue) {
-      car.fairValueByRegion = fairValue;
-    }
+    car.fairValueByRegion = fv;
   }
 
   return cars;
@@ -481,8 +490,25 @@ function computeGrade(
 
 // ─── Row → CollectorCar ───
 
-function rowToCollectorCar(row: ListingRow): CollectorCar {
-  const price = row.final_price ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
+export function rowToCollectorCar(row: ListingRow, rates: Record<string, number> = {}): CollectorCar {
+  const price = row.current_bid
+    ?? row.final_price
+    ?? (row.hammer_price != null ? Number(row.hammer_price) || 0 : 0);
+
+  const derived = derivePrice(
+    {
+      source: row.source ?? "",
+      status: row.status ?? null,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      hammer_price: row.hammer_price != null ? Number(row.hammer_price) : null,
+      final_price: row.final_price != null ? Number(row.final_price) : null,
+      current_bid: row.current_bid != null ? Number(row.current_bid) : null,
+      original_currency: row.original_currency ?? null,
+    },
+    { rates },
+  );
 
   // Prefer direct images column; fall back to photos_media join
   const directImages = (row.images ?? []).map(normalizeListingImageUrl).filter((u): u is string => u !== null);
@@ -584,6 +610,11 @@ function rowToCollectorCar(row: ListingRow): CollectorCar {
     description: desc,
     sellerNotes: row.seller_notes ?? null,
     originalCurrency: row.original_currency ?? null,
+    soldPriceUsd: derived.soldPriceUsd,
+    askingPriceUsd: derived.askingPriceUsd,
+    valuationBasis: derived.basis,
+    canonicalMarket: derived.canonicalMarket,
+    family: derived.family,
   };
 }
 
@@ -705,102 +736,67 @@ async function countLiveListingsForCanonicalSource(
   return countListingsByQuery(query);
 }
 
-export async function fetchLiveListingAggregateCounts(options?: { make?: string | null }): Promise<LiveListingAggregateCounts> {
+export async function fetchLiveListingAggregateCounts(
+  options?: { make?: string | null },
+): Promise<LiveListingAggregateCounts> {
+  const empty: LiveListingAggregateCounts = {
+    liveNow: 0,
+    regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+    regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+  };
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return empty;
 
-  if (!url || !key) {
-    return {
-      liveNow: 0,
-      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-    };
-  }
-
-  const targetMake = resolveRequestedMake(options?.make);
+  const targetMake = resolveRequestedMake(options?.make).toLowerCase();
 
   try {
     const supabase = createSupabaseClient(url, key);
+    const { data, error } = await supabase
+      .from("listings_active_counts")
+      .select("source,region_by_country,live_count")
+      .eq("make", targetMake);
 
-    const totalPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-    );
+    if (error) {
+      if (/(relation.*listings_active_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_counts MV missing — apply the migration + run refresh_listings_active_counts().",
+        );
+        return empty;
+      }
+      console.error("[supabaseLiveListings] aggregate MV query failed:", error.message);
+      return empty;
+    }
 
-    const usBatPromise = countLiveListingsForCanonicalSource(supabase, "BaT", targetMake);
-    const usClassicPromise = countLiveListingsForCanonicalSource(supabase, "ClassicCom", targetMake);
-    const euPromise = countLiveListingsForCanonicalSource(supabase, "AutoScout24", targetMake);
-    const ukPromise = countLiveListingsForCanonicalSource(supabase, "AutoTrader", targetMake);
-    const jpPromise = countLiveListingsForCanonicalSource(supabase, "BeForward", targetMake);
-    const euElferspotPromise = countLiveListingsForCanonicalSource(supabase, "Elferspot", targetMake);
+    const platform = { all: 0, US: 0, UK: 0, EU: 0, JP: 0 };
+    const location = { all: 0, US: 0, UK: 0, EU: 0, JP: 0 };
 
-    const locationUsPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .or(`country.is.null,country.in.(${encodePostgrestInValues(["USA", "US", "UNITED STATES"])})`)
-    );
-    const locationUkPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .in("country", ["UK", "UNITED KINGDOM"])
-    );
-    const locationJpPromise = countListingsByQuery(
-      supabase
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .in("country", ["JAPAN"])
-    );
+    for (const row of (data ?? []) as { source: string; region_by_country: string | null; live_count: number }[]) {
+      const n = Number(row.live_count);
+      platform.all += n;
+      location.all += n;
 
-    const [total, usBat, usClassic, eu, uk, jp, euElferspot, locationUs, locationUk, locationJp] = await Promise.all([
-      totalPromise,
-      usBatPromise,
-      usClassicPromise,
-      euPromise,
-      ukPromise,
-      jpPromise,
-      euElferspotPromise,
-      locationUsPromise,
-      locationUkPromise,
-      locationJpPromise,
-    ]);
+      const canonical = resolveCanonicalSource(row.source, null);
+      if (canonical === "BaT" || canonical === "CarsAndBids" || canonical === "ClassicCom") platform.US += n;
+      else if (canonical === "AutoScout24" || canonical === "CollectingCars" || canonical === "Elferspot") platform.EU += n;
+      else if (canonical === "AutoTrader") platform.UK += n;
+      else if (canonical === "BeForward") platform.JP += n;
 
-    const locationEu = Math.max(0, total - locationUs - locationUk - locationJp);
+      if (row.region_by_country === "US" || row.region_by_country === null) location.US += n;
+      else if (row.region_by_country === "UK") location.UK += n;
+      else if (row.region_by_country === "JP") location.JP += n;
+      else if (row.region_by_country === "EU") location.EU += n;
+    }
 
     return {
-      liveNow: total,
-      regionTotalsByPlatform: {
-        all: total,
-        US: usBat + usClassic,
-        EU: eu + euElferspot,
-        UK: uk,
-        JP: jp,
-      },
-      regionTotalsByLocation: {
-        all: total,
-        US: locationUs,
-        UK: locationUk,
-        JP: locationJp,
-        EU: locationEu,
-      },
+      liveNow: platform.all,
+      regionTotalsByPlatform: platform,
+      regionTotalsByLocation: location,
     };
-  } catch (error) {
-    console.error("[supabaseLiveListings] fetchLiveListingAggregateCounts failed:", error);
-    return {
-      liveNow: 0,
-      regionTotalsByPlatform: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-      regionTotalsByLocation: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
-    };
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchLiveListingAggregateCounts threw:", err);
+    return empty;
   }
 }
 
@@ -903,85 +899,49 @@ async function queryListingsMany(
     return query;
   };
 
-  const querySourceBucket = async (source: CanonicalSource) => {
+  const querySourceBucket = async (source: CanonicalSource): Promise<ListingRow[]> => {
     const sourceAliases = SOURCE_ALIASES[source] ?? [source];
     const platformAliases = source in PLATFORM_ALIASES
       ? PLATFORM_ALIASES[source as keyof typeof PLATFORM_ALIASES]
       : [];
 
-    const runBucketQuery = async (label: "source" | "platform", builder: () => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>) => {
-      try {
-        const result = await builder();
-        if (result.error) {
-          console.error(`[supabaseLiveListings] ${source} ${label} query failed:`, result.error.message);
-          return [] as ListingRow[];
-        }
-        return (result.data ?? []) as ListingRow[];
-      } catch (error) {
-        console.error(`[supabaseLiveListings] ${source} ${label} query threw:`, error);
-        return [] as ListingRow[];
-      }
-    };
+    const orClause = platformAliases.length > 0
+      ? `source.in.(${encodePostgrestInValues([...sourceAliases])}),platform.in.(${encodePostgrestInValues([...platformAliases])})`
+      : `source.in.(${encodePostgrestInValues([...sourceAliases])})`;
 
-    const fetchBucketRows = async (
-      label: "source" | "platform",
-      build: (from: number, to: number) => PromiseLike<{ data: ListingRow[] | null; error: { message: string } | null }>
-    ) => {
-      // Always paginate in chunks to avoid Supabase PostgREST max_rows
-      // silent truncation (default 1000). A single .range(0, 3999) would
-      // silently return only 1000 rows with no error.
-      const rows: ListingRow[] = [];
-      const pageSize = 1000;
-      let from = 0;
-
-      while (rows.length < maxRowsPerSource) {
-        const pageRows = await runBucketQuery(label, () => build(from, from + pageSize - 1));
-        if (pageRows.length === 0) break;
-        rows.push(...pageRows);
-        if (pageRows.length < pageSize) break;
-        from += pageSize;
-      }
-
-      return rows;
-    };
-
-    const sourceRows = await fetchBucketRows("source", (from, to) =>
-      buildBaseQuery()
-        .in("source", [...sourceAliases])
+    // Single query (pagination retained — PostgREST hard-caps range() at 1000).
+    const rows: ListingRow[] = [];
+    let from = 0;
+    while (rows.length < maxRowsPerSource) {
+      const to = from + 1000 - 1;
+      const { data, error } = await buildBaseQuery()
+        .or(orClause)
         .order("sale_date", { ascending: false, nullsFirst: false })
-        .order("end_time", { ascending: false, nullsFirst: false })
-        .order("id", { ascending: false })
-        .range(from, to)
-    );
+        .order("end_time",  { ascending: false, nullsFirst: false })
+        .order("id",        { ascending: false })
+        .range(from, to);
 
-    const platformRows = platformAliases.length > 0
-      ? await fetchBucketRows("platform", (from, to) =>
-          buildBaseQuery()
-            .in("platform", [...platformAliases])
-            .order("sale_date", { ascending: false, nullsFirst: false })
-            .order("end_time", { ascending: false, nullsFirst: false })
-            .order("id", { ascending: false })
-            .range(from, to)
-        )
-      : [];
-
-    const merged = [...sourceRows, ...platformRows].sort((a, b) => {
-      const aPrimary = a.sale_date ?? a.end_time ?? "";
-      const bPrimary = b.sale_date ?? b.end_time ?? "";
-      if (aPrimary !== bPrimary) return bPrimary.localeCompare(aPrimary);
-      const aSecondary = a.end_time ?? "";
-      const bSecondary = b.end_time ?? "";
-      if (aSecondary !== bSecondary) return bSecondary.localeCompare(aSecondary);
-      return b.id.localeCompare(a.id);
-    });
-    const byId = new Map<string, ListingRow>();
-      for (const row of merged) {
-        const canonicalSource = resolveCanonicalSource(row.source, row.platform);
-        if (canonicalSource !== source) continue;
-        if (statusFilter && statusFilter.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
-        byId.set(row.id, row);
+      if (error) {
+        console.error(`[supabaseLiveListings] ${source} query failed:`, error.message);
+        break;
       }
+      const page = (data ?? []) as ListingRow[];
+      if (page.length === 0) break;
+      rows.push(...page);
+      if (page.length < 1000) break;
+      from += 1000;
+    }
 
+    // Post-filter to drop cross-source matches (e.g. ClassicCom aliases that overlap
+    // BaT's platform value). The alias tables allow multiple sources to share tokens,
+    // so the OR query is permissive — resolveCanonicalSource narrows it back down.
+    const byId = new Map<string, ListingRow>();
+    for (const row of rows) {
+      const canonicalSource = resolveCanonicalSource(row.source, row.platform);
+      if (canonicalSource !== source) continue;
+      if (statusFilter?.toLowerCase() === "active" && !isLiveListingStatus(row.status)) continue;
+      byId.set(row.id, row);
+    }
     return Array.from(byId.values());
   };
 
@@ -1122,11 +1082,12 @@ export async function fetchSoldListingsForMake(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,sale_date,status")
+      // Project canonical sold_price as hammer_price to keep the consumer
+      // shape identical. status='sold' is enforced by the sold_price column
+      // generator itself (NULL otherwise), so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:sold_price,sale_date,status")
       .ilike("make", normalizedMake)
-      .eq("status", "sold")
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("sold_price", 0)
       .order("sale_date", { ascending: true })
       .limit(limit);
 
@@ -1182,10 +1143,12 @@ export async function fetchPricedListingsForModel(
 
     const { data, error } = await supabase
       .from("listings")
-      .select("id,year,make,model,trim,hammer_price,original_currency,sale_date,status,mileage,source,country")
+      // Project canonical listing_price as hammer_price to keep the consumer
+      // shape identical. listing_price is the COALESCE of all raw price
+      // columns, so a single .gt is sufficient.
+      .select("id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,country")
       .ilike("make", normalizedMake)
-      .not("hammer_price", "is", null)
-      .gt("hammer_price", 0)
+      .gt("listing_price", 0)
       .order("sale_date", { ascending: false })
       .limit(limit);
 
@@ -1198,6 +1161,157 @@ export async function fetchPricedListingsForModel(
     console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
     return [];
   }
+}
+
+export async function fetchValuationListingsForMake(
+  make: string,
+  limit = 50_000
+): Promise<CollectorCar[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) return [];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createSupabaseClient(url, key);
+    const pageSize = 1000;
+    const maxRows = limit > 0 ? limit : 50_000;
+    const rows: ListingRow[] = [];
+    let from = 0;
+
+    while (rows.length < maxRows) {
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await supabase
+        .from("listings")
+        .select(SELECT_NARROW)
+        .ilike("make", normalizedMake)
+        // Canonical: listing_price = COALESCE of raw price columns.
+        .gt("listing_price", 0)
+        .order("sale_date", { ascending: false, nullsFirst: false })
+        .order("end_time", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error("[supabaseLiveListings] fetchValuationListingsForMake page failed:", error.message);
+        break;
+      }
+
+      const page = ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
+      if (page.length === 0) break;
+
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    return rows.map((row) => rowToCollectorCar(row));
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchValuationListingsForMake failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Lightweight valuation corpus: returns DerivedPrice[] for every priced
+ * listing of the given make, with no ORDER BY, no image joins, and only the
+ * columns derivePrice actually needs. Safe to run against the full ~35k
+ * priced Porsche rows without timing out.
+ *
+ * Unlike fetchValuationListingsForMake (which builds CollectorCar objects with
+ * image resolution, grade computation, status mapping, etc.), this function
+ * emits only the data the valuation aggregation pipeline consumes — so the
+ * dashboard can aggregate medians over the full corpus, not just the 200-per
+ * source budget used for the live feed.
+ */
+export async function fetchValuationCorpusForMake(
+  make: string,
+  limit = 40_000,
+): Promise<import("./pricing/types").DerivedPrice[]> {
+  const normalizedMake = normalizeSupportedMake(make);
+  if (!normalizedMake) return [];
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createSupabaseClient(url, key);
+  const rates = await getExchangeRates();
+
+  const out: import("./pricing/types").DerivedPrice[] = [];
+  const pageSize = 1000;
+  const maxRows = limit > 0 ? limit : 40_000;
+  let from = 0;
+
+  try {
+    while (out.length < maxRows) {
+      const to = Math.min(from + pageSize - 1, maxRows - 1);
+      const { data, error } = await supabase
+        .from("listings")
+        .select(
+          "source,status,year,make,model,hammer_price,final_price,current_bid,original_currency",
+        )
+        .ilike("make", normalizedMake)
+        // listing_price is a generated column on listings that COALESCEs
+        // hammer_price/final_price/current_bid — the single source of truth
+        // for "this listing has a price". See migration
+        // 20260419_listings_canonical_price_columns.sql.
+        .gt("listing_price", 0)
+        .range(from, to);
+
+      if (error) {
+        console.error(
+          "[supabaseLiveListings] fetchValuationCorpusForMake page failed:",
+          error.message,
+        );
+        break;
+      }
+
+      const rows = (data ?? []) as Array<{
+        source: string | null;
+        status: string | null;
+        year: number;
+        make: string;
+        model: string;
+        hammer_price: string | number | null;
+        final_price: number | null;
+        current_bid: number | null;
+        original_currency: string | null;
+      }>;
+      if (rows.length === 0) break;
+
+      for (const row of rows) {
+        out.push(
+          derivePrice(
+            {
+              source: row.source ?? "",
+              status: row.status ?? null,
+              year: row.year,
+              make: row.make,
+              model: row.model,
+              hammer_price:
+                row.hammer_price != null ? Number(row.hammer_price) || null : null,
+              final_price: row.final_price ?? null,
+              current_bid: row.current_bid ?? null,
+              original_currency: row.original_currency ?? null,
+            },
+            { rates },
+          ),
+        );
+      }
+      from += rows.length;
+      if (rows.length < pageSize) break;
+    }
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchValuationCorpusForMake failed:", err);
+  }
+
+  return out;
 }
 
 export async function fetchLiveListingsAsCollectorCars(options?: {
@@ -1231,8 +1345,14 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
     const rows = rawRows.filter((r) => !isJunkListing(r));
     if (rows.length === 0) return [];
 
+    // Hoist rates once so every row is derived with the correct USD conversion.
+    const rates = await getExchangeRates();
+
     if (!includePriceHistory) {
-      return await enrichFairValues(rows.map((row) => rowToCollectorCar(row)));
+      return await enrichFairValues(
+        rows.map((row) => rowToCollectorCar(row, rates)),
+        rates,
+      );
     }
 
     // Fetch price history for trend computation
@@ -1251,10 +1371,10 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
     }
 
     const cars = rows.map((row) => {
-      const car = rowToCollectorCar(row);
+      const car = rowToCollectorCar(row, rates);
       const history = historyByListing.get(row.id);
 
-      // Use latest price_history as currentBid when hammer_price is 0 (active listings)
+      // Use latest price_history as currentBid when the live bid is still unavailable.
       if (car.currentBid === 0 && history && history.length > 0) {
         const latest = history[history.length - 1];
         const latestPrice = latest.price_usd ?? latest.price_eur ?? latest.price_gbp ?? 0;
@@ -1272,7 +1392,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       return car;
     });
 
-    return await enrichFairValues(cars);
+    return await enrichFairValues(cars, rates);
   } catch (err) {
     console.error("[supabaseLiveListings] Failed to fetch:", err);
     return [];
@@ -1318,48 +1438,114 @@ function resolveSourceAliasesForPlatform(platformKey: string): string[] {
 const SORT_COLUMN_MAP: Record<string, string> = {
   endTime: "end_time",
   price: "hammer_price",
-  currentBid: "hammer_price",
+  currentBid: "current_bid",
   year: "year",
   bidCount: "bid_count",
   trendValue: "hammer_price",
 };
 
+/**
+ * Apply the filters shared by the paginated rows query and the live-count
+ * HEAD query. Keeps the two queries in sync so the counts always describe
+ * the same logical set (aside from the status filter, which differs).
+ */
+function applyPaginatedListingFilters<T>(
+  query: T,
+  options: {
+    series?: string | null;
+    modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
+    region?: string | null;
+    platform?: string | null;
+    query?: string | null;
+  },
+): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = query;
+
+  if (options.series) {
+    q = q.eq("series", options.series);
+    const patterns = options.modelPatterns;
+    if (patterns?.yearMin !== undefined) q = q.gte("year", patterns.yearMin);
+    if (patterns?.yearMax !== undefined) q = q.lte("year", patterns.yearMax);
+  } else if (options.modelPatterns) {
+    const { keywords, yearMin, yearMax } = options.modelPatterns;
+    if (keywords.length > 0) {
+      const orClauses = keywords
+        .map((kw) => `model.ilike.%${kw.replace(/[%_]/g, "")}%`)
+        .join(",");
+      q = q.or(orClauses);
+    }
+    if (yearMin !== undefined) q = q.gte("year", yearMin);
+    if (yearMax !== undefined) q = q.lte("year", yearMax);
+  }
+
+  if (options.region) {
+    const regionUpper = options.region.toUpperCase();
+    const sourceGroups = REGION_SOURCE_MAP[regionUpper];
+    if (sourceGroups) {
+      const allAliases = sourceGroups.flat();
+      q = q.in("source", allAliases);
+    } else {
+      const countryValues = REGION_COUNTRY_MAP[regionUpper];
+      if (countryValues) q = q.in("country", countryValues);
+    }
+  }
+
+  if (options.platform) {
+    const sourceAliases = resolveSourceAliasesForPlatform(options.platform);
+    q = q.in("source", sourceAliases);
+  }
+
+  if (options.query) {
+    const escaped = options.query.replace(/[%_]/g, "");
+    q = q.or(`title.ilike.%${escaped}%,model.ilike.%${escaped}%`);
+  }
+
+  return q as T;
+}
+
 export async function fetchPaginatedListings(options: {
   make: string;
   pageSize?: number;
-  offset?: number;
+  cursor?: { endTime: string | null; id: string } | null;
   region?: string | null;
   platform?: string | null;
   query?: string | null;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   status?: "active" | "all";
+  series?: string | null;
   modelPatterns?: { keywords: string[]; yearMin?: number; yearMax?: number } | null;
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
-  totalCount?: number;
+  nextCursor: { endTime: string | null; id: string } | null;
+  totalCount: number | null;
+  totalLiveCount: number | null;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { cars: [], hasMore: false };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 
   const pageSize = options.pageSize ?? 50;
-  const offset = options.offset ?? 0;
   const targetMake = resolveRequestedMake(options.make);
 
   try {
     const supabase = createSupabaseClient(url, key);
 
-    // Build base query — use count: "exact" to get total matching rows
+    // Build base query. Using `count: "planned"` — Postgres returns its
+    // planner-estimated row count for the filtered query without executing
+    // a full table scan. Accuracy is approximate (statistics freshness),
+    // which is acceptable for visual counters. See
+    // docs/superpowers/specs/2026-04-18-absolute-car-counts-design.md.
     let query = supabase
       .from("listings")
-      .select(SELECT_NARROW, { count: "exact" })
-      .ilike("make", targetMake);
+      .select(SELECT_NARROW, { count: "planned" })
+      .eq("make", targetMake);
 
     // Status filter
     if (options.status !== "all") {
@@ -1368,74 +1554,76 @@ export async function fetchPaginatedListings(options: {
       query = query.or("end_time.is.null,end_time.gt." + new Date().toISOString());
     }
 
-    // Model pattern filter (series-level, e.g. "992" → model ILIKE %992%)
-    if (options.modelPatterns) {
-      const { keywords, yearMin, yearMax } = options.modelPatterns;
-      if (keywords.length > 0) {
-        const orClauses = keywords
-          .map((kw) => `model.ilike.%${kw.replace(/[%_]/g, "")}%`)
-          .join(",");
-        query = query.or(orClauses);
-      }
-      if (yearMin !== undefined) {
-        query = query.gte("year", yearMin);
-      }
-      if (yearMax !== undefined) {
-        query = query.lte("year", yearMax);
-      }
-    }
+    // Series / model / region / platform / search filters — shared with the
+    // parallel HEAD count query below so both describe the same logical set.
+    query = applyPaginatedListingFilters(query, {
+      series: options.series,
+      modelPatterns: options.modelPatterns,
+      region: options.region,
+      platform: options.platform,
+      query: options.query,
+    });
 
-    // Region filter — use source/platform mapping (reliable) instead of country
-    // column which may be NULL for some scrapers (e.g. BeForward for JP).
-    if (options.region) {
-      const regionUpper = options.region.toUpperCase();
-      const sourceGroups = REGION_SOURCE_MAP[regionUpper];
-
-      if (sourceGroups) {
-        const allAliases = sourceGroups.flat();
-        query = query.in("source", allAliases);
+    // Keyset cursor filter — applied AFTER all other filters.
+    // Uses the partial index: listings_active_endtime_id_idx ON (end_time ASC NULLS LAST, id DESC)
+    if (options.cursor) {
+      const { endTime, id } = options.cursor;
+      if (endTime !== null) {
+        // Rows with (end_time > cursor.endTime) OR (end_time == cursor.endTime AND id < cursor.id)
+        query = query.or(
+          `end_time.gt.${endTime},and(end_time.eq.${endTime},id.lt.${id})`,
+        );
       } else {
-        // Unknown region — fall back to country-based filtering
-        const countryValues = REGION_COUNTRY_MAP[regionUpper];
-        if (countryValues) {
-          query = query.in("country", countryValues);
-        }
+        // endTime null means we're past all non-null rows; paginate by id among the nulls.
+        query = query.is("end_time", null).lt("id", id);
       }
     }
 
-    // Platform filter
-    if (options.platform) {
-      const sourceAliases = resolveSourceAliasesForPlatform(options.platform);
-      query = query.in("source", sourceAliases);
-    }
-
-    // Text search filter
-    if (options.query) {
-      const escaped = options.query.replace(/[%_]/g, "");
-      query = query.or(
-        `title.ilike.%${escaped}%,model.ilike.%${escaped}%`
-      );
-    }
-
-    // Sorting
-    const sortColumn = SORT_COLUMN_MAP[options.sortBy ?? "endTime"] ?? "end_time";
-    const ascending = (options.sortOrder ?? "asc") === "asc";
-    query = query.order(sortColumn, { ascending, nullsFirst: false });
-
-    // Secondary sort for stable pagination
-    if (sortColumn !== "id") {
-      query = query.order("id", { ascending: false });
-    }
+    // TODO: sortBy / sortOrder params are accepted for API compatibility but ignored here.
+    // Keyset pagination requires a FIXED ORDER BY that matches the cursor comparison.
+    // Client-side sort of the loaded pages covers the sort UX for now.
+    query = query.order("end_time", { ascending: true, nullsFirst: false });
+    query = query.order("id", { ascending: false });
 
     // Fetch pageSize + 1 to determine hasMore
-    const fetchCount = pageSize + 1;
-    query = query.range(offset, offset + fetchCount - 1);
+    query = query.limit(pageSize + 1);
 
-    const { data, error, count } = await query;
+    // Parallel HEAD count query for live-only subset (status='active').
+    // This count ignores the main query's status filter and always
+    // restricts to live listings — matches the "Latest Listings" semantics.
+    let liveCountQuery = supabase
+      .from("listings")
+      .select("id", { count: "planned", head: true })
+      .eq("make", targetMake)
+      .eq("status", LIVE_DB_STATUS_VALUES[0]);
+
+    liveCountQuery = applyPaginatedListingFilters(liveCountQuery, {
+      series: options.series,
+      modelPatterns: options.modelPatterns,
+      region: options.region,
+      platform: options.platform,
+      query: options.query,
+    });
+
+    // Exclude stale auction rows whose end_time passed (mirrors main query).
+    liveCountQuery = liveCountQuery.or(
+      "end_time.is.null,end_time.gt." + new Date().toISOString(),
+    );
+
+    const [rowsResult, liveCountResult] = await Promise.all([
+      query,
+      liveCountQuery,
+    ]);
+
+    const { data, error, count } = rowsResult;
+    const totalLiveCount =
+      liveCountResult.error || typeof liveCountResult.count !== "number"
+        ? null
+        : liveCountResult.count;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
-      return { cars: [], hasMore: false };
+      return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
     }
 
     const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
@@ -1444,78 +1632,60 @@ export async function fetchPaginatedListings(options: {
 
     const cars = pageRows.map((row) => rowToCollectorCar(row));
 
-    return { cars, hasMore, totalCount: count ?? undefined };
+    const lastRow = pageRows[pageRows.length - 1] ?? null;
+    const nextCursor = hasMore && lastRow
+      ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
+      : null;
+
+    const totalCount = typeof count === "number" ? count : null;
+    return { cars, hasMore, nextCursor, totalCount, totalLiveCount };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
-    return { cars: [], hasMore: false };
+    return { cars: [], hasMore: false, nextCursor: null, totalCount: null, totalLiveCount: null };
   }
 }
 
-// ─── Per-series counts (accurate, fetches only model+year) ───
+// ─── Per-series counts (reads from listings_active_counts materialized view) ───
 
 /**
- * Returns exact listing counts per Porsche series by fetching all model+year
- * pairs and running extractSeries() on each. Only model+year are fetched so
- * the payload is tiny (~600KB for 26K rows) even though we paginate through all.
- * Results are cached in memory for 10 minutes to avoid repeating 27 parallel
- * Supabase requests on every page load.
+ * Returns listing counts per series by querying the `listings_active_counts`
+ * materialized view with a single request. Aggregation is done by Postgres,
+ * eliminating the previous keyset-paginated client-side approach.
+ *
+ * Graceful fallback: if the MV hasn't been created yet (migration pending),
+ * returns {} and emits a console.warn pointing at the migration file.
  */
-const _seriesCountsCache = new Map<string, { counts: Record<string, number>; expiresAt: number }>();
-const SERIES_COUNTS_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-export async function fetchSeriesCounts(
-  make: string,
-): Promise<Record<string, number>> {
-  const cacheKey = make.toLowerCase();
-  const cached = _seriesCountsCache.get(cacheKey);
-  if (cached && Date.now() < cached.expiresAt) {
-    return cached.counts;
-  }
-
+export async function fetchSeriesCounts(make: string): Promise<Record<string, number>> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return {};
 
-  const targetMake = resolveRequestedMake(make);
+  const targetMake = resolveRequestedMake(make).toLowerCase();
 
   try {
     const supabase = createSupabaseClient(url, key);
-    const PAGE = 1000; // Supabase PostgREST hard-caps .range() at 1000 rows per request
-    const counts: Record<string, number> = {};
+    const { data, error } = await supabase
+      .from("listings_active_counts")
+      .select("series,live_count")
+      .eq("make", targetMake);
 
-    // First, get total count to know how many parallel pages to fetch
-    const { count: total, error: countErr } = await supabase
-      .from("listings")
-      .select("id", { count: "exact", head: true })
-      .ilike("make", targetMake)
-      .eq("status", LIVE_DB_STATUS_VALUES[0]);
-
-    if (countErr || !total) return {};
-
-    // Fetch all model+year pairs in parallel pages of 1000
-    const pageCount = Math.ceil(total / PAGE);
-    const pagePromises = Array.from({ length: pageCount }, (_, i) =>
-      supabase
-        .from("listings")
-        .select("model,year,title")
-        .ilike("make", targetMake)
-        .eq("status", LIVE_DB_STATUS_VALUES[0])
-        .range(i * PAGE, (i + 1) * PAGE - 1)
-        .then(({ data }) => data ?? [])
-    );
-
-    const pages = await Promise.all(pagePromises);
-
-    for (const page of pages) {
-      for (const row of page as { model: string; year: number; title: string | null }[]) {
-        if (isJunkListing({ make, model: row.model, year: row.year })) continue;
-        const seriesId = extractSeries(row.model ?? "", row.year ?? 0, make, row.title ?? undefined);
-        if (!getSeriesConfig(seriesId, make)) continue;
-        counts[seriesId] = (counts[seriesId] ?? 0) + 1;
+    if (error) {
+      if (/(relation.*listings_active_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_counts MV missing — " +
+          "apply supabase/migrations/20260419_listings_active_counts_mv.sql and run refresh_listings_active_counts()."
+        );
+        return {};
       }
+      console.error("[supabaseLiveListings] fetchSeriesCounts MV query failed:", error.message);
+      return {};
     }
 
-    _seriesCountsCache.set(cacheKey, { counts, expiresAt: Date.now() + SERIES_COUNTS_TTL_MS });
+    const counts: Record<string, number> = {};
+    for (const row of (data ?? []) as { series: string; live_count: number }[]) {
+      if (row.series === "__null") continue;
+      counts[row.series] = (counts[row.series] ?? 0) + Number(row.live_count);
+    }
     return counts;
   } catch (err) {
     console.error("[supabaseLiveListings] fetchSeriesCounts threw:", err);

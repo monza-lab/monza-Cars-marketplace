@@ -40,6 +40,7 @@ Central registry — **single source of truth** for all brand/series data.
 - Use `extractSeries()` instead of `model.split()` for series extraction
 - All component data flows through brandConfig helpers
 - Frontend-only changes — don't modify API routes or DB schema without discussion
+- **Valuation data** flows through `src/lib/pricing/*` and `src/components/dashboard/utils/valuation.ts`. Never read raw `hammer_price`, `final_price`, or `current_bid` in UI code. Never group by the raw `region` column — use `sourceToCanonicalMarket()`. Sold and asking prices are separate concepts with separate tiers; never blend them into a single median. See `docs/porsche/listings-distribution-overview.md` "Current Valuation Standard" section.
 
 ### Stack
 - `npm run dev` starts the dev server (uses `--webpack` flag)

@@ -162,7 +162,7 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
         <p className="text-[13px] font-medium text-foreground truncate">{car.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-display font-medium text-primary">{formatPrice(car.currentBid)}</span>
-          <span className="text-[10px] text-emerald-400">{car.trend}</span>
+          <span className="text-[10px] text-positive">{car.trend}</span>
         </div>
       </div>
       <ChevronRight className="size-4 text-muted-foreground shrink-0" />
@@ -450,7 +450,7 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                         <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
                           {t("auth.credits")}
                         </p>
-                        <p className={`text-[32px] font-bold ${creditsRemaining > 0 ? "text-primary" : "text-[#FB923C]"}`}>
+                        <p className={`text-[32px] font-bold ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`}>
                           {creditsRemaining}
                         </p>
                       </div>

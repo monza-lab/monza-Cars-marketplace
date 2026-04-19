@@ -1,26 +1,29 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { aggregateSourceImageCompleteness } from "@/components/dashboard/utils/aggregation";
 
-const ADMIN_EMAILS = ["caposk8@hotmail.com"];
+const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
 export const dynamic = "force-dynamic";
 
 const FIELDS = [
-  "vin", "trim", "engine", "transmission", "mileage_km",
+  "vin", "trim", "engine", "transmission", "mileage",
   "color_exterior", "color_interior", "body_style",
 ] as const;
 
 export async function GET() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (process.env.NODE_ENV !== "development") {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
-    return NextResponse.json(
-      { status: 401, code: "AUTH_REQUIRED", message: "Admin access required" },
-      { status: 401 }
-    );
+    if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+      return NextResponse.json(
+        { status: 401, code: "AUTH_REQUIRED", message: "Admin access required" },
+        { status: 401 }
+      );
+    }
   }
 
   // Query field completeness per source (active listings only)
@@ -28,7 +31,7 @@ export async function GET() {
   // migrate to a Supabase RPC function (see spec Section 6A).
   const { data: rows, error } = await supabase
     .from("listings")
-    .select("source,vin,trim,engine,transmission,mileage_km,color_exterior,color_interior,body_style,current_bid,images")
+    .select("source,vin,trim,engine,transmission,mileage,color_exterior,color_interior,body_style,current_bid,images")
     .eq("status", "active");
 
   if (error) {
@@ -37,6 +40,10 @@ export async function GET() {
       { status: 500 }
     );
   }
+
+  const imageCompletenessBySource = new Map(
+    aggregateSourceImageCompleteness(rows ?? []).map((row) => [row.source, row])
+  );
 
   // Aggregate by source
   const bySource: Record<string, {
@@ -64,13 +71,27 @@ export async function GET() {
   }
 
   // Convert to percentages
-  const result = Object.entries(bySource).map(([source, { total, fields }]) => ({
-    source,
-    total,
-    ...Object.fromEntries(
-      Object.entries(fields).map(([k, v]) => [k, total > 0 ? Math.round((v / total) * 1000) / 10 : 0])
-    ),
-  }));
+  const result = Object.entries(bySource).map(([source, { total, fields }]) => {
+    const imageCompleteness = imageCompletenessBySource.get(source);
+    return {
+      source,
+      total,
+      ...Object.fromEntries(
+        Object.entries(fields).map(([k, v]) => [k, total > 0 ? Math.round((v / total) * 1000) / 10 : 0])
+      ),
+      imageCompleteness: imageCompleteness
+        ? {
+            withImages: imageCompleteness.withImages,
+            missingImages: imageCompleteness.missingImages,
+            percentage: imageCompleteness.percentage,
+          }
+        : {
+            withImages: 0,
+            missingImages: total,
+            percentage: 0,
+          },
+    };
+  });
 
   result.sort((a, b) => a.source.localeCompare(b.source));
 

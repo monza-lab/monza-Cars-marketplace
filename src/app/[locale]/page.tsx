@@ -1,13 +1,30 @@
 import { setRequestLocale } from "next-intl/server";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
-import { getCachedDashboardData, type DashboardData } from "@/lib/dashboardCache";
+import { ViewPreferenceRedirect } from "@/components/layout/ViewPreferenceRedirect";
+import {
+  fetchDashboardDataUncached,
+  getCachedDashboardData,
+  type DashboardData,
+} from "@/lib/dashboardCache";
 
 async function loadDashboardData(): Promise<DashboardData> {
   try {
     return await getCachedDashboardData();
   } catch (err) {
     console.error("[Home] getCachedDashboardData failed:", err);
-    return { auctions: [], liveNow: 0, regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 }, seriesCounts: {} };
+    try {
+      return await fetchDashboardDataUncached();
+    } catch (fallbackErr) {
+      console.error("[Home] fetchDashboardDataUncached failed:", fallbackErr);
+      return {
+        auctions: [],
+        valuationListings: [],
+        regionalValByFamily: {},
+        liveNow: 0,
+        regionTotals: { all: 0, US: 0, UK: 0, EU: 0, JP: 0 },
+        seriesCounts: {},
+      };
+    }
   }
 }
 
@@ -32,11 +49,16 @@ export default async function Home({
   }
 
   return (
-    <DashboardClient
-      auctions={data.auctions}
-      liveRegionTotals={data.regionTotals}
-      liveNowTotal={data.liveNow}
-      seriesCounts={data.seriesCounts}
-    />
+    <>
+      <ViewPreferenceRedirect current="monza" />
+      <DashboardClient
+        auctions={data.auctions}
+        valuationListings={data.valuationListings}
+        regionalValByFamily={data.regionalValByFamily}
+        liveRegionTotals={data.regionTotals}
+        liveNowTotal={data.liveNow}
+        seriesCounts={data.seriesCounts}
+      />
+    </>
   );
 }

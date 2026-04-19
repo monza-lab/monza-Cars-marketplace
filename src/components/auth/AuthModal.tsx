@@ -22,6 +22,7 @@ interface AuthModalProps {
 export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthModalProps) {
   const t = useTranslations('auth')
   const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode)
+  const [method, setMethod] = useState<'password' | 'magic'>('password')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -29,7 +30,13 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const { signIn, signUp, resendConfirmationEmail, signInWithGoogle } = useAuth()
+  const {
+    signIn,
+    signUp,
+    resendConfirmationEmail,
+    signInWithGoogle,
+    signInWithMagicLink,
+  } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +45,18 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
     setSuccess(null)
 
     try {
-      if (mode === 'signin') {
+      if (mode === 'signin' && method === 'magic') {
+        if (!email) {
+          setError(t('emailRequired'))
+          return
+        }
+        const { error } = await signInWithMagicLink(email)
+        if (error) {
+          setError(error.message)
+        } else {
+          setSuccess(t('magicLinkSent'))
+        }
+      } else if (mode === 'signin') {
         const { error } = await signIn(email, password)
         if (error) {
           setError(error.message)
@@ -112,6 +130,49 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           </DialogDescription>
         </DialogHeader>
 
+        {mode === 'signin' && (
+          <div
+            role="tablist"
+            aria-label={t('signInMethod')}
+            className="mt-4 grid grid-cols-2 gap-1 rounded-md bg-foreground/5 p-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={method === 'password'}
+              onClick={() => {
+                setMethod('password')
+                setSuccess(null)
+                setError(null)
+              }}
+              className={`text-xs uppercase tracking-[0.2em] py-2 rounded transition-colors ${
+                method === 'password'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t('password')}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={method === 'magic'}
+              onClick={() => {
+                setMethod('magic')
+                setSuccess(null)
+                setError(null)
+              }}
+              className={`text-xs uppercase tracking-[0.2em] py-2 rounded transition-colors ${
+                method === 'magic'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t('magicLink')}
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {mode === 'signup' && (
             <div className="space-y-2">
@@ -142,28 +203,36 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              {t('password')}
-            </label>
-            <Input
-              type="password"
-              placeholder={t('passwordPlaceholder')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+          {!(mode === 'signin' && method === 'magic') && (
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                {t('password')}
+              </label>
+              <Input
+                type="password"
+                placeholder={t('passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+          )}
+
+          {mode === 'signin' && method === 'magic' && (
+            <p className="text-xs text-muted-foreground">
+              {t('magicLinkDesc')}
+            </p>
+          )}
 
           {error && (
-            <p className="text-sm text-[#FB923C]">{error}</p>
+            <p className="text-sm text-destructive">{error}</p>
           )}
 
           {success && (
             <div className="space-y-2">
-              <p className="text-sm text-[#34D399]">{success}</p>
+              <p className="text-sm text-positive">{success}</p>
               {mode === 'signup' && (
                 <button
                   type="button"
@@ -185,7 +254,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
             {loading
               ? t('loading')
               : mode === 'signin'
-              ? t('signIn')
+              ? method === 'magic'
+                ? t('sendMagicLink')
+                : t('signIn')
               : t('createAccountTitle')}
           </Button>
         </form>

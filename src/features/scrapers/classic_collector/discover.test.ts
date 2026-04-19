@@ -1,5 +1,21 @@
-import { describe, it, expect } from "vitest";
-import { buildSearchUrl, parseGraphQLSearchResponses, parseSearchResultsFromDOM } from "./discover";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("./scrapling", () => ({
+  canUseScraplingFallback: vi.fn(() => true),
+  fetchClassicPageHtmlWithScrapling: vi.fn(),
+  shouldPreferScraplingFirst: vi.fn(() => false),
+}));
+
+import {
+  buildSearchUrl,
+  discoverAllListings,
+  parseGraphQLSearchResponses,
+  parseSearchResultsFromDOM,
+} from "./discover";
+import { fetchClassicPageHtmlWithScrapling, shouldPreferScraplingFirst } from "./scrapling";
+
+const mockFetchClassicPageHtmlWithScrapling = vi.mocked(fetchClassicPageHtmlWithScrapling);
+const mockShouldPreferScraplingFirst = vi.mocked(shouldPreferScraplingFirst);
 
 describe("buildSearchUrl", () => {
   it("builds URL for page 1 without page param", () => {
@@ -136,5 +152,81 @@ describe("parseSearchResultsFromDOM", () => {
       </body></html>
     `;
     expect(parseSearchResultsFromDOM(html)).toHaveLength(1);
+  });
+});
+
+describe("discoverAllListings", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("falls back to Scrapling when Playwright discovery fails", async () => {
+    mockFetchClassicPageHtmlWithScrapling.mockResolvedValueOnce(`
+      <html><body>
+        <div class="listing-card">
+          <a href="/veh/2024-porsche-911-gt3-WP0AC2A98RS263305-abc1234/">
+            <h3 class="title">2024 Porsche 911 GT3</h3>
+            <span class="price">$275,000</span>
+          </a>
+        </div>
+      </body></html>
+    `);
+
+    const page = {
+      on: vi.fn(),
+      removeListener: vi.fn(),
+      goto: vi.fn().mockRejectedValue(new Error("Execution context was destroyed, most likely because of a navigation")),
+    } as unknown as Parameters<typeof discoverAllListings>[0]["page"];
+
+    const result = await discoverAllListings({
+      page,
+      make: "Porsche",
+      location: "US",
+      status: "forsale",
+      maxPages: 1,
+      maxListings: 5,
+      navigationDelayMs: 0,
+      pageTimeoutMs: 1000,
+      runId: "run-1",
+    });
+
+    expect(result.listings).toHaveLength(1);
+    expect(result.listings[0].title).toBe("2024 Porsche 911 GT3");
+    expect(result.listings[0].price).toBe(275000);
+    expect(mockFetchClassicPageHtmlWithScrapling).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses Scrapling first when forced by automation", async () => {
+    mockShouldPreferScraplingFirst.mockReturnValueOnce(true);
+    mockFetchClassicPageHtmlWithScrapling.mockResolvedValueOnce(`
+      <html><body>
+        <a href="/veh/2024-porsche-911-gt3-WP0AC2A98RS263305-abc1234/">
+          <h3 class="title">2024 Porsche 911 GT3</h3>
+          <span class="price">$275,000</span>
+        </a>
+      </body></html>
+    `);
+
+    const page = {
+      on: vi.fn(),
+      removeListener: vi.fn(),
+      goto: vi.fn(),
+    } as unknown as Parameters<typeof discoverAllListings>[0]["page"];
+
+    const result = await discoverAllListings({
+      page,
+      make: "Porsche",
+      location: "US",
+      status: "forsale",
+      maxPages: 1,
+      maxListings: 5,
+      navigationDelayMs: 0,
+      pageTimeoutMs: 1000,
+      runId: "run-automation",
+    });
+
+    expect(result.listings).toHaveLength(1);
+    expect(page.goto).not.toHaveBeenCalled();
+    expect(mockFetchClassicPageHtmlWithScrapling).toHaveBeenCalledTimes(1);
   });
 });

@@ -116,12 +116,11 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover"
                 referrerPolicy="no-referrer"
-                unoptimized
               />
             </motion.div>
           ) : (
             <div className="flex size-full items-center justify-center">
-              <ImageOff className="size-10 text-[rgba(232,226,222,0.1)]" />
+              <ImageOff className="size-10 text-muted-foreground/20" />
             </div>
           )}
 
@@ -168,13 +167,13 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             <span className="text-xl font-bold text-primary">
               {formatPrice(currentBid ?? 0)}
             </span>
-            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[rgba(232,226,222,0.35)]">
+            <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground/60">
               {getPriceLabel(platform, status).toLowerCase()}
             </span>
           </div>
 
           {/* Meta row */}
-          <div className="flex items-center justify-between text-[11px] text-[rgba(232,226,222,0.35)]">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground/60">
             {isAuctionPlatform(platform) ? (
               <span className="flex items-center gap-1.5">
                 <Gavel className="size-3" />
@@ -188,7 +187,7 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             )}
 
             {isAuctionPlatform(platform) && endTime && !isEnded ? (
-              <AuctionTimer endTime={endTime} className="text-[11px] font-mono text-[rgba(232,226,222,0.5)]" />
+              <AuctionTimer endTime={endTime} className="text-[11px] tabular-nums text-muted-foreground" />
             ) : isAuctionPlatform(platform) && endTime && isEnded ? (
               <span className="flex items-center gap-1">
                 <Eye className="size-3" />

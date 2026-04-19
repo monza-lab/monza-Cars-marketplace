@@ -25,7 +25,7 @@ function RichContent({ text }: { text: string }) {
         if (/^\d+\.\s/.test(line)) {
           return (
             <div key={i} className="flex gap-2 pl-1 py-0.5">
-              <span className="text-primary shrink-0 font-mono text-[11px] mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
+              <span className="text-primary shrink-0 tabular-nums text-[11px] mt-0.5">{line.match(/^\d+/)?.[0]}.</span>
               <span>{rendered.slice(1)}</span>
             </div>
           )

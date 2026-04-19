@@ -65,8 +65,8 @@ export function SortOptions({ value, onChange, className }: SortOptionsProps) {
               value={option.value}
               className={cn(
                 "cursor-pointer text-sm text-zinc-300",
-                "focus:bg-amber-500/10 focus:text-amber-400",
-                "data-[state=checked]:text-amber-400"
+                "focus:bg-amber-500/10 focus:text-destructive",
+                "data-[state=checked]:text-destructive"
               )}
             >
               {option.label}

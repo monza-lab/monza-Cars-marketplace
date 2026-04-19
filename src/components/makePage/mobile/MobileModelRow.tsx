@@ -23,7 +23,7 @@ export function MobileModelRow({
 
   const gradeColor = (g: string) => {
     switch (g) {
-      case "AAA": return "text-emerald-400"
+      case "AAA": return "text-positive"
       case "AA": return "text-primary"
       default: return "text-muted-foreground"
     }
@@ -49,8 +49,8 @@ export function MobileModelRow({
         />
         {model.liveCount > 0 && (
           <div className="absolute top-1 left-1 flex items-center gap-1 rounded-full bg-background/80 px-1.5 py-0.5">
-            <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[8px] font-bold text-emerald-400">{model.liveCount}</span>
+            <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+            <span className="text-[8px] font-bold text-positive">{model.liveCount}</span>
           </div>
         )}
       </Link>
@@ -67,7 +67,7 @@ export function MobileModelRow({
           {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] font-mono text-primary">
+          <span className="text-[12px] tabular-nums text-primary">
             {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
           </span>
           {platformBadge && (

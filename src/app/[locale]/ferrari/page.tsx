@@ -39,7 +39,7 @@ export default async function FerrariDataPage({
           <h1 className="text-2xl font-light tracking-tight text-foreground">
             Ferrari Ingestion (Supabase)
           </h1>
-          <p className="mt-3 text-sm text-[rgba(232,226,222,0.55)]">
+          <p className="mt-3 text-sm text-muted-foreground">
             Missing env vars. Set <code className="text-primary">NEXT_PUBLIC_SUPABASE_URL</code> and
             either <code className="text-primary">SUPABASE_SERVICE_ROLE_KEY</code> (preferred) or
             <code className="text-primary">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
@@ -73,12 +73,12 @@ export default async function FerrariDataPage({
             <h1 className="text-2xl font-light tracking-tight text-foreground">
               Ferrari Ingestion (Supabase)
             </h1>
-            <p className="mt-2 text-sm text-[rgba(232,226,222,0.55)]">
+            <p className="mt-2 text-sm text-muted-foreground">
               Rendering from <code className="text-primary">public.listings</code> (make = Ferrari)
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] tracking-[0.2em] uppercase text-[rgba(232,226,222,0.35)]">
+            <p className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground/60">
               rows
             </p>
             <p className="text-xl font-light text-foreground tabular-nums">{rows.length}</p>
@@ -87,7 +87,7 @@ export default async function FerrariDataPage({
 
         {error ? (
           <div className="mt-6 rounded-2xl border border-primary/15 bg-card px-4 py-3">
-            <p className="text-sm text-[#FB923C]">Query error: {error.message}</p>
+            <p className="text-sm text-destructive">Query error: {error.message}</p>
           </div>
         ) : null}
 
@@ -106,7 +106,7 @@ export default async function FerrariDataPage({
                   <th
                     key={h}
                     scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-medium tracking-[0.2em] uppercase text-[rgba(232,226,222,0.45)]"
+                    className="px-4 py-3 text-left text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground/70"
                   >
                     {h}
                   </th>
@@ -147,7 +147,7 @@ export default async function FerrariDataPage({
                           >
                             {carName}
                           </a>
-                          <div className="mt-0.5 text-[11px] text-[rgba(232,226,222,0.4)]">
+                          <div className="mt-0.5 text-[11px] text-muted-foreground/70">
                             photos: {r.photos_count}
                           </div>
                         </div>
@@ -167,7 +167,7 @@ export default async function FerrariDataPage({
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-4 py-10 text-center text-sm text-[rgba(232,226,222,0.45)]"
+                    className="px-4 py-10 text-center text-sm text-muted-foreground/70"
                   >
                     No Ferrari rows yet. Run the collector to ingest.
                   </td>
@@ -178,7 +178,7 @@ export default async function FerrariDataPage({
         </div>
 
         <div className="mt-6 rounded-2xl border border-primary/8 bg-card px-4 py-3">
-          <p className="text-[12px] text-[rgba(232,226,222,0.55)]">
+          <p className="text-[12px] text-muted-foreground">
             Ingestion CLI: <code className="text-primary">npx tsx src/features/ferrari_collector/cli.ts --mode=daily</code>
           </p>
         </div>

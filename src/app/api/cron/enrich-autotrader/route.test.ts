@@ -5,17 +5,14 @@ import { GET } from "./route";
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
-const mockSelect = vi.fn().mockReturnValue({
-  eq: vi.fn().mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      is: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-    }),
-  }),
-});
+const mockLimit = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockOrder = vi.fn();
+mockOrder.mockReturnValue({ order: mockOrder, limit: mockLimit });
+const mockOr = vi.fn().mockReturnValue({ order: mockOrder, limit: mockLimit });
+const mockLt = vi.fn().mockReturnValue({ or: mockOr, order: mockOrder, limit: mockLimit });
+const mockEq2 = vi.fn().mockReturnValue({ lt: mockLt, or: mockOr, is: mockLt, order: mockOrder, limit: mockLimit });
+const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2, lt: mockLt, is: mockLt });
+const mockSelect = vi.fn().mockReturnValue({ eq: mockEq1 });
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
@@ -95,15 +92,19 @@ describe("GET /api/cron/enrich-autotrader", () => {
     expect(clearScraperRunActive).toHaveBeenCalledWith("enrich-autotrader");
   });
 
-  it("marks runs unsuccessful when rows are discovered but nothing is written", async () => {
+  it("returns 200 when discovered rows are successfully demoted", async () => {
     mockSelect.mockReturnValueOnce({
       eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          is: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [{ id: "at-1", source_url: "https://example.com/1" }],
-                error: null,
+          lt: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({
+                    data: [{ id: "at-1", source_url: "https://example.com/1" }],
+                    error: null,
+                  }),
+                }),
               }),
             }),
           }),
@@ -116,13 +117,13 @@ describe("GET /api/cron/enrich-autotrader", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(false);
-    expect(data.successReason).toBe("no_written_rows");
+    expect(data.success).toBe(true);
+    expect(data.successReason).toBe("enrichment_progress");
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({
         scraper_name: "enrich-autotrader",
-        success: false,
-        errors_count: 1,
+        success: true,
+        written: 1,
       })
     );
   });
@@ -139,5 +140,65 @@ describe("GET /api/cron/enrich-autotrader", () => {
     const response = await GET(makeRequest());
     const data = await response.json();
     expect(data.duration).toMatch(/^\d+ms$/);
+  });
+
+  it("writes current_bid, mileage, and images when recoverable data exists", async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    mockUpdate.mockReturnValue({ eq: updateEq });
+    mockLimit
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "row-1",
+            source_url: "https://www.autotrader.co.uk/car-details/202209029381504",
+            current_bid: null,
+            mileage: null,
+            images: null,
+            engine: null,
+            transmission: null,
+            vin: null,
+            color_exterior: null,
+            description_text: null,
+            status: "active",
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [], error: null });
+
+    const detailModule = await import("@/features/scrapers/autotrader_collector/detail");
+    vi.mocked(detailModule.fetchAutoTraderDetail).mockResolvedValue({
+      title: "2016 Porsche 911",
+      price: 87500,
+      priceText: "£87,500",
+      mileage: 18000,
+      mileageUnit: "miles",
+      location: "LUTON • 32 miles away",
+      description: "Great car",
+      images: ["https://m.atcdn.co.uk/a/media/one.jpg"],
+      vin: null,
+      exteriorColor: null,
+      interiorColor: null,
+      transmission: null,
+      engine: null,
+      bodyStyle: null,
+    });
+
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(200);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        current_bid: 87500,
+        hammer_price: 87500,
+        mileage: 28968,
+        mileage_unit: "km",
+        images: ["https://m.atcdn.co.uk/a/media/one.jpg"],
+        photos_count: 1,
+      })
+    );
+    expect(updateEq).toHaveBeenCalledWith(
+      "id",
+      "row-1"
+    );
   });
 });

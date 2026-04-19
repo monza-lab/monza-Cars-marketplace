@@ -100,14 +100,14 @@ export const SORT_LABELS: Record<string, string> = {
 
 // ─── PLATFORM LABELS ───
 export const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-amber-400" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
   RM_SOTHEBYS: { short: "RM", color: "bg-rose-500/20 text-rose-400" },
-  GOODING: { short: "Gooding", color: "bg-emerald-500/20 text-emerald-400" },
+  GOODING: { short: "Gooding", color: "bg-positive/20 text-positive" },
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
-  AUTO_TRADER: { short: "AutoTrader", color: "bg-orange-500/20 text-orange-400" },
+  AUTO_TRADER: { short: "AutoTrader", color: "bg-destructive/20 text-destructive" },
   BE_FORWARD: { short: "BeForward", color: "bg-teal-500/20 text-teal-400" },
   CLASSIC_COM: { short: "Classic.com", color: "bg-indigo-500/20 text-indigo-400" },
   ELFERSPOT: { short: "Elferspot", color: "bg-yellow-500/20 text-yellow-400" },

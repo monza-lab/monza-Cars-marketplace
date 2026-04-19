@@ -43,3 +43,12 @@ jobs:
             --maxListings=${{ github.event.inputs.max_listings || '6000' }} \
             ${{ github.event.inputs.source && format('--source={0}', github.event.inputs.source) || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Verify scraper quality gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx scripts/verify-scraper-quality.mjs \
+            --scraper=liveness-check \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
