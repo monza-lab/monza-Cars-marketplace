@@ -11,6 +11,7 @@ import type {
   RegionalMarketStats,
   ModelMarketStats,
 } from "./types"
+import type { HausReport, DetectedSignal } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
 
 const FREE_CREDITS_PER_MONTH = 3
@@ -336,4 +337,63 @@ export async function getTransactionHistory(
 
   if (error || !data) return []
   return data as CreditTransactionRow[]
+}
+
+// -- Haus Report writers (Phase 6, Task 29) --
+
+export async function saveHausReport(
+  listingId: string,
+  report: Omit<HausReport, "listing_id">,
+): Promise<void> {
+  const supabase = getServiceClient()
+
+  const { error } = await supabase.from("listing_reports").upsert(
+    {
+      listing_id: listingId,
+      fair_value_low: report.fair_value_low,
+      fair_value_high: report.fair_value_high,
+      median_price: report.median_price,
+      specific_car_fair_value_low: report.specific_car_fair_value_low,
+      specific_car_fair_value_mid: report.specific_car_fair_value_mid,
+      specific_car_fair_value_high: report.specific_car_fair_value_high,
+      comparable_layer_used: report.comparable_layer_used,
+      comparables_count: report.comparables_count,
+      modifiers_applied_json: report.modifiers_applied,
+      modifiers_total_percent: report.modifiers_total_percent,
+      signals_extracted_at: report.signals_extracted_at,
+      extraction_version: report.extraction_version,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "listing_id" },
+  )
+
+  if (error) throw new Error(`saveHausReport failed: ${error.message}`)
+}
+
+export async function saveSignals(
+  listingId: string,
+  runId: string,
+  version: string,
+  signals: DetectedSignal[],
+): Promise<void> {
+  if (signals.length === 0) return
+  const supabase = getServiceClient()
+
+  const rows = signals.map((s) => ({
+    listing_id: listingId,
+    extraction_run_id: runId,
+    signal_key: s.key,
+    signal_value_json: {
+      value_display: s.value_display,
+      name_i18n_key: s.name_i18n_key,
+    },
+    evidence_source_type: s.evidence.source_type,
+    evidence_source_ref: s.evidence.source_ref,
+    evidence_raw_excerpt: s.evidence.raw_excerpt,
+    evidence_confidence: s.evidence.confidence,
+    extraction_version: version,
+  }))
+
+  const { error } = await supabase.from("listing_signals").insert(rows)
+  if (error) throw new Error(`saveSignals failed: ${error.message}`)
 }
