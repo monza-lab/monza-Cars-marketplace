@@ -47,7 +47,7 @@ const REPORT_FEATURES = [
 const FAQ_ITEMS = [
   {
     q: "Do reports expire?",
-    a: "One-time Pack and Single purchases never expire. Monthly reports reset each billing period (no rollover). Annual plans follow the same pattern — 10 reports added every month for 12 months.",
+    a: "Single and Pack purchases never expire — use them whenever you want. Monthly is an unlimited subscription as long as it's active.",
   },
   {
     q: "What's included in each report?",
@@ -55,7 +55,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's the difference between Pack and Monthly?",
-    a: "The Reports Pack is 5 reports you can use any time, forever. Monthly gives you 10 reports per month plus Watchlist, Alerts, and Saved Searches — effectively the tools to hunt actively, not just analyze one-offs.",
+    a: "The Reports Pack gives you 5 reports to use at your own pace, forever. Monthly gives you unlimited Reports, plus Watchlist, Email Alerts on matching cars, Saved Searches, priority report generation, and PDF + CSV export. Monthly is for active hunters; Pack is for pausing between purchases.",
+  },
+  {
+    q: "Why is Monthly the obvious choice?",
+    a: "Two Reports Packs cost $78 combined. Monthly is $59 — cheaper than two packs, and you get unlimited reports instead of 10, plus Watchlist and Alerts on top.",
   },
   {
     q: "Can I cancel my subscription?",
@@ -95,8 +99,8 @@ export default function PricingPage() {
           Due Diligence for Porsche Buyers
         </h1>
         <p className="text-[15px] text-muted-foreground max-w-xl mx-auto">
-          A PPI costs $300. An official Porsche PPS, $150. Paying $19 a month
-          to know whether a $180k deal is fair is due diligence, not an expense.
+          A PPI costs $300. An official Porsche PPS, $150. Unlimited investment
+          analyses for $59 a month is due diligence, not an expense.
         </p>
       </div>
 

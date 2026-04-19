@@ -76,8 +76,7 @@ export function CheckoutModal({
     onSwitchPlan("monthly")
   }
 
-  const priceSuffix =
-    plan.period === "monthly" ? "/mo" : plan.period === "annual" ? "/yr" : "USD"
+  const priceSuffix = plan.period === "monthly" ? "/mo" : "USD"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,17 +86,20 @@ export function CheckoutModal({
             {plan.name}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-[13px]">
-            {plan.period === "one-time"
-              ? `${plan.reports} Reports · never expire`
-              : `${plan.reports} Reports/month · ${plan.perReport}`}
+            {plan.reports === "unlimited"
+              ? "Unlimited Reports · Watchlist · Alerts · Export"
+              : plan.reports === 1
+              ? "1 Report · never expires"
+              : `${plan.reports} Reports · never expire`}
           </DialogDescription>
         </DialogHeader>
 
         {showPackUpsell && onSwitchPlan && (
           <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 mt-2">
             <p className="text-[12px] text-foreground mb-2">
-              💡 Monthly at <strong>$19/mo</strong> gives you{" "}
-              <strong>10 Reports + Watchlist + Alerts</strong> for 81% less than this pack.
+              💡 By $20 more, <strong>Monthly ($59)</strong> gives you{" "}
+              <strong>unlimited Reports + Watchlist + Alerts + Export</strong>.
+              Two packs would cost you $78 — Monthly costs less.
             </p>
             <button
               onClick={handleSwitchToMonthly}
@@ -149,7 +151,7 @@ export function CheckoutModal({
             <Shield className="size-3 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">30-day refund</span>
           </div>
-          {(plan.period === "monthly" || plan.period === "annual") && (
+          {plan.period === "monthly" && (
             <>
               <div className="w-px h-3 bg-foreground/10" />
               <span className="text-[10px] text-muted-foreground">Cancel anytime</span>

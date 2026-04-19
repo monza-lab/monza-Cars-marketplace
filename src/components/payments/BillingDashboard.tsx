@@ -17,6 +17,7 @@ export function BillingDashboard() {
   const packCredits = profile?.packCreditsBalance ?? 0
   const tier = profile?.tier ?? "FREE"
   const isSubscribed = tier === "MONTHLY" || tier === "ANNUAL"
+  const hasUnlimited = isSubscribed
   const periodEnd = profile?.subscriptionPeriodEnd
     ? new Date(profile.subscriptionPeriodEnd).toLocaleDateString("en-US", {
         month: "long",
@@ -73,16 +74,20 @@ export function BillingDashboard() {
             <div className="flex items-center gap-2 mb-1">
               <FileText className="size-3.5 text-muted-foreground" />
               <span className="text-[11px] text-muted-foreground">
-                {isSubscribed ? "This month" : "Free monthly"}
+                {hasUnlimited ? "Subscription" : "Free monthly"}
               </span>
             </div>
-            <span
-              className={`text-2xl font-bold ${
-                credits > 0 ? "text-primary" : "text-destructive"
-              }`}
-            >
-              {credits}
-            </span>
+            {hasUnlimited ? (
+              <span className="text-2xl font-bold text-primary">∞</span>
+            ) : (
+              <span
+                className={`text-2xl font-bold ${
+                  credits > 0 ? "text-primary" : "text-destructive"
+                }`}
+              >
+                {credits}
+              </span>
+            )}
           </div>
           <div className="rounded-xl border border-border bg-foreground/2 p-4">
             <div className="flex items-center gap-2 mb-1">

@@ -893,6 +893,7 @@ export function Header() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const creditsRemaining = profile?.creditsBalance ?? 0;
   const isAuthenticated = !!user;
+  const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
 
   // Translated menu links
   const menuLinks = menuLinkKeys.map((link) => ({
@@ -971,7 +972,7 @@ export function Header() {
                 href="/pricing"
                 className="text-primary font-semibold hover:underline"
               >
-                Upgrade to Monthly →
+                Go Unlimited — $59/mo →
               </Link>
             </span>
           </div>
@@ -1179,9 +1180,15 @@ export function Header() {
                 onClick={() => router.push('/account')}
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
               >
-                <Coins className={`size-3 ${creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
-                <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                <Coins className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
+                {hasUnlimited ? (
+                  <span className="text-[12px] font-medium text-foreground">Unlimited</span>
+                ) : (
+                  <>
+                    <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
+                    <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                  </>
+                )}
               </button>
             )}
 

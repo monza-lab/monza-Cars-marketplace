@@ -49,14 +49,14 @@ export function OutOfReportsModal({
             onClick={() => onOpenChange(false)}
             className="block w-full py-3 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary/80 transition-colors text-center"
           >
-            Go Monthly — $19/mo · 10 Reports + Watchlist
+            Go Unlimited — $59/mo · Reports + Watchlist + Alerts
           </Link>
           <Link
             href="/pricing"
             onClick={() => onOpenChange(false)}
             className="block w-full py-3 rounded-xl bg-foreground/6 border border-border text-[13px] font-medium hover:bg-foreground/10 transition-colors text-center"
           >
-            Or buy a Pack that never expires
+            Or buy a Pack of 5 that never expires — $39
           </Link>
         </div>
       </DialogContent>
