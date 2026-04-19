@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import type { HausReport } from "../types"
 import mock from "./992-gt3-pts-mock.json"
+import sparse from "./991-carrera-sparse-mock.json"
 
 describe("992-gt3-pts-mock fixture", () => {
   it("conforms to HausReport shape", () => {
@@ -17,5 +18,20 @@ describe("992-gt3-pts-mock fixture", () => {
     const r: HausReport = mock as HausReport
     const expectedMid = Math.round(r.median_price * (1 + r.modifiers_total_percent / 100))
     expect(Math.abs(r.specific_car_fair_value_mid - expectedMid)).toBeLessThan(Math.round(r.median_price * 0.02))
+  })
+})
+
+describe("991-carrera-sparse-mock fixture", () => {
+  it("conforms to HausReport shape", () => {
+    const r: HausReport = sparse as HausReport
+    expect(r.listing_id).toBeTruthy()
+    expect(r.modifiers_applied).toHaveLength(0)
+    expect(r.modifiers_total_percent).toBe(0)
+    expect(r.signals_missing.length).toBeGreaterThan(r.signals_detected.length)
+  })
+
+  it("specific fair value mid equals median_price when no modifiers applied", () => {
+    const r: HausReport = sparse as HausReport
+    expect(r.specific_car_fair_value_mid).toBe(r.median_price)
   })
 })

@@ -1,0 +1,60 @@
+{
+  "listing_id": "mock-991-carrera-sparse-67890",
+  "fair_value_low": 58000,
+  "fair_value_high": 72000,
+  "median_price": 65000,
+
+  "specific_car_fair_value_low": 60450,
+  "specific_car_fair_value_mid": 65000,
+  "specific_car_fair_value_high": 69550,
+  "comparable_layer_used": "series",
+  "comparables_count": 14,
+
+  "signals_detected": [
+    {
+      "key": "transmission",
+      "name_i18n_key": "report.signals.transmission_pdk",
+      "value_display": "PDK (automatic)",
+      "evidence": {
+        "source_type": "structured_field",
+        "source_ref": "listings.transmission",
+        "raw_excerpt": null,
+        "confidence": "high"
+      }
+    }
+  ],
+
+  "signals_missing": [
+    {
+      "key": "paint_to_sample",
+      "name_i18n_key": "report.signals.paint_to_sample",
+      "question_for_seller_i18n_key": "report.questions.is_paint_factory_or_pts"
+    },
+    {
+      "key": "service_records",
+      "name_i18n_key": "report.signals.service_records",
+      "question_for_seller_i18n_key": "report.questions.ask_for_service_records"
+    },
+    {
+      "key": "previous_owners",
+      "name_i18n_key": "report.signals.previous_owners",
+      "question_for_seller_i18n_key": "report.questions.how_many_previous_owners"
+    },
+    {
+      "key": "original_paint",
+      "name_i18n_key": "report.signals.original_paint",
+      "question_for_seller_i18n_key": "report.questions.confirm_original_paint"
+    },
+    {
+      "key": "accident_history",
+      "name_i18n_key": "report.signals.accident_history",
+      "question_for_seller_i18n_key": "report.questions.accident_disclosure_in_writing"
+    }
+  ],
+
+  "modifiers_applied": [],
+  "modifiers_total_percent": 0,
+
+  "signals_extracted_at": "2026-04-19T12:00:00.000Z",
+  "extraction_version": "v1.0"
+}
