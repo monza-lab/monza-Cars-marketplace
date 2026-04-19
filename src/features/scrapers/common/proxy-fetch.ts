@@ -44,7 +44,8 @@ export function isProxyConfigured(): boolean {
 
 /**
  * Fetch through the Decodo residential proxy (if configured).
- * Falls back to direct fetch if proxy is not configured.
+ * Falls back to direct fetch if proxy is not configured or if the proxy
+ * request fails (connection error, timeout, etc.).
  */
 export async function proxyFetch(
   url: string | URL,
@@ -55,10 +56,22 @@ export async function proxyFetch(
     return fetch(url, init)
   }
 
-  // Node's fetch accepts `dispatcher` via undici under the hood
-  return fetch(url, {
-    ...init,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dispatcher: agent as any,
-  } as RequestInit)
+  try {
+    // Node's fetch accepts `dispatcher` via undici under the hood
+    return await fetch(url, {
+      ...init,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dispatcher: agent as any,
+    } as RequestInit)
+  } catch {
+    // Proxy unreachable — fall back to direct fetch so local runs
+    // still work when the proxy is down.
+    if (!proxyFallbackLogged) {
+      console.warn("[proxy-fetch] Proxy failed, falling back to direct fetch")
+      proxyFallbackLogged = true
+    }
+    return fetch(url, init)
+  }
 }
+
+let proxyFallbackLogged = false

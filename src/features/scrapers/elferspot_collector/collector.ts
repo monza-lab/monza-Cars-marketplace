@@ -7,6 +7,7 @@ import { fetchSearchPage } from "./discover"
 import { fetchDetailPage } from "./detail"
 import { normalizeListing } from "./normalize"
 import { upsertListing } from "./supabase_writer"
+import { proxyFetch, isProxyConfigured } from "@/features/scrapers/common/proxy-fetch"
 import type { CollectorRunConfig, CollectorResult, CollectorCounts } from "./types"
 
 export async function runElferspotCollector(config: CollectorRunConfig): Promise<CollectorResult> {
@@ -17,6 +18,23 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
   let consecutiveFailures = 0
 
   console.log(`[elferspot] Starting run ${runId}, maxPages=${config.maxPages}, details=${config.scrapeDetails}`)
+  console.log(`[elferspot] Proxy configured: ${isProxyConfigured()}`)
+
+  // Preflight: quick connectivity check before full run
+  try {
+    const probe = await proxyFetch("https://www.elferspot.com/en/", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(15_000),
+    })
+    console.log(`[elferspot] Preflight check: HTTP ${probe.status}`)
+    if (!probe.ok) {
+      console.warn(`[elferspot] Warning: Elferspot returned HTTP ${probe.status} on preflight`)
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[elferspot] Preflight FAILED (both proxy and direct): ${msg}`)
+    return { runId, counts: { ...counts, errors: 1 }, errors: [`Preflight failed: ${msg}`] }
+  }
 
   const checkpoint = await loadCheckpoint(config.checkpointPath)
   const processedSet = new Set(checkpoint.processedIds)
@@ -114,6 +132,7 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
       }
     } catch (err) {
       counts.errors++
+      consecutiveFailures++
       const msg = err instanceof Error ? err.message : String(err)
       errors.push(`Page ${page}: ${msg}`)
 
@@ -121,6 +140,14 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
         errors.push("Circuit-break: blocked by server")
         break
       }
+
+      if (consecutiveFailures >= CONSECUTIVE_FAILURE_LIMIT) {
+        errors.push(`Circuit-break: ${CONSECUTIVE_FAILURE_LIMIT} consecutive page failures`)
+        break
+      }
+
+      // Still rate-limit even on failure to avoid hammering
+      await sleep(config.delayMs)
     }
   }
 
