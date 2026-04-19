@@ -24,7 +24,7 @@ export interface ModifierDefinition {
   name_i18n_key: string
   signal_key: string                  // which DetectedSignal.key triggers this modifier
   base_percent: number                // starting value; can be overridden by data-driven regression
-  range: [min: number, max: number]   // clamp
+  range: [min: number, max: number]   // clamp [min,max]; may straddle 0 when the same signal can be positive or negative (e.g., low_previous_owners)
   citation_url: string | null         // MUST be public URL; null = modifier is "data-driven, no citation needed"
   is_data_driven: boolean             // true = %'s come from comparable-set regression at runtime
   description_i18n_key: string
