@@ -20,7 +20,18 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
 
   const checkpoint = await loadCheckpoint(config.checkpointPath)
   const processedSet = new Set(checkpoint.processedIds)
-  const startPage = checkpoint.lastCompletedPage + 1
+
+  // Auto-reset page counter if checkpoint is stale (>6h) — new daily run should
+  // start from page 1 but keep processedIds for dedup.  CLI --fresh forces this.
+  const STALE_MS = 6 * 60 * 60 * 1000 // 6 hours
+  const cpAge = Date.now() - new Date(checkpoint.updatedAt).getTime()
+  const freshRun = config.fresh || cpAge > STALE_MS
+
+  if (freshRun && checkpoint.lastCompletedPage > 0) {
+    console.log(`[elferspot] Stale checkpoint (${Math.round(cpAge / 3600000)}h old), resetting page counter (keeping ${processedSet.size} known IDs)`)
+  }
+
+  const startPage = freshRun ? 1 : checkpoint.lastCompletedPage + 1
 
   // Ensure output dir
   const outputDir = path.dirname(config.outputPath)

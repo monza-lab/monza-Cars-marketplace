@@ -9,6 +9,8 @@ export interface CollectorRunConfig {
   outputPath: string
   dryRun: boolean
   language: "en" | "de" | "nl" | "fr"
+  /** Force start from page 1, keeping processedIds for dedup */
+  fresh?: boolean
 }
 
 export interface ElferspotListingSummary {

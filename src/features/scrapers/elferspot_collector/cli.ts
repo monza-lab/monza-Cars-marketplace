@@ -53,6 +53,7 @@ async function main() {
       "  --delayMs=10000        Delay between requests in ms (default: 10000)",
       "  --dryRun               Skip DB writes",
       "  --language=en          Site language: en, de, nl, fr (default: en)",
+      "  --fresh                Reset page counter, start from page 1 (keeps dedup IDs)",
       "  --checkpointPath=...   Resume file",
       "  --outputPath=...       JSONL output file",
       "  --help                 Show this help",
@@ -69,6 +70,7 @@ async function main() {
     outputPath: String(args.outputPath || "var/elferspot_collector/listings.jsonl"),
     dryRun: args.dryRun === true,
     language: (String(args.language || "en")) as CollectorRunConfig["language"],
+    fresh: args.fresh === true,
   }
 
   console.log("[elferspot] Config:", JSON.stringify(config, null, 2))

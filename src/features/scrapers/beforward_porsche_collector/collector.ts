@@ -39,19 +39,16 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
   const errors: string[] = [];
   const seenSourceIds = new Set<string>();
 
-  let firstPage: Awaited<ReturnType<typeof discoverPage>> | null = null;
-  let pageCount = checkpoint.pageCount;
-  let totalResults = checkpoint.totalResults;
-  if (pageCount <= 0) {
-    firstPage = await discoverPage({
-      page: 1,
-      limiter,
-      timeoutMs: config.timeoutMs,
-    });
-    pageCount = firstPage.totalResults ? computeTotalPages(firstPage.totalResults, 25) : firstPage.pageCount;
-    totalResults = firstPage.totalResults;
-  }
-  pageCount = clampPageCount(pageCount, config.maxPages, config.startPage);
+  // Always discover page 1 to get fresh totalResults/pageCount.
+  // The checkpoint only provides lastCompletedPage for resumption.
+  const firstPage = await discoverPage({
+    page: 1,
+    limiter,
+    timeoutMs: config.timeoutMs,
+  });
+  const rawPageCount = firstPage.totalResults ? computeTotalPages(firstPage.totalResults, 25) : firstPage.pageCount;
+  const totalResults = firstPage.totalResults;
+  let pageCount = clampPageCount(rawPageCount, config.maxPages, config.startPage);
 
   const startPage = Math.max(config.startPage, checkpoint.lastCompletedPage + 1);
   let processedPages = 0;
@@ -60,7 +57,7 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
   for (let page = startPage; page <= pageCount; page++) {
     let discovered;
     try {
-        discovered = page === 1 && firstPage !== null
+        discovered = page === 1
           ? firstPage
           : await discoverPage({ page, limiter, timeoutMs: config.timeoutMs });
     } catch (err) {
@@ -149,7 +146,7 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
       version: 1,
       updatedAt: new Date().toISOString(),
       totalResults,
-      pageCount,
+      pageCount: rawPageCount,
       lastCompletedPage: page,
       written: counts.written,
       errors: counts.errors,

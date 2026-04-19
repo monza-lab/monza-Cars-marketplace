@@ -59,26 +59,28 @@ export function createSupabaseWriter(): SupabaseWriter {
 
 async function upsertListing(client: SupabaseClient, listing: NormalizedListing, meta: ScrapeMeta): Promise<string> {
   const row = mapNormalizedListingToListingsRow(listing, meta);
-  const { data, error } = await client
-    .from("listings")
-    .upsert(row, { onConflict: "source,source_id" })
-    .select("id")
-    .limit(1);
+  return retryOnTimeout(async () => {
+    const { data, error } = await client
+      .from("listings")
+      .upsert(row, { onConflict: "source,source_id" })
+      .select("id")
+      .limit(1);
 
-  if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
-  const id = (data as Array<{ id: string }> | null)?.[0]?.id;
-  if (id) return id;
+    if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
+    const id = (data as Array<{ id: string }> | null)?.[0]?.id;
+    if (id) return id;
 
-  const sel = await client
-    .from("listings")
-    .select("id")
-    .eq("source", listing.source)
-    .eq("source_id", listing.sourceId)
-    .limit(1);
-  if (sel.error) throw new Error(`Supabase listings select failed: ${sel.error.message}`);
-  const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
-  if (!fallback) throw new Error("Supabase listings upsert returned no id");
-  return fallback;
+    const sel = await client
+      .from("listings")
+      .select("id")
+      .eq("source", listing.source)
+      .eq("source_id", listing.sourceId)
+      .limit(1);
+    if (sel.error) throw new Error(`Supabase listings select failed: ${sel.error.message}`);
+    const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
+    if (!fallback) throw new Error("Supabase listings upsert returned no id");
+    return fallback;
+  });
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
@@ -137,6 +139,20 @@ function truncate(value: string | null | undefined, max: number): string | null 
   return value.slice(0, max);
 }
 
+const TIMEOUT_RE = /statement timeout|too many connections|connection terminated/i;
+
+async function retryOnTimeout<T>(fn: () => Promise<T>, retries = 3, baseDelayMs = 2000): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt >= retries || !TIMEOUT_RE.test(msg)) throw err;
+      await sleep(baseDelayMs * 2 ** attempt);
+    }
+  }
+}
+
 async function insertPriceHistorySnapshot(
   client: SupabaseClient,
   listingId: string,
@@ -147,24 +163,26 @@ async function insertPriceHistorySnapshot(
   if (!amount || amount <= 0) return;
 
   const time = truncateIsoToHour(meta.scrapeTimestamp);
-  const exists = await client
-    .from("price_history")
-    .select("time")
-    .eq("listing_id", listingId)
-    .eq("time", time)
-    .limit(1);
-  if (exists.error) throw new Error(`Supabase price_history select failed: ${exists.error.message}`);
-  if ((exists.data ?? []).length > 0) return;
+  await retryOnTimeout(async () => {
+    const exists = await client
+      .from("price_history")
+      .select("time")
+      .eq("listing_id", listingId)
+      .eq("time", time)
+      .limit(1);
+    if (exists.error) throw new Error(`Supabase price_history select failed: ${exists.error.message}`);
+    if ((exists.data ?? []).length > 0) return;
 
-  const { error } = await client.from("price_history").insert({
-    time,
-    listing_id: listingId,
-    status: listing.status,
-    price_usd: amount,
-    price_eur: null,
-    price_gbp: null,
+    const { error } = await client.from("price_history").insert({
+      time,
+      listing_id: listingId,
+      status: listing.status,
+      price_usd: amount,
+      price_eur: null,
+      price_gbp: null,
+    });
+    if (error) throw new Error(`Supabase price_history insert failed: ${error.message}`);
   });
-  if (error) throw new Error(`Supabase price_history insert failed: ${error.message}`);
 }
 
 function truncateIsoToHour(iso: string): string {

@@ -137,6 +137,7 @@ export function normalizeListingFromSummary(input: {
   const auctionHouse = parseAuctionHouse(input.summary.auctionHouse);
   const listDate = toUtcDateOnly(new Date(input.meta.scrapeTimestamp));
   const price = input.summary.price;
+  const currentBid = price ?? -1;
 
   return {
     source: "ClassicCom",
@@ -174,7 +175,7 @@ export function normalizeListingFromSummary(input: {
     location,
     pricing: {
       hammerPrice: null,
-    currentBid,
+      currentBid,
       bidCount: null,
       originalCurrency: price ? "USD" : null,
       rawPriceText: price ? `$${price.toLocaleString("en-US")}` : null,

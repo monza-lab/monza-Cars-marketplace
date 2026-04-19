@@ -11,10 +11,18 @@ side thin and avoid depending on the CLI entrypoint.
 from __future__ import annotations
 
 import html
+import io
 import json
+import os
 import sys
 from html.parser import HTMLParser
 from concurrent.futures import ProcessPoolExecutor
+
+# Force UTF-8 stdout/stderr on Windows (avoids charmap codec errors)
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 from scrapling.fetchers.requests import Fetcher
 

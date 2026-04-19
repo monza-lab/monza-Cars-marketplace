@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 
 import { runAutoScout24Collector } from "./collector";
@@ -85,12 +85,20 @@ Options:
   --dryRun                   Skip DB writes
   --checkpointPath=...       Path to checkpoint file
   --outputPath=...           Path to JSONL output file
+  --reset                    Reset checkpoint (start fresh, re-scrape all shards)
   --help                     Show this help
 `);
     process.exit(0);
   }
 
   const countries = parseCountries(readString(args, "countries"));
+  const checkpointPath = readString(args, "checkpointPath") ?? "var/autoscout24_collector/checkpoint.json";
+
+  // Handle --reset: delete checkpoint file to start fresh
+  if (hasFlag(args, "reset") && existsSync(checkpointPath)) {
+    unlinkSync(checkpointPath);
+    console.log(`  [Reset] Checkpoint deleted: ${checkpointPath}`);
+  }
 
   const config: CollectorRunConfig = {
     mode: "daily",
@@ -105,7 +113,7 @@ Options:
     navigationDelayMs: readNumber(args, "navigationDelayMs", 3000),
     pageTimeoutMs: readNumber(args, "pageTimeoutMs", 30000),
     scrapeDetails: hasFlag(args, "scrapeDetails"),
-    checkpointPath: readString(args, "checkpointPath") ?? "var/autoscout24_collector/checkpoint.json",
+    checkpointPath,
     outputPath: readString(args, "outputPath") ?? "var/autoscout24_collector/listings.jsonl",
     dryRun: hasFlag(args, "dryRun"),
   };

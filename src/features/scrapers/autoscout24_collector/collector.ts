@@ -59,7 +59,16 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   // Load checkpoint, filter to incomplete shards
   let checkpoint = await loadCheckpoint(config.checkpointPath);
-  const incompleteIds = getIncompleteShards(checkpoint, allShards);
+  let incompleteIds = getIncompleteShards(checkpoint, allShards);
+
+  // Auto-reset: if all shards are already complete, start a fresh run
+  if (incompleteIds.length === 0 && allShards.length > 0) {
+    logEvent({ level: "info", event: "collector.checkpoint_reset", runId, reason: "all shards already complete" });
+    checkpoint = { version: 1, updatedAt: new Date().toISOString(), shards: {}, totalWritten: 0, totalErrors: 0 };
+    await saveCheckpoint(config.checkpointPath, checkpoint);
+    incompleteIds = allShards.map((s) => s.id);
+  }
+
   const pendingShards = allShards.filter((s) => incompleteIds.includes(s.id));
 
   logEvent({
@@ -70,18 +79,6 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
     pending: pendingShards.length,
     completed: allShards.length - pendingShards.length,
   });
-
-  if (pendingShards.length === 0) {
-    logEvent({ level: "info", event: "collector.all_shards_complete", runId });
-    return {
-      runId,
-      shardsCompleted: allShards.length,
-      shardsTotal: allShards.length,
-      counts,
-      errors,
-      outputPath: config.outputPath,
-    };
-  }
 
   // Writer
   const writer = config.dryRun ? createDryRunWriter() : createSupabaseWriter();

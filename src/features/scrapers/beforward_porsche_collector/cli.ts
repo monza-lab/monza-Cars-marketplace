@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 
 import { runBeForwardPorscheCollector } from "./collector";
@@ -74,6 +74,7 @@ function usage(): string {
     "  --timeoutMs=20000",
     "  --rateLimitMs=2500",
     "  --summaryOnly",
+    "  --fresh              Delete checkpoint before starting (full re-scrape)",
     "  --checkpointPath=var/beforward_porsche_collector/checkpoint.json",
     "  --outputPath=var/beforward_porsche_collector/listings.jsonl",
   ].join("\n");
@@ -101,6 +102,11 @@ async function main(): Promise<void> {
     outputPath: readString(args, "outputPath") ?? "var/beforward_porsche_collector/listings.jsonl",
     dryRun: hasFlag(args, "dryRun"),
   };
+
+  if (hasFlag(args, "fresh") && existsSync(config.checkpointPath)) {
+    unlinkSync(config.checkpointPath);
+    console.log(`[beforward] Deleted checkpoint: ${config.checkpointPath}`);
+  }
 
   const result = await runBeForwardPorscheCollector(config);
   console.log(JSON.stringify({
