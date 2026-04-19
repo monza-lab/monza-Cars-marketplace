@@ -2,6 +2,70 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const unstableCache = vi.fn((fn: () => unknown) => fn)
 const revalidateTag = vi.fn()
+const dashboardValuation = {
+  "992": {
+    US: {
+      market: "US",
+      family: "992",
+      marketValue: { valueUsd: 302000, p25Usd: 290000, p75Usd: 315000, soldN: 4, tier: "medium" },
+      askMedian: {
+        valueUsd: 286000,
+        rawMedianUsd: 286000,
+        p25Usd: 280000,
+        p75Usd: 292000,
+        askingN: 6,
+        factorApplied: 1,
+        factorSource: "none",
+        tier: "medium",
+      },
+    },
+    EU: {
+      market: "EU",
+      family: "992",
+      marketValue: { valueUsd: 280000, p25Usd: 270000, p75Usd: 290000, soldN: 3, tier: "low" },
+      askMedian: {
+        valueUsd: 265000,
+        rawMedianUsd: 265000,
+        p25Usd: 258000,
+        p75Usd: 270000,
+        askingN: 5,
+        factorApplied: 1,
+        factorSource: "none",
+        tier: "low",
+      },
+    },
+    UK: {
+      market: "UK",
+      family: "992",
+      marketValue: { valueUsd: 295000, p25Usd: 288000, p75Usd: 304000, soldN: 2, tier: "low" },
+      askMedian: {
+        valueUsd: 279000,
+        rawMedianUsd: 279000,
+        p25Usd: 274000,
+        p75Usd: 282000,
+        askingN: 4,
+        factorApplied: 1,
+        factorSource: "none",
+        tier: "low",
+      },
+    },
+    JP: {
+      market: "JP",
+      family: "992",
+      marketValue: { valueUsd: 318000, p25Usd: 310000, p75Usd: 325000, soldN: 2, tier: "low" },
+      askMedian: {
+        valueUsd: 300000,
+        rawMedianUsd: 300000,
+        p25Usd: 295000,
+        p75Usd: 308000,
+        askingN: 3,
+        factorApplied: 1,
+        factorSource: "none",
+        tier: "low",
+      },
+    },
+  },
+} as const
 
 const activeCar = {
   id: "active-1",
@@ -50,6 +114,13 @@ const fetchValuationCorpusForMake = vi.fn(() =>
   ])
 )
 
+const fetchDashboardRegionalValuationByFamily = vi.fn(() =>
+  Promise.resolve(dashboardValuation),
+)
+const aggregateRegionalValuationByFamily = vi.fn(
+  (prices: Array<{ family?: string | null }>) => (prices.length > 0 ? dashboardValuation : {}),
+)
+
 const fetchLiveListingAggregateCounts = vi.fn(async () => ({
   liveNow: 7,
   regionTotalsByPlatform: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
@@ -73,6 +144,11 @@ vi.mock("./supabaseLiveListings", () => ({
   fetchSeriesCountsByRegion,
 }))
 
+vi.mock("./dashboardValuationCache", () => ({
+  aggregateRegionalValuationByFamily,
+  fetchDashboardRegionalValuationByFamily,
+}))
+
 vi.mock("next/cache", () => ({
   unstable_cache: unstableCache,
   revalidateTag,
@@ -87,6 +163,8 @@ describe("dashboard cache", () => {
     vi.resetModules()
     fetchPaginatedListings.mockClear()
     fetchValuationCorpusForMake.mockClear()
+    fetchDashboardRegionalValuationByFamily.mockClear()
+    aggregateRegionalValuationByFamily.mockClear()
     fetchLiveListingAggregateCounts.mockClear()
     fetchSeriesCounts.mockClear()
     fetchSeriesCountsByRegion.mockClear()
@@ -149,13 +227,14 @@ describe("dashboard cache", () => {
         includeCount: false,
       }),
     )
-    expect(fetchValuationCorpusForMake).toHaveBeenCalledWith(
+    expect(fetchDashboardRegionalValuationByFamily).toHaveBeenCalledWith(
       "Porsche",
-      40_000,
       expect.objectContaining({
         signal: expect.any(Object),
+        timeoutMs: 3_000,
       }),
     )
+    expect(fetchValuationCorpusForMake).not.toHaveBeenCalled()
     expect(data.auctions).toHaveLength(1)
     expect(data.regionalValByFamily).toBeDefined()
     expect(data.regionalValByFamily["992"]).toBeDefined()
@@ -403,6 +482,7 @@ describe("dashboard cache", () => {
       totalCount: 1,
       totalLiveCount: 1,
     })
+    fetchDashboardRegionalValuationByFamily.mockResolvedValueOnce(null)
     fetchValuationCorpusForMake.mockRejectedValueOnce(new Error("timeout"))
 
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
@@ -421,6 +501,9 @@ describe("dashboard cache", () => {
       totalCount: 1,
       totalLiveCount: 1,
     })
+    fetchDashboardRegionalValuationByFamily.mockImplementationOnce(
+      () => new Promise(() => {}),
+    )
     fetchValuationCorpusForMake.mockImplementationOnce(
       () => new Promise(() => {}),
     )
@@ -434,7 +517,7 @@ describe("dashboard cache", () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const pending = fetchDashboardDataUncached()
 
-    await vi.advanceTimersByTimeAsync(45_000)
+    await vi.advanceTimersByTimeAsync(50_000)
 
     await expect(pending).resolves.toMatchObject({
       auctions: [expect.objectContaining({ id: "active-1" })],

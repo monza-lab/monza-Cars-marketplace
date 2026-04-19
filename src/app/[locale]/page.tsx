@@ -7,6 +7,8 @@ import {
   type DashboardData,
 } from "@/lib/dashboardCache";
 
+export const dynamic = "force-dynamic";
+
 async function loadDashboardData(): Promise<DashboardData> {
   try {
     return await getCachedDashboardData();

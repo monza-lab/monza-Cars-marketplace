@@ -9,41 +9,20 @@ import {
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
 import type { CollectorCar } from "./curatedCars";
-import type { DerivedPrice, SegmentStats, CanonicalMarket } from "./pricing/types";
-import { computeSegmentStats } from "./pricing/segmentStats";
+import {
+  aggregateRegionalValuationByFamily,
+  fetchDashboardRegionalValuationByFamily,
+  type RegionalValByFamily,
+} from "./dashboardValuationCache";
 
-const VALUATION_MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
-const DASHBOARD_VALUATION_QUERY_TIMEOUT_MS = 45_000;
+const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
+const DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS = 45_000;
 const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
 const DASHBOARD_REGION_SAMPLE_SIZE = 6;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 const DASHBOARD_REGION_ORDER: readonly ("US" | "EU" | "UK" | "JP")[] = ["US", "EU", "UK", "JP"] as const;
-
-/**
- * Pre-aggregate the full valuation corpus into { family → market → SegmentStats }.
- * This is much smaller than the raw corpus (~22 families × 4 markets × ~400 bytes
- * = a few hundred KB, well under Next.js's 2MB cache limit) and lets the client
- * render tiles directly without shipping 40k rows.
- */
-function aggregateValuationByFamily(
-  corpus: DerivedPrice[],
-): Record<string, Record<CanonicalMarket, SegmentStats>> {
-  const families = Array.from(
-    new Set(corpus.map((p) => p.family).filter((f): f is string => !!f)),
-  );
-  const out: Record<string, Record<CanonicalMarket, SegmentStats>> = {};
-  for (const fam of families) {
-    const perMarket = {} as Record<CanonicalMarket, SegmentStats>;
-    for (const m of VALUATION_MARKETS) {
-      perMarket[m] = computeSegmentStats(corpus, { market: m, family: fam });
-    }
-    out[fam] = perMarket;
-  }
-  return out;
-}
-
-export type RegionalValByFamily = Record<string, Record<CanonicalMarket, SegmentStats>>;
+export type { RegionalValByFamily };
 
 // ─── Shape expected by DashboardClient ───
 
@@ -351,16 +330,16 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     console.error("[dashboardCache] live listings query failed:", error);
   }
 
-  const [valuationCorpus, aggregates, seriesCounts, seriesCountsByRegion] = await Promise.all([
+  const [cachedRegionalValByFamily, aggregates, seriesCounts, seriesCountsByRegion] = await Promise.all([
     withSoftTimeout(
       (signal) =>
-        fetchValuationCorpusForMake(requestedMake ?? "Porsche", 40_000, {
-          timeoutMs: DASHBOARD_VALUATION_QUERY_TIMEOUT_MS + 1_000,
+        fetchDashboardRegionalValuationByFamily(requestedMake ?? "Porsche", {
+          timeoutMs: DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS + 1_000,
           signal,
         }),
-      DASHBOARD_VALUATION_QUERY_TIMEOUT_MS,
-      "valuation corpus query",
-      [],
+      DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS,
+      "valuation cache query",
+      null,
     ),
     withSoftTimeout(
       (signal) =>
@@ -400,7 +379,32 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
   ).slice(0, DASHBOARD_DISPLAY_LIMIT);
 
-  const regionalValByFamily = aggregateValuationByFamily(valuationCorpus);
+  let regionalValByFamily = cachedRegionalValByFamily ?? {};
+
+  if (Object.keys(regionalValByFamily).length === 0) {
+    if (cachedRegionalValByFamily == null) {
+      console.warn(
+        "[dashboardCache] valuation cache unavailable; falling back to raw corpus scan",
+      );
+    } else {
+      console.warn(
+        "[dashboardCache] valuation cache returned no rows; falling back to raw corpus scan",
+      );
+    }
+
+    const valuationCorpus = await withSoftTimeout(
+      (signal) =>
+        fetchValuationCorpusForMake(requestedMake ?? "Porsche", 40_000, {
+          timeoutMs: DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
+      DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS,
+      "valuation corpus fallback query",
+      [],
+    );
+
+    regionalValByFamily = aggregateRegionalValuationByFamily(valuationCorpus);
+  }
 
   const result: DashboardData = {
     auctions: active.map(transformCar),

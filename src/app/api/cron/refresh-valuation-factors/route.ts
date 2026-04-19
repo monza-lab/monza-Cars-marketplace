@@ -4,6 +4,8 @@ import { getExchangeRates } from "@/lib/exchangeRates";
 import { derivePrice } from "@/lib/pricing/derivePrice";
 import { computeFactorTable } from "@/lib/pricing/computeFactorTable";
 import type { DerivedPrice } from "@/lib/pricing/types";
+import { invalidateDashboardCache } from "@/lib/dashboardCache";
+import { storeDashboardRegionalValuationByFamily } from "@/lib/dashboardValuationCache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -56,6 +58,9 @@ export async function GET(req: Request) {
   }
 
   const table = computeFactorTable(prices);
+  await storeDashboardRegionalValuationByFamily(sb, "Porsche", prices);
+  invalidateDashboardCache();
+
   console.log("[cron:refresh-valuation-factors] porsche-wide:", table.porscheWide);
   console.log("[cron:refresh-valuation-factors] families:", Object.keys(table.byFamily).length);
   for (const [fam, f] of Object.entries(table.byFamily)) {

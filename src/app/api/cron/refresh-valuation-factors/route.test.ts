@@ -5,11 +5,21 @@ const mockChain = {
   eq: vi.fn().mockReturnThis(),
   range: vi.fn().mockResolvedValueOnce({ data: [], error: null }),
 };
+const invalidateDashboardCache = vi.fn();
+const storeDashboardRegionalValuationByFamily = vi.fn(async () => undefined);
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => mockChain),
   })),
+}));
+
+vi.mock("@/lib/dashboardCache", () => ({
+  invalidateDashboardCache,
+}));
+
+vi.mock("@/lib/dashboardValuationCache", () => ({
+  storeDashboardRegionalValuationByFamily,
 }));
 
 vi.mock("@/lib/exchangeRates", async () => ({
@@ -38,5 +48,7 @@ describe("refresh-valuation-factors route", () => {
     expect(body.ok).toBe(true);
     expect(body).toHaveProperty("table.porscheWide");
     expect(body).toHaveProperty("table.byFamily");
+    expect(storeDashboardRegionalValuationByFamily).toHaveBeenCalledTimes(1);
+    expect(invalidateDashboardCache).toHaveBeenCalledTimes(1);
   });
 });

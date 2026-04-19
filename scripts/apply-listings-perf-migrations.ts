@@ -28,6 +28,7 @@ const MIGRATIONS = [
   "supabase/migrations/20260419_listings_series_column.sql",
   "supabase/migrations/20260419_listings_active_partial_index.sql",
   "supabase/migrations/20260419_listings_active_counts_mv.sql",
+  "supabase/migrations/20260420_dashboard_valuation_by_family_cache.sql",
 ];
 
 async function main() {
