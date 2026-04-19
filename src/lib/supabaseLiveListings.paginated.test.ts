@@ -20,6 +20,8 @@ const spyLte = vi.fn();
 const spyIn = vi.fn();
 const spyOrder = vi.fn();
 const spyRange = vi.fn();
+const spyFrom = vi.fn();
+const createdChains: Record<string, (...args: unknown[]) => unknown>[] = [];
 
 // Build the chainable proxy: every spy returns `chain` so calls compose.
 // `range` is the terminal — resolves the promise.
@@ -46,12 +48,16 @@ function makeChain() {
     return Promise.resolve({ data: [], error: null });
   };
 
+  createdChains.push(chain);
   return chain;
 }
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({
-    from: () => makeChain(),
+    from: (...args: unknown[]) => {
+      spyFrom(...args);
+      return makeChain();
+    },
   }),
 }));
 
@@ -70,6 +76,8 @@ describe("fetchPaginatedListings", () => {
     spyIn.mockClear();
     spyOrder.mockClear();
     spyRange.mockClear();
+    spyFrom.mockClear();
+    createdChains.length = 0;
   });
 
   afterEach(() => {
@@ -192,5 +200,17 @@ describe("fetchPaginatedListings", () => {
       (call) => typeof call[0] === "string" && call[0].includes("model.ilike."),
     );
     expect(modelOrCall).toBeUndefined();
+  });
+
+  it("case 4: default path skips the extra live-count query", async () => {
+    const { fetchPaginatedListings } = await import("./supabaseLiveListings");
+
+    await fetchPaginatedListings({
+      make: "Porsche",
+      status: "active",
+    });
+
+    expect(spyFrom).toHaveBeenCalledTimes(1);
+    expect(spyFrom).toHaveBeenCalledWith("listings");
   });
 });

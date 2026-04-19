@@ -46,15 +46,19 @@ const fetchValuationCorpusForMake = vi.fn(() =>
   ])
 )
 
+const fetchLiveListingAggregateCounts = vi.fn(async () => ({
+  liveNow: 7,
+  regionTotalsByPlatform: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
+  regionTotalsByLocation: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
+}))
+
+const fetchSeriesCounts = vi.fn(async () => ({ "992": 1 }))
+
 vi.mock("./supabaseLiveListings", () => ({
   fetchPaginatedListings,
   fetchValuationCorpusForMake,
-  fetchLiveListingAggregateCounts: vi.fn(async () => ({
-    liveNow: 7,
-    regionTotalsByPlatform: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
-    regionTotalsByLocation: { all: 7, US: 3, UK: 1, EU: 2, JP: 1 },
-  })),
-  fetchSeriesCounts: vi.fn(async () => ({ "992": 1 })),
+  fetchLiveListingAggregateCounts,
+  fetchSeriesCounts,
 }))
 
 vi.mock("./makeProfiles", () => ({
@@ -65,6 +69,9 @@ describe("dashboard cache", () => {
   beforeEach(() => {
     fetchPaginatedListings.mockClear()
     fetchValuationCorpusForMake.mockClear()
+    fetchLiveListingAggregateCounts.mockClear()
+    fetchSeriesCounts.mockClear()
+    vi.useRealTimers()
   })
 
   it("fetches dashboard listings from the direct paginated query path", async () => {
@@ -102,5 +109,30 @@ describe("dashboard cache", () => {
 
     expect(data.auctions).toHaveLength(1)
     expect(data.regionalValByFamily).toEqual({})
+  })
+
+  it("keeps listings when ancillary dashboard queries hang past the soft timeout", async () => {
+    vi.useFakeTimers()
+    fetchValuationCorpusForMake.mockImplementationOnce(
+      () => new Promise(() => {}),
+    )
+    fetchLiveListingAggregateCounts.mockImplementationOnce(
+      () => new Promise(() => {}),
+    )
+    fetchSeriesCounts.mockImplementationOnce(
+      () => new Promise(() => {}),
+    )
+
+    const { fetchDashboardDataUncached } = await import("./dashboardCache")
+    const pending = fetchDashboardDataUncached()
+
+    await vi.advanceTimersByTimeAsync(5_000)
+
+    await expect(pending).resolves.toMatchObject({
+      auctions: [expect.objectContaining({ id: "active-1" })],
+      liveNow: 1,
+      seriesCounts: {},
+      regionalValByFamily: {},
+    })
   })
 })

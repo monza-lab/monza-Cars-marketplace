@@ -1588,38 +1588,8 @@ export async function fetchPaginatedListings(options: {
     // Fetch pageSize + 1 to determine hasMore
     query = query.limit(pageSize + 1);
 
-    // Parallel HEAD count query for live-only subset (status='active').
-    // This count ignores the main query's status filter and always
-    // restricts to live listings — matches the "Latest Listings" semantics.
-    let liveCountQuery = supabase
-      .from("listings")
-      .select("id", { count: "planned", head: true })
-      .eq("make", targetMake)
-      .eq("status", LIVE_DB_STATUS_VALUES[0]);
-
-    liveCountQuery = applyPaginatedListingFilters(liveCountQuery, {
-      series: options.series,
-      modelPatterns: options.modelPatterns,
-      region: options.region,
-      platform: options.platform,
-      query: options.query,
-    });
-
-    // Exclude stale auction rows whose end_time passed (mirrors main query).
-    liveCountQuery = liveCountQuery.or(
-      "end_time.is.null,end_time.gt." + new Date().toISOString(),
-    );
-
-    const [rowsResult, liveCountResult] = await Promise.all([
-      query,
-      liveCountQuery,
-    ]);
-
+    const rowsResult = await query;
     const { data, error, count } = rowsResult;
-    const totalLiveCount =
-      liveCountResult.error || typeof liveCountResult.count !== "number"
-        ? null
-        : liveCountResult.count;
 
     if (error) {
       console.error("[supabaseLiveListings] fetchPaginatedListings failed:", error.message);
@@ -1638,6 +1608,10 @@ export async function fetchPaginatedListings(options: {
       : null;
 
     const totalCount = typeof count === "number" ? count : null;
+    const totalLiveCount =
+      options.status === "all"
+        ? null
+        : totalCount;
     return { cars, hasMore, nextCursor, totalCount, totalLiveCount };
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPaginatedListings threw:", err);
