@@ -42,6 +42,10 @@ const IMPORT_COUNTRIES = ["us", "germany", "uk", "japan"]
 
 const KNOWLEDGE_SLUGS = [
   "ims-bearing",
+  "porsche-paint-codes",
+  "porsche-air-cooled-vs-water-cooled",
+  "porsche-rust-inspection",
+  "porsche-service-intervals",
   "mezger-engine",
   "porsche-certificate-of-authenticity",
   "porsche-pre-purchase-inspection",
