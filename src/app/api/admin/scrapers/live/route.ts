@@ -8,7 +8,7 @@ import {
   getActiveRuns,
 } from "@/features/scrapers/common/monitoring";
 
-const ADMIN_EMAILS = ["caposk8@hotmail.com"];
+const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
 export const dynamic = "force-dynamic";
 

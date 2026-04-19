@@ -12,7 +12,7 @@ import {
 } from "@/features/scrapers/common/monitoring";
 import ScrapersDashboardClient from "./ScrapersDashboardClient";
 
-const ADMIN_EMAILS = ["caposk8@hotmail.com"];
+const ADMIN_EMAILS = ["caposk8@hotmail.com", "caposk817@gmail.com"];
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
