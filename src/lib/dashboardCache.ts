@@ -67,7 +67,6 @@ export type DashboardAuction = {
     bidTargetLow: number | null;
     bidTargetHigh: number | null;
     confidence: string | null;
-    investmentGrade: string | null;
     appreciationPotential: string | null;
     keyStrengths: string[];
     redFlags: string[];
@@ -139,17 +138,7 @@ function transformCar(car: CollectorCar): DashboardAuction {
     region: car.region,
     category: car.category,
     originalCurrency: car.originalCurrency ?? null,
-    analysis: car.investmentGrade
-      ? {
-          bidTargetLow: null,
-          bidTargetHigh: null,
-          confidence: null,
-          investmentGrade: car.investmentGrade,
-          appreciationPotential: car.trend,
-          keyStrengths: [],
-          redFlags: [],
-        }
-      : null,
+    analysis: null,
     priceHistory: [],
     fairValueByRegion: car.fairValueByRegion,
     soldPriceUsd: car.soldPriceUsd ?? null,

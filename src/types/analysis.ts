@@ -1,5 +1,4 @@
 export type AnalysisConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
-export type InvestmentGrade = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'SPECULATIVE';
 export type MarketTrend = 'APPRECIATING' | 'STABLE' | 'DECLINING';
 
 export interface Analysis {
@@ -14,7 +13,6 @@ export interface Analysis {
   yearlyMaintenance?: number | null;
   insuranceEstimate?: number | null;
   majorServiceCost?: number | null;
-  investmentGrade?: InvestmentGrade | null;
   appreciationPotential?: string | null;
   rawAnalysis?: AIAnalysisResponse | null;
   createdAt: string;
@@ -41,7 +39,6 @@ export interface AIAnalysisResponse {
     };
   };
   investmentOutlook: {
-    grade: InvestmentGrade;
     trend: MarketTrend;
     reasoning: string;
   };

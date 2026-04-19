@@ -51,7 +51,6 @@ export interface ListingReport {
   primary_tier: number | null
   primary_region: string | null
   regional_stats: RegionalMarketStats[] | null
-  investment_grade: string | null
   confidence: string | null
   red_flags: string[] | null
   key_strengths: string[] | null

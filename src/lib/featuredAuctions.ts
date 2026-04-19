@@ -26,7 +26,6 @@ export interface FeaturedAuction {
   interiorColor: string
   location: string
   images: string[]
-  investmentGrade: "AAA" | "AA" | "A" | "B"
   provenance: string
   highlight: string
   verified: boolean
@@ -60,7 +59,6 @@ export const featuredAuctions: FeaturedAuction[] = [
     images: [
       "https://bringatrailer.com/wp-content/uploads/2025/01/1988_porsche_959-komfort_IMG_2863-01999.jpeg",
     ],
-    investmentGrade: "AAA",
     provenance: "One of 292 Komfort examples. Sequential twin turbos, all-wheel drive, adjustable suspension.",
     highlight: "Sold for $1,254,959 — The legend that defined supercar engineering",
     verified: true,
@@ -93,7 +91,6 @@ export const featuredAuctions: FeaturedAuction[] = [
     images: [
       "https://cdn.rmsothebys.com/c/e/7/d/f/c/ce7dfc037b433b1a7d7041ce3256ac387da3fcdf.webp",
     ],
-    investmentGrade: "AAA",
     provenance: "Ferrari Classiche Certified. Matching numbers. One of 1,311 produced.",
     highlight: "Sold for £1.97M — The ultimate analog supercar, Classiche certified",
     verified: true,
@@ -126,7 +123,6 @@ export const featuredAuctions: FeaturedAuction[] = [
     images: [
       "https://bringatrailer.com/wp-content/uploads/2024/01/2005_porsche_carrera-gt_IMG-14503-05933-scaled.jpg",
     ],
-    investmentGrade: "AAA",
     provenance: "7,000 miles. Recent service including oil change, brake/clutch fluid flush.",
     highlight: "Sold for $1.2M — The last true analog Porsche supercar",
     verified: true,

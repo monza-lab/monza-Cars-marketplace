@@ -73,7 +73,6 @@ export interface Comparable {
 }
 
 export type AnalysisConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
-export type InvestmentGrade = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'SPECULATIVE';
 
 export interface Analysis {
   id: string;
@@ -87,7 +86,6 @@ export interface Analysis {
   yearlyMaintenance?: number | null;
   insuranceEstimate?: number | null;
   majorServiceCost?: number | null;
-  investmentGrade?: InvestmentGrade | null;
   appreciationPotential?: string | null;
   rawAnalysis?: Record<string, unknown> | null;
   createdAt: string;
