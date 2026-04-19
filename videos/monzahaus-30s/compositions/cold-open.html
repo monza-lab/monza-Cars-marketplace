@@ -1,0 +1,164 @@
+<template id="cold-open-template">
+  <div data-composition-id="cold-open" data-width="1080" data-height="1920" data-start="0" data-duration="2.2">
+    <img class="bg-photo" id="s1-photo" src="../assets/photos/lineage_992_769465e3.jpg" />
+    <div class="warm-tint"></div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="brand-mark" id="s1-logo">Monza<span class="haus">Haus</span></div>
+    <div class="hook-layer">
+      <div class="hook-eyebrow" id="s1-eyebrow">914 Porsches · live inventory</div>
+      <div class="hook-line" id="s1-line-a">
+        <span>FOLLOW TO SEE</span>
+        <span>THE ONE PORSCHE</span>
+      </div>
+      <div class="hook-line hook-line-b" id="s1-line-b">
+        <span>WE&rsquo;D ACTUALLY</span>
+        <span>BUY RIGHT NOW.</span>
+      </div>
+    </div>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600;700&family=Karla:wght@300;400;500;600;700;800&display=swap');
+
+      [data-composition-id="cold-open"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: #0E0A0C;
+        overflow: hidden;
+      }
+      [data-composition-id="cold-open"] .bg-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 45%;
+        will-change: transform, opacity;
+      }
+      [data-composition-id="cold-open"] .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at center, transparent 40%, rgba(14,10,12,0.40) 80%, rgba(14,10,12,0.78) 100%),
+          linear-gradient(to top, rgba(14,10,12,0.80) 0%, rgba(14,10,12,0.18) 35%, transparent 55%, transparent 80%, rgba(14,10,12,0.45) 100%);
+      }
+      [data-composition-id="cold-open"] .warm-tint {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 50% 30%, rgba(212,115,138,0.10), transparent 70%);
+        mix-blend-mode: screen;
+      }
+      [data-composition-id="cold-open"] .grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.15;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91  0 0 0 0 0.89  0 0 0 0 0.87  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        mix-blend-mode: overlay;
+      }
+      [data-composition-id="cold-open"] .brand-mark {
+        position: absolute;
+        top: 96px;
+        left: 80px;
+        font-family: 'Cormorant', serif;
+        font-weight: 500;
+        font-size: 54px;
+        line-height: 1;
+        letter-spacing: 0.002em;
+        color: #E8E2DE;
+        opacity: 0;
+        text-shadow: 0 4px 18px rgba(0,0,0,0.7);
+      }
+      [data-composition-id="cold-open"] .brand-mark .haus {
+        color: #D4738A;
+      }
+      [data-composition-id="cold-open"] .hook-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      [data-composition-id="cold-open"] .hook-eyebrow {
+        position: absolute;
+        left: 80px;
+        bottom: 600px;
+        font-family: 'Karla', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.36em;
+        font-size: 20px;
+        color: #D4738A;
+        opacity: 0;
+      }
+      [data-composition-id="cold-open"] .hook-line {
+        position: absolute;
+        left: 80px;
+        right: 80px;
+        bottom: 220px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-family: 'Karla', sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        font-size: 96px;
+        line-height: 0.98;
+        color: #FDFBF9;
+        text-shadow: 0 12px 42px rgba(0,0,0,0.88);
+        opacity: 0;
+        will-change: opacity, transform, clip-path;
+      }
+      [data-composition-id="cold-open"] .hook-line-b {
+        clip-path: inset(0 100% 0 0);
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        const sel = (s) => '[data-composition-id="cold-open"] ' + s;
+
+        // Kinetic push-in over 2.2s.
+        tl.fromTo(sel('#s1-photo'),
+          { scale: 1.08 },
+          { scale: 1.00, duration: 2.2, ease: 'power1.out' },
+        0);
+
+        // Logo mark drops in first.
+        tl.fromTo(sel('#s1-logo'),
+          { y: -18, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.35, ease: 'expo.out' },
+        0.05);
+
+        // Eyebrow just above the hook lines (always-live proof point).
+        tl.fromTo(sel('#s1-eyebrow'),
+          { y: 12, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.35, ease: 'expo.out' },
+        0.15);
+
+        // Line A slams in.
+        tl.fromTo(sel('#s1-line-a'),
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.4, ease: 'expo.out' },
+        0.25);
+        // Line A fades as Line B enters.
+        tl.to(sel('#s1-line-a'),
+          { opacity: 0, duration: 0.25, ease: 'power1.inOut' },
+        0.9);
+
+        // Line B wipes from left via clip-path.
+        tl.set(sel('#s1-line-b'), { opacity: 1 }, 0.9);
+        tl.to(sel('#s1-line-b'),
+          { clipPath: 'inset(0 0% 0 0)', duration: 0.55, ease: 'expo.out' },
+        0.9);
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines['cold-open'] = tl;
+      })();
+    </script>
+  </div>
+</template>

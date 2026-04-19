@@ -1,0 +1,168 @@
+<template id="lineage-template">
+  <div data-composition-id="lineage" data-width="1080" data-height="1920" data-start="0" data-duration="6.5">
+    <img class="lineage-photo" id="s2-p1" src="../assets/photos/lineage_356_9fbd5bdd.jpeg" />
+    <img class="lineage-photo" id="s2-p2" src="../assets/photos/lineage_930_a4d3d2f7.jpg" />
+    <img class="lineage-photo" id="s2-p3" src="../assets/photos/lineage_964_76b4d458.jpg" />
+    <img class="lineage-photo" id="s2-p4" src="../assets/photos/lineage_993_ace0559d.jpg" />
+    <img class="lineage-photo" id="s2-p5" src="../assets/photos/lineage_996_692a8076.jpeg" />
+    <img class="lineage-photo" id="s2-p6" src="../assets/photos/lineage_997_3fcaa000.png" />
+    <img class="lineage-photo" id="s2-p7" src="../assets/photos/lineage_991_417deeb3.jpeg" />
+    <img class="lineage-photo" id="s2-p8" src="../assets/photos/lineage_992_769465e3.jpg" />
+    <div class="warm-tint"></div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="top-tag" id="s2-tag">Lineage &middot; Porsche</div>
+    <div class="series-badge" id="s2-b1">
+      <div class="series-code">356</div>
+      <div class="series-meta">1948 &mdash; 1965</div>
+    </div>
+    <div class="series-badge" id="s2-b2">
+      <div class="series-code">930</div>
+      <div class="series-meta">1975 &mdash; 1989</div>
+    </div>
+    <div class="series-badge" id="s2-b3">
+      <div class="series-code">964</div>
+      <div class="series-meta">1989 &mdash; 1994</div>
+    </div>
+    <div class="series-badge" id="s2-b4">
+      <div class="series-code">993</div>
+      <div class="series-meta">1993 &mdash; 1998</div>
+    </div>
+    <div class="series-badge" id="s2-b5">
+      <div class="series-code">996</div>
+      <div class="series-meta">1997 &mdash; 2005</div>
+    </div>
+    <div class="series-badge" id="s2-b6">
+      <div class="series-code">997</div>
+      <div class="series-meta">2004 &mdash; 2012</div>
+    </div>
+    <div class="series-badge" id="s2-b7">
+      <div class="series-code">991</div>
+      <div class="series-meta">2011 &mdash; 2019</div>
+    </div>
+    <div class="series-badge" id="s2-b8">
+      <div class="series-code">992</div>
+      <div class="series-meta">2018 &mdash; present</div>
+    </div>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600;700&family=Karla:wght@300;400;500;600;700&display=swap');
+
+      [data-composition-id="lineage"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        background: #0E0A0C;
+        overflow: hidden;
+      }
+      [data-composition-id="lineage"] .lineage-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 45%;
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+      /* Lighter gradient — car must be prominently visible. */
+      [data-composition-id="lineage"] .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at center, transparent 48%, rgba(14,10,12,0.35) 82%, rgba(14,10,12,0.80) 100%),
+          linear-gradient(to top, rgba(14,10,12,0.78) 0%, rgba(14,10,12,0.20) 30%, transparent 48%, transparent 82%, rgba(14,10,12,0.40) 100%);
+      }
+      [data-composition-id="lineage"] .warm-tint {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 50% 30%, rgba(212,115,138,0.08), transparent 70%);
+        mix-blend-mode: screen;
+      }
+      [data-composition-id="lineage"] .grain {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.14;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.91  0 0 0 0 0.89  0 0 0 0 0.87  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        mix-blend-mode: overlay;
+      }
+      [data-composition-id="lineage"] .top-tag {
+        position: absolute;
+        left: 80px;
+        top: 120px;
+        font-family: 'Karla', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.36em;
+        font-size: 18px;
+        color: rgba(232,226,222,0.75);
+        opacity: 0;
+      }
+      [data-composition-id="lineage"] .series-badge {
+        position: absolute;
+        left: 80px;
+        bottom: 180px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+      [data-composition-id="lineage"] .series-code {
+        font-family: 'Cormorant', serif;
+        font-weight: 400;
+        font-style: italic;
+        font-size: 220px;
+        line-height: 0.85;
+        color: #E8E2DE;
+        letter-spacing: -0.02em;
+        text-shadow: 0 8px 40px rgba(0,0,0,0.85);
+      }
+      [data-composition-id="lineage"] .series-meta {
+        font-family: 'Karla', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        font-size: 20px;
+        color: #D4738A;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const tl = gsap.timeline({ paused: true });
+        const sel = (s) => '[data-composition-id="lineage"] ' + s;
+
+        // 8 families at 0.80s per beat = 6.4s + intro tag.
+        const beat = 0.80;
+        const photos = ['#s2-p1','#s2-p2','#s2-p3','#s2-p4','#s2-p5','#s2-p6','#s2-p7','#s2-p8'];
+        const badges = ['#s2-b1','#s2-b2','#s2-b3','#s2-b4','#s2-b5','#s2-b6','#s2-b7','#s2-b8'];
+
+        tl.from(sel('#s2-tag'), { y: 10, opacity: 0, duration: 0.4, ease: 'expo.out' }, 0.05);
+
+        for (let i = 0; i < photos.length; i++) {
+          const tIn = i * beat;
+          if (i > 0) {
+            tl.to(sel(photos[i - 1]), { opacity: 0, duration: 0.28, ease: 'power1.inOut' }, tIn);
+            tl.to(sel(badges[i - 1]), { opacity: 0, duration: 0.24, ease: 'power1.inOut' }, tIn);
+          }
+          tl.fromTo(sel(photos[i]),
+            { opacity: 0, scale: 1.06 },
+            { opacity: 1, scale: 1.0, duration: 0.45, ease: 'power2.inOut' },
+          tIn);
+          tl.fromTo(sel(badges[i]),
+            { opacity: 0, y: 18 },
+            { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out' },
+          tIn + 0.08);
+        }
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines['lineage'] = tl;
+      })();
+    </script>
+  </div>
+</template>
