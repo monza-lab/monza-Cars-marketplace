@@ -1308,6 +1308,9 @@
       "subtitle": "Fragen Sie den Verkäufer vor dem Kauf danach",
       "empty": "Alle wichtigen Signale wurden in diesem Inserat erkannt"
     },
+    "verdict": {
+      "factualSummary": "Preis liegt bei {deltaPercent}% gegenüber dem fahrzeugspezifischen Fair Value. {detected} von {total} wertrelevanten Signalen erkannt."
+    },
     "questions": {
       "ask_for_service_records": "Bitten Sie den Verkäufer um dokumentierte Servicehistorie (Daten, Laufleistung und Stempel).",
       "remaining_factory_warranty": "Bestätigen Sie eine verbleibende Werks- oder verlängerte Garantie.",

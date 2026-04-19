@@ -1308,6 +1308,9 @@
       "subtitle": "Pregúntale al vendedor antes de comprar",
       "empty": "Todas las señales de alto valor fueron detectadas"
     },
+    "verdict": {
+      "factualSummary": "El precio está {deltaPercent}% vs. el valor justo específico del vehículo. {detected} de {total} señales de alto valor detectadas."
+    },
     "questions": {
       "ask_for_service_records": "Pídele al vendedor historial de servicio documentado (fechas, kilometraje y sellos).",
       "remaining_factory_warranty": "Confirma cualquier garantía de fábrica o extendida vigente.",

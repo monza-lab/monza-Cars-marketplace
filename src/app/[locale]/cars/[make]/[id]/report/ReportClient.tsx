@@ -37,7 +37,11 @@ import {
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
-import type { ListingReport, ModelMarketStats, RegionalMarketStats } from "@/lib/reports/types"
+import type { HausReport } from "@/lib/fairValue/types"
+import type { ModelMarketStats, RegionalMarketStats } from "@/lib/reports/types"
+import { SignalsDetectedSection } from "@/components/report/SignalsDetectedSection"
+import { SignalsMissingSection } from "@/components/report/SignalsMissingSection"
+import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
@@ -125,19 +129,22 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 export function ReportClient({ car, similarCars, existingReport, marketStats }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
-  existingReport: ListingReport | null
+  existingReport: HausReport | null
   marketStats: ModelMarketStats | null
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
 
   // Use existing report or the one just generated
-  const report = generatedReport ?? existingReport
-  const hasLLM = !!(report?.investment_grade)
-  const hasStats = !!(marketStats && marketStats.totalDataPoints > 0) || !!(report?.regional_stats?.length)
-  const regions: RegionalMarketStats[] = report?.regional_stats ?? marketStats?.regions ?? []
+  // TODO(Task 31): useReport hook still returns legacy ListingReport; cast for now until refactor.
+  const report: HausReport | null = (generatedReport as unknown as HausReport | null) ?? existingReport
+  const hasSignals = !!(report?.signals_extracted_at)
+  const hasStats = !!(marketStats && marketStats.totalDataPoints > 0)
+  const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
+  const tFairValue = useTranslations("report.fairValue")
+  const tVerdict = useTranslations("report.verdict")
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
   const { resolvedTheme } = useTheme()
@@ -218,21 +225,19 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   // ─── COMPUTED DATA (DB-only — no fabricated fallbacks) ───
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // Red flags & questions: from report only
-  const flags = report?.red_flags?.length ? report.red_flags : []
-  const questions = report?.critical_questions?.length ? report.critical_questions : []
-  const strengths = report?.key_strengths?.length ? report.key_strengths : []
+  // Red flags & questions: legacy fields not in HausReport — derived from signals_missing going forward.
+  // For now, fall back to empty arrays until signal→question mapping is wired.
+  const flags: string[] = []
+  const questions: string[] = []
+  const strengths: string[] = []
   const hasDbRiskData = flags.length > 0
   const hasDbQuestions = questions.length > 0
 
-  // Ownership costs: from report only
-  const hasOwnershipData = !!(report?.insurance_estimate || report?.yearly_maintenance)
-  const costs = hasOwnershipData ? {
-    insurance: report!.insurance_estimate ?? 0,
-    maintenance: report!.yearly_maintenance ?? 0,
-    majorService: report!.major_service_cost ?? 0,
-  } : null
-  const totalAnnualCost = costs ? costs.insurance + costs.maintenance : 0
+  // Ownership costs: not in HausReport v1 — shown as "not available" block.
+  const hasOwnershipData = false
+  type CostBreakdown = { insurance: number; maintenance: number; majorService: number }
+  const costs: CostBreakdown | null = hasOwnershipData ? { insurance: 0, maintenance: 0, majorService: 0 } : null
+  const totalAnnualCost = 0
 
   // No fake comparables — regional stats replace this
   const comps: Array<{ title: string; price: number; date: string; platform: string; delta: number }> = []
@@ -256,18 +261,25 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
     )
   )
 
-  // Risk score: from report confidence, fallback to grade-based
-  const investmentGrade = report?.investment_grade ?? car.investmentGrade
-  const riskScore = report?.confidence === "HIGH" ? 25 :
-    report?.confidence === "MEDIUM" ? 45 :
-    report?.confidence === "LOW" ? 70 :
-    car.investmentGrade === "AAA" ? 25 : car.investmentGrade === "AA" ? 35 : car.investmentGrade === "A" ? 50 : 65
+  // Risk score: derived from signal completeness (detected / (detected + missing)).
+  // Higher signal coverage ⇒ lower uncertainty ⇒ lower risk score.
+  const detectedCount = report?.signals_detected.length ?? 0
+  const missingCount = report?.signals_missing.length ?? 0
+  const totalSignalCount = detectedCount + missingCount
+  const signalCoverage = totalSignalCount > 0 ? detectedCount / totalSignalCount : 0
+  const riskScore = hasSignals
+    ? Math.round(100 - signalCoverage * 70) // 30–100 range
+    : 50 // neutral default when signals not yet extracted
 
-  // Verdict logic — only when LLM data exists
+  // Verdict logic — purely factual: based on price delta vs specific-car fair value midpoint.
+  const specificMid = report?.specific_car_fair_value_mid ?? 0
   const isAboveFair = car.price > 0 && fairHigh > 0 && car.price > fairHigh
-  const verdict = !hasLLM ? null :
-    isBelowFair && (report?.investment_grade === "AAA" || report?.investment_grade === "AA") ? "buy" :
-    isAboveFair ? "watch" : "hold"
+  const deltaVsSpecific = hasSignals && specificMid > 0
+    ? Math.round(((car.currentBid - specificMid) / specificMid) * 100)
+    : 0
+  const verdict = !hasSignals ? null :
+    deltaVsSpecific <= -5 ? "buy" :
+    deltaVsSpecific >= 5 ? "watch" : "hold"
 
   // Arbitrage: difference between cheapest and most expensive region
   const cheapestRegionAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
@@ -443,7 +455,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       const rawThesis = stripHtml(car.thesis) || ""
       const isGenericThesis = !rawThesis || rawThesis.length < 50 || /Live auction listing from|Live Data/i.test(rawThesis)
       const pdfThesis = isGenericThesis
-        ? `${pdfTitle} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}–${fmtPdf(fairHigh, regionRange.currency)}. Investment Grade: ${car.investmentGrade}.`
+        ? `${pdfTitle} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}–${fmtPdf(fairHigh, regionRange.currency)}.`
         : rawThesis
 
       // Fetch car images for PDF embedding (up to 6)
@@ -477,7 +489,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.text(tLines, M, 87)
       const tEnd = 87 + tLines.length * 11
       pdf.setFontSize(9); gray()
-      pdf.text(`Grade: ${car.investmentGrade}    Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}`, M, tEnd + 8)
+      pdf.text(`Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}    Signals: ${detectedCount}/${totalSignalCount || "—"}`, M, tEnd + 8)
       const vy = tEnd + 18
       const vBadgeClr = verdict === "buy" ? [52, 211, 153] : verdict === "hold" ? [251, 191, 36] : pal.primary
       pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
@@ -587,7 +599,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       let y = sectionTitle(1, "Executive Summary", 16)
       // 6-metric card grid (3 cols x 2 rows)
       const mData = [
-        { lbl: "INVESTMENT GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
+        { lbl: "SIGNALS DETECTED", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
         { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0],pal.primary[1],pal.primary[2]] },
         { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
         { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
@@ -804,14 +816,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.addPage(); bg(); chrome("Performance & Returns")
       y = sectionTitle(4, "Performance & Returns", 16)
 
-      // Investment Grade Breakdown card
+      // Signal Synthesis card (replaces legacy Investment Grade Breakdown)
       card(M, y, CW, 32)
-      pdf.setFontSize(6); dim(); pdf.text("INVESTMENT GRADE BREAKDOWN", M + 4, y + 5)
-      const gradeLabel = car.investmentGrade === "AAA" ? "Exceptional" : car.investmentGrade === "AA" ? "Strong" : car.investmentGrade === "A" ? "Solid" : "Speculative"
-      const gradeClr = car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : car.investmentGrade === "A" ? [251,191,36] : [248,113,113]
-      pdf.setFontSize(22); pdf.setTextColor(gradeClr[0], gradeClr[1], gradeClr[2])
-      pdf.text(car.investmentGrade, M + 4, y + 18)
-      pdf.setFontSize(10); pdf.text(gradeLabel, M + 30, y + 18)
+      pdf.setFontSize(6); dim(); pdf.text("SIGNAL SYNTHESIS", M + 4, y + 5)
+      const synthesisLabel = detectedCount >= 5 ? "Well-Documented" : detectedCount >= 2 ? "Partial Coverage" : totalSignalCount > 0 ? "Sparse" : "Pending"
+      const synthesisClr = detectedCount >= 5 ? [52,211,153] : detectedCount >= 2 ? [96,165,250] : [251,191,36]
+      pdf.setFontSize(22); pdf.setTextColor(synthesisClr[0], synthesisClr[1], synthesisClr[2])
+      pdf.text(`${detectedCount}/${totalSignalCount || "—"}`, M + 4, y + 18)
+      pdf.setFontSize(10); pdf.text(synthesisLabel, M + 40, y + 18)
       pdf.setFontSize(7); gray()
       pdf.text(`Price Position: ${pricePosition.toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
       y += 38
@@ -882,8 +894,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
 
-      // Key strengths card (Collectibility / Why Buy)
-      const keyStrengths = report?.key_strengths ?? []
+      // Key strengths card (Collectibility / Why Buy) — not available on HausReport v1
+      const keyStrengths: string[] = []
       if (keyStrengths.length > 0) {
         const ksH = 7 + keyStrengths.length * 7
         card(M, y, CW, ksH)
@@ -988,10 +1000,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       pdf.addPage(); bg(); chrome("Market Context")
       y = sectionTitle(8, "Market Context", 16)
 
-      // Market overview card — trend + total data points
-      const trendPct = report?.trend_percent ?? 0
-      const trendDir = report?.trend_direction ?? car.trend ?? "stable"
-      const totalComps = report?.total_comparable_sales ?? similarCars.length
+      // Market overview card — trend + total data points (HausReport v1 doesn't include trend; fall back to car.trend).
+      const trendPct = 0
+      const trendDir = car.trend ?? "stable"
+      const totalComps = report?.comparables_count ?? similarCars.length
       const mktOverviewH = 28
       card(M, y, CW, mktOverviewH)
       pdf.setFontSize(6); dim(); pdf.text("MARKET OVERVIEW", M + 4, y + 5)
@@ -1052,10 +1064,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       similarCars.forEach((sc, i) => {
         card(M, y, CW, 16)
         pdf.setFontSize(8); white(); pdf.text(sc.car.title, M + 4, y + 5)
-        // Grade badge
-        const gClr = sc.car.investmentGrade === "AAA" ? [52,211,153] : sc.car.investmentGrade === "AA" ? [96,165,250] : [251,191,36]
-        badge(sc.car.investmentGrade, M + 4, y + 10, gClr[0] > 200 ? 20 : 15, gClr[1] > 150 ? 35 : 25, gClr[2] > 150 ? 25 : 15, gClr[0], gClr[1], gClr[2])
-        pdf.setFontSize(7); gray(); pdf.text(sc.car.trend, M + 20, y + 10)
+        pdf.setFontSize(7); gray(); pdf.text(sc.car.trend, M + 4, y + 10)
         // Price + bar
         pdf.setFontSize(9); pink(); pdf.text(`$${sc.car.currentBid.toLocaleString()}`, W - M - 4, y + 5, { align: "right" })
         const sbPct = sc.car.currentBid / maxSimBid
@@ -1075,7 +1084,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       y += 25
       // Verdict metrics card (3 cols)
       const vMetrics = [
-        { lbl: "GRADE", val: car.investmentGrade, clr: car.investmentGrade === "AAA" ? [52,211,153] : car.investmentGrade === "AA" ? [96,165,250] : [251,191,36] },
+        { lbl: "SIGNALS", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
         { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
         { lbl: "RISK", val: `${riskScore}/100`, clr: rsClr },
       ]
@@ -1227,7 +1236,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         ["Category", car.category],
         [""],
         ["INVESTMENT ANALYSIS"],
-        ["Investment Grade", car.investmentGrade],
+        ["Signals Detected", `${detectedCount}/${totalSignalCount || "—"}`],
         ["Verdict", (verdict ?? "hold").toUpperCase()],
         ["Fair Value Low (USD)", fairLow],
         ["Fair Value High (USD)", fairHigh],
@@ -1244,12 +1253,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         ...(report ? [
           [""],
           ["MARKET DATA (from report)"],
-          ["Avg Price (USD)", report.avg_price ?? "N/A"],
           ["Median Price (USD)", report.median_price ?? "N/A"],
           ["Fair Value Low (USD)", report.fair_value_low ?? "N/A"],
           ["Fair Value High (USD)", report.fair_value_high ?? "N/A"],
-          ["Total Comparable Sales", report.total_comparable_sales ?? 0],
-          ["Trend", report.trend_direction ?? "N/A"],
+          ["Specific-Car Fair Value Low", report.specific_car_fair_value_low ?? "N/A"],
+          ["Specific-Car Fair Value Mid", report.specific_car_fair_value_mid ?? "N/A"],
+          ["Specific-Car Fair Value High", report.specific_car_fair_value_high ?? "N/A"],
+          ["Comparables Count", report.comparables_count ?? 0],
+          ["Comparable Layer Used", report.comparable_layer_used ?? "N/A"],
         ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
@@ -1305,7 +1316,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
         const simRows: (string | number)[][] = [
           ["SIMILAR VEHICLES ON MARKET"],
           [""],
-          ["Title", "Year", "Make", "Model", "Price (USD)", "Grade", "Trend", "Platform", "Mileage", "Match Score", "Match Reasons"],
+          ["Title", "Year", "Make", "Model", "Price (USD)", "Trend", "Platform", "Mileage", "Match Score", "Match Reasons"],
         ]
         for (const sc of similarCars) {
           simRows.push([
@@ -1314,7 +1325,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
             sc.car.make,
             sc.car.model,
             sc.car.currentBid,
-            sc.car.investmentGrade,
             sc.car.trend,
             sc.car.platform.replace(/_/g, " "),
             sc.car.mileage,
@@ -1558,15 +1568,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
           </Link>
           <h1 className="text-[13px] font-bold text-foreground mt-2 leading-tight">{car.title}</h1>
           <div className="flex items-center gap-2 mt-1.5">
-            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-              investmentGrade === "AAA" || investmentGrade === "AA"
-                ? "bg-positive/15 text-positive border border-positive/20"
-                : investmentGrade === "A" || investmentGrade === "BBB"
-                  ? "bg-primary/15 text-primary border border-primary/20"
-                  : investmentGrade === "BB" || investmentGrade === "B"
-                    ? "bg-yellow-500/15 text-yellow-500 border border-yellow-500/20"
-                    : "bg-destructive/15 text-destructive border border-destructive/20"
-            }`}>{investmentGrade}</span>
             <span className="text-[10px] text-muted-foreground">{t("title")}</span>
           </div>
         </div>
@@ -1668,18 +1669,23 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SectionHeader id="summary" title={t("sections.summary")} />
 
-              {/* 6-metric grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {/* Investment Grade */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.investmentGrade")}</span>
-                  <p className={`text-[28px] font-black mt-1 ${
-                    investmentGrade === "AAA" || investmentGrade === "AA" ? "text-positive" :
-                    investmentGrade === "A" || investmentGrade === "BBB" ? "text-primary" :
-                    investmentGrade === "BB" || investmentGrade === "B" ? "text-yellow-500" :
-                    "text-destructive"
-                  }`}>{investmentGrade}</p>
+              {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
+              {report && (
+                <div className="rounded-2xl border border-border bg-card p-5 mb-4">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    {tFairValue("specificCarTitle")}
+                  </p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
+                    {formatUsd(report.specific_car_fair_value_low)} – {formatUsd(report.specific_car_fair_value_high)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {tFairValue("baselineSubtitle", { count: report.comparables_count })}
+                  </p>
                 </div>
+              )}
+
+              {/* 5-metric grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {/* Current Price */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
@@ -1893,6 +1899,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   </div>
                 </div>
 
+                {/* Modifiers applied list — adjustments to specific-car fair value */}
+                <div className="mb-4">
+                  <ModifiersAppliedList modifiers={report?.modifiers_applied ?? []} />
+                </div>
+
                 {/* Arbitrage alert */}
                 {hasArbitrage && (
                   <div className="rounded-xl bg-positive/[0.05] border border-positive/20 p-5 mb-4">
@@ -1931,6 +1942,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   </div>
                 </div>
               </PaywallSection>
+            </section>
+
+            {/* ═══════════════════════════════════════
+                §3b — SIGNALS DETECTED
+                ═══════════════════════════════════════ */}
+            <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
+              <SignalsDetectedSection signals={report?.signals_detected ?? []} />
             </section>
 
             {/* ═══════════════════════════════════════
@@ -1998,15 +2016,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                                       THIS CAR
                                     </span>
                                   )}
-                                  <span className={`shrink-0 px-1.5 py-0.5 rounded text-[7px] font-bold ${
-                                    c.investmentGrade === "AAA"
-                                      ? "bg-positive/15 text-positive border border-positive/20"
-                                      : c.investmentGrade === "AA"
-                                        ? "bg-blue-500/15 text-blue-400 border border-blue-400/20"
-                                        : "bg-amber-500/15 text-destructive border border-amber-400/20"
-                                  }`}>
-                                    {c.investmentGrade}
-                                  </span>
                                 </div>
                                 <span className={`text-[12px] tabular-nums font-semibold shrink-0 ml-3 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>
                                   {formatPrice(c.currentBid)}
@@ -2320,12 +2329,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                         <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
-                          <span className={`text-[9px] font-bold ${
-                            sc.car.investmentGrade === "AAA" || sc.car.investmentGrade === "AA" ? "text-positive" :
-                            sc.car.investmentGrade === "A" || sc.car.investmentGrade === "BBB" ? "text-primary" :
-                            sc.car.investmentGrade === "BB" || sc.car.investmentGrade === "B" ? "text-yellow-500" :
-                            "text-destructive"
-                          }`}>{sc.car.investmentGrade}</span>
                           <span className="text-[10px] text-positive">{sc.car.trend}</span>
                         </div>
                         {sc.matchReasons.length > 0 && (
@@ -2343,6 +2346,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   ))}
                 </div>
               </PaywallSection>
+            </section>
+
+            {/* ═══════════════════════════════════════
+                §9b — SIGNALS MISSING (pre-verdict)
+                ═══════════════════════════════════════ */}
+            <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
+              <SignalsMissingSection signals={report?.signals_missing ?? []} />
             </section>
 
             {/* ═══════════════════════════════════════
@@ -2381,13 +2391,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
 
                   <div className="flex items-center justify-center gap-4 mb-6">
                     <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Grade</span>
-                      <p className={`text-[20px] font-black ${
-                        investmentGrade === "AAA" || investmentGrade === "AA" ? "text-positive" :
-                        investmentGrade === "A" || investmentGrade === "BBB" ? "text-primary" :
-                        investmentGrade === "BB" || investmentGrade === "B" ? "text-yellow-500" :
-                        "text-destructive"
-                      }`}>{investmentGrade}</p>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Signals</span>
+                      <p className={`text-[20px] font-black ${detectedCount > 0 ? "text-positive" : "text-muted-foreground"}`}>
+                        {detectedCount}/{totalSignalCount || "—"}
+                      </p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
@@ -2404,6 +2411,17 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                       }`}>{riskScore}/100</p>
                     </div>
                   </div>
+
+                  {/* Factual synthesis (replaces grade narrative) */}
+                  {report && (
+                    <p className="text-sm text-foreground text-center mb-4">
+                      {tVerdict("factualSummary", {
+                        deltaPercent: deltaVsSpecific,
+                        detected: detectedCount,
+                        total: totalSignalCount,
+                      })}
+                    </p>
+                  )}
 
                   {/* Strategy */}
                   <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
@@ -2425,9 +2443,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
                   <div className="space-y-2">
                     {[
-                      `${investmentGrade} investment grade — priced at ${pricePosition.toFixed(0)}% of the fair value range`,
+                      `Priced at ${pricePosition.toFixed(0)}% of the fair value range`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      ...(totalAnnualCost > 0 ? [`Annual ownership costs of ${formatPrice(totalAnnualCost)}`] : []),
+                      ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
                     ].map((takeaway, i) => (
                       <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">

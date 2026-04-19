@@ -1309,6 +1309,9 @@
       "subtitle": "Ask the seller about these before you buy",
       "empty": "All high-value signals were detected in this listing"
     },
+    "verdict": {
+      "factualSummary": "Price is {deltaPercent}% vs. specific-car fair value. {detected} of {total} high-value signals detected."
+    },
     "questions": {
       "ask_for_service_records": "Ask the seller for documented service history (dates, mileage, and stamps).",
       "remaining_factory_warranty": "Confirm any remaining factory or extended warranty coverage.",

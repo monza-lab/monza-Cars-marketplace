@@ -1308,6 +1308,9 @@
       "subtitle": "購入前に売り手に確認してください",
       "empty": "この出品からすべての主要シグナルが検出されました"
     },
+    "verdict": {
+      "factualSummary": "価格は車両固有フェアバリューに対して {deltaPercent}%。高価値シグナル {total} 件のうち {detected} 件を検出。"
+    },
     "questions": {
       "ask_for_service_records": "売り手に整備履歴（日付、走行距離、スタンプ）の提示を依頼してください。",
       "remaining_factory_warranty": "メーカー保証や延長保証の残りを確認してください。",
