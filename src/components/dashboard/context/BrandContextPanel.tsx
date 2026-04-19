@@ -7,7 +7,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { Shield, Award, ChevronRight } from "lucide-react"
 import { getBrandConfig } from "@/lib/brandConfig"
 import { mockWhyBuy } from "../constants"
-import { computeRegionalValFromAuctions, listingPriceUsd } from "../utils/valuation"
+import { computeRegionalValFromAuctions, listingPriceUsd, formatUsdValue } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
@@ -84,9 +84,20 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
     }
   }, [brandAuctions, brand.name])
 
-  // Similar brands (same grade tier)
+  // Median sold across brand's auctions (USD). Used for the Median Sold metric.
+  const medianSoldUsd = useMemo(() => {
+    const prices = brandAuctions
+      .map(a => listingPriceUsd(a, rates))
+      .filter(p => p > 0)
+      .sort((a, b) => a - b)
+    if (prices.length === 0) return null
+    const mid = Math.floor(prices.length / 2)
+    return prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2
+  }, [brandAuctions, rates])
+
+  // Similar brands (fallback: same price tier, different slug)
   const similarBrands = allBrands
-    .filter(b => b.topGrade === brand.topGrade && b.slug !== brand.slug)
+    .filter(b => b.slug !== brand.slug)
     .slice(0, 3)
 
   return (
@@ -110,10 +121,11 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
         <div className="px-5 py-3 border-b border-border bg-primary/3">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.grade")}</span>
-              <p className={`text-[16px] font-bold ${
-                brand.topGrade === "AAA" ? "text-positive" : "text-primary"
-              }`}>{brand.topGrade}</p>
+              {/* TODO: switch to t("brandContext.medianSold") after Task 15 adds i18n key */}
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Median Sold</span>
+              <p className="text-[16px] font-bold text-foreground">
+                {formatUsdValue(medianSoldUsd)}
+              </p>
             </div>
             <div>
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{t("brandContext.minPrice")}</span>
@@ -161,9 +173,6 @@ export function BrandContextPanel({ brand, allBrands, auctions, allAuctions }: {
                     <span className="text-[10px] tabular-nums text-muted-foreground">
                       {formatPrice(b.priceMin)}–{formatPrice(b.priceMax)}
                     </span>
-                    <span className={`text-[9px] font-bold ${
-                      b.topGrade === "AAA" ? "text-positive" : "text-primary"
-                    }`}>{b.topGrade}</span>
                   </div>
                 </Link>
               ))}
