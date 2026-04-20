@@ -1,0 +1,56 @@
+name: Classic.com Scrapling Enrichment
+
+on:
+  schedule:
+    - cron: '0 6 * * *'     # 06:00 UTC daily (2h after main collect at 04:00)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max listings to enrich'
+        default: '500'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+      preflight:
+        description: 'Test first 5 only'
+        default: 'false'
+
+concurrency:
+  group: classic-enrich
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
+      - run: npm ci
+
+      - name: Run Scrapling enrichment
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPLING_FETCH_MODE: stealthy-fetch
+        run: |
+          npx tsx scripts/classic-enrich-scrapling.ts \
+            --limit=${{ github.event.inputs.limit || '500' }} \
+            --timeBudgetMs=1200000 \
+            ${{ github.event.inputs.preflight == 'true' && '--preflight' || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}

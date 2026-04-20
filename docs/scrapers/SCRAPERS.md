@@ -306,7 +306,7 @@ npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --dryRun --maxP
 npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --summaryOnly --maxPages=10
 
 # Full run — all pages with detail scraping
-npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --maxPages=200 --maxDetails=10000 --concurrency=6
+npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --maxPages=200 --maxDetails=10000
 
 # Show help
 npx tsx src/features/scrapers/beforward_porsche_collector/cli.ts --help
@@ -326,8 +326,8 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 | `--startPage` | `1` | Page number to start from |
 | `--maxDetails` | `10000` | Max detail pages to fetch |
 | `--summaryOnly` | `false` | Skip detail page fetches |
-| `--concurrency` | `6` | Parallel detail-page fetches |
-| `--rateLimitMs` | `2500` | Minimum delay between requests (ms) |
+| `--concurrency` | `3` | Parallel detail-page fetches |
+| `--rateLimitMs` | `4000` | Minimum delay between requests (ms) |
 | `--timeoutMs` | `20000` | HTTP request timeout (ms) |
 | `--checkpointPath` | `var/beforward_porsche_collector/checkpoint.json` | Resume checkpoint file |
 | `--outputPath` | `var/beforward_porsche_collector/listings.jsonl` | JSONL output file |
