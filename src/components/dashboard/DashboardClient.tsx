@@ -413,6 +413,33 @@ function aggregateFamilies(
     })
   })
 
+  // Pad with stubs for every series in brandConfig that has no auctions in the current
+  // ACTIVE/ENDING_SOON sample, so the sidebar family click always lands on a card
+  // (mirrors 993 behavior for 930, G-Model, F-Model, Carrera GT, 918 Spyder, 959,
+  // pre-718 Cayman/Boxster, 914, 924, 928, 968, 718 Boxster — any series without live stock)
+  const presentSlugs = new Set(families.map(f => f.slug))
+  const brandConfig = getBrandConfig("Porsche")
+  if (brandConfig) {
+    for (const series of brandConfig.series) {
+      const slug = series.id.toLowerCase()
+      if (presentSlugs.has(slug)) continue
+      const staticImage = getModelImage("Porsche", series.id) || getBrandImage("Porsche") || ""
+      families.push({
+        name: series.label,
+        slug,
+        carCount: dbSeriesCounts?.[series.id] ?? 0,
+        priceMin: 0,
+        priceMax: 0,
+        medianPriceUsd: 0,
+        yearMin: series.yearRange[0],
+        yearMax: series.yearRange[1],
+        representativeImage: staticImage,
+        fallbackImage: staticImage,
+        representativeCar: series.label,
+      })
+    }
+  }
+
   return families.sort((a, b) => {
     const orderA = getFamilyPrestigeOrder(a.slug)
     const orderB = getFamilyPrestigeOrder(b.slug)
@@ -597,7 +624,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
     : `${family.yearMin}–${family.yearMax}`
 
   return (
-    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
+    <div className="h-[calc(100dvh-var(--app-header-h,80px))] w-full flex flex-col snap-start p-4">
       <Link
         href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
         className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
@@ -2424,8 +2451,14 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
   const activeFamily = porscheFamilies[safeFamilyIndex]
   const activeFamilyName = activeFamily?.name
 
-  // Card height = 100vh - 80px
-  const getCardHeight = () => typeof window !== "undefined" ? window.innerHeight - 80 : 800
+  // Card height = viewport minus the real top chrome (nav + optional free-user banner).
+  // The actual header height is published as --app-header-h by <Header /> via ResizeObserver.
+  const getCardHeight = () => {
+    if (typeof window === "undefined") return 800
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--app-header-h")
+    const headerH = parseInt(raw, 10)
+    return window.innerHeight - (Number.isFinite(headerH) && headerH > 0 ? headerH : 80)
+  }
 
   // Handle scroll snap to update current index (Desktop) — synced with family cards
   useEffect(() => {
@@ -2445,12 +2478,15 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
     return () => container.removeEventListener("scroll", handleScroll)
   }, [porscheFamilies.length, safeFamilyIndex])
 
-  // Scroll to index when nav is clicked
+  // Scroll to index when nav is clicked.
+  // Uses "instant" because Chrome's smooth scroll conflicts with snap-mandatory
+  // over long distances — the browser sometimes refuses the animation and the
+  // container stays put. Instant teleport is reliable and actually snappier UX.
   const scrollToIndex = (index: number) => {
     const container = feedRef.current
     if (!container) return
     const slideHeight = getCardHeight()
-    container.scrollTo({ top: slideHeight * index, behavior: "smooth" })
+    container.scrollTo({ top: slideHeight * index, behavior: "instant" })
     setCurrentIndex(index)
   }
 
@@ -2478,7 +2514,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
   return (
     <>
       {/* ═══ MOBILE LAYOUT — Vertical Scrollable Feed ═══ */}
-      <div className="md:hidden min-h-[100dvh] w-full bg-background pt-14">
+      <div className="md:hidden min-h-[100dvh] w-full bg-background pt-[var(--app-header-h,3.5rem)]">
         {/* Sticky region pills */}
         <MobileRegionPills />
 
@@ -2519,7 +2555,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[var(--app-header-h,80px)]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}

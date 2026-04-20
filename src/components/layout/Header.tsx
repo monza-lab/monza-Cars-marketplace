@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Coins, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
 import {
@@ -844,6 +844,7 @@ export function Header() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { theme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Smart search autocomplete state
@@ -896,6 +897,24 @@ export function Header() {
   const isAuthenticated = !!user;
   const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
   const homeHref = "/";
+
+  // Publish the fixed header's real height (banner + nav) as a CSS var on <html>
+  // so page layouts/cards can size themselves around whatever top chrome is showing.
+  // Effect re-runs when the free-user banner appears/disappears (tier/credits change)
+  // so the measurement stays in sync with the current header composition.
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof window === "undefined") return;
+    const publish = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h > 0) {
+        document.documentElement.style.setProperty("--app-header-h", `${h}px`);
+      }
+    };
+    publish();
+    window.addEventListener("resize", publish);
+    return () => window.removeEventListener("resize", publish);
+  }, [profile?.tier, creditsRemaining]);
 
   // Translated menu links
   const menuLinks = menuLinkKeys.map((link) => ({
@@ -960,7 +979,7 @@ export function Header() {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-50">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
         {/* Glass background — Obsidian */}
         <div className="absolute inset-0 h-full bg-background/85 backdrop-blur-xl border-b border-border" />
 

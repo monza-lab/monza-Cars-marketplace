@@ -923,7 +923,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[var(--app-header-h,80px)]">
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: GENERATIONS + FILTERS + LIVE */}
           <div className="h-full flex flex-col border-r border-border overflow-hidden">

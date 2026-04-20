@@ -1581,7 +1581,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       {/* ═══════════════════════════════════════════════════════════
           DESKTOP LAYOUT (3-column grid)
           ═══════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[80px]">
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[var(--app-header-h,80px)]">
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
 
           {/* COLUMN A: LEFT SIDEBAR */}

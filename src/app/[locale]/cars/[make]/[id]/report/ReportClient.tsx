@@ -1565,7 +1565,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       </div>
 
       {/* DESKTOP: Fixed left sidebar nav */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-background border-r border-border z-40 pt-[80px]">
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-background border-r border-border z-40 pt-[var(--app-header-h,80px)]">
         <div className="px-4 py-4 border-b border-border">
           <Link
             href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
@@ -1639,7 +1639,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       </div>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <div className="md:ml-[240px] pt-[52px] md:pt-[80px]">
+      <div className="md:ml-[240px] pt-[52px] md:pt-[var(--app-header-h,80px)]">
         <div className={`max-w-[840px] mx-auto px-4 md:px-8 ${hasAccess ? "pb-32" : "pb-24"}`}>
 
           {/* ═══ COVER / HERO ═══ */}
