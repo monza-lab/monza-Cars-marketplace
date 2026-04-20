@@ -42,8 +42,8 @@ export async function GET(request: Request) {
     const result = await runCollector({
       maxPages: 3,           // 75 listings (25/page) — enough to catch daily new listings
       summaryOnly: true,     // Skip detail page fetches (biggest time saver)
-      concurrency: 6,
-      rateLimitMs: 3500,
+      concurrency: 3,
+      rateLimitMs: 4000,
       checkpointPath: "/tmp/beforward_porsche_collector/checkpoint.json",
       outputPath: "/tmp/beforward_porsche_collector/listings.jsonl",
       dryRun: false,
