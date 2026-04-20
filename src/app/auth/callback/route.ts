@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   const tokenHash = searchParams.get('token_hash')
   const otpType = searchParams.get('type') as EmailOtpType | null
   const next = searchParams.get('next') ?? '/'
+  const redirectUrl = next.startsWith('http') ? next : new URL(next, origin).toString()
+  const successResponse = NextResponse.redirect(redirectUrl)
 
   // Handle error redirects from Supabase (e.g. user denied consent)
   const error = searchParams.get('error')
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/?${params.toString()}`)
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient({ response: successResponse })
 
   if (tokenHash && otpType) {
     const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -28,7 +30,7 @@ export async function GET(request: Request) {
     })
 
     if (!verifyError) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return successResponse
     }
 
     console.error('OTP verification error:', verifyError.message)
@@ -39,7 +41,7 @@ export async function GET(request: Request) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!exchangeError) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return successResponse
     }
 
     console.error('Code exchange error:', exchangeError.message)
