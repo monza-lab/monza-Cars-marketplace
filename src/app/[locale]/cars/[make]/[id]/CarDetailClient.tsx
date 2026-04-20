@@ -50,139 +50,17 @@ import { useTokens } from "@/hooks/useTokens"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
 
 // ─── MOCK DATA ───
-const redFlags: Record<string, string[]> = {
-  McLaren: [
-    "Central driving position requires specialist knowledge",
-    "BMW V12 servicing limited to certified facilities",
-    "Gold foil heat shielding integrity critical",
-    "Monocoque carbon fiber inspection mandatory",
-  ],
-  Porsche: [
-    "Chain tensioner failure risk on early models",
-    "Heat exchanger condition critical; rust inspection required",
-    "Galvanized vs non-galvanized body impacts value",
-    "Verify matching numbers engine and transmission",
-  ],
-  Ferrari: [
-    "Cam belt service history critical ($5,000+ if overdue)",
-    "Sticky interior switches common; verify all electronics",
-    "Classiche rejection significantly impacts resale",
-    "Exhaust manifold cracks require specialist repair",
-  ],
-  Lamborghini: [
-    "Carburetors require specialized tuning",
-    "Clutch replacement labor-intensive (~$8,000+)",
-    "Cooling system prone to issues in traffic",
-    "Frame susceptible to stress cracks",
-  ],
-  Nissan: [
-    "ATTESA E-TS pump failure common",
-    "RB26 head gasket issues if previously tuned",
-    "Rust in rear quarters common on JDM imports",
-    "Verify legal import status and compliance",
-  ],
-  default: [
-    "Request comprehensive service history",
-    "Verify VIN matches title and body panels",
-    "Check for evidence of previous accident damage",
-    "Confirm mileage with service records",
-  ],
-}
+// ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
+// Per-make lists used to live here. Real source of truth is dbAnalysis
+// (Analysis table, AI-generated). When dbAnalysis is missing or empty the
+// UI renders an explicit empty state instead of per-make fake fallbacks.
 
-const sellerQuestions: Record<string, string[]> = {
-  McLaren: [
-    "Is the original tool kit and owner's documentation complete?",
-    "When was the last McLaren Special Operations service?",
-    "Has the monocoque been inspected for stress fractures?",
-    "What is the history of the BMW engine servicing?",
-  ],
-  Porsche: [
-    "When was the last valve adjustment performed?",
-    "Has the vehicle been used in motorsport?",
-    "Are the date codes correct on all glass?",
-    "Has the transmission been rebuilt?",
-  ],
-  Ferrari: [
-    "Is Classiche certification obtainable?",
-    "When was the last cam belt service?",
-    "Are all tools and books present?",
-    "Has the car ever been repainted?",
-  ],
-  default: [
-    "Is a pre-purchase inspection permitted?",
-    "What is the complete service history?",
-    "Are there any known mechanical issues?",
-    "What is included in the sale?",
-  ],
-}
-
-const ownershipCosts: Record<string, { insurance: number; storage: number; maintenance: number }> = {
-  McLaren: { insurance: 45000, storage: 12000, maintenance: 25000 },
-  Porsche: { insurance: 8500, storage: 6000, maintenance: 8000 },
-  Ferrari: { insurance: 18000, storage: 8000, maintenance: 15000 },
-  Lamborghini: { insurance: 15000, storage: 8000, maintenance: 12000 },
-  Nissan: { insurance: 4500, storage: 3600, maintenance: 3500 },
-  Toyota: { insurance: 3200, storage: 3600, maintenance: 2500 },
-  BMW: { insurance: 3800, storage: 3600, maintenance: 4000 },
-  "Mercedes-Benz": { insurance: 6500, storage: 4800, maintenance: 6000 },
-  "Aston Martin": { insurance: 8000, storage: 6000, maintenance: 10000 },
-  Lexus: { insurance: 6000, storage: 4800, maintenance: 4500 },
-  Ford: { insurance: 5500, storage: 4200, maintenance: 4000 },
-  Acura: { insurance: 3000, storage: 3600, maintenance: 2800 },
-  Jaguar: { insurance: 4500, storage: 4200, maintenance: 5000 },
-  default: { insurance: 5000, storage: 4800, maintenance: 5000 },
-}
-
-const comparableSales: Record<string, { title: string; price: number; date: string; platform: string; delta: number }[]> = {
-  McLaren: [
-    { title: "1994 McLaren F1", price: 20_500_000, date: "Aug 2025", platform: "RM Sotheby's", delta: 8 },
-    { title: "1995 McLaren F1", price: 19_800_000, date: "May 2025", platform: "Gooding", delta: 5 },
-    { title: "1996 McLaren F1", price: 18_200_000, date: "Jan 2025", platform: "Bonhams", delta: -3 },
-  ],
-  Porsche: [
-    { title: "1973 911 Carrera RS 2.7", price: 1_450_000, date: "Oct 2025", platform: "RM Sotheby's", delta: 12 },
-    { title: "1973 911 Carrera RS", price: 1_320_000, date: "Jul 2025", platform: "Gooding", delta: 8 },
-    { title: "1972 911 2.7 RS", price: 1_180_000, date: "Apr 2025", platform: "BaT", delta: 5 },
-  ],
-  Ferrari: [
-    { title: "1990 Ferrari F40", price: 2_850_000, date: "Nov 2025", platform: "RM Sotheby's", delta: 10 },
-    { title: "1989 Ferrari F40", price: 2_650_000, date: "Aug 2025", platform: "Gooding", delta: 7 },
-    { title: "1991 Ferrari F40", price: 2_450_000, date: "May 2025", platform: "Bonhams", delta: 3 },
-  ],
-  default: [
-    { title: "Similar Model (Recent)", price: 125_000, date: "Nov 2025", platform: "BaT", delta: 5 },
-    { title: "Similar Model (Mid-Year)", price: 118_000, date: "Jul 2025", platform: "C&B", delta: 3 },
-  ],
-}
-
-const eventsData: Record<string, { name: string; type: string; impact: "positive" | "neutral" | "negative" }[]> = {
-  McLaren: [
-    { name: "Pebble Beach Concours", type: "Show", impact: "positive" },
-    { name: "Gordon Murray Documentary Release", type: "Media", impact: "positive" },
-    { name: "McLaren F1 Owners Club Annual Meet", type: "Community", impact: "positive" },
-  ],
-  Porsche: [
-    { name: "Rennsport Reunion", type: "Event", impact: "positive" },
-    { name: "Luftgekühlt", type: "Show", impact: "positive" },
-    { name: "911 60th Anniversary", type: "Milestone", impact: "positive" },
-  ],
-  Ferrari: [
-    { name: "Ferrari Cavalcade", type: "Event", impact: "positive" },
-    { name: "Maranello Factory Tour Program", type: "Experience", impact: "neutral" },
-    { name: "Classiche Certification Backlog", type: "Service", impact: "negative" },
-  ],
-  default: [
-    { name: "Monterey Car Week", type: "Event", impact: "positive" },
-    { name: "Barrett-Jackson Scottsdale", type: "Auction", impact: "neutral" },
-  ],
-}
-
-const shippingCosts: Record<string, { domestic: number; euImport: number; ukImport: number }> = {
-  McLaren: { domestic: 3500, euImport: 18000, ukImport: 15000 },
-  Porsche: { domestic: 1800, euImport: 8500, ukImport: 7000 },
-  Ferrari: { domestic: 2500, euImport: 12000, ukImport: 10000 },
-  default: { domestic: 1500, euImport: 6000, ukImport: 5000 },
-}
+// ─── HARDCODED FAKE DATA REMOVED ───
+// Ownership costs, comparable sales, upcoming events, and shipping estimates
+// used to live here as per-make fake arrays. They've been deleted so the UI
+// renders honest empty states wherever the backend hasn't populated real data.
+// When the backend starts writing to the "Comparable" table (and equivalents
+// for ownership/shipping/events) the UI will pick it up automatically.
 
 // ─── PLATFORM LABELS ───
 const platformLabels: Record<string, { short: string; color: string }> = {
@@ -375,15 +253,17 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
 function CarNavSidebar({
   car,
   similarCars,
+  dbAnalysis,
 }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
+  dbAnalysis?: DbAnalysisRow | null
 }) {
   const locale = useLocale()
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd } = useCurrency()
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
-  const flags = redFlags[car.make] || redFlags.default
+  const flags: string[] = dbAnalysis?.redFlags ?? []
   const platform = platformLabels[car.platform]
 
   // Market position: where current price sits within selected region's fair value range
@@ -550,15 +430,17 @@ function CarNavSidebar({
       </div>
 
       {/* ── Risk / Inspection ── */}
-      <div className="px-4 py-3 shrink-0 border-b border-border">
-        <div className="flex items-center gap-2 mb-1">
-          <AlertTriangle className="size-3.5 text-destructive" />
-          <span className="text-[10px] font-semibold text-muted-foreground">{flags.length} inspection points</span>
+      {flags.length > 0 && (
+        <div className="px-4 py-3 shrink-0 border-b border-border">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="size-3.5 text-destructive" />
+            <span className="text-[10px] font-semibold text-muted-foreground">{flags.length} inspection points</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground leading-relaxed pl-[22px]">
+            {flags[0]}
+          </p>
         </div>
-        <p className="text-[10px] text-muted-foreground leading-relaxed pl-[22px]">
-          {flags[0]}
-        </p>
-      </div>
+      )}
 
       {/* ── Similar vehicles (scrollable) ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -595,15 +477,22 @@ function CarContextPanel({
 }) {
   const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
-  const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
-  const costs = {
-    insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
-    storage: fallbackCosts.storage,
-    maintenance: dbAnalysis?.yearlyMaintenance ?? fallbackCosts.maintenance,
-  }
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
-  const shipping = shippingCosts[car.make] || shippingCosts.default
-  const events = eventsData[car.make] || eventsData.default
+  // Ownership cost: surface only whatever the AI analysis actually returned.
+  // Storage is not analyzed today, so we leave it null. Sections render empty
+  // states when no real data is present (no more per-make fake fallbacks).
+  const costs = dbAnalysis && (dbAnalysis.insuranceEstimate || dbAnalysis.yearlyMaintenance)
+    ? {
+        insurance: dbAnalysis.insuranceEstimate ?? null,
+        storage: null as number | null,
+        maintenance: dbAnalysis.yearlyMaintenance ?? null,
+      }
+    : null
+  const totalAnnualCost = costs
+    ? (costs.insurance ?? 0) + (costs.storage ?? 0) + (costs.maintenance ?? 0)
+    : null
+  // Shipping and upcoming events have no DB source yet — render empty states.
+  const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
+  const events: { name: string; type: string; impact: "positive" | "neutral" | "negative" }[] = []
 
   // Regional pricing — use real per-region fair values from DB
   const pricing = car.fairValueByRegion
@@ -770,22 +659,30 @@ function CarContextPanel({
               Annual Ownership Cost
             </span>
           </div>
-          <div className="space-y-2">
-            {[
-              { label: "Insurance", value: costs.insurance },
-              { label: "Storage", value: costs.storage },
-              { label: "Maintenance", value: costs.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
+          {costs ? (
+            <div className="space-y-2">
+              {[
+                { label: "Insurance", value: costs.insurance },
+                { label: "Storage", value: costs.storage },
+                { label: "Maintenance", value: costs.maintenance },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground">
+                    {item.value == null ? "—" : formatPrice(item.value)}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
+                <span className="text-[11px] font-medium text-foreground">Total</span>
+                <span className="text-[12px] font-display font-medium text-primary">
+                  {totalAnnualCost ? `${formatPrice(totalAnnualCost)}/yr` : "—"}
+                </span>
               </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
             </div>
-          </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
+          )}
         </div>
 
         {/* 6. SHIPPING COSTS */}
@@ -796,18 +693,22 @@ function CarContextPanel({
               Shipping Estimates
             </span>
           </div>
-          <div className="space-y-2">
-            {[
-              { label: "Domestic (Enclosed)", value: shipping.domestic },
-              { label: "EU Import", value: shipping.euImport },
-              { label: "UK Import", value: shipping.ukImport },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-          </div>
+          {shipping ? (
+            <div className="space-y-2">
+              {[
+                { label: "Domestic (Enclosed)", value: shipping.domestic },
+                { label: "EU Import", value: shipping.euImport },
+                { label: "UK Import", value: shipping.ukImport },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
+          )}
         </div>
 
         {/* 7. EVENTS & COMMUNITY */}
@@ -818,25 +719,29 @@ function CarContextPanel({
               Events & Community
             </span>
           </div>
-          <div className="space-y-2">
-            {events.map((event, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`size-1.5 rounded-full ${
-                    event.impact === "positive" ? "bg-positive" :
-                    event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
-                  }`} />
-                  <span className="text-[11px] text-muted-foreground">{event.name}</span>
+          {events.length > 0 ? (
+            <div className="space-y-2">
+              {events.map((event, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`size-1.5 rounded-full ${
+                      event.impact === "positive" ? "bg-positive" :
+                      event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
+                    }`} />
+                    <span className="text-[11px] text-muted-foreground">{event.name}</span>
+                  </div>
+                  <span className={`text-[9px] font-semibold ${
+                    event.impact === "positive" ? "text-positive" :
+                    event.impact === "negative" ? "text-destructive" : "text-muted-foreground"
+                  }`}>
+                    {event.impact === "positive" ? "+" : event.impact === "negative" ? "−" : "~"}
+                  </span>
                 </div>
-                <span className={`text-[9px] font-semibold ${
-                  event.impact === "positive" ? "text-positive" :
-                  event.impact === "negative" ? "text-destructive" : "text-muted-foreground"
-                }`}>
-                  {event.impact === "positive" ? "+" : event.impact === "negative" ? "−" : "~"}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
+          )}
         </div>
       </div>
 
@@ -965,21 +870,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // ─── Use DB analysis data when available, fallback to hardcoded ───
-  const flags = (dbAnalysis?.redFlags?.length ?? 0) > 0
-    ? dbAnalysis!.redFlags : (redFlags[car.make] || redFlags.default)
-  const questions = (dbAnalysis?.criticalQuestions?.length ?? 0) > 0
-    ? dbAnalysis!.criticalQuestions : (sellerQuestions[car.make] || sellerQuestions.default)
+  // DB analysis is the only source for red flags and critical questions.
+  const flags: string[] = dbAnalysis?.redFlags ?? []
+  const questions: string[] = dbAnalysis?.criticalQuestions ?? []
 
-  // Ownership costs: prefer DB analysis, fallback to hardcoded
-  const fallbackCosts = ownershipCosts[car.make] || ownershipCosts.default
-  const costs = {
-    insurance: dbAnalysis?.insuranceEstimate ?? fallbackCosts.insurance,
-    storage: fallbackCosts.storage,
-    maintenance: dbAnalysis?.yearlyMaintenance ?? fallbackCosts.maintenance,
-  }
+  // Ownership cost: surface only what the AI analysis returned. No per-make
+  // fake fallback — storage is not analyzed today, so leave it null.
+  const costs = dbAnalysis && (dbAnalysis.insuranceEstimate || dbAnalysis.yearlyMaintenance)
+    ? {
+        insurance: dbAnalysis.insuranceEstimate ?? null,
+        storage: null as number | null,
+        maintenance: dbAnalysis.yearlyMaintenance ?? null,
+      }
+    : null
 
-  // Comparable sales: prefer DB, fallback to hardcoded
+  // Comparable sales: only real DB rows. Empty array when Comparable table has nothing.
   const comps = dbComparables.length > 0
     ? dbComparables.map(c => ({
         title: c.title,
@@ -988,11 +893,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform === "AUTO_SCOUT_24" ? "AS24" : c.platform,
         delta: dbMarketData?.avgPrice ? Math.round(((c.soldPrice - dbMarketData.avgPrice) / dbMarketData.avgPrice) * 100) : 0,
       }))
-    : (comparableSales[car.make] || comparableSales.default)
+    : []
 
-  const events = eventsData[car.make] || eventsData.default
-  const shipping = shippingCosts[car.make] || shippingCosts.default
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
+  // No DB source yet for upcoming events or shipping costs — render empty states.
+  const events: { name: string; type: string; impact: "positive" | "neutral" | "negative" }[] = []
+  const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
+  const totalAnnualCost = costs
+    ? (costs.insurance ?? 0) + (costs.storage ?? 0) + (costs.maintenance ?? 0)
+    : null
 
   // ─── Investment Passport computations (for mobile) ───
   // Use real per-region fair values from DB
@@ -1214,9 +1122,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   {t("investmentPassport.annualCost")}
                 </span>
                 <span className="text-[22px] font-bold tabular-nums text-foreground">
-                  {formatPrice(totalAnnualCost)}
+                  {totalAnnualCost ? formatPrice(totalAnnualCost) : "—"}
                 </span>
-                <span className="text-[11px] text-muted-foreground">/yr</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {totalAnnualCost ? "/yr" : " pending"}
+                </span>
               </div>
             </div>
           </div>
@@ -1404,14 +1314,18 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             defaultOpen
             badge={<span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length} items</span>}
           >
-            <div className="space-y-2">
-              {flags.map((flag, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/3">
-                  <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
-                  <span className="text-[13px] text-foreground">{flag}</span>
-                </div>
-              ))}
-            </div>
+            {flags.length > 0 ? (
+              <div className="space-y-2">
+                {flags.map((flag, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/3">
+                    <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-[13px] text-foreground">{flag}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted-foreground italic">Awaiting backend analysis</p>
+            )}
           </CollapsibleSection>
 
           {/* 9. Questions to Ask Seller */}
@@ -1420,16 +1334,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             icon={<HelpCircle className="size-5" />}
             badge={<span className="text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded-full">{questions.length}</span>}
           >
-            <div className="space-y-2">
-              {questions.map((q, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
-                  <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
-                    {i + 1}
-                  </span>
-                  <span className="text-[13px] text-muted-foreground">{q}</span>
-                </div>
-              ))}
-            </div>
+            {questions.length > 0 ? (
+              <div className="space-y-2">
+                {questions.map((q, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                    <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="text-[13px] text-muted-foreground">{q}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted-foreground italic">Awaiting backend analysis</p>
+            )}
           </CollapsibleSection>
 
           {/* 10. Pre-Purchase Inspection */}
@@ -1460,99 +1378,124 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             title={t("comparableSales")}
             icon={<TrendingUp className="size-5" />}
             defaultOpen
-            badge={<span className="text-[9px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">{t("sampleData")}</span>}
           >
-            <div className="space-y-3">
-              {comps.map((sale, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+            {comps.length > 0 ? (
+              <div className="space-y-3">
+                {comps.map((sale, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                    </div>
+                    <p className="text-[16px] font-bold tabular-nums text-foreground shrink-0 ml-3">{formatPrice(sale.price)}</p>
                   </div>
-                  <p className="text-[16px] font-bold tabular-nums text-foreground shrink-0 ml-3">{formatPrice(sale.price)}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+            )}
           </CollapsibleSection>
 
           {/* 12. Ownership Cost & Shipping */}
           <CollapsibleSection title={t("ownershipAndShipping")} icon={<Wrench className="size-5" />}>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <Shield className="size-4 text-muted-foreground" />
-                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
-                </div>
-                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.insurance)}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <MapPin className="size-4 text-muted-foreground" />
-                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
-                </div>
-                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.storage)}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <Wrench className="size-4 text-muted-foreground" />
-                  <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
-                </div>
-                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(costs.maintenance)}</span>
-              </div>
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
-                <span className="text-[18px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
-              </div>
-              <div className="border-t border-border pt-3 mt-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <Truck className="size-4 text-primary" />
-                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                    Shipping Estimates
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                    <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
-                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
+            {costs || shipping ? (
+              <div className="space-y-3">
+                {costs && (
+                  <>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <Shield className="size-4 text-muted-foreground" />
+                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
+                      </div>
+                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
+                        {costs.insurance == null ? "—" : formatPrice(costs.insurance)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="size-4 text-muted-foreground" />
+                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
+                      </div>
+                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
+                        {costs.storage == null ? "—" : formatPrice(costs.storage)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <Wrench className="size-4 text-muted-foreground" />
+                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
+                      </div>
+                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
+                        {costs.maintenance == null ? "—" : formatPrice(costs.maintenance)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
+                      <span className="text-[18px] font-display font-medium text-primary">
+                        {totalAnnualCost ? `${formatPrice(totalAnnualCost)}/yr` : "—"}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {shipping && (
+                  <div className="border-t border-border pt-3 mt-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Truck className="size-4 text-primary" />
+                      <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
+                        Shipping Estimates
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                        <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
+                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                        <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
+                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                        <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
+                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                    <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
-                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                    <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
-                    <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+            )}
           </CollapsibleSection>
 
           {/* 13. Events & Community */}
           <CollapsibleSection title={t("eventsAndCommunity")} icon={<Users className="size-5" />}>
-            <div className="space-y-2">
-              {events.map((event, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                  <div className="flex items-center gap-3">
-                    <span className={`size-2 rounded-full ${
-                      event.impact === "positive" ? "bg-positive" :
-                      event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
-                    }`} />
-                    <div>
-                      <p className="text-[13px] text-foreground">{event.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{event.type}</p>
+            {events.length > 0 ? (
+              <div className="space-y-2">
+                {events.map((event, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                    <div className="flex items-center gap-3">
+                      <span className={`size-2 rounded-full ${
+                        event.impact === "positive" ? "bg-positive" :
+                        event.impact === "negative" ? "bg-destructive" : "bg-muted-foreground"
+                      }`} />
+                      <div>
+                        <p className="text-[13px] text-foreground">{event.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{event.type}</p>
+                      </div>
                     </div>
+                    <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                      event.impact === "positive" ? "bg-positive/10 text-positive" :
+                      event.impact === "negative" ? "bg-destructive/10 text-destructive" :
+                      "bg-foreground/5 text-muted-foreground"
+                    }`}>
+                      {event.impact === "positive" ? "Value +" : event.impact === "negative" ? "Value -" : "Neutral"}
+                    </span>
                   </div>
-                  <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                    event.impact === "positive" ? "bg-positive/10 text-positive" :
-                    event.impact === "negative" ? "bg-destructive/10 text-destructive" :
-                    "bg-foreground/5 text-muted-foreground"
-                  }`}>
-                    {event.impact === "positive" ? "Value +" : event.impact === "negative" ? "Value -" : "Neutral"}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+            )}
           </CollapsibleSection>
 
           {/* 14. Similar Cars */}
@@ -1585,7 +1528,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
 
           {/* COLUMN A: LEFT SIDEBAR */}
-          <CarNavSidebar car={car} similarCars={similarCars} />
+          <CarNavSidebar car={car} similarCars={similarCars} dbAnalysis={dbAnalysis} />
 
           {/* COLUMN B: CENTER SCROLL (continuous, no tabs) */}
           <div className="h-full overflow-y-auto no-scrollbar">
@@ -1659,14 +1602,18 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <h2 className="text-[12px] font-semibold text-foreground">Key Inspection Points</h2>
                   <span className="text-[9px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length}</span>
                 </div>
-                <div className="space-y-2">
-                  {flags.map((flag, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-primary/3">
-                      <AlertTriangle className="size-3.5 text-primary mt-0.5 shrink-0" />
-                      <span className="text-[12px] text-foreground">{flag}</span>
-                    </div>
-                  ))}
-                </div>
+                {flags.length > 0 ? (
+                  <div className="space-y-2">
+                    {flags.map((flag, i) => (
+                      <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-primary/3">
+                        <AlertTriangle className="size-3.5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-[12px] text-foreground">{flag}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend analysis</p>
+                )}
               </div>
 
               {/* QUESTIONS TO ASK */}
@@ -1675,16 +1622,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <HelpCircle className="size-4 text-primary" />
                   <h2 className="text-[12px] font-semibold text-foreground">Questions to Ask the Seller</h2>
                 </div>
-                <div className="space-y-2">
-                  {questions.map((q, i) => (
-                    <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-foreground/2">
-                      <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[9px] font-bold text-primary shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="text-[12px] text-muted-foreground">{q}</span>
-                    </div>
-                  ))}
-                </div>
+                {questions.length > 0 ? (
+                  <div className="space-y-2">
+                    {questions.map((q, i) => (
+                      <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-foreground/2">
+                        <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-[9px] font-bold text-primary shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="text-[12px] text-muted-foreground">{q}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend analysis</p>
+                )}
               </div>
 
               {/* PRE-PURCHASE INSPECTION */}
@@ -1721,19 +1672,22 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <DollarSign className="size-4 text-primary" />
                     <h2 className="text-[12px] font-semibold text-foreground">Recent Comparable Sales</h2>
                   </div>
-                  <span className="text-[9px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded">Sample</span>
                 </div>
-                <div className="space-y-2">
-                  {comps.map((sale, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2 border border-border/50">
-                      <div>
-                        <p className="text-[12px] font-medium text-foreground">{sale.title}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                {comps.length > 0 ? (
+                  <div className="space-y-2">
+                    {comps.map((sale, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2 border border-border/50">
+                        <div>
+                          <p className="text-[12px] font-medium text-foreground">{sale.title}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                        </div>
+                        <span className="text-[14px] tabular-nums font-bold text-foreground">{formatPrice(sale.price)}</span>
                       </div>
-                      <span className="text-[14px] tabular-nums font-bold text-foreground">{formatPrice(sale.price)}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend data</p>
+                )}
               </div>
 
               {/* FULL REPORT CTA */}
