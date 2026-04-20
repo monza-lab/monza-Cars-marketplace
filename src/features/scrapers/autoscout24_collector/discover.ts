@@ -5,6 +5,7 @@ import type { SearchShard, AS24ListingSummary, DiscoverResult } from "./types";
 import { isAkamaiChallenge, waitForChallengeResolution, dismissCookieConsent } from "./browser";
 import { NavigationRateLimiter } from "./net";
 import { logEvent } from "./logging";
+import { fetchAS24SearchWithScrapling } from "./scrapling";
 
 export interface DiscoverOptions {
   page: Page;
@@ -139,6 +140,110 @@ export async function discoverShard(opts: DiscoverOptions): Promise<DiscoverResu
         page: pageNum,
         error: err instanceof Error ? err.message : String(err),
       });
+    }
+  }
+
+  return {
+    shardId: opts.shard.id,
+    listings: allListings,
+    totalResults,
+    pagesProcessed,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Scrapling-based Discovery                                          */
+/* ------------------------------------------------------------------ */
+
+export interface ScraplingDiscoverOptions {
+  shard: SearchShard;
+  runId: string;
+  navigationDelayMs: number;
+  resumeFromPage?: number;
+  onPageDone?: (shardId: string, page: number, found: number) => Promise<void>;
+}
+
+/**
+ * Discover listings using Scrapling (requests-based, no browser).
+ * Mirrors discoverShard() interface but calls fetchAS24SearchWithScrapling().
+ */
+export async function discoverShardWithScrapling(
+  opts: ScraplingDiscoverOptions,
+): Promise<DiscoverResult> {
+  const allListings: AS24ListingSummary[] = [];
+  const seenUrls = new Set<string>();
+  let totalResults: number | null = null;
+  let pagesProcessed = 0;
+  const startPage = (opts.resumeFromPage ?? 0) + 1;
+
+  for (let pageNum = startPage; pageNum <= opts.shard.maxPages; pageNum++) {
+    const url = buildSearchUrl(opts.shard, pageNum);
+    logEvent({
+      level: "info",
+      event: "discover.scrapling_page_start",
+      runId: opts.runId,
+      shard: opts.shard.id,
+      page: pageNum,
+      url,
+    });
+
+    const result = await fetchAS24SearchWithScrapling(url);
+    if (!result) {
+      logEvent({
+        level: "warn",
+        event: "discover.scrapling_fetch_failed",
+        runId: opts.runId,
+        shard: opts.shard.id,
+        page: pageNum,
+      });
+      break;
+    }
+
+    if (totalResults === null && result.totalResults !== null) {
+      totalResults = result.totalResults;
+    }
+
+    // Deduplicate by URL
+    const newListings: AS24ListingSummary[] = [];
+    for (const listing of result.listings) {
+      if (!seenUrls.has(listing.url)) {
+        seenUrls.add(listing.url);
+        newListings.push(listing);
+      }
+    }
+
+    allListings.push(...newListings);
+    pagesProcessed++;
+
+    logEvent({
+      level: "info",
+      event: "discover.scrapling_page_done",
+      runId: opts.runId,
+      shard: opts.shard.id,
+      page: pageNum,
+      found: newListings.length,
+      total: allListings.length,
+      totalResults,
+    });
+
+    if (newListings.length === 0) break;
+
+    // Warn if shard is saturated
+    if (pageNum === 20 && newListings.length > 0) {
+      logEvent({
+        level: "warn",
+        event: "discover.shard_saturated",
+        runId: opts.runId,
+        shard: opts.shard.id,
+        message: "Shard reached 20-page limit. Consider adding price-range sub-shards.",
+      });
+    }
+
+    await opts.onPageDone?.(opts.shard.id, pageNum, newListings.length);
+
+    // Rate limiting between pages
+    if (pageNum < opts.shard.maxPages) {
+      await new Promise((r) => setTimeout(r, opts.navigationDelayMs));
     }
   }
 

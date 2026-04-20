@@ -49,7 +49,7 @@ SCRAPLING_PYTHON=python
 | 3 | [AutoTrader Collector](#3-autotrader-collector) | AutoTrader UK | GraphQL API + Scrapling | Vercel Cron | 02:00 UTC |
 | 4 | [BeForward Collector](#4-beforward-collector) | BeForward | HTTP / HTML | Vercel Cron | 03:00 UTC |
 | 5 | [Classic.com Collector](#5-classiccom-collector) | Classic.com (US) | Scrapling + Playwright | GitHub Actions | 04:00 UTC |
-| 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Playwright Browser | GitHub Actions | 05:00 UTC |
+| 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Scrapling + Playwright | GitHub Actions | 05:00 UTC |
 | 7 | [Elferspot Collector](#7-elferspot-collector) | Elferspot (33 countries) | HTTP / Cheerio + JSON-LD | Vercel Cron | 09:15 UTC |
 
 Cross-cutting jobs that apply to all sources:
@@ -369,18 +369,19 @@ node scripts/verify-scraper-quality.mjs --scraper=beforward
 
 ## 5. Classic.com Collector
 
-**What it does:** Scrapes Porsche for-sale listings from Classic.com (US market). Uses a multi-tier fallback strategy for detail pages to handle Cloudflare protection. The most complex scraper with the most fallback paths.
+**What it does:** Scrapes Porsche for-sale listings from Classic.com (US market). Uses Scrapling (Python) as the primary fetcher — proven 95%+ detail success rate with zero Cloudflare blocks and no proxy dependency.
 
 **Source directory:** `src/features/scrapers/classic_collector/`
 
 ### Fallback chain (detail pages)
 
 ```
-1. Scrapling (Python)           → fetchClassicDetailWithScrapling() — Chrome impersonation, no browser
-2. Playwright + proxy           → headless browser + Decodo residential proxy + CF resolution
-3. Scrapling image recovery     → if Playwright got 0 images, try scrapling for images only
-4. Summary-only normalization   → normalizeListingFromSummary() — basic data, no detail enrichment
+1. Scrapling (Python) [DEFAULT] → fetchClassicDetailWithScrapling() — Chrome impersonation, no browser, no proxy needed
+2. Playwright + proxy           → headless browser + Decodo residential proxy + CF resolution (opt-in fallback)
+3. Summary-only normalization   → normalizeListingFromSummary() — basic data, no detail enrichment
 ```
+
+> **Note:** Scrapling is the default since 2026-04-20 after testing showed 458/480 detail pages fetched (95.4%) with 0 CF blocks, vs. Playwright+proxy which got 0/480 when proxy was down. Playwright is now opt-in via `disable_playwright=false` in the GHA workflow.
 
 ### 5a. Discovery + Details
 
@@ -388,11 +389,11 @@ node scripts/verify-scraper-quality.mjs --scraper=beforward
 # Quick test — dry run, 5 listings, visible browser
 npx tsx src/features/scrapers/classic_collector/cli.ts --dryRun --headed --maxListings=5
 
-# Production run (headless, scrapling fallback active)
-npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20
+# Production run — Scrapling-only (recommended, no proxy needed)
+CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK=1 npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20
 
-# With explicit proxy
-npx tsx src/features/scrapers/classic_collector/cli.ts --proxyServer=http://gate.smartproxy.com:7000
+# Full run with Playwright fallback enabled (needs proxy)
+npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20 --proxyServer=http://gate.smartproxy.com:7000
 
 # Show help
 npx tsx src/features/scrapers/classic_collector/cli.ts --help
@@ -417,16 +418,16 @@ npx tsx src/features/scrapers/classic_collector/cli.ts --help
 | `--outputPath` | `var/classic_collector/listings.jsonl` | JSONL output file |
 | `--dryRun` | `false` | Skip database writes |
 
-### 5b. Scrapling-Only Mode
+### 5b. Scrapling Mode (Default)
 
-Skip Playwright entirely — useful when proxy is down or for faster runs:
+Scrapling is the default fetcher for both search and detail pages. No proxy or Playwright needed.
 
 ```bash
-# Scrapling-only discovery + details
-CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK=1 npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=5
+# Standard run — Scrapling handles everything
+npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20
 
-# Force scrapling on search pages too (default uses Playwright GraphQL interception)
-CLASSIC_FORCE_SCRAPLING=1 npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=5
+# Revert to Playwright-first (legacy behavior, needs proxy)
+CLASSIC_FORCE_SCRAPLING=0 npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=5
 ```
 
 **Scrapling environment variables:**
@@ -434,8 +435,8 @@ CLASSIC_FORCE_SCRAPLING=1 npx tsx src/features/scrapers/classic_collector/cli.ts
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SCRAPLING_PYTHON` | `python3.11` | Python binary. Set to `python` on Windows. |
-| `CLASSIC_FORCE_SCRAPLING` | — | `1` = use scrapling first on search pages |
-| `CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK` | — | `1` = scrapling-only mode, no Playwright |
+| `CLASSIC_FORCE_SCRAPLING` | `1` (implicit) | Set to `0` to revert to Playwright-first on search pages |
+| `CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK` | — | `1` = skip Playwright fallback entirely (GHA default) |
 | `CLASSIC_SCRAPLING_PARALLELISM` | `8` | Max parallel scrapling fetches during backfill |
 
 ### 5c. Scrapling Direct (Python, no Node)
@@ -460,7 +461,42 @@ python scripts/classic_scrapling_fetch.py "https://..." "https://..." "https://.
 
 > Scrapling is disabled on Vercel automatically (`process.env.VERCEL` check).
 
-### 5d. Image Backfill
+### 5d. Scrapling Enrichment
+
+**What it does:** Enriches summary-only Classic.com listings (discovered by Vercel cron) with full detail data via Scrapling. Finds listings where `description_text IS NULL`, fetches detail pages, and updates only null fields.
+
+**Source:** `scripts/classic-enrich-scrapling.ts`
+
+```bash
+# Pre-flight — test first 5 listings
+npx tsx scripts/classic-enrich-scrapling.ts --preflight
+
+# Dry run — 50 listings, no DB writes
+npx tsx scripts/classic-enrich-scrapling.ts --limit=50 --dryRun
+
+# Production run — 500 listings, 20-minute budget
+npx tsx scripts/classic-enrich-scrapling.ts --limit=500
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--limit` | `500` | Max listings to enrich |
+| `--timeBudgetMs` | `1200000` (20 min) | Total time budget (ms) |
+| `--delayMs` | `2000` | Delay between requests (ms) |
+| `--dryRun` | `false` | Skip DB writes |
+| `--preflight` | `false` | Test first 5 only |
+
+**GHA workflow:** `.github/workflows/classic-enrich.yml` — runs daily at 06:00 UTC.
+
+Go to **Actions > Classic.com Scrapling Enrichment > Run workflow**:
+
+| Input | Default |
+|-------|---------|
+| Max listings to enrich | `500` |
+| Skip DB writes | `false` |
+| Test first 5 only | `false` |
+
+### 5e. Image Backfill
 
 **Inline backfill** (runs after discovery if >40s remains): max 5 listings per run using the existing Playwright page. Source: `src/features/scrapers/classic_collector/backfill.ts`
 
@@ -488,7 +524,7 @@ npx tsx scripts/backfill-classic-images.ts
 
 > Without Decodo proxy credentials, Cloudflare blocks the headless browser after 1-2 requests. The proxy is mandatory for Playwright-based bulk backfill.
 
-### 5e. Verify
+### 5f. Verify
 
 ```bash
 node scripts/verify-scraper-quality.mjs --scraper=classic
@@ -496,10 +532,14 @@ node scripts/verify-scraper-quality.mjs --scraper=classic
 
 ### Automated schedule
 
-| Step | Time (UTC) | Runtime | Duration |
-|------|------------|---------|----------|
-| Discovery + details | 04:00 | GitHub Actions | 45 min |
-| Bulk image backfill | 04:30 | GitHub Actions | 45 min |
+| Step | Time (UTC) | Runtime | Mode | Duration |
+|------|------------|---------|------|----------|
+| Discovery (summary-only) | Vercel Cron | Vercel | Playwright discovery, no details (no Python on Vercel) | 5 min |
+| Discovery + details (Scrapling) | 04:00 | GitHub Actions | Scrapling-first, 170 pages, full detail enrichment | 45 min |
+| Bulk image backfill | 04:30 | GitHub Actions | Playwright + proxy | 45 min |
+| Scrapling enrichment | 06:00 | GitHub Actions | Enrich summary-only listings via Scrapling | 30 min |
+
+> The Vercel cron is a lightweight supplement — it catches new listings between GHA runs via summary-only discovery (10 pages, 250 listings). The GHA workflow is the primary collector using Scrapling for full detail data. The enrichment job at 06:00 backfills any remaining summary-only listings with full detail via Scrapling.
 
 **Trigger manually on GitHub:**
 
@@ -507,9 +547,11 @@ Go to **Actions > Classic.com Collector (Daily) > Run workflow**:
 
 | Input | Default |
 |-------|---------|
-| Max search pages | `5` |
-| Max listings to process | `125` |
+| Max search pages | `170` |
+| Max listings to process | `5000` |
 | Skip DB writes | `false` |
+| Skip detail fetches | `false` |
+| Scrapling-only mode | `true` |
 
 Go to **Actions > Classic.com Image Backfill > Run workflow**:
 
@@ -523,9 +565,19 @@ Go to **Actions > Classic.com Image Backfill > Run workflow**:
 
 ## 6. AutoScout24 Collector
 
-**What it does:** Scrapes Porsche listings from AutoScout24 across 8 European countries. Uses Playwright browser. Shards searches by model + year range + country to overcome the 20-page pagination limit (~31,000 total listings). Detail enrichment runs separately via a cron route.
+**What it does:** Scrapes Porsche listings from AutoScout24 across 8 European countries. Uses Scrapling (Python, requests-based) as the primary fetcher — extracts `__NEXT_DATA__` JSON from search pages without a browser. Shards searches by model + year range + country to overcome the 20-page pagination limit (~31,000 total listings). Detail enrichment runs separately via a dedicated scrapling enrichment script.
 
 **Source directory:** `src/features/scrapers/autoscout24_collector/`
+
+### Fallback chain
+
+```
+1. Scrapling (Python) [DEFAULT] → fetchAS24SearchWithScrapling() — Chrome TLS impersonation, no browser, no proxy needed
+2. Playwright + proxy            → headless browser + Decodo residential proxy (opt-in fallback)
+3. Summary-only (Vercel Cron)    → existing lightweight path, ~100 listings/day
+```
+
+> **Note:** Scrapling became the default on 2026-04-20 after Akamai Bot Manager blocked 100% of Playwright runs for 8+ consecutive days (0 listings/run). Scrapling bypasses Akamai by mimicking Chrome's TLS fingerprint without running a browser. First run: 39 listings in 4 seconds, 0 blocks.
 
 ### 6a. Discovery
 
@@ -571,6 +623,8 @@ npx tsx src/features/scrapers/autoscout24_collector/cli.ts --help
 | `--outputPath` | `var/autoscout24_collector/listings.jsonl` | JSONL output file |
 | `--dryRun` | `false` | Skip database writes |
 | `--reset` | `false` | Delete checkpoint file and start fresh |
+| `--forceScrapling` | implicit `1` | Force scrapling mode (`--forceScrapling=0` to revert to Playwright) |
+| `--disablePlaywright` | `false` | Skip Playwright fallback entirely |
 
 **Country codes:**
 
@@ -585,19 +639,94 @@ npx tsx src/features/scrapers/autoscout24_collector/cli.ts --help
 | `L` | Luxembourg |
 | `NL` | Netherlands |
 
-### 6b. Detail Enrichment
+### 6b. Scrapling Mode (Default)
 
-Enriches listings by fetching their detail pages via plain HTTP + cheerio (no Playwright). Extracts trim, transmission, body style, engine, colors, VIN, description, and images.
-
-**Source:** `src/app/api/cron/enrich-details/route.ts`
+Scrapling is the default fetcher for search pages. No proxy or Playwright needed. AutoScout24 is a Next.js app — all listing data is embedded in `__NEXT_DATA__` JSON within the initial HTML response, so no JavaScript execution is required.
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/enrich-details
+# Standard run — Scrapling handles everything
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --maxListings=500 --countries=D
+
+# Revert to Playwright-first (legacy behavior, needs proxy — likely blocked by Akamai)
+npx tsx src/features/scrapers/autoscout24_collector/cli.ts --forceScrapling=0 --countries=L --maxListings=10
 ```
 
-Config: 100 listings per run, 1s delay, 270s time budget. On 404/410: marks listing as `delisted`. On 403/429: circuit-breaks.
+**Scrapling environment variables:**
 
-### 6c. Image Backfill
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SCRAPLING_PYTHON` | `python3.11` | Python binary. Set to `python` on Windows. |
+| `AS24_FORCE_SCRAPLING` | `1` (implicit) | Set to `0` to revert to Playwright-first |
+| `AS24_DISABLE_PLAYWRIGHT_FALLBACK` | — | `1` = skip Playwright fallback entirely (GHA default) |
+
+### 6c. Scrapling Direct (Python, no Node)
+
+Test the scrapling fetcher independently:
+
+```bash
+# Search mode — extract listings from a search page
+python scripts/as24_scrapling_fetch.py search "https://www.autoscout24.com/lst/porsche/911?cy=D&fregfrom=2020&fregto=2025"
+
+# Detail mode — extract vehicle specs from a listing page
+python scripts/as24_scrapling_fetch.py detail "https://www.autoscout24.com/offers/porsche-911-..."
+
+# Batch mode (parallel, 4 workers for search, 6 for detail)
+python scripts/as24_scrapling_fetch.py detail "url1" "url2" "url3"
+```
+
+**Search output:**
+```json
+{ "ok": true, "mode": "search", "listings": [...], "totalResults": 158, "totalPages": 9 }
+```
+
+**Detail output:**
+```json
+{ "ok": true, "mode": "detail", "vehicle": { "trim": "Carrera 4S", "vin": "...", "bodyStyle": "Coupe", ... } }
+```
+
+**Script:** `scripts/as24_scrapling_fetch.py`
+**TS wrapper:** `src/features/scrapers/autoscout24_collector/scrapling.ts`
+
+> Scrapling is disabled on Vercel automatically (`process.env.VERCEL` check).
+
+### 6d. Scrapling Enrichment
+
+**What it does:** Enriches AS24 listings (discovered by collector) with detail page data via Scrapling. Finds listings where `trim IS NULL`, fetches detail pages, and updates only null fields. Always sets `trim=""` after attempting (sentinel to prevent re-processing).
+
+**Source:** `scripts/as24-enrich-scrapling.ts`
+
+```bash
+# Pre-flight — test first 5 listings
+npx tsx scripts/as24-enrich-scrapling.ts --preflight
+
+# Dry run — 50 listings, no DB writes
+npx tsx scripts/as24-enrich-scrapling.ts --limit=50 --dryRun
+
+# Production run — 500 listings, 20-minute budget
+npx tsx scripts/as24-enrich-scrapling.ts --limit=500
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--limit` | `500` | Max listings to enrich |
+| `--timeBudgetMs` | `1200000` (20 min) | Total time budget (ms) |
+| `--delayMs` | `2000` | Delay between requests (ms) |
+| `--dryRun` | `false` | Skip DB writes |
+| `--preflight` | `false` | Test first 5 only |
+
+**GHA workflow:** `.github/workflows/autoscout24-enrich.yml` — runs daily at 07:30 UTC.
+
+### 6e. Detail Enrichment (Legacy)
+
+The old HTTP+cheerio enrichment is still available but no longer called by the GHA workflow:
+
+**Source:** `scripts/enrich-as24-bulk.ts`
+
+```bash
+npx tsx scripts/enrich-as24-bulk.ts --maxListings=100 --delayMs=1000
+```
+
+### 6g. Image Backfill
 
 AS24 images are handled by the cross-source image backfill module:
 
@@ -609,7 +738,7 @@ npx tsx scripts/backfill-images.ts --source AutoScout24 --limit 100
 npx tsx scripts/backfill-images.ts --source AutoScout24 --limit 10 --dry-run
 ```
 
-### 6d. Verify
+### 6h. Verify
 
 ```bash
 node scripts/verify-scraper-quality.mjs --scraper=autoscout24
@@ -617,20 +746,33 @@ node scripts/verify-scraper-quality.mjs --scraper=autoscout24
 
 ### Automated schedule
 
-| Step | Time (UTC) | Runtime | Duration |
-|------|------------|---------|----------|
-| Discovery | 05:00 | GitHub Actions | 90 min |
-| Detail enrichment | manual | Vercel Cron | 5 min |
-| Image backfill | 06:30 | Vercel Cron | 5 min |
+| Step | Time (UTC) | Runtime | Mode | Duration |
+|------|------------|---------|------|----------|
+| Discovery (Scrapling) | 05:00 | GitHub Actions | Scrapling-first, 52 shards, no browser | 30 min |
+| Discovery (Vercel) | Vercel Cron | Vercel | Playwright, summary-only supplement (~100 listings/day) | 5 min |
+| Scrapling enrichment | 07:30 | GitHub Actions | Enrich detail pages via Scrapling | 20 min |
+| Image backfill | 06:30 | Vercel Cron | Cross-source image backfill | 5 min |
 
-**Trigger manually on GitHub:** Go to **Actions > AutoScout24 Collector (Daily) > Run workflow**:
+> The Vercel cron is a lightweight supplement — it catches new listings between GHA runs. The GHA workflow is the primary collector using Scrapling. The enrichment job at 07:30 fills trim/VIN/colors for existing listings.
+
+**Trigger manually on GitHub:**
+
+Go to **Actions > AutoScout24 Collector (Daily) > Run workflow**:
 
 | Input | Default |
 |-------|---------|
-| Max listings to process | `2000` |
+| Max listings to process | `7000` |
 | Country codes | `D,A,B,E,F,I,L,NL` |
 | Max pages per shard | `20` |
 | Fetch detail pages | `false` |
+| Skip DB writes | `false` |
+
+Go to **Actions > AutoScout24 Bulk Enrichment (Daily) > Run workflow**:
+
+| Input | Default |
+|-------|---------|
+| Max listings to enrich | `500` |
+| Delay between requests (ms) | `2000` |
 | Skip DB writes | `false` |
 
 ---
@@ -894,19 +1036,21 @@ All times in UTC. Staggered to avoid overlapping.
 01:30  BaT Detail Scraper         (GitHub Actions, 30 min)
 02:00  AutoTrader Collector       (Vercel Cron, 5 min)
 03:00  BeForward Collector        (Vercel Cron, 5 min)
-04:00  Classic.com Collector      (GitHub Actions, 45 min)
+04:00  Classic.com Collector      (GitHub Actions, 45 min, Scrapling-first)
 04:30  Classic.com Image Backfill (GitHub Actions, 45 min)
-05:00  AutoScout24 Collector      (GitHub Actions, 90 min)
+  --   Classic.com Discovery      (Vercel Cron, 5 min, summary-only supplement)
+05:00  AutoScout24 Collector      (GitHub Actions, 30 min, Scrapling-first)
 05:30  Listing Validator          (Vercel Cron, 1 min)
+06:00  Classic.com Enrichment     (GitHub Actions, 30 min, Scrapling)
 06:00  Cleanup                    (Vercel Cron, 1 min)
 06:30  Image Backfill             (Vercel Cron, 5 min)
 07:00  VIN Enrichment             (Vercel Cron, 1 min)
 07:15  Title Enrichment           (Vercel Cron, 1 min)
+07:30  AutoScout24 Enrichment     (GitHub Actions, 20 min, Scrapling)
 07:45  AutoTrader Enrichment      (Vercel Cron, 5 min)
 09:15  Elferspot Collector        (Vercel Cron, 5 min)
 09:45  Elferspot Enrichment       (Vercel Cron, 5 min)
 10:30  Liveness Checker           (GitHub Actions, 60 min)
- --    AS24 Detail Enrichment     (Vercel Cron, manual only)
 ```
 
 **Why two runtimes?**
@@ -1007,10 +1151,13 @@ npx playwright install chromium --with-deps
 ```
 
 ### Cloudflare / Akamai blocks
-Browser-based scrapers (Classic.com, AutoScout24) may get blocked without a proxy. Options:
-1. Set the `DECODO_PROXY_*` environment variables or pass `--proxyServer`
-2. Use Scrapling fallback: `CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK=1` for scrapling-only mode
-3. Test scrapling directly: `python scripts/classic_scrapling_fetch.py <url>`
+Browser-based scrapers may get blocked without a proxy. Both Classic.com and AutoScout24 now default to Scrapling which bypasses these blocks:
+1. **AutoScout24:** Scrapling is default. To revert: `AS24_FORCE_SCRAPLING=0` (will likely be blocked by Akamai)
+2. **Classic.com:** Scrapling is default. To revert: `CLASSIC_FORCE_SCRAPLING=0`
+3. Test scrapling directly:
+   - `python scripts/as24_scrapling_fetch.py search "https://www.autoscout24.com/lst/porsche/911?cy=D"`
+   - `python scripts/classic_scrapling_fetch.py "https://www.classic.com/veh/..."`
+4. Last resort: Set `DECODO_PROXY_*` environment variables for Playwright+proxy fallback
 
 ### Scrapling not working
 ```bash

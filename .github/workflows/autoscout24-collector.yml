@@ -45,7 +45,15 @@ jobs:
 
       - run: npm ci
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install scrapling
+        run: pip install "scrapling[fetchers]"
+
       - name: Install Playwright browsers
+        if: env.AS24_DISABLE_PLAYWRIGHT_FALLBACK != '1'
         run: |
           npx playwright install chromium --with-deps
           npx rebrowser-playwright install chromium || true
@@ -57,6 +65,8 @@ jobs:
           DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
+          SCRAPLING_PYTHON: python
+          AS24_DISABLE_PLAYWRIGHT_FALLBACK: "1"
         run: |
           npx tsx src/features/scrapers/autoscout24_collector/cli.ts \
             --countries=${{ github.event.inputs.countries || 'D,A,B,E,F,I,L,NL' }} \

@@ -2,7 +2,7 @@ name: AutoScout24 Bulk Enrichment (Daily)
 
 on:
   schedule:
-    - cron: '30 6 * * *'     # 06:30 UTC daily (after AS24 collector at 05:00)
+    - cron: '30 7 * * *'     # 07:30 UTC daily (after AS24 collector at 05:00)
   workflow_dispatch:
     inputs:
       max_listings:
@@ -33,14 +33,22 @@ jobs:
 
       - run: npm ci
 
-      - name: Run bulk enrichment
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install scrapling
+        run: pip install "scrapling[fetchers]"
+
+      - name: Run bulk enrichment (scrapling)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPLING_PYTHON: python
         run: |
-          npx tsx scripts/enrich-as24-bulk.ts \
-            --maxListings=${{ github.event.inputs.max_listings || '500' }} \
-            --delayMs=${{ github.event.inputs.delay_ms || '1000' }} \
+          npx tsx scripts/as24-enrich-scrapling.ts \
+            --limit=${{ github.event.inputs.max_listings || '500' }} \
+            --delayMs=${{ github.event.inputs.delay_ms || '2000' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Verify scraper quality gate
@@ -49,5 +57,5 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           npx tsx scripts/verify-scraper-quality.mjs \
-            --scraper=enrich-details-bulk \
+            --scraper=as24-enrich \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}

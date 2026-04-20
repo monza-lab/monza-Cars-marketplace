@@ -10,7 +10,8 @@ import type {
   NormalizedListing,
 } from "./types";
 import { generateShards } from "./shards";
-import { discoverShard } from "./discover";
+import { discoverShard, discoverShardWithScrapling } from "./discover";
+import { canUseScrapling } from "./scrapling";
 import { fetchAndParseDetail } from "./detail";
 import { normalizeListing, normalizeFromSearch, isLuxuryCarListing } from "./normalize";
 import { deriveSourceId } from "./id";
@@ -136,21 +137,24 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
   const outputDir = path.dirname(config.outputPath);
   await fs.mkdir(outputDir, { recursive: true });
 
-  // Launch browser
-  const browser = await launchStealthBrowser({
+  // Scrapling mode: skip browser entirely
+  const useScrapling = canUseScrapling();
+  logEvent({ level: "info", event: "collector.mode", runId, mode: useScrapling ? "scrapling" : "playwright" });
+
+  const browser = useScrapling ? null : await launchStealthBrowser({
     headless: config.headless,
     proxyServer: config.proxyServer,
     proxyUsername: config.proxyUsername,
     proxyPassword: config.proxyPassword,
   });
 
-  let context = await createStealthContext(browser, {
+  let context = browser ? await createStealthContext(browser, {
     headless: config.headless,
     proxyServer: config.proxyServer,
     proxyUsername: config.proxyUsername,
     proxyPassword: config.proxyPassword,
-  });
-  let page = await createPage(context);
+  }) : null;
+  let page = context ? await createPage(context) : null;
   const rateLimiter = new NavigationRateLimiter(config.navigationDelayMs);
 
   const seenSourceIds = new Set<string>();
@@ -183,18 +187,29 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
       const resumePage = getShardResumePage(checkpoint, shard.id);
 
       // Discover listings for this shard
-      const discoverResult = await discoverShard({
-        page,
-        shard,
-        rateLimiter,
-        pageTimeoutMs: config.pageTimeoutMs,
-        runId,
-        resumeFromPage: resumePage,
-        onPageDone: async (shardId, pageNum, found) => {
-          checkpoint = updateShardCheckpoint(checkpoint, shardId, pageNum, found);
-          await saveCheckpoint(config.checkpointPath, checkpoint);
-        },
-      });
+      const discoverResult = useScrapling
+        ? await discoverShardWithScrapling({
+            shard,
+            runId,
+            navigationDelayMs: config.navigationDelayMs,
+            resumeFromPage: resumePage,
+            onPageDone: async (shardId, pageNum, found) => {
+              checkpoint = updateShardCheckpoint(checkpoint, shardId, pageNum, found);
+              await saveCheckpoint(config.checkpointPath, checkpoint);
+            },
+          })
+        : await discoverShard({
+            page: page!,
+            shard,
+            rateLimiter,
+            pageTimeoutMs: config.pageTimeoutMs,
+            runId,
+            resumeFromPage: resumePage,
+            onPageDone: async (shardId, pageNum, found) => {
+              checkpoint = updateShardCheckpoint(checkpoint, shardId, pageNum, found);
+              await saveCheckpoint(config.checkpointPath, checkpoint);
+            },
+          });
 
       counts.discovered += discoverResult.listings.length;
 
@@ -220,8 +235,8 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
           continue;
         }
 
-        // Refresh browser context periodically
-        if (totalListingsProcessed > 0 && totalListingsProcessed % CONTEXT_REFRESH_INTERVAL === 0) {
+        // Refresh browser context periodically (skip in scrapling mode — no browser)
+        if (!useScrapling && totalListingsProcessed > 0 && totalListingsProcessed % CONTEXT_REFRESH_INTERVAL === 0) {
           logEvent({ level: "info", event: "collector.context_refresh", runId, index: totalListingsProcessed });
           await page.close().catch(() => {});
           await context.close().catch(() => {});
@@ -236,7 +251,7 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
         let normalized: NormalizedListing | null = null;
 
-        if (config.scrapeDetails) {
+        if (config.scrapeDetails && !useScrapling) {
           try {
             await rateLimiter.waitBeforeNavigation();
             const { value: detail } = await withRetry(
@@ -306,9 +321,9 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
     errors.push(`Fatal: ${msg}`);
     logEvent({ level: "error", event: "collector.fatal", runId, error: msg });
   } finally {
-    await page.close().catch(() => {});
-    await context.close().catch(() => {});
-    await closeBrowser(browser);
+    if (page) await page.close().catch(() => {});
+    if (context) await context.close().catch(() => {});
+    if (browser) await closeBrowser(browser);
   }
 
   logEvent({ level: "info", event: "collector.done", runId, counts, shardsCompleted, shardsTotal: allShards.length });

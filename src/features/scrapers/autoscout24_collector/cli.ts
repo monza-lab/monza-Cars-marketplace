@@ -85,6 +85,9 @@ Options:
   --dryRun                   Skip DB writes
   --checkpointPath=...       Path to checkpoint file
   --outputPath=...           Path to JSONL output file
+  --forceScrapling           Force scrapling mode (set AS24_FORCE_SCRAPLING=1)
+  --forceScrapling=0         Disable scrapling (revert to Playwright)
+  --disablePlaywright        Skip Playwright fallback entirely
   --reset                    Reset checkpoint (start fresh, re-scrape all shards)
   --help                     Show this help
 `);
@@ -98,6 +101,17 @@ Options:
   if (hasFlag(args, "reset") && existsSync(checkpointPath)) {
     unlinkSync(checkpointPath);
     console.log(`  [Reset] Checkpoint deleted: ${checkpointPath}`);
+  }
+
+  // Scrapling control flags → set env vars consumed by scrapling.ts predicates
+  const scraplingVal = readString(args, "forceScrapling");
+  if (scraplingVal !== undefined) {
+    process.env.AS24_FORCE_SCRAPLING = scraplingVal === "0" ? "0" : "1";
+  } else if (hasFlag(args, "forceScrapling")) {
+    process.env.AS24_FORCE_SCRAPLING = "1";
+  }
+  if (hasFlag(args, "disablePlaywright")) {
+    process.env.AS24_DISABLE_PLAYWRIGHT_FALLBACK = "1";
   }
 
   const config: CollectorRunConfig = {

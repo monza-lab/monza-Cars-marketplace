@@ -172,3 +172,24 @@ export interface CollectorResult {
   errors: string[];
   outputPath: string;
 }
+
+/** Result from scrapling search page fetch */
+export interface AS24ScraplingSearchResult {
+  listings: AS24ListingSummary[];
+  totalResults: number | null;
+  totalPages: number | null;
+}
+
+/** Result from scrapling detail page fetch */
+export interface AS24ScraplingDetailResult {
+  trim: string | null;
+  vin: string | null;
+  transmission: string | null;
+  bodyStyle: string | null;
+  engine: string | null;
+  colorExterior: string | null;
+  colorInterior: string | null;
+  description: string | null;
+  images: string[];
+  features: string[];
+}
