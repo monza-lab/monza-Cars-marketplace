@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal, MessageSquare } from "lucide-react";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { BrowseCard } from "./BrowseCard";
@@ -9,8 +9,80 @@ import { useClassicFilters } from "./filters/useClassicFilters";
 import { applyFilters } from "./filters/applyFilters";
 import { countActiveFilters } from "./filters/types";
 
-const INITIAL_VISIBLE = 24;
-const PAGE_SIZE = 24;
+const REMOTE_PAGE_SIZE = 30;
+
+type ApiCar = {
+  id: string;
+  title: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string | null;
+  engine?: string | null;
+  transmission?: string | null;
+  mileage?: number | null;
+  mileageUnit?: string | null;
+  location?: string | null;
+  platform: string;
+  status: string;
+  price?: number;
+  currentBid: number;
+  bidCount: number;
+  endTime: string;
+  image?: string;
+  images?: string[];
+  sourceUrl?: string | null;
+  category?: string;
+  region?: string | null;
+  originalCurrency?: string | null;
+  soldPriceUsd?: number | null;
+  askingPriceUsd?: number | null;
+  valuationBasis?: "sold" | "asking" | "unknown";
+  canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
+  family?: string | null;
+  fairValueByRegion?: DashboardAuction["fairValueByRegion"] | null;
+};
+
+// Bring an /api/mock-auctions car into the DashboardAuction shape BrowseCard expects.
+// Only the fields the card actually reads need to match; everything else is filled with
+// neutral defaults so the type checker is happy.
+function toDashboardAuction(c: ApiCar): DashboardAuction {
+  return {
+    id: c.id,
+    title: c.title,
+    make: c.make,
+    model: c.model,
+    year: c.year,
+    trim: c.trim ?? null,
+    price: c.price ?? 0,
+    currentBid: c.currentBid,
+    bidCount: c.bidCount,
+    viewCount: 0,
+    watchCount: 0,
+    status: c.status,
+    endTime: c.endTime,
+    platform: c.platform,
+    engine: c.engine ?? null,
+    transmission: c.transmission ?? null,
+    exteriorColor: null,
+    mileage: c.mileage ?? null,
+    mileageUnit: c.mileageUnit ?? null,
+    location: c.location ?? null,
+    region: c.region ?? null,
+    description: null,
+    images: c.images && c.images.length > 0 ? c.images : c.image ? [c.image] : [],
+    analysis: null,
+    priceHistory: [],
+    fairValueByRegion: c.fairValueByRegion ?? undefined,
+    category: c.category,
+    originalCurrency: c.originalCurrency ?? null,
+    soldPriceUsd: c.soldPriceUsd ?? null,
+    askingPriceUsd: c.askingPriceUsd ?? null,
+    valuationBasis: c.valuationBasis ?? "unknown",
+    canonicalMarket: c.canonicalMarket ?? null,
+    family: c.family ?? null,
+  };
+}
 
 export function BrowseClient({
   auctions,
@@ -22,19 +94,74 @@ export function BrowseClient({
   totalTracked: number;
 }) {
   const { filters, setFilters, resetFilters } = useClassicFilters();
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
-  const filtered = useMemo(() => applyFilters(auctions, filters), [auctions, filters]);
+  // Extra cars streamed in from /api/mock-auctions as the user scrolls.
+  const [remoteCars, setRemoteCars] = useState<DashboardAuction[]>([]);
+  const [remoteCursor, setRemoteCursor] = useState<string | null>(null);
+  const [remoteHasMore, setRemoteHasMore] = useState(true);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const seenIdsRef = useRef<Set<string>>(new Set(auctions.map((a) => a.id)));
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = filtered.length > visibleCount;
+  const allAuctions = useMemo(() => [...auctions, ...remoteCars], [auctions, remoteCars]);
+  const filtered = useMemo(() => applyFilters(allAuctions, filters), [allAuctions, filters]);
+
+  const visible = filtered;
+  const hasMore = remoteHasMore && !remoteLoading;
   const activeCount = countActiveFilters(filters);
 
-  // Reset pagination when filters change.
-  const filtersKey = JSON.stringify(filters);
+  const fetchMoreRemote = useCallback(async () => {
+    if (remoteLoading || !remoteHasMore) return;
+    setRemoteLoading(true);
+    try {
+      const params = new URLSearchParams({
+        make: "Porsche",
+        pageSize: String(REMOTE_PAGE_SIZE),
+        status: "ACTIVE",
+      });
+      if (remoteCursor) params.set("cursor", remoteCursor);
+      const res = await fetch(`/api/mock-auctions?${params.toString()}`, { cache: "no-store" });
+      if (!res.ok) {
+        setRemoteHasMore(false);
+        return;
+      }
+      const data = (await res.json()) as {
+        auctions: ApiCar[];
+        nextCursor: string | null;
+        hasMore: boolean;
+      };
+      const fresh = data.auctions
+        .filter((c) => !seenIdsRef.current.has(c.id))
+        .map(toDashboardAuction);
+      fresh.forEach((c) => seenIdsRef.current.add(c.id));
+      setRemoteCars((prev) => [...prev, ...fresh]);
+      setRemoteCursor(data.nextCursor);
+      setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
+    } catch {
+      setRemoteHasMore(false);
+    } finally {
+      setRemoteLoading(false);
+    }
+  }, [remoteCursor, remoteHasMore, remoteLoading]);
+
+  // Infinite scroll: when the user nears the bottom, stream the next page from
+  // the API. Uses a window scroll listener — simple + universally reliable.
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [filtersKey]);
+    if (!hasMore) return;
+    const handle = () => {
+      const nearBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 600;
+      if (nearBottom) void fetchMoreRemote();
+    };
+    // Fire once in case the first render already leaves the user near the bottom.
+    handle();
+    window.addEventListener("scroll", handle, { passive: true });
+    window.addEventListener("resize", handle);
+    return () => {
+      window.removeEventListener("scroll", handle);
+      window.removeEventListener("resize", handle);
+    };
+  }, [hasMore, fetchMoreRemote]);
 
   return (
     <div className="min-h-screen bg-background pt-14 md:pt-16">
@@ -95,13 +222,25 @@ export function BrowseClient({
             </div>
 
             {hasMore && (
-              <div className="mt-8 md:mt-10 flex justify-center">
-                <button
-                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                  className="w-full md:w-auto h-12 md:h-auto px-6 md:py-2.5 rounded-full border border-border text-[13px] md:text-[12px] font-medium text-foreground active:bg-foreground/5 md:hover:border-primary/40 md:hover:bg-foreground/[0.03] transition-colors"
-                >
-                  Load more ({(filtered.length - visibleCount).toLocaleString()} remaining)
-                </button>
+              <div className="mt-8 md:mt-10 flex justify-center items-center min-h-[4rem]">
+                {remoteLoading ? (
+                  <div className="size-6 rounded-full border-2 border-border border-t-primary animate-spin" />
+                ) : (
+                  <button
+                    onClick={() => void fetchMoreRemote()}
+                    className="px-6 py-2.5 rounded-full border border-border text-[12px] font-medium text-foreground hover:border-primary/40 hover:bg-foreground/[0.03] transition-colors"
+                  >
+                    Load more acquisitions
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!hasMore && visible.length > 0 && (
+              <div className="mt-10 text-center">
+                <p className="text-[11px] text-muted-foreground tracking-wider">
+                  You&apos;ve reached the end of the current inventory · {visible.length.toLocaleString()} shown
+                </p>
               </div>
             )}
 
