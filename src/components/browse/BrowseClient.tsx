@@ -133,7 +133,25 @@ export function BrowseClient({
     () => (hasServerFilters ? remoteCars : [...auctions, ...remoteCars]),
     [hasServerFilters, auctions, remoteCars],
   );
-  const filtered = useMemo(() => applyFilters(allAuctions, filters), [allAuctions, filters]);
+  // When the server has already filtered on a field, we must NOT re-filter
+  // it on the client. The server uses SQL patterns (getModelPatternsForSeries,
+  // title/model ILIKE) while applyFilters uses extractSeries — they disagree
+  // on edge cases like "1991 Porsche 911 Carrera 2" which is a 964 per the
+  // year but whose title doesn't contain "964".
+  const clientFilters = useMemo(() => {
+    if (!hasServerFilters) return filters;
+    return {
+      ...filters,
+      q: serverFilters.query ? "" : filters.q,
+      series: serverFilters.family ? [] : filters.series,
+      region: serverFilters.region ? [] : filters.region,
+      platform: serverFilters.platform ? [] : filters.platform,
+    };
+  }, [filters, hasServerFilters, serverFilters]);
+  const filtered = useMemo(
+    () => applyFilters(allAuctions, clientFilters),
+    [allAuctions, clientFilters],
+  );
 
   const visible = filtered;
   const hasMore = remoteHasMore && !remoteLoading;
