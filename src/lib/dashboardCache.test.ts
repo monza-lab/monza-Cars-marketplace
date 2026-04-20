@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+^import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const unstableCache = vi.fn((fn: () => unknown) => fn)
 const revalidateTag = vi.fn()
@@ -502,16 +502,16 @@ describe("dashboard cache", () => {
       totalLiveCount: 1,
     })
     fetchDashboardRegionalValuationByFamily.mockImplementationOnce(
-      () => new Promise(() => {}),
+      () => new Promise(() => { }),
     )
     fetchValuationCorpusForMake.mockImplementationOnce(
-      () => new Promise(() => {}),
+      () => new Promise(() => { }),
     )
     fetchLiveListingAggregateCounts.mockImplementationOnce(
-      () => new Promise(() => {}),
+      () => new Promise(() => { }),
     )
     fetchSeriesCounts.mockImplementationOnce(
-      () => new Promise(() => {}),
+      () => new Promise(() => { }),
     )
 
     const { fetchDashboardDataUncached } = await import("./dashboardCache")

@@ -221,9 +221,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // Magic link lands on /auth/confirm, which verifies the token_hash
-        // and establishes the session. Existing users sign in; new accounts
-        // are created on first click (shouldCreateUser defaults to true).
+        // Magic link lands on /auth/confirm, which now accepts both the older
+        // token_hash verification flow and the code exchange flow.
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },
     })
