@@ -198,18 +198,24 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
               await saveCheckpoint(config.checkpointPath, checkpoint);
             },
           })
-        : await discoverShard({
-            page: page!,
-            shard,
-            rateLimiter,
-            pageTimeoutMs: config.pageTimeoutMs,
-            runId,
-            resumeFromPage: resumePage,
-            onPageDone: async (shardId, pageNum, found) => {
-              checkpoint = updateShardCheckpoint(checkpoint, shardId, pageNum, found);
-              await saveCheckpoint(config.checkpointPath, checkpoint);
-            },
-          });
+        : await (() => {
+            if (!page) {
+              throw new Error("Playwright page unavailable in browser collector mode");
+            }
+
+            return discoverShard({
+              page,
+              shard,
+              rateLimiter,
+              pageTimeoutMs: config.pageTimeoutMs,
+              runId,
+              resumeFromPage: resumePage,
+              onPageDone: async (shardId, pageNum, found) => {
+                checkpoint = updateShardCheckpoint(checkpoint, shardId, pageNum, found);
+                await saveCheckpoint(config.checkpointPath, checkpoint);
+              },
+            });
+          })();
 
       counts.discovered += discoverResult.listings.length;
 
@@ -238,8 +244,11 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
         // Refresh browser context periodically (skip in scrapling mode — no browser)
         if (!useScrapling && totalListingsProcessed > 0 && totalListingsProcessed % CONTEXT_REFRESH_INTERVAL === 0) {
           logEvent({ level: "info", event: "collector.context_refresh", runId, index: totalListingsProcessed });
-          await page.close().catch(() => {});
-          await context.close().catch(() => {});
+          if (!browser) {
+            throw new Error("Playwright browser unavailable during context refresh");
+          }
+          await page?.close().catch(() => {});
+          await context?.close().catch(() => {});
           context = await createStealthContext(browser, {
             headless: config.headless,
             proxyServer: config.proxyServer,
@@ -253,9 +262,13 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
         if (config.scrapeDetails && !useScrapling) {
           try {
+            if (!page) {
+              throw new Error("Playwright page unavailable during detail scrape");
+            }
+            const detailPage = page;
             await rateLimiter.waitBeforeNavigation();
             const { value: detail } = await withRetry(
-              async () => fetchAndParseDetail({ page, url: searchListing.url, pageTimeoutMs: config.pageTimeoutMs, runId }),
+              async () => fetchAndParseDetail({ page: detailPage, url: searchListing.url, pageTimeoutMs: config.pageTimeoutMs, runId }),
               { retries: 1, baseDelayMs: 3000 },
             );
             counts.detailsFetched++;
