@@ -31,7 +31,10 @@ export function canUseScraplingFallback(): boolean {
 }
 
 export function shouldPreferScraplingFirst(): boolean {
-  return isScraplingEnabled() && process.env.CLASSIC_FORCE_SCRAPLING === "1";
+  // Scrapling is the default detail/search fetcher (proven 95%+ success, 0 CF blocks).
+  // Set CLASSIC_FORCE_SCRAPLING=0 to revert to Playwright-first.
+  if (process.env.CLASSIC_FORCE_SCRAPLING === "0") return false;
+  return isScraplingEnabled();
 }
 
 function resolveScraplingPython(): string {

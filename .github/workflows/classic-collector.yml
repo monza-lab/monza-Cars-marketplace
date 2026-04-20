@@ -16,10 +16,10 @@ on:
         default: 'false'
       summary_only:
         description: 'Skip detail fetches'
-        default: 'true'
-      force_scrapling:
-        description: 'Force Scrapling on the search page'
         default: 'false'
+      disable_playwright:
+        description: 'Scrapling-only mode (skip Playwright fallback)'
+        default: 'true'
 
 concurrency:
   group: classic-collector
@@ -55,13 +55,14 @@ jobs:
 
       - run: npm ci
 
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers (only if Playwright fallback enabled)
+        if: ${{ github.event.inputs.disable_playwright == 'false' }}
         run: |
           npx playwright install-deps chromium
           npx playwright install chromium
           npx rebrowser-playwright install chromium || true
 
-      - name: Run collector (incremental)
+      - name: Run collector (Scrapling-first)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -69,14 +70,14 @@ jobs:
           DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
           DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
           SCRAPLING_FETCH_MODE: stealthy-fetch
-          CLASSIC_FORCE_SCRAPLING: ${{ github.event.inputs.force_scrapling == 'true' && '1' || '' }}
+          CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK: ${{ github.event.inputs.disable_playwright != 'false' && '1' || '' }}
         run: |
           npx tsx src/features/scrapers/classic_collector/cli.ts \
             --maxPages=${{ github.event.inputs.max_pages || '170' }} \
             --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \
-            ${{ github.event.inputs.summary_only != 'false' && '--summaryOnly' || '' }} \
+            ${{ github.event.inputs.summary_only == 'true' && '--summaryOnly' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Verify scraper quality gate

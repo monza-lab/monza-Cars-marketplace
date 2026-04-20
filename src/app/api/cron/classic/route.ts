@@ -34,24 +34,25 @@ export async function GET(request: Request) {
   });
 
   try {
+    // Vercel cron = lightweight discovery-only (no Python → no Scrapling).
+    // Full detail-enriched collection runs via GHA workflow at 04:00 UTC
+    // using Scrapling (95%+ detail success, 0 CF blocks, no proxy needed).
+    // This cron supplements GHA by catching new listings between runs.
     const result = await runClassicComCollector({
       mode: "daily",
       make: "Porsche",
       location: "US",
       status: "forsale",
-      maxPages: 5,
-      maxListings: 120,
+      maxPages: 10,
+      maxListings: 250,
       headless: true,
-      proxyServer: process.env.DECODO_PROXY_URL,
-      proxyUsername: process.env.DECODO_PROXY_USER,
-      proxyPassword: process.env.DECODO_PROXY_PASS,
       navigationDelayMs: 2000,
       pageTimeoutMs: 20000,
       checkpointPath: "/tmp/classic_collector/checkpoint.json",
       outputPath: "/tmp/classic_collector/listings.jsonl",
       dryRun: false,
       timeBudgetMs: 270_000,
-      summaryOnly: true,    // skip detail page fetches on Vercel
+      summaryOnly: true,    // no Scrapling on Vercel → summary-only discovery
       skipMonitoring: true, // cron route handles monitoring
     });
 
