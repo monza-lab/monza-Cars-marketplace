@@ -5,11 +5,12 @@ import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
-import { extractSeries, getBrandConfig, getSeriesConfig } from "@/lib/brandConfig"
+import { getBrandConfig, getSeriesConfig } from "@/lib/brandConfig"
 import { Clock, Car, ChevronRight } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
 import { platformShort } from "../constants"
+import { filterLiveSidebarAuctions, useLiveSidebarListings } from "./useLiveSidebarListings"
 import type { Auction, Brand, LiveRegionTotals } from "../types"
 
 interface DiscoverySidebarProps {
@@ -84,19 +85,39 @@ export function DiscoverySidebar({
       })
   }, [activeBrandSlug, brands, seriesCounts, seriesCountsByRegion, selectedRegion])
 
-  // Live auctions sorted by ending soonest — filtered by active family when scrolling
-  const liveAuctions = useMemo(() => {
-    const now = Date.now()
-    let filtered = auctions.filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-    if (activeFamilyName) {
-      const familySlug = activeFamilyName.toLowerCase()
-      filtered = filtered.filter(a => {
-        const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
-        return series === familySlug
-      })
-    }
-    return filtered.sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
-  }, [auctions, activeFamilyName])
+  const activeFamilyCount = useMemo(() => {
+    if (!activeFamilyName) return null
+
+    const normalized = activeFamilyName.toLowerCase()
+    const family = activeBrandFamilies.find((entry) => {
+      const familySlug = entry.slug.toLowerCase()
+      return entry.name === activeFamilyName || familySlug === normalized || normalized.startsWith(familySlug)
+    })
+
+    return family?.count ?? null
+  }, [activeBrandFamilies, activeFamilyName])
+
+  const seedKey = `${selectedRegion ?? "all"}|${activeFamilyName ?? "all"}`
+  const seedAuctions = useMemo(
+    () => filterLiveSidebarAuctions(auctions, { activeFamilyName, pageSize: 8 }),
+    [auctions, activeFamilyName],
+  )
+  const {
+    liveAuctions,
+    liveCount,
+    scrollRootRef,
+    sentinelRef,
+    isLoading,
+    isFetchingMore,
+    hasMore,
+  } = useLiveSidebarListings({
+    seedAuctions,
+    seedKey,
+    make: auctions[0]?.make ?? "Porsche",
+    activeFamilyName,
+    region: selectedRegion,
+    pageSize: 8,
+  })
 
   const timeLabels = {
     ended: t("asset.ended"),
@@ -223,18 +244,23 @@ export function DiscoverySidebar({
             {t("sidebar.liveNow")}
           </span>
           <span className="text-[10px] font-display font-medium text-primary">
-            {liveAuctions.length}
+            {activeFamilyCount ?? liveCount}
           </span>
         </div>
 
         {/* Live auctions list (scrollable) */}
-        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-          {liveAuctions.length === 0 ? (
+        <div ref={scrollRootRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+          {isLoading && liveAuctions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-20 text-center px-4">
+              <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveListings")}</p>
+            </div>
+          ) : liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
               <p className="text-[11px] text-muted-foreground">{t("sidebar.noLiveListings")}</p>
             </div>
           ) : (
-            liveAuctions.map((auction) => {
+            <>
+              {liveAuctions.map((auction) => {
               const isEndingSoon = auction.status === "ENDING_SOON"
               const remaining = timeLeft(auction.endTime, timeLabels)
 
@@ -290,7 +316,13 @@ export function DiscoverySidebar({
                   </div>
                 </Link>
               )
-            })
+              })}
+              {hasMore && (
+                <div ref={sentinelRef} className="h-20 flex items-center justify-center">
+                  {isFetchingMore && <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
