@@ -95,40 +95,78 @@ export function BrowseClient({
 }) {
   const { filters, setFilters, resetFilters } = useClassicFilters();
 
-  // Extra cars streamed in from /api/mock-auctions as the user scrolls.
+  // Build the subset of filters that the server API can apply on its side.
+  // The others (year, price, mileage, transmission, body, drive, variants…)
+  // continue to run client-side on the streamed pool.
+  const serverFilters = useMemo(() => {
+    const params: Record<string, string> = {};
+    const q = filters.q.trim();
+    if (q) params.query = q;
+    // API takes a single family at a time. Multi-series selection falls back
+    // to pure client-side filtering on whatever is already loaded.
+    if (filters.series.length === 1) params.family = filters.series[0];
+    if (filters.region.length === 1) params.region = filters.region[0];
+    if (filters.platform.length === 1) params.platform = filters.platform[0];
+    return params;
+  }, [filters.q, filters.series, filters.region, filters.platform]);
+
+  const hasServerFilters = Object.keys(serverFilters).length > 0;
+  const serverFilterKey = useMemo(() => JSON.stringify(serverFilters), [serverFilters]);
+  // Debounce so typing in the search box doesn't fire a request per keystroke.
+  const [activeServerKey, setActiveServerKey] = useState(serverFilterKey);
+  useEffect(() => {
+    const t = setTimeout(() => setActiveServerKey(serverFilterKey), 300);
+    return () => clearTimeout(t);
+  }, [serverFilterKey]);
+
+  // Extra cars streamed in from /api/mock-auctions as the user scrolls or changes filters.
   const [remoteCars, setRemoteCars] = useState<DashboardAuction[]>([]);
   const [remoteCursor, setRemoteCursor] = useState<string | null>(null);
   const [remoteHasMore, setRemoteHasMore] = useState(true);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const seenIdsRef = useRef<Set<string>>(new Set(auctions.map((a) => a.id)));
 
-  const allAuctions = useMemo(() => [...auctions, ...remoteCars], [auctions, remoteCars]);
+  // When a server-backed filter is active we ignore the SSR pool (it was a
+  // mixed sample) and show only what the server returned for this specific
+  // filter. Otherwise keep the SSR cars so the landing view feels full.
+  const allAuctions = useMemo(
+    () => (hasServerFilters ? remoteCars : [...auctions, ...remoteCars]),
+    [hasServerFilters, auctions, remoteCars],
+  );
   const filtered = useMemo(() => applyFilters(allAuctions, filters), [allAuctions, filters]);
 
   const visible = filtered;
   const hasMore = remoteHasMore && !remoteLoading;
   const activeCount = countActiveFilters(filters);
 
-  const fetchMoreRemote = useCallback(async () => {
-    if (remoteLoading || !remoteHasMore) return;
-    setRemoteLoading(true);
-    try {
+  const fetchPage = useCallback(
+    async (cursor: string | null, signal?: AbortSignal) => {
       const params = new URLSearchParams({
         make: "Porsche",
         pageSize: String(REMOTE_PAGE_SIZE),
         status: "ACTIVE",
       });
-      if (remoteCursor) params.set("cursor", remoteCursor);
-      const res = await fetch(`/api/mock-auctions?${params.toString()}`, { cache: "no-store" });
-      if (!res.ok) {
-        setRemoteHasMore(false);
-        return;
-      }
-      const data = (await res.json()) as {
+      for (const [k, v] of Object.entries(serverFilters)) params.set(k, v);
+      if (cursor) params.set("cursor", cursor);
+      const res = await fetch(`/api/mock-auctions?${params.toString()}`, {
+        cache: "no-store",
+        signal,
+      });
+      if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+      return (await res.json()) as {
         auctions: ApiCar[];
         nextCursor: string | null;
         hasMore: boolean;
       };
+    },
+    [serverFilters],
+  );
+
+  const fetchMoreRemote = useCallback(async () => {
+    if (remoteLoading || !remoteHasMore) return;
+    setRemoteLoading(true);
+    try {
+      const data = await fetchPage(remoteCursor);
       const fresh = data.auctions
         .filter((c) => !seenIdsRef.current.has(c.id))
         .map(toDashboardAuction);
@@ -141,10 +179,42 @@ export function BrowseClient({
     } finally {
       setRemoteLoading(false);
     }
-  }, [remoteCursor, remoteHasMore, remoteLoading]);
+  }, [remoteCursor, remoteHasMore, remoteLoading, fetchPage]);
+
+  // Reset and refetch whenever the (debounced) server filter set changes.
+  useEffect(() => {
+    const ac = new AbortController();
+    seenIdsRef.current = new Set(auctions.map((a) => a.id));
+    setRemoteCars([]);
+    setRemoteCursor(null);
+    setRemoteHasMore(true);
+    if (!hasServerFilters) return () => ac.abort();
+    setRemoteLoading(true);
+    (async () => {
+      try {
+        const data = await fetchPage(null, ac.signal);
+        if (ac.signal.aborted) return;
+        // When server filters are active we replace the pool — ignore SSR ids
+        // so a streamed car matching the filter isn't deduped against them.
+        const fresh = data.auctions.map(toDashboardAuction);
+        const ids = new Set(fresh.map((c) => c.id));
+        seenIdsRef.current = ids;
+        setRemoteCars(fresh);
+        setRemoteCursor(data.nextCursor);
+        setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
+      } catch (e) {
+        if ((e as { name?: string })?.name === "AbortError") return;
+        setRemoteHasMore(false);
+      } finally {
+        if (!ac.signal.aborted) setRemoteLoading(false);
+      }
+    })();
+    return () => ac.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeServerKey]);
 
   // Infinite scroll: when the user nears the bottom, stream the next page from
-  // the API. Uses a window scroll listener — simple + universally reliable.
+  // the API with whatever filters are currently active.
   useEffect(() => {
     if (!hasMore) return;
     const handle = () => {
