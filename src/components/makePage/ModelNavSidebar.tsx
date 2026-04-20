@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation"
 import { ArrowLeft, Clock } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import { timeLeft, type Model } from "@/lib/makePageHelpers"
 
@@ -25,6 +25,8 @@ export function ModelNavSidebar({
   onSelectModel: (index: number) => void
 }) {
   const tAuction = useTranslations("auctionDetail")
+  const locale = useLocale()
+  const homeHref = locale === "en" ? "/" : `/${locale}`
   const { formatPrice } = useCurrency()
   const minPrice = cars.length > 0 ? Math.min(...cars.map(c => c.currentBid)) : 0
   const maxPrice = cars.length > 0 ? Math.max(...cars.map(c => c.currentBid)) : 0
@@ -44,7 +46,7 @@ export function ModelNavSidebar({
       <div className="shrink-0 px-3 pt-2.5 pb-2 border-b border-border">
         <div className="flex items-center justify-between">
           <a
-            href="/"
+            href={homeHref}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer"
           >
             <ArrowLeft className="size-3 text-muted-foreground" />

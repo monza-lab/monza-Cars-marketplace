@@ -835,6 +835,7 @@ const TYPING_PHRASES = [
 // ─── MAIN HEADER COMPONENT ───
 export function Header() {
   const t = useTranslations();
+  const locale = useLocale();
   const { selectedRegion, setSelectedRegion } = useRegion();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -894,6 +895,7 @@ export function Header() {
   const creditsRemaining = profile?.creditsBalance ?? 0;
   const isAuthenticated = !!user;
   const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
+  const homeHref = locale === "en" ? "/" : `/${locale}`;
 
   // Translated menu links
   const menuLinks = menuLinkKeys.map((link) => ({
@@ -981,7 +983,7 @@ export function Header() {
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
           {/* Left: Logo */}
-          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
+          <Link href={homeHref} className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
             <span className="font-display font-light text-[18px] md:text-[22px] tracking-[0.35em] uppercase text-foreground">
               MONZA
             </span>

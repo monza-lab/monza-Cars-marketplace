@@ -18,7 +18,7 @@ import {
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { saveSearchQuery } from "@/lib/searchHistory"
 import { getBrandConfig } from "@/lib/brandConfig"
@@ -601,6 +601,7 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 // ─── MAIN MOBILE BOTTOM NAV ───
 export function MobileBottomNav() {
   const t = useTranslations("mobile")
+  const locale = useLocale()
   const pathname = usePathname()
   const router = useRouter()
   const [showSearch, setShowSearch] = useState(false)
@@ -613,6 +614,7 @@ export function MobileBottomNav() {
 
   // Determine active tab
   const isHome = pathname === "/" || pathname === "/en" || pathname === "/es" || pathname === "/de" || pathname === "/ja"
+  const homeHref = locale === "en" ? "/" : `/${locale}`
 
   return (
     <>
@@ -622,7 +624,7 @@ export function MobileBottomNav() {
           <div className="flex items-center justify-around">
             {/* Home */}
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push(homeHref)}
               className={`flex flex-col items-center gap-1 transition-colors ${
                 isHome && !showSearch && !showExplore ? "text-primary" : "text-muted-foreground"
               }`}

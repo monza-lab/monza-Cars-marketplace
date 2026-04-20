@@ -8,13 +8,16 @@ import { MonzaHelmet } from "@/components/icons/MonzaHelmet";
 export function ViewToggle() {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = pathname?.split("/")[1];
+  const homeHref = locale && ["en", "es", "de", "ja"].includes(locale) ? (locale === "en" ? "/" : `/${locale}`) : "/";
+  const classicHref = locale && ["en", "es", "de", "ja"].includes(locale) ? (locale === "en" ? "/browse" : `/${locale}/browse`) : "/browse";
 
   const active: MarketplaceView = pathname?.startsWith("/browse") ? "classic" : "monza";
 
   const handleSelect = (view: MarketplaceView) => {
     if (view === active) return;
     setPreferredView(view);
-    router.push(view === "classic" ? "/browse" : "/");
+    router.push(view === "classic" ? classicHref : homeHref);
   };
 
   return (

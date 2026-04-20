@@ -15,6 +15,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { Link } from "@/i18n/navigation";
 import type { CollectorCar, Platform } from "@/lib/curatedCars";
 import { getPriceLabel } from "@/lib/makePageConstants";
+import { useLocale, useTranslations } from "next-intl";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -277,6 +278,9 @@ function PlatformSection({
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
+  const locale = useLocale();
+  const homeHref = locale === "en" ? "/" : `/${locale}`;
+  const tAuction = useTranslations("auctionDetail");
   const { formatPrice } = useCurrency();
 
   // Group cars by platform for real market segmentation
@@ -356,7 +360,7 @@ export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
           >
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-4">
-              <Link href="/" className="hover:text-primary transition-colors">
+              <Link href={homeHref} className="hover:text-primary transition-colors">
                 Market
               </Link>
               <ChevronRight className="size-3" />

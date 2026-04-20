@@ -64,6 +64,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   initialVariant?: string
 }) {
   const locale = useLocale()
+  const homeHref = locale === "en" ? "/" : `/${locale}`
   const router = useRouter()
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
@@ -356,7 +357,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const handleBackToGenerations = () => {
     if (initialFamily) {
       // Came from dashboard with ?family= — go back to landing
-      router.push("/")
+      router.push(homeHref)
       return
     }
     setSelectedGeneration(null)
@@ -374,7 +375,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const handleBackToFamilies = () => {
     if (initialFamily) {
       // User arrived from the landing page with ?family= — go back to landing
-      router.push("/")
+      router.push(homeHref)
       return
     }
     setViewMode('families')

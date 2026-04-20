@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Link, useRouter } from "@/i18n/navigation"
 import { ArrowLeft } from "lucide-react"
 import { useCurrency } from "@/lib/CurrencyContext"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import type { Model } from "@/lib/makePageHelpers"
@@ -15,6 +15,8 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
   const t = useTranslations("makePage")
   const { formatPrice } = useCurrency()
   const router = useRouter()
+  const locale = useLocale()
+  const homeHref = locale === "en" ? "/" : `/${locale}`
 
   return (
     <Link href={`/cars/${makeSlug}/${model.representativeCar.id}`} className="block relative">
@@ -32,7 +34,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
 
         {/* Back link */}
         <div className="absolute top-4 left-4">
-          <button onClick={() => router.push("/")} className="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white/90 transition-colors cursor-pointer">
+          <button onClick={() => router.push(homeHref)} className="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white/90 transition-colors cursor-pointer">
             <ArrowLeft className="size-3.5" />
             {t("hero.backToCollection")}
           </button>
