@@ -4,18 +4,24 @@ import { LayoutGrid } from "lucide-react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { setPreferredView, type MarketplaceView } from "@/lib/viewPreference";
 import { MonzaHelmet } from "@/components/icons/MonzaHelmet";
+import { useLocale } from "next-intl";
 
 export function ViewToggle() {
   const router = useRouter();
   const pathname = usePathname();
-  const locale = pathname?.split("/")[1];
-  const homeHref = locale && ["en", "es", "de", "ja"].includes(locale) ? (locale === "en" ? "/" : `/${locale}`) : "/";
-  const classicHref = locale && ["en", "es", "de", "ja"].includes(locale) ? (locale === "en" ? "/browse" : `/${locale}/browse`) : "/browse";
+  const locale = useLocale();
+  const homeHref = locale === "en" ? "/" : `/${locale}`;
+  const classicHref = locale === "en" ? "/browse" : `/${locale}/browse`;
+  const isClassicRoute = pathname === "/browse" || pathname?.startsWith("/browse/");
+  const isHomeRoute = pathname === "/";
 
-  const active: MarketplaceView = pathname?.startsWith("/browse") ? "classic" : "monza";
+  const active: MarketplaceView = isClassicRoute ? "classic" : "monza";
 
   const handleSelect = (view: MarketplaceView) => {
-    if (view === active) return;
+    if ((view === "classic" && isClassicRoute) || (view === "monza" && isHomeRoute)) {
+      return;
+    }
+
     setPreferredView(view);
     router.push(view === "classic" ? classicHref : homeHref);
   };

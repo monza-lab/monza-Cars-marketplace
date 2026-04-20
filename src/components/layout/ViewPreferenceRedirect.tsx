@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { getPreferredView, type MarketplaceView } from "@/lib/viewPreference";
+import { useLocale } from "next-intl";
 
 export function ViewPreferenceRedirect({ current }: { current: MarketplaceView }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = pathname?.split("/")[1];
-  const isSupportedLocale = locale && ["en", "es", "de", "ja"].includes(locale);
-  const homeHref = isSupportedLocale ? (locale === "en" ? "/" : `/${locale}`) : "/";
-  const classicHref = isSupportedLocale ? (locale === "en" ? "/browse" : `/${locale}/browse`) : "/browse";
+  const locale = useLocale();
+  const homeHref = locale === "en" ? "/" : `/${locale}`;
+  const classicHref = locale === "en" ? "/browse" : `/${locale}/browse`;
 
   useEffect(() => {
     const preferred = getPreferredView();
