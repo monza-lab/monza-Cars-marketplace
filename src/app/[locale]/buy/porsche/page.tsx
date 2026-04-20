@@ -9,8 +9,9 @@ import {
 import { PORSCHE_MODELS } from "@/lib/models/registry";
 import { IMPORT_GUIDES } from "@/lib/import-guides/registry";
 import { PORSCHE_VARIANTS } from "@/lib/variants/registry";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 const LOCALES = ["en", "es", "de", "ja"] as const;
 
 const TITLES: Record<(typeof LOCALES)[number], string> = {

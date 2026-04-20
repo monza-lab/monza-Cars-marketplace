@@ -15,8 +15,9 @@ import { findSimilarCars } from "@/lib/similarCars"
 import { VehicleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd"
 import { buildCarDetailMetadata } from "@/lib/seo/carDetailMetadata"
 import type { HausReport } from "@/lib/fairValue/types"
+import { getSiteUrl } from "@/lib/seo/siteUrl"
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
+const BASE_URL = getSiteUrl()
 
 interface CarDetailPageProps {
   params: Promise<{ make: string; id: string; locale: string }>

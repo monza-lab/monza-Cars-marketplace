@@ -5,8 +5,9 @@ import {
   CollectionPageJsonLd,
 } from "@/components/seo/JsonLd";
 import { INDEX_REGISTRY } from "@/lib/index/registry";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 const LOCALES = ["en", "es", "de", "ja"] as const;
 
 const TITLES: Record<(typeof LOCALES)[number], string> = {

@@ -8,8 +8,9 @@ import { getMarketDataForMake, getComparablesForMake, getSoldAuctionsForMake, ge
 import { MakePageClient } from "./MakePageClient"
 import { BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/seo/JsonLd"
 import { buildMakePageMetadata } from "@/lib/seo/makePageMetadata"
+import { getSiteUrl } from "@/lib/seo/siteUrl"
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com"
+const BASE_URL = getSiteUrl()
 
 export const dynamic = 'force-dynamic'
 

@@ -11,6 +11,7 @@ import { MobileBottomNav } from "@/components/mobile";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -25,7 +26,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
 
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+  const BASE_URL = getSiteUrl();
 
   const titles: Record<string, string> = {
     en: "MonzaHaus | Collector Car Market Intelligence & Porsche Investment Analysis",

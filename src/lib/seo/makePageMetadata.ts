@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { getSiteUrl } from "./siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 const LOCALES = ["en", "es", "de", "ja"] as const;
 type Locale = (typeof LOCALES)[number];
 

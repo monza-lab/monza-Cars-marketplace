@@ -6,8 +6,9 @@ import {
 } from "@/components/seo/JsonLd";
 import { IndexPageLayout } from "@/components/index/IndexPageLayout";
 import { porscheGtIndexConfig, getPorscheGtIndex } from "@/lib/index/porscheGt";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 const LOCALES = ["en", "es", "de", "ja"] as const;
 
 export const dynamic = "force-dynamic";

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { routing } from "@/i18n/routing";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const cormorant = Cormorant({
   subsets: ["latin"],
@@ -19,7 +20,7 @@ const karla = Karla({
 
 import type { Viewport } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 
 export const viewport: Viewport = {
   themeColor: "#FDFBF9",

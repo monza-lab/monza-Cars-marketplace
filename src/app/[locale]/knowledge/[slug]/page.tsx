@@ -11,8 +11,9 @@ import {
   getKnowledgeArticle,
   listKnowledgeSlugs,
 } from "@/lib/knowledge/registry";
+import { getSiteUrl } from "@/lib/seo/siteUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
+const BASE_URL = getSiteUrl();
 const LOCALES = ["en", "es", "de", "ja"] as const;
 
 export const dynamic = "force-dynamic";
