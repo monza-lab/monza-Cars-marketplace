@@ -39,6 +39,7 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { ModelMarketStats, RegionalMarketStats } from "@/lib/reports/types"
+import type { DbComparableRow } from "@/lib/db/queries"
 import { SignalsDetectedSection } from "@/components/report/SignalsDetectedSection"
 import { SignalsMissingSection } from "@/components/report/SignalsMissingSection"
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
@@ -126,11 +127,12 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function ReportClient({ car, similarCars, existingReport, marketStats }: {
+export function ReportClient({ car, similarCars, existingReport, marketStats, dbComparables = [] }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   existingReport: HausReport | null
   marketStats: ModelMarketStats | null
+  dbComparables?: DbComparableRow[]
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
@@ -248,7 +250,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
   const totalAnnualCost = 0
 
   // No fake comparables — regional stats replace this
-  const comps: Array<{ title: string; price: number; date: string; platform: string; delta: number }> = []
+  // Real comparable sales from the Comparable table. Empty array when the
+  // backend hasn't populated it yet — the UI renders an honest empty state.
+  const marketAvgForDelta = marketStats
+    ? (marketStats.primaryFairValueLow + marketStats.primaryFairValueHigh) / 2
+    : null
+  const comps = dbComparables.map(c => ({
+    title: c.title,
+    price: c.soldPrice,
+    date: c.soldDate ? new Date(c.soldDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "N/A",
+    platform: c.platform === "BRING_A_TRAILER" ? "BaT" : c.platform === "CARS_AND_BIDS" ? "C&B" : c.platform === "COLLECTING_CARS" ? "CC" : c.platform === "AUTO_SCOUT_24" ? "AS24" : c.platform,
+    delta: marketAvgForDelta ? Math.round(((c.soldPrice - marketAvgForDelta) / marketAvgForDelta) * 100) : 0,
+  }))
 
   const platform = platformLabels[car.platform]
 
@@ -1565,7 +1578,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       </div>
 
       {/* DESKTOP: Fixed left sidebar nav */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-background border-r border-border z-40 pt-[80px]">
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-background border-r border-border z-40 pt-[var(--app-header-h,80px)]">
         <div className="px-4 py-4 border-b border-border">
           <Link
             href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
@@ -1639,7 +1652,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
       </div>
 
       {/* ═══ MAIN CONTENT ═══ */}
-      <div className="md:ml-[240px] pt-[52px] md:pt-[80px]">
+      <div className="md:ml-[240px] pt-[52px] md:pt-[var(--app-header-h,80px)]">
         <div className={`max-w-[840px] mx-auto px-4 md:px-8 ${hasAccess ? "pb-32" : "pb-24"}`}>
 
           {/* ═══ COVER / HERO ═══ */}
@@ -1932,22 +1945,26 @@ export function ReportClient({ car, similarCars, existingReport, marketStats }: 
                 {/* Comparable sales */}
                 <div className="rounded-xl bg-card border border-border p-5">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.comparables")}</h3>
-                  <div className="space-y-2">
-                    {comps.map((sale, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                  {comps.length > 0 ? (
+                    <div className="space-y-2">
+                      {comps.map((sale, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                          </div>
+                          <div className="text-right shrink-0 ml-3">
+                            <p className="text-[16px] font-bold tabular-nums text-foreground">{formatPrice(sale.price)}</p>
+                            <span className={`text-[10px] tabular-nums font-semibold ${sale.delta > 0 ? "text-positive" : "text-destructive"}`}>
+                              {sale.delta > 0 ? "+" : ""}{sale.delta}%
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right shrink-0 ml-3">
-                          <p className="text-[16px] font-bold tabular-nums text-foreground">{formatPrice(sale.price)}</p>
-                          <span className={`text-[10px] tabular-nums font-semibold ${sale.delta > 0 ? "text-positive" : "text-destructive"}`}>
-                            {sale.delta > 0 ? "+" : ""}{sale.delta}%
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground italic">Awaiting backend data</p>
+                  )}
                 </div>
               </PaywallSection>
             </section>

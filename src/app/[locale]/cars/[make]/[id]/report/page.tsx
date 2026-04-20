@@ -18,6 +18,7 @@ import {
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
+import { getComparablesForModel } from "@/lib/db/queries"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
@@ -89,8 +90,9 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   const similarCars = findSimilarCars(car, allCandidates, 6)
 
   // Fetch priced listings + compute market stats in parallel
-  const [allPriced] = await Promise.all([
+  const [allPriced, dbComparables] = await Promise.all([
     fetchPricedListingsForModel(car.make),
+    getComparablesForModel(car.make, car.model),
   ])
 
   // Filter by series, expand to family if needed, compute regional stats (shared helper)
@@ -143,6 +145,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         similarCars={similarCars}
         existingReport={existingReport}
         marketStats={marketStats}
+        dbComparables={dbComparables}
       />
     </Suspense>
   )

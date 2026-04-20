@@ -96,13 +96,12 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   }
   const similarCars = findSimilarCars(car, allCandidates, 4)
 
-  const shouldQueryHistoricalData = !car.id.startsWith("live-")
-
-  // Fetch Supabase sold history first; fallback to historical tables only when empty.
+  // Always query historical tables regardless of listing id shape. If the tables
+  // are empty the UI will render honest empty states instead of hardcoded fakes.
   const [dbMarketData, dbComparables, dbAnalysis, supabaseSoldHistory] = await Promise.all([
-    shouldQueryHistoricalData ? getMarketDataForModel(car.make, car.model) : Promise.resolve(null),
-    shouldQueryHistoricalData ? getComparablesForModel(car.make, car.model) : Promise.resolve([]),
-    shouldQueryHistoricalData ? getAnalysisForCar(car.make, car.model, car.year) : Promise.resolve(null),
+    getMarketDataForModel(car.make, car.model),
+    getComparablesForModel(car.make, car.model),
+    getAnalysisForCar(car.make, car.model, car.year),
     fetchSoldListingsForMake(car.make),
   ])
 

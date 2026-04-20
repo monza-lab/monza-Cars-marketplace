@@ -127,7 +127,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
   const containerClass = "flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300"
 
   return (
-    <div className="h-[calc(100dvh-80px)] w-full flex flex-col snap-start p-4">
+    <div className="h-[calc(100dvh-var(--app-header-h,80px))] w-full flex flex-col snap-start p-4">
       {onClick ? (
         <button onClick={onClick} className={containerClass}>
           {cardContent}

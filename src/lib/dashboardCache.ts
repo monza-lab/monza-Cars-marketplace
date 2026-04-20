@@ -19,7 +19,7 @@ const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
 const DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS = 45_000;
 const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
-const DASHBOARD_REGION_SAMPLE_SIZE = 6;
+const DASHBOARD_REGION_SAMPLE_SIZE = 15;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 const DASHBOARD_REGION_ORDER: readonly ("US" | "EU" | "UK" | "JP")[] = ["US", "EU", "UK", "JP"] as const;
 export type { RegionalValByFamily };
@@ -98,7 +98,7 @@ export type DashboardData = {
 
 let lastSuccessfulDashboardData: DashboardData | null = null;
 
-const DASHBOARD_DISPLAY_LIMIT = 24;
+const DASHBOARD_DISPLAY_LIMIT = 60;
 const DASHBOARD_FALLBACK_PAGE_SIZE = 8;
 
 function buildAggregateFallback(liveCount: number) {
