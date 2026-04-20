@@ -111,7 +111,7 @@ describe("DatasetJsonLd", () => {
       <DatasetJsonLd
         name="MonzaHaus Air-Cooled 911 Index"
         description="Historical market values for air-cooled Porsche 911 models."
-        url="https://monzalab.com/en/index/air-cooled-911"
+        url="https://monzalab.com/en/indices/air-cooled-911"
         keywords={["Porsche", "911", "collector", "market data"]}
         license="https://creativecommons.org/licenses/by/4.0/"
       />

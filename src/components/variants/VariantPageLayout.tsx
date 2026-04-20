@@ -176,7 +176,7 @@ export function VariantPageLayout({
             Market bands are aggregated from public auction results. For the current
             generation-level median and YoY trend, see the{" "}
             <Link
-              href={`/${locale}/index/${parentModel.indexSlug}`}
+              href={`/${locale}/indices/${parentModel.indexSlug}`}
               className="text-amber-400 hover:underline"
             >
               {parentModel.indexSlug === "air-cooled-911" ? "Air-Cooled" : "Water-Cooled"} 911 Index

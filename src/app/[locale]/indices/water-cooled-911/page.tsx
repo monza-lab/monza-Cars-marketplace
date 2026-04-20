@@ -43,11 +43,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLES[loc];
   const description = DESCRIPTIONS[loc];
-  const url = `${BASE_URL}/${loc}/index/water-cooled-911`;
+  const url = `${BASE_URL}/${loc}/indices/water-cooled-911`;
 
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/index/water-cooled-911`;
-  languages["x-default"] = `${BASE_URL}/en/index/water-cooled-911`;
+  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/indices/water-cooled-911`;
+  languages["x-default"] = `${BASE_URL}/en/indices/water-cooled-911`;
 
   return {
     title,
@@ -65,8 +65,8 @@ export default async function WaterCooled911IndexPage({ params }: PageProps) {
     : "en") as (typeof LOCALES)[number];
 
   const payload = await getWaterCooled911Index();
-  const url = `${BASE_URL}/${loc}/index/water-cooled-911`;
-  const csvUrl = `${BASE_URL}/${loc}/index/water-cooled-911.csv`;
+  const url = `${BASE_URL}/${loc}/indices/water-cooled-911`;
+  const csvUrl = `${BASE_URL}/${loc}/indices/water-cooled-911.csv`;
 
   const oldestYear = payload.buckets.length > 0 ? payload.buckets[0].year : null;
   const newestYear =
@@ -101,7 +101,7 @@ export default async function WaterCooled911IndexPage({ params }: PageProps) {
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: `${BASE_URL}/${loc}` },
-          { name: "Index", url: `${BASE_URL}/${loc}/index` },
+          { name: "Index", url: `${BASE_URL}/${loc}/indices` },
           { name: "Water-Cooled 911 Index", url },
         ]}
       />

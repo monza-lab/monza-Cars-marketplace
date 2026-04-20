@@ -107,11 +107,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   for (const locale of LOCALES) {
     for (const slug of INDEX_SLUGS) {
       entries.push({
-        url: `${BASE_URL}/${locale}/index${slug}`,
+        url: `${BASE_URL}/${locale}/indices${slug}`,
         lastModified: new Date(),
         changeFrequency: "weekly",
         priority: slug === "" ? 0.95 : 0.9,
-        alternates: buildAlternates(`/index${slug}`),
+        alternates: buildAlternates(`/indices${slug}`),
       })
     }
   }

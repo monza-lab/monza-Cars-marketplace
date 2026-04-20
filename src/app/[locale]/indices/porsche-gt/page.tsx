@@ -40,11 +40,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLES[loc];
   const description = DESCRIPTIONS[loc];
-  const url = `${BASE_URL}/${loc}/index/porsche-gt`;
+  const url = `${BASE_URL}/${loc}/indices/porsche-gt`;
 
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/index/porsche-gt`;
-  languages["x-default"] = `${BASE_URL}/en/index/porsche-gt`;
+  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/indices/porsche-gt`;
+  languages["x-default"] = `${BASE_URL}/en/indices/porsche-gt`;
 
   return {
     title,
@@ -62,8 +62,8 @@ export default async function PorscheGtIndexPage({ params }: PageProps) {
     : "en") as (typeof LOCALES)[number];
 
   const payload = await getPorscheGtIndex();
-  const url = `${BASE_URL}/${loc}/index/porsche-gt`;
-  const csvUrl = `${BASE_URL}/${loc}/index/porsche-gt.csv`;
+  const url = `${BASE_URL}/${loc}/indices/porsche-gt`;
+  const csvUrl = `${BASE_URL}/${loc}/indices/porsche-gt.csv`;
 
   const oldestYear = payload.buckets.length > 0 ? payload.buckets[0].year : null;
   const newestYear =
@@ -98,7 +98,7 @@ export default async function PorscheGtIndexPage({ params }: PageProps) {
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: `${BASE_URL}/${loc}` },
-          { name: "Index", url: `${BASE_URL}/${loc}/index` },
+          { name: "Index", url: `${BASE_URL}/${loc}/indices` },
           { name: "Porsche GT Index", url },
         ]}
       />

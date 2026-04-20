@@ -46,7 +46,7 @@ const BUY_STEPS: { name: string; text: string; url?: string }[] = [
   {
     name: "Read current market values",
     text: "Before any serious discussion, know the market. The MonzaHaus Index tracks quarterly median sale prices for air-cooled 911, water-cooled 911, Turbo lineage, and GT variants. YoY trends tell you whether you're buying in a rising, flat, or softening market. Bidding without this context is how overpays happen.",
-    url: "/en/index",
+    url: "/en/indices",
   },
   {
     name: "Find the car — auction, dealer, or private",

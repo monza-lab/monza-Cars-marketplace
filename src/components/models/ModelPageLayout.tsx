@@ -70,7 +70,7 @@ export function ModelPageLayout({
                 </p>
               </div>
               <Link
-                href={`/${locale}/index/${model.indexSlug}`}
+                href={`/${locale}/indices/${model.indexSlug}`}
                 className="text-sm text-amber-400 hover:underline whitespace-nowrap"
               >
                 View full index →

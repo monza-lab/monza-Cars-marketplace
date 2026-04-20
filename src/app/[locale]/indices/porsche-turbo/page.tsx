@@ -43,11 +43,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLES[loc];
   const description = DESCRIPTIONS[loc];
-  const url = `${BASE_URL}/${loc}/index/porsche-turbo`;
+  const url = `${BASE_URL}/${loc}/indices/porsche-turbo`;
 
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/index/porsche-turbo`;
-  languages["x-default"] = `${BASE_URL}/en/index/porsche-turbo`;
+  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/indices/porsche-turbo`;
+  languages["x-default"] = `${BASE_URL}/en/indices/porsche-turbo`;
 
   return {
     title,
@@ -65,8 +65,8 @@ export default async function PorscheTurboIndexPage({ params }: PageProps) {
     : "en") as (typeof LOCALES)[number];
 
   const payload = await getPorscheTurboIndex();
-  const url = `${BASE_URL}/${loc}/index/porsche-turbo`;
-  const csvUrl = `${BASE_URL}/${loc}/index/porsche-turbo.csv`;
+  const url = `${BASE_URL}/${loc}/indices/porsche-turbo`;
+  const csvUrl = `${BASE_URL}/${loc}/indices/porsche-turbo.csv`;
 
   const oldestYear = payload.buckets.length > 0 ? payload.buckets[0].year : null;
   const newestYear =
@@ -101,7 +101,7 @@ export default async function PorscheTurboIndexPage({ params }: PageProps) {
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: `${BASE_URL}/${loc}` },
-          { name: "Index", url: `${BASE_URL}/${loc}/index` },
+          { name: "Index", url: `${BASE_URL}/${loc}/indices` },
           { name: "Porsche Turbo Index", url },
         ]}
       />

@@ -36,11 +36,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLES[loc];
   const description = DESCRIPTIONS[loc];
-  const url = `${BASE_URL}/${loc}/index`;
+  const url = `${BASE_URL}/${loc}/indices`;
 
   const languages: Record<string, string> = {};
-  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/index`;
-  languages["x-default"] = `${BASE_URL}/en/index`;
+  for (const l of LOCALES) languages[l] = `${BASE_URL}/${l}/indices`;
+  languages["x-default"] = `${BASE_URL}/en/indices`;
 
   return {
     title,
@@ -57,7 +57,7 @@ export default async function IndexHubPage({ params }: PageProps) {
     ? locale
     : "en") as (typeof LOCALES)[number];
 
-  const url = `${BASE_URL}/${loc}/index`;
+  const url = `${BASE_URL}/${loc}/indices`;
   const liveIndices = INDEX_REGISTRY.filter((i) => i.status === "live");
   const upcoming = INDEX_REGISTRY.filter((i) => i.status === "upcoming");
 
@@ -99,7 +99,7 @@ export default async function IndexHubPage({ params }: PageProps) {
               {liveIndices.map((idx) => (
                 <Link
                   key={idx.slug}
-                  href={`/${loc}/index/${idx.slug}`}
+                  href={`/${loc}/indices/${idx.slug}`}
                   className="group border border-zinc-800 rounded-lg p-6 bg-zinc-950 hover:border-amber-600/50 transition"
                 >
                   <div className="flex items-center gap-2 mb-3">

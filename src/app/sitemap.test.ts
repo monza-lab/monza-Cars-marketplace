@@ -40,4 +40,11 @@ describe("sitemap", () => {
     const home = entries.find((e) => e.url.endsWith("/en"));
     expect(home?.priority).toBe(1.0);
   });
+
+  it("publishes index hub URLs under /indices", () => {
+    const entries = sitemap();
+    const hub = entries.find((e) => e.url.endsWith("/en/indices"));
+    expect(hub).toBeDefined();
+    expect(entries.some((e) => e.url.includes("/en/index"))).toBe(false);
+  });
 });

@@ -42,7 +42,7 @@ describe("ViewToggle", () => {
   });
 
   it("returns to the dashboard home when Monza is clicked from the seo index route", () => {
-    pathname = "/index";
+    pathname = "/indices";
 
     render(createElement(ViewToggle));
 

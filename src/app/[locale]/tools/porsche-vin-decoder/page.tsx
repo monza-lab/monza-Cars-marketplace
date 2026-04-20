@@ -231,7 +231,7 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
 
           <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
             Looking to understand what a specific VIN is actually worth? See our{" "}
-            <Link href={`/${loc}/index`} className="text-amber-400 hover:underline">
+            <Link href={`/${loc}/indices`} className="text-amber-400 hover:underline">
               MonzaHaus Index
             </Link>{" "}
             for current market values, or the{" "}
