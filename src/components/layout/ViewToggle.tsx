@@ -4,14 +4,12 @@ import { LayoutGrid } from "lucide-react";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { setPreferredView, type MarketplaceView } from "@/lib/viewPreference";
 import { MonzaHelmet } from "@/components/icons/MonzaHelmet";
-import { useLocale } from "next-intl";
 
 export function ViewToggle() {
   const router = useRouter();
   const pathname = usePathname();
-  const locale = useLocale();
-  const homeHref = locale === "en" ? "/" : `/${locale}`;
-  const classicHref = locale === "en" ? "/browse" : `/${locale}/browse`;
+  const homeHref = "/";
+  const classicHref = "/browse";
   const isClassicRoute = pathname === "/browse" || pathname?.startsWith("/browse/");
   const isHomeRoute = pathname === "/";
 

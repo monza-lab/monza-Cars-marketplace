@@ -64,7 +64,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   initialVariant?: string
 }) {
   const locale = useLocale()
-  const homeHref = locale === "en" ? "/" : `/${locale}`
+  const homeHref = "/"
   const router = useRouter()
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")

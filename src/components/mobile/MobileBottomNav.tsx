@@ -614,7 +614,7 @@ export function MobileBottomNav() {
 
   // Determine active tab
   const isHome = pathname === "/" || pathname === "/en" || pathname === "/es" || pathname === "/de" || pathname === "/ja"
-  const homeHref = locale === "en" ? "/" : `/${locale}`
+  const homeHref = "/"
 
   return (
     <>

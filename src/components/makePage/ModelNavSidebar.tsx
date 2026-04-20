@@ -26,7 +26,7 @@ export function ModelNavSidebar({
 }) {
   const tAuction = useTranslations("auctionDetail")
   const locale = useLocale()
-  const homeHref = locale === "en" ? "/" : `/${locale}`
+  const homeHref = "/"
   const { formatPrice } = useCurrency()
   const minPrice = cars.length > 0 ? Math.min(...cars.map(c => c.currentBid)) : 0
   const maxPrice = cars.length > 0 ? Math.max(...cars.map(c => c.currentBid)) : 0

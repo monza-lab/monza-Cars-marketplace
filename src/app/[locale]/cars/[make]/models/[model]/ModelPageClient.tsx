@@ -279,7 +279,7 @@ function PlatformSection({
 
 export function ModelPageClient({ make, model, cars }: ModelPageClientProps) {
   const locale = useLocale();
-  const homeHref = locale === "en" ? "/" : `/${locale}`;
+  const homeHref = "/";
   const tAuction = useTranslations("auctionDetail");
   const { formatPrice } = useCurrency();
 

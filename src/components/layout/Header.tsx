@@ -895,7 +895,7 @@ export function Header() {
   const creditsRemaining = profile?.creditsBalance ?? 0;
   const isAuthenticated = !!user;
   const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
-  const homeHref = locale === "en" ? "/" : `/${locale}`;
+  const homeHref = "/";
 
   // Translated menu links
   const menuLinks = menuLinkKeys.map((link) => ({

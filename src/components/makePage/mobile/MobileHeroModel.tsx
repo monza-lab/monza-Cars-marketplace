@@ -16,7 +16,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
   const { formatPrice } = useCurrency()
   const router = useRouter()
   const locale = useLocale()
-  const homeHref = locale === "en" ? "/" : `/${locale}`
+  const homeHref = "/"
 
   return (
     <Link href={`/cars/${makeSlug}/${model.representativeCar.id}`} className="block relative">
