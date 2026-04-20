@@ -102,7 +102,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
         ]}
       />
 
-      <KnowledgeArticleLayout article={article} locale={loc} />
+      <KnowledgeArticleLayout article={article} />
     </>
   );
 }

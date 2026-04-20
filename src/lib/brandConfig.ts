@@ -521,6 +521,52 @@ export function getSeriesConfig(seriesId: string, make: string): SeriesConfig | 
   return config.series.find(s => s.id === seriesId) || null
 }
 
+function normalizeSeriesToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s_]+/g, "-")
+}
+
+/**
+ * Resolve a family/series selector to the canonical series ID for a brand.
+ *
+ * The UI mostly passes stable series IDs, but some navigation paths can feed
+ * a display label instead. Resolving at the boundary keeps the data fetch and
+ * filtering logic locale-agnostic.
+ */
+export function resolveSeriesIdForFamily(make: string, family: string | null | undefined): string | null {
+  if (!family) return null
+
+  const config = getBrandConfig(make)
+  if (!config) return null
+
+  const raw = family.trim().toLowerCase()
+  if (!raw) return null
+
+  const normalized = normalizeSeriesToken(raw)
+  const compact = raw.replace(/[^a-z0-9]/g, "")
+
+  for (const series of config.series) {
+    const id = series.id.toLowerCase()
+    const label = series.label.toLowerCase()
+    const idNormalized = normalizeSeriesToken(id)
+    const labelNormalized = normalizeSeriesToken(label)
+    const idCompact = id.replace(/[^a-z0-9]/g, "")
+    const labelCompact = label.replace(/[^a-z0-9]/g, "")
+
+    if (
+      raw === id ||
+      raw === label ||
+      normalized === idNormalized ||
+      normalized === labelNormalized ||
+      compact === idCompact ||
+      compact === labelCompact
+    ) {
+      return series.id
+    }
+  }
+
+  return null
+}
+
 /**
  * Returns model ILIKE patterns + optional year range for a series.
  * Used by fetchPaginatedListings to filter at the DB level.

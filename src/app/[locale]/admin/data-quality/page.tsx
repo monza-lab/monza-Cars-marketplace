@@ -32,5 +32,5 @@ export default async function DataQualityPage({
     redirect(`/${locale}`);
   }
 
-  return <DataQualityClient locale={locale} />;
+  return <DataQualityClient />;
 }

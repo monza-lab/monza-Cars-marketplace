@@ -92,7 +92,7 @@ export default async function ImportGuidePage({ params }: PageProps) {
         ]}
       />
 
-      <ImportGuideLayout guide={guide} locale={loc} />
+      <ImportGuideLayout guide={guide} />
     </>
   );
 }

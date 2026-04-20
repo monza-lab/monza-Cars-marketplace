@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { matchVariant, extractSeries } from "./brandConfig"
+import { matchVariant, extractSeries, resolveSeriesIdForFamily } from "./brandConfig"
 
 describe("matchVariant regression tests", () => {
   // Existing behavior must be preserved
@@ -54,5 +54,12 @@ describe("extractSeries still works", () => {
   })
   it("year fallback: 911 Carrera → 997 for year 2010", () => {
     expect(extractSeries("911 Carrera", 2010, "Porsche")).toBe("997")
+  })
+})
+
+describe("resolveSeriesIdForFamily", () => {
+  it("accepts either the canonical series id or the displayed label", () => {
+    expect(resolveSeriesIdForFamily("Porsche", "718 Cayman")).toBe("718-cayman")
+    expect(resolveSeriesIdForFamily("Porsche", "718-cayman")).toBe("718-cayman")
   })
 })

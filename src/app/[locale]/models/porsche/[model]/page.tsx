@@ -98,7 +98,7 @@ export default async function PorscheModelPage({ params }: PageProps) {
         ]}
       />
 
-      <ModelPageLayout model={model} marketSummary={marketSummary} locale={loc} />
+      <ModelPageLayout model={model} marketSummary={marketSummary} />
     </>
   );
 }

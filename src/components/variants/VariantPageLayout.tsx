@@ -1,26 +1,24 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { PorscheVariantPage } from "@/lib/variants/types";
 import type { PorscheModelPage } from "@/lib/models/types";
 
 export function VariantPageLayout({
   variant,
   parentModel,
-  locale,
 }: {
   variant: PorscheVariantPage;
   parentModel: PorscheModelPage;
-  locale: string;
 }) {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto max-w-4xl px-6 py-12 space-y-12">
         <header className="space-y-4">
           <nav className="text-xs text-zinc-500 flex gap-2 items-center flex-wrap">
-            <Link href={`/${locale}`} className="hover:text-amber-400">Home</Link>
+            <Link href="/" className="hover:text-amber-400">Home</Link>
             <span>/</span>
-            <Link href={`/${locale}/cars/porsche`} className="hover:text-amber-400">Porsche</Link>
+            <Link href="/cars/porsche" className="hover:text-amber-400">Porsche</Link>
             <span>/</span>
-            <Link href={`/${locale}/models/porsche/${parentModel.slug}`} className="hover:text-amber-400">
+            <Link href={`/models/porsche/${parentModel.slug}`} className="hover:text-amber-400">
               {parentModel.shortName}
             </Link>
             <span>/</span>
@@ -165,7 +163,7 @@ export function VariantPageLayout({
           <p>
             Back to{" "}
             <Link
-              href={`/${locale}/models/porsche/${parentModel.slug}`}
+              href={`/models/porsche/${parentModel.slug}`}
               className="text-amber-400 hover:underline"
             >
               {parentModel.fullName} buyer&apos;s guide
@@ -176,7 +174,7 @@ export function VariantPageLayout({
             Market bands are aggregated from public auction results. For the current
             generation-level median and YoY trend, see the{" "}
             <Link
-              href={`/${locale}/indices/${parentModel.indexSlug}`}
+              href={`/indices/${parentModel.indexSlug}`}
               className="text-amber-400 hover:underline"
             >
               {parentModel.indexSlug === "air-cooled-911" ? "Air-Cooled" : "Water-Cooled"} 911 Index

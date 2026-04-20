@@ -13,7 +13,7 @@ import {
   type SupportedLiveMake,
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
-import { extractSeries, getSeriesConfig } from "./brandConfig";
+import { extractSeries, getSeriesConfig, resolveSeriesIdForFamily } from "./brandConfig";
 import { getExchangeRates } from "./exchangeRates";
 import { derivePrice } from "./pricing/derivePrice";
 import { computeSegmentStats } from "./pricing/segmentStats";
@@ -1551,6 +1551,7 @@ export async function fetchPaginatedListings(options: {
   const pageSize = options.pageSize ?? 50;
   const targetMake = resolveRequestedMake(options.make);
   const includeCount = options.includeCount ?? true;
+  const resolvedSeries = resolveSeriesIdForFamily(targetMake, options.series) ?? options.series;
 
   try {
     const supabase = createSupabaseClient(url, key, {
@@ -1581,7 +1582,7 @@ export async function fetchPaginatedListings(options: {
     // Series / model / region / platform / search filters — shared with the
     // parallel HEAD count query below so both describe the same logical set.
     query = applyPaginatedListingFilters(query, {
-      series: options.series,
+      series: resolvedSeries,
       modelPatterns: options.modelPatterns,
       region: options.region,
       platform: options.platform,

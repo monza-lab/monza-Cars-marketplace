@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { PorscheModelPage } from "@/lib/models/types";
 import type { IndexSummary } from "@/lib/index/factory";
 import { getModelAdjacency } from "@/lib/models/adjacency";
@@ -21,20 +21,18 @@ function formatPct(n: number | null) {
 export function ModelPageLayout({
   model,
   marketSummary,
-  locale,
 }: {
   model: PorscheModelPage;
   marketSummary: IndexSummary<string> | null;
-  locale: string;
 }) {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto max-w-4xl px-6 py-12 space-y-12">
         <header className="space-y-4">
           <nav className="text-xs text-zinc-500 flex gap-2 items-center">
-            <Link href={`/${locale}`} className="hover:text-amber-400">Home</Link>
+            <Link href="/" className="hover:text-amber-400">Home</Link>
             <span>/</span>
-            <Link href={`/${locale}/cars/porsche`} className="hover:text-amber-400">Porsche</Link>
+            <Link href="/cars/porsche" className="hover:text-amber-400">Porsche</Link>
             <span>/</span>
             <span className="text-zinc-300">{model.shortName}</span>
           </nav>
@@ -70,7 +68,7 @@ export function ModelPageLayout({
                 </p>
               </div>
               <Link
-                href={`/${locale}/indices/${model.indexSlug}`}
+                href={`/indices/${model.indexSlug}`}
                 className="text-sm text-amber-400 hover:underline whitespace-nowrap"
               >
                 View full index →
@@ -164,7 +162,7 @@ export function ModelPageLayout({
                 {variants.map((v) => (
                   <Link
                     key={v.slug}
-                    href={`/${locale}/variants/porsche/${v.slug}`}
+                    href={`/variants/porsche/${v.slug}`}
                     className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-zinc-500">
@@ -197,7 +195,7 @@ export function ModelPageLayout({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {prevModel && (
                   <Link
-                    href={`/${locale}/models/porsche/${prevModel.slug}`}
+                    href={`/models/porsche/${prevModel.slug}`}
                     className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-zinc-500">Previous generation</p>
@@ -209,7 +207,7 @@ export function ModelPageLayout({
                 )}
                 {nextModel && (
                   <Link
-                    href={`/${locale}/models/porsche/${nextModel.slug}`}
+                    href={`/models/porsche/${nextModel.slug}`}
                     className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-zinc-500">Next generation</p>
@@ -224,7 +222,7 @@ export function ModelPageLayout({
                 <div className="mt-4 flex flex-wrap gap-3 text-sm">
                   {adj.comparisonPrev && prevModel && (
                     <Link
-                      href={`/${locale}/compare/${adj.comparisonPrev}`}
+                      href={`/compare/${adj.comparisonPrev}`}
                       className="text-amber-400 hover:underline"
                     >
                       Compare: {prevModel.shortName} vs {model.shortName} →
@@ -232,7 +230,7 @@ export function ModelPageLayout({
                   )}
                   {adj.comparisonNext && nextModel && (
                     <Link
-                      href={`/${locale}/compare/${adj.comparisonNext}`}
+                      href={`/compare/${adj.comparisonNext}`}
                       className="text-amber-400 hover:underline"
                     >
                       Compare: {model.shortName} vs {nextModel.shortName} →
@@ -248,7 +246,7 @@ export function ModelPageLayout({
           Market data and commentary are provided for informational purposes and do
           not constitute investment advice. For live listings, see our{" "}
           <Link
-            href={`/${locale}/cars/porsche?series=${model.slug}`}
+            href={`/cars/porsche?series=${model.slug}`}
             className="text-amber-400 hover:underline"
           >
             {model.shortName} marketplace

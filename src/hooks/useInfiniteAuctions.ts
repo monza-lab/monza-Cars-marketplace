@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { extractSeries } from "@/lib/brandConfig";
+import { extractSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -56,6 +56,7 @@ export function useInfiniteAuctions(
     sortOrder,
     enabled = true,
   } = params;
+  const resolvedFamily = resolveSeriesIdForFamily(make, family) ?? family;
 
   // ── State ──
   const [cars, setCars] = useState<any[]>([]);
@@ -94,7 +95,7 @@ export function useInfiniteAuctions(
       url.searchParams.set("make", make);
 
       if (pageCursor) url.searchParams.set("cursor", pageCursor);
-      if (family) url.searchParams.set("family", family);
+      if (resolvedFamily) url.searchParams.set("family", resolvedFamily);
       if (region && region !== "all") url.searchParams.set("region", region);
       if (platform && platform !== "All Platforms")
         url.searchParams.set("platform", platform);
@@ -104,7 +105,7 @@ export function useInfiniteAuctions(
 
       return url.toString();
     },
-    [make, family, region, platform, query, sortBy, sortOrder],
+    [make, resolvedFamily, region, platform, query, sortBy, sortOrder],
   );
 
   // ── Fetch a single page ──
@@ -150,16 +151,16 @@ export function useInfiniteAuctions(
 
       // Client-side family filter
       let filtered = activeAuctions;
-      if (family) {
+      if (resolvedFamily) {
         filtered = activeAuctions.filter(
           (car: any) =>
-            extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === family,
+            extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
         );
       }
 
       return { filteredNew: filtered, nextCursor, pageHasMore };
     },
-    [buildUrl, family, make],
+    [buildUrl, resolvedFamily, make],
   );
 
   // ── Load next page (orchestrator) ──
@@ -201,7 +202,7 @@ export function useInfiniteAuctions(
 
         // Decide whether to auto-fetch another page
         const needsMore =
-          family &&
+          resolvedFamily &&
           accumulatedNew.length < MIN_FILTERED_RESULTS &&
           currentHasMore &&
           autoFetchCountRef.current < MAX_AUTO_FETCHES;
@@ -235,7 +236,7 @@ export function useInfiniteAuctions(
         setIsFetchingMore(false);
       }
     }
-  }, [enabled, cars.length, fetchPage, family]);
+  }, [enabled, cars.length, fetchPage, resolvedFamily]);
 
   // ── Reset ──
   const reset = useCallback(() => {
@@ -336,10 +337,10 @@ export function useInfiniteAuctions(
   // ── Derived: filtered cars (when family is set) ──
   // Note: cars are already filtered by family in fetchPage (with title),
   // so this is just a safety net — must also pass title for consistency.
-  const visibleCars = family
+  const visibleCars = resolvedFamily
     ? cars.filter(
         (car) =>
-          extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === family,
+          extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
       )
     : cars;
 

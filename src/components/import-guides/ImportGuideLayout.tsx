@@ -1,21 +1,19 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { ImportGuide } from "@/lib/import-guides/types";
 
 export function ImportGuideLayout({
   guide,
-  locale,
 }: {
   guide: ImportGuide;
-  locale: string;
 }) {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto max-w-4xl px-6 py-12 space-y-12">
         <header className="space-y-4">
           <nav className="text-xs text-zinc-500 flex gap-2 items-center flex-wrap">
-            <Link href={`/${locale}`} className="hover:text-amber-400">Home</Link>
+            <Link href="/" className="hover:text-amber-400">Home</Link>
             <span>/</span>
-            <Link href={`/${locale}/guides/import`} className="hover:text-amber-400">
+            <Link href="/guides/import" className="hover:text-amber-400">
               Import Guides
             </Link>
             <span>/</span>

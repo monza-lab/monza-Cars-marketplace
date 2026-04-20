@@ -21,7 +21,7 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters } from "@/components/filters/AdvancedFilters"
-import { extractSeries, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { extractSeries, deriveBodyType, getSeriesVariants, matchVariant, getFamilyGroupsWithSeries, getSeriesConfig, resolveSeriesIdForFamily } from "@/lib/brandConfig"
 import { isAuctionPlatform } from "@/components/dashboard/platformMapping"
 import { useInfiniteAuctions } from "@/hooks/useInfiniteAuctions"
 import {
@@ -137,7 +137,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [expandedModel, setExpandedModel] = useState<Model | null>(null)
   const [activeFilters, setActiveFilters] = useState<FamilyFilters | null>(null)
   const [viewMode, setViewMode] = useState<'families' | 'generations' | 'cars'>(initialFamily ? 'cars' : 'families')
-  const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(initialFamily || null)
+  const [selectedFamilyForFeed, setSelectedFamilyForFeed] = useState<string | null>(resolveSeriesIdForFamily(make, initialFamily) ?? initialFamily ?? null)
   const [selectedGeneration, setSelectedGeneration] = useState<string | null>(initialGen || null)
   const [selectedVariantChip, setSelectedVariantChip] = useState<string | null>(initialVariant || null)
   const [feedStatusFilter, setFeedStatusFilter] = useState<"all" | "live" | "ended">("all")
@@ -327,7 +327,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
 
   // Handler: Click en familia → Mostrar generaciones
   const handleFamilyClick = (familyName: string) => {
-    setSelectedFamilyForFeed(familyName)
+    setSelectedFamilyForFeed(resolveSeriesIdForFamily(make, familyName) ?? familyName)
     setSelectedGeneration(null)
     setSelectedVariantChip(null)
     setFeedStatusFilter("all")
@@ -391,8 +391,9 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
 
   // Handler: Switch between sibling series (same family group) in Column A nav
   const handleSiblingClick = (seriesId: string) => {
-    if (seriesId === selectedFamilyForFeed) return
-    setSelectedFamilyForFeed(seriesId)
+    const resolvedSeriesId = resolveSeriesIdForFamily(make, seriesId) ?? seriesId
+    if (resolvedSeriesId === selectedFamilyForFeed) return
+    setSelectedFamilyForFeed(resolvedSeriesId)
     setSelectedGeneration(null)
     setSelectedVariantChip(null)
     setFeedStatusFilter("all")

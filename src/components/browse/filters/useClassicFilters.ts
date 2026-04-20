@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { EMPTY_FILTERS, type ClassicFilters, type SortOption, type StatusFilter } from "./types";
 
 function parseList(value: string | null): string[] {

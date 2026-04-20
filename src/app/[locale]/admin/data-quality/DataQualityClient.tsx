@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import type {
   DataQualityOverviewResponse,
   SourceHealth,
@@ -75,7 +75,7 @@ function formatInt(n: number | null | undefined): string {
   return n.toLocaleString();
 }
 
-export default function DataQualityClient({ locale }: { locale: string }) {
+export default function DataQualityClient() {
   const [data, setData] = useState<DataQualityOverviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -232,7 +232,7 @@ export default function DataQualityClient({ locale }: { locale: string }) {
             >
               {refreshing ? 'Refreshing…' : 'Refresh now'}
             </button>
-            <Link href={`/${locale}/admin/scrapers`} className="text-muted-foreground hover:text-foreground underline underline-offset-2">
+            <Link href="/admin/scrapers" className="text-muted-foreground hover:text-foreground underline underline-offset-2">
               Scrapers console →
             </Link>
           </div>

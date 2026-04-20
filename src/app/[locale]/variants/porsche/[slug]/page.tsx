@@ -102,7 +102,7 @@ export default async function PorscheVariantPage({ params }: PageProps) {
         ]}
       />
 
-      <VariantPageLayout variant={variant} parentModel={parentModel} locale={loc} />
+      <VariantPageLayout variant={variant} parentModel={parentModel} />
     </>
   );
 }

@@ -114,7 +114,6 @@ export default async function ComparePage({ params }: PageProps) {
         rightModel={rightModel}
         leftMarket={leftMarket}
         rightMarket={rightMarket}
-        locale={loc}
       />
     </>
   );

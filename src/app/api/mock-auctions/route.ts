@@ -9,7 +9,7 @@ import {
   fetchSeriesCounts,
 } from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
-import { getModelPatternsForSeries } from "@/lib/brandConfig";
+import { getModelPatternsForSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
 
 // Per-source budget for the non-paginated (dashboard) path.
 // Dashboard only needs enough data for family-level aggregations (counts, sample images).
@@ -117,8 +117,10 @@ export async function GET(request: NextRequest) {
       status === "Ended" || status === "ENDED" ? "all" : "active";
 
     // Resolve family to DB-level model patterns
-    const modelPatterns = family
-      ? getModelPatternsForSeries(family, requestedMake ?? "Porsche")
+    const resolvedFamily = resolveSeriesIdForFamily(requestedMake ?? "Porsche", family) ?? family;
+
+    const modelPatterns = resolvedFamily
+      ? getModelPatternsForSeries(resolvedFamily, requestedMake ?? "Porsche")
       : null;
 
     const paginatedPromise = fetchPaginatedListings({
@@ -131,7 +133,7 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder: sortOrder as "asc" | "desc",
       status: dbStatus,
-      series: family || null,
+      series: resolvedFamily || null,
       modelPatterns,
       timeoutMs: MOCK_AUCTIONS_TIMEOUT_MS,
     });

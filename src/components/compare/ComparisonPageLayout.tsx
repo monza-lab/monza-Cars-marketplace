@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { ComparisonPage } from "@/lib/compare/types";
 import type { PorscheModelPage } from "@/lib/models/types";
 import type { IndexSummary } from "@/lib/index/factory";
@@ -22,23 +22,21 @@ export function ComparisonPageLayout({
   rightModel,
   leftMarket,
   rightMarket,
-  locale,
 }: {
   comparison: ComparisonPage;
   leftModel: PorscheModelPage;
   rightModel: PorscheModelPage;
   leftMarket: IndexSummary<string> | null;
   rightMarket: IndexSummary<string> | null;
-  locale: string;
 }) {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto max-w-5xl px-6 py-12 space-y-12">
         <header className="space-y-4">
           <nav className="text-xs text-zinc-500 flex gap-2 items-center">
-            <Link href={`/${locale}`} className="hover:text-amber-400">Home</Link>
+            <Link href="/" className="hover:text-amber-400">Home</Link>
             <span>/</span>
-            <Link href={`/${locale}/compare`} className="hover:text-amber-400">Compare</Link>
+            <Link href="/compare" className="hover:text-amber-400">Compare</Link>
             <span>/</span>
             <span className="text-zinc-300">{leftModel.shortName} vs {rightModel.shortName}</span>
           </nav>
@@ -56,7 +54,7 @@ export function ComparisonPageLayout({
           ].map(({ model, market }) => (
             <Link
               key={model.slug}
-              href={`/${locale}/models/porsche/${model.slug}`}
+              href={`/models/porsche/${model.slug}`}
               className="group border border-zinc-800 rounded-lg p-5 bg-zinc-950 hover:border-amber-600/40 transition"
             >
               <p className="text-xs uppercase tracking-wider text-zinc-500">

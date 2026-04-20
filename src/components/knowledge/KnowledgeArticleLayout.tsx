@@ -1,21 +1,19 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { KnowledgeArticle } from "@/lib/knowledge/types";
 
 export function KnowledgeArticleLayout({
   article,
-  locale,
 }: {
   article: KnowledgeArticle;
-  locale: string;
 }) {
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto max-w-4xl px-6 py-12 space-y-12">
         <header className="space-y-4">
           <nav className="text-xs text-zinc-500 flex gap-2 items-center flex-wrap">
-            <Link href={`/${locale}`} className="hover:text-amber-400">Home</Link>
+            <Link href="/" className="hover:text-amber-400">Home</Link>
             <span>/</span>
-            <Link href={`/${locale}/knowledge`} className="hover:text-amber-400">
+            <Link href="/knowledge" className="hover:text-amber-400">
               Knowledge
             </Link>
             <span>/</span>

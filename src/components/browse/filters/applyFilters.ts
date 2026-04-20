@@ -5,6 +5,7 @@ import {
   deriveBodyType,
   getSeriesConfig,
   getSeriesVariants,
+  resolveSeriesIdForFamily,
 } from "@/lib/brandConfig";
 import {
   DRIVE_OPTIONS,
@@ -114,7 +115,11 @@ export function applyFilters(
 
     if (f.series.length > 0) {
       const s = extractSeries(car.model, car.year, car.make, car.title);
-      if (!f.series.includes(s)) return false;
+      const matchesSeries = f.series.some((seriesId) => {
+        const resolved = resolveSeriesIdForFamily(car.make, seriesId) ?? seriesId;
+        return resolved === s;
+      });
+      if (!matchesSeries) return false;
     }
 
     if (f.variants.length > 0) {
