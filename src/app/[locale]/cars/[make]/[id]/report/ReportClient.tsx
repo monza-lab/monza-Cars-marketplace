@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowLeft,
   TrendingUp,
@@ -43,6 +43,8 @@ import type { DbComparableRow } from "@/lib/db/queries"
 import { SignalsDetectedSection } from "@/components/report/SignalsDetectedSection"
 import { SignalsMissingSection } from "@/components/report/SignalsMissingSection"
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
+import { LandedCostBlock } from "@/components/report/LandedCostBlock"
+import { SourcesBlock } from "@/components/report/SourcesBlock"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
@@ -146,6 +148,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const hasStats = !!(marketStats && marketStats.totalDataPoints > 0)
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
+  const locale = useLocale()
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const tFairValue = useTranslations("report.fairValue")
@@ -2489,6 +2492,27 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 </div>
               </PaywallSection>
             </section>
+
+            {/* ═══ LANDED COST ═══ */}
+            {report?.landed_cost ? (
+              <>
+                <LandedCostBlock breakdown={report.landed_cost} locale={locale} />
+                <SourcesBlock sources={report.landed_cost.sourcesUsed} />
+              </>
+            ) : report ? (
+              <section className="rounded-lg border border-border p-6 my-8">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  Landed Cost (Estimate)
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Landed cost not estimated for vehicles originating in this
+                  country.{" "}
+                  <Link href="/contact" className="underline">
+                    Contact Monza Haus for a custom quote →
+                  </Link>
+                </p>
+              </section>
+            ) : null}
 
           </div>
         </div>
