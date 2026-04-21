@@ -32,7 +32,7 @@
       "signInHint": "Anmelden, um mit der Analyse zu beginnen"
     },
     "credits": {
-      "label": "Credits",
+      "label": "Kolben",
       "perReport": "1 Credit pro Analyse",
       "buy": "Mehr kaufen"
     },
@@ -50,7 +50,7 @@
     "signUp": "Registrieren",
     "signOut": "Abmelden",
     "createAccount": "Kostenloses Konto erstellen",
-    "credits": "Guthaben",
+    "credits": "Kolben",
     "buy": "Kaufen",
     "buyCredits": "Guthaben Kaufen",
     "freeCredits": "Melden Sie sich an für 3 kostenlose Analyse-Credits",
@@ -84,7 +84,23 @@
     "magicLink": "Magic Link",
     "magicLinkDesc": "Wir senden Ihnen einen Anmeldelink per E-Mail — ganz ohne Passwort.",
     "sendMagicLink": "Magic Link senden",
-    "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink."
+    "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink.",
+    "pistons": {
+      "label": "Kolben",
+      "walletTitle": "Deine Kolben",
+      "nextReset": "Nächste Zurücksetzung: {date}",
+      "todayUsage": "Heutige Nutzung",
+      "recentDebits": "Letzte Abbuchungen",
+      "topUp": "Kolben aufladen",
+      "viewActivity": "Gesamte Aktivität ansehen",
+      "lowBalance": "Nur noch {count, plural, one {# Kolben} other {# Kolben}} übrig",
+      "graceRemaining": "{used}/{total} {tier} heute genutzt",
+      "tierPillInstant": "Instant · 1 Kolben",
+      "tierPillMarketplace": "Marketplace · ~5 Kolben",
+      "tierPillDeepResearch": "Deep Research · ~25 Kolben",
+      "debitGhost": "-{amount} {amount, plural, one {Kolben} other {Kolben}}",
+      "upgradeCta": "Auf PRO upgraden"
+    }
   },
   "hero": {
     "badge": "Live-Auktions-Intelligenz",

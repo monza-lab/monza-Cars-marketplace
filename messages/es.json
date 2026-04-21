@@ -32,7 +32,7 @@
       "signInHint": "Inicia sesión para comenzar a analizar"
     },
     "credits": {
-      "label": "Créditos",
+      "label": "Pistones",
       "perReport": "1 crédito por análisis",
       "buy": "Comprar más"
     },
@@ -50,7 +50,7 @@
     "signUp": "Registrarse",
     "signOut": "Cerrar Sesión",
     "createAccount": "Crear Cuenta Gratis",
-    "credits": "Créditos",
+    "credits": "Pistones",
     "buy": "Comprar",
     "buyCredits": "Comprar Créditos",
     "freeCredits": "Inicia sesión para obtener 3 créditos gratis",
@@ -84,7 +84,23 @@
     "magicLink": "Enlace Mágico",
     "magicLinkDesc": "Te enviaremos un enlace de inicio de sesión por correo. Sin contraseña.",
     "sendMagicLink": "Enviar Enlace Mágico",
-    "magicLinkSent": "Revisa tu correo para el enlace de acceso."
+    "magicLinkSent": "Revisa tu correo para el enlace de acceso.",
+    "pistons": {
+      "label": "Pistones",
+      "walletTitle": "Tus Pistones",
+      "nextReset": "Próxima renovación: {date}",
+      "todayUsage": "Uso de hoy",
+      "recentDebits": "Cargos recientes",
+      "topUp": "Recargar Pistones",
+      "viewActivity": "Ver toda la actividad",
+      "lowBalance": "Solo quedan {count, plural, one {# Pistón} other {# Pistones}}",
+      "graceRemaining": "{used}/{total} {tier} usados hoy",
+      "tierPillInstant": "Instant · 1 Pistón",
+      "tierPillMarketplace": "Marketplace · ~5 Pistones",
+      "tierPillDeepResearch": "Deep Research · ~25 Pistones",
+      "debitGhost": "-{amount} {amount, plural, one {Pistón} other {Pistones}}",
+      "upgradeCta": "Mejorar a PRO"
+    }
   },
   "hero": {
     "badge": "Inteligencia de Subastas en Vivo",

@@ -32,7 +32,7 @@
       "signInHint": "サインインして分析を開始"
     },
     "credits": {
-      "label": "クレジット",
+      "label": "ピストン",
       "perReport": "分析1件につき1クレジット",
       "buy": "追加購入"
     },
@@ -50,7 +50,7 @@
     "signUp": "登録",
     "signOut": "ログアウト",
     "createAccount": "無料アカウント作成",
-    "credits": "クレジット",
+    "credits": "ピストン",
     "buy": "購入",
     "buyCredits": "クレジット購入",
     "freeCredits": "ログインして3つの無料分析クレジットを取得",
@@ -84,7 +84,23 @@
     "magicLink": "マジックリンク",
     "magicLinkDesc": "ログイン用のリンクをメールで送ります。パスワードは不要です。",
     "sendMagicLink": "マジックリンクを送信",
-    "magicLinkSent": "受信トレイを確認し、ログインリンクをクリックしてください。"
+    "magicLinkSent": "受信トレイを確認し、ログインリンクをクリックしてください。",
+    "pistons": {
+      "label": "ピストン",
+      "walletTitle": "あなたのピストン",
+      "nextReset": "次回リセット: {date}",
+      "todayUsage": "今日の使用量",
+      "recentDebits": "最近の利用",
+      "topUp": "ピストンを追加",
+      "viewActivity": "すべての履歴を見る",
+      "lowBalance": "残り {count} ピストン",
+      "graceRemaining": "{used}/{total} {tier} を今日使用",
+      "tierPillInstant": "Instant · 1 ピストン",
+      "tierPillMarketplace": "Marketplace · ~5 ピストン",
+      "tierPillDeepResearch": "Deep Research · ~25 ピストン",
+      "debitGhost": "-{amount} ピストン",
+      "upgradeCta": "PROにアップグレード"
+    }
   },
   "hero": {
     "badge": "ライブオークションインテリジェンス",

@@ -31,7 +31,7 @@
       "signInHint": "Sign in to start analyzing"
     },
     "credits": {
-      "label": "Credits",
+      "label": "Pistons",
       "perReport": "1 credit per analysis",
       "buy": "Buy more"
     },
@@ -49,7 +49,7 @@
     "signUp": "Sign Up",
     "signOut": "Sign Out",
     "createAccount": "Create Free Account",
-    "credits": "Credits",
+    "credits": "Pistons",
     "buy": "Buy",
     "buyCredits": "Buy Credits",
     "freeCredits": "Sign in to get 3 free analysis credits",
@@ -85,7 +85,23 @@
     "magicLink": "Magic Link",
     "magicLinkDesc": "We will email you a one-tap sign-in link. No password needed.",
     "sendMagicLink": "Send Magic Link",
-    "magicLinkSent": "Check your inbox for the sign-in link."
+    "magicLinkSent": "Check your inbox for the sign-in link.",
+    "pistons": {
+      "label": "Pistons",
+      "walletTitle": "Your Pistons",
+      "nextReset": "Next reset: {date}",
+      "todayUsage": "Today's usage",
+      "recentDebits": "Recent debits",
+      "topUp": "Top up Pistons",
+      "viewActivity": "View all activity",
+      "lowBalance": "Only {count, plural, one {# Piston} other {# Pistons}} left",
+      "graceRemaining": "{used}/{total} {tier} used today",
+      "tierPillInstant": "Instant · 1 Piston",
+      "tierPillMarketplace": "Marketplace · ~5 Pistons",
+      "tierPillDeepResearch": "Deep Research · ~25 Pistons",
+      "debitGhost": "-{amount} {amount, plural, one {Piston} other {Pistons}}",
+      "upgradeCta": "Upgrade to PRO"
+    }
   },
   "hero": {
     "badge": "Live Market Intelligence",
