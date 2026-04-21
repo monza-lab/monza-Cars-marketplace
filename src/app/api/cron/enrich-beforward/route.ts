@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 
     const { data: rows, error: fetchErr } = await client
       .from("listings")
-      .select("id,source_url")
+      .select("id,source_url,images")
       .eq("source", "BeForward")
       .eq("status", "active")
       .is("trim", null)
@@ -115,6 +115,11 @@ export async function GET(request: Request) {
         if (detail.transmission) update.transmission = detail.transmission;
         if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
         if (detail.vin) update.vin = detail.vin;
+        const hasImages = Array.isArray(row.images) && row.images.length > 0;
+        if (!hasImages && detail.images && detail.images.length > 0) {
+          update.images = detail.images;
+          update.photos_count = detail.images.length;
+        }
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
