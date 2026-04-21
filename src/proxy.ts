@@ -26,12 +26,16 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL(`${strippedPath}${search}`, request.url))
   }
 
-  // API and auth callback routes must refresh the Supabase session cookie,
-  // but must NOT run i18n locale routing (see docs/login-overview.md Issue 3).
+  // API, auth callback, and the public /verify/[hash] anti-forge route must
+  // NOT run i18n locale routing. The verify URL is shared on PDF/Excel
+  // exports and needs to be locale-free so one canonical link works for
+  // every recipient. All three paths still flow through Supabase session
+  // refresh (benign for public routes; no-op when no session).
   if (
     pathname.startsWith('/api/') ||
     pathname === '/api' ||
-    pathname.startsWith('/auth/')
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/verify/')
   ) {
     return updateSession(request)
   }

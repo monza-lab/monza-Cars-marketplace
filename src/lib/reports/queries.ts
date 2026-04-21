@@ -45,6 +45,82 @@ export async function getReportForListing(
 }
 
 /**
+ * Update the v2 metadata columns on a listing_reports row (report_hash,
+ * tier, version). Defensive against the columns not existing yet —
+ * silently no-ops if the BE migration has not run. Returns true when the
+ * write succeeded, false on any schema / network failure.
+ */
+export async function saveReportMetadataV2(
+  listingId: string,
+  reportHash: string,
+  tier: "tier_1" | "tier_2" | "tier_3",
+  version: number,
+): Promise<boolean> {
+  const supabase = getServiceClient()
+  try {
+    const { error } = await supabase
+      .from("listing_reports")
+      .update({
+        report_hash: reportHash,
+        tier,
+        version,
+      })
+      .eq("listing_id", listingId)
+    if (error) {
+      // 42703 = undefined column — BE migration pending. Silent.
+      if (
+        error.code === "42703" ||
+        /report_hash|tier|version/i.test(error.message ?? "")
+      ) {
+        return false
+      }
+      // Other errors: log once, still don't fail the request.
+      console.warn("[saveReportMetadataV2] non-schema error, ignored:", error.message)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.warn("[saveReportMetadataV2] exception, ignored:", err)
+    return false
+  }
+}
+
+/**
+ * Read the current version + hash from a listing_reports row, tolerating
+ * missing columns. Returns null fields when BE migration is pending.
+ */
+export async function getReportMetadataV2(
+  listingId: string,
+): Promise<{ report_hash: string | null; tier: "tier_1" | "tier_2" | "tier_3" | null; version: number | null }> {
+  const supabase = getServiceClient()
+  try {
+    const { data, error } = await supabase
+      .from("listing_reports")
+      .select("report_hash, tier, version")
+      .eq("listing_id", listingId)
+      .maybeSingle()
+    if (error) {
+      return { report_hash: null, tier: null, version: null }
+    }
+    if (!data) {
+      return { report_hash: null, tier: null, version: null }
+    }
+    const row = data as {
+      report_hash: string | null
+      tier: "tier_1" | "tier_2" | "tier_3" | null
+      version: number | null
+    }
+    return {
+      report_hash: row.report_hash ?? null,
+      tier: row.tier ?? null,
+      version: row.version ?? null,
+    }
+  } catch {
+    return { report_hash: null, tier: null, version: null }
+  }
+}
+
+/**
  * Look up a report snapshot by its deterministic hash. Used by the public
  * /verify/[hash] route to prove authenticity of shared PDF/Excel exports.
  *
