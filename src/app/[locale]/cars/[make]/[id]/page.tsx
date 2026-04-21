@@ -16,6 +16,13 @@ import { VehicleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd"
 import { buildCarDetailMetadata } from "@/lib/seo/carDetailMetadata"
 import type { HausReport } from "@/lib/fairValue/types"
 import { getSiteUrl } from "@/lib/seo/siteUrl"
+import {
+  calculateLandedCost,
+  computeTeaserAmount,
+  localeToDestination,
+  sourceToOriginCountry,
+} from "@/lib/landedCost"
+import type { Country, Currency } from "@/lib/landedCost"
 
 const BASE_URL = getSiteUrl()
 
@@ -125,6 +132,33 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   // TODO: once a user-level paid check is wired in Task 31, replace this stub
   // with a real check against user_reports. For now, default to false.
 
+  // Landed-cost teaser — destination from locale, origin from listing platform.
+  // Null when domestic, unsupported origin, or missing year/price.
+  let landedCostTeaser:
+    | { amount: number; currency: Currency; destination: Country }
+    | null = null
+  try {
+    const destination = localeToDestination(locale)
+    const origin = sourceToOriginCountry(car.platform)
+    if (origin && car.price && car.price > 0 && car.year) {
+      const breakdown = await calculateLandedCost({
+        car: { priceUsd: car.price, year: car.year },
+        origin,
+        destination,
+      })
+      if (breakdown) {
+        landedCostTeaser = {
+          amount: computeTeaserAmount(breakdown),
+          currency: breakdown.currency,
+          destination,
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[detail] landedCostTeaser failed", err)
+    landedCostTeaser = null
+  }
+
   const carUrl = `${BASE_URL}/${locale}/cars/${make}/${id}`
   const mileageUnitCode = car.mileageUnit === "km" ? "KMT" : "SMI"
 
@@ -171,6 +205,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
           dbSoldHistory={soldHistory}
           existingReport={existingReport}
           userAlreadyPaid={userAlreadyPaid}
+          landedCostTeaser={landedCostTeaser}
         />
       </Suspense>
     </>
