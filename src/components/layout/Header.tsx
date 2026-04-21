@@ -1201,12 +1201,18 @@ export function Header() {
             {isAuthenticated && (
               <button
                 onClick={() => setWalletOpen(true)}
-                className="hidden md:flex items-center gap-1 rounded-md px-2 py-1 hover:bg-foreground/5 transition-colors"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
                 aria-label={t("auth.pistons.walletTitle")}
               >
                 <Piston className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
-                <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                {hasUnlimited ? (
+                  <span className="text-[12px] font-medium text-foreground">Unlimited</span>
+                ) : (
+                  <>
+                    <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
+                    <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                  </>
+                )}
               </button>
             )}
 
