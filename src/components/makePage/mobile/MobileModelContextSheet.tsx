@@ -11,19 +11,13 @@ import { MobileModelContext } from "./MobileModelContext"
 export function MobileModelContextSheet({
   model,
   make,
-  cars,
   allCars,
-  allModels,
   onClose,
-  dbOwnershipCosts,
 }: {
   model: Model | null
   make: string
-  cars: CollectorCar[]
   allCars: CollectorCar[]
-  allModels: Model[]
   onClose: () => void
-  dbOwnershipCosts?: { insurance?: number; storage?: number; maintenance?: number } | null
 }) {
   if (!model) return null
 
@@ -63,11 +57,7 @@ export function MobileModelContextSheet({
             <div className="overflow-y-auto max-h-[calc(85vh-70px)] pb-8">
               <MobileModelContext
                 model={model}
-                make={make}
-                cars={cars}
                 allCars={allCars}
-                allModels={allModels}
-                dbOwnershipCosts={dbOwnershipCosts}
               />
             </div>
           </motion.div>

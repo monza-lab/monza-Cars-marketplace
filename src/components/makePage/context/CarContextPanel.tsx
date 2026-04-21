@@ -5,16 +5,14 @@ import {
   Shield,
   Car,
   Globe,
-  Wrench,
   MessageCircle,
   FileText,
-  Clock,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
-import { ownershipCosts, getPriceLabel, isAuctionPlatform, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
+import { getPriceLabel, isAuctionPlatform, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { stripHtml } from "@/lib/stripHtml"
 import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
@@ -36,14 +34,6 @@ export function CarContextPanel({
   const fvUS = car.fairValueByRegion?.US
   const fairValueLow = fvUS?.low ?? null
   const fairValueHigh = fvUS?.high ?? null
-
-  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
-  const priceRatio = car.currentBid > 0 ? Math.max(car.currentBid / 100000, 0.5) : 1
-  const carOwnershipCosts = {
-    insurance: Math.round(fallbackCosts.insurance * priceRatio),
-    storage: fallbackCosts.storage,
-    maintenance: Math.round(fallbackCosts.maintenance * priceRatio),
-  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -167,32 +157,6 @@ export function CarContextPanel({
               <span className="text-[12px] font-semibold text-foreground">{car.category}</span>
             </div>
           )}
-        </div>
-
-        {/* 5. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Annual Ownership Cost
-            </span>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: "Insurance", value: carOwnershipCosts.insurance },
-              { label: "Storage", value: carOwnershipCosts.storage },
-              { label: "Maintenance", value: carOwnershipCosts.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(carOwnershipCosts.insurance + carOwnershipCosts.storage + carOwnershipCosts.maintenance)}/yr</span>
-            </div>
-          </div>
         </div>
       </div>
 

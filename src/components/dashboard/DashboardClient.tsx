@@ -1604,34 +1604,6 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [allAuctions, auction.make, auction.id, rates])
-  const ownershipCost = useMemo(() => {
-    const config = getBrandConfig(auction.make)
-    const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-
-    // Pivot off segment market value; fall back to per-auction derived USD; final fallback 100k.
-    const famAuctions = allAuctions.filter(
-      (a) => a.make === auction.make && a.family === auction.family,
-    )
-    const regionalVal = computeRegionalValFromAuctions(famAuctions)
-    const segment = auction.canonicalMarket ? regionalVal[auction.canonicalMarket] : null
-    const marketPivot =
-      segment?.marketValue.valueUsd ??
-      segment?.askMedian.valueUsd ??
-      auction.soldPriceUsd ??
-      auction.askingPriceUsd ??
-      100_000
-
-    const scale =
-      marketPivot < 100_000 ? 0.7 :
-      marketPivot < 250_000 ? 1.0 :
-      marketPivot < 500_000 ? 1.3 : 1.6
-
-    return {
-      insurance: Math.round(base.insurance * scale),
-      storage: Math.round(base.storage * scale),
-      maintenance: Math.round(base.maintenance * scale),
-    }
-  }, [auction.make, auction.canonicalMarket, auction.family, auction.soldPriceUsd, auction.askingPriceUsd, allAuctions])
   // Fair value range — real segment IQR band from same family auctions.
   const familyAuctions = allAuctions.filter(
     (a) => a.make === auction.make && a.family === auction.family,
@@ -1642,8 +1614,6 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
   const similarCars = allAuctions
     .filter(a => a.category === auction.category && a.id !== auction.id)
     .slice(0, 5)
-
-  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -1696,37 +1666,6 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
             </span>
           </div>
         )}
-      </div>
-
-      {/* SECTION 3: Ownership Cost */}
-      <div className="px-5 py-3 border-b border-border">
-        <div className="flex items-center gap-2 mb-2">
-          <Wrench className="size-4 text-primary" />
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-            {t("context.annualOwnershipCost")}
-          </span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="text-center">
-            <Shield className="size-3 text-muted-foreground mx-auto mb-1" />
-            <p className="text-[10px] text-muted-foreground">{t("context.insurance")}</p>
-            <p className="text-[11px] tabular-nums font-semibold text-foreground">${(ownershipCost.insurance / 1000).toFixed(0)}K</p>
-          </div>
-          <div className="text-center">
-            <MapPin className="size-3 text-muted-foreground mx-auto mb-1" />
-            <p className="text-[10px] text-muted-foreground">{t("context.storage")}</p>
-            <p className="text-[11px] tabular-nums font-semibold text-foreground">${(ownershipCost.storage / 1000).toFixed(1)}K</p>
-          </div>
-          <div className="text-center">
-            <Wrench className="size-3 text-muted-foreground mx-auto mb-1" />
-            <p className="text-[10px] text-muted-foreground">{t("context.service")}</p>
-            <p className="text-[11px] tabular-nums font-semibold text-foreground">${(ownershipCost.maintenance / 1000).toFixed(0)}K</p>
-          </div>
-        </div>
-        <div className="mt-2 pt-2 border-t border-border flex justify-between">
-          <span className="text-[10px] text-muted-foreground">{t("context.totalAnnual")}</span>
-          <span className="text-[12px] font-display font-medium text-primary">${(totalAnnualCost / 1000).toFixed(0)}K{t("context.perYear")}</span>
-        </div>
       </div>
 
       {/* SECTION 4: Similar Cars (Scrollable) */}
@@ -1857,37 +1796,6 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
       demandScore,
     }
   }, [familyAuctions])
-
-  // ─── DYNAMIC: Ownership Cost scaled by market value from segment with most sold data ───
-  const ownershipCost = useMemo(() => {
-    const base = getBrandConfig("Porsche")?.ownershipCosts ?? { insurance: 8500, storage: 6000, maintenance: 8000 }
-
-    // Pivot = market value from the segment with the most sold data; else family min/max midpoint.
-    const regionalVal = computeRegionalValFromAuctions(allFamilyAuctions)
-    let bestSegment: ReturnType<typeof computeRegionalValFromAuctions>[keyof ReturnType<typeof computeRegionalValFromAuctions>] | null = null
-    for (const m of ["US", "EU", "UK", "JP"] as const) {
-      const s = regionalVal[m]
-      if (!s) continue
-      if (!bestSegment || s.marketValue.soldN > bestSegment.marketValue.soldN) bestSegment = s
-    }
-    const pivot =
-      bestSegment?.marketValue.valueUsd ??
-      bestSegment?.askMedian.valueUsd ??
-      (family.priceMin + family.priceMax) / 2
-
-    const scale =
-      pivot < 100_000 ? 0.7 :
-      pivot < 250_000 ? 1.0 :
-      pivot < 500_000 ? 1.3 : 1.6
-
-    return {
-      insurance: Math.round(base.insurance * scale),
-      storage: Math.round(base.storage * scale),
-      maintenance: Math.round(base.maintenance * scale),
-    }
-  }, [allFamilyAuctions, family.priceMin, family.priceMax])
-
-  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
   // Top variants: group by model variant name, sorted by avg listing price (USD)
   const topVariants = useMemo(() => {
@@ -2071,33 +1979,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
           </div>
         </div>
 
-        {/* 7. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              {t("brandContext.annualOwnership")}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: t("brandContext.insurance"), value: ownershipCost.insurance },
-              { label: t("brandContext.storage"), value: ownershipCost.storage },
-              { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("brandContext.perYear")}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 8. OTHER FAMILIES — removed: duplicates family navigation in Column B */}
+        {/* 7. OTHER FAMILIES — removed: duplicates family navigation in Column B */}
       </div>
 
       {/* CTA — pinned bottom */}
@@ -2159,20 +2041,6 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])
-  const ownershipCost = useMemo(() => {
-    const config = getBrandConfig(brand.name)
-    const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const prices = brandAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
-    const avgPrice = prices.length > 0
-      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
-      : (brand.priceMin + brand.priceMax) / 2
-    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
-    return {
-      insurance: Math.round(base.insurance * scale),
-      storage: Math.round(base.storage * scale),
-      maintenance: Math.round(base.maintenance * scale),
-    }
-  }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
   const topModels = useMemo(() => {
     const variantMap = new Map<string, { count: number; prices: number[] }>()
     brandAuctions.forEach(a => {
@@ -2228,8 +2096,6 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
       demandScore,
     }
   }, [brandAuctions, brand.name])
-
-  const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
   // Similar brands (different brand, ranked by proximity of median price)
   const similarBrands = allBrands
@@ -2335,32 +2201,6 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
                   />
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 7. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              {t("brandContext.annualOwnership")}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: t("brandContext.insurance"), value: ownershipCost.insurance },
-              { label: t("brandContext.storage"), value: ownershipCost.storage },
-              { label: t("brandContext.maintenance"), value: ownershipCost.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">{t("brandContext.total")}</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("brandContext.perYear")}</span>
             </div>
           </div>
         </div>
