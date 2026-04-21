@@ -53,3 +53,22 @@ export function toUsd(
   const rate = rates[cur]
   return rate ? amount / rate : amount
 }
+
+/**
+ * Convert an amount in USD to the target currency.
+ * Inverse of toUsd. `rates` must be in USD→X format.
+ *
+ * USD→EUR: amount * rates.EUR  (e.g. 1000 USD * 0.92 = 920 EUR)
+ */
+export function fromUsd(
+  amountUsd: number,
+  currency: string | null | undefined,
+  rates: Record<string, number>,
+): number {
+  if (!currency) return amountUsd
+  const cur = currency.toUpperCase()
+  if (cur === "USD") return amountUsd
+  const rate = rates[cur]
+  if (!rate || !Number.isFinite(rate)) return amountUsd
+  return amountUsd * rate
+}
