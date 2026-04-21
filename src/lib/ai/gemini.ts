@@ -105,17 +105,34 @@ export async function generateJson<T>(
     },
   })
 
+  // Gemini 2.5 Flash has been intermittently rate-limited / 503'd under load.
+  // A single transient failure here would surface to users as the placeholder
+  // fallback on first visit, and the client-side hook caches null for the
+  // session — so one hiccup locks the user out of the AI content. Two retries
+  // with backoff covers the vast majority of transient failures while keeping
+  // the total latency ceiling reasonable (~1s + ~2s + final attempt).
+  const MAX_ATTEMPTS = 3
+  let lastError: unknown = null
   let raw = ""
-  try {
-    const res = await model.generateContent(opts.userPrompt)
-    raw = res.response.text()
-    const parsed = JSON.parse(raw) as T
-    return { ok: true, data: parsed, raw }
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-      raw,
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await model.generateContent(opts.userPrompt)
+      raw = res.response.text()
+      const parsed = JSON.parse(raw) as T
+      return { ok: true, data: parsed, raw }
+    } catch (err) {
+      lastError = err
+      if (attempt < MAX_ATTEMPTS - 1) {
+        const backoffMs = 1000 * Math.pow(2, attempt) // 1s, 2s
+        await new Promise(resolve => setTimeout(resolve, backoffMs))
+      }
     }
+  }
+
+  return {
+    ok: false,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+    raw,
   }
 }
