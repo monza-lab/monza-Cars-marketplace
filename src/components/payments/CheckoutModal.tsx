@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useLocale } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { PRICING_PLANS, type PlanId } from "./PricingCards"
+import { PRICING_PLANS, type PlanId } from "@/lib/payments/plans"
 import { Shield, Lock, Loader2 } from "lucide-react"
 import { track } from "@/lib/analytics/events"
 
@@ -27,6 +28,7 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const locale = useLocale()
 
   const plan = planId ? PRICING_PLANS[planId] : null
   const showPackUpsell = plan?.id === "pack"
@@ -53,7 +55,7 @@ export function CheckoutModal({
       const res = await fetch("/api/checkout/create-session", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ plan: plan.id }),
+        body: JSON.stringify({ plan: plan.id, locale }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || !json.url) {
@@ -65,7 +67,8 @@ export function CheckoutModal({
           (window.location.hostname === "localhost" ||
             window.location.hostname === "127.0.0.1")
         if (isLocal) {
-          window.location.href = `/checkout/payment?plan=${plan.id}`
+          const prefix = locale === "en" ? "" : `/${locale}`
+          window.location.href = `${prefix}/checkout/payment?plan=${plan.id}`
           return
         }
         throw new Error(json.error ?? "Failed to start checkout")

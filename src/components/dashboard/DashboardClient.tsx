@@ -37,6 +37,7 @@ import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions, computeRegionalValFromCorpus } from "./utils/valuation"
+import { selectBestDatabaseImage } from "./utils/aggregation"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket } from "@/lib/pricing/types"
@@ -334,12 +335,14 @@ function getFamilyDisplayName(familyKey: string): string {
 
 function aggregateFamilies(
   auctions: Auction[],
+  historicalAuctions: Auction[],
   rates: Record<string, number>,
   dbSeriesCounts?: Record<string, number>,
   selectedRegion?: string | null,
   liveRegionTotals?: LiveRegionTotals
 ): PorscheFamily[] {
   const familyMap = new Map<string, Auction[]>()
+  const historicalFamilyMap = new Map<string, Auction[]>()
 
   auctions
     .filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON")
@@ -350,6 +353,14 @@ function aggregateFamilies(
     const existing = familyMap.get(family) || []
     existing.push(auction)
     familyMap.set(family, existing)
+  })
+
+  historicalAuctions.forEach(auction => {
+    const family = extractSeries(auction.model, auction.year, auction.make || "Porsche", auction.title)
+    if (!getSeriesConfig(family, auction.make || "Porsche")) return
+    const existing = historicalFamilyMap.get(family) || []
+    existing.push(auction)
+    historicalFamilyMap.set(family, existing)
   })
 
   // Region-aware scaling: when a region is selected, scale sample distribution
@@ -363,6 +374,7 @@ function aggregateFamilies(
   familyMap.forEach((cars, familyKey) => {
     const prices = cars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
     const years = cars.map(c => c.year)
+    const historicalCars = historicalFamilyMap.get(familyKey) || []
 
     // Median price (factual metric, replaces grade for ranking)
     const sortedPrices = [...prices].sort((a, b) => a - b)
@@ -372,21 +384,8 @@ function aggregateFamilies(
 
     const bestCar = cars.reduce((max, car) => listingPriceUsd(car, rates) > listingPriceUsd(max, rates) ? car : max, cars[0])
 
-    // Pick the best real DB image for this family:
-    // 1. Prefer images from trusted listing/dealer platforms (Elferspot, AutoScout24, etc.)
-    //    which have verified, real photos of the actual car
-    // 2. Fall back to any car with images, sorted by price (most expensive = best quality)
-    // 3. Last resort: curated static image for the series
-    const carsWithImages = cars
-      .filter(c => c.images?.length > 0 && c.make === "Porsche")
-      .sort((a, b) => {
-        const aListing = isListingPlatform(a.platform) ? 0 : 1
-        const bListing = isListingPlatform(b.platform) ? 0 : 1
-        if (aListing !== bListing) return aListing - bListing
-        return listingPriceUsd(b, rates) - listingPriceUsd(a, rates)
-      })
-    const rawHeroImage = carsWithImages[0]?.images?.[0]
-    const heroImage = rawHeroImage ? upgradeImageUrl(rawHeroImage) : null
+    // Prefer live listings first, then historical listings, before any static fallback.
+    const heroImage = selectBestDatabaseImage(cars, historicalCars)
     const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
     let carCount: number
@@ -2437,7 +2436,10 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
   const brands = useMemo(() => aggregateBrands(filteredAuctions, rates, liveNowCount), [filteredAuctions, rates, liveNowCount])
 
   // Aggregate into Porsche families for the family-based landing scroll
-  const porscheFamilies = useMemo(() => aggregateFamilies(filteredAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals), [filteredAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals])
+  const porscheFamilies = useMemo(
+    () => aggregateFamilies(filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals),
+    [filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals]
+  )
 
   // Reset scroll position when region changes
   useEffect(() => {

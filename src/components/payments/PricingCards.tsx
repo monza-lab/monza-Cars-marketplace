@@ -2,72 +2,9 @@
 
 import { Check } from "lucide-react"
 import { track } from "@/lib/analytics/events"
+import { PRICING_PLANS, type PlanId, type PricingPlan } from "@/lib/payments/plans"
 
-export type PlanId = "single" | "pack" | "monthly"
-
-export interface PricingPlan {
-  id: PlanId
-  name: string
-  price: number
-  period: "one-time" | "monthly"
-  reports: number | "unlimited"
-  perReport: string
-  badge?: string
-  features: string[]
-  cta: string
-}
-
-export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
-  single: {
-    id: "single",
-    name: "Single Report",
-    price: 9.99,
-    period: "one-time",
-    reports: 1,
-    perReport: "$9.99/report",
-    features: [
-      "1 full investment dossier",
-      "10-section analysis",
-      "Regional fair value",
-      "Never expires",
-    ],
-    cta: "Buy 1 Report",
-  },
-  pack: {
-    id: "pack",
-    name: "Reports Pack",
-    price: 39,
-    period: "one-time",
-    reports: 5,
-    perReport: "$7.80/report",
-    features: [
-      "5 full investment dossiers",
-      "Never expires",
-      "Save 22% vs Single",
-      "No Watchlist or Alerts",
-    ],
-    cta: "Buy 5 Reports",
-  },
-  monthly: {
-    id: "monthly",
-    name: "Monthly",
-    price: 59,
-    period: "monthly",
-    reports: "unlimited",
-    perReport: "Unlimited reports",
-    badge: "BEST VALUE",
-    features: [
-      "Unlimited Reports",
-      "Watchlist (unlimited saves)",
-      "Email Alerts on matches",
-      "Saved Searches",
-      "Priority Generation (faster)",
-      "PDF + CSV Export",
-      "Cancel anytime",
-    ],
-    cta: "Go Unlimited",
-  },
-}
+export type { PlanId } from "@/lib/payments/plans"
 
 function PricingCard({
   plan,

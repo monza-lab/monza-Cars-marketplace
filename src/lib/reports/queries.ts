@@ -123,8 +123,14 @@ export async function getOrCreateUser(
       email,
       display_name: displayName ?? null,
       credits_balance: FREE_CREDITS_PER_MONTH,
+      pack_credits_balance: 0,
+      free_credits_used: 0,
       tier: "FREE",
       credit_reset_date: new Date().toISOString(),
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      subscription_status: null,
+      subscription_period_end: null,
     })
     .select("*")
     .single()
@@ -165,6 +171,9 @@ export async function checkAndResetFreeCredits(
     .single()
 
   if (!user) throw new Error("User not found")
+  if (user.tier === "MONTHLY" || user.tier === "ANNUAL") {
+    return user as UserCreditsRow
+  }
 
   const now = new Date()
   const resetDate = new Date(user.credit_reset_date)
@@ -231,18 +240,35 @@ export async function deductCredit(
     .single()
 
   if (!user) return { success: false, error: "USER_NOT_FOUND" }
-  if (user.credits_balance < 1) return { success: false, error: "INSUFFICIENT_CREDITS" }
+
+  const isUnlimited = user.tier === "MONTHLY" || user.tier === "ANNUAL"
+  const hasPackCredits = (user.pack_credits_balance ?? 0) > 0
+  if (!isUnlimited && !hasPackCredits && user.credits_balance < 1) {
+    return { success: false, error: "INSUFFICIENT_CREDITS" }
+  }
 
   // Deduct credit
-  const { error: updateError } = await supabase
-    .from("user_credits")
-    .update({
-      credits_balance: user.credits_balance - 1,
+  if (!isUnlimited) {
+    const updatePayload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId)
+    }
 
-  if (updateError) return { success: false, error: updateError.message }
+    if (hasPackCredits) {
+      updatePayload.pack_credits_balance = user.pack_credits_balance - 1
+    } else {
+      updatePayload.credits_balance = user.credits_balance - 1
+      if (user.tier === "FREE") {
+        updatePayload.free_credits_used = user.free_credits_used + 1
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from("user_credits")
+      .update(updatePayload)
+      .eq("id", userId)
+
+    if (updateError) return { success: false, error: updateError.message }
+  }
 
   // Record the report access
   const { error: reportError } = await supabase
@@ -251,26 +277,40 @@ export async function deductCredit(
       user_id: userId,
       listing_id: listingId,
       report_id: reportId,
-      credit_cost: 1,
+      credit_cost: isUnlimited ? 0 : 1,
     })
 
   if (reportError && reportError.code === "23505") {
     // Already recorded — restore credit
-    await supabase
-      .from("user_credits")
-      .update({ credits_balance: user.credits_balance })
-      .eq("id", userId)
+    if (!isUnlimited) {
+      const restorePayload: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      }
+
+      if (hasPackCredits) {
+        restorePayload.pack_credits_balance = user.pack_credits_balance
+      } else {
+        restorePayload.credits_balance = user.credits_balance
+      }
+
+      await supabase
+        .from("user_credits")
+        .update(restorePayload)
+        .eq("id", userId)
+    }
     return { success: true, creditUsed: 0, cached: true }
   }
 
-  // Log transaction
-  await supabase.from("credit_transactions").insert({
-    user_id: userId,
-    amount: -1,
-    type: "REPORT_USED",
-    description: `Report for listing ${listingId}`,
-    listing_id: listingId,
-  })
+  if (!isUnlimited) {
+    // Log transaction
+    await supabase.from("credit_transactions").insert({
+      user_id: userId,
+      amount: -1,
+      type: "REPORT_USED",
+      description: `Report for listing ${listingId}`,
+      listing_id: listingId,
+    })
+  }
 
   return { success: true, creditUsed: 1, cached: false }
 }
@@ -326,6 +366,271 @@ export async function addPurchasedCredits(
   })
 
   return (updated ?? user) as UserCreditsRow
+}
+
+export async function updateStripeCustomerId(
+  userId: string,
+  stripeCustomerId: string,
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from("user_credits")
+    .update({
+      stripe_customer_id: stripeCustomerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (error || !data) throw new Error(`Failed to link Stripe customer: ${error?.message ?? "unknown error"}`)
+  return data as UserCreditsRow
+}
+
+export async function findUserByStripeCustomerId(
+  stripeCustomerId: string,
+): Promise<UserCreditsRow | null> {
+  const supabase = getServiceClient()
+  const { data } = await supabase
+    .from("user_credits")
+    .select("*")
+    .eq("stripe_customer_id", stripeCustomerId)
+    .maybeSingle()
+
+  return (data as UserCreditsRow | null) ?? null
+}
+
+export async function findUserByStripeSubscriptionId(
+  stripeSubscriptionId: string,
+): Promise<UserCreditsRow | null> {
+  const supabase = getServiceClient()
+  const { data } = await supabase
+    .from("user_credits")
+    .select("*")
+    .eq("stripe_subscription_id", stripeSubscriptionId)
+    .maybeSingle()
+
+  return (data as UserCreditsRow | null) ?? null
+}
+
+export async function grantStripePurchase(
+  userId: string,
+  amount: number,
+  stripePaymentId: string,
+  planId: "single" | "pack",
+  stripeCustomerId?: string | null,
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+  const { data: existingTx } = await supabase
+    .from("credit_transactions")
+    .select("id")
+    .eq("stripe_payment_id", stripePaymentId)
+    .maybeSingle()
+
+  if (existingTx) {
+    const { data: current } = await supabase
+      .from("user_credits")
+      .select("*")
+      .eq("id", userId)
+      .single()
+    if (!current) throw new Error("User not found")
+    return current as UserCreditsRow
+  }
+
+  const current = await supabase
+    .from("user_credits")
+    .select("*")
+    .eq("id", userId)
+    .single()
+
+  if (!current.data) throw new Error("User not found")
+
+  const nextPackCredits = (current.data.pack_credits_balance ?? 0) + amount
+  const nextTier =
+    current.data.tier === "FREE" ? "PACK_OWNER" : current.data.tier
+
+  const { data, error } = await supabase
+    .from("user_credits")
+    .update({
+      pack_credits_balance: nextPackCredits,
+      tier: nextTier,
+      stripe_customer_id: stripeCustomerId ?? current.data.stripe_customer_id ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to grant pack credits: ${error?.message ?? "unknown error"}`)
+  }
+
+  const { error: txError } = await supabase.from("credit_transactions").insert({
+    user_id: userId,
+    amount,
+    type: "STRIPE_PACK_PURCHASE",
+    description:
+      planId === "single" ? "Purchased 1 report" : `Purchased ${amount} reports`,
+    stripe_payment_id: stripePaymentId,
+  })
+
+  if (txError) throw new Error(`Failed to record Stripe purchase: ${txError.message}`)
+
+  return data as UserCreditsRow
+}
+
+export async function activateStripeSubscription(
+  userId: string,
+  params: {
+    stripeCustomerId: string
+    stripeSubscriptionId: string
+    subscriptionStatus: string | null
+    subscriptionPeriodEnd: string | null
+    stripePaymentId: string
+  },
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+  const { data: existingTx } = await supabase
+    .from("credit_transactions")
+    .select("id")
+    .eq("stripe_payment_id", params.stripePaymentId)
+    .maybeSingle()
+
+  if (existingTx) {
+    const { data: current } = await supabase
+      .from("user_credits")
+      .select("*")
+      .eq("id", userId)
+      .single()
+    if (!current) throw new Error("User not found")
+    return current as UserCreditsRow
+  }
+
+  const { data, error } = await supabase
+    .from("user_credits")
+    .update({
+      tier: "MONTHLY",
+      credits_balance: 0,
+      stripe_customer_id: params.stripeCustomerId,
+      stripe_subscription_id: params.stripeSubscriptionId,
+      subscription_status: params.subscriptionStatus,
+      subscription_period_end: params.subscriptionPeriodEnd,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to activate subscription: ${error?.message ?? "unknown error"}`)
+  }
+
+  const { error: txError } = await supabase.from("credit_transactions").insert({
+    user_id: userId,
+    amount: 0,
+    type: "STRIPE_SUBSCRIPTION_ACTIVATION",
+    description: "Activated Stripe subscription",
+    stripe_payment_id: params.stripePaymentId,
+  })
+
+  if (txError) throw new Error(`Failed to record subscription activation: ${txError.message}`)
+
+  return data as UserCreditsRow
+}
+
+export async function updateStripeSubscriptionStatus(
+  userId: string,
+  params: {
+    subscriptionStatus: string | null
+    subscriptionPeriodEnd: string | null
+    stripeSubscriptionId: string | null
+    stripeCustomerId: string | null
+  },
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from("user_credits")
+    .update({
+      subscription_status: params.subscriptionStatus,
+      subscription_period_end: params.subscriptionPeriodEnd,
+      stripe_subscription_id: params.stripeSubscriptionId,
+      stripe_customer_id: params.stripeCustomerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to update subscription status: ${error?.message ?? "unknown error"}`)
+  }
+
+  return data as UserCreditsRow
+}
+
+export async function deactivateStripeSubscription(
+  userId: string,
+  stripePaymentId: string,
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+  const { data: existingTx } = await supabase
+    .from("credit_transactions")
+    .select("id")
+    .eq("stripe_payment_id", stripePaymentId)
+    .maybeSingle()
+
+  if (existingTx) {
+    const { data: current } = await supabase
+      .from("user_credits")
+      .select("*")
+      .eq("id", userId)
+      .single()
+    if (!current) throw new Error("User not found")
+    return current as UserCreditsRow
+  }
+
+  const { data: current, error } = await supabase
+    .from("user_credits")
+    .select("*")
+    .eq("id", userId)
+    .single()
+
+  if (error || !current) {
+    throw new Error(`Failed to load user for cancellation: ${error?.message ?? "unknown error"}`)
+  }
+
+  const nextTier = (current.pack_credits_balance ?? 0) > 0 ? "PACK_OWNER" : "FREE"
+  const nextCredits = Math.max(current.credits_balance, FREE_CREDITS_PER_MONTH)
+
+  const { data, error: updateError } = await supabase
+    .from("user_credits")
+    .update({
+      tier: nextTier,
+      credits_balance: nextCredits,
+      stripe_subscription_id: null,
+      subscription_status: "canceled",
+      subscription_period_end: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (updateError || !data) {
+    throw new Error(`Failed to deactivate subscription: ${updateError?.message ?? "unknown error"}`)
+  }
+
+  const { error: txError } = await supabase.from("credit_transactions").insert({
+    user_id: userId,
+    amount: 0,
+    type: "STRIPE_SUBSCRIPTION_CANCELED",
+    description: "Canceled Stripe subscription",
+    stripe_payment_id: stripePaymentId,
+  })
+
+  if (txError) throw new Error(`Failed to record subscription cancellation: ${txError.message}`)
+
+  return data as UserCreditsRow
 }
 
 export async function getTransactionHistory(

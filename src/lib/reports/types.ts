@@ -74,8 +74,14 @@ export interface UserCreditsRow {
   email: string | null
   display_name: string | null
   credits_balance: number
-  tier: "FREE" | "PRO"
+  pack_credits_balance: number
+  free_credits_used: number
+  tier: "FREE" | "PACK_OWNER" | "MONTHLY" | "ANNUAL" | "PRO"
   credit_reset_date: string
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  subscription_status: string | null
+  subscription_period_end: string | null
   created_at: string
   updated_at: string
 }
@@ -85,7 +91,13 @@ export interface CreditTransactionRow {
   id: string
   user_id: string
   amount: number
-  type: "FREE_MONTHLY" | "REPORT_USED" | "PURCHASE"
+  type:
+    | "FREE_MONTHLY"
+    | "REPORT_USED"
+    | "PURCHASE"
+    | "STRIPE_PACK_PURCHASE"
+    | "STRIPE_SUBSCRIPTION_ACTIVATION"
+    | "STRIPE_SUBSCRIPTION_CANCELED"
   description: string | null
   listing_id: string | null
   stripe_payment_id: string | null

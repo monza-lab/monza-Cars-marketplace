@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser } from '@/lib/credits'
+import { getOrCreateUser } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 
 const CREATE_USER_DB_TIMEOUT_MS = 15_000
@@ -57,11 +57,15 @@ export async function POST(request: NextRequest) {
         success: true,
         profile: {
           id: profile.id,
-          supabaseId: profile.supabaseId,
+          supabaseId: profile.supabase_user_id,
           email: profile.email,
-          name: profile.name,
-          creditsBalance: profile.creditsBalance,
+          name: profile.display_name,
+          creditsBalance: profile.credits_balance,
+          packCreditsBalance: profile.pack_credits_balance ?? 0,
+          freeCreditsUsed: profile.free_credits_used ?? 0,
           tier: profile.tier,
+          creditResetDate: profile.credit_reset_date,
+          subscriptionPeriodEnd: profile.subscription_period_end ?? null,
         },
       })
     } catch (dbError) {
@@ -76,7 +80,11 @@ export async function POST(request: NextRequest) {
             email: user.email,
             name: user.user_metadata?.full_name ?? null,
             creditsBalance: 3,
+            packCreditsBalance: 0,
             tier: 'FREE',
+            freeCreditsUsed: 0,
+            creditResetDate: new Date().toISOString(),
+            subscriptionPeriodEnd: null,
           },
         })
       }

@@ -3,6 +3,7 @@ import {
   fetchPaginatedListings,
   fetchLiveListingAggregateCounts,
   fetchValuationCorpusForMake,
+  fetchValuationListingsForMake,
   fetchSeriesCounts,
   fetchSeriesCountsByRegion,
   type SeriesCountsByRegion,
@@ -18,6 +19,8 @@ import {
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
 const DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS = 45_000;
+const DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS = 8_000;
+const DASHBOARD_VALUATION_IMAGE_POOL_LIMIT = 1_000;
 const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
 const DASHBOARD_REGION_SAMPLE_SIZE = 15;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
@@ -374,6 +377,17 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     ),
   ]);
 
+  const valuationListings = await withSoftTimeout(
+    (signal) =>
+      fetchValuationListingsForMake(requestedMake ?? "Porsche", DASHBOARD_VALUATION_IMAGE_POOL_LIMIT, {
+        timeoutMs: DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS + 1_000,
+        signal,
+      }),
+    DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS,
+    "valuation listings query",
+    [],
+  );
+
   // Only active listings for dashboard
   const active = live.filter(
     (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
@@ -408,7 +422,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
 
   const result: DashboardData = {
     auctions: active.map(transformCar),
-    valuationListings: [], // superseded by regionalValByFamily
+    valuationListings: valuationListings.map(transformCar),
     regionalValByFamily,
     liveNow: aggregates.liveNow,
     regionTotals: {

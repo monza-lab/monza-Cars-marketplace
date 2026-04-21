@@ -1,8 +1,10 @@
-^import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+type MockListing = Record<string, unknown>
 
 const unstableCache = vi.fn((fn: () => unknown) => fn)
 const revalidateTag = vi.fn()
-const dashboardValuation = {
+const dashboardValuation: Record<string, unknown> = {
   "992": {
     US: {
       market: "US",
@@ -65,9 +67,9 @@ const dashboardValuation = {
       },
     },
   },
-} as const
+}
 
-const activeCar = {
+const activeCar: MockListing = {
   id: "active-1",
   title: "2023 Porsche 992 GT3",
   year: 2023,
@@ -90,7 +92,7 @@ const activeCar = {
   category: "911",
   originalCurrency: "USD",
   trend: "Stable",
-} as const
+}
 
 const fetchPaginatedListings = vi.fn(() =>
   Promise.resolve({
@@ -110,6 +112,18 @@ const fetchValuationCorpusForMake = vi.fn(() =>
       basis: "asking" as const,
       canonicalMarket: "EU" as const,
       family: "992",
+    },
+  ])
+)
+
+const fetchValuationListingsForMake = vi.fn(() =>
+  Promise.resolve([
+    {
+      ...activeCar,
+      id: "historical-1",
+      title: "2008 Porsche 997 GT3",
+      status: "ENDED",
+      images: ["https://example.com/historical.jpg"],
     },
   ])
 )
@@ -139,6 +153,7 @@ const fetchSeriesCountsByRegion = vi.fn(async () => ({
 vi.mock("./supabaseLiveListings", () => ({
   fetchPaginatedListings,
   fetchValuationCorpusForMake,
+  fetchValuationListingsForMake,
   fetchLiveListingAggregateCounts,
   fetchSeriesCounts,
   fetchSeriesCountsByRegion,
@@ -163,6 +178,7 @@ describe("dashboard cache", () => {
     vi.resetModules()
     fetchPaginatedListings.mockClear()
     fetchValuationCorpusForMake.mockClear()
+    fetchValuationListingsForMake.mockClear()
     fetchDashboardRegionalValuationByFamily.mockClear()
     aggregateRegionalValuationByFamily.mockClear()
     fetchLiveListingAggregateCounts.mockClear()
@@ -182,7 +198,7 @@ describe("dashboard cache", () => {
       1,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 6,
+        pageSize: 15,
         region: "US",
         status: "active",
         includeCount: false,
@@ -192,7 +208,7 @@ describe("dashboard cache", () => {
       2,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 6,
+        pageSize: 15,
         region: "EU",
         status: "active",
         includeCount: false,
@@ -202,7 +218,7 @@ describe("dashboard cache", () => {
       3,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 6,
+        pageSize: 15,
         region: "UK",
         status: "active",
         includeCount: false,
@@ -212,7 +228,7 @@ describe("dashboard cache", () => {
       4,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 6,
+        pageSize: 15,
         region: "JP",
         status: "active",
         includeCount: false,
@@ -222,7 +238,7 @@ describe("dashboard cache", () => {
       5,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 24,
+        pageSize: 60,
         status: "active",
         includeCount: false,
       }),
@@ -234,8 +250,21 @@ describe("dashboard cache", () => {
         timeoutMs: 3_000,
       }),
     )
+    expect(fetchValuationListingsForMake).toHaveBeenCalledWith(
+      "Porsche",
+      1_000,
+      expect.objectContaining({
+        signal: expect.any(Object),
+        timeoutMs: 9_000,
+      }),
+    )
     expect(fetchValuationCorpusForMake).not.toHaveBeenCalled()
     expect(data.auctions).toHaveLength(1)
+    expect(data.valuationListings).toHaveLength(1)
+    expect(data.valuationListings[0]).toMatchObject({
+      id: "historical-1",
+      images: ["https://example.com/historical.jpg"],
+    })
     expect(data.regionalValByFamily).toBeDefined()
     expect(data.regionalValByFamily["992"]).toBeDefined()
     expect(data.regionalValByFamily["992"].EU).toBeDefined()
@@ -290,9 +319,9 @@ describe("dashboard cache", () => {
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
-    expect(data.auctions).toHaveLength(24)
-    expect(new Set(data.auctions.map((auction) => auction.id)).size).toBe(24)
-    expect(fetchPaginatedListings).toHaveBeenCalledTimes(4)
+    expect(data.auctions).toHaveLength(41)
+    expect(new Set(data.auctions.map((auction) => auction.id)).size).toBe(41)
+    expect(fetchPaginatedListings).toHaveBeenCalledTimes(5)
   })
 
   it("falls back to source-scoped queries when regional buckets and the fill query return no cars", async () => {
@@ -362,7 +391,7 @@ describe("dashboard cache", () => {
       1,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 6,
+        pageSize: 15,
         region: "US",
         status: "active",
         includeCount: false,
@@ -372,7 +401,7 @@ describe("dashboard cache", () => {
       5,
       expect.objectContaining({
         make: "Porsche",
-        pageSize: 24,
+        pageSize: 60,
         status: "active",
         includeCount: false,
       }),

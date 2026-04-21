@@ -19,6 +19,43 @@ function upgradeImageUrl(url: string): string {
   return url
 }
 
+function getImagePriority(car: Auction, sourcePriority: number): [number, number, number] {
+  const platformPriority = isListingPlatform(car.platform) ? 0 : 1
+  const pricePriority = Math.max(car.currentBid ?? 0, car.price ?? 0)
+  return [sourcePriority, platformPriority, -pricePriority]
+}
+
+export function selectBestDatabaseImage(
+  liveCars: Auction[],
+  historicalCars: Auction[],
+): string | null {
+  const seen = new Map<string, { car: Auction; sourcePriority: number }>()
+
+  for (const [sourcePriority, cars] of [liveCars, historicalCars].entries()) {
+    for (const car of cars) {
+      if (!Array.isArray(car.images) || car.images.length === 0) continue
+      const existing = seen.get(car.id)
+      if (!existing || sourcePriority < existing.sourcePriority) {
+        seen.set(car.id, { car, sourcePriority })
+      }
+    }
+  }
+
+  const best = [...seen.values()]
+    .sort((left, right) => {
+      const [leftSource, leftPlatform, leftPrice] = getImagePriority(left.car, left.sourcePriority)
+      const [rightSource, rightPlatform, rightPrice] = getImagePriority(right.car, right.sourcePriority)
+      if (leftSource !== rightSource) return leftSource - rightSource
+      if (leftPlatform !== rightPlatform) return leftPlatform - rightPlatform
+      if (leftPrice !== rightPrice) return leftPrice - rightPrice
+      return left.car.id.localeCompare(right.car.id)
+    })
+    .find(({ car }) => car.images.length > 0)
+
+  const raw = best?.car.images[0]
+  return raw ? upgradeImageUrl(raw) : null
+}
+
 export function aggregateSourceImageCompleteness(
   rows: Array<{ source: string | null | undefined; images?: unknown[] | null }>
 ): SourceImageCompleteness[] {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser, getUserCredits } from '@/lib/credits'
+import { getOrCreateUser, getUserCredits } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 
 const PROFILE_DB_TIMEOUT_MS = 15_000
@@ -65,9 +65,11 @@ export async function GET(request: Request) {
             name: user.user_metadata?.full_name || null,
             avatarUrl: user.user_metadata?.avatar_url || null,
             creditsBalance: 3,
+            packCreditsBalance: 0,
             freeCreditsUsed: 0,
             tier: 'FREE',
             creditResetDate: new Date().toISOString(),
+            subscriptionPeriodEnd: null,
           },
         })
       }
@@ -77,14 +79,16 @@ export async function GET(request: Request) {
     return NextResponse.json({
       profile: {
         id: profile.id,
-        supabaseId: user.id,
+        supabaseId: profile.supabase_user_id,
         email: user.email,
-        name: user.user_metadata?.full_name || null,
+        name: profile.display_name ?? user.user_metadata?.full_name ?? null,
         avatarUrl: user.user_metadata?.avatar_url || null,
-        creditsBalance: profile.creditsBalance,
-        freeCreditsUsed: profile.freeCreditsUsed,
+        creditsBalance: profile.credits_balance,
+        packCreditsBalance: profile.pack_credits_balance ?? 0,
+        freeCreditsUsed: profile.free_credits_used ?? 0,
         tier: profile.tier,
-        creditResetDate: profile.creditResetDate,
+        creditResetDate: profile.credit_reset_date,
+        subscriptionPeriodEnd: profile.subscription_period_end ?? null,
       },
     })
   } catch (error) {
