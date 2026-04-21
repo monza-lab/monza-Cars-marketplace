@@ -161,5 +161,7 @@
   "modifiers_total_percent": 26,
 
   "signals_extracted_at": "2026-04-19T12:00:00.000Z",
-  "extraction_version": "v1.0"
+  "extraction_version": "v1.0",
+
+  "landed_cost": null
 }

@@ -672,6 +672,7 @@ export async function saveHausReport(
       modifiers_total_percent: report.modifiers_total_percent,
       signals_extracted_at: report.signals_extracted_at,
       extraction_version: report.extraction_version,
+      landed_cost_json: report.landed_cost,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "listing_id" },
@@ -764,6 +765,7 @@ export function assembleHausReportFromDB(
     modifiers_total_percent: num(row.modifiers_total_percent),
     signals_extracted_at: (row.signals_extracted_at as string | null) ?? null,
     extraction_version: (row.extraction_version as string | undefined) ?? "v1.0",
+    landed_cost: (row.landed_cost_json ?? null) as HausReport["landed_cost"],
   }
 }
 

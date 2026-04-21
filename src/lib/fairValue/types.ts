@@ -1,6 +1,8 @@
 // Public types for the Haus Report (paid) + Fair Value signal extraction pipeline.
 // See docs/superpowers/specs/2026-04-19-fair-value-signal-extraction-design.md §8.1
 
+import type { LandedCostBreakdown } from "@/lib/landedCost"
+
 export type SignalSourceType =
   | "listing_text"      // extracted by Gemini from description_text
   | "structured_field"  // deterministic parse of a listings.* column
@@ -63,4 +65,9 @@ export interface HausReport {
   // NEW: meta
   signals_extracted_at: string | null  // ISO timestamp; null = signal extraction not yet run
   extraction_version: string           // e.g., "v1.0"
+
+  // Landed cost estimate (destination inferred from locale at generation time).
+  // Null when origin is outside the supported matrix, for domestic transactions,
+  // or when exchange rates failed at generation time.
+  landed_cost: LandedCostBreakdown | null
 }
