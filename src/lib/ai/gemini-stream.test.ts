@@ -54,3 +54,74 @@ describe("streamWithTools", () => {
     expect(events.some(e => e.type === "tool_call" && e.name === "search_listings")).toBe(true)
   })
 })
+
+describe("streamWithTools — error classification", () => {
+  it("classifies a rate-limit error as retryable with code=transient", async () => {
+    mockGenerateContentStream.mockRejectedValue(new Error("429 Too Many Requests"))
+    const events: any[] = []
+    for await (const ev of streamWithTools({
+      model: "gemini-2.5-flash", systemPrompt: "sys",
+      messages: [{ role: "user", content: "x" }], tools: [],
+    })) events.push(ev)
+    const err = events.find(e => e.type === "error")
+    expect(err).toMatchObject({ type: "error", code: "transient", retryable: true })
+    expect(err.cause).toBeInstanceOf(Error)
+  })
+
+  it("classifies an unknown error as non-retryable with code=llm_error", async () => {
+    mockGenerateContentStream.mockRejectedValue(new Error("unexpected SDK failure"))
+    const events: any[] = []
+    for await (const ev of streamWithTools({
+      model: "gemini-2.5-flash", systemPrompt: "sys",
+      messages: [{ role: "user", content: "x" }], tools: [],
+    })) events.push(ev)
+    const err = events.find(e => e.type === "error")
+    expect(err).toMatchObject({ type: "error", code: "llm_error", retryable: false })
+  })
+
+  it("yields missing_api_key error when GEMINI_API_KEY is unset", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "")
+    const events: any[] = []
+    for await (const ev of streamWithTools({
+      model: "gemini-2.5-flash", systemPrompt: "sys",
+      messages: [{ role: "user", content: "x" }], tools: [],
+    })) events.push(ev)
+    expect(events[0]).toMatchObject({ type: "error", code: "missing_api_key", retryable: false })
+  })
+})
+
+describe("streamWithTools — abort signal", () => {
+  it("aborts before start if signal already aborted", async () => {
+    const ac = new AbortController()
+    ac.abort()
+    const events: any[] = []
+    for await (const ev of streamWithTools({
+      model: "gemini-2.5-flash", systemPrompt: "sys",
+      messages: [{ role: "user", content: "x" }], tools: [],
+      signal: ac.signal,
+    })) events.push(ev)
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ type: "error", code: "aborted", retryable: false })
+  })
+
+  it("aborts mid-stream after the next chunk check", async () => {
+    const ac = new AbortController()
+    mockGenerateContentStream.mockResolvedValue({
+      stream: (async function* () {
+        yield { text: () => "Hel" }
+        ac.abort() // abort after first chunk
+        yield { text: () => "should not appear" }
+      })(),
+      response: Promise.resolve({ functionCalls: () => [] }),
+    })
+    const events: any[] = []
+    for await (const ev of streamWithTools({
+      model: "gemini-2.5-flash", systemPrompt: "sys",
+      messages: [{ role: "user", content: "x" }], tools: [],
+      signal: ac.signal,
+    })) events.push(ev)
+    const texts = events.filter(e => e.type === "text").map(e => e.delta).join("")
+    expect(texts).toBe("Hel")
+    expect(events.some(e => e.type === "error" && e.code === "aborted")).toBe(true)
+  })
+})

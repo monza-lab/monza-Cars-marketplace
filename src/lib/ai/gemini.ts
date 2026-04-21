@@ -200,17 +200,30 @@ export interface StreamOptions {
   tools: ToolDefinition[]
   temperature?: number
   maxOutputTokens?: number
+  signal?: AbortSignal
 }
 
 export type StreamEvent =
   | { type: "text"; delta: string }
   | { type: "tool_call"; name: string; args: Record<string, unknown> }
-  | { type: "error"; message: string }
+  | { type: "error"; message: string; code?: string; retryable?: boolean; cause?: unknown }
+
+function classifyGeminiError(err: unknown): { message: string; code: string; retryable: boolean; cause: unknown } {
+  const message = err instanceof Error ? err.message : String(err)
+  const retryable = /(429|rate.?limit|quota|503|ETIMEDOUT|ENOTFOUND|ECONNRESET|network)/i.test(message)
+  return { message, code: retryable ? "transient" : "llm_error", retryable, cause: err }
+}
 
 export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<StreamEvent> {
+  // Check if already aborted before doing any work.
+  if (opts.signal?.aborted) {
+    yield { type: "error", message: "request aborted before start", code: "aborted", retryable: false }
+    return
+  }
+
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    yield { type: "error", message: "GEMINI_API_KEY is not configured" }
+    yield { type: "error", message: "GEMINI_API_KEY is not configured", code: "missing_api_key", retryable: false }
     return
   }
 
@@ -241,8 +254,13 @@ export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<Stre
   }))
 
   try {
+    // Best-effort cancellation: SDK does not accept AbortSignal, so we poll between chunks.
     const result = await model.generateContentStream({ contents: history })
     for await (const chunk of result.stream) {
+      if (opts.signal?.aborted) {
+        yield { type: "error", message: "aborted mid-stream", code: "aborted", retryable: false }
+        return
+      }
       const t = chunk.text()
       if (t) yield { type: "text", delta: t }
     }
@@ -252,6 +270,7 @@ export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<Stre
       yield { type: "tool_call", name: call.name, args: call.args as Record<string, unknown> }
     }
   } catch (err) {
-    yield { type: "error", message: err instanceof Error ? err.message : String(err) }
+    const classified = classifyGeminiError(err)
+    yield { type: "error", ...classified }
   }
 }
