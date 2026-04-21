@@ -2,7 +2,7 @@
 // Gemini API Client — for investment report analysis
 // ---------------------------------------------------------------------------
 
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI, type Schema } from "@google/generative-ai"
 
 const DEFAULT_MODEL = "gemini-2.5-flash"
 
@@ -65,8 +65,10 @@ if (!JSON_API_KEY) {
 interface GenerateJsonOptions {
   systemPrompt?: string
   userPrompt: string
+  model?: string
   temperature?: number      // default 0
   maxOutputTokens?: number  // default 2048
+  responseSchema?: Schema   // NEW: enforce a JSON schema on Gemini's output
 }
 
 export interface GeminiJsonResponse<T> {
@@ -94,26 +96,83 @@ export async function generateJson<T>(
 
   const client = new GoogleGenerativeAI(JSON_API_KEY)
   const model = client.getGenerativeModel({
-    model: JSON_MODEL_ID,
+    model: opts.model ?? JSON_MODEL_ID,
     systemInstruction: opts.systemPrompt,
     generationConfig: {
       temperature: opts.temperature ?? 0,
       maxOutputTokens: opts.maxOutputTokens ?? 2048,
       responseMimeType: "application/json",
+      ...(opts.responseSchema ? { responseSchema: opts.responseSchema } : {}),
     },
   })
 
+  // Gemini 2.5 Flash has been intermittently rate-limited / 503'd under load.
+  // A single transient failure here would surface to users as the placeholder
+  // fallback on first visit, and the client-side hook caches null for the
+  // session — so one hiccup locks the user out of the AI content. Two retries
+  // with backoff covers the vast majority of transient failures while keeping
+  // the total latency ceiling reasonable (~1s + ~2s + final attempt).
+  const MAX_ATTEMPTS = 3
+  let lastError: unknown = null
   let raw = ""
-  try {
-    const res = await model.generateContent(opts.userPrompt)
-    raw = res.response.text()
-    const parsed = JSON.parse(raw) as T
-    return { ok: true, data: parsed, raw }
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-      raw,
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await model.generateContent(opts.userPrompt)
+      raw = res.response.text()
+      const parsed = parseJsonPayload<T>(raw)
+      return { ok: true, data: parsed, raw }
+    } catch (err) {
+      lastError = err
+      if (attempt < MAX_ATTEMPTS - 1) {
+        const backoffMs = 1000 * Math.pow(2, attempt) // 1s, 2s
+        await new Promise(resolve => setTimeout(resolve, backoffMs))
+      }
     }
   }
+
+  return {
+    ok: false,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+    raw,
+  }
+}
+
+function parseJsonPayload<T>(raw: string): T {
+  const candidates = buildJsonCandidates(raw)
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as T
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error("Gemini response was not valid JSON")
+}
+
+function buildJsonCandidates(raw: string): string[] {
+  const trimmed = raw.trim()
+  const candidates = new Set<string>([trimmed])
+
+  const fenced = trimmed
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim()
+  candidates.add(fenced)
+
+  const objectStart = trimmed.indexOf("{")
+  const objectEnd = trimmed.lastIndexOf("}")
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    candidates.add(trimmed.slice(objectStart, objectEnd + 1).trim())
+  }
+
+  const arrayStart = trimmed.indexOf("[")
+  const arrayEnd = trimmed.lastIndexOf("]")
+  if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    candidates.add(trimmed.slice(arrayStart, arrayEnd + 1).trim())
+  }
+
+  return [...candidates]
 }

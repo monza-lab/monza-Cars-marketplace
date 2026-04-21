@@ -8,6 +8,7 @@ const DB_UNREACHABLE_COOLDOWN_MS = 30_000
 const DB_CIRCUIT_OPEN_CODE = 'DB_CIRCUIT_OPEN'
 
 let dbUnavailableUntil = 0
+let analysisTableAvailable: Promise<boolean> | null = null
 
 class DbCircuitOpenError extends Error {
   code = DB_CIRCUIT_OPEN_CODE
@@ -86,6 +87,27 @@ function logDbQueryError(label: string, error: unknown) {
   if (shouldLogDbError(error)) {
     console.error(`[queries] ${label}:`, error)
   }
+}
+
+async function hasAnalysisTable(): Promise<boolean> {
+  if (!analysisTableAvailable) {
+    analysisTableAvailable = (async () => {
+      try {
+        const result = await dbQuery<{ regclass: string | null }>(
+          'SELECT to_regclass(\'"Analysis"\') AS regclass',
+        )
+        return Boolean(result.rows[0]?.regclass)
+      } catch {
+        return false
+      }
+    })()
+  }
+
+  return analysisTableAvailable
+}
+
+export function __resetAnalysisTableAvailabilityForTests(): void {
+  analysisTableAvailable = null
 }
 
 function normalizeRows(rows: Record<string, unknown>[]) {
@@ -257,6 +279,10 @@ export async function upsertAuction(data: Record<string, unknown> & { externalId
 }
 
 export async function saveAnalysis(auctionId: string, data: Record<string, unknown>) {
+  if (!(await hasAnalysisTable())) {
+    return null
+  }
+
   const result = await dbQuery<Record<string, unknown>>(
     `
       INSERT INTO "Analysis" (
@@ -526,6 +552,10 @@ export async function getComparablesForModel(make: string, model: string, limit 
 
 export async function getAnalysisForCar(make: string, model: string, year: number): Promise<DbAnalysisRow | null> {
   try {
+    if (!(await hasAnalysisTable())) {
+      return null
+    }
+
     const rows = await withDbTimeout(
       () =>
         dbQuery<DbAnalysisRow>(
@@ -546,7 +576,9 @@ export async function getAnalysisForCar(make: string, model: string, year: numbe
     )
     return rows.rows[0] ?? null
   } catch (e) {
-    logDbQueryError('getAnalysisForCar', e)
+    if (getErrorCode(e) !== "42P01") {
+      logDbQueryError('getAnalysisForCar', e)
+    }
     return null
   }
 }

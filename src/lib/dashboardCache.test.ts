@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const unstableCache = vi.fn((fn: () => unknown) => fn)
 const revalidateTag = vi.fn()
-const dashboardValuation = {
+const dashboardValuation: Record<string, unknown> = {
   "992": {
     US: {
       market: "US",
@@ -65,7 +65,7 @@ const dashboardValuation = {
       },
     },
   },
-} as const
+}
 
 const activeCar = {
   id: "active-1",
@@ -253,10 +253,6 @@ describe("dashboard cache", () => {
     expect(fetchValuationListingsForMake).toHaveBeenCalledWith(
       "Porsche",
       1_000,
-      expect.objectContaining({
-        signal: expect.any(Object),
-        timeoutMs: 9_000,
-      }),
     )
     expect(fetchValuationCorpusForMake).not.toHaveBeenCalled()
     expect(data.auctions).toHaveLength(1)

@@ -53,3 +53,72 @@ describe("gemini client", () => {
     vi.useRealTimers()
   })
 })
+
+describe("generateJson responseSchema", () => {
+  it("passes responseSchema to generationConfig when provided", async () => {
+    mockGenerateContent.mockImplementationOnce(async (_: unknown) => {
+      return { response: { text: () => '{"ok":true}' } }
+    })
+
+    // Re-mock with a spy that captures getGenerativeModel args
+    const getGenerativeModel = vi.fn(() => ({
+      generateContent: mockGenerateContent,
+    }))
+
+    const { SchemaType } = await vi.importActual<typeof import("@google/generative-ai")>(
+      "@google/generative-ai",
+    )
+
+    vi.doMock("@google/generative-ai", () => ({
+      GoogleGenerativeAI: class {
+        getGenerativeModel = getGenerativeModel
+      },
+      SchemaType,
+    }))
+
+    vi.resetModules()
+    const mod = await import("./gemini")
+
+    const schema: import("@google/generative-ai").Schema = {
+      type: SchemaType.OBJECT,
+      properties: { ok: { type: SchemaType.BOOLEAN } },
+      required: ["ok"],
+    }
+
+    const res = await mod.generateJson<{ ok: boolean }>({
+      userPrompt: "hi",
+      responseSchema: schema,
+    })
+
+    expect(res.ok).toBe(true)
+    const calls = getGenerativeModel.mock.calls as unknown as Array<[unknown]>
+    const modelCall = calls[0]?.[0] as {
+      generationConfig?: { responseSchema?: unknown; responseMimeType?: string }
+    }
+    expect(modelCall.generationConfig?.responseMimeType).toBe("application/json")
+    expect(modelCall.generationConfig?.responseSchema).toEqual(schema)
+
+    vi.doUnmock("@google/generative-ai")
+  })
+
+  it("parses JSON wrapped in fences or surrounding text", async () => {
+    mockGenerateContent.mockResolvedValueOnce({
+      response: {
+        text: () => '```json\n{"ok":true}\n```\n',
+      },
+    })
+
+    const { generateJson } = await import("./gemini")
+    const res = await generateJson<{ ok: boolean }>({
+      userPrompt: "hi",
+      responseSchema: {
+        type: "object",
+        properties: { ok: { type: "boolean" } },
+        required: ["ok"],
+      } as import("@google/generative-ai").Schema,
+    })
+
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.data).toEqual({ ok: true })
+  })
+})
