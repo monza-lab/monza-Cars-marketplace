@@ -3,12 +3,14 @@ import {
   fetchPaginatedListings,
   fetchLiveListingAggregateCounts,
   fetchValuationCorpusForMake,
+  fetchValuationListingsForMake,
   fetchSeriesCounts,
   fetchSeriesCountsByRegion,
   type SeriesCountsByRegion,
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
 import type { CollectorCar } from "./curatedCars";
+import { getModelPatternsForSeries } from "./brandConfig";
 import {
   aggregateRegionalValuationByFamily,
   fetchDashboardRegionalValuationByFamily,
@@ -18,6 +20,9 @@ import {
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
 const DASHBOARD_VALUATION_FALLBACK_QUERY_TIMEOUT_MS = 45_000;
+const DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS = 8_000;
+const DASHBOARD_FAMILY_REP_TIMEOUT_MS = 8_000;
+const DASHBOARD_VALUATION_IMAGE_POOL_LIMIT = 1_000;
 const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
 const DASHBOARD_REGION_SAMPLE_SIZE = 15;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
@@ -315,6 +320,41 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
   return Array.from(deduped.values()).slice(0, DASHBOARD_DISPLAY_LIMIT);
 }
 
+async function fetchMissingFamilyRepresentatives(
+  make: string,
+  liveCars: CollectorCar[],
+  seriesCounts: Record<string, number>,
+): Promise<CollectorCar[]> {
+  const presentFamilies = new Set(
+    liveCars
+      .map((car) => car.family)
+      .filter((family): family is string => typeof family === "string" && family.length > 0),
+  );
+
+  const missingFamilies = Object.entries(seriesCounts)
+    .filter(([family, count]) => count > 0 && !presentFamilies.has(family))
+    .map(([family]) => family);
+
+  if (missingFamilies.length === 0) return [];
+
+  const results = await Promise.all(
+    missingFamilies.map(async (family) => {
+      const result = await fetchPaginatedListings({
+        make,
+        pageSize: 1,
+        status: "active",
+        includeCount: false,
+        series: family,
+        modelPatterns: getModelPatternsForSeries(family, make),
+        timeoutMs: DASHBOARD_FAMILY_REP_TIMEOUT_MS,
+      });
+      return result.cars[0] ?? null;
+    }),
+  );
+
+  return results.filter((car): car is CollectorCar => car !== null);
+}
+
 /**
  * Core dashboard data fetch — no caching directive here so it can be
  * imported and called directly in tests without triggering "use cache"
@@ -374,10 +414,36 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     ),
   ]);
 
+  const valuationListings = await withSoftTimeout(
+    (signal) =>
+      fetchValuationListingsForMake(requestedMake ?? "Porsche", DASHBOARD_VALUATION_IMAGE_POOL_LIMIT, {
+        timeoutMs: DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS + 1_000,
+        signal,
+      }),
+    DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS,
+    "valuation listings query",
+    [],
+  );
+
   // Only active listings for dashboard
   const active = live.filter(
     (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
   ).slice(0, DASHBOARD_DISPLAY_LIMIT);
+
+  const familyRepresentatives = await withSoftTimeout(
+    () => fetchMissingFamilyRepresentatives(requestedMake ?? "Porsche", active, seriesCounts),
+    DASHBOARD_FAMILY_REP_TIMEOUT_MS,
+    "family representative query",
+    [],
+  );
+
+  const valuationListingMap = new Map<string, CollectorCar>();
+  for (const car of [...familyRepresentatives, ...valuationListings]) {
+    if (!valuationListingMap.has(car.id)) {
+      valuationListingMap.set(car.id, car);
+    }
+  }
+  const representativeListings = Array.from(valuationListingMap.values());
 
   let regionalValByFamily = cachedRegionalValByFamily ?? {};
 
@@ -408,7 +474,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
 
   const result: DashboardData = {
     auctions: active.map(transformCar),
-    valuationListings: [], // superseded by regionalValByFamily
+    valuationListings: representativeListings.map(transformCar),
     regionalValByFamily,
     liveNow: aggregates.liveNow,
     regionTotals: {
