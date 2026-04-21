@@ -123,4 +123,28 @@ describe("loadSkill", () => {
     })
     expect(() => loadSkill("demo", tmp)).toThrow(/User Prompt Template/)
   })
+
+  it("kind: chat skips the User Prompt Template requirement", () => {
+    writeSkill(path.join(tmp, "advisor"), {
+      "SKILL.md": [
+        "---",
+        "name: advisor",
+        "kind: chat",
+        "version: 0.1.0",
+        "model: gemini-2.5-flash",
+        "temperature: 0.3",
+        "references: []",
+        "---",
+        "",
+        "# System Instruction",
+        "",
+        "You are the MonzaHaus advisor.",
+      ].join("\n"),
+    })
+
+    const skill = loadSkill("advisor", tmp)
+    expect(skill.kind).toBe("chat")
+    expect(skill.userPromptTemplate).toBe("")
+    expect(skill.systemPrompt).toContain("You are the MonzaHaus advisor.")
+  })
 })

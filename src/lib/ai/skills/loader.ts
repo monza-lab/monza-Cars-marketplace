@@ -1,9 +1,12 @@
 import * as fs from "node:fs"
 import * as path from "node:path"
 
+export type SkillKind = "one-shot" | "chat"
+
 export interface LoadedSkill {
   name: string
   description?: string
+  kind: SkillKind
   version: string
   model: string
   temperature: number
@@ -14,6 +17,7 @@ export interface LoadedSkill {
 interface Frontmatter {
   name: string
   description?: string
+  kind: SkillKind
   version: string
   model: string
   temperature: number
@@ -43,11 +47,20 @@ export function loadSkill(name: string, baseDir: string = DEFAULT_SKILLS_DIR): L
 
   const userHeading = "# User Prompt Template"
   const idx = body.indexOf(userHeading)
-  if (idx === -1) {
-    throw new Error(`Skill ${name}: missing '${userHeading}' heading in SKILL.md`)
+
+  let systemBody: string
+  let userPromptTemplate: string
+
+  if (frontmatter.kind === "chat") {
+    systemBody = idx === -1 ? body.trim() : body.slice(0, idx).trim()
+    userPromptTemplate = idx === -1 ? "" : body.slice(idx + userHeading.length).trim()
+  } else {
+    if (idx === -1) {
+      throw new Error(`Skill ${name}: missing '${userHeading}' heading in SKILL.md`)
+    }
+    systemBody = body.slice(0, idx).trim()
+    userPromptTemplate = body.slice(idx + userHeading.length).trim()
   }
-  const systemBody = body.slice(0, idx).trim()
-  const userPromptTemplate = body.slice(idx + userHeading.length).trim()
 
   const referenceBlocks: string[] = []
   for (const ref of frontmatter.references) {
@@ -64,6 +77,7 @@ export function loadSkill(name: string, baseDir: string = DEFAULT_SKILLS_DIR): L
   const skill: LoadedSkill = {
     name: frontmatter.name,
     description: frontmatter.description,
+    kind: frontmatter.kind,
     version: frontmatter.version,
     model: frontmatter.model,
     temperature: frontmatter.temperature,
@@ -122,9 +136,11 @@ function parseFrontmatter(raw: string): { frontmatter: Frontmatter; body: string
     }
   }
 
+  const kind: SkillKind = data.kind === "chat" ? "chat" : "one-shot"
   const fm: Frontmatter = {
     name: String(data.name),
     description: data.description ? String(data.description) : undefined,
+    kind,
     version: String(data.version),
     model: String(data.model),
     temperature: Number(data.temperature),
