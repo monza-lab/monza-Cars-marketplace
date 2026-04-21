@@ -133,6 +133,10 @@ describe("useLiveSidebarListings", () => {
   })
 
   beforeEach(() => {
+    // Pin "now" to just before the hardcoded endTime values so live-status filter
+    // (endTime > Date.now()) keeps the seed visible regardless of when the suite runs.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(new Date("2026-04-20T10:00:00.000Z"))
     MockIntersectionObserver.instances = []
     vi.stubGlobal("IntersectionObserver", MockIntersectionObserver as unknown as typeof IntersectionObserver)
     vi.stubGlobal(
@@ -163,6 +167,7 @@ describe("useLiveSidebarListings", () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.clearAllMocks()
   })
