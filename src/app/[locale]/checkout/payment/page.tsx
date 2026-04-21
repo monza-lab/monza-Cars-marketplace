@@ -3,11 +3,13 @@
 import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useLocale } from "next-intl"
 import { CreditCard, Lock, ArrowLeft, Loader2 } from "lucide-react"
-import { PRICING_PLANS, type PlanId } from "@/components/payments/PricingCards"
+import { PRICING_PLANS, type PlanId } from "@/lib/payments/plans"
 
 function PaymentForm() {
   const router = useRouter()
+  const locale = useLocale()
   const params = useSearchParams()
   const planId = (params.get("plan") as PlanId) ?? "monthly"
   const plan = PRICING_PLANS[planId]
@@ -24,7 +26,10 @@ function PaymentForm() {
     return (
       <div className="text-center text-muted-foreground text-[13px]">
         Invalid plan.{" "}
-        <Link href="/pricing" className="text-primary hover:underline">
+        <Link
+          href={locale === "en" ? "/pricing" : `/${locale}/pricing`}
+          className="text-primary hover:underline"
+        >
           Go to pricing
         </Link>
       </div>
@@ -35,7 +40,8 @@ function PaymentForm() {
     e.preventDefault()
     setLoading(true)
     setTimeout(() => {
-      router.push("/checkout/success?session_id=dev-mock")
+      const prefix = locale === "en" ? "" : `/${locale}`
+      router.push(`${prefix}/checkout/success?session_id=dev-mock`)
     }, 1200)
   }
 
@@ -46,7 +52,7 @@ function PaymentForm() {
       {/* Left — plan summary */}
       <div className="bg-foreground/2 p-8 border-b md:border-b-0 md:border-r border-border">
         <Link
-          href="/pricing"
+          href={locale === "en" ? "/pricing" : `/${locale}/pricing`}
           className="inline-flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="size-3" />

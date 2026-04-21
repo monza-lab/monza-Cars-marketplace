@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS user_reports (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id             uuid NOT NULL REFERENCES user_credits(id),
   listing_id          uuid NOT NULL,
-  report_id           uuid NOT NULL REFERENCES listing_reports(id),
+  report_id           uuid NOT NULL,
   credit_cost         integer NOT NULL DEFAULT 1,
   created_at          timestamptz NOT NULL DEFAULT now(),
 
