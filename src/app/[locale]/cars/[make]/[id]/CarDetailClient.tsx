@@ -48,6 +48,7 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
+import { formatPoint } from "@/lib/landedCost/format"
 
 // ─── MOCK DATA ───
 // ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
@@ -781,7 +782,7 @@ function CarContextPanel({
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [], existingReport = null, userAlreadyPaid = false }: {
+export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables = [], dbAnalysis, dbSoldHistory = [], existingReport = null, userAlreadyPaid = false, landedCostTeaser = null }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   dbMarketData?: DbMarketDataRow | null
@@ -790,6 +791,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   dbSoldHistory?: DbSoldRecord[]
   existingReport?: HausReport | null
   userAlreadyPaid?: boolean
+  landedCostTeaser?: {
+    amount: number
+    currency: "USD" | "EUR" | "GBP" | "JPY"
+    destination: "US" | "DE" | "UK" | "JP"
+  } | null
 }) {
   const locale = useLocale()
   const t = useTranslations("carDetail")
@@ -1053,6 +1059,26 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </p>
                   <span className="text-[12px] tabular-nums font-semibold text-positive">{car.trend}</span>
                 </div>
+                {landedCostTeaser && (
+                  <p className="mt-1 text-[11px] tabular-nums text-white/60 flex items-center gap-1.5">
+                    <span>
+                      Est. landed cost to {landedCostTeaser.destination}:{" "}
+                      <span className="text-white/90 font-medium">
+                        {formatPoint(
+                          landedCostTeaser.amount,
+                          landedCostTeaser.currency,
+                          locale,
+                        )}
+                      </span>
+                    </span>
+                    <span
+                      title="Estimated total to your country including shipping, duties, taxes, and fees. Full breakdown in Haus Report."
+                      className="cursor-help opacity-60 text-[10px]"
+                    >
+                      ⓘ
+                    </span>
+                  </p>
+                )}
               </div>
               {isLive && isAuctionPlatform(car.platform) && (
                 <>
