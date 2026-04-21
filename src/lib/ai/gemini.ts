@@ -176,3 +176,82 @@ function buildJsonCandidates(raw: string): string[] {
 
   return [...candidates]
 }
+
+// ---------------------------------------------------------------------------
+// Streaming + function-calling client (advisor runtime)
+// ---------------------------------------------------------------------------
+
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: Schema
+}
+
+export interface StreamMessage {
+  role: "user" | "assistant" | "tool"
+  content: string
+  toolName?: string // when role === "tool"
+}
+
+export interface StreamOptions {
+  model: string
+  systemPrompt: string
+  messages: StreamMessage[]
+  tools: ToolDefinition[]
+  temperature?: number
+  maxOutputTokens?: number
+}
+
+export type StreamEvent =
+  | { type: "text"; delta: string }
+  | { type: "tool_call"; name: string; args: Record<string, unknown> }
+  | { type: "error"; message: string }
+
+export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<StreamEvent> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    yield { type: "error", message: "GEMINI_API_KEY is not configured" }
+    return
+  }
+
+  const client = new GoogleGenerativeAI(apiKey)
+  const model = client.getGenerativeModel({
+    model: opts.model,
+    systemInstruction: opts.systemPrompt,
+    generationConfig: {
+      temperature: opts.temperature ?? 0.3,
+      maxOutputTokens: opts.maxOutputTokens ?? 4096,
+    },
+    tools: opts.tools.length
+      ? [{ functionDeclarations: opts.tools.map(t => ({
+          name: t.name,
+          description: t.description,
+          // FunctionDeclarationSchema uses SchemaType enum for `type`, which differs
+          // from the Schema union type. Cast narrowly to satisfy the SDK type.
+          parameters: t.parameters as unknown as import("@google/generative-ai").FunctionDeclarationSchema,
+        })) }]
+      : undefined,
+  })
+
+  const history = opts.messages.map(m => ({
+    role: m.role === "assistant" ? "model" : m.role === "tool" ? "function" : "user",
+    parts: m.role === "tool"
+      ? [{ functionResponse: { name: m.toolName ?? "tool", response: { content: m.content } } }]
+      : [{ text: m.content }],
+  }))
+
+  try {
+    const result = await model.generateContentStream({ contents: history })
+    for await (const chunk of result.stream) {
+      const t = chunk.text()
+      if (t) yield { type: "text", delta: t }
+    }
+    const final = await result.response
+    const calls = final.functionCalls?.() ?? []
+    for (const call of calls) {
+      yield { type: "tool_call", name: call.name, args: call.args as Record<string, unknown> }
+    }
+  } catch (err) {
+    yield { type: "error", message: err instanceof Error ? err.message : String(err) }
+  }
+}
