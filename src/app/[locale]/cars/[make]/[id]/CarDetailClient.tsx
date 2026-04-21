@@ -48,6 +48,7 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
+import { ListingHook } from "@/components/detail/ListingHook"
 
 // ─── MOCK DATA ───
 // ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
@@ -1171,7 +1172,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
               <span className="text-[9px] text-primary/50 bg-primary/8 px-2 py-0.5 rounded">{t("editorial")}</span>
             </div>
-            <p className="text-[14px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
+            <ListingHook
+              listingId={car.id}
+              fallback={
+                <p className="text-[14px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
+              }
+            />
           </div>
 
           {/* 2. Vehicle Specs */}
@@ -1573,7 +1579,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                   <span className="text-[9px] text-primary/50 bg-primary/8 px-2 py-0.5 rounded">{t("editorial")}</span>
                 </div>
-                <p className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                <ListingHook
+                  listingId={car.id}
+                  fallback={
+                    <p className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                  }
+                />
               </div>
 
               {/* HAUS REPORT TEASER */}
