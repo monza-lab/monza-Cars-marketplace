@@ -8,7 +8,6 @@ import type {
   UserCreditsRow,
   CreditTransactionRow,
   DeductResult,
-  RegionalMarketStats,
   ModelMarketStats,
 } from "./types"
 import type {

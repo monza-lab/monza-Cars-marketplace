@@ -10,7 +10,7 @@ const mockUpdate = vi.fn()
 const mockUpsert = vi.fn<(...args: unknown[]) => Promise<SupaResult>>(() =>
   Promise.resolve({ error: null }),
 )
-const mockFrom = vi.fn((_table: string) => ({
+const mockFrom = vi.fn((_table: string) => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
   select: mockSelect,
   insert: mockInsert,
   update: mockUpdate,
