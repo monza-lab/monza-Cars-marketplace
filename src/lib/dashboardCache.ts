@@ -416,10 +416,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
 
   const valuationListings = await withSoftTimeout(
     (signal) =>
-      fetchValuationListingsForMake(requestedMake ?? "Porsche", DASHBOARD_VALUATION_IMAGE_POOL_LIMIT, {
-        timeoutMs: DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS + 1_000,
-        signal,
-      }),
+      fetchValuationListingsForMake(requestedMake ?? "Porsche", DASHBOARD_VALUATION_IMAGE_POOL_LIMIT),
     DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS,
     "valuation listings query",
     [],
