@@ -53,3 +53,50 @@ describe("gemini client", () => {
     vi.useRealTimers()
   })
 })
+
+describe("generateJson responseSchema", () => {
+  it("passes responseSchema to generationConfig when provided", async () => {
+    mockGenerateContent.mockImplementationOnce(async (_: unknown) => {
+      return { response: { text: () => '{"ok":true}' } }
+    })
+
+    // Re-mock with a spy that captures getGenerativeModel args
+    const getGenerativeModel = vi.fn(() => ({
+      generateContent: mockGenerateContent,
+    }))
+
+    const { SchemaType } = await vi.importActual<typeof import("@google/generative-ai")>(
+      "@google/generative-ai",
+    )
+
+    vi.doMock("@google/generative-ai", () => ({
+      GoogleGenerativeAI: class {
+        getGenerativeModel = getGenerativeModel
+      },
+      SchemaType,
+    }))
+
+    vi.resetModules()
+    const mod = await import("./gemini")
+
+    const schema = {
+      type: SchemaType.OBJECT,
+      properties: { ok: { type: SchemaType.BOOLEAN } },
+      required: ["ok"],
+    }
+
+    const res = await mod.generateJson<{ ok: boolean }>({
+      userPrompt: "hi",
+      responseSchema: schema,
+    })
+
+    expect(res.ok).toBe(true)
+    const modelCall = getGenerativeModel.mock.calls[0]?.[0] as {
+      generationConfig?: { responseSchema?: unknown; responseMimeType?: string }
+    }
+    expect(modelCall.generationConfig?.responseMimeType).toBe("application/json")
+    expect(modelCall.generationConfig?.responseSchema).toEqual(schema)
+
+    vi.doUnmock("@google/generative-ai")
+  })
+})

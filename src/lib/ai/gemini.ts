@@ -2,7 +2,7 @@
 // Gemini API Client — for investment report analysis
 // ---------------------------------------------------------------------------
 
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenerativeAI, type Schema } from "@google/generative-ai"
 
 const DEFAULT_MODEL = "gemini-2.5-flash"
 
@@ -67,6 +67,7 @@ interface GenerateJsonOptions {
   userPrompt: string
   temperature?: number      // default 0
   maxOutputTokens?: number  // default 2048
+  responseSchema?: Schema   // NEW: enforce a JSON schema on Gemini's output
 }
 
 export interface GeminiJsonResponse<T> {
@@ -100,6 +101,7 @@ export async function generateJson<T>(
       temperature: opts.temperature ?? 0,
       maxOutputTokens: opts.maxOutputTokens ?? 2048,
       responseMimeType: "application/json",
+      ...(opts.responseSchema ? { responseSchema: opts.responseSchema } : {}),
     },
   })
 
