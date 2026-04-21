@@ -100,4 +100,25 @@ describe("generateJson responseSchema", () => {
 
     vi.doUnmock("@google/generative-ai")
   })
+
+  it("parses JSON wrapped in fences or surrounding text", async () => {
+    mockGenerateContent.mockResolvedValueOnce({
+      response: {
+        text: () => '```json\n{"ok":true}\n```\n',
+      },
+    })
+
+    const { generateJson } = await import("./gemini")
+    const res = await generateJson<{ ok: boolean }>({
+      userPrompt: "hi",
+      responseSchema: {
+        type: "object",
+        properties: { ok: { type: "boolean" } },
+        required: ["ok"],
+      } as import("@google/generative-ai").Schema,
+    })
+
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.data).toEqual({ ok: true })
+  })
 })

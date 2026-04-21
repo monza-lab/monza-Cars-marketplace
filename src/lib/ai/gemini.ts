@@ -65,6 +65,7 @@ if (!JSON_API_KEY) {
 interface GenerateJsonOptions {
   systemPrompt?: string
   userPrompt: string
+  model?: string
   temperature?: number      // default 0
   maxOutputTokens?: number  // default 2048
   responseSchema?: Schema   // NEW: enforce a JSON schema on Gemini's output
@@ -95,7 +96,7 @@ export async function generateJson<T>(
 
   const client = new GoogleGenerativeAI(JSON_API_KEY)
   const model = client.getGenerativeModel({
-    model: JSON_MODEL_ID,
+    model: opts.model ?? JSON_MODEL_ID,
     systemInstruction: opts.systemPrompt,
     generationConfig: {
       temperature: opts.temperature ?? 0,
@@ -119,7 +120,7 @@ export async function generateJson<T>(
     try {
       const res = await model.generateContent(opts.userPrompt)
       raw = res.response.text()
-      const parsed = JSON.parse(raw) as T
+      const parsed = parseJsonPayload<T>(raw)
       return { ok: true, data: parsed, raw }
     } catch (err) {
       lastError = err
@@ -135,4 +136,43 @@ export async function generateJson<T>(
     error: lastError instanceof Error ? lastError.message : String(lastError),
     raw,
   }
+}
+
+function parseJsonPayload<T>(raw: string): T {
+  const candidates = buildJsonCandidates(raw)
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as T
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error("Gemini response was not valid JSON")
+}
+
+function buildJsonCandidates(raw: string): string[] {
+  const trimmed = raw.trim()
+  const candidates = new Set<string>([trimmed])
+
+  const fenced = trimmed
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim()
+  candidates.add(fenced)
+
+  const objectStart = trimmed.indexOf("{")
+  const objectEnd = trimmed.lastIndexOf("}")
+  if (objectStart >= 0 && objectEnd > objectStart) {
+    candidates.add(trimmed.slice(objectStart, objectEnd + 1).trim())
+  }
+
+  const arrayStart = trimmed.indexOf("[")
+  const arrayEnd = trimmed.lastIndexOf("]")
+  if (arrayStart >= 0 && arrayEnd > arrayStart) {
+    candidates.add(trimmed.slice(arrayStart, arrayEnd + 1).trim())
+  }
+
+  return [...candidates]
 }

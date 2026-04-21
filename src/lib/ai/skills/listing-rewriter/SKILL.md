@@ -1,8 +1,8 @@
 ---
 name: listing-rewriter
 description: Generate an editorial headline and 2–5 highlights for a vehicle listing, in a target locale, grounded only in the provided facts.
-version: 1.1.0
-model: gemini-2.5-flash
+version: 1.2.0
+model: gemini-2.5-flash-lite
 temperature: 0.3
 references:
   - references/tone-guide.md

@@ -77,8 +77,9 @@ export async function rewriteListing(
     const resp = await generateJson<{ headline: string; highlights: string[] }>({
       systemPrompt: skill.systemPrompt,
       userPrompt,
+      model: skill.model,
       temperature: skill.temperature,
-      maxOutputTokens: 600,
+      maxOutputTokens: 1024,
       responseSchema: LISTING_HOOK_SCHEMA,
     })
 

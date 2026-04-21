@@ -37,8 +37,8 @@ const baseSource: RewriterSource = {
 function mockSkill() {
   mockLoadSkill.mockReturnValue({
     name: "listing-rewriter",
-    version: "1.0.0",
-    model: "gemini-2.5-flash",
+    version: "1.2.0",
+    model: "gemini-2.5-flash-lite",
     temperature: 0.3,
     systemPrompt: "SYSTEM",
     userPromptTemplate: "Locale: {{locale}} Year: {{year}} Desc: {{description_text}}",
@@ -59,8 +59,8 @@ describe("rewriteListing", () => {
       headline: "cached",
       highlights: ["a", "b"],
       source_hash: expectedHash,
-      prompt_version: "1.0.0",
-      model: "gemini-2.5-flash",
+      prompt_version: "1.2.0",
+      model: "gemini-2.5-flash-lite",
       generated_at: "2026-04-21T00:00:00Z",
     })
 
@@ -79,9 +79,12 @@ describe("rewriteListing", () => {
     expect(res).not.toBeNull()
     expect(res!.headline).toBe(richFixture.headline)
     expect(res!.highlights).toEqual(richFixture.highlights)
-    expect(res!.promptVersion).toBe("1.0.0")
-    expect(res!.model).toBe("gemini-2.5-flash")
+    expect(res!.promptVersion).toBe("1.2.0")
+    expect(res!.model).toBe("gemini-2.5-flash-lite")
     expect(mockGenerateJson).toHaveBeenCalledOnce()
+    expect(mockGenerateJson).toHaveBeenCalledWith(expect.objectContaining({
+      model: "gemini-2.5-flash-lite",
+    }))
     expect(mockUpsert).toHaveBeenCalledOnce()
   })
 
