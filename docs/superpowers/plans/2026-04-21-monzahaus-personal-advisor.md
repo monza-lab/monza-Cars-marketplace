@@ -970,58 +970,184 @@ git commit -m "feat(db): advisor_messages table with RLS"
 
 ---
 
-### Task 2.3: Migration — extend `user_credits` ledger for advisor
+### Task 2.3: Migration — extend `credit_transactions` for advisor debits
 
 **Files:**
-- Create: `supabase/migrations/20260422_extend_user_credits_ledger.sql`
+- Create: `supabase/migrations/20260422_extend_credit_transactions_for_advisor.sql`
 
-**Why:** Per spec §11, the Piston ledger extends the existing `user_credits` infra rather than a new table. We add columns to capture per-event source + link back to a conversation/message.
+**Why:** Live-verified against the DB on 2026-04-21. `credit_transactions` already exists as the ledger. We extend it in place instead of creating `user_credits_ledger`.
+
+**Live-verified schema facts (from `scripts/inspect-db.mjs`):**
+- `credit_transactions.user_id uuid NOT NULL` — references `user_credits.id` (NOT `auth.users.id`).
+- `user_credits.supabase_user_id` is the `auth.users.id` equivalent.
+- `user_credits.credits_balance integer NOT NULL` is the current balance.
+- Existing CHECK: `type IN ('FREE_MONTHLY','REPORT_USED','PURCHASE','STRIPE_PACK_PURCHASE','STRIPE_SUBSCRIPTION_ACTIVATION','STRIPE_SUBSCRIPTION_CANCELED')`.
+- RLS is already ON for `credit_transactions` and `user_credits` with "Service role manages" policies.
 
 - [ ] **Step 1: Write the migration**
 
 ```sql
--- Assume user_credits_ledger (or equivalent debit table) exists as part of the
--- 20260317 credits tables migration. If it doesn't, create it here.
-create table if not exists public.user_credits_ledger (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
-  anonymous_session_id text,
-  amount integer not null,
-  reason text not null,
-  conversation_id uuid references public.advisor_conversations(id) on delete set null,
-  message_id uuid references public.advisor_messages(id) on delete set null,
-  created_at timestamptz not null default now(),
-  constraint ledger_user_or_anon check (user_id is not null or anonymous_session_id is not null)
-);
+-- Extend credit_transactions to support advisor debits with conversation/message linkage.
 
--- Idempotent column additions if the table already exists from the prior credits migration.
-alter table public.user_credits_ledger
-  add column if not exists conversation_id uuid references public.advisor_conversations(id) on delete set null,
-  add column if not exists message_id uuid references public.advisor_messages(id) on delete set null,
-  add column if not exists anonymous_session_id text;
+ALTER TABLE public.credit_transactions
+  ADD COLUMN IF NOT EXISTS anonymous_session_id text,
+  ADD COLUMN IF NOT EXISTS conversation_id uuid,
+  ADD COLUMN IF NOT EXISTS message_id uuid;
 
-create index if not exists idx_ledger_user     on public.user_credits_ledger(user_id, created_at desc) where user_id is not null;
-create index if not exists idx_ledger_anon     on public.user_credits_ledger(anonymous_session_id, created_at desc) where anonymous_session_id is not null;
-create index if not exists idx_ledger_conv     on public.user_credits_ledger(conversation_id)          where conversation_id is not null;
+-- Allow anonymous rows (no user_id) once the anon column exists.
+ALTER TABLE public.credit_transactions
+  ALTER COLUMN user_id DROP NOT NULL;
 
-alter table public.user_credits_ledger enable row level security;
+ALTER TABLE public.credit_transactions
+  DROP CONSTRAINT IF EXISTS credit_transactions_user_or_anon;
+ALTER TABLE public.credit_transactions
+  ADD CONSTRAINT credit_transactions_user_or_anon
+  CHECK (user_id IS NOT NULL OR anonymous_session_id IS NOT NULL)
+  NOT VALID;
+ALTER TABLE public.credit_transactions VALIDATE CONSTRAINT credit_transactions_user_or_anon;
 
-create policy "ledger_owner_select"
-  on public.user_credits_ledger
-  for select
-  using (auth.uid() = user_id);
+-- Expand type CHECK to include advisor reasons.
+ALTER TABLE public.credit_transactions
+  DROP CONSTRAINT IF EXISTS credit_transactions_type_check;
+ALTER TABLE public.credit_transactions
+  ADD CONSTRAINT credit_transactions_type_check
+  CHECK (type IN (
+    'FREE_MONTHLY',
+    'REPORT_USED',
+    'PURCHASE',
+    'STRIPE_PACK_PURCHASE',
+    'STRIPE_SUBSCRIPTION_ACTIVATION',
+    'STRIPE_SUBSCRIPTION_CANCELED',
+    'ADVISOR_INSTANT',
+    'ADVISOR_MARKETPLACE',
+    'ADVISOR_DEEP_RESEARCH',
+    'ADVISOR_REFUND'
+  ));
+
+-- Foreign keys to advisor tables (created in 2.1 and 2.2; Task 2.3 must run after those).
+ALTER TABLE public.credit_transactions
+  DROP CONSTRAINT IF EXISTS credit_transactions_conversation_fk;
+ALTER TABLE public.credit_transactions
+  ADD CONSTRAINT credit_transactions_conversation_fk
+  FOREIGN KEY (conversation_id) REFERENCES public.advisor_conversations(id) ON DELETE SET NULL;
+
+ALTER TABLE public.credit_transactions
+  DROP CONSTRAINT IF EXISTS credit_transactions_message_fk;
+ALTER TABLE public.credit_transactions
+  ADD CONSTRAINT credit_transactions_message_fk
+  FOREIGN KEY (message_id) REFERENCES public.advisor_messages(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_credit_tx_anon
+  ON public.credit_transactions(anonymous_session_id, created_at DESC)
+  WHERE anonymous_session_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_credit_tx_conversation
+  ON public.credit_transactions(conversation_id)
+  WHERE conversation_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_credit_tx_user_created
+  ON public.credit_transactions(user_id, created_at DESC)
+  WHERE user_id IS NOT NULL;
+
+-- Atomic debit RPC. Resolves user_credits.id via supabase_user_id; decrements with balance guard.
+CREATE OR REPLACE FUNCTION public.debit_user_credits(
+  p_supabase_user_id uuid,
+  p_anon text,
+  p_amount integer,
+  p_type text,
+  p_conversation_id uuid,
+  p_message_id uuid,
+  p_description text DEFAULT NULL
+)
+RETURNS TABLE(new_balance integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_credits_id uuid;
+  v_new_balance integer;
+BEGIN
+  IF p_supabase_user_id IS NULL AND p_anon IS NULL THEN
+    RAISE EXCEPTION 'supabase_user_id or anonymous_session_id required';
+  END IF;
+  IF p_amount < 0 THEN
+    RAISE EXCEPTION 'amount must be >= 0';
+  END IF;
+  IF p_type NOT IN ('ADVISOR_INSTANT','ADVISOR_MARKETPLACE','ADVISOR_DEEP_RESEARCH','REPORT_USED','ADVISOR_REFUND') THEN
+    RAISE EXCEPTION 'invalid debit type %', p_type;
+  END IF;
+
+  IF p_supabase_user_id IS NOT NULL THEN
+    SELECT id INTO v_user_credits_id
+      FROM public.user_credits
+      WHERE supabase_user_id = p_supabase_user_id;
+    IF v_user_credits_id IS NULL THEN
+      RAISE EXCEPTION 'user_credits row not found for auth user %', p_supabase_user_id;
+    END IF;
+
+    UPDATE public.user_credits
+      SET credits_balance = credits_balance - p_amount,
+          updated_at = now()
+      WHERE id = v_user_credits_id
+      RETURNING credits_balance INTO v_new_balance;
+
+    IF v_new_balance < 0 THEN
+      RAISE EXCEPTION 'insufficient_credits';
+    END IF;
+  ELSE
+    v_new_balance := 0; -- anonymous sessions have no balance; audit row only
+  END IF;
+
+  INSERT INTO public.credit_transactions(
+    user_id, anonymous_session_id, amount, type, description,
+    conversation_id, message_id
+  ) VALUES (
+    v_user_credits_id, p_anon, -p_amount, p_type, p_description,
+    p_conversation_id, p_message_id
+  );
+
+  RETURN QUERY SELECT v_new_balance;
+END $$;
+
+REVOKE ALL ON FUNCTION public.debit_user_credits(uuid, text, integer, text, uuid, uuid, text) FROM public;
+GRANT EXECUTE ON FUNCTION public.debit_user_credits(uuid, text, integer, text, uuid, uuid, text) TO service_role;
 ```
 
-- [ ] **Step 2: Apply**
+- [ ] **Step 2: Apply against the live DB**
 
-Run: `npx supabase db push`
-Expected: migration applied without error on fresh or existing schema (idempotent).
-
-- [ ] **Step 3: Commit**
+Use the helper script that reads `DATABASE_URL` from `.env.local` (same pattern as `scripts/inspect-db.mjs`):
 
 ```bash
-git add supabase/migrations/20260422_extend_user_credits_ledger.sql
-git commit -m "feat(db): extend user_credits_ledger with conversation + anon session columns"
+node -e "
+import('fs').then(async fs => {
+  const env = fs.readFileSync('.env.local','utf8')
+  for (const line of env.split('\n')) {
+    const m = line.match(/^([A-Z_]+)=(.*)$/)
+    if (m) process.env[m[1]] = m[2].replace(/^[\"']|[\"']$/g,'')
+  }
+  const pg = (await import('pg')).default
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  await client.connect()
+  const sql = fs.readFileSync('supabase/migrations/20260422_extend_credit_transactions_for_advisor.sql','utf8')
+  await client.query(sql)
+  console.log('migration applied')
+  await client.end()
+})
+"
+```
+
+Expected: `migration applied` and no error.
+
+- [ ] **Step 3: Verify via inspection script**
+
+Run: `node scripts/inspect-db.mjs | head -40`
+Expected: `type` CHECK lists all 10 types including ADVISOR_INSTANT/MARKETPLACE/DEEP_RESEARCH/REFUND; `credit_transactions` has `conversation_id`, `message_id`, `anonymous_session_id` columns.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add supabase/migrations/20260422_extend_credit_transactions_for_advisor.sql
+git commit -m "feat(db): extend credit_transactions with advisor types + debit_user_credits RPC"
 ```
 
 ---
@@ -1382,171 +1508,238 @@ git commit -m "feat(advisor): messages persistence module"
 
 **Why:** The ledger module encapsulates debiting Pistons with a `reason` + optional `conversation_id`/`message_id` link. The anon-session module mints and validates a signed HTTP-only cookie for unauthenticated users (spec §11).
 
+> **Important:** The `debit_user_credits` RPC was already defined in Task 2.3's migration (against the live `credit_transactions` table). This task only implements the thin Node.js wrapper. We also read recent debits and today's usage from `credit_transactions`, never from a separate ledger table.
+
 - [ ] **Step 1: Write ledger test**
 
 Create `src/lib/advisor/persistence/ledger.test.ts`:
 
 ```ts
 import { describe, it, expect, vi } from "vitest"
-import { debitCredits, getRecentDebits, getTodayUsageByReason } from "./ledger"
+import { debitCredits, getRecentDebits, getTodayUsageByType } from "./ledger"
 
+const mockRpc = vi.fn()
+const mockSelect = vi.fn()
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: () => ({
-    rpc: async () => ({ data: { new_balance: 95 }, error: null }),
+  createAdminClient: () => ({
+    rpc: mockRpc,
     from: () => ({
-      insert: (row: unknown) => ({ async then(res: (v: unknown) => void) { res({ data: row, error: null }) } }),
-      select: () => ({ eq: () => ({ gte: () => ({ order: () => ({ limit: () => ({ async then(res: (v: unknown) => void) { res({ data: [], error: null }) } }) }) }) }) }),
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            gte: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+          }),
+          order: () => ({ limit: () => Promise.resolve({ data: [{ amount: -5, type: "ADVISOR_MARKETPLACE", conversation_id: "c1", message_id: "m1", created_at: new Date().toISOString() }], error: null }) }),
+          gte: () => Promise.resolve({ data: [{ amount: -5, type: "ADVISOR_MARKETPLACE" }], error: null }),
+        }),
+      }),
     }),
   }),
 }))
 
 describe("debitCredits", () => {
-  it("writes a negative ledger row and returns the new balance", async () => {
+  it("calls the debit_user_credits RPC with the correct type and returns the new balance", async () => {
+    mockRpc.mockResolvedValue({ data: [{ new_balance: 95 }], error: null })
     const { newBalance } = await debitCredits({
-      userId: "user-1",
+      supabaseUserId: "user-1",
       amount: 5,
-      reason: "advisor.marketplace",
+      type: "ADVISOR_MARKETPLACE",
       conversationId: "conv-1",
       messageId: "msg-1",
     })
     expect(newBalance).toBe(95)
+    expect(mockRpc).toHaveBeenCalledWith("debit_user_credits", expect.objectContaining({
+      p_supabase_user_id: "user-1",
+      p_amount: 5,
+      p_type: "ADVISOR_MARKETPLACE",
+    }))
+  })
+
+  it("throws on insufficient_credits error", async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: "insufficient_credits" } })
+    await expect(debitCredits({
+      supabaseUserId: "user-1", amount: 99999, type: "ADVISOR_INSTANT",
+      conversationId: null, messageId: null,
+    })).rejects.toThrow(/insufficient_credits/)
+  })
+})
+
+describe("getRecentDebits", () => {
+  it("returns debit rows scoped by user_credits.id resolved from supabase_user_id", async () => {
+    const rows = await getRecentDebits("user-credits-id-1", 10)
+    expect(Array.isArray(rows)).toBe(true)
+  })
+})
+
+describe("getTodayUsageByType", () => {
+  it("aggregates absolute amounts by type for today", async () => {
+    const usage = await getTodayUsageByType("user-credits-id-1")
+    expect(typeof usage).toBe("object")
   })
 })
 ```
 
-- [ ] **Step 2: Implement `ledger.ts`**
+- [ ] **Step 2: Ensure `createAdminClient` helper exists**
+
+If `src/lib/supabase/server.ts` does not yet export a service-role client, add one. It must be a sibling to the existing cookie-authed `createClient`.
+
+Read the current file first: `cat src/lib/supabase/server.ts`
+
+Append (or equivalent — match the project's existing import/export style):
 
 ```ts
-import { createClient } from "@/lib/supabase/server"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
-export type DebitReason =
-  | "advisor.instant"
-  | "advisor.marketplace"
-  | "advisor.deep_research"
-  | "report"
-  | "grant.monthly"
-  | "grant.signup"
-  | "topup"
-  | "refund"
+/**
+ * Service-role Supabase client for server-only code paths that must bypass RLS
+ * (anonymous conversations, ledger inserts, debit RPCs).
+ * NEVER export or import from client components.
+ */
+export function createAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL missing")
+  if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY missing")
+  return createSupabaseClient(url, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+```
+
+- [ ] **Step 3: Implement `ledger.ts`**
+
+```ts
+import { createAdminClient } from "@/lib/supabase/server"
+
+/**
+ * Advisor Piston ledger — thin wrapper around credit_transactions + debit_user_credits RPC.
+ *
+ * Design notes:
+ * - We never insert directly into credit_transactions for advisor debits; the RPC enforces
+ *   the balance check atomically and writes the ledger row.
+ * - `supabaseUserId` is the `auth.users.id` UUID. The RPC resolves it to `user_credits.id`.
+ * - `anonymousSessionId` users have no balance; the RPC writes an audit row with new_balance=0.
+ */
+
+export type AdvisorDebitType =
+  | "ADVISOR_INSTANT"
+  | "ADVISOR_MARKETPLACE"
+  | "ADVISOR_DEEP_RESEARCH"
+  | "REPORT_USED"
+  | "ADVISOR_REFUND"
 
 export interface DebitInput {
-  userId?: string | null
+  supabaseUserId?: string | null
   anonymousSessionId?: string | null
-  amount: number // positive number of Pistons to debit (stored as negative)
-  reason: DebitReason
+  amount: number // positive; stored as negative in credit_transactions
+  type: AdvisorDebitType
   conversationId?: string | null
   messageId?: string | null
+  description?: string | null
 }
 
 export interface DebitResult { newBalance: number }
 
 export async function debitCredits(input: DebitInput): Promise<DebitResult> {
-  const supabase = createClient()
-  // Atomic debit via RPC to enforce server-side balance check. The RPC is
-  // assumed to exist from the pre-existing credits migration; if not, it is
-  // defined inline in the 20260422_extend_user_credits_ledger.sql migration.
+  const supabase = createAdminClient()
   const { data, error } = await supabase.rpc("debit_user_credits", {
-    p_user_id: input.userId ?? null,
+    p_supabase_user_id: input.supabaseUserId ?? null,
     p_anon: input.anonymousSessionId ?? null,
     p_amount: input.amount,
-    p_reason: input.reason,
+    p_type: input.type,
     p_conversation_id: input.conversationId ?? null,
     p_message_id: input.messageId ?? null,
+    p_description: input.description ?? null,
   })
-  if (error) throw error
-  return { newBalance: (data as { new_balance: number }).new_balance }
+  if (error) throw new Error(error.message)
+  const row = Array.isArray(data) ? data[0] : data
+  return { newBalance: (row as { new_balance: number }).new_balance }
 }
 
 export interface RecentDebit {
-  amount: number
-  reason: DebitReason
+  amount: number                // negative
+  type: AdvisorDebitType | string
   conversationId: string | null
   messageId: string | null
   createdAt: string
 }
 
-export async function getRecentDebits(userId: string, limit = 10): Promise<RecentDebit[]> {
-  const supabase = createClient()
+/**
+ * Recent debit rows for a given `user_credits.id`. Caller must have resolved the id
+ * via supabase_user_id before calling.
+ */
+export async function getRecentDebits(userCreditsId: string, limit = 10): Promise<RecentDebit[]> {
+  const supabase = createAdminClient()
   const { data } = await supabase
-    .from("user_credits_ledger")
-    .select("amount, reason, conversation_id, message_id, created_at")
-    .eq("user_id", userId)
+    .from("credit_transactions")
+    .select("amount, type, conversation_id, message_id, created_at")
+    .eq("user_id", userCreditsId)
     .order("created_at", { ascending: false })
     .limit(limit)
   return (data ?? []).map(r => ({
     amount: r.amount,
-    reason: r.reason as DebitReason,
+    type: r.type,
     conversationId: r.conversation_id,
     messageId: r.message_id,
     createdAt: r.created_at,
   }))
 }
 
-export async function getTodayUsageByReason(userId: string): Promise<Record<DebitReason, number>> {
-  const supabase = createClient()
+/**
+ * Today's absolute usage per debit type for a given `user_credits.id`.
+ * Used to populate the Pistons Wallet modal's "Today's usage" section.
+ */
+export async function getTodayUsageByType(userCreditsId: string): Promise<Record<string, number>> {
+  const supabase = createAdminClient()
   const startOfDay = new Date()
   startOfDay.setUTCHours(0, 0, 0, 0)
   const { data } = await supabase
-    .from("user_credits_ledger")
-    .select("amount, reason")
-    .eq("user_id", userId)
+    .from("credit_transactions")
+    .select("amount, type")
+    .eq("user_id", userCreditsId)
     .gte("created_at", startOfDay.toISOString())
-  const out = {} as Record<DebitReason, number>
-  for (const row of data ?? []) {
-    const r = row.reason as DebitReason
-    out[r] = (out[r] ?? 0) + Math.abs(row.amount as number)
+  const out: Record<string, number> = {}
+  for (const row of (data ?? []) as Array<{ amount: number; type: string }>) {
+    if (row.amount >= 0) continue // grants/refunds aren't "usage"
+    out[row.type] = (out[row.type] ?? 0) + Math.abs(row.amount)
   }
   return out
 }
+
+/**
+ * Resolve a Supabase auth user id to the matching `user_credits.id`.
+ * Helper used by UI surfaces that need to call `getRecentDebits` / `getTodayUsageByType`.
+ */
+export async function resolveUserCreditsId(supabaseUserId: string): Promise<string | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("user_credits")
+    .select("id")
+    .eq("supabase_user_id", supabaseUserId)
+    .single()
+  return data?.id ?? null
+}
 ```
 
-- [ ] **Step 3: Add `debit_user_credits` RPC to the earlier ledger migration**
+- [ ] **Step 4: (The RPC already exists)**
 
-Append to `supabase/migrations/20260422_extend_user_credits_ledger.sql`:
+The `debit_user_credits` RPC was created as part of Task 2.3's migration (`20260422_extend_credit_transactions_for_advisor.sql`). Do NOT re-create it here. Verify it exists with:
 
-```sql
--- Atomic debit with balance check. Returns the new balance.
-create or replace function public.debit_user_credits(
-  p_user_id uuid,
-  p_anon text,
-  p_amount integer,
-  p_reason text,
-  p_conversation_id uuid,
-  p_message_id uuid
-) returns table(new_balance integer) language plpgsql security definer as $$
-declare
-  current_balance integer;
-begin
-  if p_user_id is null and p_anon is null then
-    raise exception 'user_id or anonymous_session_id required';
-  end if;
-  if p_amount < 0 then
-    raise exception 'amount must be >= 0';
-  end if;
-
-  if p_user_id is not null then
-    update public.user_credits
-      set credits_balance = credits_balance - p_amount
-      where user_id = p_user_id
-      returning credits_balance into current_balance;
-    if current_balance is null or current_balance < 0 then
-      raise exception 'insufficient_credits';
-    end if;
-  else
-    current_balance := 0; -- anonymous sessions track zero balance; grace is handled elsewhere
-  end if;
-
-  insert into public.user_credits_ledger(user_id, anonymous_session_id, amount, reason, conversation_id, message_id)
-    values (p_user_id, p_anon, -p_amount, p_reason, p_conversation_id, p_message_id);
-
-  return query select current_balance;
-end $$;
+```bash
+node -e "
+import('fs').then(async fs => {
+  const env = fs.readFileSync('.env.local','utf8')
+  for (const line of env.split('\n')) { const m = line.match(/^([A-Z_]+)=(.*)$/); if (m) process.env[m[1]] = m[2].replace(/^[\"']|[\"']$/g,'') }
+  const pg = (await import('pg')).default
+  const c = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  await c.connect()
+  const { rows } = await c.query(\"SELECT proname FROM pg_proc WHERE proname='debit_user_credits';\")
+  console.log('RPC present:', rows.length > 0)
+  await c.end()
+})
+"
 ```
-
-- [ ] **Step 4: Re-apply the extended migration**
-
-Run: `npx supabase db push`
-Expected: RPC created.
+Expected: `RPC present: true`.
 
 - [ ] **Step 5: Write anon-session test**
 
@@ -1634,8 +1827,8 @@ Expected: PASS across conversations, messages, ledger, anon-session.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/lib/advisor/persistence/ledger.ts src/lib/advisor/persistence/ledger.test.ts src/lib/advisor/persistence/anon-session.ts src/lib/advisor/persistence/anon-session.test.ts supabase/migrations/20260422_extend_user_credits_ledger.sql
-git commit -m "feat(advisor): piston ledger, debit RPC, and signed anonymous session cookie"
+git add src/lib/advisor/persistence/ledger.ts src/lib/advisor/persistence/ledger.test.ts src/lib/advisor/persistence/anon-session.ts src/lib/advisor/persistence/anon-session.test.ts src/lib/supabase/server.ts
+git commit -m "feat(advisor): piston ledger wrapper + signed anonymous session cookie + createAdminClient"
 ```
 
 ---
@@ -2072,63 +2265,83 @@ git commit -m "feat(advisor): tool registry with tier gating"
 **Files:**
 - Create: `src/lib/advisor/runtime/grace.ts`
 - Create: `src/lib/advisor/runtime/grace.test.ts`
-- Append to: `supabase/migrations/20260422_extend_user_credits_ledger.sql`
+- Create: `supabase/migrations/20260423_create_advisor_grace_counters.sql`
 
-**Why:** Spec §9 free tier gets 10 Instant + 2 Marketplace zero-debit requests per day. We persist counters in Supabase keyed by `(user_id or anonymous_session_id, date)` so they survive server restarts and multi-region.
+**Why:** Spec §9 free tier gets 10 Instant + 2 Marketplace zero-debit requests per day. We persist counters in Supabase keyed by `(supabase_user_id or anonymous_session_id, date)` so they survive server restarts and multi-region.
 
-- [ ] **Step 1: Add counters table to the ledger migration**
+- [ ] **Step 1: Create the grace-counters migration as its own file**
 
-Append to `supabase/migrations/20260422_extend_user_credits_ledger.sql`:
+`supabase/migrations/20260423_create_advisor_grace_counters.sql`:
 
 ```sql
-create table if not exists public.advisor_grace_counters (
-  user_id uuid references auth.users(id) on delete cascade,
+CREATE TABLE IF NOT EXISTS public.advisor_grace_counters (
+  supabase_user_id uuid,
   anonymous_session_id text,
-  day date not null,
-  instant_used integer not null default 0,
-  marketplace_used integer not null default 0,
-  primary key (coalesce(user_id::text, anonymous_session_id), day)
+  day date NOT NULL,
+  instant_used integer NOT NULL DEFAULT 0,
+  marketplace_used integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (COALESCE(supabase_user_id::text, anonymous_session_id), day),
+  CONSTRAINT grace_user_or_anon CHECK (supabase_user_id IS NOT NULL OR anonymous_session_id IS NOT NULL)
 );
 
-alter table public.advisor_grace_counters enable row level security;
+ALTER TABLE public.advisor_grace_counters ENABLE ROW LEVEL SECURITY;
 
-create policy "grace_owner_select"
-  on public.advisor_grace_counters
-  for select using (auth.uid() = user_id);
+-- Owner read-only; writes happen via SECURITY DEFINER RPC only.
+CREATE POLICY "grace_owner_select"
+  ON public.advisor_grace_counters
+  FOR SELECT USING (auth.uid() = supabase_user_id);
 
 -- Atomic consume-one. Returns true if within grace, false otherwise.
-create or replace function public.advisor_try_consume_grace(
-  p_user_id uuid,
+CREATE OR REPLACE FUNCTION public.advisor_try_consume_grace(
+  p_supabase_user_id uuid,
   p_anon text,
   p_tier text,          -- 'instant' | 'marketplace'
-  p_instant_cap integer default 10,
-  p_marketplace_cap integer default 2
-) returns boolean language plpgsql security definer as $$
-declare
-  today date := (now() at time zone 'utc')::date;
-  ok boolean := false;
-begin
-  insert into public.advisor_grace_counters(user_id, anonymous_session_id, day)
-    values (p_user_id, p_anon, today)
-    on conflict do nothing;
-  if p_tier = 'instant' then
-    update public.advisor_grace_counters
-      set instant_used = instant_used + 1
-      where day = today
-        and coalesce(user_id::text, anonymous_session_id) = coalesce(p_user_id::text, p_anon)
-        and instant_used < p_instant_cap
-      returning true into ok;
-  elsif p_tier = 'marketplace' then
-    update public.advisor_grace_counters
-      set marketplace_used = marketplace_used + 1
-      where day = today
-        and coalesce(user_id::text, anonymous_session_id) = coalesce(p_user_id::text, p_anon)
-        and marketplace_used < p_marketplace_cap
-      returning true into ok;
-  end if;
-  return coalesce(ok, false);
-end $$;
+  p_instant_cap integer DEFAULT 10,
+  p_marketplace_cap integer DEFAULT 2
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_today date := (now() AT TIME ZONE 'utc')::date;
+  v_ok boolean := false;
+  v_key text := COALESCE(p_supabase_user_id::text, p_anon);
+BEGIN
+  IF v_key IS NULL THEN
+    RAISE EXCEPTION 'supabase_user_id or anonymous_session_id required';
+  END IF;
+
+  INSERT INTO public.advisor_grace_counters(supabase_user_id, anonymous_session_id, day)
+    VALUES (p_supabase_user_id, p_anon, v_today)
+    ON CONFLICT DO NOTHING;
+
+  IF p_tier = 'instant' THEN
+    UPDATE public.advisor_grace_counters
+      SET instant_used = instant_used + 1
+      WHERE day = v_today
+        AND COALESCE(supabase_user_id::text, anonymous_session_id) = v_key
+        AND instant_used < p_instant_cap
+      RETURNING true INTO v_ok;
+  ELSIF p_tier = 'marketplace' THEN
+    UPDATE public.advisor_grace_counters
+      SET marketplace_used = marketplace_used + 1
+      WHERE day = v_today
+        AND COALESCE(supabase_user_id::text, anonymous_session_id) = v_key
+        AND marketplace_used < p_marketplace_cap
+      RETURNING true INTO v_ok;
+  ELSE
+    RAISE EXCEPTION 'unknown tier %', p_tier;
+  END IF;
+
+  RETURN COALESCE(v_ok, false);
+END $$;
+
+REVOKE ALL ON FUNCTION public.advisor_try_consume_grace(uuid, text, text, integer, integer) FROM public;
+GRANT EXECUTE ON FUNCTION public.advisor_try_consume_grace(uuid, text, text, integer, integer) TO service_role;
 ```
+
+Apply via the same node/pg helper used in Task 2.3 Step 2 (change the SQL filename). Verify with `scripts/inspect-db.mjs` that `advisor_grace_counters` table and `advisor_try_consume_grace` function exist.
 
 - [ ] **Step 2: Write failing test for `grace.ts`**
 
@@ -2139,20 +2352,20 @@ import { describe, it, expect, vi } from "vitest"
 import { tryConsumeGrace, getGraceUsage } from "./grace"
 
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: () => ({
+  createAdminClient: () => ({
     rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
-    from: () => ({ select: () => ({ eq: () => ({ eq: () => ({ single: async () => ({ data: { instant_used: 3, marketplace_used: 0 }, error: null }) }) }) }) }),
+    from: () => ({ select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { instant_used: 3, marketplace_used: 0 }, error: null }) }) }) }) }),
   }),
 }))
 
 describe("grace", () => {
   it("returns true when RPC says capacity available", async () => {
-    const ok = await tryConsumeGrace({ userId: "u1", anonymousSessionId: null, tier: "instant" })
+    const ok = await tryConsumeGrace({ supabaseUserId: "u1", anonymousSessionId: null, tier: "instant" })
     expect(ok).toBe(true)
   })
 
   it("reads today's usage", async () => {
-    const u = await getGraceUsage({ userId: "u1", anonymousSessionId: null })
+    const u = await getGraceUsage({ supabaseUserId: "u1", anonymousSessionId: null })
     expect(u.instantUsed).toBe(3)
   })
 })
@@ -2161,9 +2374,12 @@ describe("grace", () => {
 - [ ] **Step 3: Implement `grace.ts`**
 
 ```ts
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
-export interface GraceKey { userId: string | null; anonymousSessionId: string | null }
+export interface GraceKey {
+  supabaseUserId: string | null
+  anonymousSessionId: string | null
+}
 
 export interface ConsumeGraceInput extends GraceKey {
   tier: "instant" | "marketplace"
@@ -2172,9 +2388,9 @@ export interface ConsumeGraceInput extends GraceKey {
 }
 
 export async function tryConsumeGrace(input: ConsumeGraceInput): Promise<boolean> {
-  const supabase = createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase.rpc("advisor_try_consume_grace", {
-    p_user_id: input.userId,
+    p_supabase_user_id: input.supabaseUserId,
     p_anon: input.anonymousSessionId,
     p_tier: input.tier,
     p_instant_cap: input.instantCap ?? 10,
@@ -2192,14 +2408,16 @@ export interface GraceUsage {
 }
 
 export async function getGraceUsage(key: GraceKey): Promise<GraceUsage> {
-  const supabase = createClient()
+  const supabase = createAdminClient()
   const today = new Date().toISOString().slice(0, 10)
+  const filterColumn = key.supabaseUserId ? "supabase_user_id" : "anonymous_session_id"
+  const filterValue = key.supabaseUserId ?? key.anonymousSessionId
   const { data } = await supabase
     .from("advisor_grace_counters")
     .select("instant_used, marketplace_used")
     .eq("day", today)
-    .eq(key.userId ? "user_id" : "anonymous_session_id", key.userId ?? key.anonymousSessionId)
-    .single()
+    .eq(filterColumn, filterValue as string)
+    .maybeSingle()
   return {
     instantUsed: data?.instant_used ?? 0,
     marketplaceUsed: data?.marketplace_used ?? 0,
@@ -2211,14 +2429,14 @@ export async function getGraceUsage(key: GraceKey): Promise<GraceUsage> {
 
 - [ ] **Step 4: Apply migration + run tests**
 
-Run: `npx supabase db push && npx vitest run src/lib/advisor/runtime/grace.test.ts`
-Expected: migration applied, tests PASS.
+Apply `20260423_create_advisor_grace_counters.sql` via the same node/pg helper as Task 2.3 Step 2. Then run: `npx vitest run src/lib/advisor/runtime/grace.test.ts`
+Expected: RPC + table exist, tests PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/advisor/runtime/grace.ts src/lib/advisor/runtime/grace.test.ts supabase/migrations/20260422_extend_user_credits_ledger.sql
-git commit -m "feat(advisor): daily grace quota counters + RPC"
+git add src/lib/advisor/runtime/grace.ts src/lib/advisor/runtime/grace.test.ts supabase/migrations/20260423_create_advisor_grace_counters.sql
+git commit -m "feat(advisor): daily grace quota counters + consume RPC"
 ```
 
 ---
@@ -2631,20 +2849,48 @@ git commit -m "feat(advisor/tools): analysis tools (red flags, compare, shortlis
 
 **Tools (premium.ts):**
 
-| Tool | Description |
-|---|---|
-| `web_search` | Calls a web-search provider (spec §17 benchmarks Tavily/Brave/SerpAPI — pick one at implementation time, default **Tavily** for v1 using `TAVILY_API_KEY` env). Returns top 5 results with title/url/snippet. PRO. |
-| `fetch_url` | Fetches a URL the user pasted. HTML → markdown via `@mozilla/readability` + `node-html-parser`. Returns `{ title, url, markdown }` capped at ~8k chars. PRO. |
+Both use **Gemini's native capabilities** — no Tavily, no external web-search provider, no HTML-scraping libraries. These tools wrap focused Gemini 2.5 Pro calls that enable Google Search grounding (`googleSearchRetrieval`) and URL context tools, then return a summarized result.
 
-- [ ] Implement each file, following the shared pattern.
-- [ ] Tests per file mocking outbound calls (Tavily + fetch).
-- [ ] Add env vars to `.env.example`: `TAVILY_API_KEY=`, `ADVISOR_ANON_SECRET=`, `GEMINI_MODEL_FLASH=gemini-2.5-flash`, `GEMINI_MODEL_PRO=gemini-2.5-pro`.
+| Tool | Description | Gemini capability used |
+|---|---|---|
+| `web_search` | Returns a grounded answer + list of source URLs for a research query. PRO. | Gemini 2.5 Pro + `tools: [{ googleSearchRetrieval: {} }]` |
+| `fetch_url` | Summarizes a URL the user pasted (e.g., a BaT listing they're asking about). PRO. | Gemini 2.5 Pro + `tools: [{ urlContext: {} }]`, passing the URL in the user prompt |
+
+Implementation sketch for `web_search` handler:
+
+```ts
+import { GoogleGenerativeAI } from "@google/generative-ai"
+
+async function callWithGoogleSearch(query: string, locale: string) {
+  const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const model = client.getGenerativeModel({
+    model: process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro",
+    systemInstruction: `You are the MonzaHaus advisor's web-research subagent. Answer the query concisely (≤200 words). Cite every factual claim with a source URL inline in the form [source](url). End your answer with a "## Sources" list of unique URLs used. Respond in locale ${locale}.`,
+    generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
+    // Gemini 2.5 Pro supports Google Search grounding as a built-in tool.
+    tools: [{ googleSearchRetrieval: {} } as unknown as never],
+  })
+  const res = await model.generateContent(query)
+  const text = res.response.text()
+  const urls = Array.from(text.matchAll(/\((https?:\/\/[^\s)]+)\)/g)).map(m => m[1])
+  return { answer: text, sources: [...new Set(urls)].slice(0, 10) }
+}
+```
+
+Implementation sketch for `fetch_url` handler: identical shape but swap `googleSearchRetrieval` → `urlContext`, and prepend the URL in the user prompt so Gemini retrieves + summarizes it.
+
+Both handlers wrap the raw Gemini call and return `ToolResult` with a ≤500 char `summary` derived from the first 2–3 sentences of the answer plus a count of sources.
+
+- [ ] Implement `action.ts`, `user.ts`, `premium.ts` following the shared pattern in Task 4.1.
+- [ ] Tests mock `@google/generative-ai`'s `generateContent` for `premium.ts`; standard pattern for the others.
+- [ ] Add env vars to `.env.example`: `ADVISOR_ANON_SECRET=`, `GEMINI_MODEL_FLASH=gemini-2.5-flash`, `GEMINI_MODEL_PRO=gemini-2.5-pro`. (No `TAVILY_API_KEY` — not used.)
+- [ ] If either Gemini tool (`googleSearchRetrieval`, `urlContext`) is unavailable on your current `@google/generative-ai` SDK version, the handler returns `{ ok: false, error: "gemini_tool_unavailable" }` and the orchestrator surfaces a graceful fallback. Do NOT fall back to pretraining-only answers silently.
 - [ ] Commit each as a separate commit:
 
 ```bash
 git add src/lib/advisor/tools/action.ts src/lib/advisor/tools/action.test.ts && git commit -m "feat(advisor/tools): action tools (trigger_report, navigate_to)"
 git add src/lib/advisor/tools/user.ts src/lib/advisor/tools/user.test.ts && git commit -m "feat(advisor/tools): user context tools"
-git add src/lib/advisor/tools/premium.ts src/lib/advisor/tools/premium.test.ts .env.example && git commit -m "feat(advisor/tools): premium web_search + fetch_url (PRO-gated)"
+git add src/lib/advisor/tools/premium.ts src/lib/advisor/tools/premium.test.ts .env.example && git commit -m "feat(advisor/tools): premium web_search + fetch_url via Gemini native grounding"
 ```
 
 ---
@@ -2785,17 +3031,17 @@ import { tryConsumeGrace } from "./grace"
 import { advisorQueryCache, queryHash } from "./cache"
 import { appendMessage, listMessages, type ToolCallSummary } from "@/lib/advisor/persistence/messages"
 import { touchLastMessage } from "@/lib/advisor/persistence/conversations"
-import { debitCredits, type DebitReason } from "@/lib/advisor/persistence/ledger"
+import { debitCredits, type AdvisorDebitType } from "@/lib/advisor/persistence/ledger"
 import type { AdvisorSseEvent } from "./streaming"
 
 const MAX_TOOL_CALLS = 8
 const TOTAL_TIMEOUT_MS = 60_000
 const TOOL_TIMEOUT_MS = 10_000
 
-const REASON_BY_TIER: Record<Tier, DebitReason> = {
-  instant: "advisor.instant",
-  marketplace: "advisor.marketplace",
-  deep_research: "advisor.deep_research",
+const TYPE_BY_TIER: Record<Tier, AdvisorDebitType> = {
+  instant: "ADVISOR_INSTANT",
+  marketplace: "ADVISOR_MARKETPLACE",
+  deep_research: "ADVISOR_DEEP_RESEARCH",
 }
 
 const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
@@ -2854,7 +3100,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   let graceConsumed = false
   if (classification.tier === "instant" || classification.tier === "marketplace") {
     graceConsumed = await tryConsumeGrace({
-      userId: input.userId,
+      supabaseUserId: input.userId,
       anonymousSessionId: input.anonymousSessionId,
       tier: classification.tier,
     })
@@ -2961,9 +3207,9 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   })
   if (pistonsToDebit > 0 && input.userId) {
     await debitCredits({
-      userId: input.userId,
+      supabaseUserId: input.userId,
       amount: pistonsToDebit,
-      reason: REASON_BY_TIER[classification.tier],
+      type: TYPE_BY_TIER[classification.tier],
       conversationId: input.conversationId,
       messageId: asstMsg.id,
     })
@@ -3220,12 +3466,29 @@ Add after the user profile is successfully created, before the response:
 const anonCookie = cookies().get(AnonSessionCookie.name)?.value
 const anonId = verifyAnonymousSession(anonCookie)
 if (anonId && newUserId) {
+  // Merge conversations (matches on anonymous_session_id, sets user_id to the new auth user).
   await mergeAnonymousToUser(anonId, newUserId)
-  // Also migrate ledger rows
-  const supabase = createClient()
-  await supabase
-    .from("user_credits_ledger")
-    .update({ user_id: newUserId, anonymous_session_id: null })
+
+  // Migrate audit rows in credit_transactions. Rows were inserted with user_id = NULL and
+  // anonymous_session_id set. We resolve the new user's user_credits.id first.
+  const { createAdminClient } = await import("@/lib/supabase/server")
+  const admin = createAdminClient()
+  const { data: creditsRow } = await admin
+    .from("user_credits")
+    .select("id")
+    .eq("supabase_user_id", newUserId)
+    .single()
+  if (creditsRow?.id) {
+    await admin
+      .from("credit_transactions")
+      .update({ user_id: creditsRow.id, anonymous_session_id: null })
+      .eq("anonymous_session_id", anonId)
+  }
+
+  // Grace counters keyed on anonymous session are also moved over.
+  await admin
+    .from("advisor_grace_counters")
+    .update({ supabase_user_id: newUserId, anonymous_session_id: null })
     .eq("anonymous_session_id", anonId)
 }
 ```
@@ -3929,8 +4192,8 @@ GEMINI_MODEL_PRO=gemini-2.5-pro
 ADVISOR_ANON_SECRET=CHANGE_ME_to_32plus_random_chars
 ADVISOR_ENABLED=internal
 ADVISOR_INTERNAL_USER_IDS=
-TAVILY_API_KEY=
 ```
+(No `TAVILY_API_KEY` — web search goes through Gemini's native Google Search grounding, not an external provider.)
 
 - [ ] **Step 5: Commit**
 
