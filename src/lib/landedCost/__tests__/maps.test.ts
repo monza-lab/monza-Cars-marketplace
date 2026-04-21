@@ -27,6 +27,12 @@ describe("localeToDestination", () => {
 });
 
 describe("sourceToOriginCountry", () => {
+  it("maps platform enum BRING_A_TRAILER → US", () => {
+    expect(sourceToOriginCountry("BRING_A_TRAILER")).toBe("US");
+  });
+  it("maps platform enum AUTO_SCOUT_24 → DE", () => {
+    expect(sourceToOriginCountry("AUTO_SCOUT_24")).toBe("DE");
+  });
   it("maps BaT → US", () => {
     expect(sourceToOriginCountry("BaT")).toBe("US");
   });
