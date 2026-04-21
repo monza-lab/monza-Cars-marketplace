@@ -187,3 +187,8 @@ export async function calculateLandedCost(input: {
     sourcesUsed: consolidateSources({ destination }),
   };
 }
+
+export function computeTeaserAmount(breakdown: LandedCostBreakdown): number {
+  const mid = (breakdown.landedCost.min + breakdown.landedCost.max) / 2;
+  return Math.round(mid / 100) * 100;
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { calculateLandedCost } from "../calculator";
+import { calculateLandedCost, computeTeaserAmount } from "../calculator";
 import * as exchangeRates from "@/lib/exchangeRates";
 
 const FIXED_RATES: Record<string, number> = {
@@ -109,5 +109,23 @@ describe("calculateLandedCost", () => {
       destination: "US",
     });
     expect(result).toBeNull();
+  });
+});
+
+describe("computeTeaserAmount", () => {
+  it("returns midpoint of landedCost rounded to nearest 100", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const breakdown = {
+      landedCost: { min: 95362, max: 99868, currency: "USD" as const },
+    } as any;
+    expect(computeTeaserAmount(breakdown)).toBe(97600);
+  });
+
+  it("rounds 97,650 midpoint → 97,700", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const breakdown = {
+      landedCost: { min: 95350, max: 99950, currency: "USD" as const },
+    } as any;
+    expect(computeTeaserAmount(breakdown)).toBe(97700);
   });
 });
