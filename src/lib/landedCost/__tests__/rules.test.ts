@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolveDutyRate, resolveVatRate } from "../calculator";
+import { consolidateSources, resolveDutyRate, resolveVatRate } from "../calculator";
 
 describe("resolveDutyRate", () => {
   it("US < 25 yrs: standard 2.5%", () => {
@@ -47,5 +47,21 @@ describe("resolveVatRate", () => {
   });
   it("JP consumption tax: 10%", () => {
     expect(resolveVatRate("JP", 50).ratePct).toBe(10);
+  });
+});
+
+describe("consolidateSources", () => {
+  it("pulls duty, tax, shipping, and fee sources for a US destination", () => {
+    const consolidated = consolidateSources({ destination: "US" });
+    expect(consolidated.duty.name).toMatch(/Harmonized Tariff/);
+    expect(consolidated.tax.name).toMatch(/Avalara/);
+    expect(consolidated.shipping.length).toBeGreaterThan(0);
+    expect(consolidated.portAndBroker.name).toMatch(/CBP/);
+    expect(consolidated.registration.name).toMatch(/DMV/);
+  });
+
+  it("lastReviewedOverall is the max of all input lastReviewed dates", () => {
+    const consolidated = consolidateSources({ destination: "DE" });
+    expect(consolidated.lastReviewedOverall).toBe("2026-04-20");
   });
 });
