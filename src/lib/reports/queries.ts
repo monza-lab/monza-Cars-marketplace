@@ -44,6 +44,43 @@ export async function getReportForListing(
   return data as ListingReport
 }
 
+/**
+ * Look up a report snapshot by its deterministic hash. Used by the public
+ * /verify/[hash] route to prove authenticity of shared PDF/Excel exports.
+ *
+ * Graceful against the `report_hash` column not existing yet (BE migration
+ * still pending). Returns:
+ *  - { status: "found", report }
+ *  - { status: "not_found" }
+ *  - { status: "schema_pending" } when the column itself is missing
+ */
+export type VerifyLookupResult =
+  | { status: "found"; report: ListingReport }
+  | { status: "not_found" }
+  | { status: "schema_pending" }
+
+export async function getReportByHash(hash: string): Promise<VerifyLookupResult> {
+  if (!hash || hash.length < 8) return { status: "not_found" }
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from("listing_reports")
+    .select("*")
+    .eq("report_hash", hash)
+    .maybeSingle()
+
+  if (error) {
+    // Column not in schema yet — BE hasn't run the v2 migration.
+    // Postgres error codes: 42703 = undefined_column. Supabase returns
+    // the pg code in error.code for PostgREST responses.
+    if (error.code === "42703" || /report_hash/i.test(error.message ?? "")) {
+      return { status: "schema_pending" }
+    }
+    return { status: "not_found" }
+  }
+  if (!data) return { status: "not_found" }
+  return { status: "found", report: data as ListingReport }
+}
+
 export async function saveReport(
   listingId: string,
   marketStats: ModelMarketStats | null,
