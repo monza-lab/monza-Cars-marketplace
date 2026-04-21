@@ -7,7 +7,6 @@ import {
   Globe,
   DollarSign,
   Gauge,
-  Wrench,
   Award,
   MessageCircle,
   FileText,
@@ -26,7 +25,6 @@ import {
   type Model,
 } from "@/lib/makePageHelpers"
 import {
-  ownershipCosts,
   platformLabels,
   regionLabels,
 } from "@/lib/makePageConstants"
@@ -39,7 +37,6 @@ export function ModelContextPanel({
   allCars,
   allModels,
   onOpenAdvisor,
-  dbOwnershipCosts,
 }: {
   model: Model
   make: string
@@ -47,7 +44,6 @@ export function ModelContextPanel({
   allCars: CollectorCar[]
   allModels: Model[]
   onOpenAdvisor: () => void
-  dbOwnershipCosts?: { insurance?: number; storage?: number; maintenance?: number } | null
 }) {
   const t = useTranslations("makePage")
   const tAuction = useTranslations("auctionDetail")
@@ -62,21 +58,8 @@ export function ModelContextPanel({
   // Model-specific thesis (from the representative car's real data)
   const modelThesis = model.representativeCar.thesis
 
-  // Model-specific ownership costs — prefer DB data, fallback to hardcoded
-  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
-  const baseCosts = {
-    insurance: dbOwnershipCosts?.insurance ?? fallbackCosts.insurance,
-    storage: dbOwnershipCosts?.storage ?? fallbackCosts.storage,
-    maintenance: dbOwnershipCosts?.maintenance ?? fallbackCosts.maintenance,
-  }
   const brandAvgPrice = allCars.length > 0 ? allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length : 1
   const scaleFactor = brandAvgPrice > 0 ? model.avgPrice / brandAvgPrice : 1
-  const costs = {
-    insurance: Math.round(baseCosts.insurance * scaleFactor),
-    storage: Math.round(baseCosts.storage * scaleFactor),
-    maintenance: Math.round(baseCosts.maintenance * scaleFactor),
-  }
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
 
   // Determine best-value region
   const bestRegion = regionalPricing ? findBestRegion(regionalPricing) : null
@@ -280,33 +263,7 @@ export function ModelContextPanel({
           </div>
         </div>
 
-        {/* 6. ANNUAL OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Annual Ownership Cost
-            </span>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: "Insurance", value: costs.insurance },
-              { label: "Storage", value: costs.storage },
-              { label: "Maintenance", value: costs.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}/yr</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 7. SIMILAR MODELS */}
+        {/* 6. SIMILAR MODELS */}
         {similarModels.length > 0 && (
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">

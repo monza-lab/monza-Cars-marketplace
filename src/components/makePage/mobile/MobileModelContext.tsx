@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Globe, Gauge, Wrench } from "lucide-react"
+import { Globe, Gauge } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice as fmtRegional } from "@/lib/regionPricing"
@@ -13,47 +13,24 @@ import {
   deriveModelDepth,
   type Model,
 } from "@/lib/makePageHelpers"
-import { ownershipCosts, regionLabels } from "@/lib/makePageConstants"
+import { regionLabels } from "@/lib/makePageConstants"
 
 // ─── MOBILE: MODEL CONTEXT (4 panels) ───
 export function MobileModelContext({
   model,
-  make,
-  cars,
   allCars,
-  allModels,
-  dbOwnershipCosts,
 }: {
   model: Model
-  make: string
-  cars: CollectorCar[]
   allCars: CollectorCar[]
-  allModels: Model[]
-  dbOwnershipCosts?: { insurance?: number; storage?: number; maintenance?: number } | null
 }) {
   const t = useTranslations("makePage")
   const { effectiveRegion } = useRegion()
-  const { formatPrice, convertFromUsd, currencySymbol, rates } = useCurrency()
+  const { convertFromUsd, currencySymbol, rates } = useCurrency()
 
   const allModelCars = allCars.filter(c => c.model === model.name)
   const regionalPricing = useMemo(() => aggregateRegionalPricing(allModelCars, rates), [allModelCars, rates])
   const bestRegion = regionalPricing ? findBestRegion(regionalPricing) : null
   const depth = deriveModelDepth(allModelCars)
-
-  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
-  const baseCosts = {
-    insurance: dbOwnershipCosts?.insurance ?? fallbackCosts.insurance,
-    storage: dbOwnershipCosts?.storage ?? fallbackCosts.storage,
-    maintenance: dbOwnershipCosts?.maintenance ?? fallbackCosts.maintenance,
-  }
-  const brandAvgPrice = allCars.length > 0 ? allCars.reduce((s, c) => s + c.currentBid, 0) / allCars.length : 1
-  const scaleFactor = brandAvgPrice > 0 ? model.avgPrice / brandAvgPrice : 1
-  const costs = {
-    insurance: Math.round(baseCosts.insurance * scaleFactor),
-    storage: Math.round(baseCosts.storage * scaleFactor),
-    maintenance: Math.round(baseCosts.maintenance * scaleFactor),
-  }
-  const totalAnnualCost = costs.insurance + costs.storage + costs.maintenance
 
   const maxRegionalUsd = regionalPricing
     ? Math.max(...(["US", "EU", "UK", "JP"] as const).map(r =>
@@ -133,32 +110,6 @@ export function MobileModelContext({
           <div>
             <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.demandScore")}</p>
             <p className="text-[14px] font-display font-medium text-primary">{depth.demandScore}/10</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Panel 4: Ownership Cost */}
-      <div className="rounded-2xl bg-card border border-border p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Wrench className="size-3.5 text-primary" />
-          <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
-            {t("mobileContext.ownershipCost")}
-          </span>
-        </div>
-        <div className="space-y-2">
-          {[
-            { label: t("mobileContext.insurance"), value: costs.insurance },
-            { label: t("mobileContext.storage"), value: costs.storage },
-            { label: t("mobileContext.maintenance"), value: costs.maintenance },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">{item.label}</span>
-              <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
-            <span className="text-[11px] font-medium text-foreground">{t("mobileContext.total")}</span>
-            <span className="text-[12px] font-display font-medium text-primary">{formatPrice(totalAnnualCost)}{t("mobileContext.perYear")}</span>
           </div>
         </div>
       </div>

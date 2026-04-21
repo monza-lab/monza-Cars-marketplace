@@ -1,7 +1,6 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { Globe } from "lucide-react";
@@ -12,15 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const localeFlags: Record<string, string> = {
-  en: "🇺🇸",
-  es: "🇪🇸",
-  de: "🇩🇪",
-  ja: "🇯🇵",
+const localeCodes: Record<string, string> = {
+  en: "EN",
+  es: "ES",
+  de: "DE",
+  ja: "JA",
 };
 
 export function LanguageSwitcher() {
-  const t = useTranslations("language");
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -36,7 +34,7 @@ export function LanguageSwitcher() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors">
           <Globe className="size-4" />
-          <span className="hidden md:inline">{localeFlags[locale]}</span>
+          <span className="hidden md:inline">{localeCodes[locale]}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -53,8 +51,7 @@ export function LanguageSwitcher() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span>{localeFlags[loc]}</span>
-            <span>{t(loc)}</span>
+            <span className="tracking-[0.16em]">{localeCodes[loc]}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -68,7 +65,6 @@ export function MobileLanguageSwitcher({
 }: {
   onSelect?: () => void;
 }) {
-  const t = useTranslations("language");
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -92,8 +88,7 @@ export function MobileLanguageSwitcher({
               : "bg-foreground/5 text-muted-foreground hover:bg-foreground/10 border border-transparent"
           }`}
         >
-          <span className="text-lg">{localeFlags[loc]}</span>
-          <span>{t(loc)}</span>
+          <span className="tracking-[0.18em]">{localeCodes[loc]}</span>
         </button>
       ))}
     </div>

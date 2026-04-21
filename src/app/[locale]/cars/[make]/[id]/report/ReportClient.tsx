@@ -10,8 +10,6 @@ import {
   TrendingUp,
   Scale,
   ChevronRight,
-  Shield,
-  Wrench,
   MapPin,
   Car,
   Gauge,
@@ -24,15 +22,12 @@ import {
   Lock,
   Coins,
   BarChart3,
-  DollarSign,
   Copy,
   Check,
   Target,
-  Eye,
   Award,
   Globe,
   History,
-  Clock,
   Download,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
@@ -105,7 +100,6 @@ const SECTION_IDS = [
   "performance",
   "risk",
   "dueDiligence",
-  "ownership",
   "marketContext",
   "similar",
   "verdict",
@@ -120,7 +114,6 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
   performance: TrendingUp,
   risk: AlertTriangle,
   dueDiligence: HelpCircle,
-  ownership: DollarSign,
   marketContext: BarChart3,
   similar: Users,
   verdict: Award,
@@ -245,12 +238,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const strengths: string[] = []
   const hasDbRiskData = flags.length > 0
   const hasDbQuestions = questions.length > 0
-
-  // Ownership costs: not in HausReport v1 — shown as "not available" block.
-  const hasOwnershipData = false
-  type CostBreakdown = { insurance: number; maintenance: number; majorService: number }
-  const costs: CostBreakdown | null = hasOwnershipData ? { insurance: 0, maintenance: 0, majorService: 0 } : null
-  const totalAnnualCost = 0
 
   // No fake comparables — regional stats replace this
   // Real comparable sales from the Comparable table. Empty array when the
@@ -539,7 +526,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("www.monzahaus.com", W - M, H - 15, { align: "right" })
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, H - 2, W, 2, "F")
 
-      const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Ownership Economics", "Market Context", "Similar Vehicles", "Final Verdict"]
+      const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Market Context", "Similar Vehicles", "Final Verdict"]
 
       // ═══ PAGE 2: PERSONAL LETTER ═══
       pdf.addPage(); bg(); chrome("Welcome")
@@ -877,22 +864,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFontSize(7); gray(); pdf.text(`${pricePosition.toFixed(0)}% of fair range`, M + 4, pvGY + 8)
       y += 42
 
-      // Cost of Ownership vs Appreciation card (only if data available)
-      if (totalAnnualCost > 0) {
-        const costPct = (totalAnnualCost / car.currentBid) * 100
-        const costHighFlag = costPct > 15
-        card(M, y, CW, costHighFlag ? 34 : 26)
-        pdf.setFontSize(6); dim(); pdf.text("COST OF OWNERSHIP vs APPRECIATION", M + 4, y + 5)
-        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}/yr`, M + 4, y + 14)
-        pdf.setFontSize(8); gray(); pdf.text(`${costPct.toFixed(1)}% of vehicle value`, M + 65, y + 14)
-        if (costHighFlag) {
-          pdf.setFillColor(pal.redTintBg[0], pal.redTintBg[1], pal.redTintBg[2]); pdf.rect(M + 4, y + 19, CW - 8, 10, "F")
-          pdf.setDrawColor(248, 113, 113); pdf.setLineWidth(0.2); pdf.rect(M + 4, y + 19, CW - 8, 10, "S")
-          pdf.setFontSize(7); pdf.setTextColor(248, 113, 113)
-          pdf.text("High ownership cost relative to value — consider negotiating price down", M + 8, y + 25.5)
-        }
-      }
-
       // ═══ PAGE 8: RISK ASSESSMENT ═══
       pdf.addPage(); bg(); chrome("Risk Assessment")
       y = sectionTitle(5, "Risk Assessment", 16)
@@ -989,40 +960,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.text(aiLines, M + 12, aiy)
       })
 
-      // ═══ PAGE 10: OWNERSHIP ECONOMICS ═══
-      pdf.addPage(); bg(); chrome("Ownership Economics")
-      y = sectionTitle(7, "Ownership Economics", 16)
-      // Annual costs card with bars (conditional on DB data)
-      const costItems = costs ? [
-        { lbl: "Insurance (Agreed Value)", val: costs.insurance },
-        { lbl: "Service & Maintenance", val: costs.maintenance },
-      ] : []
-      if (costItems.length > 0) {
-        card(M, y, CW, 7 + costItems.length * 12 + 14)
-        pdf.setFontSize(6); dim(); pdf.text("ANNUAL OWNERSHIP COSTS (USD)", M + 4, y + 5)
-        costItems.forEach((c, i) => {
-          const cy2 = y + 11 + i * 12
-          pdf.setFontSize(7.5); white(); pdf.text(c.lbl, M + 4, cy2)
-          pink(); pdf.text(`$${c.val.toLocaleString()}`, W - M - 4, cy2, { align: "right" })
-          const pct = totalAnnualCost > 0 ? c.val / totalAnnualCost : 0.5
-          pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, cy2 + 2, CW - 8, 3, "F")
-          pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, cy2 + 2, (CW - 8) * pct, 3, "F")
-          pdf.setFontSize(6); dim(); pdf.text(`${(pct * 100).toFixed(0)}%`, M + 4, cy2 + 8)
-        })
-        // Total
-        const tY = y + 11 + costItems.length * 12
-        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M + 4, tY, W - M - 4, tY)
-        pdf.setFontSize(8); white(); pdf.text("Total Annual Cost", M + 4, tY + 5)
-        pdf.setFontSize(10); pink(); pdf.text(`$${totalAnnualCost.toLocaleString()}`, W - M - 4, tY + 5, { align: "right" })
-        pdf.setFontSize(7); gray(); pdf.text(`${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}% of vehicle value`, M + 4, tY + 10)
-      } else {
-        card(M, y, CW, 16)
-        pdf.setFontSize(8); gray(); pdf.text("Ownership cost data not yet available for this vehicle.", M + 4, y + 10)
-      }
-
-      // ═══ PAGE 11: MARKET CONTEXT ═══
+      // ═══ PAGE 10: MARKET CONTEXT ═══
       pdf.addPage(); bg(); chrome("Market Context")
-      y = sectionTitle(8, "Market Context", 16)
+      y = sectionTitle(7, "Market Context", 16)
 
       // Market overview card — trend + total data points (HausReport v1 doesn't include trend; fall back to car.trend).
       const trendPct = 0
@@ -1129,10 +1069,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       sy = cardRow("Below Fair Value?", isBelowFair ? "YES" : "NO", M, sy, CW)
       sy = cardRow("Best Buy Region", regionLabels[bestRegion]?.short || bestRegion, M, sy, CW)
       if (hasArbitrage) { sy = cardRow("Arbitrage Savings", `$${Math.round(arbitrageSavings).toLocaleString()}`, M, sy, CW) }
-      if (totalAnnualCost > 0) {
-        sy = cardRow("Annual Cost", `$${totalAnnualCost.toLocaleString()}`, M, sy, CW)
-        sy = cardRow("Cost % of Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`, M, sy, CW)
-      }
       sy = cardRow("Similar Vehicles", `${similarCars.length}`, M, sy, CW)
 
       // Disclaimer card
@@ -1269,7 +1205,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
         ["Risk Score (0-100)", riskScore],
         ["Trend", car.trend],
-        ...(totalAnnualCost > 0 ? [["Est. Annual Cost (USD)", totalAnnualCost]] : []),
         [""],
         ["ARBITRAGE"],
         ["Best Buy Region", regionLabels[bestRegion]?.short || bestRegion],
@@ -1437,33 +1372,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         XLSX.utils.book_append_sheet(wb, wsSold, "Regional Data")
       }
 
-      // ═══ Sheet 6: Ownership Costs (conditional) ═══
-      if (costs) {
-        const costRows: (string | number)[][] = [
-          ["ANNUAL OWNERSHIP COSTS"],
-          [""],
-          ["Category", "Annual Cost (USD)", "% of Total"],
-          ["Insurance (Agreed Value)", costs.insurance, totalAnnualCost > 0 ? Math.round((costs.insurance / totalAnnualCost) * 100) : 0],
-          ["Service & Maintenance", costs.maintenance, totalAnnualCost > 0 ? Math.round((costs.maintenance / totalAnnualCost) * 100) : 0],
-          [""],
-          ["Total Annual Cost", totalAnnualCost, 100],
-          ["Cost as % of Vehicle Value", `${((totalAnnualCost / car.currentBid) * 100).toFixed(1)}%`],
-          [""],
-          ["5-YEAR PROJECTION"],
-          ["Year", "Cumulative Cost (USD)", "% of Vehicle Value"],
-          ...([1, 2, 3, 4, 5].map(yr => [
-            `Year ${yr}`,
-            totalAnnualCost * yr,
-            `${((totalAnnualCost * yr / car.currentBid) * 100).toFixed(1)}%`,
-          ])),
-        ]
-        const ws4 = XLSX.utils.aoa_to_sheet(costRows)
-        ws4["!cols"] = [{ wch: 30 }, { wch: 22 }, { wch: 18 }]
-        ws4["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-        XLSX.utils.book_append_sheet(wb, ws4, "Ownership Costs")
-      }
-
-      // ═══ Sheet 7: Due Diligence (only if data available) ═══
+      // ═══ Sheet 6: Due Diligence (only if data available) ═══
       if (flags.length > 0 || questions.length > 0) {
         const ddRows: (string | number)[][] = [
           ["DUE DILIGENCE CHECKLIST"],
@@ -2231,87 +2140,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             </section>
 
             {/* ═══════════════════════════════════════
-                §7 — OWNERSHIP ECONOMICS
-                ═══════════════════════════════════════ */}
-            <section ref={setSectionRef("ownership")} id="section-ownership" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="ownership">
-                <SectionHeader id="ownership" title={t("sections.ownership")} />
-
-                {/* Annual costs — only shown when DB data available */}
-                {costs ? (
-                  <>
-                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.annualCosts")}</h3>
-                      <div className="space-y-3">
-                        {[
-                          { label: t("ownership.insurance"), value: costs.insurance, icon: <Shield className="size-4 text-muted-foreground" /> },
-                          { label: t("ownership.maintenance"), value: costs.maintenance, icon: <Wrench className="size-4 text-muted-foreground" /> },
-                        ].map((item, i) => {
-                          const pct = totalAnnualCost > 0 ? (item.value / totalAnnualCost) * 100 : 50
-                          return (
-                            <div key={i}>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-2">
-                                  {item.icon}
-                                  <span className="text-[12px] text-muted-foreground">{item.label}</span>
-                                </div>
-                                <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(item.value)}</span>
-                              </div>
-                              <div className="relative h-[4px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${pct}%` }}
-                                  transition={{ duration: 0.6, delay: 0.1 + i * 0.1 }}
-                                  className="h-full rounded-full bg-primary/30"
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
-                        <div className="flex items-center justify-between pt-3 border-t border-border">
-                          <span className="text-[13px] font-semibold text-foreground">{t("ownership.totalAnnual")}</span>
-                          <span className="text-[20px] tabular-nums font-bold text-primary">{formatPrice(totalAnnualCost)}/yr</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cost projection */}
-                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("ownership.fiveYearProjection")}</h3>
-                      <div className="flex items-end gap-2 md:gap-3 h-[120px]">
-                        {[1, 2, 3, 4, 5].map(year => {
-                          const cumulative = totalAnnualCost * year
-                          const maxCumulative = totalAnnualCost * 5
-                          const barHeight = (cumulative / maxCumulative) * 100
-                          return (
-                            <div key={year} className="flex-1 flex flex-col items-center gap-1">
-                              <span className="text-[9px] tabular-nums text-muted-foreground">{formatPrice(cumulative)}</span>
-                              <motion.div
-                                initial={{ height: 0 }}
-                                animate={{ height: `${barHeight}%` }}
-                                transition={{ duration: 0.6, delay: year * 0.1 }}
-                                className="w-full rounded-t-md bg-primary/20"
-                              />
-                              <span className="text-[9px] text-muted-foreground">Yr {year}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                    <p className="text-[13px] text-muted-foreground text-center">
-                      Ownership cost data not yet available for this vehicle.
-                    </p>
-                  </div>
-                )}
-
-              </PaywallSection>
-            </section>
-
-            {/* ═══════════════════════════════════════
-                §8 — MARKET CONTEXT
+                §7 — MARKET CONTEXT
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("marketContext")} id="section-marketContext" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="marketContext">
