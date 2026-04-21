@@ -5,7 +5,7 @@ import {
   computeD3PeerPositioning,
   computeD4Confidence,
 } from "./aggregator"
-import type { DbComparableRow } from "@/lib/db/queries"
+import type { SoldComparableInput } from "./aggregator"
 import type { LandedCostBreakdown } from "@/lib/landedCost"
 
 describe("computeD4Confidence", () => {
@@ -50,22 +50,14 @@ describe("computeD4Confidence", () => {
   })
 })
 
-function mkSold(monthsAgo: number, priceUsd: number): DbComparableRow {
+function mkSold(monthsAgo: number, priceUsd: number): SoldComparableInput {
   const d = new Date()
   d.setMonth(d.getMonth() - monthsAgo)
   return {
-    id: `c${monthsAgo}-${priceUsd}`,
-    year: 2022,
-    make: "Porsche",
-    model: "992 GT3 Touring",
-    hammerPrice: priceUsd,
-    originalCurrency: "USD",
-    saleDate: d.toISOString().slice(0, 10),
+    priceUsd,
+    soldDate: d.toISOString().slice(0, 10),
     status: "sold",
-    mileage: 5000,
-    source: "BaT",
-    country: "US",
-  } as DbComparableRow
+  }
 }
 
 describe("computeD1Trajectory", () => {

@@ -4,8 +4,18 @@ import type {
   MarketIntelD3,
   MarketIntelD4,
 } from "@/lib/fairValue/types"
-import type { DbComparableRow } from "@/lib/db/queries"
 import type { LandedCostBreakdown, OriginCountry, Country } from "@/lib/landedCost"
+
+/**
+ * Aggregator-local input shape. Intentionally decoupled from DB row types
+ * (which evolve on their own schedule) — callers project their row type
+ * into this shape before passing to the aggregator.
+ */
+export interface SoldComparableInput {
+  priceUsd: number
+  soldDate: string | null
+  status: string
+}
 
 // ─── D4: Confidence & freshness ────────────────────────────────────
 
@@ -40,15 +50,15 @@ export function computeD4Confidence(input: D4Input): MarketIntelD4 {
 
 // ─── D1: Sold trajectory & velocity ────────────────────────────────
 
-export function computeD1Trajectory(comparables: DbComparableRow[]): MarketIntelD1 {
+export function computeD1Trajectory(comparables: SoldComparableInput[]): MarketIntelD1 {
   const now = new Date()
   const msIn30Days = 30 * 24 * 60 * 60 * 1000
 
   const soldWithDates = comparables
-    .filter((c) => c.status === "sold" && c.saleDate && c.hammerPrice > 0)
+    .filter((c) => c.status === "sold" && c.soldDate && c.priceUsd > 0)
     .map((c) => ({
-      price: c.hammerPrice,
-      date: new Date(c.saleDate as string),
+      price: c.priceUsd,
+      date: new Date(c.soldDate as string),
     }))
     .filter((c) => !isNaN(c.date.getTime()))
 
