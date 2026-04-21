@@ -4,7 +4,6 @@ import type {
   MarketIntelD3,
   MarketIntelD4,
 } from "@/lib/fairValue/types"
-import type { LandedCostBreakdown, OriginCountry, Country } from "@/lib/landedCost"
 
 /**
  * Aggregator-local input shape. Intentionally decoupled from DB row types
@@ -16,6 +15,18 @@ export interface SoldComparableInput {
   soldDate: string | null
   status: string
 }
+
+/**
+ * Minimal landed-cost shape the aggregator needs. Stays decoupled from
+ * the full landed-cost module so this lib has no external dependency.
+ * The orchestrator adapts the real LandedCostBreakdown into this shape.
+ */
+export interface LandedCostResolvedMin {
+  landedCost: { min: number; max: number }
+}
+
+export type ArbitrageOrigin = "US" | "DE" | "UK" | "JP" | "IT" | "BE" | "NL"
+export type ArbitrageDestination = "US" | "DE" | "UK" | "JP"
 
 // ─── D4: Confidence & freshness ────────────────────────────────────
 
@@ -140,20 +151,20 @@ export interface D2Input {
   targetRegion: "US" | "EU" | "UK" | "JP"
   comparablesByRegion: Record<"US" | "EU" | "UK" | "JP", ArbitrageComparable[]>
   landedCostResolver: (
-    origin: OriginCountry,
-    destination: Country,
+    origin: ArbitrageOrigin,
+    destination: ArbitrageDestination,
     priceUsd: number
-  ) => Promise<LandedCostBreakdown | null>
+  ) => Promise<LandedCostResolvedMin | null>
 }
 
-const REGION_TO_ORIGIN: Record<"US" | "EU" | "UK" | "JP", OriginCountry> = {
+const REGION_TO_ORIGIN: Record<"US" | "EU" | "UK" | "JP", ArbitrageOrigin> = {
   US: "US",
   EU: "DE",
   UK: "UK",
   JP: "JP",
 }
 
-const REGION_TO_DEST: Record<"US" | "EU" | "UK" | "JP", Country> = {
+const REGION_TO_DEST: Record<"US" | "EU" | "UK" | "JP", ArbitrageDestination> = {
   US: "US",
   EU: "DE",
   UK: "UK",

@@ -16,13 +16,14 @@ import {
   assembleHausReportFromDB,
 } from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
+import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
 import { getComparablesForModel } from "@/lib/db/queries"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
-  searchParams?: Promise<{ mock?: string }>
+  searchParams?: Promise<{ mock?: string; v2?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -140,13 +141,23 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      <ReportClient
-        car={car}
-        similarCars={similarCars}
-        existingReport={existingReport}
-        marketStats={marketStats}
-        dbComparables={dbComparables}
-      />
+      {resolvedSearch.v2 === "1" ? (
+        <ReportClientV2
+          car={car}
+          similarCars={similarCars}
+          existingReport={existingReport}
+          marketStats={marketStats}
+          dbComparables={dbComparables}
+        />
+      ) : (
+        <ReportClient
+          car={car}
+          similarCars={similarCars}
+          existingReport={existingReport}
+          marketStats={marketStats}
+          dbComparables={dbComparables}
+        />
+      )}
     </Suspense>
   )
 }

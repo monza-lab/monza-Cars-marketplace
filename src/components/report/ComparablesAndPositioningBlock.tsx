@@ -93,8 +93,8 @@ export function ComparablesAndPositioningBlock({
                   <BarChart data={chartData}>
                     <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                     <Tooltip
-                      formatter={(v: number) => [`${v} sold`, ""]}
-                      labelFormatter={(l: string) => `Bucket starting ${l}`}
+                      formatter={(value) => [`${value ?? 0} sold`, ""]}
+                      labelFormatter={(label) => `Bucket starting ${String(label ?? "")}`}
                     />
                     <Bar dataKey="count" fill="currentColor" className="text-primary" />
                     {closestBin && (

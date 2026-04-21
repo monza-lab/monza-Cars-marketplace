@@ -5,8 +5,7 @@ import {
   computeD3PeerPositioning,
   computeD4Confidence,
 } from "./aggregator"
-import type { SoldComparableInput } from "./aggregator"
-import type { LandedCostBreakdown } from "@/lib/landedCost"
+import type { SoldComparableInput, LandedCostResolvedMin } from "./aggregator"
 
 describe("computeD4Confidence", () => {
   it("returns insufficient when sample below threshold", () => {
@@ -106,10 +105,9 @@ describe("computeD2Arbitrage", () => {
         UK: [],
         JP: [],
       },
-      landedCostResolver: async (_origin, _destination, priceUsd) =>
-        ({
-          landedCost: { min: priceUsd + 14000, max: priceUsd + 14000, currency: "USD" },
-        }) as unknown as LandedCostBreakdown,
+      landedCostResolver: async (_origin, _destination, priceUsd): Promise<LandedCostResolvedMin> => ({
+        landedCost: { min: priceUsd + 14000, max: priceUsd + 14000 },
+      }),
     })
     const eu = d2.by_region.find((r) => r.region === "EU")!
     expect(eu.cheapest_comparable_usd).toBe(195000)
