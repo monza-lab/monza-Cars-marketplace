@@ -64,3 +64,86 @@ export interface HausReport {
   signals_extracted_at: string | null  // ISO timestamp; null = signal extraction not yet run
   extraction_version: string           // e.g., "v1.0"
 }
+
+// ─── v2 additions (2026-04-21 spec) ───────────────────────────────
+
+export type ReportTier = "tier_1" | "tier_2" | "tier_3"
+
+export interface MarketIntelD1 {
+  // Trajectory & velocity (12m sold trajectory)
+  sold_trajectory: Array<{ month: string; median_usd: number; sample: number }>
+  sold_12m_count: number
+  sold_6m_count: number
+  trend_12m_direction: "up" | "down" | "stable"
+  trend_12m_percent: number
+}
+
+export interface MarketIntelD2 {
+  // Cross-border arbitrage
+  by_region: Array<{
+    region: "US" | "EU" | "UK" | "JP"
+    cheapest_comparable_usd: number | null
+    cheapest_comparable_listing_id: string | null
+    cheapest_comparable_url: string | null
+    landed_cost_to_target_usd: number | null
+    total_landed_to_target_usd: number | null
+  }>
+  target_region: "US" | "EU" | "UK" | "JP"
+  narrative_insight: string | null
+}
+
+export interface MarketIntelD3 {
+  // Peer positioning within variant + adjacent variants
+  vin_percentile_within_variant: number
+  variant_distribution_bins: Array<{
+    price_bucket_usd_low: number
+    price_bucket_usd_high: number
+    count: number
+  }>
+  adjacent_variants: Array<{
+    variant_key: string
+    variant_label: string
+    median_usd: number
+    sample_size: number
+  }>
+}
+
+export interface MarketIntelD4 {
+  // Freshness & confidence
+  confidence_tier: "high" | "medium" | "low" | "insufficient"
+  sample_size: number
+  capture_date_start: string
+  capture_date_end: string
+  outlier_flags: Array<{ message: string; severity: "info" | "warning" }>
+}
+
+export interface MarketIntel {
+  d1: MarketIntelD1
+  d2: MarketIntelD2
+  d3: MarketIntelD3
+  d4: MarketIntelD4
+}
+
+export interface RemarkableClaim {
+  id: string
+  claim_text: string
+  source_type: "signal" | "reference_pack" | "kb_entry" | "specialist_agent" | "model_spec"
+  source_ref: string
+  source_url: string | null
+  capture_date: string | null
+  confidence: Confidence
+  tier_required: ReportTier
+}
+
+export interface HausReportV2 extends HausReport {
+  report_id: string
+  report_hash: string
+  report_version: number
+  tier: ReportTier
+
+  market_intel: MarketIntel
+  remarkable_claims: RemarkableClaim[]
+
+  specialist_coverage_available: boolean
+  generated_at: string
+}
