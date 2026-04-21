@@ -8,7 +8,6 @@ import type {
   UserCreditsRow,
   CreditTransactionRow,
   DeductResult,
-  RegionalMarketStats,
   ModelMarketStats,
 } from "./types"
 import type {
@@ -43,6 +42,119 @@ export async function getReportForListing(
 
   if (error || !data) return null
   return data as ListingReport
+}
+
+/**
+ * Update the v2 metadata columns on a listing_reports row (report_hash,
+ * tier, version). Defensive against the columns not existing yet —
+ * silently no-ops if the BE migration has not run. Returns true when the
+ * write succeeded, false on any schema / network failure.
+ */
+export async function saveReportMetadataV2(
+  listingId: string,
+  reportHash: string,
+  tier: "tier_1" | "tier_2" | "tier_3",
+  version: number,
+): Promise<boolean> {
+  const supabase = getServiceClient()
+  try {
+    const { error } = await supabase
+      .from("listing_reports")
+      .update({
+        report_hash: reportHash,
+        tier,
+        version,
+      })
+      .eq("listing_id", listingId)
+    if (error) {
+      // 42703 = undefined column — BE migration pending. Silent.
+      if (
+        error.code === "42703" ||
+        /report_hash|tier|version/i.test(error.message ?? "")
+      ) {
+        return false
+      }
+      // Other errors: log once, still don't fail the request.
+      console.warn("[saveReportMetadataV2] non-schema error, ignored:", error.message)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.warn("[saveReportMetadataV2] exception, ignored:", err)
+    return false
+  }
+}
+
+/**
+ * Read the current version + hash from a listing_reports row, tolerating
+ * missing columns. Returns null fields when BE migration is pending.
+ */
+export async function getReportMetadataV2(
+  listingId: string,
+): Promise<{ report_hash: string | null; tier: "tier_1" | "tier_2" | "tier_3" | null; version: number | null }> {
+  const supabase = getServiceClient()
+  try {
+    const { data, error } = await supabase
+      .from("listing_reports")
+      .select("report_hash, tier, version")
+      .eq("listing_id", listingId)
+      .maybeSingle()
+    if (error) {
+      return { report_hash: null, tier: null, version: null }
+    }
+    if (!data) {
+      return { report_hash: null, tier: null, version: null }
+    }
+    const row = data as {
+      report_hash: string | null
+      tier: "tier_1" | "tier_2" | "tier_3" | null
+      version: number | null
+    }
+    return {
+      report_hash: row.report_hash ?? null,
+      tier: row.tier ?? null,
+      version: row.version ?? null,
+    }
+  } catch {
+    return { report_hash: null, tier: null, version: null }
+  }
+}
+
+/**
+ * Look up a report snapshot by its deterministic hash. Used by the public
+ * /verify/[hash] route to prove authenticity of shared PDF/Excel exports.
+ *
+ * Graceful against the `report_hash` column not existing yet (BE migration
+ * still pending). Returns:
+ *  - { status: "found", report }
+ *  - { status: "not_found" }
+ *  - { status: "schema_pending" } when the column itself is missing
+ */
+export type VerifyLookupResult =
+  | { status: "found"; report: ListingReport }
+  | { status: "not_found" }
+  | { status: "schema_pending" }
+
+export async function getReportByHash(hash: string): Promise<VerifyLookupResult> {
+  if (!hash || hash.length < 8) return { status: "not_found" }
+  const supabase = getServiceClient()
+  const { data, error } = await supabase
+    .from("listing_reports")
+    .select("*")
+    .eq("report_hash", hash)
+    .maybeSingle()
+
+  if (error) {
+    // Column not in schema yet — BE hasn't run the v2 migration.
+    // Postgres error codes: 42703 = undefined_column. Supabase returns
+    // the pg code in error.code for PostgREST responses.
+    if (error.code === "42703" || /report_hash/i.test(error.message ?? "")) {
+      return { status: "schema_pending" }
+    }
+    return { status: "not_found" }
+  }
+  if (!data) return { status: "not_found" }
+  return { status: "found", report: data as ListingReport }
 }
 
 export async function saveReport(

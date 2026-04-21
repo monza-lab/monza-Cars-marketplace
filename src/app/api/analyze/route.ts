@@ -13,7 +13,10 @@ import {
   hasAlreadyGenerated,
   deductCredit,
   checkAndResetFreeCredits,
+  saveReportMetadataV2,
+  getReportMetadataV2,
 } from "@/lib/reports/queries"
+import { computeReportHash } from "@/lib/reports/hash"
 import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
 import { extractSellerSignal } from "@/lib/fairValue/extractors/seller"
 import { extractTextSignals } from "@/lib/fairValue/extractors/text"
@@ -151,6 +154,9 @@ export async function POST(request: Request) {
       extraction_version?: string | null
     }) | null
     if (cachedHausRow && cachedHausRow.signals_extracted_at) {
+      // v2 metadata: pull hash/tier/version if the BE migration landed.
+      // Silent fallback to nulls if the columns don't exist.
+      const v2Meta = await getReportMetadataV2(body.listingId)
       return NextResponse.json({
         success: true,
         ok: true,
@@ -159,6 +165,10 @@ export async function POST(request: Request) {
         cached: true,
         creditUsed: 0,
         creditsRemaining: user.credits_balance,
+        // v2 additions (null when BE migration pending)
+        report_hash: v2Meta.report_hash,
+        tier: v2Meta.tier ?? "tier_1",
+        report_version: v2Meta.version ?? 1,
       })
     }
 
@@ -288,6 +298,23 @@ export async function POST(request: Request) {
       await saveSignals(body.listingId, runId, MODIFIER_LIBRARY_VERSION, detected)
     }
 
+    // 11b. v2 metadata: compute deterministic hash over the generated
+    //      HausReport (minus volatile fields) and try to persist hash +
+    //      tier + version. Defensive — silently no-ops if the BE migration
+    //      hasn't added the columns yet.
+    const reportHash = computeReportHash(report, {
+      ignoreKeys: ["signals_extracted_at"],
+    })
+    const priorMeta = await getReportMetadataV2(body.listingId)
+    const nextVersion = (priorMeta.version ?? 0) + 1
+    const tier: "tier_1" | "tier_2" | "tier_3" = "tier_1"
+    const metaWritten = await saveReportMetadataV2(
+      body.listingId,
+      reportHash,
+      tier,
+      nextVersion,
+    )
+
     // 12. Deduct credit
     let creditUsed = 0
     if (!alreadyGenerated) {
@@ -309,6 +336,11 @@ export async function POST(request: Request) {
       creditUsed,
       creditsRemaining: user.credits_balance - creditUsed,
       geminiUsed: textResult.ok,
+      // v2 additions
+      report_hash: reportHash,
+      tier,
+      report_version: nextVersion,
+      v2_metadata_persisted: metaWritten,
     })
   } catch (error) {
     console.error("Error analyzing listing:", error)

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import { applyModifiers, computeSpecificCarFairValue } from "./engine"
-import { MODIFIER_LIBRARY } from "./modifiers"
 import type { DetectedSignal } from "./types"
 
 function signal(key: string, valueDisplay = "test"): DetectedSignal {
