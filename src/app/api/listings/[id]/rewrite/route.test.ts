@@ -121,4 +121,30 @@ describe("GET /api/listings/[id]/rewrite", () => {
     expect(res.status).toBe(204)
     vi.stubEnv("LISTING_REWRITER_ENABLED", "true")
   })
+
+  it("defaults to enabled in development when LISTING_REWRITER_ENABLED is unset", async () => {
+    vi.stubEnv("LISTING_REWRITER_ENABLED", "")
+    vi.stubEnv("NODE_ENV", "development")
+    mockLoadSource.mockResolvedValue({
+      description_text: "desc", year: 2011, make: "Porsche", model: "911", trim: null,
+      mileage: 1, mileage_unit: "mi", vin: null, color_exterior: null, color_interior: null,
+      engine: null, transmission: null, body_style: null, location: null, platform: null,
+    })
+    mockRewrite.mockResolvedValue({
+      headline: "h",
+      highlights: ["a", "b"],
+      promptVersion: "1.0.0",
+      model: "gemini-2.5-flash",
+      sourceHash: "deadbeef",
+      generatedAt: "2026-04-21T00:00:00Z",
+    })
+
+    const res = await GET(
+      req("https://x/api/listings/live-abc/rewrite?locale=en"),
+      { params: Promise.resolve({ id: "live-abc" }) },
+    )
+    expect(res.status).toBe(200)
+    vi.stubEnv("NODE_ENV", "test")
+    vi.stubEnv("LISTING_REWRITER_ENABLED", "true")
+  })
 })

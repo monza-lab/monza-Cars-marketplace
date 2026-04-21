@@ -8,11 +8,22 @@ const SUPPORTED_LOCALES: RewriterLocale[] = ["en", "es", "de", "ja"]
 
 const limiter = createRateLimiter({ limit: 10, windowMs: 60_000 })
 
+function isListingRewriterEnabled(): boolean {
+  const flag = process.env.LISTING_REWRITER_ENABLED
+
+  if (flag === "true") return true
+  if (flag === "false") return false
+
+  // Default to enabled outside production so local dev/test runs exercise the
+  // real pipeline even when the flag is omitted from .env.local.
+  return process.env.NODE_ENV !== "production"
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  if (process.env.LISTING_REWRITER_ENABLED !== "true") {
+  if (!isListingRewriterEnabled()) {
     return new NextResponse(null, { status: 204 })
   }
 
