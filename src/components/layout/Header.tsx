@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Coins, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
+import { Piston } from "@/components/icons/Piston";
 import {
   Sheet,
   SheetTrigger,
@@ -1200,7 +1201,7 @@ export function Header() {
                 onClick={() => router.push('/account')}
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
               >
-                <Coins className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
+                <Piston className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
                 {hasUnlimited ? (
                   <span className="text-[12px] font-medium text-foreground">Unlimited</span>
                 ) : (
@@ -1306,7 +1307,7 @@ export function Header() {
                   <div className="mx-5 rounded-xl bg-primary/4 border border-primary/8 p-4">
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <Coins className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
+                        <Piston className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
                         <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.credits.label")}</span>
                       </div>
                       <span className="text-[14px] tabular-nums font-bold text-foreground">
