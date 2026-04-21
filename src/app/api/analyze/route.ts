@@ -25,6 +25,24 @@ import type {
   MissingSignal,
   ComparableLayer,
 } from "@/lib/fairValue/types"
+import {
+  calculateLandedCost,
+  localeToDestination,
+  sourceToOriginCountry,
+} from "@/lib/landedCost"
+
+// Extract the locale segment from the Referer header (e.g., "/en/cars/..." → "en").
+// Falls back to "en" when the header is missing or malformed.
+function inferLocaleFromReferer(referer: string | null): string {
+  if (!referer) return "en"
+  try {
+    const path = new URL(referer).pathname
+    const segment = path.split("/").filter(Boolean)[0]
+    return segment || "en"
+  } catch {
+    return "en"
+  }
+}
 
 interface AnalyzeRequestBody {
   listingId: string
@@ -215,6 +233,26 @@ export async function POST(request: Request) {
     const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
     const specific = computeSpecificCarFairValue({ baselineUsd, totalPercent })
 
+    // 9b. Landed cost — destination from URL locale (via Referer), origin from
+    //     the listing source. Returns null for domestic trades, unsupported
+    //     origins, or if the exchange-rate fetch fails — never blocks the report.
+    const locale = inferLocaleFromReferer(request.headers.get("referer"))
+    const destination = localeToDestination(locale)
+    const origin = sourceToOriginCountry(car.platform)
+    let landedCost: Awaited<ReturnType<typeof calculateLandedCost>> = null
+    try {
+      if (origin && car.price && car.price > 0 && car.year) {
+        landedCost = await calculateLandedCost({
+          car: { priceUsd: car.price, year: car.year },
+          origin,
+          destination,
+        })
+      }
+    } catch (err) {
+      console.error("[analyze] landedCost computation failed", err)
+      landedCost = null
+    }
+
     // 10. Compose HausReport
     const runId = randomUUID()
     const now = new Date().toISOString()
@@ -234,6 +272,7 @@ export async function POST(request: Request) {
       modifiers_total_percent: totalPercent,
       signals_extracted_at: textResult.ok ? now : null,
       extraction_version: MODIFIER_LIBRARY_VERSION,
+      landed_cost: landedCost,
     }
 
     // 11. Persist
