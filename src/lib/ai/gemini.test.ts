@@ -79,7 +79,7 @@ describe("generateJson responseSchema", () => {
     vi.resetModules()
     const mod = await import("./gemini")
 
-    const schema = {
+    const schema: import("@google/generative-ai").Schema = {
       type: SchemaType.OBJECT,
       properties: { ok: { type: SchemaType.BOOLEAN } },
       required: ["ok"],
@@ -91,7 +91,8 @@ describe("generateJson responseSchema", () => {
     })
 
     expect(res.ok).toBe(true)
-    const modelCall = getGenerativeModel.mock.calls[0]?.[0] as {
+    const calls = getGenerativeModel.mock.calls as unknown as Array<[unknown]>
+    const modelCall = calls[0]?.[0] as {
       generationConfig?: { responseSchema?: unknown; responseMimeType?: string }
     }
     expect(modelCall.generationConfig?.responseMimeType).toBe("application/json")
