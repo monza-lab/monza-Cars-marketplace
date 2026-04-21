@@ -27,6 +27,7 @@ import { CurrencyDropdown } from "./CurrencyDropdown";
 import { stripHtml } from "@/lib/stripHtml";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
+import { PistonsWalletModal } from "@/components/advisor/PistonsWalletModal";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
@@ -843,6 +844,7 @@ export function Header() {
   const [isOracleOpen, setIsOracleOpen] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -1195,21 +1197,16 @@ export function Header() {
 
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
-            {/* Credits - only show when authenticated, click → /account */}
+            {/* Credits - only show when authenticated, click → Pistons Wallet modal */}
             {isAuthenticated && (
               <button
-                onClick={() => router.push('/account')}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
+                onClick={() => setWalletOpen(true)}
+                className="hidden md:flex items-center gap-1 rounded-md px-2 py-1 hover:bg-foreground/5 transition-colors"
+                aria-label={t("auth.pistons.walletTitle")}
               >
                 <Piston className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
-                {hasUnlimited ? (
-                  <span className="text-[12px] font-medium text-foreground">Unlimited</span>
-                ) : (
-                  <>
-                    <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                    <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
-                  </>
-                )}
+                <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
+                <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
               </button>
             )}
 
@@ -1428,6 +1425,20 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* PISTONS WALLET MODAL */}
+      <PistonsWalletModal
+        open={walletOpen}
+        onOpenChange={setWalletOpen}
+        balance={creditsRemaining}
+        tier={profile?.tier === "PRO" ? "PRO" : "FREE"}
+        nextResetDate={new Date()}
+        todayUsage={{ chat: 0, oracle: 0, report: 0 }}
+        graceUsage={null}
+        recentDebits={[]}
+        onClose={() => setWalletOpen(false)}
+        onUpgrade={() => router.push("/pricing")}
+      />
 
       {/* THE ORACLE OVERLAY */}
       <OracleOverlay
