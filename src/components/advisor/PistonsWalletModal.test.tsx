@@ -32,6 +32,28 @@ describe("PistonsWalletModal", () => {
     expect(screen.getByText(/PRO/)).toBeInTheDocument()
   })
 
+  it("does not emit duplicate key warnings when open", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    renderWithIntl(
+      <PistonsWalletModal
+        open
+        onOpenChange={() => {}}
+        balance={42}
+        tier="FREE"
+        nextResetDate={new Date("2026-05-21")}
+        todayUsage={{ chat: 3, oracle: 1, report: 0 }}
+        graceUsage={null}
+        recentDebits={[]}
+        onClose={() => {}}
+      />
+    )
+
+    expect(error.mock.calls.some((call) => String(call[0]).includes("Encountered two children with the same key"))).toBe(false)
+
+    error.mockRestore()
+  })
+
   it("shows grace usage and upgrade CTA for FREE tier", () => {
     renderWithIntl(
       <PistonsWalletModal

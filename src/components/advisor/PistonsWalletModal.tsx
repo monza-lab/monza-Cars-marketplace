@@ -44,6 +44,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
   return (
     <AnimatePresence>
       <motion.div
+        key="pistons-wallet-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -51,6 +52,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
       />
       <motion.div
+        key="pistons-wallet-panel"
         initial={{ opacity: 0, y: 10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
