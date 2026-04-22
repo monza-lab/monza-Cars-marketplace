@@ -19,12 +19,11 @@ stages; only env var changes are needed.
 | 4 | `full` | All FREE + PRO users (no anonymous yet) | 2 weeks |
 | 5 | `full` | Everyone including anonymous (cookie-session), ongoing | ongoing |
 
-Note: the in-code `advisorEnabledFor` treats `free_beta` as "any signed-in
-user (FREE or PRO)". The 10% / 50% cohort split in Stages 2–3 is
-implemented at the edge / app router by checking a stable cohort hash
-(`userId` → SHA-1 → first-byte bucket). Anonymous users are excluded until
-Stage 5 in the original rollout plan, but the live runtime now allows them
-through so the advisor can operate as a conversion surface.
+Note: the rollout gating has been relaxed in the live runtime so both
+anonymous and signed-in users can reach the advisor. The 10% / 50% cohort
+split in Stages 2–3 is preserved in this document as historical rollout
+context, but production now uses the advisor as a conversion surface instead
+of blocking specific car chats behind the old allowlist.
 
 ## Stage 1 — Internal (Week 1)
 
@@ -134,18 +133,13 @@ grace state.
 - Cost drift — anonymous users don't debit pistons; they only consume grace + cache. Confirm the grace ceiling (10 Instant / 2 Marketplace per day) actually caps them. Anything else gets `feature_disabled` from the grace layer.
 - Long-term retention: return rate of anonymous users who converted.
 
-**Rollback.** Drop back to Stage 4 for signed-in traffic. Anonymous
-conversations remain in the DB and continue to be usable because the runtime
-gate intentionally permits them.
+**Rollback.** If needed, disable the advisor globally via the kill switch
+(`ADVISOR_ENABLED` unset or invalid). Conversations remain in the DB.
 
 ## Cross-stage safety valves
 
-- `ADVISOR_ENABLED=internal` with an empty `ADVISOR_INTERNAL_USER_IDS` =
-  off for signed-in users. Anonymous chat still works so conversion traffic is
-  not blocked. Set `ADVISOR_ANON_SECRET` in Vercel for signed cookies, or rely
-  on the unsigned fallback if you need the live site to keep moving while the
-  secret is being fixed. This is the emergency kill switch for the rollout
-  gate — no deploy needed.
+- `ADVISOR_ENABLED` unset or invalid = off for everyone. This is the emergency
+  kill switch — no deploy needed.
 - The observability logger (`logAdvisorEvent`) emits a `response` event
   on every successful turn and an `error` event on every failure. Wire
   these to your alerting surface of choice (Datadog monitor, Vercel log

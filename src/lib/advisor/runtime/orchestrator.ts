@@ -35,25 +35,15 @@ const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
   tier === "deep_research" && userTier === "PRO" ? 3 : 2
 
 /**
- * Feature-flag gate. `ADVISOR_ENABLED` supports:
- * - "full"       → everyone
- * - "free_beta"  → FREE + PRO (anonymous excluded)
- * - "internal"   → only userIds listed in ADVISOR_INTERNAL_USER_IDS (csv)
- *
- * Anonymous users are always allowed through this gate because the advisor is
- * a conversion surface. The API route still enforces identity/session checks
- * before any DB writes.
+ * Feature-flag gate. We keep the env var as a kill switch, but the advisor is
+ * otherwise open because both the search overlay and car-specific chat are
+ * conversion surfaces. Anonymous and signed-in users should get the same
+ * access path in production.
  */
 function advisorEnabledFor(userTier: "FREE" | "PRO", userId: string): boolean {
-  if (userId === "") return true
   const flag = process.env.ADVISOR_ENABLED ?? "internal"
-  if (flag === "full") return true
-  if (flag === "free_beta") return userTier === "FREE" || userTier === "PRO"
-  if (flag === "internal") {
-    const allowed = process.env.ADVISOR_INTERNAL_USER_IDS?.split(",").map(s => s.trim()).filter(Boolean) ?? []
-    return userId !== "" && allowed.includes(userId)
-  }
-  return false
+  if (!["internal", "free_beta", "full"].includes(flag)) return false
+  return true
 }
 
 export interface RunAdvisorTurnInput {

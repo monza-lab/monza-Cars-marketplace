@@ -135,7 +135,7 @@ For each user message, the orchestrator (`src/lib/advisor/runtime/orchestrator.t
 
 **Timeouts:** total 60s, per-tool 10s. Each tool runs behind a `Promise.race` with a timeout fallback. Total-timeout trigger yields `error { code: "timeout" }` and returns.
 
-**Feature flag:** env `ADVISOR_ENABLED` = `internal` | `free_beta` | `full`. Gate evaluates **before** anything else for signed-in users and yields `error { code: "feature_disabled" }` when blocked. Anonymous users are allowed through so the advisor can act as a conversion surface.
+**Feature flag:** env `ADVISOR_ENABLED` remains available as a kill switch, but the live advisor is open to both anonymous and signed-in users so the search overlay and car chat share the same conversion path. The `feature_disabled` response should now only appear if the flag is explicitly turned off.
 
 ---
 

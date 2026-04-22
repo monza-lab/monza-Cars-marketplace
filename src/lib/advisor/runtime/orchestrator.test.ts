@@ -116,6 +116,35 @@ describe("runAdvisorTurn (anonymous access)", () => {
   })
 })
 
+describe("runAdvisorTurn (signed-in access)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.ADVISOR_ENABLED = "internal"
+    streamWithToolsMock.mockImplementation(async function* () {
+      yield { type: "text", delta: "Signed-in access works." }
+    })
+  })
+
+  it("allows signed-in users through the gate even when rollout is internal", async () => {
+    const events: string[] = []
+    for await (const ev of runAdvisorTurn({
+      userText: "hi",
+      conversationId: "conv-user",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "user-1",
+      anonymousSessionId: null,
+      locale: "en",
+      initialContext: null,
+    })) {
+      events.push(ev.type)
+    }
+
+    expect(events).toContain("content_delta")
+    expect(events[events.length - 1]).toBe("done")
+  })
+})
+
 describe("runAdvisorTurn (tool follow-up)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
