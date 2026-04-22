@@ -26,8 +26,13 @@ const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
   ? (process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro")
   : (process.env.GEMINI_MODEL_FLASH ?? "gemini-2.5-flash")
 
+// Budget is 2 for Instant/Marketplace so the model can (1) call a tool and
+// (2) synthesize an answer from the tool result in a follow-up round. Deep
+// research users get 3 rounds for multi-step investigations. Without a second
+// round, any tool-calling response would produce a tool_call_* event and no
+// content_delta — a silent, broken-looking reply for the user.
 const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
-  tier === "deep_research" && userTier === "PRO" ? 3 : 1
+  tier === "deep_research" && userTier === "PRO" ? 3 : 2
 
 /**
  * Feature-flag gate. `ADVISOR_ENABLED` supports:

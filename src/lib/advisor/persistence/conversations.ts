@@ -51,7 +51,12 @@ export async function createConversation(input: CreateConversationInput): Promis
 }
 
 export async function getConversation(id: string): Promise<AdvisorConversation | null> {
-  const supabase = await createClient()
+  // Use the admin client — the API route enforces ownership via user_id /
+  // anonymous_session_id comparison after this lookup. Using the user-scoped
+  // client here would 404 anonymous conversations because the RLS policy only
+  // grants SELECT to the authenticated owner (anonymous access is mediated by
+  // the server-side signed cookie, not by SQL).
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("advisor_conversations")
     .select("*")

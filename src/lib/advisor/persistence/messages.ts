@@ -56,7 +56,10 @@ export async function appendMessage(input: AppendMessageInput): Promise<AdvisorM
 }
 
 export async function listMessages(conversationId: string): Promise<AdvisorMessageRow[]> {
-  const supabase = await createClient()
+  // Use the admin client so anonymous-session conversations can load their
+  // history. Ownership is already enforced upstream when the conversation is
+  // resolved in the API route.
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("advisor_messages")
     .select("*")
