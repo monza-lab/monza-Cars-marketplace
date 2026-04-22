@@ -89,7 +89,8 @@ export async function getTodayUsageByType(userCreditsId: string): Promise<Record
     .gte("created_at", startOfDay.toISOString())
   const out: Record<string, number> = {}
   for (const row of (data ?? []) as Array<{ amount: number; type: string }>) {
-    if (row.amount >= 0) continue // grants/refunds aren't "usage"
+    // Only negative entries represent usage; positive entries are refunds/grants and are excluded.
+    if (row.amount >= 0) continue
     out[row.type] = (out[row.type] ?? 0) + Math.abs(row.amount)
   }
   return out

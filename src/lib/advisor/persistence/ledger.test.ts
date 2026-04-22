@@ -45,6 +45,21 @@ describe("debitCredits", () => {
       conversationId: null, messageId: null,
     })).rejects.toThrow(/insufficient_credits/)
   })
+
+  it("calls the RPC with ADVISOR_REFUND type and returns the credited balance", async () => {
+    mockRpc.mockResolvedValue({ data: [{ new_balance: 105 }], error: null })
+    const { newBalance } = await debitCredits({
+      supabaseUserId: "user-1",
+      amount: 5,
+      type: "ADVISOR_REFUND",
+      conversationId: "c-1",
+      messageId: "m-1",
+    })
+    expect(newBalance).toBe(105)
+    expect(mockRpc).toHaveBeenCalledWith("debit_user_credits", expect.objectContaining({
+      p_type: "ADVISOR_REFUND",
+    }))
+  })
 })
 
 describe("getRecentDebits", () => {
