@@ -61,6 +61,9 @@ export async function getConversation(id: string): Promise<AdvisorConversation |
   return data as AdvisorConversation
 }
 
+// TODO: Phase 6 — migrate to get_shared_conversation RPC; current implementation
+// requires owner auth or service role (the public share RLS policy was dropped
+// in 20260422_fix_advisor_rls_drop_public_share.sql).
 export async function getConversationByShareToken(token: string): Promise<AdvisorConversation | null> {
   const supabase = await createClient()
   const { data, error } = await supabase
