@@ -54,6 +54,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/cron/classic": ["./node_modules/@sparticuz/chromium/**/*"],
     "/api/cron/autoscout24": ["./node_modules/@sparticuz/chromium/**/*"],
+    "/api/advisor/message": ["./src/lib/ai/skills/**/*"],
+    "/api/listings/[id]/rewrite": ["./src/lib/ai/skills/**/*"],
   },
   serverExternalPackages: [
     "rebrowser-playwright",
