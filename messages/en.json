@@ -44,6 +44,21 @@
       "empty": "No analyses yet"
     }
   },
+  "advisor": {
+    "inputPlaceholder": "Ask anything…",
+    "deepResearch": "Deep Research",
+    "continueInChat": "Continue in chat →",
+    "share": "Share",
+    "archive": "Archive",
+    "newChat": "New chat",
+    "sharedWatermark": "Shared conversation — market data is current, prices at time of writing may be stale",
+    "suggestions": {
+      "compareGt3s": "Compare top 3 997.2 GT3s",
+      "inspection993": "993 inspection checklist",
+      "best992": "Best 992 value this quarter",
+      "imsRisk": "IMS risk by era"
+    }
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",

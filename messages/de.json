@@ -45,6 +45,21 @@
       "empty": "Noch keine Analysen"
     }
   },
+  "advisor": {
+    "inputPlaceholder": "Frag alles…",
+    "deepResearch": "Tiefenrecherche",
+    "continueInChat": "Im Chat fortsetzen →",
+    "share": "Teilen",
+    "archive": "Archivieren",
+    "newChat": "Neuer Chat",
+    "sharedWatermark": "Geteilte Unterhaltung — Marktdaten sind aktuell, Preise könnten veraltet sein",
+    "suggestions": {
+      "compareGt3s": "Top 3 997.2 GT3 vergleichen",
+      "inspection993": "993 Inspektions-Checkliste",
+      "best992": "Bester 992-Wert dieses Quartal",
+      "imsRisk": "IMS-Risiko nach Baureihe"
+    }
+  },
   "auth": {
     "signIn": "Anmelden",
     "signUp": "Registrieren",

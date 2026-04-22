@@ -45,6 +45,21 @@
       "empty": "Aún no hay análisis"
     }
   },
+  "advisor": {
+    "inputPlaceholder": "Pregunta lo que sea…",
+    "deepResearch": "Investigación Profunda",
+    "continueInChat": "Continuar en chat →",
+    "share": "Compartir",
+    "archive": "Archivar",
+    "newChat": "Nuevo chat",
+    "sharedWatermark": "Conversación compartida — los datos de mercado son actuales, los precios pueden estar desactualizados",
+    "suggestions": {
+      "compareGt3s": "Comparar los 3 mejores 997.2 GT3",
+      "inspection993": "Lista de inspección 993",
+      "best992": "Mejor valor 992 este trimestre",
+      "imsRisk": "Riesgo IMS por generación"
+    }
+  },
   "auth": {
     "signIn": "Iniciar Sesión",
     "signUp": "Registrarse",

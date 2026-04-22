@@ -45,6 +45,21 @@
       "empty": "まだ分析はありません"
     }
   },
+  "advisor": {
+    "inputPlaceholder": "何でも質問してください…",
+    "deepResearch": "ディープリサーチ",
+    "continueInChat": "チャットで続ける →",
+    "share": "共有",
+    "archive": "アーカイブ",
+    "newChat": "新しいチャット",
+    "sharedWatermark": "共有された会話 — 市場データは最新ですが、価格は古くなっている可能性があります",
+    "suggestions": {
+      "compareGt3s": "997.2 GT3 上位3台を比較",
+      "inspection993": "993 検査チェックリスト",
+      "best992": "今四半期のベスト 992",
+      "imsRisk": "世代別 IMS リスク"
+    }
+  },
   "auth": {
     "signIn": "ログイン",
     "signUp": "登録",
