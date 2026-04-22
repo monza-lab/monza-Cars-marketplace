@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateRegionalValuationByFamily } from "./dashboardValuationCache";
+import { aggregateRegionalValuationByFamily, isRegionalValByFamily } from "./dashboardValuationCache";
 
 describe("dashboard valuation cache aggregation", () => {
   it("groups segment stats by family and keeps all market buckets", () => {
@@ -33,5 +33,10 @@ describe("dashboard valuation cache aggregation", () => {
     expect(payload["992"]).toHaveProperty("UK");
     expect(payload["992"]).toHaveProperty("JP");
     expect(payload["991"]).toHaveProperty("US");
+  });
+
+  it("rejects malformed cache payloads", () => {
+    expect(isRegionalValByFamily({})).toBe(false);
+    expect(isRegionalValByFamily({ "992": { US: null } })).toBe(false);
   });
 });

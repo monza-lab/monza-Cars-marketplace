@@ -36,11 +36,11 @@ import {
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
-import { listingPriceUsd, computeRegionalValFromAuctions, computeRegionalValFromCorpus } from "./utils/valuation"
+import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
 import { selectBestDatabaseImage } from "./utils/aggregation"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
-import type { CanonicalMarket } from "@/lib/pricing/types"
+import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── Upgrade low-res image URLs to high-res ───
@@ -143,6 +143,7 @@ type Auction = {
 function resolveFairValueBand(
   auction: Auction,
   familyAuctions: Auction[],
+  cachedFamilyValuation?: Partial<Record<CanonicalMarket, SegmentStats>>,
 ): { low: number; high: number } | null {
   // Prefer an explicit analysis band if present (upstream scoring system).
   const lo = auction.analysis?.bidTargetLow
@@ -153,6 +154,15 @@ function resolveFairValueBand(
   const family = auction.family ?? null
   if (!market || !family) return null
 
+  const cachedSegment = cachedFamilyValuation?.[market]
+  if (cachedSegment) {
+    const cachedLow = cachedSegment.marketValue.p25Usd ?? cachedSegment.askMedian.p25Usd
+    const cachedHigh = cachedSegment.marketValue.p75Usd ?? cachedSegment.askMedian.p75Usd
+    if (cachedLow != null && cachedHigh != null && cachedLow > 0 && cachedHigh > 0) {
+      return { low: Math.round(cachedLow), high: Math.round(cachedHigh) }
+    }
+  }
+
   const regionalVal = computeRegionalValFromAuctions(familyAuctions)
   const segment = regionalVal[market]
   if (!segment) return null
@@ -160,6 +170,32 @@ function resolveFairValueBand(
   const high = segment.marketValue.p75Usd ?? segment.askMedian.p75Usd
   if (low == null || high == null || low <= 0 || high <= 0) return null
   return { low: Math.round(low), high: Math.round(high) }
+}
+
+function pickBestSegment(regionalVal: Partial<Record<CanonicalMarket, SegmentStats>> | undefined): SegmentStats | null {
+  if (!regionalVal) return null
+
+  let best: SegmentStats | null = null
+  for (const market of ["US", "EU", "UK", "JP"] as const) {
+    const segment = regionalVal[market]
+    if (!segment) continue
+    if (!best || segment.marketValue.soldN > best.marketValue.soldN) {
+      best = segment
+    }
+  }
+
+  return best
+}
+
+function useClockNow(updateMs = 60_000): number {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), updateMs)
+    return () => clearInterval(id)
+  }, [updateMs])
+
+  return now
 }
 
 // ─── PORSCHE FAMILY TYPE (for family-based landing scroll) ───
@@ -899,6 +935,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
+  const now = useClockNow()
 
   const timeBaseLabels = {
     day: t("asset.timeDay"),
@@ -909,7 +946,6 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const soldText = t("asset.sold")
 
   const liveAuctions = useMemo(() => {
-    const now = Date.now()
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
       .sort((a, b) => {
@@ -919,7 +955,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
         return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
       })
       .slice(0, 8)
-  }, [auctions])
+  }, [auctions, now])
 
   if (liveAuctions.length === 0) return null
 
@@ -1423,7 +1459,7 @@ function DiscoverySidebar({
 }
 
 // ─── COLUMN B: THE BTW-STYLE ASSET CARD (DESKTOP) ───
-function AssetCard({ auction, allAuctions = [] }: { auction: Auction; allAuctions?: Auction[] }) {
+function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction: Auction; allAuctions?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily }) {
   const t = useTranslations("dashboard")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
@@ -1522,7 +1558,8 @@ function AssetCard({ auction, allAuctions = [] }: { auction: Auction; allAuction
             const familyAuctions = allAuctions.filter(
               (a) => a.make === auction.make && a.family === auction.family,
             )
-            const band = resolveFairValueBand(auction, familyAuctions)
+            const cachedFamilyValuation = auction.family ? regionalValByFamily?.[auction.family] : undefined
+            const band = resolveFairValueBand(auction, familyAuctions, cachedFamilyValuation)
             const priceUsd = listingPriceUsd(auction, {})
             const medianUsd = band ? (band.low + band.high) / 2 : null
 
@@ -1805,12 +1842,12 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
 }
 
 // ─── FAMILY CONTEXT PANEL (for Porsche family-based landing) ───
-function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValByFamily, allFamilies }: { family: PorscheFamily; auctions: Auction[]; valuationAuctions?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; allFamilies: PorscheFamily[] }) {
+function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies }: { family: PorscheFamily; auctions: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily; allFamilies: PorscheFamily[] }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
+  const now = useClockNow()
 
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
-  const valuationSource = valuationAuctions && valuationAuctions.length > 0 ? valuationAuctions : auctions
 
   // Get auctions for this family — all derived data depends on this
   const familyAuctions = useMemo(() => {
@@ -1821,22 +1858,17 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
     })
   }, [auctions, family.slug])
 
-  // ─── DYNAMIC: Valuation by Market from the valuation universe ───
-  const allFamilyAuctions = useMemo(() => {
-    const familyKey = family.slug
-    return valuationSource.filter(a => {
-      const series = extractSeries(a.model, a.year, a.make || "Porsche", a.title).toLowerCase()
-      return series === familyKey
-    })
-  }, [valuationSource, family.slug])
-  // Valuation must come from the pre-aggregated corpus only.
-  const regionalVal = useMemo(() => regionalValByFamily?.[family.slug] ?? {}, [regionalValByFamily, family.slug])
+  // Valuation comes from the cache when available; live family auctions are the fallback.
+  const regionalVal = useMemo(
+    () => regionalValByFamily?.[family.slug] ?? computeRegionalValFromAuctions(familyAuctions),
+    [regionalValByFamily, family.slug, familyAuctions],
+  )
 
   // ─── DYNAMIC: Market Depth from real listing counts ───
   const depth = useMemo(() => {
     const count = familyAuctions.length
     const withPrice = familyAuctions.filter(a => listingPriceUsd(a, rates) > 0)
-    const ended = familyAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
+    const ended = familyAuctions.filter(a => new Date(a.endTime).getTime() < now)
     const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
@@ -1856,20 +1888,14 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
       sellThroughRate: sellThrough,
       demandScore,
     }
-  }, [familyAuctions])
+  }, [familyAuctions, now, rates])
 
   // ─── DYNAMIC: Ownership Cost scaled by market value from segment with most sold data ───
   const ownershipCost = useMemo(() => {
     const base = getBrandConfig("Porsche")?.ownershipCosts ?? { insurance: 8500, storage: 6000, maintenance: 8000 }
 
     // Pivot = market value from the segment with the most sold data; else family min/max midpoint.
-    const regionalVal = computeRegionalValFromAuctions(allFamilyAuctions)
-    let bestSegment: ReturnType<typeof computeRegionalValFromAuctions>[keyof ReturnType<typeof computeRegionalValFromAuctions>] | null = null
-    for (const m of ["US", "EU", "UK", "JP"] as const) {
-      const s = regionalVal[m]
-      if (!s) continue
-      if (!bestSegment || s.marketValue.soldN > bestSegment.marketValue.soldN) bestSegment = s
-    }
+    const bestSegment = pickBestSegment(regionalVal)
     const pivot =
       bestSegment?.marketValue.valueUsd ??
       bestSegment?.askMedian.valueUsd ??
@@ -1885,7 +1911,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
       storage: Math.round(base.storage * scale),
       maintenance: Math.round(base.maintenance * scale),
     }
-  }, [allFamilyAuctions, family.priceMin, family.priceMax])
+  }, [family.priceMin, family.priceMax, regionalVal])
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
@@ -1915,7 +1941,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
       })
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
-  }, [familyAuctions])
+  }, [familyAuctions, rates])
 
   // Recent sales from this family
   const recentSales = useMemo(() => {
@@ -1929,7 +1955,7 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
-  }, [familyAuctions])
+  }, [familyAuctions, rates])
 
   // Similar families (nearby in prestige order)
   const similarFamilies = allFamilies
@@ -2115,23 +2141,19 @@ function FamilyContextPanel({ family, auctions, valuationAuctions, regionalValBy
 }
 
 // ─── BRAND CONTEXT PANEL ───
-function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regionalValByFamily }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; valuationAuctions?: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily }) {
+function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: { brand: Brand; allBrands: Brand[]; auctions: Auction[]; regionalValByFamily?: import("@/lib/dashboardCache").RegionalValByFamily }) {
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
+  const now = useClockNow()
   const brandAuctions = useMemo(() =>
     auctions.filter(a => a.make === brand.name),
     [auctions, brand.name]
   )
 
   const whyBuy = getBrandConfig(brand.name)?.defaultThesis || mockWhyBuy[brand.name] || mockWhyBuy["default"]
-  const valuationSource = valuationAuctions && valuationAuctions.length > 0 ? valuationAuctions : auctions
-  const allBrandAuctions = useMemo(() =>
-    valuationSource.filter(a => a.make === brand.name),
-    [valuationSource, brand.name]
-  )
   const dominantFamily = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const auction of allBrandAuctions) {
+    for (const auction of brandAuctions) {
       if (!auction.family) continue
       counts.set(auction.family, (counts.get(auction.family) ?? 0) + 1)
     }
@@ -2142,10 +2164,10 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
     }
 
     return best?.[0] ?? null
-  }, [allBrandAuctions])
+  }, [brandAuctions])
   const regionalVal = useMemo(
-    () => (dominantFamily ? regionalValByFamily?.[dominantFamily] ?? {} : {}),
-    [regionalValByFamily, dominantFamily],
+    () => (dominantFamily ? regionalValByFamily?.[dominantFamily] ?? computeRegionalValFromAuctions(brandAuctions.filter(a => a.family === dominantFamily)) : {}),
+    [regionalValByFamily, dominantFamily, brandAuctions],
   )
   const recentSales = useMemo(() => {
     return brandAuctions
@@ -2158,7 +2180,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
         platform: a.platform?.replace(/_/g, " ") || "Listing",
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
-  }, [brandAuctions])
+  }, [brandAuctions, rates])
   const ownershipCost = useMemo(() => {
     const config = getBrandConfig(brand.name)
     const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
@@ -2172,7 +2194,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
       storage: Math.round(base.storage * scale),
       maintenance: Math.round(base.maintenance * scale),
     }
-  }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
+  }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax, rates])
   const topModels = useMemo(() => {
     const variantMap = new Map<string, { count: number; prices: number[] }>()
     brandAuctions.forEach(a => {
@@ -2199,7 +2221,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
       })
       .sort((a, b) => b.avgPrice - a.avgPrice)
       .slice(0, 5)
-  }, [brandAuctions])
+  }, [brandAuctions, rates])
   const depth = useMemo(() => {
     const count = brandAuctions.length
     if (count === 0) {
@@ -2207,7 +2229,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
       return config?.marketDepth ?? { auctionsPerYear: 15, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 6 }
     }
     const withPrice = brandAuctions.filter(a => listingPriceUsd(a, rates) > 0)
-    const ended = brandAuctions.filter(a => new Date(a.endTime).getTime() < Date.now())
+    const ended = brandAuctions.filter(a => new Date(a.endTime).getTime() < now)
     const sold = ended.filter(a => a.price > 0 || a.currentBid > 0)
     const sellThrough = ended.length > 0 ? Math.round((sold.length / ended.length) * 100) : 85
     const avgDays = ended.length > 0
@@ -2227,7 +2249,7 @@ function BrandContextPanel({ brand, allBrands, auctions, valuationAuctions, regi
       sellThroughRate: sellThrough,
       demandScore,
     }
-  }, [brandAuctions, brand.name])
+  }, [brandAuctions, brand.name, now, rates])
 
   const totalAnnualCost = ownershipCost.insurance + ownershipCost.storage + ownershipCost.maintenance
 
@@ -2599,12 +2621,11 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
                 key={activeFamily.slug}
                 family={activeFamily}
                 auctions={filteredAuctions}
-                valuationAuctions={valuationAuctions}
                 regionalValByFamily={regionalValByFamily}
                 allFamilies={porscheFamilies}
               />
             ) : (
-              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} valuationAuctions={valuationAuctions} regionalValByFamily={regionalValByFamily} />
+              <BrandContextPanel brand={selectedBrand} allBrands={brands} auctions={filteredAuctions} regionalValByFamily={regionalValByFamily} />
             )}
           </div>
         </div>

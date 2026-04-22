@@ -59,6 +59,70 @@ export function aggregateRegionalValuationByFamily(prices: DerivedPrice[]): Regi
   return out;
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isCanonicalMarket(value: unknown): value is CanonicalMarket {
+  return value === "US" || value === "EU" || value === "UK" || value === "JP";
+}
+
+function isConfidenceTier(value: unknown): value is SegmentStats["marketValue"]["tier"] {
+  return value === "high" || value === "medium" || value === "low" || value === "insufficient";
+}
+
+function isFactorSource(value: unknown): value is SegmentStats["askMedian"]["factorSource"] {
+  return value === "family" || value === "porsche_wide" || value === "none";
+}
+
+function isNumberOrNull(value: unknown): value is number | null {
+  return value === null || (typeof value === "number" && Number.isFinite(value));
+}
+
+function isValidSegmentStats(value: unknown): value is SegmentStats {
+  if (!isObject(value)) return false;
+  if (!isCanonicalMarket(value.market)) return false;
+  if (typeof value.family !== "string" || value.family.length === 0) return false;
+
+  const marketValue = value.marketValue;
+  const askMedian = value.askMedian;
+  if (!isObject(marketValue) || !isObject(askMedian)) return false;
+
+  return (
+    isNumberOrNull(marketValue.valueUsd) &&
+    isNumberOrNull(marketValue.p25Usd) &&
+    isNumberOrNull(marketValue.p75Usd) &&
+    typeof marketValue.soldN === "number" &&
+    Number.isInteger(marketValue.soldN) &&
+    marketValue.soldN >= 0 &&
+    isConfidenceTier(marketValue.tier) &&
+    isNumberOrNull(askMedian.valueUsd) &&
+    isNumberOrNull(askMedian.rawMedianUsd) &&
+    isNumberOrNull(askMedian.p25Usd) &&
+    isNumberOrNull(askMedian.p75Usd) &&
+    typeof askMedian.askingN === "number" &&
+    Number.isInteger(askMedian.askingN) &&
+    askMedian.askingN >= 0 &&
+    (askMedian.factorApplied === null || (typeof askMedian.factorApplied === "number" && Number.isFinite(askMedian.factorApplied))) &&
+    isFactorSource(askMedian.factorSource) &&
+    isConfidenceTier(askMedian.tier)
+  );
+}
+
+export function isRegionalValByFamily(value: unknown): value is RegionalValByFamily {
+  if (!isObject(value)) return false;
+  if (Object.keys(value).length === 0) return false;
+
+  for (const familyVal of Object.values(value)) {
+    if (!isObject(familyVal)) return false;
+    for (const market of MARKETS) {
+      if (!isValidSegmentStats(familyVal[market])) return false;
+    }
+  }
+
+  return true;
+}
+
 function isMissingValuationTableError(errorMessage: string): boolean {
   return /(relation.*dashboard_valuation_by_family.*does not exist)|(could not find the table)/i.test(
     errorMessage,
@@ -101,11 +165,11 @@ export async function fetchDashboardRegionalValuationByFamily(
     }
 
     const payload = data?.regional_val_by_family;
-    if (!payload || typeof payload !== "object") {
+    if (!isRegionalValByFamily(payload)) {
       return null;
     }
 
-    return payload as RegionalValByFamily;
+    return payload;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[dashboardValuationCache] cached valuation query threw:", message);
