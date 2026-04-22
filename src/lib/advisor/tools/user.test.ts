@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { ToolInvocationContext } from "./registry"
 
 vi.mock("@/lib/credits", () => ({
-  getUserCredits: vi.fn(async () => ({ balance: 42 })),
+  getUserCredits: vi.fn(async () => ({ creditsBalance: 42 })),
 }))
 
 import { userTools } from "./user"

@@ -30,8 +30,8 @@ export const getUserContext: ToolDef = {
     if (ctx.userId) {
       try {
         const credits = await getUserCredits(ctx.userId)
-        if (credits && typeof (credits as { balance?: number }).balance === "number") {
-          pistonsBalance = (credits as { balance: number }).balance
+        if (credits && typeof credits.creditsBalance === "number") {
+          pistonsBalance = credits.creditsBalance
         }
       } catch (err) {
         // If credits lookup fails, leave balance null — do not fail the tool.
