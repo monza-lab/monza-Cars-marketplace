@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getOrCreateUser } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
+import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persistence/anon-session'
+import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
 
 const CREATE_USER_DB_TIMEOUT_MS = 15_000
 
@@ -52,6 +55,42 @@ export async function POST(request: NextRequest) {
         ),
         '/api/user/create getOrCreateUser'
       )
+
+      // Advisor: merge any anonymous conversations + grace + ledger rows into this new user.
+      try {
+        const cookieStore = await cookies()
+        const anonCookie = cookieStore.get(AnonSessionCookie.name)?.value
+        const anonId = verifyAnonymousSession(anonCookie)
+        if (anonId && user.id) {
+          // Conversations (matches on anonymous_session_id, sets user_id).
+          await mergeAnonymousToUser(anonId, user.id)
+
+          // Migrate audit rows in credit_transactions. Rows were inserted with user_id = NULL
+          // and anonymous_session_id set; resolve the new user's user_credits.id first.
+          const { createAdminClient } = await import('@/lib/supabase/server')
+          const admin = createAdminClient()
+          const { data: creditsRow } = await admin
+            .from('user_credits')
+            .select('id')
+            .eq('supabase_user_id', user.id)
+            .single()
+          if (creditsRow?.id) {
+            await admin
+              .from('credit_transactions')
+              .update({ user_id: creditsRow.id, anonymous_session_id: null })
+              .eq('anonymous_session_id', anonId)
+          }
+
+          // Grace counters keyed on anonymous session are also moved over.
+          await admin
+            .from('advisor_grace_counters')
+            .update({ supabase_user_id: user.id, anonymous_session_id: null })
+            .eq('anonymous_session_id', anonId)
+        }
+      } catch (mergeErr) {
+        // Merge is best-effort; never fail sign-up because of it.
+        console.warn('[advisor] anon->user merge failed:', mergeErr)
+      }
 
       return NextResponse.json({
         success: true,
