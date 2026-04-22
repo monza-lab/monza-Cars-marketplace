@@ -214,6 +214,23 @@ function classifyGeminiError(err: unknown): { message: string; code: string; ret
   return { message, code: retryable ? "transient" : "llm_error", retryable, cause: err }
 }
 
+/**
+ * Gemini's FunctionDeclarationSchema is a strict OpenAPI-3.0-subset and
+ * rejects fields it doesn't recognize (notably `additionalProperties`, which
+ * is valid JSON Schema but not in Gemini's subset). Some of our tool defs use
+ * `additionalProperties` legitimately; strip it here before sending.
+ */
+function sanitizeGeminiSchema(schema: unknown): unknown {
+  if (!schema || typeof schema !== "object") return schema
+  if (Array.isArray(schema)) return schema.map(sanitizeGeminiSchema)
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(schema as Record<string, unknown>)) {
+    if (k === "additionalProperties") continue
+    out[k] = sanitizeGeminiSchema(v)
+  }
+  return out
+}
+
 export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<StreamEvent> {
   // Check if already aborted before doing any work.
   if (opts.signal?.aborted) {
@@ -241,7 +258,8 @@ export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<Stre
           description: t.description,
           // FunctionDeclarationSchema uses SchemaType enum for `type`, which differs
           // from the Schema union type. Cast narrowly to satisfy the SDK type.
-          parameters: t.parameters as unknown as import("@google/generative-ai").FunctionDeclarationSchema,
+          // Also strip fields Gemini doesn't accept (e.g. additionalProperties).
+          parameters: sanitizeGeminiSchema(t.parameters) as unknown as import("@google/generative-ai").FunctionDeclarationSchema,
         })) }]
       : undefined,
   })
