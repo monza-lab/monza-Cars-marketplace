@@ -35,7 +35,7 @@ export interface AppendMessageInput {
 }
 
 export async function appendMessage(input: AppendMessageInput): Promise<AdvisorMessageRow> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const row = {
     conversation_id: input.conversationId,
     role: input.role,
@@ -56,7 +56,7 @@ export async function appendMessage(input: AppendMessageInput): Promise<AdvisorM
 }
 
 export async function listMessages(conversationId: string): Promise<AdvisorMessageRow[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("advisor_messages")
     .select("*")
@@ -67,7 +67,7 @@ export async function listMessages(conversationId: string): Promise<AdvisorMessa
 }
 
 export async function supersedeLastAssistant(conversationId: string): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase
     .from("advisor_messages")
     .update({ is_superseded: true })

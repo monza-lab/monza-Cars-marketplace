@@ -31,7 +31,7 @@ export interface CreateConversationInput {
 }
 
 export async function createConversation(input: CreateConversationInput): Promise<AdvisorConversation> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const row = {
     user_id: input.userId ?? null,
     anonymous_session_id: input.anonymousSessionId ?? null,
@@ -51,7 +51,7 @@ export async function createConversation(input: CreateConversationInput): Promis
 }
 
 export async function getConversation(id: string): Promise<AdvisorConversation | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("advisor_conversations")
     .select("*")
@@ -62,7 +62,7 @@ export async function getConversation(id: string): Promise<AdvisorConversation |
 }
 
 export async function getConversationByShareToken(token: string): Promise<AdvisorConversation | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("advisor_conversations")
     .select("*")
@@ -74,7 +74,7 @@ export async function getConversationByShareToken(token: string): Promise<Adviso
 }
 
 export async function listConversationsForUser(userId: string, limit = 50): Promise<AdvisorConversation[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("advisor_conversations")
     .select("*")
@@ -86,7 +86,7 @@ export async function listConversationsForUser(userId: string, limit = 50): Prom
 }
 
 export async function touchLastMessage(id: string): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase
     .from("advisor_conversations")
     .update({ last_message_at: new Date().toISOString(), updated_at: new Date().toISOString() })
@@ -94,7 +94,7 @@ export async function touchLastMessage(id: string): Promise<void> {
 }
 
 export async function archiveConversation(id: string): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase
     .from("advisor_conversations")
     .update({ is_archived: true })
@@ -102,19 +102,19 @@ export async function archiveConversation(id: string): Promise<void> {
 }
 
 export async function rotateShareToken(id: string): Promise<string> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const token = randomBytes(10).toString("base64url")
   await supabase.from("advisor_conversations").update({ share_token: token }).eq("id", id)
   return token
 }
 
 export async function revokeShareToken(id: string): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase.from("advisor_conversations").update({ share_token: null }).eq("id", id)
 }
 
 export async function mergeAnonymousToUser(anonymousSessionId: string, userId: string): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase
     .from("advisor_conversations")
     .update({ user_id: userId, anonymous_session_id: null })
