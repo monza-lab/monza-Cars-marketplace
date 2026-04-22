@@ -9,6 +9,7 @@ import { touchLastMessage } from "@/lib/advisor/persistence/conversations"
 import { debitCredits, type AdvisorDebitType } from "@/lib/advisor/persistence/ledger"
 import type { AdvisorSseEvent } from "./streaming"
 import { generateTitle } from "./titleGen"
+import { logAdvisorEvent } from "./observability"
 import type { Schema } from "@google/generative-ai"
 
 const MAX_TOOL_CALLS = 8
@@ -28,6 +29,23 @@ const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
 const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
   tier === "deep_research" && userTier === "PRO" ? 3 : 1
 
+/**
+ * Feature-flag gate. `ADVISOR_ENABLED` supports:
+ * - "full"       → everyone
+ * - "free_beta"  → FREE + PRO (anonymous excluded)
+ * - "internal"   → only userIds listed in ADVISOR_INTERNAL_USER_IDS (csv)
+ */
+function advisorEnabledFor(userTier: "FREE" | "PRO", userId: string): boolean {
+  const flag = process.env.ADVISOR_ENABLED ?? "internal"
+  if (flag === "full") return true
+  if (flag === "free_beta") return userTier === "FREE" || userTier === "PRO"
+  if (flag === "internal") {
+    const allowed = process.env.ADVISOR_INTERNAL_USER_IDS?.split(",").map(s => s.trim()).filter(Boolean) ?? []
+    return userId !== "" && allowed.includes(userId)
+  }
+  return false
+}
+
 export interface RunAdvisorTurnInput {
   userText: string
   conversationId: string
@@ -42,11 +60,36 @@ export interface RunAdvisorTurnInput {
 export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerator<AdvisorSseEvent> {
   const startedAt = Date.now()
 
+  // 0. Feature-flag gate
+  if (!advisorEnabledFor(input.userTier, input.userId ?? "")) {
+    logAdvisorEvent({
+      kind: "error",
+      conversationId: input.conversationId,
+      userId: input.userId,
+      anonymousSessionId: input.anonymousSessionId,
+      userTier: input.userTier,
+      errorCode: "feature_disabled",
+      message: "advisor is in limited rollout",
+    })
+    yield { type: "error", code: "feature_disabled", message: "Advisor is in limited rollout" }
+    return
+  }
+
   // 1. Classify
   const classification = await classifyRequest({
     userText: input.userText,
     hasCarContext: Boolean(input.initialContext?.listingId),
     userTier: input.userTier,
+  })
+  logAdvisorEvent({
+    kind: "classify",
+    conversationId: input.conversationId,
+    userId: input.userId,
+    anonymousSessionId: input.anonymousSessionId,
+    userTier: input.userTier,
+    tier: classification.tier,
+    pistons: classification.estimatedPistons,
+    model: MODEL_BY_TIER(classification.tier),
   })
   yield {
     type: "classified",
@@ -69,6 +112,17 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
       creditsUsed: 0, latencyMs: Date.now() - startedAt, model: "cache",
     })
     await touchLastMessage(input.conversationId)
+    logAdvisorEvent({
+      kind: "response",
+      conversationId: input.conversationId,
+      userId: input.userId,
+      anonymousSessionId: input.anonymousSessionId,
+      userTier: input.userTier,
+      tier: classification.tier,
+      model: "cache",
+      pistons: 0,
+      latencyMs: Date.now() - startedAt,
+    })
     yield { type: "done", pistonsDebited: 0, messageId: asstMsg.id }
     return
   }
@@ -111,6 +165,17 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
 
   for (let round = 0; round < budget; round++) {
     if (Date.now() - startedAt > TOTAL_TIMEOUT_MS) {
+      logAdvisorEvent({
+        kind: "error",
+        conversationId: input.conversationId,
+        userId: input.userId,
+        anonymousSessionId: input.anonymousSessionId,
+        userTier: input.userTier,
+        tier: classification.tier,
+        latencyMs: Date.now() - startedAt,
+        errorCode: "timeout",
+        message: "request exceeded 60s budget",
+      })
       yield { type: "error", code: "timeout", message: "request exceeded 60s budget" }
       return
     }
@@ -134,6 +199,18 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
       } else if (ev.type === "tool_call") {
         calls.push({ name: ev.name, args: ev.args })
       } else if (ev.type === "error") {
+        logAdvisorEvent({
+          kind: "error",
+          conversationId: input.conversationId,
+          userId: input.userId,
+          anonymousSessionId: input.anonymousSessionId,
+          userTier: input.userTier,
+          tier: classification.tier,
+          model,
+          latencyMs: Date.now() - startedAt,
+          errorCode: "llm_error",
+          message: ev.message,
+        })
         yield { type: "error", code: "llm_error", message: ev.message }
         return
       }
@@ -146,6 +223,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     for (const call of calls) {
       if (toolCallSummaries.length >= MAX_TOOL_CALLS) break
       yield { type: "tool_call_start", name: call.name, args: call.args }
+      const toolStartedAt = Date.now()
       const result = await Promise.race([
         registry.invoke(call.name, call.args, input.userTier, {
           userId: input.userId, anonymousSessionId: input.anonymousSessionId, userTier: input.userTier,
@@ -153,9 +231,22 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
         }),
         new Promise<{ ok: false; error: string }>(res => setTimeout(() => res({ ok: false, error: "tool_timeout" }), TOOL_TIMEOUT_MS)),
       ])
+      const toolLatency = Date.now() - toolStartedAt
       const summary = result.ok ? (result as { summary: string }).summary : `error: ${(result as { error: string }).error}`
       toolCallSummaries.push({ name: call.name, args: call.args, result_summary: summary.slice(0, 500) })
       toolsUsed.push(call.name)
+      logAdvisorEvent({
+        kind: "tool_call",
+        conversationId: input.conversationId,
+        userId: input.userId,
+        anonymousSessionId: input.anonymousSessionId,
+        userTier: input.userTier,
+        tier: classification.tier,
+        toolName: call.name,
+        toolOk: result.ok,
+        latencyMs: toolLatency,
+        errorCode: result.ok ? undefined : (result as { error: string }).error,
+      })
       yield { type: "tool_call_end", name: call.name, summary: summary.slice(0, 500), ok: result.ok }
       streamMessages.push({
         role: "assistant", content: roundTextAccumulator,
@@ -191,10 +282,32 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
       messageId: asstMsg.id,
     })
   }
+  logAdvisorEvent({
+    kind: "debit",
+    conversationId: input.conversationId,
+    userId: input.userId,
+    anonymousSessionId: input.anonymousSessionId,
+    userTier: input.userTier,
+    tier: classification.tier,
+    pistons: pistonsToDebit,
+  })
   await touchLastMessage(input.conversationId)
 
   // 8. Cache
   advisorQueryCache.set(userKey, hash, { content: accumulatedText, toolCalls: toolCallSummaries })
+
+  const totalLatency = Date.now() - startedAt
+  logAdvisorEvent({
+    kind: "response",
+    conversationId: input.conversationId,
+    userId: input.userId,
+    anonymousSessionId: input.anonymousSessionId,
+    userTier: input.userTier,
+    tier: classification.tier,
+    model: MODEL_BY_TIER(classification.tier),
+    pistons: pistonsToDebit,
+    latencyMs: totalLatency,
+  })
 
   yield { type: "done", pistonsDebited: pistonsToDebit, messageId: asstMsg.id }
 

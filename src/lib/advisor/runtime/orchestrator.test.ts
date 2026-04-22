@@ -59,6 +59,7 @@ import { runAdvisorTurn } from "./orchestrator"
 describe("runAdvisorTurn (happy path, no tools)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.ADVISOR_ENABLED = "full"
   })
 
   it("streams text and ends with a done event", async () => {
