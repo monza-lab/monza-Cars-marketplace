@@ -12,7 +12,6 @@ import {
   SheetTitle,
   SheetClose,
 } from "@/components/ui/sheet";
-import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useRegion } from "@/lib/RegionContext";
@@ -24,10 +23,11 @@ import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { CurrencyDropdown } from "./CurrencyDropdown";
-import { stripHtml } from "@/lib/stripHtml";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { PistonsWalletModal } from "@/components/advisor/PistonsWalletModal";
+import { AdvisorConversation } from "@/components/advisor/AdvisorConversation";
+import { useAdvisorChatHandoffOptional } from "@/components/advisor/AdvisorHandoffContext";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
@@ -269,326 +269,10 @@ const menuLinkKeys = [
 ] as const;
 
 
-// Response type with optional car context for navigation
-type OracleResponse = {
-  answer: string;
-  chips: OracleChip[];
-  carContext?: { id: string; make: string } | null;
-  brandContext?: string | null;
-};
-
-type OracleChipId =
-  | "viewCarDetails"
-  | "viewFullDetails"
-  | "similarCars"
-  | "browseBrand"
-  | "viewLiveListings"
-  | "browseAll"
-  | "browseByBrand"
-  | "viewAllUnderBudget"
-  | "bestRoiCars"
-  | "setPriceAlert"
-  | "viewAllBrand"
-  | "compareModels"
-  | "setAlerts";
-
-type OracleChip = {
-  id: OracleChipId;
-};
-
-// TODO(i18n): move to messages/*.json — oracle responses currently English-only
-// Generate intelligent response based on query and car data
-function getResponseForQuery(
-  query: string,
-  t: (key: string, values?: any) => string,
-  formatPrice: (usdAmount: number) => string
-): OracleResponse {
-  const lowerQuery = query.toLowerCase();
-
-  // Search for matching cars
-  const matchingCars = searchCars(query);
-
-  // Check for specific query types
-  const isFairValueQuery = lowerQuery.includes("fair value") || lowerQuery.includes("worth") || lowerQuery.includes("price") || lowerQuery.includes("value");
-  const isBudgetQuery = lowerQuery.includes("under") || lowerQuery.includes("below") || lowerQuery.includes("less than") || lowerQuery.includes("budget");
-  const isTrendQuery = lowerQuery.includes("trend") || lowerQuery.includes("appreciation") || lowerQuery.includes("appreciating") || lowerQuery.includes("growing");
-  const isBestQuery = lowerQuery.includes("best") || lowerQuery.includes("top") || lowerQuery.includes("recommend");
-  const isCompareQuery = lowerQuery.includes("compare") || lowerQuery.includes("vs") || lowerQuery.includes("versus") || lowerQuery.includes("difference");
-
-  // Extract budget amount if present
-  const budgetMatch = lowerQuery.match(/(\d+)k|(\d+),?000|(\d+)m/i);
-  let budgetAmount = 0;
-  if (budgetMatch) {
-    if (budgetMatch[1]) budgetAmount = parseInt(budgetMatch[1]) * 1000;
-    else if (budgetMatch[2]) budgetAmount = parseInt(budgetMatch[2].replace(",", "")) * 1000;
-    else if (budgetMatch[3]) budgetAmount = parseInt(budgetMatch[3]) * 1000000;
-  }
-
-  // If specific car(s) found and it's a value/price query
-  if (matchingCars.length === 1 && isFairValueQuery) {
-    const car = matchingCars[0];
-    return {
-      answer: `**${car.title}**
-
-**Market Data:**
-• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
-• Platform: ${car.platform.replace(/_/g, " ")}
-• Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
-• Location: ${car.location}
-
-**Vehicle Specs:**
-• Engine: ${car.engine}
-• Transmission: ${car.transmission}
-• Year: ${car.year}
-
-**About this Vehicle** _(Editorial)_
-${stripHtml(car.thesis)}
-
-_Note: Price data from real auction results. No value estimates._`,
-      chips: [{ id: "viewCarDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
-      carContext: { id: car.id, make: car.make },
-    };
-  }
-
-  // If looking for cars under a budget
-  if (isBudgetQuery && budgetAmount > 0) {
-    const affordableCars = CURATED_CARS.filter(car => car.make !== "Ferrari" && car.currentBid <= budgetAmount)
-      .sort((a, b) => b.trendValue - a.trendValue)
-      .slice(0, 5);
-
-    if (affordableCars.length > 0) {
-      const carList = affordableCars.map(car =>
-        `• **${car.year} ${car.make} ${car.model}** — ${formatPrice(car.currentBid)} (${car.trend})`
-      ).join("\n");
-
-      return {
-        answer: `**Collector Cars Under ${formatPrice(budgetAmount)}**
-
-Based on your budget, here are the top appreciating assets:
-
-${carList}
-
-**Investment Insight:** At this price point, focus on ${affordableCars[0].category} vehicles. The ${affordableCars[0].title} offers the strongest appreciation potential at ${affordableCars[0].trend}.
-
-**Key Considerations:**
-• Prioritize documented history and matching numbers
-• JDM vehicles continue to surge with 25-year import eligibility
-• Manual transmissions command 15-20% premiums over automatics`,
-        chips: [{ id: "viewAllUnderBudget" }, { id: "bestRoiCars" }, { id: "setPriceAlert" }],
-        carContext: null,
-      };
-    }
-  }
-
-  // If asking about trends or appreciation
-  if (isTrendQuery) {
-    const liveCars = CURATED_CARS.filter(c => c.make !== "Ferrari" && (c.status === "ACTIVE" || c.status === "ENDING_SOON"));
-    const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount).slice(0, 5);
-
-    const carList = topBidActivity.map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)} (${car.bidCount} bids)`
-    ).join("\n");
-
-    return {
-      answer: `**Most Active Listings Right Now**
-
-${carList}
-
-**Market Activity:**
-• ${liveCars.length} live listings being tracked
-• Total collection: ${CURATED_CARS.filter(c => c.make !== "Ferrari").length} vehicles
-• Platforms: Bring a Trailer, Cars & Bids, AutoScout24, AutoTrader
-
-**What's Hot** _(Editorial)_
-JDM vehicles and analog supercars continue to attract strong market activity. Manual transmission examples consistently generate more competition.
-
-_Note: Data from real market results. Past performance not indicative of future results._`,
-      chips: [{ id: "viewLiveListings" }, { id: "setAlerts" }, { id: "browseAll" }],
-      carContext: null,
-    };
-  }
-
-  // If multiple cars match (brand/category search)
-  if (matchingCars.length > 1) {
-    const sortedCars = matchingCars.sort((a, b) => b.currentBid - a.currentBid).slice(0, 5);
-    const brandOrCategory = sortedCars[0].make;
-    const liveCars = matchingCars.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
-
-    const carList = sortedCars.map(car =>
-      `• **${car.title}** — ${formatPrice(car.currentBid)} ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "(Live)" : "(Sold)"}`
-    ).join("\n");
-
-    return {
-      answer: `**${brandOrCategory} Collection**
-
-We're tracking ${matchingCars.length} ${brandOrCategory} vehicles:
-
-${carList}
-
-**Market Data:**
-• Live auctions: **${liveCars.length}**
-• Price range: ${formatPrice(Math.min(...sortedCars.map(c => c.currentBid)))}–${formatPrice(Math.max(...sortedCars.map(c => c.currentBid)))}
-• Platforms: ${[...new Set(sortedCars.map(c => c.platform.replace(/_/g, " ")))].slice(0, 3).join(", ")}
-
-**About ${brandOrCategory}** _(Editorial)_
-${sortedCars[0].thesis}
-
-_Data from real auction results._`,
-      chips: [{ id: "viewAllBrand" }, { id: "compareModels" }, { id: "setAlerts" }],
-      brandContext: brandOrCategory,
-    };
-  }
-
-  // Single car match but general question
-  if (matchingCars.length === 1) {
-    const car = matchingCars[0];
-
-    return {
-      answer: `**${car.title}**
-
-**Market Data:**
-• Price: **${formatPrice(car.currentBid)}**${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? ` with ${car.bidCount} bids` : ""}
-• Platform: ${car.platform.replace(/_/g, " ")}
-• Location: ${car.location}
-
-**Vehicle Specs:**
-• Engine: ${car.engine}
-• Transmission: ${car.transmission}
-• Mileage: ${car.mileage.toLocaleString()} ${car.mileageUnit}
-
-**Seller's Notes:** ${stripHtml(car.history)}
-
-**About this Model** _(Editorial)_
-${stripHtml(car.thesis)}`,
-      chips: [{ id: "viewFullDetails" }, { id: "similarCars" }, { id: "browseBrand" }],
-      carContext: { id: car.id, make: car.make },
-    };
-  }
-
-  // Default: Market overview with real data (excluding curated Ferraris)
-  const nonFerrariCurated = CURATED_CARS.filter(c => c.make !== "Ferrari");
-  const totalCars = nonFerrariCurated.length;
-  const liveCars = nonFerrariCurated.filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON");
-  const totalValue = nonFerrariCurated.reduce((sum, c) => sum + c.currentBid, 0);
-  const topBidActivity = liveCars.sort((a, b) => b.bidCount - a.bidCount)[0];
-
-  return {
-    answer: `**Monza Lab Market Overview**
-
-We're tracking ${totalCars} collector vehicles across multiple auction platforms.
-
-**Current Activity:**
-• **${liveCars.length}** live auctions
-• **${totalCars - liveCars.length}** completed sales
-• Total tracked value: **${formatPrice(totalValue)}**
-
-${topBidActivity ? `**Most Active:** ${topBidActivity.title} — ${formatPrice(topBidActivity.currentBid)} with ${topBidActivity.bidCount} bids` : ""}
-
-**Platforms Tracked:**
-• Bring a Trailer • Cars & Bids • Collecting Cars
-
-**Try Asking:**
-• "Show me Porsche under $200K"
-• "What's the price of a Toyota Supra?"
-• "Browse Ferrari collection"
-
-_All prices from real market data._`,
-    chips: [{ id: "viewLiveListings" }, { id: "browseByBrand" }, { id: "setAlerts" }],
-    carContext: null,
-  };
-}
-
-// ─── CHIP ROUTE MAPPING ───
-// Check if chip starts with "View All" for brand-specific navigation
-function getChipRoute(
-  chip: OracleChip,
-  carContext?: { id: string; make: string } | null,
-  brandContext?: string | null
-): string {
-  // Car-specific routes
-  if (carContext) {
-    const makePath = carContext.make.toLowerCase().replace(/\s+/g, "-");
-    if (chip.id === "viewCarDetails" || chip.id === "viewFullDetails") {
-      return `/cars/${makePath}/${carContext.id}`;
-    }
-    if (chip.id === "similarCars") {
-      return `/cars/${makePath}`;
-    }
-    if (chip.id === "browseBrand") {
-      return `/cars/${makePath}`;
-    }
-  }
-
-  // Brand-specific routes
-  if (brandContext) {
-    const makePath = brandContext.toLowerCase().replace(/\s+/g, "-");
-    if (chip.id === "viewAllBrand") {
-      return `/cars/${makePath}`;
-    }
-  }
-
-  // General routes
-  const staticRoutes: Record<OracleChipId, string> = {
-    viewCarDetails: "/",
-    viewFullDetails: "/",
-    similarCars: "/",
-    browseBrand: "/",
-    viewLiveListings: "/auctions",
-    browseAll: "/auctions",
-    browseByBrand: "/cars",
-    viewAllUnderBudget: "/",
-    bestRoiCars: "/?sortBy=trendValue&sortOrder=desc",
-    setPriceAlert: "/alerts",
-    viewAllBrand: "/",
-    compareModels: "/",
-    setAlerts: "/alerts",
-  };
-
-  return staticRoutes[chip.id] || "/";
-}
-
-// Routes that are coming soon (show toast instead of navigating)
-const comingSoonRoutes: Record<string, string> = {
-  "/market-trends": "oracle.comingSoon.marketReport",
-  "/alerts": "oracle.comingSoon.priceAlerts",
-};
-
-// ─── INLINE TOAST COMPONENT ───
-function OracleToast({
-  message,
-  isVisible,
-  onClose,
-}: {
-  message: string;
-  isVisible: boolean;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(onClose, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 rounded-full bg-card border border-primary/20 px-5 py-3 shadow-2xl shadow-black/50 backdrop-blur-xl"
-        >
-          <Scale className="size-4 text-primary" />
-          <span className="text-[13px] font-medium text-foreground">{message}</span>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
 // ─── THE ORACLE OVERLAY ───
+// Delegates to the shared AdvisorConversation component which streams a real
+// AI answer from /api/advisor/message. A "Continue in chat" CTA hands the
+// conversation off to the AdvisorChat modal via the handoff context.
 function OracleOverlay({
   isOpen,
   onClose,
@@ -599,46 +283,16 @@ function OracleOverlay({
   query: string;
 }) {
   const t = useTranslations();
-  const router = useRouter();
-  const { formatPrice } = useCurrency();
-  const [phase, setPhase] = useState<"loading" | "ready">("loading");
-  const [response, setResponse] = useState<OracleResponse | null>(null);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
+  const locale = useLocale();
+  const { profile } = useAuth();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const handoff = useAdvisorChatHandoffOptional();
 
-  // Handle chip click navigation
-  const handleChipClick = (chip: OracleChip) => {
-    if (!response) return;
-    const route = getChipRoute(chip, response.carContext, response.brandContext);
-    if (comingSoonRoutes[route]) {
-      setToastMessage(t(comingSoonRoutes[route]));
-      setShowToast(true);
-    } else {
-      onClose();
-      router.push(route);
-    }
-  };
-
-  const handleToastClose = useCallback(() => setShowToast(false), []);
-
-  // Simple effect: when opens, load after delay
+  // Reset conversation state each time the overlay opens.
   useEffect(() => {
-    if (!isOpen) {
-      setPhase("loading");
-      setResponse(null);
-      return;
-    }
-
-    // Calculate response and show after brief delay
-    const result = getResponseForQuery(query, t, formatPrice);
-    const timer = setTimeout(() => {
-      setResponse(result);
-      setPhase("ready");
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [isOpen, query, t, formatPrice]);
+    if (!isOpen) setConversationId(null);
+  }, [isOpen]);
 
   // Close on ESC
   useEffect(() => {
@@ -656,6 +310,8 @@ function OracleOverlay({
       onClose();
     }
   };
+
+  const userTier: "FREE" | "PRO" = profile?.tier === "PRO" ? "PRO" : "FREE";
 
   return (
     <AnimatePresence>
@@ -680,9 +336,9 @@ function OracleOverlay({
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="fixed left-1/2 -translate-x-1/2 top-28 z-50 w-full max-w-3xl mx-4"
           >
-            <div className="bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+            <div className="bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl shadow-black/50 overflow-hidden flex flex-col max-h-[75vh]">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10 shrink-0">
                 <div className="flex items-center gap-2">
                   <Scale className="size-4 text-primary" />
                   <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-primary">
@@ -698,91 +354,44 @@ function OracleOverlay({
               </div>
 
               {/* Query Echo */}
-              <div className="px-6 pt-4">
+              <div className="px-6 pt-4 shrink-0">
                 <p className="text-[13px] text-muted-foreground">
                   <span className="text-muted-foreground/60">{t("oracle.youAsked")}</span>{" "}
                   <span className="text-foreground">"{query}"</span>
                 </p>
               </div>
 
-              {/* Content */}
-              <div className="px-6 py-5 max-h-[50vh] overflow-y-auto no-scrollbar">
-                {phase === "loading" ? (
-                  // Loading State
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="size-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[14px] text-foreground/70">
-                        {t("oracle.analyzingMarket")}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="h-4 bg-primary/8 rounded animate-pulse w-full" />
-                      <div className="h-4 bg-primary/8 rounded animate-pulse w-5/6" />
-                      <div className="h-4 bg-primary/8 rounded animate-pulse w-4/6" />
-                    </div>
-                  </div>
-                ) : response ? (
-                  // Answer - simple text display (no typewriter)
-                  <div className="prose prose-invert prose-sm max-w-none">
-                    <div className="text-[15px] leading-relaxed text-foreground whitespace-pre-wrap">
-                      {response.answer.split("\n").map((line, i) => {
-                        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-                        return (
-                          <p key={i} className={line.startsWith("•") ? "pl-4 my-1" : "my-3"}>
-                            {parts.map((part, j) => {
-                              if (part.startsWith("**") && part.endsWith("**")) {
-                                return (
-                                  <span key={j} className="font-semibold text-primary">
-                                    {part.slice(2, -2)}
-                                  </span>
-                                );
-                              }
-                              return <span key={j}>{part}</span>;
-                            })}
-                          </p>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
+              {/* AI-streamed conversation */}
+              <div className="flex-1 min-h-[280px] max-h-[50vh]">
+                <AdvisorConversation
+                  conversationId={conversationId}
+                  onConversationIdChanged={setConversationId}
+                  surface="oracle"
+                  locale={locale as "en" | "de" | "es" | "ja"}
+                  userTier={userTier}
+                  autoSendOnMount={query}
+                  compact
+                />
               </div>
 
-              {/* Follow-up Chips */}
-              {response && response.chips.length > 0 && (
-                <div className="px-6 pb-5 pt-2 border-t border-primary/8">
-                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-3">
-                    {t("oracle.relatedActions")}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {response.chips.map((chip, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleChipClick(chip)}
-                        className="flex items-center gap-1.5 rounded-full bg-primary/8 border border-primary/15 px-4 py-2 text-[11px] font-medium text-primary cursor-pointer hover:bg-primary/20 hover:border-primary/30 active:scale-95 transition-all duration-150"
-                      >
-                        {i === 0 && <Car className="size-3" />}
-                        {i === 1 && <BarChart3 className="size-3" />}
-                        {i === 2 && <TrendingUp className="size-3" />}
-                        {chip.id === "viewAllBrand" && response.brandContext
-                          ? t("oracle.chips.viewAllBrand", { brand: response.brandContext })
-                          : t(`oracle.chips.${chip.id}`)}
-                      </button>
-                    ))}
-                  </div>
+              {/* Continue in chat CTA */}
+              {conversationId && (
+                <div className="px-6 pb-5 pt-2 border-t border-primary/8 shrink-0">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      handoff?.startChatForConversation(conversationId);
+                    }}
+                    className="w-full py-2 rounded-xl bg-primary/15 border border-primary/25 text-[12px] font-medium text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    {t("advisor.continueInChat")}
+                  </button>
                 </div>
               )}
             </div>
           </motion.div>
         </>
       )}
-
-      {/* Toast Notification */}
-      <OracleToast
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={handleToastClose}
-      />
     </AnimatePresence>
   );
 }
