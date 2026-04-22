@@ -27,4 +27,11 @@ describe("classifyRequest", () => {
     expect(r.tier).toBe("marketplace")
     expect(r.downgradedFromDeepResearch).toBe(true)
   })
+
+  it("falls back to marketplace (not instant) on classifier failure", async () => {
+    ;(generateJson as any).mockResolvedValue({ ok: false, error: "gemini_503" })
+    const r = await classifyRequest({ userText: "Is this fairly priced at 95k?", hasCarContext: true, userTier: "FREE" })
+    expect(r.tier).toBe("marketplace")
+    expect(r.estimatedPistons).toBe(5)
+  })
 })
