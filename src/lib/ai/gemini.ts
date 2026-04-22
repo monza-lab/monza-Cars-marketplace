@@ -2,7 +2,7 @@
 // Gemini API Client — for investment report analysis
 // ---------------------------------------------------------------------------
 
-import { GoogleGenerativeAI, type Schema } from "@google/generative-ai"
+import { GoogleGenerativeAI, type Content, type Schema } from "@google/generative-ai"
 
 const DEFAULT_MODEL = "gemini-2.5-flash"
 
@@ -191,6 +191,7 @@ export interface StreamMessage {
   role: "user" | "assistant" | "tool"
   content: string
   toolName?: string // when role === "tool"
+  functionCall?: { name: string; args: Record<string, unknown> }
 }
 
 export interface StreamOptions {
@@ -264,12 +265,36 @@ export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<Stre
       : undefined,
   })
 
-  const history = opts.messages.map(m => ({
-    role: m.role === "assistant" ? "model" : m.role === "tool" ? "function" : "user",
-    parts: m.role === "tool"
-      ? [{ functionResponse: { name: m.toolName ?? "tool", response: { content: m.content } } }]
-      : [{ text: m.content }],
-  }))
+  const history: Content[] = opts.messages.map(m => {
+    if (m.role === "tool") {
+      return {
+        role: "function",
+        parts: [{
+          functionResponse: {
+            name: m.toolName ?? "tool",
+            response: { content: m.content },
+          },
+        }],
+      }
+    }
+
+    if (m.role === "assistant" && m.functionCall) {
+      return {
+        role: "model",
+        parts: [{
+          functionCall: {
+            name: m.functionCall.name,
+            args: m.functionCall.args,
+          },
+        }],
+      }
+    }
+
+    return {
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }
+  })
 
   try {
     // Best-effort cancellation: SDK does not accept AbortSignal, so we poll between chunks.

@@ -151,11 +151,38 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
 
   // Compact history: last 10 messages
   const history = (await listMessages(input.conversationId)).slice(-10)
-  const streamMessages: StreamMessage[] = history.map(m => ({
-    role: m.role === "tool" ? "tool" : m.role === "assistant" ? "assistant" : "user",
-    content: m.content,
-    toolName: m.tool_calls?.[0]?.name,
-  }))
+  const streamMessages: StreamMessage[] = []
+  for (const m of history) {
+    if (m.role === "assistant") {
+      if (m.content) {
+        streamMessages.push({ role: "assistant", content: m.content })
+      }
+      for (const call of m.tool_calls ?? []) {
+        streamMessages.push({
+          role: "assistant",
+          content: "",
+          functionCall: { name: call.name, args: call.args },
+        })
+        streamMessages.push({
+          role: "tool",
+          toolName: call.name,
+          content: call.result_summary,
+        })
+      }
+      continue
+    }
+
+    if (m.role === "tool") {
+      streamMessages.push({
+        role: "tool",
+        toolName: m.tool_calls?.[0]?.name ?? "tool",
+        content: m.content,
+      })
+      continue
+    }
+
+    streamMessages.push({ role: "user", content: m.content })
+  }
   streamMessages.push({ role: "user", content: input.userText })
 
   // 5. Append user message
@@ -253,16 +280,61 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
         errorCode: result.ok ? undefined : (result as { error: string }).error,
       })
       yield { type: "tool_call_end", name: call.name, summary: summary.slice(0, 500), ok: result.ok }
-      streamMessages.push({
-        role: "assistant", content: roundTextAccumulator,
-      }, {
-        role: "tool", toolName: call.name, content: summary,
-      })
+      if (roundTextAccumulator) {
+        streamMessages.push({ role: "assistant", content: roundTextAccumulator })
+        roundTextAccumulator = ""
+      }
+      streamMessages.push(
+        {
+          role: "assistant",
+          content: "",
+          functionCall: { name: call.name, args: call.args },
+        },
+        {
+          role: "tool",
+          toolName: call.name,
+          content: summary,
+        },
+      )
     }
 
     if (classification.tier === "deep_research") {
       runningCost += 10 // crude per-round accumulator; retune later with real usage metrics
       yield { type: "deep_research_cost", runningPistons: runningCost, toolsUsed: [...toolsUsed] }
+    }
+  }
+
+  // If the model spent every available round on tools, give it one final
+  // synthesis pass with tools disabled so the user still gets an answer.
+  if (!accumulatedText.trim() && toolCallSummaries.length > 0) {
+    const synthesisStream = streamWithTools({
+      model: MODEL_BY_TIER(classification.tier),
+      systemPrompt: skill.systemPrompt.replace("{{locale}}", input.locale),
+      messages: streamMessages,
+      tools: [],
+      temperature: skill.temperature,
+    })
+
+    for await (const ev of synthesisStream) {
+      if (ev.type === "text") {
+        accumulatedText += ev.delta
+        yield { type: "content_delta", delta: ev.delta }
+      } else if (ev.type === "error") {
+        logAdvisorEvent({
+          kind: "error",
+          conversationId: input.conversationId,
+          userId: input.userId,
+          anonymousSessionId: input.anonymousSessionId,
+          userTier: input.userTier,
+          tier: classification.tier,
+          model: MODEL_BY_TIER(classification.tier),
+          latencyMs: Date.now() - startedAt,
+          errorCode: "llm_error",
+          message: ev.message,
+        })
+        yield { type: "error", code: "llm_error", message: ev.message }
+        return
+      }
     }
   }
 

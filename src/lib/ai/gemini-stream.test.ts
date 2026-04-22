@@ -34,6 +34,49 @@ describe("streamWithTools", () => {
     expect(events.join("")).toBe("Hello world")
   })
 
+  it("sends function-call history back to Gemini for the follow-up turn", async () => {
+    const seenRequests: any[] = []
+    mockGenerateContentStream.mockImplementation(async (request: any) => {
+      seenRequests.push(request)
+      return {
+        stream: (async function* () {
+          yield { text: () => "" }
+        })(),
+        response: Promise.resolve({ functionCalls: () => [] }),
+      }
+    })
+
+    const tools: ToolDefinition[] = []
+    for await (const _ of streamWithTools({
+      model: "gemini-2.5-flash",
+      systemPrompt: "sys",
+      messages: [
+        { role: "assistant", content: "", functionCall: { name: "search_listings", args: { query: "gt3" } } },
+        { role: "tool", toolName: "search_listings", content: "Found 3 listings" },
+        { role: "user", content: "Now summarize them" },
+      ],
+      tools,
+    })) {
+      void _
+    }
+
+    expect(seenRequests).toHaveLength(1)
+    expect(seenRequests[0].contents).toEqual([
+      {
+        role: "model",
+        parts: [{ functionCall: { name: "search_listings", args: { query: "gt3" } } }],
+      },
+      {
+        role: "function",
+        parts: [{ functionResponse: { name: "search_listings", response: { content: "Found 3 listings" } } }],
+      },
+      {
+        role: "user",
+        parts: [{ text: "Now summarize them" }],
+      },
+    ])
+  })
+
   it("emits a tool_call event when the model invokes a function", async () => {
     mockGenerateContentStream.mockResolvedValue({
       stream: (async function* () {

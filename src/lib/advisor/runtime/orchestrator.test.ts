@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
+const { streamWithToolsMock } = vi.hoisted(() => ({
+  streamWithToolsMock: vi.fn(),
+}))
+
 vi.mock("@/lib/ai/gemini", () => ({
-  streamWithTools: vi.fn(async function* () {
-    yield { type: "text", delta: "The 997.2 GT3 is " }
-    yield { type: "text", delta: "a Mezger-engined GT car." }
-  }),
+  streamWithTools: streamWithToolsMock,
   generateJson: vi.fn().mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" }),
 }))
 
@@ -49,8 +50,8 @@ vi.mock("./grace", () => ({
 vi.mock("@/lib/advisor/tools", () => ({
   buildDefaultToolRegistry: () => ({
     register: () => {},
-    listForTier: () => [],
-    invoke: async () => ({ ok: false, error: "noop" }),
+    listForTier: () => [{ name: "list_knowledge_topics", description: "", parameters: { type: "object", properties: {} } }],
+    invoke: async () => ({ ok: true, summary: "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled", data: {} }),
   }),
 }))
 
@@ -60,6 +61,10 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.ADVISOR_ENABLED = "full"
+    streamWithToolsMock.mockImplementation(async function* () {
+      yield { type: "text", delta: "The 997.2 GT3 is " }
+      yield { type: "text", delta: "a Mezger-engined GT car." }
+    })
   })
 
   it("streams text and ends with a done event", async () => {
@@ -79,5 +84,60 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
     expect(events[0]).toBe("classified")
     expect(events).toContain("content_delta")
     expect(events[events.length - 1]).toBe("done")
+  })
+})
+
+describe("runAdvisorTurn (tool follow-up)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.ADVISOR_ENABLED = "full"
+  })
+
+  it("feeds the tool call back into the next Gemini round and yields a final answer", async () => {
+    streamWithToolsMock
+      .mockImplementationOnce(async function* () {
+        yield { type: "tool_call", name: "list_knowledge_topics", args: { category: "engine" } }
+      })
+      .mockImplementationOnce(async function* () {
+        yield { type: "tool_call", name: "list_knowledge_topics", args: { query: "IMS bearing" } }
+      })
+      .mockImplementationOnce(async function* () {
+        yield { type: "text", delta: "IMSベアリングはエンジン内部の中間軸ベアリングです。" }
+      })
+
+    const events: string[] = []
+    for await (const ev of runAdvisorTurn({
+      userText: "Was ist ein IMS-Lager?",
+      conversationId: "conv-2",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "u1",
+      anonymousSessionId: null,
+      locale: "de",
+      initialContext: null,
+    })) {
+      events.push(ev.type)
+    }
+
+    expect(events).toContain("tool_call_start")
+    expect(events).toContain("content_delta")
+    expect(events[events.length - 1]).toBe("done")
+    expect(streamWithToolsMock).toHaveBeenCalledTimes(3)
+
+    const secondCall = streamWithToolsMock.mock.calls[1]?.[0]
+    expect(secondCall?.messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: "assistant",
+        functionCall: {
+          name: "list_knowledge_topics",
+          args: { category: "engine" },
+        },
+      }),
+      expect.objectContaining({
+        role: "tool",
+        toolName: "list_knowledge_topics",
+        content: "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled",
+      }),
+    ]))
   })
 })
