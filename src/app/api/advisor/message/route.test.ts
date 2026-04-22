@@ -45,4 +45,16 @@ describe("POST /api/advisor/message", () => {
     expect(text).toContain("content_delta")
     expect(text).toContain("done")
   })
+
+  it("still streams for anonymous users when the anon secret is missing", async () => {
+    vi.stubEnv("ADVISOR_ANON_SECRET", "")
+    const req = new NextRequest("http://localhost/api/advisor/message", {
+      method: "POST",
+      body: JSON.stringify({ content: "hi", surface: "chat" }),
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(200)
+    const text = await res.text()
+    expect(text).toContain("classified")
+  })
 })

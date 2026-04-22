@@ -2,28 +2,44 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto"
 
 const COOKIE_NAME = "monza_advisor_anon"
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 180 // 180 days
+const MIN_SECRET_LENGTH = 32
 
-function getSecret(): string {
+let warnedMissingSecret = false
+
+function getSecret(): string | null {
   const s = process.env.ADVISOR_ANON_SECRET
-  if (!s || s.length < 32) throw new Error("ADVISOR_ANON_SECRET missing or too short (>= 32 chars required)")
-  return s
+  if (s && s.length >= MIN_SECRET_LENGTH) return s
+  if (!warnedMissingSecret) {
+    warnedMissingSecret = true
+    console.warn("[advisor] ADVISOR_ANON_SECRET missing or too short; anonymous sessions will use unsigned fallback ids")
+  }
+  return null
 }
 
-function sign(payload: string): string {
-  return createHmac("sha256", getSecret()).update(payload).digest("base64url")
+function sign(payload: string, secret: string): string {
+  return createHmac("sha256", secret).update(payload).digest("base64url")
 }
 
 export function mintAnonymousSession(): string {
   const id = randomBytes(16).toString("base64url")
-  const sig = sign(id)
+  const secret = getSecret()
+  if (!secret) return id
+  const sig = sign(id, secret)
   return `${id}.${sig}`
 }
 
 export function verifyAnonymousSession(cookieValue: string | null | undefined): string | null {
   if (!cookieValue) return null
+  const secret = getSecret()
+  if (!secret) {
+    const trimmed = cookieValue.trim()
+    if (!trimmed) return null
+    const [id] = trimmed.split(".")
+    return id || null
+  }
   const [id, sig] = cookieValue.split(".")
   if (!id || !sig) return null
-  const expected = sign(id)
+  const expected = sign(id, secret)
   try {
     const a = Buffer.from(sig, "base64url")
     const b = Buffer.from(expected, "base64url")

@@ -28,7 +28,7 @@ All four routes render the same `<AdvisorConversation>` component. Only the oute
 
 1. User lands on site → server hasn't minted anything yet.
 2. User types a question in the header search or visits `/advisor`.
-3. POST `/api/advisor/message` — route detects no `Authorization` cookie, mints a signed HTTP-only cookie `monza_advisor_anon=<id>.<hmac>` (180-day expiry).
+3. POST `/api/advisor/message` — route detects no authenticated user, then mints an anonymous HTTP-only cookie. If `ADVISOR_ANON_SECRET` is configured, the cookie is signed as `monza_advisor_anon=<id>.<hmac>`; otherwise the server falls back to an opaque unsigned session id so anonymous chat still works.
 4. Orchestrator creates an `advisor_conversations` row with `anonymous_session_id = <id>` and `user_id = NULL`.
 5. Classifier runs, tier emits, tools run, text streams, conversation persists. Anon users debit 0 Pistons (audit-only rows in `credit_transactions`).
 6. User can continue the conversation across page reloads because the cookie sticks.

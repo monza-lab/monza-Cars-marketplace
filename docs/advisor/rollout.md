@@ -138,7 +138,7 @@ route). Anonymous conversations remain in the DB but become read-only.
 ## Cross-stage safety valves
 
 - `ADVISOR_ENABLED=internal` with an empty `ADVISOR_INTERNAL_USER_IDS` =
-  off for everyone. This is the emergency kill switch — no deploy needed.
+  off for signed-in users. Anonymous chat still depends on `/api/advisor/message` being able to mint a session; set `ADVISOR_ANON_SECRET` in Vercel for signed cookies, or rely on the current unsigned fallback if you need conversion traffic unblocked. This is the emergency kill switch for the rollout gate — no deploy needed.
 - The observability logger (`logAdvisorEvent`) emits a `response` event
   on every successful turn and an `error` event on every failure. Wire
   these to your alerting surface of choice (Datadog monitor, Vercel log

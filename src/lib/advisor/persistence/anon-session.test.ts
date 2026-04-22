@@ -16,4 +16,12 @@ describe("anonymous session cookie", () => {
     const v = mintAnonymousSession()
     expect(verifyAnonymousSession(v.slice(0, -2) + "xx")).toBeNull()
   })
+
+  it("falls back to unsigned ids when the secret is missing", () => {
+    vi.stubEnv("ADVISOR_ANON_SECRET", "")
+    const value = mintAnonymousSession()
+    expect(value).not.toContain(".")
+    expect(verifyAnonymousSession(value)).toBe(value)
+    expect(verifyAnonymousSession(`${value}.legacy.sig`)).toBe(value)
+  })
 })
