@@ -12,6 +12,7 @@ import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
+import { AdvisorHandoffProvider } from "@/components/advisor/AdvisorHandoffContext";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -84,12 +85,14 @@ export default async function LocaleLayout({
         <AuthProvider>
           <RegionProvider>
             <CurrencyProvider>
-              <OrganizationJsonLd />
-              <ClientHeader />
-              <main>{children}</main>
-              <MobileBottomNav />
-              <OnboardingModal />
-              <AppFooter />
+              <AdvisorHandoffProvider>
+                <OrganizationJsonLd />
+                <ClientHeader />
+                <main>{children}</main>
+                <MobileBottomNav />
+                <OnboardingModal />
+                <AppFooter />
+              </AdvisorHandoffProvider>
             </CurrencyProvider>
           </RegionProvider>
         </AuthProvider>

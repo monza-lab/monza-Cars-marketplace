@@ -18,6 +18,7 @@ import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } fr
 import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
+import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
 import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters } from "@/components/filters/AdvancedFilters"
@@ -134,6 +135,10 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [sortBy, setSortBy] = useState("price-desc")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
+  const { openChatConversationId } = useAdvisorChatHandoff()
+  useEffect(() => {
+    if (openChatConversationId) setShowAdvisorChat(true)
+  }, [openChatConversationId])
   const [expandedModel, setExpandedModel] = useState<Model | null>(null)
   const [activeFilters, setActiveFilters] = useState<FamilyFilters | null>(null)
   const [viewMode, setViewMode] = useState<'families' | 'generations' | 'cars'>(initialFamily ? 'cars' : 'families')
@@ -1458,6 +1463,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         open={showAdvisorChat}
         onOpenChange={setShowAdvisorChat}
         initialContext={{ make }}
+        conversationId={openChatConversationId ?? null}
       />
     </>
   )

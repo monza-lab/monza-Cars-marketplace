@@ -45,6 +45,7 @@ import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
+import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
@@ -810,6 +811,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
   const [showSticky, setShowSticky] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
+  const { openChatConversationId } = useAdvisorChatHandoff()
+  useEffect(() => {
+    if (openChatConversationId) setShowAdvisorChat(true)
+  }, [openChatConversationId])
   const [gateName, setGateName] = useState("")
   const [gateEmail, setGateEmail] = useState("")
   const [gateErrors, setGateErrors] = useState<{ name?: boolean; email?: boolean }>({})
@@ -2108,6 +2113,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       <AdvisorChat
         open={showAdvisorChat}
         onOpenChange={setShowAdvisorChat}
+        conversationId={openChatConversationId ?? null}
         initialContext={{
           car,
           make: car.make,
