@@ -39,8 +39,13 @@ const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
  * - "full"       → everyone
  * - "free_beta"  → FREE + PRO (anonymous excluded)
  * - "internal"   → only userIds listed in ADVISOR_INTERNAL_USER_IDS (csv)
+ *
+ * Anonymous users are always allowed through this gate because the advisor is
+ * a conversion surface. The API route still enforces identity/session checks
+ * before any DB writes.
  */
 function advisorEnabledFor(userTier: "FREE" | "PRO", userId: string): boolean {
+  if (userId === "") return true
   const flag = process.env.ADVISOR_ENABLED ?? "internal"
   if (flag === "full") return true
   if (flag === "free_beta") return userTier === "FREE" || userTier === "PRO"

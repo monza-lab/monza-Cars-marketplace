@@ -135,7 +135,7 @@ For each user message, the orchestrator (`src/lib/advisor/runtime/orchestrator.t
 
 **Timeouts:** total 60s, per-tool 10s. Each tool runs behind a `Promise.race` with a timeout fallback. Total-timeout trigger yields `error { code: "timeout" }` and returns.
 
-**Feature flag:** env `ADVISOR_ENABLED` = `internal` | `free_beta` | `full`. Gate evaluates **before** anything else and yields `error { code: "feature_disabled" }` when blocked.
+**Feature flag:** env `ADVISOR_ENABLED` = `internal` | `free_beta` | `full`. Gate evaluates **before** anything else for signed-in users and yields `error { code: "feature_disabled" }` when blocked. Anonymous users are allowed through so the advisor can act as a conversion surface.
 
 ---
 

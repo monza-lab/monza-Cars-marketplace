@@ -87,6 +87,35 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
   })
 })
 
+describe("runAdvisorTurn (anonymous access)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.ADVISOR_ENABLED = "internal"
+    streamWithToolsMock.mockImplementation(async function* () {
+      yield { type: "text", delta: "Anonymous access works." }
+    })
+  })
+
+  it("allows anonymous users through the gate even when rollout is internal", async () => {
+    const events: string[] = []
+    for await (const ev of runAdvisorTurn({
+      userText: "hi",
+      conversationId: "conv-anon",
+      surface: "chat",
+      userTier: "FREE",
+      userId: null,
+      anonymousSessionId: "anon-1",
+      locale: "en",
+      initialContext: null,
+    })) {
+      events.push(ev.type)
+    }
+
+    expect(events).toContain("content_delta")
+    expect(events[events.length - 1]).toBe("done")
+  })
+})
+
 describe("runAdvisorTurn (tool follow-up)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
