@@ -75,6 +75,14 @@ export function useAdvisorStream(opts: UseAdvisorStreamOptions) {
     } catch (err) {
       setMessages(prev => prev.map(m => m.id === asstMsg.id ? { ...m, content: `[error] ${err instanceof Error ? err.message : String(err)}`, isStreaming: false } : m))
     } finally {
+      // Ensure the assistant bubble exits the streaming state even if the server
+      // ended the stream without a `done` event (e.g. orchestrator emitted an
+      // error and returned, or the connection dropped mid-flight).
+      setMessages(prev => prev.map(m =>
+        m.id === asstMsg.id && m.isStreaming
+          ? { ...m, isStreaming: false, content: m.content || "No response. Please try again." }
+          : m
+      ))
       setIsStreaming(false)
       abortRef.current = null
     }
@@ -88,6 +96,14 @@ export function useAdvisorStream(opts: UseAdvisorStreamOptions) {
           case "tool_call_start": return { ...m, toolCalls: [...(m.toolCalls ?? []), { name: ev.name, args: ev.args }] }
           case "tool_call_end":   return { ...m, toolCalls: (m.toolCalls ?? []).map(tc => tc.name === ev.name && !tc.summary ? { ...tc, summary: ev.summary, ok: ev.ok } : tc) }
           case "done":            return { ...m, pistonsDebited: ev.pistonsDebited, id: ev.messageId, isStreaming: false }
+          case "error": {
+            const friendly =
+              ev.code === "feature_disabled" ? "The advisor is in limited rollout and isn't enabled for your account yet."
+              : ev.code === "timeout"        ? "The advisor took too long to respond. Please try again."
+              : ev.code === "llm_error"      ? `The model returned an error: ${ev.message}`
+              : `Something went wrong: ${ev.message}`
+            return { ...m, content: friendly, isStreaming: false }
+          }
           default:                return m
         }
       }))
