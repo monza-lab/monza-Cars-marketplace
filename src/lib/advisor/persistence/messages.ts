@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export type MessageRole = "user" | "assistant" | "tool"
 export type TierClassification = "instant" | "marketplace" | "deep_research"
@@ -35,7 +35,7 @@ export interface AppendMessageInput {
 }
 
 export async function appendMessage(input: AppendMessageInput): Promise<AdvisorMessageRow> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const row = {
     conversation_id: input.conversationId,
     role: input.role,
@@ -67,7 +67,7 @@ export async function listMessages(conversationId: string): Promise<AdvisorMessa
 }
 
 export async function supersedeLastAssistant(conversationId: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase
     .from("advisor_messages")
     .update({ is_superseded: true })

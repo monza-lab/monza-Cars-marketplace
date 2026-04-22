@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export type AdvisorSurface = "oracle" | "chat" | "page"
 export type AdvisorLocale = "en" | "de" | "es" | "ja"
@@ -31,7 +31,7 @@ export interface CreateConversationInput {
 }
 
 export async function createConversation(input: CreateConversationInput): Promise<AdvisorConversation> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const row = {
     user_id: input.userId ?? null,
     anonymous_session_id: input.anonymousSessionId ?? null,
@@ -89,7 +89,7 @@ export async function listConversationsForUser(userId: string, limit = 50): Prom
 }
 
 export async function touchLastMessage(id: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase
     .from("advisor_conversations")
     .update({ last_message_at: new Date().toISOString(), updated_at: new Date().toISOString() })
@@ -97,7 +97,7 @@ export async function touchLastMessage(id: string): Promise<void> {
 }
 
 export async function archiveConversation(id: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase
     .from("advisor_conversations")
     .update({ is_archived: true })
@@ -105,19 +105,19 @@ export async function archiveConversation(id: string): Promise<void> {
 }
 
 export async function rotateShareToken(id: string): Promise<string> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const token = randomBytes(10).toString("base64url")
   await supabase.from("advisor_conversations").update({ share_token: token }).eq("id", id)
   return token
 }
 
 export async function revokeShareToken(id: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase.from("advisor_conversations").update({ share_token: null }).eq("id", id)
 }
 
 export async function mergeAnonymousToUser(anonymousSessionId: string, userId: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase
     .from("advisor_conversations")
     .update({ user_id: userId, anonymous_session_id: null })

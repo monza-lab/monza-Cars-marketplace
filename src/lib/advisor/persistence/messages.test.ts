@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest"
 import { appendMessage, listMessages, supersedeLastAssistant } from "./messages"
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: () => ({
+vi.mock("@/lib/supabase/server", () => {
+  const mk = () => ({
     from: () => ({
       insert: (row: unknown) => ({
         select: () => ({
@@ -12,8 +12,9 @@ vi.mock("@/lib/supabase/server", () => ({
       select: () => ({ eq: () => ({ order: () => ({ async then(res: (v: unknown) => void) { res({ data: [], error: null }) } }) }) }),
       update: () => ({ eq: () => ({ eq: () => ({ async then(res: (v: unknown) => void) { res({ data: null, error: null }) } }) }) }),
     }),
-  }),
-}))
+  })
+  return { createClient: mk, createAdminClient: mk }
+})
 
 describe("appendMessage", () => {
   it("persists a user message and returns an id", async () => {

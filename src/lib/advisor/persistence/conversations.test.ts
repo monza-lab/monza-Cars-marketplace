@@ -9,8 +9,8 @@ import {
   type CreateConversationInput,
 } from "./conversations"
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: () => ({
+vi.mock("@/lib/supabase/server", () => {
+  const mk = () => ({
     from: () => ({
       insert: (row: unknown) => ({
         select: () => ({
@@ -25,8 +25,9 @@ vi.mock("@/lib/supabase/server", () => ({
       }),
       update: () => ({ eq: () => ({ async then(res: (v: unknown) => void) { res({ data: null, error: null }) } }) }),
     }),
-  }),
-}))
+  })
+  return { createClient: mk, createAdminClient: mk }
+})
 
 describe("createConversation", () => {
   it("inserts a row with the provided surface + locale", async () => {
