@@ -36,10 +36,10 @@ export function OutOfReportsModal({
             <Coins className="size-5 text-primary" />
           </div>
           <DialogTitle className="text-[17px] font-bold text-foreground">
-            You&apos;ve used your 3 Free Reports this month
+            You&apos;ve used your 300 Free Pistons this month
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-[13px]">
-            Your next reset is {formattedDate}. Upgrade now to keep analyzing Porsches.
+            Your next reset is {formattedDate}. Upgrade now or top up to keep generating reports.
           </DialogDescription>
         </DialogHeader>
 
@@ -49,14 +49,14 @@ export function OutOfReportsModal({
             onClick={() => onOpenChange(false)}
             className="block w-full py-3 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary/80 transition-colors text-center"
           >
-            Go Unlimited — $59/mo · Reports + Watchlist + Alerts
+            Go Unlimited — $59/mo · unlimited reports
           </Link>
           <Link
             href="/pricing"
             onClick={() => onOpenChange(false)}
             className="block w-full py-3 rounded-xl bg-foreground/6 border border-border text-[13px] font-medium hover:bg-foreground/10 transition-colors text-center"
           >
-            Or buy a Pack of 5 that never expires — $39
+            Or buy Pistons that never expire — from $9.99
           </Link>
         </div>
       </DialogContent>

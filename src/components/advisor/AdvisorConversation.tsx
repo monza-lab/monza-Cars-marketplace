@@ -26,6 +26,7 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
   const t = useTranslations()
   const [input, setInput] = useState("")
   const [deepResearch, setDeepResearch] = useState(false)
+  const deepResearchCost = 500
   const endRef = useRef<HTMLDivElement>(null)
   const stream = useAdvisorStream({
     conversationId: props.conversationId,
@@ -110,7 +111,11 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
                 className="accent-primary"
               />
               <Sparkles className="size-3 text-primary" />
-              <span className="text-foreground/80">{t("auth.pistons.tierPillDeepResearch")}</span>
+              <span className="text-foreground/80">
+                {canDeepResearch
+                  ? `${t("auth.pistons.tierPillDeepResearch")} · 500 Pistons`
+                  : t("auth.pistons.tierPillDeepResearch")}
+              </span>
             </label>
             {!canDeepResearch && <span className="text-[10px] text-muted-foreground">PRO only</span>}
           </div>
@@ -132,8 +137,9 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
               onClick={() => void handleSend()}
               disabled={!input.trim() || stream.isStreaming}
               className="size-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center disabled:opacity-30 hover:bg-primary/25"
+              aria-label={deepResearch ? `Send · ${deepResearchCost} Pistons` : "Send"}
             >
-              <Send className="size-4 text-primary" />
+              {deepResearch ? <span className="text-[10px] font-semibold text-primary">500</span> : <Send className="size-4 text-primary" />}
             </button>
           </div>
         </div>

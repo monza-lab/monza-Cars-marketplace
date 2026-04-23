@@ -18,7 +18,8 @@ import type {
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
 
-const FREE_CREDITS_PER_MONTH = 3
+const DEFAULT_MONTHLY_PISTONS = 300
+const REPORT_PISTON_COST = 100
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -234,10 +235,13 @@ export async function getOrCreateUser(
       supabase_user_id: supabaseUserId,
       email,
       display_name: displayName ?? null,
-      credits_balance: FREE_CREDITS_PER_MONTH,
+      credits_balance: DEFAULT_MONTHLY_PISTONS,
       pack_credits_balance: 0,
       free_credits_used: 0,
       tier: "FREE",
+      subscription_plan_key: null,
+      monthly_allowance_pistons: DEFAULT_MONTHLY_PISTONS,
+      unlimited_reports: false,
       credit_reset_date: new Date().toISOString(),
       stripe_customer_id: null,
       stripe_subscription_id: null,
@@ -263,7 +267,7 @@ export async function getOrCreateUser(
   // Log welcome credits transaction
   await supabase.from("credit_transactions").insert({
     user_id: created.id,
-    amount: FREE_CREDITS_PER_MONTH,
+    amount: DEFAULT_MONTHLY_PISTONS,
     type: "FREE_MONTHLY",
     description: "Welcome credits",
   })
@@ -295,12 +299,16 @@ export async function checkAndResetFreeCredits(
 
   if (monthsSinceReset < 1) return user as UserCreditsRow
 
+  const monthlyAllowance = user.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS
+
   const { data: updated, error } = await supabase
     .from("user_credits")
     .update({
-      credits_balance: user.credits_balance + FREE_CREDITS_PER_MONTH,
+      credits_balance: monthlyAllowance,
+      monthly_allowance_pistons: monthlyAllowance,
       credit_reset_date: now.toISOString(),
       updated_at: now.toISOString(),
+      free_credits_used: 0,
     })
     .eq("id", userId)
     .select("*")
@@ -310,9 +318,9 @@ export async function checkAndResetFreeCredits(
 
   await supabase.from("credit_transactions").insert({
     user_id: userId,
-    amount: FREE_CREDITS_PER_MONTH,
+    amount: monthlyAllowance,
     type: "FREE_MONTHLY",
-    description: `Monthly free credits - ${now.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
+    description: `Monthly Pistons grant - ${now.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
   })
 
   return (updated ?? user) as UserCreditsRow
@@ -353,33 +361,37 @@ export async function deductCredit(
 
   if (!user) return { success: false, error: "USER_NOT_FOUND" }
 
-  const isUnlimited = user.tier === "MONTHLY" || user.tier === "ANNUAL"
-  const hasPackCredits = (user.pack_credits_balance ?? 0) > 0
-  if (!isUnlimited && !hasPackCredits && user.credits_balance < 1) {
+  const isUnlimited = Boolean(user.unlimited_reports) || user.tier === "MONTHLY" || user.tier === "ANNUAL"
+  const cost = isUnlimited ? 0 : REPORT_PISTON_COST
+  const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
+  if (!isUnlimited && totalBalance < cost) {
     return { success: false, error: "INSUFFICIENT_CREDITS" }
   }
 
-  // Deduct credit
-  if (!isUnlimited) {
-    const updatePayload: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
+  const debitAmount = cost
+  if (debitAmount > 0) {
+    try {
+      const { debitCredits } = await import("@/lib/advisor/persistence/ledger")
+      await debitCredits({
+        supabaseUserId: user.supabase_user_id,
+        amount: debitAmount,
+        type: "REPORT_USED",
+        conversationId: null,
+        messageId: null,
+        description: `Report for listing ${listingId}`,
+      })
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : "DEBIT_FAILED" }
     }
-
-    if (hasPackCredits) {
-      updatePayload.pack_credits_balance = user.pack_credits_balance - 1
-    } else {
-      updatePayload.credits_balance = user.credits_balance - 1
-      if (user.tier === "FREE") {
-        updatePayload.free_credits_used = user.free_credits_used + 1
-      }
-    }
-
-    const { error: updateError } = await supabase
-      .from("user_credits")
-      .update(updatePayload)
-      .eq("id", userId)
-
-    if (updateError) return { success: false, error: updateError.message }
+  } else {
+    await supabase.from("credit_transactions").insert({
+      user_id: userId,
+      amount: 0,
+      type: "REPORT_USED",
+      description: `Unlimited report access for listing ${listingId}`,
+      listing_id: listingId,
+      stripe_payment_id: null,
+    })
   }
 
   // Record the report access
@@ -389,42 +401,26 @@ export async function deductCredit(
       user_id: userId,
       listing_id: listingId,
       report_id: reportId,
-      credit_cost: isUnlimited ? 0 : 1,
+      credit_cost: debitAmount,
     })
 
   if (reportError && reportError.code === "23505") {
-    // Already recorded — restore credit
-    if (!isUnlimited) {
-      const restorePayload: Record<string, unknown> = {
-        updated_at: new Date().toISOString(),
-      }
-
-      if (hasPackCredits) {
-        restorePayload.pack_credits_balance = user.pack_credits_balance
-      } else {
-        restorePayload.credits_balance = user.credits_balance
-      }
-
-      await supabase
-        .from("user_credits")
-        .update(restorePayload)
-        .eq("id", userId)
+    // Already recorded — refund the debit so the ledger and balance stay aligned.
+    if (debitAmount > 0) {
+      const { debitCredits } = await import("@/lib/advisor/persistence/ledger")
+      await debitCredits({
+        supabaseUserId: user.supabase_user_id,
+        amount: debitAmount,
+        type: "ADVISOR_REFUND",
+        conversationId: null,
+        messageId: null,
+        description: `Refund for duplicate report ${listingId}`,
+      })
     }
     return { success: true, creditUsed: 0, cached: true }
   }
 
-  if (!isUnlimited) {
-    // Log transaction
-    await supabase.from("credit_transactions").insert({
-      user_id: userId,
-      amount: -1,
-      type: "REPORT_USED",
-      description: `Report for listing ${listingId}`,
-      listing_id: listingId,
-    })
-  }
-
-  return { success: true, creditUsed: 1, cached: false }
+  return { success: true, creditUsed: debitAmount, cached: false }
 }
 
 export async function getUserCredits(
@@ -460,7 +456,8 @@ export async function addPurchasedCredits(
   const { data: updated, error } = await supabase
     .from("user_credits")
     .update({
-      credits_balance: user.credits_balance + amount,
+      pack_credits_balance: (user.pack_credits_balance ?? 0) + amount,
+      tier: user.tier === "FREE" ? "PACK_OWNER" : user.tier,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)
@@ -472,8 +469,8 @@ export async function addPurchasedCredits(
   await supabase.from("credit_transactions").insert({
     user_id: userId,
     amount,
-    type: "PURCHASE",
-    description: `Purchased ${amount} credits`,
+    type: "STRIPE_PACK_PURCHASE",
+    description: `Purchased ${amount} Pistons`,
     stripe_payment_id: stripePaymentId ?? null,
   })
 
@@ -529,7 +526,7 @@ export async function grantStripePurchase(
   userId: string,
   amount: number,
   stripePaymentId: string,
-  planId: "single" | "pack",
+  planId: string,
   stripeCustomerId?: string | null,
 ): Promise<UserCreditsRow> {
   const supabase = getServiceClient()
@@ -581,8 +578,7 @@ export async function grantStripePurchase(
     user_id: userId,
     amount,
     type: "STRIPE_PACK_PURCHASE",
-    description:
-      planId === "single" ? "Purchased 1 report" : `Purchased ${amount} reports`,
+    description: `${planId} top-up of ${amount} Pistons`,
     stripe_payment_id: stripePaymentId,
   })
 
@@ -599,6 +595,9 @@ export async function activateStripeSubscription(
     subscriptionStatus: string | null
     subscriptionPeriodEnd: string | null
     stripePaymentId: string
+    subscriptionPlanKey?: string | null
+    monthlyAllowancePistons?: number | null
+    unlimitedReports?: boolean | null
   },
 ): Promise<UserCreditsRow> {
   const supabase = getServiceClient()
@@ -621,8 +620,11 @@ export async function activateStripeSubscription(
   const { data, error } = await supabase
     .from("user_credits")
     .update({
-      tier: "MONTHLY",
-      credits_balance: 0,
+      tier: "PRO",
+      subscription_plan_key: params.subscriptionPlanKey ?? "rennsport",
+      monthly_allowance_pistons: params.monthlyAllowancePistons ?? 10000,
+      unlimited_reports: params.unlimitedReports ?? false,
+      credits_balance: params.monthlyAllowancePistons ?? 10000,
       stripe_customer_id: params.stripeCustomerId,
       stripe_subscription_id: params.stripeSubscriptionId,
       subscription_status: params.subscriptionStatus,
@@ -639,9 +641,9 @@ export async function activateStripeSubscription(
 
   const { error: txError } = await supabase.from("credit_transactions").insert({
     user_id: userId,
-    amount: 0,
+    amount: params.monthlyAllowancePistons ?? 10000,
     type: "STRIPE_SUBSCRIPTION_ACTIVATION",
-    description: "Activated Stripe subscription",
+    description: `Activated Stripe subscription (${params.subscriptionPlanKey ?? "rennsport"})`,
     stripe_payment_id: params.stripePaymentId,
   })
 
@@ -712,13 +714,14 @@ export async function deactivateStripeSubscription(
   }
 
   const nextTier = (current.pack_credits_balance ?? 0) > 0 ? "PACK_OWNER" : "FREE"
-  const nextCredits = Math.max(current.credits_balance, FREE_CREDITS_PER_MONTH)
 
   const { data, error: updateError } = await supabase
     .from("user_credits")
     .update({
       tier: nextTier,
-      credits_balance: nextCredits,
+      subscription_plan_key: null,
+      monthly_allowance_pistons: DEFAULT_MONTHLY_PISTONS,
+      unlimited_reports: false,
       stripe_subscription_id: null,
       subscription_status: "canceled",
       subscription_period_end: null,

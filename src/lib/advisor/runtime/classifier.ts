@@ -21,6 +21,28 @@ const PISTONS_BY_TIER: Record<Tier, number> = {
   deep_research: 25,
 }
 
+const DEEP_RESEARCH_RE = /(?:\bshortlist\b|\brank\b|\bcompare\b|\btop\s+\d+\b|\bwhich of these\b|\bside by side\b|\bvs\.?\b|\bbest value across\b|\bmulti[- ]car\b)/i
+const MARKETPLACE_RE = /(?:\bprice\b|\bfair value\b|\bfairly priced\b|\bworth\b|\bcost\b|\bcomps\b|\blistings?\b|\bfor sale\b|\bon the market\b|\bavailable\b|\bfind me\b|\bshow me\b|\bunder\s+\$?\d|\bbelow market\b|\bpercentile\b)/i
+const INSTANT_RE = /(?:\bwhat is\b|\bwhat's\b|\bexplain\b|\bhow many\b|\boption code\b|\bwhat does\b|\bdefinition\b)/i
+
+function classifyHeuristically(input: ClassifyInput): { tier: Tier; reason: string } {
+  const text = input.userText.toLowerCase()
+
+  if (DEEP_RESEARCH_RE.test(text)) {
+    return { tier: "deep_research", reason: "heuristic: multi-car synthesis request" }
+  }
+
+  if (input.hasCarContext || MARKETPLACE_RE.test(text)) {
+    return { tier: "marketplace", reason: "heuristic: single-car market/valuation request" }
+  }
+
+  if (INSTANT_RE.test(text)) {
+    return { tier: "instant", reason: "heuristic: pure knowledge lookup" }
+  }
+
+  return { tier: "marketplace", reason: "heuristic fallback: defaulting to marketplace" }
+}
+
 const CLASSIFIER_SYSTEM = `You classify a user message to a MonzaHaus collector-car advisor into one of three tiers. Return the highest tier that matches — when in doubt between two tiers, pick the higher one.
 
 TIER DEFINITIONS
@@ -66,6 +88,9 @@ export async function classifyRequest(input: ClassifyInput): Promise<ClassifyRes
     tier = res.data.tier
     reason = res.data.reason
   } else {
+    const fallback = classifyHeuristically(input)
+    tier = fallback.tier
+    reason = fallback.reason
     console.warn(JSON.stringify({ advisor: { kind: "classifier_fallback", ts: new Date().toISOString() } }))
   }
 

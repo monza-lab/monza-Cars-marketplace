@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useLocale } from "next-intl"
 import { CreditCard, Lock, ArrowLeft, Loader2 } from "lucide-react"
-import { PRICING_PLANS, type PlanId } from "@/lib/payments/plans"
+import { getPricingPlan, type PlanId } from "@/lib/payments/plans"
 
 function PaymentForm() {
   const router = useRouter()
   const locale = useLocale()
   const params = useSearchParams()
   const planId = (params.get("plan") as PlanId) ?? "monthly"
-  const plan = PRICING_PLANS[planId]
+  const plan = getPricingPlan(planId)
 
   const [email, setEmail] = useState("")
   const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242")
@@ -68,7 +68,7 @@ function PaymentForm() {
           </div>
         </div>
 
-        <div className="space-y-3 mb-6">
+          <div className="space-y-3 mb-6">
           {plan.features.map((feature) => (
             <div key={feature} className="flex items-start gap-2">
               <div className="size-1 rounded-full bg-primary mt-2 shrink-0" />
@@ -205,8 +205,8 @@ function PaymentForm() {
           </button>
 
           <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-            By confirming your subscription, you allow Monza Haus to charge your card for
-            this payment and future payments in accordance with their terms.
+            By confirming this purchase, you allow Monza Haus to charge your card for
+            this payment and future recurring subscription payments in accordance with their terms.
           </p>
         </form>
 

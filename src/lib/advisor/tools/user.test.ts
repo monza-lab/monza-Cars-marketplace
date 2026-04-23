@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { ToolInvocationContext } from "./registry"
 
-vi.mock("@/lib/credits", () => ({
-  getUserCredits: vi.fn(async () => ({ creditsBalance: 42 })),
+vi.mock("@/lib/reports/queries", () => ({
+  getUserCredits: vi.fn(async () => ({ credits_balance: 42, pack_credits_balance: 8 })),
 }))
 
 import { userTools } from "./user"
-import { getUserCredits } from "@/lib/credits"
+import { getUserCredits } from "@/lib/reports/queries"
 
 const ctx: ToolInvocationContext = {
   userId: "user-1",
@@ -42,7 +42,7 @@ describe("user tools", () => {
         }
         expect(data.tier).toBe("PRO")
         expect(data.locale).toBe("en")
-        expect(data.pistonsBalance).toBe(42)
+        expect(data.pistonsBalance).toBe(50)
         expect(data.viewedCars).toEqual(["live-1"])
       }
     })
@@ -59,8 +59,8 @@ describe("user tools", () => {
         const data = res.data as { pistonsBalance: number | null }
         expect(data.pistonsBalance).toBeNull()
       }
-      expect(vi.mocked(getUserCredits)).not.toHaveBeenCalled()
-    })
+    expect(vi.mocked(getUserCredits)).not.toHaveBeenCalled()
+  })
   })
 
   describe("get_user_watchlist", () => {

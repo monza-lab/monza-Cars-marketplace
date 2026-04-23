@@ -12,10 +12,23 @@ export interface UserProfile {
   avatarUrl: string | null
   creditsBalance: number
   packCreditsBalance: number
+  pistonsBalance: number
   freeCreditsUsed: number
   tier: 'FREE' | 'PACK_OWNER' | 'MONTHLY' | 'ANNUAL' | 'PRO'
   creditResetDate: string
   subscriptionPeriodEnd: string | null
+  subscriptionPlanKey: string | null
+  monthlyAllowancePistons: number
+  unlimitedReports: boolean
+  wallet?: {
+    recentDebits: Array<{
+      amount: number
+      label: string
+      surface: 'chat' | 'oracle' | 'report' | 'deep_research'
+      timestamp: string
+    }>
+    todayUsage: { chat: number; oracle: number; report: number }
+  }
 }
 
 interface AuthContextType {
@@ -55,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (response.ok) {
         const data = await response.json()
-        setProfile(data.profile)
+        setProfile({ ...data.profile, wallet: data.wallet })
         return { ok: true, status: response.status }
       }
       return { ok: false, status: response.status }

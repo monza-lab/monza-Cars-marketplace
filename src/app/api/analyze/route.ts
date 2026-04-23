@@ -134,6 +134,7 @@ export async function POST(request: Request) {
     // 2. Get/create user + reset credits if needed
     const dbUser = await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
     const user = await checkAndResetFreeCredits(dbUser.id)
+    const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
 
     // 3. Check if user already generated this report (free re-access)
     const alreadyGenerated = await hasAlreadyGenerated(user.id, body.listingId)
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
         report: cachedHausRow,
         cached: true,
         creditUsed: 0,
-        creditsRemaining: user.credits_balance,
+        creditsRemaining: totalBalance,
         // v2 additions (null when BE migration pending)
         report_hash: v2Meta.report_hash,
         tier: v2Meta.tier ?? "tier_1",
@@ -173,12 +174,12 @@ export async function POST(request: Request) {
     }
 
     // 5. Credits check (if not already generated and no cached report)
-    if (!alreadyGenerated && user.credits_balance < 1) {
+    if (!alreadyGenerated && !user.unlimited_reports && totalBalance < 100) {
       return NextResponse.json(
         {
           success: false,
           error: "INSUFFICIENT_CREDITS",
-          message: "You have no report credits remaining.",
+          message: "You have no Pistons remaining for reports.",
           creditsRemaining: 0,
         },
         { status: 402 },
@@ -334,7 +335,7 @@ export async function POST(request: Request) {
       report,
       cached: false,
       creditUsed,
-      creditsRemaining: user.credits_balance - creditUsed,
+      creditsRemaining: totalBalance - creditUsed,
       geminiUsed: textResult.ok,
       // v2 additions
       report_hash: reportHash,

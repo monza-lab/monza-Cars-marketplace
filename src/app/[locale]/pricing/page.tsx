@@ -47,7 +47,7 @@ const REPORT_FEATURES = [
 const FAQ_ITEMS = [
   {
     q: "Do reports expire?",
-    a: "Single and Pack purchases never expire — use them whenever you want. Monthly is an unlimited subscription as long as it's active.",
+    a: "Top-ups never expire. Subscription Pistons reset each billing cycle, and Rennsport keeps reports unlimited while active.",
   },
   {
     q: "What's included in each report?",
@@ -55,11 +55,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's the difference between Pack and Monthly?",
-    a: "The Reports Pack gives you 5 reports to use at your own pace, forever. Monthly gives you unlimited Reports, plus Watchlist, Email Alerts on matching cars, Saved Searches, priority report generation, and PDF + CSV export. Monthly is for active hunters; Pack is for pausing between purchases.",
+    a: "Fuel Cell is a top-up bucket that never expires. Rennsport is the unlimited monthly plan with the largest Pistons allowance.",
   },
   {
     q: "Why is Monthly the obvious choice?",
-    a: "Two Reports Packs cost $78 combined. Monthly is $59 — cheaper than two packs, and you get unlimited reports instead of 10, plus Watchlist and Alerts on top.",
+    a: "If you use reports often, Rennsport keeps the flow simple: one monthly charge, unlimited reports, and the largest Pistons allowance.",
   },
   {
     q: "Can I cancel my subscription?",
@@ -92,15 +92,15 @@ export default function PricingPage() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
           <Coins className="size-3 text-primary" />
           <span className="text-[11px] font-medium text-primary">
-            3 free reports every month
+            300 free Pistons every month
           </span>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Due Diligence for Porsche Buyers
         </h1>
         <p className="text-[15px] text-muted-foreground max-w-xl mx-auto">
-          A PPI costs $300. An official Porsche PPS, $150. Unlimited investment
-          analyses for $59 a month is due diligence, not an expense.
+          One report costs 100 Pistons. Higher plans unlock more monthly Pistons,
+          while top-ups never expire.
         </p>
       </div>
 
@@ -168,7 +168,7 @@ export default function PricingPage() {
           <p className="text-[11px] text-muted-foreground">
             Current balance:{" "}
             <span className="text-primary font-semibold">
-              {profile.creditsBalance} Reports
+              {profile.pistonsBalance ?? profile.creditsBalance} Pistons
             </span>
           </p>
         )}

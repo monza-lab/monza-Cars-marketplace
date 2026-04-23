@@ -505,9 +505,12 @@ export function Header() {
 
   // Auth state
   const { user, profile, loading: authLoading, signOut } = useAuth();
-  const creditsRemaining = profile?.creditsBalance ?? 0;
+  const creditsRemaining = profile?.pistonsBalance ?? profile?.creditsBalance ?? 0;
   const isAuthenticated = !!user;
-  const hasUnlimited = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
+  const hasUnlimited = (profile?.unlimitedReports ?? false) || profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL";
+  const planName =
+    profile?.subscriptionPlanKey ??
+    (profile?.tier === "PACK_OWNER" ? "top_up" : profile?.tier ?? "FREE");
   const homeHref = "/";
 
   // Publish the fixed header's real height (banner + nav) as a CSS var on <html>
@@ -924,14 +927,14 @@ export function Header() {
                       </div>
                       <span className="text-[14px] tabular-nums font-bold text-foreground">
                         {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 3,000</span>
+                        <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 10,000</span>
                       </span>
                     </div>
                     {/* Progress bar */}
                     <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/70 transition-all duration-500"
-                        style={{ width: `${Math.min((creditsRemaining / 3000) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((creditsRemaining / 10000) * 100, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between mt-2.5">
@@ -1046,11 +1049,17 @@ export function Header() {
         open={walletOpen}
         onOpenChange={setWalletOpen}
         balance={creditsRemaining}
-        tier={profile?.tier === "PRO" ? "PRO" : "FREE"}
-        nextResetDate={new Date()}
-        todayUsage={{ chat: 0, oracle: 0, report: 0 }}
+        tier={profile?.tier === "FREE" ? "FREE" : "PRO"}
+        planName={planName}
+        nextResetDate={new Date(profile?.creditResetDate ?? new Date().toISOString())}
+        todayUsage={profile?.wallet?.todayUsage ?? { chat: 0, oracle: 0, report: 0 }}
         graceUsage={null}
-        recentDebits={[]}
+        recentDebits={(profile?.wallet?.recentDebits ?? []).map((row) => ({
+          amount: row.amount,
+          label: row.label,
+          surface: row.surface,
+          timestamp: new Date(row.timestamp),
+        }))}
         onClose={() => setWalletOpen(false)}
         onUpgrade={() => router.push("/pricing")}
       />

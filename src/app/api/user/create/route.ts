@@ -101,10 +101,14 @@ export async function POST(request: NextRequest) {
           name: profile.display_name,
           creditsBalance: profile.credits_balance,
           packCreditsBalance: profile.pack_credits_balance ?? 0,
+          pistonsBalance: profile.credits_balance + (profile.pack_credits_balance ?? 0),
           freeCreditsUsed: profile.free_credits_used ?? 0,
           tier: profile.tier,
           creditResetDate: profile.credit_reset_date,
           subscriptionPeriodEnd: profile.subscription_period_end ?? null,
+          subscriptionPlanKey: profile.subscription_plan_key ?? null,
+          monthlyAllowancePistons: profile.monthly_allowance_pistons ?? 300,
+          unlimitedReports: profile.unlimited_reports ?? false,
         },
       })
     } catch (dbError) {
@@ -118,12 +122,16 @@ export async function POST(request: NextRequest) {
             supabaseId: user.id,
             email: user.email,
             name: user.user_metadata?.full_name ?? null,
-            creditsBalance: 3,
+            creditsBalance: 300,
             packCreditsBalance: 0,
+            pistonsBalance: 300,
             tier: 'FREE',
             freeCreditsUsed: 0,
             creditResetDate: new Date().toISOString(),
             subscriptionPeriodEnd: null,
+            subscriptionPlanKey: null,
+            monthlyAllowancePistons: 300,
+            unlimitedReports: false,
           },
         })
       }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getOrCreateUser, updateStripeCustomerId } from "@/lib/reports/queries"
-import { isPlanId, PRICING_PLANS } from "@/lib/payments/plans"
+import { getPricingPlan, isPlanId, resolvePlanKey } from "@/lib/payments/plans"
 import {
   getAppBaseUrl,
   getLocalizedPath,
@@ -33,7 +33,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
-    const plan = PRICING_PLANS[body.plan]
+    const plan = getPricingPlan(body.plan)
+    const resolvedPlanKey = resolvePlanKey(body.plan)
+    if (!plan || !resolvedPlanKey) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
+    }
     const locale = body.locale && body.locale.length > 0 ? body.locale : "en"
     const baseUrl = getAppBaseUrl(request)
     const successUrl = `${baseUrl}${getLocalizedPath(locale, "/checkout/success")}?session_id={CHECKOUT_SESSION_ID}`
@@ -76,9 +80,9 @@ export async function POST(request: Request) {
             product_data: {
               name: `Monza Haus ${plan.name}`,
               description:
-                plan.id === "monthly"
-                  ? "Unlimited reports and alerts"
-                  : `${plan.creditsGranted} report${plan.creditsGranted === 1 ? "" : "s"} never expire`,
+                plan.billingMode === "subscription"
+                  ? (plan.unlimitedReports ? "Unlimited reports and Pistons allowance" : `${plan.pistons.toLocaleString()} Pistons every month`)
+                  : `${plan.pistons.toLocaleString()} Pistons top-up`,
             },
             ...(plan.billingMode === "subscription"
               ? { recurring: { interval: "month" as const } }
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
       ],
       metadata: {
         appUserId: user.id,
-        planId: plan.id,
+        planId: resolvedPlanKey,
         locale,
       },
       subscription_data:
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
           ? {
               metadata: {
                 appUserId: user.id,
-                planId: plan.id,
+                planId: resolvedPlanKey,
                 locale,
               },
             }
@@ -106,7 +110,7 @@ export async function POST(request: Request) {
           ? {
               metadata: {
                 appUserId: user.id,
-                planId: plan.id,
+                planId: resolvedPlanKey,
                 locale,
               },
             }

@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { PRICING_PLANS, type PlanId } from "@/lib/payments/plans"
+import { getPricingPlan, type PlanId } from "@/lib/payments/plans"
 import { Shield, Lock, Loader2 } from "lucide-react"
 import { track } from "@/lib/analytics/events"
 
@@ -30,16 +30,16 @@ export function CheckoutModal({
   const [error, setError] = useState<string | null>(null)
   const locale = useLocale()
 
-  const plan = planId ? PRICING_PLANS[planId] : null
-  const showPackUpsell = plan?.id === "pack"
+  const plan = planId ? getPricingPlan(planId) : null
+  const showPackUpsell = plan?.id === "fuel_cell"
 
   useEffect(() => {
     if (open && showPackUpsell) {
-      track({
-        event: "upsell_shown",
-        payload: { context: "pack_modal", fromPlan: "pack", toPlan: "monthly" },
-      })
-    }
+        track({
+          event: "upsell_shown",
+          payload: { context: "pack_modal", fromPlan: "fuel_cell", toPlan: "rennsport" },
+        })
+      }
   }, [open, showPackUpsell])
 
   if (!plan) return null
@@ -85,9 +85,9 @@ export function CheckoutModal({
     if (!onSwitchPlan) return
     track({
       event: "upsell_converted",
-      payload: { context: "pack_modal", fromPlan: "pack", toPlan: "monthly" },
+      payload: { context: "pack_modal", fromPlan: "fuel_cell", toPlan: "rennsport" },
     })
-    onSwitchPlan("monthly")
+    onSwitchPlan("rennsport")
   }
 
   const priceSuffix = plan.period === "monthly" ? "/mo" : "USD"
@@ -101,25 +101,25 @@ export function CheckoutModal({
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-[13px]">
             {plan.reports === "unlimited"
-              ? "Unlimited Reports · Watchlist · Alerts · Export"
+              ? "Unlimited reports · deep research reserve · export"
               : plan.reports === 1
-              ? "1 Report · never expires"
-              : `${plan.reports} Reports · never expire`}
+              ? "1 report · never expires"
+              : `${plan.reports} reports · never expire`}
           </DialogDescription>
         </DialogHeader>
 
         {showPackUpsell && onSwitchPlan && (
           <div className="rounded-xl border border-primary/30 bg-primary/[0.04] p-4 mt-2">
             <p className="text-[12px] text-foreground mb-2">
-              💡 By $20 more, <strong>Monthly ($59)</strong> gives you{" "}
-              <strong>unlimited Reports + Watchlist + Alerts + Export</strong>.
-              Two packs would cost you $78 — Monthly costs less.
+              💡 By $30 more, <strong>Rennsport ($59)</strong> gives you{" "}
+              <strong>unlimited reports + a 10,000 Pistons allowance</strong>.
+              Two Fuel Cells cost more than the monthly plan.
             </p>
             <button
               onClick={handleSwitchToMonthly}
               className="text-[11px] font-semibold text-primary hover:underline"
             >
-              Switch to Monthly →
+              Switch to Rennsport →
             </button>
           </div>
         )}

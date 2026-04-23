@@ -34,4 +34,11 @@ describe("classifyRequest", () => {
     expect(r.tier).toBe("marketplace")
     expect(r.estimatedPistons).toBe(5)
   })
+
+  it("falls back to deep_research on classifier failure when the request clearly asks for a shortlist", async () => {
+    ;(generateJson as any).mockResolvedValue({ ok: false, error: "GEMINI_API_KEY is not configured" })
+    const r = await classifyRequest({ userText: "Build me a shortlist of clean 997.2 GT3s in Europe under 180k", hasCarContext: false, userTier: "PRO" })
+    expect(r.tier).toBe("deep_research")
+    expect(r.estimatedPistons).toBe(25)
+  })
 })

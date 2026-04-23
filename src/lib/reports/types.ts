@@ -77,6 +77,9 @@ export interface UserCreditsRow {
   pack_credits_balance: number
   free_credits_used: number
   tier: "FREE" | "PACK_OWNER" | "MONTHLY" | "ANNUAL" | "PRO"
+  subscription_plan_key: string | null
+  monthly_allowance_pistons: number
+  unlimited_reports: boolean
   credit_reset_date: string
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
@@ -98,9 +101,16 @@ export interface CreditTransactionRow {
     | "STRIPE_PACK_PURCHASE"
     | "STRIPE_SUBSCRIPTION_ACTIVATION"
     | "STRIPE_SUBSCRIPTION_CANCELED"
+    | "ADVISOR_INSTANT"
+    | "ADVISOR_MARKETPLACE"
+    | "ADVISOR_DEEP_RESEARCH"
+    | "ADVISOR_REFUND"
   description: string | null
   listing_id: string | null
   stripe_payment_id: string | null
+  anonymous_session_id?: string | null
+  conversation_id?: string | null
+  message_id?: string | null
   created_at: string
 }
 

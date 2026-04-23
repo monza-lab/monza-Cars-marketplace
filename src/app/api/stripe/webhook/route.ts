@@ -9,7 +9,7 @@ import {
   updateStripeSubscriptionStatus,
 } from "@/lib/reports/queries"
 import { getStripeClient } from "@/lib/payments/stripe"
-import { isPlanId } from "@/lib/payments/plans"
+import { getPricingPlan, resolvePlanKey } from "@/lib/payments/plans"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -17,11 +17,13 @@ export const dynamic = "force-dynamic"
 async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const planId = session.metadata?.planId
   const appUserId = session.metadata?.appUserId
-  if (!planId || !isPlanId(planId) || !appUserId) {
+  const resolvedPlanKey = planId ? resolvePlanKey(planId) : null
+  const plan = planId ? getPricingPlan(planId) : null
+  if (!resolvedPlanKey || !plan || !appUserId) {
     return
   }
 
-  if (planId === "monthly") {
+  if (plan.billingMode === "subscription") {
     const customerId = typeof session.customer === "string" ? session.customer : null
     const subscriptionId = typeof session.subscription === "string" ? session.subscription : null
     if (!customerId || !subscriptionId) return
@@ -37,12 +39,20 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
           ? new Date(currentPeriodEnd * 1000).toISOString()
           : null,
       stripePaymentId: session.id,
+      subscriptionPlanKey: resolvedPlanKey,
+      monthlyAllowancePistons: plan.pistons,
+      unlimitedReports: plan.unlimitedReports,
     })
     return
   }
 
-  const credits = planId === "pack" ? 5 : 1
-  await grantStripePurchase(appUserId, credits, session.id, planId, typeof session.customer === "string" ? session.customer : null)
+  await grantStripePurchase(
+    appUserId,
+    plan.pistons,
+    session.id,
+    resolvedPlanKey,
+    typeof session.customer === "string" ? session.customer : null,
+  )
 }
 
 async function applySubscriptionUpdate(subscription: Stripe.Subscription) {

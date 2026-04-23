@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser, getUserCredits } from '@/lib/reports/queries'
+import { getOrCreateUser, getUserCredits, getTransactionHistory } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
+import { getTodayUsageByType, resolveUserCreditsId } from '@/lib/advisor/persistence/ledger'
 
 const PROFILE_DB_TIMEOUT_MS = 15_000
 
@@ -77,6 +78,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
+      wallet: await buildWalletSnapshot(profile.supabase_user_id),
       profile: {
         id: profile.id,
         supabaseId: profile.supabase_user_id,
@@ -85,8 +87,12 @@ export async function GET(request: Request) {
         avatarUrl: user.user_metadata?.avatar_url || null,
         creditsBalance: profile.credits_balance,
         packCreditsBalance: profile.pack_credits_balance ?? 0,
+        pistonsBalance: profile.credits_balance + (profile.pack_credits_balance ?? 0),
         freeCreditsUsed: profile.free_credits_used ?? 0,
         tier: profile.tier,
+        subscriptionPlanKey: profile.subscription_plan_key ?? null,
+        monthlyAllowancePistons: profile.monthly_allowance_pistons ?? 300,
+        unlimitedReports: profile.unlimited_reports ?? false,
         creditResetDate: profile.credit_reset_date,
         subscriptionPeriodEnd: profile.subscription_period_end ?? null,
       },
@@ -98,4 +104,49 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   }
+}
+
+async function buildWalletSnapshot(supabaseUserId: string) {
+  const userCreditsId = await resolveUserCreditsId(supabaseUserId)
+  if (!userCreditsId) {
+    return { recentDebits: [], todayUsage: { chat: 0, oracle: 0, report: 0 } }
+  }
+
+  const [transactions, usage] = await Promise.all([
+    getTransactionHistory(userCreditsId, 10),
+    getTodayUsageByType(userCreditsId),
+  ])
+
+  const recentDebits = transactions
+    .filter(row => row.amount < 0)
+    .map(row => ({
+      amount: Math.abs(row.amount),
+      label: row.description ?? row.type,
+      surface: mapSurface(row.type),
+      timestamp: new Date(row.created_at),
+    }))
+
+  return {
+    recentDebits,
+    todayUsage: {
+      chat: (usage.ADVISOR_INSTANT ?? 0) + (usage.ADVISOR_MARKETPLACE ?? 0) + (usage.ADVISOR_DEEP_RESEARCH ?? 0),
+      oracle: 0,
+      report: usage.REPORT_USED ?? 0,
+    },
+  }
+}
+
+function mapSurface(type: string): "chat" | "oracle" | "report" | "deep_research" {
+  if (
+    type === "REPORT_USED" ||
+    type === "STRIPE_PACK_PURCHASE" ||
+    type === "STRIPE_SUBSCRIPTION_ACTIVATION" ||
+    type === "PURCHASE" ||
+    type === "FREE_MONTHLY"
+  ) {
+    return "report"
+  }
+  if (type === "ADVISOR_DEEP_RESEARCH") return "deep_research"
+  if (type === "ADVISOR_INSTANT" || type === "ADVISOR_MARKETPLACE") return "chat"
+  return "oracle"
 }

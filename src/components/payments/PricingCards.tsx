@@ -86,9 +86,9 @@ export function PricingCards({
   return (
     <div className="max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <PricingCard plan={PRICING_PLANS.single} onSelect={onSelectPlan} />
-        <PricingCard plan={PRICING_PLANS.pack} onSelect={onSelectPlan} />
-        <PricingCard plan={PRICING_PLANS.monthly} onSelect={onSelectPlan} />
+        <PricingCard plan={PRICING_PLANS.jerrycan} onSelect={onSelectPlan} />
+        <PricingCard plan={PRICING_PLANS.fuel_cell} onSelect={onSelectPlan} />
+        <PricingCard plan={PRICING_PLANS.rennsport} onSelect={onSelectPlan} />
       </div>
     </div>
   )

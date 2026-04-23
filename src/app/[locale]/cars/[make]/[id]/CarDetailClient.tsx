@@ -1893,7 +1893,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   Welcome to Monza
                 </h3>
                 <p className="text-3xl tabular-nums font-black text-primary mt-2">
-                  3,000 tokens
+                  300 Pistons
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
                   have been added to your account
@@ -1917,12 +1917,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <div className="flex items-start gap-3">
                     <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-[11px] font-bold text-primary">2</span>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-foreground">Generate full analyses with tokens</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs 1,000 tokens &mdash; you have 3 free</p>
-                    </div>
                   </div>
+                  <div>
+                      <p className="text-[12px] font-medium text-foreground">Generate full analyses with Pistons</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs 100 Pistons &mdash; you have 300 free each month</p>
+                  </div>
+                </div>
                   <div className="flex items-start gap-3">
                     <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-[11px] font-bold text-primary">3</span>
@@ -2028,7 +2028,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <div className="flex items-center justify-center gap-2 pt-2">
                         <Coins className="size-3.5 text-primary" />
                         <span className="text-[11px] text-muted-foreground">
-                          1,000 tokens used &middot; {tokens.toLocaleString()} remaining
+                          100 Pistons used &middot; {tokens.toLocaleString()} remaining
                         </span>
                       </div>
                     )}

@@ -27,6 +27,7 @@ export interface PistonsWalletModalProps {
   onOpenChange: (open: boolean) => void
   balance: number
   tier: UserTier
+  planName?: string | null
   nextResetDate: Date
   todayUsage: { chat: number; oracle: number; report: number }
   graceUsage: GraceUsage | null
@@ -40,6 +41,9 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
   const t = useTranslations("auth.pistons")
   if (!props.open) return null
   const isFree = props.tier === "FREE"
+  const planLabel = (props.planName ?? props.tier)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase())
 
   return (
     <AnimatePresence>
@@ -71,7 +75,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
           <div className="flex items-center gap-3 mb-1">
             <Piston className="size-5 text-primary" />
             <span className="text-[22px] font-display text-foreground">{props.balance.toLocaleString()}</span>
-            <span className="text-[10px] tracking-widest uppercase text-muted-foreground">{props.tier}</span>
+            <span className="text-[10px] tracking-widest uppercase text-muted-foreground">{planLabel}</span>
           </div>
           <p className="text-[11px] text-muted-foreground">{t("nextReset", { date: props.nextResetDate.toLocaleDateString() })}</p>
         </div>
@@ -101,7 +105,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
                   <span className="truncate text-foreground/80">-{d.amount} · {d.label}</span>
                   {d.conversationHref
                     ? <a href={d.conversationHref} className="text-primary text-[10px] shrink-0">open</a>
-                    : <span className="text-[10px] text-muted-foreground shrink-0">{d.surface}</span>}
+                    : <span className="text-[10px] text-muted-foreground shrink-0">{d.surface} · {d.timestamp.toLocaleDateString()}</span>}
                 </li>
               ))}
             </ul>

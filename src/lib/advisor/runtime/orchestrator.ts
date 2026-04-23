@@ -6,7 +6,6 @@ import { tryConsumeGrace } from "./grace"
 import { advisorQueryCache, queryHash } from "./cache"
 import { appendMessage, listMessages, type ToolCallSummary } from "@/lib/advisor/persistence/messages"
 import { touchLastMessage } from "@/lib/advisor/persistence/conversations"
-import { debitCredits, type AdvisorDebitType } from "@/lib/advisor/persistence/ledger"
 import type { AdvisorSseEvent } from "./streaming"
 import { generateTitle } from "./titleGen"
 import { logAdvisorEvent } from "./observability"
@@ -15,12 +14,6 @@ import type { Schema } from "@google/generative-ai"
 const MAX_TOOL_CALLS = 8
 const TOTAL_TIMEOUT_MS = 60_000
 const TOOL_TIMEOUT_MS = 10_000
-
-const TYPE_BY_TIER: Record<Tier, AdvisorDebitType> = {
-  instant: "ADVISOR_INSTANT",
-  marketplace: "ADVISOR_MARKETPLACE",
-  deep_research: "ADVISOR_DEEP_RESEARCH",
-}
 
 const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
   ? (process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro")
@@ -127,10 +120,10 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     return
   }
 
-  // 3. Grace / debit pre-check for Instant + Marketplace
-  let graceConsumed = false
+  // 3. Grace layer stays in place for observability, but chat is free in the
+  // Pistons economy so no debit is applied on the advisor path.
   if (classification.tier === "instant" || classification.tier === "marketplace") {
-    graceConsumed = await tryConsumeGrace({
+    await tryConsumeGrace({
       supabaseUserId: input.userId,
       anonymousSessionId: input.anonymousSessionId,
       tier: classification.tier,
@@ -334,7 +327,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   }
 
   // 7. Persist assistant message, debit, touch conversation
-  const pistonsToDebit = graceConsumed ? 0 : classification.estimatedPistons
+  const pistonsToDebit = 0
   const asstMsg = await appendMessage({
     conversationId: input.conversationId,
     role: "assistant",
@@ -345,15 +338,6 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     latencyMs: Date.now() - startedAt,
     model: MODEL_BY_TIER(classification.tier),
   })
-  if (pistonsToDebit > 0 && input.userId) {
-    await debitCredits({
-      supabaseUserId: input.userId,
-      amount: pistonsToDebit,
-      type: TYPE_BY_TIER[classification.tier],
-      conversationId: input.conversationId,
-      messageId: asstMsg.id,
-    })
-  }
   logAdvisorEvent({
     kind: "debit",
     conversationId: input.conversationId,
@@ -361,7 +345,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     anonymousSessionId: input.anonymousSessionId,
     userTier: input.userTier,
     tier: classification.tier,
-    pistons: pistonsToDebit,
+    pistons: 0,
   })
   await touchLastMessage(input.conversationId)
 
@@ -377,7 +361,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     userTier: input.userTier,
     tier: classification.tier,
     model: MODEL_BY_TIER(classification.tier),
-    pistons: pistonsToDebit,
+    pistons: 0,
     latencyMs: totalLatency,
   })
 

@@ -1,5 +1,5 @@
 import type { ToolDef } from "@/lib/advisor/tools/registry"
-import { getUserCredits } from "@/lib/credits"
+import { getUserCredits as getPistonUserCredits } from "@/lib/reports/queries"
 
 function truncate(s: string, max = 500): string {
   if (s.length <= max) return s
@@ -29,9 +29,9 @@ export const getUserContext: ToolDef = {
     let pistonsBalance: number | null = null
     if (ctx.userId) {
       try {
-        const credits = await getUserCredits(ctx.userId)
-        if (credits && typeof credits.creditsBalance === "number") {
-          pistonsBalance = credits.creditsBalance
+        const credits = await getPistonUserCredits(ctx.userId)
+        if (credits && typeof credits.credits_balance === "number") {
+          pistonsBalance = credits.credits_balance + (credits.pack_credits_balance ?? 0)
         }
       } catch (err) {
         // If credits lookup fails, leave balance null — do not fail the tool.
