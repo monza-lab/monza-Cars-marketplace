@@ -122,6 +122,36 @@ describe("streamWithTools — error classification", () => {
     expect(err).toMatchObject({ type: "error", code: "llm_error", retryable: false })
   })
 
+  it("retries once on a transient 503 before any streamed text", async () => {
+    vi.useFakeTimers()
+    try {
+      mockGenerateContentStream
+        .mockRejectedValueOnce(new Error("503 Service Unavailable"))
+        .mockResolvedValueOnce({
+          stream: (async function* () {
+            yield { text: () => "Hello" }
+          })(),
+          response: Promise.resolve({ functionCalls: () => [] }),
+        })
+
+      const events: any[] = []
+      const run = (async () => {
+        for await (const ev of streamWithTools({
+          model: "gemini-2.5-flash", systemPrompt: "sys",
+          messages: [{ role: "user", content: "x" }], tools: [],
+        })) events.push(ev)
+      })()
+
+      await vi.advanceTimersByTimeAsync(1000)
+      await run
+
+      expect(mockGenerateContentStream).toHaveBeenCalledTimes(2)
+      expect(events.filter(e => e.type === "text").map(e => e.delta).join("")).toBe("Hello")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it("yields missing_api_key error when GEMINI_API_KEY is unset", async () => {
     vi.stubEnv("GEMINI_API_KEY", "")
     const events: any[] = []

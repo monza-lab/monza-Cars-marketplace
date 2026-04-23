@@ -215,6 +215,15 @@ function classifyGeminiError(err: unknown): { message: string; code: string; ret
   return { message, code: retryable ? "transient" : "llm_error", retryable, cause: err }
 }
 
+function shouldRetryGeminiStreamError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err)
+  return /(503|service unavailable|ETIMEDOUT|ENOTFOUND|ECONNRESET|network)/i.test(message)
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 /**
  * Gemini's FunctionDeclarationSchema is a strict OpenAPI-3.0-subset and
  * rejects fields it doesn't recognize (notably `additionalProperties`, which
@@ -296,24 +305,39 @@ export async function* streamWithTools(opts: StreamOptions): AsyncGenerator<Stre
     }
   })
 
-  try {
-    // Best-effort cancellation: SDK does not accept AbortSignal, so we poll between chunks.
-    const result = await model.generateContentStream({ contents: history })
-    for await (const chunk of result.stream) {
-      if (opts.signal?.aborted) {
-        yield { type: "error", message: "aborted mid-stream", code: "aborted", retryable: false }
-        return
+  const MAX_ATTEMPTS = 3
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    let sawAnyOutput = false
+
+    try {
+      // Best-effort cancellation: SDK does not accept AbortSignal, so we poll between chunks.
+      const result = await model.generateContentStream({ contents: history })
+      for await (const chunk of result.stream) {
+        if (opts.signal?.aborted) {
+          yield { type: "error", message: "aborted mid-stream", code: "aborted", retryable: false }
+          return
+        }
+        const t = chunk.text()
+        if (t) {
+          sawAnyOutput = true
+          yield { type: "text", delta: t }
+        }
       }
-      const t = chunk.text()
-      if (t) yield { type: "text", delta: t }
+      const final = await result.response
+      const calls = final.functionCalls?.() ?? []
+      for (const call of calls) {
+        yield { type: "tool_call", name: call.name, args: call.args as Record<string, unknown> }
+      }
+      return
+    } catch (err) {
+      if (!sawAnyOutput && attempt < MAX_ATTEMPTS - 1 && shouldRetryGeminiStreamError(err)) {
+        await sleep(1000 * Math.pow(2, attempt))
+        continue
+      }
+
+      const classified = classifyGeminiError(err)
+      yield { type: "error", ...classified }
+      return
     }
-    const final = await result.response
-    const calls = final.functionCalls?.() ?? []
-    for (const call of calls) {
-      yield { type: "tool_call", name: call.name, args: call.args as Record<string, unknown> }
-    }
-  } catch (err) {
-    const classified = classifyGeminiError(err)
-    yield { type: "error", ...classified }
   }
 }
