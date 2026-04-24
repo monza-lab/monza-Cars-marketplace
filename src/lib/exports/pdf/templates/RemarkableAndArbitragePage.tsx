@@ -66,7 +66,7 @@ export function RemarkableAndArbitragePage({
                   ]}
                   wrap={false}
                 >
-                  <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 10 }}>
+                  <Text style={[pdfStyles.bodyEmphasis, { fontSize: 10 }]}>
                     {FLAG[row.region] ?? row.region} {row.region}
                     {isTarget ? "  (this listing)" : ""}
                   </Text>

@@ -14,6 +14,10 @@ import {
 import { getComparablesForModel } from "@/lib/db/queries"
 import type { HausReport } from "@/lib/fairValue/types"
 import { adaptV1ReportToV2 } from "@/lib/fairValue/adaptV1ToV2"
+import {
+  computeArbitrageForCar,
+  inferTargetRegion,
+} from "@/lib/marketIntel/computeArbitrageForCar"
 import { computeReportHash } from "@/lib/reports/hash"
 import { renderReportToExcelBuffer } from "@/lib/exports/excel/renderReport"
 import {
@@ -66,11 +70,22 @@ export async function GET(
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
   const askingUsd = deriveAskingUsd(car)
+  const targetRegion = inferTargetRegion(car.region)
+  const d2Precomputed =
+    askingUsd > 0
+      ? await computeArbitrageForCar({
+          pricedListings: allPriced,
+          thisVinPriceUsd: askingUsd,
+          targetRegion,
+          carYear: car.year,
+        })
+      : undefined
   const v2 = adaptV1ReportToV2({
     v1Report,
     marketStats,
     dbComparables,
     thisVinPriceUsd: askingUsd,
+    d2Precomputed,
   })
 
   const reportHash =

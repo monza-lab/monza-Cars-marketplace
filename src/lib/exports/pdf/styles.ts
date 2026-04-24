@@ -1,27 +1,43 @@
 import { StyleSheet } from "@react-pdf/renderer"
 
-// Monza Haus brand palette (mirrors src/lib/brandConfig.ts where possible).
-// Using Helvetica + Helvetica-Bold (react-pdf built-ins) to avoid font-loading
-// complexity in Phase 4. A follow-on task can register Playfair Display for
-// display headlines once we commit to a font-file delivery strategy.
+// Monza Haus brand palette — dark-mode PDF per brand manual v2.0.
+// Exact hex values verified against monzahaus-brand-manual v2.0 (see
+// skills/monzahaus-branding). NEVER use pure white, blue-black, or red.
 export const PDF_COLORS = {
-  background: "#0E0A0C",
-  card: "#161113",
-  foreground: "#E8E2DE",
-  muted: "#6B6365",
-  primary: "#D4738A",
+  // Base surface
+  background: "#0E0A0C",        // Obsidian
+  card: "#161113",              // Obsidian Card
+  cardWarm: "#1A1315",          // slight warm tint for inner surfaces
+  // Text
+  foreground: "#E8E2DE",        // Bone / Warm White
+  muted: "#6B6365",             // Cool Gray
+  mutedStrong: "#8B8386",       // raised-prominence muted for sub-labels
+  // Accent
+  primary: "#D4738A",           // Salon Rose (dark-mode accent)
+  primaryDeep: "#7A2E4A",       // Salon Burgundy (pressed / gradient stop)
   primaryForeground: "#FFFFFF",
-  positive: "#7EB88A",
-  destructive: "#C75C6B",
-  amber: "#D4A373",
-  border: "#2A2024",
+  // Financial indicators (brand: NEVER red for negative)
+  positive: "#34D399",          // Emerald Mint
+  negative: "#FB923C",          // Burnt Orange (instead of red)
+  warning: "#FBBF24",           // Amber
+  // Structural
+  border: "#2A2226",            // Dark Border
+  borderSoft: "#201619",        // quieter divider
 } as const
+
+// Brand typography — Cormorant (serif, display) + Karla (sans, body).
+// Registered via src/lib/exports/pdf/fonts.ts at runtime; if registration
+// fails the fontFamily strings still resolve to the registered families.
+const FONT_SERIF = "Cormorant"
+const FONT_SANS = "Karla"
+const FONT_MONO = "Courier" // built-in fallback for numerical data
 
 export const pdfStyles = StyleSheet.create({
   page: {
     backgroundColor: PDF_COLORS.background,
     color: PDF_COLORS.foreground,
-    fontFamily: "Helvetica",
+    fontFamily: FONT_SANS,
+    fontWeight: 400,
     fontSize: 10,
     padding: 36,
     flexDirection: "column",
@@ -31,8 +47,8 @@ export const pdfStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PDF_COLORS.border,
     backgroundColor: PDF_COLORS.card,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 10,
+    padding: 14,
     marginBottom: 10,
   },
   cardDashed: {
@@ -40,49 +56,82 @@ export const pdfStyles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: PDF_COLORS.border,
     backgroundColor: PDF_COLORS.card,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 10,
+    padding: 14,
     marginBottom: 10,
   },
-  // Typography
+  // Typography — editorial hierarchy
+  wordmark: {
+    fontFamily: FONT_SERIF,
+    fontWeight: 500,
+    fontSize: 14,
+    letterSpacing: 3,
+    color: PDF_COLORS.primary,
+  },
   h1: {
-    fontSize: 22,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: FONT_SERIF,
+    fontWeight: 400,
+    fontSize: 28,
+    letterSpacing: -0.3,
     color: PDF_COLORS.foreground,
     marginBottom: 6,
   },
   h2: {
-    fontSize: 14,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: FONT_SERIF,
+    fontWeight: 500,
+    fontSize: 16,
+    letterSpacing: -0.2,
     color: PDF_COLORS.foreground,
     marginTop: 14,
     marginBottom: 6,
   },
   h3: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: FONT_SANS,
+    fontWeight: 500,
+    fontSize: 9,
     color: PDF_COLORS.muted,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 2,
     marginBottom: 4,
   },
   body: {
+    fontFamily: FONT_SANS,
+    fontWeight: 400,
+    fontSize: 10,
+    color: PDF_COLORS.foreground,
+    lineHeight: 1.55,
+  },
+  bodyEmphasis: {
+    fontFamily: FONT_SANS,
+    fontWeight: 500,
     fontSize: 10,
     color: PDF_COLORS.foreground,
     lineHeight: 1.5,
   },
   bodyMuted: {
+    fontFamily: FONT_SANS,
+    fontWeight: 400,
     fontSize: 9,
     color: PDF_COLORS.muted,
-    lineHeight: 1.4,
+    lineHeight: 1.45,
   },
   mono: {
-    fontFamily: "Courier",
+    fontFamily: FONT_MONO,
     fontSize: 10,
+    color: PDF_COLORS.foreground,
   },
   monoBold: {
-    fontFamily: "Courier-Bold",
-    fontSize: 12,
+    fontFamily: FONT_MONO,
+    fontSize: 14,
+    color: PDF_COLORS.foreground,
+  },
+  priceDisplay: {
+    // Serif display for prices, per brand "Price: Cormorant 500".
+    fontFamily: FONT_SERIF,
+    fontWeight: 500,
+    fontSize: 26,
+    letterSpacing: -0.5,
+    color: PDF_COLORS.foreground,
   },
   // Layout helpers
   row: {
@@ -102,13 +151,14 @@ export const pdfStyles = StyleSheet.create({
   },
   // Verdict chip
   verdictChip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 2,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: FONT_SANS,
+    fontWeight: 600,
     fontSize: 14,
-    letterSpacing: 2,
+    letterSpacing: 3,
     textAlign: "center",
     alignSelf: "center",
   },
@@ -123,6 +173,8 @@ export const pdfStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: PDF_COLORS.border,
     paddingTop: 8,
+    fontFamily: FONT_SANS,
+    fontWeight: 400,
     fontSize: 8,
     color: PDF_COLORS.muted,
   },
@@ -132,8 +184,8 @@ export function verdictColors(verdict: "BUY" | "WATCH" | "WALK") {
   if (verdict === "BUY")
     return { color: PDF_COLORS.positive, borderColor: PDF_COLORS.positive }
   if (verdict === "WALK")
-    return { color: PDF_COLORS.destructive, borderColor: PDF_COLORS.destructive }
-  return { color: PDF_COLORS.amber, borderColor: PDF_COLORS.amber }
+    return { color: PDF_COLORS.negative, borderColor: PDF_COLORS.negative }
+  return { color: PDF_COLORS.warning, borderColor: PDF_COLORS.warning }
 }
 
 export function fmtK(v: number | null | undefined): string {

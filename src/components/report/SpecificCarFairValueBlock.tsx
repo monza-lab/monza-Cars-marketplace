@@ -1,6 +1,13 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
+import { SourceBadge } from "./primitives/SourceBadge"
+
+export interface ComparablesSourceInfo {
+  platforms: string[]
+  captureDateRange?: { start: string; end: string } | null
+  onSourceClick?: () => void
+}
 
 interface SpecificCarFairValueBlockProps {
   fairValueLowUsd: number
@@ -9,7 +16,21 @@ interface SpecificCarFairValueBlockProps {
   askingUsd: number
   comparablesCount: number
   comparableLayer: "strict" | "series" | "family"
+  comparablesSources?: ComparablesSourceInfo
   onExplainClick?: () => void
+}
+
+function formatShortDate(iso: string): string {
+  // Expect "YYYY-MM-DD"; gracefully handle partials.
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+function formatPlatformsLabel(platforms: string[]): string {
+  if (platforms.length === 0) return "Market comparables"
+  if (platforms.length <= 3) return platforms.join(" · ")
+  return `${platforms.slice(0, 3).join(" · ")} +${platforms.length - 3}`
 }
 
 function fmtK(v: number): string {
@@ -23,6 +44,7 @@ export function SpecificCarFairValueBlock({
   askingUsd,
   comparablesCount,
   comparableLayer,
+  comparablesSources,
   onExplainClick,
 }: SpecificCarFairValueBlockProps) {
   const range = fairValueHighUsd - fairValueLowUsd
@@ -45,6 +67,21 @@ export function SpecificCarFairValueBlock({
       <p className="mt-2 text-[12px] text-muted-foreground">
         Mid {fmtK(fairValueMidUsd)} · Layer: {comparableLayer} · {comparablesCount} comparables
       </p>
+
+      {comparablesSources && (comparablesSources.platforms.length > 0 || comparablesSources.captureDateRange) && (
+        <div className="mt-2">
+          <SourceBadge
+            name={formatPlatformsLabel(comparablesSources.platforms)}
+            count={comparablesCount}
+            captureDate={
+              comparablesSources.captureDateRange
+                ? `captured ${formatShortDate(comparablesSources.captureDateRange.start)} – ${formatShortDate(comparablesSources.captureDateRange.end)}`
+                : undefined
+            }
+            onClick={comparablesSources.onSourceClick}
+          />
+        </div>
+      )}
 
       <div className="mt-4 space-y-2">
         <div className="relative h-2 rounded-full bg-foreground/10">

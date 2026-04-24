@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
-import type { HausReport, HausReportV2 } from "@/lib/fairValue/types"
+import type { HausReport, HausReportV2, MarketIntelD2, ReportTier } from "@/lib/fairValue/types"
 import type { ModelMarketStats } from "@/lib/reports/types"
 import type { DbComparableRow } from "@/lib/db/queries"
 import { adaptV1ReportToV2 } from "@/lib/fairValue/adaptV1ToV2"
@@ -23,6 +23,8 @@ import { QuestionsToAskBlock } from "@/components/report/QuestionsToAskBlock"
 import { MethodologyLink } from "@/components/report/MethodologyLink"
 import { ReportSourcesBlock } from "@/components/report/ReportSourcesBlock"
 import { ReportMetadataFooter } from "@/components/report/ReportMetadataFooter"
+import { SeeSampleModal } from "@/components/report/SeeSampleModal"
+import { DownloadSheet } from "@/components/report/DownloadSheet"
 
 interface ReportClientV2Props {
   car: CollectorCar
@@ -30,6 +32,10 @@ interface ReportClientV2Props {
   existingReport: HausReport | null
   marketStats: ModelMarketStats | null
   dbComparables?: DbComparableRow[]
+  d2Precomputed?: MarketIntelD2
+  reportTier?: ReportTier | null
+  reportHash?: string | null
+  reportVersion?: number | null
 }
 
 export function ReportClientV2({
@@ -37,9 +43,14 @@ export function ReportClientV2({
   existingReport,
   marketStats,
   dbComparables = [],
+  d2Precomputed,
+  reportTier,
+  reportHash,
+  reportVersion,
 }: ReportClientV2Props) {
   const router = useRouter()
   const [downloadSheetOpen, setDownloadSheetOpen] = useState(false)
+  const [seeSampleOpen, setSeeSampleOpen] = useState(false)
 
   // Not-yet-generated state: inform the user to generate first. We intentionally
   // don't gate the new UI behind a full generation flow here — that lives in V1.
@@ -72,6 +83,10 @@ export function ReportClientV2({
     marketStats,
     dbComparables,
     thisVinPriceUsd,
+    d2Precomputed,
+    tier: reportTier ?? undefined,
+    reportHash: reportHash ?? undefined,
+    reportVersion: reportVersion ?? undefined,
   })
 
   const verdict = deriveVerdict(v2, thisVinPriceUsd)
@@ -82,6 +97,9 @@ export function ReportClientV2({
     key: m.key,
     url: m.citation_url,
   }))
+
+  const comparablesSources = deriveComparablesSources(marketStats, dbComparables)
+  const comparablesCaptureDateRange = deriveComparablesCaptureDateRange(dbComparables, marketStats)
 
   return (
     <main className="flex min-h-screen flex-col bg-background pb-20 md:pb-0">
@@ -112,12 +130,14 @@ export function ReportClientV2({
           askingUsd={thisVinPriceUsd}
           comparablesCount={v2.comparables_count}
           comparableLayer={v2.comparable_layer_used}
+          comparablesSources={comparablesSources}
         />
 
         <WhatsRemarkableBlock
           claims={v2.remarkable_claims}
           tier={v2.tier}
           onUpgradeClick={() => router.push("/pricing")}
+          onSeeSampleClick={() => setSeeSampleOpen(true)}
         />
 
         <ValuationBreakdownBlock
@@ -128,13 +148,18 @@ export function ReportClientV2({
         />
 
         {v2.market_intel.d2.by_region.length > 0 && (
-          <ArbitrageSignalBlock d2={v2.market_intel.d2} thisListingPriceUsd={thisVinPriceUsd} />
+          <ArbitrageSignalBlock
+            d2={v2.market_intel.d2}
+            thisListingPriceUsd={thisVinPriceUsd}
+            landedCostMethodologyHref="/methodology#landed-cost"
+          />
         )}
 
         <ComparablesAndPositioningBlock
           d3={v2.market_intel.d3}
           thisVinPriceUsd={thisVinPriceUsd}
           comparables={dbComparables}
+          captureDateRange={comparablesCaptureDateRange}
         />
 
         <MarketContextBlock regions={marketStats?.regions ?? []} />
@@ -161,12 +186,22 @@ export function ReportClientV2({
         />
       </div>
 
-      {downloadSheetOpen && (
-        <DownloadSheetStub
-          onClose={() => setDownloadSheetOpen(false)}
-          report={v2}
-        />
-      )}
+      <DownloadSheet
+        open={downloadSheetOpen}
+        onClose={() => setDownloadSheetOpen(false)}
+        listingId={car.id}
+        reportHash={v2.report_hash || null}
+        verifyHref={v2.report_hash ? `/verify/${v2.report_hash}` : undefined}
+      />
+
+      <SeeSampleModal
+        open={seeSampleOpen}
+        onClose={() => setSeeSampleOpen(false)}
+        onUpgradeClick={() => {
+          setSeeSampleOpen(false)
+          router.push("/pricing")
+        }}
+      />
     </main>
   )
 }
@@ -209,40 +244,59 @@ function computeDelta(askingUsd: number, fairMidUsd: number): number {
   return ((askingUsd - fairMidUsd) / fairMidUsd) * 100
 }
 
-function DownloadSheetStub({
-  onClose,
-  report,
-}: {
-  onClose: () => void
-  report: HausReportV2
-}) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 md:items-center"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-t-2xl bg-card p-6 md:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-[16px] font-semibold">Download Report</h3>
-        <p className="mt-2 text-[12px] text-muted-foreground">
-          Server-side PDF and Excel export arrives in Phase 4/5. For now, use the
-          classic report page to download.
-        </p>
-        <p className="mt-2 text-[11px] font-mono text-muted-foreground">
-          Report: {report.report_id}
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-4 block w-full rounded-lg bg-primary px-4 py-2 text-center font-semibold text-primary-foreground"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  )
+// ─── Source derivation helpers ──────────────────────────────────────
+
+function deriveComparablesSources(
+  marketStats: ModelMarketStats | null,
+  dbComparables: DbComparableRow[],
+) {
+  const platforms = new Set<string>()
+
+  for (const r of marketStats?.regions ?? []) {
+    for (const s of r.sources ?? []) {
+      if (s?.trim()) platforms.add(s.trim())
+    }
+  }
+
+  for (const c of dbComparables) {
+    if (c.platform?.trim()) platforms.add(c.platform.trim())
+  }
+
+  const ordered = Array.from(platforms)
+  const range = aggregateCaptureRange(marketStats, dbComparables)
+
+  if (ordered.length === 0 && !range) return undefined
+
+  return {
+    platforms: ordered,
+    captureDateRange: range,
+  }
+}
+
+function deriveComparablesCaptureDateRange(
+  dbComparables: DbComparableRow[],
+  marketStats: ModelMarketStats | null,
+) {
+  return aggregateCaptureRange(marketStats, dbComparables)
+}
+
+function aggregateCaptureRange(
+  marketStats: ModelMarketStats | null,
+  dbComparables: DbComparableRow[],
+): { start: string; end: string } | null {
+  const dates: string[] = []
+
+  for (const r of marketStats?.regions ?? []) {
+    if (r.oldestDate) dates.push(r.oldestDate)
+    if (r.newestDate) dates.push(r.newestDate)
+  }
+
+  for (const c of dbComparables) {
+    if (c.soldDate) dates.push(c.soldDate)
+  }
+
+  if (dates.length === 0) return null
+
+  const sorted = [...dates].sort()
+  return { start: sorted[0], end: sorted[sorted.length - 1] }
 }

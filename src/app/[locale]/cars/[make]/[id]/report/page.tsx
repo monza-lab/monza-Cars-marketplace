@@ -14,12 +14,17 @@ import {
   getReportForListing,
   fetchSignalsForListing,
   assembleHausReportFromDB,
+  getReportMetadataV2,
 } from "@/lib/reports/queries"
 import { ReportClient } from "./ReportClient"
 import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
-import type { HausReport } from "@/lib/fairValue/types"
+import type { HausReport, MarketIntelD2, ReportTier } from "@/lib/fairValue/types"
 import { getComparablesForModel } from "@/lib/db/queries"
+import {
+  computeArbitrageForCar,
+  inferTargetRegion,
+} from "@/lib/marketIntel/computeArbitrageForCar"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
@@ -93,15 +98,43 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   // Fetch priced listings + compute market stats in parallel
   const [allPriced, dbComparables] = await Promise.all([
     fetchPricedListingsForModel(car.make),
-    getComparablesForModel(car.make, car.model),
+    getComparablesForModel(car.make, car.model).catch((err) => {
+      console.warn(
+        "[report] getComparablesForModel failed, continuing without DB comparables:",
+        err instanceof Error ? err.message : err,
+      )
+      return []
+    }),
   ])
 
   // Filter by series, expand to family if needed, compute regional stats (shared helper)
   const rates = await getExchangeRates()
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
+  // D2 — Cross-border arbitrage (spec §5.7). Resolve landed cost to the
+  // target region of the listing so the Arbitrage block ships populated.
+  const askingForArbitrage =
+    car.soldPriceUsd ??
+    car.askingPriceUsd ??
+    car.currentBid ??
+    car.price ??
+    0
+  const targetRegion = inferTargetRegion(car.region)
+  const d2Precomputed: MarketIntelD2 =
+    askingForArbitrage > 0
+      ? await computeArbitrageForCar({
+          pricedListings: allPriced,
+          thisVinPriceUsd: askingForArbitrage,
+          targetRegion,
+          carYear: car.year,
+        })
+      : { by_region: [], target_region: targetRegion, narrative_insight: null }
+
   // Resolve HausReport — via mock fixture (?mock=992gt3|sparse) or DB.
   let existingReport: HausReport | null = null
+  let reportTier: ReportTier | null = null
+  let reportHash: string | null = null
+  let reportVersion: number | null = null
   if (mockName === "992gt3") {
     const fixture = (await import("@/lib/fairValue/__fixtures__/992-gt3-pts-mock.json")).default
     existingReport = fixture as HausReport
@@ -119,6 +152,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportRow as unknown as Record<string, unknown>,
           signalRows,
         )
+        // Pull the tier / hash / version the orchestrator persisted so the v2
+        // adapter reflects the true tier instead of defaulting to tier_1.
+        const meta = await getReportMetadataV2(car.id)
+        reportTier = meta.tier
+        reportHash = meta.report_hash
+        reportVersion = meta.version
       } else {
         existingReport = null
       }
@@ -148,6 +187,10 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           existingReport={existingReport}
           marketStats={marketStats}
           dbComparables={dbComparables}
+          d2Precomputed={d2Precomputed}
+          reportTier={reportTier}
+          reportHash={reportHash}
+          reportVersion={reportVersion}
         />
       ) : (
         <ReportClient

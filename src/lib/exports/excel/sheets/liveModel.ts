@@ -1,20 +1,35 @@
 import type { Workbook } from "exceljs"
-import { EXCEL_COLORS, formulaCell, headerCell, titleCell, NUMBER_FMT } from "../styles"
+import {
+  EXCEL_COLORS,
+  EXCEL_FONTS,
+  NUMBER_FMT,
+  applyWarmBackground,
+  formulaCell,
+  headerCell,
+  sectionLabelCell,
+  titleCell,
+} from "../styles"
 
 export function buildLiveModelSheet(wb: Workbook, askingUsd: number): void {
   const ws = wb.addWorksheet("Live Model", {
-    properties: { tabColor: { argb: "FF808080" } },
+    // Soft Beige tab signals "formulas, don't touch"
+    properties: { tabColor: { argb: EXCEL_COLORS.softBeige } },
     views: [{ showGridLines: false, state: "normal" }],
   })
-  ws.columns = [{ width: 42 }, { width: 18 }]
+  ws.columns = [{ width: 44 }, { width: 20 }]
 
   let row = 1
-  ws.getCell(`A${row}`).value = "LIVE MODEL — formulas reading from Assumptions"
+
+  // Keep exactly 2 header rows so the hardcoded `B8` / `B${row-N}` formula
+  // references below still resolve to the same cells.
+  ws.getCell(`A${row}`).value = "LIVE MODEL"
   Object.assign(ws.getCell(`A${row}`), titleCell())
   ws.mergeCells(`A${row}:B${row}`)
   row += 1
-  ws.getCell(`A${row}`).value = "Do not edit. Change the blue cells in Assumptions instead."
-  ws.getCell(`A${row}`).font = { italic: true, color: { argb: EXCEL_COLORS.brandMuted }, size: 10 }
+
+  ws.getCell(`A${row}`).value =
+    "Formulas reading from Assumptions · do not edit, change the rose cells in Assumptions"
+  Object.assign(ws.getCell(`A${row}`), sectionLabelCell())
   ws.mergeCells(`A${row}:B${row}`)
   row += 2
 
@@ -22,14 +37,29 @@ export function buildLiveModelSheet(wb: Workbook, askingUsd: number): void {
     const cell = ws.getCell(`A${row}`)
     cell.value = title
     Object.assign(cell, headerCell())
+    const rhs = ws.getCell(`B${row}`)
+    rhs.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: EXCEL_COLORS.headerBg },
+    }
     ws.mergeCells(`A${row}:B${row}`)
+    ws.getRow(row).height = 22
     row++
   }
+
+  const labelFont = () => ({
+    bold: true,
+    name: EXCEL_FONTS.bodyName,
+    size: 11,
+    color: { argb: EXCEL_COLORS.brandForeground },
+  })
 
   const putFormula = (label: string, formula: string, numFmt?: string) => {
     const labelCell = ws.getCell(`A${row}`)
     labelCell.value = label
-    labelCell.font = { bold: true, name: "Calibri" }
+    labelCell.font = labelFont()
+    labelCell.alignment = { vertical: "middle", indent: 1 }
     const valueCell = ws.getCell(`B${row}`)
     valueCell.value = { formula }
     Object.assign(valueCell, formulaCell())
@@ -40,7 +70,8 @@ export function buildLiveModelSheet(wb: Workbook, askingUsd: number): void {
   const putStatic = (label: string, value: number, numFmt?: string) => {
     const labelCell = ws.getCell(`A${row}`)
     labelCell.value = label
-    labelCell.font = { bold: true, name: "Calibri" }
+    labelCell.font = labelFont()
+    labelCell.alignment = { vertical: "middle", indent: 1 }
     const valueCell = ws.getCell(`B${row}`)
     valueCell.value = value
     Object.assign(valueCell, formulaCell())
@@ -88,4 +119,6 @@ export function buildLiveModelSheet(wb: Workbook, askingUsd: number): void {
     "(ANNUAL_MAINT_USD+ANNUAL_INSURANCE_USD)*HOLD_YEARS",
     NUMBER_FMT.usd,
   )
+
+  applyWarmBackground(ws, row - 1, 2)
 }

@@ -47,10 +47,10 @@ export function DueDiligencePage({ report, pageNumber, totalPages }: Props) {
           {risks.map((s) => (
             <View
               key={s.key}
-              style={[pdfStyles.card, { borderColor: PDF_COLORS.destructive }]}
+              style={[pdfStyles.card, { borderColor: PDF_COLORS.negative }]}
               wrap={false}
             >
-              <Text style={[pdfStyles.body, { color: PDF_COLORS.destructive, fontFamily: "Helvetica-Bold" }]}>
+              <Text style={[pdfStyles.bodyEmphasis, { color: PDF_COLORS.negative }]}>
                 {prettyKey(s.key)}
               </Text>
               <Text style={pdfStyles.bodyMuted}>{s.value_display}</Text>

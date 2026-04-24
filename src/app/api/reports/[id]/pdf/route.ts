@@ -14,6 +14,10 @@ import {
 import { getComparablesForModel } from "@/lib/db/queries"
 import type { HausReport } from "@/lib/fairValue/types"
 import { adaptV1ReportToV2 } from "@/lib/fairValue/adaptV1ToV2"
+import {
+  computeArbitrageForCar,
+  inferTargetRegion,
+} from "@/lib/marketIntel/computeArbitrageForCar"
 import { computeReportHash } from "@/lib/reports/hash"
 import { renderReportToPdfBuffer } from "@/lib/exports/pdf/renderReport"
 import {
@@ -69,13 +73,24 @@ export async function GET(
   const rates = await getExchangeRates()
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
-  // 4. Adapt to v2
+  // 4. Adapt to v2 — including pre-computed D2 cross-border arbitrage
   const askingUsd = deriveAskingUsd(car)
+  const targetRegion = inferTargetRegion(car.region)
+  const d2Precomputed =
+    askingUsd > 0
+      ? await computeArbitrageForCar({
+          pricedListings: allPriced,
+          thisVinPriceUsd: askingUsd,
+          targetRegion,
+          carYear: car.year,
+        })
+      : undefined
   const v2 = adaptV1ReportToV2({
     v1Report,
     marketStats,
     dbComparables,
     thisVinPriceUsd: askingUsd,
+    d2Precomputed,
   })
 
   // 5. Stable hash for this snapshot (ignoring volatile timestamps).

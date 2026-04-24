@@ -79,4 +79,46 @@ describe("ComparablesAndPositioningBlock", () => {
     )
     expect(screen.getByText(/Not enough sold comparables/)).toBeInTheDocument()
   })
+
+  it("renders source badge with derived platforms and date range", () => {
+    render(
+      <ComparablesAndPositioningBlock
+        d3={d3}
+        thisVinPriceUsd={225000}
+        comparables={comparables}
+        captureDateRange={{ start: "2025-12-20", end: "2026-03-15" }}
+      />
+    )
+    expect(screen.getByText(/BaT/)).toBeInTheDocument()
+    expect(screen.getByText(/captured Dec 20, 2025 – Mar 15, 2026/)).toBeInTheDocument()
+  })
+
+  it("source badge absent when comparables list is empty", () => {
+    render(
+      <ComparablesAndPositioningBlock
+        d3={d3}
+        thisVinPriceUsd={225000}
+        comparables={[]}
+        captureDateRange={{ start: "2025-12-20", end: "2026-03-15" }}
+      />
+    )
+    expect(screen.queryByText(/captured/i)).not.toBeInTheDocument()
+  })
+
+  it("deduplicates platforms in source badge", () => {
+    const mixedPlatforms: DbComparableRow[] = [
+      { title: "A", platform: "BaT", soldDate: "2026-03-15", soldPrice: 225000, mileage: 5000, condition: null },
+      { title: "B", platform: "BAT", soldDate: "2026-03-10", soldPrice: 220000, mileage: 6000, condition: null },
+      { title: "C", platform: "Classic.com", soldDate: "2026-03-05", soldPrice: 215000, mileage: 7000, condition: null },
+    ]
+    render(
+      <ComparablesAndPositioningBlock
+        d3={d3}
+        thisVinPriceUsd={225000}
+        comparables={mixedPlatforms}
+      />
+    )
+    // "BAT" should not appear as a duplicate of "BaT"
+    expect(screen.getByText(/BaT · Classic\.com/)).toBeInTheDocument()
+  })
 })

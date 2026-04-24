@@ -5,11 +5,14 @@ import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, ReferenceLine } fro
 import type { MarketIntelD3 } from "@/lib/fairValue/types"
 import type { DbComparableRow } from "@/lib/db/queries"
 import { CollapsibleList } from "./primitives/CollapsibleList"
+import { SourceBadge } from "./primitives/SourceBadge"
 
 interface ComparablesAndPositioningBlockProps {
   d3: MarketIntelD3
   thisVinPriceUsd: number
   comparables: DbComparableRow[]
+  captureDateRange?: { start: string; end: string } | null
+  onSourceClick?: () => void
   initialTab?: "distribution" | "table"
 }
 
@@ -17,13 +20,43 @@ function fmtK(v: number): string {
   return `$${Math.round(v / 1000)}K`
 }
 
+function formatShortDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+function derivePlatforms(comparables: DbComparableRow[]): string[] {
+  const seen = new Set<string>()
+  const order: string[] = []
+  for (const c of comparables) {
+    const p = c.platform?.trim()
+    if (!p) continue
+    const key = p.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    order.push(p)
+  }
+  return order
+}
+
+function formatPlatformsLabel(platforms: string[]): string {
+  if (platforms.length === 0) return "Market comparables"
+  if (platforms.length <= 3) return platforms.join(" · ")
+  return `${platforms.slice(0, 3).join(" · ")} +${platforms.length - 3}`
+}
+
 export function ComparablesAndPositioningBlock({
   d3,
   thisVinPriceUsd,
   comparables,
+  captureDateRange,
+  onSourceClick,
   initialTab = "distribution",
 }: ComparablesAndPositioningBlockProps) {
   const [tab, setTab] = useState<"distribution" | "table">(initialTab)
+  const platforms = derivePlatforms(comparables)
+  const hasSource = comparables.length > 0 && (platforms.length > 0 || captureDateRange)
 
   const chartData = d3.variant_distribution_bins.map((b) => ({
     label: fmtK(b.price_bucket_usd_low),
@@ -47,6 +80,21 @@ export function ComparablesAndPositioningBlock({
       >
         Comparables &amp; Positioning
       </h2>
+
+      {hasSource && (
+        <div className="mt-2">
+          <SourceBadge
+            name={formatPlatformsLabel(platforms)}
+            count={comparables.length}
+            captureDate={
+              captureDateRange
+                ? `captured ${formatShortDate(captureDateRange.start)} – ${formatShortDate(captureDateRange.end)}`
+                : undefined
+            }
+            onClick={onSourceClick}
+          />
+        </div>
+      )}
 
       <div className="mt-3 flex gap-1 border-b border-border text-[13px]">
         <button

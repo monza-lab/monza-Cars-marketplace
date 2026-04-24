@@ -1,6 +1,15 @@
 import type { Workbook, Worksheet } from "exceljs"
 import type { HausReportV2 } from "@/lib/fairValue/types"
-import { EXCEL_COLORS, headerCell, inputCell, titleCell, NUMBER_FMT } from "../styles"
+import {
+  EXCEL_COLORS,
+  EXCEL_FONTS,
+  NUMBER_FMT,
+  applyWarmBackground,
+  headerCell,
+  inputCell,
+  sectionLabelCell,
+  titleCell,
+} from "../styles"
 
 function addNamedInput(
   ws: Worksheet,
@@ -13,7 +22,14 @@ function addNamedInput(
 ): void {
   const labelCell = ws.getCell(`A${row}`)
   labelCell.value = label
-  labelCell.font = { bold: true, name: "Calibri" }
+  labelCell.font = {
+    bold: true,
+    name: EXCEL_FONTS.bodyName,
+    size: 11,
+    color: { argb: EXCEL_COLORS.brandForeground },
+  }
+  labelCell.alignment = { vertical: "middle", indent: 1 }
+
   const valueCell = ws.getCell(`B${row}`)
   valueCell.value = value
   Object.assign(valueCell, inputCell())
@@ -27,19 +43,32 @@ function addNamedInput(
 
 export function buildAssumptionsSheet(wb: Workbook, report: HausReportV2): void {
   const ws = wb.addWorksheet("Assumptions", {
-    properties: { tabColor: { argb: "FF5FA3E0" } }, // blue tab to signal "editable"
+    properties: { tabColor: { argb: EXCEL_COLORS.brandRose } },
     views: [{ showGridLines: false, state: "normal" }],
   })
-  ws.columns = [{ width: 42 }, { width: 18 }]
+  ws.columns = [{ width: 44 }, { width: 20 }]
 
   let row = 1
-  ws.getCell(`A${row}`).value = "ASSUMPTIONS — edit the blue cells"
+
+  // Wordmark + tagline
+  ws.getCell(`A${row}`).value = "ASSUMPTIONS"
   Object.assign(ws.getCell(`A${row}`), titleCell())
   ws.mergeCells(`A${row}:B${row}`)
-  row += 1
+  row++
+  ws.getCell(`A${row}`).value = "Edit the rose cells to re-run the model"
+  Object.assign(ws.getCell(`A${row}`), sectionLabelCell())
+  ws.mergeCells(`A${row}:B${row}`)
+  row++
 
-  ws.getCell(`A${row}`).value = 'Blue cells = your inputs. Black cells in "Live Model" are formulas — edit only the blue.'
-  ws.getCell(`A${row}`).font = { italic: true, color: { argb: EXCEL_COLORS.brandMuted }, size: 10 }
+  ws.getCell(`A${row}`).value =
+    "Rose cells are your inputs. Beige cells in Live Model are formulas — edit only the rose."
+  ws.getCell(`A${row}`).font = {
+    italic: true,
+    name: EXCEL_FONTS.bodyName,
+    color: { argb: EXCEL_COLORS.brandMuted },
+    size: 10,
+  }
+  ws.getCell(`A${row}`).alignment = { vertical: "middle" }
   ws.mergeCells(`A${row}:B${row}`)
   row += 2
 
@@ -47,7 +76,14 @@ export function buildAssumptionsSheet(wb: Workbook, report: HausReportV2): void 
     const cell = ws.getCell(`A${row}`)
     cell.value = title
     Object.assign(cell, headerCell())
+    const rhs = ws.getCell(`B${row}`)
+    rhs.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: EXCEL_COLORS.headerBg },
+    }
     ws.mergeCells(`A${row}:B${row}`)
+    ws.getRow(row).height = 22
     row++
   }
 
@@ -77,4 +113,6 @@ export function buildAssumptionsSheet(wb: Workbook, report: HausReportV2): void 
   addNamedInput(ws, row++, "Annual maintenance (USD)", 3500, "ANNUAL_MAINT_USD", NUMBER_FMT.usd)
   addNamedInput(ws, row++, "Annual insurance (USD)", 1800, "ANNUAL_INSURANCE_USD", NUMBER_FMT.usd)
   addNamedInput(ws, row++, "Expected hold period (years)", 5, "HOLD_YEARS", NUMBER_FMT.plain)
+
+  applyWarmBackground(ws, row - 1, 2)
 }

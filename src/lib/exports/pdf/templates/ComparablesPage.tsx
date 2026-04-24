@@ -28,7 +28,7 @@ export function ComparablesPage({
       {d3.variant_distribution_bins.length > 0 ? (
         <Text style={pdfStyles.body}>
           This VIN falls in the{" "}
-          <Text style={{ fontFamily: "Helvetica-Bold" }}>
+          <Text style={pdfStyles.bodyEmphasis}>
             {d3.vin_percentile_within_variant}th percentile
           </Text>{" "}
           of variant sold prices in the last 12 months.
@@ -96,7 +96,7 @@ export function ComparablesPage({
           <View style={{ flexDirection: "row", gap: 8 }}>
             {regions.slice(0, 4).map((r) => (
               <View key={r.region} style={[pdfStyles.card, { flex: 1, marginBottom: 0 }]} wrap={false}>
-                <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 10 }}>{r.region}</Text>
+                <Text style={[pdfStyles.bodyEmphasis, { fontSize: 10 }]}>{r.region}</Text>
                 <Text style={[pdfStyles.mono, { marginTop: 2 }]}>{fmtK(r.medianPriceUsd)}</Text>
                 <Text style={pdfStyles.bodyMuted}>{r.totalListings} sold · {r.trendDirection}</Text>
               </View>

@@ -3,6 +3,7 @@ import type { HausReportV2 } from "@/lib/fairValue/types"
 import type { RegionalMarketStats } from "@/lib/reports/types"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { DbComparableRow } from "@/lib/db/queries"
+import { ensureBrandFontsRegistered } from "./fonts"
 import { Cover } from "./templates/Cover"
 import { RemarkableAndArbitragePage } from "./templates/RemarkableAndArbitragePage"
 import { ValuationPage } from "./templates/ValuationPage"
@@ -37,6 +38,7 @@ function composeOneLiner(report: HausReportV2, askingUsd: number): string {
 }
 
 export async function renderReportToPdfBuffer(input: RenderReportInput): Promise<Buffer> {
+  ensureBrandFontsRegistered()
   const verdict = deriveVerdict(input.askingUsd, input.report.specific_car_fair_value_mid)
   const verdictOneLiner = composeOneLiner(input.report, input.askingUsd)
 
