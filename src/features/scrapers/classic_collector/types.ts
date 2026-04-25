@@ -16,9 +16,6 @@ export interface CollectorRunConfig {
   maxPages: number;
   maxListings: number;
   headless: boolean;
-  proxyServer?: string;
-  proxyUsername?: string;
-  proxyPassword?: string;
   navigationDelayMs: number;
   pageTimeoutMs: number;
   checkpointPath: string;

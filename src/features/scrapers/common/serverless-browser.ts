@@ -14,17 +14,9 @@ const IS_VERCEL = !!process.env.VERCEL;
  * Returns a playwright-core Browser instance in both cases.
  */
 export async function launchServerlessBrowser(
-  opts: LaunchOptions & { proxyServer?: string; proxyUsername?: string; proxyPassword?: string },
+  opts: LaunchOptions,
 ): Promise<Browser> {
-  const { proxyServer, proxyUsername, proxyPassword, ...launchOpts } = opts;
-
-  if (proxyServer) {
-    launchOpts.proxy = {
-      server: proxyServer,
-      username: proxyUsername,
-      password: proxyPassword,
-    };
-  }
+  const { ...launchOpts } = opts;
 
   if (IS_VERCEL) {
     // Serverless path: @sparticuz/chromium + playwright-core

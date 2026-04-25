@@ -112,16 +112,10 @@ async function main() {
       console.log("Launching stealth browser...");
       browser = await launchStealthBrowser({
         headless: !opts.headed,
-        proxyServer: process.env.DECODO_PROXY_URL,
-        proxyUsername: process.env.DECODO_PROXY_USER,
-        proxyPassword: process.env.DECODO_PROXY_PASS,
       });
 
       const context = await createStealthContext(browser, {
         headless: !opts.headed,
-        proxyServer: process.env.DECODO_PROXY_URL,
-        proxyUsername: process.env.DECODO_PROXY_USER,
-        proxyPassword: process.env.DECODO_PROXY_PASS,
       });
 
       page = await createPage(context, true); // blockMedia=true for speed

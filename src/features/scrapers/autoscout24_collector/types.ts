@@ -29,9 +29,6 @@ export interface CollectorRunConfig {
   maxPagesPerShard: number;
   maxListings: number;
   headless: boolean;
-  proxyServer?: string;
-  proxyUsername?: string;
-  proxyPassword?: string;
   navigationDelayMs: number;
   pageTimeoutMs: number;
   scrapeDetails: boolean;

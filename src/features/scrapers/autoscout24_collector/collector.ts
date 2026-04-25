@@ -99,7 +99,7 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   const startMs = Date.now();
 
-  logEvent({ level: "info", event: "collector.start", runId, config: { ...config, proxyPassword: "***" } });
+  logEvent({ level: "info", event: "collector.start", runId, config });
 
   // Generate or use provided shards
   const allShards = config.shards ?? generateShards({
@@ -143,16 +143,10 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   const browser = useScrapling ? null : await launchStealthBrowser({
     headless: config.headless,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
   });
 
   let context = browser ? await createStealthContext(browser, {
     headless: config.headless,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
   }) : null;
   let page = context ? await createPage(context) : null;
   const rateLimiter = new NavigationRateLimiter(config.navigationDelayMs);
@@ -251,9 +245,6 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
           await context?.close().catch(() => {});
           context = await createStealthContext(browser, {
             headless: config.headless,
-            proxyServer: config.proxyServer,
-            proxyUsername: config.proxyUsername,
-            proxyPassword: config.proxyPassword,
           });
           page = await createPage(context);
         }
@@ -385,9 +376,6 @@ export async function runCollector(overrides?: Partial<CollectorRunConfig>): Pro
     maxPagesPerShard: 20,
     maxListings: 50000,
     headless: true,
-    proxyServer: process.env.DECODO_PROXY_URL,
-    proxyUsername: process.env.DECODO_PROXY_USER,
-    proxyPassword: process.env.DECODO_PROXY_PASS,
     navigationDelayMs: 3000,
     pageTimeoutMs: 30000,
     scrapeDetails: false,

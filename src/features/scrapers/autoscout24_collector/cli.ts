@@ -121,9 +121,6 @@ Options:
     maxPagesPerShard: readNumber(args, "maxPagesPerShard", 20),
     maxListings: readNumber(args, "maxListings", 50000),
     headless: !hasFlag(args, "headed"),
-    proxyServer: process.env.DECODO_PROXY_URL,
-    proxyUsername: process.env.DECODO_PROXY_USER,
-    proxyPassword: process.env.DECODO_PROXY_PASS,
     navigationDelayMs: readNumber(args, "navigationDelayMs", 3000),
     pageTimeoutMs: readNumber(args, "pageTimeoutMs", 30000),
     scrapeDetails: hasFlag(args, "scrapeDetails"),
@@ -140,7 +137,7 @@ Options:
   console.log(`  Scrape details: ${config.scrapeDetails}`);
   console.log(`  Dry run: ${config.dryRun}`);
   console.log(`  Headed: ${!config.headless}`);
-  console.log(`  Proxy: ${config.proxyServer ? "configured" : "none"}`);
+  console.log(`  Proxy: none`);
   console.log();
 
   const result = await runAutoScout24Collector(config);

@@ -53,9 +53,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DECODO_PROXY_URL: ${{ secrets.DECODO_PROXY_URL }}
-          DECODO_PROXY_USER: ${{ secrets.DECODO_PROXY_USER }}
-          DECODO_PROXY_PASS: ${{ secrets.DECODO_PROXY_PASS }}
           SCRAPLING_FETCH_MODE: stealthy-fetch
         run: |
           npx tsx scripts/backfill-classic-images.ts \

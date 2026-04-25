@@ -3,9 +3,6 @@ import { launchServerlessBrowser } from "@/features/scrapers/common/serverless-b
 
 export interface BrowserConfig {
   headless: boolean;
-  proxyServer?: string;
-  proxyUsername?: string;
-  proxyPassword?: string;
 }
 
 const STEALTH_ARGS = [
@@ -75,9 +72,6 @@ export async function launchStealthBrowser(config: BrowserConfig): Promise<Brows
   return launchServerlessBrowser({
     headless: config.headless,
     args: STEALTH_ARGS,
-    proxyServer: config.proxyServer,
-    proxyUsername: config.proxyUsername,
-    proxyPassword: config.proxyPassword,
   });
 }
 

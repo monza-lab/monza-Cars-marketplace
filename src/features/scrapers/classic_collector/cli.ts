@@ -21,9 +21,6 @@ Options:
   --dryRun                     Skip DB writes, output to JSONL only
   --navigationDelayMs=<number> Delay between page navigations in ms (default: 3000)
   --pageTimeoutMs=<number>     Playwright page.goto timeout in ms (default: 30000)
-  --proxyServer=<url>          Proxy server URL (or DECODO_PROXY_URL env)
-  --proxyUsername=<string>     Proxy username (or DECODO_PROXY_USER env)
-  --proxyPassword=<string>     Proxy password (or DECODO_PROXY_PASS env)
   --checkpointPath=<path>      Checkpoint file path
   --outputPath=<path>          JSONL output file path
   --help                       Show this help message
@@ -35,8 +32,6 @@ Examples:
   # Production run with defaults:
   npx tsx src/features/classic_collector/cli.ts --maxPages=20
 
-  # With proxy:
-  npx tsx src/features/classic_collector/cli.ts --proxyServer=http://gate.smartproxy.com:7000
 `.trim();
 }
 
@@ -109,9 +104,6 @@ async function main(): Promise<void> {
     maxPages: readNumber(args, "maxPages", 10),
     maxListings: readNumber(args, "maxListings", 500),
     headless: !hasFlag(args, "headed"),
-    proxyServer: readString(args, "proxyServer") ?? process.env.DECODO_PROXY_URL,
-    proxyUsername: readString(args, "proxyUsername") ?? process.env.DECODO_PROXY_USER,
-    proxyPassword: readString(args, "proxyPassword") ?? process.env.DECODO_PROXY_PASS,
     navigationDelayMs: readNumber(args, "navigationDelayMs", 3000),
     pageTimeoutMs: readNumber(args, "pageTimeoutMs", 30000),
     checkpointPath: readString(args, "checkpointPath") ?? "var/classic_collector/checkpoint.json",
@@ -120,24 +112,7 @@ async function main(): Promise<void> {
     summaryOnly: hasFlag(args, "summaryOnly"),
   };
 
-  const hasProxyCreds = Boolean(config.proxyUsername || config.proxyPassword);
-  if (hasProxyCreds && !config.proxyServer) {
-    console.warn(
-      "[classic_collector] Proxy credentials are set but proxyServer is missing. " +
-      "Set DECODO_PROXY_URL in .env.local or pass --proxyServer=..."
-    );
-  }
-  if (config.proxyServer && (!config.proxyUsername || !config.proxyPassword)) {
-    console.warn(
-      "[classic_collector] proxyServer is set but proxyUsername/proxyPassword is missing. " +
-      "Set DECODO_PROXY_USER/DECODO_PROXY_PASS or pass --proxyUsername/--proxyPassword."
-    );
-  }
-
-  console.log(`[classic_collector] Starting with config:`, {
-    ...config,
-    proxyPassword: config.proxyPassword ? "***" : undefined,
-  });
+  console.log(`[classic_collector] Starting with config:`, config);
 
   const result = await runClassicComCollector(config);
 

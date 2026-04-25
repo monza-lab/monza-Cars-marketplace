@@ -43,9 +43,6 @@ npx tsx src/features/classic_collector/cli.ts --dryRun --headed --maxListings=5
 
 # Production run:
 npx tsx src/features/classic_collector/cli.ts --maxPages=20 --maxListings=500
-
-# With proxy:
-npx tsx src/features/classic_collector/cli.ts --proxyServer=http://gate.smartproxy.com:7000
 ```
 
 ## Environment Variables
@@ -55,11 +52,6 @@ Required in `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-
-# Optional: Decodo/SmartProxy residential proxies
-DECODO_PROXY_URL=http://gate.smartproxy.com:7000
-DECODO_PROXY_USER=user-country-us
-DECODO_PROXY_PASS=your_password
 ```
 
 ## CLI Flags

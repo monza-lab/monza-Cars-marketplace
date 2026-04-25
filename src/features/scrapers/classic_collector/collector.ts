@@ -1,8 +1,6 @@
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { ProxyAgent } from "undici";
-
 import type {
   CollectorRunConfig,
   CollectorResult,
@@ -24,101 +22,6 @@ import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 const MAX_CONSECUTIVE_CF_BLOCKS = 10;
 const CONTEXT_REFRESH_INTERVAL = 100;
 
-type ProxyPreflightResult = {
-  config: CollectorRunConfig;
-  usedProxy: boolean;
-  fallbackReason?: string;
-};
-
-export async function preflightProxy(
-  config: CollectorRunConfig,
-  runId: string
-): Promise<ProxyPreflightResult> {
-  if (!config.proxyServer) {
-    return { config, usedProxy: false };
-  }
-
-  if (!config.proxyUsername || !config.proxyPassword) {
-    throw new Error("Proxy server configured but missing proxy username/password");
-  }
-
-  const token = `Basic ${Buffer.from(`${config.proxyUsername}:${config.proxyPassword}`).toString("base64")}`;
-  const agent = new ProxyAgent({ uri: config.proxyServer, token });
-
-  const controller = new AbortController();
-  const timeoutMs = 12_000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    // Use a non-Classic endpoint so we can distinguish proxy auth/limit failures from Classic Cloudflare.
-    // Any 407 here means the proxy itself is not usable (auth failure, traffic limit, etc).
-    let res: Response;
-    try {
-      res = await fetch("https://api.ipify.org?format=json", {
-        signal: controller.signal,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dispatcher: agent as any,
-      } as RequestInit);
-    } catch (err) {
-      // Undici's ProxyAgent can abort the request before producing a Response when CONNECT fails.
-      // In practice, Decodo/Smartproxy returns a 407 for auth/traffic-limit issues.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const e: any = err;
-      const causeMsg = String(e?.cause?.cause?.message ?? e?.cause?.message ?? e?.message ?? err);
-      if (causeMsg.includes("Proxy response (407)")) {
-        const reason =
-          "Proxy CONNECT rejected (407). Decodo/Smartproxy credentials are invalid or the account traffic limit is exhausted.";
-        logEvent({ level: "warn", event: "proxy.preflight_fallback", runId, reason });
-        return {
-          config: {
-            ...config,
-            proxyServer: undefined,
-            proxyUsername: undefined,
-            proxyPassword: undefined,
-          },
-          usedProxy: false,
-          fallbackReason: reason,
-        };
-      }
-      throw err;
-    }
-
-    if (res.status === 407) {
-      const body = await res.text().catch(() => "");
-      const reason = `Proxy rejected CONNECT (407). ${body}`.trim();
-      logEvent({ level: "warn", event: "proxy.preflight_fallback", runId, reason });
-      return {
-        config: {
-          ...config,
-          proxyServer: undefined,
-          proxyUsername: undefined,
-          proxyPassword: undefined,
-        },
-        usedProxy: false,
-        fallbackReason: reason,
-      };
-    }
-
-    if (!res.ok) {
-      logEvent({
-        level: "warn",
-        event: "proxy.preflight_non_ok",
-        runId,
-        status: res.status,
-      });
-    } else {
-      logEvent({ level: "info", event: "proxy.preflight_ok", runId });
-    }
-
-    return { config, usedProxy: true };
-  } finally {
-    clearTimeout(timeout);
-    // ProxyAgent doesn't require explicit close for single-use, but keep this guarded.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (agent as any).close?.();
-  }
-}
-
 export async function runClassicComCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
@@ -136,21 +39,9 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
 
   const startMs = Date.now();
 
-  logEvent({ level: "info", event: "collector.start", runId, config: { ...config, proxyPassword: "***" } });
+  logEvent({ level: "info", event: "collector.start", runId, config });
 
-  // Fail fast if a configured proxy cannot be used (auth/traffic limit/etc),
-  // otherwise the run will waste time on Playwright timeouts.
-  const preflight = await preflightProxy(config, runId);
-  const runConfig = preflight?.config ?? config;
-  if (preflight?.fallbackReason) {
-    errors.push(`Proxy fallback: ${preflight.fallbackReason}`);
-    logEvent({
-      level: "warn",
-      event: "proxy.disabled_fallback",
-      runId,
-      reason: preflight.fallbackReason,
-    });
-  }
+  const runConfig = config;
 
   // Load checkpoint
   const checkpoint = await loadCheckpoint(runConfig.checkpointPath);
@@ -165,16 +56,10 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
   // Launch browser
   const browser = await launchStealthBrowser({
     headless: runConfig.headless,
-    proxyServer: runConfig.proxyServer,
-    proxyUsername: runConfig.proxyUsername,
-    proxyPassword: runConfig.proxyPassword,
   });
 
   let context = await createStealthContext(browser, {
     headless: runConfig.headless,
-    proxyServer: runConfig.proxyServer,
-    proxyUsername: runConfig.proxyUsername,
-    proxyPassword: runConfig.proxyPassword,
   });
   let page = await createPage(context);
   const rateLimiter = new NavigationRateLimiter(runConfig.navigationDelayMs);
@@ -296,9 +181,6 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
         await context.close().catch(() => {});
         context = await createStealthContext(browser, {
           headless: runConfig.headless,
-          proxyServer: runConfig.proxyServer,
-          proxyUsername: runConfig.proxyUsername,
-          proxyPassword: runConfig.proxyPassword,
         });
         page = await createPage(context);
       }
@@ -343,16 +225,13 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
           counts.cloudflareBlocked++;
           logEvent({ level: "warn", event: "collector.cloudflare_block", runId, index: i, consecutive: consecutiveCfBlocks });
 
-          // Rotate proxy session (new IP) after CF block by refreshing context
-          if (runConfig.proxyServer && consecutiveCfBlocks < MAX_CONSECUTIVE_CF_BLOCKS) {
+          // Refresh context after CF block to get a new browser fingerprint
+          if (consecutiveCfBlocks < MAX_CONSECUTIVE_CF_BLOCKS) {
             logEvent({ level: "info", event: "collector.context_refresh_cf", runId, index: i });
             await page.close().catch(() => {});
             await context.close().catch(() => {});
             context = await createStealthContext(browser, {
               headless: runConfig.headless,
-              proxyServer: runConfig.proxyServer,
-              proxyUsername: runConfig.proxyUsername,
-              proxyPassword: runConfig.proxyPassword,
             });
             page = await createPage(context, true);
           }
@@ -465,9 +344,6 @@ export async function runCollector(overrides?: Partial<CollectorRunConfig>): Pro
     maxPages: 10,
     maxListings: 500,
     headless: true,
-    proxyServer: process.env.DECODO_PROXY_URL,
-    proxyUsername: process.env.DECODO_PROXY_USER,
-    proxyPassword: process.env.DECODO_PROXY_PASS,
     navigationDelayMs: 3000,
     pageTimeoutMs: 30000,
     checkpointPath: "var/classic_collector/checkpoint.json",
