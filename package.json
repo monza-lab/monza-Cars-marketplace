@@ -25,6 +25,7 @@
     "db:quality:porsche": "tsx scripts/db-porsche.ts --cmd=quality",
     "db:security:advisors": "tsx scripts/db-porsche.ts --cmd=security",
     "generate:factors": "tsx scripts/generate-family-factors.ts",
+    "scrapers": "tsx scripts/run-scrapers.ts",
     "postinstall": "node -e \"process.exit(0)\""
   },
   "dependencies": {
@@ -53,6 +54,7 @@
     "next-themes": "^0.4.6",
     "pg": "^8.18.0",
     "playwright-core": "^1.58.2",
+    "prompts": "^2.4.2",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -72,6 +74,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
+    "@types/prompts": "^2.4.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.0.18",
