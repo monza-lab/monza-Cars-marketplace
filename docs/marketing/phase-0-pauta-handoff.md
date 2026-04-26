@@ -43,13 +43,16 @@ Pixel and CAPI fire **the same events** with the same `event_id` so Meta dedupes
 Add to Vercel (production + preview) and `.env.example`:
 
 ```
-NEXT_PUBLIC_META_PIXEL_ID=             # 15-digit Pixel ID, public — set when Edgar creates Pixel in BM
-META_CAPI_ACCESS_TOKEN=                # Server-side only, never NEXT_PUBLIC_
-META_CAPI_TEST_EVENT_CODE=             # Optional — used in dev to test events without polluting prod
-META_DOMAIN_VERIFICATION_TOKEN=        # Meta-supplied token for domain verification meta tag
+NEXT_PUBLIC_META_PIXEL_ID=1497731501724687
+META_CAPI_ACCESS_TOKEN=                # Server-side only, never NEXT_PUBLIC_ — Edgar provides via secure channel
+META_CAPI_TEST_EVENT_CODE=             # Optional — pull from Events Manager → Test Events tab
+META_DOMAIN_VERIFICATION_TOKEN=6kn33pdk2lzvaj08jowe39llb1rzqx
 ```
 
-Edgar will provide these IDs once he completes BM setup. Do not block on them — code can be written and tested with placeholder env vars; switch to real values at deploy time.
+**Values set by Edgar on 2026-04-26:**
+- Pixel ID `1497731501724687` is public (ships in browser JS).
+- Domain verification token `6kn33pdk2lzvaj08jowe39llb1rzqx` goes in the meta tag (HTML head) — also non-secret, just an identifier.
+- **CAPI access token is the only true secret.** Edgar holds it in his local `.env`. Request it from him via 1Password / Bitwarden / encrypted DM — do not have him paste it in chat or any unencrypted channel.
 
 ## 4 · Component 1 — Meta Pixel (client-side)
 
@@ -378,7 +381,7 @@ Edgar will provide the token from Business Manager → Brand Safety → Domains.
 
 **Before deploying to production:**
 
-1. Set `META_CAPI_TEST_EVENT_CODE` in Vercel preview env (Edgar pulls test code from Events Manager → Test Events tab).
+1. Set `META_CAPI_TEST_EVENT_CODE` in Vercel preview env (pull test code from Events Manager → Test Events tab: https://business.facebook.com/events_manager2/list/dataset/1497731501724687/test_events).
 2. Deploy to a Vercel preview branch.
 3. Open `/en/get-started` in Chrome with [Meta Pixel Helper](https://chromewebstore.google.com/detail/meta-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc) installed.
 4. Verify:
@@ -405,7 +408,8 @@ Not a backend task, but documented here so the implementation aligns with the ca
 | Conversion event | **`CompleteRegistration`** | Signup volume gives Meta enough data density (~10-30 events/wk) to optimize. Purchase volume is too low until Phase 1. |
 | Optimization | Maximize conversions | Standard for low-volume launch |
 | Bid strategy | Highest volume (no cap) | Let Meta find the cheapest signups; we set CPL ceilings via budget pacing, not bid caps |
-| Audience | Saved Audience: Men 35-65 US, Porsche-intent interests | See `project_monzahaus_pauta_phase0.md` |
+| Audience | Saved Audience: "MonzaHaus US — Porsche Buyers M35-65 v1" (already created in BM 2026-04-26) | Men, US, 35-65, Porsche-intent interests |
+| Ad Account | `act_963490026422203` (Monza Haus, USD) | — |
 | Placements | Advantage+ (automatic) | More signal for Meta in low-budget regime |
 | Attribution | 7-day click, 1-day view | Default; revisit in Phase 1 |
 
@@ -422,6 +426,7 @@ Not a backend task, but documented here so the implementation aligns with the ca
 
 ## 12 · Open questions for Edgar / PM
 
-- Post-signup redirect destination: `/en/advisor` vs `/en/cars` vs `/en/account`? Defaults to `/en/advisor` if no preference.
-- Hero copy and imagery: pending Edgar.
-- Stripe test event code: Edgar pulls when ready.
+- **Post-signup redirect destination:** `/en/advisor` vs `/en/cars` vs `/en/account`? Defaults to `/en/advisor` if no preference.
+- **Hero copy and imagery for `/en/get-started`:** pending Edgar.
+- **CAPI access token handoff:** Edgar to share via 1Password / Bitwarden / encrypted DM — NOT in chat or plaintext.
+- **Production domain confirmation:** doc assumes `monzahaus.com` (matches the verified domain in BM). Confirm before deploy.
