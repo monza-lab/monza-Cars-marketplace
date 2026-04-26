@@ -241,7 +241,7 @@ export function parseMileageFromTitle(title: string): { mileage: number; unit: s
   } else {
     mileage = parseInt(raw, 10);
   }
-  if (isNaN(mileage) || mileage <= 0) return null;
+  if (isNaN(mileage) || mileage <= 0 || mileage > 999_999) return null;
   const unit = /km|kilometer/i.test(m[2]) ? 'km' : 'miles';
   return { mileage, unit };
 }
@@ -268,7 +268,7 @@ export function parseMileageFromDescription(description: string): { mileage: num
       } else {
         mileage = parseInt(raw, 10);
       }
-      if (isNaN(mileage) || mileage <= 0) continue;
+      if (isNaN(mileage) || mileage <= 0 || mileage > 999_999) continue;
       const unit = /km|kilometer/i.test(m[2]) ? 'km' : 'miles';
       return { mileage, unit };
     }
@@ -334,7 +334,7 @@ function extractMileageCandidate(text: string): { mileage: number; unit: 'miles'
     ? parseFloat(raw.slice(0, -1)) * 1000
     : parseInt(raw, 10);
 
-  if (!Number.isFinite(mileage) || mileage <= 0) return null;
+  if (!Number.isFinite(mileage) || mileage <= 0 || mileage > 999_999) return null;
 
   const contextScore = /\b(shown|showing|indicated|reads?|odometer|speedometer)\b/i.test(normalized) ? 100 : 90;
   return { mileage: Math.round(mileage), unit, score: contextScore };
@@ -357,7 +357,7 @@ function extractMileageFromKeyedValue(
 
   let mileage = parseFloat(match[1]);
   if (match[2]) mileage *= 1000;
-  if (!Number.isFinite(mileage) || mileage <= 0) return null;
+  if (!Number.isFinite(mileage) || mileage <= 0 || mileage > 999_999) return null;
 
   return { mileage: Math.round(mileage), unit: inferredUnit, score: 200 };
 }
