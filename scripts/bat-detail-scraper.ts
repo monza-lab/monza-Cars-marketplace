@@ -219,7 +219,7 @@ async function main() {
       if (detail.currentBid != null && !listing.hammer_price) {
         updates.hammer_price = detail.currentBid;
       }
-      if (!listing.original_currency) {
+      if (!listing.original_currency && detail.currentBid != null) {
         updates.original_currency = 'USD'; // BaT default
       }
 
