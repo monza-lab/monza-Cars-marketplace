@@ -975,7 +975,7 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
     const bidValueText = ($('.current-bid-value').first().text().trim()
       || $('.current-bid').first().text().trim());
     if (bidValueText) {
-      const priceMatch = bidValueText.match(/\$[\d,]+/);
+      const priceMatch = bidValueText.match(/[$€£¥][\d,]+/);
       if (priceMatch) {
         detailBid = parsePrice(priceMatch[0]);
       }
