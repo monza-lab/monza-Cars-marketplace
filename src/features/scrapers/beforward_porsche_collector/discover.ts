@@ -61,6 +61,15 @@ export async function discoverPage(input: {
   const pageCount = parsePageCount($);
   const listings = parseListingRows($, input.page);
 
+  // Diagnostic: log when parser finds 0 listings despite receiving HTML
+  if (listings.length === 0) {
+    const htmlSize = html.length;
+    const preview = html.slice(0, 200).replace(/\s+/g, " ");
+    console.warn(
+      `[BeForward] Page ${input.page}: 0 listings parsed. HTML size=${htmlSize}, totalResults=${totalResults}, preview="${preview}"`,
+    );
+  }
+
   return {
     totalResults,
     pageCount,
@@ -125,6 +134,14 @@ function parseListingRows($: cheerio.CheerioAPI, page: number): ListingSummary[]
       location: cleanText(locationText) || null,
     });
   });
+
+  if (out.length === 0) {
+    const rowCount = $("tr.stocklist-row").length;
+    console.warn(
+      `[BeForward] parseListingRows: 0 valid listings. stocklist-row count=${rowCount}`,
+    );
+  }
+
   return out;
 }
 
