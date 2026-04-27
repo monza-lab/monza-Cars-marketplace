@@ -139,6 +139,7 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
 
   // Scrapling mode: skip browser entirely
   const useScrapling = canUseScrapling();
+  console.log(`[AS24] Scrapling mode: ${useScrapling ? 'enabled' : 'disabled'}`);
   logEvent({ level: "info", event: "collector.mode", runId, mode: useScrapling ? "scrapling" : "playwright" });
 
   const browser = useScrapling ? null : await launchStealthBrowser({
