@@ -3,6 +3,9 @@ import { proxyFetch } from "@/features/scrapers/common/proxy-fetch"
 import { canUseScraplingFallback, fetchHtmlWithScrapling } from "./scrapling"
 import type { ElferspotDetail } from "./types"
 
+/** Currencies allowed by the monza_currency DB enum */
+const ALLOWED_CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "CHF"])
+
 interface JsonLdVehicle {
   price: number | null
   currency: string
@@ -143,6 +146,12 @@ export function parseDetailPage(html: string): ElferspotDetail {
       const parsed = parseFloat(numStr)
       if (Number.isFinite(parsed) && parsed > 0) price = parsed
     }
+  }
+
+  // Validate currency against DB enum
+  if (!ALLOWED_CURRENCIES.has(currency)) {
+    console.warn(`[elferspot:detail] Unsupported currency "${currency}", mapping to EUR`)
+    currency = "EUR"
   }
 
   return {
