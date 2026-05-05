@@ -125,8 +125,8 @@ describe("BeForward Cron Route", () => {
     expect(runCollector).toHaveBeenCalledWith({
       maxPages: 3,
       summaryOnly: true,
-      concurrency: 6,
-      rateLimitMs: 3500,
+      concurrency: 3,
+      rateLimitMs: 4000,
       checkpointPath: "/tmp/beforward_porsche_collector/checkpoint.json",
       outputPath: "/tmp/beforward_porsche_collector/listings.jsonl",
       dryRun: false,
