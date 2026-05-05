@@ -970,14 +970,25 @@ export async function scrapeDetail(auction: BaTAuction): Promise<BaTAuction> {
       }
     }
 
-    // Current bid — from ".current-bid-value" or ".current-bid"
+    // Current bid — from ".current-bid-value", ".current-bid", or sold-auction result
     let detailBid: number | null = null;
     const bidValueText = ($('.current-bid-value').first().text().trim()
       || $('.current-bid').first().text().trim());
     if (bidValueText) {
-      const priceMatch = bidValueText.match(/\$[\d,]+/);
+      const priceMatch = bidValueText.match(/[$€£¥][\d,]+/);
       if (priceMatch) {
         detailBid = parsePrice(priceMatch[0]);
+      }
+    }
+    // Fallback for sold/ended auctions where bid selectors are empty
+    if (detailBid === null) {
+      const soldText = ($('.listing-available-info .info-value').first().text().trim()
+        || $('.listing-stats-value.current-bid-value strong').first().text().trim());
+      if (soldText) {
+        const priceMatch = soldText.match(/[$€£¥][\d,]+/);
+        if (priceMatch) {
+          detailBid = parsePrice(priceMatch[0]);
+        }
       }
     }
 

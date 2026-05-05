@@ -20,7 +20,7 @@ export const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
 
 /** Sources excluded from liveness checks (handled by end_time expiry) */
-export const EXCLUDED_SOURCES = ["BaT", "CarsAndBids", "CollectingCars"];
+export const EXCLUDED_SOURCES = ["BaT", "CarsAndBids", "CollectingCars", "ClassicCom"];
 
 /**
  * Dealer/classified sources to check.
@@ -31,7 +31,6 @@ export const SOURCE_CONFIGS: SourceConfig[] = [
   { source: "Elferspot",    delayMs: 10_000, maxPerRun: 330 },
   { source: "AutoTrader",   delayMs: 2_000,  maxPerRun: 1_650 },
   { source: "BeForward",    delayMs: 2_500,  maxPerRun: 1_320 },
-  { source: "ClassicCom",   delayMs: 3_000,  maxPerRun: 1_100 },
 ];
 
 /** Circuit breaker: stop a source after this many consecutive blocks (403/429/503) */

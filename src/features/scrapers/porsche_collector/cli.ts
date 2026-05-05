@@ -82,6 +82,7 @@ function usage(): string {
     "  --maxActivePages=10",
     "  --maxEndedPages=10",
     "  --checkpointPath=var/porsche_collector/checkpoint.json",
+    "  --timeBudgetMs=1500000",
     "  --dryRun",
     "  --noDetails",
   ].join("\n");
@@ -111,6 +112,7 @@ async function main(): Promise<void> {
     scrapeDetails: !hasFlag(args, "noDetails"),
     checkpointPath: readString(args, "checkpointPath") ?? "var/porsche_collector/checkpoint.json",
     dryRun: hasFlag(args, "dryRun"),
+    timeBudgetMs: readNumber(args, "timeBudgetMs", 25 * 60 * 1000), // 25 min default
   };
 
   await runPorscheCollector(config);

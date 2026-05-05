@@ -56,7 +56,11 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
   const totalResults = firstPage.totalResults;
   let pageCount = clampPageCount(rawPageCount, config.maxPages, config.startPage);
 
-  const startPage = Math.max(config.startPage, checkpoint.lastCompletedPage + 1);
+  // Reset checkpoint when it exceeds the current page range (e.g. daily cron with small maxPages)
+  const checkpointPage = checkpoint.lastCompletedPage + 1;
+  const startPage = checkpointPage > pageCount
+    ? config.startPage
+    : Math.max(config.startPage, checkpointPage);
   let processedPages = 0;
   let remainingDetails = config.maxDetails;
 

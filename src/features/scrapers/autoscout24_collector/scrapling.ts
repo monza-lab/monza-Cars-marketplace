@@ -31,10 +31,6 @@ function resolveScraplingPython(): string {
   return process.env.SCRAPLING_PYTHON || "python3.11";
 }
 
-function shellEscape(arg: string): string {
-  return `'${arg.replace(/'/g, `'\\''`)}'`;
-}
-
 const SCRIPT_PATH = "scripts/as24_scrapling_fetch.py";
 
 /* ── Search ────────────────────────────────────────────────────────── */
@@ -48,9 +44,8 @@ export async function fetchAS24SearchWithScrapling(
   const scriptPath = path.resolve(process.cwd(), SCRIPT_PATH);
   let stdout = "";
   try {
-    const shell = process.env.SHELL || "/bin/bash";
-    const command = `${resolveScraplingPython()} ${shellEscape(scriptPath)} search ${shellEscape(url)}`;
-    const result = await execFileAsync(shell, ["-lc", command], {
+    const python = resolveScraplingPython();
+    const result = await execFileAsync(python, [scriptPath, "search", url], {
       encoding: "utf8",
       timeout: 30_000,
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
@@ -96,9 +91,8 @@ export async function fetchAS24DetailWithScrapling(
   const scriptPath = path.resolve(process.cwd(), SCRIPT_PATH);
   let stdout = "";
   try {
-    const shell = process.env.SHELL || "/bin/bash";
-    const command = `${resolveScraplingPython()} ${shellEscape(scriptPath)} detail ${shellEscape(url)}`;
-    const result = await execFileAsync(shell, ["-lc", command], {
+    const python = resolveScraplingPython();
+    const result = await execFileAsync(python, [scriptPath, "detail", url], {
       encoding: "utf8",
       timeout: 30_000,
       env: { ...process.env, PYTHONUNBUFFERED: "1" },

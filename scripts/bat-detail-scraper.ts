@@ -124,10 +124,10 @@ async function main() {
   // Query BaT listings needing enrichment
   const { data: listings, error } = await supabase
     .from("listings")
-    .select("id, source_url, title, images, description_text, seller_notes, engine, mileage, vin, transmission, color_exterior, color_interior, body_style")
+    .select("id, source_url, title, images, description_text, seller_notes, engine, mileage, vin, transmission, color_exterior, color_interior, body_style, current_bid, hammer_price, original_currency")
     .eq("source", "BaT")
     .eq("status", "active")
-    .or("engine.is.null,mileage.is.null,vin.is.null,transmission.is.null,color_exterior.is.null,color_interior.is.null,body_style.is.null,description_text.is.null,seller_notes.is.null,images.eq.{}")
+    .or("engine.is.null,mileage.is.null,vin.is.null,transmission.is.null,color_exterior.is.null,color_interior.is.null,body_style.is.null,description_text.is.null,seller_notes.is.null,images.eq.{},current_bid.is.null")
     .order("scrape_timestamp", { ascending: true })
     .limit(opts.limit);
 
@@ -188,7 +188,7 @@ async function main() {
       enriched++;
 
       if (opts.dryRun) {
-        console.log(`  [DRY] ${listing.source_url}: images=${detail.images.length}, engine=${detail.engine}, mileage=${detail.mileage}`);
+        console.log(`  [DRY] ${listing.source_url}: images=${detail.images.length}, engine=${detail.engine}, mileage=${detail.mileage}, bid=${detail.currentBid}`);
         written++;
         continue;
       }
@@ -211,6 +211,17 @@ async function main() {
       if (!listing.body_style && detail.bodyStyle) updates.body_style = detail.bodyStyle;
       if (!listing.description_text && detail.description) updates.description_text = detail.description;
       if (!listing.seller_notes && detail.sellerNotes) updates.seller_notes = detail.sellerNotes;
+
+      // Price fields — always write if detail has a bid and DB is missing
+      if (detail.currentBid != null && !listing.current_bid) {
+        updates.current_bid = detail.currentBid;
+      }
+      if (detail.currentBid != null && !listing.hammer_price) {
+        updates.hammer_price = detail.currentBid;
+      }
+      if (!listing.original_currency && detail.currentBid != null) {
+        updates.original_currency = 'USD'; // BaT default
+      }
 
       if (Object.keys(updates).length === 0) continue;
 

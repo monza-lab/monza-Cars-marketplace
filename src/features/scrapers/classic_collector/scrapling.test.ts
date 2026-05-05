@@ -65,12 +65,10 @@ describe("classic Scrapling wrapper", () => {
     await fetchClassicDetailWithScrapling("https://www.classic.com/veh/test");
 
     const call = mockExecFile.mock.calls[0];
-    expect(call[0]).toContain("/bin/zsh");
+    expect(call[0]).toBe("python3.11");
     expect(call[1]).toHaveLength(2);
-    expect(call[1][0]).toBe("-lc");
-    expect(call[1][1]).toContain("python3.11");
-    expect(call[1][1]).toContain("scripts/classic_scrapling_fetch.py");
-    expect(call[1][1]).toContain("https://www.classic.com/veh/test");
+    expect(call[1][0]).toMatch(/scripts[/\\]classic_scrapling_fetch\.py/);
+    expect(call[1][1]).toBe("https://www.classic.com/veh/test");
     expect(call[2]).toEqual(expect.objectContaining({
       timeout: 120000,
       encoding: "utf8",

@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import * as cheerio from 'cheerio';
+import { fetchCCHtmlWithScrapling } from './collectingCarsScrapling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,6 +90,11 @@ async function fetchPage(url: string): Promise<string> {
     }
 
     return await response.text();
+  } catch (err) {
+    // Fallback to Scrapling on HTTP errors (403, etc.)
+    const html = await fetchCCHtmlWithScrapling(url);
+    if (html) return html;
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }

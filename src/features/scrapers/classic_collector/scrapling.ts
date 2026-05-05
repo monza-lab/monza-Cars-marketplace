@@ -41,19 +41,14 @@ function resolveScraplingPython(): string {
   return process.env.SCRAPLING_PYTHON || "python3.11";
 }
 
-function shellEscape(arg: string): string {
-  return `'${arg.replace(/'/g, `'\\''`)}'`;
-}
-
 export async function fetchClassicDetailWithScrapling(url: string): Promise<ClassicScraplingDetailContent | null> {
   if (!isScraplingEnabled()) return null;
 
   const scriptPath = path.resolve(process.cwd(), "scripts/classic_scrapling_fetch.py");
   let stdout = "";
   try {
-    const shell = process.env.SHELL || "/bin/zsh";
-    const command = `${resolveScraplingPython()} ${shellEscape(scriptPath)} ${shellEscape(url)}`;
-    const result = await execFileAsync(shell, ["-lc", command], {
+    const python = resolveScraplingPython();
+    const result = await execFileAsync(python, [scriptPath, url], {
       encoding: "utf8",
       timeout: 120_000,
       env: {

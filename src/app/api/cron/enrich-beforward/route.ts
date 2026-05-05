@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     const discovered = rows.length;
     let enriched = 0;
     const errors: string[] = [];
-    const DELAY_MS = 2_000;
+    const DELAY_MS = 4_000;
     const TIME_BUDGET_MS = 270_000;
 
     for (let i = 0; i < rows.length; i++) {

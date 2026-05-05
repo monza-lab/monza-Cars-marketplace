@@ -78,7 +78,7 @@ const SCRAPERS: ScraperDef[] = [
     args: ["tsx", "src/features/scrapers/porsche_collector/cli.ts", "--mode=daily"],
     dryRunFlag: "--dryRun",
     defaultSelected: true,
-    timeoutMs: 30 * 60_000,
+    timeoutMs: 27 * 60_000,
   },
   {
     id: "ferrari",
@@ -90,7 +90,7 @@ const SCRAPERS: ScraperDef[] = [
     args: ["tsx", "src/features/scrapers/ferrari_collector/cli.ts", "--mode=daily"],
     dryRunFlag: "--dryRun",
     defaultSelected: true,
-    timeoutMs: 30 * 60_000,
+    timeoutMs: 27 * 60_000,
   },
   {
     id: "beforward",
