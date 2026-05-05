@@ -11,7 +11,7 @@
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import prompts from "prompts";
 
@@ -433,10 +433,16 @@ async function selectScrapers(
 // ── Execution ───────────────────────────────────────────────────────
 
 interface RunResult {
+  id: string;
   name: string;
+  phase: Phase;
+  type: "cli" | "cron";
   status: "ok" | "failed" | "timeout";
   durationMs: number;
   exitCode?: number;
+  stdout: string;
+  stderr: string;
+  cronResponse?: unknown;
 }
 
 function formatDuration(ms: number): string {
@@ -457,28 +463,55 @@ function runCliScraper(
       args.push(scraper.dryRunFlag);
     }
 
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+
     const fullCommand = [scraper.command!, ...args].join(" ");
     const proc: ChildProcess = spawn(fullCommand, [], {
-      stdio: "inherit",
+      stdio: ["inherit", "pipe", "pipe"],
       shell: true,
+    });
+
+    // Tee stdout to terminal + capture
+    proc.stdout?.on("data", (chunk: Buffer) => {
+      const text = chunk.toString();
+      process.stdout.write(text);
+      stdoutChunks.push(text);
+    });
+
+    // Tee stderr to terminal + capture
+    proc.stderr?.on("data", (chunk: Buffer) => {
+      const text = chunk.toString();
+      process.stderr.write(text);
+      stderrChunks.push(text);
     });
 
     const timer = setTimeout(() => {
       proc.kill("SIGTERM");
       resolve({
+        id: scraper.id,
         name: scraper.name,
+        phase: scraper.phase,
+        type: scraper.type,
         status: "timeout",
         durationMs: Date.now() - start,
+        stdout: stdoutChunks.join(""),
+        stderr: stderrChunks.join(""),
       });
     }, scraper.timeoutMs);
 
     proc.on("close", (code) => {
       clearTimeout(timer);
       resolve({
+        id: scraper.id,
         name: scraper.name,
+        phase: scraper.phase,
+        type: scraper.type,
         status: code === 0 ? "ok" : "failed",
         durationMs: Date.now() - start,
         exitCode: code ?? undefined,
+        stdout: stdoutChunks.join(""),
+        stderr: stderrChunks.join(""),
       });
     });
 
@@ -486,9 +519,14 @@ function runCliScraper(
       clearTimeout(timer);
       console.error(`  Error spawning ${scraper.name}: ${err.message}`);
       resolve({
+        id: scraper.id,
         name: scraper.name,
+        phase: scraper.phase,
+        type: scraper.type,
         status: "failed",
         durationMs: Date.now() - start,
+        stdout: stdoutChunks.join(""),
+        stderr: stderrChunks.join("") + `\nSpawn error: ${err.message}`,
       });
     });
   });
@@ -503,7 +541,16 @@ async function runCronScraper(
 
   if (!cronSecret) {
     console.error("  CRON_SECRET not set in .env.local -- skipping cron routes");
-    return { name: scraper.name, status: "failed", durationMs: 0 };
+    return {
+      id: scraper.id,
+      name: scraper.name,
+      phase: scraper.phase,
+      type: scraper.type,
+      status: "failed",
+      durationMs: 0,
+      stdout: "",
+      stderr: "CRON_SECRET not set in .env.local",
+    };
   }
 
   let url = `http://localhost:3000${scraper.cronRoute}`;
@@ -532,18 +579,30 @@ async function runCronScraper(
       res.status >= 400 || (body && (body as Record<string, unknown>).error);
 
     return {
+      id: scraper.id,
       name: scraper.name,
+      phase: scraper.phase,
+      type: scraper.type,
       status: failed ? "failed" : "ok",
       durationMs: Date.now() - start,
       exitCode: res.status,
+      stdout: body ? JSON.stringify(body, null, 2) : "",
+      stderr: "",
+      cronResponse: body,
     };
   } catch (err) {
     const isTimeout =
       err instanceof DOMException && err.name === "AbortError";
+    const errMsg = err instanceof Error ? err.message : String(err);
     return {
+      id: scraper.id,
       name: scraper.name,
+      phase: scraper.phase,
+      type: scraper.type,
       status: isTimeout ? "timeout" : "failed",
       durationMs: Date.now() - start,
+      stdout: "",
+      stderr: errMsg,
     };
   }
 }
@@ -582,10 +641,44 @@ function printSummary(results: RunResult[]): void {
   console.log(`+${divider}+----------+----------+`);
 }
 
+// ── Run log persistence ─────────────────────────────────────────────
+
+interface RunLog {
+  runId: string;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  flags: CliFlags;
+  devServerUp: boolean;
+  scrapersSelected: string[];
+  summary: {
+    total: number;
+    ok: number;
+    failed: number;
+    timeout: number;
+  };
+  results: RunResult[];
+}
+
+function saveRunLog(log: RunLog): string {
+  const logsDir = path.resolve(process.cwd(), "logs", "scraper-runs");
+  mkdirSync(logsDir, { recursive: true });
+
+  // Filename: run-YYYY-MM-DDTHH-MM-SS-mmmZ.json
+  const ts = log.startedAt.replace(/[:.]/g, "-");
+  const filename = `run-${ts}.json`;
+  const filePath = path.join(logsDir, filename);
+
+  writeFileSync(filePath, JSON.stringify(log, null, 2), "utf8");
+  return filePath;
+}
+
 // ── Main ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const flags = parseFlags();
+  const startedAt = new Date().toISOString();
+  const runId = crypto.randomUUID();
 
   console.log("Checking dev server on localhost:3000...");
   const devServerUp = await isDevServerUp();
@@ -621,6 +714,30 @@ async function main(): Promise<void> {
   }
 
   printSummary(results);
+
+  // Save master log JSON
+  const finishedAt = new Date().toISOString();
+  const totalMs = results.reduce((sum, r) => sum + r.durationMs, 0);
+
+  const log: RunLog = {
+    runId,
+    startedAt,
+    finishedAt,
+    durationMs: totalMs,
+    flags,
+    devServerUp,
+    scrapersSelected: selected.map((s) => s.id),
+    summary: {
+      total: results.length,
+      ok: results.filter((r) => r.status === "ok").length,
+      failed: results.filter((r) => r.status === "failed").length,
+      timeout: results.filter((r) => r.status === "timeout").length,
+    },
+    results,
+  };
+
+  const logPath = saveRunLog(log);
+  console.log(`\n📄 Run log saved: ${logPath}`);
 
   const anyFailed = results.some((r) => r.status !== "ok");
   process.exit(anyFailed ? 1 : 0);

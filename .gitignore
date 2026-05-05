@@ -13,6 +13,9 @@
 # scraper data / temp artifacts
 var/
 
+# scraper run logs (local only, feed to LLM)
+logs/
+
 # windows artifacts
 nul
 
