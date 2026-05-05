@@ -874,11 +874,6 @@ async function queryListingsMany(
   statusFilter?: string,
   sources: readonly CanonicalSource[] = DEFAULT_QUERY_SOURCES,
 ): Promise<ListingRow[]> {
-  const directRows = await queryAllListingsDirect(supabase, limit, targetMake, statusFilter);
-  if (directRows.length > 0) {
-    return directRows;
-  }
-
   const hasLimit = limit > 0;
   const perSourceLimit = Math.max(1, Math.ceil((hasLimit ? limit : 200) / Math.max(1, sources.length)));
   const nowIso = new Date().toISOString();
