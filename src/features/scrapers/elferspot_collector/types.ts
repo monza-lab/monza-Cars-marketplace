@@ -11,6 +11,8 @@ export interface CollectorRunConfig {
   language: "en" | "de" | "nl" | "fr"
   /** Force start from page 1, keeping processedIds for dedup */
   fresh?: boolean
+  /** Max time in ms before stopping early (0 = no limit) */
+  timeBudgetMs?: number
 }
 
 export interface ElferspotListingSummary {

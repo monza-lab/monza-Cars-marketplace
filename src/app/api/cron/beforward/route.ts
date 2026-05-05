@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success: result.counts.discovered > 0 || refreshResult.checked > 0,
       runtime: 'vercel_cron',
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,

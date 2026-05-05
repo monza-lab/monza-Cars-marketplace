@@ -1,0 +1,58 @@
+name: AutoTrader Collector (Daily)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'      # 02:00 UTC daily (moved from Vercel cron)
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: 'Max search pages per source'
+        default: '5'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+      no_details:
+        description: 'Skip detail page fetches'
+        default: 'false'
+
+concurrency:
+  group: autotrader-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify environment
+        run: |
+          node --version
+          npm --version
+
+      - run: npm ci
+
+      - name: Run AutoTrader collector
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx src/features/scrapers/autotrader_collector/cli.ts \
+            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
+            ${{ github.event.inputs.no_details == 'true' && '--noDetails' || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Upload output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autotrader-collector-output
+          path: var/autotrader_collector/
+          retention-days: 7
+          if-no-files-found: ignore

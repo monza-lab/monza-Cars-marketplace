@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       outputPath: "/tmp/elferspot_collector/listings.jsonl",
       dryRun: false,
       language: "en",
+      timeBudgetMs: 240_000, // 4 min budget — leave 60s margin for cleanup/metrics
     })
 
     await recordScraperRun({

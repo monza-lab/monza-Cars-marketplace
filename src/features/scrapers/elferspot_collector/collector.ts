@@ -16,6 +16,8 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
   const errors: string[] = []
   const CONSECUTIVE_FAILURE_LIMIT = 5
   let consecutiveFailures = 0
+  const TIME_BUDGET_MS = config.timeBudgetMs ?? 0 // 0 = no budget
+  const runStartTime = Date.now()
 
   console.log(`[elferspot] Starting run ${runId}, maxPages=${config.maxPages}, details=${config.scrapeDetails}`)
   console.log(`[elferspot] Proxy configured: ${isProxyConfigured()}`)
@@ -56,6 +58,11 @@ export async function runElferspotCollector(config: CollectorRunConfig): Promise
   await fs.mkdir(outputDir, { recursive: true })
 
   for (let page = startPage; page <= config.maxPages; page++) {
+    if (TIME_BUDGET_MS > 0 && Date.now() - runStartTime > TIME_BUDGET_MS) {
+      console.log(`[elferspot] Time budget exceeded (${TIME_BUDGET_MS}ms) after page ${page - 1}, stopping early`)
+      break
+    }
+
     if (counts.discovered >= config.maxListings) {
       console.log(`[elferspot] Reached maxListings=${config.maxListings}`)
       break
