@@ -38,7 +38,7 @@ function getSupabaseHeaders() {
 async function fetchLatestRun(scraperName) {
   const { url, key } = getSupabaseHeaders();
   const endpoint = new URL('/rest/v1/scraper_runs', url);
-  endpoint.searchParams.set('select', 'scraper_name,run_id,success,discovered,written,errors_count,image_coverage');
+  endpoint.searchParams.set('select', 'scraper_name,run_id,success,discovered,written,errors_count');
   endpoint.searchParams.set('scraper_name', `eq.${scraperName}`);
   endpoint.searchParams.set('order', 'finished_at.desc');
   endpoint.searchParams.set('limit', '1');
@@ -66,7 +66,7 @@ async function fetchLatestRun(scraperName) {
 function fetchLatestRunViaCurl(scraperName) {
   const { url, key } = getSupabaseHeaders();
   const endpoint = new URL('/rest/v1/scraper_runs', url);
-  endpoint.searchParams.set('select', 'scraper_name,run_id,success,discovered,written,errors_count,image_coverage');
+  endpoint.searchParams.set('select', 'scraper_name,run_id,success,discovered,written,errors_count');
   endpoint.searchParams.set('scraper_name', `eq.${scraperName}`);
   endpoint.searchParams.set('order', 'finished_at.desc');
   endpoint.searchParams.set('limit', '1');
