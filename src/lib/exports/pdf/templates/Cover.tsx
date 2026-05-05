@@ -20,24 +20,20 @@ export function Cover({ report, car, verdict, askingUsd, totalPages }: CoverProp
 
   return (
     <Page size="A4" style={pdfStyles.page}>
-      {/* Top: brand */}
+      {/* Top: wordmark + tagline */}
       <View>
-        <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 10, letterSpacing: 3, color: PDF_COLORS.primary }}>
-          MONZA HAUS
-        </Text>
-        <Text style={{ fontSize: 8, color: PDF_COLORS.muted, marginTop: 2 }}>
-          Haus Report · Valuation Intelligence for Porsche
+        <Text style={pdfStyles.wordmark}>MONZA HAUS</Text>
+        <Text style={[pdfStyles.bodyMuted, { marginTop: 3 }]}>
+          Investment-Grade Automotive Assets
         </Text>
       </View>
 
       {/* Middle: car title + verdict + fair value */}
       <View style={{ flex: 1, justifyContent: "center" }}>
-        <Text style={{ fontSize: 11, color: PDF_COLORS.muted, textTransform: "uppercase", letterSpacing: 2 }}>
-          Vehicle
-        </Text>
-        <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 28, marginTop: 8 }}>{carTitle}</Text>
+        <Text style={pdfStyles.h3}>Vehicle</Text>
+        <Text style={[pdfStyles.h1, { marginTop: 4 }]}>{carTitle}</Text>
 
-        <View style={{ marginTop: 32, alignItems: "center" }}>
+        <View style={{ marginTop: 36, alignItems: "center" }}>
           <Text
             style={[
               pdfStyles.verdictChip,
@@ -48,12 +44,14 @@ export function Cover({ report, car, verdict, askingUsd, totalPages }: CoverProp
           </Text>
         </View>
 
-        <View style={{ marginTop: 32 }}>
-          <Text style={[pdfStyles.h3, { textAlign: "center" }]}>Specific-Car Fair Value</Text>
-          <Text style={[pdfStyles.monoBold, { fontSize: 26, textAlign: "center", marginTop: 6 }]}>
+        <View style={{ marginTop: 36 }}>
+          <Text style={[pdfStyles.h3, { textAlign: "center" }]}>
+            Specific-Car Fair Value
+          </Text>
+          <Text style={[pdfStyles.priceDisplay, { textAlign: "center", marginTop: 8 }]}>
             {fmtK(report.specific_car_fair_value_low)} – {fmtK(report.specific_car_fair_value_high)}
           </Text>
-          <Text style={[pdfStyles.bodyMuted, { textAlign: "center", marginTop: 4 }]}>
+          <Text style={[pdfStyles.bodyMuted, { textAlign: "center", marginTop: 6 }]}>
             Mid {fmtK(report.specific_car_fair_value_mid)} · Asking {fmtK(askingUsd)} ·{" "}
             {report.comparables_count} comparables · {report.comparable_layer_used} layer
           </Text>
@@ -66,14 +64,23 @@ export function Cover({ report, car, verdict, askingUsd, totalPages }: CoverProp
           <Text style={[pdfStyles.bodyMuted, { textAlign: "center" }]}>
             Verify this report at
           </Text>
-          <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, marginTop: 4 }}>
+          <Text
+            style={{
+              fontFamily: "Karla",
+              fontWeight: 500,
+              fontSize: 11,
+              color: PDF_COLORS.foreground,
+              marginTop: 4,
+            }}
+          >
             monzahaus.com/verify/{report.report_hash.slice(0, 12)}
           </Text>
         </View>
       )}
 
       <Text style={[pdfStyles.bodyMuted, { textAlign: "center" }]}>
-        Generated {fmtDate(report.generated_at)} · v{report.report_version} · {report.tier.replace("_", " ")}
+        Generated {fmtDate(report.generated_at)} · v{report.report_version} ·{" "}
+        {report.tier.replace("_", " ")}
       </Text>
 
       <PageFooter

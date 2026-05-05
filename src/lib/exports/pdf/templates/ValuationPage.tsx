@@ -68,7 +68,7 @@ export function ValuationPage({
           </Text>
         </View>
         <View style={[pdfStyles.rowSpread, { marginTop: 4 }]}>
-          <Text style={[pdfStyles.body, { fontFamily: "Helvetica-Bold" }]}>Specific-car fair value</Text>
+          <Text style={pdfStyles.bodyEmphasis}>Specific-car fair value</Text>
           <Text style={[pdfStyles.monoBold, { color: PDF_COLORS.primary }]}>
             {fmtK(report.specific_car_fair_value_mid)}
           </Text>
@@ -89,7 +89,7 @@ export function ValuationPage({
                       color:
                         m.baseline_contribution_usd >= 0
                           ? PDF_COLORS.positive
-                          : PDF_COLORS.destructive,
+                          : PDF_COLORS.negative,
                     },
                   ]}
                 >

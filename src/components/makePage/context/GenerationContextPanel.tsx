@@ -6,13 +6,11 @@ import {
   Car,
   DollarSign,
   Gauge,
-  Wrench,
   MessageCircle,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { extractGenerationFromModel } from "@/lib/makePageHelpers"
-import { ownershipCosts } from "@/lib/makePageConstants"
 import type { GenerationAggregate } from "@/components/makePage/GenerationFeedCard"
 import { formatUsdValue } from "@/components/dashboard/utils/valuation"
 
@@ -67,20 +65,6 @@ export function GenerationContextPanel({
       .sort((a, b) => new Date(b.endTime).getTime() - new Date(a.endTime).getTime())
       .slice(0, 4)
   }, [genCars])
-
-  const fallbackCosts = ownershipCosts[make] || ownershipCosts.default
-  const genAvgPrice = genCars.length > 0
-    ? genCars.reduce((s, c) => s + c.currentBid, 0) / genCars.length
-    : 1
-  const brandAvgPrice = familyCars.length > 0
-    ? familyCars.reduce((s, c) => s + c.currentBid, 0) / familyCars.length
-    : 1
-  const genScaleFactor = brandAvgPrice > 0 ? genAvgPrice / brandAvgPrice : 1
-  const genOwnershipCosts = {
-    insurance: Math.round(fallbackCosts.insurance * genScaleFactor),
-    storage: Math.round(fallbackCosts.storage * genScaleFactor),
-    maintenance: Math.round(fallbackCosts.maintenance * genScaleFactor),
-  }
 
   // Median sold across this generation (avg of known currentBids)
   const medianSold = useMemo(() => {
@@ -238,32 +222,6 @@ export function GenerationContextPanel({
             </div>
           </div>
         )}
-
-        {/* 6. OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Annual Ownership Cost
-            </span>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: "Insurance", value: genOwnershipCosts.insurance },
-              { label: "Storage", value: genOwnershipCosts.storage },
-              { label: "Maintenance", value: genOwnershipCosts.maintenance },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                <span className="text-[11px] tabular-nums text-muted-foreground">{formatPrice(item.value)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-              <span className="text-[11px] font-medium text-foreground">Total</span>
-              <span className="text-[12px] font-display font-medium text-primary">{formatPrice(genOwnershipCosts.insurance + genOwnershipCosts.storage + genOwnershipCosts.maintenance)}/yr</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* CTA */}

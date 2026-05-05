@@ -10,7 +10,6 @@ import { listingPriceUsd } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
-import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { PorscheFamily, Auction } from "../types"
 import type { RegionalValByFamily } from "@/lib/dashboardCache"
 
@@ -56,20 +55,6 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
       demandScore,
     }
   }, [familyAuctions])
-
-  // ─── DYNAMIC: Ownership Cost scaled by family avg listing price (in USD) ───
-  const ownershipCost = useMemo(() => {
-    const prices = familyAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
-    const avgPrice = prices.length > 0
-      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
-      : (family.priceMin + family.priceMax) / 2
-    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
-    return {
-      insurance: Math.round(8500 * scale),
-      storage: Math.round(6000 * scale),
-      maintenance: Math.round(8000 * scale),
-    }
-  }, [familyAuctions, family.priceMin, family.priceMax])
 
   // Recent sales from this family
   const recentSales = useMemo(() => {
@@ -133,9 +118,6 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
 
         {/* 5. LIQUIDITY & MARKET DEPTH — shared section */}
         <MarketDepthSection depth={depth} />
-
-        {/* 6. OWNERSHIP COST — shared section */}
-        <OwnershipCostSection ownershipCost={ownershipCost} />
 
       </div>
 

@@ -2,6 +2,7 @@
 
 import { ExternalLink } from "lucide-react"
 import type { MarketIntelD2 } from "@/lib/fairValue/types"
+import { SourceBadge } from "./primitives/SourceBadge"
 
 type Region = MarketIntelD2["by_region"][number]["region"]
 
@@ -20,9 +21,16 @@ function fmtK(v: number | null): string {
 interface ArbitrageSignalBlockProps {
   d2: MarketIntelD2
   thisListingPriceUsd: number
+  landedCostMethodologyHref?: string
+  onLandedCostMethodologyClick?: () => void
 }
 
-export function ArbitrageSignalBlock({ d2, thisListingPriceUsd }: ArbitrageSignalBlockProps) {
+export function ArbitrageSignalBlock({
+  d2,
+  thisListingPriceUsd,
+  landedCostMethodologyHref,
+  onLandedCostMethodologyClick,
+}: ArbitrageSignalBlockProps) {
   return (
     <section className="px-4 py-6" aria-labelledby="arbitrage-heading">
       <h2
@@ -34,6 +42,25 @@ export function ArbitrageSignalBlock({ d2, thisListingPriceUsd }: ArbitrageSigna
       <p className="mt-1 text-[12px] text-muted-foreground">
         Cheapest comparable per region, landed to {d2.target_region}
       </p>
+
+      {(landedCostMethodologyHref || onLandedCostMethodologyClick) && (
+        <div className="mt-2">
+          {landedCostMethodologyHref ? (
+            <a
+              href={landedCostMethodologyHref}
+              className="inline-block"
+              aria-label="Landed-cost methodology"
+            >
+              <SourceBadge name="Landed-cost methodology" />
+            </a>
+          ) : (
+            <SourceBadge
+              name="Landed-cost methodology"
+              onClick={onLandedCostMethodologyClick}
+            />
+          )}
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {d2.by_region.map((row) => {

@@ -81,4 +81,22 @@ describe("ArbitrageSignalBlock", () => {
     )
     expect(screen.queryByText(/EU-sourced/)).not.toBeInTheDocument()
   })
+
+  it("renders landed-cost methodology link when href provided", () => {
+    render(
+      <ArbitrageSignalBlock
+        d2={d2}
+        thisListingPriceUsd={225000}
+        landedCostMethodologyHref="/methodology#landed-cost"
+      />
+    )
+    const link = screen.getByLabelText(/Landed-cost methodology/i)
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute("href", "/methodology#landed-cost")
+  })
+
+  it("does NOT render methodology link when neither href nor click handler provided", () => {
+    render(<ArbitrageSignalBlock d2={d2} thisListingPriceUsd={225000} />)
+    expect(screen.queryByText(/Landed-cost methodology/i)).not.toBeInTheDocument()
+  })
 })

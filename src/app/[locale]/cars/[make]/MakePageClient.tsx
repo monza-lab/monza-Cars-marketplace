@@ -115,15 +115,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
     return filled as number[]
   }, [dbSoldHistory])
 
-  // Ownership costs from DB analysis (average across analyses)
-  const realOwnershipCosts = useMemo(() => {
-    const withCosts = dbAnalyses.filter(a => a.insuranceEstimate || a.yearlyMaintenance)
-    if (withCosts.length === 0) return null
-    const avgIns = Math.round(withCosts.reduce((s, a) => s + (a.insuranceEstimate ?? 0), 0) / withCosts.length)
-    const avgMaint = Math.round(withCosts.reduce((s, a) => s + (a.yearlyMaintenance ?? 0), 0) / withCosts.length)
-    return { insurance: avgIns || undefined, storage: undefined, maintenance: avgMaint || undefined }
-  }, [dbAnalyses])
-
   const [currentModelIndex, setCurrentModelIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const { selectedRegion, setSelectedRegion, effectiveRegion } = useRegion()
@@ -857,11 +848,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   <MobileHeroModel model={filteredModels[0]} make={make} />
                   <MobileModelContext
                     model={filteredModels[0]}
-                    make={make}
-                    cars={regionFilteredCars}
                     allCars={infiniteScrollCars}
-                    allModels={filteredModels}
-                    dbOwnershipCosts={realOwnershipCosts}
                   />
                 </>
               )}
@@ -904,11 +891,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         <MobileModelContextSheet
           model={expandedModel}
           make={make}
-          cars={regionFilteredCars}
           allCars={infiniteScrollCars}
-          allModels={filteredModels}
           onClose={() => setExpandedModel(null)}
-          dbOwnershipCosts={realOwnershipCosts}
         />
 
         <MobileFilterSheet
@@ -1451,7 +1435,6 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                 allCars={infiniteScrollCars}
                 allModels={filteredModels}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
-                dbOwnershipCosts={realOwnershipCosts}
               />
             ) : null}
           </div>

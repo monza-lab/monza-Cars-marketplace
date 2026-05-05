@@ -170,5 +170,118 @@ export async function extractTextSignals(input: TextExtractionInput): Promise<Te
     })
   }
 
+  // Option signals (spec §3.1 — close the signal-mapping gap so What's
+  // Remarkable has material to synthesize beyond the 8 originals above).
+  if (payload.options.sport_chrono === true) {
+    signals.push({
+      key: "sport_chrono",
+      name_i18n_key: "report.signals.sport_chrono",
+      value_display: "Sport Chrono Package",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.pccb === true) {
+    signals.push({
+      key: "pccb",
+      name_i18n_key: "report.signals.pccb",
+      value_display: "PCCB ceramic composite brakes",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.burmester === true) {
+    signals.push({
+      key: "burmester",
+      name_i18n_key: "report.signals.burmester",
+      value_display: "Burmester audio",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.lwb_seats === true) {
+    signals.push({
+      key: "lwb_seats",
+      name_i18n_key: "report.signals.lwb_seats",
+      value_display: "Lightweight bucket seats",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.carbon_roof === true) {
+    signals.push({
+      key: "carbon_roof",
+      name_i18n_key: "report.signals.carbon_roof",
+      value_display: "Carbon fiber roof",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.factory_rear_spoiler_delete === true) {
+    signals.push({
+      key: "factory_rear_spoiler_delete",
+      name_i18n_key: "report.signals.factory_rear_spoiler_delete",
+      value_display: "Factory rear spoiler delete",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  // Service: dealer-only maintenance — indicator of proper upkeep.
+  if (payload.service.dealer_serviced === true) {
+    signals.push({
+      key: "dealer_serviced",
+      name_i18n_key: "report.signals.dealer_serviced",
+      value_display: "Dealer-serviced history",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  // Ownership qualifiers
+  if (payload.ownership.one_owner_claim === true) {
+    signals.push({
+      key: "single_owner",
+      name_i18n_key: "report.signals.single_owner",
+      value_display: "Single owner",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.ownership.years_current_owner != null && payload.ownership.years_current_owner >= 5) {
+    signals.push({
+      key: "long_term_ownership",
+      name_i18n_key: "report.signals.long_term_ownership",
+      value_display: `${payload.ownership.years_current_owner} years with current owner`,
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.ownership.collector_owned_claim === true) {
+    signals.push({
+      key: "collector_owned",
+      name_i18n_key: "report.signals.collector_owned",
+      value_display: "Collector-owned",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.ownership.garage_kept_claim === true) {
+    signals.push({
+      key: "garage_kept",
+      name_i18n_key: "report.signals.garage_kept",
+      value_display: "Garage kept",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  // Originality
+  if (payload.originality.matching_numbers_claim === true) {
+    signals.push({
+      key: "matching_numbers",
+      name_i18n_key: "report.signals.matching_numbers",
+      value_display: "Matching numbers",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
   return { ok: true, signals, rawPayload: payload }
 }

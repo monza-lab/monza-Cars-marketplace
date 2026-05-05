@@ -117,11 +117,12 @@ export function ClosingPage({ report, regions, pageNumber, totalPages }: Props) 
 
       <Text
         style={{
-          fontFamily: "Helvetica-Bold",
-          fontSize: 8,
-          color: PDF_COLORS.muted,
-          marginTop: 10,
-          letterSpacing: 2,
+          fontFamily: "Cormorant",
+          fontWeight: 500,
+          fontSize: 10,
+          color: PDF_COLORS.primary,
+          marginTop: 12,
+          letterSpacing: 3,
         }}
       >
         MONZA HAUS · Haus Report

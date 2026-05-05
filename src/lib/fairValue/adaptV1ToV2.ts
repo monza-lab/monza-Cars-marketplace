@@ -2,6 +2,7 @@ import type {
   HausReport,
   HausReportV2,
   MarketIntel,
+  MarketIntelD2,
   RemarkableClaim,
   ReportTier,
 } from "./types"
@@ -37,6 +38,33 @@ export interface AdaptV1Context {
   reportId?: string
   reportVersion?: number
   generatedAt?: string
+  /**
+   * Pre-computed D2 (cross-border arbitrage) block. Callers that run
+   * server-side can compute this with `computeArbitrageForCar` and pass
+   * it in — the adapter will use it verbatim. When omitted, the adapter
+   * emits an empty D2 block (Phase 2 default; renders as "no data yet"
+   * on the client).
+   */
+  d2Precomputed?: MarketIntelD2
+}
+
+function aggregateCaptureWindow(ctx: AdaptV1Context): { start: string; end: string } {
+  const dates: string[] = []
+  for (const r of ctx.marketStats?.regions ?? []) {
+    if (r.oldestDate) dates.push(r.oldestDate)
+    if (r.newestDate) dates.push(r.newestDate)
+  }
+  for (const c of ctx.dbComparables) {
+    if (c.soldDate) dates.push(c.soldDate)
+  }
+
+  if (dates.length === 0) {
+    const fallback = ctx.generatedAt ?? new Date().toISOString().slice(0, 10)
+    return { start: fallback, end: fallback }
+  }
+
+  const sorted = [...dates].sort()
+  return { start: sorted[0], end: sorted[sorted.length - 1] }
 }
 
 export function adaptV1ReportToV2(ctx: AdaptV1Context): HausReportV2 {
@@ -61,18 +89,22 @@ export function adaptV1ReportToV2(ctx: AdaptV1Context): HausReportV2 {
     adjacentVariants: [],
   })
 
+  // Aggregate the capture window across every region + comparable row so
+  // confidence reflects true data freshness, not just the first region bucket.
+  const captureWindow = aggregateCaptureWindow(ctx)
   const d4 = computeD4Confidence({
     sample_size: ctx.dbComparables.length,
-    capture_date_start: ctx.marketStats?.regions[0]?.oldestDate ?? ctx.generatedAt ?? new Date().toISOString().slice(0, 10),
-    capture_date_end: ctx.marketStats?.regions[0]?.newestDate ?? ctx.generatedAt ?? new Date().toISOString().slice(0, 10),
+    capture_date_start: captureWindow.start,
+    capture_date_end: captureWindow.end,
     outlier_flags: [],
   })
 
-  // D2 is a no-op stub at this stage — real cross-border arbitrage lights
-  // up when the Phase 3 orchestrator resolves landed cost per region.
+  // D2 uses pre-computed cross-border arbitrage when available (server
+  // callers compute it via `computeArbitrageForCar`); otherwise an empty
+  // block keeps the adapter sync and the UI gracefully degrades.
   const marketIntel: MarketIntel = {
     d1,
-    d2: {
+    d2: ctx.d2Precomputed ?? {
       by_region: [],
       target_region: "US",
       narrative_insight: null,

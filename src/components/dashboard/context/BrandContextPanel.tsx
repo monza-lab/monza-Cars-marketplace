@@ -11,7 +11,6 @@ import { listingPriceUsd, formatUsdValue } from "../utils/valuation"
 import { RegionalValuationSection } from "./shared/RegionalValuation"
 import { RecentSalesSection } from "./shared/RecentSales"
 import { MarketDepthSection } from "./shared/MarketDepth"
-import { OwnershipCostSection } from "./shared/OwnershipCost"
 import type { Brand, Auction } from "../types"
 import type { RegionalValByFamily } from "@/lib/dashboardCache"
 
@@ -54,20 +53,6 @@ export function BrandContextPanel({ brand, allBrands, auctions, regionalValByFam
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])
-  const ownershipCost = useMemo(() => {
-    const config = getBrandConfig(brand.name)
-    const base = config?.ownershipCosts ?? { insurance: 8000, storage: 5000, maintenance: 7000 }
-    const prices = brandAuctions.map(a => listingPriceUsd(a, rates)).filter(p => p > 0)
-    const avgPrice = prices.length > 0
-      ? prices.reduce((sum, p) => sum + p, 0) / prices.length
-      : (brand.priceMin + brand.priceMax) / 2
-    const scale = avgPrice < 100_000 ? 0.7 : avgPrice < 250_000 ? 1.0 : avgPrice < 500_000 ? 1.3 : 1.6
-    return {
-      insurance: Math.round(base.insurance * scale),
-      storage: Math.round(base.storage * scale),
-      maintenance: Math.round(base.maintenance * scale),
-    }
-  }, [brandAuctions, brand.name, brand.priceMin, brand.priceMax])
   const depth = useMemo(() => {
     const count = brandAuctions.length
     if (count === 0) {
@@ -159,9 +144,6 @@ export function BrandContextPanel({ brand, allBrands, auctions, regionalValByFam
 
         {/* 5. LIQUIDITY & MARKET DEPTH — shared section */}
         <MarketDepthSection depth={depth} />
-
-        {/* 6. OWNERSHIP COST — shared section */}
-        <OwnershipCostSection ownershipCost={ownershipCost} />
 
         {/* 7. SIMILAR BRANDS */}
         {similarBrands.length > 0 && (

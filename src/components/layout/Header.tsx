@@ -448,6 +448,8 @@ export function Header() {
   const t = useTranslations();
   const locale = useLocale();
   const { selectedRegion, setSelectedRegion } = useRegion();
+  const pathname = usePathname();
+  const isMarketLocked = /^\/(?:[a-z]{2}\/)?cars\/[^/]+\/[^/]+$/.test(pathname);
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
@@ -778,7 +780,11 @@ export function Header() {
           </div>
 
           {/* Region Filter — with pink separators */}
-          <div className="hidden md:flex items-center shrink-0">
+          <div
+            className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
+            aria-disabled={isMarketLocked}
+            title={isMarketLocked ? "Locked to vehicle market on detail pages" : undefined}
+          >
             {REGIONS.map((region, i) => {
               const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
               return (
@@ -787,8 +793,12 @@ export function Header() {
                     <div className="w-px h-3.5 bg-primary/20 mx-0.5" />
                   )}
                   <button
-                    onClick={() => setSelectedRegion(region.id === "all" ? null : region.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.1em] transition-all ${
+                    onClick={() => {
+                      if (isMarketLocked) return
+                      setSelectedRegion(region.id === "all" ? null : region.id)
+                    }}
+                    disabled={isMarketLocked}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.1em] transition-all disabled:cursor-not-allowed disabled:opacity-100 ${
                       isActive
                         ? "bg-primary/15 text-primary border border-primary/25"
                         : "text-muted-foreground hover:text-foreground hover:bg-foreground/3"

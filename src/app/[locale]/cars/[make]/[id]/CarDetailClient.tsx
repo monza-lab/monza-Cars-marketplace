@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronDown,
   Shield,
-  Wrench,
   MapPin,
   Car,
   Gauge,
@@ -59,7 +58,7 @@ import { formatPoint } from "@/lib/landedCost/format"
 // UI renders an explicit empty state instead of per-make fake fallbacks.
 
 // ─── HARDCODED FAKE DATA REMOVED ───
-// Ownership costs, comparable sales, upcoming events, and shipping estimates
+// Comparable sales, upcoming events, and shipping estimates
 // used to live here as per-make fake arrays. They've been deleted so the UI
 // renders honest empty states wherever the backend hasn't populated real data.
 // When the backend starts writing to the "Comparable" table (and equivalents
@@ -257,20 +256,21 @@ function CarNavSidebar({
   car,
   similarCars,
   dbAnalysis,
+  activeRegion,
 }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   dbAnalysis?: DbAnalysisRow | null
+  activeRegion: string
 }) {
   const locale = useLocale()
-  const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd } = useCurrency()
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
   const flags: string[] = dbAnalysis?.redFlags ?? []
   const platform = platformLabels[car.platform]
 
   // Market position: where current price sits within selected region's fair value range
-  const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
+  const regionRange = car.fairValueByRegion[activeRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const fairLow = regionRange.low
   const fairHigh = regionRange.high
   // Convert currentBid (USD) to selected currency for comparison
@@ -320,7 +320,7 @@ function CarNavSidebar({
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
-          <span className="text-[9px] text-muted-foreground">Fair Value Range ({effectiveRegion})</span>
+          <span className="text-[9px] text-muted-foreground">Fair Value Range ({activeRegion})</span>
           <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
         </div>
         {/* Position bar */}
@@ -472,27 +472,15 @@ function CarContextPanel({
   onOpenAdvisor,
   dbAnalysis,
   dbSoldHistory = [],
+  activeRegion,
 }: {
   car: CollectorCar
   onOpenAdvisor: () => void
   dbAnalysis?: DbAnalysisRow | null
   dbSoldHistory?: DbSoldRecord[]
+  activeRegion: string
 }) {
-  const { effectiveRegion } = useRegion()
   const { formatPrice, convertFromUsd, currencySymbol } = useCurrency()
-  // Ownership cost: surface only whatever the AI analysis actually returned.
-  // Storage is not analyzed today, so we leave it null. Sections render empty
-  // states when no real data is present (no more per-make fake fallbacks).
-  const costs = dbAnalysis && (dbAnalysis.insuranceEstimate || dbAnalysis.yearlyMaintenance)
-    ? {
-        insurance: dbAnalysis.insuranceEstimate ?? null,
-        storage: null as number | null,
-        maintenance: dbAnalysis.yearlyMaintenance ?? null,
-      }
-    : null
-  const totalAnnualCost = costs
-    ? (costs.insurance ?? 0) + (costs.storage ?? 0) + (costs.maintenance ?? 0)
-    : null
   // Shipping and upcoming events have no DB source yet — render empty states.
   const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
   const events: { name: string; type: string; impact: "positive" | "neutral" | "negative" }[] = []
@@ -507,7 +495,7 @@ function CarContextPanel({
   )
 
   // Market position: where is the current bid relative to fair value?
-  const regionRange = pricing[effectiveRegion as keyof typeof pricing] || pricing.US
+  const regionRange = pricing[activeRegion as keyof typeof pricing] || pricing.US
   const fairMid = (regionRange.low + regionRange.high) / 2
   const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
 
@@ -568,7 +556,7 @@ function CarContextPanel({
             {(["US", "UK", "EU", "JP"] as const).map(region => {
               const rp = pricing[region]
               const isBest = bestRegion === region
-              const isSelected = region === effectiveRegion
+              const isSelected = region === activeRegion
               const avg = (rp.low + rp.high) / 2
               const barWidth = (avg / maxRegionalUsd) * 100
               return (
@@ -594,7 +582,7 @@ function CarContextPanel({
                       </span>
                     </div>
                   </div>
-                  {region !== effectiveRegion && (
+                  {region !== activeRegion && (
                     <div className="flex justify-end mb-1">
                       <span className="text-[9px] tabular-nums text-muted-foreground">
                         ≈ {formatPrice(rp.high)}
@@ -654,41 +642,7 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 5. ANNUAL OWNERSHIP COST */}
-        <div className="px-5 py-4 border-b border-border bg-primary/3">
-          <div className="flex items-center gap-2 mb-3">
-            <Wrench className="size-4 text-primary" />
-            <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Annual Ownership Cost
-            </span>
-          </div>
-          {costs ? (
-            <div className="space-y-2">
-              {[
-                { label: "Insurance", value: costs.insurance },
-                { label: "Storage", value: costs.storage },
-                { label: "Maintenance", value: costs.maintenance },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">{item.label}</span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground">
-                    {item.value == null ? "—" : formatPrice(item.value)}
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between pt-2 mt-2 border-t border-border">
-                <span className="text-[11px] font-medium text-foreground">Total</span>
-                <span className="text-[12px] font-display font-medium text-primary">
-                  {totalAnnualCost ? `${formatPrice(totalAnnualCost)}/yr` : "—"}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
-          )}
-        </div>
-
-        {/* 6. SHIPPING COSTS */}
+        {/* 5. SHIPPING COSTS */}
         <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
             <Truck className="size-4 text-primary" />
@@ -803,11 +757,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const t = useTranslations("carDetail")
   const tAuction = useTranslations("auctionDetail")
   const tStatus = useTranslations("status")
-  const { effectiveRegion } = useRegion()
+  const { selectedRegion, setSelectedRegion } = useRegion()
   const { formatPrice, convertFromUsd } = useCurrency()
   const router = useRouter()
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
   const handleOpenReport = () => router.push(`/cars/${makeSlug}/${car.id}/report`)
+  const lockedRegion = car.canonicalMarket ?? car.region
+  const previousRegionRef = useRef<string | null>(null)
+  if (previousRegionRef.current === null) {
+    previousRegionRef.current = selectedRegion
+  }
 
   const [showSticky, setShowSticky] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
@@ -886,16 +845,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const flags: string[] = dbAnalysis?.redFlags ?? []
   const questions: string[] = dbAnalysis?.criticalQuestions ?? []
 
-  // Ownership cost: surface only what the AI analysis returned. No per-make
-  // fake fallback — storage is not analyzed today, so leave it null.
-  const costs = dbAnalysis && (dbAnalysis.insuranceEstimate || dbAnalysis.yearlyMaintenance)
-    ? {
-        insurance: dbAnalysis.insuranceEstimate ?? null,
-        storage: null as number | null,
-        maintenance: dbAnalysis.yearlyMaintenance ?? null,
-      }
-    : null
-
   // Comparable sales: only real DB rows. Empty array when Comparable table has nothing.
   const comps = dbComparables.length > 0
     ? dbComparables.map(c => ({
@@ -910,14 +859,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   // No DB source yet for upcoming events or shipping costs — render empty states.
   const events: { name: string; type: string; impact: "positive" | "neutral" | "negative" }[] = []
   const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
-  const totalAnnualCost = costs
-    ? (costs.insurance ?? 0) + (costs.storage ?? 0) + (costs.maintenance ?? 0)
-    : null
 
   // ─── Investment Passport computations (for mobile) ───
   // Use real per-region fair values from DB
   const mobilePricing = car.fairValueByRegion
-  const regionRange = mobilePricing[effectiveRegion as keyof typeof mobilePricing] || mobilePricing.US
+  const regionRange = mobilePricing[lockedRegion as keyof typeof mobilePricing] || mobilePricing.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
   const bidInCurrency = convertFromUsd(car.currentBid)
@@ -932,6 +878,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       (pricing[r].low + pricing[r].high) / 2
     ))
   )
+
+  // Keep this detail page anchored to the car's native market.
+  useEffect(() => {
+    setSelectedRegion(lockedRegion)
+    return () => {
+      setSelectedRegion(previousRegionRef.current)
+    }
+  }, [lockedRegion, setSelectedRegion])
+
+  useEffect(() => {
+    if (selectedRegion !== lockedRegion) {
+      setSelectedRegion(lockedRegion)
+    }
+  }, [lockedRegion, selectedRegion, setSelectedRegion])
 
   // Scroll handler for mobile sticky bar
   useEffect(() => {
@@ -1139,7 +1099,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               {/* Cell 3: Fair Value */}
-              <div className="rounded-xl bg-foreground/3 border border-border p-3">
+              <div className="col-span-2 rounded-xl bg-foreground/3 border border-border p-3">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
@@ -1148,18 +1108,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </span>
               </div>
 
-              {/* Cell 4: Annual Cost */}
-              <div className="rounded-xl bg-foreground/3 border border-border p-3">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
-                  {t("investmentPassport.annualCost")}
-                </span>
-                <span className="text-[22px] font-bold tabular-nums text-foreground">
-                  {totalAnnualCost ? formatPrice(totalAnnualCost) : "—"}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {totalAnnualCost ? "/yr" : " pending"}
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -1239,7 +1187,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               {(["US", "UK", "EU", "JP"] as const).map(region => {
                 const rp = pricing[region]
                 const isBest = bestRegion === region
-                const isSelected = region === effectiveRegion
+                const isSelected = region === lockedRegion
                 const usdAvg = (rp.low + rp.high) / 2
                 const barWidth = (usdAvg / maxRegionalUsd) * 100
                 return (
@@ -1433,71 +1381,22 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             )}
           </CollapsibleSection>
 
-          {/* 12. Ownership Cost & Shipping */}
-          <CollapsibleSection title={t("ownershipAndShipping")} icon={<Wrench className="size-5" />}>
-            {costs || shipping ? (
-              <div className="space-y-3">
-                {costs && (
-                  <>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <Shield className="size-4 text-muted-foreground" />
-                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.insurance")}</span>
-                      </div>
-                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
-                        {costs.insurance == null ? "—" : formatPrice(costs.insurance)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <MapPin className="size-4 text-muted-foreground" />
-                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.storage")}</span>
-                      </div>
-                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
-                        {costs.storage == null ? "—" : formatPrice(costs.storage)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <div className="flex items-center gap-3">
-                        <Wrench className="size-4 text-muted-foreground" />
-                        <span className="text-[13px] text-muted-foreground">{t("ownershipCosts.service")}</span>
-                      </div>
-                      <span className="text-[14px] tabular-nums font-semibold text-foreground">
-                        {costs.maintenance == null ? "—" : formatPrice(costs.maintenance)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-[13px] font-semibold text-foreground">{t("totalAnnual")}</span>
-                      <span className="text-[18px] font-display font-medium text-primary">
-                        {totalAnnualCost ? `${formatPrice(totalAnnualCost)}/yr` : "—"}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {shipping && (
-                  <div className="border-t border-border pt-3 mt-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Truck className="size-4 text-primary" />
-                      <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                        Shipping Estimates
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
-                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
-                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
-                        <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+          {/* 12. Shipping Estimates */}
+          <CollapsibleSection title="Shipping Estimates" icon={<Truck className="size-5" />}>
+            {shipping ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                  <span className="text-[13px] text-muted-foreground">{t("domestic")}</span>
+                  <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.domestic)}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                  <span className="text-[13px] text-muted-foreground">{t("euImport")}</span>
+                  <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.euImport)}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                  <span className="text-[13px] text-muted-foreground">{t("ukImport")}</span>
+                  <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
+                </div>
               </div>
             ) : (
               <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
@@ -1565,7 +1464,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
 
           {/* COLUMN A: LEFT SIDEBAR */}
-          <CarNavSidebar car={car} similarCars={similarCars} dbAnalysis={dbAnalysis} />
+          <CarNavSidebar car={car} similarCars={similarCars} dbAnalysis={dbAnalysis} activeRegion={lockedRegion} />
 
           {/* COLUMN B: CENTER SCROLL (continuous, no tabs) */}
           <div className="h-full overflow-y-auto no-scrollbar">
@@ -1759,7 +1658,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* COLUMN C: RIGHT PANEL */}
           <div className="overflow-hidden">
-            <CarContextPanel car={car} onOpenAdvisor={() => setShowAdvisorChat(true)} dbAnalysis={dbAnalysis} dbSoldHistory={dbSoldHistory} />
+            <CarContextPanel car={car} onOpenAdvisor={() => setShowAdvisorChat(true)} dbAnalysis={dbAnalysis} dbSoldHistory={dbSoldHistory} activeRegion={lockedRegion} />
           </div>
         </div>
       </div>
