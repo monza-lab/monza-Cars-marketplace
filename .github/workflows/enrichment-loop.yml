@@ -1,0 +1,74 @@
+name: Enrichment Loop
+
+on:
+  schedule:
+    - cron: '0 12 * * *'     # 12:00 UTC daily (after all individual enrichment jobs finish)
+  workflow_dispatch:
+    inputs:
+      max_iterations:
+        description: 'Max loop iterations'
+        default: '5'
+      pause_minutes:
+        description: 'Pause between iterations (minutes)'
+        default: '2'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: enrichment-loop
+  cancel-in-progress: false
+
+jobs:
+  enrich-loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360    # 6 hours max
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
+      - run: npm ci
+
+      - name: Start dev server
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          npm run dev &
+          echo "Waiting for dev server..."
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000 | grep -qE '200|307|308'; then
+              echo "Dev server ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run enrichment loop
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCRAPLING_PYTHON: python3
+        run: |
+          npx tsx scripts/run-scrapers.ts \
+            --enrich-loop \
+            --max-iterations=${{ github.event.inputs.max_iterations || '5' }} \
+            --pause=${{ github.event.inputs.pause_minutes || '2' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}

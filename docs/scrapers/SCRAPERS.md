@@ -1070,6 +1070,21 @@ With 2-min pause: ~55 min/iteration. Typical runs converge in 3-5 iterations (~4
 
 > **Note:** Cron-type scrapers require `npm run dev` running in another terminal. CLI scrapers always work.
 
+### Automated schedule (GitHub Actions)
+
+**Workflow:** `.github/workflows/enrichment-loop.yml`
+**Schedule:** 12:00 UTC daily (after all individual enrichment jobs finish)
+
+The GHA workflow starts a Next.js dev server in the background so both CLI and cron-route scrapers run. Timeout: 6 hours.
+
+**Trigger manually:** Actions > Enrichment Loop > Run workflow:
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| Max loop iterations | `5` | How many times to repeat |
+| Pause between iterations | `2` | Minutes between iterations |
+| Skip DB writes | `false` | Dry run mode |
+
 ---
 
 ## Cross-Source Maintenance
@@ -1193,11 +1208,13 @@ All times in UTC. Staggered to avoid overlapping.
 09:15  Elferspot Collector        (Vercel Cron, 5 min)
 09:45  Elferspot Enrichment       (Vercel Cron, 5 min)
 10:30  Liveness Checker           (GitHub Actions, 60 min)
+12:00  Enrichment Loop            (GitHub Actions, ~5h, repeats until quality targets met)
 ```
 
 **Why two runtimes?**
 - **Vercel Cron** (max 5 min): Lightweight HTTP-based scrapers that fit within serverless limits.
 - **GitHub Actions** (30-90 min): Heavy Playwright browser scrapers that need more time and memory.
+- **Enrichment Loop** (up to 6h): Iterates all enrichment scrapers until data quality targets are met.
 
 ---
 
