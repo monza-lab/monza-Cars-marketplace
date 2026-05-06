@@ -743,6 +743,59 @@ async function main(): Promise<void> {
   }
   console.log("");
 
+  // ── TUI mode selector (no CLI flags) ─────────────────────────────
+  const hasCliMode = flags.full || flags.discovery || flags.enrichment || flags.enrichLoop;
+  if (!hasCliMode) {
+    const modeResponse = await prompts({
+      type: "select",
+      name: "mode",
+      message: "Select run mode",
+      choices: [
+        { title: "Manual select", description: "Pick individual scrapers", value: "manual" },
+        { title: "Enrichment Loop", description: "Repeat enrichment until quality targets met", value: "enrich-loop" },
+        { title: "Discovery only", description: "Run all discovery scrapers", value: "discovery" },
+        { title: "Enrichment only", description: "Run all enrichment scrapers (once)", value: "enrichment" },
+        { title: "Run all", description: "Run everything", value: "full" },
+      ],
+    });
+
+    if (modeResponse.mode === undefined) {
+      console.log("No mode selected. Exiting.");
+      process.exit(0);
+    }
+
+    if (modeResponse.mode === "enrich-loop") {
+      const loopConfig = await prompts([
+        {
+          type: "number",
+          name: "maxIterations",
+          message: "Max iterations",
+          initial: 10,
+          min: 1,
+          max: 50,
+        },
+        {
+          type: "number",
+          name: "pauseMinutes",
+          message: "Pause between iterations (minutes)",
+          initial: 2,
+          min: 0,
+          max: 30,
+        },
+      ]);
+      flags.enrichLoop = true;
+      flags.maxIterations = loopConfig.maxIterations ?? 10;
+      flags.pauseMinutes = loopConfig.pauseMinutes ?? 2;
+    } else if (modeResponse.mode === "discovery") {
+      flags.discovery = true;
+    } else if (modeResponse.mode === "enrichment") {
+      flags.enrichment = true;
+    } else if (modeResponse.mode === "full") {
+      flags.full = true;
+    }
+    // "manual" falls through to normal selectScrapers() TUI
+  }
+
   // ── Enrich-loop mode ───────────────────────────────────────────
   if (flags.enrichLoop) {
     console.log("╔══════════════════════════════════════════════════════════╗");

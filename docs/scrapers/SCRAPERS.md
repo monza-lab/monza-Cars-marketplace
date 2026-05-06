@@ -930,6 +930,148 @@ npx tsx src/features/scrapers/liveness_checker/cli.ts --help
 
 ---
 
+## Scraper TUI (Interactive Runner)
+
+The TUI is the main way to run scrapers locally. It provides a mode selector and interactive multi-select.
+
+```bash
+# Launch the TUI
+npm run scrapers
+
+# Or directly
+npx tsx scripts/run-scrapers.ts
+```
+
+On launch, the TUI asks you to **select a run mode**:
+
+| Mode | Description |
+|------|-------------|
+| **Manual select** | Pick individual scrapers from a multi-select list |
+| **Enrichment Loop** | Repeat all enrichment scrapers until quality targets are met |
+| **Discovery only** | Run all discovery scrapers (once) |
+| **Enrichment only** | Run all enrichment scrapers (once) |
+| **Run all** | Run everything (discovery + enrichment + maintenance) |
+
+You can also bypass the TUI with CLI flags:
+
+```bash
+npx tsx scripts/run-scrapers.ts --full            # Run everything
+npx tsx scripts/run-scrapers.ts --discovery       # Discovery only
+npx tsx scripts/run-scrapers.ts --enrichment      # Enrichment only
+npx tsx scripts/run-scrapers.ts --dry-run         # Skip DB writes (combine with any mode)
+```
+
+---
+
+## Enrichment Loop
+
+Repeatedly runs all enrichment scrapers in a loop until data quality targets are met or a max iteration count is reached. Eliminates the need to manually re-run enrichment.
+
+### How to run
+
+**Option 1 — Via TUI (recommended):**
+
+```bash
+npm run scrapers
+# Select "Enrichment Loop" from the mode menu
+# Enter max iterations (default: 10) and pause between iterations (default: 2 min)
+```
+
+**Option 2 — Via CLI flags:**
+
+```bash
+# Default: 10 iterations, 2-minute pause
+npm run scrapers:enrich-loop
+
+# Custom: 20 iterations, 5-minute cooldown
+npx tsx scripts/run-scrapers.ts --enrich-loop --max-iterations=20 --pause=5
+
+# Dry run (test loop logic without DB writes — stalls after 2 iterations)
+npx tsx scripts/run-scrapers.ts --enrich-loop --dry-run
+```
+
+### CLI flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--enrich-loop` | `false` | Enable enrichment loop mode |
+| `--max-iterations=N` | `10` | Maximum number of loop iterations |
+| `--pause=N` | `2` | Minutes to pause between iterations |
+| `--dry-run` | `false` | Skip database writes |
+
+### How it works
+
+```
+Start
+  |
+  v
+Initial quality check --> All passed? --> Exit (0)
+  | no
+  v
++-----------------------------+
+|  ITERATION N                |
+|  Run all enrichment scrapers|
+|  Print summary table        |
+|                             |
+|  Quality check              |
+|  |-- All passed --> Exit (0)|
+|  |-- No improvement --> Exit|
+|  |-- Max iterations --> Exit|
+|  +-- Gaps remain --> Pause  |
+|       +-- Next iteration    |
++-----------------------------+
+  |
+  v
+Save combined run log
+Exit (0 if all passed, 1 if gaps remain)
+```
+
+1. **Initial quality check** — queries Supabase for fill-rates. If all targets already met, exits immediately.
+2. **Enrichment iteration** — runs all enrichment scrapers (CLI + cron routes).
+3. **Post-iteration quality check** — measures progress.
+4. **Stall detection** — if no improvement since last iteration, stops early.
+5. **Pause** — waits N minutes before next iteration.
+6. **Run log** — saves a combined JSON log with loop metadata to `logs/scraper-runs/`.
+
+### Quality targets
+
+| Source | Field | Target % |
+|--------|-------|----------|
+| AutoScout24 | description_text | 90% |
+| AutoScout24 | trim | 90% |
+| AutoTrader | description_text | 90% |
+| AutoTrader | images | 95% |
+| Classic.com | description_text | 90% |
+| Classic.com | mileage | 80% |
+| Elferspot | description_text | 90% |
+| Elferspot | hammer_price | 80% |
+| BeForward | images | 95% |
+| BaT | description_text | 90% |
+| ALL sources | images | 95% |
+| ALL sources | engine | 80% |
+| ALL sources | transmission | 80% |
+
+### Enrichment scrapers included
+
+| Scraper | Type | ~Duration |
+|---------|------|-----------|
+| BaT Detail Scraper | CLI | ~4 min |
+| Classic.com Enrichment | CLI | ~17 min |
+| AS24 Enrichment | CLI | ~17 min |
+| AutoTrader Enrichment | Cron | ~2 min |
+| BeForward Enrichment | Cron | ~3 min |
+| Elferspot Enrichment | Cron | ~2 min |
+| VIN Enrichment | Cron | ~2 min |
+| Title Enrichment | Cron | ~1 min |
+| Image Backfill | Cron | ~5 min |
+| **Total per iteration** | | **~53 min** |
+
+With 2-min pause: ~55 min/iteration. Typical runs converge in 3-5 iterations (~4-5 hours).
+
+> **Note:** Cron-type scrapers require `npm run dev` running in another terminal. CLI scrapers always work.
+
+---
+
 ## Cross-Source Maintenance
 
 These jobs apply to all sources. They run as Vercel cron routes with no query parameters.
