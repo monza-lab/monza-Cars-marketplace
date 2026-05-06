@@ -14,7 +14,7 @@ const STATIC_ROUTES = [
 const PORSCHE_SERIES = [
   "992", "991", "997", "996", "993", "964", "930",
   "718-cayman", "718-boxster",
-  "cayenne", "macan", "panamera", "taycan",
+  "panamera",
 ]
 
 const PORSCHE_MODEL_SLUGS = ["964", "991", "992", "993", "996", "997"]

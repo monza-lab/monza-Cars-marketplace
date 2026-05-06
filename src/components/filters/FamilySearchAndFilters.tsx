@@ -37,19 +37,6 @@ const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>
     { id: "g-model", label: "G-Model (1974-1989)" },
     { id: "f-model", label: "F-Model (1963-1973)" },
   ],
-  "Cayenne": [
-    { id: "e3", label: "E3 (2019-2024)" },
-    { id: "e2", label: "E2 (2011-2018)" },
-    { id: "e1", label: "E1 (2003-2010)" },
-  ],
-  "Taycan": [
-    { id: "j1", label: "J1 (2020+)" },
-  ],
-  "Macan": [
-    { id: "95b-2", label: "95B.2 (2024+)" },
-    { id: "95b", label: "95B (2019-2024)" },
-    { id: "95b-1", label: "95B.1 (2014-2018)" },
-  ],
   "Panamera": [
     { id: "g3", label: "G3 (2024+)" },
     { id: "g2", label: "G2 (2017-2024)" },
@@ -116,9 +103,6 @@ const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>
 // Variantes populares por familia (para autocomplete)
 const VARIANTS_BY_FAMILY: Record<string, string[]> = {
   "911": ["Turbo", "GT3", "Carrera", "GTS", "Targa", "4S", "Speedster", "GT2", "Sport Classic"],
-  "Cayenne": ["Turbo", "S", "GTS", "E-Hybrid", "Coupe"],
-  "Macan": ["S", "GTS", "Turbo", "4"],
-  "Taycan": ["Turbo S", "4S", "GTS", "Cross Turismo"],
   "Panamera": ["Turbo", "4S", "GTS", "E-Hybrid"],
   "Boxster": ["S", "GTS", "Spyder", "T", "25 Years"],
   "Cayman": ["S", "GTS", "GT4", "T", "R"],

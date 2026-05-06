@@ -7,6 +7,9 @@ const SUPABASE_TIMEOUT_MS = 30_000;
 const DASHBOARD_VALUATION_TABLE = "dashboard_valuation_by_family";
 const MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 
+// Models excluded from the frontend — must match EXCLUDED_MODELS in supabaseLiveListings.ts.
+const EXCLUDED_FAMILIES = ["cayenne", "macan", "taycan"];
+
 export type RegionalValByFamily = Record<string, Record<CanonicalMarket, SegmentStats>>;
 
 function createSupabaseClient(url: string, key: string, options: { timeoutMs?: number; signal?: AbortSignal } = {}): SupabaseClient {
@@ -44,7 +47,9 @@ function createSupabaseClient(url: string, key: string, options: { timeoutMs?: n
 
 export function aggregateRegionalValuationByFamily(prices: DerivedPrice[]): RegionalValByFamily {
   const families = Array.from(
-    new Set(prices.map((price) => price.family).filter((family): family is string => !!family)),
+    new Set(prices.map((price) => price.family).filter(
+      (family): family is string => !!family && !EXCLUDED_FAMILIES.includes(family),
+    )),
   );
   const out: RegionalValByFamily = {};
 
@@ -167,6 +172,11 @@ export async function fetchDashboardRegionalValuationByFamily(
     const payload = data?.regional_val_by_family;
     if (!isRegionalValByFamily(payload)) {
       return null;
+    }
+
+    // Strip excluded families from the cached payload.
+    for (const family of EXCLUDED_FAMILIES) {
+      delete (payload as Record<string, unknown>)[family];
     }
 
     return payload;

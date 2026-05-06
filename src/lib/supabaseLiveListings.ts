@@ -605,9 +605,28 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
 
 // ─── Junk listing filter (safety net — catches items the cron cleanup hasn't removed yet) ───
 
+// Models excluded from the frontend (non-collector SUVs / EVs).
+const EXCLUDED_MODELS = ["cayenne", "macan", "taycan"];
+
+// Parts, accessories, and non-vehicle items that should never render.
+// IMPORTANT: Use specific multi-word phrases to avoid false positives.
+// Single words like "wheel", "manual", "book", "sign", "parts" match
+// legitimate car titles (e.g. "alloy wheels", "manual transmission",
+// "service book", "Porsche Design", "sports exhaust").
+const NON_VEHICLE_KEYWORDS = [
+  "wheel set", "wheel only", "rim set", "fuchs rim", "fuchs wheel",
+  "part lot", "parts lot", "spare parts",
+  "tool kit", "toolkit", "brochure", "literature", "press kit",
+  "scale model", "diecast", "poster", "emblem only",
+  "seat set", "engine only", "transmission only", "gearbox only",
+  "go-kart", "go kart",
+  "replica car", "kit car",
+];
+
 function isJunkListing(row: { make: string; model: string; year: number; title?: string | null }): boolean {
   const model = (row.model ?? "").toLowerCase();
   const title = (row.title ?? "").toLowerCase();
+  const haystack = `${model} ${title}`;
 
   // Porsche-Diesel tractors (but NOT Cayenne Diesel which is a real car)
   if (model.includes("diesel") && !model.includes("cayenne")) return true;
@@ -615,15 +634,14 @@ function isJunkListing(row: { make: string; model: string; year: number; title?:
   // Tractors by model or title
   if (model.includes("tractor") || title.includes("tractor")) return true;
 
-  // Literature, press kits, tool kits
-  if (model.includes("literature") || model.includes("press kit")) return true;
-  if (model.includes("tool kit") || (model.includes("tool") && model.includes("356"))) return true;
-
   // Kit cars using Porsche engines (APAL, Genie, etc.)
   if (model.includes("apal") || model.includes("genie")) return true;
 
   // Non-car projects / parts / accessories
   if (model.includes("kenworth")) return true;
+
+  // Parts, rims, accessories, non-vehicle items
+  if (NON_VEHICLE_KEYWORDS.some((kw) => haystack.includes(kw))) return true;
 
   return false;
 }
@@ -983,6 +1001,7 @@ async function queryListingSingle(
   if (!isSupportedLiveMake(row.make)) {
     return null;
   }
+  if (isJunkListing(row)) return null;
   return row;
 }
 
@@ -1082,7 +1101,9 @@ export async function fetchSoldListingsForMake(
     if (error || !data) return [];
 
     return data
-      .filter((r: { hammer_price: string | number | null; sale_date: string | null }) => r.hammer_price != null && r.sale_date != null)
+      .filter((r: { hammer_price: string | number | null; sale_date: string | null; model: string; year: number; make: string }) =>
+        r.hammer_price != null && r.sale_date != null && !isJunkListing({ make: r.make, model: r.model, year: r.year })
+      )
       .map((r: { year: number; make: string; model: string; trim: string | null; hammer_price: string | number; sale_date: string }) => ({
         price: Number(r.hammer_price),
         date: r.sale_date,
@@ -1142,9 +1163,9 @@ export async function fetchPricedListingsForModel(
 
     if (error || !data) return [];
 
-    return data.filter(
-      (r: { hammer_price: string | number | null }) => r.hammer_price != null && Number(r.hammer_price) > 0
-    ) as PricedListingRow[];
+    return (data as PricedListingRow[]).filter(
+      (r) => r.hammer_price != null && Number(r.hammer_price) > 0 && !isJunkListing({ make: r.make, model: r.model, year: r.year })
+    );
   } catch (err) {
     console.error("[supabaseLiveListings] fetchPricedListingsForModel failed:", err);
     return [];
@@ -1273,7 +1294,7 @@ export async function fetchValuationCorpusForMake(
         break;
       }
 
-      const rows = (data ?? []) as Array<{
+      const rawRows = (data ?? []) as Array<{
         id: string;
         source: string | null;
         status: string | null;
@@ -1285,8 +1306,9 @@ export async function fetchValuationCorpusForMake(
         current_bid: number | null;
         original_currency: string | null;
       }>;
-      if (rows.length === 0) break;
+      if (rawRows.length === 0) break;
 
+      const rows = rawRows.filter((r) => !isJunkListing({ make: r.make, model: r.model, year: r.year }));
       for (const row of rows) {
         out.push(
           derivePrice(
@@ -1306,8 +1328,8 @@ export async function fetchValuationCorpusForMake(
           ),
         );
       }
-      cursorId = rows[rows.length - 1]?.id ?? null;
-      if (rows.length < pageSize) break;
+      cursorId = rawRows[rawRows.length - 1]?.id ?? null;
+      if (rawRows.length < pageSize) break;
     }
   } catch (err) {
     console.error("[supabaseLiveListings] fetchValuationCorpusForMake failed:", err);
@@ -1483,12 +1505,22 @@ function applyPaginatedListingFilters<T>(
   if (options.region) {
     const regionUpper = options.region.toUpperCase();
     const sourceGroups = REGION_SOURCE_MAP[regionUpper];
-    if (sourceGroups) {
+    const countryValues = REGION_COUNTRY_MAP[regionUpper];
+
+    if (sourceGroups && countryValues) {
+      // Combine source-based and country-based filtering with OR so we capture
+      // listings from the canonical regional platform (e.g. AutoTrader for UK)
+      // AND listings from other platforms that happen to be located in that country
+      // (e.g. Elferspot with country = 'United Kingdom').
+      const allAliases = sourceGroups.flat();
+      const sourceClauses = allAliases.map((a) => `source.eq.${a}`).join(",");
+      const countryClauses = countryValues.map((c) => `country.ilike.${c}`).join(",");
+      q = q.or(`${sourceClauses},${countryClauses}`);
+    } else if (sourceGroups) {
       const allAliases = sourceGroups.flat();
       q = q.in("source", allAliases);
-    } else {
-      const countryValues = REGION_COUNTRY_MAP[regionUpper];
-      if (countryValues) q = q.in("country", countryValues);
+    } else if (countryValues) {
+      q = q.in("country", countryValues);
     }
   }
 
@@ -1698,6 +1730,7 @@ export async function fetchSeriesCounts(
     const counts: Record<string, number> = {};
     for (const row of (data ?? []) as { series: string; live_count: number }[]) {
       if (row.series === "__null") continue;
+      if (EXCLUDED_MODELS.includes(row.series)) continue;
       counts[row.series] = (counts[row.series] ?? 0) + Number(row.live_count);
     }
     return counts;
@@ -1769,6 +1802,7 @@ export async function fetchSeriesCountsByRegion(
 
     for (const row of (data ?? []) as { series: string; region_by_country: string | null; live_count: number }[]) {
       if (row.series === "__null") continue;
+      if (EXCLUDED_MODELS.includes(row.series)) continue;
 
       const liveCount = Number(row.live_count);
       if (!Number.isFinite(liveCount) || liveCount <= 0) continue;

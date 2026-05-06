@@ -86,12 +86,6 @@ export const FAMILY_FACTOR_TABLE: FamilyFactorTable = {
       "soldN": 205,
       "askingN": 806
     },
-    "cayenne": {
-      "family": "cayenne",
-      "factor": 0.32983474922975903,
-      "soldN": 718,
-      "askingN": 7172
-    },
     "panamera": {
       "family": "panamera",
       "factor": 0.536311423550088,
@@ -103,12 +97,6 @@ export const FAMILY_FACTOR_TABLE: FamilyFactorTable = {
       "factor": 0.7582259955944057,
       "soldN": 390,
       "askingN": 1039
-    },
-    "macan": {
-      "family": "macan",
-      "factor": 0.4326630748607961,
-      "soldN": 108,
-      "askingN": 5014
     },
     "boxster": {
       "family": "boxster",

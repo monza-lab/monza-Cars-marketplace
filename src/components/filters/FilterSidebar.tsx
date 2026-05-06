@@ -35,11 +35,8 @@ const MODEL_FAMILIES = [
   { id: "968", label: "968", count: 4 },
   { id: "924", label: "924", count: 7 },
   { id: "914", label: "914", count: 5 },
-  // SUV & Sedan
-  { id: "cayenne", label: "Cayenne", count: 42 },
-  { id: "macan", label: "Macan", count: 14 },
+  // Gran Turismo
   { id: "panamera", label: "Panamera", count: 31 },
-  { id: "taycan", label: "Taycan", count: 14 },
 ]
 
 // Generaciones por familia (contextual)
@@ -54,19 +51,6 @@ const GENERATIONS_BY_FAMILY: Record<string, typeof GENERATIONS> = {
     { id: "930", label: "930 (1975-1989)", count: 12 },
     { id: "g-model", label: "G-Model (1974-1989)", count: 18 },
     { id: "f-model", label: "F-Model (1963-1973)", count: 15 },
-  ],
-  "cayenne": [
-    { id: "e3", label: "E3 (2019-2024)", count: 20 },
-    { id: "e2", label: "E2 (2011-2018)", count: 15 },
-    { id: "e1", label: "E1 (2003-2010)", count: 7 },
-  ],
-  "taycan": [
-    { id: "j1", label: "J1 (2020+)", count: 14 },
-  ],
-  "macan": [
-    { id: "95b-2", label: "95B.2 (2024+)", count: 2 },
-    { id: "95b", label: "95B (2019-2024)", count: 8 },
-    { id: "95b-1", label: "95B.1 (2014-2018)", count: 4 },
   ],
   "panamera": [
     { id: "g3", label: "G3 (2024+)", count: 5 },

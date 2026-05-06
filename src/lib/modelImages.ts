@@ -47,12 +47,8 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Porsche|918 Spyder": "https://images.unsplash.com/photo-1596450886763-6f9b7f3cbd0a?w=1200&h=800&fit=crop",
   // Carrera GT: silver Carrera GT
   "Porsche|Carrera GT": "https://images.unsplash.com/photo-1773142232494-3b5196591d4a?w=1200&h=800&fit=crop",
-  // Cayenne: white Cayenne SUV in parking garage
-  "Porsche|Cayenne": "https://images.unsplash.com/photo-1649296303096-38245976e01e?w=1200&h=800&fit=crop",
   // Panamera: black Panamera GTS on coastal road
   "Porsche|Panamera": "https://images.unsplash.com/photo-1770847816156-a4041d979580?w=1200&h=800&fit=crop",
-  // Taycan: silver Taycan electric sedan
-  "Porsche|Taycan": "https://images.unsplash.com/photo-1618213221550-c32da08997db?w=1200&h=800&fit=crop",
   // 718 Cayman variants: teal 718 Cayman S coupe
   "Porsche|718 Cayman": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
   "Porsche|718 Cayman S": "https://images.unsplash.com/photo-1563720223185-11003d516935?w=1200&h=800&fit=crop",
@@ -111,15 +107,8 @@ export const MODEL_IMAGES: Record<string, string> = {
   "Porsche|928": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
   "Porsche|968": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
   "Porsche|924": "https://images.unsplash.com/photo-1547981430-ee4085c20f3b?w=1200&h=800&fit=crop",
-  // Cayenne: white Cayenne SUV in parking garage
-  "Porsche|cayenne": "https://images.unsplash.com/photo-1649296303096-38245976e01e?w=1200&h=800&fit=crop",
-  // Macan: black Macan compact SUV
-  "Porsche|macan": "https://images.unsplash.com/photo-1661914132349-095cd34f37aa?w=1200&h=800&fit=crop",
   // Panamera: black Panamera GTS on coastal road
   "Porsche|panamera": "https://images.unsplash.com/photo-1770847816156-a4041d979580?w=1200&h=800&fit=crop",
-  // Taycan: silver Taycan electric sedan
-  "Porsche|taycan": "https://images.unsplash.com/photo-1618213221550-c32da08997db?w=1200&h=800&fit=crop",
-
   // ─── LAMBORGHINI ───
   "Lamborghini|Miura": "https://images.unsplash.com/photo-1621135802920-133df287f89c?w=1200&h=800&fit=crop",
   "Lamborghini|Countach": "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=1200&h=800&fit=crop",

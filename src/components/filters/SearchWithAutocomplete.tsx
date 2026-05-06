@@ -17,9 +17,6 @@ type SearchResult = {
 // Model Families (from model_family column)
 const MODEL_FAMILIES: SearchResult[] = [
   { type: "family", name: "911", count: 200, subtitle: "Sports car icon" },
-  { type: "family", name: "Cayenne", count: 42, subtitle: "Performance SUV" },
-  { type: "family", name: "Macan", count: 14, subtitle: "Compact SUV" },
-  { type: "family", name: "Taycan", count: 14, subtitle: "Electric performance" },
   { type: "family", name: "Panamera", count: 31, subtitle: "Grand tourer" },
   { type: "family", name: "Boxster", count: 7, subtitle: "Mid-engine roadster" },
   { type: "family", name: "Cayman", count: 6, subtitle: "Mid-engine coupe" },

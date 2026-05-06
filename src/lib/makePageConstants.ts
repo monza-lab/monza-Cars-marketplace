@@ -172,19 +172,6 @@ export const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: st
     { id: "g-model", label: "G-Model (1974-1989)" },
     { id: "f-model", label: "F-Model (1963-1973)" },
   ],
-  "Cayenne": [
-    { id: "e3", label: "E3 (2019-2024)" },
-    { id: "e2", label: "E2 (2011-2018)" },
-    { id: "e1", label: "E1 (2003-2010)" },
-  ],
-  "Taycan": [
-    { id: "j1", label: "J1 (2020+)" },
-  ],
-  "Macan": [
-    { id: "95b-2", label: "95B.2 (2024+)" },
-    { id: "95b", label: "95B (2019-2024)" },
-    { id: "95b-1", label: "95B.1 (2014-2018)" },
-  ],
   "Panamera": [
     { id: "g3", label: "G3 (2024+)" },
     { id: "g2", label: "G2 (2017-2024)" },

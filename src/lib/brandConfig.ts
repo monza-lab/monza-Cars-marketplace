@@ -11,14 +11,13 @@ export interface VariantConfig {
   keywords: string[]
 }
 
-export type BodyType = "Coupe" | "Convertible" | "Targa" | "Speedster" | "SUV" | "Sedan" | "Wagon" | "Unknown"
+export type BodyType = "Coupe" | "Convertible" | "Targa" | "Speedster" | "Sedan" | "Wagon" | "Unknown"
 
 export const BODY_TYPE_OPTIONS: { id: BodyType; label: string }[] = [
   { id: "Coupe",       label: "Coupe" },
   { id: "Convertible", label: "Convertible" },
   { id: "Targa",       label: "Targa" },
   { id: "Speedster",   label: "Speedster" },
-  { id: "SUV",         label: "SUV" },
   { id: "Sedan",       label: "Sedan" },
   { id: "Wagon",       label: "Sport Turismo" },
 ]
@@ -64,7 +63,7 @@ import {
   PORSCHE_914_VARIANTS, PORSCHE_944_VARIANTS, PORSCHE_928_VARIANTS,
   PORSCHE_968_VARIANTS, PORSCHE_924_VARIANTS, PORSCHE_356_VARIANTS,
   PORSCHE_918_VARIANTS, PORSCHE_CARRERA_GT_VARIANTS, PORSCHE_959_VARIANTS,
-  PORSCHE_TAYCAN_VARIANTS, PORSCHE_PANAMERA_VARIANTS,
+  PORSCHE_PANAMERA_VARIANTS,
 } from "./brandVariants"
 
 // ─── PORSCHE ───
@@ -322,53 +321,16 @@ const PORSCHE_SERIES: SeriesConfig[] = [
     variants: PORSCHE_356_VARIANTS,
   },
 
-  // ── SUV & Sedan ──
-  {
-    id: "cayenne",
-    label: "Cayenne",
-    family: "SUV & Sedan",
-    yearRange: [2003, 2026],
-    order: 24,
-    keywords: ["cayenne"],
-    thesis: "The Cayenne saved Porsche financially and became the benchmark performance SUV. Turbo GT variants push supercar performance. High liquidity and broad appeal.",
-    variants: [
-      { id: "base", label: "Base", keywords: ["cayenne"] },
-      { id: "s", label: "S", keywords: ["cayenne s"] },
-      { id: "gts", label: "GTS", keywords: ["gts"] },
-      { id: "turbo", label: "Turbo", keywords: ["turbo"] },
-      { id: "turbo-gt", label: "Turbo GT", keywords: ["turbo gt"] },
-      { id: "coupe", label: "Coupe", keywords: ["coupe", "coupé"] },
-      { id: "e-hybrid", label: "E-Hybrid", keywords: ["e-hybrid", "hybrid"] },
-    ],
-  },
-  {
-    id: "macan",
-    label: "Macan",
-    family: "SUV & Sedan",
-    yearRange: [2014, 2026],
-    order: 25,
-    keywords: ["macan"],
-    thesis: "Porsche's best-selling model. GTS variants offer the best balance. The new electric Macan represents Porsche's EV future. Strong daily-driver appeal with Porsche DNA.",
-  },
+  // ── Gran Turismo ──
   {
     id: "panamera",
     label: "Panamera",
-    family: "SUV & Sedan",
+    family: "Gran Turismo",
     yearRange: [2009, 2026],
-    order: 26,
+    order: 24,
     keywords: ["panamera"],
     thesis: "The Panamera proved a four-door Porsche could work. Turbo S and Sport Turismo are most desirable. E-Hybrid models offer a glimpse of the electric future.",
     variants: PORSCHE_PANAMERA_VARIANTS,
-  },
-  {
-    id: "taycan",
-    label: "Taycan",
-    family: "SUV & Sedan",
-    yearRange: [2020, 2026],
-    order: 27,
-    keywords: ["taycan"],
-    thesis: "Porsche's electric sports sedan. Turbo S delivers hypercar acceleration. Cross Turismo adds versatility. Leading the luxury EV segment with genuine Porsche character.",
-    variants: PORSCHE_TAYCAN_VARIANTS,
   },
 ]
 
@@ -378,7 +340,7 @@ const PORSCHE_FAMILY_GROUPS: FamilyGroup[] = [
   { id: "mid-engine",   label: "Mid-Engine",         order: 3, seriesIds: ["718-cayman", "718-boxster", "cayman", "boxster", "914"] },
   { id: "transaxle",    label: "Transaxle Classics",  order: 4, seriesIds: ["944", "928", "968", "924"] },
   { id: "heritage",     label: "Heritage",           order: 5, seriesIds: ["356"] },
-  { id: "suv-sedan",    label: "SUV & Sedan",        order: 6, seriesIds: ["cayenne", "macan", "panamera", "taycan"] },
+  { id: "gran-turismo", label: "Gran Turismo",        order: 6, seriesIds: ["panamera"] },
 ]
 
 const PORSCHE: BrandConfig = {
@@ -417,7 +379,7 @@ export function getAllBrands(): BrandConfig[] {
  * Examples (Porsche):
  *   extractSeries("993 Turbo", 1996, "Porsche")  → "993"
  *   extractSeries("911 Carrera", 2020, "Porsche") → "992"  (year fallback)
- *   extractSeries("Cayenne S", 2022, "Porsche")   → "cayenne"
+ *   extractSeries("Panamera GTS", 2022, "Porsche") → "panamera"
  *   extractSeries("GT3 RS", 2023, "Porsche")      → "992"
  *
  * For brands without config, returns the first word of the model.
@@ -666,8 +628,7 @@ const BODY_TYPE_RULES: { type: BodyType; keywords: string[] }[] = [
   { type: "Speedster",   keywords: ["speedster", "spyder"] },
   { type: "Convertible", keywords: ["cabriolet", "convertible", "cabrio", "roadster", "drop top"] },
   { type: "Wagon",       keywords: ["sport turismo", "cross turismo", "shooting brake", "wagon"] },
-  { type: "SUV",         keywords: ["cayenne", "macan"] },
-  { type: "Sedan",       keywords: ["panamera", "taycan"] },
+  { type: "Sedan",       keywords: ["panamera"] },
   { type: "Coupe",       keywords: ["coupe", "coupé"] },
 ]
 
@@ -690,8 +651,7 @@ export function deriveBodyType(model: string, trim: string | null, category: str
   if (config) {
     const series = config.series.find(s => s.id === seriesId)
     if (series) {
-      if (["cayenne", "macan"].includes(series.id)) return "SUV"
-      if (["panamera", "taycan"].includes(series.id)) return "Sedan"
+      if (series.id === "panamera") return "Sedan"
       if (series.id.includes("boxster")) return "Convertible"
       if (["911 Family", "Transaxle Classics", "GT & Hypercars", "Heritage", "Mid-Engine"].includes(series.family)) return "Coupe"
     }

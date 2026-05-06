@@ -64,7 +64,6 @@ export const BODY_OPTIONS = [
   { id: "Convertible", label: "Cabriolet" },
   { id: "Targa", label: "Targa" },
   { id: "Speedster", label: "Speedster" },
-  { id: "SUV", label: "SUV" },
   { id: "Sedan", label: "Sedan" },
   { id: "Wagon", label: "Sport Turismo" },
 ] as const;

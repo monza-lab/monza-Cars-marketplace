@@ -438,7 +438,7 @@ const TYPING_PHRASES = [
   "Find a 997 GT3 with manual gearbox",
   "Compare 991 GT3 vs 992 GT3",
   "Porsche 964 Carrera RS investment outlook",
-  "Search Cayenne Turbo GT, 718 Spyder...",
+  "Search 718 Spyder, Boxster GTS...",
   "How much is a Porsche 930 Turbo?",
   "Best Porsche under $100K right now",
 ]
@@ -679,7 +679,7 @@ export function Header() {
                       setShowDropdown(false)
                     }
                   }}
-                  placeholder={isFocused ? "Search 992, GT3, Turbo, Cayenne..." : ""}
+                  placeholder={isFocused ? "Search 992, GT3, Turbo, 993..." : ""}
                   className="w-full bg-transparent text-[15px] font-light text-foreground placeholder:text-muted-foreground focus:outline-none tracking-tight"
                 />
                 {query.trim() && (
