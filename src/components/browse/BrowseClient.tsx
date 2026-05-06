@@ -105,7 +105,7 @@ export function BrowseClient({
     // API takes a single family at a time. Multi-series selection falls back
     // to pure client-side filtering on whatever is already loaded.
     if (filters.series.length === 1) params.family = filters.series[0];
-    if (filters.region.length === 1) params.region = filters.region[0];
+    if (filters.region.length >= 1) params.region = filters.region.join(",");
     if (filters.platform.length === 1) params.platform = filters.platform[0];
     return params;
   }, [filters.q, filters.series, filters.region, filters.platform]);
