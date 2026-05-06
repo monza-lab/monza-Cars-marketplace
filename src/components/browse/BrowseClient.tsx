@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal, MessageSquare } from "lucide-react";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { BrowseCard } from "./BrowseCard";
+import { NoMarketplaceBanner } from "./NoMarketplaceBanner";
 import { FilterBar } from "./filters/FilterBar";
 import { useClassicFilters } from "./filters/useClassicFilters";
 import { applyFilters } from "./filters/applyFilters";
@@ -279,6 +280,7 @@ export function BrowseClient({
         onChange={(patch) => setFilters(patch)}
         onReset={resetFilters}
       />
+      <NoMarketplaceBanner />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
         {filtered.length === 0 ? (
