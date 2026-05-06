@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
     if (aggregatesResult) {
       response.aggregates = {
         liveNow: aggregatesResult.liveNow,
-        regionTotals: aggregatesResult.regionTotalsByPlatform,
+        regionTotals: aggregatesResult.regionTotalsByLocation,
       };
     }
 

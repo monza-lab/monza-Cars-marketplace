@@ -62,7 +62,7 @@ export function getPlatformTypeLabel(platform: string | null | undefined): strin
   return isAuctionPlatform(platform) ? "Auction" : "Listing"
 }
 
-export function filterAuctionsForRegion<T extends { platform: string | null | undefined }>(
+export function filterAuctionsForRegion<T extends { platform: string | null | undefined; region?: string | null | undefined }>(
   auctions: T[],
   selectedRegion: string | null | undefined,
 ): T[] {
@@ -72,6 +72,8 @@ export function filterAuctionsForRegion<T extends { platform: string | null | un
   if (!targetPlatforms || targetPlatforms.length === 0) return auctions;
 
   return auctions.filter((auction) => {
+    // Match by region field (set from country by mapRegion) OR by platform
+    if (auction.region && auction.region.toUpperCase() === selectedRegion.toUpperCase()) return true;
     const normalized = normalizeAuctionPlatform(auction.platform);
     return normalized !== null && targetPlatforms.includes(normalized);
   });
