@@ -690,6 +690,13 @@ interface RunLog {
     timeout: number;
   };
   results: RunResult[];
+  // Loop metadata (only present in --enrich-loop runs)
+  loop?: {
+    iterations: number;
+    maxIterations: number;
+    allTargetsMet: boolean;
+    pauseMinutes: number;
+  };
 }
 
 function saveRunLog(log: RunLog): string {
