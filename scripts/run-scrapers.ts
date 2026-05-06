@@ -324,15 +324,30 @@ interface CliFlags {
   discovery: boolean;
   enrichment: boolean;
   dryRun: boolean;
+  enrichLoop: boolean;      // NEW
+  maxIterations: number;    // NEW — default 10
+  pauseMinutes: number;     // NEW — default 2
 }
 
 function parseFlags(): CliFlags {
   const args = process.argv.slice(2);
+
+  // Parse --max-iterations=N (default 10)
+  const maxIterMatch = args.find((a) => a.startsWith("--max-iterations="));
+  const maxIterations = maxIterMatch ? parseInt(maxIterMatch.split("=")[1], 10) || 10 : 10;
+
+  // Parse --pause=N in minutes (default 2)
+  const pauseMatch = args.find((a) => a.startsWith("--pause="));
+  const pauseMinutes = pauseMatch ? parseInt(pauseMatch.split("=")[1], 10) || 2 : 2;
+
   return {
     full: args.includes("--full"),
     discovery: args.includes("--discovery"),
     enrichment: args.includes("--enrichment"),
     dryRun: args.includes("--dry-run"),
+    enrichLoop: args.includes("--enrich-loop"),
+    maxIterations,
+    pauseMinutes,
   };
 }
 
