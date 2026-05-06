@@ -289,20 +289,19 @@ export function BrowseClient({
             {auctions.length === 0 ? (
               <>
                 <p className="text-[15px] font-display font-medium text-foreground">
-                  Our data pipeline is updating
+                  Our intelligence is updating
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground max-w-sm">
-                  Check back shortly for new acquisitions.
+                  Check back shortly — new reports are published as listings come live.
                 </p>
               </>
             ) : (
               <>
                 <p className="text-[15px] font-display font-medium text-foreground">
-                  No acquisitions match this specification
+                  No reports match this specification
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground max-w-md">
-                  Looking for something specific? Broaden your filters or speak with a
-                  dedicated sourcing advisor — we find acquisitions off-market.
+                  Try broadening your filters, or talk to an advisor about a custom report.
                 </p>
                 <div className="mt-6 flex items-center gap-3">
                   <button
@@ -341,7 +340,7 @@ export function BrowseClient({
                     onClick={() => void fetchMoreRemote()}
                     className="px-6 py-2.5 rounded-full border border-border text-[12px] font-medium text-foreground hover:border-primary/40 hover:bg-foreground/[0.03] transition-colors"
                   >
-                    Load more acquisitions
+                    Load more reports
                   </button>
                 )}
               </div>
@@ -350,7 +349,7 @@ export function BrowseClient({
             {!hasMore && visible.length > 0 && (
               <div className="mt-10 text-center">
                 <p className="text-[11px] text-muted-foreground tracking-wider">
-                  You&apos;ve reached the end of the current inventory · {visible.length.toLocaleString()} shown
+                  You&apos;ve reached the end · {visible.length.toLocaleString()} reports shown
                 </p>
               </div>
             )}
@@ -362,8 +361,8 @@ export function BrowseClient({
                     Narrow specification?
                   </p>
                   <p className="mt-1 text-[12px] text-muted-foreground max-w-xl">
-                    Save this search and we&apos;ll notify you when new matches appear, or
-                    hand it to our sourcing team to search off-market inventory.
+                    Save this search and we&apos;ll notify you when new reports match, or
+                    commission a custom one with our team.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

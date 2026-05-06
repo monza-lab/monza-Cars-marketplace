@@ -89,7 +89,7 @@ export function BrowseCard({
       layout
     >
       <Link
-        href={`/cars/${makeSlug}/${car.id}`}
+        href={`/cars/${makeSlug}/${car.id}/report`}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
