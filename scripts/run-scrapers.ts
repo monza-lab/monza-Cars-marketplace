@@ -338,18 +338,35 @@ function parseFlags(): CliFlags {
 
 // ── Dev server detection ────────────────────────────────────────────
 
+// Use 127.0.0.1 for cron route calls — avoids IPv6 mismatch on Windows.
+const DEV_SERVER = "http://127.0.0.1:3000";
+
 async function isDevServerUp(): Promise<boolean> {
-  try {
+  // Race 127.0.0.1 and localhost in parallel:
+  //  - Windows: localhost often resolves to ::1 (IPv6) but dev server listens
+  //    on 127.0.0.1 (IPv4), so 127.0.0.1 wins.
+  //  - macOS: both resolve to 127.0.0.1, either wins.
+  // Using redirect:"manual" avoids triggering webpack compilation.
+  // 5s timeout covers slow cold-starts on either platform.
+  const probe = (url: string): Promise<boolean> => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch("http://localhost:3000", {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    return res.ok || res.status === 307;
-  } catch {
-    return false;
-  }
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    return fetch(url, { signal: controller.signal, redirect: "manual" })
+      .then((res) => {
+        clearTimeout(timeout);
+        return res.ok || res.status === 307 || res.status === 308;
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        return false;
+      });
+  };
+
+  const results = await Promise.all([
+    probe("http://127.0.0.1:3000"),
+    probe("http://localhost:3000"),
+  ]);
+  return results.some(Boolean);
 }
 
 // ── Phase labels ────────────────────────────────────────────────────
@@ -553,7 +570,7 @@ async function runCronScraper(
     };
   }
 
-  let url = `http://localhost:3000${scraper.cronRoute}`;
+  let url = `${DEV_SERVER}${scraper.cronRoute}`;
   if (dryRun) url += "?dryRun=true";
 
   try {
