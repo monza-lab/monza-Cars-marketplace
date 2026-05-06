@@ -26,6 +26,7 @@
     "db:security:advisors": "tsx scripts/db-porsche.ts --cmd=security",
     "generate:factors": "tsx scripts/generate-family-factors.ts",
     "scrapers": "tsx scripts/run-scrapers.ts",
+    "scrapers:enrich-loop": "tsx scripts/run-scrapers.ts --enrich-loop",
     "postinstall": "node -e \"process.exit(0)\""
   },
   "dependencies": {
