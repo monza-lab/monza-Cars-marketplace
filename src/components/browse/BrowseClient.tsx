@@ -125,6 +125,11 @@ export function BrowseClient({
   const [remoteHasMore, setRemoteHasMore] = useState(true);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const seenIdsRef = useRef<Set<string>>(new Set(auctions.map((a) => a.id)));
+  // Lookup: listing id → URL of the original listing on its source platform
+  // (BaT, Cars and Bids, Collecting Cars, Elferspot, etc.). Populated as
+  // listings stream in from /api/mock-auctions; SSR-initial cars do not
+  // carry sourceUrl through the cache so they will not appear here.
+  const [sourceUrlById, setSourceUrlById] = useState<Map<string, string>>(() => new Map());
 
   // When a server-backed filter is active we ignore the SSR pool (it was a
   // mixed sample) and show only what the server returned for this specific
@@ -185,11 +190,17 @@ export function BrowseClient({
     setRemoteLoading(true);
     try {
       const data = await fetchPage(remoteCursor);
-      const fresh = data.auctions
-        .filter((c) => !seenIdsRef.current.has(c.id))
-        .map(toDashboardAuction);
+      const freshApi = data.auctions.filter((c) => !seenIdsRef.current.has(c.id));
+      const fresh = freshApi.map(toDashboardAuction);
       fresh.forEach((c) => seenIdsRef.current.add(c.id));
       setRemoteCars((prev) => [...prev, ...fresh]);
+      setSourceUrlById((prev) => {
+        const next = new Map(prev);
+        for (const c of freshApi) {
+          if (c.sourceUrl) next.set(c.id, c.sourceUrl);
+        }
+        return next;
+      });
       setRemoteCursor(data.nextCursor);
       setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
     } catch {
@@ -218,6 +229,13 @@ export function BrowseClient({
         const ids = new Set(fresh.map((c) => c.id));
         seenIdsRef.current = ids;
         setRemoteCars(fresh);
+        setSourceUrlById((prev) => {
+          const next = new Map(prev);
+          for (const c of data.auctions) {
+            if (c.sourceUrl) next.set(c.id, c.sourceUrl);
+          }
+          return next;
+        });
         setRemoteCursor(data.nextCursor);
         setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
       } catch (e) {
@@ -305,7 +323,12 @@ export function BrowseClient({
           <>
             <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((car, i) => (
-                <BrowseCard key={car.id} car={car} index={i} />
+                <BrowseCard
+                  key={car.id}
+                  car={car}
+                  index={i}
+                  sourceUrl={sourceUrlById.get(car.id) ?? null}
+                />
               ))}
             </div>
 

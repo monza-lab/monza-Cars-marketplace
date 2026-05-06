@@ -62,7 +62,16 @@ function regionCode(region: string | null | undefined): string | null {
   return region;
 }
 
-export function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
+export function BrowseCard({
+  car,
+  index,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- consumed in Task 4 (link "View on {platform}")
+  sourceUrl,
+}: {
+  car: DashboardAuction;
+  index: number;
+  sourceUrl?: string | null;
+}) {
   const locale = useLocale();
   const { formatPrice } = useCurrency();
   const live = isLiveStatus(car.status);
