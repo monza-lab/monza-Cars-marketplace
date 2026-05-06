@@ -57,9 +57,14 @@ function formatTransmission(raw: string | null): string | null {
   return null;
 }
 
-function regionCode(region: string | null | undefined): string | null {
-  if (!region) return null;
-  return region;
+/**
+ * The region label shown on a card MUST match the field the region filter
+ * uses (canonicalMarket — normalized US/EU/UK/JP). The raw `region` column
+ * is the physical car location and would mismatch the filter (e.g. a BaT
+ * listing of a German car has canonicalMarket="US" but region="EU").
+ */
+function regionCode(car: DashboardAuction): string | null {
+  return car.canonicalMarket ?? null;
 }
 
 export function BrowseCard({
@@ -78,7 +83,7 @@ export function BrowseCard({
   const image = car.images?.[0] || "/cars/placeholder.svg";
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-");
   const trans = formatTransmission(car.transmission);
-  const region = regionCode(car.region);
+  const region = regionCode(car);
   const fairUs = car.fairValueByRegion?.US;
 
   return (
