@@ -161,7 +161,7 @@ export function FilterBar({
                 <span className="tabular-nums text-foreground font-semibold">
                   {(totalTracked || matchCount).toLocaleString()}
                 </span>{" "}
-                acquisitions
+                reports
               </span>
             ) : (
               <span className="text-muted-foreground/70">
