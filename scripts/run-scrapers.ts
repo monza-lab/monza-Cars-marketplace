@@ -8,12 +8,16 @@
  *   npm run scrapers                          # Same
  *   npx tsx scripts/run-scrapers.ts --full    # Run everything
  *   npx tsx scripts/run-scrapers.ts --discovery --dry-run
+ *   npx tsx scripts/run-scrapers.ts --enrich-loop                # Loop until quality targets met (max 10 iterations)
+ *   npx tsx scripts/run-scrapers.ts --enrich-loop --max-iterations=20 --pause=5
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import prompts from "prompts";
+import { createClient } from "@supabase/supabase-js";
+import { checkQuality, printQualityReport, type QualityCheckResult } from "./enrich-loop-quality";
 
 // ── Env loading (same pattern as other scripts) ─────────────────────
 
@@ -40,6 +44,16 @@ function loadEnvFromFile(filePath: string): void {
 
 loadEnvFromFile(path.resolve(process.cwd(), ".env.local"));
 loadEnvFromFile(path.resolve(process.cwd(), ".env"));
+
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for quality check");
+    process.exit(1);
+  }
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -729,6 +743,150 @@ async function main(): Promise<void> {
   }
   console.log("");
 
+  // ── Enrich-loop mode ───────────────────────────────────────────
+  if (flags.enrichLoop) {
+    console.log("╔══════════════════════════════════════════════════════════╗");
+    console.log("║           ENRICHMENT LOOP MODE                         ║");
+    console.log(`║  Max iterations: ${String(flags.maxIterations).padEnd(3)}  Pause: ${flags.pauseMinutes}min between runs  ║`);
+    console.log("╚══════════════════════════════════════════════════════════╝\n");
+
+    const sb = getSupabaseClient();
+
+    // Pre-loop quality check
+    console.log("Running initial quality check...\n");
+    const initialCheck = await checkQuality(sb);
+    printQualityReport(initialCheck);
+
+    if (initialCheck.allPassed) {
+      console.log("\nAll quality targets already met. Nothing to do.");
+      process.exit(0);
+    }
+
+    // Select only enrichment scrapers by explicit ID.
+    // Excludes: cron-autotrader (discovery, would add new incomplete rows),
+    //           cron-validate / cron-cleanup (could change listing status mid-loop).
+    const ENRICH_IDS = new Set([
+      "bat-detail", "classic-enrich", "as24-enrich",           // CLI enrichment
+      "cron-autotrader-enrich", "cron-beforward-enrich",       // Cron enrichment
+      "cron-elferspot-enrich",
+      "cron-vin", "cron-titles", "cron-images",                // Cron maintenance (data-filling only)
+    ]);
+    const enrichScrapers = SCRAPERS.filter(
+      (s) => ENRICH_IDS.has(s.id) && (s.type === "cli" || devServerUp)
+    );
+
+    if (enrichScrapers.length === 0) {
+      console.error("No enrichment scrapers available. Start dev server for cron routes.");
+      process.exit(1);
+    }
+
+    console.log(`\nEnrichment scrapers selected (${enrichScrapers.length}):`);
+    for (const s of enrichScrapers) {
+      console.log(`  - ${s.name} (${s.phase})`);
+    }
+
+    const allResults: RunResult[] = [];
+    let iteration = 0;
+    let previousCheck: QualityCheckResult | null = null;
+    let lastCheck: QualityCheckResult = initialCheck;
+
+    while (iteration < flags.maxIterations) {
+      iteration++;
+      console.log(`\n${"═".repeat(60)}`);
+      console.log(`  ITERATION ${iteration} / ${flags.maxIterations}`);
+      console.log(`${"═".repeat(60)}\n`);
+
+      const iterResults: RunResult[] = [];
+
+      for (const scraper of enrichScrapers) {
+        console.log(`\n=== Running: ${scraper.name} ===\n`);
+        const result =
+          scraper.type === "cli"
+            ? await runCliScraper(scraper, flags.dryRun)
+            : await runCronScraper(scraper, flags.dryRun);
+        iterResults.push(result);
+        console.log(
+          `\n>> ${scraper.name}: ${result.status.toUpperCase()} (${formatDuration(result.durationMs)})`
+        );
+      }
+
+      allResults.push(...iterResults);
+      printSummary(iterResults);
+
+      // Quality check after iteration
+      console.log("\nChecking quality after iteration...\n");
+      const postCheck = await checkQuality(sb);
+      printQualityReport(postCheck);
+      lastCheck = postCheck;
+
+      if (postCheck.allPassed) {
+        console.log(`\n✓ All quality targets met after ${iteration} iteration(s)!`);
+        break;
+      }
+
+      // Count remaining gaps
+      const failingGaps = postCheck.gaps.filter((g) => !g.passed);
+      console.log(`\n${failingGaps.length} target(s) still below threshold.`);
+
+      // Stall detection: if no improvement since last iteration, stop early
+      if (previousCheck) {
+        const prevFailing = previousCheck.gaps.filter((g) => !g.passed);
+        const improved = failingGaps.length < prevFailing.length ||
+          failingGaps.some((g) => {
+            const prev = previousCheck!.gaps.find((p) => p.target.label === g.target.label);
+            return prev !== undefined && g.fillPct > prev.fillPct + 0.1;
+          });
+        if (!improved) {
+          console.log("\nNo improvement detected since last iteration — stopping early.");
+          break;
+        }
+      }
+      previousCheck = postCheck;
+
+      if (iteration < flags.maxIterations) {
+        console.log(`Pausing ${flags.pauseMinutes} minute(s) before next iteration...`);
+        await new Promise((resolve) => setTimeout(resolve, flags.pauseMinutes * 60_000));
+      }
+    }
+
+    // Save combined run log
+    const finishedAt = new Date().toISOString();
+    const totalMs = allResults.reduce((sum, r) => sum + r.durationMs, 0);
+
+    const anyGaps = !lastCheck.allPassed;
+
+    const log: RunLog = {
+      runId,
+      startedAt,
+      finishedAt,
+      durationMs: totalMs,
+      flags,
+      devServerUp,
+      scrapersSelected: enrichScrapers.map((s) => s.id),
+      summary: {
+        total: allResults.length,
+        ok: allResults.filter((r) => r.status === "ok").length,
+        failed: allResults.filter((r) => r.status === "failed").length,
+        timeout: allResults.filter((r) => r.status === "timeout").length,
+      },
+      results: allResults,
+      loop: {
+        iterations: iteration,
+        maxIterations: flags.maxIterations,
+        allTargetsMet: !anyGaps,
+        pauseMinutes: flags.pauseMinutes,
+      },
+    };
+
+    const logPath = saveRunLog(log);
+    console.log(`\nRun log saved: ${logPath}`);
+    console.log(`Total iterations: ${iteration}`);
+    console.log(`Total duration: ${formatDuration(totalMs)}`);
+
+    process.exit(anyGaps ? 1 : 0);
+  }
+
+  // ── Normal mode (unchanged) ────────────────────────────────────
   const selected = await selectScrapers(flags, devServerUp);
 
   if (flags.dryRun) {
@@ -776,7 +934,7 @@ async function main(): Promise<void> {
   };
 
   const logPath = saveRunLog(log);
-  console.log(`\n📄 Run log saved: ${logPath}`);
+  console.log(`\nRun log saved: ${logPath}`);
 
   const anyFailed = results.some((r) => r.status !== "ok");
   process.exit(anyFailed ? 1 : 0);
