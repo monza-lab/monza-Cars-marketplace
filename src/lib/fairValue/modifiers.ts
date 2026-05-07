@@ -18,6 +18,8 @@ export type ModifierKey =
   | "documentation_provided"
   | "warranty_remaining"
   | "seller_tier_specialist"
+  | "color_rarity"
+  | "no_accidents_confirmed"
 
 export interface ModifierDefinition {
   key: ModifierKey
@@ -150,6 +152,26 @@ export const MODIFIER_LIBRARY: Record<ModifierKey, ModifierDefinition> = {
     citation_url: null,
     is_data_driven: false,
     description_i18n_key: "report.modifiers.seller_tier_specialist.description",
+  },
+  color_rarity: {
+    key: "color_rarity",
+    name_i18n_key: "report.modifiers.color_rarity.name",
+    signal_key: "color_rarity",
+    base_percent: 8,
+    range: [5, 15],
+    citation_url: "https://www.hagerty.com/media/market-trends/porsche-paint-to-sample-values/",
+    is_data_driven: false,
+    description_i18n_key: "report.modifiers.color_rarity.description",
+  },
+  no_accidents_confirmed: {
+    key: "no_accidents_confirmed",
+    name_i18n_key: "report.modifiers.no_accidents_confirmed.name",
+    signal_key: "no_accidents_confirmed",
+    base_percent: 3,
+    range: [2, 4],
+    citation_url: null,
+    is_data_driven: false,
+    description_i18n_key: "report.modifiers.no_accidents_confirmed.description",
   },
 }
 

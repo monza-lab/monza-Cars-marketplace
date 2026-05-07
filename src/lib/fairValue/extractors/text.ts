@@ -11,6 +11,16 @@ interface ExtractedPayload {
     carbon_roof: boolean | null
     paint_to_sample: { present: boolean; color_name: string | null; pts_code: string | null } | null
     factory_rear_spoiler_delete: boolean | null
+    rear_axle_steering: boolean | null
+    pdcc: boolean | null
+    sport_exhaust: boolean | null
+    front_axle_lift: boolean | null
+    ventilated_seats: boolean | null
+    sunroof_moonroof: boolean | null
+    alcantara_interior: boolean | null
+    full_leather_interior: boolean | null
+    led_matrix_headlights: boolean | null
+    adaptive_cruise_control: boolean | null
   }
   service: {
     records_mentioned: boolean
@@ -222,6 +232,96 @@ export async function extractTextSignals(input: TextExtractionInput): Promise<Te
       key: "factory_rear_spoiler_delete",
       name_i18n_key: "report.signals.factory_rear_spoiler_delete",
       value_display: "Factory rear spoiler delete",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.rear_axle_steering === true) {
+    signals.push({
+      key: "rear_axle_steering",
+      name_i18n_key: "report.signals.rear_axle_steering",
+      value_display: "Rear-axle steering",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.pdcc === true) {
+    signals.push({
+      key: "pdcc",
+      name_i18n_key: "report.signals.pdcc",
+      value_display: "PDCC active suspension",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.sport_exhaust === true) {
+    signals.push({
+      key: "sport_exhaust",
+      name_i18n_key: "report.signals.sport_exhaust",
+      value_display: "Sport exhaust system",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.front_axle_lift === true) {
+    signals.push({
+      key: "front_axle_lift",
+      name_i18n_key: "report.signals.front_axle_lift",
+      value_display: "Front axle lift system",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.ventilated_seats === true) {
+    signals.push({
+      key: "ventilated_seats",
+      name_i18n_key: "report.signals.ventilated_seats",
+      value_display: "Ventilated seats",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.sunroof_moonroof === true) {
+    signals.push({
+      key: "sunroof",
+      name_i18n_key: "report.signals.sunroof",
+      value_display: "Sunroof/moonroof",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.alcantara_interior === true) {
+    signals.push({
+      key: "alcantara_interior",
+      name_i18n_key: "report.signals.alcantara_interior",
+      value_display: "Alcantara interior",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.full_leather_interior === true) {
+    signals.push({
+      key: "full_leather_interior",
+      name_i18n_key: "report.signals.full_leather_interior",
+      value_display: "Full leather interior",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.led_matrix_headlights === true) {
+    signals.push({
+      key: "led_matrix_headlights",
+      name_i18n_key: "report.signals.led_matrix_headlights",
+      value_display: "LED matrix headlights",
+      evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
+    })
+  }
+
+  if (payload.options.adaptive_cruise_control === true) {
+    signals.push({
+      key: "adaptive_cruise",
+      name_i18n_key: "report.signals.adaptive_cruise",
+      value_display: "Adaptive cruise control",
       evidence: { source_type: "listing_text", source_ref: "description_text", raw_excerpt: null, confidence: "high" },
     })
   }

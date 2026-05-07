@@ -178,6 +178,71 @@ function buildJsonCandidates(raw: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// Plain-text generation (no JSON schema enforcement)
+// Used for narrative / prose generation where JSON is not needed.
+// ---------------------------------------------------------------------------
+
+interface GenerateTextOptions {
+  systemPrompt: string
+  userPrompt: string
+  model?: string
+  temperature?: number
+  maxOutputTokens?: number
+}
+
+export interface GeminiTextResponse {
+  ok: true
+  text: string
+}
+
+export interface GeminiTextErrorResponse {
+  ok: false
+  text: null
+  error: string
+}
+
+export async function generateText(
+  opts: GenerateTextOptions,
+): Promise<GeminiTextResponse | GeminiTextErrorResponse> {
+  if (!JSON_API_KEY) {
+    return { ok: false, text: null, error: "GEMINI_API_KEY is not configured" }
+  }
+
+  const client = new GoogleGenerativeAI(JSON_API_KEY)
+  const model = client.getGenerativeModel({
+    model: opts.model ?? JSON_MODEL_ID,
+    systemInstruction: opts.systemPrompt,
+    generationConfig: {
+      temperature: opts.temperature ?? 0.3,
+      maxOutputTokens: opts.maxOutputTokens ?? 1024,
+    },
+  })
+
+  const MAX_ATTEMPTS = 3
+  let lastError: unknown = null
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await model.generateContent(opts.userPrompt)
+      const text = res.response.text()
+      return { ok: true, text }
+    } catch (err) {
+      lastError = err
+      if (attempt < MAX_ATTEMPTS - 1) {
+        const backoffMs = 1000 * Math.pow(2, attempt)
+        await new Promise(resolve => setTimeout(resolve, backoffMs))
+      }
+    }
+  }
+
+  return {
+    ok: false,
+    text: null,
+    error: lastError instanceof Error ? lastError.message : String(lastError),
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Streaming + function-calling client (advisor runtime)
 // ---------------------------------------------------------------------------
 

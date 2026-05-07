@@ -94,6 +94,108 @@ const RED_FLAG_RULES: HeuristicRule[] = [
       return { match: true, evidence: "Non-original paint disclosed or implied in listing text." }
     },
   },
+  // ── New rules ──
+  {
+    id: "coolant-pipes-cayenne",
+    severity: "high",
+    appliesToSeries: (s) => s === "cayenne",
+    check: (l) => {
+      if (l.year < 2003 || l.year > 2010) return { match: false, evidence: "" }
+      const hasReplacement = /coolant pipe|water pipe|pipe replacement|plastic pipe/i.test(l.description)
+      if (hasReplacement) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `${l.year} Cayenne: plastic coolant pipes fail catastrophically; no mention of replacement in description.`,
+      }
+    },
+  },
+  {
+    id: "rear-main-seal-m96",
+    severity: "medium",
+    appliesToSeries: (s) => s === "996" || s === "boxster",
+    check: (l) => {
+      const hasReseal = /rear main seal|rms|reseal/i.test(l.description)
+      if (hasReseal) return { match: false, evidence: "" }
+      if (l.mileage < 50000) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `M96 engine at ${l.mileage.toLocaleString()} mi: rear main seal leak is common above 50k mi; not addressed in description.`,
+      }
+    },
+  },
+  {
+    id: "pdk-mechatronic-991.1",
+    severity: "medium",
+    appliesToSeries: (s) => s === "991",
+    check: (l) => {
+      if (l.year > 2016) return { match: false, evidence: "" }
+      const isPDK = /pdk|doppelkuppl/i.test(l.description)
+      if (!isPDK) return { match: false, evidence: "" }
+      const hasService = /mechatronic|clutch pack|pdk service/i.test(l.description)
+      if (hasService) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `991.1 PDK: mechatronic unit and clutch pack need service by 60-80k mi; no PDK service mentioned.`,
+      }
+    },
+  },
+  {
+    id: "water-ingress-986",
+    severity: "medium",
+    appliesToSeries: (s) => s === "boxster" || s === "718-boxster",
+    check: (l) => {
+      if (l.year > 2004) return { match: false, evidence: "" }
+      const hasCheck = /water ingress|drain|water damage/i.test(l.description)
+      if (hasCheck) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `986 Boxster: known water ingress via blocked drains; can damage ECU. Not mentioned in description.`,
+      }
+    },
+  },
+  {
+    id: "aos-failure-997",
+    severity: "medium",
+    appliesToSeries: (s) => s === "997",
+    check: (l) => {
+      if (l.year > 2008) return { match: false, evidence: "" }
+      const hasAOS = /aos|air[- ]oil separator|smoke on startup/i.test(l.description)
+      if (hasAOS) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `997.1: AOS (air-oil separator) failure causes smoke on startup; no mention in description.`,
+      }
+    },
+  },
+  {
+    id: "cylinder-scoring-991-3.8",
+    severity: "medium",
+    appliesToSeries: (s) => s === "991",
+    check: (l) => {
+      if (l.year < 2012 || l.year > 2016) return { match: false, evidence: "" }
+      const is38 = /3\.8|gt3|carrera s|gts/i.test(l.description + " " + (l.title ?? ""))
+      if (!is38) return { match: false, evidence: "" }
+      const hasScope = /borescop|cylinder|bore scor/i.test(l.description)
+      if (hasScope) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `991.1 3.8L: cylinder scoring risk; no borescope evidence in description.`,
+      }
+    },
+  },
+  {
+    id: "missing-service-records",
+    severity: "low",
+    check: (l) => {
+      if (l.mileage < 30000) return { match: false, evidence: "" }
+      const hasRecords = /service history|service record|full history|stamped book|service book/i.test(l.description)
+      if (hasRecords) return { match: false, evidence: "" }
+      return {
+        match: true,
+        evidence: `${l.mileage.toLocaleString()} mi without documented service history claim.`,
+      }
+    },
+  },
 ]
 
 export const assessRedFlags: ToolDef = {
@@ -156,6 +258,20 @@ export const assessRedFlags: ToolDef = {
           return "Please share the insurance / body-shop records and paint-meter readings per panel."
         case "repainted":
           return "Which panels were repainted and why? Any paint-meter readings?"
+        case "coolant-pipes-cayenne":
+          return "Have the plastic coolant pipes been replaced with aluminum? What brand/at what mileage?"
+        case "rear-main-seal-m96":
+          return "Has the rear main seal been replaced? Any oil spots on the garage floor or rear of the engine?"
+        case "pdk-mechatronic-991.1":
+          return "Has the PDK mechatronic unit and clutch pack been serviced? At what mileage? By which shop?"
+        case "water-ingress-986":
+          return "Have the front trunk drains been checked and cleared? Any evidence of water damage to the ECU compartment?"
+        case "aos-failure-997":
+          return "Has the AOS (air-oil separator) been replaced? Any smoke on cold startup?"
+        case "cylinder-scoring-991-3.8":
+          return "Has a borescope inspection of all six cylinders been performed? Please share the photos."
+        case "missing-service-records":
+          return "Can you share the full service history or a stamped service book?"
         default:
           return `Clarify: ${f.issue}`
       }

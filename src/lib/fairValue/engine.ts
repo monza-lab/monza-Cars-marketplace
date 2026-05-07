@@ -21,6 +21,8 @@ const SIGNAL_TO_MODIFIER: Record<string, ModifierKey> = {
   documentation: "documentation_provided",
   warranty: "warranty_remaining",
   seller_tier: "seller_tier_specialist",
+  color_rarity: "color_rarity",
+  no_accidents_confirmed: "no_accidents_confirmed",
 }
 
 export interface ApplyModifiersInput {

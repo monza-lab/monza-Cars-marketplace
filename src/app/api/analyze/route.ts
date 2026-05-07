@@ -20,6 +20,11 @@ import { computeReportHash } from "@/lib/reports/hash"
 import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
 import { extractSellerSignal } from "@/lib/fairValue/extractors/seller"
 import { extractTextSignals } from "@/lib/fairValue/extractors/text"
+import { cleanDescription } from "@/lib/fairValue/extractors/descriptionCleaner"
+import { extractColorIntelligence } from "@/lib/fairValue/extractors/color"
+import { extractVinIntelligence } from "@/lib/fairValue/extractors/vinDeep"
+import { generateInvestmentNarrative } from "@/lib/fairValue/narrative"
+import { extractSeries } from "@/lib/brandConfig"
 import { applyModifiers, computeSpecificCarFairValue } from "@/lib/fairValue/engine"
 import { MODIFIER_LIBRARY_VERSION } from "@/lib/fairValue/modifiers"
 import type {
@@ -221,12 +226,13 @@ export async function POST(request: Request) {
       sellerDomain: extractDomainFromUrl(car.sourceUrl ?? null),
     })
 
-    // Task 28 flagged that maxOutputTokens=2048 can truncate JSON on long
-    // descriptions. The extractor now accepts maxOutputTokens — pass 4096 here.
+    // Clean the description before AI extraction (strips nav chrome, HTML, footers)
+    const cleanedDescription = cleanDescription(car.description ?? "")
+
     let textResult: Awaited<ReturnType<typeof extractTextSignals>> = { ok: false, signals: [] }
     try {
       textResult = await extractTextSignals({
-        description: car.description ?? "",
+        description: cleanedDescription,
         maxOutputTokens: 4096,
       })
     } catch (geminiError) {
@@ -234,11 +240,49 @@ export async function POST(request: Request) {
       textResult = { ok: false, signals: [] }
     }
 
+    // 8b. Color intelligence
+    const seriesId = extractSeries(car.model, car.year ?? 0, car.make)
+    const colorResult = extractColorIntelligence({
+      exteriorColor: car.exteriorColor ?? null,
+      interiorColor: car.interiorColor ?? null,
+      seriesId,
+      description: cleanedDescription,
+    })
+
+    // 8c. Deep VIN decode
+    const vinResult = extractVinIntelligence({
+      vin: car.vin ?? null,
+      year: car.year ?? 0,
+      model: car.model,
+      seriesId,
+    })
+
     const detected: DetectedSignal[] = [
       ...structuredSignals,
       ...(sellerSignal ? [sellerSignal] : []),
       ...(textResult.ok ? textResult.signals : []),
+      ...colorResult.signals,
+      ...vinResult.signals,
     ]
+
+    // 8d. "no_accidents_confirmed" signal
+    if (
+      textResult.ok &&
+      textResult.rawPayload?.originality.accident_disclosure === "no_accidents_claim" &&
+      !detected.some((s) => s.key === "accident_history")
+    ) {
+      detected.push({
+        key: "no_accidents_confirmed",
+        name_i18n_key: "report.signals.no_accidents_confirmed",
+        value_display: "No accidents claimed by seller",
+        evidence: {
+          source_type: "listing_text",
+          source_ref: "description_text",
+          raw_excerpt: null,
+          confidence: "medium",
+        },
+      })
+    }
 
     // 9. Modifiers + specific-car fair value
     const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
@@ -264,6 +308,30 @@ export async function POST(request: Request) {
       landedCost = null
     }
 
+    // 9c. Investment narrative
+    let investmentNarrative: Awaited<ReturnType<typeof generateInvestmentNarrative>> = null
+    try {
+      investmentNarrative = await generateInvestmentNarrative({
+        title: car.title,
+        year: car.year ?? 0,
+        make: car.make,
+        model: car.model,
+        seriesId,
+        mileage: car.mileage ?? null,
+        transmission: car.transmission ?? null,
+        exteriorColor: car.exteriorColor ?? null,
+        interiorColor: car.interiorColor ?? null,
+        price: car.price ?? 0,
+        fairValueMid: specific.mid,
+        signals: detected.map((s) => s.key),
+        redFlags: vinResult.warnings,
+        colorRarity: colorResult.exterior.rarity,
+        colorPremium: colorResult.exterior.valuePremiumPercent,
+      })
+    } catch (err) {
+      console.error("[analyze] narrative generation failed:", err)
+    }
+
     // 10. Compose HausReport
     const runId = randomUUID()
     const now = new Date().toISOString()
@@ -284,6 +352,25 @@ export async function POST(request: Request) {
       signals_extracted_at: textResult.ok ? now : null,
       extraction_version: MODIFIER_LIBRARY_VERSION,
       landed_cost: landedCost,
+      color_intelligence: {
+        exteriorColorName: colorResult.exterior.matchedColor?.name ?? car.exteriorColor ?? null,
+        exteriorColorCode: colorResult.exterior.matchedColor?.code ?? null,
+        exteriorRarity: colorResult.exterior.rarity,
+        exteriorDesirability: colorResult.exterior.matchedColor?.desirability ?? 5,
+        exteriorValuePremiumPercent: colorResult.exterior.valuePremiumPercent,
+        interiorColorName: car.interiorColor ?? null,
+        combinationNote: colorResult.combinationNote,
+        isPTS: colorResult.exterior.isPTS,
+      },
+      vin_intelligence: {
+        vinDecoded: vinResult.decoded,
+        plant: vinResult.plant,
+        bodyHint: vinResult.bodyHint,
+        modelYearFromVin: vinResult.modelYearFromVin,
+        yearMatchesListing: vinResult.yearMatch,
+        warnings: vinResult.warnings,
+      },
+      investment_narrative: investmentNarrative,
     }
 
     // 11. Persist

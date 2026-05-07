@@ -42,6 +42,32 @@ export interface MissingSignal {
 
 export type ComparableLayer = "strict" | "series" | "family"
 
+export interface ColorIntelligence {
+  exteriorColorName: string | null
+  exteriorColorCode: string | null
+  exteriorRarity: "common" | "uncommon" | "rare" | "very_rare" | "unique" | "unknown"
+  exteriorDesirability: number  // 1-10
+  exteriorValuePremiumPercent: number
+  interiorColorName: string | null
+  combinationNote: string | null
+  isPTS: boolean
+}
+
+export interface VinIntelligence {
+  vinDecoded: boolean
+  plant: string | null
+  bodyHint: string | null
+  modelYearFromVin: number | null
+  yearMatchesListing: boolean
+  warnings: string[]
+}
+
+export interface InvestmentNarrative {
+  story: string         // 2-3 paragraph AI-generated investment analysis
+  generatedBy: string   // model used: "gemini-2.5-flash"
+  generatedAt: string   // ISO timestamp
+}
+
 export interface HausReport {
   // Existing market stats fields (from 2026-03-17 spec — unchanged)
   listing_id: string
@@ -70,6 +96,11 @@ export interface HausReport {
   // Null when origin is outside the supported matrix, for domestic transactions,
   // or when exchange rates failed at generation time.
   landed_cost: LandedCostBreakdown | null
+
+  // New intelligence layers (optional — added in report AI insights maximization)
+  color_intelligence?: ColorIntelligence | null
+  vin_intelligence?: VinIntelligence | null
+  investment_narrative?: InvestmentNarrative | null
 }
 
 // ─── v2 additions (2026-04-21 spec) ───────────────────────────────

@@ -25,6 +25,9 @@ import { ReportSourcesBlock } from "@/components/report/ReportSourcesBlock"
 import { ReportMetadataFooter } from "@/components/report/ReportMetadataFooter"
 import { SeeSampleModal } from "@/components/report/SeeSampleModal"
 import { DownloadSheet } from "@/components/report/DownloadSheet"
+import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
+import { VinIntelBlock } from "@/components/report/VinIntelBlock"
+import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
 
 interface ReportClientV2Props {
   car: CollectorCar
@@ -59,10 +62,10 @@ export function ReportClientV2({
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
         <h1 className="font-serif text-[22px] font-semibold">
-          No Haus Report generated for this listing yet
+          {/* [HARDCODED] */}No Haus Report generated for this listing yet
         </h1>
         <p className="mt-2 max-w-md text-[13px] text-muted-foreground">
-          Return to the classic report view to generate one, then come back here
+          {/* [HARDCODED] */}Return to the classic report view to generate one, then come back here
           to see the new layout.
         </p>
         <button
@@ -70,7 +73,7 @@ export function ReportClientV2({
           onClick={() => router.back()}
           className="mt-4 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground"
         >
-          Go back
+          {/* [HARDCODED] */}Go back
         </button>
       </main>
     )
@@ -121,6 +124,15 @@ export function ReportClientV2({
           askingUsd={thisVinPriceUsd}
           fairValueMidUsd={v2.specific_car_fair_value_mid}
           deltaPercent={deltaPercent}
+        />
+
+        <InvestmentStoryBlock narrative={v2.investment_narrative} />
+
+        <ColorIntelBlock colorIntel={v2.color_intelligence} />
+
+        <VinIntelBlock
+          vinIntel={v2.vin_intelligence}
+          vin={car.vin ?? null}
         />
 
         <SpecificCarFairValueBlock
@@ -236,7 +248,7 @@ function deriveVerdict(report: HausReportV2, askingUsd: number): "BUY" | "WATCH"
 function composeOneLiner(report: HausReportV2, askingUsd: number): string {
   const delta = computeDelta(askingUsd, report.specific_car_fair_value_mid)
   const deltaStr = delta >= 0 ? `+${delta.toFixed(1)}%` : `${delta.toFixed(1)}%`
-  return `Priced ${deltaStr} vs specific-car Fair Value · ${report.comparables_count} comparables · ${report.market_intel.d4.confidence_tier} confidence`
+  return `Priced ${deltaStr} vs specific-car Fair Value · ${report.comparables_count} comparables · ${report.market_intel.d4.confidence_tier} confidence` // [HARDCODED]
 }
 
 function computeDelta(askingUsd: number, fairMidUsd: number): number {

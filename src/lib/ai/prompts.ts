@@ -353,7 +353,17 @@ export function buildSignalExtractionPrompt(description: string): string {
     "lwb_seats": boolean | null,
     "carbon_roof": boolean | null,
     "paint_to_sample": { "present": boolean, "color_name": string | null, "pts_code": string | null } | null,
-    "factory_rear_spoiler_delete": boolean | null
+    "factory_rear_spoiler_delete": boolean | null,
+    "rear_axle_steering": boolean | null,
+    "pdcc": boolean | null,
+    "sport_exhaust": boolean | null,
+    "front_axle_lift": boolean | null,
+    "ventilated_seats": boolean | null,
+    "sunroof_moonroof": boolean | null,
+    "alcantara_interior": boolean | null,
+    "full_leather_interior": boolean | null,
+    "led_matrix_headlights": boolean | null,
+    "adaptive_cruise_control": boolean | null
   },
   "service": {
     "records_mentioned": boolean,
@@ -401,4 +411,58 @@ Listing description:
 """
 ${description}
 """`
+}
+
+// -------------------------------------------------------------------------
+// Investment Narrative Prompt (Haus Report — "Investment Story")
+// -------------------------------------------------------------------------
+
+export const NARRATIVE_SYSTEM_PROMPT = `You are Monza Lab AI, a collector car investment analyst writing a concise, authoritative analysis for a buyer considering a specific Porsche. Write in the style of a Hagerty Insider article — factual, opinionated, and specific to this exact car.
+
+RULES:
+- Be specific to THIS car — reference the exact color, mileage, options, year
+- Never use generic filler ("stunning", "beautiful", "timeless")
+- Reference known market dynamics for this generation/variant
+- If data is limited, say so — don't fabricate
+- 2-3 paragraphs, 150-250 words total
+- End with a clear buy/watch/walk recommendation with reasoning`
+
+export function buildNarrativePrompt(vehicle: {
+  title: string
+  year: number
+  make: string
+  model: string
+  seriesId: string | null
+  mileage: number | null
+  transmission: string | null
+  exteriorColor: string | null
+  interiorColor: string | null
+  price: number
+  fairValueMid: number
+  signals: string[]
+  redFlags: string[]
+  colorRarity: string | null
+  colorPremium: number
+}): string {
+  const deltaPercent = vehicle.fairValueMid > 0
+    ? (((vehicle.price - vehicle.fairValueMid) / vehicle.fairValueMid) * 100).toFixed(1)
+    : "N/A"
+
+  return `Write an investment narrative for this specific Porsche.
+
+VEHICLE:
+- ${vehicle.title}
+- Series: ${vehicle.seriesId ?? "unknown"}
+- Mileage: ${vehicle.mileage?.toLocaleString() ?? "unknown"} mi
+- Transmission: ${vehicle.transmission ?? "unknown"}
+- Exterior: ${vehicle.exteriorColor ?? "unknown"}${vehicle.colorRarity ? ` (${vehicle.colorRarity}${vehicle.colorPremium > 0 ? `, +${vehicle.colorPremium}% color premium` : ""})` : ""}
+- Interior: ${vehicle.interiorColor ?? "unknown"}
+- Asking: $${vehicle.price.toLocaleString()}
+- Fair Value (specific-car): $${vehicle.fairValueMid.toLocaleString()}
+- Delta: ${deltaPercent}%
+
+DETECTED SIGNALS (positive attributes): ${vehicle.signals.length > 0 ? vehicle.signals.join(", ") : "none"}
+RED FLAGS: ${vehicle.redFlags.length > 0 ? vehicle.redFlags.join(", ") : "none identified"}
+
+Write the investment story. Return ONLY the narrative text (no JSON, no headers, no markdown). 2-3 paragraphs, 150-250 words.`
 }

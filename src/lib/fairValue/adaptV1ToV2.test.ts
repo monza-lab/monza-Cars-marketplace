@@ -31,6 +31,7 @@ const v1Report: HausReport = {
   modifiers_total_percent: 0,
   signals_extracted_at: "2026-04-20T00:00:00Z",
   extraction_version: "v1.0",
+  landed_cost: null,
 }
 
 const comparables: DbComparableRow[] = [
@@ -95,5 +96,43 @@ describe("adaptV1ReportToV2", () => {
       tier: "tier_2",
     })
     expect(v2.tier).toBe("tier_2")
+  })
+
+  it("passes through color_intelligence and vin_intelligence", () => {
+    const withIntel = {
+      ...v1Report,
+      color_intelligence: {
+        exteriorColorName: "Riviera Blue",
+        exteriorColorCode: "1K1K",
+        exteriorRarity: "rare" as const,
+        exteriorDesirability: 10,
+        exteriorValuePremiumPercent: 35,
+        interiorColorName: "Black",
+        combinationNote: null,
+        isPTS: false,
+      },
+      vin_intelligence: {
+        vinDecoded: true,
+        plant: "Stuttgart-Zuffenhausen",
+        bodyHint: "993",
+        modelYearFromVin: 1995,
+        yearMatchesListing: true,
+        warnings: [],
+      },
+      investment_narrative: {
+        story: "Test narrative",
+        generatedBy: "gemini-2.5-flash",
+        generatedAt: "2026-05-07T00:00:00Z",
+      },
+    }
+    const v2 = adaptV1ReportToV2({
+      v1Report: withIntel,
+      marketStats: null,
+      dbComparables: comparables,
+      thisVinPriceUsd: 220000,
+    })
+    expect(v2.color_intelligence?.exteriorColorName).toBe("Riviera Blue")
+    expect(v2.vin_intelligence?.plant).toBe("Stuttgart-Zuffenhausen")
+    expect(v2.investment_narrative?.story).toBe("Test narrative")
   })
 })

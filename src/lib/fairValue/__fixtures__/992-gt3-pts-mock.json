@@ -163,5 +163,29 @@
   "signals_extracted_at": "2026-04-19T12:00:00.000Z",
   "extraction_version": "v1.0",
 
-  "landed_cost": null
+  "landed_cost": null,
+
+  "color_intelligence": {
+    "exteriorColorName": "Gulf Blue",
+    "exteriorColorCode": "PTS-Y5C",
+    "exteriorRarity": "very_rare",
+    "exteriorDesirability": 10,
+    "exteriorValuePremiumPercent": 25,
+    "interiorColorName": "Black",
+    "combinationNote": null,
+    "isPTS": true
+  },
+  "vin_intelligence": {
+    "vinDecoded": true,
+    "plant": "Stuttgart-Zuffenhausen (911, Boxster, Cayman)",
+    "bodyHint": "992-generation 911 (2019+)",
+    "modelYearFromVin": 2022,
+    "yearMatchesListing": true,
+    "warnings": []
+  },
+  "investment_narrative": {
+    "story": "This 2022 992 GT3 in Paint-to-Sample Gulf Blue represents one of the most sought configurations in the current GT3 market. PTS commissions on the 992 GT3 command premiums of 20-30% over standard colors, and Gulf Blue — a nod to Porsche's racing heritage — sits at the top of that hierarchy. With 3,200 miles and full service records, this example is barely broken in.\n\nAt $285,000 against a specific-car fair value of $272,000, the asking price represents a modest 4.8% premium. Given the PTS specification, manual transmission, and documented provenance, this pricing is competitive. Comparable PTS GT3s with higher mileage have traded above $290,000 in recent months.\n\nVerdict: BUY. The PTS premium is real and documented, the mileage is low, and the color will only appreciate as the GT3 production run concludes. Negotiate to $275,000 if possible, but this is fairly priced even at ask.",
+    "generatedBy": "gemini-2.5-flash",
+    "generatedAt": "2026-05-07T17:00:00.000Z"
+  }
 }
