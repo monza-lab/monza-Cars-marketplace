@@ -27,7 +27,7 @@ const STEPS = [
     icon: TrendingUp,
     title: "Make a smarter offer",
     description:
-      "Know exactly what to pay based on real auction data across US, EU, UK, and JP markets.",
+      "Know exactly what to pay based on real market data across US, EU, UK, and JP.",
   },
 ]
 
@@ -72,8 +72,9 @@ export default function GetStartedPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-              MonzaHaus analyzes thousands of auction results to give you
-              investment-grade intelligence — so you never overpay.
+              MonzaHaus analyzes thousands of real-world Porsche sales and
+              listings to give you investment-grade intelligence — so you
+              never overpay.
             </p>
 
             <button
@@ -90,7 +91,7 @@ export default function GetStartedPage() {
         <section className="border-y border-border bg-foreground/[0.02] py-6 px-4">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-              Powered by real auction data from
+              Powered by real market data from
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
               {DATA_SOURCES.map((source) => (
