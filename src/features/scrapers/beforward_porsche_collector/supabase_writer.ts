@@ -132,8 +132,8 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     reserve_status: null,
     seller_notes: listing.sellerNotes,
     images: listing.photos,
-    engine: truncate(listing.engine, 17),
-    transmission: truncate(listing.transmission, 17),
+    engine: truncate(listing.engine, 100),
+    transmission: truncate(listing.transmission, 100),
     end_time: listing.endTime?.toISOString() ?? null,
     start_time: listing.startTime?.toISOString() ?? null,
     final_price: listing.finalPrice,
@@ -148,7 +148,7 @@ function truncate(value: string | null | undefined, max: number): string | null 
   return value.slice(0, max);
 }
 
-const TIMEOUT_RE = /statement timeout|too many connections|connection terminated/i;
+const TIMEOUT_RE = /statement timeout|too many connections|connection terminated|502 Bad Gateway|503 Service|504 Gateway/i;
 
 async function retryOnTimeout<T>(fn: () => Promise<T>, retries = 3, baseDelayMs = 2000): Promise<T> {
   for (let attempt = 0; ; attempt++) {

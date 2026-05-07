@@ -157,10 +157,10 @@ export async function backfillImagesForSource(
         continue;
       }
 
-      // Circuit-break on 403/429/Cloudflare
+      // Circuit-break on 403/429/Cloudflare — stop this source only
       if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
         result.errors.push(`Circuit-break (${source}): ${msg}`);
-        break;
+        break; // Breaks inner loop; caller iterates sources independently
       }
 
       result.errors.push(`Failed ${row.source_url}: ${msg}`);

@@ -10,6 +10,11 @@ import {
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+function truncate(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  return value.length <= max ? value : value.slice(0, max);
+}
+
 const FETCH_HEADERS: Record<string, string> = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -71,14 +76,15 @@ export async function GET(request: Request) {
     let enriched = 0;
     const errors: string[] = [];
     const DELAY_MS = 1_000;
-    const TIME_BUDGET_MS = 270_000;
+    const TIME_BUDGET_MS = 240_000;
+    let timeBudgetReached = false;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
       // Time budget check
       if (Date.now() - startTime > TIME_BUDGET_MS) {
-        errors.push(`Time budget reached after ${enriched} enrichments`);
+        timeBudgetReached = true;
         break;
       }
 
@@ -107,7 +113,18 @@ export async function GET(request: Request) {
         }
 
         const html = await response.text();
-        const detail = parseDetailHtml(html);
+
+        let detail;
+        try {
+          detail = parseDetailHtml(html);
+        } catch (parseErr) {
+          errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
+          await client
+            .from("listings")
+            .update({ trim: "", updated_at: new Date().toISOString() })
+            .eq("id", row.id);
+          continue;
+        }
 
         // Build update payload — only set non-null fields from detail
         const update: Record<string, unknown> = {
@@ -115,14 +132,14 @@ export async function GET(request: Request) {
           last_verified_at: new Date().toISOString(),
         };
 
-        if (detail.trim) update.trim = detail.trim;
-        if (detail.transmission) update.transmission = detail.transmission;
-        if (detail.bodyStyle) update.body_style = detail.bodyStyle;
-        if (detail.engine) update.engine = detail.engine;
-        if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
-        if (detail.interiorColor) update.color_interior = detail.interiorColor;
-        if (detail.vin) update.vin = detail.vin;
-        if (detail.description) update.description_text = detail.description;
+        if (detail.trim) update.trim = truncate(detail.trim, 100);
+        if (detail.transmission) update.transmission = truncate(detail.transmission, 100);
+        if (detail.bodyStyle) update.body_style = truncate(detail.bodyStyle, 100);
+        if (detail.engine) update.engine = truncate(detail.engine, 100);
+        if (detail.exteriorColor) update.color_exterior = truncate(detail.exteriorColor, 100);
+        if (detail.interiorColor) update.color_interior = truncate(detail.interiorColor, 100);
+        if (detail.vin) update.vin = truncate(detail.vin, 17);
+        if (detail.description) update.description_text = truncate(detail.description, 2000);
         if (detail.images && detail.images.length > 0) {
           update.images = detail.images;
           update.photos_count = detail.images.length;
@@ -164,12 +181,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const success = (errors.length === 0 || enriched > 0) || timeBudgetReached;
+
     await recordScraperRun({
       scraper_name: "enrich-details",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -181,11 +200,12 @@ export async function GET(request: Request) {
     await clearScraperRunActive("enrich-details");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       discovered,
       enriched,
       errors,
+      timeBudgetReached,
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

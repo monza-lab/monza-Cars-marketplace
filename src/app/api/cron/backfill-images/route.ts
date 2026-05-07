@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       allErrors.push(...result.errors);
     }
 
-    const success = allErrors.length === 0;
+    const success = totalBackfilled > 0 || allErrors.length === 0;
 
     await recordScraperRun({
       scraper_name: "backfill-images",

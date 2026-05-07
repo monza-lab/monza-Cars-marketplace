@@ -64,12 +64,16 @@ export async function GET(request: Request) {
       });
     }
 
+    // Success = wrote new listings OR refreshed/backfilled existing ones OR ran without errors
+    const totalWritten = result.counts.written + backfillResult.backfilled + refreshResult.updated;
+    const isSuccess = totalWritten > 0 || result.errors.length === 0;
+
     await recordScraperRun({
       scraper_name: 'beforward',
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: result.counts.discovered > 0,
+      success: isSuccess,
       runtime: 'vercel_cron',
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,
@@ -84,8 +88,6 @@ export async function GET(request: Request) {
 
     await clearScraperRunActive("beforward");
     invalidateDashboardCache();
-
-    const isSuccess = result.counts.discovered > 0;
     return NextResponse.json({
       success: isSuccess,
       runId: result.runId,

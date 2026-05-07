@@ -130,7 +130,7 @@ export async function GET(request: Request) {
           if (detail.interiorColor) update.color_interior = truncate(detail.interiorColor, 100);
           if (detail.bodyStyle) update.body_style = truncate(detail.bodyStyle, 100);
           if (detail.vin) update.vin = truncate(detail.vin, 17);
-          if (detail.description) update.description_text = detail.description;
+          if (detail.description) update.description_text = truncate(detail.description, 2000);
           if (images.length > 0) {
             update.images = images;
             update.photos_count = images.length;
@@ -205,14 +205,16 @@ export async function GET(request: Request) {
       errors.push("Zero output: AutoTrader enrichment discovered rows but wrote none");
     }
 
-    const success = (errors.length === 0 && !noWrittenRows) || timeBudgetReached;
+    const success = (written > 0 || errors.length === 0) || timeBudgetReached;
     const successReason = timeBudgetReached
       ? "time_budget_reached"
       : noWrittenRows
         ? "no_written_rows"
-        : errors.length === 0
+        : written > 0
           ? "enrichment_progress"
-          : "errors_present";
+          : errors.length === 0
+            ? "no_rows_to_process"
+            : "errors_present";
 
     await recordScraperRun({
       scraper_name: "enrich-autotrader",

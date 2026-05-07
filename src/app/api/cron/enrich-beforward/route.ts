@@ -175,7 +175,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const success = errors.length === 0 || timeBudgetReached;
+    const success = errors.length === 0 || enriched > 0 || timeBudgetReached;
 
     await recordScraperRun({
       scraper_name: "enrich-beforward",
@@ -204,7 +204,9 @@ export async function GET(request: Request) {
         ? "time_budget_reached"
         : errors.length === 0
           ? "all_rows_enriched"
-          : "errors_present",
+          : enriched > 0
+            ? "partial_with_errors"
+            : "errors_present",
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

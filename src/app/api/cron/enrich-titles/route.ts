@@ -16,6 +16,11 @@ import {
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Title parsing is CPU-only, very fast
 
+function truncate(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  return value.length <= max ? value : value.slice(0, max);
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -62,19 +67,19 @@ export async function GET(request: Request) {
 
       if (!listing.engine) {
         const engine = parseEngineFromText(title);
-        if (engine) updates.engine = engine;
+        if (engine) updates.engine = truncate(engine, 100)!;
       }
       if (!listing.transmission) {
         const transmission = parseTransmissionFromText(title);
-        if (transmission) updates.transmission = transmission;
+        if (transmission) updates.transmission = truncate(transmission, 100)!;
       }
       if (!listing.body_style) {
         const bodyStyle = parseBodyStyleFromText(title);
-        if (bodyStyle) updates.body_style = bodyStyle;
+        if (bodyStyle) updates.body_style = truncate(bodyStyle, 100)!;
       }
       if (!listing.trim) {
         const trim = parseTrimFromText(title);
-        if (trim) updates.trim = trim;
+        if (trim) updates.trim = truncate(trim, 100)!;
       }
 
       if (Object.keys(updates).length === 0) continue;
@@ -91,12 +96,14 @@ export async function GET(request: Request) {
       written++;
     }
 
+    const success = errors.length === 0 || written > 0;
+
     await recordScraperRun({
       scraper_name: "enrich-titles",
       run_id: runId,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -107,7 +114,7 @@ export async function GET(request: Request) {
     await clearScraperRunActive("enrich-titles");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       duration: `${Date.now() - startTime}ms`,
       discovered,
