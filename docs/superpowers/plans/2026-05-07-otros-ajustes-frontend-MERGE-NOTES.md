@@ -24,8 +24,12 @@
 | 1 | `c669e11` | docs(plans): add otros-ajustes-front-end implementation plan | 1 (plan doc) |
 | 2 | `bd5d0e4` | fix(browse): card stops showing fabricated auction signals | 1 (`BrowseCard.tsx`) |
 | 3 | `f0d9ad6` | test(browse): cover BrowseCard honest-by-data conditions | 1 (`BrowseCard.test.tsx` nuevo) |
+| 4 | `bea24cd` | docs(plans): add merge notes for otros-ajustes-front-end | 1 (this file) |
+| 5 | `fa90ac5` | fix(browse): re-apply region filter on client (defense-in-depth) | 1 (`BrowseClient.tsx`) |
+| 6 | `79def68` | fix(landing): rewrite /get-started copy from "auction" to "market" | 1 (`get-started/page.tsx`) |
+| 7 | `b41175a` | fix(browse): FilterBar offset matches Header height on desktop | 2 (`FilterBar.tsx`, `BrowseClient.tsx`) |
 
-**Total commits past `main`:** 3.
+**Total commits past `main`:** 7.
 
 ---
 
@@ -38,6 +42,9 @@
 
 ### Modified
 - `src/components/browse/BrowseCard.tsx` — quitado el badge `LIVE`, condicionado `Gavel + bidCount` a `bidCount > 0`, condicionado `Clock + countdown` a `(bidCount > 0) && (endTime > now)`. Removida la función helper `isLiveStatus` y la variable `live` ya muertas. ~13 líneas insertadas, ~17 eliminadas.
+- `src/components/browse/BrowseClient.tsx` — (a) `clientFilters` deja de limpiar `filters.region` cuando coincide con el server filter, para que `applyFilters` re-recortea por `canonicalMarket` localmente (defense-in-depth contra el bug del API que devuelve EU cuando se pide UK); (b) wrapper `pt-14 md:pt-16` → `pt-14 md:pt-20` para alinearse con la altura del Header global en desktop.
+- `src/components/browse/filters/FilterBar.tsx` — sticky offset `top-14` → `top-14 md:top-20`. Header pasa de h-14 (mobile) a h-20 (desktop); el FilterBar ahora escala con él, evitando el overlap de 24px que tenía en desktop.
+- `src/app/[locale]/get-started/page.tsx` — landing pública de paid-traffic. Tres strings de "auction" reescritos a "market" (hero subtitle, trust strip, paso 3). Estructura, CTAs y lista de fuentes (Bring a Trailer, Cars & Bids, AutoScout24, Elferspot, Classic.com) intactas. Página sigue siendo `noindex`.
 
 ### Out of scope — explicitly NOT touched
 - `src/lib/**` (especialmente `supabaseLiveListings.ts:561` donde `?? 0` coerce silenciosamente).
@@ -58,7 +65,7 @@
 
 ### Manual (smoke con Chrome contra dev local)
 
-Distribución observada después de scroll completo en `/browse`:
+**Auction signals — distribución observada después de scroll completo en `/browse`:**
 
 | Plataforma | Cards | Cards con martillo (Gavel) | Cards con countdown (Clock) |
 |---|---|---|---|
@@ -69,6 +76,23 @@ Distribución observada después de scroll completo en `/browse`:
 | **Total** | 60 | 29 | 29 |
 
 Cero badges `LIVE` verdes en toda la página. Cero false positives.
+
+**Region filter — verificado por mercado (`/browse?region=X`):**
+
+| Region | Cards visibles | canonicalMarket distribution |
+|---|---|---|
+| US | 24 | 100% US ✅ |
+| EU | 25 | 100% EU ✅ |
+| JP | 10 | 100% JP ✅ |
+| UK | **0** | (server actualmente clasifica los listings UK bajo canonicalMarket="EU" — el front rechaza esos resultados antes que mentir; ver Backend Backlog abajo) |
+
+**FilterBar overlap — desktop (1440×900 viewport):**
+
+| Element | Top | Bottom | Height | Overlap with Header |
+|---|---|---|---|---|
+| Header | 0px | 80px | 80px | — |
+| FilterBar | 80px | 181px | 101px | **0px** ✅ |
+| First card row | 262.5px | — | — | — |
 
 ---
 
@@ -96,6 +120,14 @@ Cada uno hardcodea `status: "active"`. Implementar verificación real al estilo 
 | `src/features/scrapers/elferspot_collector/supabase_writer.ts` | 16-46 | Elferspot (omite la columna; DB default 0 aplica) |
 
 Si la fuente no es de subasta y no hay bids, dejar `bid_count: null` (no `0`). Eso permite que la UI distinga "0 bids reales" de "no aplica". También aplica al schema: considerar cambiar `bid_count INTEGER DEFAULT 0` a `bid_count INTEGER DEFAULT NULL` en una migración nueva. Migración relevante: `supabase/migrations/20260215_align_listings_with_auction_model.sql:12`.
+
+### Alta prioridad — `canonicalMarket` mal asignado para UK
+
+`/api/mock-auctions?region=UK` devuelve actualmente listings con `canonicalMarket: "EU"` (probado en local: 10/10 cards Elferspot con country=UK pero clasificadas como EU). El front ahora descarta esos resultados (defense-in-depth en commit `fa90ac5`), por lo que `/browse?region=UK` muestra grid vacío hasta que esto se arregle upstream.
+
+Causa raíz: la query SQL en `src/lib/supabaseLiveListings.ts:1508-1528` (función `applyPaginatedListingFilters`) filtra correctamente por `country` + `source`, pero el helper `mapRegion(country, source)` (línea ~581) que computa `canonicalMarket` no devuelve `"UK"` para listings de Elferspot/AutoScout24/etc. con country en `REGION_COUNTRY_MAP["UK"]`. Resultado: server cumple la query, pero el campo derivado no matchea.
+
+**Fix sugerido:** que `mapRegion()` priorice `country ∈ REGION_COUNTRY_MAP["UK"]` → `"UK"` antes de cualquier fallback por `source`. Una vez corregido, las cards UK aparecerán automáticamente en el front sin más cambios.
 
 ### Media prioridad — `?? 0` silencia signals en lib
 
