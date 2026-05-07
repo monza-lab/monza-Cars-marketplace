@@ -64,6 +64,11 @@ function parseArgs() {
   return opts;
 }
 
+function truncate(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  return value.length <= max ? value : value.slice(0, max);
+}
+
 async function main() {
   const opts = parseArgs();
   const startTime = Date.now();
@@ -175,13 +180,13 @@ async function main() {
       if (detail) {
         detailsFetched++;
         // Only update null/empty fields
-        if (detail.trim) updates.trim = detail.trim;
-        if (!listing.vin && detail.vin) updates.vin = detail.vin;
-        if (!listing.transmission && detail.transmission) updates.transmission = detail.transmission;
-        if (!listing.body_style && detail.bodyStyle) updates.body_style = detail.bodyStyle;
-        if (!listing.engine && detail.engine) updates.engine = detail.engine;
-        if (!listing.color_exterior && detail.colorExterior) updates.color_exterior = detail.colorExterior;
-        if (!listing.color_interior && detail.colorInterior) updates.color_interior = detail.colorInterior;
+        if (detail.trim) updates.trim = truncate(detail.trim, 100);
+        if (!listing.vin && detail.vin) updates.vin = truncate(detail.vin, 17);
+        if (!listing.transmission && detail.transmission) updates.transmission = truncate(detail.transmission, 100);
+        if (!listing.body_style && detail.bodyStyle) updates.body_style = truncate(detail.bodyStyle, 100);
+        if (!listing.engine && detail.engine) updates.engine = truncate(detail.engine, 100);
+        if (!listing.color_exterior && detail.colorExterior) updates.color_exterior = truncate(detail.colorExterior, 100);
+        if (!listing.color_interior && detail.colorInterior) updates.color_interior = truncate(detail.colorInterior, 100);
         if (!listing.description_text && detail.description) updates.description_text = detail.description;
         if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1)) {
           updates.images = detail.images;

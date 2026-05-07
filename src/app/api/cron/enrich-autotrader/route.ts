@@ -10,6 +10,11 @@ import {
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+function truncate(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  return value.length <= max ? value : value.slice(0, max);
+}
+
 export async function GET(request: Request) {
   const startTime = Date.now();
   const startedAtIso = new Date(startTime).toISOString();
@@ -52,10 +57,10 @@ export async function GET(request: Request) {
     let demoted = 0;
     const errors: string[] = [];
     const DELAY_MS = 0;
-    const TIME_BUDGET_MS = 600_000;
+    const TIME_BUDGET_MS = 270_000; // 4.5 min — must finish before Vercel's maxDuration=300s
     let consecutiveFailures = 0;
     const BATCH_SIZE = 200;
-    const MAX_BATCHES = 20;
+    const MAX_BATCHES = 5;
     let batches = 0;
 
     while (Date.now() - startTime <= TIME_BUDGET_MS && batches < MAX_BATCHES) {
@@ -110,8 +115,8 @@ export async function GET(request: Request) {
             update.current_bid = detail.price;
             update.hammer_price = detail.price;
           }
-          if (detail.engine) update.engine = detail.engine;
-          if (detail.transmission) update.transmission = detail.transmission;
+          if (detail.engine) update.engine = truncate(detail.engine, 100);
+          if (detail.transmission) update.transmission = truncate(detail.transmission, 100);
           if (detail.mileage != null) {
             // Convert miles to km for consistency
             const mileageKm = detail.mileageUnit === "km"
@@ -120,10 +125,10 @@ export async function GET(request: Request) {
             update.mileage = mileageKm;
             update.mileage_unit = "km";
           }
-          if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
-          if (detail.interiorColor) update.color_interior = detail.interiorColor;
-          if (detail.bodyStyle) update.body_style = detail.bodyStyle;
-          if (detail.vin) update.vin = detail.vin;
+          if (detail.exteriorColor) update.color_exterior = truncate(detail.exteriorColor, 100);
+          if (detail.interiorColor) update.color_interior = truncate(detail.interiorColor, 100);
+          if (detail.bodyStyle) update.body_style = truncate(detail.bodyStyle, 100);
+          if (detail.vin) update.vin = truncate(detail.vin, 17);
           if (detail.description) update.description_text = detail.description;
           if (images.length > 0) {
             update.images = images;

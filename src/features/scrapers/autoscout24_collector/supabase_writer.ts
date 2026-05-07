@@ -72,14 +72,30 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
       .eq("id", existing[0].id);
   }
 
-  const { data, error } = await client
-    .from("listings")
-    .upsert(row, { onConflict: "source,source_id" })
-    .select("id")
-    .limit(1);
+  let data: Array<{ id: string }> | null = null;
+  let error: { message: string } | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await client
+      .from("listings")
+      .upsert(row, { onConflict: "source,source_id" })
+      .select("id")
+      .limit(1);
+
+    data = result.data as Array<{ id: string }> | null;
+    error = result.error;
+
+    if (!error) break;
+    // Retry only on transient gateway errors
+    if (/\b(502|503|504)\b/.test(error.message) && attempt < 2) {
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+    break;
+  }
 
   if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
-  const id = (data as Array<{ id: string }> | null)?.[0]?.id;
+  const id = data?.[0]?.id;
   if (id) return id;
 
   // Fallback: select the row we just upserted
@@ -101,12 +117,12 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     source_id: listing.sourceId,
     source_url: listing.sourceUrl,
     year: listing.year,
-    make: truncate(listing.make, 32),
-    model: truncate(listing.model, 17),
-    trim: truncate(listing.trim, 64),
-    body_style: listing.bodyStyle,
-    color_exterior: listing.exteriorColor,
-    color_interior: listing.interiorColor,
+    make: truncate(listing.make, 100),
+    model: truncate(listing.model, 100),
+    trim: truncate(listing.trim, 100),
+    body_style: truncate(listing.bodyStyle, 100),
+    color_exterior: truncate(listing.exteriorColor, 100),
+    color_interior: truncate(listing.interiorColor, 100),
     mileage: listing.mileageKm,
     mileage_unit: listing.mileageUnitStored,
     vin: truncate(listing.vin, 17),
@@ -135,8 +151,8 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     reserve_status: listing.reserveStatus,
     seller_notes: listing.sellerNotes,
     images: listing.photos,
-    engine: truncate(listing.engine, 17),
-    transmission: truncate(listing.transmission, 17),
+    engine: truncate(listing.engine, 100),
+    transmission: truncate(listing.transmission, 100),
     end_time: listing.endTime?.toISOString() ?? null,
     start_time: listing.startTime?.toISOString() ?? null,
     final_price: listing.finalPrice,

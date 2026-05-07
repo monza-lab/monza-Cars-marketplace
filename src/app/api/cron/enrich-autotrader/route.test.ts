@@ -142,6 +142,61 @@ describe("GET /api/cron/enrich-autotrader", () => {
     expect(data.duration).toMatch(/^\d+ms$/);
   });
 
+  it("truncates long fields to fit VARCHAR constraints", async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null });
+    mockUpdate.mockReturnValue({ eq: updateEq });
+    mockLimit
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "row-trunc",
+            source_url: "https://www.autotrader.co.uk/car-details/999",
+            current_bid: null,
+            mileage: null,
+            images: null,
+            engine: null,
+            transmission: null,
+            vin: null,
+            color_exterior: null,
+            description_text: null,
+            status: "active",
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [], error: null });
+
+    const detailModule = await import("@/features/scrapers/autotrader_collector/detail");
+    vi.mocked(detailModule.fetchAutoTraderDetail).mockResolvedValue({
+      title: "Test Car",
+      price: 50000,
+      priceText: "£50,000",
+      mileage: null,
+      mileageUnit: "miles",
+      location: "London",
+      description: null,
+      images: [],
+      vin: "WVWZZZ3CZWE123456789", // 20 chars > VARCHAR(17)
+      exteriorColor: "E".repeat(120), // > VARCHAR(100)
+      interiorColor: "I".repeat(110),
+      transmission: "T".repeat(105),
+      engine: "N".repeat(130),
+      bodyStyle: "B".repeat(115),
+    });
+
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(200);
+
+    const updatePayload = mockUpdate.mock.calls.at(-1)?.[0];
+    expect(updatePayload).toBeDefined();
+    expect(updatePayload.vin.length).toBe(17);
+    expect(updatePayload.color_exterior.length).toBe(100);
+    expect(updatePayload.color_interior.length).toBe(100);
+    expect(updatePayload.transmission.length).toBe(100);
+    expect(updatePayload.engine.length).toBe(100);
+    expect(updatePayload.body_style.length).toBe(100);
+  });
+
   it("writes current_bid, mileage, and images when recoverable data exists", async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null });
     mockUpdate.mockReturnValue({ eq: updateEq });

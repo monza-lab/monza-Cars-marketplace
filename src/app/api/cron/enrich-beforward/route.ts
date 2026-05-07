@@ -16,6 +16,11 @@ const FETCH_HEADERS: Record<string, string> = {
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 };
 
+function truncate(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  return value.length <= max ? value : value.slice(0, max);
+}
+
 export async function GET(request: Request) {
   const startTime = Date.now();
   const startedAtIso = new Date(startTime).toISOString();
@@ -110,11 +115,11 @@ export async function GET(request: Request) {
           last_verified_at: new Date().toISOString(),
         };
 
-        if (detail.trim) update.trim = detail.trim;
-        if (detail.engine) update.engine = detail.engine;
-        if (detail.transmission) update.transmission = detail.transmission;
-        if (detail.exteriorColor) update.color_exterior = detail.exteriorColor;
-        if (detail.vin) update.vin = detail.vin;
+        if (detail.trim) update.trim = truncate(detail.trim, 100);
+        if (detail.engine) update.engine = truncate(detail.engine, 100);
+        if (detail.transmission) update.transmission = truncate(detail.transmission, 100);
+        if (detail.exteriorColor) update.color_exterior = truncate(detail.exteriorColor, 100);
+        if (detail.vin) update.vin = truncate(detail.vin, 17);
         const hasImages = Array.isArray(row.images) && row.images.length > 0;
         if (!hasImages && detail.images && detail.images.length > 0) {
           update.images = detail.images;

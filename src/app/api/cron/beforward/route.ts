@@ -44,8 +44,8 @@ export async function GET(request: Request) {
       summaryOnly: true,     // Skip detail page fetches (biggest time saver)
       concurrency: 3,
       rateLimitMs: 4000,
-      checkpointPath: "/tmp/beforward_porsche_collector/checkpoint.json",
-      outputPath: "/tmp/beforward_porsche_collector/listings.jsonl",
+      checkpointPath: undefined, // /tmp/ is ephemeral on Vercel — no persistent checkpoints
+      outputPath: undefined,
       dryRun: false,
     });
 
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: result.counts.discovered > 0 || refreshResult.checked > 0,
+      success: result.counts.discovered > 0,
       runtime: 'vercel_cron',
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,
@@ -85,8 +85,9 @@ export async function GET(request: Request) {
     await clearScraperRunActive("beforward");
     invalidateDashboardCache();
 
+    const isSuccess = result.counts.discovered > 0;
     return NextResponse.json({
-      success: true,
+      success: isSuccess,
       runId: result.runId,
       refresh: {
         checked: refreshResult.checked,

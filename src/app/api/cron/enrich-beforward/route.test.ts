@@ -114,6 +114,50 @@ describe("GET /api/cron/enrich-beforward", () => {
     expect(data.duration).toMatch(/^\d+ms$/);
   });
 
+  it("truncates long VIN and fields to fit VARCHAR constraints", async () => {
+    // Mock parseDetailHtml to return oversized values
+    const detailMod = await import("@/features/scrapers/beforward_porsche_collector/detail");
+    vi.mocked(detailMod.parseDetailHtml).mockReturnValueOnce({
+      trim: "A".repeat(150), // exceeds VARCHAR(100)
+      engine: "B".repeat(120),
+      transmission: "C".repeat(110),
+      exteriorColor: "D".repeat(105),
+      vin: "WVWZZZ3CZWE123456789", // 20 chars, exceeds VARCHAR(17)
+      fuel: "Gasoline",
+      images: [],
+    } as any);
+
+    const row = {
+      id: "bef-trunc",
+      source_url: "https://example.com/be-forward/trunc",
+      images: [],
+    };
+
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [row], error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+
+    const response = await GET(makeRequest());
+    expect(response.status).toBe(200);
+
+    const updatePayload = mockUpdate.mock.calls.at(-1)?.[0];
+    expect(updatePayload).toBeDefined();
+    expect(updatePayload.trim.length).toBe(100);
+    expect(updatePayload.engine.length).toBe(100);
+    expect(updatePayload.transmission.length).toBe(100);
+    expect(updatePayload.color_exterior.length).toBe(100);
+    expect(updatePayload.vin.length).toBe(17);
+    expect(updatePayload.vin).toBe("WVWZZZ3CZWE123456");
+  });
+
   it("does not write a missing fuel column", async () => {
     const row = {
       id: "bef-1",

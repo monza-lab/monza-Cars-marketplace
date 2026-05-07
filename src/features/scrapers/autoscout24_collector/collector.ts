@@ -225,6 +225,12 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
       for (const searchListing of discoverResult.listings) {
         if (totalListingsProcessed >= config.maxListings) break;
 
+        // Inner time-budget guard: stop processing listings if running low on time
+        if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+          logEvent({ level: "info", event: "collector.time_budget_listing_loop", runId, elapsedMs: Date.now() - startMs });
+          break;
+        }
+
         const sourceId = deriveSourceId({ sourceId: searchListing.id, sourceUrl: searchListing.url });
         if (seenSourceIds.has(sourceId)) {
           counts.skippedDuplicate++;
