@@ -37,11 +37,6 @@ const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>
     { id: "g-model", label: "G-Model (1974-1989)" },
     { id: "f-model", label: "F-Model (1963-1973)" },
   ],
-  "Panamera": [
-    { id: "g3", label: "G3 (2024+)" },
-    { id: "g2", label: "G2 (2017-2024)" },
-    { id: "g1", label: "G1 (2010-2016)" },
-  ],
   "Boxster": [
     { id: "718", label: "718 (2016+)" },
     { id: "981", label: "981 (2012-2016)" },
@@ -103,7 +98,6 @@ const GENERATIONS_BY_FAMILY: Record<string, Array<{ id: string; label: string }>
 // Variantes populares por familia (para autocomplete)
 const VARIANTS_BY_FAMILY: Record<string, string[]> = {
   "911": ["Turbo", "GT3", "Carrera", "GTS", "Targa", "4S", "Speedster", "GT2", "Sport Classic"],
-  "Panamera": ["Turbo", "4S", "GTS", "E-Hybrid"],
   "Boxster": ["S", "GTS", "Spyder", "T", "25 Years"],
   "Cayman": ["S", "GTS", "GT4", "T", "R"],
   "356": ["A", "B", "C", "Carrera", "Speedster", "Roadster"],

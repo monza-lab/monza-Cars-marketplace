@@ -8,7 +8,7 @@ const DASHBOARD_VALUATION_TABLE = "dashboard_valuation_by_family";
 const MARKETS: readonly CanonicalMarket[] = ["US", "EU", "UK", "JP"] as const;
 
 // Models excluded from the frontend — must match EXCLUDED_MODELS in supabaseLiveListings.ts.
-const EXCLUDED_FAMILIES = ["cayenne", "macan", "taycan"];
+const EXCLUDED_FAMILIES = ["cayenne", "macan", "taycan", "panamera"];
 
 export type RegionalValByFamily = Record<string, Record<CanonicalMarket, SegmentStats>>;
 

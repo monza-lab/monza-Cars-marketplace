@@ -34,8 +34,8 @@ function detectJunk(row: ListingRow): string | null {
   }
 
   // Rule 1b: Non-collector models (SUVs / EVs) excluded from the marketplace
-  const EXCLUDED_MODELS = ["cayenne", "macan", "taycan"];
-  if (EXCLUDED_MODELS.some((ex) => model.includes(ex))) {
+  const EXCLUDED_MODELS = ["cayenne", "macan", "taycan", "panamera"];
+  if (EXCLUDED_MODELS.some((ex) => model.includes(ex) || title.includes(ex))) {
     return `excluded-non-collector:${row.model}`;
   }
 

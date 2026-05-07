@@ -606,7 +606,7 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
 // ─── Junk listing filter (safety net — catches items the cron cleanup hasn't removed yet) ───
 
 // Models excluded from the frontend (non-collector SUVs / EVs).
-const EXCLUDED_MODELS = ["cayenne", "macan", "taycan"];
+const EXCLUDED_MODELS = ["cayenne", "macan", "taycan", "panamera"];
 
 // Parts, accessories, and non-vehicle items that should never render.
 // IMPORTANT: Use specific multi-word phrases to avoid false positives.
@@ -628,8 +628,8 @@ function isJunkListing(row: { make: string; model: string; year: number; title?:
   const title = (row.title ?? "").toLowerCase();
   const haystack = `${model} ${title}`;
 
-  // Non-collector models (SUVs / EVs) excluded from the marketplace
-  if (EXCLUDED_MODELS.some((ex) => model.includes(ex))) return true;
+  // Non-collector models (SUVs / EVs / sedans) excluded from the marketplace
+  if (EXCLUDED_MODELS.some((ex) => model.includes(ex) || title.includes(ex))) return true;
 
   // Porsche-Diesel tractors
   if (model.includes("diesel")) return true;

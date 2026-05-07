@@ -35,8 +35,6 @@ const MODEL_FAMILIES = [
   { id: "968", label: "968", count: 4 },
   { id: "924", label: "924", count: 7 },
   { id: "914", label: "914", count: 5 },
-  // Gran Turismo
-  { id: "panamera", label: "Panamera", count: 31 },
 ]
 
 // Generaciones por familia (contextual)
@@ -51,11 +49,6 @@ const GENERATIONS_BY_FAMILY: Record<string, typeof GENERATIONS> = {
     { id: "930", label: "930 (1975-1989)", count: 12 },
     { id: "g-model", label: "G-Model (1974-1989)", count: 18 },
     { id: "f-model", label: "F-Model (1963-1973)", count: 15 },
-  ],
-  "panamera": [
-    { id: "g3", label: "G3 (2024+)", count: 5 },
-    { id: "g2", label: "G2 (2017-2024)", count: 18 },
-    { id: "g1", label: "G1 (2010-2016)", count: 8 },
   ],
   "boxster": [
     { id: "718", label: "718 (2016+)", count: 4 },
