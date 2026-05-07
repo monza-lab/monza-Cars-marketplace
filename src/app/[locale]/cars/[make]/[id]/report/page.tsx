@@ -26,6 +26,8 @@ import {
   inferTargetRegion,
 } from "@/lib/marketIntel/computeArbitrageForCar"
 
+export const dynamic = "force-dynamic"
+
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
   searchParams?: Promise<{ mock?: string; v2?: string }>
