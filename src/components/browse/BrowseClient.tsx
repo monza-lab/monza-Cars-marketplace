@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal, MessageSquare } from "lucide-react";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { BrowseCard } from "./BrowseCard";
+import { NoMarketplaceBanner } from "./NoMarketplaceBanner";
 import { FilterBar } from "./filters/FilterBar";
 import { useClassicFilters } from "./filters/useClassicFilters";
 import { applyFilters } from "./filters/applyFilters";
@@ -105,7 +106,7 @@ export function BrowseClient({
     // API takes a single family at a time. Multi-series selection falls back
     // to pure client-side filtering on whatever is already loaded.
     if (filters.series.length === 1) params.family = filters.series[0];
-    if (filters.region.length === 1) params.region = filters.region[0];
+    if (filters.region.length >= 1) params.region = filters.region.join(",");
     if (filters.platform.length === 1) params.platform = filters.platform[0];
     return params;
   }, [filters.q, filters.series, filters.region, filters.platform]);
@@ -125,6 +126,11 @@ export function BrowseClient({
   const [remoteHasMore, setRemoteHasMore] = useState(true);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const seenIdsRef = useRef<Set<string>>(new Set(auctions.map((a) => a.id)));
+  // Lookup: listing id → URL of the original listing on its source platform
+  // (BaT, Cars and Bids, Collecting Cars, Elferspot, etc.). Populated as
+  // listings stream in from /api/mock-auctions; SSR-initial cars do not
+  // carry sourceUrl through the cache so they will not appear here.
+  const [sourceUrlById, setSourceUrlById] = useState<Map<string, string>>(() => new Map());
 
   // When a server-backed filter is active we ignore the SSR pool (it was a
   // mixed sample) and show only what the server returned for this specific
@@ -185,11 +191,17 @@ export function BrowseClient({
     setRemoteLoading(true);
     try {
       const data = await fetchPage(remoteCursor);
-      const fresh = data.auctions
-        .filter((c) => !seenIdsRef.current.has(c.id))
-        .map(toDashboardAuction);
+      const freshApi = data.auctions.filter((c) => !seenIdsRef.current.has(c.id));
+      const fresh = freshApi.map(toDashboardAuction);
       fresh.forEach((c) => seenIdsRef.current.add(c.id));
       setRemoteCars((prev) => [...prev, ...fresh]);
+      setSourceUrlById((prev) => {
+        const next = new Map(prev);
+        for (const c of freshApi) {
+          if (c.sourceUrl) next.set(c.id, c.sourceUrl);
+        }
+        return next;
+      });
       setRemoteCursor(data.nextCursor);
       setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
     } catch {
@@ -218,6 +230,13 @@ export function BrowseClient({
         const ids = new Set(fresh.map((c) => c.id));
         seenIdsRef.current = ids;
         setRemoteCars(fresh);
+        setSourceUrlById((prev) => {
+          const next = new Map(prev);
+          for (const c of data.auctions) {
+            if (c.sourceUrl) next.set(c.id, c.sourceUrl);
+          }
+          return next;
+        });
         setRemoteCursor(data.nextCursor);
         setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
       } catch (e) {
@@ -261,6 +280,7 @@ export function BrowseClient({
         onChange={(patch) => setFilters(patch)}
         onReset={resetFilters}
       />
+      <NoMarketplaceBanner />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
         {filtered.length === 0 ? (
@@ -271,20 +291,19 @@ export function BrowseClient({
             {auctions.length === 0 ? (
               <>
                 <p className="text-[15px] font-display font-medium text-foreground">
-                  Our data pipeline is updating
+                  Our intelligence is updating
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground max-w-sm">
-                  Check back shortly for new acquisitions.
+                  Check back shortly — new reports are published as listings come live.
                 </p>
               </>
             ) : (
               <>
                 <p className="text-[15px] font-display font-medium text-foreground">
-                  No acquisitions match this specification
+                  No reports match this specification
                 </p>
                 <p className="mt-1 text-[13px] text-muted-foreground max-w-md">
-                  Looking for something specific? Broaden your filters or speak with a
-                  dedicated sourcing advisor — we find acquisitions off-market.
+                  Try broadening your filters, or talk to an advisor about a custom report.
                 </p>
                 <div className="mt-6 flex items-center gap-3">
                   <button
@@ -305,7 +324,12 @@ export function BrowseClient({
           <>
             <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((car, i) => (
-                <BrowseCard key={car.id} car={car} index={i} />
+                <BrowseCard
+                  key={car.id}
+                  car={car}
+                  index={i}
+                  sourceUrl={sourceUrlById.get(car.id) ?? null}
+                />
               ))}
             </div>
 
@@ -318,7 +342,7 @@ export function BrowseClient({
                     onClick={() => void fetchMoreRemote()}
                     className="px-6 py-2.5 rounded-full border border-border text-[12px] font-medium text-foreground hover:border-primary/40 hover:bg-foreground/[0.03] transition-colors"
                   >
-                    Load more acquisitions
+                    Load more reports
                   </button>
                 )}
               </div>
@@ -327,7 +351,7 @@ export function BrowseClient({
             {!hasMore && visible.length > 0 && (
               <div className="mt-10 text-center">
                 <p className="text-[11px] text-muted-foreground tracking-wider">
-                  You&apos;ve reached the end of the current inventory · {visible.length.toLocaleString()} shown
+                  You&apos;ve reached the end · {visible.length.toLocaleString()} reports shown
                 </p>
               </div>
             )}
@@ -339,8 +363,8 @@ export function BrowseClient({
                     Narrow specification?
                   </p>
                   <p className="mt-1 text-[12px] text-muted-foreground max-w-xl">
-                    Save this search and we&apos;ll notify you when new matches appear, or
-                    hand it to our sourcing team to search off-market inventory.
+                    Save this search and we&apos;ll notify you when new reports match, or
+                    commission a custom one with our team.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

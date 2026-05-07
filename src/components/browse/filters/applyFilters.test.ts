@@ -213,11 +213,14 @@ describe("applyFilters — transmission", () => {
   });
 });
 
-describe("applyFilters — region", () => {
-  const us = makeCar({ id: "us", region: "US" });
-  const uk = makeCar({ id: "uk", region: "UK" });
-  const eu = makeCar({ id: "eu", region: "EU" });
-  const jp = makeCar({ id: "jp", region: "JP" });
+describe("applyFilters — region (canonicalMarket)", () => {
+  // Filter compares against `canonicalMarket` (normalized "US"|"EU"|"UK"|"JP"),
+  // not against the raw `region` column which can be a country name like
+  // "United States" or "Germany".
+  const us = makeCar({ id: "us", canonicalMarket: "US" });
+  const uk = makeCar({ id: "uk", canonicalMarket: "UK" });
+  const eu = makeCar({ id: "eu", canonicalMarket: "EU" });
+  const jp = makeCar({ id: "jp", canonicalMarket: "JP" });
   const cars = [us, uk, eu, jp];
 
   it("single region", () => {
@@ -227,6 +230,18 @@ describe("applyFilters — region", () => {
   it("multi region", () => {
     const ids = applyFilters(cars, f({ region: ["US", "UK"] })).map((c) => c.id).sort();
     expect(ids).toEqual(["uk", "us"]);
+  });
+  it("excludes cars without canonicalMarket when filter active", () => {
+    const carsWithNull = [
+      makeCar({ id: "a", canonicalMarket: "US" }),
+      makeCar({ id: "b", canonicalMarket: null }),
+    ];
+    const out = applyFilters(carsWithNull, f({ region: ["US"] }));
+    expect(out.map((c) => c.id)).toEqual(["a"]);
+  });
+  it("returns all cars when no region filter is set", () => {
+    const out = applyFilters(cars, f({ region: [] }));
+    expect(out).toHaveLength(4);
   });
 });
 
@@ -306,3 +321,4 @@ describe("applyFilters — sorting", () => {
     expect(ids).toEqual(["expensive", "mid", "cheap"]);
   });
 });
+

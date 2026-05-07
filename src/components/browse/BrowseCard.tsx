@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
-import { Clock, Gavel } from "lucide-react";
+import { Clock, Gavel, ExternalLink } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
 import { timeLeft } from "@/lib/makePageHelpers";
@@ -57,12 +57,25 @@ function formatTransmission(raw: string | null): string | null {
   return null;
 }
 
-function regionCode(region: string | null | undefined): string | null {
-  if (!region) return null;
-  return region;
+/**
+ * The region label shown on a card MUST match the field the region filter
+ * uses (canonicalMarket — normalized US/EU/UK/JP). The raw `region` column
+ * is the physical car location and would mismatch the filter (e.g. a BaT
+ * listing of a German car has canonicalMarket="US" but region="EU").
+ */
+function regionCode(car: DashboardAuction): string | null {
+  return car.canonicalMarket ?? null;
 }
 
-export function BrowseCard({ car, index }: { car: DashboardAuction; index: number }) {
+export function BrowseCard({
+  car,
+  index,
+  sourceUrl,
+}: {
+  car: DashboardAuction;
+  index: number;
+  sourceUrl?: string | null;
+}) {
   const locale = useLocale();
   const { formatPrice } = useCurrency();
   const live = isLiveStatus(car.status);
@@ -70,7 +83,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
   const image = car.images?.[0] || "/cars/placeholder.svg";
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-");
   const trans = formatTransmission(car.transmission);
-  const region = regionCode(car.region);
+  const region = regionCode(car);
   const fairUs = car.fairValueByRegion?.US;
 
   return (
@@ -81,7 +94,7 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
       layout
     >
       <Link
-        href={`/cars/${makeSlug}/${car.id}`}
+        href={`/cars/${makeSlug}/${car.id}/report`}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
@@ -162,11 +175,26 @@ export function BrowseCard({ car, index }: { car: DashboardAuction; index: numbe
                 <span className="shrink-0 font-medium text-foreground/70">{trans}</span>
               )}
             </div>
-            {region && (
-              <span className="font-medium text-muted-foreground tracking-wider">
-                {region}
-              </span>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {region && (
+                <span className="font-medium text-muted-foreground tracking-wider">
+                  {region}
+                </span>
+              )}
+              {sourceUrl && (
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:border-primary/40 hover:text-primary transition-colors"
+                  title={`View original listing on ${platformLabel}`}
+                >
+                  View on {platformLabel}
+                  <ExternalLink className="size-2.5" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </Link>

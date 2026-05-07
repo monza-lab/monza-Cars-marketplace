@@ -149,7 +149,12 @@ export function applyFilters(
     }
 
     if (f.region.length > 0) {
-      if (!car.region || !f.region.includes(car.region)) return false;
+      // Compare against canonicalMarket (normalized "US"|"EU"|"UK"|"JP")
+      // rather than the raw `region` column which may be a country name
+      // like "United States" or "Germany" — the filter UI emits the
+      // short canonical IDs.
+      const market = car.canonicalMarket ?? null;
+      if (!market || !f.region.includes(market)) return false;
     }
 
     if (f.drive.length > 0) {

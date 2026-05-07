@@ -90,8 +90,15 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   // Fetch similar cars
   const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
   if (car.id.startsWith("live-")) {
-    const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
-    allCandidates.push(...live.filter(c => c.id !== car.id))
+    try {
+      const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
+      allCandidates.push(...live.filter(c => c.id !== car.id))
+    } catch (err) {
+      console.warn(
+        "[report] fetchLiveListingsAsCollectorCars failed, continuing without live candidates:",
+        err instanceof Error ? err.message : err,
+      )
+    }
   }
   const similarCars = findSimilarCars(car, allCandidates, 6)
 
@@ -108,7 +115,13 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   ])
 
   // Filter by series, expand to family if needed, compute regional stats (shared helper)
-  const rates = await getExchangeRates()
+  const rates = await getExchangeRates().catch((err) => {
+    console.warn(
+      "[report] getExchangeRates failed, falling back to identity rates:",
+      err instanceof Error ? err.message : err,
+    )
+    return {} as Record<string, number>
+  })
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
   // D2 — Cross-border arbitrage (spec §5.7). Resolve landed cost to the
@@ -127,6 +140,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           thisVinPriceUsd: askingForArbitrage,
           targetRegion,
           carYear: car.year,
+        }).catch((err) => {
+          console.warn(
+            "[report] computeArbitrageForCar failed, returning empty D2:",
+            err instanceof Error ? err.message : err,
+          )
+          return { by_region: [], target_region: targetRegion, narrative_insight: null }
         })
       : { by_region: [], target_region: targetRegion, narrative_insight: null }
 

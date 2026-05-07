@@ -184,7 +184,7 @@ export function MobileFilterSheet({
       description={
         section === "root"
           ? activeCount === 0
-            ? "Refine acquisitions"
+            ? "Refine reports"
             : `${activeCount} filter${activeCount === 1 ? "" : "s"} active`
           : undefined
       }
