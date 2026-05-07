@@ -25,6 +25,7 @@ import { extractColorIntelligence } from "@/lib/fairValue/extractors/color"
 import { extractVinIntelligence } from "@/lib/fairValue/extractors/vinDeep"
 import { generateInvestmentNarrative } from "@/lib/fairValue/narrative"
 import { extractSeries } from "@/lib/brandConfig"
+import { isAdmin } from "@/lib/admin"
 import { applyModifiers, computeSpecificCarFairValue } from "@/lib/fairValue/engine"
 import { MODIFIER_LIBRARY_VERSION } from "@/lib/fairValue/modifiers"
 import type {
@@ -139,6 +140,8 @@ export async function POST(request: Request) {
     // 2. Get/create user + reset credits if needed
     const dbUser = await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
     const user = await checkAndResetFreeCredits(dbUser.id)
+    const adminBypass = isAdmin(authUser.email)
+    if (adminBypass) user.unlimited_reports = true
     const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
 
     // 3. Check if user already generated this report (free re-access)

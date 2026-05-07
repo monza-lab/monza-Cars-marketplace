@@ -17,6 +17,7 @@ import type {
   AppliedModifier,
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
+import { isAdmin } from "@/lib/admin"
 
 const DEFAULT_MONTHLY_PISTONS = 300
 const REPORT_PISTON_COST = 100
@@ -361,7 +362,7 @@ export async function deductCredit(
 
   if (!user) return { success: false, error: "USER_NOT_FOUND" }
 
-  const isUnlimited = Boolean(user.unlimited_reports) || user.tier === "MONTHLY" || user.tier === "ANNUAL"
+  const isUnlimited = Boolean(user.unlimited_reports) || user.tier === "MONTHLY" || user.tier === "ANNUAL" || isAdmin(user.email)
   const cost = isUnlimited ? 0 : REPORT_PISTON_COST
   const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
   if (!isUnlimited && totalBalance < cost) {
