@@ -48,19 +48,19 @@ export function DownloadSheet({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Haus Report
+              {/* [HARDCODED] */}Haus Report
             </p>
             <h3
               id="download-sheet-heading"
               className="mt-1 font-serif text-[22px] font-semibold leading-tight md:text-[24px]"
             >
-              Download report
+              {/* [HARDCODED] */}Download report
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close download sheet"
+            aria-label="Close download sheet" /* [HARDCODED] */
             className="shrink-0 rounded-full p-1 transition-colors hover:bg-foreground/10"
           >
             <X className="size-4" />
@@ -73,20 +73,20 @@ export function DownloadSheet({
             filename={`haus-report-${shortHash ?? listingId}.pdf`}
             icon={<FileText className="size-5" />}
             label="PDF"
-            description="Editorial 4–6 page document. Hash-verifiable."
+            description="Editorial 4–6 page document. Hash-verifiable." /* [HARDCODED] */
           />
           <DownloadOption
             href={excelHref}
             filename={`haus-report-${shortHash ?? listingId}.xlsx`}
             icon={<FileSpreadsheet className="size-5" />}
             label="Excel"
-            description="Interactive model with live formulas across 4 sheets."
+            description="Interactive model with live formulas across 4 sheets." /* [HARDCODED] */
           />
         </div>
 
         {shortHash && (
           <div className="mt-5 rounded-lg bg-foreground/5 px-3 py-2.5 text-[11px] font-mono">
-            <span className="text-muted-foreground">Hash · </span>
+            <span className="text-muted-foreground">{/* [HARDCODED] */}Hash · </span>
             <span className="text-foreground">{shortHash}</span>
             {verifyHref && (
               <>
@@ -95,7 +95,7 @@ export function DownloadSheet({
                   href={verifyHref}
                   className="text-primary hover:underline"
                 >
-                  Verify
+                  {/* [HARDCODED] */}Verify
                 </a>
               </>
             )}
@@ -103,7 +103,7 @@ export function DownloadSheet({
         )}
 
         <p className="mt-4 text-[11px] italic leading-relaxed text-muted-foreground">
-          Downloads are included with your Haus Report.
+          {/* [HARDCODED] */}Downloads are included with your Haus Report.
         </p>
       </div>
     </div>

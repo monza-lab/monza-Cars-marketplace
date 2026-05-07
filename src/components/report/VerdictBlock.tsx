@@ -27,14 +27,14 @@ export function VerdictBlock({
 }: VerdictBlockProps) {
   const deltaStr =
     Math.abs(deltaPercent) < 0.5
-      ? "at fair"
+      ? "at fair" // [HARDCODED]
       : `${deltaPercent > 0 ? "+" : ""}${deltaPercent.toFixed(1)}%`
 
   return (
     <section aria-labelledby="verdict-label" className="px-4 py-6 md:py-8">
       <div className="flex flex-col items-center text-center">
         <span id="verdict-label" className="sr-only">
-          Verdict
+          {/* [HARDCODED] */}Verdict
         </span>
         <span
           className={`inline-flex items-center rounded-full border-2 px-6 py-2 text-[18px] font-bold tracking-wider md:text-[22px] ${VERDICT_STYLE[verdict]}`}
@@ -48,19 +48,19 @@ export function VerdictBlock({
 
       <dl className="mx-auto mt-6 grid max-w-lg grid-cols-3 gap-2 border-t border-border pt-4 text-center">
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Asking</dt>
+          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{/* [HARDCODED] */}Asking</dt>
           <dd className="mt-1 font-mono text-[14px] font-semibold md:text-[16px]">
             {fmtUsd(askingUsd)}
           </dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Fair Value</dt>
+          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{/* [HARDCODED] */}Fair Value</dt>
           <dd className="mt-1 font-mono text-[14px] font-semibold md:text-[16px]">
             {fmtUsd(fairValueMidUsd)}
           </dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Delta</dt>
+          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{/* [HARDCODED] */}Delta</dt>
           <dd className="mt-1 font-mono text-[14px] font-semibold md:text-[16px]">{deltaStr}</dd>
         </div>
       </dl>

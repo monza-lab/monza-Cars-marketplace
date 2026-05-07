@@ -21,6 +21,7 @@ const TIER_DOT: Record<ConfidenceTier, string> = {
   insufficient: "bg-neutral-700",
 }
 
+// [HARDCODED]
 const TIER_LABEL: Record<ConfidenceTier, string> = {
   high: "High",
   medium: "Medium",
@@ -59,7 +60,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
             {t("brandContext.valuationByMarket")}
           </span>
         </div>
-        <p className="text-[8px] text-muted-foreground mt-1 ml-6">Sold • Asking (adjusted)</p>
+        <p className="text-[8px] text-muted-foreground mt-1 ml-6">{/* [HARDCODED] */}Sold • Asking (adjusted)</p>
       </div>
       <div className="space-y-1">
         {(["US", "UK", "EU", "JP"] as const).map((region) => {
@@ -87,7 +88,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
                   ? ` • factor=${stats.askMedian.factorApplied.toFixed(2)} (${stats.askMedian.factorSource})`
                   : ""
               }`
-            : "Insufficient data"
+            : "Insufficient data" // [HARDCODED]
 
           return (
             <div
@@ -112,7 +113,7 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
                   </span>
                 )}
                 <span className="text-[8px] font-mono text-muted-foreground ml-auto">
-                  {sampleCount} listings
+                  {/* [HARDCODED] */}{sampleCount} listings
                 </span>
               </div>
 
@@ -137,8 +138,8 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
               </div>
 
               <div className="flex justify-between text-[8px] font-mono text-muted-foreground">
-                <span>Sold: {soldFormatted} (n={soldN})</span>
-                <span>Ask: {askFormatted} (n={askN})</span>
+                <span>{/* [HARDCODED] */}Sold: {soldFormatted} (n={soldN})</span>
+                <span>{/* [HARDCODED] */}Ask: {askFormatted} (n={askN})</span>
               </div>
             </div>
           )

@@ -317,9 +317,11 @@ function CarNavSidebar({
       {/* ── Market Position (hidden when no price data) ── */}
       {car.currentBid > 0 && (
       <div className="px-4 py-3 shrink-0 border-b border-border">
+        {/* [HARDCODED] */}
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairLow, regionRange.currency)}</span>
+          {/* [HARDCODED] */}
           <span className="text-[9px] text-muted-foreground">Fair Value Range ({activeRegion})</span>
           <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(fairHigh, regionRange.currency)}</span>
         </div>
@@ -336,11 +338,13 @@ function CarNavSidebar({
           {isBelowFair ? (
             <>
               <CheckCircle2 className="size-3 text-positive" />
+              {/* [HARDCODED] */}
               <span className="text-[10px] font-medium text-positive">Below market average</span>
             </>
           ) : (
             <>
               <TrendingUp className="size-3 text-destructive" />
+              {/* [HARDCODED] */}
               <span className="text-[10px] font-medium text-destructive">Above market average</span>
             </>
           )}
@@ -354,6 +358,7 @@ function CarNavSidebar({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="size-1.5 rounded-full bg-positive animate-pulse" />
+              {/* [HARDCODED] */}
               <span className="text-[10px] font-semibold text-positive uppercase tracking-wider">{isAuctionPlatform(car.platform) ? "Live Auction" : "For Sale"}</span>
             </div>
             {platform && (
@@ -363,6 +368,7 @@ function CarNavSidebar({
             )}
           </div>
           <div className="flex items-center justify-between">
+            {/* [HARDCODED] */}
             {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>}
             {isAuctionPlatform(car.platform) && <span className="text-[11px] tabular-nums text-destructive">{timeLeft(car.endTime)}</span>}
           </div>
@@ -373,6 +379,7 @@ function CarNavSidebar({
               rel="noopener noreferrer"
               className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
             >
+              {/* [HARDCODED] */}
               Ver en {platform?.short || car.platform.replace(/_/g, " ")}
               <ChevronRight className="size-3" />
             </a>
@@ -390,6 +397,7 @@ function CarNavSidebar({
                   {platform.short}
                 </span>
               )}
+              {/* [HARDCODED] */}
               {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[10px] text-muted-foreground">{car.bidCount} bids</span>}
             </div>
             <span className="text-[10px] font-medium text-muted-foreground">{getStatusLabel(car.platform, car.status)}</span>
@@ -401,6 +409,7 @@ function CarNavSidebar({
               rel="noopener noreferrer"
               className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
             >
+              {/* [HARDCODED] */}
               Ver en {platform?.short || car.platform.replace(/_/g, " ")}
               <ChevronRight className="size-3" />
             </a>
@@ -410,6 +419,7 @@ function CarNavSidebar({
 
       {/* ── Specs ── */}
       <div className="px-4 py-3 shrink-0 border-b border-border">
+        {/* [HARDCODED] */}
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Vehicle</span>
         <div className="space-y-1.5">
           {[
@@ -437,6 +447,7 @@ function CarNavSidebar({
         <div className="px-4 py-3 shrink-0 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="size-3.5 text-destructive" />
+            {/* [HARDCODED] */}
             <span className="text-[10px] font-semibold text-muted-foreground">{flags.length} inspection points</span>
           </div>
           <p className="text-[10px] text-muted-foreground leading-relaxed pl-[22px]">
@@ -448,6 +459,7 @@ function CarNavSidebar({
       {/* ── Similar vehicles (scrollable) ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="px-4 py-2 shrink-0">
+          {/* [HARDCODED] */}
           <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
             Similar · {similarCars.length}
           </span>
@@ -507,6 +519,7 @@ function CarContextPanel({
         <div className="px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2 mb-1">
             <Shield className="size-4 text-primary" />
+            {/* [HARDCODED] */}
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Investment Analysis
             </span>
@@ -535,6 +548,7 @@ function CarContextPanel({
               <p className="text-[13px] tabular-nums font-semibold text-foreground">{formatPrice(car.currentBid)}</p>
             </div>
             <div>
+              {/* [HARDCODED] */}
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
               <p className="text-[13px] tabular-nums font-semibold text-positive">{car.trend}</p>
             </div>
@@ -546,10 +560,12 @@ function CarContextPanel({
           <div className="mb-4">
             <div className="flex items-center gap-2">
               <Globe className="size-4 text-primary" />
+              {/* [HARDCODED] */}
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Valuation by Market
               </span>
             </div>
+            {/* [HARDCODED] */}
             <p className="text-[8px] text-muted-foreground mt-1 ml-6">Fair value range by region</p>
           </div>
           <div className="space-y-2.5">
@@ -566,10 +582,10 @@ function CarContextPanel({
                       <span className="text-[12px]">{regionLabels[region].flag}</span>
                       <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                       {isBest && (
-                        <span className="text-[8px] font-bold text-positive tracking-wide">BEST</span>
+                        <span className="text-[8px] font-bold text-positive tracking-wide">{/* [HARDCODED] */}BEST</span>
                       )}
                       {isSelected && (
-                        <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>
+                        <span className="text-[8px] font-bold text-primary tracking-wide">{/* [HARDCODED] */}YOUR MARKET</span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-1.5">
@@ -605,6 +621,7 @@ function CarContextPanel({
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Scale className="size-4 text-primary" />
+            {/* [HARDCODED] */}
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Market Position
             </span>
@@ -612,6 +629,7 @@ function CarContextPanel({
           {/* Price vs Fair Value gauge */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1.5">
+              {/* [HARDCODED] */}
               <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
               <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
                 {pricePosition}%
@@ -629,6 +647,7 @@ function CarContextPanel({
             </div>
           </div>
           {/* Position label */}
+          {/* [HARDCODED] */}
           <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
             <span className="text-[11px] text-muted-foreground">
               {pricePosition <= 85
@@ -646,6 +665,7 @@ function CarContextPanel({
         <div className="px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-3">
             <Truck className="size-4 text-primary" />
+            {/* [HARDCODED] */}
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Shipping Estimates
             </span>
@@ -653,9 +673,9 @@ function CarContextPanel({
           {shipping ? (
             <div className="space-y-2">
               {[
-                { label: "Domestic (Enclosed)", value: shipping.domestic },
-                { label: "EU Import", value: shipping.euImport },
-                { label: "UK Import", value: shipping.ukImport },
+                { label: "Domestic (Enclosed)", value: shipping.domestic }, // [HARDCODED]
+                { label: "EU Import", value: shipping.euImport }, // [HARDCODED]
+                { label: "UK Import", value: shipping.ukImport }, // [HARDCODED]
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{item.label}</span>
@@ -664,7 +684,7 @@ function CarContextPanel({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
+            <p className="text-[11px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
           )}
         </div>
 
@@ -672,6 +692,7 @@ function CarContextPanel({
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Users className="size-4 text-primary" />
+            {/* [HARDCODED] */}
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
               Events & Community
             </span>
@@ -697,7 +718,7 @@ function CarContextPanel({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground italic">Awaiting backend data</p>
+            <p className="text-[11px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
           )}
         </div>
       </div>
@@ -713,8 +734,8 @@ function CarContextPanel({
               <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">Full Investment Report</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; costs</p>
+              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; costs</p>
             </div>
             <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
           </div>
@@ -728,6 +749,7 @@ function CarContextPanel({
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground hover:bg-primary/80 transition-colors"
         >
           <MessageCircle className="size-4" />
+          {/* [HARDCODED] */}
           Speak with Advisor
         </button>
       </div>
@@ -955,6 +977,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] font-semibold uppercase text-primary-foreground active:bg-primary/80 transition-colors"
                 >
                   <FileText className="size-3.5" />
+                  {/* [HARDCODED] */}
                   Report
                 </Link>
               </div>
@@ -974,6 +997,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
               {/* Photo counter */}
+              {/* [HARDCODED] */}
               <div className="absolute bottom-28 right-4 z-10 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-[10px] font-medium text-white/80">
                 {car.images.length} photos
               </div>
@@ -1000,7 +1024,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             {isLive && (
               <div className="flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1.5">
                 <div className="size-2 rounded-full bg-positive animate-pulse" />
-                <span className="text-[10px] font-medium text-positive">LIVE</span>
+                <span className="text-[10px] font-medium text-positive">{/* [HARDCODED] */}LIVE</span>
               </div>
             )}
             <div className="rounded-full px-3 py-1.5 text-[10px] font-medium backdrop-blur-md bg-black/40 text-white/70">
@@ -1027,6 +1051,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
                 {landedCostTeaser && (
                   <p className="mt-1 text-[11px] tabular-nums text-white/60 flex items-center gap-1.5">
+                    {/* [HARDCODED] */}
                     <span>
                       Est. landed cost to {landedCostTeaser.destination}:{" "}
                       <span className="text-white/90 font-medium">
@@ -1037,6 +1062,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         )}
                       </span>
                     </span>
+                    {/* [HARDCODED] */}
                     <span
                       title="Estimated total to your country including shipping, duties, taxes, and fees. Full breakdown in Haus Report."
                       className="cursor-help opacity-60 text-[10px]"
@@ -1071,6 +1097,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <div className="grid grid-cols-2 gap-3">
               {/* Cell 1: Trend */}
               <div className="rounded-xl bg-foreground/3 border border-border p-3">
+                {/* [HARDCODED] */}
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Trend
                 </span>
@@ -1100,6 +1127,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
               {/* Cell 3: Fair Value */}
               <div className="col-span-2 rounded-xl bg-foreground/3 border border-border p-3">
+                {/* [HARDCODED] */}
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
@@ -1130,11 +1158,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <FileText className="size-6 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold text-foreground">Full Investment Report</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Valuation · Risks · Comps · Costs</p>
+            <p className="text-[14px] font-semibold text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation · Risks · Comps · Costs</p>
           </div>
           <span className="shrink-0 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-primary-foreground">
-            View
+            {/* [HARDCODED] */}View
             <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
           </span>
         </Link>
@@ -1196,8 +1224,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <div className="flex items-center gap-1.5">
                         <span className="text-[12px]">{regionLabels[region].flag}</span>
                         <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
-                        {isBest && <span className="text-[8px] font-bold text-positive tracking-wide">BEST</span>}
-                        {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">YOUR MARKET</span>}
+                        {isBest && <span className="text-[8px] font-bold text-positive tracking-wide">{/* [HARDCODED] */}BEST</span>}
+                        {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">{/* [HARDCODED] */}YOUR MARKET</span>}
                       </div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[11px] tabular-nums font-semibold text-foreground">
@@ -1225,12 +1253,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <div className="rounded-xl bg-primary/3 border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
               <Scale className="size-4 text-primary" />
+              {/* [HARDCODED] */}
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
                 Market Position
               </span>
             </div>
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1.5">
+                {/* [HARDCODED] */}
                 <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
                 <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
                   {pricePosition}%
@@ -1247,6 +1277,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
               </div>
             </div>
+            {/* [HARDCODED] */}
             <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
               <span className="text-[11px] text-muted-foreground">
                 {pricePosition <= 85
@@ -1297,7 +1328,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             title={t("keyInspectionPoints")}
             icon={<AlertTriangle className="size-5" />}
             defaultOpen
-            badge={<span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length} items</span>}
+            badge={<span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{/* [HARDCODED] */}{flags.length} items</span>}
           >
             {flags.length > 0 ? (
               <div className="space-y-2">
@@ -1309,7 +1340,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">Awaiting backend analysis</p>
+              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
             )}
           </CollapsibleSection>
 
@@ -1331,26 +1362,28 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">Awaiting backend analysis</p>
+              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
             )}
           </CollapsibleSection>
 
           {/* 10. Pre-Purchase Inspection */}
           <CollapsibleSection title={t("prePurchaseInspection")} icon={<CheckCircle2 className="size-5" />}>
+            {/* [HARDCODED] */}
             <div className="space-y-2">
               {[
-                { item: "Compression test all cylinders", critical: true },
-                { item: "Full chassis and suspension inspection", critical: true },
-                { item: "Paint depth measurement (all panels)", critical: false },
-                { item: "Electronics and switchgear test", critical: false },
-                { item: "Road test (minimum 30 minutes)", critical: true },
-                { item: "Fluid analysis (engine oil, transmission)", critical: false },
+                { item: "Compression test all cylinders", critical: true }, // [HARDCODED]
+                { item: "Full chassis and suspension inspection", critical: true }, // [HARDCODED]
+                { item: "Paint depth measurement (all panels)", critical: false }, // [HARDCODED]
+                { item: "Electronics and switchgear test", critical: false }, // [HARDCODED]
+                { item: "Road test (minimum 30 minutes)", critical: true }, // [HARDCODED]
+                { item: "Fluid analysis (engine oil, transmission)", critical: false }, // [HARDCODED]
               ].map((check, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
                   <span className="text-[13px] text-muted-foreground">{check.item}</span>
                   <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
                     check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
                   }`}>
+                    {/* [HARDCODED] */}
                     {check.critical ? "Critical" : "Recommended"}
                   </span>
                 </div>
@@ -1377,11 +1410,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
             )}
           </CollapsibleSection>
 
           {/* 12. Shipping Estimates */}
+          {/* [HARDCODED] */}
           <CollapsibleSection title="Shipping Estimates" icon={<Truck className="size-5" />}>
             {shipping ? (
               <div className="space-y-2">
@@ -1399,7 +1433,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
             )}
           </CollapsibleSection>
 
@@ -1424,13 +1458,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       event.impact === "negative" ? "bg-destructive/10 text-destructive" :
                       "bg-foreground/5 text-muted-foreground"
                     }`}>
+                      {/* [HARDCODED] */}
                       {event.impact === "positive" ? "Value +" : event.impact === "negative" ? "Value -" : "Neutral"}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
             )}
           </CollapsibleSection>
 
@@ -1487,7 +1522,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   {isLive && (
                     <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-positive/30">
                       <div className="size-1.5 rounded-full bg-positive animate-pulse" />
-                      <span className="text-[10px] font-semibold text-positive">LIVE</span>
+                      <span className="text-[10px] font-semibold text-positive">{/* [HARDCODED] */}LIVE</span>
                     </span>
                   )}
                 </div>
@@ -1540,7 +1575,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="size-4 text-primary" />
-                  <h2 className="text-[12px] font-semibold text-foreground">Key Inspection Points</h2>
+                  <h2 className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Key Inspection Points</h2>
                   <span className="text-[9px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length}</span>
                 </div>
                 {flags.length > 0 ? (
@@ -1553,7 +1588,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend analysis</p>
+                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
                 )}
               </div>
 
@@ -1561,7 +1596,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <HelpCircle className="size-4 text-primary" />
-                  <h2 className="text-[12px] font-semibold text-foreground">Questions to Ask the Seller</h2>
+                  <h2 className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Questions to Ask the Seller</h2>
                 </div>
                 {questions.length > 0 ? (
                   <div className="space-y-2">
@@ -1575,7 +1610,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend analysis</p>
+                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
                 )}
               </div>
 
@@ -1583,22 +1618,24 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 className="size-4 text-primary" />
-                  <h2 className="text-[12px] font-semibold text-foreground">Pre-Purchase Inspection</h2>
+                  <h2 className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Pre-Purchase Inspection</h2>
                 </div>
+                {/* [HARDCODED] */}
                 <div className="space-y-2">
                   {[
-                    { item: "Compression test all cylinders", critical: true },
-                    { item: "Full chassis and suspension inspection", critical: true },
-                    { item: "Paint depth measurement (all panels)", critical: false },
-                    { item: "Electronics and switchgear test", critical: false },
-                    { item: "Road test (minimum 30 minutes)", critical: true },
-                    { item: "Fluid analysis (engine oil, transmission)", critical: false },
+                    { item: "Compression test all cylinders", critical: true }, // [HARDCODED]
+                    { item: "Full chassis and suspension inspection", critical: true }, // [HARDCODED]
+                    { item: "Paint depth measurement (all panels)", critical: false }, // [HARDCODED]
+                    { item: "Electronics and switchgear test", critical: false }, // [HARDCODED]
+                    { item: "Road test (minimum 30 minutes)", critical: true }, // [HARDCODED]
+                    { item: "Fluid analysis (engine oil, transmission)", critical: false }, // [HARDCODED]
                   ].map((check, i) => (
                     <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-foreground/2">
                       <span className="text-[12px] text-muted-foreground">{check.item}</span>
                       <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
                         check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
                       }`}>
+                        {/* [HARDCODED] */}
                         {check.critical ? "Critical" : "Recommended"}
                       </span>
                     </div>
@@ -1611,7 +1648,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <DollarSign className="size-4 text-primary" />
-                    <h2 className="text-[12px] font-semibold text-foreground">Recent Comparable Sales</h2>
+                    <h2 className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Recent Comparable Sales</h2>
                   </div>
                 </div>
                 {comps.length > 0 ? (
@@ -1627,7 +1664,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Awaiting backend data</p>
+                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
                 )}
               </div>
 
@@ -1641,10 +1678,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <FileText className="size-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-foreground">Full Investment Report</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; ownership costs</p>
+                    <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; ownership costs</p>
                   </div>
                   <span className="flex items-center gap-2 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-[12px] font-semibold text-primary-foreground">
+                    {/* [HARDCODED] */}
                     View Report
                     <ChevronRight className="size-4" />
                   </span>
@@ -1687,9 +1725,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
               <div className="px-6 pt-8 pb-2 text-center">
                 <h3 className="text-xl font-bold text-foreground">
+                  {/* [HARDCODED] */}
                   Sign up to continue
                 </h3>
                 <p className="text-[12px] text-muted-foreground mt-1">
+                  {/* [HARDCODED] */}
                   Create a free account to explore this vehicle
                 </p>
               </div>
@@ -1706,13 +1746,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
+                  {/* [HARDCODED] */}
                   Continue with Google
                 </button>
               </div>
 
               <div className="px-6 flex items-center gap-3 pb-4">
                 <div className="flex-1 h-px bg-foreground/10" />
-                <span className="text-[10px] text-muted-foreground">or use email</span>
+                <span className="text-[10px] text-muted-foreground">{/* [HARDCODED] */}or use email</span>
                 <div className="flex-1 h-px bg-foreground/10" />
               </div>
 
@@ -1724,12 +1765,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       type="text"
                       value={gateName}
                       onChange={(e) => { setGateName(e.target.value); setGateErrors(prev => ({ ...prev, name: false })) }}
-                      placeholder="Your name"
+                      placeholder="Your name" // [HARDCODED]
                       className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
                         gateErrors.name ? "border-destructive/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
+                  {/* [HARDCODED] */}
                   {gateErrors.name && <p className="text-[10px] text-destructive mt-1 pl-1">Enter your name</p>}
                 </div>
 
@@ -1740,12 +1782,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       type="email"
                       value={gateEmail}
                       onChange={(e) => { setGateEmail(e.target.value); setGateErrors(prev => ({ ...prev, email: false })) }}
-                      placeholder="your@email.com"
+                      placeholder="your@email.com" // [HARDCODED]
                       className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
                         gateErrors.email ? "border-destructive/50" : "border-border focus:border-primary/50"
                       }`}
                     />
                   </div>
+                  {/* [HARDCODED] */}
                   {gateErrors.email && <p className="text-[10px] text-destructive mt-1 pl-1">Enter a valid email</p>}
                 </div>
 
@@ -1753,9 +1796,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   type="submit"
                   className="w-full py-3 rounded-xl border border-border text-foreground font-medium text-[13px] hover:bg-white/[0.05] transition-all"
                 >
+                  {/* [HARDCODED] */}
                   Sign up with email
                 </button>
 
+                {/* [HARDCODED] */}
                 <p className="text-[10px] text-muted-foreground text-center pt-1">
                   Free account. No credit card needed.
                 </p>
@@ -1789,17 +1834,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <Coins className="size-7 text-primary" />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">
+                  {/* [HARDCODED] */}
                   Welcome to Monza
                 </h3>
                 <p className="text-3xl tabular-nums font-black text-primary mt-2">
+                  {/* [HARDCODED] */}
                   300 Pistons
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
+                  {/* [HARDCODED] */}
                   have been added to your account
                 </p>
               </div>
 
               <div className="px-6 pb-5">
+                {/* [HARDCODED] */}
                 <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
                   How it works
                 </p>
@@ -1809,8 +1858,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <span className="text-[11px] font-bold text-primary">1</span>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium text-foreground">Browse all vehicles freely</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Explore every car, model, and brand at no cost</p>
+                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Browse all vehicles freely</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Explore every car, model, and brand at no cost</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -1818,8 +1867,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <span className="text-[11px] font-bold text-primary">2</span>
                   </div>
                   <div>
-                      <p className="text-[12px] font-medium text-foreground">Generate full analyses with Pistons</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs 100 Pistons &mdash; you have 300 free each month</p>
+                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Generate full analyses with Pistons</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Each report costs 100 Pistons &mdash; you have 300 free each month</p>
                   </div>
                 </div>
                   <div className="flex items-start gap-3">
@@ -1827,8 +1876,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       <span className="text-[11px] font-bold text-primary">3</span>
                     </div>
                     <div>
-                      <p className="text-[12px] font-medium text-foreground">Download or receive by email</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Re-downloading a report you already generated is free</p>
+                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Download or receive by email</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Re-downloading a report you already generated is free</p>
                     </div>
                   </div>
                 </div>
@@ -1839,6 +1888,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   onClick={() => setShowWelcome(false)}
                   className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
                 >
+                  {/* [HARDCODED] */}
                   Got it
                 </button>
               </div>
@@ -1878,8 +1928,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   >
                     <CheckCircle2 className="size-7 text-positive" />
                   </motion.div>
-                  <h3 className="text-lg font-bold text-foreground">Analysis sent!</h3>
+                  <h3 className="text-lg font-bold text-foreground">{/* [HARDCODED] */}Analysis sent!</h3>
                   <p className="text-[12px] text-muted-foreground mt-1">
+                    {/* [HARDCODED] */}
                     Check your inbox at {user?.email}
                   </p>
                 </div>
@@ -1887,6 +1938,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <>
                   <div className="px-6 pt-6 pb-4 text-center">
                     <h3 className="text-lg font-bold text-foreground">
+                      {/* [HARDCODED] */}
                       Your analysis is ready
                     </h3>
                     <p className="text-[12px] text-muted-foreground mt-1">
@@ -1903,7 +1955,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         <Send className="size-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="text-[13px] font-semibold text-primary-foreground">Send to my email</p>
+                        <p className="text-[13px] font-semibold text-primary-foreground">{/* [HARDCODED] */}Send to my email</p>
                         <p className="text-[11px] text-primary-foreground/60">{user?.email}</p>
                       </div>
                     </button>
@@ -1918,14 +1970,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                         <Download className="size-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-[13px] font-medium text-foreground">Download PDF</p>
-                        <p className="text-[11px] text-muted-foreground">Full investment report</p>
+                        <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Download PDF</p>
+                        <p className="text-[11px] text-muted-foreground">{/* [HARDCODED] */}Full investment report</p>
                       </div>
                     </button>
 
                     {!hasAnalyzed(car.id) && (
                       <div className="flex items-center justify-center gap-2 pt-2">
                         <Coins className="size-3.5 text-primary" />
+                        {/* [HARDCODED] */}
                         <span className="text-[11px] text-muted-foreground">
                           100 Pistons used &middot; {tokens.toLocaleString()} remaining
                         </span>
@@ -1965,17 +2018,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <Coins className="size-7 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">
+                  {/* [HARDCODED] */}
                   You&apos;ve used your free analyses
                 </h3>
                 <p className="text-[12px] text-muted-foreground mt-1">
+                  {/* [HARDCODED] */}
                   Get unlimited access to all vehicle reports
                 </p>
 
+                {/* [HARDCODED] */}
                 <div className="mt-5 space-y-2 text-left">
                   {[
-                    "Unlimited vehicle analyses",
-                    "Real-time price alerts",
-                    "Personal collector advisor",
+                    "Unlimited vehicle analyses", // [HARDCODED]
+                    "Real-time price alerts", // [HARDCODED]
+                    "Personal collector advisor", // [HARDCODED]
                   ].map((benefit) => (
                     <div key={benefit} className="flex items-center gap-2.5">
                       <CheckCircle2 className="size-3.5 text-primary shrink-0" />
@@ -1985,6 +2041,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
 
                 <a
+                  // [HARDCODED]
                   href={`https://wa.me/573208492641?text=${encodeURIComponent(
                     `Hi, I'd like to upgrade to Monza Premium for unlimited analyses.`
                   )}`}
@@ -1993,6 +2050,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   className="flex items-center justify-center gap-2 w-full py-3.5 mt-6 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
                 >
                   <MessageCircle className="size-4" />
+                  {/* [HARDCODED] */}
                   Contact us to upgrade
                 </a>
 
@@ -2000,6 +2058,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   onClick={() => setShowPaywall(false)}
                   className="w-full py-3 mt-2 text-[12px] text-muted-foreground hover:text-muted-foreground transition-colors"
                 >
+                  {/* [HARDCODED] */}
                   Maybe later
                 </button>
               </div>

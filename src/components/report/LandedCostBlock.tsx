@@ -2,6 +2,7 @@ import type { LandedCostBreakdown } from "@/lib/landedCost";
 import { formatLandedCost } from "@/lib/landedCost/format";
 import { TAX_RULES } from "@/lib/landedCost/taxes";
 
+// [HARDCODED] all country names below
 const COUNTRY_LABEL: Record<string, string> = {
   US: "United States",
   DE: "Germany",
@@ -23,32 +24,32 @@ export function LandedCostBlock({ breakdown, locale }: Props) {
     <section className="rounded-lg border border-border p-6 my-8">
       <header className="mb-1">
         <h2 className="text-lg font-semibold tracking-tight">
-          Landed Cost (Estimate)
+          {/* [HARDCODED] */}Landed Cost (Estimate)
         </h2>
       </header>
       <p className="text-xs text-muted-foreground mb-4">
-        Origin: {COUNTRY_LABEL[breakdown.origin] ?? breakdown.origin} · Destination:{" "}
+        {/* [HARDCODED] */}Origin: {COUNTRY_LABEL[breakdown.origin] ?? breakdown.origin} · Destination:{" "}
         {COUNTRY_LABEL[breakdown.destination] ?? breakdown.destination}
       </p>
 
       <dl className="divide-y divide-border text-sm">
-        <Row label="International shipping" range={breakdown.shipping} locale={locale} />
+        <Row label="International shipping" /* [HARDCODED] */ range={breakdown.shipping} locale={locale} />
         <Row
-          label="Marine insurance"
+          label="Marine insurance" /* [HARDCODED] */
           range={breakdown.marineInsurance}
           locale={locale}
-          hint="1.5–2.5% of CIF"
+          hint="1.5–2.5% of CIF" /* [HARDCODED] */
         />
-        <Row label="Customs duty" range={breakdown.customsDuty} locale={locale} />
+        <Row label="Customs duty" /* [HARDCODED] */ range={breakdown.customsDuty} locale={locale} />
         <Row label={taxLabel} range={breakdown.vatOrSalesTax} locale={locale} />
-        <Row label="Port & broker fees" range={breakdown.portAndBroker} locale={locale} />
-        <Row label="Registration" range={breakdown.registration} locale={locale} />
+        <Row label="Port & broker fees" /* [HARDCODED] */ range={breakdown.portAndBroker} locale={locale} />
+        <Row label="Registration" /* [HARDCODED] */ range={breakdown.registration} locale={locale} />
       </dl>
 
       <dl className="mt-4 pt-4 border-t border-border text-sm space-y-2">
-        <Row label="Import & delivery costs" range={breakdown.importCosts} locale={locale} bold />
-        <Row label="Car price" range={breakdown.carPriceLocal} locale={locale} />
-        <Row label="Total landed cost" range={breakdown.landedCost} locale={locale} bold />
+        <Row label="Import & delivery costs" /* [HARDCODED] */ range={breakdown.importCosts} locale={locale} bold />
+        <Row label="Car price" /* [HARDCODED] */ range={breakdown.carPriceLocal} locale={locale} />
+        <Row label="Total landed cost" /* [HARDCODED] */ range={breakdown.landedCost} locale={locale} bold />
       </dl>
 
       {breakdown.notes.length > 0 && (

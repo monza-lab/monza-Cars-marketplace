@@ -17,6 +17,7 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
   const t = useTranslations("dashboard")
   const { formatPrice, rates } = useCurrency()
 
+  // [HARDCODED]
   const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
 
   // Get auctions for this family — all derived data depends on this
@@ -65,7 +66,7 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
       .map(a => ({
         title: `${a.year} ${a.model}`,
         price: listingPriceUsd(a, rates),
-        platform: a.platform?.replace(/_/g, " ") || "Listing",
+        platform: a.platform?.replace(/_/g, " ") || "Listing", // [HARDCODED]
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [familyAuctions])
@@ -86,7 +87,7 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
             </span>
           </div>
           <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
-            Porsche
+            {/* [HARDCODED] */}Porsche
           </p>
           <h3 className="text-[18px] font-bold text-foreground tracking-tight mb-2">
             {family.name}
@@ -127,7 +128,7 @@ export function FamilyContextPanel({ family, auctions, regionalValByFamily, allF
           href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
-          Explore {family.name} Collection
+          {/* [HARDCODED] */}Explore {family.name} Collection
           <ChevronRight className="size-4" />
         </Link>
       </div>

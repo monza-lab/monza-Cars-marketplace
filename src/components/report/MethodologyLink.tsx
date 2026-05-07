@@ -14,7 +14,7 @@ export function MethodologyLink({ href = "/methodology" }: MethodologyLinkProps)
       >
         <BookOpen className="size-4" />
         <span>
-          How we compute Fair Value, Modifiers, Market Intel, and Sources
+          {/* [HARDCODED] */}How we compute Fair Value, Modifiers, Market Intel, and Sources
         </span>
         <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
       </Link>

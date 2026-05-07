@@ -11,8 +11,9 @@ interface SeeSampleModalProps {
   onUpgradeClick?: () => void
 }
 
-const SAMPLE_CAR_TITLE = "2023 Porsche 992 GT3 Touring · Paint-to-Sample Gulf Blue"
+const SAMPLE_CAR_TITLE = "2023 Porsche 992 GT3 Touring · Paint-to-Sample Gulf Blue" // [HARDCODED]
 
+// [HARDCODED] all sample claims below
 const SAMPLE_CLAIMS: RemarkableClaim[] = [
   {
     id: "sample-1",
@@ -77,20 +78,20 @@ export function SeeSampleModal({ open, onClose, onUpgradeClick }: SeeSampleModal
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Tier 2 sample · different listing
+              {/* [HARDCODED] */}Tier 2 sample · different listing
             </p>
             <h3
               id="sample-modal-heading"
               className="mt-1 font-serif text-[22px] font-semibold leading-tight md:text-[26px]"
             >
-              What&apos;s Remarkable
+              {/* [HARDCODED] */}What&apos;s Remarkable
             </h3>
             <p className="mt-1 text-[12px] text-muted-foreground">{SAMPLE_CAR_TITLE}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close sample"
+            aria-label="Close sample" /* [HARDCODED] */
             className="shrink-0 rounded-full p-1 transition-colors hover:bg-foreground/10"
           >
             <X className="size-4" />
@@ -104,7 +105,7 @@ export function SeeSampleModal({ open, onClose, onUpgradeClick }: SeeSampleModal
         </div>
 
         <p className="mt-5 text-[11px] italic leading-relaxed text-muted-foreground">
-          This sample is from a different listing to illustrate Tier 2 depth without revealing the
+          {/* [HARDCODED] */}This sample is from a different listing to illustrate Tier 2 depth without revealing the
           full analysis of the car you&apos;re currently viewing.
         </p>
 
@@ -114,7 +115,7 @@ export function SeeSampleModal({ open, onClose, onUpgradeClick }: SeeSampleModal
             onClick={onUpgradeClick}
             className="mt-4 block w-full rounded-xl bg-primary px-4 py-3 text-center text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Unlock this depth for every report
+            {/* [HARDCODED] */}Unlock this depth for every report
           </button>
         )}
       </div>

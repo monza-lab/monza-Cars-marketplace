@@ -13,12 +13,12 @@ const TIER_DOT: Record<ConfidenceTier, string> = {
 function TraceTooltip({ stats }: { stats: SegmentStats }) {
   return (
     <span className="pointer-events-none absolute z-50 hidden w-64 rounded border border-neutral-700 bg-neutral-900 p-2 text-[10px] text-neutral-300 group-hover:block">
-      <div>Market: <b>{stats.market}</b></div>
-      <div>Family: <b>{stats.family}</b></div>
-      <div>Sold sample: <b>{stats.marketValue.soldN}</b> ({stats.marketValue.tier})</div>
-      <div>Asking sample: <b>{stats.askMedian.askingN}</b> ({stats.askMedian.tier})</div>
+      <div>{/* [HARDCODED] */}Market: <b>{stats.market}</b></div>
+      <div>{/* [HARDCODED] */}Family: <b>{stats.family}</b></div>
+      <div>{/* [HARDCODED] */}Sold sample: <b>{stats.marketValue.soldN}</b> ({stats.marketValue.tier})</div>
+      <div>{/* [HARDCODED] */}Asking sample: <b>{stats.askMedian.askingN}</b> ({stats.askMedian.tier})</div>
       {stats.askMedian.factorApplied != null && (
-        <div>Factor: <b>{stats.askMedian.factorApplied.toFixed(2)}</b> ({stats.askMedian.factorSource})</div>
+        <div>{/* [HARDCODED] */}Factor: <b>{stats.askMedian.factorApplied.toFixed(2)}</b> ({stats.askMedian.factorSource})</div>
       )}
     </span>
   );

@@ -30,7 +30,7 @@ export function ReportMetadataFooter({
   return (
     <footer className="border-t border-border px-4 py-4">
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        Haus Report · Generated {fmtDate(generatedAt)} · Hash:{" "}
+        {/* [HARDCODED] */}Haus Report · Generated {fmtDate(generatedAt)} · Hash:{" "}
         <span className="font-mono">{shortHash(reportHash)}</span> · Modifier library{" "}
         {modifierVersion} · Extraction {extractionVersion}
         {reportHash && (
@@ -40,14 +40,14 @@ export function ReportMetadataFooter({
               href={`/verify/${reportHash}`}
               className="inline-flex items-center gap-0.5 text-primary hover:underline"
             >
-              Verify this report
+              {/* [HARDCODED] */}Verify this report
               <ArrowUpRight className="size-3" />
             </Link>
           </>
         )}
       </p>
       <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground/70">
-        Content is provided for informational and educational purposes only. Market
+        {/* [HARDCODED] */}Content is provided for informational and educational purposes only. Market
         signals, price benchmarks, and analytical assessments do not constitute
         financial, investment, legal, or tax advice.
       </p>

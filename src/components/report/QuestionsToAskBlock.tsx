@@ -10,6 +10,7 @@ interface QuestionsToAskBlockProps {
 
 // Default fallback questions per signal key (used when translation is missing).
 // Kept short + imperative; match i18n keys `report.questions.{key}_question` shape.
+// [HARDCODED] all fallback questions below
 const FALLBACK_QUESTION: Record<string, string> = {
   service_records: "Ask the seller for documented service history",
   paint_to_sample: "Confirm whether this car has a Paint-to-Sample color",
@@ -24,6 +25,7 @@ const FALLBACK_QUESTION: Record<string, string> = {
   modifications: "Request a list of all modifications performed on the car",
 }
 
+// [HARDCODED] all impact copy below
 const IMPACT_COPY: Record<string, string> = {
   service_records: "Documented service history typically adds 4–6% to specific-car value",
   paint_to_sample: "PTS adds 8–12% depending on color rarity",
@@ -38,7 +40,7 @@ const IMPACT_COPY: Record<string, string> = {
 }
 
 function questionFor(key: string): string {
-  return FALLBACK_QUESTION[key] ?? `Ask the seller about ${key.replace(/_/g, " ")}`
+  return FALLBACK_QUESTION[key] ?? `Ask the seller about ${key.replace(/_/g, " ")}` // [HARDCODED]
 }
 
 export function QuestionsToAskBlock({ missingSignals }: QuestionsToAskBlockProps) {
@@ -65,17 +67,17 @@ export function QuestionsToAskBlock({ missingSignals }: QuestionsToAskBlockProps
         id="questions-heading"
         className="font-serif text-[20px] font-semibold md:text-[24px]"
       >
-        Questions Before You Commit
+        {/* [HARDCODED] */}Questions Before You Commit
       </h2>
       <p className="mt-1 text-[12px] text-muted-foreground">
-        Based on what&apos;s missing from the listing — converted to actionable asks
+        {/* [HARDCODED] */}Based on what&apos;s missing from the listing — converted to actionable asks
       </p>
 
       <div className="mt-4 space-y-3">
         {missingSignals.map((s) => (
           <div key={s.key} className="rounded-xl border border-border bg-card/30 p-4">
             <p className="text-[14px] font-medium">{questionFor(s.key)}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">Not mentioned in listing</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{/* [HARDCODED] */}Not mentioned in listing</p>
             {IMPACT_COPY[s.key] && (
               <p className="mt-2 inline-flex items-center rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] text-muted-foreground">
                 {IMPACT_COPY[s.key]}
@@ -91,7 +93,7 @@ export function QuestionsToAskBlock({ missingSignals }: QuestionsToAskBlockProps
         className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-[12px] font-semibold hover:bg-accent"
       >
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        {copied ? "Copied" : "Copy all questions"}
+        {/* [HARDCODED] */}{copied ? "Copied" : "Copy all questions"}
       </button>
     </section>
   )

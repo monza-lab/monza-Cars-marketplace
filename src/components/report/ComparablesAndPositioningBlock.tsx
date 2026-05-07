@@ -41,7 +41,7 @@ function derivePlatforms(comparables: DbComparableRow[]): string[] {
 }
 
 function formatPlatformsLabel(platforms: string[]): string {
-  if (platforms.length === 0) return "Market comparables"
+  if (platforms.length === 0) return "Market comparables" // [HARDCODED]
   if (platforms.length <= 3) return platforms.join(" · ")
   return `${platforms.slice(0, 3).join(" · ")} +${platforms.length - 3}`
 }
@@ -78,7 +78,7 @@ export function ComparablesAndPositioningBlock({
         id="comparables-heading"
         className="font-serif text-[20px] font-semibold md:text-[24px]"
       >
-        Comparables &amp; Positioning
+        {/* [HARDCODED] */}Comparables &amp; Positioning
       </h2>
 
       {hasSource && (
@@ -88,7 +88,7 @@ export function ComparablesAndPositioningBlock({
             count={comparables.length}
             captureDate={
               captureDateRange
-                ? `captured ${formatShortDate(captureDateRange.start)} – ${formatShortDate(captureDateRange.end)}`
+                ? `captured ${formatShortDate(captureDateRange.start)} – ${formatShortDate(captureDateRange.end)}` // [HARDCODED] "captured"
                 : undefined
             }
             onClick={onSourceClick}
@@ -106,7 +106,7 @@ export function ComparablesAndPositioningBlock({
               : "text-muted-foreground"
           }`}
         >
-          Distribution
+          {/* [HARDCODED] */}Distribution
         </button>
         <button
           type="button"
@@ -117,7 +117,7 @@ export function ComparablesAndPositioningBlock({
               : "text-muted-foreground"
           }`}
         >
-          Comparables ({comparables.length})
+          {/* [HARDCODED] */}Comparables ({comparables.length})
         </button>
       </div>
 
@@ -125,24 +125,24 @@ export function ComparablesAndPositioningBlock({
         <div className="mt-4">
           {chartData.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border bg-card/30 p-4 text-[13px] text-muted-foreground">
-              Not enough sold comparables to build a distribution chart yet.
+              {/* [HARDCODED] */}Not enough sold comparables to build a distribution chart yet.
             </p>
           ) : (
             <>
               <p className="text-[12px] text-muted-foreground">
-                This VIN falls in the{" "}
+                {/* [HARDCODED] */}This VIN falls in the{" "}
                 <strong className="text-foreground">
-                  {d3.vin_percentile_within_variant}th percentile
+                  {d3.vin_percentile_within_variant}{/* [HARDCODED] */}th percentile
                 </strong>{" "}
-                of variant sold prices in the last 12 months.
+                {/* [HARDCODED] */}of variant sold prices in the last 12 months.
               </p>
               <div className="mt-3 h-48 w-full">
                 <ResponsiveContainer>
                   <BarChart data={chartData}>
                     <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                     <Tooltip
-                      formatter={(value) => [`${value ?? 0} sold`, ""]}
-                      labelFormatter={(label) => `Bucket starting ${String(label ?? "")}`}
+                      formatter={(value) => [`${value ?? 0} sold`, ""]} /* [HARDCODED] "sold" */
+                      labelFormatter={(label) => `Bucket starting ${String(label ?? "")}`} /* [HARDCODED] "Bucket starting" */
                     />
                     <Bar dataKey="count" fill="currentColor" className="text-primary" />
                     {closestBin && (
@@ -165,14 +165,14 @@ export function ComparablesAndPositioningBlock({
         <>
           {comparables.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-border bg-card/30 p-4 text-[13px] text-muted-foreground">
-              No comparables available for this listing yet.
+              {/* [HARDCODED] */}No comparables available for this listing yet.
             </p>
           ) : (
             <CollapsibleList
               items={comparables}
               initialCount={5}
               moreLabel={(hidden) =>
-                `Show all ${comparables.length} comparables (+${hidden} more) →`
+                `Show all ${comparables.length} comparables (+${hidden} more) →` // [HARDCODED]
               }
               render={(c, i) => (
                 <div
@@ -181,11 +181,11 @@ export function ComparablesAndPositioningBlock({
                 >
                   <span className="font-medium md:col-span-2">{c.title}</span>
                   <span>
-                    <span className="text-muted-foreground md:hidden">Mileage · </span>
+                    <span className="text-muted-foreground md:hidden">{/* [HARDCODED] */}Mileage · </span>
                     {c.mileage?.toLocaleString() ?? "—"}
                   </span>
                   <span className="font-mono">
-                    <span className="text-muted-foreground md:hidden">Sold · </span>
+                    <span className="text-muted-foreground md:hidden">{/* [HARDCODED] */}Sold · </span>
                     {fmtK(c.soldPrice)}
                   </span>
                   <span className="text-muted-foreground">

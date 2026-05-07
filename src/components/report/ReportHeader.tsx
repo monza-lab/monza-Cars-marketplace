@@ -15,9 +15,9 @@ interface ReportHeaderProps {
 }
 
 const TIER_LABEL: Record<ReportTier, string> = {
-  tier_1: "Tier 1",
-  tier_2: "Tier 2",
-  tier_3: "Tier 3",
+  tier_1: "Tier 1", // [HARDCODED]
+  tier_2: "Tier 2", // [HARDCODED]
+  tier_3: "Tier 3", // [HARDCODED]
 }
 
 export function ReportHeader({
@@ -52,7 +52,7 @@ export function ReportHeader({
           {carTitle}
         </h1>
         <p className="mt-0.5 truncate text-[10px] text-muted-foreground md:text-[11px]">
-          Generated {dateStr} · v{reportVersion} · {TIER_LABEL[tier]}
+          {/* [HARDCODED] */}Generated {dateStr} · v{reportVersion} · {TIER_LABEL[tier]}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -60,7 +60,7 @@ export function ReportHeader({
           <button
             type="button"
             onClick={onRegenerateClick}
-            aria-label="Regenerate report"
+            aria-label="Regenerate report" /* [HARDCODED] */
             className="rounded-lg p-2 hover:bg-foreground/5 active:scale-95"
           >
             <RefreshCw className="size-4" />
@@ -72,7 +72,7 @@ export function ReportHeader({
           className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[12px] font-semibold text-primary-foreground hover:bg-primary/90 active:scale-95"
         >
           <Download className="size-4" />
-          <span className="hidden sm:inline">Download</span>
+          <span className="hidden sm:inline">{/* [HARDCODED] */}Download</span>
         </button>
       </div>
     </header>

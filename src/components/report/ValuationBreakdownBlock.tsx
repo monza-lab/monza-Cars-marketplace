@@ -47,19 +47,19 @@ export function ValuationBreakdownBlock({
         id="valuation-heading"
         className="font-serif text-[20px] font-semibold md:text-[24px]"
       >
-        How we arrived at {fmtK(specificCarFairValueMidUsd)}
+        {/* [HARDCODED] */}How we arrived at {fmtK(specificCarFairValueMidUsd)}
       </h2>
 
       <div className="mt-4 flex flex-col gap-2 rounded-xl border border-border bg-card/30 p-4 text-[13px] md:flex-row md:items-center md:justify-between">
         <span>
-          Baseline median{" "}
+          {/* [HARDCODED] */}Baseline median{" "}
           <strong className="font-mono">{fmtK(baselineMedianUsd)}</strong>
         </span>
         <span className="text-muted-foreground" aria-hidden>
           →
         </span>
         <span>
-          Modifiers{" "}
+          {/* [HARDCODED] */}Modifiers{" "}
           <strong className={`font-mono ${aggregateClass}`}>
             {aggregateModifierPercent >= 0 ? "+" : ""}
             {aggregateModifierPercent.toFixed(1)}%
@@ -69,7 +69,7 @@ export function ValuationBreakdownBlock({
           =
         </span>
         <span>
-          Fair Value{" "}
+          {/* [HARDCODED] */}Fair Value{" "}
           <strong className="font-mono">{fmtK(specificCarFairValueMidUsd)}</strong>
         </span>
       </div>
@@ -77,17 +77,17 @@ export function ValuationBreakdownBlock({
       {sorted.length > 0 && (
         <>
           <h3 className="mt-5 text-[13px] font-semibold text-muted-foreground">
-            Top modifiers applied
+            {/* [HARDCODED] */}Top modifiers applied
           </h3>
           <CollapsibleList
             items={sorted}
             initialCount={3}
             moreLabel={(hidden) =>
-              `Show all ${sorted.length} modifiers applied (+${hidden} more) →`
+              `Show all ${sorted.length} modifiers applied (+${hidden} more) →` // [HARDCODED]
             }
             render={(m) => {
               const sign = m.baseline_contribution_usd >= 0 ? "+" : "−"
-              const verb = m.baseline_contribution_usd >= 0 ? "added" : "subtracted"
+              const verb = m.baseline_contribution_usd >= 0 ? "added" : "subtracted" // [HARDCODED]
               return (
                 <div
                   key={m.key}
@@ -98,12 +98,12 @@ export function ValuationBreakdownBlock({
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                       {sign}
                       {Math.abs(m.delta_percent)}% · {fmtK(m.baseline_contribution_usd)}{" "}
-                      {verb}
+                      {verb}{/* [HARDCODED] "added"/"subtracted" */}
                     </p>
                   </div>
                   {m.citation_url && (
                     <SourceBadge
-                      name="Source"
+                      name="Source" /* [HARDCODED] */
                       onClick={
                         onSourceClick
                           ? () => onSourceClick(m.key, m.citation_url)

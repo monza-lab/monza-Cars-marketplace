@@ -39,7 +39,7 @@ export function MarketContextBlock({ regions }: MarketContextBlockProps) {
         id="market-context-heading"
         className="font-serif text-[18px] font-semibold md:text-[20px]"
       >
-        Market Context
+        {/* [HARDCODED] */}Market Context
       </h2>
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         {regions.map((r) => {
@@ -54,7 +54,7 @@ export function MarketContextBlock({ regions }: MarketContextBlockProps) {
               </p>
               <p className="mt-1 font-mono text-[15px]">{fmtK(r.medianPriceUsd)}</p>
               <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                {r.totalListings} sold
+                {/* [HARDCODED] */}{r.totalListings} sold
                 <Trend
                   className={`size-3 ${trendClassFor(r.trendDirection)}`}
                   aria-label={`trend ${r.trendDirection}`}

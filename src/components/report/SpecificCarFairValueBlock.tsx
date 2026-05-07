@@ -28,7 +28,7 @@ function formatShortDate(iso: string): string {
 }
 
 function formatPlatformsLabel(platforms: string[]): string {
-  if (platforms.length === 0) return "Market comparables"
+  if (platforms.length === 0) return "Market comparables" // [HARDCODED]
   if (platforms.length <= 3) return platforms.join(" · ")
   return `${platforms.slice(0, 3).join(" · ")} +${platforms.length - 3}`
 }
@@ -59,13 +59,13 @@ export function SpecificCarFairValueBlock({
         id="fair-value-heading"
         className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
       >
-        Specific-Car Fair Value
+        {/* [HARDCODED] */}Specific-Car Fair Value
       </h2>
       <p className="mt-2 font-mono text-[28px] font-bold leading-none tracking-tight md:text-[36px]">
         {fmtK(fairValueLowUsd)} – {fmtK(fairValueHighUsd)}
       </p>
       <p className="mt-2 text-[12px] text-muted-foreground">
-        Mid {fmtK(fairValueMidUsd)} · Layer: {comparableLayer} · {comparablesCount} comparables
+        {/* [HARDCODED] */}Mid {fmtK(fairValueMidUsd)} · Layer: {comparableLayer} · {comparablesCount} comparables
       </p>
 
       {comparablesSources && (comparablesSources.platforms.length > 0 || comparablesSources.captureDateRange) && (
@@ -75,7 +75,7 @@ export function SpecificCarFairValueBlock({
             count={comparablesCount}
             captureDate={
               comparablesSources.captureDateRange
-                ? `captured ${formatShortDate(comparablesSources.captureDateRange.start)} – ${formatShortDate(comparablesSources.captureDateRange.end)}`
+                ? `captured ${formatShortDate(comparablesSources.captureDateRange.start)} – ${formatShortDate(comparablesSources.captureDateRange.end)}` // [HARDCODED] "captured"
                 : undefined
             }
             onClick={comparablesSources.onSourceClick}
@@ -88,12 +88,12 @@ export function SpecificCarFairValueBlock({
           <div
             className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary"
             style={{ left: `${clampedMarker}%` }}
-            aria-label={`Asking price position: ${clampedMarker.toFixed(0)}% within range`}
+            aria-label={`Asking price position: ${clampedMarker.toFixed(0)}% within range`} /* [HARDCODED] */
           />
         </div>
         <div className="flex justify-between text-[10px] text-muted-foreground">
           <span>{fmtK(fairValueLowUsd)}</span>
-          <span className="font-medium text-foreground">Asking {fmtK(askingUsd)}</span>
+          <span className="font-medium text-foreground">{/* [HARDCODED] */}Asking {fmtK(askingUsd)}</span>
           <span>{fmtK(fairValueHighUsd)}</span>
         </div>
       </div>
@@ -104,7 +104,7 @@ export function SpecificCarFairValueBlock({
           onClick={onExplainClick}
           className="mt-4 inline-flex items-center gap-1 text-[12px] text-primary hover:underline"
         >
-          See how this was computed <ArrowRight className="size-3" />
+          {/* [HARDCODED] */}See how this was computed <ArrowRight className="size-3" />
         </button>
       )}
     </section>

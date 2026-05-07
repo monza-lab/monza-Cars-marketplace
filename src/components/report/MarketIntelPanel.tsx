@@ -53,12 +53,12 @@ export function MarketIntelPanel({
 }: MarketIntelPanelProps) {
   const trendLabel =
     d1.trend_12m_direction === "stable"
-      ? "Stable"
+      ? "Stable" // [HARDCODED]
       : `${d1.trend_12m_direction === "up" ? "↑" : "↓"} ${Math.abs(d1.trend_12m_percent).toFixed(1)}%`
 
   return (
     <aside
-      aria-label="Market Intel Panel"
+      aria-label="Market Intel Panel" /* [HARDCODED] */
       className="sticky top-[56px] z-20 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-md md:static md:rounded-xl md:border md:py-4"
     >
       <div className="grid grid-cols-3 gap-3 md:grid-cols-1 md:gap-4">
@@ -70,7 +70,7 @@ export function MarketIntelPanel({
         >
           <Sparkline points={d1.sold_trajectory} />
           <div>
-            <p className="text-[10px] uppercase text-muted-foreground">12m trend</p>
+            <p className="text-[10px] uppercase text-muted-foreground">{/* [HARDCODED] */}12m trend</p>
             <p className="text-[12px] font-semibold">{trendLabel}</p>
           </div>
         </button>
@@ -83,7 +83,7 @@ export function MarketIntelPanel({
         >
           <ConfidenceDot level={d4.confidence_tier} />
           <div>
-            <p className="text-[10px] uppercase text-muted-foreground">Confidence</p>
+            <p className="text-[10px] uppercase text-muted-foreground">{/* [HARDCODED] */}Confidence</p>
             <p className="text-[12px] font-semibold capitalize">
               {d4.confidence_tier} · {d4.sample_size}
             </p>
@@ -93,7 +93,7 @@ export function MarketIntelPanel({
         <div className="flex items-center gap-2 md:flex-col md:items-start">
           <div className="size-2" aria-hidden />
           <div>
-            <p className="text-[10px] uppercase text-muted-foreground">Captured</p>
+            <p className="text-[10px] uppercase text-muted-foreground">{/* [HARDCODED] */}Captured</p>
             <p className="text-[11px] text-muted-foreground">
               {formatDateRange(d4.capture_date_start, d4.capture_date_end)}
             </p>
@@ -102,7 +102,7 @@ export function MarketIntelPanel({
       </div>
       {(onExpandD1 || onExpandD4) && (
         <p className="mt-3 flex items-center justify-center gap-1 text-[10px] text-muted-foreground md:hidden">
-          <ChevronDown className="size-3" /> Tap to expand
+          <ChevronDown className="size-3" /> {/* [HARDCODED] */}Tap to expand
         </p>
       )}
     </aside>

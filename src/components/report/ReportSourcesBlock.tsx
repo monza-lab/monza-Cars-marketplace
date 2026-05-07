@@ -43,7 +43,7 @@ function buildCategories({
   const marketRows: SourceRow[] = regions.flatMap((r) =>
     r.sources.map((source) => ({
       name: source,
-      detail: `${r.region} · ${r.totalListings} listings`,
+      detail: `${r.region} · ${r.totalListings} listings`, // [HARDCODED]
       url: null,
       captureDate: r.newestDate,
     }))
@@ -53,7 +53,7 @@ function buildCategories({
   const referencePackRows: SourceRow[] = remarkableClaims
     .filter((c) => c.source_type === "reference_pack" && c.source_url)
     .map((c) => ({
-      name: hostname(c.source_url!) ?? "reference",
+      name: hostname(c.source_url!) ?? "reference", // [HARDCODED]
       detail: null,
       url: c.source_url,
       captureDate: c.capture_date,
@@ -63,7 +63,7 @@ function buildCategories({
   const kbRows: SourceRow[] = remarkableClaims
     .filter((c) => c.source_type === "kb_entry")
     .map((c) => ({
-      name: c.source_url ? (hostname(c.source_url) ?? "KB entry") : `KB ${c.source_ref}`,
+      name: c.source_url ? (hostname(c.source_url) ?? "KB entry") : `KB ${c.source_ref}`, // [HARDCODED]
       detail: null,
       url: c.source_url,
       captureDate: c.capture_date,
@@ -73,7 +73,7 @@ function buildCategories({
   const agentRows: SourceRow[] = remarkableClaims
     .filter((c) => c.source_type === "specialist_agent")
     .map((c) => ({
-      name: c.source_url ? (hostname(c.source_url) ?? "specialist finding") : "specialist finding",
+      name: c.source_url ? (hostname(c.source_url) ?? "specialist finding") : "specialist finding", // [HARDCODED]
       detail: null,
       url: c.source_url,
       captureDate: c.capture_date,
@@ -83,7 +83,7 @@ function buildCategories({
   const modifierRows: SourceRow[] = modifierCitationUrls
     .filter((m) => m.url)
     .map((m) => ({
-      name: hostname(m.url!) ?? "modifier citation",
+      name: hostname(m.url!) ?? "modifier citation", // [HARDCODED]
       detail: m.key.replace(/_/g, " "),
       url: m.url,
       captureDate: null,
@@ -93,11 +93,11 @@ function buildCategories({
   void extractionVersion
 
   return [
-    { label: "Market data", rows: uniqueBy(marketRows, (r) => `${r.name}|${r.detail}`) },
-    { label: "Modifier citations", rows: uniqueBy(modifierRows, (r) => r.url ?? r.name) },
-    { label: "Reference pack", rows: uniqueBy(referencePackRows, (r) => r.url ?? r.name) },
-    { label: "Knowledge base", rows: uniqueBy(kbRows, (r) => r.url ?? r.name) },
-    { label: "Specialist agent", rows: uniqueBy(agentRows, (r) => r.url ?? r.name) },
+    { label: "Market data", rows: uniqueBy(marketRows, (r) => `${r.name}|${r.detail}`) }, // [HARDCODED]
+    { label: "Modifier citations", rows: uniqueBy(modifierRows, (r) => r.url ?? r.name) }, // [HARDCODED]
+    { label: "Reference pack", rows: uniqueBy(referencePackRows, (r) => r.url ?? r.name) }, // [HARDCODED]
+    { label: "Knowledge base", rows: uniqueBy(kbRows, (r) => r.url ?? r.name) }, // [HARDCODED]
+    { label: "Specialist agent", rows: uniqueBy(agentRows, (r) => r.url ?? r.name) }, // [HARDCODED]
   ].filter((cat) => cat.rows.length > 0)
 }
 
@@ -122,7 +122,7 @@ export function ReportSourcesBlock(props: ReportSourcesBlockProps) {
         id="sources-heading"
         className="font-serif text-[18px] font-semibold md:text-[20px]"
       >
-        Sources
+        {/* [HARDCODED] */}Sources
       </h2>
 
       <div className="mt-4 space-y-5">
@@ -154,7 +154,7 @@ export function ReportSourcesBlock(props: ReportSourcesBlockProps) {
                   )}
                   {row.captureDate && (
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      Captured {row.captureDate}
+                      {/* [HARDCODED] */}Captured {row.captureDate}
                     </p>
                   )}
                 </li>

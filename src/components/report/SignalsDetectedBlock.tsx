@@ -34,7 +34,7 @@ export function SignalsDetectedBlock({ signals, onEvidenceClick }: SignalsDetect
         id="signals-heading"
         className="font-serif text-[20px] font-semibold md:text-[24px]"
       >
-        What we found in this listing
+        {/* [HARDCODED] */}What we found in this listing
       </h2>
 
       {riskSignals.length > 0 && (
@@ -64,7 +64,7 @@ export function SignalsDetectedBlock({ signals, onEvidenceClick }: SignalsDetect
           items={positiveSignals}
           initialCount={5}
           moreLabel={(hidden) =>
-            `Show all ${positiveSignals.length} signals (+${hidden} more) →`
+            `Show all ${positiveSignals.length} signals (+${hidden} more) →` // [HARDCODED]
           }
           render={(signal) => (
             <button
@@ -87,7 +87,7 @@ export function SignalsDetectedBlock({ signals, onEvidenceClick }: SignalsDetect
 
       {signals.length === 0 && (
         <p className="mt-4 rounded-xl border border-dashed border-border bg-card/30 p-4 text-[13px] text-muted-foreground">
-          No objective signals were extracted from this listing yet.
+          {/* [HARDCODED] */}No objective signals were extracted from this listing yet.
         </p>
       )}
     </section>

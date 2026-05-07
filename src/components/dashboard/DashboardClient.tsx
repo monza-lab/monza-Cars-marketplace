@@ -343,7 +343,7 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       medianPriceUsd,
-      avgTrend: "Active Market",
+      avgTrend: "Active Market", // [HARDCODED]
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],
@@ -702,7 +702,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
             <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
-              {family.carCount} {family.carCount === 1 ? "car" : "cars"}
+              {/* [HARDCODED] */}{family.carCount} {family.carCount === 1 ? "car" : "cars"}
             </span>
           </div>
 
@@ -716,7 +716,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
         <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
-              Porsche
+              {/* [HARDCODED] */}Porsche
             </p>
             <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {family.name}
@@ -741,7 +741,7 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Calendar className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Years</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{/* [HARDCODED] */}Years</span>
               </div>
               <p className="text-[13px] tabular-nums text-foreground">{yearLabel}</p>
             </div>
@@ -751,14 +751,14 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
               </div>
-              <p className="text-[13px] text-foreground">{family.carCount} listings</p>
+              <p className="text-[13px] text-foreground">{/* [HARDCODED] */}{family.carCount} listings</p>
             </div>
           </div>
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
-              Explore {family.name}
+              {/* [HARDCODED] */}Explore {family.name}
             </span>
             <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
@@ -1013,7 +1013,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[12px] font-display font-medium text-primary">
-                    {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
+                    {auction.currentBid > 0 ? formatPrice(auction.currentBid) : /* [HARDCODED] */ "POA"}
                   </span>
                   {isAuctionPlatform(auction.platform) && (
                     <span className="text-[10px] text-muted-foreground">
@@ -1036,7 +1036,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
                   </div>
                 ) : (
                   <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
-                    Listing
+                    {/* [HARDCODED] */}Listing
                   </span>
                 )}
                 <span className="text-[8px] text-muted-foreground">
@@ -1422,7 +1422,7 @@ function DiscoverySidebar({
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[12px] font-display font-medium text-primary">
-                          {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
+                          {auction.currentBid > 0 ? formatPrice(auction.currentBid) : /* [HARDCODED] */ "POA"}
                         </span>
                         <div className="flex items-center gap-1 ml-auto">
                           {isAuctionPlatform(auction.platform) ? (
@@ -1436,7 +1436,7 @@ function DiscoverySidebar({
                             </>
                           ) : (
                             <span className="text-[8px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
-                              Listing
+                              {/* [HARDCODED] */}Listing
                             </span>
                           )}
                         </div>
@@ -1535,7 +1535,7 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
             </div>
             <div className="text-right shrink-0">
               <p className="text-3xl font-bold text-foreground tabular-nums tabular-nums">
-                {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "POA"}
+                {auction.currentBid > 0 ? formatPrice(auction.currentBid) : /* [HARDCODED] */ "POA"}
               </p>
               <div className="flex items-center justify-end gap-3 mt-1 text-muted-foreground">
                 <span className="text-[11px]">{tAuction("bids.count", { count: auction.bidCount })}</span>
@@ -1556,6 +1556,7 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
 
           {/* Investment Metrics Grid */}
           {(() => {
+            // [HARDCODED]
             const trend = auction.analysis?.appreciationPotential === "APPRECIATING"
               ? "High Demand"
               : auction.analysis?.appreciationPotential === "DECLINING"
@@ -1643,7 +1644,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
       .map(a => ({
         title: `${a.year} ${a.model}`,
         price: listingPriceUsd(a, rates),
-        platform: a.platform?.replace(/_/g, " ") || "Listing",
+        platform: a.platform?.replace(/_/g, " ") || "Listing", // [HARDCODED]
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [allAuctions, auction.make, auction.id, rates])
@@ -1792,7 +1793,7 @@ function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies
   const { formatPrice, rates } = useCurrency()
   const now = useClockNow()
 
-  const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal."
+  const thesis = getSeriesThesis(family.slug, "Porsche") || "A compelling Porsche family with strong collector appeal." // [HARDCODED]
 
   // Get auctions for this family — all derived data depends on this
   const familyAuctions = useMemo(() => {
@@ -1872,7 +1873,7 @@ function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies
       .map(a => ({
         title: `${a.year} ${a.model}`,
         price: listingPriceUsd(a, rates),
-        platform: a.platform?.replace(/_/g, " ") || "Listing",
+        platform: a.platform?.replace(/_/g, " ") || "Listing", // [HARDCODED]
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [familyAuctions, rates])
@@ -1898,7 +1899,7 @@ function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies
             </span>
           </div>
           <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
-            Porsche
+            {/* [HARDCODED] */}Porsche
           </p>
           <h3 className="text-[18px] font-bold text-foreground tracking-tight mb-2">
             {family.name}
@@ -1938,7 +1939,7 @@ function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies
                 <div key={variant.name} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-medium text-foreground truncate block">{variant.name}</span>
-                    <span className="text-[9px] text-muted-foreground">{variant.count} listings</span>
+                    <span className="text-[9px] text-muted-foreground">{/* [HARDCODED] */}{variant.count} listings</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-[11px] font-display font-medium text-primary">
@@ -2026,7 +2027,7 @@ function FamilyContextPanel({ family, auctions, regionalValByFamily, allFamilies
           href={`/cars/porsche?family=${encodeURIComponent(family.slug)}`}
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
-          Explore {family.name} Collection
+          {/* [HARDCODED] */}Explore {family.name} Collection
           <ChevronRight className="size-4" />
         </Link>
       </div>
@@ -2071,7 +2072,7 @@ function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: 
       .map(a => ({
         title: a.title,
         price: listingPriceUsd(a, rates),
-        platform: a.platform?.replace(/_/g, " ") || "Listing",
+        platform: a.platform?.replace(/_/g, " ") || "Listing", // [HARDCODED]
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])
@@ -2096,7 +2097,7 @@ function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: 
           avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
           medianPrice,
           count: data.count,
-          trend: "Stable",
+          trend: "Stable", // [HARDCODED]
         }
       })
       .sort((a, b) => b.avgPrice - a.avgPrice)

@@ -47,7 +47,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
           {/* Car count badge */}
           <div className="absolute top-4 right-4">
             <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium tracking-[0.1em] uppercase text-foreground">
-              {family.carCount} {family.carCount === 1 ? "car" : "cars"}
+              {/* [HARDCODED] */}{family.carCount} {family.carCount === 1 ? "car" : "cars"}
             </span>
           </div>
 
@@ -57,7 +57,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
         <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
-              Porsche
+              {/* [HARDCODED] */}Porsche
             </p>
             <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
               {family.name}
@@ -82,7 +82,7 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Calendar className="size-3" />
-                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">Years</span>
+                <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{/* [HARDCODED] */}Years</span>
               </div>
               <p className="text-[13px] tabular-nums text-foreground">{yearLabel}</p>
             </div>
@@ -92,14 +92,14 @@ export function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index
                 <Car className="size-3" />
                 <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("brandCard.collection")}</span>
               </div>
-              <p className="text-[13px] text-foreground">{family.carCount} listings</p>
+              <p className="text-[13px] text-foreground">{/* [HARDCODED] */}{family.carCount} listings</p>
             </div>
           </div>
 
           {/* CTA */}
           <div className="mt-6 flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground group-hover:text-primary transition-colors">
-              Explore {family.name}
+              {/* [HARDCODED] */}Explore {family.name}
             </span>
             <ChevronRight className="size-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>

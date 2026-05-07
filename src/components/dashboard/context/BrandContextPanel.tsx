@@ -49,7 +49,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, regionalValByFam
       .map(a => ({
         title: a.title,
         price: listingPriceUsd(a, rates),
-        platform: a.platform?.replace(/_/g, " ") || "Listing",
+        platform: a.platform?.replace(/_/g, " ") || "Listing", // [HARDCODED]
         date: new Date(a.endTime).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       }))
   }, [brandAuctions])
@@ -120,7 +120,7 @@ export function BrandContextPanel({ brand, allBrands, auctions, regionalValByFam
           <div className="grid grid-cols-3 gap-3">
             <div>
               {/* TODO: switch to t("brandContext.medianSold") after Task 15 adds i18n key */}
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Median Sold</span>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">{/* [HARDCODED] */}Median Sold</span>
               <p className="text-[16px] font-bold text-foreground">
                 {formatUsdValue(medianSoldUsd)}
               </p>

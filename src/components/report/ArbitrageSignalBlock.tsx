@@ -37,10 +37,10 @@ export function ArbitrageSignalBlock({
         id="arbitrage-heading"
         className="font-serif text-[20px] font-semibold md:text-[24px]"
       >
-        Cross-Border Opportunity
+        {/* [HARDCODED] */}Cross-Border Opportunity
       </h2>
       <p className="mt-1 text-[12px] text-muted-foreground">
-        Cheapest comparable per region, landed to {d2.target_region}
+        {/* [HARDCODED] */}Cheapest comparable per region, landed to {d2.target_region}
       </p>
 
       {(landedCostMethodologyHref || onLandedCostMethodologyClick) && (
@@ -49,13 +49,13 @@ export function ArbitrageSignalBlock({
             <a
               href={landedCostMethodologyHref}
               className="inline-block"
-              aria-label="Landed-cost methodology"
+              aria-label="Landed-cost methodology" /* [HARDCODED] */
             >
-              <SourceBadge name="Landed-cost methodology" />
+              <SourceBadge name="Landed-cost methodology" /* [HARDCODED] */ />
             </a>
           ) : (
             <SourceBadge
-              name="Landed-cost methodology"
+              name="Landed-cost methodology" /* [HARDCODED] */
               onClick={onLandedCostMethodologyClick}
             />
           )}
@@ -77,7 +77,7 @@ export function ArbitrageSignalBlock({
                   {FLAG[row.region]} {row.region}
                   {isTarget && (
                     <span className="ml-1 text-[10px] text-muted-foreground">
-                      (this listing)
+                      {/* [HARDCODED] */}(this listing)
                     </span>
                   )}
                 </span>
@@ -87,13 +87,13 @@ export function ArbitrageSignalBlock({
               </p>
               {!isTarget && row.landed_cost_to_target_usd !== null && (
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  + landed {fmtK(row.landed_cost_to_target_usd)} ={" "}
+                  {/* [HARDCODED] */}+ landed {fmtK(row.landed_cost_to_target_usd)} ={" "}
                   {fmtK(row.total_landed_to_target_usd)}
                 </p>
               )}
               {!isTarget && row.cheapest_comparable_usd === null && (
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  No comparable available
+                  {/* [HARDCODED] */}No comparable available
                 </p>
               )}
               {row.cheapest_comparable_url && (
@@ -103,7 +103,7 @@ export function ArbitrageSignalBlock({
                   rel="noopener noreferrer"
                   className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                 >
-                  View listing <ExternalLink className="size-3" />
+                  {/* [HARDCODED] */}View listing <ExternalLink className="size-3" />
                 </a>
               )}
             </div>
