@@ -279,7 +279,7 @@ export function BrowseClient({
   }, [hasMore, fetchMoreRemote]);
 
   return (
-    <div className="min-h-screen bg-background pt-14 md:pt-16">
+    <div className="min-h-screen bg-background pt-14 md:pt-20">
       <FilterBar
         filters={filters}
         matchCount={filtered.length}

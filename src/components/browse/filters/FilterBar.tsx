@@ -130,7 +130,7 @@ export function FilterBar({
 
   return (
     <div
-      className="sticky top-14 z-30 bg-background/90 backdrop-blur-md border-b border-border"
+      className="sticky top-14 md:top-20 z-30 bg-background/90 backdrop-blur-md border-b border-border"
     >
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-2 md:py-3 space-y-2">
         {/* Row 1: search + counter + sort */}
