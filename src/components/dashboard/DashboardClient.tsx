@@ -455,8 +455,10 @@ function aggregateFamilies(
   const presentSlugs = new Set(families.map(f => f.slug))
   const brandConfig = getBrandConfig("Porsche")
   if (brandConfig) {
+    const EXCLUDED_SERIES = new Set(["cayenne", "macan", "taycan", "panamera"])
     for (const series of brandConfig.series) {
       const slug = series.id.toLowerCase()
+      if (EXCLUDED_SERIES.has(slug)) continue
       if (presentSlugs.has(slug)) continue
       const historicalCars = historicalFamilyMap.get(series.id) || []
       const historicalPrices = historicalCars.map(c => listingPriceUsd(c, rates)).filter(p => p > 0)
@@ -1181,7 +1183,9 @@ function DiscoverySidebar({
 
     const brandSeries = getBrandConfig(brandName)?.series ?? []
 
+    const EXCLUDED_SERIES = new Set(["cayenne", "macan", "taycan", "panamera"])
     return brandSeries
+      .filter((series) => !EXCLUDED_SERIES.has(series.id.toLowerCase()))
       .map((series) => {
         const count =
           seriesCountsByRegion?.[regionKey]?.[series.id] ??

@@ -61,8 +61,10 @@ export function DiscoverySidebar({
         : "all"
 
     const brandSeries = getBrandConfig(brandName)?.series ?? []
+    const EXCLUDED_SERIES = new Set(["cayenne", "macan", "taycan", "panamera"])
 
     return brandSeries
+      .filter((series) => !EXCLUDED_SERIES.has(series.id.toLowerCase()))
       .map((series) => {
         const count =
           seriesCountsByRegion?.[regionKey]?.[series.id] ??
