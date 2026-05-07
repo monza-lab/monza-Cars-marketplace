@@ -28,8 +28,10 @@
 | 5 | `fa90ac5` | fix(browse): re-apply region filter on client (defense-in-depth) | 1 (`BrowseClient.tsx`) |
 | 6 | `79def68` | fix(landing): rewrite /get-started copy from "auction" to "market" | 1 (`get-started/page.tsx`) |
 | 7 | `b41175a` | fix(browse): FilterBar offset matches Header height on desktop | 2 (`FilterBar.tsx`, `BrowseClient.tsx`) |
+| 8 | `aa9cbff` | docs(plans): refresh merge notes with the 3 follow-up commits | 1 (this file) |
+| 9 | `1062ac1` | fix(header): region pills sync with /browse URL | 1 (`Header.tsx`) |
 
-**Total commits past `main`:** 7.
+**Total commits past `main`:** 9.
 
 ---
 
@@ -45,6 +47,7 @@
 - `src/components/browse/BrowseClient.tsx` — (a) `clientFilters` deja de limpiar `filters.region` cuando coincide con el server filter, para que `applyFilters` re-recortea por `canonicalMarket` localmente (defense-in-depth contra el bug del API que devuelve EU cuando se pide UK); (b) wrapper `pt-14 md:pt-16` → `pt-14 md:pt-20` para alinearse con la altura del Header global en desktop.
 - `src/components/browse/filters/FilterBar.tsx` — sticky offset `top-14` → `top-14 md:top-20`. Header pasa de h-14 (mobile) a h-20 (desktop); el FilterBar ahora escala con él, evitando el overlap de 24px que tenía en desktop.
 - `src/app/[locale]/get-started/page.tsx` — landing pública de paid-traffic. Tres strings de "auction" reescritos a "market" (hero subtitle, trust strip, paso 3). Estructura, CTAs y lista de fuentes (Bring a Trailer, Cars & Bids, AutoScout24, Elferspot, Classic.com) intactas. Página sigue siendo `noindex`.
+- `src/components/layout/Header.tsx` — los pills de región del header global (ALL/US/UK/EU/JP) ahora escriben a la URL `?region=X` cuando el usuario está en `/browse`, además de actualizar `RegionContext`. Antes solo actualizaban el context y el grid no se enteraba. El estado activo del pill también lee de la URL en `/browse` para que `/browse?region=US` directo muestre el pill US activo en el primer paint.
 
 ### Out of scope — explicitly NOT touched
 - `src/lib/**` (especialmente `supabaseLiveListings.ts:561` donde `?? 0` coerce silenciosamente).
