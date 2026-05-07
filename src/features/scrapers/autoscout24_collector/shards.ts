@@ -37,6 +37,33 @@ const HIGH_VOLUME_YEAR_SPLITS: Record<string, [number, number][]> = {
 };
 
 /**
+ * Models that saturate the 20-page limit when searched without price filter.
+ * Split into price-range sub-shards to capture full inventory.
+ */
+const PRICE_RANGE_SPLITS: Record<string, { from?: number; to?: number }[]> = {
+  panamera: [
+    { to: 50000 },
+    { from: 50001, to: 120000 },
+    { from: 120001 },
+  ],
+  taycan: [
+    { to: 55000 },
+    { from: 55001, to: 100000 },
+    { from: 100001 },
+  ],
+  boxster: [
+    { to: 40000 },
+    { from: 40001, to: 80000 },
+    { from: 80001 },
+  ],
+  cayman: [
+    { to: 50000 },
+    { from: 50001, to: 100000 },
+    { from: 100001 },
+  ],
+};
+
+/**
  * Generate search shards that partition the full AutoScout24 Porsche inventory.
  *
  * High-volume models (911) are split by year range × country.
@@ -67,6 +94,20 @@ export function generateShards(options: {
             maxPages: options.maxPagesPerShard,
           });
         }
+      }
+    } else if (PRICE_RANGE_SPLITS[model]) {
+      // Saturated model: split by price range to stay under 20-page limit
+      const priceSplits = PRICE_RANGE_SPLITS[model];
+      for (const [idx, range] of priceSplits.entries()) {
+        const label = ["low", "mid", "high"][idx] ?? `p${idx}`;
+        shards.push({
+          id: `${model}-${label}`,
+          model,
+          priceFrom: range.from,
+          priceTo: range.to,
+          countries: options.countries,
+          maxPages: options.maxPagesPerShard,
+        });
       }
     } else {
       // Lower-volume model: all countries together

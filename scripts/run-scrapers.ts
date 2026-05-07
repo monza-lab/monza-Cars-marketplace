@@ -578,6 +578,25 @@ function runCliScraper(
   });
 }
 
+/**
+ * Quick probe — returns true if dev server responds, false otherwise.
+ * Used before each cron route call to detect crashed server early.
+ */
+async function probeServer(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(`${DEV_SERVER}/api/health`, {
+      signal: controller.signal,
+      redirect: "manual",
+    });
+    clearTimeout(t);
+    return res.ok || res.status === 307 || res.status === 308 || res.status === 404;
+  } catch {
+    return false;
+  }
+}
+
 async function runCronScraper(
   scraper: ScraperDef,
   dryRun: boolean
@@ -603,49 +622,104 @@ async function runCronScraper(
   if (dryRun) url += "?dryRun=true";
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      scraper.timeoutMs
-    );
+    const MAX_RETRIES = 2;
+    let lastErr: Error | null = null;
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${cronSecret}` },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // Health check before each attempt
+      const serverUp = await probeServer();
+      if (!serverUp) {
+        console.error(`  ⚠ Dev server not responding (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+        if (attempt < MAX_RETRIES) {
+          console.log(`  Waiting 10s before retry...`);
+          await new Promise((r) => setTimeout(r, 10_000));
+          continue;
+        }
+        return {
+          id: scraper.id,
+          name: scraper.name,
+          phase: scraper.phase,
+          type: scraper.type,
+          status: "failed",
+          durationMs: Date.now() - start,
+          stdout: "",
+          stderr: "Dev server not responding after retries",
+        };
+      }
 
-    const body = await res.json().catch(() => null);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), scraper.timeoutMs);
 
-    if (body) {
-      console.log(JSON.stringify(body, null, 2));
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${cronSecret}` },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        const body = await res.json().catch(() => null);
+        if (body) console.log(JSON.stringify(body, null, 2));
+
+        // Trust body.success when present over HTTP status
+        const bodyObj = body as Record<string, unknown> | null;
+        const failed =
+          res.status >= 400 && !(bodyObj?.success === true);
+
+        return {
+          id: scraper.id,
+          name: scraper.name,
+          phase: scraper.phase,
+          type: scraper.type,
+          status: failed ? "failed" : "ok",
+          durationMs: Date.now() - start,
+          exitCode: res.status,
+          stdout: body ? JSON.stringify(body, null, 2) : "",
+          stderr: "",
+          cronResponse: body,
+        };
+      } catch (err) {
+        lastErr = err instanceof Error ? err : new Error(String(err));
+        const isTimeout = err instanceof DOMException && err.name === "AbortError";
+
+        if (isTimeout) {
+          return {
+            id: scraper.id,
+            name: scraper.name,
+            phase: scraper.phase,
+            type: scraper.type,
+            status: "timeout",
+            durationMs: Date.now() - start,
+            stdout: "",
+            stderr: lastErr.message,
+          };
+        }
+
+        // Connection error — retry
+        console.error(`  Fetch failed (attempt ${attempt + 1}): ${lastErr.message}`);
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, 5_000));
+        }
+      }
     }
-
-    const failed =
-      res.status >= 400 || (body && (body as Record<string, unknown>).error);
 
     return {
       id: scraper.id,
       name: scraper.name,
       phase: scraper.phase,
       type: scraper.type,
-      status: failed ? "failed" : "ok",
+      status: "failed",
       durationMs: Date.now() - start,
-      exitCode: res.status,
-      stdout: body ? JSON.stringify(body, null, 2) : "",
-      stderr: "",
-      cronResponse: body,
+      stdout: "",
+      stderr: lastErr?.message ?? "fetch failed",
     };
   } catch (err) {
-    const isTimeout =
-      err instanceof DOMException && err.name === "AbortError";
     const errMsg = err instanceof Error ? err.message : String(err);
     return {
       id: scraper.id,
       name: scraper.name,
       phase: scraper.phase,
       type: scraper.type,
-      status: isTimeout ? "timeout" : "failed",
+      status: "failed",
       durationMs: Date.now() - start,
       stdout: "",
       stderr: errMsg,
