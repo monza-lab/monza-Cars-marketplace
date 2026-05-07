@@ -628,8 +628,11 @@ function isJunkListing(row: { make: string; model: string; year: number; title?:
   const title = (row.title ?? "").toLowerCase();
   const haystack = `${model} ${title}`;
 
-  // Porsche-Diesel tractors (but NOT Cayenne Diesel which is a real car)
-  if (model.includes("diesel") && !model.includes("cayenne")) return true;
+  // Non-collector models (SUVs / EVs) excluded from the marketplace
+  if (EXCLUDED_MODELS.some((ex) => model.includes(ex))) return true;
+
+  // Porsche-Diesel tractors
+  if (model.includes("diesel")) return true;
 
   // Tractors by model or title
   if (model.includes("tractor") || title.includes("tractor")) return true;

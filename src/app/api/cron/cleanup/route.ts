@@ -33,8 +33,14 @@ function detectJunk(row: ListingRow): string | null {
     return `non-porsche-make:${row.make}`;
   }
 
-  // Rule 2: Porsche-Diesel tractors (exclude Cayenne Diesel which is a real car)
-  if (model.includes("diesel") && !model.includes("cayenne")) {
+  // Rule 1b: Non-collector models (SUVs / EVs) excluded from the marketplace
+  const EXCLUDED_MODELS = ["cayenne", "macan", "taycan"];
+  if (EXCLUDED_MODELS.some((ex) => model.includes(ex))) {
+    return `excluded-non-collector:${row.model}`;
+  }
+
+  // Rule 2: Porsche-Diesel tractors
+  if (model.includes("diesel")) {
     return "porsche-diesel-tractor";
   }
 
