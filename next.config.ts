@@ -78,11 +78,11 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://connect.facebook.net",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: bringatrailer.com *.bringatrailer.com wp.com *.wp.com carsandbids.com *.carsandbids.com collectingcars.com *.collectingcars.com images.unsplash.com source.unsplash.com upload.wikimedia.org *.wikimedia.org picsum.photos fastly.picsum.photos cdn.rmsothebys.com *.rmsothebys.com autoscout24.net *.autoscout24.net autoscout24.com *.autoscout24.com *.autoscout24.de *.autoscout24.ch *.autoscout24.it *.autoscout24.fr *.autoscout24.nl *.autoscout24.es *.autoscout24.at *.autoscout24.be images.classic.com *.classic.com cdn.elferspot.com *.elferspot.com image-cdn.beforward.jp m.atcdn.co.uk",
+      "img-src 'self' data: blob: bringatrailer.com *.bringatrailer.com wp.com *.wp.com carsandbids.com *.carsandbids.com collectingcars.com *.collectingcars.com images.unsplash.com source.unsplash.com upload.wikimedia.org *.wikimedia.org picsum.photos fastly.picsum.photos cdn.rmsothebys.com *.rmsothebys.com autoscout24.net *.autoscout24.net autoscout24.com *.autoscout24.com *.autoscout24.de *.autoscout24.ch *.autoscout24.it *.autoscout24.fr *.autoscout24.nl *.autoscout24.es *.autoscout24.at *.autoscout24.be images.classic.com *.classic.com cdn.elferspot.com *.elferspot.com image-cdn.beforward.jp m.atcdn.co.uk www.facebook.com",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com https://www.facebook.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",

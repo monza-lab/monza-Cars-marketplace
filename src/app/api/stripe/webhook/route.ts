@@ -10,6 +10,7 @@ import {
 } from "@/lib/reports/queries"
 import { getStripeClient } from "@/lib/payments/stripe"
 import { getPricingPlan, resolvePlanKey } from "@/lib/payments/plans"
+import { sendServerCapiEvent } from "@/lib/marketing/metaCapiServer"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -43,6 +44,21 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
       monthlyAllowancePistons: plan.pistons,
       unlimitedReports: plan.unlimitedReports,
     })
+
+    await sendServerCapiEvent({
+      eventName: "Purchase",
+      eventId: `purchase_${session.id}`,
+      email: session.customer_details?.email ?? undefined,
+      externalId: appUserId,
+      customData: {
+        value: plan.price,
+        currency: "USD",
+        content_ids: [resolvedPlanKey],
+        content_type: "product",
+        content_name: plan.name,
+      },
+    }).catch((err) => console.error("[meta-capi-purchase] failed", err))
+
     return
   }
 
@@ -53,6 +69,20 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     resolvedPlanKey,
     typeof session.customer === "string" ? session.customer : null,
   )
+
+  await sendServerCapiEvent({
+    eventName: "Purchase",
+    eventId: `purchase_${session.id}`,
+    email: session.customer_details?.email ?? undefined,
+    externalId: appUserId,
+    customData: {
+      value: plan.price,
+      currency: "USD",
+      content_ids: [resolvedPlanKey],
+      content_type: "product",
+      content_name: plan.name,
+    },
+  }).catch((err) => console.error("[meta-capi-purchase] failed", err))
 }
 
 async function applySubscriptionUpdate(subscription: Stripe.Subscription) {

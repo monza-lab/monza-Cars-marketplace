@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { fireMetaEvent } from '@/lib/marketing/metaPixel'
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,10 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
           if (error) {
             setError(error.message)
           } else {
+          fireMetaEvent('CompleteRegistration', {
+            pixelParams: { content_name: 'free_signup', status: 'completed' },
+            email,
+          })
           setSuccess(t('confirmEmail'))
         }
       }
@@ -86,6 +91,10 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
       const { error } = await signInWithGoogle()
       if (error) {
         setError(error.message)
+      } else {
+        fireMetaEvent('CompleteRegistration', {
+          pixelParams: { content_name: 'free_signup', status: 'completed' },
+        })
       }
     } catch {
       setError(t('unexpectedError'))

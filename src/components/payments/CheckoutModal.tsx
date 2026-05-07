@@ -12,6 +12,7 @@ import {
 import { getPricingPlan, type PlanId } from "@/lib/payments/plans"
 import { Shield, Lock, Loader2 } from "lucide-react"
 import { track } from "@/lib/analytics/events"
+import { fireMetaEvent } from "@/lib/marketing/metaPixel"
 
 interface CheckoutModalProps {
   open: boolean
@@ -50,6 +51,20 @@ export function CheckoutModal({
     track({
       event: "checkout_started",
       payload: { planId: plan.id, amount: plan.price, sessionId: "" },
+    })
+    fireMetaEvent("InitiateCheckout", {
+      pixelParams: {
+        value: plan.price,
+        currency: "USD",
+        content_ids: [plan.id],
+        content_type: "product",
+        content_name: plan.name,
+      },
+      customData: {
+        value: plan.price,
+        currency: "USD",
+        content_ids: [plan.id],
+      },
     })
     try {
       const res = await fetch("/api/checkout/create-session", {
