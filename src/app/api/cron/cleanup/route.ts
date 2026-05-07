@@ -185,9 +185,11 @@ export async function GET(request: Request) {
     }
 
     // ── Step 1d: Expire stale dealer listings ──
-    // Dealer listings (no end_time) that haven't been updated in >30 days
-    // are almost certainly no longer available. Mark as 'unsold'.
-    const cutoff30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    // Dealer/classified listings (no end_time) that haven't been updated
+    // in >90 days are likely no longer available.  90 days gives the
+    // scrapers plenty of time to re-discover and refresh active listings
+    // before they are expired.
+    const cutoff30d = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: staleDealerData, error: staleDealerErr } = await supabase
       .from("listings")

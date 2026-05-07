@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase/middleware", () => ({
   updateSession,
 }));
 
-import proxy from "./proxy";
+import proxy from "./middleware";
 
 describe("proxy locale normalization", () => {
   beforeEach(() => {

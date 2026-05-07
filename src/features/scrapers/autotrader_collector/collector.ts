@@ -1,11 +1,6 @@
 import crypto from "node:crypto";
 
 import * as cheerio from "cheerio";
-import { fetchAuctionData, type ScrapedAuctionData } from "@/features/scrapers/common/scraper";
-import {
-  createTerminalStatusClient,
-  fetchTerminalStatusSourceIds,
-} from "@/features/scrapers/common/terminalStatus";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
 import { discoverListingUrls, fetchAutoTraderGatewayPage } from "./discover";
@@ -143,7 +138,7 @@ export async function runCollector(
     endedWindowDays: overrides.endedWindowDays ?? 90,
     dateFrom: overrides.dateFrom,
     dateTo: overrides.dateTo,
-    maxActivePagesPerSource: overrides.maxActivePagesPerSource ?? 5,
+    maxActivePagesPerSource: overrides.maxActivePagesPerSource ?? 20,
     maxEndedPagesPerSource: overrides.maxEndedPagesPerSource ?? 5,
     scrapeDetails: overrides.scrapeDetails ?? true,
     checkpointPath: overrides.checkpointPath ?? "/tmp/autotrader_collector/checkpoint.json",
@@ -179,7 +174,6 @@ async function runSource(input: {
   };
 
   const writer = input.writer;
-  const terminalStatusClient = createTerminalStatusClient();
 
   // 1) Active listings (daily mode) - scrape search results for active listings
   if (config.mode === "daily") {
@@ -222,18 +216,12 @@ async function runSource(input: {
       }
     }
 
-    const terminalActiveSourceIds = await fetchTerminalStatusSourceIds(
-      terminalStatusClient,
-      normalizedActive.map(({ normalized }) => normalized.sourceId),
-    );
-
+    // AutoTrader is a classifieds platform — if a listing appears in the
+    // search results it is definitively active right now.  Skip the
+    // terminal-status gate so that previously-delisted / unsold listings
+    // get re-activated and their updated_at is refreshed.
     for (const { normalized, url } of normalizedActive) {
       try {
-        if (terminalActiveSourceIds.has(normalized.sourceId)) {
-          logEvent({ level: "info", event: "collector.skip_terminal", runId, source, url, sourceId: normalized.sourceId });
-          continue;
-        }
-
         await writer.upsertAll(normalized, meta, config.dryRun);
         counts.written++;
       } catch (err) {
