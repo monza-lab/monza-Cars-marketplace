@@ -375,7 +375,8 @@ function aggregateFamilies(
   rates: Record<string, number>,
   dbSeriesCounts?: Record<string, number>,
   selectedRegion?: string | null,
-  liveRegionTotals?: LiveRegionTotals
+  liveRegionTotals?: LiveRegionTotals,
+  seriesCountsByRegion?: SeriesCountsByRegion
 ): PorscheFamily[] {
   const familyMap = new Map<string, Auction[]>()
   const historicalFamilyMap = new Map<string, Auction[]>()
@@ -399,12 +400,11 @@ function aggregateFamilies(
     historicalFamilyMap.set(family, existing)
   })
 
-  // Region-aware scaling: when a region is selected, scale sample distribution
-  // by the DB regional total (same approach as DiscoverySidebar)
-  const dbTotal = selectedRegion && liveRegionTotals
-    ? (liveRegionTotals[selectedRegion as keyof LiveRegionTotals] ?? liveRegionTotals.all)
-    : liveRegionTotals?.all
-  const sampleTotal = auctions.filter(a => a.status === "ACTIVE" || a.status === "ENDING_SOON").length
+  // Resolve region key once for all families
+  const regionKey: keyof SeriesCountsByRegion =
+    selectedRegion === "US" || selectedRegion === "UK" || selectedRegion === "EU" || selectedRegion === "JP"
+      ? selectedRegion
+      : "all"
 
   const families: PorscheFamily[] = []
   familyMap.forEach((cars, familyKey) => {
@@ -424,9 +424,10 @@ function aggregateFamilies(
     const staticFallback = getModelImage("Porsche", familyKey) || getBrandImage("Porsche") || ""
 
     let carCount: number
-    if (selectedRegion && dbTotal && sampleTotal > 0) {
-      // Region selected: scale sample distribution by DB regional total
-      carCount = Math.round(cars.length / sampleTotal * dbTotal)
+    const regionCount = seriesCountsByRegion?.[regionKey]?.[familyKey]
+    if (selectedRegion && regionCount != null) {
+      // Region selected: use exact DB count for this series in this region
+      carCount = regionCount
     } else {
       // All regions: use exact DB count if available, otherwise sample count
       carCount = dbSeriesCounts?.[familyKey] ?? cars.length
@@ -468,10 +469,11 @@ function aggregateFamilies(
       const historicalMedianPrice = historicalPrices.length > 0
         ? [...historicalPrices].sort((a, b) => a - b)[Math.floor(historicalPrices.length / 2)]
         : 0
+      const stubCount = seriesCountsByRegion?.[regionKey]?.[series.id] ?? dbSeriesCounts?.[series.id] ?? 0
       families.push({
         name: series.label,
         slug,
-        carCount: dbSeriesCounts?.[series.id] ?? 0,
+        carCount: stubCount,
         priceMin: historicalPrices.length > 0 ? Math.min(...historicalPrices) : 0,
         priceMax: historicalPrices.length > 0 ? Math.max(...historicalPrices) : 0,
         medianPriceUsd: historicalMedianPrice,
@@ -2314,8 +2316,8 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
 
   // Aggregate into Porsche families for the family-based landing scroll
   const porscheFamilies = useMemo(
-    () => aggregateFamilies(filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals),
-    [filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals]
+    () => aggregateFamilies(filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals, seriesCountsByRegion),
+    [filteredAuctions, valuationAuctions, rates, seriesCounts, selectedRegion, liveRegionTotals, seriesCountsByRegion]
   )
 
   // Reset scroll position when region changes
