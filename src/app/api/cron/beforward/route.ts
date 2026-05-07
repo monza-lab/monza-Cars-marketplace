@@ -44,8 +44,8 @@ export async function GET(request: Request) {
       summaryOnly: true,     // Skip detail page fetches (biggest time saver)
       concurrency: 3,
       rateLimitMs: 4000,
-      checkpointPath: undefined, // /tmp/ is ephemeral on Vercel — no persistent checkpoints
-      outputPath: undefined,
+      checkpointPath: "/tmp/beforward_checkpoint.json",
+      outputPath: "/tmp/beforward_listings.jsonl",
       dryRun: false,
     });
 

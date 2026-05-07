@@ -62,6 +62,7 @@ export async function GET(request: Request) {
     const BATCH_SIZE = 200;
     const MAX_BATCHES = 5;
     let batches = 0;
+    let timeBudgetReached = false;
 
     while (Date.now() - startTime <= TIME_BUDGET_MS && batches < MAX_BATCHES) {
       const { data: rows, error: fetchErr } = await client
@@ -90,7 +91,7 @@ export async function GET(request: Request) {
         discoveredRows.add(row.id);
 
         if (Date.now() - startTime > TIME_BUDGET_MS) {
-          errors.push(`Time budget reached after ${enriched} enrichments`);
+          timeBudgetReached = true;
           break;
         }
 
@@ -204,12 +205,14 @@ export async function GET(request: Request) {
       errors.push("Zero output: AutoTrader enrichment discovered rows but wrote none");
     }
 
-    const success = errors.length === 0 && !noWrittenRows;
-    const successReason = noWrittenRows
-      ? "no_written_rows"
-      : success
-        ? "enrichment_progress"
-        : "errors_present";
+    const success = (errors.length === 0 && !noWrittenRows) || timeBudgetReached;
+    const successReason = timeBudgetReached
+      ? "time_budget_reached"
+      : noWrittenRows
+        ? "no_written_rows"
+        : errors.length === 0
+          ? "enrichment_progress"
+          : "errors_present";
 
     await recordScraperRun({
       scraper_name: "enrich-autotrader",
@@ -236,6 +239,7 @@ export async function GET(request: Request) {
         demoted,
         written,
         errors,
+        timeBudgetReached,
         successReason,
         duration: `${Date.now() - startTime}ms`,
       },

@@ -66,12 +66,13 @@ export async function GET(request: Request) {
     const errors: string[] = [];
     const DELAY_MS = 2_500;
     const TIME_BUDGET_MS = 270_000;
+    let timeBudgetReached = false;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
       if (Date.now() - startTime > TIME_BUDGET_MS) {
-        errors.push(`Time budget reached after ${enriched} enrichments`);
+        timeBudgetReached = true;
         break;
       }
 
@@ -158,12 +159,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const success = errors.length === 0 || timeBudgetReached;
+
     await recordScraperRun({
       scraper_name: "enrich-elferspot",
       run_id: runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered,
@@ -175,11 +178,17 @@ export async function GET(request: Request) {
     await clearScraperRunActive("enrich-elferspot");
 
     return NextResponse.json({
-      success: true,
+      success,
       runId,
       discovered,
       enriched,
       errors,
+      timeBudgetReached,
+      successReason: timeBudgetReached
+        ? "time_budget_reached"
+        : errors.length === 0
+          ? "all_rows_enriched"
+          : "errors_present",
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

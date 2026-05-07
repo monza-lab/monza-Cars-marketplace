@@ -76,12 +76,13 @@ export async function GET(request: Request) {
     const errors: string[] = [];
     const DELAY_MS = 4_000;
     const TIME_BUDGET_MS = 270_000;
+    let timeBudgetReached = false;
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
 
       if (Date.now() - startTime > TIME_BUDGET_MS) {
-        errors.push(`Time budget reached after ${enriched} enrichments`);
+        timeBudgetReached = true;
         break;
       }
 
@@ -108,7 +109,19 @@ export async function GET(request: Request) {
         }
 
         const html = await response.text();
-        const detail = parseDetailHtml(html);
+
+        let detail;
+        try {
+          detail = parseDetailHtml(html);
+        } catch (parseErr) {
+          errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
+          // Mark as attempted to avoid re-processing
+          await client
+            .from("listings")
+            .update({ trim: "", updated_at: new Date().toISOString() })
+            .eq("id", row.id);
+          continue;
+        }
 
         const update: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
@@ -152,11 +165,17 @@ export async function GET(request: Request) {
           break;
         }
 
+        // Handle fetch-level failures (network, DNS, etc)
+        if (/fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT/i.test(msg)) {
+          errors.push(`Network error for ${row.source_url}: ${msg}`);
+          continue;
+        }
+
         errors.push(`Failed ${row.source_url}: ${msg}`);
       }
     }
 
-    const success = errors.length === 0;
+    const success = errors.length === 0 || timeBudgetReached;
 
     await recordScraperRun({
       scraper_name: "enrich-beforward",
@@ -180,7 +199,12 @@ export async function GET(request: Request) {
       discovered,
       enriched,
       errors,
-      successReason: success ? "all_rows_enriched" : "errors_present",
+      timeBudgetReached,
+      successReason: timeBudgetReached
+        ? "time_budget_reached"
+        : errors.length === 0
+          ? "all_rows_enriched"
+          : "errors_present",
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {
