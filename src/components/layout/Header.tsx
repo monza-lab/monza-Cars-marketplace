@@ -18,6 +18,7 @@ import { useRegion } from "@/lib/RegionContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
@@ -449,7 +450,17 @@ export function Header() {
   const locale = useLocale();
   const { selectedRegion, setSelectedRegion } = useRegion();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isMarketLocked = /^\/(?:[a-z]{2}\/)?cars\/[^/]+\/[^/]+$/.test(pathname);
+  // True when the user is on the browse listing page. In that case clicking
+  // a region pill must also write the choice into the URL — that's what
+  // BrowseClient reads via useClassicFilters to filter its grid.
+  const isBrowsePage = /^\/(?:[a-z]{2}\/)?browse$/.test(pathname);
+  // On /browse the URL is the source of truth for the active region. Read
+  // from the query param so the active pill matches the current filter
+  // even when the user lands via direct URL like /browse?region=US.
+  const urlRegion = isBrowsePage ? searchParams.get("region") : null;
+  const effectiveRegion = isBrowsePage ? urlRegion : selectedRegion;
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
@@ -786,7 +797,7 @@ export function Header() {
             title={isMarketLocked ? "Locked to vehicle market on detail pages" : undefined}
           >
             {REGIONS.map((region, i) => {
-              const isActive = (region.id === "all" && !selectedRegion) || selectedRegion === region.id
+              const isActive = (region.id === "all" && !effectiveRegion) || effectiveRegion === region.id
               return (
                 <div key={region.id} className="flex items-center">
                   {i > 0 && (
@@ -795,7 +806,19 @@ export function Header() {
                   <button
                     onClick={() => {
                       if (isMarketLocked) return
-                      setSelectedRegion(region.id === "all" ? null : region.id)
+                      const next = region.id === "all" ? null : region.id
+                      setSelectedRegion(next)
+                      // When on /browse, also write the choice to the URL so
+                      // BrowseClient (which reads via useClassicFilters) recortea
+                      // the grid. Without this, only the global context updates
+                      // and the listings would stay unchanged.
+                      if (isBrowsePage) {
+                        const sp = new URLSearchParams(searchParams.toString())
+                        if (next) sp.set("region", next)
+                        else sp.delete("region")
+                        const qs = sp.toString()
+                        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+                      }
                     }}
                     disabled={isMarketLocked}
                     className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.1em] transition-all disabled:cursor-not-allowed disabled:opacity-100 ${

@@ -24,10 +24,6 @@ const PLATFORM_SHORT: Record<string, string> = {
   GOODING: "G&C",
 };
 
-function isLiveStatus(status: string): boolean {
-  return status === "ACTIVE" || status === "ENDING_SOON";
-}
-
 export function parseEndTimeMs(value: string): number | null {
   if (!value) return null;
   const parsed = new Date(value).getTime();
@@ -78,13 +74,18 @@ export function BrowseCard({
 }) {
   const locale = useLocale();
   const { formatPrice } = useCurrency();
-  const live = isLiveStatus(car.status);
   const platformLabel = PLATFORM_SHORT[car.platform] || car.platform;
   const image = car.images?.[0] || "/cars/placeholder.svg";
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-");
   const trans = formatTransmission(car.transmission);
   const region = regionCode(car);
   const fairUs = car.fairValueByRegion?.US;
+  // Honest-by-data: countdown only renders for active auctions (future
+  // endTime + at least one bid). 4 of 5 marketplace scrapers hardcode
+  // bidCount=0, so this combo only fires for real auctions.
+  const endMs = parseEndTimeMs(car.endTime);
+  // eslint-disable-next-line react-hooks/purity -- Date.now() is the only honest signal; React Compiler is not enabled.
+  const showCountdown = car.bidCount > 0 && endMs !== null && endMs > Date.now();
 
   return (
     <motion.div
@@ -106,13 +107,6 @@ export function BrowseCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-
-          {live && (
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-md px-2 py-0.5">
-              <span className="size-1.5 rounded-full bg-positive animate-pulse" />
-              <span className="text-[9px] font-medium text-positive tracking-wide">LIVE</span>
-            </div>
-          )}
 
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
             <MarketDeltaPill priceUsd={car.currentBid} medianUsd={null} />
@@ -156,7 +150,7 @@ export function BrowseCard({
 
           <div className="mt-2.5 pt-2 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
             <div className="flex items-center gap-2.5 min-w-0">
-              {live && parseEndTimeMs(car.endTime) !== null && (
+              {showCountdown && (
                 <span className="flex items-center gap-1 shrink-0">
                   <Clock className="size-3" />
                   {timeLeft(new Date(car.endTime), {
@@ -167,10 +161,12 @@ export function BrowseCard({
                   })}
                 </span>
               )}
-              <span className="flex items-center gap-1 shrink-0">
-                <Gavel className="size-3" />
-                {car.bidCount}
-              </span>
+              {car.bidCount > 0 && (
+                <span className="flex items-center gap-1 shrink-0">
+                  <Gavel className="size-3" />
+                  {car.bidCount}
+                </span>
+              )}
               {trans && (
                 <span className="shrink-0 font-medium text-foreground/70">{trans}</span>
               )}

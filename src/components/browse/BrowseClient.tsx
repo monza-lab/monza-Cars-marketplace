@@ -144,13 +144,21 @@ export function BrowseClient({
   // title/model ILIKE) while applyFilters uses extractSeries — they disagree
   // on edge cases like "1991 Porsche 911 Carrera 2" which is a 964 per the
   // year but whose title doesn't contain "964".
+  //
+  // EXCEPTION: `region` is re-applied on the client even when the server
+  // also filtered it. The server's filter uses `country` + `source` columns,
+  // but the UI surfaces (badge on card, applyFilters helper) read
+  // `canonicalMarket`. The two can disagree — e.g. an Elferspot listing
+  // with country="United Kingdom" passes the server filter for `region=UK`
+  // but its canonicalMarket is "EU". Re-filtering on the client by
+  // canonicalMarket guarantees what the user filters matches what they see.
   const clientFilters = useMemo(() => {
     if (!hasServerFilters) return filters;
     return {
       ...filters,
       q: serverFilters.query ? "" : filters.q,
       series: serverFilters.family ? [] : filters.series,
-      region: serverFilters.region ? [] : filters.region,
+      // region intentionally NOT cleared — see comment above.
       platform: serverFilters.platform ? [] : filters.platform,
     };
   }, [filters, hasServerFilters, serverFilters]);
@@ -271,7 +279,7 @@ export function BrowseClient({
   }, [hasMore, fetchMoreRemote]);
 
   return (
-    <div className="min-h-screen bg-background pt-14 md:pt-16">
+    <div className="min-h-screen bg-background pt-14 md:pt-20">
       <FilterBar
         filters={filters}
         matchCount={filtered.length}
