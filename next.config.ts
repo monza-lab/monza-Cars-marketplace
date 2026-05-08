@@ -70,6 +70,17 @@ const nextConfig: NextConfig = {
       "**/node_modules/rebrowser-playwright-core/**",
     ],
   },
+  webpack: (config) => {
+    config.watchOptions = {
+      ...(config.watchOptions ?? {}),
+      ignored: [
+        "**/node_modules/**",
+        "**/.worktrees/**",
+        "**/.git/**",
+      ],
+    };
+    return config;
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
