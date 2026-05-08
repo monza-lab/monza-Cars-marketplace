@@ -1658,16 +1658,26 @@ export async function fetchPaginatedListings(options: {
       };
     }
 
-    const rows = ((data ?? []) as ListingRow[]).filter((r) => !isJunkListing(r));
-    const hasMore = rows.length > pageSize;
-    const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+    const rawRows = (data ?? []) as ListingRow[];
 
-    const cars = pageRows.map((row) => rowToCollectorCar(row));
+    // Determine hasMore from RAW row count (before junk filter) so that
+    // filtering out junk listings doesn't falsely signal end-of-data.
+    const hasMore = rawRows.length > pageSize;
+    const rawPage = hasMore ? rawRows.slice(0, pageSize) : rawRows;
 
-    const lastRow = pageRows[pageRows.length - 1] ?? null;
-    const nextCursor = hasMore && lastRow
-      ? { endTime: lastRow.end_time ?? null, id: lastRow.id }
+    // Cursor is based on the last raw row of this page so the next fetch
+    // starts correctly — junk rows between cursor positions are simply
+    // skipped on the next page.
+    const lastRaw = rawPage[rawPage.length - 1] ?? null;
+    const nextCursor = hasMore && lastRaw
+      ? { endTime: lastRaw.end_time ?? null, id: lastRaw.id }
       : null;
+
+    // Junk filtering as post-processing — pages may return fewer than
+    // pageSize cars, but hasMore stays accurate so the client keeps fetching.
+    const cars = rawPage
+      .filter((r) => !isJunkListing(r))
+      .map((row) => rowToCollectorCar(row));
 
     const totalCount = includeCount && typeof count === "number" ? count : null;
     const totalLiveCount =

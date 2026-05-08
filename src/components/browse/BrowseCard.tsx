@@ -178,17 +178,19 @@ export function BrowseCard({
                 </span>
               )}
               {sourceUrl && (
-                <a
-                  href={sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(sourceUrl, "_blank", "noopener,noreferrer");
+                  }}
                   className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:border-primary/40 hover:text-primary transition-colors"
                   title={`View original listing on ${platformLabel}`}
                 >
                   View on {platformLabel}
                   <ExternalLink className="size-2.5" />
-                </a>
+                </button>
               )}
             </div>
           </div>

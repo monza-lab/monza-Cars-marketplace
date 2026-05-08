@@ -112,7 +112,10 @@ export function BrowseClient({
   }, [filters.q, filters.series, filters.region, filters.platform]);
 
   const hasServerFilters = Object.keys(serverFilters).length > 0;
-  const serverFilterKey = useMemo(() => JSON.stringify(serverFilters), [serverFilters]);
+  const serverFilterKey = useMemo(
+    () => JSON.stringify({ ...serverFilters, _status: filters.status }),
+    [serverFilters, filters.status],
+  );
   // Debounce so typing in the search box doesn't fire a request per keystroke.
   const [activeServerKey, setActiveServerKey] = useState(serverFilterKey);
   useEffect(() => {
@@ -125,7 +128,6 @@ export function BrowseClient({
   const [remoteCursor, setRemoteCursor] = useState<string | null>(null);
   const [remoteHasMore, setRemoteHasMore] = useState(true);
   const [remoteLoading, setRemoteLoading] = useState(false);
-  const seenIdsRef = useRef<Set<string>>(new Set(auctions.map((a) => a.id)));
   // Lookup: listing id → URL of the original listing on its source platform
   // (BaT, Cars and Bids, Collecting Cars, Elferspot, etc.). Populated as
   // listings stream in from /api/mock-auctions; SSR-initial cars do not
@@ -134,11 +136,17 @@ export function BrowseClient({
 
   // When a server-backed filter is active we ignore the SSR pool (it was a
   // mixed sample) and show only what the server returned for this specific
-  // filter. Otherwise keep the SSR cars so the landing view feels full.
-  const allAuctions = useMemo(
-    () => (hasServerFilters ? remoteCars : [...auctions, ...remoteCars]),
-    [hasServerFilters, auctions, remoteCars],
-  );
+  // filter. Otherwise merge SSR + streamed and deduplicate by id.
+  const allAuctions = useMemo(() => {
+    if (hasServerFilters) return remoteCars;
+    const merged = [...auctions, ...remoteCars];
+    const seen = new Set<string>();
+    return merged.filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+  }, [hasServerFilters, auctions, remoteCars]);
   // When the server has already filtered on a field, we must NOT re-filter
   // it on the client. The server uses SQL patterns (getModelPatternsForSeries,
   // title/model ILIKE) while applyFilters uses extractSeries — they disagree
@@ -168,7 +176,6 @@ export function BrowseClient({
   );
 
   const visible = filtered;
-  const hasMore = remoteHasMore && !remoteLoading;
   const activeCount = countActiveFilters(filters);
 
   const fetchPage = useCallback(
@@ -176,8 +183,12 @@ export function BrowseClient({
       const params = new URLSearchParams({
         make: "Porsche",
         pageSize: String(REMOTE_PAGE_SIZE),
-        status: "ACTIVE",
       });
+      // Map the UI status filter to the API's expected values.
+      // "all" = no status filter (fetch live + ended); "live" = active only; "sold" = ended only.
+      if (filters.status === "live") params.set("status", "ACTIVE");
+      else if (filters.status === "sold") params.set("status", "Ended");
+      // "all" → omit status param so the API returns everything
       for (const [k, v] of Object.entries(serverFilters)) params.set(k, v);
       if (cursor) params.set("cursor", cursor);
       const res = await fetch(`/api/mock-auctions?${params.toString()}`, {
@@ -191,38 +202,52 @@ export function BrowseClient({
         hasMore: boolean;
       };
     },
-    [serverFilters],
+    [serverFilters, filters.status],
   );
 
+  // Use refs to avoid recreating the callback (and the observer) on every state change.
+  const remoteCursorRef = useRef(remoteCursor);
+  remoteCursorRef.current = remoteCursor;
+  const remoteHasMoreRef = useRef(remoteHasMore);
+  remoteHasMoreRef.current = remoteHasMore;
+  const remoteLoadingRef = useRef(remoteLoading);
+  remoteLoadingRef.current = remoteLoading;
+
   const fetchMoreRemote = useCallback(async () => {
-    if (remoteLoading || !remoteHasMore) return;
+    if (remoteLoadingRef.current || !remoteHasMoreRef.current) return;
+    remoteLoadingRef.current = true;
     setRemoteLoading(true);
     try {
-      const data = await fetchPage(remoteCursor);
-      const freshApi = data.auctions.filter((c) => !seenIdsRef.current.has(c.id));
-      const fresh = freshApi.map(toDashboardAuction);
-      fresh.forEach((c) => seenIdsRef.current.add(c.id));
-      setRemoteCars((prev) => [...prev, ...fresh]);
-      setSourceUrlById((prev) => {
-        const next = new Map(prev);
-        for (const c of freshApi) {
-          if (c.sourceUrl) next.set(c.id, c.sourceUrl);
-        }
-        return next;
-      });
+      const data = await fetchPage(remoteCursorRef.current);
+      const fresh = data.auctions.map(toDashboardAuction);
+      // Append all results — deduplication against SSR pool happens in allAuctions memo
+      if (fresh.length > 0) {
+        setRemoteCars((prev) => [...prev, ...fresh]);
+        setSourceUrlById((prev) => {
+          const next = new Map(prev);
+          for (const c of data.auctions) {
+            if (c.sourceUrl) next.set(c.id, c.sourceUrl);
+          }
+          return next;
+        });
+      }
+      // Update refs immediately so the next observer trigger reads fresh values
+      remoteCursorRef.current = data.nextCursor;
+      remoteHasMoreRef.current = Boolean(data.hasMore && data.nextCursor);
       setRemoteCursor(data.nextCursor);
       setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
-    } catch {
-      setRemoteHasMore(false);
+    } catch (err) {
+      // Don't permanently give up — log and let the user retry by scrolling again.
+      console.warn("[BrowseClient] fetchMoreRemote failed, will retry on next scroll:", err);
     } finally {
+      remoteLoadingRef.current = false;
       setRemoteLoading(false);
     }
-  }, [remoteCursor, remoteHasMore, remoteLoading, fetchPage]);
+  }, [fetchPage]);
 
   // Reset and refetch whenever the (debounced) server filter set changes.
   useEffect(() => {
     const ac = new AbortController();
-    seenIdsRef.current = new Set(auctions.map((a) => a.id));
     setRemoteCars([]);
     setRemoteCursor(null);
     setRemoteHasMore(true);
@@ -235,8 +260,6 @@ export function BrowseClient({
         // When server filters are active we replace the pool — ignore SSR ids
         // so a streamed car matching the filter isn't deduped against them.
         const fresh = data.auctions.map(toDashboardAuction);
-        const ids = new Set(fresh.map((c) => c.id));
-        seenIdsRef.current = ids;
         setRemoteCars(fresh);
         setSourceUrlById((prev) => {
           const next = new Map(prev);
@@ -249,7 +272,7 @@ export function BrowseClient({
         setRemoteHasMore(Boolean(data.hasMore && data.nextCursor));
       } catch (e) {
         if ((e as { name?: string })?.name === "AbortError") return;
-        setRemoteHasMore(false);
+        console.warn("[BrowseClient] initial fetch failed, will retry on scroll:", e);
       } finally {
         if (!ac.signal.aborted) setRemoteLoading(false);
       }
@@ -258,17 +281,20 @@ export function BrowseClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeServerKey]);
 
-  // Infinite scroll: when the user nears the bottom, stream the next page from
-  // the API with whatever filters are currently active.
+  // Infinite scroll via scroll listener — reads refs directly to avoid
+  // recreating the handler on every state change.
+  const fetchMoreRef = useRef(fetchMoreRemote);
+  fetchMoreRef.current = fetchMoreRemote;
+
   useEffect(() => {
-    if (!hasMore) return;
     const handle = () => {
+      if (!remoteHasMoreRef.current || remoteLoadingRef.current) return;
       const nearBottom =
         window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 600;
-      if (nearBottom) void fetchMoreRemote();
+      if (nearBottom) void fetchMoreRef.current();
     };
-    // Fire once in case the first render already leaves the user near the bottom.
+    // Fire once in case the page is already short enough.
     handle();
     window.addEventListener("scroll", handle, { passive: true });
     window.addEventListener("resize", handle);
@@ -276,7 +302,7 @@ export function BrowseClient({
       window.removeEventListener("scroll", handle);
       window.removeEventListener("resize", handle);
     };
-  }, [hasMore, fetchMoreRemote]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background pt-14 md:pt-20">
@@ -332,31 +358,29 @@ export function BrowseClient({
           <>
             <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((car, i) => (
-                <BrowseCard
+                <div
                   key={car.id}
-                  car={car}
-                  index={i}
-                  sourceUrl={sourceUrlById.get(car.id) ?? null}
-                />
+                  style={{ contentVisibility: "auto", containIntrinsicSize: "auto 420px" }}
+                >
+                  <BrowseCard
+                    car={car}
+                    index={i}
+                    sourceUrl={sourceUrlById.get(car.id) ?? null}
+                  />
+                </div>
               ))}
             </div>
 
-            {hasMore && (
+            {/* Loading indicator */}
+            {remoteHasMore && (
               <div className="mt-8 md:mt-10 flex justify-center items-center min-h-[4rem]">
-                {remoteLoading ? (
+                {remoteLoading && (
                   <div className="size-6 rounded-full border-2 border-border border-t-primary animate-spin" />
-                ) : (
-                  <button
-                    onClick={() => void fetchMoreRemote()}
-                    className="px-6 py-2.5 rounded-full border border-border text-[12px] font-medium text-foreground hover:border-primary/40 hover:bg-foreground/[0.03] transition-colors"
-                  >
-                    Load more reports
-                  </button>
                 )}
               </div>
             )}
 
-            {!hasMore && visible.length > 0 && (
+            {!remoteHasMore && visible.length > 0 && (
               <div className="mt-10 text-center">
                 <p className="text-[11px] text-muted-foreground tracking-wider">
                   You&apos;ve reached the end · {visible.length.toLocaleString()} reports shown

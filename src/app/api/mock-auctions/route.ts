@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // Determine DB-level status filter
     const dbStatus: "active" | "all" =
-      status === "Ended" || status === "ENDED" ? "all" : "active";
+      !status || status === "all" || status === "Ended" || status === "ENDED" ? "all" : "active";
 
     // Resolve family to DB-level model patterns
     const resolvedFamily = resolveSeriesIdForFamily(requestedMake ?? "Porsche", family) ?? family;
