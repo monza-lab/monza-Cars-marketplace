@@ -26,6 +26,23 @@ from scrapling.fetchers import StealthyFetcher
 
 # ── Fetch ──────────────────────────────────────────────────────────────
 
+CF_BLOCK_MARKERS = [
+    "security service to protect",
+    "just a moment",
+    "checking your browser",
+    "verify you are human",
+    "enable javascript and cookies",
+    "attention required",
+    "cloudflare",
+]
+
+
+def _is_cf_blocked(page) -> bool:
+    """Detect Cloudflare challenge/block pages."""
+    text = _get_text(page).lower()
+    return any(m in text for m in CF_BLOCK_MARKERS) and len(text) < 2000
+
+
 def fetch_page(url: str, timeout_ms: int = 30000):
     """Fetch a fully-rendered page using StealthyFetcher."""
     StealthyFetcher.adaptive = True
@@ -36,6 +53,9 @@ def fetch_page(url: str, timeout_ms: int = 30000):
 
 def parse_search(url: str) -> dict:
     page = fetch_page(url, timeout_ms=30000)
+
+    if _is_cf_blocked(page):
+        return {"ok": False, "mode": "search", "error": "cloudflare_blocked", "url": url}
 
     listings = []
 
@@ -121,6 +141,10 @@ def parse_search(url: str) -> dict:
 
 def parse_detail(url: str) -> dict:
     page = fetch_page(url, timeout_ms=30000)
+
+    if _is_cf_blocked(page):
+        return {"ok": False, "mode": "detail", "error": "cloudflare_blocked", "url": url}
+
     body_text = _get_text(page)
 
     vehicle: dict = {
