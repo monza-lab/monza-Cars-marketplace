@@ -1,24 +1,25 @@
 import { StyleSheet } from "@react-pdf/renderer"
 
-// Monza Haus brand palette — dark-mode PDF per brand manual v2.0.
-// Exact hex values verified against monzahaus-brand-manual v2.0 (see
-// skills/monzahaus-branding). NEVER use pure white, blue-black, or red.
+// MonzaHaus brand palette — dark-mode PDF per brand manual v2.1.
+// PDF is always dark editorial (rule: brand artifact, not theme-responsive).
+// Exact hex values verified against monzahaus-brand-manual v2.1 (Heritage
+// Lavender). NEVER use pure white, blue-black, or red.
 export const PDF_COLORS = {
-  // Base surface
-  background: "#0E0A0C",        // Obsidian
-  card: "#161113",              // Obsidian Card
-  cardWarm: "#1A1315",          // slight warm tint for inner surfaces
+  // Base surface — Noir (v2.1)
+  background: "#0E0E0D",        // Noir
+  card: "#161114",              // Noir Card
+  cardWarm: "#1A1418",          // slight warm tint for inner surfaces
   // Text
   foreground: "#E8E2DE",        // Bone / Warm White
-  muted: "#6B6365",             // Cool Gray
+  muted: "#6B6365",             // Stone Dark
   mutedStrong: "#8B8386",       // raised-prominence muted for sub-labels
-  // Accent
-  primary: "#D4738A",           // Salon Rose (dark-mode accent)
-  primaryDeep: "#7A2E4A",       // Salon Burgundy (pressed / gradient stop)
-  primaryForeground: "#FFFFFF",
-  // Financial indicators (brand: NEVER red for negative)
+  // Accent — Heritage Lavender (v2.1)
+  primary: "#E1CCE5",           // Heritage Lavender (vivid on noir)
+  primaryDeep: "#D6BEDC",       // Lavender Deep (pressed / gradient stop)
+  primaryForeground: "#3F2A47", // Lavender Ink Deep (text on lavender — per brand)
+  // Financial indicators (brand: NEVER red for negative — orange instead)
   positive: "#34D399",          // Emerald Mint
-  negative: "#FB923C",          // Burnt Orange (instead of red)
+  negative: "#FB923C",          // Burnt Orange
   warning: "#FBBF24",           // Amber
   // Structural
   border: "#2A2226",            // Dark Border
