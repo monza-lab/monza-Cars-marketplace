@@ -34,7 +34,11 @@ import type { Viewport } from "next";
 const BASE_URL = getSiteUrl();
 
 export const viewport: Viewport = {
-  themeColor: "#FDFBF9",
+  // Per v2.1 brand: Warm Cream chrome on light, Noir chrome on dark.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FDFBF9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E0E0D" },
+  ],
   colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
