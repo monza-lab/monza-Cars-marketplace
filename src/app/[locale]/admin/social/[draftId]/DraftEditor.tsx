@@ -21,14 +21,14 @@ export function DraftEditor({ draft }: { draft: SocialPostDraft }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       {slides.length === 0 ? (
         <div style={{
-          padding: 32, background: "#161113", border: "1px dashed #2A2226", borderRadius: 10,
+          padding: 32, background: "#161114", border: "1px dashed #2A2226", borderRadius: 10,
           textAlign: "center", color: "#9A8E88",
         }}>
           <div style={{ marginBottom: 16 }}>Slides not generated yet.</div>
           <button
             disabled={isPending}
             onClick={() => run(() => triggerGenerate(draft.id))}
-            style={{ padding: "12px 24px", background: "#7A2E4A", color: "white", border: "none", borderRadius: 6, cursor: "pointer" }}
+            style={{ padding: "12px 24px", background: "#D6BEDC", color: "white", border: "none", borderRadius: 6, cursor: "pointer" }}
           >
             {isPending ? "Generating..." : "Generate carousel"}
           </button>
@@ -57,7 +57,7 @@ export function DraftEditor({ draft }: { draft: SocialPostDraft }) {
           onChange={(e) => setCaption(e.target.value)}
           rows={6}
           style={{
-            width: "100%", padding: 16, background: "#161113", border: "1px solid #2A2226",
+            width: "100%", padding: 16, background: "#161114", border: "1px solid #2A2226",
             color: "#E8E2DE", borderRadius: 6, fontFamily: "Karla, sans-serif", fontSize: 14, lineHeight: 1.6,
           }}
         />
@@ -72,7 +72,7 @@ export function DraftEditor({ draft }: { draft: SocialPostDraft }) {
         <button
           disabled={isPending || slides.length === 0 || !caption.trim()}
           onClick={() => run(() => triggerPublish(draft.id, caption))}
-          style={{ padding: "12px 24px", background: "#34D399", color: "#0E0A0C", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 500 }}
+          style={{ padding: "12px 24px", background: "#34D399", color: "#0E0E0D", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 500 }}
         >
           {isPending ? "Publishing..." : "Publish to IG + FB"}
         </button>
@@ -96,7 +96,7 @@ export function DraftEditor({ draft }: { draft: SocialPostDraft }) {
       </div>
 
       {message && (
-        <div style={{ padding: 12, background: "#161113", border: "1px solid #2A2226", borderRadius: 6, fontSize: 12, color: "#9A8E88" }}>
+        <div style={{ padding: 12, background: "#161114", border: "1px solid #2A2226", borderRadius: 6, fontSize: 12, color: "#9A8E88" }}>
           {message}
         </div>
       )}

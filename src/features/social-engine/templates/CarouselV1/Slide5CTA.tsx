@@ -22,7 +22,7 @@ export function Slide5CTA({ data }: { data: SlideData }) {
         <div>
           <div style={{
             fontSize: 22, fontWeight: 500, letterSpacing: "0.3em",
-            textTransform: "uppercase", color: "#D4738A",
+            textTransform: "uppercase", color: "#E1CCE5",
           }}>
             Visítanos
           </div>
@@ -34,7 +34,7 @@ export function Slide5CTA({ data }: { data: SlideData }) {
           </div>
           <div style={{
             fontFamily: "Geist Mono, monospace", fontSize: 28,
-            color: "#D4738A", marginTop: 48, letterSpacing: "0.05em",
+            color: "#E1CCE5", marginTop: 48, letterSpacing: "0.05em",
           }}>
             monzahaus.com
           </div>

@@ -6,6 +6,13 @@ export const alt = "MonzaHaus — Investment-Grade Automotive Assets"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
+// Heritage Lavender palette (v2.1)
+const NOIR = "#0E0E0D"
+const NOIR_DEEPER = "#161114"
+const HERITAGE_LAVENDER = "#E1CCE5"
+const LAVENDER_DEEP = "#D6BEDC"
+const BONE = "#E8E2DE"
+
 export default function OGImage() {
   return new ImageResponse(
     (
@@ -17,12 +24,12 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #0E0A0C 0%, #1a1018 40%, #0E0A0C 100%)",
-          fontFamily: "system-ui, serif",
+          background: `linear-gradient(145deg, ${NOIR} 0%, ${NOIR_DEEPER} 50%, ${NOIR} 100%)`,
+          fontFamily: "system-ui, sans-serif",
           position: "relative",
         }}
       >
-        {/* Salon rose glow */}
+        {/* Heritage Lavender radial glow */}
         <div
           style={{
             position: "absolute",
@@ -32,7 +39,7 @@ export default function OGImage() {
             width: "700px",
             height: "500px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(212,115,138,0.10) 0%, transparent 65%)",
+            background: `radial-gradient(circle, rgba(225, 204, 229, 0.16) 0%, transparent 65%)`,
           }}
         />
 
@@ -44,7 +51,7 @@ export default function OGImage() {
             left: 0,
             right: 0,
             height: "3px",
-            background: "linear-gradient(90deg, transparent 10%, #D4738A 50%, transparent 90%)",
+            background: `linear-gradient(90deg, transparent 10%, ${HERITAGE_LAVENDER} 50%, transparent 90%)`,
             opacity: 0.7,
           }}
         />
@@ -77,8 +84,8 @@ export default function OGImage() {
               gap: "6px",
               padding: "5px 14px",
               borderRadius: "100px",
-              background: "rgba(212,115,138,0.10)",
-              border: "1px solid rgba(212,115,138,0.20)",
+              background: "rgba(225,204,229,0.10)",
+              border: "1px solid rgba(225,204,229,0.20)",
             }}
           >
             <div
@@ -86,14 +93,14 @@ export default function OGImage() {
                 width: "5px",
                 height: "5px",
                 borderRadius: "50%",
-                background: "#D4738A",
+                background: HERITAGE_LAVENDER,
               }}
             />
             <span
               style={{
                 fontSize: "10px",
                 fontWeight: 600,
-                color: "#D4738A",
+                color: HERITAGE_LAVENDER,
                 letterSpacing: "3px",
                 textTransform: "uppercase",
               }}
@@ -103,33 +110,59 @@ export default function OGImage() {
           </div>
         </div>
 
-        {/* Logo text */}
+        {/* Wordmark — M + helmet + NZAHAUS */}
         <div
           style={{
             display: "flex",
-            alignItems: "baseline",
-            marginBottom: "20px",
+            alignItems: "center",
+            marginBottom: "24px",
+            gap: "8px",
           }}
         >
           <span
             style={{
-              fontSize: "82px",
-              fontWeight: 300,
-              color: "#E8E2DE",
-              letterSpacing: "-2px",
+              fontSize: "92px",
+              fontWeight: 700,
+              color: BONE,
+              letterSpacing: "2px",
+              textTransform: "uppercase",
             }}
           >
-            Monza
+            M
           </span>
+          {/* Helmet — substitutes the "O" in MONZAHAUS */}
+          <svg
+            width={72}
+            height={73}
+            viewBox="0 0 120 121"
+            style={{ marginBottom: "8px" }}
+          >
+            <path
+              d="M60 3C36 3 12 18 7 40C2 57 2 72 6 86L15 103C23 113 38 118 57 118L60 118L63 118C82 118 97 113 105 103L114 86C118 72 118 57 113 40C108 18 84 3 60 3Z"
+              fill={HERITAGE_LAVENDER}
+            />
+            <path
+              d="M14 46C14 36 33 30 60 30C87 30 106 36 106 46L106 68C105 77 86 83 60 83C34 83 15 77 14 68Z"
+              fill={NOIR}
+            />
+            <path
+              d="M26 90Q60 86 94 90"
+              stroke={NOIR}
+              strokeWidth={3}
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
           <span
             style={{
-              fontSize: "82px",
-              fontWeight: 300,
-              color: "#D4738A",
-              letterSpacing: "-2px",
+              fontSize: "92px",
+              fontWeight: 700,
+              color: BONE,
+              letterSpacing: "2px",
+              textTransform: "uppercase",
             }}
           >
-            Haus
+            NZAHAUS
           </span>
         </div>
 
@@ -138,7 +171,7 @@ export default function OGImage() {
           style={{
             width: "48px",
             height: "1px",
-            background: "rgba(212,115,138,0.4)",
+            background: `${LAVENDER_DEEP}66`, // ~40% alpha
             marginBottom: "20px",
           }}
         />
@@ -148,7 +181,7 @@ export default function OGImage() {
           style={{
             fontSize: "16px",
             fontWeight: 500,
-            color: "rgba(232,226,222,0.50)",
+            color: "rgba(232,226,222,0.55)",
             letterSpacing: "6px",
             textTransform: "uppercase",
           }}
@@ -164,7 +197,7 @@ export default function OGImage() {
             left: 0,
             right: 0,
             height: "3px",
-            background: "linear-gradient(90deg, transparent 10%, #D4738A 50%, transparent 90%)",
+            background: `linear-gradient(90deg, transparent 10%, ${HERITAGE_LAVENDER} 50%, transparent 90%)`,
             opacity: 0.4,
           }}
         />

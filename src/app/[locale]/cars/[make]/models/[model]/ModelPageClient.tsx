@@ -43,13 +43,13 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; shortLabel: string; col
   BRING_A_TRAILER: {
     label: "Bring a Trailer",
     shortLabel: "BaT",
-    color: "#D4738A",
+    color: "#E1CCE5",
     market: "US"
   },
   CARS_AND_BIDS: {
     label: "Cars & Bids",
     shortLabel: "C&B",
-    color: "#c084fc",
+    color: "#B89FBE",
     market: "US"
   },
   COLLECTING_CARS: {

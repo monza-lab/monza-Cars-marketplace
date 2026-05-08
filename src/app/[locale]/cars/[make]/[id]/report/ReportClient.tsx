@@ -348,32 +348,32 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       // ─── Theme-aware color palette ───
       const isDark = resolvedTheme === "dark"
       const pal = isDark ? {
-        bg: [14, 10, 12] as const,           // #0E0A0C
+        bg: [14, 14, 13] as const,           // #0E0E0D — Noir (v2.1)
         fg: [232, 226, 222] as const,        // #E8E2DE
-        card: [22, 17, 19] as const,         // #161113
-        primary: [212, 115, 138] as const,   // #D4738A
+        card: [22, 17, 20] as const,         // #161114 — Noir Card (v2.1)
+        primary: [225, 204, 229] as const,   // #E1CCE5 — Heritage Lavender (v2.1)
         muted: [107, 99, 101] as const,      // #6B6365
         dim: [80, 72, 75] as const,
         border: [42, 34, 38] as const,       // #2A2226
         barBg: [35, 28, 32] as const,
         barFill: [60, 52, 56] as const,
-        onPrimary: [14, 10, 12] as const,
+        onPrimary: [14, 14, 13] as const,    // Noir text on lavender
         letterBody: [180, 175, 172] as const,
         closingText: [160, 155, 152] as const,
         footerDim: [100, 94, 96] as const,
         greenTintBg: [15, 25, 20] as const,
         redTintBg: [30, 18, 18] as const,
       } : {
-        bg: [253, 251, 249] as const,        // #FDFBF9
-        fg: [42, 35, 32] as const,           // #2A2320
-        card: [245, 242, 238] as const,      // #F5F2EE
-        primary: [122, 46, 74] as const,     // #7A2E4A
-        muted: [154, 142, 136] as const,     // #9A8E88
+        bg: [253, 251, 249] as const,        // #FDFBF9 — Warm Cream
+        fg: [20, 20, 19] as const,           // #141413 — Ink (v2.1)
+        card: [245, 242, 238] as const,      // #F5F2EE — Soft Beige
+        primary: [214, 190, 220] as const,   // #D6BEDC — Lavender Deep (v2.1)
+        muted: [154, 142, 136] as const,     // #9A8E88 — Stone
         dim: [185, 175, 168] as const,
         border: [232, 226, 220] as const,    // #E8E2DC
         barBg: [238, 233, 228] as const,
-        barFill: [210, 202, 196] as const,
-        onPrimary: [253, 251, 249] as const,
+        barFill: [214, 190, 220] as const,   // Lavender Deep tint for filled bar
+        onPrimary: [63, 42, 71] as const,    // #3F2A47 — Lavender Ink Deep
         letterBody: [100, 90, 85] as const,
         closingText: [120, 110, 105] as const,
         footerDim: [175, 165, 158] as const,

@@ -7,17 +7,17 @@
 :root {
   /* ── CORE COLORS ── */
   --warm-cream: #FDFBF9;        /* Light mode background */
-  --dark-espresso: #2A2320;     /* Primary text (light mode) */
-  --salon-burgundy: #7A2E4A;    /* Primary accent, CTAs */
-  --salon-rose: #D4738A;        /* Primary accent (dark mode) */
+  --dark-espresso: #141413;     /* Primary text (light mode) */
+  --salon-burgundy: #D6BEDC;    /* Primary accent, CTAs */
+  --salon-rose: #E1CCE5;        /* Primary accent (dark mode) */
   --soft-beige: #F5F2EE;        /* Card backgrounds */
   --warm-border: #E8E2DC;       /* Borders, dividers (light) */
   --museum-gray: #9A8E88;       /* Muted text, secondary labels */
   --bone: #E8E2DE;              /* Primary text (dark mode) */
 
   /* ── DARK MODE SURFACES ── */
-  --obsidian: #0E0A0C;          /* Dark mode background */
-  --obsidian-card: #161113;     /* Card background (dark) */
+  --obsidian: #0E0E0D;          /* Dark mode background */
+  --obsidian-card: #161114;     /* Card background (dark) */
   --dark-border: #2A2226;       /* Borders (dark mode) */
   --cool-gray: #6B6365;         /* Muted text (dark mode) */
 
@@ -27,21 +27,21 @@
   --warning: #FBBF24;           /* Amber — advisory only */
 
   /* ── CHART PALETTE ── */
-  --chart-burgundy: #7A2E4A;
-  --chart-rose: #D4738A;
-  --chart-purple: #c084fc;
+  --chart-burgundy: #D6BEDC;
+  --chart-rose: #E1CCE5;
+  --chart-purple: #B89FBE;
   --chart-cyan: #67e8f9;
   --chart-positive: #34D399;
   --chart-negative: #FB923C;
 
   /* ── LIGHT THEME (default) ── */
   --bg: #FDFBF9;
-  --fg: #2A2320;
+  --fg: #141413;
   --card: #F5F2EE;
-  --primary: #7A2E4A;
+  --primary: #D6BEDC;
   --primary-fg: #FDFBF9;
-  --primary-hover: #5C1A33;
-  --rose: #D4738A;
+  --primary-hover: #5D3F66;
+  --rose: #E1CCE5;
   --muted: #9A8E88;
   --border: #E8E2DC;
 
@@ -101,15 +101,15 @@
   --transition-shimmer: 8s ease-in-out infinite;
 
   /* ── EFFECTS ── */
-  --salon-glow-light: rgba(92, 26, 51, 0.04);
-  --salon-glow-dark: rgba(212, 115, 138, 0.12);
+  --salon-glow-light: rgba(184, 159, 190, 0.18);
+  --salon-glow-dark: rgba(225, 204, 229, 0.16);
 
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-blur: blur(24px) saturate(1.3);
   --glass-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 8px 40px rgba(0,0,0,0.08);
 
-  --selection-color: rgba(122, 46, 74, 0.2);
-  --focus-ring: rgba(122, 46, 74, 0.3);
+  --selection-color: rgba(184, 159, 190, 0.4);
+  --focus-ring: rgba(214, 190, 220, 0.4);
 
   /* ── NOISE TEXTURE ── */
   --noise-opacity-light: 0.01;
@@ -122,12 +122,12 @@
 /* ── DARK THEME ── */
 [data-theme="dark"],
 .dark {
-  --bg: #0E0A0C;
+  --bg: #0E0E0D;
   --fg: #E8E2DE;
-  --card: #161113;
-  --primary: #D4738A;
-  --primary-fg: #0E0A0C;
-  --primary-hover: #E8919F;
+  --card: #161114;
+  --primary: #E1CCE5;
+  --primary-fg: #0E0E0D;
+  --primary-hover: #F1E6F3;
   --muted: #6B6365;
   --border: #2A2226;
 }
@@ -226,11 +226,11 @@
 .btn-primary:hover {
   background: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(122, 46, 74, 0.25);
+  box-shadow: 0 4px 12px rgba(214, 190, 220, 0.4);
 }
 
 .btn-secondary {
-  background: rgba(122, 46, 74, 0.06);
+  background: rgba(214, 190, 220, 0.10);
   color: var(--dark-espresso);
   padding: 0.625rem 1.5rem;
   font-family: var(--font-sans);
@@ -243,8 +243,8 @@
 }
 
 .btn-secondary:hover {
-  background: rgba(122, 46, 74, 0.1);
-  border-color: rgba(122, 46, 74, 0.2);
+  background: rgba(214, 190, 220, 0.20);
+  border-color: rgba(184, 159, 190, 0.4);
 }
 
 .btn-ghost {
@@ -262,7 +262,7 @@
 
 .btn-ghost:hover {
   color: var(--dark-espresso);
-  background: rgba(42, 35, 32, 0.04);
+  background: rgba(20, 20, 19, 0.04);
 }
 
 /* ── GLASSMORPHISM CARD ── */
@@ -314,7 +314,7 @@
 .text-shimmer {
   background: linear-gradient(
     90deg,
-    #5C1A33, #7A2E4A, #5C1A33, #4A1228, #5C1A33
+    #5D3F66, #D6BEDC, #5D3F66, #3F2A47, #5D3F66
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -367,7 +367,7 @@
   letter-spacing: var(--tracking-label-alt);
   text-transform: uppercase;
   border-radius: var(--radius-sm);
-  background: rgba(122, 46, 74, 0.08);
+  background: rgba(214, 190, 220, 0.16);
   color: var(--primary);
 }
 

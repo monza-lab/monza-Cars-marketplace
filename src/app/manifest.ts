@@ -8,9 +8,15 @@ export default function manifest(): MetadataRoute.Manifest {
       "AI-powered collector car intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0E0A0C",
-    theme_color: "#0E0A0C",
+    background_color: "#0E0E0D",
+    theme_color: "#0E0E0D",
     icons: [
+      {
+        src: "/favicon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any",
+      },
       {
         src: "/favicon-192.png",
         sizes: "192x192",

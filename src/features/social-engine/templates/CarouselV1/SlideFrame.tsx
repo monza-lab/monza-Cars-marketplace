@@ -6,9 +6,9 @@ import type { ReactNode } from "react";
 
 export function SlideFrame({ children, theme = "dark" }: { children: ReactNode; theme?: "dark" | "light" | "rose" }) {
   const bg =
-    theme === "dark" ? "var(--obsidian, #0E0A0C)"
+    theme === "dark" ? "var(--obsidian, #0E0E0D)"
     : theme === "light" ? "var(--cream, #FDFBF9)"
-    : "linear-gradient(140deg, #5C1A33 0%, #7A2E4A 50%, #8d3a56 100%)";
+    : "linear-gradient(140deg, #5D3F66 0%, #D6BEDC 50%, #8d3a56 100%)";
   return (
     <>
       <link
@@ -23,7 +23,7 @@ export function SlideFrame({ children, theme = "dark" }: { children: ReactNode; 
           overflow: "hidden",
           background: bg,
           fontFamily: "Karla, sans-serif",
-          color: theme === "light" ? "#2A2320" : "#E8E2DE",
+          color: theme === "light" ? "#141413" : "#E8E2DE",
         }}
       >
         {children}

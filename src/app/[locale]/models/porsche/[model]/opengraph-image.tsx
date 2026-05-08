@@ -48,6 +48,6 @@ export default async function OG({ params }: Props) {
     median: summary?.latestMedian ?? null,
     yoyPct: summary?.yoyChangePct ?? null,
     sampleSize: summary?.sampleSize ?? null,
-    accent: MODEL_ACCENT[model.slug] ?? "#D4738A",
+    accent: MODEL_ACCENT[model.slug] ?? "#E1CCE5",
   });
 }

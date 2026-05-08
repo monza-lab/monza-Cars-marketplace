@@ -1,11 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0E0A0C"/>
-  <!-- Salon Glow -->
+  <!-- Noir background with rounded corners -->
+  <rect width="512" height="512" rx="96" fill="#0E0E0D"/>
+  <!-- Heritage Lavender radial glow -->
   <radialGradient id="glow" cx="50%" cy="30%" r="60%">
-    <stop offset="0%" stop-color="#D4738A" stop-opacity="0.15"/>
-    <stop offset="100%" stop-color="#D4738A" stop-opacity="0"/>
+    <stop offset="0%" stop-color="#E1CCE5" stop-opacity="0.16"/>
+    <stop offset="100%" stop-color="#E1CCE5" stop-opacity="0"/>
   </radialGradient>
   <rect width="512" height="512" rx="96" fill="url(#glow)"/>
-  <!-- "M" in Cormorant style — elegant serif M -->
-  <text x="256" y="380" text-anchor="middle" font-family="Cormorant, 'Cormorant Garamond', Georgia, serif" font-weight="600" font-size="400" letter-spacing="-8" fill="#E8E2DE">M</text>
+  <!-- Helmet, centered. Source path 120x121 — scaled and translated
+       to sit at ~70% of the canvas, centered horizontally. -->
+  <g transform="translate(96 96) scale(2.66)">
+    <!-- shell — Heritage Lavender (vivid on noir) -->
+    <path d="M60 3C36 3 12 18 7 40C2 57 2 72 6 86L15 103C23 113 38 118 57 118L60 118L63 118C82 118 97 113 105 103L114 86C118 72 118 57 113 40C108 18 84 3 60 3Z" fill="#E1CCE5"/>
+    <!-- visor -->
+    <path d="M14 46C14 36 33 30 60 30C87 30 106 36 106 46L106 68C105 77 86 83 60 83C34 83 15 77 14 68Z" fill="#0E0E0D"/>
+    <!-- strap -->
+    <path d="M26 90Q60 86 94 90" stroke="#0E0E0D" stroke-width="3" stroke-linecap="round" fill="none"/>
+  </g>
 </svg>

@@ -33,10 +33,11 @@ export function dataOgImage({
   median,
   yoyPct,
   sampleSize,
-  accent = "#D4738A",
+  accent = "#E1CCE5",
 }: DataOgImageOptions): ImageResponse {
+  // v2.1 brand: Emerald Mint for growth, Burnt Orange for risk — never red.
   const yoyColor =
-    yoyPct == null ? "rgba(232,226,222,0.5)" : yoyPct >= 0 ? "#6EE7B7" : "#FCA5A5";
+    yoyPct == null ? "rgba(232,226,222,0.5)" : yoyPct >= 0 ? "#34D399" : "#FB923C";
 
   return new ImageResponse(
     (
@@ -46,7 +47,7 @@ export function dataOgImage({
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: "linear-gradient(145deg, #0E0A0C 0%, #1a1018 40%, #0E0A0C 100%)",
+          background: "linear-gradient(145deg, #0E0E0D 0%, #161114 50%, #0E0E0D 100%)",
           fontFamily: "system-ui, serif",
           position: "relative",
           padding: "64px 72px",

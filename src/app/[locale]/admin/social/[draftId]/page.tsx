@@ -16,7 +16,7 @@ export default async function Page({ params }: { params: Promise<{ draftId: stri
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0E0A0C", color: "#E8E2DE", padding: "48px 64px",
+      minHeight: "100vh", background: "#0E0E0D", color: "#E8E2DE", padding: "48px 64px",
       fontFamily: "Karla, sans-serif",
     }}>
       <Link href="/admin/social" style={{ color: "#9A8E88", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", textDecoration: "none" }}>

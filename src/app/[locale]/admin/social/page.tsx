@@ -36,13 +36,13 @@ function DraftCard({ draft, listing }: { draft: SocialPostDraft; listing: Listin
     : null;
   return (
     <Link href={`/admin/social/${draft.id}`} style={{
-      display: "flex", gap: 16, padding: 16, background: "#161113",
+      display: "flex", gap: 16, padding: 16, background: "#161114",
       border: "1px solid #2A2226", borderRadius: 10, textDecoration: "none", color: "#E8E2DE",
     }}>
       <div style={{
         width: 120, height: 150,
         backgroundImage: cover ? `url(${cover})` : "none",
-        backgroundColor: "#0E0A0C",
+        backgroundColor: "#0E0E0D",
         backgroundSize: "cover", backgroundPosition: "center", borderRadius: 6, flexShrink: 0,
       }} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
@@ -75,7 +75,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0E0A0C", color: "#E8E2DE", padding: "48px 64px",
+      minHeight: "100vh", background: "#0E0E0D", color: "#E8E2DE", padding: "48px 64px",
       fontFamily: "Karla, sans-serif",
     }}>
       <h1 style={{ fontFamily: "Cormorant, serif", fontWeight: 400, fontSize: 44, marginBottom: 32 }}>
@@ -85,8 +85,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         {TABS.map((t) => (
           <Link key={t.key} href={`?tab=${t.key}`} style={{
             padding: "8px 16px", borderRadius: 20, textDecoration: "none",
-            background: tab === t.key ? "#7A2E4A" : "transparent",
-            border: "1px solid " + (tab === t.key ? "#7A2E4A" : "#2A2226"),
+            background: tab === t.key ? "#D6BEDC" : "transparent",
+            border: "1px solid " + (tab === t.key ? "#D6BEDC" : "#2A2226"),
             color: tab === t.key ? "white" : "#9A8E88",
             fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase",
           }}>

@@ -5,7 +5,7 @@
 
 @theme inline {
   /* ═══════════════════════════════════════════════════════════════════════════
-     SALON — Art Gallery Palette
+     SALON — Art Gallery Palette · Heritage Lavender (v2.1)
      ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Core Colors */
@@ -13,6 +13,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
+  --font-mark: var(--font-mark);
 
   /* Semantic Colors */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -66,39 +67,60 @@
   --text-5xl: 3.5rem;
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     SALON — Design Tokens
+     SALON — Design Tokens (Heritage Lavender v2.1)
      ═══════════════════════════════════════════════════════════════════════════ */
 
-  /* Backgrounds */
-  --color-salon-dark: #0E0A0C;
-  --color-salon-surface: #161113;
-  --color-salon-surface-alpha: rgba(22, 17, 19, 0.9);
+  /* Paper & Ink */
+  --color-cream: #FDFBF9;
+  --color-soft-beige: #F5F2EE;
+  --color-ink: #141413;
+  --color-stone: #9A8E88;
+
+  /* Heritage Lavender — primary accent (replaces v2.0 Burgundy) */
+  --color-lavender: #E1CCE5;
+  --color-lavender-deep: #D6BEDC;
+  --color-lavender-mid: #B89FBE;
+  --color-lavender-veil: #F1E6F3;
+  --color-lavender-ink: #5D3F66;
+  --color-lavender-ink-deep: #3F2A47;
+
+  /* Dark Surfaces — Noir (replaces v2.0 Obsidian) */
+  --color-noir: #0E0E0D;
+  --color-noir-card: #161114;
+  --color-noir-surface-alpha: rgba(22, 17, 20, 0.9);
+  --color-bone: #E8E2DE;
+  --color-stone-dark: #6B6365;
+
+  /* Backgrounds (legacy names → v2.1 values) */
+  --color-salon-dark: #0E0E0D;
+  --color-salon-surface: #161114;
+  --color-salon-surface-alpha: rgba(22, 17, 20, 0.9);
 
   /* Typography */
   --color-salon-warm-white: #E8E2DE;
   --color-salon-muted: #6B6365;
   --color-salon-muted-deep: #564E50;
 
-  /* Accent — Salon Rose */
-  --color-salon-rose: #D4738A;
+  /* Accent — semantic name kept for back-compat; value is now Heritage Lavender */
+  --color-salon-rose: #E1CCE5;
 
-  /* Financial Indicators (unchanged) */
+  /* Financial Indicators (unchanged across versions) */
   --color-positive: #34D399;
   --color-negative: #FB923C;
   --color-warning: #FBBF24;
 
-  /* Legacy aliases for compatibility */
-  /* @deprecated — use --color-salon-* directly */
-  --color-obsidian: #0E0A0C;
-  --color-obsidian-card: #161113;
-  --color-obsidian-surface: rgba(22, 17, 19, 0.9);
-  --color-bone: #E8E2DE;
+  /* Legacy aliases — values updated to v2.1; names kept so consumer
+     components don't need to change. New code should prefer the
+     --color-lavender-*, --color-noir, --color-cream tokens above. */
+  --color-obsidian: #0E0E0D;
+  --color-obsidian-card: #161114;
+  --color-obsidian-surface: rgba(22, 17, 20, 0.9);
   --color-cool-gray: #6B6365;
   --color-deep-gray: #564E50;
-  --color-monza-pink: #D4738A;
+  --color-monza-pink: #E1CCE5;
   --color-monza-cream: #E8E2DE;
-  --color-monza-dark: #0E0A0C;
-  --color-monza-surface: rgba(22, 17, 19, 0.9);
+  --color-monza-dark: #0E0E0D;
+  --color-monza-surface: rgba(22, 17, 20, 0.9);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -108,57 +130,79 @@
 :root {
   --radius: 0.625rem;
 
+  /* ─── FONT FAMILIES (4 roles · v2.1 brand manual) ─── */
+  /* --font-sans, --font-serif: provided by next/font in layout.tsx */
+  /* --font-mark: provided by next/font in layout.tsx (Saira — wordmark only) */
+
+  /* ─── HERITAGE LAVENDER PALETTE (v2.1 brand manual) ─── */
+  /* These mirror the brand manual :root and let new components reach them
+     via CSS vars without going through the semantic --primary/--accent. */
+  --lavender: #E1CCE5;          /* Heritage Lavender — base accent */
+  --lavender-deep: #D6BEDC;     /* Lavender Deep — CTAs, hover states */
+  --lavender-mid: #B89FBE;      /* Lavender Mid — gradients, secondary accent */
+  --lavender-veil: #F1E6F3;     /* Lavender Veil — ghost surfaces */
+  --lavender-ink: #5D3F66;      /* Lavender Ink — text on lavender */
+  --lavender-ink-deep: #3F2A47; /* Lavender Ink Deep — strong contrast on lavender */
+
+  /* ─── PAPER, INK, NOIR ─── */
+  --ink: #141413;               /* Ink — primary text on cream */
+  --noir: #0E0E0D;              /* Noir — dark mode background */
+  --noir-card: #161114;         /* Noir Card — dark mode card */
+  --cream: #FDFBF9;             /* Warm Cream — paper, never pure white */
+  --bone: #E8E2DE;              /* Warm White — text on noir */
+  --stone: #9A8E88;             /* Stone — muted text on cream */
+
   /* ─── BACKGROUNDS (warm cream, not cold white) ─── */
   --background: #FDFBF9;
-  --foreground: #2A2320;
+  --foreground: #141413;
   --card: #F5F2EE;
-  --card-foreground: #2A2320;
+  --card-foreground: #141413;
   --popover: rgba(253, 251, 249, 0.98);
-  --popover-foreground: #2A2320;
+  --popover-foreground: #141413;
 
-  /* ─── PRIMARY: SALON BURGUNDY ─── */
-  --primary: #7A2E4A;
-  --primary-foreground: #FDFBF9;
+  /* ─── PRIMARY: LAVENDER DEEP (v2.1) ─── */
+  --primary: #D6BEDC;
+  --primary-foreground: #3F2A47;
 
   /* ─── SECONDARY ─── */
-  --secondary: rgba(122, 46, 74, 0.06);
-  --secondary-foreground: #6B5F5A;
+  --secondary: rgba(214, 190, 220, 0.10);
+  --secondary-foreground: #5D3F66;
 
   /* ─── MUTED ─── */
-  --muted: rgba(42, 35, 32, 0.04);
+  --muted: rgba(20, 20, 19, 0.04);
   --muted-foreground: #9A8E88;
 
   /* ─── ACCENT ─── */
-  --accent: rgba(122, 46, 74, 0.07);
-  --accent-foreground: #2A2320;
+  --accent: rgba(214, 190, 220, 0.20);
+  --accent-foreground: #141413;
 
   /* ─── DESTRUCTIVE ─── */
   --destructive: #FB923C;
 
   /* ─── BORDERS & INPUTS ─── */
   --border: #E8E2DC;
-  --input: rgba(42, 35, 32, 0.05);
-  --ring: rgba(122, 46, 74, 0.3);
+  --input: rgba(20, 20, 19, 0.05);
+  --ring: rgba(214, 190, 220, 0.40);
 
-  /* ─── GLOW (light mode — subtle burgundy) ─── */
-  --glow-color: 122, 46, 74;
+  /* ─── GLOW (light mode — subtle lavender mid) ─── */
+  --glow-color: 184, 159, 190;
 
-  /* ─── CHART PALETTE ─── */
-  --chart-1: #7A2E4A;
+  /* ─── CHART PALETTE (v2.1) ─── */
+  --chart-1: #D6BEDC;
   --chart-2: #34D399;
   --chart-3: #FB923C;
-  --chart-4: #c084fc;
+  --chart-4: #B89FBE;
   --chart-5: #67e8f9;
 
   /* ─── SIDEBAR ─── */
   --sidebar: #F5F2EE;
-  --sidebar-foreground: #2A2320;
-  --sidebar-primary: #7A2E4A;
-  --sidebar-primary-foreground: #FDFBF9;
-  --sidebar-accent: rgba(122, 46, 74, 0.07);
-  --sidebar-accent-foreground: #2A2320;
+  --sidebar-foreground: #141413;
+  --sidebar-primary: #D6BEDC;
+  --sidebar-primary-foreground: #3F2A47;
+  --sidebar-accent: rgba(214, 190, 220, 0.20);
+  --sidebar-accent-foreground: #141413;
   --sidebar-border: #E8E2DC;
-  --sidebar-ring: rgba(122, 46, 74, 0.3);
+  --sidebar-ring: rgba(214, 190, 220, 0.40);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -166,28 +210,28 @@
    ═════════════════════════════════════════════════════════════════════════════ */
 
 .dark {
-  /* ─── BACKGROUNDS (Warm Burgundy-Black) ─── */
-  --background: #0E0A0C;
+  /* ─── BACKGROUNDS (Noir + Heritage Lavender) ─── */
+  --background: #0E0E0D;
   --foreground: #E8E2DE;
-  --card: #161113;
+  --card: #161114;
   --card-foreground: #E8E2DE;
-  --popover: rgba(14, 10, 12, 0.98);
+  --popover: rgba(14, 14, 13, 0.98);
   --popover-foreground: #E8E2DE;
 
-  /* ─── PRIMARY: SALON ROSE ─── */
-  --primary: #D4738A;
-  --primary-foreground: #0E0A0C;
+  /* ─── PRIMARY: HERITAGE LAVENDER (vivid on noir, v2.1) ─── */
+  --primary: #E1CCE5;
+  --primary-foreground: #0E0E0D;
 
   /* ─── SECONDARY ─── */
-  --secondary: rgba(212, 115, 138, 0.08);
-  --secondary-foreground: #6B6365;
+  --secondary: rgba(225, 204, 229, 0.10);
+  --secondary-foreground: #B89FBE;
 
   /* ─── MUTED ─── */
   --muted: rgba(232, 226, 222, 0.04);
   --muted-foreground: #6B6365;
 
   /* ─── ACCENT ─── */
-  --accent: rgba(212, 115, 138, 0.10);
+  --accent: rgba(225, 204, 229, 0.16);
   --accent-foreground: #E8E2DE;
 
   /* ─── DESTRUCTIVE ─── */
@@ -196,27 +240,27 @@
   /* ─── BORDERS ─── */
   --border: #2A2226;
   --input: rgba(255, 255, 255, 0.04);
-  --ring: rgba(212, 115, 138, 0.3);
+  --ring: rgba(225, 204, 229, 0.30);
 
-  /* ─── CHARTS ─── */
-  --chart-1: #D4738A;
+  /* ─── CHARTS (v2.1) ─── */
+  --chart-1: #E1CCE5;
   --chart-2: #34D399;
   --chart-3: #FB923C;
-  --chart-4: #c084fc;
+  --chart-4: #B89FBE;
   --chart-5: #67e8f9;
 
-  /* ─── GLOW (dark mode — rose) ─── */
-  --glow-color: 212, 115, 138;
+  /* ─── GLOW (dark mode — Heritage Lavender) ─── */
+  --glow-color: 225, 204, 229;
 
   /* ─── SIDEBAR ─── */
   --sidebar: #0B0809;
   --sidebar-foreground: #E8E2DE;
-  --sidebar-primary: #D4738A;
-  --sidebar-primary-foreground: #0E0A0C;
-  --sidebar-accent: rgba(212, 115, 138, 0.08);
+  --sidebar-primary: #E1CCE5;
+  --sidebar-primary-foreground: #0E0E0D;
+  --sidebar-accent: rgba(225, 204, 229, 0.10);
   --sidebar-accent-foreground: #E8E2DE;
   --sidebar-border: #2A2226;
-  --sidebar-ring: rgba(212, 115, 138, 0.3);
+  --sidebar-ring: rgba(225, 204, 229, 0.30);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -267,22 +311,22 @@
     }
   }
 
-  /* Selection highlight */
+  /* Selection highlight (v2.1 — Lavender Mid on cream, Heritage on noir) */
   ::selection {
-    background: rgba(92, 26, 51, 0.2);
-    color: var(--foreground);
+    background: rgba(184, 159, 190, 0.40);
+    color: var(--lavender-ink-deep);
   }
   .dark ::selection {
-    background: rgba(212, 115, 138, 0.3);
+    background: rgba(225, 204, 229, 0.30);
     color: var(--foreground);
   }
 
   ::-moz-selection {
-    background: rgba(92, 26, 51, 0.2);
-    color: var(--foreground);
+    background: rgba(184, 159, 190, 0.40);
+    color: var(--lavender-ink-deep);
   }
   .dark ::-moz-selection {
-    background: rgba(212, 115, 138, 0.3);
+    background: rgba(225, 204, 229, 0.30);
     color: var(--foreground);
   }
 
@@ -297,27 +341,27 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(92, 26, 51, 0.15);
+    background: rgba(184, 159, 190, 0.20);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(92, 26, 51, 0.3);
+    background: rgba(184, 159, 190, 0.40);
   }
   .dark ::-webkit-scrollbar-thumb {
-    background: rgba(212, 115, 138, 0.15);
+    background: rgba(225, 204, 229, 0.16);
   }
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 115, 138, 0.3);
+    background: rgba(225, 204, 229, 0.30);
   }
 
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(92, 26, 51, 0.15) transparent;
+    scrollbar-color: rgba(184, 159, 190, 0.20) transparent;
   }
   .dark * {
-    scrollbar-color: rgba(212, 115, 138, 0.15) transparent;
+    scrollbar-color: rgba(225, 204, 229, 0.16) transparent;
   }
 }
 
@@ -396,7 +440,7 @@
       0 8px 40px rgba(0, 0, 0, 0.08);
   }
   .dark .glass-card {
-    background: rgba(22, 17, 19, 0.6);
+    background: rgba(22, 17, 20, 0.6);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.02),
       0 8px 40px rgba(0, 0, 0, 0.6);
@@ -416,7 +460,7 @@
     height: 50%;
     background: radial-gradient(
       80% 50% at 50% 0%,
-      rgba(92, 26, 51, 0.04) 0%,
+      rgba(184, 159, 190, 0.18) 0%,
       transparent 60%
     );
     pointer-events: none;
@@ -425,7 +469,7 @@
   .dark .monza-glow::before {
     background: radial-gradient(
       80% 50% at 50% 0%,
-      rgba(212, 115, 138, 0.12) 0%,
+      rgba(225, 204, 229, 0.16) 0%,
       transparent 60%
     );
   }
@@ -469,7 +513,7 @@
     height: 200px;
     background: radial-gradient(
       50% 100% at 50% 0%,
-      rgba(92, 26, 51, 0.03) 0%,
+      rgba(184, 159, 190, 0.10) 0%,
       transparent 100%
     );
     pointer-events: none;
@@ -477,7 +521,7 @@
   .dark .monza-section-glow::before {
     background: radial-gradient(
       50% 100% at 50% 0%,
-      rgba(212, 115, 138, 0.06) 0%,
+      rgba(225, 204, 229, 0.10) 0%,
       transparent 100%
     );
   }
