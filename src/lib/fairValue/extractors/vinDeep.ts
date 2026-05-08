@@ -6,6 +6,7 @@ export interface VinDeepInput {
   year: number
   model: string
   seriesId: string | null
+  make?: string
 }
 
 export interface VinIntelligenceResult {
@@ -20,18 +21,22 @@ export interface VinIntelligenceResult {
 }
 
 export function extractVinIntelligence(input: VinDeepInput): VinIntelligenceResult {
-  if (!input.vin) {
-    return {
-      decoded: false,
-      rawDecode: null,
-      plant: null,
-      bodyHint: null,
-      modelYearFromVin: null,
-      yearMatch: true,
-      warnings: [],
-      signals: [],
-    }
+  const emptyResult: VinIntelligenceResult = {
+    decoded: false,
+    rawDecode: null,
+    plant: null,
+    bodyHint: null,
+    modelYearFromVin: null,
+    yearMatch: true,
+    warnings: [],
+    signals: [],
   }
+
+  if (!input.vin) return emptyResult
+
+  // VIN decoder currently only supports Porsche — skip for other makes
+  const make = input.make ?? "Porsche"
+  if (make !== "Porsche") return emptyResult
 
   const decode = decodePorscheVin(input.vin)
   const signals: DetectedSignal[] = []

@@ -340,10 +340,15 @@ Be specific to THIS exact vehicle. Weight verified sales (Tier 1) more heavily t
 // -------------------------------------------------------------------------
 // Signal Extraction Prompt (Haus Report pipeline — see specs/2026-04-19-*)
 // -------------------------------------------------------------------------
-export const SIGNAL_EXTRACTION_SYSTEM_PROMPT = `You are a deterministic Porsche fact extractor. You extract ONLY facts explicitly (or near-explicitly) stated in listing descriptions. You NEVER infer, NEVER guess, NEVER use marketing adjectives (like "beautiful", "stunning") as facts. If a field is not stated in the text, return null (or false for booleans). Return ONLY valid JSON matching the requested schema. No prose, no markdown.`
+export function buildSignalExtractionSystemPrompt(make: string): string {
+  return `You are a deterministic ${make} fact extractor. You extract ONLY facts explicitly (or near-explicitly) stated in listing descriptions. You NEVER infer, NEVER guess, NEVER use marketing adjectives (like "beautiful", "stunning") as facts. If a field is not stated in the text, return null (or false for booleans). Return ONLY valid JSON matching the requested schema. No prose, no markdown.`
+}
 
-export function buildSignalExtractionPrompt(description: string): string {
-  return `Extract structured facts from this Porsche listing description. Return ONLY valid JSON matching this exact schema:
+/** @deprecated Use buildSignalExtractionSystemPrompt(make) instead */
+export const SIGNAL_EXTRACTION_SYSTEM_PROMPT = buildSignalExtractionSystemPrompt("Porsche")
+
+export function buildSignalExtractionPrompt(description: string, make = "Porsche"): string {
+  return `Extract structured facts from this ${make} listing description. Return ONLY valid JSON matching this exact schema:
 
 {
   "options": {
@@ -417,7 +422,8 @@ ${description}
 // Investment Narrative Prompt (Haus Report — "Investment Story")
 // -------------------------------------------------------------------------
 
-export const NARRATIVE_SYSTEM_PROMPT = `You are Monza Lab AI, a collector car investment analyst writing a concise, authoritative analysis for a buyer considering a specific Porsche. Write in the style of a Hagerty Insider article — factual, opinionated, and specific to this exact car.
+export function buildNarrativeSystemPrompt(make: string): string {
+  return `You are Monza Lab AI, a collector car investment analyst writing a concise, authoritative analysis for a buyer considering a specific ${make}. Write in the style of a Hagerty Insider article — factual, opinionated, and specific to this exact car.
 
 RULES:
 - Be specific to THIS car — reference the exact color, mileage, options, year
@@ -426,6 +432,10 @@ RULES:
 - If data is limited, say so — don't fabricate
 - 2-3 paragraphs, 150-250 words total
 - End with a clear buy/watch/walk recommendation with reasoning`
+}
+
+/** @deprecated Use buildNarrativeSystemPrompt(make) instead */
+export const NARRATIVE_SYSTEM_PROMPT = buildNarrativeSystemPrompt("Porsche")
 
 export function buildNarrativePrompt(vehicle: {
   title: string
@@ -448,7 +458,7 @@ export function buildNarrativePrompt(vehicle: {
     ? (((vehicle.price - vehicle.fairValueMid) / vehicle.fairValueMid) * 100).toFixed(1)
     : "N/A"
 
-  return `Write an investment narrative for this specific Porsche.
+  return `Write an investment narrative for this specific ${vehicle.make}.
 
 VEHICLE:
 - ${vehicle.title}

@@ -1,6 +1,6 @@
 import { generateText } from "@/lib/ai/gemini"
 import {
-  NARRATIVE_SYSTEM_PROMPT,
+  buildNarrativeSystemPrompt,
   buildNarrativePrompt,
 } from "@/lib/ai/prompts"
 import type { InvestmentNarrative } from "./types"
@@ -29,7 +29,7 @@ export async function generateInvestmentNarrative(
   try {
     const prompt = buildNarrativePrompt(input)
     const result = await generateText({
-      systemPrompt: NARRATIVE_SYSTEM_PROMPT,
+      systemPrompt: buildNarrativeSystemPrompt(input.make),
       userPrompt: prompt,
       temperature: 0.3,
       maxOutputTokens: 8192,

@@ -22,6 +22,7 @@ const SPECIALIST_NAMES = new Set([
 export interface SellerInput {
   sellerName?: string | null
   sellerDomain?: string | null
+  make?: string
 }
 
 export function extractSellerSignal(input: SellerInput): DetectedSignal | null {
@@ -33,10 +34,11 @@ export function extractSellerSignal(input: SellerInput): DetectedSignal | null {
 
   if (!matchedDomain && !matchedName) return null
 
+  const make = input.make ?? "Porsche"
   return {
     key: "seller_tier",
     name_i18n_key: "report.signals.seller_tier_specialist",
-    value_display: `Porsche specialist (${input.sellerName ?? matchedDomain ?? "curated dealer"})`,
+    value_display: `${make} specialist (${input.sellerName ?? matchedDomain ?? "curated dealer"})`,
     evidence: {
       source_type: "seller_context",
       source_ref: "seller_whitelist",

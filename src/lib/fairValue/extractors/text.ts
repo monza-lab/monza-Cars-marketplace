@@ -1,5 +1,5 @@
 import { generateJson } from "@/lib/ai/gemini"
-import { buildSignalExtractionPrompt, SIGNAL_EXTRACTION_SYSTEM_PROMPT } from "@/lib/ai/prompts"
+import { buildSignalExtractionPrompt, buildSignalExtractionSystemPrompt } from "@/lib/ai/prompts"
 import type { DetectedSignal } from "../types"
 
 interface ExtractedPayload {
@@ -59,6 +59,8 @@ interface ExtractedPayload {
 
 export interface TextExtractionInput {
   description: string
+  /** Car make — used to parameterize the extraction prompt (default: "Porsche") */
+  make?: string
   /**
    * Optional cap on Gemini output tokens. Defaults to the generateJson default
    * (2048). Long descriptions with many modifications/panels may need more
@@ -75,9 +77,10 @@ export interface TextExtractionResult {
 }
 
 export async function extractTextSignals(input: TextExtractionInput): Promise<TextExtractionResult> {
+  const make = input.make ?? "Porsche"
   const response = await generateJson<ExtractedPayload>({
-    systemPrompt: SIGNAL_EXTRACTION_SYSTEM_PROMPT,
-    userPrompt: buildSignalExtractionPrompt(input.description),
+    systemPrompt: buildSignalExtractionSystemPrompt(make),
+    userPrompt: buildSignalExtractionPrompt(input.description, make),
     temperature: 0,
     maxOutputTokens: input.maxOutputTokens,
   })

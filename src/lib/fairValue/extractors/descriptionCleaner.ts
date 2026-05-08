@@ -10,10 +10,13 @@
 
 // Patterns that indicate Classic.com / marketplace navigation boilerplate.
 // Match start-of-line anchored blocks that precede the actual vehicle description.
-const CLASSIC_COM_NAV_PATTERNS = [
-  /^Find\n[\s\S]*?(?=About this|VIN:|\d{4}\s+Porsche)/m,
-  /Search Listings\n[\d,]+\nBrowse Auctions\n[\d,]+\nBrowse Dealers[\s\S]*?(?=About this|\d{4}\s+Porsche)/m,
-]
+// Note: uses `make` placeholder at runtime — see buildNavPatterns().
+function buildNavPatterns(make: string): RegExp[] {
+  return [
+    new RegExp(`^Find\\n[\\s\\S]*?(?=About this|VIN:|\\d{4}\\s+${make})`, "m"),
+    new RegExp(`Search Listings\\n[\\d,]+\\nBrowse Auctions\\n[\\d,]+\\nBrowse Dealers[\\s\\S]*?(?=About this|\\d{4}\\s+${make})`, "m"),
+  ]
+}
 
 // Footer patterns from various sources
 const FOOTER_PATTERNS = [
@@ -43,7 +46,7 @@ const SPECS_BLOCK = /Specs\n(?:Details about this vehicle[\s\S]*?)(?=About this|
 
 const HTML_TAG = /<\/?[a-z][^>]*>/gi
 
-export function cleanDescription(raw: string): string {
+export function cleanDescription(raw: string, make = "Porsche"): string {
   if (!raw) return ""
 
   let text = raw
@@ -51,8 +54,8 @@ export function cleanDescription(raw: string): string {
   // 1. Strip HTML tags
   text = text.replace(HTML_TAG, " ")
 
-  // 2. Strip Classic.com navigation blocks
-  for (const pattern of CLASSIC_COM_NAV_PATTERNS) {
+  // 2. Strip Classic.com navigation blocks (parameterized by make)
+  for (const pattern of buildNavPatterns(make)) {
     text = text.replace(pattern, "")
   }
 
@@ -83,7 +86,8 @@ export function cleanDescription(raw: string): string {
   text = text.replace(/\n{3,}/g, "\n\n").trim()
 
   // 7. Deduplicate — Classic.com repeats the "About this..." block
-  const aboutMatch = text.match(/About this \d{4} Porsche [^\n]+/g)
+  const aboutPattern = new RegExp(`About this \\d{4} ${make} [^\\n]+`, "g")
+  const aboutMatch = text.match(aboutPattern)
   if (aboutMatch && aboutMatch.length > 1) {
     // Keep only the first occurrence
     let found = false

@@ -227,15 +227,17 @@ export async function POST(request: Request) {
     const sellerSignal = extractSellerSignal({
       sellerName: null, // CollectorCar doesn't expose a seller name; future: thread through from ListingRow
       sellerDomain: extractDomainFromUrl(car.sourceUrl ?? null),
+      make: car.make,
     })
 
     // Clean the description before AI extraction (strips nav chrome, HTML, footers)
-    const cleanedDescription = cleanDescription(car.description ?? "")
+    const cleanedDescription = cleanDescription(car.description ?? "", car.make)
 
     let textResult: Awaited<ReturnType<typeof extractTextSignals>> = { ok: false, signals: [] }
     try {
       textResult = await extractTextSignals({
         description: cleanedDescription,
+        make: car.make,
         maxOutputTokens: 4096,
       })
     } catch (geminiError) {
@@ -250,6 +252,7 @@ export async function POST(request: Request) {
       interiorColor: car.interiorColor ?? null,
       seriesId,
       description: cleanedDescription,
+      make: car.make,
     })
 
     // 8c. Deep VIN decode
@@ -258,6 +261,7 @@ export async function POST(request: Request) {
       year: car.year ?? 0,
       model: car.model,
       seriesId,
+      make: car.make,
     })
 
     const detected: DetectedSignal[] = [

@@ -11,6 +11,7 @@ export interface ColorIntelInput {
   interiorColor: string | null
   seriesId: string | null
   description: string | null
+  make?: string
 }
 
 export interface ColorMatch {
@@ -65,6 +66,17 @@ const CLASSIC_COMBOS: Array<{ ext: ColorFamily; int: string; note: string }> = [
 ]
 
 export function extractColorIntelligence(input: ColorIntelInput): ColorIntelligenceResult {
+  // Color intelligence currently only supports Porsche — return neutral for other makes
+  const make = input.make ?? "Porsche"
+  if (make !== "Porsche") {
+    return {
+      exterior: { inputColor: input.exteriorColor, matchedColor: null, colorFamily: resolveColorFamily(input.exteriorColor), rarity: "unknown", valuePremiumPercent: 0, isPTS: false },
+      interior: { inputColor: input.interiorColor, matchedColor: null, colorFamily: resolveColorFamily(input.interiorColor), rarity: "unknown", valuePremiumPercent: 0, isPTS: false },
+      combinationNote: null,
+      signals: [],
+    }
+  }
+
   const exterior = buildColorMatch(input.exteriorColor, input.seriesId, input.description)
   const interior = buildColorMatch(input.interiorColor, input.seriesId, null)
 
