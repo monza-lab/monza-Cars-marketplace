@@ -107,18 +107,28 @@ async function main() {
     return;
   }
 
-  // Pre-flight
+  // Pre-flight: test 5 MOST RECENTLY updated listings (likely still live on AT)
   if (opts.preflight) {
     console.log("=== PRE-FLIGHT CHECK ===\n");
+    const { data: recentListings } = await supabase
+      .from("listings")
+      .select("id, source_url")
+      .eq("source", "AutoTrader")
+      .eq("status", "active")
+      .not("source_url", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
+    const preflightListings = recentListings?.length ? recentListings : listings.slice(0, 5);
     let passed = 0;
-    for (const listing of listings.slice(0, 5)) {
+    for (const listing of preflightListings) {
       const detail = await fetchATDetailWithScrapling(listing.source_url);
       const ok = !!(detail?.price || detail?.mileage || detail?.engine || detail?.images?.length);
       console.log(`  ${ok ? "OK" : "SKIP"}: ${listing.source_url} — price=${detail?.price}, mileage=${detail?.mileage}, images=${detail?.images?.length ?? 0}`);
       if (ok) passed++;
       await new Promise((r) => setTimeout(r, opts.delayMs));
     }
-    console.log(`\nPre-flight: ${passed}/5`);
+    console.log(`\nPre-flight: ${passed}/${preflightListings.length}`);
     if (passed < 2) { console.error("Pre-flight FAILED."); process.exit(1); }
     console.log("Pre-flight PASSED.");
     await clearScraperRunActive("at-enrich");

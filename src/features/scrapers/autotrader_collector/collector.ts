@@ -3,10 +3,11 @@ import crypto from "node:crypto";
 import * as cheerio from "cheerio";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
-import { discoverListingUrls, fetchAutoTraderGatewayPage } from "./discover";
+import { discoverListingUrls, fetchAutoTraderGatewayPage, buildSearchUrl } from "./discover";
 import { fetchAutoTraderDetail } from "./detail";
 import { canonicalizeUrl, deriveSourceId } from "./id";
 import { logEvent } from "./logging";
+import { fetchATSearchWithScrapling, canUseScrapling } from "./scrapling";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry, fetchHtml } from "./net";
 import {
   buildLocationString,
@@ -310,9 +311,100 @@ async function runSource(input: {
 }
 
 /**
- * Scrape active listings from AutoTrader search results
+ * Scrape active listings from AutoTrader search results.
+ * Tries Scrapling first (bypasses Cloudflare), falls back to gateway API.
  */
 async function scrapeActiveListings(
+  source: SourceKey,
+  maxPages: number,
+  make: string,
+  model: string | undefined,
+  postcode: string | undefined,
+): Promise<ActiveListingBase[]> {
+  // Try Scrapling first (headless browser bypasses Cloudflare)
+  if (canUseScrapling()) {
+    const scraplingListings = await scrapeActiveListingsViaScrapling(source, maxPages, make, model, postcode);
+    if (scraplingListings.length > 0) return scraplingListings;
+    logEvent({ level: "warn", event: "collector.scrapling_active_empty", runId: "", source });
+  }
+
+  // Fallback: gateway API (works from residential IPs, blocked on datacenter)
+  return scrapeActiveListingsViaGateway(source, maxPages, make, model, postcode);
+}
+
+async function scrapeActiveListingsViaScrapling(
+  source: SourceKey,
+  maxPages: number,
+  make: string,
+  model: string | undefined,
+  postcode: string | undefined,
+): Promise<ActiveListingBase[]> {
+  const listings: ActiveListingBase[] = [];
+  const seen = new Set<string>();
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const searchUrl = buildSearchUrl({
+        make,
+        model,
+        postcode: postcode ?? "SW1A 1AA",
+      }) + (page > 1 ? `&page=${page}` : "");
+
+      const result = await fetchATSearchWithScrapling(searchUrl);
+      if (!result || result.listings.length === 0) break;
+
+      let newCount = 0;
+      for (const row of result.listings) {
+        const url = canonicalizeUrl(row.url);
+        if (seen.has(url)) continue;
+        seen.add(url);
+        newCount++;
+
+        listings.push({
+          source,
+          url,
+          externalId: row.advertId,
+          title: row.title ?? "",
+          make: make || null,
+          model: model || null,
+          year: null,
+          mileage: null,
+          mileageUnit: null,
+          price: row.price ?? null,
+          priceText: row.priceText ?? null,
+          status: "active",
+          location: null,
+          images: [],
+          priceIndicator: null,
+        });
+      }
+
+      logEvent({
+        level: "info",
+        event: "collector.scrapling_active_page",
+        runId: "",
+        page,
+        listings: result.listings.length,
+        totalResults: result.totalResults,
+      });
+
+      if (newCount === 0) break;
+    } catch (err) {
+      logEvent({
+        level: "warn",
+        event: "collector.scrapling_active_error",
+        runId: "",
+        page,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      break;
+    }
+  }
+
+  return listings;
+}
+
+async function scrapeActiveListingsViaGateway(
   source: SourceKey,
   maxPages: number,
   make: string,
@@ -364,7 +456,7 @@ async function scrapeActiveListings(
       });
     }
   }
-  
+
   return listings;
 }
 
