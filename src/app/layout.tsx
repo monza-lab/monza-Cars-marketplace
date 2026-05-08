@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant, Karla } from "next/font/google";
+import { Cormorant, Karla, Saira } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
@@ -17,6 +17,16 @@ const karla = Karla({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["300", "400", "500", "600", "700"],
+});
+
+// Saira — wordmark / mark font ONLY. Per the v2.1 brand manual, this
+// face is reserved for the MonzaHaus logotype and must not appear in
+// body, headlines or UI. We expose it as --font-mark (consumed by the
+// MonzaHausWordmark component).
+const saira = Saira({
+  subsets: ["latin"],
+  variable: "--font-mark",
+  weight: ["600"],
 });
 
 import type { Viewport } from "next";
@@ -134,7 +144,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} className="" suppressHydrationWarning>
       <body
-        className={`${cormorant.variable} ${karla.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
+        className={`${cormorant.variable} ${karla.variable} ${saira.variable} font-sans antialiased bg-background text-foreground noise-overlay`}
       >
         {children}
         <Analytics />
