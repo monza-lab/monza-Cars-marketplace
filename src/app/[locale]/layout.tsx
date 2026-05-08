@@ -8,7 +8,6 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { RegionProvider } from "@/lib/RegionContext";
 import { CurrencyProvider } from "@/lib/CurrencyContext";
 import { MobileBottomNav } from "@/components/mobile";
-import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
@@ -90,7 +89,6 @@ export default async function LocaleLayout({
                 <ClientHeader />
                 <main>{children}</main>
                 <MobileBottomNav />
-                <OnboardingModal />
                 <AppFooter />
               </AdvisorHandoffProvider>
             </CurrencyProvider>
