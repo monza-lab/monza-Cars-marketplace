@@ -44,7 +44,7 @@ export const webSearch: ToolDef = {
       const model = client.getGenerativeModel({
         model: process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro",
         systemInstruction: `You are the MonzaHaus advisor's web-research subagent. Answer the query concisely (≤200 words). Cite every factual claim with a source URL inline in the form [source](url). End your answer with a "## Sources" list of unique URLs used. Respond in locale ${ctx.locale}.`,
-        generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
         // Gemini 2.5 Pro supports Google Search grounding as a native tool.
         // The typed Schema on @google/generative-ai doesn't yet expose this as
         // a first-class field; cast at the boundary so the runtime payload is
@@ -108,7 +108,7 @@ export const fetchUrl: ToolDef = {
       const model = client.getGenerativeModel({
         model: process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro",
         systemInstruction: `You are the MonzaHaus advisor's URL-reader subagent. Summarize the page concisely (≤200 words), focus on facts relevant to collector-car buyers (chassis/variant, mileage, price, provenance, condition). Cite specific facts back to the URL. Respond in locale ${ctx.locale}.`,
-        generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
         tools: [{ urlContext: {} } as unknown as never],
       })
       let text: string

@@ -79,7 +79,7 @@ export async function classifyRequest(input: ClassifyInput): Promise<ClassifyRes
     systemPrompt: CLASSIFIER_SYSTEM,
     userPrompt: `User message: """${input.userText}"""\n${ctx}`,
     temperature: 0,
-    maxOutputTokens: 100,
+    maxOutputTokens: 2048,
   })
 
   let tier: Tier = "marketplace"

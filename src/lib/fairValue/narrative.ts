@@ -32,7 +32,7 @@ export async function generateInvestmentNarrative(
       systemPrompt: NARRATIVE_SYSTEM_PROMPT,
       userPrompt: prompt,
       temperature: 0.3,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 8192,
     })
 
     if (!result.ok || !result.text) return null

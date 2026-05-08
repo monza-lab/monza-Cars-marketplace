@@ -79,7 +79,7 @@ export async function rewriteListing(
       userPrompt,
       model: skill.model,
       temperature: skill.temperature,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 4096,
       responseSchema: LISTING_HOOK_SCHEMA,
     })
 

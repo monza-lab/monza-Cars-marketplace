@@ -67,7 +67,7 @@ interface GenerateJsonOptions {
   userPrompt: string
   model?: string
   temperature?: number      // default 0
-  maxOutputTokens?: number  // default 2048
+  maxOutputTokens?: number  // default 8192 (Gemini 2.5 Flash uses ~1k thinking tokens that count against this limit)
   responseSchema?: Schema   // NEW: enforce a JSON schema on Gemini's output
 }
 
@@ -100,7 +100,7 @@ export async function generateJson<T>(
     systemInstruction: opts.systemPrompt,
     generationConfig: {
       temperature: opts.temperature ?? 0,
-      maxOutputTokens: opts.maxOutputTokens ?? 2048,
+      maxOutputTokens: opts.maxOutputTokens ?? 8192,
       responseMimeType: "application/json",
       ...(opts.responseSchema ? { responseSchema: opts.responseSchema } : {}),
     },
@@ -187,7 +187,7 @@ interface GenerateTextOptions {
   userPrompt: string
   model?: string
   temperature?: number
-  maxOutputTokens?: number
+  maxOutputTokens?: number  // default 8192 (Gemini 2.5 Flash uses ~1k thinking tokens that count against this limit)
 }
 
 export interface GeminiTextResponse {
@@ -214,7 +214,7 @@ export async function generateText(
     systemInstruction: opts.systemPrompt,
     generationConfig: {
       temperature: opts.temperature ?? 0.3,
-      maxOutputTokens: opts.maxOutputTokens ?? 1024,
+      maxOutputTokens: opts.maxOutputTokens ?? 8192,
     },
   })
 
