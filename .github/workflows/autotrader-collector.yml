@@ -2,12 +2,12 @@ name: AutoTrader Collector (Daily)
 
 on:
   schedule:
-    - cron: '0 2 * * *'      # 02:00 UTC daily (moved from Vercel cron)
+    - cron: '0 2 * * *'      # 02:00 UTC daily
   workflow_dispatch:
     inputs:
       max_pages:
         description: 'Max search pages per source'
-        default: '5'
+        default: '20'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -31,20 +31,27 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Verify environment
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
         run: |
-          node --version
-          npm --version
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
 
       - run: npm ci
 
-      - name: Run AutoTrader collector
+      - name: Run AutoTrader collector (Scrapling-first)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPLING_PYTHON: python3.11
+          AT_FORCE_SCRAPLING: '1'
         run: |
           npx tsx src/features/scrapers/autotrader_collector/cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
+            --maxPages=${{ github.event.inputs.max_pages || '20' }} \
             ${{ github.event.inputs.no_details == 'true' && '--noDetails' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 

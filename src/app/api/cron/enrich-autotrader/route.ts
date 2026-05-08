@@ -160,23 +160,16 @@ export async function GET(request: Request) {
               batchEnriched++;
               consecutiveFailures = 0;
             }
-          } else if (!detailHasRecoverableData) {
-            const { error: demoteErr } = await client
+          } else {
+            // No recoverable data — likely Cloudflare-blocked or transient error.
+            // Do NOT demote to "unsold"; let refreshActiveListings() handle
+            // genuine 404/410 removals.  Just touch updated_at so this row
+            // isn't retried immediately in the next batch.
+            const { error: skipErr } = await client
               .from("listings")
-              .update({
-                status: "unsold",
-                updated_at: new Date().toISOString(),
-              })
+              .update({ updated_at: new Date().toISOString() })
               .eq("id", row.id);
-
-            if (demoteErr) {
-              errors.push(`Demote failed (${row.id}): ${demoteErr.message}`);
-              consecutiveFailures++;
-            } else {
-              demoted++;
-              batchDemoted++;
-              consecutiveFailures = 0;
-            }
+            if (!skipErr) consecutiveFailures = 0;
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);

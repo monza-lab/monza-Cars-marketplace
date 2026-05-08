@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { fetchHtml, getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
 import { logEvent } from "./logging";
 import type { SourceKey } from "./types";
+import { fetchATSearchWithScrapling, canUseScrapling } from "./scrapling";
 
 export interface DiscoverOptions {
   runId: string;
@@ -462,6 +463,68 @@ export function getTotalPages(html: string): number {
 }
 
 async function discoverAutoTrader(opts: DiscoverOptions): Promise<string[]> {
+  // Try Scrapling first (bypasses Cloudflare)
+  if (canUseScrapling()) {
+    const scraplingResult = await discoverAutoTraderViaScrapling(opts);
+    if (scraplingResult.length > 0) return scraplingResult;
+    logEvent({
+      level: "warn",
+      event: "discover.scrapling_empty",
+      runId: opts.runId,
+      source: "AutoTrader",
+    });
+  }
+
+  // Fallback: gateway API (works from residential IPs)
+  return discoverAutoTraderViaGateway(opts);
+}
+
+async function discoverAutoTraderViaScrapling(opts: DiscoverOptions): Promise<string[]> {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const startPage = Math.max(1, opts.startPage ?? 1);
+
+  for (let page = startPage; page < startPage + opts.maxPages; page++) {
+    const searchUrl = buildSearchUrl({
+      make: opts.make,
+      model: opts.model,
+      postcode: opts.postcode || "SW1A 1AA",
+      yearFrom: opts.yearFrom,
+      yearTo: opts.yearTo,
+      priceTo: opts.priceTo,
+      mileageTo: opts.mileageTo,
+    }) + (page > 1 ? `&page=${page}` : "");
+
+    const result = await fetchATSearchWithScrapling(searchUrl);
+    if (!result) break;
+
+    let newCount = 0;
+    for (const listing of result.listings) {
+      const url = listing.url;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      out.push(url);
+      newCount++;
+    }
+
+    logEvent({
+      level: "info",
+      event: "discover.scrapling_page_fetched",
+      runId: opts.runId,
+      source: "AutoTrader",
+      page,
+      listings: result.listings.length,
+      totalResults: result.totalResults,
+    });
+
+    if (opts.onPageDone) await opts.onPageDone(page);
+    if (newCount === 0) break;
+  }
+
+  return out;
+}
+
+async function discoverAutoTraderViaGateway(opts: DiscoverOptions): Promise<string[]> {
   const filters: SearchFilters = {
     make: opts.make,
     model: opts.model,

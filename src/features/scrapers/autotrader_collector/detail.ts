@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { fetchHtml } from "./net";
 import { extractAutoTraderImages, normalizeAutoTraderImageUrl } from "./imageUrls";
 import { fetchAutoTraderSearchListing } from "./searchResults";
+import { fetchATDetailWithScrapling, canUseScrapling } from "./scrapling";
 
 export interface AutoTraderDetailParsed {
   title: string | null;
@@ -160,7 +161,17 @@ export async function fetchAutoTraderDetail(
       return merged;
     }
   } catch {
-    // fall through to empty
+    // fall through to Scrapling fallback
+  }
+
+  // Scrapling fallback — if both fetch approaches failed (likely CF-blocked)
+  if (canUseScrapling()) {
+    try {
+      const scraplingResult = await fetchATDetailWithScrapling(url);
+      if (scraplingResult) return scraplingResult;
+    } catch {
+      // fall through to empty
+    }
   }
 
   return empty;

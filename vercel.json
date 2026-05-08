@@ -2,7 +2,6 @@
   "crons": [
     { "path": "/api/cron/ferrari",      "schedule": "0 0 * * *" },
     { "path": "/api/cron/porsche",      "schedule": "0 1 * * *" },
-    { "path": "/api/cron/autotrader",   "schedule": "0 2 * * *" },
     { "path": "/api/cron/beforward",    "schedule": "0 3 * * *" },
     { "path": "/api/cron/classic",      "schedule": "0 4 * * *" },
     { "path": "/api/cron/autoscout24",  "schedule": "0 5 * * *" },
@@ -12,7 +11,6 @@
     { "path": "/api/cron/enrich-vin",      "schedule": "0 7 * * *" },
     { "path": "/api/cron/enrich-titles",   "schedule": "15 7 * * 1" },
     { "path": "/api/cron/enrich-details",  "schedule": "30 7 * * *" },
-    { "path": "/api/cron/enrich-autotrader", "schedule": "45 7 * * *" },
     { "path": "/api/cron/enrich-beforward", "schedule": "0 8 * * *" },
     { "path": "/api/cron/elferspot",        "schedule": "15 9 * * *" },
     { "path": "/api/cron/enrich-elferspot", "schedule": "45 9 * * *" },
