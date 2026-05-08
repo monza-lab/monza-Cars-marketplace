@@ -46,12 +46,6 @@ jobs:
 
       - run: npm ci
 
-      - name: Scrapling diagnostic test
-        run: |
-          echo "=== Testing Scrapling detail fetch on CI ==="
-          python3.11 scripts/autotrader_scrapling_fetch.py detail "https://www.autotrader.co.uk/car-details/202602139920462" 2>&1 || echo "SCRAPLING_EXIT=$?"
-          echo "=== Scrapling diagnostic done ==="
-
       - name: Run AutoTrader enrichment
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
