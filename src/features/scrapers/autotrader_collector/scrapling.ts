@@ -54,12 +54,18 @@ export async function fetchATSearchWithScrapling(
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
     });
     stdout = typeof result === "string" ? result : result.stdout ?? "";
-  } catch (err) {
+    const stderr = typeof result === "string" ? "" : result.stderr ?? "";
+    if (stderr) {
+      logEvent({ level: "debug", event: "scrapling.at_search_stderr", url, stderr: stderr.slice(0, 500) });
+    }
+  } catch (err: unknown) {
+    const errObj = err as { stderr?: string; message?: string };
     logEvent({
       level: "warn",
       event: "scrapling.at_search_error",
       url,
-      error: err instanceof Error ? err.message : String(err),
+      error: errObj.message ?? String(err),
+      stderr: errObj.stderr?.slice(0, 500),
     });
     return null;
   }
@@ -99,12 +105,18 @@ export async function fetchATDetailWithScrapling(
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
     });
     stdout = typeof result === "string" ? result : result.stdout ?? "";
-  } catch (err) {
+    const stderr = typeof result === "string" ? "" : result.stderr ?? "";
+    if (stderr) {
+      logEvent({ level: "debug", event: "scrapling.at_detail_stderr", url, stderr: stderr.slice(0, 500) });
+    }
+  } catch (err: unknown) {
+    const errObj = err as { stderr?: string; message?: string };
     logEvent({
       level: "warn",
       event: "scrapling.at_detail_error",
       url,
-      error: err instanceof Error ? err.message : String(err),
+      error: errObj.message ?? String(err),
+      stderr: errObj.stderr?.slice(0, 500),
     });
     return null;
   }
