@@ -33,7 +33,7 @@ export function Slide4Story({ data }: { data: SlideData }) {
       <div style={{
         position: "absolute", top: 64, left: 64, right: 64, zIndex: 2,
         fontSize: 22, fontWeight: 500, letterSpacing: "0.3em",
-        textTransform: "uppercase", color: "#D4738A",
+        textTransform: "uppercase", color: "#E1CCE5",
       }}>
         Why this one matters
       </div>

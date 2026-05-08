@@ -20,7 +20,7 @@ export function Slide1Cover({ data }: { data: SlideData }) {
       <div style={{
         position: "absolute", top: 64, left: 64, zIndex: 2,
         fontSize: 22, fontWeight: 500, letterSpacing: "0.25em",
-        textTransform: "uppercase", color: "#D4738A",
+        textTransform: "uppercase", color: "#E1CCE5",
       }}>
         New Listing
       </div>
