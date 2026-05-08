@@ -19,7 +19,7 @@ export async function fetchCCHtmlWithScrapling(url: string): Promise<string | nu
   try {
     const result = spawnSync("scrapling", ["extract", "stealthy-fetch", url, htmlPath, "--solve-cloudflare"], {
       encoding: "utf8",
-      timeout: 180_000,
+      timeout: 30_000,
       env: {
         ...process.env,
         PYTHONUNBUFFERED: "1",

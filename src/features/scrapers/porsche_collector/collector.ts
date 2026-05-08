@@ -315,6 +315,12 @@ async function runSource(input: {
   const normalizedDiscovered: Array<{ normalized: NormalizedListing; url: string; requiresTerminalCheck: boolean }> = [];
 
   for (const url of discoveredUrls) {
+    // Time-budget guard: stop processing ended listings if running low on time
+    if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+      logEvent({ level: "info", event: "collector.ended_time_budget_exceeded", runId, source });
+      break;
+    }
+
     try {
       const normalized = await normalizeFromBaseAndUrl({
         source,
@@ -504,18 +510,8 @@ async function normalizeFromBaseAndUrl(input: {
       })
     : null;
 
-  const initialPhotos = extractPhotoUrls(enriched);
-  if (status === "active" && initialPhotos.length === 0) {
-    const fallbackEnriched = await fetchDetailViaExistingScraper({
-      source,
-      url,
-      title,
-      year,
-      model: vehicle.model,
-      make: input.make,
-    });
-    if (fallbackEnriched) enriched = fallbackEnriched;
-  }
+  // No double-retry: if the first detail scrape returned no photos, accept it.
+  // The previous logic re-fetched detail pages identically, wasting 30s+ per listing.
 
   // Use enriched bid data from detail page when available
   if (enriched?.currentBid != null && enriched.currentBid > 0) {
@@ -541,7 +537,10 @@ async function normalizeFromBaseAndUrl(input: {
 
   const photos = extractPhotoUrls(enriched);
   const photosCount = photos.length;
-  if (status === "active" && photosCount === 0) {
+  // Only reject photo-less active listings when detail scraping was enabled.
+  // In cron/summary mode (scrapeDetails=false), photos aren't fetched — listings
+  // get enriched later by the backfill-images job.
+  if (status === "active" && photosCount === 0 && input.scrapeDetails) {
     logEvent({
       level: "warn",
       event: "collector.reject_missing_images",

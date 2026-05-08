@@ -4,6 +4,7 @@ import { refreshActiveListings } from "@/features/scrapers/beforward_porsche_col
 import { backfillMissingImages } from "@/features/scrapers/beforward_porsche_collector/backfill";
 import {
   clearScraperRunActive,
+  clearStaleActiveRun,
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+
+  await clearStaleActiveRun("beforward", 10);
 
   await markScraperRunStarted({
     scraperName: "beforward",

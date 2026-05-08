@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { parseDetailHtml } from "@/features/scrapers/beforward_porsche_collector/detail";
 import {
   clearScraperRunActive,
+  clearStaleActiveRun,
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+
+  // Clear any stale active-run marker left behind by a Vercel hard-kill
+  await clearStaleActiveRun("enrich-beforward", 10);
 
   await markScraperRunStarted({
     scraperName: "enrich-beforward",

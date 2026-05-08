@@ -258,6 +258,17 @@ export async function scrapeListings(
       const html = await fetchPage(url);
       const $ = cheerio.load(html);
 
+      // Detect Next.js SPA shell (no auction data in HTML — data loads via JS/RSC).
+      // CollectingCars migrated to a client-rendered SPA; plain fetch + cheerio
+      // only gets the navigation shell, not the auction listings.
+      const isNextSpa = html.includes('/_next/static') && !html.includes('/cars/') && !html.includes('/lots/');
+      if (isNextSpa && page === 1) {
+        errors.push(
+          `[CC] Site is a Next.js SPA — auction data is not in HTML. Scrapling or Playwright required.`,
+        );
+        break;
+      }
+
       // Collecting Cars uses card-based layout
       const auctionCards = $(
         '.lot-card, .search-result, .auction-card, [class*="lot-card"], [class*="search-result"]',

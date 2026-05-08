@@ -89,6 +89,13 @@ async function main() {
       }
 
       const html = await response.text();
+
+      // Detect Akamai challenge pages — skip without marking as attempted
+      if (html.includes("/_sec/cp_challenge") || html.includes("akam") || (html.length < 5000 && !html.includes("listingDetails"))) {
+        errors.push(`Akamai challenge (${row.id}): page blocked`);
+        continue;
+      }
+
       const detail = parseDetailHtml(html);
 
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() };

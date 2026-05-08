@@ -1,0 +1,62 @@
+name: BeForward Collector (Daily)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'        # 03:00 UTC daily (replaces Vercel cron, which is IP-blocked)
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: 'Max discovery pages (25 listings/page)'
+        default: '10'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+      summary_only:
+        description: 'Skip detail page fetches (faster, less data)'
+        default: 'false'
+      concurrency:
+        description: 'Parallel fetch workers'
+        default: '3'
+      rate_limit_ms:
+        description: 'Min ms between requests per domain'
+        default: '4000'
+
+concurrency:
+  group: beforward-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run BeForward collector
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx scripts/bf-collector-cli.ts \
+            --maxPages=${{ github.event.inputs.max_pages || '10' }} \
+            --concurrency=${{ github.event.inputs.concurrency || '3' }} \
+            --rateLimitMs=${{ github.event.inputs.rate_limit_ms || '4000' }} \
+            ${{ github.event.inputs.summary_only == 'true' && '--summaryOnly' || '' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
+
+      - name: Upload output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beforward-collector-output
+          path: var/beforward_porsche_collector/
+          retention-days: 7
+          if-no-files-found: ignore

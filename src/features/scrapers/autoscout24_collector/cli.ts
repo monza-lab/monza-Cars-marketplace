@@ -80,6 +80,7 @@ Options:
   --maxListings=50000        Max listings to process (default: 50000)
   --navigationDelayMs=3000   Delay between page navigations (default: 3000)
   --pageTimeoutMs=30000      Page load timeout (default: 30000)
+  --timeBudgetMs=1500000     Total time budget in ms (default: 25 min)
   --scrapeDetails            Fetch individual listing pages for enriched data
   --headed                   Run browser in headed mode (visible)
   --dryRun                   Skip DB writes
@@ -123,6 +124,7 @@ Options:
     headless: !hasFlag(args, "headed"),
     navigationDelayMs: readNumber(args, "navigationDelayMs", 3000),
     pageTimeoutMs: readNumber(args, "pageTimeoutMs", 30000),
+    timeBudgetMs: readNumber(args, "timeBudgetMs", 25 * 60 * 1000), // 25 min default
     scrapeDetails: hasFlag(args, "scrapeDetails"),
     checkpointPath,
     outputPath: readString(args, "outputPath") ?? "var/autoscout24_collector/listings.jsonl",
@@ -136,6 +138,7 @@ Options:
   console.log(`  Max pages/shard: ${config.maxPagesPerShard}`);
   console.log(`  Scrape details: ${config.scrapeDetails}`);
   console.log(`  Dry run: ${config.dryRun}`);
+  console.log(`  Time budget: ${config.timeBudgetMs ? `${Math.round(config.timeBudgetMs / 60000)}m` : 'none'}`);
   console.log(`  Headed: ${!config.headless}`);
   console.log(`  Proxy: none`);
   console.log();

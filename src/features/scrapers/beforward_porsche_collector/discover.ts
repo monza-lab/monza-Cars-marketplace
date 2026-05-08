@@ -61,6 +61,24 @@ export async function discoverPage(input: {
   const pageCount = parsePageCount($);
   const listings = parseListingRows($, input.page);
 
+  // Detect bot-blocked responses: Vercel IPs are often blocked by BeForward.
+  // A real page with listings is ~700KB+; a challenge/blocked page is much smaller.
+  const isBotBlocked =
+    listings.length === 0 &&
+    (html.length < 50_000 ||
+      html.includes("captcha") ||
+      html.includes("_challenge") ||
+      html.includes("Access Denied") ||
+      (!html.includes("stocklist-row") && html.length > 0));
+
+  if (isBotBlocked) {
+    const preview = html.slice(0, 300).replace(/\s+/g, " ");
+    console.error(
+      `[BeForward] Page ${input.page}: BOT BLOCKED. HTML size=${html.length}, preview="${preview}"`,
+    );
+    throw new Error(`Bot-blocked on page ${input.page} (HTML size=${html.length})`);
+  }
+
   // Diagnostic: log when parser finds 0 listings despite receiving HTML
   if (listings.length === 0) {
     const htmlSize = html.length;

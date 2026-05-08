@@ -46,6 +46,32 @@ export async function markScraperRunStarted(params: {
 }
 
 /**
+ * Clear stale active-run markers that were never cleaned up (e.g. Vercel hard-kill at maxDuration).
+ * Deletes the marker if it is older than `ttlMinutes` (default 10 min).
+ * Call this BEFORE markScraperRunStarted so the new run isn't blocked by a ghost.
+ */
+export async function clearStaleActiveRun(scraperName: ScraperName, ttlMinutes = 10): Promise<void> {
+  try {
+    const supabase = getMonitoringClient();
+    if (!supabase) return;
+
+    const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000).toISOString();
+
+    const { error } = await supabase
+      .from('scraper_active_runs')
+      .delete()
+      .eq('scraper_name', scraperName)
+      .lt('updated_at', cutoff);
+
+    if (error) {
+      console.error('[scraper-monitoring] Failed to clear stale active run:', error.message);
+    }
+  } catch (err) {
+    console.error('[scraper-monitoring] Unexpected error clearing stale run:', err instanceof Error ? err.message : err);
+  }
+}
+
+/**
  * Clear active run marker once run is finished.
  */
 export async function clearScraperRunActive(scraperName: ScraperName): Promise<void> {

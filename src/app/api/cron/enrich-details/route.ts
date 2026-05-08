@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
 import {
   clearScraperRunActive,
+  clearStaleActiveRun,
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+
+  // Clear any stale active-run marker left behind by a Vercel hard-kill
+  await clearStaleActiveRun("enrich-details", 10);
 
   await markScraperRunStarted({
     scraperName: "enrich-details",
@@ -114,11 +118,19 @@ export async function GET(request: Request) {
 
         const html = await response.text();
 
+        // Detect Akamai challenge pages — skip without marking as attempted
+        // so the listing can be retried later (by bulk script or next run)
+        if (html.includes("/_sec/cp_challenge") || html.includes("akam") || (html.length < 5000 && !html.includes("listingDetails"))) {
+          errors.push(`Akamai challenge (${row.id}): page blocked`);
+          continue;
+        }
+
         let detail;
         try {
           detail = parseDetailHtml(html);
         } catch (parseErr) {
           errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
+          // Only mark as attempted on genuine parse failures (HTML was fetched OK but structure unexpected)
           await client
             .from("listings")
             .update({ trim: "", updated_at: new Date().toISOString() })

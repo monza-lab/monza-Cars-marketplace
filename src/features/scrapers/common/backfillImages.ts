@@ -142,7 +142,8 @@ export async function backfillImagesForSource(
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
 
-      // Mark dead URLs so they stop being queried for backfill
+      // Mark dead URLs so they stop being queried for backfill.
+      // These are expected maintenance events (churned inventory), not errors.
       if (/\b(404|410)\b/.test(msg)) {
         if (!opts.dryRun) {
           await client
@@ -153,7 +154,8 @@ export async function backfillImagesForSource(
             })
             .eq("id", row.id);
         }
-        result.errors.push(`Dead URL (${row.id}): ${msg}`);
+        // Don't push to errors — dead URL cleanup is normal operation
+        console.log(`[backfill-images] Dead URL (${row.id}): ${msg} → marked unsold`);
         continue;
       }
 

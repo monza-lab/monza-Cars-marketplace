@@ -12,6 +12,7 @@ export {
   recordScraperRun,
   markScraperRunStarted,
   clearScraperRunActive,
+  clearStaleActiveRun,
 } from './record';
 
 // Server-only query functions (use next/headers) are NOT re-exported here.

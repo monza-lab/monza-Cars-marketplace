@@ -39,41 +39,21 @@ function makeSlug(value: string | undefined): string {
 async function discoverBaT(opts: DiscoverOptions): Promise<string[]> {
   const q = encodeURIComponent(opts.query);
   const slug = makeSlug(opts.make ?? opts.query);
-  // Multiple discovery paths for better coverage:
-  // 1. Search results (ended + active mix)
-  // 2. Porsche make-specific page (dedicated Porsche listings)
-  // 3. Active auctions search
+  // Use first working URL only — scraping all 3 candidates triples page fetches
+  // and yields mostly duplicates (all return the same ~1,257 listings).
   const candidates = [
     `https://bringatrailer.com/${slug}/`,
     `https://bringatrailer.com/auctions/results/?search=${q}`,
     `https://bringatrailer.com/auctions/?search=${q}`,
   ];
 
-  // Scrape all working URLs (not just the first) for maximum coverage
-  const allUrls: string[] = [];
-  const seen = new Set<string>();
-
-  for (const base of candidates) {
-    try {
-      const urls = await discoverByPaging({
-        ...opts,
-        baseUrls: [base],
-        pageParam: "page",
-        linkExtractor: (html) => extractLinks(html, "https://bringatrailer.com", ["/listing/"]),
-        source: "BaT",
-      });
-      for (const u of urls) {
-        if (!seen.has(u)) {
-          seen.add(u);
-          allUrls.push(u);
-        }
-      }
-    } catch {
-      // If one candidate fails, continue with others
-    }
-  }
-
-  return allUrls;
+  return await discoverByPaging({
+    ...opts,
+    baseUrls: candidates,
+    pageParam: "page",
+    linkExtractor: (html) => extractLinks(html, "https://bringatrailer.com", ["/listing/"]),
+    source: "BaT",
+  });
 }
 
 async function discoverCarsAndBids(opts: DiscoverOptions): Promise<string[]> {
