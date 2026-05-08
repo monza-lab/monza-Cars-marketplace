@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { Clock, Gavel, ExternalLink } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
@@ -87,6 +87,9 @@ export function BrowseCard({
   // eslint-disable-next-line react-hooks/purity -- Date.now() is the only honest signal; React Compiler is not enabled.
   const showCountdown = car.bidCount > 0 && endMs !== null && endMs > Date.now();
 
+  const router = useRouter();
+  const reportHref = `/cars/${makeSlug}/${car.id}/report`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -94,9 +97,22 @@ export function BrowseCard({
       transition={{ delay: Math.min(index * 0.015, 0.2) }}
       layout
     >
-      <Link
-        href={`/cars/${makeSlug}/${car.id}/report`}
-        className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300"
+      {/* Card is a div, not an anchor, so we can render the "View on
+          {platform}" anchor inside without nesting <a> in <a> (which
+          triggers a hydration warning and is invalid HTML). The whole
+          card stays clickable via onClick + keyboard via onKeyDown. */}
+      <div
+        role="link"
+        tabIndex={0}
+        aria-label={`View MonzaHaus report — ${car.title}`}
+        onClick={() => router.push(reportHref)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            router.push(reportHref);
+          }
+        }}
+        className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
           <Image
@@ -193,7 +209,7 @@ export function BrowseCard({
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
