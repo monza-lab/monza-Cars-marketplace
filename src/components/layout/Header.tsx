@@ -19,6 +19,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
+import { MonzaHausWordmark } from "@/components/brand/MonzaHausWordmark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
@@ -629,11 +630,12 @@ export function Header() {
 
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
         <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
-          {/* Left: Logo */}
+          {/* Left: Logo — MonzaHaus wordmark (Saira 600 + helmet) */}
           <Link href={homeHref} className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
-            <span className="font-display font-light text-[18px] md:text-[22px] tracking-[0.35em] uppercase text-foreground">
-              MONZA
-            </span>
+            <MonzaHausWordmark
+              tone="lavender-deep"
+              className="text-foreground text-[18px] md:text-[22px]"
+            />
           </Link>
 
           {/* View Toggle: Monza | Classic */}

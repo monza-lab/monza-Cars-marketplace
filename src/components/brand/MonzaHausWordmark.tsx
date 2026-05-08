@@ -14,19 +14,17 @@ import { MonzaHausHelmet, type HelmetTone } from "./MonzaHausHelmet";
 
 interface MonzaHausWordmarkProps {
   /**
-   * Visual size of the wordmark text. Maps to a CSS font-size; the
-   * helmet glyph scales relative to it via 0.78em width.
-   * Default: "md" (1.125rem ≈ 18px) — matches the legacy "MONZA"
-   * heading in the global header.
-   */
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  /**
    * Tone preset for the helmet inset. Should match the background
    * the wordmark sits on. The text always uses currentColor so the
    * caller controls it via Tailwind text-* utilities.
    */
   tone?: HelmetTone;
-  /** Tailwind / className passthrough on the outer span. */
+  /**
+   * Tailwind / className passthrough on the outer element. The
+   * caller controls the wordmark's font-size here (e.g. `text-lg`,
+   * `text-[18px] md:text-[24px]`) and the helmet inset scales with
+   * it automatically via em-based sizing.
+   */
   className?: string;
   /**
    * Render as an h1 instead of a span. Use for hero placements where
@@ -35,21 +33,11 @@ interface MonzaHausWordmarkProps {
   asHeading?: boolean;
 }
 
-const SIZE_TO_REM: Record<NonNullable<MonzaHausWordmarkProps["size"]>, string> = {
-  xs: "0.75rem", // 12px — captions
-  sm: "0.875rem", // 14px — inline signatures
-  md: "1.125rem", // 18px — default header
-  lg: "1.5rem", // 24px — desktop header / cards
-  xl: "2.5rem", // 40px — hero
-};
-
 export function MonzaHausWordmark({
-  size = "md",
   tone = "lavender-deep",
   className,
   asHeading = false,
 }: MonzaHausWordmarkProps) {
-  const fontSize = SIZE_TO_REM[size];
   const Tag: "h1" | "span" = asHeading ? "h1" : "span";
   return (
     <Tag
@@ -62,7 +50,6 @@ export function MonzaHausWordmark({
         display: "inline-flex",
         alignItems: "baseline",
         lineHeight: 1,
-        fontSize,
       }}
       aria-label="MonzaHaus"
     >
