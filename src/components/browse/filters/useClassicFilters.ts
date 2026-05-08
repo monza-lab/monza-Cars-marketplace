@@ -18,7 +18,7 @@ function parseInt10(value: string | null): number | null {
 }
 
 function parseStatus(value: string | null): StatusFilter {
-  if (value === "live" || value === "sold") return value;
+  if (value === "live") return value;
   return "all";
 }
 

@@ -46,7 +46,6 @@ const SORT_LABELS: Record<SortOption, string> = {
 const STATUS_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "live", label: "Live" },
-  { id: "sold", label: "Sold" },
 ];
 
 function formatCompact(n: number): string {

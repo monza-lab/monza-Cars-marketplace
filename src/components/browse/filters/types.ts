@@ -1,4 +1,4 @@
-export type StatusFilter = "all" | "live" | "sold";
+export type StatusFilter = "all" | "live";
 
 export type SortOption =
   | "newest"

@@ -110,8 +110,7 @@ export function applyFilters(
   const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
 
   let out = auctions.filter((car) => {
-    if (f.status === "live" && !isLiveStatus(car.status)) return false;
-    if (f.status === "sold" && isLiveStatus(car.status)) return false;
+    if (!isLiveStatus(car.status)) return false;
 
     if (f.series.length > 0) {
       const s = extractSeries(car.model, car.year, car.make, car.title);

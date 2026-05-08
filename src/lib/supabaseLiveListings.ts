@@ -1625,8 +1625,11 @@ export async function fetchPaginatedListings(options: {
       const { endTime, id } = options.cursor;
       if (endTime !== null) {
         // Rows with (end_time > cursor.endTime) OR (end_time == cursor.endTime AND id < cursor.id)
+        // OR end_time IS NULL (classified/dealer listings sort LAST via NULLS LAST).
+        // Without the null branch, NULL end_time rows are invisible to keyset pagination
+        // because NULL > any_timestamp is never true in SQL.
         query = query.or(
-          `end_time.gt.${endTime},and(end_time.eq.${endTime},id.lt.${id})`,
+          `end_time.gt.${endTime},and(end_time.eq.${endTime},id.lt.${id}),end_time.is.null`,
         );
       } else {
         // endTime null means we're past all non-null rows; paginate by id among the nulls.

@@ -184,11 +184,8 @@ export function BrowseClient({
         make: "Porsche",
         pageSize: String(REMOTE_PAGE_SIZE),
       });
-      // Map the UI status filter to the API's expected values.
-      // "all" = no status filter (fetch live + ended); "live" = active only; "sold" = ended only.
-      if (filters.status === "live") params.set("status", "ACTIVE");
-      else if (filters.status === "sold") params.set("status", "Ended");
-      // "all" → omit status param so the API returns everything
+      // Always show only active listings — sold data is kept for analysis only.
+      params.set("status", "ACTIVE");
       for (const [k, v] of Object.entries(serverFilters)) params.set(k, v);
       if (cursor) params.set("cursor", cursor);
       const res = await fetch(`/api/mock-auctions?${params.toString()}`, {

@@ -76,16 +76,16 @@ describe("applyFilters — status", () => {
   const sold = makeCar({ id: "c", status: "ENDED" });
   const cars = [live, ending, sold];
 
-  it("defaults to all", () => {
-    expect(applyFilters(cars, f()).length).toBe(3);
+  it("defaults to all (active only)", () => {
+    expect(applyFilters(cars, f()).length).toBe(2);
   });
   it("filters to live (active + ending soon)", () => {
     const ids = applyFilters(cars, f({ status: "live" })).map((c) => c.id);
     expect(ids.sort()).toEqual(["a", "b"]);
   });
-  it("filters to sold", () => {
-    const ids = applyFilters(cars, f({ status: "sold" })).map((c) => c.id);
-    expect(ids).toEqual(["c"]);
+  it("excludes sold listings", () => {
+    const ids = applyFilters(cars, f()).map((c) => c.id);
+    expect(ids).not.toContain("c");
   });
 });
 
