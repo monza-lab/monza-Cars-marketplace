@@ -5,6 +5,7 @@ export interface BackfillResult {
   discovered: number;
   backfilled: number;
   errors: string[];
+  warnings: string[];
   durationMs: number;
 }
 
@@ -35,6 +36,7 @@ export async function backfillImagesForSource(
     discovered: 0,
     backfilled: 0,
     errors: [],
+    warnings: [],
     durationMs: 0,
   };
 
@@ -159,9 +161,11 @@ export async function backfillImagesForSource(
         continue;
       }
 
-      // Circuit-break on 403/429/Cloudflare — stop this source only
+      // Circuit-break on 403/429/Cloudflare — stop this source only.
+      // This is expected operational behavior (WAF/rate-limit), not an error.
       if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
-        result.errors.push(`Circuit-break (${source}): ${msg}`);
+        result.warnings.push(`Circuit-break (${source}): ${msg}`);
+        console.log(`[backfill-images] Circuit-break (${source}): ${msg}`);
         break; // Breaks inner loop; caller iterates sources independently
       }
 
@@ -195,16 +199,6 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
     "@/features/scrapers/auctions/bringATrailerImages"
   );
 
-  // AutoScout24: use parseDetailHtml (cheerio-only export) with a simple fetch
-  const fetchAutoScout24Images: ImageFetcher = async (url) => {
-    const { parseDetailHtml } = await import(
-      "@/features/scrapers/autoscout24_collector/detail"
-    );
-    const html = await fetchHtml(url);
-    const detail = parseDetailHtml(html);
-    return detail.images ?? [];
-  };
-
   // BeForward: use parseDetailHtml (cheerio-only export) with a simple fetch
   const fetchBeForwardImages: ImageFetcher = async (url) => {
     const { parseDetailHtml } = await import(
@@ -217,10 +211,9 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
 
   return {
     BaT: fetchBaTImages,
-    AutoScout24: fetchAutoScout24Images,
     BeForward: fetchBeForwardImages,
-    // ClassicCom requires Playwright — already handled by its own backfill
-    // module in classic_collector/backfill.ts (runs as part of /api/cron/classic)
-    // AutoTrader has very few missing (14) — not worth adding
+    // AutoScout24: requires Akamai challenge handling — handled by /api/cron/enrich-details (Playwright)
+    // ClassicCom: requires Playwright — handled by /api/cron/classic
+    // AutoTrader: very few missing — not worth adding
   };
 }

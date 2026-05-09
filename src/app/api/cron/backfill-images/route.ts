@@ -32,12 +32,15 @@ export async function GET(request: Request) {
   });
 
   try {
-    // Process BaT first (biggest backlog), then BeForward, then AutoScout24
-    const sources = ["BaT", "BeForward", "AutoScout24"] as const;
+    // BaT is the only source that works reliably with plain HTTP fetch.
+    // BeForward and AutoScout24 are handled by their own enrichment crons
+    // (enrich-beforward, enrich-details) which use proper HTTP/browser handling.
+    const sources = ["BaT", "BeForward"] as const;
     const results = [];
     let totalBackfilled = 0;
     let totalDiscovered = 0;
     const allErrors: string[] = [];
+    const allWarnings: string[] = [];
     const timeBudgetMs = 270_000; // Leave 30s margin for overhead
     const perSourceBudget = Math.floor(timeBudgetMs / sources.length);
 
@@ -59,6 +62,7 @@ export async function GET(request: Request) {
       totalBackfilled += result.backfilled;
       totalDiscovered += result.discovered;
       allErrors.push(...result.errors);
+      allWarnings.push(...result.warnings);
     }
 
     const success = totalBackfilled > 0 || allErrors.length === 0;
@@ -89,8 +93,10 @@ export async function GET(request: Request) {
         discovered: r.discovered,
         backfilled: r.backfilled,
         errors: r.errors,
+        warnings: r.warnings,
         durationMs: r.durationMs,
       })),
+      ...(allWarnings.length > 0 ? { warnings: allWarnings } : {}),
       duration: `${Date.now() - startTime}ms`,
     });
   } catch (error) {

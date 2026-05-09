@@ -25,9 +25,6 @@ vi.mock("@supabase/supabase-js", () => ({
 vi.mock("@/features/scrapers/auctions/bringATrailerImages", () => ({
   fetchBaTImages: vi.fn(),
 }));
-vi.mock("@/features/scrapers/autoscout24_collector/detail", () => ({
-  parseDetailHtml: vi.fn(),
-}));
 vi.mock("@/features/scrapers/beforward_porsche_collector/detail", () => ({
   parseDetailHtml: vi.fn(),
 }));
@@ -113,7 +110,8 @@ describe("backfillImages module", () => {
     expect(mockUpdate).not.toHaveBeenCalledWith(
       expect.objectContaining({ images: ["__dead_url__"] })
     );
-    expect(result.errors[0]).toContain("Dead URL");
+    // Dead URL cleanup is normal operation — should NOT be in errors
+    expect(result.errors).toHaveLength(0);
   });
 
   it("queries empty image arrays with the Supabase array literal syntax", async () => {
