@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Coins } from "lucide-react"
+import { Piston } from "@/components/icons/Piston"
 import Link from "next/link"
 
 interface OutOfReportsModalProps {
@@ -33,7 +33,7 @@ export function OutOfReportsModal({
       <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
           <div className="inline-flex items-center justify-center size-10 rounded-lg bg-primary/10 mb-3">
-            <Coins className="size-5 text-primary" />
+            <Piston className="size-5 text-primary" />
           </div>
           <DialogTitle className="text-[17px] font-bold text-foreground">
             You&apos;ve used your 300 Free Pistons this month

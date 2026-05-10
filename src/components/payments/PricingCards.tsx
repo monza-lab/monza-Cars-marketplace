@@ -13,18 +13,30 @@ function PricingCard({
   plan: PricingPlan
   onSelect: (planId: PlanId) => void
 }) {
+  // Only the subscription tier (Rennsport) is the conversion target.
+  // Top-up packs can carry a "Best value" badge but stay visually quieter
+  // — the Salon test: a single anchor, not three competing for attention.
+  const isPrimary = plan.id === "rennsport"
   const isHighlighted = !!plan.badge
 
   return (
     <div
       className={`relative flex flex-col p-6 rounded-2xl border transition-all ${
-        isHighlighted
-          ? "border-primary/50 bg-primary/[0.03] shadow-lg shadow-primary/5"
+        isPrimary
+          ? "border-primary/60 bg-primary/[0.05] shadow-xl shadow-primary/10 md:scale-[1.03]"
+          : isHighlighted
+          ? "border-border bg-foreground/[0.02]"
           : "border-border bg-foreground/2 hover:border-border/80"
       }`}
     >
       {plan.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest px-3 py-1 bg-primary text-primary-foreground rounded-full font-bold">
+        <span
+          className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.18em] px-3 py-1 rounded-full font-semibold ${
+            isPrimary
+              ? "uppercase bg-primary text-primary-foreground"
+              : "bg-foreground/5 border border-border text-foreground/70"
+          }`}
+        >
           {plan.badge}
         </span>
       )}

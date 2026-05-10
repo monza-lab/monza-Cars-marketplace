@@ -109,8 +109,8 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background pt-[var(--app-header-h,3.5rem)] md:pt-24 pb-32 md:pb-16">
       {/* Hero — compact mobile */}
       <div className="px-4 pt-6 md:pt-4 pb-8 md:pb-12 text-center max-w-2xl mx-auto">
-        <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-primary/85">
-          {/* [HARDCODED] */}300 free Pistons every month
+        <p className="text-[11px] font-medium tracking-wide text-primary/80">
+          {/* [HARDCODED] */}300 free Pistons each month — no card required
         </p>
         <h1 className="mt-3 font-display text-[28px] md:text-[40px] leading-tight font-medium text-foreground">
           {/* [HARDCODED] */}Due diligence for Porsche buyers

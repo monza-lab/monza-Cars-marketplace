@@ -590,13 +590,14 @@ export function Header() {
 
     const timeout = setTimeout(() => {
       if (!isDeleting) {
-        // Typing forward
+        // Typing forward — slower for editorial calm (was 25-55ms; now 35-75ms)
         if (charIndex < currentPhrase.length) {
           setTypedPlaceholder(currentPhrase.slice(0, charIndex + 1))
           setCharIndex(charIndex + 1)
         } else {
-          // Pause at end, then start deleting
-          setTimeout(() => setIsDeleting(true), 2000)
+          // Pause at end longer so the user can read the full phrase
+          // before it starts deleting (was 2000ms; now 4000ms)
+          setTimeout(() => setIsDeleting(true), 4000)
         }
       } else {
         // Deleting
@@ -609,7 +610,7 @@ export function Header() {
           setPhraseIndex((phraseIndex + 1) % TYPING_PHRASES.length)
         }
       }
-    }, isDeleting ? 25 : 55)
+    }, isDeleting ? 35 : 75)
 
     return () => clearTimeout(timeout)
   }, [charIndex, isDeleting, phraseIndex, isFocused, query])
@@ -949,7 +950,7 @@ export function Header() {
             {isAuthenticated && (
               <button
                 onClick={() => setWalletOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-label={t("auth.pistons.walletTitle")}
               >
                 <Piston className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
@@ -969,7 +970,7 @@ export function Header() {
                 fight the primary "Buy" CTAs on the page. */}
             <Link
               href="/advisor"
-              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold tracking-wide transition-colors ${
+              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                 pathname?.startsWith("/advisor")
                   ? "bg-primary/15 border-primary/30 text-primary"
                   : "border-primary/30 text-primary/85 hover:bg-primary/10 hover:text-primary hover:border-primary/40"
@@ -990,7 +991,7 @@ export function Header() {
             ) : isAuthenticated ? (
               <button
                 onClick={() => setAccountSheetOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 title={/* [HARDCODED] */ "Account"}
               >
                 <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
@@ -1003,7 +1004,7 @@ export function Header() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide"
+                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t('auth.signIn')}
               </button>
@@ -1016,7 +1017,7 @@ export function Header() {
             {/* Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors">
+                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded">
                   <Menu className="size-4" />
                   <span className="hidden md:inline">{t('nav.menu')}</span>
                 </button>
