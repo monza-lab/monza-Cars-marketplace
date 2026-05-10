@@ -2,12 +2,12 @@ name: BeForward Collector (Daily)
 
 on:
   schedule:
-    - cron: '0 3 * * *'        # 03:00 UTC daily (replaces Vercel cron, which is IP-blocked)
+    - cron: '0 3 * * *'        # 03:00 UTC daily
   workflow_dispatch:
     inputs:
       max_pages:
         description: 'Max discovery pages (25 listings/page)'
-        default: '10'
+        default: '5'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -15,8 +15,8 @@ on:
         description: 'Skip detail page fetches (faster, less data)'
         default: 'false'
       concurrency:
-        description: 'Parallel fetch workers'
-        default: '3'
+        description: 'Parallel fetch workers (each spawns a Chromium instance via scrapling)'
+        default: '2'
       rate_limit_ms:
         description: 'Min ms between requests per domain'
         default: '4000'
@@ -28,7 +28,8 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    # RAM budget: ~2 concurrent Chromium instances (~400MB) + Node.js (~200MB) = ~600MB of 7GB
 
     steps:
       - uses: actions/checkout@v4
@@ -38,16 +39,28 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scrapling
+        run: |
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
       - run: npm ci
 
       - name: Run BeForward collector
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SCRAPLING_PYTHON: python3.11
+          BF_FORCE_SCRAPLING: '1'
         run: |
           npx tsx scripts/bf-collector-cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '10' }} \
-            --concurrency=${{ github.event.inputs.concurrency || '3' }} \
+            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
+            --concurrency=${{ github.event.inputs.concurrency || '2' }} \
             --rateLimitMs=${{ github.event.inputs.rate_limit_ms || '4000' }} \
             ${{ github.event.inputs.summary_only == 'true' && '--summaryOnly' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
