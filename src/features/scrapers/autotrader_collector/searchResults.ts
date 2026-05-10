@@ -1,4 +1,5 @@
 import { normalizeAutoTraderImageUrl } from "./imageUrls";
+import { proxyFetch } from "../common/proxy-fetch";
 
 interface AutoTraderSearchBadge {
   type?: string | null;
@@ -113,7 +114,7 @@ export async function fetchAutoTraderSearchListing(
   advertId: string,
   timeoutMs = 15_000,
 ): Promise<AutoTraderSearchListingParsed | null> {
-  const response = await fetch("https://www.autotrader.co.uk/at-gateway", {
+  const response = await proxyFetch("https://www.autotrader.co.uk/at-gateway", {
     method: "POST",
     headers: SEARCH_HEADERS,
     body: JSON.stringify({

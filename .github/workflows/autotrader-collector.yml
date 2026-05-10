@@ -49,6 +49,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SCRAPLING_PYTHON: python3.11
           AT_FORCE_SCRAPLING: '1'
+          AT_PROXY_URL: ${{ secrets.AT_PROXY_URL }}
         run: |
           npx tsx src/features/scrapers/autotrader_collector/cli.ts \
             --maxPages=${{ github.event.inputs.max_pages || '20' }} \

@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 
 import { fetchHtml, getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
+import { proxyFetch } from "../common/proxy-fetch";
 import { logEvent } from "./logging";
 import type { SourceKey } from "./types";
 import { fetchATSearchWithScrapling, canUseScrapling } from "./scrapling";
@@ -160,7 +161,7 @@ export async function detectAppVersion(): Promise<string> {
   if (_cachedAppVersion) return _cachedAppVersion;
 
   try {
-    const res = await fetch("https://www.autotrader.co.uk/car-search?postcode=SW1A+1AA&make=Porsche", {
+    const res = await proxyFetch("https://www.autotrader.co.uk/car-search?postcode=SW1A+1AA&make=Porsche", {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -237,7 +238,7 @@ export async function fetchAutoTraderGatewayPage(input: {
 
   const refererUrl = buildSearchUrl({ ...input.filters, postcode: input.filters.postcode ?? "SW1A 1AA" });
   const appVersion = await detectAppVersion();
-  const res = await fetch("https://www.autotrader.co.uk/at-gateway?opname=SearchResultsListingsGridQuery", {
+  const res = await proxyFetch("https://www.autotrader.co.uk/at-gateway?opname=SearchResultsListingsGridQuery", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -473,9 +474,12 @@ async function discoverAutoTrader(opts: DiscoverOptions): Promise<string[]> {
       runId: opts.runId,
       source: "AutoTrader",
     });
+    // If headless browser was CF-blocked, plain HTTP has no chance
+    logEvent({ level: "warn", event: "discover.skipping_gateway_after_cf", runId: opts.runId, source: "AutoTrader" });
+    return [];
   }
 
-  // Fallback: gateway API (works from residential IPs)
+  // Gateway API only (no Scrapling available)
   return discoverAutoTraderViaGateway(opts);
 }
 

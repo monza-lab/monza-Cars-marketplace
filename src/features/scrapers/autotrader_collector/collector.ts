@@ -326,9 +326,13 @@ async function scrapeActiveListings(
     const scraplingListings = await scrapeActiveListingsViaScrapling(source, maxPages, make, model, postcode);
     if (scraplingListings.length > 0) return scraplingListings;
     logEvent({ level: "warn", event: "collector.scrapling_active_empty", runId: "", source });
+    // If Scrapling (headless browser) was CF-blocked, plain HTTP gateway
+    // has zero chance from the same IP — skip the useless fallback.
+    logEvent({ level: "warn", event: "collector.skipping_gateway_after_cf", runId: "", source });
+    return [];
   }
 
-  // Fallback: gateway API (works from residential IPs, blocked on datacenter)
+  // Gateway API only (no Scrapling available — e.g. Vercel)
   return scrapeActiveListingsViaGateway(source, maxPages, make, model, postcode);
 }
 
@@ -412,6 +416,8 @@ async function scrapeActiveListingsViaGateway(
   postcode: string | undefined,
 ): Promise<ActiveListingBase[]> {
   const listings: ActiveListingBase[] = [];
+  let consecutiveErrors = 0;
+  const MAX_CONSECUTIVE_ERRORS = 3;
 
   for (let page = 1; page <= maxPages; page++) {
     try {
@@ -424,6 +430,8 @@ async function scrapeActiveListingsViaGateway(
           postcode: postcode ?? "SW1A 1AA",
         },
       });
+
+      consecutiveErrors = 0; // reset on success
 
       for (const row of gateway.listings) {
         listings.push({
@@ -447,13 +455,28 @@ async function scrapeActiveListingsViaGateway(
 
       if (gateway.listings.length === 0) break;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      consecutiveErrors++;
       logEvent({
         level: "warn",
         event: "collector.gateway_page_error",
         runId: "",
         page,
-        message: err instanceof Error ? err.message : String(err),
+        message: msg,
       });
+
+      // Circuit-break: stop after N consecutive failures (likely CF-blocked)
+      if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        logEvent({
+          level: "warn",
+          event: "collector.gateway_circuit_break",
+          runId: "",
+          source,
+          consecutiveErrors,
+          message: `Stopping after ${consecutiveErrors} consecutive gateway errors (likely Cloudflare block)`,
+        });
+        break;
+      }
     }
   }
 

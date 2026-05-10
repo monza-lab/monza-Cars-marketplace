@@ -1,21 +1,53 @@
 /**
  * Fetch wrapper for scrapers.
- * Previously routed through a residential proxy (Decodo/Smartproxy).
- * Now delegates directly to the global fetch — kept as a thin wrapper
- * so every call-site doesn't need to be rewritten.
+ * Routes through a residential proxy when AT_PROXY_URL is set.
+ * Falls back to direct fetch when no proxy is configured.
+ *
+ * Supported AT_PROXY_URL formats:
+ *   http://user:pass@host:port
+ *   http://host:port
+ *   socks5://host:port
  */
 
-/** Whether a proxy is configured (always false — proxy removed). */
+let _dispatcher: object | undefined;
+let _dispatcherUrl: string | undefined;
+
+function getProxyDispatcher(): object | undefined {
+  const proxyUrl = process.env.AT_PROXY_URL?.trim();
+  if (!proxyUrl) return undefined;
+
+  // Cache the dispatcher so we don't create a new one per request
+  if (_dispatcherUrl === proxyUrl && _dispatcher) return _dispatcher;
+
+  try {
+    // Node.js 20+ bundles undici — ProxyAgent is available at runtime
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { ProxyAgent } = require("undici");
+    _dispatcher = new ProxyAgent(proxyUrl);
+    _dispatcherUrl = proxyUrl;
+    return _dispatcher;
+  } catch {
+    // undici not available — fall through to direct fetch
+    return undefined;
+  }
+}
+
+/** Whether a proxy is configured via AT_PROXY_URL. */
 export function isProxyConfigured(): boolean {
-  return false
+  return !!process.env.AT_PROXY_URL?.trim();
 }
 
 /**
- * Fetch a URL. Formerly proxy-aware; now a direct pass-through to fetch.
+ * Fetch a URL, routing through AT_PROXY_URL when configured.
  */
 export async function proxyFetch(
   url: string | URL,
   init?: RequestInit & { signal?: AbortSignal },
 ): Promise<Response> {
-  return fetch(url, init)
+  const dispatcher = getProxyDispatcher();
+  if (dispatcher) {
+    // Node.js built-in fetch accepts undici's dispatcher option
+    return fetch(url, { ...init, dispatcher } as RequestInit);
+  }
+  return fetch(url, init);
 }

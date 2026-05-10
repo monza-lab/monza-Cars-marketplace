@@ -156,11 +156,19 @@ async function main() {
 
   // Batch
   let written = 0, skipped = 0;
+  let consecutiveNulls = 0;
+  const MAX_CONSECUTIVE_NULLS = 5; // CF blocks return null — stop early
   const errors: string[] = [];
 
   for (let i = 0; i < listings.length; i++) {
     if (Date.now() - startTime > opts.timeBudgetMs) {
       console.log(`\nTime budget reached after ${i} listings.`);
+      break;
+    }
+
+    // Circuit-break on consecutive null results (CF-blocked)
+    if (consecutiveNulls >= MAX_CONSECUTIVE_NULLS) {
+      console.log(`\nCircuit-break: ${consecutiveNulls} consecutive null results (Cloudflare-blocked). Stopping.`);
       break;
     }
 
@@ -170,6 +178,7 @@ async function main() {
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
       if (detail) {
+        consecutiveNulls = 0; // reset on any data
         if (detail.price != null && detail.price > 0) {
           updates.current_bid = detail.price;
           updates.hammer_price = detail.price;
@@ -189,6 +198,7 @@ async function main() {
           updates.photos_count = detail.images.length;
         }
       } else {
+        consecutiveNulls++;
         skipped++;
       }
 
@@ -204,6 +214,7 @@ async function main() {
       if (written > 0 && written % 25 === 0) console.log(`  Progress: ${written}/${i + 1}`);
       if (i < listings.length - 1) await new Promise((r) => setTimeout(r, opts.delayMs));
     } catch (err: unknown) {
+      consecutiveNulls++;
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${listing.source_url}: ${msg}`);
     }

@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import { fetchHtml } from "./net";
+import { proxyFetch } from "../common/proxy-fetch";
 import { extractAutoTraderImages, normalizeAutoTraderImageUrl } from "./imageUrls";
 import { fetchAutoTraderSearchListing } from "./searchResults";
 import { fetchATDetailWithScrapling, canUseScrapling } from "./scrapling";
@@ -188,7 +189,7 @@ async function fetchAutoTraderProductPagePayload(
   endpoint.searchParams.set("channel", "cars");
   endpoint.searchParams.set("postcode", "SW1A 1AA");
 
-  const response = await fetch(endpoint.toString(), {
+  const response = await proxyFetch(endpoint.toString(), {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

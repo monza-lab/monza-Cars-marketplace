@@ -24,6 +24,31 @@ if sys.platform == "win32":
 from scrapling.fetchers import StealthyFetcher
 
 
+# ── Proxy ─────────────────────────────────────────────────────────────
+
+def _get_proxy_config() -> dict | None:
+    """Build Playwright proxy dict from AT_PROXY_URL env var.
+
+    Supports formats:
+      http://user:pass@host:port
+      http://host:port
+      socks5://host:port
+    """
+    proxy_url = os.environ.get("AT_PROXY_URL", "").strip()
+    if not proxy_url:
+        return None
+
+    from urllib.parse import urlparse
+    parsed = urlparse(proxy_url)
+    config: dict = {"server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"}
+    if parsed.username:
+        config["username"] = parsed.username
+    if parsed.password:
+        config["password"] = parsed.password
+    sys.stderr.write(f"[scrapling] Using proxy: {parsed.hostname}:{parsed.port}\n")
+    return config
+
+
 # ── Fetch ──────────────────────────────────────────────────────────────
 
 CF_BLOCK_MARKERS = [
@@ -46,7 +71,11 @@ def _is_cf_blocked(page) -> bool:
 def fetch_page(url: str, timeout_ms: int = 30000):
     """Fetch a fully-rendered page using StealthyFetcher."""
     StealthyFetcher.adaptive = True
-    return StealthyFetcher.fetch(url, headless=True, network_idle=True, timeout=timeout_ms)
+    proxy = _get_proxy_config()
+    kwargs: dict = {"headless": True, "network_idle": True, "timeout": timeout_ms}
+    if proxy:
+        kwargs["proxy"] = proxy
+    return StealthyFetcher.fetch(url, **kwargs)
 
 
 # ── Search Mode ────────────────────────────────────────────────────────

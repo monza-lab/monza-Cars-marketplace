@@ -101,7 +101,7 @@ export async function fetchATDetailWithScrapling(
     const python = resolveScraplingPython();
     const result = await execFileAsync(python, [scriptPath, "detail", url], {
       encoding: "utf8",
-      timeout: 45_000,
+      timeout: 25_000,
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
     });
     stdout = typeof result === "string" ? result : result.stdout ?? "";
