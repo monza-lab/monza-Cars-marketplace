@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import Image from "next/image"
-import { Link, useRouter } from "@/i18n/navigation"
+import { Link } from "@/i18n/navigation"
 import { Clock, Gavel, ChevronRight, ExternalLink, Car } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
@@ -69,7 +69,6 @@ function MobileMakeReportCard({
   timeLabels: { ended: string; day: string; hour: string; minute: string }
   formatPrice: (n: number) => string
 }) {
-  const router = useRouter()
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
   const reportHref = `/cars/${makeSlug}/${car.id}`
   const platform = car.platform ? platformLabels[car.platform] : null
@@ -87,17 +86,9 @@ function MobileMakeReportCard({
     : null
 
   return (
-    <div
-      role="link"
-      tabIndex={0}
+    <Link
+      href={reportHref}
       aria-label={`View MonzaHaus report — ${car.title}`}
-      onClick={() => router.push(reportHref)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          router.push(reportHref)
-        }
-      }}
       className="group flex items-stretch gap-3 rounded-xl bg-card border border-border overflow-hidden active:border-primary/30 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {/* Thumbnail with platform pill */}
@@ -163,22 +154,24 @@ function MobileMakeReportCard({
             )}
           </div>
           {sourceUrl ? (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                window.open(sourceUrl, "_blank", "noopener,noreferrer")
+              }}
               className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 active:border-primary/40 active:text-primary transition-colors shrink-0"
               title={`View original listing on ${platformLabel}`}
             >
               {/* [HARDCODED] */}View on {platformLabel}
               <ExternalLink className="size-2.5" />
-            </a>
+            </button>
           ) : (
             <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
           )}
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

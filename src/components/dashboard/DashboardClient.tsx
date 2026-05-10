@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import Image from "next/image"
-import { Link, useRouter } from "@/i18n/navigation"
+import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
@@ -1072,7 +1072,6 @@ function MobileReportCard({
   timeLabels: { day: string; hour: string; minute: string }
   formatPrice: (n: number) => string
 }) {
-  const router = useRouter()
   const locale = useLocale()
   const platformLabel = platformShort[auction.platform] || auction.platform
   const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
@@ -1092,17 +1091,9 @@ function MobileReportCard({
     : null
 
   return (
-    <div
-      role="link"
-      tabIndex={0}
+    <Link
+      href={reportHref}
       aria-label={`View MonzaHaus report — ${auction.title}`}
-      onClick={() => router.push(reportHref)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault()
-          router.push(reportHref)
-        }
-      }}
       className="group flex items-stretch gap-3 rounded-xl bg-card border border-border overflow-hidden active:border-primary/30 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {/* Thumbnail with platform pill overlay */}
@@ -1172,23 +1163,25 @@ function MobileReportCard({
             )}
           </div>
           {sourceUrl ? (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                window.open(sourceUrl, "_blank", "noopener,noreferrer")
+              }}
               className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 active:border-primary/40 active:text-primary transition-colors shrink-0"
               title={`View original listing on ${platformLabel}`}
             >
               {/* [HARDCODED] */}View on {platformLabel}
               <ExternalLink className="size-2.5" />
-            </a>
+            </button>
           ) : (
             <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
           )}
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 

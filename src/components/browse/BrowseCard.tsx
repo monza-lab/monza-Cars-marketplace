@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { Clock, Gavel, ExternalLink } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
@@ -87,7 +87,6 @@ export function BrowseCard({
   // eslint-disable-next-line react-hooks/purity -- Date.now() is the only honest signal; React Compiler is not enabled.
   const showCountdown = car.bidCount > 0 && endMs !== null && endMs > Date.now();
 
-  const router = useRouter();
   const reportHref = `/cars/${makeSlug}/${car.id}/report`;
 
   return (
@@ -97,21 +96,12 @@ export function BrowseCard({
       transition={{ delay: Math.min(index * 0.015, 0.2) }}
       layout
     >
-      {/* Card is a div, not an anchor, so we can render the "View on
-          {platform}" anchor inside without nesting <a> in <a> (which
-          triggers a hydration warning and is invalid HTML). The whole
-          card stays clickable via onClick + keyboard via onKeyDown. */}
-      <div
-        role="link"
-        tabIndex={0}
+      {/* Outer is a real <Link> for SEO + Cmd-click + crawlers. The
+          "View on {platform}" external link below is a <button> (not <a>)
+          so we don't nest <a> inside <a>. */}
+      <Link
+        href={reportHref}
         aria-label={`View MonzaHaus report — ${car.title}`}
-        onClick={() => router.push(reportHref)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            router.push(reportHref);
-          }
-        }}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
@@ -194,22 +184,24 @@ export function BrowseCard({
                 </span>
               )}
               {sourceUrl && (
-                <a
-                  href={sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(sourceUrl, "_blank", "noopener,noreferrer");
+                  }}
                   className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 hover:border-primary/40 hover:text-primary transition-colors"
                   title={`View original listing on ${platformLabel}`}
                 >
                   View on {platformLabel}
                   <ExternalLink className="size-2.5" />
-                </a>
+                </button>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </Link>
     </motion.div>
   );
 }
