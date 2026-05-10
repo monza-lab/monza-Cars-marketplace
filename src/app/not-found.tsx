@@ -11,7 +11,7 @@ export default function NotFound() {
       <div className="relative text-center">
         {/* 404 number */}
         <div className="relative mb-6">
-          <span className="text-[120px] font-black leading-none tracking-tighter text-zinc-900 sm:text-[160px]">
+          <span className="text-[120px] font-black leading-none tracking-tighter text-foreground/10 sm:text-[160px]">
             404
           </span>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -23,16 +23,16 @@ export default function NotFound() {
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
           Vehicle Not Found
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-base text-zinc-500">
+        <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground/80">
           The page you are looking for may have been moved, sold at auction, or
           never existed in our garage.
         </p>
 
         {/* Decorative separator */}
         <div className="mx-auto my-8 flex items-center gap-3">
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-zinc-800" />
+          <div className="h-px w-16 bg-gradient-to-r from-transparent to-border" />
           <div className="size-1.5 rounded-full bg-primary/50" />
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-zinc-800" />
+          <div className="h-px w-16 bg-gradient-to-l from-transparent to-border" />
         </div>
 
         {/* Actions */}
@@ -47,7 +47,7 @@ export default function NotFound() {
             asChild
             variant="outline"
             size="lg"
-            className="gap-2 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-foreground"
+            className="gap-2 border-border text-foreground/80 hover:bg-foreground/5 hover:text-foreground"
           >
             <Link href="/search">
               <Search className="size-4" />
@@ -57,7 +57,7 @@ export default function NotFound() {
         </div>
 
         {/* Bottom tag */}
-        <p className="mt-12 text-[10px] uppercase tracking-widest text-zinc-700">
+        <p className="mt-12 text-[10px] uppercase tracking-widest text-muted-foreground/40">
           Monza Lab &middot; Investment-Grade Automotive Assets
         </p>
       </div>

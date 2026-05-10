@@ -1246,12 +1246,12 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                       </div>
                     )}
                     {!hasMore && infiniteScrollCars.length > 0 && (
-                      <p className="text-center text-zinc-500 py-8">
+                      <p className="text-center text-muted-foreground/80 py-8">
                         Showing all {infiniteScrollCars.length} listings
                       </p>
                     )}
                     {!isLoadingCars && !hasMore && infiniteScrollCars.length === 0 && (
-                      <div className="text-center text-zinc-500 py-16">
+                      <div className="text-center text-muted-foreground/80 py-16">
                         <p>No listings found for these filters.</p>
                       </div>
                     )}

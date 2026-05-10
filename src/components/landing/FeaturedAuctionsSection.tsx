@@ -94,7 +94,7 @@ function FeaturedCard({
                 ? "bg-primary/20 text-primary border border-primary/30"
                 : auction.status === "ACTIVE"
                 ? "bg-positive/20 text-positive border border-positive/30"
-                : "bg-amber-500/20 text-destructive border border-amber-500/30"
+                : "bg-primary/20 text-destructive border border-primary/40/30"
             }`}
           >
             {auction.status === "SOLD"

@@ -66,7 +66,7 @@ import { formatPoint } from "@/lib/landedCost/format"
 
 // ─── PLATFORM LABELS ───
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-primary/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },

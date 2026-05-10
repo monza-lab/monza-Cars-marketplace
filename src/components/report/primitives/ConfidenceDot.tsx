@@ -5,7 +5,7 @@ interface ConfidenceDotProps {
 
 const CLASS_BY_LEVEL = {
   high: "bg-positive",
-  medium: "bg-amber-500",
+  medium: "bg-primary",
   low: "bg-orange-500",
   insufficient: "bg-muted-foreground",
 } as const

@@ -16,7 +16,7 @@ const INTEGER_FMT = new Intl.NumberFormat("en-US")
 
 const TIER_DOT: Record<ConfidenceTier, string> = {
   high: "bg-emerald-500",
-  medium: "bg-amber-400",
+  medium: "bg-primary/80",
   low: "bg-neutral-500",
   insufficient: "bg-neutral-700",
 }

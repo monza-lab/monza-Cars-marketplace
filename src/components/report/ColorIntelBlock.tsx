@@ -9,7 +9,7 @@ interface ColorIntelBlockProps {
 // [HARDCODED] all rarity labels below
 const RARITY_LABELS: Record<string, { label: string; color: string }> = {
   common: { label: "Common", color: "text-muted-foreground" },
-  uncommon: { label: "Uncommon", color: "text-amber-600" },
+  uncommon: { label: "Uncommon", color: "text-primary" },
   rare: { label: "Rare", color: "text-orange-500" },
   very_rare: { label: "Very Rare", color: "text-red-500" },
   unique: { label: "Unique", color: "text-purple-500" },

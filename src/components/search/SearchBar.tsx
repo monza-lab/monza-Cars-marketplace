@@ -68,18 +68,18 @@ export function SearchBar({
       {/* Background glow on focus */}
       <div
         className={cn(
-          "absolute -inset-0.5 rounded-xl bg-gradient-to-r from-amber-500/0 via-amber-500/0 to-amber-500/0 opacity-0 blur-sm transition-all duration-500",
+          "absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/0 via-primary/0 to-primary/80/0 opacity-0 blur-sm transition-all duration-500",
           isFocused &&
-            "from-amber-500/20 via-amber-400/10 to-amber-500/20 opacity-100"
+            "from-primary/20 via-primary/10 to-primary/80/20 opacity-100"
         )}
       />
 
       <div
         className={cn(
-          "relative flex items-center overflow-hidden rounded-xl border bg-zinc-950/80 transition-all duration-300",
+          "relative flex items-center overflow-hidden rounded-xl border bg-card/80 transition-all duration-300",
           isFocused
-            ? "border-amber-500/40 shadow-lg shadow-amber-500/5"
-            : "border-zinc-800 hover:border-zinc-700"
+            ? "border-primary/40 shadow-lg shadow-primary/5"
+            : "border-border hover:border-border"
         )}
       >
         {/* Search icon */}
@@ -87,7 +87,7 @@ export function SearchBar({
           <Search
             className={cn(
               "size-4 transition-colors duration-300",
-              isFocused ? "text-destructive" : "text-zinc-500"
+              isFocused ? "text-destructive" : "text-muted-foreground/80"
             )}
           />
         </div>
@@ -102,14 +102,14 @@ export function SearchBar({
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-zinc-500"
+          className="border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/80"
         />
 
         {/* Clear button */}
         {value && (
           <button
             onClick={handleClear}
-            className="mr-3 flex shrink-0 items-center justify-center rounded-md p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+            className="mr-3 flex shrink-0 items-center justify-center rounded-md p-1 text-muted-foreground/80 transition-colors hover:bg-foreground/5 hover:text-foreground/80"
             aria-label="Clear search"
           >
             <X className="size-4" />

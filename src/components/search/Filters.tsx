@@ -142,27 +142,27 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
         className={cn(
           "flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-all duration-300 lg:hidden",
           isExpanded
-            ? "border-amber-500/30 bg-zinc-950/90"
-            : "border-zinc-800 bg-zinc-950/60 hover:border-zinc-700"
+            ? "border-primary/40/30 bg-card/90"
+            : "border-border bg-card/60 hover:border-border"
         )}
       >
         <div className="flex items-center gap-2.5">
           <SlidersHorizontal
             className={cn(
               "size-4",
-              isExpanded ? "text-destructive" : "text-zinc-400"
+              isExpanded ? "text-destructive" : "text-muted-foreground"
             )}
           />
-          <span className="text-sm font-medium text-zinc-200">Filters</span>
+          <span className="text-sm font-medium text-foreground/90">Filters</span>
           {activeFilterCount > 0 && (
-            <Badge className="border-amber-500/30 bg-amber-500/10 text-destructive">
+            <Badge className="border-primary/40/30 bg-primary/10 text-destructive">
               {activeFilterCount}
             </Badge>
           )}
         </div>
         <ChevronDown
           className={cn(
-            "size-4 text-zinc-400 transition-transform duration-300",
+            "size-4 text-muted-foreground transition-transform duration-300",
             isExpanded && "rotate-180"
           )}
         />
@@ -195,8 +195,8 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                         className={cn(
                           "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-200",
                           isSelected
-                            ? "border-amber-500/40 bg-amber-500/10 text-destructive shadow-sm shadow-amber-500/5"
-                            : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+                            ? "border-primary/40 bg-primary/10 text-destructive shadow-sm shadow-primary/5"
+                            : "border-border bg-card/50 text-muted-foreground hover:border-border hover:text-foreground/80"
                         )}
                       >
                         {isSelected && <Check className="size-3" />}
@@ -214,7 +214,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
               <FilterSection title="Price Range">
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/80">
                       $
                     </span>
                     <Input
@@ -222,12 +222,12 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                       placeholder="Min"
                       value={localFilters.priceMin}
                       onChange={(e) => updateLocal("priceMin", e.target.value)}
-                      className="border-zinc-800 bg-zinc-900/50 pl-7 text-sm text-zinc-200 placeholder:text-zinc-600 focus-visible:border-amber-500/40 focus-visible:ring-amber-500/10"
+                      className="border-border bg-card/50 pl-7 text-sm text-foreground/90 placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:ring-primary/10"
                     />
                   </div>
-                  <span className="text-xs text-zinc-600">to</span>
+                  <span className="text-xs text-muted-foreground/60">to</span>
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/80">
                       $
                     </span>
                     <Input
@@ -235,7 +235,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                       placeholder="Max"
                       value={localFilters.priceMax}
                       onChange={(e) => updateLocal("priceMax", e.target.value)}
-                      className="border-zinc-800 bg-zinc-900/50 pl-7 text-sm text-zinc-200 placeholder:text-zinc-600 focus-visible:border-amber-500/40 focus-visible:ring-amber-500/10"
+                      className="border-border bg-card/50 pl-7 text-sm text-foreground/90 placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:ring-primary/10"
                     />
                   </div>
                 </div>
@@ -251,9 +251,9 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                     max={2026}
                     value={localFilters.yearMin}
                     onChange={(e) => updateLocal("yearMin", e.target.value)}
-                    className="flex-1 border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus-visible:border-amber-500/40 focus-visible:ring-amber-500/10"
+                    className="flex-1 border-border bg-card/50 text-sm text-foreground/90 placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:ring-primary/10"
                   />
-                  <span className="text-xs text-zinc-600">to</span>
+                  <span className="text-xs text-muted-foreground/60">to</span>
                   <Input
                     type="number"
                     placeholder="To"
@@ -261,7 +261,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                     max={2026}
                     value={localFilters.yearMax}
                     onChange={(e) => updateLocal("yearMax", e.target.value)}
-                    className="flex-1 border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus-visible:border-amber-500/40 focus-visible:ring-amber-500/10"
+                    className="flex-1 border-border bg-card/50 text-sm text-foreground/90 placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:ring-primary/10"
                   />
                 </div>
               </FilterSection>
@@ -272,15 +272,15 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                   value={localFilters.status}
                   onValueChange={(v) => updateLocal("status", v)}
                 >
-                  <SelectTrigger className="w-full border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 focus:border-amber-500/40 focus:ring-amber-500/10">
+                  <SelectTrigger className="w-full border-border bg-card/50 text-sm text-foreground/90 focus:border-primary/40 focus:ring-primary/10">
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
-                  <SelectContent className="border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40">
+                  <SelectContent className="border-border bg-card shadow-xl shadow-black/40">
                     {STATUSES.map((status) => (
                       <SelectItem
                         key={status.value}
                         value={status.value}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
+                        className="cursor-pointer text-sm text-foreground/80 focus:bg-primary/10 focus:text-destructive"
                       >
                         {status.label}
                       </SelectItem>
@@ -295,15 +295,15 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                   value={localFilters.make}
                   onValueChange={(v) => updateLocal("make", v)}
                 >
-                  <SelectTrigger className="w-full border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 focus:border-amber-500/40 focus:ring-amber-500/10">
+                  <SelectTrigger className="w-full border-border bg-card/50 text-sm text-foreground/90 focus:border-primary/40 focus:ring-primary/10">
                     <SelectValue placeholder="All makes" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-[280px] border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40">
+                  <SelectContent className="max-h-[280px] border-border bg-card shadow-xl shadow-black/40">
                     {POPULAR_MAKES.map((make) => (
                       <SelectItem
                         key={make}
                         value={make.toLowerCase()}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
+                        className="cursor-pointer text-sm text-foreground/80 focus:bg-primary/10 focus:text-destructive"
                       >
                         {make}
                       </SelectItem>
@@ -318,15 +318,15 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                   value={localFilters.transmission}
                   onValueChange={(v) => updateLocal("transmission", v)}
                 >
-                  <SelectTrigger className="w-full border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 focus:border-amber-500/40 focus:ring-amber-500/10">
+                  <SelectTrigger className="w-full border-border bg-card/50 text-sm text-foreground/90 focus:border-primary/40 focus:ring-primary/10">
                     <SelectValue placeholder="All transmissions" />
                   </SelectTrigger>
-                  <SelectContent className="border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40">
+                  <SelectContent className="border-border bg-card shadow-xl shadow-black/40">
                     {TRANSMISSIONS.map((t) => (
                       <SelectItem
                         key={t.value}
                         value={t.value}
-                        className="cursor-pointer text-sm text-zinc-300 focus:bg-amber-500/10 focus:text-destructive"
+                        className="cursor-pointer text-sm text-foreground/80 focus:bg-primary/10 focus:text-destructive"
                       >
                         {t.label}
                       </SelectItem>
@@ -336,10 +336,10 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
               </FilterSection>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-3 border-t border-zinc-800/60 pt-5">
+              <div className="flex items-center gap-3 border-t border-border/60 pt-5">
                 <Button
                   onClick={handleApply}
-                  className="flex-1 border border-amber-500/20 bg-gradient-to-r from-amber-600 to-amber-500 text-sm font-semibold text-zinc-950 shadow-lg shadow-amber-500/10 transition-all hover:from-amber-500 hover:to-amber-400 hover:shadow-amber-500/20"
+                  className="flex-1 border border-primary/30 bg-gradient-to-r from-primary to-primary/85 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/10 transition-all hover:from-primary/90 hover:to-primary/75 hover:shadow-primary/20"
                 >
                   <Check className="mr-1.5 size-4" />
                   Apply Filters
@@ -347,7 +347,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
                 <Button
                   variant="outline"
                   onClick={handleReset}
-                  className="border-zinc-800 bg-zinc-900/50 text-sm text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800/80 hover:text-zinc-200"
+                  className="border-border bg-card/50 text-sm text-muted-foreground hover:border-border hover:bg-foreground/5/80 hover:text-foreground/90"
                 >
                   <RotateCcw className="mr-1.5 size-3.5" />
                   Reset
@@ -372,7 +372,7 @@ function FilterSection({
 }) {
   return (
     <div className="space-y-2.5">
-      <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
         {title}
       </label>
       {children}

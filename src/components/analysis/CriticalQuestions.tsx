@@ -90,7 +90,7 @@ export function CriticalQuestions({
           size="xs"
           onClick={handleCopyAll}
           className={cn(
-            "text-zinc-500 hover:text-zinc-300 gap-1.5",
+            "text-muted-foreground/80 hover:text-foreground/80 gap-1.5",
             allCopied && "text-positive hover:text-positive"
           )}
         >
@@ -118,19 +118,19 @@ export function CriticalQuestions({
             transition={{ delay: i * 0.05, duration: 0.2 }}
             className={cn(
               "group flex items-start gap-3 rounded-md p-3",
-              "bg-zinc-900/60 border border-zinc-800/60",
-              "hover:bg-zinc-800/50 hover:border-zinc-700/60 transition-colors"
+              "bg-card/60 border border-border/60",
+              "hover:bg-foreground/5/50 hover:border-border/60 transition-colors"
             )}
           >
             {/* Number badge */}
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-destructive text-xs font-semibold mt-0.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-destructive text-xs font-semibold mt-0.5">
               {i + 1}
             </span>
 
             {/* Icon + Text */}
             <div className="flex-1 flex items-start gap-2 min-w-0">
               <HelpCircle className="size-4 mt-0.5 shrink-0 text-destructive/70" />
-              <p className="text-sm text-zinc-300 leading-relaxed">{question}</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{question}</p>
             </div>
 
             {/* Copy individual */}
@@ -140,7 +140,7 @@ export function CriticalQuestions({
               onClick={() => copy(question, i)}
               className={cn(
                 "opacity-0 group-hover:opacity-100 transition-opacity shrink-0",
-                "text-zinc-500 hover:text-zinc-300",
+                "text-muted-foreground/80 hover:text-foreground/80",
                 copiedIndex === i && "opacity-100 text-positive hover:text-positive"
               )}
               title="Copy question"

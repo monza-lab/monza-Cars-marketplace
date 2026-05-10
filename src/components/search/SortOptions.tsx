@@ -36,7 +36,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 export function SortOptions({ value, onChange, className }: SortOptionsProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground/80">
         <ArrowUpDown className="size-3.5" />
         <span className="hidden sm:inline">Sort by</span>
       </div>
@@ -44,18 +44,18 @@ export function SortOptions({ value, onChange, className }: SortOptionsProps) {
       <Select value={value} onValueChange={(v) => onChange(v as SortOption)}>
         <SelectTrigger
           className={cn(
-            "w-[180px] border-zinc-800 bg-zinc-950/80 text-sm text-zinc-200",
+            "w-[180px] border-border bg-card/80 text-sm text-foreground/90",
             "transition-all duration-200",
-            "hover:border-zinc-700",
-            "focus:border-amber-500/40 focus:ring-amber-500/10",
-            "data-[state=open]:border-amber-500/40 data-[state=open]:ring-1 data-[state=open]:ring-amber-500/10"
+            "hover:border-border",
+            "focus:border-primary/40 focus:ring-primary/10",
+            "data-[state=open]:border-primary/40 data-[state=open]:ring-1 data-[state=open]:ring-primary/10"
           )}
         >
           <SelectValue placeholder="Sort by..." />
         </SelectTrigger>
 
         <SelectContent
-          className="border-zinc-800 bg-zinc-950 shadow-xl shadow-black/40"
+          className="border-border bg-card shadow-xl shadow-black/40"
           position="popper"
           sideOffset={4}
         >
@@ -64,8 +64,8 @@ export function SortOptions({ value, onChange, className }: SortOptionsProps) {
               key={option.value}
               value={option.value}
               className={cn(
-                "cursor-pointer text-sm text-zinc-300",
-                "focus:bg-amber-500/10 focus:text-destructive",
+                "cursor-pointer text-sm text-foreground/80",
+                "focus:bg-primary/10 focus:text-destructive",
                 "data-[state=checked]:text-destructive"
               )}
             >

@@ -35,19 +35,19 @@ const REFRESH_MS = 30_000;
 
 const statusDot: Record<Status, string> = {
   green: 'bg-emerald-500',
-  yellow: 'bg-amber-400',
+  yellow: 'bg-primary/80',
   red: 'bg-red-500',
 };
 
 const statusTextClass: Record<Status, string> = {
   green: 'text-emerald-600 dark:text-emerald-400',
-  yellow: 'text-amber-700 dark:text-amber-300',
+  yellow: 'text-primary/85 dark:text-primary',
   red: 'text-red-600 dark:text-red-400',
 };
 
 const statusBorder: Record<Status, string> = {
   green: 'border-emerald-500/30',
-  yellow: 'border-amber-400/40',
+  yellow: 'border-primary/30/40',
   red: 'border-red-500/50',
 };
 
@@ -178,7 +178,7 @@ export default function DataQualityClient() {
         <div className="flex flex-col items-center gap-4">
           <div className="relative h-10 w-10">
             <div className="h-10 w-10 rounded-full border-2 border-border" />
-            <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+            <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary/40 border-t-transparent animate-spin" />
           </div>
           <p className="text-sm text-muted-foreground">Loading live data quality...</p>
         </div>
@@ -191,7 +191,7 @@ export default function DataQualityClient() {
       <div className="min-h-screen bg-background text-foreground p-10">
         <h1 className="text-xl font-semibold mb-4">Data Quality — load failed</h1>
         <p className="text-red-600 dark:text-red-400 mb-4">{error ?? 'no data'}</p>
-        <button onClick={() => load()} className="px-4 py-2 rounded bg-amber-500 text-black text-sm font-medium">
+        <button onClick={() => load()} className="px-4 py-2 rounded bg-primary text-black text-sm font-medium">
           Retry
         </button>
       </div>
@@ -222,13 +222,13 @@ export default function DataQualityClient() {
               updated {formatAgo(data.generatedAt, now)}
             </span>
             <label className="flex items-center gap-2 text-muted-foreground">
-              <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} className="accent-amber-500" />
+              <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} className="accent-primary" />
               auto-refresh
             </label>
             <button
               onClick={() => load()}
               disabled={refreshing}
-              className="px-3 py-1.5 rounded bg-amber-500 text-black font-medium hover:bg-amber-400 disabled:opacity-50"
+              className="px-3 py-1.5 rounded bg-primary text-black font-medium hover:bg-primary/80 disabled:opacity-50"
             >
               {refreshing ? 'Refreshing…' : 'Refresh now'}
             </button>
@@ -262,7 +262,7 @@ export default function DataQualityClient() {
                     </div>
                     <button
                       onClick={() => setSelected({ type: a.scope === 'source' ? 'source' : a.scope === 'maintenance' ? 'maintenance' : 'scraper', name: a.target })}
-                      className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:text-amber-300 underline underline-offset-2"
+                      className="text-xs text-primary dark:text-primary hover:text-primary/85 dark:text-primary underline underline-offset-2"
                     >
                       inspect
                     </button>
@@ -328,15 +328,15 @@ export default function DataQualityClient() {
 
           {/* Unknown active runs */}
           {data.unknownActiveRuns.length > 0 && (
-            <section className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-              <h3 className="text-sm font-semibold mb-2 text-amber-700 dark:text-amber-300">Unknown active runs</h3>
+            <section className="rounded-lg border border-primary/40/30 bg-primary/5 p-4">
+              <h3 className="text-sm font-semibold mb-2 text-primary/85 dark:text-primary">Unknown active runs</h3>
               <p className="text-xs text-muted-foreground mb-2">
                 These scraper_names have active rows but are not in <code className="text-foreground">sourceRegistry.ts</code>. Add them to the registry or investigate.
               </p>
               <ul className="text-xs space-y-1">
                 {data.unknownActiveRuns.map((u) => (
                   <li key={u.runId} className="text-foreground">
-                    <code className="text-amber-800 dark:text-amber-200">{u.scraperName}</code> — {u.ageMinutes}m old ({u.runId.slice(0, 8)}…)
+                    <code className="text-primary dark:text-primary/85">{u.scraperName}</code> — {u.ageMinutes}m old ({u.runId.slice(0, 8)}…)
                   </li>
                 ))}
               </ul>
@@ -387,7 +387,7 @@ function SourceCard({
     <button
       onClick={onClick}
       className={`text-left rounded-lg border bg-card p-4 transition-colors ${
-        selected ? 'border-amber-500 ring-1 ring-amber-500/40' : statusBorder[source.status] + ' hover:border-border'
+        selected ? 'border-primary/40 ring-1 ring-primary/40' : statusBorder[source.status] + ' hover:border-border'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -419,7 +419,7 @@ function SourceCard({
             {Object.entries(source.fieldCompleteness).map(([k, v]) => (
               <div key={k} className="flex justify-between gap-1">
                 <span className="text-muted-foreground">{k}</span>
-                <span className={v >= 80 ? 'text-emerald-600 dark:text-emerald-400' : v >= 50 ? 'text-amber-700 dark:text-amber-300' : 'text-red-600 dark:text-red-400'}>
+                <span className={v >= 80 ? 'text-emerald-600 dark:text-emerald-400' : v >= 50 ? 'text-primary/85 dark:text-primary' : 'text-red-600 dark:text-red-400'}>
                   {v.toFixed(0)}%
                 </span>
               </div>
@@ -438,7 +438,7 @@ function SourceCard({
                 scStatus === 'red'
                   ? 'border-red-500/40 text-red-700 dark:text-red-300'
                   : scStatus === 'yellow'
-                    ? 'border-amber-500/40 text-amber-800 dark:text-amber-200'
+                    ? 'border-primary/40 text-primary dark:text-primary/85'
                     : 'border-border text-muted-foreground'
               }`}
               title={sc.active?.note ?? ''}
@@ -448,7 +448,7 @@ function SourceCard({
               {sc.active && (
                 <span className="text-muted-foreground">
                   ·{sc.active.ageMinutes}m
-                  {sc.active.state === 'orphaned' && <span className="text-amber-700 dark:text-amber-300"> orph</span>}
+                  {sc.active.state === 'orphaned' && <span className="text-primary/85 dark:text-primary"> orph</span>}
                   {sc.active.state === 'stalled' && <span className="text-red-700 dark:text-red-300"> stall</span>}
                 </span>
               )}
@@ -481,7 +481,7 @@ function MaintenanceRow({
   onClick: () => void;
 }) {
   return (
-    <tr onClick={onClick} className={`cursor-pointer hover:bg-muted/40 ${selected ? 'bg-amber-500/5' : ''}`}>
+    <tr onClick={onClick} className={`cursor-pointer hover:bg-muted/40 ${selected ? 'bg-primary/5' : ''}`}>
       <td className="px-4 py-2.5">
         <div className="font-mono text-xs text-foreground">{m.scraperName}</div>
         <div className="text-[10px] text-muted-foreground">{m.purpose}</div>
@@ -503,7 +503,7 @@ function MaintenanceRow({
       <td className={`px-4 py-2.5 text-right font-mono text-xs ${m.failures7d > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground/60'}`}>
         {m.failures7d}
       </td>
-      <td className="px-4 py-2.5 text-right text-xs text-amber-600 dark:text-amber-400">inspect →</td>
+      <td className="px-4 py-2.5 text-right text-xs text-primary dark:text-primary">inspect →</td>
     </tr>
   );
 }
@@ -555,7 +555,7 @@ function DrillDownPanel({
               <button
                 key={sc.name}
                 onClick={() => onSelectScraper(sc.name)}
-                className="px-2 py-1 rounded border border-border hover:border-amber-500 font-mono text-[11px]"
+                className="px-2 py-1 rounded border border-border hover:border-primary/40 font-mono text-[11px]"
               >
                 {sc.name}
               </button>

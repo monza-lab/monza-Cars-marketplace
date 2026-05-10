@@ -135,7 +135,7 @@ function Checkbox({
         "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
         checked
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-zinc-700 bg-zinc-900/50 hover:border-zinc-600"
+          : "border-border bg-card/50 hover:border-border"
       )}
     >
       {checked && (
@@ -173,12 +173,12 @@ function FilterSection({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-2 text-xs font-semibold tracking-wider text-zinc-300 uppercase transition-colors hover:text-foreground"
+        className="flex w-full items-center justify-between py-2 text-xs font-semibold tracking-wider text-foreground/80 uppercase transition-colors hover:text-foreground"
       >
         {title}
         <ChevronDown
           className={cn(
-            "size-3.5 text-zinc-500 transition-transform duration-200",
+            "size-3.5 text-muted-foreground/80 transition-transform duration-200",
             open && "rotate-180"
           )}
         />
@@ -255,12 +255,12 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
   return (
     <aside
       className={cn(
-        "flex w-[280px] shrink-0 flex-col border-r border-zinc-800/50 bg-zinc-950/50",
+        "flex w-[280px] shrink-0 flex-col border-r border-border/50 bg-card/50",
         className
       )}
     >
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800/50 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="size-4 text-primary" />
           <span className="text-sm font-semibold text-white">Filters</span>
@@ -276,7 +276,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
         {hasActiveFilters && (
           <button
             onClick={handleClear}
-            className="flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-foreground"
+            className="flex items-center gap-1 text-xs text-muted-foreground/80 transition-colors hover:text-foreground"
           >
             <RotateCcw className="size-3" />
             Clear All
@@ -300,10 +300,10 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                   checked={filters.platforms.includes(platform.id)}
                   onChange={() => toggleArrayValue("platforms", platform.id)}
                 />
-                <span className="text-sm text-zinc-400">{platform.label}</span>
+                <span className="text-sm text-muted-foreground">{platform.label}</span>
                 <Badge
                   variant="outline"
-                  className="ml-auto border-zinc-800 text-[10px] text-zinc-600"
+                  className="ml-auto border-border text-[10px] text-muted-foreground/60"
                 >
                   {platform.shortLabel}
                 </Badge>
@@ -312,13 +312,13 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
           </div>
         </FilterSection>
 
-        <Separator className="my-1 bg-zinc-800/40" />
+        <Separator className="my-1 bg-foreground/5/40" />
 
         {/* Price Range */}
         <FilterSection title="Price Range">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-600">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60">
                 $
               </span>
               <Input
@@ -326,12 +326,12 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                 placeholder="Min"
                 value={filters.priceMin}
                 onChange={(e) => updateFilter("priceMin", e.target.value)}
-                className="h-8 border-zinc-800 bg-zinc-900/50 pl-6 text-xs text-white placeholder:text-zinc-600"
+                className="h-8 border-border bg-card/50 pl-6 text-xs text-white placeholder:text-muted-foreground/60"
               />
             </div>
-            <span className="text-xs text-zinc-600">&ndash;</span>
+            <span className="text-xs text-muted-foreground/60">&ndash;</span>
             <div className="relative flex-1">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-600">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60">
                 $
               </span>
               <Input
@@ -339,7 +339,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                 placeholder="Max"
                 value={filters.priceMax}
                 onChange={(e) => updateFilter("priceMax", e.target.value)}
-                className="h-8 border-zinc-800 bg-zinc-900/50 pl-6 text-xs text-white placeholder:text-zinc-600"
+                className="h-8 border-border bg-card/50 pl-6 text-xs text-white placeholder:text-muted-foreground/60"
               />
             </div>
           </div>
@@ -365,7 +365,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                       updateFilter("priceMax", "");
                     }
                   }}
-                  className="rounded-md border border-zinc-800/60 bg-zinc-900/30 px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+                  className="rounded-md border border-border/60 bg-card/30 px-2 py-1 text-[10px] text-muted-foreground/80 transition-colors hover:border-border hover:text-foreground/80"
                 >
                   {preset}
                 </button>
@@ -374,7 +374,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
           </div>
         </FilterSection>
 
-        <Separator className="my-1 bg-zinc-800/40" />
+        <Separator className="my-1 bg-foreground/5/40" />
 
         {/* Year Range */}
         <FilterSection title="Year Range">
@@ -384,17 +384,17 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
               placeholder="From"
               value={filters.yearMin}
               onChange={(e) => updateFilter("yearMin", e.target.value)}
-              className="h-8 border-zinc-800 bg-zinc-900/50 text-xs text-white placeholder:text-zinc-600"
+              className="h-8 border-border bg-card/50 text-xs text-white placeholder:text-muted-foreground/60"
               min={1900}
               max={2026}
             />
-            <span className="text-xs text-zinc-600">&ndash;</span>
+            <span className="text-xs text-muted-foreground/60">&ndash;</span>
             <Input
               type="number"
               placeholder="To"
               value={filters.yearMax}
               onChange={(e) => updateFilter("yearMax", e.target.value)}
-              className="h-8 border-zinc-800 bg-zinc-900/50 text-xs text-white placeholder:text-zinc-600"
+              className="h-8 border-border bg-card/50 text-xs text-white placeholder:text-muted-foreground/60"
               min={1900}
               max={2026}
             />
@@ -423,7 +423,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                     updateFilter("yearMax", "");
                   }
                 }}
-                className="rounded-md border border-zinc-800/60 bg-zinc-900/30 px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+                className="rounded-md border border-border/60 bg-card/30 px-2 py-1 text-[10px] text-muted-foreground/80 transition-colors hover:border-border hover:text-foreground/80"
               >
                 {decade}
               </button>
@@ -431,7 +431,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
           </div>
         </FilterSection>
 
-        <Separator className="my-1 bg-zinc-800/40" />
+        <Separator className="my-1 bg-foreground/5/40" />
 
         {/* Make */}
         <FilterSection title="Make">
@@ -439,15 +439,15 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
             value={filters.make}
             onValueChange={(val) => updateFilter("make", val === "Any" ? "" : val)}
           >
-            <SelectTrigger className="h-8 w-full border-zinc-800 bg-zinc-900/50 text-xs text-zinc-300">
+            <SelectTrigger className="h-8 w-full border-border bg-card/50 text-xs text-foreground/80">
               <SelectValue placeholder="All Makes" />
             </SelectTrigger>
-            <SelectContent className="border-zinc-800 bg-zinc-900">
+            <SelectContent className="border-border bg-card">
               {popularMakes.map((make) => (
                 <SelectItem
                   key={make}
                   value={make}
-                  className="text-xs text-zinc-300 focus:bg-foreground/6 focus:text-white"
+                  className="text-xs text-foreground/80 focus:bg-foreground/6 focus:text-white"
                 >
                   {make}
                 </SelectItem>
@@ -456,7 +456,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
           </Select>
         </FilterSection>
 
-        <Separator className="my-1 bg-zinc-800/40" />
+        <Separator className="my-1 bg-foreground/5/40" />
 
         {/* Status */}
         <FilterSection title="Status">
@@ -480,17 +480,17 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                       "size-3.5",
                       status.id === "active" && "text-positive",
                       status.id === "ending-soon" && "text-destructive",
-                      status.id === "sold" && "text-zinc-500"
+                      status.id === "sold" && "text-muted-foreground/80"
                     )}
                   />
-                  <span className="text-sm text-zinc-400">{status.label}</span>
+                  <span className="text-sm text-muted-foreground">{status.label}</span>
                 </label>
               );
             })}
           </div>
         </FilterSection>
 
-        <Separator className="my-1 bg-zinc-800/40" />
+        <Separator className="my-1 bg-foreground/5/40" />
 
         {/* Transmission */}
         <FilterSection title="Transmission">
@@ -506,8 +506,8 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
                   checked={filters.transmissions.includes(option.id)}
                   onChange={() => toggleArrayValue("transmissions", option.id)}
                 />
-                <Cog className="size-3.5 text-zinc-600" />
-                <span className="text-sm text-zinc-400">{option.label}</span>
+                <Cog className="size-3.5 text-muted-foreground/60" />
+                <span className="text-sm text-muted-foreground">{option.label}</span>
               </label>
             ))}
           </div>
@@ -515,7 +515,7 @@ export function Sidebar({ className, onApplyFilters, onClearFilters }: SidebarPr
       </div>
 
       {/* Apply Button (sticky at bottom) */}
-      <div className="border-t border-zinc-800/50 p-4">
+      <div className="border-t border-border/50 p-4">
         <Button
           onClick={handleApply}
           className="w-full bg-primary font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-md hover:shadow-primary/10"

@@ -60,7 +60,7 @@ export function LoadingSpinner({
 
         {/* Track ring */}
         <div
-          className={cn("rounded-full border-zinc-800/60", container, border)}
+          className={cn("rounded-full border-border/60", container, border)}
         />
 
         {/* Spinning gradient ring */}
@@ -107,7 +107,7 @@ export function LoadingSpinner({
         >
           <div
             className={cn(
-              "rounded-full bg-amber-500",
+              "rounded-full bg-primary",
               size === "sm" && "size-1",
               size === "md" && "size-1.5",
               size === "lg" && "size-2.5"

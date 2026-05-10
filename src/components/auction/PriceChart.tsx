@@ -67,11 +67,11 @@ function CustomTooltip({
 
   const entry = payload[0];
   return (
-    <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/95 px-3 py-2 shadow-xl shadow-black/40 backdrop-blur-sm">
-      <p className="text-sm font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+    <div className="rounded-lg border border-border/60 bg-card/95 px-3 py-2 shadow-xl shadow-black/40 backdrop-blur-sm">
+      <p className="text-sm font-bold bg-gradient-to-r from-primary/70 to-primary/85 bg-clip-text text-transparent">
         {formatPrice(entry.value ?? 0)}
       </p>
-      <p className="mt-0.5 text-[11px] text-zinc-400">
+      <p className="mt-0.5 text-[11px] text-muted-foreground">
         {entry.payload.formattedTime}
       </p>
     </div>
@@ -109,11 +109,11 @@ export function PriceChart({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-lg border border-zinc-800/60 bg-zinc-900/30 py-16",
+          "flex items-center justify-center rounded-lg border border-border/60 bg-card/30 py-16",
           className
         )}
       >
-        <p className="text-sm text-zinc-500">No bid data available</p>
+        <p className="text-sm text-muted-foreground/80">No bid data available</p>
       </div>
     );
   }

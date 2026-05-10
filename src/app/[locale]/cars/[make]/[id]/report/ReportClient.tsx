@@ -53,7 +53,7 @@ import { OutOfReportsModal } from "@/components/payments/OutOfReportsModal"
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-primary/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
@@ -1642,11 +1642,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
                   {pricePosition !== null ? (
                     <>
-                      <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-amber-400"}`}>
+                      <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
                         {pricePosition}%
                       </p>
                       {pricePosition > 100 && (
-                        <p className="text-[10px] text-amber-400 mt-0.5">{/* [HARDCODED] */}Above fair value</p>
+                        <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
                       )}
                     </>
                   ) : (
@@ -1667,11 +1667,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     <div className="flex items-center gap-3 mt-2">
                       <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-amber-400" : "bg-destructive"}`}
+                          className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
                           style={{ width: `${riskScore}%` }}
                         />
                       </div>
-                      <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-amber-400" : "text-destructive"}`}>
+                      <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
                         {riskScore}/100
                       </span>
                     </div>
@@ -2046,7 +2046,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-amber-400/30 to-red-400/30" />
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-primary/30 to-red-400/30" />
                         <motion.div
                           initial={{ left: 0 }}
                           animate={{ left: `calc(${riskScore}% - 8px)` }}

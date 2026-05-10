@@ -31,10 +31,10 @@ export default function AuctionsPage() {
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <div className="h-10 w-10 rounded-full border-2 border-zinc-800" />
-              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+              <div className="h-10 w-10 rounded-full border-2 border-border" />
+              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary/40 border-t-transparent animate-spin" />
             </div>
-            <p className="text-sm text-zinc-500">{t("auctions.loading")}</p>
+            <p className="text-sm text-muted-foreground/80">{t("auctions.loading")}</p>
           </div>
         </div>
       }
