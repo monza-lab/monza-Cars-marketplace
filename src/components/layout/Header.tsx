@@ -893,13 +893,13 @@ export function Header() {
               <LanguageSwitcher />
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle — visible on mobile + desktop (1-tap access) */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hidden md:flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+              className="flex items-center justify-center size-9 md:size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+              {theme === "dark" ? <Sun className="size-4 md:size-3.5" /> : <Moon className="size-4 md:size-3.5" />}
             </button>
 
             {/* Menu */}

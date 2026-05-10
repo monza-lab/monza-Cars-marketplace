@@ -33,9 +33,6 @@ import {
   Flame,
   ChevronDown,
   ExternalLink,
-  MessageSquare,
-  Info,
-  Sparkles,
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
@@ -772,18 +769,19 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
   )
 }
 
-// ─── MOBILE: TESIS BANNER (intelligence, not marketplace) ───
+// ─── MOBILE: TESIS BANNER (compact, editorial) ───
 function MobileTesisBanner({ liveCount }: { liveCount: number }) {
   return (
     <div className="border-b border-border bg-foreground/[0.02]">
-      <div className="px-4 py-3 flex items-start gap-2.5">
-        <Info className="size-3.5 shrink-0 text-muted-foreground mt-0.5" aria-hidden />
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          <span className="font-medium text-foreground">Intelligence, not a marketplace.</span>{" "}
-          {liveCount > 0
-            ? `${liveCount.toLocaleString()} Porsches tracked across BaT, Cars & Bids, AS24, Elferspot and more — we publish the report; you bid where the car lives.`
-            : "We track Porsches across BaT, Cars & Bids, AS24, Elferspot and more — we publish the report; you bid where the car lives."}
-        </p>
+      <div className="px-4 py-2 flex items-baseline justify-between gap-3">
+        <span className="text-[9px] font-semibold tracking-[0.22em] uppercase text-foreground/85 shrink-0">
+          {/* [HARDCODED] */}Intelligence, not a marketplace
+        </span>
+        {liveCount > 0 && (
+          <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+            {liveCount.toLocaleString()} {/* [HARDCODED] */}tracked
+          </span>
+        )}
       </div>
     </div>
   )
@@ -819,28 +817,28 @@ function MobileFamilyChips() {
   )
 }
 
-// ─── MOBILE: ADVISOR BAND (Pistons CTA inline) ───
+// ─── MOBILE: ADVISOR BAND (editorial, typography-led — no AI iconography) ───
 function MobileAdvisorBand() {
   return (
     <div className="px-4 py-3">
       <Link
         href="/advisor"
-        className="group flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.08] via-primary/[0.04] to-transparent px-4 py-3 active:from-primary/[0.14] transition-colors"
+        className="group block rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.08] via-primary/[0.04] to-transparent px-5 py-4 active:from-primary/[0.14] transition-colors"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="size-9 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-            <Sparkles className="size-4 text-primary" />
-          </div>
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-foreground">
+            <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-primary/80">
+              {/* [HARDCODED] */}Advisor
+            </p>
+            <p className="font-display text-[18px] leading-tight text-foreground mt-1">
               {/* [HARDCODED] */}Need an opinion?
             </p>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {/* [HARDCODED] */}Ask the advisor about any Porsche
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {/* [HARDCODED] */}Ask anything — from inspection to fair value
             </p>
           </div>
+          <ChevronRight className="size-4 text-primary group-active:translate-x-0.5 transition-transform shrink-0" />
         </div>
-        <ChevronRight className="size-4 text-primary group-active:translate-x-0.5 transition-transform shrink-0" />
       </Link>
     </div>
   )
