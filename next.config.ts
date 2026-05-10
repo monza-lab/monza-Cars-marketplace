@@ -77,6 +77,14 @@ const nextConfig: NextConfig = {
         "**/node_modules/**",
         "**/.worktrees/**",
         "**/.git/**",
+        "**/var/**",
+        "**/logs/**",
+        "**/agents/testscripts/artifacts/**",
+        "**/test-results/**",
+        "**/videos/**",
+        "**/.claude/**",
+        "**/.opencode/**",
+        "**/.superpowers/**",
       ],
     };
     return config;
