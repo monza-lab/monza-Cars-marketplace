@@ -568,7 +568,7 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
     model: row.model,
     trim: row.trim,
     price,
-    trend: "Live Data",
+    trend: "",
     trendValue: 0,
     thesis,
     image: resolvedImages[0],
@@ -654,7 +654,7 @@ function isJunkListing(row: { make: string; model: string; year: number; title?:
 function computeTrend(
   history: PriceHistoryRow[]
 ): { trend: string; trendValue: number } {
-  if (history.length < 2) return { trend: "Live Data", trendValue: 0 };
+  if (history.length < 2) return { trend: "", trendValue: 0 };
 
   const sorted = [...history].sort(
     (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
@@ -664,7 +664,7 @@ function computeTrend(
   const earliestPrice = earliest.price_usd ?? earliest.price_eur ?? earliest.price_gbp ?? 0;
   const latestPrice = latest.price_usd ?? latest.price_eur ?? latest.price_gbp ?? 0;
 
-  if (earliestPrice <= 0) return { trend: "Live Data", trendValue: 0 };
+  if (earliestPrice <= 0) return { trend: "", trendValue: 0 };
 
   const trendValue = ((latestPrice - earliestPrice) / earliestPrice) * 100;
   const trend =

@@ -124,7 +124,9 @@ export function aggregateBrands(auctions: Auction[], dbTotalOverride?: number): 
       carCount: count,
       priceMin: Math.min(...prices),
       priceMax: Math.max(...prices),
-      avgTrend: count >= 100 ? "Premium Demand" : count >= 50 ? "Strong Demand" : count >= 20 ? "High Demand" : "Growing Demand",
+      // Honest-by-data: don't fabricate "demand" labels from listing count.
+      // Real trend would come from price history; until then leave empty.
+      avgTrend: "",
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],

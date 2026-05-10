@@ -162,7 +162,9 @@ function SearchResultCard({ car, onSelect }: { car: CollectorCar; onSelect: () =
         <p className="text-[13px] font-medium text-foreground truncate">{car.title}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-[12px] font-display font-medium text-primary">{formatPrice(car.currentBid)}</span>
-          <span className="text-[10px] text-positive">{car.trend}</span>
+          {car.trend && (
+            <span className="text-[10px] text-positive">{car.trend}</span>
+          )}
         </div>
       </div>
       <ChevronRight className="size-4 text-muted-foreground shrink-0" />

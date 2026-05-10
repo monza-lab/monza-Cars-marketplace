@@ -152,7 +152,9 @@ export function GenerationContextPanel({
           </div>
         )}
 
-        {/* 4. MARKET DEPTH */}
+        {/* 4. MARKET DEPTH — only verifiable signals.
+            Sell-through and demand score were synthesized from `carCount` —
+            removed because they read like real metrics but weren't. */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="size-4 text-primary" />
@@ -165,34 +167,19 @@ export function GenerationContextPanel({
               <span className="text-[11px] text-muted-foreground">Active Listings</span>
               <span className="text-[12px] tabular-nums font-semibold text-foreground">{gen.carCount}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">Avg. Price</span>
-              <span className="text-[12px] font-display font-medium text-primary">
-                {formatPrice(
-                  gen.priceMin > 0 && gen.priceMax > 0
-                    ? Math.round((gen.priceMin + gen.priceMax) / 2)
-                    : 0
-                )}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
-              <span className="text-[12px] tabular-nums font-semibold text-positive">{Math.min(85 + Math.floor(gen.carCount / 3), 98)}%</span>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-muted-foreground">Demand Score</span>
-                <span className="text-[12px] font-display font-medium text-primary">{Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10)}/10</span>
+            {gen.priceMin > 0 && gen.priceMax > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">Avg. Price</span>
+                <span className="text-[12px] font-display font-medium text-primary">
+                  {formatPrice(Math.round((gen.priceMin + gen.priceMax) / 2))}
+                </span>
               </div>
-              <div className="flex gap-1">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-[6px] flex-1 rounded-sm ${i < Math.min(Math.max(Math.round(gen.carCount / 2), 4), 10) ? "bg-primary/50" : "bg-foreground/4"}`}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
+            {recentSales.length === 0 && (
+              <p className="text-[10px] text-muted-foreground italic mt-1.5 leading-relaxed">
+                Sell-through &amp; demand score pending recent sales for this generation.
+              </p>
+            )}
           </div>
         </div>
 

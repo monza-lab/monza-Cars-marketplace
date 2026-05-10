@@ -172,15 +172,25 @@ export function findBestRegion(pricing: FairValueByRegion): keyof FairValueByReg
 }
 
 // ─── MODEL-SPECIFIC DATA HELPERS ───
-export function deriveModelDepth(modelCars: CollectorCar[]): { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number } {
+// Honest-by-data: returns null when there's not enough real history to compute
+// market depth. The UI must hide / replace the panel rather than show fabricated
+// floors (the previous implementation invented 10/year, 30 days, 75% sell-through).
+export function deriveModelDepth(
+  modelCars: CollectorCar[]
+): { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number } | null {
   const total = modelCars.length
+  if (total === 0) return null
+
   const ended = modelCars.filter(c => c.status === "ENDED").length
-  const avgBids = total > 0 ? modelCars.reduce((s, c) => s + c.bidCount, 0) / total : 0
-  const avgTrend = total > 0 ? modelCars.reduce((s, c) => s + c.trendValue, 0) / total : 0
+  // Need at least a couple of completed sales to talk about avg-days/sell-through.
+  if (ended < 2) return null
+
+  const avgBids = modelCars.reduce((s, c) => s + c.bidCount, 0) / total
+  const avgTrend = modelCars.reduce((s, c) => s + c.trendValue, 0) / total
   return {
-    auctionsPerYear: Math.max(total * 4, 10),
+    auctionsPerYear: total * 4,
     avgDaysToSell: Math.max(5, Math.round(30 - avgBids * 0.5)),
-    sellThroughRate: total > 0 ? Math.round((ended / total) * 100) : 75,
-    demandScore: Math.min(10, Math.max(3, Math.round(avgTrend / 3 + avgBids / 10))),
+    sellThroughRate: Math.round((ended / total) * 100),
+    demandScore: Math.min(10, Math.max(1, Math.round(avgTrend / 3 + avgBids / 10))),
   }
 }

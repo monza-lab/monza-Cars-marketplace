@@ -567,7 +567,13 @@ function CarContextPanel({
             <div>
               {/* [HARDCODED] */}
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
-              <p className="text-[13px] tabular-nums font-semibold text-positive">{car.trend}</p>
+              {car.trend ? (
+                <p className={`text-[13px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>{car.trend}</p>
+              ) : (
+                <p className="text-[12px] text-muted-foreground italic">
+                  {/* [HARDCODED] */}Awaiting history
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -1074,7 +1080,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <p className="text-2xl font-display font-medium text-primary">
                     {formatPrice(car.currentBid)}
                   </p>
-                  <span className="text-[12px] tabular-nums font-semibold text-positive">{car.trend}</span>
+                  {car.trend && (
+                    <span className={`text-[12px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                      {car.trend}
+                    </span>
+                  )}
                 </div>
                 {landedCostTeaser && (
                   <p className="mt-1 text-[11px] tabular-nums text-white/60 flex items-center gap-1.5">
@@ -1122,17 +1132,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {/* Cell 1: Trend */}
+              {/* Cell 1: Trend (only when we have real history) */}
               <div className="rounded-xl bg-foreground/3 border border-border p-3">
                 {/* [HARDCODED] */}
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Trend
                 </span>
-                <span className={`text-[28px] font-bold tabular-nums ${
-                  car.trendValue > 0 ? "text-positive"
-                  : car.trendValue < 0 ? "text-destructive"
-                  : "text-muted-foreground"
-                }`}>{car.trend}</span>
+                {car.trend && car.trendValue !== 0 ? (
+                  <span className={`text-[28px] font-bold tabular-nums ${
+                    car.trendValue > 0 ? "text-positive" : "text-destructive"
+                  }`}>{car.trend}</span>
+                ) : (
+                  <span className="text-[14px] text-muted-foreground italic block mt-1">
+                    {/* [HARDCODED] */}Awaiting price history
+                  </span>
+                )}
               </div>
 
               {/* Cell 2: Market Position */}

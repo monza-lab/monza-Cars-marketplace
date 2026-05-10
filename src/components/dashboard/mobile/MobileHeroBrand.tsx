@@ -58,7 +58,9 @@ export function MobileHeroBrand({ brand }: { brand: Brand }) {
             <span className="text-[16px] font-display font-medium text-primary">
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
-            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            {brand.avgTrend && (
+              <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            )}
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-3">

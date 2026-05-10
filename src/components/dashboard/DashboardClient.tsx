@@ -344,7 +344,8 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       medianPriceUsd,
-      avgTrend: "Active Market", // [HARDCODED]
+      // Honest-by-data: trend label only when computed from real history.
+      avgTrend: "",
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],
@@ -910,12 +911,7 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
         {/* Side gradient — supports text on bright backgrounds */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-transparent dark:from-background/65 dark:via-background/10 pointer-events-none" />
 
-        {/* Market delta pill */}
-        <div className="absolute top-4 left-4">
-          <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
-        </div>
-
-        {/* Car count */}
+        {/* Car count — only honest signal we have at the brand-aggregate level */}
         <div className="absolute top-4 right-4">
           <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-foreground">
             {t("brandCard.carsCount", { count: brand.carCount })}
@@ -943,7 +939,9 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
             >
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
-            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            {brand.avgTrend && (
+              <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            )}
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-3">
@@ -1009,7 +1007,9 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
           <span className="text-[12px] tabular-nums text-primary">
             {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
-          <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          {brand.avgTrend && (
+            <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          )}
         </div>
       </div>
 
@@ -2271,7 +2271,8 @@ function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: 
           avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
           medianPrice,
           count: data.count,
-          trend: "Stable", // [HARDCODED]
+          // Honest-by-data: trend left empty until we compute real history.
+          trend: "",
         }
       })
       .sort((a, b) => b.avgPrice - a.avgPrice)
