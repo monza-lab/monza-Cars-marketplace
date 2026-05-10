@@ -831,7 +831,11 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         </div>
 
         <div className="pb-24">
-          {filteredModels.length === 0 ? (
+          {isLoadingCars && filteredModels.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+            </div>
+          ) : filteredModels.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center px-8 py-20">
               <Car className="size-12 text-muted-foreground mb-4" />
               <h3 className="text-[15px] font-semibold text-foreground mb-2">{t("empty.title")}</h3>
