@@ -11,7 +11,7 @@ import type { RegionalMarketStats, PricedListingRecord } from "@/lib/reports/typ
 // System prompt (shared context for all analysis calls)
 // ---------------------------------------------------------------------------
 
-export const ANALYSIS_SYSTEM_PROMPT = `You are Monza Lab AI, an expert automotive analyst specializing in collector cars, enthusiast vehicles, and online car auctions. You have deep knowledge of:
+export const ANALYSIS_SYSTEM_PROMPT = `You are MonzaHaus AI, an expert automotive analyst specializing in collector cars, enthusiast vehicles, and online car auctions. You have deep knowledge of:
 
 - Auction platforms (Bring a Trailer, Cars & Bids, Collecting Cars)
 - Vehicle valuations, market trends, and price history
@@ -220,7 +220,7 @@ Respond with ONLY a JSON object:
 // Investment Report Analysis Prompt (Gemini)
 // ---------------------------------------------------------------------------
 
-export const REPORT_SYSTEM_PROMPT = `You are Monza Lab AI, an expert collector car investment analyst. You specialize in valuations based on real market data — actual sale prices, asking prices, and listing histories.
+export const REPORT_SYSTEM_PROMPT = `You are MonzaHaus AI, an expert collector car investment analyst. You specialize in valuations based on real market data — actual sale prices, asking prices, and listing histories.
 
 RULES:
 - Base ALL analysis on the real market data provided below
@@ -417,7 +417,7 @@ ${description}
 // Investment Narrative Prompt (Haus Report — "Investment Story")
 // -------------------------------------------------------------------------
 
-export const NARRATIVE_SYSTEM_PROMPT = `You are Monza Lab AI, a collector car investment analyst writing a concise, authoritative analysis for a buyer considering a specific Porsche. Write in the style of a Hagerty Insider article — factual, opinionated, and specific to this exact car.
+export const NARRATIVE_SYSTEM_PROMPT = `You are MonzaHaus AI, a collector car investment analyst writing a concise, authoritative analysis for a buyer considering a specific Porsche. Write in the style of a Hagerty Insider article — factual, opinionated, and specific to this exact car.
 
 RULES:
 - Be specific to THIS car — reference the exact color, mileage, options, year

@@ -7,10 +7,10 @@ import { ArrowLeft } from "lucide-react"
 export async function generateMetadata() {
   const locale = await getLocale()
   const titles: Record<string, string> = {
-    en: "Privacy Policy | Monza Lab",
-    es: "Política de Privacidad | Monza Lab",
-    de: "Datenschutzerklärung | Monza Lab",
-    ja: "プライバシーポリシー | Monza Lab",
+    en: "Privacy Policy | MonzaHaus",
+    es: "Política de Privacidad | MonzaHaus",
+    de: "Datenschutzerklärung | MonzaHaus",
+    ja: "プライバシーポリシー | MonzaHaus",
   }
   return { title: titles[locale] || titles.en }
 }
@@ -24,7 +24,7 @@ function EnContent() {
 
       <h2>1. Information We Collect</h2>
       <p>
-        Monza Lab (&quot;we&quot;, &quot;us&quot;) collects the following information when you use our platform:
+        MonzaHaus (&quot;we&quot;, &quot;us&quot;) collects the following information when you use our platform:
       </p>
       <ul>
         <li><strong>Account information</strong>: email address provided during registration via our authentication provider (Supabase Auth).</li>
@@ -80,7 +80,7 @@ function EsContent() {
 
       <h2>1. Información que Recopilamos</h2>
       <p>
-        Monza Lab (&quot;nosotros&quot;) recopila la siguiente información cuando utilizas nuestra plataforma:
+        MonzaHaus (&quot;nosotros&quot;) recopila la siguiente información cuando utilizas nuestra plataforma:
       </p>
       <ul>
         <li><strong>Información de cuenta</strong>: dirección de correo electrónico proporcionada durante el registro a través de nuestro proveedor de autenticación (Supabase Auth).</li>
@@ -132,7 +132,7 @@ function DeContent() {
 
       <h2>1. Erhobene Daten</h2>
       <p>
-        Monza Lab (&quot;wir&quot;, &quot;uns&quot;) erhebt folgende Daten bei der Nutzung unserer Plattform:
+        MonzaHaus (&quot;wir&quot;, &quot;uns&quot;) erhebt folgende Daten bei der Nutzung unserer Plattform:
       </p>
       <ul>
         <li><strong>Kontoinformationen</strong>: E-Mail-Adresse, die bei der Registrierung über unseren Authentifizierungsanbieter (Supabase Auth) angegeben wird.</li>
@@ -175,7 +175,7 @@ function DeContent() {
 
       <h2>6. Verantwortlicher</h2>
       <p>
-        Verantwortlich für die Datenverarbeitung: Monza Lab.<br />
+        Verantwortlich für die Datenverarbeitung: MonzaHaus.<br />
         Kontakt für Datenschutzanfragen: <strong>privacy@monzalab.com</strong>
       </p>
     </>
@@ -189,7 +189,7 @@ function JaContent() {
 
       <h2>1. 収集する情報</h2>
       <p>
-        Monza Lab（以下「当社」）は、プラットフォームのご利用時に以下の情報を収集します：
+        MonzaHaus（以下「当社」）は、プラットフォームのご利用時に以下の情報を収集します：
       </p>
       <ul>
         <li><strong>アカウント情報</strong>：認証プロバイダー（Supabase Auth）を通じた登録時に提供されるメールアドレス。</li>

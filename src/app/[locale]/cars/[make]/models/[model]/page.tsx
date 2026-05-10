@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: ModelPageProps) {
   const cars = [...curated, ...liveModel]
 
   if (cars.length === 0) {
-    return { title: "Not Found | Monza Lab" }
+    return { title: "Not Found | MonzaHaus" }
   }
 
   const makeName = cars[0].make

@@ -26,14 +26,14 @@ export async function generateMetadata({
 
     if (!res.ok) {
       return {
-        title: "Auction Not Found | Monza Lab",
+        title: "Auction Not Found | MonzaHaus",
         description: "The auction you are looking for could not be found.",
       }
     }
 
     const auction = await res.json()
 
-    const title = `${auction.title} | Monza Lab`
+    const title = `${auction.title} | MonzaHaus`
     const description = `${auction.year} ${auction.make} ${auction.model} – ${
       auction.currentBid
         ? `Current bid $${Number(auction.currentBid).toLocaleString()}`
@@ -57,7 +57,7 @@ export async function generateMetadata({
     }
   } catch {
     return {
-      title: "Auction | Monza Lab",
+      title: "Auction | MonzaHaus",
       description: "View auction details and get AI-powered analysis.",
     }
   }

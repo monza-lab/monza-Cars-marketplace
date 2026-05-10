@@ -7,10 +7,10 @@ import { ArrowLeft } from "lucide-react"
 export async function generateMetadata() {
   const locale = await getLocale()
   const titles: Record<string, string> = {
-    en: "Terms of Service | Monza Lab",
-    es: "Términos de Servicio | Monza Lab",
-    de: "Nutzungsbedingungen | Monza Lab",
-    ja: "利用規約 | Monza Lab",
+    en: "Terms of Service | MonzaHaus",
+    es: "Términos de Servicio | MonzaHaus",
+    de: "Nutzungsbedingungen | MonzaHaus",
+    ja: "利用規約 | MonzaHaus",
   }
   return { title: titles[locale] || titles.en }
 }
@@ -22,13 +22,13 @@ function EnContent() {
 
       <h2>1. Acceptance of Terms</h2>
       <p>
-        By accessing or using Monza Lab (&quot;the Platform&quot;), you agree to be bound by these Terms of Service.
+        By accessing or using MonzaHaus (&quot;the Platform&quot;), you agree to be bound by these Terms of Service.
         If you do not agree, please do not use the Platform.
       </p>
 
       <h2>2. Description of Service</h2>
       <p>
-        Monza Lab is a collector vehicle marketplace and analysis platform. We provide market data, investment analysis,
+        MonzaHaus is a collector vehicle marketplace and analysis platform. We provide market data, investment analysis,
         and listing aggregation for informational purposes. We are not a licensed broker, dealer, or financial advisor.
       </p>
 
@@ -49,7 +49,7 @@ function EnContent() {
 
       <h2>5. Intellectual Property</h2>
       <p>
-        All content, design, and analysis produced by Monza Lab is protected by copyright. You may not reproduce, distribute,
+        All content, design, and analysis produced by MonzaHaus is protected by copyright. You may not reproduce, distribute,
         or create derivative works without express written permission.
       </p>
 
@@ -61,7 +61,7 @@ function EnContent() {
 
       <h2>7. Limitation of Liability</h2>
       <p>
-        Monza Lab is provided &quot;as is&quot; without warranties of any kind. We are not liable for any losses arising
+        MonzaHaus is provided &quot;as is&quot; without warranties of any kind. We are not liable for any losses arising
         from your use of the Platform or reliance on information provided herein.
       </p>
 
@@ -83,13 +83,13 @@ function EsContent() {
 
       <h2>1. Aceptación de los Términos</h2>
       <p>
-        Al acceder o utilizar Monza Lab (&quot;la Plataforma&quot;), aceptas regirte por estos Términos de Servicio.
+        Al acceder o utilizar MonzaHaus (&quot;la Plataforma&quot;), aceptas regirte por estos Términos de Servicio.
         Si no estás de acuerdo, por favor no utilices la Plataforma.
       </p>
 
       <h2>2. Descripción del Servicio</h2>
       <p>
-        Monza Lab es una plataforma de marketplace y análisis de vehículos de colección. Proporcionamos datos de mercado,
+        MonzaHaus es una plataforma de marketplace y análisis de vehículos de colección. Proporcionamos datos de mercado,
         análisis de inversión y agregación de listados con fines informativos. No somos un corredor, comerciante o asesor financiero autorizado.
       </p>
 
@@ -110,7 +110,7 @@ function EsContent() {
 
       <h2>5. Propiedad Intelectual</h2>
       <p>
-        Todo el contenido, diseño y análisis producido por Monza Lab está protegido por derechos de autor. No puedes reproducir,
+        Todo el contenido, diseño y análisis producido por MonzaHaus está protegido por derechos de autor. No puedes reproducir,
         distribuir ni crear obras derivadas sin permiso expreso por escrito.
       </p>
 
@@ -122,7 +122,7 @@ function EsContent() {
 
       <h2>7. Limitación de Responsabilidad</h2>
       <p>
-        Monza Lab se proporciona &quot;tal cual&quot; sin garantías de ningún tipo. No somos responsables de ninguna pérdida
+        MonzaHaus se proporciona &quot;tal cual&quot; sin garantías de ningún tipo. No somos responsables de ninguna pérdida
         derivada del uso de la Plataforma o la confianza en la información proporcionada.
       </p>
 
@@ -145,13 +145,13 @@ function DeContent() {
 
       <h2>1. Annahme der Nutzungsbedingungen</h2>
       <p>
-        Durch den Zugriff auf oder die Nutzung von Monza Lab (&quot;die Plattform&quot;) erklären Sie sich mit diesen
+        Durch den Zugriff auf oder die Nutzung von MonzaHaus (&quot;die Plattform&quot;) erklären Sie sich mit diesen
         Nutzungsbedingungen einverstanden. Wenn Sie nicht einverstanden sind, nutzen Sie die Plattform bitte nicht.
       </p>
 
       <h2>2. Beschreibung des Dienstes</h2>
       <p>
-        Monza Lab ist eine Marktplatz- und Analyseplattform für Sammlerfahrzeuge. Wir stellen Marktdaten, Investitionsanalysen
+        MonzaHaus ist eine Marktplatz- und Analyseplattform für Sammlerfahrzeuge. Wir stellen Marktdaten, Investitionsanalysen
         und Listing-Aggregation zu Informationszwecken bereit. Wir sind kein lizenzierter Makler, Händler oder Finanzberater.
       </p>
 
@@ -172,7 +172,7 @@ function DeContent() {
 
       <h2>5. Geistiges Eigentum</h2>
       <p>
-        Alle von Monza Lab produzierten Inhalte, Designs und Analysen sind urheberrechtlich geschützt. Sie dürfen ohne
+        Alle von MonzaHaus produzierten Inhalte, Designs und Analysen sind urheberrechtlich geschützt. Sie dürfen ohne
         ausdrückliche schriftliche Genehmigung nicht vervielfältigt, verbreitet oder abgeleitete Werke erstellt werden.
       </p>
 
@@ -185,7 +185,7 @@ function DeContent() {
 
       <h2>7. Haftungsbeschränkung</h2>
       <p>
-        Monza Lab wird &quot;wie besehen&quot; ohne Gewährleistung jeglicher Art bereitgestellt. Wir haften nicht für
+        MonzaHaus wird &quot;wie besehen&quot; ohne Gewährleistung jeglicher Art bereitgestellt. Wir haften nicht für
         Verluste, die aus Ihrer Nutzung der Plattform oder dem Vertrauen auf die hierin bereitgestellten Informationen entstehen.
       </p>
 
@@ -208,13 +208,13 @@ function JaContent() {
 
       <h2>1. 利用規約の同意</h2>
       <p>
-        Monza Lab（以下「本プラットフォーム」）にアクセスまたは利用することにより、お客様は本利用規約に拘束されることに同意するものとします。
+        MonzaHaus（以下「本プラットフォーム」）にアクセスまたは利用することにより、お客様は本利用規約に拘束されることに同意するものとします。
         同意されない場合は、本プラットフォームをご利用にならないでください。
       </p>
 
       <h2>2. サービスの説明</h2>
       <p>
-        Monza Labは、コレクター車両のマーケットプレイスおよび分析プラットフォームです。市場データ、投資分析、
+        MonzaHausは、コレクター車両のマーケットプレイスおよび分析プラットフォームです。市場データ、投資分析、
         リスティング集約を情報提供目的で提供しています。当社は認可されたブローカー、ディーラー、またはファイナンシャルアドバイザーではありません。
       </p>
 
@@ -235,7 +235,7 @@ function JaContent() {
 
       <h2>5. 知的財産権</h2>
       <p>
-        Monza Labが制作するすべてのコンテンツ、デザイン、分析は著作権により保護されています。
+        MonzaHausが制作するすべてのコンテンツ、デザイン、分析は著作権により保護されています。
         書面による明示的な許可なく、複製、配布、または派生物の作成を行うことはできません。
       </p>
 
@@ -247,7 +247,7 @@ function JaContent() {
 
       <h2>7. 責任の制限</h2>
       <p>
-        Monza Labは、いかなる種類の保証もなく「現状のまま」提供されます。本プラットフォームのご利用または
+        MonzaHausは、いかなる種類の保証もなく「現状のまま」提供されます。本プラットフォームのご利用または
         提供される情報への依存から生じるいかなる損失についても、当社は責任を負いません。
       </p>
 

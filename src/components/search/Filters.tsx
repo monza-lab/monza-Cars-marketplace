@@ -71,26 +71,10 @@ const STATUSES = [
   { value: "no-sale", label: "No Sale" },
 ];
 
+// Porsche-only doctrine (skill `monzahaus-growth`). Other makes are
+// documented future expansion (llms.txt) but not surfaced as filters.
 const POPULAR_MAKES = [
   "Porsche",
-  "BMW",
-  "Mercedes-Benz",
-  "Ferrari",
-  "Lamborghini",
-  "Aston Martin",
-  "Jaguar",
-  "Chevrolet",
-  "Ford",
-  "Toyota",
-  "Nissan",
-  "Audi",
-  "Land Rover",
-  "Alfa Romeo",
-  "Maserati",
-  "McLaren",
-  "Lotus",
-  "Bentley",
-  "Rolls-Royce",
 ];
 
 const TRANSMISSIONS = [

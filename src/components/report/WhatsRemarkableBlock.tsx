@@ -1,6 +1,6 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
+import { Piston } from "@/components/icons/Piston"
 import type { RemarkableClaim, ReportTier } from "@/lib/fairValue/types"
 import { ClaimCard } from "./primitives/ClaimCard"
 
@@ -51,7 +51,7 @@ export function WhatsRemarkableBlock({
       {tier === "tier_1" && (
         <div className="mt-5 rounded-xl border border-dashed border-border bg-card/30 p-4">
           <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
+            <Piston className="mt-0.5 size-4 shrink-0 text-primary" />
             <div className="flex-1">
               <p className="text-[13px] font-medium">
                 {/* [HARDCODED] */}Monthly subscribers unlock production context + specialist variant analysis

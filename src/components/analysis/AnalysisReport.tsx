@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Brain,
   ChevronDown,
   TrendingUp,
   TrendingDown,
@@ -241,9 +240,9 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="size-5 text-destructive" />
-            <span className="bg-gradient-to-r from-primary/80 to-primary bg-clip-text text-transparent font-bold">
-              AI Analysis
+            <Scale className="size-5 text-primary" />
+            <span className="font-display font-medium text-foreground">
+              Investment Analysis
             </span>
           </CardTitle>
 

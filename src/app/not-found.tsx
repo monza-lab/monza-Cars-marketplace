@@ -58,7 +58,7 @@ export default function NotFound() {
 
         {/* Bottom tag */}
         <p className="mt-12 text-[10px] uppercase tracking-widest text-muted-foreground/40">
-          Monza Lab &middot; Investment-Grade Automotive Assets
+          MonzaHaus &middot; Investment-Grade Automotive Assets
         </p>
       </div>
     </div>
