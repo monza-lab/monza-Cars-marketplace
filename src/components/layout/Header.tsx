@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, HelpCircle, Mail, ScrollText, MessageCircle } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, FileText, ChevronRight, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, ScrollText, MessageCircle } from "lucide-react";
 import { Piston } from "@/components/icons/Piston";
 import {
   Sheet,
@@ -21,13 +21,11 @@ import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { MonzaHausWordmark } from "@/components/brand/MonzaHausWordmark";
 import { AccountSheetContent } from "@/components/account/AccountSheetContent";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { CurrencyDropdown } from "./CurrencyDropdown";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
 import { PistonsWalletModal } from "@/components/advisor/PistonsWalletModal";
 import { AdvisorConversation } from "@/components/advisor/AdvisorConversation";
 import { useAdvisorChatHandoffOptional } from "@/components/advisor/AdvisorHandoffContext";
@@ -480,6 +478,15 @@ function LanguageRow() {
   )
 }
 
+function CurrencyRow() {
+  return (
+    <div className="px-3 py-2 flex items-center justify-between">
+      <p className="text-[12px] text-foreground/85">{/* [HARDCODED] */}Currency</p>
+      <CurrencyDropdown />
+    </div>
+  )
+}
+
 function InlineLanguageSwitcher() {
   const locale = useLocale()
   const pathname = usePathname()
@@ -536,6 +543,13 @@ export function Header() {
   // a region pill must also write the choice into the URL — that's what
   // BrowseClient reads via useClassicFilters to filter its grid.
   const isBrowsePage = /^\/(?:[a-z]{2}\/)?browse$/.test(pathname);
+  // Route-aware header — only show controls where they actually apply.
+  // Home: ViewToggle (Monza/Classic). /cars/{make} + /browse: Region pills.
+  // Everywhere else: clean header (wordmark + search + actions only).
+  const isHomePage = /^\/(?:[a-z]{2})?\/?$/.test(pathname);
+  const isCarsListPage = /^\/(?:[a-z]{2}\/)?cars\/[^/]+\/?$/.test(pathname);
+  const showViewToggle = isHomePage;
+  const showRegionPills = isCarsListPage || isBrowsePage;
   // On /browse the URL is the source of truth for the active region. Read
   // from the query param so the active pill matches the current filter
   // even when the user lands via direct URL like /browse?region=US.
@@ -548,7 +562,6 @@ export function Header() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -718,8 +731,10 @@ export function Header() {
             />
           </Link>
 
-          {/* View Toggle: Monza | Classic */}
-          <ViewToggle />
+          {/* View Toggle: Monza | Classic — only on home (where the dual
+              feed view is the actual UX). Off on cars list, advisor, report,
+              tools etc. so the header stays calm. */}
+          {showViewToggle && <ViewToggle />}
 
           {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
           <div className="hidden md:block flex-1 max-w-xl relative">
@@ -872,7 +887,10 @@ export function Header() {
             </AnimatePresence>
           </div>
 
-          {/* Region Filter — with pink separators */}
+          {/* Region Filter — only where filtering by region actually does
+              something: /cars/{make} list and /browse. On other pages (home,
+              advisor, report, tools…) the region pills were noise. */}
+          {showRegionPills && (
           <div
             className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
             aria-disabled={isMarketLocked}
@@ -916,11 +934,10 @@ export function Header() {
             })}
           </div>
 
-          {/* Currency Dropdown */}
-          <div className="hidden md:flex items-center ml-2">
-            <div className="w-px h-3.5 bg-primary/20 mx-1" />
-            <CurrencyDropdown />
-          </div>
+          )}
+
+          {/* Currency moved to Menu › Preferences (header was overcrowded;
+              currency is a personal preference, lives next to Theme/Language). */}
 
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
@@ -988,19 +1005,9 @@ export function Header() {
               </button>
             )}
 
-            {/* Language Switcher (desktop only — mobile uses Profile sheet) */}
-            <div className="hidden md:block">
-              <LanguageSwitcher />
-            </div>
-
-            {/* Theme Toggle — visible on mobile + desktop (1-tap access) */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex items-center justify-center size-9 md:size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="size-4 md:size-3.5" /> : <Moon className="size-4 md:size-3.5" />}
-            </button>
+            {/* Theme + Language moved to Menu › Preferences. Header was
+                overcrowded; both already exist inside the Menu sheet, so
+                having them outside was duplication. */}
 
             {/* Menu */}
             <Sheet>
@@ -1048,6 +1055,7 @@ export function Header() {
                   <MenuSection label={/* [HARDCODED] */ "Preferences"}>
                     <ThemeRow />
                     <LanguageRow />
+                    <CurrencyRow />
                   </MenuSection>
 
                   {/* ─── HELP & LEGAL ─── */}
