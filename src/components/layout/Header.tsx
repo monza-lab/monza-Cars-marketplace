@@ -943,6 +943,22 @@ export function Header() {
               </button>
             )}
 
+            {/* Advisor pill (desktop) — high-priority funnel: Pistons + retention
+                driver. Active state when on /advisor. Outline style so it doesn't
+                fight the primary "Buy" CTAs on the page. */}
+            <Link
+              href="/advisor"
+              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold tracking-wide transition-colors ${
+                pathname?.startsWith("/advisor")
+                  ? "bg-primary/15 border-primary/30 text-primary"
+                  : "border-primary/30 text-primary/85 hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+              }`}
+              aria-label={/* [HARDCODED] */ "Open the Advisor chat"}
+            >
+              <MessageCircle className="size-3.5" />
+              {/* [HARDCODED] */}Advisor
+            </Link>
+
             {/* Account button (desktop) — opens the same AccountSheetContent
                 used by the mobile bottom sheet. Click no longer signs out;
                 sign-out lives inside the sheet. */}
