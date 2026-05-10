@@ -101,7 +101,7 @@ export function IndexPageLayout<ID extends string>({
           </Suspense>
         </section>
 
-        <section className="prose prose-invert max-w-3xl text-muted-foreground">
+        <section className="prose dark:prose-invert max-w-3xl text-muted-foreground">
           <h2 className="text-xl font-serif text-foreground">Methodology</h2>
           {methodology}
           <p>

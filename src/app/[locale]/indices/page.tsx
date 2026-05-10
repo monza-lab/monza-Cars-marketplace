@@ -141,7 +141,7 @@ export default async function IndexHubPage({ params }: PageProps) {
             </div>
           </section>
 
-          <section className="prose prose-invert max-w-3xl text-muted-foreground">
+          <section className="prose dark:prose-invert max-w-3xl text-muted-foreground">
             <h2 className="text-xl font-serif text-foreground">About the MonzaHaus Index</h2>
             <p>
               Every index uses the same methodology: quarterly median hammer prices from

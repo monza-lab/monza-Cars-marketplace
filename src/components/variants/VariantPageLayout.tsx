@@ -36,7 +36,7 @@ export function VariantPageLayout({
           </div>
         </header>
 
-        <section className="prose prose-invert max-w-none text-foreground/80">
+        <section className="prose dark:prose-invert max-w-none text-foreground/80">
           {variant.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
@@ -44,7 +44,7 @@ export function VariantPageLayout({
 
         <section>
           <h2 className="text-2xl font-serif mb-4">Why this variant matters</h2>
-          <div className="prose prose-invert max-w-none text-muted-foreground">
+          <div className="prose dark:prose-invert max-w-none text-muted-foreground">
             {variant.significance.map((p, i) => (
               <p key={i}>{p}</p>
             ))}

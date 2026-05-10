@@ -28,7 +28,7 @@ export default function AuctionsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
               <div className="h-10 w-10 rounded-full border-2 border-border" />

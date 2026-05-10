@@ -198,8 +198,8 @@ export default async function BuyPorschePage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-black text-foreground">
-        <div className="mx-auto max-w-4xl px-6 py-12 space-y-14">
+      <div className="min-h-screen bg-background text-foreground pt-[var(--app-header-h,3.5rem)] md:pt-[var(--app-header-h,5rem)] pb-24 md:pb-12">
+        <div className="mx-auto max-w-4xl px-4 md:px-6 pt-6 md:pt-8 space-y-10 md:space-y-14">
           <header className="space-y-4">
             <p className="text-xs uppercase tracking-[0.3em] text-primary">
               MonzaHaus · Buyer&apos;s Framework

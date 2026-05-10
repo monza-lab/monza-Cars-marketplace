@@ -28,7 +28,7 @@ export function ImportGuideLayout({
           <p className="text-lg text-muted-foreground max-w-3xl">{guide.tagline}</p>
         </header>
 
-        <section className="prose prose-invert max-w-none text-foreground/80">
+        <section className="prose dark:prose-invert max-w-none text-foreground/80">
           {guide.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
@@ -36,7 +36,7 @@ export function ImportGuideLayout({
 
         <section>
           <h2 className="text-2xl font-serif mb-4">Regulatory context</h2>
-          <div className="prose prose-invert max-w-none text-muted-foreground">
+          <div className="prose dark:prose-invert max-w-none text-muted-foreground">
             {guide.regulatoryContext.map((p, i) => (
               <p key={i}>{p}</p>
             ))}

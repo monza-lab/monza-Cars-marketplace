@@ -167,8 +167,8 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-4xl px-6 py-12 space-y-10">
+      <div className="min-h-screen bg-background text-foreground pt-[var(--app-header-h,3.5rem)] md:pt-[var(--app-header-h,5rem)] pb-24 md:pb-12">
+        <div className="mx-auto max-w-4xl px-4 md:px-6 pt-6 md:pt-8 space-y-8 md:space-y-10">
           <header className="space-y-4">
             <p className="text-xs uppercase tracking-[0.3em] text-primary">
               Free Tool · MonzaHaus
@@ -187,7 +187,7 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
             <VinDecoderClient />
           </section>
 
-          <section className="prose prose-invert max-w-none text-foreground/85">
+          <section className="prose dark:prose-invert max-w-none text-foreground/85">
             <h2 className="text-2xl font-serif">How Porsche VINs are structured</h2>
             <p>
               Modern Porsches (1981+) use the 17-character VIN format standardized by

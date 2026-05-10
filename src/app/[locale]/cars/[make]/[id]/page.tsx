@@ -70,7 +70,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   if (!car) {
     if (isLiveId && liveLookupTransientError) {
       return (
-        <div className="min-h-screen bg-black flex items-center justify-center px-6 text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center px-6 text-center">
           <div className="max-w-xl space-y-4">
             <h1 className="text-2xl font-semibold text-white">Live listing temporarily unavailable</h1>
             <p className="text-muted-foreground">
@@ -185,7 +185,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
       />
       <Suspense
         fallback={
-          <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="min-h-screen bg-background flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <div className="h-10 w-10 rounded-full border-2 border-border" />

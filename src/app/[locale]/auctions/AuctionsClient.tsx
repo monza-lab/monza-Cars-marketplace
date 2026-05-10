@@ -983,7 +983,7 @@ export default function AuctionsClient() {
   }, [searchInput])
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

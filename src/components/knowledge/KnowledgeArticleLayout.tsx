@@ -28,7 +28,7 @@ export function KnowledgeArticleLayout({
           <p className="text-lg text-muted-foreground max-w-3xl">{article.summary}</p>
         </header>
 
-        <section className="prose prose-invert max-w-none text-foreground/80">
+        <section className="prose dark:prose-invert max-w-none text-foreground/80">
           {article.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
@@ -37,7 +37,7 @@ export function KnowledgeArticleLayout({
         {article.sections.map((s) => (
           <section key={s.heading}>
             <h2 className="text-2xl font-serif mb-4">{s.heading}</h2>
-            <div className="prose prose-invert max-w-none text-foreground/80">
+            <div className="prose dark:prose-invert max-w-none text-foreground/80">
               {s.body.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}

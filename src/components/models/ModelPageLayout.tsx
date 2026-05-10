@@ -77,7 +77,7 @@ export function ModelPageLayout({
           </section>
         )}
 
-        <section className="prose prose-invert max-w-none text-foreground/80">
+        <section className="prose dark:prose-invert max-w-none text-foreground/80">
           {model.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
