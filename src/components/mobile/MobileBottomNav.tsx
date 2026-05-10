@@ -13,18 +13,18 @@ import {
   ChevronDown,
   LogOut,
   Home,
-  Sun,
-  Moon,
   MessageCircle,
   Trash2,
   Clock,
   TrendingUp,
+  Bookmark,
+  FileText,
 } from "lucide-react"
+import { Piston } from "@/components/icons/Piston"
 import { CURATED_CARS, searchCars, type CollectorCar } from "@/lib/curatedCars"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { useLocale, useTranslations } from "next-intl"
-import { MobileLanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import {
   saveSearchQuery,
   getSearchHistory,
@@ -32,7 +32,6 @@ import {
   type SearchHistoryEntry,
 } from "@/lib/searchHistory"
 import { getBrandConfig } from "@/lib/brandConfig"
-import { useTheme } from "next-themes"
 
 // ─── GET UNIQUE MAKES WITH COUNTS ───
 // Legacy helper kept for the now-unused BrandCard component below. Filtered to
@@ -853,17 +852,35 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 // (Legacy MobileExploreSheet removed — Advisor took its place in the bottom nav.)
 
 // ─── PROFILE SHEET (replaces Account — no hamburger duplication) ───
+// ─── ACCOUNT SHEET — personal dashboard (TÚ) ───
+// Profile + Pistons + Watchlist + Recent reports + Plan + Sign out.
+// Theme/Language NO viven aquí — esos son preferencias de app y van en Menu.
 function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const t = useTranslations()
   const { user, profile, loading, signOut } = useAuth()
-  const { theme, setTheme } = useTheme()
+  const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const isAuthenticated = !!user
   const creditsRemaining = profile?.creditsBalance ?? 0
+  const tier = profile?.tier ?? "FREE"
+  const isSubscribed = tier === "MONTHLY" || tier === "ANNUAL"
+  const planLabel =
+    tier === "FREE"
+      ? "Free"
+      : tier === "MONTHLY"
+        ? "Rennsport · Monthly"
+        : tier === "ANNUAL"
+          ? "Rennsport · Annual"
+          : "Pack"
 
   const handleSignOut = async () => {
     await signOut()
     onClose()
+  }
+
+  const goTo = (href: string) => {
+    onClose()
+    router.push(href)
   }
 
   return (
@@ -875,124 +892,163 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[60] bg-card rounded-t-3xl border-t border-border"
-            style={{ maxHeight: "85vh" }}
+            className="fixed inset-x-0 bottom-0 z-[60] bg-card rounded-t-3xl border-t border-border flex flex-col"
+            style={{ maxHeight: "92dvh" }}
           >
-            {/* Handle */}
-            <div className="flex justify-center py-3">
+            {/* Drag handle */}
+            <div className="flex justify-center py-3 shrink-0">
               <div className="w-10 h-1 rounded-full bg-foreground/20" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pb-4">
-              <h2 className="text-[16px] font-semibold text-foreground">{t("mobile.account")}</h2>
+            <div className="flex items-center justify-between px-6 pb-3 shrink-0">
+              <h2 className="font-display text-[20px] font-medium text-foreground">
+                {/* [HARDCODED] */}Account
+              </h2>
               <button
                 onClick={onClose}
-                className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
+                aria-label="Close"
+                className="size-9 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground active:bg-foreground/10"
               >
-                <X className="size-5" />
+                <X className="size-4" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="px-6 pb-8 overflow-y-auto" style={{ maxHeight: "calc(85vh - 100px)" }}>
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="flex items-center justify-center py-16">
+                  <div className="size-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : isAuthenticated ? (
-                <div className="space-y-6">
-                  {/* User Info */}
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-foreground/5">
-                    <div className="size-14 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="size-7 text-primary" />
+                <div className="space-y-5">
+                  {/* Profile card */}
+                  <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-foreground/[0.04]">
+                    <div className="size-12 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
+                      <User className="size-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="text-[15px] font-semibold text-foreground">
-                        {profile?.name || "User"}
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-foreground truncate">
+                        {profile?.name || "Collector"}
                       </p>
-                      <p className="text-[12px] text-muted-foreground">{user.email}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Credits */}
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/15">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
-                          {t("auth.credits")}
+                  {/* Pistons balance */}
+                  <section>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
+                        <Piston className="size-3 text-primary" />
+                        {/* [HARDCODED] */}Pistons
+                      </p>
+                      <button
+                        onClick={() => goTo("/pricing")}
+                        className="text-[11px] font-semibold text-primary active:underline"
+                      >
+                        {/* [HARDCODED] */}Buy →
+                      </button>
+                    </div>
+                    <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.07] to-transparent p-4">
+                      <div className="flex items-baseline gap-2">
+                        <span className={`font-display text-[36px] font-medium tabular-nums leading-none ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`}>
+                          {creditsRemaining.toLocaleString()}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {/* [HARDCODED] */}available
+                        </span>
+                      </div>
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        {/* [HARDCODED] */}Free credits reset on the 1st of each month
+                      </p>
+                    </div>
+                  </section>
+
+                  {/* Watchlist */}
+                  <section>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
+                        <Bookmark className="size-3 text-primary" />
+                        {/* [HARDCODED] */}Watchlist
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4">
+                      <p className="text-[12px] text-muted-foreground italic leading-relaxed">
+                        {/* [HARDCODED] */}No saved Porsches yet. Tap the bookmark on any listing to track it here.
+                      </p>
+                    </div>
+                  </section>
+
+                  {/* Recent reports */}
+                  <section>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
+                        <FileText className="size-3 text-primary" />
+                        {/* [HARDCODED] */}Recent reports
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4">
+                      <p className="text-[12px] text-muted-foreground italic leading-relaxed mb-3">
+                        {/* [HARDCODED] */}No reports yet. Generate your first one to see it here.
+                      </p>
+                      <button
+                        onClick={() => goTo("/cars/porsche")}
+                        className="w-full py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-[12px] font-semibold text-primary active:bg-primary/15 transition-colors"
+                      >
+                        {/* [HARDCODED] */}Browse Porsches →
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* Plan */}
+                  <section>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
+                        {/* [HARDCODED] */}Current plan
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-foreground truncate">
+                          {planLabel}
                         </p>
-                        <p className={`text-[32px] font-bold ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`}>
-                          {creditsRemaining}
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {isSubscribed
+                            ? /* [HARDCODED] */ "Unlimited reports while active"
+                            : /* [HARDCODED] */ "3 free reports / month"}
                         </p>
                       </div>
-                      <button className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold">
-                        {t("auth.buy")}
+                      <button
+                        onClick={() => goTo("/pricing")}
+                        className="shrink-0 px-4 py-2 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold active:bg-primary/85"
+                      >
+                        {isSubscribed ? /* [HARDCODED] */ "Manage" : /* [HARDCODED] */ "Upgrade"}
                       </button>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-3">
-                      {t("auth.creditsReset")}
-                    </p>
-                  </div>
+                  </section>
 
-                  {/* Language */}
-                  <div className="py-4 border-t border-border">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
-                      {t("language.select")}
-                    </p>
-                    <MobileLanguageSwitcher onSelect={() => {}} />
-                  </div>
-
-                  {/* Theme Toggle */}
-                  <div className="py-4 border-t border-border">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
-                      Appearance
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setTheme("light")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
-                          theme === "light"
-                            ? "bg-primary/10 border-primary/30 text-primary"
-                            : "bg-foreground/5 border-border text-muted-foreground"
-                        }`}
-                      >
-                        <Sun className="size-4" />
-                        Light
-                      </button>
-                      <button
-                        onClick={() => setTheme("dark")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
-                          theme === "dark"
-                            ? "bg-primary/10 border-primary/30 text-primary"
-                            : "bg-foreground/5 border-border text-muted-foreground"
-                        }`}
-                      >
-                        <Moon className="size-4" />
-                        Dark
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Sign Out */}
+                  {/* Sign out */}
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-border text-muted-foreground active:bg-foreground/5 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl border border-border text-[13px] font-medium text-muted-foreground active:bg-foreground/[0.05] active:text-destructive transition-colors"
                   >
-                    <LogOut className="size-5" />
-                    <span className="text-[14px] font-medium">{t("auth.signOut")}</span>
+                    <LogOut className="size-4" />
+                    <span>{t("auth.signOut")}</span>
                   </button>
                 </div>
               ) : (
+                /* Welcome / unauth state */
                 <div className="space-y-6 py-4">
                   <div className="text-center">
-                    <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <User className="size-10 text-primary" />
+                    <div className="size-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+                      <User className="size-7 text-primary" />
                     </div>
-                    <h3 className="text-[18px] font-semibold text-foreground">
+                    <h3 className="font-display text-[22px] font-medium text-foreground">
                       {t("auth.welcomeBack")}
                     </h3>
-                    <p className="text-[14px] text-muted-foreground mt-2">
+                    <p className="text-[12px] text-muted-foreground mt-1.5 max-w-xs mx-auto leading-relaxed">
                       {t("auth.freeCredits")}
                     </p>
                   </div>
@@ -1002,49 +1058,23 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                       onClose()
                       setTimeout(() => setShowAuthModal(true), 300)
                     }}
-                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold active:scale-[0.98] transition-transform"
+                    className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground text-[14px] font-semibold active:bg-primary/85 transition-colors"
                   >
                     {t("auth.createAccount")}
                   </button>
 
-                  {/* Language */}
-                  <div className="py-4 border-t border-border">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
-                      {t("language.select")}
-                    </p>
-                    <MobileLanguageSwitcher onSelect={() => {}} />
-                  </div>
-
-                  {/* Theme Toggle */}
-                  <div className="py-4 border-t border-border">
-                    <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">
-                      Appearance
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setTheme("light")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
-                          theme === "light"
-                            ? "bg-primary/10 border-primary/30 text-primary"
-                            : "bg-foreground/5 border-border text-muted-foreground"
-                        }`}
-                      >
-                        <Sun className="size-4" />
-                        Light
-                      </button>
-                      <button
-                        onClick={() => setTheme("dark")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-[13px] font-medium transition-colors ${
-                          theme === "dark"
-                            ? "bg-primary/10 border-primary/30 text-primary"
-                            : "bg-foreground/5 border-border text-muted-foreground"
-                        }`}
-                      >
-                        <Moon className="size-4" />
-                        Dark
-                      </button>
-                    </div>
-                  </div>
+                  <p className="text-center text-[12px] text-muted-foreground">
+                    {/* [HARDCODED] */}Already have an account?{" "}
+                    <button
+                      onClick={() => {
+                        onClose()
+                        setTimeout(() => setShowAuthModal(true), 300)
+                      }}
+                      className="text-primary font-medium active:underline"
+                    >
+                      {/* [HARDCODED] */}Sign in →
+                    </button>
+                  </p>
                 </div>
               )}
             </div>

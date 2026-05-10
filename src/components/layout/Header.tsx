@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, HelpCircle, Mail, ScrollText, MessageCircle } from "lucide-react";
 import { Piston } from "@/components/icons/Piston";
 import {
   Sheet,
@@ -400,6 +400,84 @@ function OracleOverlay({
 
 // ─── INLINE LANGUAGE SWITCHER (for hamburger menu) ───
 const LOCALE_LABELS: Record<string, string> = { en: "EN", es: "ES", de: "DE", ja: "JA" }
+
+// ─── MENU PRIMITIVES — used inside the right-side Sheet ───
+function MenuSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section className="px-3 pt-4 pb-1">
+      <p className="px-3 text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground/80 mb-1">
+        {label}
+      </p>
+      <div className="space-y-0.5">{children}</div>
+    </section>
+  )
+}
+
+function MenuLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+}) {
+  return (
+    <SheetClose asChild>
+      <Link
+        href={href}
+        className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-foreground/[0.04] active:bg-foreground/[0.07] transition-colors"
+      >
+        <Icon className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        <span className="flex-1 text-left text-[13px] text-foreground/85 group-hover:text-foreground transition-colors">
+          {label}
+        </span>
+        <ChevronRight className="size-3.5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
+      </Link>
+    </SheetClose>
+  )
+}
+
+function ThemeRow() {
+  const { theme, setTheme } = useTheme()
+  const options: { value: "light" | "dark" | "system"; label: string }[] = [
+    { value: "light", label: /* [HARDCODED] */ "Light" },
+    { value: "dark", label: /* [HARDCODED] */ "Dark" },
+    { value: "system", label: /* [HARDCODED] */ "System" },
+  ]
+  return (
+    <div className="px-3 py-2">
+      <p className="text-[12px] text-foreground/85 mb-2">{/* [HARDCODED] */}Theme</p>
+      <div className="flex items-center gap-0.5 rounded-full bg-foreground/[0.05] border border-border p-0.5">
+        {options.map(opt => {
+          const active = (theme ?? "system") === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setTheme(opt.value)}
+              className={`flex-1 h-7 rounded-full text-[11px] font-medium transition-all ${
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function LanguageRow() {
+  return (
+    <div className="px-3 py-2 flex items-center justify-between">
+      <p className="text-[12px] text-foreground/85">{/* [HARDCODED] */}Language</p>
+      <InlineLanguageSwitcher />
+    </div>
+  )
+}
 
 function InlineLanguageSwitcher() {
   const locale = useLocale()
@@ -911,163 +989,107 @@ export function Header() {
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="border-l border-primary/8 bg-background w-[340px] p-0 flex flex-col overflow-hidden">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Menu</SheetTitle>
+                <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
+                  <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
+                    {/* [HARDCODED] */}Menu
+                  </SheetTitle>
                 </SheetHeader>
 
                 {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
 
-                  {/* ── Profile Card ── */}
-                  {isAuthenticated ? (
-                    <div className="px-6 pt-6 pb-5">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center">
-                          <User className="size-5 text-primary" />
+                  {/* ─── DESKTOP-ONLY: Profile + Pistons (en mobile esto vive en Account) ─── */}
+                  <div className="hidden md:block">
+                    {isAuthenticated ? (
+                      <div className="px-6 pb-4">
+                        <div className="flex items-center gap-3.5 p-3 rounded-xl bg-foreground/[0.04]">
+                          <div className="size-10 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
+                            <User className="size-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-foreground truncate">
+                              {profile?.name || "Collector"}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {user?.email}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground truncate">
-                            {profile?.name || "Collector"}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {user?.email || "member@monza.com"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="px-6 pt-6 pb-5">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-foreground/4 border border-border flex items-center justify-center">
-                          <User className="size-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground">{t("menu.profile.welcome")}</p>
-                          <p className="text-[11px] text-muted-foreground">{t("menu.profile.signInHint")}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowAuthModal(true)}
-                        className="mt-4 w-full rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
-                      >
-                        {t('auth.signIn')}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* ── Credits ── */}
-                  <div className="mx-5 rounded-xl bg-primary/4 border border-primary/8 p-4">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-2">
-                        <Piston className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.credits.label")}</span>
-                      </div>
-                      <span className="text-[14px] tabular-nums font-bold text-foreground">
-                        {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 10,000</span>
-                      </span>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/70 transition-all duration-500"
-                        style={{ width: `${Math.min((creditsRemaining / 10000) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between mt-2.5">
-                      <span className="text-[10px] text-muted-foreground">{t("menu.credits.perReport")}</span>
-                      <button className="text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors">
-                        {t("menu.credits.buy")}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ── Watchlist ── */}
-                  {isAuthenticated && (
-                    <div className="px-5 pt-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Bookmark className="size-3.5 text-primary" />
-                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.watchlist.title")}</span>
+                        <div className="mt-3 flex items-center justify-between rounded-xl border border-primary/15 bg-primary/[0.04] px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <Piston className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
+                            <span className="text-[11px] font-medium text-foreground">
+                              <span className="tabular-nums">{creditsRemaining.toLocaleString()}</span>
+                              {/* [HARDCODED] */}
+                              {" "}Pistons
+                            </span>
+                          </div>
+                          <SheetClose asChild>
+                            <Link
+                              href="/pricing"
+                              className="text-[11px] font-semibold text-primary hover:underline"
+                            >
+                              {/* [HARDCODED] */}Buy →
+                            </Link>
+                          </SheetClose>
                         </div>
                       </div>
-                      <p className="text-[11px] text-muted-foreground px-2 py-3">
-                        {t("menu.watchlist.empty")}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ── Recent Analyses ── */}
-                  {isAuthenticated && (
-                    <div className="px-5 pt-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-3.5 text-primary" />
-                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.recentAnalyses.title")}</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground px-2 py-3">
-                        {t("menu.recentAnalyses.empty")}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ── Quick Links ── */}
-                  <div className="px-5 pt-6 pb-2">
-                    <div className="h-px bg-foreground/5 mb-4" />
-
-                    {/* Search History — only for logged-in users */}
-                    {isAuthenticated && (
-                      <SheetClose asChild>
-                        <Link
-                          href="/search-history"
-                          className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
+                    ) : (
+                      <div className="px-6 pb-4">
+                        <button
+                          onClick={() => setShowAuthModal(true)}
+                          className="w-full rounded-xl bg-primary py-2.5 text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
                         >
-                          <Clock className="size-4 text-muted-foreground transition-colors" />
-                          <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">
-                            {t("nav.searchHistory")}
-                          </span>
-                          <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
-                        </Link>
-                      </SheetClose>
+                          {t('auth.signIn')}
+                        </button>
+                      </div>
                     )}
-
-                    {[
-                      { icon: Bell, label: "Notifications", badge: "3" },
-                      { icon: Phone, label: "Contact Advisor", badge: null },
-                      { icon: Settings, label: "Settings", badge: null },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
-                      >
-                        <item.icon className="size-4 text-muted-foreground transition-colors" />
-                        <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
-                        {item.badge && (
-                          <span className="size-4.5 flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground leading-none px-1.5 py-0.5">
-                            {item.badge}
-                          </span>
-                        )}
-                        <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
-                      </button>
-                    ))}
-
-                    {/* Language in quick links */}
-                    <div className="flex items-center gap-3 w-full py-2.5 px-2">
-                      <Globe className="size-4 text-muted-foreground" />
-                      <span className="flex-1 text-left text-[13px] text-muted-foreground">Language</span>
-                      <InlineLanguageSwitcher />
-                    </div>
                   </div>
+
+                  {/* ─── DISCOVER ─── */}
+                  <MenuSection label={/* [HARDCODED] */ "Discover"}>
+                    <MenuLink href="/cars/porsche" icon={Car} label={/* [HARDCODED] */ "Porsche collection"} />
+                    <MenuLink href="/knowledge" icon={BookOpen} label={/* [HARDCODED] */ "Knowledge guides"} />
+                    <MenuLink href="/indices" icon={BarChart3} label={/* [HARDCODED] */ "Market indices"} />
+                    <MenuLink href="/history" icon={TrendingUp} label={/* [HARDCODED] */ "Market trends"} />
+                    <MenuLink href="/tools/porsche-vin-decoder" icon={Wrench} label={/* [HARDCODED] */ "VIN decoder"} />
+                    <MenuLink href="/buy/porsche" icon={ScrollText} label={/* [HARDCODED] */ "How to buy a Porsche"} />
+                  </MenuSection>
+
+                  {/* ─── PLANS & BILLING ─── */}
+                  <MenuSection label={/* [HARDCODED] */ "Plans & Billing"}>
+                    <MenuLink href="/pricing" icon={Piston} label={/* [HARDCODED] */ "Pricing & Pistons"} />
+                    {isAuthenticated && (
+                      <MenuLink href="/account" icon={FileText} label={/* [HARDCODED] */ "Billing & history"} />
+                    )}
+                  </MenuSection>
+
+                  {/* ─── PREFERENCES ─── */}
+                  <MenuSection label={/* [HARDCODED] */ "Preferences"}>
+                    <ThemeRow />
+                    <LanguageRow />
+                  </MenuSection>
+
+                  {/* ─── HELP & LEGAL ─── */}
+                  <MenuSection label={/* [HARDCODED] */ "Help & Legal"}>
+                    <MenuLink href="/advisor" icon={MessageCircle} label={/* [HARDCODED] */ "Talk to the advisor"} />
+                    <MenuLink href="/legal/privacy" icon={ShieldCheck} label={/* [HARDCODED] */ "Privacy"} />
+                    <MenuLink href="/legal/terms" icon={ScrollText} label={/* [HARDCODED] */ "Terms"} />
+                  </MenuSection>
+
+                  {/* App version footer */}
+                  <p className="px-6 pt-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground/60">
+                    {/* [HARDCODED] */}MonzaHaus · v1.0
+                  </p>
                 </div>
 
-                {/* ── Footer: Sign Out (pinned) ── */}
+                {/* ── DESKTOP-ONLY: Sign Out footer (mobile sign-out vive en Account) ── */}
                 {isAuthenticated && (
-                  <div className="shrink-0 px-5 py-4 border-t border-border">
+                  <div className="hidden md:block shrink-0 px-5 py-4 border-t border-border">
                     <SheetClose asChild>
                       <button
                         onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-destructive hover:bg-foreground/2 transition-colors"
+                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-destructive hover:bg-foreground/[0.04] transition-colors"
                       >
                         <LogOut className="size-4" />
                         {t('auth.signOut')}
