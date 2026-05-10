@@ -2,8 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { ToolInvocationContext } from "./registry"
 
 vi.mock("@/lib/supabaseLiveListings", () => ({
-  fetchPricedListingsForModel: vi.fn(),
   fetchLiveListingById: vi.fn(),
+}))
+
+vi.mock("@/lib/advisor/advisorListings", () => ({
+  fetchAdvisorListings: vi.fn(),
 }))
 
 vi.mock("@/lib/pricing/priceHistory", () => ({
@@ -12,9 +15,9 @@ vi.mock("@/lib/pricing/priceHistory", () => ({
 
 // Avoid hitting brandConfig's full static table for unknown series strings.
 import {
-  fetchPricedListingsForModel,
   fetchLiveListingById,
 } from "@/lib/supabaseLiveListings"
+import { fetchAdvisorListings } from "@/lib/advisor/advisorListings"
 import { getPriceHistory } from "@/lib/pricing/priceHistory"
 import { marketplaceTools } from "./marketplace"
 
@@ -86,7 +89,7 @@ describe("marketplace tools", () => {
 
   describe("search_listings", () => {
     it("returns a ranked list of matches", async () => {
-      vi.mocked(fetchPricedListingsForModel).mockResolvedValue([
+      vi.mocked(fetchAdvisorListings).mockResolvedValue([
         {
           id: "1",
           year: 2011,
@@ -159,7 +162,7 @@ describe("marketplace tools", () => {
 
   describe("get_comparable_sales", () => {
     it("returns comp digest when matches exist", async () => {
-      vi.mocked(fetchPricedListingsForModel).mockResolvedValue(mockPricedRows() as never)
+      vi.mocked(fetchAdvisorListings).mockResolvedValue(mockPricedRows() as never)
       const tool = findTool("get_comparable_sales")
       const res = await tool.handler({ seriesId: "997", monthsBack: 24 }, ctx)
       expect(res.ok).toBe(true)
@@ -182,7 +185,7 @@ describe("marketplace tools", () => {
 
   describe("get_regional_valuation", () => {
     it("returns bands across regions", async () => {
-      vi.mocked(fetchPricedListingsForModel).mockResolvedValue(mockPricedRows() as never)
+      vi.mocked(fetchAdvisorListings).mockResolvedValue(mockPricedRows() as never)
       const tool = findTool("get_regional_valuation")
       const res = await tool.handler({ seriesId: "997" }, ctx)
       expect(res.ok).toBe(true)
@@ -220,7 +223,7 @@ describe("marketplace tools", () => {
         endTime: new Date(),
         category: "GT3",
       })
-      vi.mocked(fetchPricedListingsForModel).mockResolvedValue(mockPricedRows() as never)
+      vi.mocked(fetchAdvisorListings).mockResolvedValue(mockPricedRows() as never)
       const tool = findTool("compute_price_position")
       const res = await tool.handler({ listingId: "live-1" }, ctx)
       expect(res.ok).toBe(true)

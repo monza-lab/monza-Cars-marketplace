@@ -5,6 +5,7 @@ import { analysisTools } from "./analysis"
 import { actionTools } from "./action"
 import { userTools } from "./user"
 import { premiumTools } from "./premium"
+import { inventoryTools } from "./inventory"
 
 export function buildDefaultToolRegistry(): ToolRegistry {
   const reg = createToolRegistry()
@@ -15,6 +16,7 @@ export function buildDefaultToolRegistry(): ToolRegistry {
     ...actionTools,
     ...userTools,
     ...premiumTools,
+    ...inventoryTools,
   ]) {
     reg.register(t)
   }

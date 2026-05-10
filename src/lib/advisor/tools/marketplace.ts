@@ -1,9 +1,9 @@
 import type { ToolDef } from "@/lib/advisor/tools/registry"
 import {
-  fetchPricedListingsForModel,
   fetchLiveListingById,
   type PricedListingRow,
 } from "@/lib/supabaseLiveListings"
+import { fetchAdvisorListings } from "@/lib/advisor/advisorListings"
 import { CURATED_CARS, type CollectorCar } from "@/lib/curatedCars"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
@@ -75,41 +75,29 @@ export const searchListings: ToolDef = {
 
     let rows: PricedListingRow[]
     try {
-      rows = await fetchPricedListingsForModel(make, 500)
+      rows = await fetchAdvisorListings({
+        make,
+        seriesId,
+        variantId,
+        query: query || null,
+        yearFrom,
+        yearTo,
+        priceFromUsd,
+        priceToUsd,
+        status: status as "live" | "ended" | null,
+        sortBy: "price_asc",
+        limit: Math.min(limit * 2, 200), // Fetch extra to allow for post-filter losses
+      })
     } catch (err) {
       return { ok: false, error: `listings_fetch_failed:${err instanceof Error ? err.message : "unknown"}` }
     }
-
-    let filtered = rows
-    if (seriesId) {
-      filtered = filtered.filter((r) => extractSeries(r.model, r.year, r.make) === seriesId)
-    }
-    if (variantId) {
-      filtered = filtered.filter((r) => {
-        const hay = `${r.model} ${r.trim ?? ""}`.toLowerCase()
-        return hay.includes(variantId)
-      })
-    }
-    if (query) {
-      const q = query.toLowerCase()
-      filtered = filtered.filter((r) => {
-        const hay = `${r.year} ${r.make} ${r.model} ${r.trim ?? ""}`.toLowerCase()
-        return q.split(/\s+/).every((token) => hay.includes(token))
-      })
-    }
-    if (yearFrom != null) filtered = filtered.filter((r) => r.year >= yearFrom)
-    if (yearTo != null) filtered = filtered.filter((r) => r.year <= yearTo)
-    if (priceFromUsd != null) filtered = filtered.filter((r) => Number(r.hammer_price) >= priceFromUsd)
-    if (priceToUsd != null) filtered = filtered.filter((r) => Number(r.hammer_price) <= priceToUsd)
-    if (status === "live") filtered = filtered.filter((r) => r.status && r.status !== "sold" && r.status !== "ended")
-    if (status === "ended") filtered = filtered.filter((r) => r.status === "sold" || r.status === "ended")
 
     // Also fold in curated cars (currently empty but future-proof).
     const curated: CollectorCar[] = CURATED_CARS.filter((c) => c.make.toLowerCase() === make.toLowerCase())
       .filter((c) => (seriesId ? extractSeries(c.model, c.year, c.make) === seriesId : true))
       .filter((c) => (query ? `${c.title}`.toLowerCase().includes(query.toLowerCase()) : true))
 
-    const liveResults = filtered.slice(0, limit).map(rowToSearchResult)
+    const liveResults = rows.slice(0, limit).map(rowToSearchResult)
     const curatedResults = curated.slice(0, Math.max(0, limit - liveResults.length)).map((c) => ({
       id: c.id,
       year: c.year,
@@ -196,20 +184,23 @@ export const getComparableSales: ToolDef = {
 
     let rows: PricedListingRow[]
     try {
-      rows = await fetchPricedListingsForModel(make, 500)
+      rows = await fetchAdvisorListings({
+        make,
+        seriesId,
+        variantId,
+        status: "ended",   // comps = sold listings
+        sortBy: "price_asc",
+        limit: 500,
+      })
     } catch (err) {
       return { ok: false, error: `listings_fetch_failed:${err instanceof Error ? err.message : "unknown"}` }
     }
 
-    // Filter to series
-    const seriesRows = rows.filter((r) => extractSeries(r.model, r.year, r.make) === seriesId)
+    // Filter by date cutoff only (series + variant already filtered server-side)
     const cutoff = new Date()
     cutoff.setMonth(cutoff.getMonth() - monthsBack)
     const cutoffIso = cutoff.toISOString().slice(0, 10)
-    const recent = seriesRows.filter((r) => !r.sale_date || r.sale_date >= cutoffIso)
-    const matched = variantId
-      ? recent.filter((r) => `${r.model} ${r.trim ?? ""}`.toLowerCase().includes(variantId))
-      : recent
+    const matched = rows.filter((r) => !r.sale_date || r.sale_date >= cutoffIso)
 
     if (matched.length === 0) {
       return { ok: false, error: "no_comps_found" }
@@ -294,17 +285,18 @@ export const getRegionalValuation: ToolDef = {
     const variantId = typeof args.variantId === "string" ? args.variantId.toLowerCase() : null
     const make = typeof args.make === "string" && args.make ? args.make : "Porsche"
 
-    let rows: PricedListingRow[]
+    let matched: PricedListingRow[]
     try {
-      rows = await fetchPricedListingsForModel(make, 500)
+      matched = await fetchAdvisorListings({
+        make,
+        seriesId,
+        variantId,
+        sortBy: "price_asc",
+        limit: 500,
+      })
     } catch (err) {
       return { ok: false, error: `listings_fetch_failed:${err instanceof Error ? err.message : "unknown"}` }
     }
-
-    const seriesRows = rows.filter((r) => extractSeries(r.model, r.year, r.make) === seriesId)
-    const matched = variantId
-      ? seriesRows.filter((r) => `${r.model} ${r.trim ?? ""}`.toLowerCase().includes(variantId))
-      : seriesRows
 
     if (matched.length === 0) {
       return { ok: false, error: "no_data_for_series" }

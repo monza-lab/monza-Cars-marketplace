@@ -623,7 +623,7 @@ const NON_VEHICLE_KEYWORDS = [
   "replica car", "kit car",
 ];
 
-function isJunkListing(row: { make: string; model: string; year: number; title?: string | null }): boolean {
+export function isJunkListing(row: { make: string; model: string; year: number; title?: string | null }): boolean {
   const model = (row.model ?? "").toLowerCase();
   const title = (row.title ?? "").toLowerCase();
   const haystack = `${model} ${title}`;

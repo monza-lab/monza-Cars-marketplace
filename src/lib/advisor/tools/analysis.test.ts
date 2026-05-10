@@ -3,7 +3,11 @@ import type { ToolInvocationContext } from "./registry"
 
 vi.mock("@/lib/supabaseLiveListings", () => ({
   fetchLiveListingById: vi.fn(),
-  fetchPricedListingsForModel: vi.fn(async () => []),
+}))
+
+vi.mock("@/lib/advisor/advisorListings", () => ({
+  fetchAdvisorListings: vi.fn(async () => []),
+  countAdvisorListings: vi.fn(async () => ({ count: 0, ok: true })),
 }))
 
 vi.mock("./marketplace", async () => {

@@ -10,6 +10,7 @@ describe("default tool registry", () => {
       "build_shortlist",
       "compare_listings",
       "compute_price_position",
+      "count_listings",
       "fetch_url",
       "get_comparable_sales",
       "get_inspection_checklist",
