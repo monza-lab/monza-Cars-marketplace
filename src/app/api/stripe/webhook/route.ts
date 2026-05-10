@@ -40,7 +40,9 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     if (!customerId || !subscriptionId) return
 
     const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId)
-    const currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end
+    // Stripe API 2026-03-25: current_period_end moved from Subscription to SubscriptionItem
+    const firstItem = subscription.items?.data?.[0] as unknown as { current_period_end?: number } | undefined
+    const currentPeriodEnd = firstItem?.current_period_end
     await activateStripeSubscription(userCreditsId, {
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
@@ -125,7 +127,9 @@ async function applyInvoicePaid(invoice: Stripe.Invoice) {
 
 async function applySubscriptionUpdate(subscription: Stripe.Subscription) {
   const customerId = typeof subscription.customer === "string" ? subscription.customer : null
-  const currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end
+  // Stripe API 2026-03-25: current_period_end moved from Subscription to SubscriptionItem
+  const firstItem = subscription.items?.data?.[0] as unknown as { current_period_end?: number } | undefined
+  const currentPeriodEnd = firstItem?.current_period_end
   const user = customerId
     ? await findUserByStripeCustomerId(customerId)
     : subscription.id
@@ -194,9 +198,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("Stripe webhook handler failed:", error)
+    const errMsg = error instanceof Error ? error.message : String(error)
+    const errStack = error instanceof Error ? error.stack : undefined
+    console.error("Stripe webhook handler failed:", errMsg, errStack)
     return NextResponse.json(
-      { error: "Webhook processing failed" },
+      { error: "Webhook processing failed", detail: errMsg },
       { status: 500 },
     )
   }
