@@ -113,4 +113,44 @@ describe("fetchAdvisorListings", () => {
     const result = await fetchAdvisorListings({ make: "Porsche" })
     expect(result).toEqual([])
   })
+
+  it("excludes active auctions by default", async () => {
+    await fetchAdvisorListings({ make: "Porsche" })
+    // Should add an OR filter for auction exclusion
+    expect(mockBuilder.or).toHaveBeenCalledWith(
+      expect.stringContaining("source.not.in.")
+    )
+    expect(mockBuilder.or).toHaveBeenCalledWith(
+      expect.stringContaining("status.neq.active")
+    )
+  })
+
+  it("does not exclude auctions when excludeActiveAuctions is false", async () => {
+    await fetchAdvisorListings({ make: "Porsche", excludeActiveAuctions: false })
+    // No auction exclusion filter should be applied (only other .or calls if any)
+    const orCalls = mockBuilder.or.mock.calls
+    const hasAuctionFilter = orCalls.some(
+      (call: string[]) => call[0]?.includes("source.not.in.")
+    )
+    expect(hasAuctionFilter).toBe(false)
+  })
+
+  it("skips auction exclusion when status is 'ended'", async () => {
+    await fetchAdvisorListings({ make: "Porsche", status: "ended" })
+    const orCalls = mockBuilder.or.mock.calls
+    const hasAuctionFilter = orCalls.some(
+      (call: string[]) => call[0]?.includes("source.not.in.")
+    )
+    expect(hasAuctionFilter).toBe(false)
+  })
+
+  it("orders by year ASC when sortBy is 'year_asc'", async () => {
+    await fetchAdvisorListings({ make: "Porsche", sortBy: "year_asc" })
+    expect(mockBuilder.order).toHaveBeenCalledWith("year", { ascending: true })
+  })
+
+  it("orders by sale_date DESC when sortBy is 'date_desc'", async () => {
+    await fetchAdvisorListings({ make: "Porsche", sortBy: "date_desc" })
+    expect(mockBuilder.order).toHaveBeenCalledWith("sale_date", { ascending: false, nullsFirst: false })
+  })
 })

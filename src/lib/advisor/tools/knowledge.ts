@@ -5,7 +5,7 @@ import {
   getOwnershipCosts,
   getMarketDepth,
 } from "@/lib/brandConfig"
-import { KNOWLEDGE_ARTICLES, getKnowledgeArticle } from "@/lib/knowledge/registry"
+import { KNOWLEDGE_ARTICLES, getKnowledgeArticle, searchKnowledgeArticles } from "@/lib/knowledge/registry"
 import { getVariantFromCorpus } from "@/lib/knowledge/variants"
 import { prePurchaseInspectionArticle } from "@/lib/knowledge/prePurchaseInspection"
 
@@ -68,29 +68,43 @@ export const getSeriesProfile: ToolDef = {
 
 export const listKnowledgeTopics: ToolDef = {
   name: "list_knowledge_topics",
-  description: "Index of curated MonzaHaus knowledge articles (title, slug, category, summary).",
+  description:
+    "Search or browse curated MonzaHaus knowledge articles. Use the `query` parameter to find articles by topic keyword (e.g. 'IMS', 'Mezger', 'rust', 'paint codes', 'service intervals'). Categories: reliability, authentication, engine, ownership, market.",
   minTier: "FREE",
   parameters: {
     type: "object",
     properties: {
+      query: {
+        type: "string",
+        description:
+          "Keyword search across article titles, summaries, and keywords. Examples: 'IMS bearing', 'Mezger', 'rust', 'PPI', 'paint codes', 'air-cooled'. Preferred over category filter.",
+      },
       category: {
         type: "string",
         enum: ["reliability", "authentication", "engine", "ownership", "market"],
-        description: "Optional category filter.",
+        description: "Optional category filter. Prefer using `query` instead — articles may be in unexpected categories.",
       },
     },
   },
   async handler(args) {
+    const queryStr = typeof args.query === "string" ? args.query.trim() : null
     const category = typeof args.category === "string" ? args.category : null
-    const items = KNOWLEDGE_ARTICLES.filter((a) => !category || a.category === category).map((a) => ({
+
+    let articles = queryStr ? searchKnowledgeArticles(queryStr) : KNOWLEDGE_ARTICLES
+    if (category) {
+      articles = articles.filter((a) => a.category === category)
+    }
+
+    const items = articles.map((a) => ({
       slug: a.slug,
       title: a.title,
       category: a.category,
       summary: a.summary,
       keywords: a.keywords,
     }))
+    const filterDesc = [queryStr && `"${queryStr}"`, category && `category=${category}`].filter(Boolean).join(", ") || "all"
     const summary = truncate(
-      `${items.length} knowledge article${items.length === 1 ? "" : "s"}${category ? ` in ${category}` : ""}: ${items
+      `${items.length} article${items.length === 1 ? "" : "s"} matching ${filterDesc}: ${items
         .slice(0, 5)
         .map((i) => i.slug)
         .join(", ")}`,
@@ -103,20 +117,39 @@ export const listKnowledgeTopics: ToolDef = {
 
 export const getKnowledgeArticleTool: ToolDef = {
   name: "get_knowledge_article",
-  description: "Full text of one curated knowledge article by slug.",
+  description:
+    "Full text of one curated knowledge article. Pass `slug` for exact lookup, or `keyword` to find the best-matching article by topic (e.g. 'IMS bearing', 'Mezger', 'rust inspection').",
   minTier: "FREE",
   parameters: {
     type: "object",
     properties: {
-      slug: { type: "string" },
+      slug: { type: "string", description: "Exact article slug (e.g. 'ims-bearing', 'mezger-engine')." },
+      keyword: { type: "string", description: "Topic keyword — returns the best-matching article. Use when you don't know the exact slug." },
     },
-    required: ["slug"],
   },
   async handler(args) {
-    const slug = typeof args.slug === "string" ? args.slug : ""
-    if (!slug) return { ok: false, error: "missing_arg:slug" }
-    const article = getKnowledgeArticle(slug)
-    if (!article) return { ok: false, error: "not_found" }
+    const slug = typeof args.slug === "string" ? args.slug.trim() : ""
+    const keyword = typeof args.keyword === "string" ? args.keyword.trim() : ""
+
+    if (!slug && !keyword) return { ok: false, error: "missing_arg:slug_or_keyword" }
+
+    // Exact slug lookup first
+    if (slug) {
+      const article = getKnowledgeArticle(slug)
+      if (article) {
+        const summary = truncate(`${article.title} — ${article.summary}`)
+        return { ok: true, data: article, summary }
+      }
+    }
+
+    // Keyword-based search fallback
+    const searchTerm = keyword || slug
+    const matches = searchKnowledgeArticles(searchTerm)
+    if (matches.length === 0) {
+      return { ok: false, error: `no_article_found_for:${searchTerm}` }
+    }
+
+    const article = matches[0]
     const summary = truncate(`${article.title} — ${article.summary}`)
     return { ok: true, data: article, summary }
   },

@@ -4,6 +4,17 @@ import { isJunkListing } from "@/lib/supabaseLiveListings"
 import { normalizeSupportedMake } from "@/lib/makeProfiles"
 
 /**
+ * Auction platform source values as they appear in the `source` column.
+ * Active auctions show current bid (not final value), distorting price queries.
+ */
+const AUCTION_SOURCE_VALUES = [
+  "BaT", "BAT", "BringATrailer", "BRING_A_TRAILER",
+  "CarsAndBids", "CARS_AND_BIDS",
+  "CollectingCars", "COLLECTING_CARS",
+  "ClassicCom", "CLASSICCOM", "CLASSIC_COM",
+] as const
+
+/**
  * Server-side filtered listing fetch for advisor tools.
  *
  * Unlike `fetchPricedListingsForModel` (which fetches 500 rows and filters
@@ -21,8 +32,10 @@ export async function fetchAdvisorListings(options: {
   priceToUsd?: number | null
   status?: "live" | "ended" | null
   region?: string | null
-  sortBy?: "price_asc" | "price_desc" | "year_desc" | null
+  sortBy?: "price_asc" | "price_desc" | "year_desc" | "year_asc" | "date_desc" | null
   limit?: number
+  /** Exclude active auction listings whose price is just a current bid (default true). */
+  excludeActiveAuctions?: boolean
 }): Promise<PricedListingRow[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key =
@@ -90,13 +103,26 @@ export async function fetchAdvisorListings(options: {
       q = q.eq("status", "sold")
     }
 
-    // Ordering — default to price ascending (cheapest first) for search queries
-    if (options.sortBy === "price_asc") {
+    // Exclude active auctions — their listing_price is just the current bid,
+    // not a real asking price. De Morgan: NOT(auction AND active) = (NOT auction) OR (NOT active).
+    const excludeAuctions = options.excludeActiveAuctions ?? true
+    if (excludeAuctions && options.status !== "ended") {
+      const auctionList = AUCTION_SOURCE_VALUES.join(",")
+      q = q.or(`source.not.in.(${auctionList}),status.neq.active`)
+    }
+
+    // Ordering
+    const sort = options.sortBy ?? "price_asc"
+    if (sort === "price_asc") {
       q = q.order("listing_price", { ascending: true })
-    } else if (options.sortBy === "price_desc") {
+    } else if (sort === "price_desc") {
       q = q.order("listing_price", { ascending: false })
-    } else if (options.sortBy === "year_desc") {
+    } else if (sort === "year_desc") {
       q = q.order("year", { ascending: false })
+    } else if (sort === "year_asc") {
+      q = q.order("year", { ascending: true })
+    } else if (sort === "date_desc") {
+      q = q.order("sale_date", { ascending: false, nullsFirst: false })
     } else {
       q = q.order("listing_price", { ascending: true })
     }

@@ -43,7 +43,7 @@ function rowToSearchResult(r: PricedListingRow) {
 export const searchListings: ToolDef = {
   name: "search_listings",
   description:
-    "Search live + curated listings by series, variant, year, price, and region. Returns a ranked list of matches with top picks in the summary.",
+    "Search live + curated listings by series, variant, year, price, and region. Returns a ranked list of matches with top picks in the summary. Active auction bids are excluded by default since their price is just the current bid, not a real asking price.",
   minTier: "FREE",
   parameters: {
     type: "object",
@@ -58,6 +58,15 @@ export const searchListings: ToolDef = {
       priceToUsd: { type: "number" },
       region: { type: "string", enum: ["US", "EU", "UK", "JP"] },
       status: { type: "string", enum: ["live", "ended"] },
+      sortBy: {
+        type: "string",
+        enum: ["price_asc", "price_desc", "year_desc", "year_asc", "date_desc"],
+        description: "Sort order. Use price_asc for 'cheapest', price_desc for 'most expensive', year_desc for 'newest', year_asc for 'oldest', date_desc for 'recently listed'. Default: price_asc.",
+      },
+      includeAuctions: {
+        type: "boolean",
+        description: "Set true to include active auction listings (current bids). Default false — only fixed-price and completed listings.",
+      },
       limit: { type: "number", description: "Max results, default 10." },
     },
   },
@@ -71,6 +80,8 @@ export const searchListings: ToolDef = {
     const priceFromUsd = typeof args.priceFromUsd === "number" ? args.priceFromUsd : null
     const priceToUsd = typeof args.priceToUsd === "number" ? args.priceToUsd : null
     const status = typeof args.status === "string" ? args.status : null
+    const sortBy = typeof args.sortBy === "string" ? args.sortBy : "price_asc"
+    const includeAuctions = args.includeAuctions === true
     const limit = typeof args.limit === "number" && args.limit > 0 ? Math.min(50, args.limit) : 10
 
     let rows: PricedListingRow[]
@@ -85,7 +96,8 @@ export const searchListings: ToolDef = {
         priceFromUsd,
         priceToUsd,
         status: status as "live" | "ended" | null,
-        sortBy: "price_asc",
+        sortBy: sortBy as "price_asc" | "price_desc" | "year_desc" | "year_asc" | "date_desc",
+        excludeActiveAuctions: !includeAuctions,
         limit: Math.min(limit * 2, 200), // Fetch extra to allow for post-filter losses
       })
     } catch (err) {
