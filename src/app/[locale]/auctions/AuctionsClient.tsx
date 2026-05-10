@@ -109,24 +109,8 @@ const STATUS_OPTIONS = [
   { value: "upcoming", key: "upcoming" as const },
 ]
 
-const POPULAR_MAKES = [
-  "",
-  "Porsche",
-  "BMW",
-  "Mercedes-Benz",
-  "Ferrari",
-  "Lamborghini",
-  "Audi",
-  "Toyota",
-  "Ford",
-  "Chevrolet",
-  "Nissan",
-  "Land Rover",
-  "Jaguar",
-  "Aston Martin",
-  "Alfa Romeo",
-  "Lotus",
-]
+// Porsche-only by product design.
+const POPULAR_MAKES = ["", "Porsche"]
 
 // ---------------------------------------------------------------------------
 // Helpers

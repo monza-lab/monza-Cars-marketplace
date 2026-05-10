@@ -35,10 +35,12 @@ import { getBrandConfig } from "@/lib/brandConfig"
 import { useTheme } from "next-themes"
 
 // ─── GET UNIQUE MAKES WITH COUNTS ───
+// Legacy helper kept for the now-unused BrandCard component below. Filtered to
+// Porsche-only to honor the product's "Porsche-only" thesis.
 function getMakesWithCounts() {
   const makeCounts: Record<string, { count: number; topCar: CollectorCar }> = {}
 
-  CURATED_CARS.filter(c => c.make !== "Ferrari").forEach((car) => {
+  CURATED_CARS.filter(c => c.make === "Porsche").forEach((car) => {
     if (!makeCounts[car.make]) {
       makeCounts[car.make] = { count: 0, topCar: car }
     }
@@ -676,10 +678,13 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     setRecent(getSearchHistory().slice(0, 6))
     if (!trendingLoaded) {
       const ac = new AbortController()
-      fetch("/api/mock-auctions?limit=6", { signal: ac.signal })
+      // Porsche-only — explicit make param + defense-in-depth client filter.
+      fetch("/api/mock-auctions?limit=6&make=Porsche", { signal: ac.signal })
         .then(r => r.ok ? r.json() : { auctions: [] })
         .then((data: { auctions?: TrendingCar[] }) => {
-          if (Array.isArray(data.auctions)) setTrending(data.auctions)
+          if (Array.isArray(data.auctions)) {
+            setTrending(data.auctions.filter(c => c.make === "Porsche"))
+          }
           setTrendingLoaded(true)
         })
         .catch(() => setTrendingLoaded(true))
@@ -845,51 +850,7 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   )
 }
 
-// ─── EXPLORE SHEET (Browse brands + search) ───
-function MobileExploreSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const t = useTranslations("mobile")
-  const makes = getMakesWithCounts()
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: "100%" }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: "100%" }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-[60] bg-background"
-        >
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border">
-            <div className="flex items-center justify-between px-5 py-4">
-              <h2 className="text-[16px] font-semibold text-foreground">
-                {t("exploreBrands")}
-              </h2>
-              <button
-                onClick={onClose}
-                className="size-10 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Brands Grid */}
-          <div className="overflow-y-auto pb-24" style={{ height: "calc(100vh - 80px)" }}>
-            <div className="grid grid-cols-2 gap-3 p-5">
-              {makes.map(({ make, count, topCar }) => (
-                <div key={make} onClick={onClose}>
-                  <BrandCard make={make} count={count} topCar={topCar} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
+// (Legacy MobileExploreSheet removed — Advisor took its place in the bottom nav.)
 
 // ─── PROFILE SHEET (replaces Account — no hamburger duplication) ───
 function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {

@@ -20,32 +20,9 @@ import { useLocale, useTranslations } from "next-intl";
 
 const ALL = "__all__";
 
-const MAKE_VALUES = [
-  "Porsche",
-  "Ferrari",
-  "Lamborghini",
-  "McLaren",
-  "BMW",
-  "Mercedes-Benz",
-  "Aston Martin",
-  "Bugatti",
-  "Pagani",
-  "Koenigsegg",
-  "Toyota",
-  "Nissan",
-  "Honda",
-  "Lexus",
-  "Mazda",
-  "Mitsubishi",
-  "Subaru",
-  "Ford",
-  "Jaguar",
-  "Maserati",
-  "Lancia",
-  "Audi",
-  "Alpine",
-  "De Tomaso",
-];
+// MonzaHaus is Porsche-only by product design. Other marques previously listed
+// here (Ferrari, BMW, etc.) confused users into thinking we covered them.
+const MAKE_VALUES = ["Porsche"];
 
 const PLATFORMS = [
   { value: "BRING_A_TRAILER", label: "Bring a Trailer" },
@@ -115,7 +92,10 @@ export function SearchClient() {
   const { formatPrice } = useCurrency();
   const { query, debouncedQuery, setQuery } = useSearch(300);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedMake, setSelectedMake] = useState(ALL);
+  // Always Porsche — product is Porsche-only. Kept as state to preserve
+  // existing query-building logic without further refactor.
+  const [selectedMake, setSelectedMake] = useState<string>("Porsche");
+  void setSelectedMake
   const [selectedPlatform, setSelectedPlatform] = useState(ALL);
   const [selectedStatus, setSelectedStatus] = useState(ALL);
   const [priceMin, setPriceMin] = useState("");
@@ -163,7 +143,7 @@ export function SearchClient() {
   ].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSelectedMake(ALL);
+    setSelectedMake("Porsche");
     setSelectedPlatform(ALL);
     setSelectedStatus(ALL);
     setPriceMin("");
@@ -266,22 +246,8 @@ export function SearchClient() {
             </button>
           ))}
 
-          {/* Make Chip */}
-          <Select value={selectedMake} onValueChange={setSelectedMake}>
-            <SelectTrigger className="h-7 w-auto min-w-[100px] rounded-full border-border bg-transparent text-[10px] tracking-[0.05em] text-muted-foreground hover:border-primary/20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key={ALL} value={ALL}>
-                {t("filters.allMakes")}
-              </SelectItem>
-              {MAKE_VALUES.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Make chip removed — MonzaHaus is Porsche-only by product design.
+              The dropdown with a single option just added noise. */}
 
           {/* Platform Chip */}
           <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
