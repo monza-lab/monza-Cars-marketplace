@@ -167,16 +167,16 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-black text-zinc-100">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 py-12 space-y-10">
           <header className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">
               Free Tool · MonzaHaus
             </p>
             <h1 className="text-4xl md:text-5xl font-serif leading-tight">
               Porsche VIN Decoder
             </h1>
-            <p className="text-lg text-zinc-400 max-w-3xl">
+            <p className="text-lg text-muted-foreground max-w-3xl">
               Paste any 17-character Porsche VIN to extract model year, plant,
               generation, and serial number. Covers 1981+ production (911, Boxster,
               Cayman, Cayenne, Panamera, Macan, Taycan).
@@ -187,7 +187,7 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
             <VinDecoderClient />
           </section>
 
-          <section className="prose prose-invert max-w-none text-zinc-300">
+          <section className="prose prose-invert max-w-none text-foreground/85">
             <h2 className="text-2xl font-serif">How Porsche VINs are structured</h2>
             <p>
               Modern Porsches (1981+) use the 17-character VIN format standardized by
@@ -213,15 +213,15 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
               {FAQS.map((faq) => (
                 <details
                   key={faq.question}
-                  className="border border-zinc-800 rounded-lg p-4 bg-zinc-950 group"
+                  className="border border-border rounded-lg p-4 bg-card group"
                 >
-                  <summary className="cursor-pointer font-medium text-zinc-100 list-none flex justify-between items-center gap-4">
+                  <summary className="cursor-pointer font-medium text-foreground list-none flex justify-between items-center gap-4">
                     <span>{faq.question}</span>
-                    <span className="text-amber-500 text-xl group-open:rotate-45 transition-transform">
+                    <span className="text-primary text-xl group-open:rotate-45 transition-transform">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </p>
                 </details>
@@ -229,15 +229,15 @@ export default async function PorscheVinDecoderPage({ params }: PageProps) {
             </div>
           </section>
 
-          <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
+          <section className="text-xs text-muted-foreground/80 pt-8 border-t border-border">
             Looking to understand what a specific VIN is actually worth? See our{" "}
-            <Link href={`/${loc}/indices`} className="text-amber-400 hover:underline">
+            <Link href={`/${loc}/indices`} className="text-primary hover:underline">
               MonzaHaus Index
             </Link>{" "}
             for current market values, or the{" "}
             <Link
               href={`/${loc}/models/porsche/964`}
-              className="text-amber-400 hover:underline"
+              className="text-primary hover:underline"
             >
               model guides
             </Link>{" "}

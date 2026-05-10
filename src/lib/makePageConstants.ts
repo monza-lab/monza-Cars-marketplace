@@ -44,23 +44,10 @@ export const ownershipCosts: Record<string, { insurance: number; storage: number
   default: { insurance: 5000, storage: 4800, maintenance: 5000 },
 }
 
-// ─── MOCK MARKET DEPTH (per brand) ───
-export const mockMarketDepth: Record<string, { auctionsPerYear: number; avgDaysToSell: number; sellThroughRate: number; demandScore: number }> = {
-  Porsche: { auctionsPerYear: 340, avgDaysToSell: 12, sellThroughRate: 89, demandScore: 9 },
-  Ferrari: { auctionsPerYear: 180, avgDaysToSell: 18, sellThroughRate: 82, demandScore: 9 },
-  McLaren: { auctionsPerYear: 15, avgDaysToSell: 45, sellThroughRate: 72, demandScore: 7 },
-  Lamborghini: { auctionsPerYear: 95, avgDaysToSell: 22, sellThroughRate: 78, demandScore: 8 },
-  BMW: { auctionsPerYear: 280, avgDaysToSell: 14, sellThroughRate: 85, demandScore: 8 },
-  Nissan: { auctionsPerYear: 120, avgDaysToSell: 8, sellThroughRate: 94, demandScore: 9 },
-  Toyota: { auctionsPerYear: 85, avgDaysToSell: 6, sellThroughRate: 96, demandScore: 10 },
-  "Mercedes-Benz": { auctionsPerYear: 150, avgDaysToSell: 20, sellThroughRate: 80, demandScore: 7 },
-  "Aston Martin": { auctionsPerYear: 60, avgDaysToSell: 28, sellThroughRate: 75, demandScore: 7 },
-  Lexus: { auctionsPerYear: 25, avgDaysToSell: 15, sellThroughRate: 88, demandScore: 8 },
-  Ford: { auctionsPerYear: 45, avgDaysToSell: 18, sellThroughRate: 82, demandScore: 7 },
-  Acura: { auctionsPerYear: 35, avgDaysToSell: 10, sellThroughRate: 90, demandScore: 8 },
-  Jaguar: { auctionsPerYear: 70, avgDaysToSell: 25, sellThroughRate: 76, demandScore: 6 },
-  default: { auctionsPerYear: 80, avgDaysToSell: 20, sellThroughRate: 78, demandScore: 7 },
-}
+// Market depth previously hardcoded per brand was removed — those numbers were
+// estimates that read like real DB metrics. Real market depth is computed from
+// completed sales (deriveModelDepth in makePageHelpers.ts) and is null when we
+// don't have enough data.
 
 // ─── PRICE RANGE OPTIONS ───
 export const priceRanges = [

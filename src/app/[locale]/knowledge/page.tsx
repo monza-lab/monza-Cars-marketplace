@@ -90,16 +90,16 @@ export default async function KnowledgeHubPage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-black text-zinc-100">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-16 space-y-12">
           <header className="space-y-6 max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">
               MonzaHaus Knowledge
             </p>
             <h1 className="text-4xl md:text-6xl font-serif leading-tight">
               Authority guides for Porsche buyers &amp; owners.
             </h1>
-            <p className="text-lg text-zinc-400">
+            <p className="text-lg text-muted-foreground">
               Deep-dive references on the technical, authentication, and reliability
               questions every Porsche collector needs answered. Factual, neutral, and
               cross-referenced to the MonzaHaus Index.
@@ -116,18 +116,18 @@ export default async function KnowledgeHubPage({ params }: PageProps) {
                   <Link
                     key={a.slug}
                     href={`/${loc}/knowledge/${a.slug}`}
-                    className="group border border-zinc-800 rounded-lg p-5 bg-zinc-950 hover:border-amber-600/40 transition"
+                    className="group border border-border rounded-lg p-5 bg-card hover:border-primary/40 transition"
                   >
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                       {CATEGORY_LABELS[a.category] ?? a.category}
                     </p>
-                    <h3 className="text-xl font-serif mt-2 group-hover:text-amber-400 transition">
+                    <h3 className="text-xl font-serif mt-2 group-hover:text-primary transition">
                       {a.title}
                     </h3>
-                    <p className="text-sm text-zinc-400 mt-2 line-clamp-3">
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
                       {a.summary}
                     </p>
-                    <span className="text-xs text-amber-500 mt-3 inline-block group-hover:underline">
+                    <span className="text-xs text-primary mt-3 inline-block group-hover:underline">
                       Read the guide →
                     </span>
                   </Link>
@@ -136,7 +136,7 @@ export default async function KnowledgeHubPage({ params }: PageProps) {
             </section>
           ))}
 
-          <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
+          <section className="text-xs text-muted-foreground/80 pt-8 border-t border-border">
             Content is informational and cross-referenced to primary sources where
             possible. MonzaHaus is an independent collector-intelligence platform —
             not affiliated with Porsche AG or its subsidiaries. For any
