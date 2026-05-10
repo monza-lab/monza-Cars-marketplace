@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
-import { Share2, Archive } from "lucide-react"
+import { Share2, Archive, Menu, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { AdvisorConversation } from "./AdvisorConversation"
 import { AdvisorSidebar } from "./AdvisorSidebar"
 import type { StreamedMessage } from "./useAdvisorStream"
@@ -26,6 +27,9 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+
+  const conversationCount = props.conversations.length
 
   async function handleShare() {
     if (!conversationId) return
@@ -65,29 +69,118 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
 
   function handleConversationIdChanged(id: string) {
     setConversationId(id)
-    // When a brand-new conversation is created from the empty state, deep-link to it.
     if (!props.conversationId && typeof window !== "undefined") {
       window.history.replaceState({}, "", `/${props.locale}/advisor/c/${id}`)
     }
   }
 
   return (
-    <div className="grid grid-cols-[260px_1fr] min-h-[calc(100vh-64px)]">
+    <div className="flex flex-col md:grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-64px)]">
+      {/* Desktop sidebar */}
       {!props.readOnly && (
-        <AdvisorSidebar
-          activeId={conversationId ?? undefined}
-          conversations={props.conversations}
-        />
+        <div className="hidden md:flex md:flex-col">
+          <AdvisorSidebar
+            activeId={conversationId ?? undefined}
+            conversations={props.conversations}
+          />
+        </div>
       )}
-      <div className={`flex flex-col min-h-0 ${props.readOnly ? "col-span-2" : ""}`}>
+
+      {/* Mobile sidebar drawer */}
+      {!props.readOnly && (
+        <AnimatePresence>
+          {showMobileSidebar && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMobileSidebar(false)}
+                className="md:hidden fixed inset-0 z-[59] bg-black/60 backdrop-blur-sm"
+              />
+              <motion.aside
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="md:hidden fixed inset-y-0 left-0 z-[60] w-[82%] max-w-[320px] bg-background border-r border-border flex flex-col"
+              >
+                <div className="px-4 py-4 border-b border-border flex items-center justify-between shrink-0">
+                  <span className="text-[14px] font-semibold text-foreground">
+                    {t("advisor.conversations")}
+                  </span>
+                  <button
+                    onClick={() => setShowMobileSidebar(false)}
+                    aria-label="Close conversations"
+                    className="size-9 flex items-center justify-center rounded-full bg-foreground/5 text-muted-foreground active:bg-foreground/10"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+                <div
+                  onClick={() => setShowMobileSidebar(false)}
+                  className="flex-1 min-h-0 flex flex-col"
+                >
+                  <AdvisorSidebar
+                    activeId={conversationId ?? undefined}
+                    conversations={props.conversations}
+                  />
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      )}
+
+      {/* Main column: chat */}
+      <div className={`flex flex-col min-h-0 ${props.readOnly ? "md:col-span-2" : ""}`}>
+        {/* Mobile chat header (sidebar trigger + actions) */}
+        {!props.readOnly && (
+          <div className="md:hidden flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
+            <button
+              onClick={() => setShowMobileSidebar(true)}
+              className="flex items-center gap-2 rounded-full bg-foreground/5 border border-border px-3 py-2 text-[12px] text-foreground/80 active:bg-foreground/10"
+              aria-label="Open conversations"
+            >
+              <Menu className="size-4" />
+              <span>
+                {conversationCount > 0
+                  ? `${t("advisor.conversations")} · ${conversationCount}`
+                  : t("advisor.newChat")}
+              </span>
+            </button>
+            {conversationId && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleShare}
+                  disabled={isBusy}
+                  className="size-9 flex items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary active:bg-primary/20 disabled:opacity-40"
+                  aria-label={t("advisor.share")}
+                >
+                  <Share2 className="size-3.5" />
+                </button>
+                <button
+                  onClick={handleArchive}
+                  disabled={isBusy}
+                  className="size-9 flex items-center justify-center rounded-full bg-foreground/5 border border-border text-foreground/80 active:bg-foreground/10 disabled:opacity-40"
+                  aria-label={t("advisor.archive")}
+                >
+                  <Archive className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {props.sharedWatermark && (
           <div className="px-4 py-2 bg-foreground/4 border-b border-border text-[11px] text-muted-foreground">
             {props.sharedWatermark}
           </div>
         )}
 
+        {/* Desktop chat header (share/archive only) */}
         {!props.readOnly && conversationId && (
-          <div className="px-4 py-2 border-b border-border flex items-center justify-end gap-2 shrink-0">
+          <div className="hidden md:flex px-4 py-2 border-b border-border items-center justify-end gap-2 shrink-0">
             <button
               onClick={handleShare}
               disabled={isBusy}

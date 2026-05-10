@@ -828,8 +828,10 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
           }
         />
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
+        {/* Gradient overlay — vertical: ensures bottom legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 dark:from-background dark:via-background/60 dark:to-background/15 pointer-events-none" />
+        {/* Side gradient — supports text on bright backgrounds */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-transparent dark:from-background/65 dark:via-background/10 pointer-events-none" />
 
         {/* Market delta pill */}
         <div className="absolute top-4 left-4">
@@ -845,14 +847,23 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
 
         {/* Overlaid info at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">
+          <h2
+            className="text-3xl font-bold text-white tracking-tight"
+            style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
+          >
             {brand.name}
           </h2>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
+          <p
+            className="text-[13px] text-white/85 mt-0.5"
+            style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+          >
             {brand.representativeCar}
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[16px] font-display font-medium text-primary">
+            <span
+              className="text-[16px] font-display font-medium text-primary"
+              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+            >
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
             <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>

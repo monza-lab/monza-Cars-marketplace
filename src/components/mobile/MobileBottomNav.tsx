@@ -605,7 +605,6 @@ export function MobileBottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [showSearch, setShowSearch] = useState(false)
-  const [showExplore, setShowExplore] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
 
   // Hide on car detail pages (has its own CTA)
@@ -625,24 +624,30 @@ export function MobileBottomNav() {
             {/* Home */}
             <button
               onClick={() => router.push(homeHref)}
-              className={`flex flex-col items-center gap-1 transition-colors ${
-                isHome && !showSearch && !showExplore ? "text-primary" : "text-muted-foreground"
+              className={`flex flex-col items-center gap-1 transition-colors min-h-[56px] ${
+                isHome && !showSearch ? "text-primary" : "text-muted-foreground"
               }`}
+              aria-label="Home"
             >
               <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${
-                isHome && !showSearch && !showExplore ? "bg-primary/10" : "bg-foreground/5"
+                isHome && !showSearch ? "bg-primary/10" : "bg-foreground/5"
               }`}>
                 <Home className="size-5" />
               </div>
               <span className="text-[10px] font-medium">Home</span>
             </button>
 
-            {/* Explore */}
+            {/* Explore — navigate to /cars/porsche directly */}
             <button
-              onClick={() => setShowExplore(true)}
-              className="flex flex-col items-center gap-1 text-muted-foreground"
+              onClick={() => router.push("/cars/porsche")}
+              className={`flex flex-col items-center gap-1 transition-colors min-h-[56px] ${
+                pathname?.startsWith("/cars") ? "text-primary" : "text-muted-foreground"
+              }`}
+              aria-label={t("explore")}
             >
-              <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
+              <div className={`size-10 rounded-full flex items-center justify-center transition-colors ${
+                pathname?.startsWith("/cars") ? "bg-primary/10" : "bg-foreground/5"
+              }`}>
                 <Car className="size-5" />
               </div>
               <span className="text-[10px] font-medium">{t("explore")}</span>
@@ -651,7 +656,8 @@ export function MobileBottomNav() {
             {/* Search */}
             <button
               onClick={() => setShowSearch(true)}
-              className="flex flex-col items-center gap-1 text-muted-foreground"
+              className="flex flex-col items-center gap-1 text-muted-foreground min-h-[56px]"
+              aria-label={t("search")}
             >
               <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
                 <Search className="size-5" />
@@ -662,7 +668,8 @@ export function MobileBottomNav() {
             {/* Profile */}
             <button
               onClick={() => setShowProfile(true)}
-              className="flex flex-col items-center gap-1 text-muted-foreground"
+              className="flex flex-col items-center gap-1 text-muted-foreground min-h-[56px]"
+              aria-label={t("account")}
             >
               <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center">
                 <User className="size-5" />
@@ -675,7 +682,6 @@ export function MobileBottomNav() {
 
       {/* Sheets */}
       <MobileSearchSheet isOpen={showSearch} onClose={() => setShowSearch(false)} />
-      <MobileExploreSheet isOpen={showExplore} onClose={() => setShowExplore(false)} />
       <MobileProfileSheet isOpen={showProfile} onClose={() => setShowProfile(false)} />
     </>
   )

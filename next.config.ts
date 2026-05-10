@@ -86,6 +86,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  devIndicators: {
+    position: "bottom-right",
+  },
   async headers() {
     const csp = [
       "default-src 'self'",

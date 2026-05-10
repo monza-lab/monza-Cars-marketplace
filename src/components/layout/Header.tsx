@@ -888,8 +888,10 @@ export function Header() {
               </button>
             )}
 
-            {/* Language Switcher */}
-            <LanguageSwitcher />
+            {/* Language Switcher (desktop only — mobile uses Profile sheet) */}
+            <div className="hidden md:block">
+              <LanguageSwitcher />
+            </div>
 
             {/* Theme Toggle */}
             <button
