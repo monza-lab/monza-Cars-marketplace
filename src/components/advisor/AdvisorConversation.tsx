@@ -148,6 +148,79 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
   )
 }
 
+// Editorial labels for advisor tool calls. Tool names like `search_listings`
+// surfaced raw (with their result summaries like "Found 0 matches; top 3: none")
+// looked like error logs. The advisor itself narrates the outcome in its
+// natural answer — these lines only need to say *what it's doing*, not what
+// it found.
+const TOOL_LABELS: Record<string, { loading: string; done: string }> = {
+  // Marketplace
+  search_listings: { loading: "Browsing listings", done: "Browsed listings" },
+  get_listing: { loading: "Pulling listing details", done: "Read listing" },
+  get_comparable_sales: { loading: "Finding comparable sales", done: "Compared sales" },
+  get_price_history: { loading: "Reviewing price history", done: "Reviewed history" },
+  get_regional_valuation: { loading: "Comparing US/EU/UK/JP", done: "Compared regions" },
+  compute_price_position: { loading: "Locating fair-value position", done: "Located in range" },
+  // Knowledge
+  get_series_profile: { loading: "Reading the series profile", done: "Read series" },
+  list_knowledge_topics: { loading: "Looking through guides", done: "Searched guides" },
+  get_knowledge_article: { loading: "Opening the guide", done: "Read guide" },
+  get_variant_details: { loading: "Pulling variant details", done: "Read variant" },
+  get_inspection_checklist: { loading: "Reviewing inspection checklist", done: "Read checklist" },
+  // Analysis
+  assess_red_flags: { loading: "Checking red flags", done: "Checked red flags" },
+  compare_listings: { loading: "Comparing listings", done: "Compared listings" },
+  // Premium
+  web_search: { loading: "Searching the web", done: "Searched the web" },
+  fetch_url: { loading: "Fetching reference", done: "Read reference" },
+  // Action
+  trigger_report: { loading: "Triggering full report", done: "Report triggered" },
+  navigate_to: { loading: "Navigating", done: "Navigated" },
+}
+
+function formatToolCallLabel(name: string, isDone: boolean): string {
+  const label = TOOL_LABELS[name]
+  if (label) return isDone ? label.done : label.loading
+  // Fallback for any unmapped tool: humanize the name
+  // (snake_case → Sentence case) and pick tense by state.
+  const humanized = name.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
+  return isDone ? humanized : `${humanized}…`
+}
+
+const SHOW_TOOL_DEBUG =
+  typeof process !== "undefined" && process.env.NODE_ENV !== "production"
+
+function ToolCallRow({ name, summary, isDone }: { name: string; summary: string | null; isDone: boolean }) {
+  const label = formatToolCallLabel(name, isDone)
+  return (
+    <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground">
+      {isDone ? (
+        <span aria-hidden className="text-muted-foreground/60">—</span>
+      ) : (
+        <span
+          aria-hidden
+          className="size-1.5 rounded-full bg-primary animate-pulse shrink-0"
+        />
+      )}
+      <span className={isDone ? "" : "text-foreground/70"}>
+        {label}
+        {!isDone && (
+          <span className="inline-block w-3 text-left">
+            <span className="animate-pulse">…</span>
+          </span>
+        )}
+      </span>
+      {/* Debug-only: surface the raw summary string in development so engineers
+          can still verify what the tool returned. Hidden in production. */}
+      {SHOW_TOOL_DEBUG && summary && (
+        <span className="text-muted-foreground/50 truncate" title={summary}>
+          · {summary.slice(0, 60)}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function MessageBubble({ m }: { m: StreamedMessage }) {
   if (m.role === "user") {
     return (
@@ -171,9 +244,12 @@ function MessageBubble({ m }: { m: StreamedMessage }) {
           </span>
         )}
         {(m.toolCalls ?? []).map((tc, i) => (
-          <div key={i} className="text-[10px] text-muted-foreground px-2">
-            {tc.summary ? `✓ ${tc.name}: ${tc.summary.slice(0, 80)}` : `◌ ${tc.name}…`}
-          </div>
+          <ToolCallRow
+            key={i}
+            name={tc.name}
+            summary={tc.summary ?? null}
+            isDone={Boolean(tc.summary)}
+          />
         ))}
         <div className="rounded-2xl bg-foreground/4 border border-border px-3.5 py-2 text-[13px] whitespace-pre-wrap">
           {m.content || (m.isStreaming ? "…" : "")}
