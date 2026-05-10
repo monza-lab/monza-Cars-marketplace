@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import Image from "next/image"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
@@ -32,6 +32,10 @@ import {
   SlidersHorizontal,
   Flame,
   ChevronDown,
+  ExternalLink,
+  MessageSquare,
+  Info,
+  Sparkles,
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
@@ -768,7 +772,82 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
   )
 }
 
+// ─── MOBILE: TESIS BANNER (intelligence, not marketplace) ───
+function MobileTesisBanner({ liveCount }: { liveCount: number }) {
+  return (
+    <div className="border-b border-border bg-foreground/[0.02]">
+      <div className="px-4 py-3 flex items-start gap-2.5">
+        <Info className="size-3.5 shrink-0 text-muted-foreground mt-0.5" aria-hidden />
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          <span className="font-medium text-foreground">Intelligence, not a marketplace.</span>{" "}
+          {liveCount > 0
+            ? `${liveCount.toLocaleString()} Porsches tracked across BaT, Cars & Bids, AS24, Elferspot and more — we publish the report; you bid where the car lives.`
+            : "We track Porsches across BaT, Cars & Bids, AS24, Elferspot and more — we publish the report; you bid where the car lives."}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── MOBILE: FAMILY CHIPS (discovery) ───
+function MobileFamilyChips() {
+  const config = getBrandConfig("porsche")
+  if (!config) return null
+
+  return (
+    <div className="px-4 pt-4 pb-2">
+      <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2.5">
+        {/* [HARDCODED] */}Discover by family
+      </p>
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+        {config.familyGroups.map((group) => {
+          const firstSeries = group.seriesIds[0]
+          const href = firstSeries ? `/cars/porsche?family=${firstSeries}` : `/cars/porsche`
+          return (
+            <Link
+              key={group.label}
+              href={href}
+              prefetch={false}
+              className="shrink-0 px-3.5 py-1.5 rounded-full bg-foreground/5 border border-border text-[12px] font-medium text-foreground/85 active:bg-primary/10 active:border-primary/25 transition-colors whitespace-nowrap"
+            >
+              {group.label}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── MOBILE: ADVISOR BAND (Pistons CTA inline) ───
+function MobileAdvisorBand() {
+  return (
+    <div className="px-4 py-3">
+      <Link
+        href="/advisor"
+        className="group flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.08] via-primary/[0.04] to-transparent px-4 py-3 active:from-primary/[0.14] transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="size-9 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
+            <Sparkles className="size-4 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-foreground">
+              {/* [HARDCODED] */}Need an opinion?
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {/* [HARDCODED] */}Ask the advisor about any Porsche
+            </p>
+          </div>
+        </div>
+        <ChevronRight className="size-4 text-primary group-active:translate-x-0.5 transition-transform shrink-0" />
+      </Link>
+    </div>
+  )
+}
+
 // ─── MOBILE: REGION PILLS (sticky) ───
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function MobileRegionPills() {
   const { selectedRegion, setSelectedRegion } = useRegion()
   const t = useTranslations("dashboard")
@@ -945,11 +1024,11 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
   )
 }
 
-// ─── MOBILE: LIVE AUCTIONS SECTION ───
+// ─── MOBILE: LATEST REPORTS SECTION (honest-by-data) ───
 function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
-  const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
+  const locale = useLocale()
   const now = useClockNow()
 
   const timeBaseLabels = {
@@ -957,8 +1036,6 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
     hour: t("asset.timeHour"),
     minute: t("asset.timeMin"),
   }
-  const endedText = t("asset.ended")
-  const soldText = t("asset.sold")
 
   const liveAuctions = useMemo(() => {
     return auctions
@@ -969,94 +1046,182 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
         if (pa !== pb) return pa - pb
         return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
       })
-      .slice(0, 8)
+      .slice(0, 16)
   }, [auctions, now])
 
   if (liveAuctions.length === 0) return null
 
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       {/* Section header */}
-      <div className="px-4 py-3 flex items-center gap-2">
-        <div className="size-2 rounded-full bg-positive animate-pulse" />
+      <div className="px-4 py-3 flex items-baseline justify-between">
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-          {t("mobileFeed.liveListings")}
+          {/* [HARDCODED] */}Latest reports
         </span>
-        <span className="text-[10px] font-display font-medium text-primary">
-          {totalLiveCount}
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          {totalLiveCount.toLocaleString(locale)} {/* [HARDCODED] */}tracked
         </span>
       </div>
 
-      {/* Auction rows */}
-      <div className="divide-y divide-border">
-        {liveAuctions.map((auction) => {
-          const isEndingSoon = auction.status === "ENDING_SOON"
-          const remaining = timeLeft(auction.endTime, { ...timeBaseLabels, ended: isAuctionPlatform(auction.platform) ? endedText : soldText })
-
+      {/* Card list — honest-by-data, click goes to MonzaHaus report */}
+      <div className="space-y-3 px-4">
+        {liveAuctions.map((auction, index) => {
+          // Inject advisor band every 6 cards (after positions 5, 11, ...)
+          const showBand = index > 0 && index % 6 === 0
           return (
-            <Link
-              key={auction.id}
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
-            >
-              {/* Thumbnail */}
-              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-card">
-                <SafeImage
-                  src={auction.images[0]}
-                  alt={auction.title}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  fallback={
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Car className="size-3.5 text-muted-foreground" />
-                    </div>
-                  }
-                />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-foreground truncate">
-                  {auction.year} {auction.make} {auction.model}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[12px] font-display font-medium text-primary">
-                    {auction.currentBid > 0 ? formatPrice(auction.currentBid) : /* [HARDCODED] */ "POA"}
-                  </span>
-                  {isAuctionPlatform(auction.platform) && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {tAuction("bids.count", { count: auction.bidCount })}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Platform + Time/Type badge */}
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                {isAuctionPlatform(auction.platform) ? (
-                  <div className="flex items-center gap-1">
-                    <Clock className={`size-3 ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`} />
-                    <span className={`text-[10px] tabular-nums font-medium ${
-                      isEndingSoon ? "text-destructive" : "text-muted-foreground"
-                    }`}>
-                      {remaining}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
-                    {/* [HARDCODED] */}Listing
-                  </span>
-                )}
-                <span className="text-[8px] text-muted-foreground">
-                  {platformShort[auction.platform] || auction.platform}
-                </span>
-              </div>
-            </Link>
+            <div key={auction.id}>
+              {showBand && <MobileAdvisorBand />}
+              <MobileReportCard
+                auction={auction}
+                now={now}
+                timeLabels={timeBaseLabels}
+                formatPrice={formatPrice}
+              />
+            </div>
           )
         })}
+      </div>
+
+      {/* End-of-feed CTA → /cars/porsche */}
+      <div className="px-4 mt-5">
+        <Link
+          href="/cars/porsche"
+          className="block w-full text-center rounded-full border border-border bg-foreground/[0.02] px-4 py-3 text-[12px] font-medium text-foreground/85 active:bg-foreground/[0.06] transition-colors"
+        >
+          {/* [HARDCODED] */}See all {totalLiveCount.toLocaleString(locale)} reports →
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ─── MOBILE: REPORT CARD (honest-by-data, BrowseCard adapted) ───
+function MobileReportCard({
+  auction,
+  now,
+  timeLabels,
+  formatPrice,
+}: {
+  auction: Auction
+  now: number
+  timeLabels: { day: string; hour: string; minute: string }
+  formatPrice: (n: number) => string
+}) {
+  const router = useRouter()
+  const locale = useLocale()
+  const platformLabel = platformShort[auction.platform] || auction.platform
+  const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
+  const reportHref = `/cars/${makeSlug}/${auction.id}`
+  const sourceUrl = (auction as Auction & { sourceUrl?: string | null }).sourceUrl
+  const fairUs = auction.fairValueByRegion?.US
+  const region = auction.canonicalMarket ?? null
+  const endMs = new Date(auction.endTime).getTime()
+  // Honest-by-data: countdown only when the auction is real and active
+  const showCountdown =
+    isAuctionPlatform(auction.platform) &&
+    auction.bidCount > 0 &&
+    Number.isFinite(endMs) &&
+    endMs > now
+  const remaining = showCountdown
+    ? timeLeft(auction.endTime, { ...timeLabels, ended: "" })
+    : null
+
+  return (
+    <div
+      role="link"
+      tabIndex={0}
+      aria-label={`View MonzaHaus report — ${auction.title}`}
+      onClick={() => router.push(reportHref)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          router.push(reportHref)
+        }
+      }}
+      className="group flex items-stretch gap-3 rounded-xl bg-card border border-border overflow-hidden active:border-primary/30 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {/* Thumbnail with platform pill overlay */}
+      <div className="relative w-28 h-28 shrink-0 bg-muted overflow-hidden">
+        <SafeImage
+          src={auction.images[0]}
+          alt={auction.title}
+          fill
+          className="object-cover"
+          sizes="112px"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Car className="size-4 text-muted-foreground" />
+            </div>
+          }
+        />
+        <div className="absolute top-1.5 left-1.5">
+          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/90 border border-border backdrop-blur-md">
+            {platformLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-w-0 py-2.5 pr-3 flex flex-col">
+        <h3 className="text-[13px] font-display font-medium text-foreground line-clamp-1">
+          {auction.title}
+        </h3>
+
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="text-[15px] font-display font-medium text-primary tabular-nums leading-tight">
+            {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "—"}
+          </span>
+          {auction.mileage !== null && (
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              {auction.mileage.toLocaleString(locale)} {auction.mileageUnit || "mi"}
+            </span>
+          )}
+        </div>
+
+        {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {/* [HARDCODED] */}Fair {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
+          </p>
+        )}
+
+        <div className="mt-auto pt-1.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 text-[10px] text-muted-foreground">
+            {showCountdown && remaining && (
+              <span className="flex items-center gap-1 shrink-0">
+                <Clock className="size-3" />
+                {remaining}
+              </span>
+            )}
+            {auction.bidCount > 0 && (
+              <span className="flex items-center gap-1 shrink-0">
+                <Gavel className="size-3" />
+                {auction.bidCount}
+              </span>
+            )}
+            {region && (
+              <span className="font-medium tracking-wider shrink-0">
+                {region}
+              </span>
+            )}
+          </div>
+          {sourceUrl ? (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 active:border-primary/40 active:text-primary transition-colors shrink-0"
+              title={`View original listing on ${platformLabel}`}
+            >
+              {/* [HARDCODED] */}View on {platformLabel}
+              <ExternalLink className="size-2.5" />
+            </a>
+          ) : (
+            <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+          )}
+        </div>
       </div>
     </div>
   )
@@ -2410,10 +2575,10 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
 
   return (
     <>
-      {/* ═══ MOBILE LAYOUT — Vertical Scrollable Feed ═══ */}
+      {/* ═══ MOBILE LAYOUT — Data-First Vertical Feed ═══ */}
       <div className="md:hidden min-h-[100dvh] w-full bg-background pt-[var(--app-header-h,3.5rem)]">
-        {/* Sticky region pills */}
-        <MobileRegionPills />
+        {/* Tesis banner — intelligence, not marketplace */}
+        <MobileTesisBanner liveCount={liveNowCount} />
 
         {/* Scrollable vertical feed */}
         <div className="pb-24">
@@ -2426,6 +2591,9 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
             <>
               {/* Hero: first brand */}
               <MobileHeroBrand brand={brands[0]} />
+
+              {/* Family chips — discovery */}
+              <MobileFamilyChips />
 
               {/* Section: All Brands */}
               {brands.length > 1 && (
@@ -2444,7 +2612,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
                 </div>
               )}
 
-              {/* Section: Live Auctions */}
+              {/* Section: Latest Reports */}
               <MobileLiveAuctions auctions={filteredAuctions} totalLiveCount={liveNowCount} />
             </>
           )}
