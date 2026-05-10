@@ -1728,8 +1728,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     <History className="size-4 text-primary" />
                     <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
                   </div>
-                  <div className="border-l-2 border-primary/20 pl-4">
-                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                  <div className="pl-4 border-l border-border">
+                    <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                   </div>
                 </div>
 

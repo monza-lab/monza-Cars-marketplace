@@ -124,7 +124,7 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/20 overflow-hidden">
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-4 hover:bg-foreground/3 transition-colors"
@@ -161,7 +161,7 @@ function StatCard({ label, value, icon }: {
   icon: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/30 p-4">
+    <div className="rounded-xl bg-card border border-border p-4">
       <div className="flex items-center gap-2 text-primary/60 mb-2">
         {icon}
         <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{label}</span>
@@ -1253,8 +1253,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* 3. Seller's Description */}
           <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
-            <div className="border-l-2 border-primary/20 pl-4">
-              <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+            <div className="pl-4 border-l border-border">
+              <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
             </div>
             <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
           </CollapsibleSection>
@@ -1637,8 +1637,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <History className="size-4 text-primary" />
                   <h2 className="text-[12px] font-semibold text-foreground">{t("sellersDescription")}</h2>
                 </div>
-                <div className="border-l-2 border-primary/20 pl-4">
-                  <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                <div className="pl-4 border-l border-border">
+                  <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
               </div>

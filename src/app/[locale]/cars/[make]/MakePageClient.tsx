@@ -952,8 +952,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             onClick={() => handleSiblingClick(s.id)}
                             className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
                               isActive
-                                ? "bg-primary/6 border-l-2 border-l-primary"
-                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
+                                ? "bg-primary/8"
+                                : "hover:bg-foreground/4"
                             }`}
                           >
                             <span className={`text-[11px] font-medium ${
@@ -993,8 +993,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             onClick={() => scrollToCar(i)}
                             className={`w-full flex items-center gap-2 px-4 py-1.5 transition-all ${
                               isActive
-                                ? "bg-primary/6 border-l-2 border-l-primary"
-                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
+                                ? "bg-primary/8"
+                                : "hover:bg-foreground/4"
                             }`}
                           >
                             <span className={`text-[9px] tabular-nums w-4 shrink-0 ${

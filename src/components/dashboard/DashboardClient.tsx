@@ -1423,8 +1423,8 @@ function DiscoverySidebar({
                     onClick={() => onSelectBrand(brand.slug)}
                     className={`w-full text-left px-4 py-2.5 border-b border-border/50 transition-all group ${
                       isActive
-                        ? "bg-primary/6 border-l-2 border-l-primary"
-                        : "hover:bg-foreground/2 border-l-2 border-l-transparent"
+                        ? "bg-primary/8"
+                        : "hover:bg-foreground/2"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1470,8 +1470,8 @@ function DiscoverySidebar({
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
-                              ? "bg-primary/8 border-l-2 border-l-primary"
-                              : "hover:bg-foreground/3 border-l-2 border-l-transparent"
+                              ? "bg-primary/8"
+                              : "hover:bg-foreground/3"
                           }`}
                         >
                           <span className={`text-[11px] font-medium transition-colors ${

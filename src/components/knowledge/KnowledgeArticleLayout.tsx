@@ -104,7 +104,7 @@ export function KnowledgeArticleLayout({
           </div>
         </section>
 
-        <section className="border-l-2 border-primary/40 pl-6 py-2">
+        <section className="rounded-xl bg-primary/[0.04] px-6 py-4">
           <h2 className="text-xl font-serif mb-2 text-foreground">Bottom line</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{article.verdict}</p>
         </section>

@@ -588,7 +588,7 @@ function RiskModule({
       </button>
 
       {showQuestions && (
-        <div className="mt-3 space-y-2 pl-4 border-l-2 border-primary/20">
+        <div className="mt-3 space-y-2 pl-4 border-l border-border">
           {questions.map((q: string, i: number) => (
             <p key={i} className="text-[12px] text-muted-foreground">
               {q}
