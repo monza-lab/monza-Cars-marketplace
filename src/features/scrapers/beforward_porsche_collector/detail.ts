@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 
 import { fetchHtml, getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
+import { fetchBFHtmlWithScrapling } from "./scrapling";
 import type { DetailParsed } from "./types";
 
 export async function fetchAndParseDetail(input: {
@@ -8,12 +9,22 @@ export async function fetchAndParseDetail(input: {
   timeoutMs: number;
   limiter: PerDomainRateLimiter;
 }): Promise<DetailParsed> {
-  const domain = getDomainFromUrl(input.url);
-  await input.limiter.waitForDomain(domain);
-  const { value: html } = await withRetry(() => fetchHtml(input.url, input.timeoutMs), {
-    retries: 5,
-    baseDelayMs: 2000,
-  });
+  let html: string;
+  // Try scrapling first (bypasses AWS WAF); retry once on failure
+  const scraplingHtml = await fetchBFHtmlWithScrapling(input.url)
+    ?? await fetchBFHtmlWithScrapling(input.url);
+  if (scraplingHtml) {
+    html = scraplingHtml;
+  } else {
+    // Scrapling unavailable or failed — fall back to plain fetch
+    const domain = getDomainFromUrl(input.url);
+    await input.limiter.waitForDomain(domain);
+    const { value } = await withRetry(() => fetchHtml(input.url, input.timeoutMs), {
+      retries: 5,
+      baseDelayMs: 2000,
+    });
+    html = value;
+  }
   return parseDetailHtml(html);
 }
 
