@@ -127,7 +127,7 @@ export function ComparableSales({
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
             Avg. Comparable Sale
           </p>
-          <p className="text-lg font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <p className="text-lg font-display font-medium text-foreground tabular-nums">
             {formatPrice(Math.round(avgPrice) ?? 0)}
           </p>
         </div>

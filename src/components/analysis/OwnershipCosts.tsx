@@ -59,7 +59,7 @@ function CostBar({
           <Icon className={cn("size-4", item.color)} />
           {item.label}
         </span>
-        <span className="text-sm font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+        <span className="text-sm font-medium text-foreground tabular-nums">
           {formatPrice(item.amount ?? 0)}
         </span>
       </div>
@@ -219,7 +219,7 @@ export function OwnershipCosts({
           <DollarSign className="size-4 text-destructive" />
           Total Annual Cost
         </span>
-        <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+        <span className="text-lg font-display font-medium text-foreground tabular-nums">
           {formatPrice(annualTotal ?? 0)}
         </span>
       </div>

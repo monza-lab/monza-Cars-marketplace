@@ -68,7 +68,7 @@ function CustomTooltip({
   const entry = payload[0];
   return (
     <div className="rounded-lg border border-border/60 bg-card/95 px-3 py-2 shadow-xl shadow-black/40 backdrop-blur-sm">
-      <p className="text-sm font-bold bg-gradient-to-r from-primary/70 to-primary/85 bg-clip-text text-transparent">
+      <p className="text-sm font-bold text-primary tabular-nums">
         {formatPrice(entry.value ?? 0)}
       </p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">

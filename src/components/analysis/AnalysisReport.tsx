@@ -269,11 +269,11 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             Recommended Bid Range
           </p>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            <span className="text-3xl font-display font-medium text-foreground tabular-nums">
               {formatPrice(bidTarget.low ?? 0)}
             </span>
             <span className="text-muted-foreground/80 text-lg">&ndash;</span>
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            <span className="text-3xl font-display font-medium text-foreground tabular-nums">
               {formatPrice(bidTarget.high ?? 0)}
             </span>
           </div>
