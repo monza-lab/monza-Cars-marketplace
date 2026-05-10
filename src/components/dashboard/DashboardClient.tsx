@@ -1171,11 +1171,11 @@ function MobileReportCard({
           <span className="text-[15px] font-display font-medium text-primary tabular-nums leading-tight">
             {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "—"}
           </span>
-          {auction.mileage !== null && (
+          {typeof auction.mileage === "number" && auction.mileage > 0 ? (
             <span className="text-[10px] text-muted-foreground tabular-nums">
               {auction.mileage.toLocaleString(locale)} {auction.mileageUnit || "mi"}
             </span>
-          )}
+          ) : null}
         </div>
 
         {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
