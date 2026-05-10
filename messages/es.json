@@ -71,6 +71,12 @@
     "advisor": "Advisor",
     "home": "Inicio"
   },
+  "cookies": {
+    "body": "Usamos cookies esenciales para que el sitio funcione, y opcionales para medir tráfico y mejorar el producto.",
+    "learnMore": "Política de Cookies",
+    "accept": "Aceptar todas",
+    "reject": "Rechazar todas"
+  },
   "accountSheet": {
     "alreadyHaveAccount": "¿Ya tienes cuenta?",
     "signIn": "Iniciar sesión →",
@@ -1377,9 +1383,10 @@
     "finish": "Comenzar"
   },
   "footer": {
-    "copyright": "© 2025 Monza Lab",
+    "copyright": "© 2026 Monza Lab LLC",
     "privacy": "Privacidad",
-    "terms": "Términos"
+    "terms": "Términos",
+    "cookies": "Cookies"
   },
   "seo": {
     "make": {

@@ -10,12 +10,25 @@ export function AppFooter() {
     <footer className="hidden md:flex items-center justify-center gap-3 py-3 border-t border-border">
       <span className="text-[10px] text-muted-foreground tracking-wide">{t("copyright")}</span>
       <span className="text-border">·</span>
-      <Link href="/legal/privacy" className="text-[10px] text-muted-foreground hover:text-muted-foreground transition-colors tracking-wide">
+      <Link
+        href="/legal/privacy"
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+      >
         {t("privacy")}
       </Link>
       <span className="text-border">·</span>
-      <Link href="/legal/terms" className="text-[10px] text-muted-foreground hover:text-muted-foreground transition-colors tracking-wide">
+      <Link
+        href="/legal/terms"
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+      >
         {t("terms")}
+      </Link>
+      <span className="text-border">·</span>
+      <Link
+        href="/legal/cookies"
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+      >
+        {t("cookies")}
       </Link>
     </footer>
   )

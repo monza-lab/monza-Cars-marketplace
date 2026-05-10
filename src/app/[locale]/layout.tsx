@@ -13,6 +13,9 @@ import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 import { AdvisorHandoffProvider } from "@/components/advisor/AdvisorHandoffContext";
+import { ConsentProvider } from "@/components/legal/ConsentProvider";
+import { ClientTrackers } from "@/components/legal/ClientTrackers";
+import { CookieBanner } from "@/components/legal/CookieBanner";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -81,22 +84,26 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-        <AuthProvider>
-          <RegionProvider>
-            <CurrencyProvider>
-              <AdvisorHandoffProvider>
-                <OrganizationJsonLd />
-                <ClientHeader />
-                <main>{children}</main>
-                <MobileBottomNav />
-                <OnboardingModal />
-                <AppFooter />
-              </AdvisorHandoffProvider>
-            </CurrencyProvider>
-          </RegionProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <ConsentProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <AuthProvider>
+            <RegionProvider>
+              <CurrencyProvider>
+                <AdvisorHandoffProvider>
+                  <OrganizationJsonLd />
+                  <ClientHeader />
+                  <main>{children}</main>
+                  <MobileBottomNav />
+                  <OnboardingModal />
+                  <AppFooter />
+                  <ClientTrackers />
+                  <CookieBanner />
+                </AdvisorHandoffProvider>
+              </CurrencyProvider>
+            </RegionProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </ConsentProvider>
     </NextIntlClientProvider>
   );
 }
