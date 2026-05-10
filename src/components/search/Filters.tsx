@@ -142,7 +142,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
         className={cn(
           "flex w-full items-center justify-between rounded-xl border px-4 py-3 transition-all duration-300 lg:hidden",
           isExpanded
-            ? "border-primary/40/30 bg-card/90"
+            ? "border-primary/30 bg-card/90"
             : "border-border bg-card/60 hover:border-border"
         )}
       >
@@ -155,7 +155,7 @@ export function Filters({ filters, onChange, className }: FiltersProps) {
           />
           <span className="text-sm font-medium text-foreground/90">Filters</span>
           {activeFilterCount > 0 && (
-            <Badge className="border-primary/40/30 bg-primary/10 text-destructive">
+            <Badge className="border-primary/30 bg-primary/10 text-destructive">
               {activeFilterCount}
             </Badge>
           )}

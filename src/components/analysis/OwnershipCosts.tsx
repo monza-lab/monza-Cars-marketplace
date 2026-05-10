@@ -130,7 +130,7 @@ function FiveYearProjection({
                   "w-full rounded-t-sm min-h-[4px]",
                   hasMajorService
                     ? "bg-gradient-to-t from-primary to-primary/80"
-                    : "bg-gradient-to-t from-primary/80 to-primary/80/80"
+                    : "bg-gradient-to-t from-primary/80 to-primary/65"
                 )}
               />
 
@@ -214,7 +214,7 @@ export function OwnershipCosts({
       )}
 
       {/* Annual total */}
-      <div className="flex items-center justify-between rounded-md bg-primary/8 border border-primary/40/20 p-3">
+      <div className="flex items-center justify-between rounded-md bg-primary/8 border border-primary/20 p-3">
         <span className="flex items-center gap-2 text-sm font-medium text-foreground/90">
           <DollarSign className="size-4 text-destructive" />
           Total Annual Cost

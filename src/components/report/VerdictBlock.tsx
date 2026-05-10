@@ -8,7 +8,7 @@ interface VerdictBlockProps {
 
 const VERDICT_STYLE: Record<VerdictBlockProps["verdict"], string> = {
   BUY: "bg-positive/15 text-positive border-positive/30",
-  WATCH: "bg-primary/15 text-primary dark:text-primary border-primary/40/30",
+  WATCH: "bg-primary/15 text-primary dark:text-primary border-primary/30",
   WALK: "bg-destructive/15 text-destructive border-destructive/30",
 }
 

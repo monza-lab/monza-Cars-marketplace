@@ -254,7 +254,7 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={m.slug}
                   href={`/${loc}/models/porsche/${m.slug}`}
-                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
                   <p className="text-xs text-muted-foreground/80">{m.specs.yearRange}</p>
                   <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
@@ -273,7 +273,7 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={v.slug}
                   href={`/${loc}/variants/porsche/${v.slug}`}
-                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
                   <p className="text-xs text-muted-foreground/80">{v.yearRange}</p>
                   <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
@@ -292,7 +292,7 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={g.slug}
                   href={`/${loc}/guides/import/${g.slug}`}
-                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
                   <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                     Import to
@@ -310,7 +310,7 @@ export default async function BuyPorschePage({ params }: PageProps) {
             <h2 className="text-2xl font-serif mb-6">Tools</h2>
             <Link
               href={`/${loc}/tools/porsche-vin-decoder`}
-              className="group block border border-border rounded-lg p-5 bg-card hover:border-primary/40/40 transition max-w-lg"
+              className="group block border border-border rounded-lg p-5 bg-card hover:border-primary/40 transition max-w-lg"
             >
               <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                 Free tool

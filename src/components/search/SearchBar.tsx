@@ -68,9 +68,9 @@ export function SearchBar({
       {/* Background glow on focus */}
       <div
         className={cn(
-          "absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/0 via-primary/0 to-primary/80/0 opacity-0 blur-sm transition-all duration-500",
+          "absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/0 via-primary/0 to-primary/0 opacity-0 blur-sm transition-all duration-500",
           isFocused &&
-            "from-primary/20 via-primary/10 to-primary/80/20 opacity-100"
+            "from-primary/20 via-primary/10 to-primary/15 opacity-100"
         )}
       />
 

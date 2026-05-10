@@ -46,7 +46,7 @@ function getSeverityStyles(index: number, total: number) {
   // Lower severity
   return {
     container:
-      "bg-primary/6 border-primary/40/20 hover:bg-primary/10",
+      "bg-primary/6 border-primary/20 hover:bg-primary/10",
     icon: "text-destructive",
     dot: "bg-primary/80",
     label: "Monitor",

@@ -163,7 +163,7 @@ export function ModelPageLayout({
                   <Link
                     key={v.slug}
                     href={`/variants/porsche/${v.slug}`}
-                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                       {v.yearRange}
@@ -196,7 +196,7 @@ export function ModelPageLayout({
                 {prevModel && (
                   <Link
                     href={`/models/porsche/${prevModel.slug}`}
-                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Previous generation</p>
                     <p className="text-lg font-serif mt-1 group-hover:text-primary transition">
@@ -208,7 +208,7 @@ export function ModelPageLayout({
                 {nextModel && (
                   <Link
                     href={`/models/porsche/${nextModel.slug}`}
-                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Next generation</p>
                     <p className="text-lg font-serif mt-1 group-hover:text-primary transition">

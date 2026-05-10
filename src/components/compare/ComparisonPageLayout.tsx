@@ -55,7 +55,7 @@ export function ComparisonPageLayout({
             <Link
               key={model.slug}
               href={`/models/porsche/${model.slug}`}
-              className="group border border-border rounded-lg p-5 bg-card hover:border-primary/40/40 transition"
+              className="group border border-border rounded-lg p-5 bg-card hover:border-primary/40 transition"
             >
               <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                 {model.specs.yearRange}

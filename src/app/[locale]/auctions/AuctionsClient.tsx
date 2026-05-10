@@ -161,7 +161,7 @@ function getReserveBadge(
     case "no_reserve":
       return {
         key: "noReserve",
-        className: "bg-primary/20 text-destructive border-primary/40/30",
+        className: "bg-primary/20 text-destructive border-primary/30",
       }
     case "met":
       return {
@@ -702,7 +702,7 @@ function MobileFilters({
         <SlidersHorizontal className="size-4 mr-1.5" />
         {t("filters.title")}
         {activeCount > 0 && (
-          <Badge className="ml-1.5 bg-primary/20 text-destructive border-primary/40/30 text-[10px] px-1.5">
+          <Badge className="ml-1.5 bg-primary/20 text-destructive border-primary/30 text-[10px] px-1.5">
             {activeCount}
           </Badge>
         )}

@@ -190,7 +190,7 @@ function getStatusColor(
 const STATUS_STYLES = {
   running: "border-sky-500/40 bg-sky-500/10",
   healthy: "border-emerald-500/30 bg-emerald-500/5",
-  "zero-output-success": "border-primary/40/30 bg-primary/5",
+  "zero-output-success": "border-primary/30 bg-primary/5",
   degraded: "border-orange-500/30 bg-orange-500/5",
   failed: "border-red-500/30 bg-red-500/5",
 };
@@ -366,7 +366,7 @@ export default function ScrapersDashboardClient({
             </div>
             <a
               href="./data-quality"
-              className="px-3 py-1.5 rounded border border-border bg-muted/50 text-xs text-foreground hover:text-primary/85 dark:hover:text-primary hover:border-primary/40/50 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded border border-border bg-muted/50 text-xs text-foreground hover:text-primary/85 dark:hover:text-primary hover:border-primary/50 transition-colors whitespace-nowrap"
               title="Source-centric, ingestion-truth view"
             >
               Data Quality →

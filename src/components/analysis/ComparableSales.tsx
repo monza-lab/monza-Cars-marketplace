@@ -42,8 +42,8 @@ function formatMileage(miles: number) {
 }
 
 const PLATFORM_STYLES: Record<string, string> = {
-  "Bring a Trailer": "bg-primary/15 text-destructive border-primary/40/30",
-  BaT: "bg-primary/15 text-destructive border-primary/40/30",
+  "Bring a Trailer": "bg-primary/15 text-destructive border-primary/30",
+  BaT: "bg-primary/15 text-destructive border-primary/30",
   "Cars & Bids": "bg-blue-500/15 text-blue-400 border-blue-500/30",
   Hemmings: "bg-positive/15 text-positive border-positive/30",
   "RM Sotheby's": "bg-purple-500/15 text-purple-400 border-purple-500/30",

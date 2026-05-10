@@ -21,7 +21,7 @@ export function SignalsMissingSection({ signals }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border border-primary/40/30 bg-primary/5 p-6">
+    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
       <h2 className="text-lg font-semibold mb-1">{t("title")}</h2>
       <p className="text-xs text-muted-foreground mb-4">{t("subtitle")}</p>
       <ul className="space-y-2">

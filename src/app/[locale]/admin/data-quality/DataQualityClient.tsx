@@ -47,7 +47,7 @@ const statusTextClass: Record<Status, string> = {
 
 const statusBorder: Record<Status, string> = {
   green: 'border-emerald-500/30',
-  yellow: 'border-primary/30/40',
+  yellow: 'border-primary/30',
   red: 'border-red-500/50',
 };
 
@@ -328,7 +328,7 @@ export default function DataQualityClient() {
 
           {/* Unknown active runs */}
           {data.unknownActiveRuns.length > 0 && (
-            <section className="rounded-lg border border-primary/40/30 bg-primary/5 p-4">
+            <section className="rounded-lg border border-primary/30 bg-primary/5 p-4">
               <h3 className="text-sm font-semibold mb-2 text-primary/85 dark:text-primary">Unknown active runs</h3>
               <p className="text-xs text-muted-foreground mb-2">
                 These scraper_names have active rows but are not in <code className="text-foreground">sourceRegistry.ts</code>. Add them to the registry or investigate.

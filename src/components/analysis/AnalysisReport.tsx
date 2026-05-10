@@ -265,7 +265,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
 
       <CardContent className="space-y-5">
         {/* Bid Target */}
-        <div className="rounded-lg bg-gradient-to-br from-primary/10 via-zinc-900 to-zinc-900 border border-primary/40/20 p-5">
+        <div className="rounded-lg bg-gradient-to-br from-primary/10 via-zinc-900 to-zinc-900 border border-primary/20 p-5">
           <p className="text-[11px] uppercase tracking-widest text-destructive/80 mb-2 font-medium">
             Recommended Bid Range
           </p>
