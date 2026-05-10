@@ -20,6 +20,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { MonzaHausWordmark } from "@/components/brand/MonzaHausWordmark";
+import { AccountSheetContent } from "@/components/account/AccountSheetContent";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
@@ -546,6 +547,7 @@ export function Header() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -941,22 +943,26 @@ export function Header() {
               </button>
             )}
 
-            {/* Account / Sign In */}
+            {/* Account button (desktop) — opens the same AccountSheetContent
+                used by the mobile bottom sheet. Click no longer signs out;
+                sign-out lives inside the sheet. */}
             {authLoading ? (
               <div className="hidden md:flex size-8 items-center justify-center">
                 <div className="size-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               </div>
             ) : isAuthenticated ? (
-                <button
-                  onClick={() => signOut()}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
-                  title={t("auth.signOut")}
-                >
-                  <User className="size-4" />
-                  <span className="text-[11px] font-medium">
-                    {profile?.name?.split(" ")[0] || t("mobile.account")}
-                  </span>
-                </button>
+              <button
+                onClick={() => setAccountSheetOpen(true)}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+                title={/* [HARDCODED] */ "Account"}
+              >
+                <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
+                  <User className="size-3.5 text-primary" />
+                </div>
+                <span className="text-[11px] font-medium">
+                  {profile?.name?.split(" ")[0] || /* [HARDCODED] */ "Account"}
+                </span>
+              </button>
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
@@ -998,53 +1004,11 @@ export function Header() {
                 {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
 
-                  {/* ─── DESKTOP-ONLY: Profile + Pistons (en mobile esto vive en Account) ─── */}
-                  <div className="hidden md:block">
-                    {isAuthenticated ? (
-                      <div className="px-6 pb-4">
-                        <div className="flex items-center gap-3.5 p-3 rounded-xl bg-foreground/[0.04]">
-                          <div className="size-10 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-                            <User className="size-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-foreground truncate">
-                              {profile?.name || "Collector"}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {user?.email}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between rounded-xl border border-primary/15 bg-primary/[0.04] px-4 py-2.5">
-                          <div className="flex items-center gap-2">
-                            <Piston className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
-                            <span className="text-[11px] font-medium text-foreground">
-                              <span className="tabular-nums">{creditsRemaining.toLocaleString()}</span>
-                              {/* [HARDCODED] */}
-                              {" "}Pistons
-                            </span>
-                          </div>
-                          <SheetClose asChild>
-                            <Link
-                              href="/pricing"
-                              className="text-[11px] font-semibold text-primary hover:underline"
-                            >
-                              {/* [HARDCODED] */}Buy →
-                            </Link>
-                          </SheetClose>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="px-6 pb-4">
-                        <button
-                          onClick={() => setShowAuthModal(true)}
-                          className="w-full rounded-xl bg-primary py-2.5 text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
-                        >
-                          {t('auth.signIn')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* (Profile + Pistons used to live here in `hidden md:block`.
+                      They moved to the Account sheet — opened from the
+                      [👤 Edgar] button in the header — to mirror the mobile
+                      Account / Menu split. The Menu is now navigation +
+                      preferences only, no personal data.) */}
 
                   {/* ─── DISCOVER ─── */}
                   <MenuSection label={/* [HARDCODED] */ "Discover"}>
@@ -1083,25 +1047,34 @@ export function Header() {
                   </p>
                 </div>
 
-                {/* ── DESKTOP-ONLY: Sign Out footer (mobile sign-out vive en Account) ── */}
-                {isAuthenticated && (
-                  <div className="hidden md:block shrink-0 px-5 py-4 border-t border-border">
-                    <SheetClose asChild>
-                      <button
-                        onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-destructive hover:bg-foreground/[0.04] transition-colors"
-                      >
-                        <LogOut className="size-4" />
-                        {t('auth.signOut')}
-                      </button>
-                    </SheetClose>
-                  </div>
-                )}
+                {/* (Sign-out moved to the Account sheet so it lives next to
+                    the rest of "TÚ" — same place on mobile and desktop.) */}
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </div>
+
+      {/* ACCOUNT SHEET (desktop) — TÚ side. Mirror of mobile MobileProfileSheet,
+          opened by the [👤 Edgar] button in the header. Sign-out lives inside. */}
+      <Sheet open={accountSheetOpen} onOpenChange={setAccountSheetOpen}>
+        <SheetContent
+          side="right"
+          className="border-l border-primary/8 bg-background w-[360px] p-0 flex flex-col overflow-hidden"
+        >
+          <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
+            <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
+              {/* [HARDCODED] */}Account
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-5 pb-6">
+            <AccountSheetContent
+              onClose={() => setAccountSheetOpen(false)}
+              onOpenAuth={() => setShowAuthModal(true)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* PISTONS WALLET MODAL */}
       <PistonsWalletModal
