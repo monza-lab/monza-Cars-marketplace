@@ -1,12 +1,11 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { setTimeout as sleep } from "node:timers/promises";
-import * as cheerio from "cheerio";
 
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
-import { fetchHtml } from "./net";
-import { mapAuctionStatus } from "./normalize";
+import { normalizeAutoTraderImageUrl } from "./imageUrls";
+import { proxyFetch } from "../common/proxy-fetch";
 import { logEvent } from "./logging";
 
 export interface SupabaseWriter {
@@ -190,8 +189,67 @@ export interface RefreshResult {
 }
 
 /**
- * Re-fetches each active AutoTrader listing URL and updates the DB
- * when the listing has been removed (404/410) or sold.
+ * Extract the numeric advert ID from an AutoTrader URL.
+ * e.g. "https://www.autotrader.co.uk/car-details/202507194625233" → "202507194625233"
+ */
+function extractAdvertId(url: string): string | null {
+  const match = url.match(/\/car-details\/(\d+)(?:[/?#]|$)/i);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Fetch the AutoTrader product-page API for a given advert ID.
+ * Returns the JSON payload if the listing is live, null if not found (404),
+ * or throws on unexpected errors.
+ */
+async function fetchProductPageApi(
+  advertId: string,
+  sourceUrl: string,
+  timeoutMs = 10_000,
+): Promise<Record<string, unknown> | null> {
+  const endpoint = new URL(`https://www.autotrader.co.uk/product-page/v1/advert/${advertId}`);
+  endpoint.searchParams.set("channel", "cars");
+  endpoint.searchParams.set("postcode", "SW1A 1AA");
+
+  const response = await proxyFetch(endpoint.toString(), {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      Referer: sourceUrl,
+    },
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (response.status === 404) return null;
+  if (response.status === 403 || response.status === 429) {
+    throw new Error(`Rate-limited (${response.status})`);
+  }
+  if (!response.ok) {
+    throw new Error(`Unexpected status ${response.status}`);
+  }
+  return (await response.json()) as Record<string, unknown>;
+}
+
+/**
+ * Extract image URLs from a product-page API payload.
+ */
+function extractImagesFromPayload(payload: Record<string, unknown>): string[] {
+  const gallery = payload.gallery as { images?: Array<{ url?: string }> } | undefined;
+  if (!gallery?.images) return [];
+  return gallery.images
+    .map((img) => (typeof img?.url === "string" ? normalizeAutoTraderImageUrl(img.url) : null))
+    .filter((url): url is string => url !== null);
+}
+
+/**
+ * Re-checks each active AutoTrader listing against the product-page API.
+ * - 404 → mark as "delisted" (listing removed from AutoTrader)
+ * - 200 → refresh images if the API returns fresh ones
+ *
+ * The old approach fetched the SPA HTML page (always 200, empty body)
+ * and couldn't detect removed listings. The product-page API gives a
+ * clear 404 for removed adverts.
  */
 export async function refreshActiveListings(): Promise<RefreshResult> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -202,60 +260,80 @@ export async function refreshActiveListings(): Promise<RefreshResult> {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // Prioritise stale listings (oldest scrape_timestamp first) and those
+  // with few photos (likely never enriched / images expired).
   const { data: activeRows, error: fetchErr } = await client
     .from("listings")
-    .select("id,source_url")
+    .select("id,source_url,photos_count")
     .eq("status", "active")
     .eq("source", "AutoTrader")
+    .order("photos_count", { ascending: true, nullsFirst: true })
     .order("scrape_timestamp", { ascending: true })
-    .limit(50);
+    .limit(200);
 
   if (fetchErr || !activeRows) {
     return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
   }
 
   const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+  let consecutiveBlocks = 0;
+  const MAX_CONSECUTIVE_BLOCKS = 5;
 
   for (const row of activeRows) {
+    if (consecutiveBlocks >= MAX_CONSECUTIVE_BLOCKS) {
+      result.errors.push(`Circuit-break: ${consecutiveBlocks} consecutive rate-limit blocks`);
+      break;
+    }
+
+    const advertId = extractAdvertId(row.source_url);
+    if (!advertId) {
+      result.errors.push(`Cannot extract advert ID from ${row.source_url}`);
+      continue;
+    }
+
     try {
-      let newStatus: string | null = null;
+      const payload = await fetchProductPageApi(advertId, row.source_url);
 
-      try {
-        const html = await fetchHtml(row.source_url, 10_000);
-        const $ = cheerio.load(html);
-        const bodyText = $("body").text();
-        const detected = mapAuctionStatus({ rawPriceText: bodyText });
-        if (detected !== "active") {
-          newStatus = detected;
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (/\b(404|410)\b/.test(msg)) {
-          newStatus = "delisted";
-        } else if (/\b403\b/.test(msg)) {
-          // Ambiguous (rate limit) — skip
-          logEvent({ level: "debug", event: "collector.refresh_skip_403", runId: "", source: "AutoTrader", url: row.source_url });
-          continue;
-        } else {
-          throw err;
-        }
-      }
-
-      if (newStatus) {
+      if (payload === null) {
+        // API returned 404 — listing is definitively removed
         const { error: updateErr } = await client
           .from("listings")
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({ status: "delisted", updated_at: new Date().toISOString() })
           .eq("id", row.id);
         if (updateErr) throw new Error(`Update failed: ${updateErr.message}`);
         result.updated++;
-        logEvent({ level: "info", event: "collector.refresh_updated", runId: "", source: "AutoTrader", url: row.source_url, newStatus });
+        logEvent({ level: "info", event: "collector.refresh_delisted", runId: "", source: "AutoTrader", url: row.source_url });
+        consecutiveBlocks = 0;
+      } else {
+        // Listing is still live — refresh images if the API has them
+        consecutiveBlocks = 0;
+        const freshImages = extractImagesFromPayload(payload);
+        if (freshImages.length > 0 && freshImages.length > (row.photos_count ?? 0)) {
+          const { error: updateErr } = await client
+            .from("listings")
+            .update({
+              images: freshImages,
+              photos_count: freshImages.length,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
+          if (updateErr) throw new Error(`Image update failed: ${updateErr.message}`);
+          result.updated++;
+          logEvent({ level: "info", event: "collector.refresh_images", runId: "", source: "AutoTrader", url: row.source_url, imageCount: freshImages.length });
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      if (/rate.?limit|403|429/i.test(msg)) {
+        consecutiveBlocks++;
+        logEvent({ level: "debug", event: "collector.refresh_rate_limited", runId: "", source: "AutoTrader", url: row.source_url });
+        continue;
+      }
       result.errors.push(`Refresh failed for ${row.source_url}: ${msg}`);
     }
 
-    await sleep(1_000);
+    // Gentle pacing to avoid AT rate limits
+    await sleep(500);
   }
 
   return result;

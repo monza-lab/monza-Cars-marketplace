@@ -28,6 +28,11 @@ vi.mock("@/features/scrapers/autotrader_collector/detail", () => ({
   fetchAutoTraderDetail: vi.fn(),
 }));
 
+// Mock proxy-fetch (used for product-page API liveness check)
+vi.mock("@/features/scrapers/common/proxy-fetch", () => ({
+  proxyFetch: vi.fn().mockRejectedValue(new Error("Not mocked")),
+}));
+
 // Mock monitoring
 vi.mock("@/features/scrapers/common/monitoring", () => ({
   markScraperRunStarted: vi.fn().mockResolvedValue(undefined),
@@ -69,7 +74,7 @@ describe("GET /api/cron/enrich-autotrader", () => {
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.success).toBe(true);
-    expect(data.successReason).toBe("enrichment_progress");
+    expect(data.successReason).toBe("no_rows_to_process");
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
   });
@@ -92,7 +97,8 @@ describe("GET /api/cron/enrich-autotrader", () => {
     expect(clearScraperRunActive).toHaveBeenCalledWith("enrich-autotrader");
   });
 
-  it("returns 200 when discovered rows are successfully demoted", async () => {
+  it("delists listings when product-page API returns 404", async () => {
+    const { proxyFetch } = await import("@/features/scrapers/common/proxy-fetch");
     mockSelect.mockReturnValueOnce({
       eq: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -101,7 +107,7 @@ describe("GET /api/cron/enrich-autotrader", () => {
               order: vi.fn().mockReturnValue({
                 order: vi.fn().mockReturnValue({
                   limit: vi.fn().mockResolvedValue({
-                    data: [{ id: "at-1", source_url: "https://example.com/1" }],
+                    data: [{ id: "at-1", source_url: "https://www.autotrader.co.uk/car-details/123456" }],
                     error: null,
                   }),
                 }),
@@ -112,20 +118,15 @@ describe("GET /api/cron/enrich-autotrader", () => {
       }),
     });
     vi.mocked(fetchAutoTraderDetail).mockResolvedValueOnce({} as any);
+    // Product-page API returns 404 → listing removed
+    vi.mocked(proxyFetch).mockResolvedValueOnce({ status: 404, ok: false } as Response);
 
     const response = await GET(makeRequest());
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(data.successReason).toBe("enrichment_progress");
-    expect(recordScraperRun).toHaveBeenCalledWith(
-      expect.objectContaining({
-        scraper_name: "enrich-autotrader",
-        success: true,
-        written: 1,
-      })
-    );
+    expect(data.demoted).toBe(1);
   });
 
   it("returns 500 when Supabase env vars missing", async () => {

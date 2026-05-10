@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { fetchAutoTraderDetail } from "@/features/scrapers/autotrader_collector/detail";
+import { proxyFetch } from "@/features/scrapers/common/proxy-fetch";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -161,15 +162,50 @@ export async function GET(request: Request) {
               consecutiveFailures = 0;
             }
           } else {
-            // No recoverable data — likely Cloudflare-blocked or transient error.
-            // Do NOT demote to "unsold"; let refreshActiveListings() handle
-            // genuine 404/410 removals.  Just touch updated_at so this row
-            // isn't retried immediately in the next batch.
-            const { error: skipErr } = await client
-              .from("listings")
-              .update({ updated_at: new Date().toISOString() })
-              .eq("id", row.id);
-            if (!skipErr) consecutiveFailures = 0;
+            // No recoverable data — check the product-page API to see if
+            // the listing was genuinely removed (404) vs CF-blocked.
+            const advertMatch = row.source_url.match(/\/car-details\/(\d+)(?:[/?#]|$)/i);
+            const advertId = advertMatch?.[1];
+            let wasDelisted = false;
+
+            if (advertId) {
+              try {
+                const apiUrl = `https://www.autotrader.co.uk/product-page/v1/advert/${advertId}?channel=cars&postcode=SW1A%201AA`;
+                const apiResp = await proxyFetch(apiUrl, {
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                    Accept: "application/json",
+                    Referer: row.source_url,
+                  },
+                  signal: AbortSignal.timeout(10_000),
+                });
+                if (apiResp.status === 404) {
+                  // Listing definitively removed from AutoTrader
+                  const { error: delistErr } = await client
+                    .from("listings")
+                    .update({ status: "delisted", updated_at: new Date().toISOString() })
+                    .eq("id", row.id);
+                  if (!delistErr) {
+                    demoted++;
+                    batchDemoted++;
+                    wasDelisted = true;
+                  }
+                  consecutiveFailures = 0;
+                }
+              } catch {
+                // API check failed — treat as transient
+              }
+            }
+
+            if (!wasDelisted) {
+              // CF-blocked or transient — just touch updated_at so this row
+              // isn't retried immediately in the next batch.
+              const { error: skipErr } = await client
+                .from("listings")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", row.id);
+              if (!skipErr) consecutiveFailures = 0;
+            }
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
