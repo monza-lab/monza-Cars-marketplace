@@ -14,6 +14,7 @@ export default function CheckoutSuccessPage() {
   const profileLoaded =
     profile?.tier === "MONTHLY" ||
     profile?.tier === "ANNUAL" ||
+    profile?.tier === "PRO" ||
     profile?.tier === "PACK_OWNER"
   const ready = profileLoaded || timeoutFired
 
@@ -48,7 +49,7 @@ export default function CheckoutSuccessPage() {
     })
   }, [ready, profile])
 
-  const isSubscription = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL"
+  const isSubscription = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL" || profile?.tier === "PRO"
 
   return (
     <div className="max-w-md w-full rounded-2xl border border-border bg-foreground/2 p-8 text-center">

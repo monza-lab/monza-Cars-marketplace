@@ -749,6 +749,66 @@ export async function deactivateStripeSubscription(
   return data as UserCreditsRow
 }
 
+export async function renewSubscriptionCredits(
+  userId: string,
+  stripeInvoiceId: string,
+): Promise<UserCreditsRow> {
+  const supabase = getServiceClient()
+
+  // Idempotency check
+  const { data: existingTx } = await supabase
+    .from("credit_transactions")
+    .select("id")
+    .eq("stripe_payment_id", stripeInvoiceId)
+    .maybeSingle()
+
+  if (existingTx) {
+    const { data: current } = await supabase
+      .from("user_credits")
+      .select("*")
+      .eq("id", userId)
+      .single()
+    if (!current) throw new Error("User not found")
+    return current as UserCreditsRow
+  }
+
+  const { data: current } = await supabase
+    .from("user_credits")
+    .select("*")
+    .eq("id", userId)
+    .single()
+
+  if (!current) throw new Error("User not found for renewal")
+
+  const allowance = current.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS
+
+  const { data, error } = await supabase
+    .from("user_credits")
+    .update({
+      credits_balance: allowance,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("*")
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to renew subscription credits: ${error?.message ?? "unknown error"}`)
+  }
+
+  const { error: txError } = await supabase.from("credit_transactions").insert({
+    user_id: userId,
+    amount: allowance,
+    type: "STRIPE_SUBSCRIPTION_ACTIVATION",
+    description: `Monthly renewal — ${allowance} Pistons reset`,
+    stripe_payment_id: stripeInvoiceId,
+  })
+
+  if (txError) throw new Error(`Failed to record renewal: ${txError.message}`)
+
+  return data as UserCreditsRow
+}
+
 export async function getTransactionHistory(
   userId: string,
   limit = 20,

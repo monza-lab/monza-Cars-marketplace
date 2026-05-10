@@ -5,7 +5,9 @@ import {
   deactivateStripeSubscription,
   findUserByStripeCustomerId,
   findUserByStripeSubscriptionId,
+  getUserCredits,
   grantStripePurchase,
+  renewSubscriptionCredits,
   updateStripeSubscriptionStatus,
 } from "@/lib/reports/queries"
 import { getStripeClient } from "@/lib/payments/stripe"
@@ -24,6 +26,14 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
+  // Resolve supabase auth UUID → user_credits.id
+  const userProfile = await getUserCredits(appUserId)
+  if (!userProfile) {
+    console.error(`[stripe-webhook] user_credits not found for supabase_user_id=${appUserId}`)
+    return
+  }
+  const userCreditsId = userProfile.id
+
   if (plan.billingMode === "subscription") {
     const customerId = typeof session.customer === "string" ? session.customer : null
     const subscriptionId = typeof session.subscription === "string" ? session.subscription : null
@@ -31,7 +41,7 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
 
     const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId)
     const currentPeriodEnd = (subscription as unknown as { current_period_end?: number }).current_period_end
-    await activateStripeSubscription(appUserId, {
+    await activateStripeSubscription(userCreditsId, {
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
       subscriptionStatus: subscription.status,
@@ -63,7 +73,7 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   }
 
   await grantStripePurchase(
-    appUserId,
+    userCreditsId,
     plan.pistons,
     session.id,
     resolvedPlanKey,
@@ -83,6 +93,34 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
       content_name: plan.name,
     },
   }).catch((err) => console.error("[meta-capi-purchase] failed", err))
+}
+
+async function applyInvoicePaid(invoice: Stripe.Invoice) {
+  // Only handle subscription renewal invoices (not the first invoice)
+  const billingReason = (invoice as unknown as { billing_reason?: string }).billing_reason
+  if (billingReason !== "subscription_cycle") return
+
+  const customerId = typeof invoice.customer === "string" ? invoice.customer : null
+  if (!customerId) return
+
+  const user = await findUserByStripeCustomerId(customerId)
+  if (!user) {
+    console.error(`[stripe-webhook] invoice.paid: user not found for customer=${customerId}`)
+    return
+  }
+
+  const subscriptionPeriodEnd = (invoice as unknown as { lines?: { data?: Array<{ period?: { end?: number } }> } })
+    .lines?.data?.[0]?.period?.end
+  if (typeof subscriptionPeriodEnd === "number") {
+    await updateStripeSubscriptionStatus(user.id, {
+      subscriptionStatus: "active",
+      subscriptionPeriodEnd: new Date(subscriptionPeriodEnd * 1000).toISOString(),
+      stripeSubscriptionId: user.stripe_subscription_id ?? null,
+      stripeCustomerId: customerId,
+    })
+  }
+
+  await renewSubscriptionCredits(user.id, invoice.id)
 }
 
 async function applySubscriptionUpdate(subscription: Stripe.Subscription) {
@@ -142,6 +180,9 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed":
         await applyCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+        break
+      case "invoice.paid":
+        await applyInvoicePaid(event.data.object as Stripe.Invoice)
         break
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
