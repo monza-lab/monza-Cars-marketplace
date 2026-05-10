@@ -114,7 +114,7 @@
       "graceRemaining": "{used}/{total} {tier} used today",
       "tierPillInstant": "Instant · 1 Piston",
       "tierPillMarketplace": "Marketplace · ~5 Pistons",
-      "tierPillDeepResearch": "Deep Research · ~25 Pistons",
+      "tierPillDeepResearch": "Deep Research",
       "debitGhost": "-{amount} {amount, plural, one {Piston} other {Pistons}}",
       "upgradeCta": "Upgrade to PRO"
     }

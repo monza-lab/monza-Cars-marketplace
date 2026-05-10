@@ -113,7 +113,7 @@
       "graceRemaining": "{used}/{total} {tier} を今日使用",
       "tierPillInstant": "Instant · 1 ピストン",
       "tierPillMarketplace": "Marketplace · ~5 ピストン",
-      "tierPillDeepResearch": "Deep Research · ~25 ピストン",
+      "tierPillDeepResearch": "ディープリサーチ",
       "debitGhost": "-{amount} ピストン",
       "upgradeCta": "PROにアップグレード"
     }

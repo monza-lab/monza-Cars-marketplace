@@ -113,7 +113,7 @@
       "graceRemaining": "{used}/{total} {tier} heute genutzt",
       "tierPillInstant": "Instant · 1 Kolben",
       "tierPillMarketplace": "Marketplace · ~5 Kolben",
-      "tierPillDeepResearch": "Deep Research · ~25 Kolben",
+      "tierPillDeepResearch": "Tiefenrecherche",
       "debitGhost": "-{amount} {amount, plural, one {Kolben} other {Kolben}}",
       "upgradeCta": "Auf PRO upgraden"
     }
