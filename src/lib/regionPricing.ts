@@ -96,23 +96,21 @@ export function formatUsd(value: number): string {
   return `$${INTEGER_FORMATTER.format(Math.round(safeValue))}`
 }
 
-/** Build FairValueByRegion from a USD price (kept for data compatibility) */
-export function buildRegionalFairValue(usdPrice: number): FairValueByRegion {
-  if (usdPrice <= 0) {
-    return {
-      US: { currency: "$", low: 0, high: 0 },
-      EU: { currency: "€", low: 0, high: 0 },
-      UK: { currency: "£", low: 0, high: 0 },
-      JP: { currency: "¥", low: 0, high: 0 },
-    }
-  }
-  const low = usdPrice * 0.8
-  const high = usdPrice * 1.2
+/**
+ * Build a placeholder FairValueByRegion (honest-by-data).
+ *
+ * The previous implementation fabricated `low = price * 0.8`, `high = price * 1.2`,
+ * which made `fairMid === price` for every car. The "Price vs Fair Value" gauge
+ * then read 100% on every listing — a lie. Real fair values are computed from
+ * segment statistics in `enrichFairValues`; when those aren't available the
+ * UI must render "—" / "Fair value pending" rather than invent a band.
+ */
+export function buildRegionalFairValue(_usdPrice: number): FairValueByRegion {
   return {
-    US: { currency: "$", low: Math.round(low), high: Math.round(high) },
-    EU: { currency: "€", low: Math.round(low), high: Math.round(high) },
-    UK: { currency: "£", low: Math.round(low), high: Math.round(high) },
-    JP: { currency: "¥", low: Math.round(low), high: Math.round(high) },
+    US: { currency: "$", low: 0, high: 0 },
+    EU: { currency: "€", low: 0, high: 0 },
+    UK: { currency: "£", low: 0, high: 0 },
+    JP: { currency: "¥", low: 0, high: 0 },
   }
 }
 

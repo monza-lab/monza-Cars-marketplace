@@ -269,16 +269,17 @@ function CarNavSidebar({
   const flags: string[] = dbAnalysis?.redFlags ?? []
   const platform = platformLabels[car.platform]
 
-  // Market position: where current price sits within selected region's fair value range
+  // Market position: where current price sits within selected region's fair value range.
+  // Honest-by-data: pricePosition is null when we don't have a real fair-value band.
   const regionRange = car.fairValueByRegion[activeRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const fairLow = regionRange.low
   const fairHigh = regionRange.high
-  // Convert currentBid (USD) to selected currency for comparison
+  const hasFairValue = fairHigh > fairLow && fairLow > 0
   const bidInCurrency = convertFromUsd(car.currentBid)
-  const pricePosition = fairHigh > fairLow
+  const pricePosition = hasFairValue
     ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
-    : 50
-  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
+    : null
+  const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
   const priceLabel = getPriceLabel(car.platform, car.status)
 
   return (
@@ -314,8 +315,8 @@ function CarNavSidebar({
         <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPrice(car.currentBid)}</p>
       </div>
 
-      {/* ── Market Position (hidden when no price data) ── */}
-      {car.currentBid > 0 && (
+      {/* ── Market Position (only with real fair-value band) ── */}
+      {car.currentBid > 0 && pricePosition !== null && (
       <div className="px-4 py-3 shrink-0 border-b border-border">
         {/* [HARDCODED] */}
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
@@ -349,6 +350,18 @@ function CarNavSidebar({
             </>
           )}
         </div>
+      </div>
+      )}
+
+      {/* ── Fair value pending state (when no comparable data yet) ── */}
+      {car.currentBid > 0 && pricePosition === null && (
+      <div className="px-4 py-3 shrink-0 border-b border-border">
+        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-1.5 block">
+          {/* [HARDCODED] */}Market Position
+        </span>
+        <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+          {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+        </p>
       </div>
       )}
 
@@ -507,9 +520,13 @@ function CarContextPanel({
   )
 
   // Market position: where is the current bid relative to fair value?
+  // Honest-by-data: pricePosition is null when no real fair-value band exists.
   const regionRange = pricing[activeRegion as keyof typeof pricing] || pricing.US
+  const hasFairBand = regionRange.high > regionRange.low && regionRange.low > 0
   const fairMid = (regionRange.low + regionRange.high) / 2
-  const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
+  const pricePosition = hasFairBand && fairMid > 0
+    ? Math.round((car.currentBid / fairMid) * 100)
+    : null
 
   return (
     <div className="h-full flex flex-col overflow-hidden border-l border-border">
@@ -617,7 +634,7 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 3. MARKET POSITION */}
+        {/* 3. MARKET POSITION (only when we have a real fair-value band) */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Scale className="size-4 text-primary" />
@@ -626,39 +643,47 @@ function CarContextPanel({
               Market Position
             </span>
           </div>
-          {/* Price vs Fair Value gauge */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1.5">
+          {pricePosition !== null ? (
+            <>
+              {/* Price vs Fair Value gauge */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  {/* [HARDCODED] */}
+                  <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+                  <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
+                    {pricePosition}%
+                  </span>
+                </div>
+                <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
+                    style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+                  <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
+                </div>
+              </div>
+              {/* Position label */}
               {/* [HARDCODED] */}
-              <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-              <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
-                {pricePosition}%
-              </span>
-            </div>
-            <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
-              <div
-                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
-                style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
-              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
-            </div>
-          </div>
-          {/* Position label */}
-          {/* [HARDCODED] */}
-          <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
-            <span className="text-[11px] text-muted-foreground">
-              {pricePosition <= 85
-                ? "Priced well below fair value range — strong buyer opportunity"
-                : pricePosition <= 100
-                  ? "Priced within the lower half of fair value range"
-                  : pricePosition <= 115
-                    ? "Priced at market — fair value for current conditions"
-                    : "Priced above fair value midpoint — verify condition justifies premium"}
-            </span>
-          </div>
+              <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {pricePosition <= 85
+                    ? "Priced well below fair value range — strong buyer opportunity"
+                    : pricePosition <= 100
+                      ? "Priced within the lower half of fair value range"
+                      : pricePosition <= 115
+                        ? "Priced at market — fair value for current conditions"
+                        : "Priced above fair value midpoint — verify condition justifies premium"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+              {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+            </p>
+          )}
         </div>
 
         {/* 5. SHIPPING COSTS */}
@@ -883,15 +908,17 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
 
   // ─── Investment Passport computations (for mobile) ───
-  // Use real per-region fair values from DB
+  // Honest-by-data: only render position when we have a real fair-value band.
   const mobilePricing = car.fairValueByRegion
   const regionRange = mobilePricing[lockedRegion as keyof typeof mobilePricing] || mobilePricing.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
+  const hasFairValue = fairHigh > fairLow && fairLow > 0
   const bidInCurrency = convertFromUsd(car.currentBid)
-  const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
-  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
+  const pricePosition = hasFairValue
+    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
+    : null
+  const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = mobilePricing
   const bestRegion = findBestRegion(pricing)
@@ -1113,16 +1140,24 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.marketPosition")}
                 </span>
-                <div className="relative h-[6px] rounded-full bg-foreground/4 overflow-hidden mt-2 mb-1.5">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
-                    style={{ left: `calc(${pricePosition}% - 4px)` }}
-                  />
-                </div>
-                <span className={`text-[11px] font-medium ${isBelowFair ? "text-positive" : "text-destructive"}`}>
-                  {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
-                </span>
+                {pricePosition !== null ? (
+                  <>
+                    <div className="relative h-[6px] rounded-full bg-foreground/4 overflow-hidden mt-2 mb-1.5">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
+                        style={{ left: `calc(${pricePosition}% - 4px)` }}
+                      />
+                    </div>
+                    <span className={`text-[11px] font-medium ${isBelowFair ? "text-positive" : "text-destructive"}`}>
+                      {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground italic block mt-2">
+                    {/* [HARDCODED] */}Pending comps
+                  </span>
+                )}
               </div>
 
               {/* Cell 3: Fair Value */}
@@ -1131,9 +1166,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
-                <span className="text-[22px] font-bold tabular-nums text-foreground">
-                  {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
-                </span>
+                {hasFairValue ? (
+                  <span className="text-[22px] font-bold tabular-nums text-foreground">
+                    {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
+                  </span>
+                ) : (
+                  <span className="text-[14px] text-muted-foreground italic">
+                    {/* [HARDCODED] */}Awaiting comparable sales
+                  </span>
+                )}
               </div>
 
             </div>
@@ -1258,37 +1299,46 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 Market Position
               </span>
             </div>
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-1.5">
+            {pricePosition !== null ? (
+              <>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    {/* [HARDCODED] */}
+                    <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+                    <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
+                      {pricePosition}%
+                    </span>
+                  </div>
+                  <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
+                      style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+                    <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
+                  </div>
+                </div>
                 {/* [HARDCODED] */}
-                <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-                <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
-                  {pricePosition}%
-                </span>
-              </div>
-              <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
-                  style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
-                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
-              </div>
-            </div>
-            {/* [HARDCODED] */}
-            <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
-              <span className="text-[11px] text-muted-foreground">
-                {pricePosition <= 85
-                  ? "Priced well below fair value — strong buyer opportunity"
-                  : pricePosition <= 100
-                    ? "Priced within the lower half of fair value range"
-                    : pricePosition <= 115
-                      ? "Priced at market — fair value for current conditions"
-                      : "Priced above fair value — verify condition justifies premium"}
-              </span>
-            </div>
+                <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    {pricePosition <= 85
+                      ? "Priced well below fair value — strong buyer opportunity"
+                      : pricePosition <= 100
+                        ? "Priced within the lower half of fair value range"
+                        : pricePosition <= 115
+                          ? "Priced at market — fair value for current conditions"
+                          : "Priced above fair value — verify condition justifies premium"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-[12px] text-muted-foreground italic leading-relaxed">
+                {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+                The Advisor can pull deeper context on a specific listing.
+              </p>
+            )}
           </div>
 
           {/* 7. Sale Information */}
