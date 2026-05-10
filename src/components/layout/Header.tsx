@@ -438,15 +438,16 @@ function MenuLink({
 }
 
 function ThemeRow() {
+  const t = useTranslations()
   const { theme, setTheme } = useTheme()
   const options: { value: "light" | "dark" | "system"; label: string }[] = [
-    { value: "light", label: /* [HARDCODED] */ "Light" },
-    { value: "dark", label: /* [HARDCODED] */ "Dark" },
-    { value: "system", label: /* [HARDCODED] */ "System" },
+    { value: "light", label: t("nav.preferencesThemeLight") },
+    { value: "dark", label: t("nav.preferencesThemeDark") },
+    { value: "system", label: t("nav.preferencesThemeSystem") },
   ]
   return (
     <div className="px-3 py-2">
-      <p className="text-[12px] text-foreground/85 mb-2">{/* [HARDCODED] */}Theme</p>
+      <p className="text-[12px] text-foreground/85 mb-2">{t("nav.preferencesTheme")}</p>
       <div className="flex items-center gap-0.5 rounded-full bg-foreground/[0.05] border border-border p-0.5">
         {options.map(opt => {
           const active = (theme ?? "system") === opt.value
@@ -470,18 +471,20 @@ function ThemeRow() {
 }
 
 function LanguageRow() {
+  const t = useTranslations()
   return (
     <div className="px-3 py-2 flex items-center justify-between">
-      <p className="text-[12px] text-foreground/85">{/* [HARDCODED] */}Language</p>
+      <p className="text-[12px] text-foreground/85">{t("nav.preferencesLanguage")}</p>
       <InlineLanguageSwitcher />
     </div>
   )
 }
 
 function CurrencyRow() {
+  const t = useTranslations()
   return (
     <div className="px-3 py-2 flex items-center justify-between">
-      <p className="text-[12px] text-foreground/85">{/* [HARDCODED] */}Currency</p>
+      <p className="text-[12px] text-foreground/85">{t("nav.preferencesCurrency")}</p>
       <CurrencyDropdown />
     </div>
   )
@@ -975,10 +978,10 @@ export function Header() {
                   ? "bg-primary/15 border-primary/30 text-primary"
                   : "border-primary/30 text-primary/85 hover:bg-primary/10 hover:text-primary hover:border-primary/40"
               }`}
-              aria-label={/* [HARDCODED] */ "Open the Advisor chat"}
+              aria-label={t("nav.advisorAria")}
             >
               <MessageCircle className="size-3.5" />
-              {/* [HARDCODED] */}Advisor
+              {t("nav.advisor")}
             </Link>
 
             {/* Account button (desktop) — opens the same AccountSheetContent
@@ -992,13 +995,13 @@ export function Header() {
               <button
                 onClick={() => setAccountSheetOpen(true)}
                 className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                title={/* [HARDCODED] */ "Account"}
+                title={t("nav.account")}
               >
                 <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
                   <User className="size-3.5 text-primary" />
                 </div>
                 <span className="text-[11px] font-medium">
-                  {profile?.name?.split(" ")[0] || /* [HARDCODED] */ "Account"}
+                  {profile?.name?.split(" ")[0] || t("nav.account")}
                 </span>
               </button>
             ) : (
@@ -1025,7 +1028,7 @@ export function Header() {
               <SheetContent side="right" className="border-l border-primary/8 bg-background w-[340px] p-0 flex flex-col overflow-hidden">
                 <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
                   <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
-                    {/* [HARDCODED] */}Menu
+                    {t("nav.menuTitle")}
                   </SheetTitle>
                 </SheetHeader>
 
@@ -1039,40 +1042,40 @@ export function Header() {
                       preferences only, no personal data.) */}
 
                   {/* ─── DISCOVER ─── */}
-                  <MenuSection label={/* [HARDCODED] */ "Discover"}>
-                    <MenuLink href="/cars/porsche" icon={Car} label={/* [HARDCODED] */ "Porsche collection"} />
-                    <MenuLink href="/knowledge" icon={BookOpen} label={/* [HARDCODED] */ "Knowledge guides"} />
-                    <MenuLink href="/indices" icon={BarChart3} label={/* [HARDCODED] */ "Market indices"} />
-                    <MenuLink href="/history" icon={TrendingUp} label={/* [HARDCODED] */ "Market trends"} />
-                    <MenuLink href="/tools/porsche-vin-decoder" icon={Wrench} label={/* [HARDCODED] */ "VIN decoder"} />
-                    <MenuLink href="/buy/porsche" icon={ScrollText} label={/* [HARDCODED] */ "How to buy a Porsche"} />
+                  <MenuSection label={t("nav.discover")}>
+                    <MenuLink href="/cars/porsche" icon={Car} label={t("nav.discoverPorsche")} />
+                    <MenuLink href="/knowledge" icon={BookOpen} label={t("nav.discoverKnowledge")} />
+                    <MenuLink href="/indices" icon={BarChart3} label={t("nav.discoverIndices")} />
+                    <MenuLink href="/history" icon={TrendingUp} label={t("nav.discoverTrends")} />
+                    <MenuLink href="/tools/porsche-vin-decoder" icon={Wrench} label={t("nav.discoverVin")} />
+                    <MenuLink href="/buy/porsche" icon={ScrollText} label={t("nav.discoverBuy")} />
                   </MenuSection>
 
                   {/* ─── PLANS & BILLING ─── */}
-                  <MenuSection label={/* [HARDCODED] */ "Plans & Billing"}>
-                    <MenuLink href="/pricing" icon={Piston} label={/* [HARDCODED] */ "Pricing & Pistons"} />
+                  <MenuSection label={t("nav.plans")}>
+                    <MenuLink href="/pricing" icon={Piston} label={t("nav.plansPricing")} />
                     {isAuthenticated && (
-                      <MenuLink href="/account" icon={FileText} label={/* [HARDCODED] */ "Billing & history"} />
+                      <MenuLink href="/account" icon={FileText} label={t("nav.plansBilling")} />
                     )}
                   </MenuSection>
 
                   {/* ─── PREFERENCES ─── */}
-                  <MenuSection label={/* [HARDCODED] */ "Preferences"}>
+                  <MenuSection label={t("nav.preferences")}>
                     <ThemeRow />
                     <LanguageRow />
                     <CurrencyRow />
                   </MenuSection>
 
                   {/* ─── HELP & LEGAL ─── */}
-                  <MenuSection label={/* [HARDCODED] */ "Help & Legal"}>
-                    <MenuLink href="/advisor" icon={MessageCircle} label={/* [HARDCODED] */ "Talk to the advisor"} />
-                    <MenuLink href="/legal/privacy" icon={ShieldCheck} label={/* [HARDCODED] */ "Privacy"} />
-                    <MenuLink href="/legal/terms" icon={ScrollText} label={/* [HARDCODED] */ "Terms"} />
+                  <MenuSection label={t("nav.help")}>
+                    <MenuLink href="/advisor" icon={MessageCircle} label={t("nav.helpAdvisor")} />
+                    <MenuLink href="/legal/privacy" icon={ShieldCheck} label={t("nav.helpPrivacy")} />
+                    <MenuLink href="/legal/terms" icon={ScrollText} label={t("nav.helpTerms")} />
                   </MenuSection>
 
                   {/* App version footer */}
                   <p className="px-6 pt-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground/60">
-                    {/* [HARDCODED] */}MonzaHaus · v1.0
+                    {t("nav.appVersion")}
                   </p>
                 </div>
 
@@ -1093,7 +1096,7 @@ export function Header() {
         >
           <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
             <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
-              {/* [HARDCODED] */}Account
+              {t("nav.accountTitle")}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 pb-6">

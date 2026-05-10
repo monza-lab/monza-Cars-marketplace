@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { PricingCards, type PlanId } from "@/components/payments/PricingCards"
 import { CheckoutModal } from "@/components/payments/CheckoutModal"
 import { useAuth } from "@/lib/auth/AuthProvider"
@@ -92,6 +93,7 @@ function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultO
 }
 
 export default function PricingPage() {
+  const t = useTranslations("pricing")
   const { profile } = useAuth()
   const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null)
 
@@ -110,20 +112,18 @@ export default function PricingPage() {
       {/* Hero — compact mobile */}
       <div className="px-4 pt-6 md:pt-4 pb-8 md:pb-12 text-center max-w-2xl mx-auto">
         <p className="text-[11px] font-medium tracking-wide text-primary/80">
-          {/* [HARDCODED] */}300 free Pistons each month — no card required
+          {t("heroEyebrow")}
         </p>
         <h1 className="mt-3 font-display text-[28px] md:text-[40px] leading-tight font-medium text-foreground">
-          {/* [HARDCODED] */}Due diligence for Porsche buyers
+          {t("heroTitle")}
         </h1>
         <p className="mt-3 text-[13px] md:text-[15px] text-muted-foreground leading-relaxed">
-          {/* [HARDCODED] */}One report costs 100 Pistons. Higher plans unlock more
-          monthly Pistons. Top-ups never expire.
+          {t("heroDescription")}
         </p>
 
         {/* Anchor — due diligence stack */}
         <p className="mt-5 text-[11px] text-muted-foreground/80 italic max-w-md mx-auto">
-          {/* [HARDCODED] */}A PPI costs $400. A Porsche PPS, $250. Paying $59/mo
-          to know if the deal is worth it is due diligence, not expense.
+          {t("heroAnchor")}
         </p>
       </div>
 
@@ -138,10 +138,10 @@ export default function PricingPage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/[0.04] border border-border">
             <Coins className="size-3 text-primary" />
             <span className="text-[11px] text-muted-foreground">
-              {/* [HARDCODED] */}Current balance
+              {t("currentBalance")}
             </span>
             <span className="text-[12px] font-semibold tabular-nums text-foreground">
-              {balance.toLocaleString()} {/* [HARDCODED] */}Pistons
+              {balance.toLocaleString()} {t("pistonsLabel")}
             </span>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function PricingPage() {
       {/* What's included */}
       <div className="max-w-4xl mx-auto px-4 mb-12 md:mb-16">
         <h2 className="font-display text-[20px] md:text-[24px] font-medium text-foreground text-center mb-6 md:mb-8">
-          {/* [HARDCODED] */}What&apos;s in every report
+          {t("whatIncluded")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
           {REPORT_FEATURES.map((feature) => (
@@ -175,7 +175,7 @@ export default function PricingPage() {
       {/* FAQ — accordion */}
       <div className="max-w-2xl mx-auto px-4 mb-10">
         <h2 className="font-display text-[20px] md:text-[24px] font-medium text-foreground text-center mb-4 md:mb-6">
-          {/* [HARDCODED] */}Frequently asked
+          {t("faqTitle")}
         </h2>
         <div className="rounded-2xl border border-border bg-foreground/[0.02] px-5">
           {FAQ_ITEMS.map((item, i) => (
@@ -189,7 +189,7 @@ export default function PricingPage() {
         <div className="inline-flex items-center gap-2.5">
           <Shield className="size-3.5 text-muted-foreground" />
           <span className="text-[12px] text-muted-foreground">
-            {/* [HARDCODED] */}30-day money-back guarantee
+            {t("guarantee")}
           </span>
         </div>
       </div>
