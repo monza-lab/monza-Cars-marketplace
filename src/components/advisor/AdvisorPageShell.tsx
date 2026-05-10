@@ -18,6 +18,9 @@ export interface AdvisorPageShellProps {
   userTier: "FREE" | "PRO"
   sharedWatermark?: string
   conversations: ConversationRow[]
+  /** When provided, the conversation auto-sends this prompt on mount.
+   *  Used by the AdvisorBand contextual deep-links (?prompt=…). */
+  autoSendOnMount?: string
 }
 
 export function AdvisorPageShell(props: AdvisorPageShellProps) {
@@ -222,6 +225,7 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
             initialMessages={props.initialMessages}
             readOnly={props.readOnly}
             suggestionChips={conversationId ? undefined : buildSuggestions(t)}
+            autoSendOnMount={props.autoSendOnMount}
           />
         </div>
       </div>

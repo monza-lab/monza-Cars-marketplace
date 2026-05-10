@@ -35,6 +35,7 @@ import {
   BarChart3,
   DollarSign,
 } from "lucide-react"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
@@ -1544,6 +1545,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             </CollapsibleSection>
           )}
 
+          {/* Contextual Advisor — pre-populated with this car's title */}
+          <AdvisorBand
+            title={/* [HARDCODED] */ "Questions about this one?"}
+            subtitle={/* [HARDCODED] */ "Inspection points, fair value, what to negotiate."}
+            prompt={`Tell me what to know before buying this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Inspection priorities, fair value, and red flags.`}
+          />
+
         </div>
 
         {/* ═══ MOBILE CTA ═══ */}
@@ -1752,6 +1760,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </span>
                 </div>
               </Link>
+
+              {/* Contextual Advisor band — desktop column B */}
+              <div className="mt-6">
+                <AdvisorBand
+                  title={/* [HARDCODED] */ "Questions about this one?"}
+                  subtitle={/* [HARDCODED] */ "Inspection points, fair value, what to negotiate."}
+                  prompt={`Tell me what to know before buying this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Inspection priorities, fair value, and red flags.`}
+                />
+              </div>
 
               {/* Bottom spacing */}
               <div className="h-8" />

@@ -9,11 +9,21 @@ type Locale = "en" | "de" | "es" | "ja"
 
 export default async function AdvisorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: Locale }>
+  searchParams: Promise<{ prompt?: string | string[] }>
 }) {
   const { locale } = await params
+  const { prompt: promptParam } = await searchParams
   setRequestLocale(locale)
+
+  // Allow contextual deep-links from AdvisorBand: /advisor?prompt=…
+  // Auto-sends on mount so the user lands directly in a conversation.
+  const promptValue = Array.isArray(promptParam) ? promptParam[0] : promptParam
+  const autoSendPrompt = typeof promptValue === "string" && promptValue.trim()
+    ? promptValue.trim().slice(0, 300)
+    : undefined
 
   const supabase = await createClient()
   const {
@@ -40,6 +50,7 @@ export default async function AdvisorPage({
         locale={locale}
         userTier={tier}
         conversations={conversations}
+        autoSendOnMount={autoSendPrompt}
       />
     </div>
   )

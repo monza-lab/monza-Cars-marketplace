@@ -40,6 +40,7 @@ import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from ".
 import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
 import { selectBestDatabaseImage } from "./utils/aggregation"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
@@ -802,29 +803,11 @@ function MobileFamilyChips() {
   )
 }
 
-// ─── MOBILE: ADVISOR BAND (editorial, typography-led — no AI iconography) ───
+// ─── HOME ADVISOR BAND — wraps shared AdvisorBand with home padding ───
 function MobileAdvisorBand() {
   return (
     <div className="px-4 py-3">
-      <Link
-        href="/advisor"
-        className="group block rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.08] via-primary/[0.04] to-transparent px-5 py-4 active:from-primary/[0.14] transition-colors"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-primary/80">
-              {/* [HARDCODED] */}Advisor
-            </p>
-            <p className="font-display text-[18px] leading-tight text-foreground mt-1">
-              {/* [HARDCODED] */}Need an opinion?
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {/* [HARDCODED] */}Ask anything — from inspection to fair value
-            </p>
-          </div>
-          <ChevronRight className="size-4 text-primary group-active:translate-x-0.5 transition-transform shrink-0" />
-        </div>
-      </Link>
+      <AdvisorBand />
     </div>
   )
 }
@@ -2627,6 +2610,13 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
             {porscheFamilies.map((family, idx) => (
               <FamilyCard key={family.slug} family={family} index={idx} />
             ))}
+            {/* Advisor band at the end of the feed — discovery-to-ask handoff */}
+            <div className="snap-start px-8 pt-6 pb-12 max-w-3xl mx-auto">
+              <AdvisorBand
+                title={/* [HARDCODED] */ "Not sure which Porsche fits?"}
+                subtitle={/* [HARDCODED] */ "The advisor reads the market with you — inspections, fair value, comps."}
+              />
+            </div>
           </div>
 
           {/* COLUMN C: CONTEXT PANEL (28%) — synced with active family in scroll */}

@@ -30,6 +30,7 @@ import {
   History,
   Download,
 } from "lucide-react"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
@@ -2365,6 +2366,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 </p>
               </section>
             ) : null}
+
+            {/* ═══ ADVISOR HANDOFF ═══
+                After the user has read the full dossier, the natural next
+                step is "ask about what's missing." Pre-populates the chat
+                with this car's title so the conversation starts in context. */}
+            <div className="mt-10 mb-4">
+              <AdvisorBand
+                title={/* [HARDCODED] */ "Anything still unclear?"}
+                subtitle={/* [HARDCODED] */ "The advisor can dig deeper on any signal in this report."}
+                prompt={`I just read the full report on this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Walk me through the most important risks and what to verify before bidding.`}
+              />
+            </div>
 
           </div>
         </div>
