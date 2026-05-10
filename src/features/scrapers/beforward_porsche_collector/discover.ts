@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 
 import { fetchHtml, getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
+import { fetchBFHtmlWithScrapling } from "./scrapling";
 import type { DiscoverPageResult, ListingSummary } from "./types";
 
 export function buildSearchCountUrl(viewCount: number, keyword: string): string {
@@ -49,12 +50,23 @@ export async function discoverPage(input: {
   timeoutMs: number;
 }): Promise<DiscoverPageResult> {
   const pageUrl = buildStocklistPageUrl(input.page);
-  const domain = getDomainFromUrl(pageUrl);
-  await input.limiter.waitForDomain(domain);
-  const { value: html } = await withRetry(() => fetchHtml(pageUrl, input.timeoutMs), {
-    retries: 5,
-    baseDelayMs: 2000,
-  });
+
+  let html: string;
+  // Try scrapling first (bypasses AWS WAF); retry once on failure
+  const scraplingHtml = await fetchBFHtmlWithScrapling(pageUrl)
+    ?? await fetchBFHtmlWithScrapling(pageUrl);
+  if (scraplingHtml) {
+    html = scraplingHtml;
+  } else {
+    // Scrapling unavailable or failed — fall back to plain fetch
+    const domain = getDomainFromUrl(pageUrl);
+    await input.limiter.waitForDomain(domain);
+    const { value } = await withRetry(() => fetchHtml(pageUrl, input.timeoutMs), {
+      retries: 5,
+      baseDelayMs: 2000,
+    });
+    html = value;
+  }
 
   const $ = cheerio.load(html);
   const totalResults = parseTotalResults($);
