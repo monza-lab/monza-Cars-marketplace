@@ -177,18 +177,18 @@ export function SearchClient() {
       {/* ═══════════════════════════════════════════════════════════════════════
           COMPACT HEADER — Search + Title + Filters inline
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-none px-6 py-4 border-b border-border">
-        {/* Top Row: Title + Search + Sort */}
-        <div className="flex items-center gap-6">
+      <div className="flex-none px-4 py-4 md:px-6 border-b border-border">
+        {/* Top Row: Title + Search + Sort — stacks on mobile */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
           {/* Title */}
           <div className="shrink-0">
-            <h1 className="text-xl font-semibold text-foreground tracking-tight">
+            <h1 className="text-lg md:text-xl font-semibold text-foreground tracking-tight">
               {t("header.title")} <span className="font-semibold">{t("header.titleAccent")}</span>
             </h1>
           </div>
 
           {/* Search Bar */}
-          <div className="relative flex-1 max-w-xl">
+          <div className="relative flex-1 md:max-w-xl">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
@@ -210,7 +210,7 @@ export function SearchClient() {
           </div>
 
           {/* Results Count + Sort */}
-          <div className="flex items-center gap-4 shrink-0 ml-auto">
+          <div className="flex items-center justify-between gap-3 shrink-0 md:ml-auto md:justify-start">
             <span className="text-[11px] tracking-[0.1em] text-muted-foreground tabular-nums">
               {t("header.results", { count: total })}
             </span>
@@ -229,8 +229,8 @@ export function SearchClient() {
           </div>
         </div>
 
-        {/* Bottom Row: Quick Filters */}
-        <div className="flex items-center gap-2 mt-3">
+        {/* Bottom Row: Quick Filters — horizontal scroll on mobile */}
+        <div className="flex items-center gap-2 mt-3 -mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto no-scrollbar">
           <Button
             variant="outline"
             size="sm"
