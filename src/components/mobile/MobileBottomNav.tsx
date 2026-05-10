@@ -267,6 +267,7 @@ function SearchEmptyState({
   onSubmitAll: () => void
   activeFilterCount: number
 }) {
+  const t = useTranslations("mobile")
   return (
     <div className="px-4 py-4 space-y-6">
       {/* Recent */}
@@ -274,7 +275,7 @@ function SearchEmptyState({
         <section aria-label="Recent searches">
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
-              {/* [HARDCODED] */}Recent
+              {t("recent")}
             </p>
             <button
               onClick={onClearRecent}
@@ -282,7 +283,7 @@ function SearchEmptyState({
               className="flex items-center gap-1 text-[11px] text-muted-foreground/80 active:text-foreground"
             >
               <Trash2 className="size-3" />
-              {/* [HARDCODED] */}Clear
+              {t("clear")}
             </button>
           </div>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
@@ -304,7 +305,7 @@ function SearchEmptyState({
       <section aria-label="Filters" className="space-y-4">
         <div>
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2">
-            {/* [HARDCODED] */}Market
+            {t("market")}
           </p>
           <Segmented<RegionFilter>
             value={region}
@@ -321,7 +322,7 @@ function SearchEmptyState({
         </div>
         <div>
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2">
-            {/* [HARDCODED] */}Status
+            {t("status")}
           </p>
           <Segmented<StatusFilter>
             value={status}
@@ -336,7 +337,7 @@ function SearchEmptyState({
         </div>
         <div>
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2">
-            {/* [HARDCODED] */}Price (USD)
+            {t("priceUsd")}
           </p>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
             {PRICE_BUCKETS.map(b => {
@@ -362,7 +363,9 @@ function SearchEmptyState({
             onClick={onSubmitAll}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold active:bg-primary/85"
           >
-            {/* [HARDCODED] */}Apply {activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} →
+            {activeFilterCount === 1
+              ? t("applyFilters", { count: activeFilterCount })
+              : t("applyFiltersPlural", { count: activeFilterCount })}
           </button>
         )}
       </section>
@@ -371,7 +374,7 @@ function SearchEmptyState({
       {familyGroups.length > 0 && (
         <section aria-label="Browse by family">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2.5">
-            {/* [HARDCODED] */}Browse by family
+            {t("browseByFamily")}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {familyGroups.map(g => (
@@ -394,7 +397,7 @@ function SearchEmptyState({
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
               <TrendingUp className="size-3" />
-              {/* [HARDCODED] */}Trending now
+              {t("trendingNow")}
             </p>
           </div>
           <div className="space-y-2">
@@ -470,6 +473,7 @@ function SearchResultsState({
   onAskAdvisor: () => void
   onSubmitAll: () => void
 }) {
+  const t = useTranslations("mobile")
   const filterChips: { label: string; onClear: () => void }[] = []
   if (region !== "all") filterChips.push({ label: region, onClear: onClearRegion })
   if (status !== "all") filterChips.push({ label: status === "live" ? "Live" : "Sold", onClear: onClearStatus })
@@ -502,7 +506,7 @@ function SearchResultsState({
       {taxonomyResults.length > 0 && (
         <section>
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2.5">
-            {/* [HARDCODED] */}Models &amp; Series
+            {t("modelsSeries")}
           </p>
           <div className="space-y-1">
             {taxonomyResults.map((item, i) => (
@@ -526,7 +530,7 @@ function SearchResultsState({
       {trendingResults.length > 0 && (
         <section>
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground mb-2.5">
-            {/* [HARDCODED] */}Listings
+            {t("listings")}
           </p>
           <div className="space-y-2">
             {trendingResults.map(c => (
@@ -574,7 +578,7 @@ function SearchResultsState({
           onClick={onSubmitAll}
           className="w-full py-3 rounded-xl border border-border bg-foreground/[0.02] text-[12px] font-medium text-foreground/85 active:bg-foreground/[0.06]"
         >
-          {/* [HARDCODED] */}See all results for &ldquo;{query}&rdquo; →
+          {t("seeAllResults", { query })}
         </button>
       )}
 
@@ -583,17 +587,17 @@ function SearchResultsState({
         <div className="text-center py-10">
           <Search className="size-10 text-muted-foreground mx-auto mb-3 opacity-30" />
           <p className="text-[14px] font-medium text-foreground">
-            {/* [HARDCODED] */}No results for &ldquo;{query}&rdquo;
+            {t("noResultsTitle", { query })}
           </p>
           <p className="text-[12px] text-muted-foreground mt-1 mb-5">
-            {/* [HARDCODED] */}The advisor can pull deeper context.
+            {t("advisorContextHint")}
           </p>
           <button
             onClick={onAskAdvisor}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-[13px] font-semibold"
           >
             <MessageCircle className="size-4" />
-            {/* [HARDCODED] */}Ask the advisor →
+            {t("askTheAdvisor")}
           </button>
         </div>
       )}
@@ -771,7 +775,7 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 autoCorrect="off"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={/* [HARDCODED] */ "Search 992, GT3, Manual…"}
+                placeholder={t("searchTypingPlaceholder")}
                 className="w-full bg-foreground/[0.05] border border-border rounded-xl pl-12 pr-24 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30 focus:bg-foreground/[0.08] transition-colors"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -790,7 +794,7 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                   onClick={onClose}
                   className="px-3 h-8 text-[13px] font-medium text-muted-foreground active:text-foreground"
                 >
-                  {/* [HARDCODED] */}Cancel
+                  {t("cancel")}
                 </button>
               </div>
             </form>
@@ -855,6 +859,7 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 // ─── PROFILE SHEET (replaces Account — no hamburger duplication) ───
 // ─── ACCOUNT SHEET (mobile bottom sheet) — wraps shared AccountSheetContent ───
 function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const t = useTranslations("mobile")
   const [showAuthModal, setShowAuthModal] = useState(false)
 
   return (
@@ -877,7 +882,7 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             {/* Header */}
             <div className="flex items-center justify-between px-6 pb-3 shrink-0">
               <h2 className="font-display text-[20px] font-medium text-foreground">
-                {/* [HARDCODED] */}Account
+                {t("account")}
               </h2>
               <button
                 onClick={onClose}
@@ -969,8 +974,7 @@ export function MobileBottomNav() {
               }`}>
                 <MessageCircle className="size-5" />
               </div>
-              {/* [HARDCODED] */}
-              <span className="text-[10px] font-medium">Advisor</span>
+              <span className="text-[10px] font-medium">{t("advisor")}</span>
             </button>
 
             {/* Search */}

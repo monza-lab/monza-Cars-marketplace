@@ -82,7 +82,7 @@ export function AccountSheetContent({
         </button>
 
         <p className="text-center text-[12px] text-muted-foreground">
-          {/* [HARDCODED] */}Already have an account?{" "}
+          {t("accountSheet.alreadyHaveAccount")}{" "}
           <button
             onClick={() => {
               onClose()
@@ -90,7 +90,7 @@ export function AccountSheetContent({
             }}
             className="text-primary font-medium hover:underline"
           >
-            {/* [HARDCODED] */}Sign in →
+            {t("accountSheet.signIn")}
           </button>
         </p>
       </div>
@@ -119,13 +119,13 @@ export function AccountSheetContent({
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
             <Piston className="size-3 text-primary" />
-            {/* [HARDCODED] */}Pistons
+            {t("accountSheet.pistons")}
           </p>
           <button
             onClick={() => goTo("/pricing")}
             className="text-[11px] font-semibold text-primary hover:underline"
           >
-            {/* [HARDCODED] */}Buy →
+            {t("accountSheet.buy")}
           </button>
         </div>
         <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.07] to-transparent p-4">
@@ -138,11 +138,11 @@ export function AccountSheetContent({
               {creditsRemaining.toLocaleString()}
             </span>
             <span className="text-[11px] text-muted-foreground">
-              {/* [HARDCODED] */}available
+              {t("accountSheet.available")}
             </span>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            {/* [HARDCODED] */}Free credits reset on the 1st of each month
+            {t("accountSheet.creditsResetHint")}
           </p>
         </div>
       </section>
@@ -152,13 +152,12 @@ export function AccountSheetContent({
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
             <Bookmark className="size-3 text-primary" />
-            {/* [HARDCODED] */}Watchlist
+            {t("accountSheet.watchlist")}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4">
           <p className="text-[12px] text-muted-foreground italic leading-relaxed">
-            {/* [HARDCODED] */}No saved Porsches yet. Tap the bookmark on any
-            listing to track it here.
+            {t("accountSheet.watchlistEmpty")}
           </p>
         </div>
       </section>
@@ -168,19 +167,18 @@ export function AccountSheetContent({
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground inline-flex items-center gap-1.5">
             <FileText className="size-3 text-primary" />
-            {/* [HARDCODED] */}Recent reports
+            {t("accountSheet.recentReports")}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4">
           <p className="text-[12px] text-muted-foreground italic leading-relaxed mb-3">
-            {/* [HARDCODED] */}No reports yet. Generate your first one to see
-            it here.
+            {t("accountSheet.recentReportsEmpty")}
           </p>
           <button
             onClick={() => goTo("/cars/porsche")}
             className="w-full py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-[12px] font-semibold text-primary hover:bg-primary/15 active:bg-primary/20 transition-colors"
           >
-            {/* [HARDCODED] */}Browse Porsches →
+            {t("accountSheet.browsePorsches")}
           </button>
         </div>
       </section>
@@ -189,7 +187,7 @@ export function AccountSheetContent({
       <section>
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
-            {/* [HARDCODED] */}Current plan
+            {t("accountSheet.currentPlan")}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-foreground/[0.02] p-4 flex items-center justify-between gap-3">
@@ -199,15 +197,15 @@ export function AccountSheetContent({
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {isSubscribed
-                ? /* [HARDCODED] */ "Unlimited reports while active"
-                : /* [HARDCODED] */ "3 free reports / month"}
+                ? t("accountSheet.unlimitedReportsActive")
+                : t("accountSheet.freeReportsHint")}
             </p>
           </div>
           <button
             onClick={() => goTo("/pricing")}
             className="shrink-0 px-4 py-2 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary/85 active:bg-primary/85"
           >
-            {isSubscribed ? /* [HARDCODED] */ "Manage" : /* [HARDCODED] */ "Upgrade"}
+            {isSubscribed ? t("accountSheet.manage") : t("accountSheet.upgrade")}
           </button>
         </div>
       </section>
@@ -219,14 +217,14 @@ export function AccountSheetContent({
           onClick={onClose}
           className="rounded-xl border border-border bg-foreground/[0.02] px-3 py-2.5 text-[12px] text-foreground/85 hover:border-primary/30 hover:text-foreground transition-colors text-center"
         >
-          {/* [HARDCODED] */}Search history
+          {t("accountSheet.searchHistory")}
         </Link>
         <Link
           href="/account"
           onClick={onClose}
           className="rounded-xl border border-border bg-foreground/[0.02] px-3 py-2.5 text-[12px] text-foreground/85 hover:border-primary/30 hover:text-foreground transition-colors text-center"
         >
-          {/* [HARDCODED] */}Billing & history
+          {t("accountSheet.billingHistory")}
         </Link>
       </section>
 
