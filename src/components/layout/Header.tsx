@@ -544,12 +544,16 @@ export function Header() {
   // BrowseClient reads via useClassicFilters to filter its grid.
   const isBrowsePage = /^\/(?:[a-z]{2}\/)?browse$/.test(pathname);
   // Route-aware header — only show controls where they actually apply.
-  // Home: ViewToggle (Monza/Classic). /cars/{make} + /browse: Region pills.
-  // Everywhere else: clean header (wordmark + search + actions only).
+  // Listings pages (home, /browse, /cars/{make}) get both ViewToggle and
+  // Region pills, because that's where the user is actually looking at
+  // cars and may want to switch view OR filter by country. Everywhere
+  // else (advisor, report, pricing, tools, knowledge…) the header stays
+  // clean.
   const isHomePage = /^\/(?:[a-z]{2})?\/?$/.test(pathname);
   const isCarsListPage = /^\/(?:[a-z]{2}\/)?cars\/[^/]+\/?$/.test(pathname);
-  const showViewToggle = isHomePage;
-  const showRegionPills = isCarsListPage || isBrowsePage;
+  const isListingsRoute = isHomePage || isBrowsePage || isCarsListPage;
+  const showViewToggle = isListingsRoute;
+  const showRegionPills = isListingsRoute;
   // On /browse the URL is the source of truth for the active region. Read
   // from the query param so the active pill matches the current filter
   // even when the user lands via direct URL like /browse?region=US.
