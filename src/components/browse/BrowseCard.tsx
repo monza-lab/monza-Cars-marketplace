@@ -1,14 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "@/i18n/navigation";
-import { Clock, Gavel, ExternalLink } from "lucide-react";
+import { Clock, Gavel, ExternalLink, ImageOff } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
 import { timeLeft } from "@/lib/makePageHelpers";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill";
+import { SafeImage } from "@/components/dashboard/cards/SafeImage";
 
 const PLATFORM_SHORT: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
@@ -115,12 +115,17 @@ export function BrowseCard({
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">
-          <Image
+          <SafeImage
             src={image}
             alt={car.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+            fallback={
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                <ImageOff className="size-8 text-muted-foreground/40" />
+              </div>
+            }
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 

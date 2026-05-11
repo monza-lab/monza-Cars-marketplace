@@ -113,8 +113,12 @@ export async function GET(request: NextRequest) {
     const regionParam = searchParams.get("region") || null;
 
     // Determine DB-level status filter
+    // Default to "active" when no status param is sent — the hook always
+    // client-side filters for ACTIVE/ENDING_SOON anyway, and querying all
+    // statuses causes keyset pagination to return pages full of ended
+    // listings that get discarded, making active listings unreachable.
     const dbStatus: "active" | "all" =
-      !status || status === "all" || status === "Ended" || status === "ENDED" ? "all" : "active";
+      status === "all" || status === "Ended" || status === "ENDED" ? "all" : "active";
 
     // Resolve family to DB-level model patterns
     const resolvedFamily = resolveSeriesIdForFamily(requestedMake ?? "Porsche", family) ?? family;

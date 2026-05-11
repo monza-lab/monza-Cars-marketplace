@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
@@ -1569,13 +1570,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
           {/* ═══ COVER / HERO ═══ */}
           <div className="relative aspect-[16/9] md:aspect-[21/9] rounded-2xl md:rounded-3xl overflow-hidden mt-4 md:mt-6">
-            <Image
+            <SafeImage
               src={car.image}
               alt={car.title}
               fill
               className="object-cover"
               priority
               sizes="(min-width: 768px) 840px, 100vw"
+              fallback={
+                <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                  <span className="text-muted-foreground text-lg">{car.title}</span>
+                </div>
+              }
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
             <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
@@ -2174,12 +2180,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
                     >
                       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
-                        <Image
+                        <SafeImage
                           src={sc.car.image}
                           alt={sc.car.title}
                           fill
                           className="object-cover"
                           sizes="80px"
+                          fallback={<div className="absolute inset-0 bg-muted" />}
                         />
                       </div>
                       <div className="flex-1 min-w-0">

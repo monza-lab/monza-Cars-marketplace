@@ -1,9 +1,9 @@
 "use client"
 
-import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
-import { Clock, Gavel, ChevronRight } from "lucide-react"
+import { Clock, Gavel, ChevronRight, ImageOff } from "lucide-react"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
@@ -32,12 +32,17 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
       >
         {/* Image */}
         <div className="relative aspect-[16/10] overflow-hidden">
-          <Image
+          <SafeImage
             src={car.image || car.images?.[0] || "/cars/placeholder.svg"}
             alt={car.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 33vw"
+            fallback={
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                <ImageOff className="size-8 text-muted-foreground/40" />
+              </div>
+            }
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />

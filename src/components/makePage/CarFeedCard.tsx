@@ -1,8 +1,8 @@
 "use client"
 
-import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { Clock, Gavel, ChevronRight } from "lucide-react"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTranslations } from "next-intl"
@@ -26,21 +26,20 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
       >
         {/* TOP: CINEMATIC IMAGE */}
         <div className="relative aspect-[2/1] w-full shrink-0 overflow-hidden">
-          {car.image ? (
-            <Image
-              src={car.image}
-              alt={car.title}
-              fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              sizes="50vw"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-card flex items-center justify-center">
-              <span className="text-muted-foreground text-lg">{car.year} {car.model}</span>
-            </div>
-          )}
+          <SafeImage
+            src={car.image || "/cars/placeholder.svg"}
+            alt={car.title}
+            fill
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            sizes="50vw"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            fallback={
+              <div className="absolute inset-0 bg-card flex items-center justify-center">
+                <span className="text-muted-foreground text-lg">{car.year} {car.model}</span>
+              </div>
+            }
+          />
 
           {/* Vignette gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-card pointer-events-none" />
