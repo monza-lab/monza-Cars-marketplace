@@ -91,10 +91,10 @@ async function main() {
   // Query AutoTrader active listings missing key enrichment fields
   const { data: listings, error } = await supabase
     .from("listings")
-    .select("id, source_url, title, engine, transmission, mileage, vin, color_exterior, description_text, images")
+    .select("id, source_url, title, engine, transmission, mileage, vin, color_exterior, description_text, images, photos_count")
     .eq("source", "AutoTrader")
     .eq("status", "active")
-    .or("engine.is.null,transmission.is.null,mileage.is.null,description_text.is.null")
+    .or("engine.is.null,transmission.is.null,mileage.is.null,description_text.is.null,photos_count.lt.5")
     .order("updated_at", { ascending: true })
     .limit(opts.limit);
 
@@ -193,7 +193,8 @@ async function main() {
         if (!listing.color_exterior && detail.exteriorColor) updates.color_exterior = truncate(detail.exteriorColor, 100);
         if (!listing.vin && detail.vin) updates.vin = truncate(detail.vin, 17);
         if (!listing.description_text && detail.description) updates.description_text = truncate(detail.description, 2000);
-        if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1)) {
+        const hasStaleImages = listing.images?.some((img: string) => img.includes("{resize}")) ?? false;
+        if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1 || hasStaleImages)) {
           updates.images = detail.images;
           updates.photos_count = detail.images.length;
         }
