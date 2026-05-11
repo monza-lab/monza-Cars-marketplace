@@ -46,17 +46,17 @@ const itemVariants = {
 
 function SkeletonCard() {
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-950 shadow-lg shadow-black/20">
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-lg shadow-black/20">
       {/* Image placeholder */}
-      <Skeleton className="aspect-[16/10] w-full rounded-none bg-zinc-900" />
+      <Skeleton className="aspect-[16/10] w-full rounded-none bg-card" />
 
       {/* Body */}
       <div className="flex flex-col gap-3 p-4">
-        <Skeleton className="h-4 w-3/4 bg-zinc-800" />
-        <Skeleton className="h-6 w-1/3 bg-zinc-800" />
+        <Skeleton className="h-4 w-3/4 bg-foreground/5" />
+        <Skeleton className="h-6 w-1/3 bg-foreground/5" />
         <div className="flex items-center justify-between">
-          <Skeleton className="h-3 w-16 bg-zinc-800" />
-          <Skeleton className="h-3 w-24 bg-zinc-800" />
+          <Skeleton className="h-3 w-16 bg-foreground/5" />
+          <Skeleton className="h-3 w-24 bg-foreground/5" />
         </div>
       </div>
     </div>
@@ -70,12 +70,12 @@ function SkeletonCard() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center gap-4 py-20">
-      <div className="flex size-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/50">
-        <Car className="size-7 text-zinc-600" />
+      <div className="flex size-16 items-center justify-center rounded-full border border-border bg-card/50">
+        <Car className="size-7 text-muted-foreground/60" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-zinc-400">{message}</p>
-        <p className="mt-1 text-xs text-zinc-600">
+        <p className="text-sm font-medium text-muted-foreground">{message}</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">
           Try adjusting your filters or check back later.
         </p>
       </div>

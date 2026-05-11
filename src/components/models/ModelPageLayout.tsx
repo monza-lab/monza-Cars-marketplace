@@ -26,26 +26,26 @@ export function ModelPageLayout({
   marketSummary: IndexSummary<string> | null;
 }) {
   return (
-    <div className="min-h-screen bg-black text-zinc-100">
+    <div className="min-h-screen bg-black text-foreground">
       <div className="mx-auto max-w-4xl px-6 py-12 space-y-12">
         <header className="space-y-4">
-          <nav className="text-xs text-zinc-500 flex gap-2 items-center">
-            <Link href="/" className="hover:text-amber-400">Home</Link>
+          <nav className="text-xs text-muted-foreground/80 flex gap-2 items-center">
+            <Link href="/" className="hover:text-primary">Home</Link>
             <span>/</span>
-            <Link href="/cars/porsche" className="hover:text-amber-400">Porsche</Link>
+            <Link href="/cars/porsche" className="hover:text-primary">Porsche</Link>
             <span>/</span>
-            <span className="text-zinc-300">{model.shortName}</span>
+            <span className="text-foreground/80">{model.shortName}</span>
           </nav>
-          <p className="text-xs uppercase tracking-[0.3em] text-amber-500">Porsche · {model.specs.yearRange}</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-primary">Porsche · {model.specs.yearRange}</p>
           <h1 className="text-4xl md:text-5xl font-serif leading-tight">{model.fullName}</h1>
-          <p className="text-lg text-zinc-400 max-w-3xl">{model.tagline}</p>
+          <p className="text-lg text-muted-foreground max-w-3xl">{model.tagline}</p>
         </header>
 
         {marketSummary && marketSummary.latestMedian != null && (
-          <section className="border border-zinc-800 rounded-lg p-6 bg-zinc-950">
+          <section className="border border-border rounded-lg p-6 bg-card">
             <div className="flex items-start justify-between flex-wrap gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wider text-zinc-500">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                   Current market median (MonzaHaus Index)
                 </p>
                 <p className="text-4xl font-serif mt-2">{formatUsd(marketSummary.latestMedian)}</p>
@@ -53,7 +53,7 @@ export function ModelPageLayout({
                   <span
                     className={
                       marketSummary.yoyChangePct == null
-                        ? "text-zinc-600"
+                        ? "text-muted-foreground/60"
                         : marketSummary.yoyChangePct >= 0
                           ? "text-emerald-400"
                           : "text-red-400"
@@ -61,15 +61,15 @@ export function ModelPageLayout({
                   >
                     YoY {formatPct(marketSummary.yoyChangePct)}
                   </span>
-                  <span className="text-zinc-600">·</span>
-                  <span className="text-zinc-500">
+                  <span className="text-muted-foreground/60">·</span>
+                  <span className="text-muted-foreground/80">
                     n = {marketSummary.sampleSize.toLocaleString()} sales
                   </span>
                 </p>
               </div>
               <Link
                 href={`/indices/${model.indexSlug}`}
-                className="text-sm text-amber-400 hover:underline whitespace-nowrap"
+                className="text-sm text-primary hover:underline whitespace-nowrap"
               >
                 View full index →
               </Link>
@@ -77,7 +77,7 @@ export function ModelPageLayout({
           </section>
         )}
 
-        <section className="prose prose-invert max-w-none text-zinc-300">
+        <section className="prose dark:prose-invert max-w-none text-foreground/80">
           {model.intro.map((p, i) => (
             <p key={i}>{p}</p>
           ))}
@@ -85,7 +85,7 @@ export function ModelPageLayout({
 
         <section>
           <h2 className="text-2xl font-serif mb-4">Specifications</h2>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm border border-zinc-800 rounded-lg p-6 bg-zinc-950">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm border border-border rounded-lg p-6 bg-card">
             {[
               ["Production years", model.specs.yearRange],
               ["Total production", model.specs.production],
@@ -96,9 +96,9 @@ export function ModelPageLayout({
               ["Top speed", model.specs.topSpeed],
               ["Curb weight", model.specs.curbWeight],
             ].map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-4 border-b border-zinc-900 pb-2">
-                <dt className="text-zinc-500">{k}</dt>
-                <dd className="text-zinc-200 text-right">{v}</dd>
+              <div key={k} className="flex justify-between gap-4 border-b border-border pb-2">
+                <dt className="text-muted-foreground/80">{k}</dt>
+                <dd className="text-foreground/90 text-right">{v}</dd>
               </div>
             ))}
           </dl>
@@ -110,13 +110,13 @@ export function ModelPageLayout({
             {model.variants.map((v) => (
               <div
                 key={v.name}
-                className="border border-zinc-800 rounded-lg p-4 bg-zinc-950"
+                className="border border-border rounded-lg p-4 bg-card"
               >
                 <div className="flex justify-between items-baseline gap-4 flex-wrap">
-                  <h3 className="font-serif text-lg text-zinc-100">{v.name}</h3>
-                  <span className="text-xs text-zinc-500">{v.yearRange}</span>
+                  <h3 className="font-serif text-lg text-foreground">{v.name}</h3>
+                  <span className="text-xs text-muted-foreground/80">{v.yearRange}</span>
                 </div>
-                <p className="text-sm text-zinc-400 mt-1">{v.note}</p>
+                <p className="text-sm text-muted-foreground mt-1">{v.note}</p>
               </div>
             ))}
           </div>
@@ -128,13 +128,13 @@ export function ModelPageLayout({
             {model.faqs.map((faq) => (
               <details
                 key={faq.question}
-                className="border border-zinc-800 rounded-lg p-4 bg-zinc-950 group"
+                className="border border-border rounded-lg p-4 bg-card group"
               >
-                <summary className="cursor-pointer font-medium text-zinc-100 list-none flex justify-between items-center gap-4">
+                <summary className="cursor-pointer font-medium text-foreground list-none flex justify-between items-center gap-4">
                   <span>{faq.question}</span>
-                  <span className="text-amber-500 text-xl group-open:rotate-45 transition-transform">+</span>
+                  <span className="text-primary text-xl group-open:rotate-45 transition-transform">+</span>
                 </summary>
-                <p className="mt-3 text-sm text-zinc-400 leading-relaxed">{faq.answer}</p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
               </details>
             ))}
           </div>
@@ -142,10 +142,10 @@ export function ModelPageLayout({
 
         <section>
           <h2 className="text-2xl font-serif mb-4">Buyer considerations</h2>
-          <ul className="space-y-2 text-sm text-zinc-400">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             {model.buyerConsiderations.map((c, i) => (
               <li key={i} className="flex gap-3">
-                <span className="text-amber-500 shrink-0">·</span>
+                <span className="text-primary shrink-0">·</span>
                 <span>{c}</span>
               </li>
             ))}
@@ -163,15 +163,15 @@ export function ModelPageLayout({
                   <Link
                     key={v.slug}
                     href={`/variants/porsche/${v.slug}`}
-                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                       {v.yearRange}
                     </p>
-                    <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                    <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
                       {v.shortName}
                     </h3>
-                    <p className="text-xs text-zinc-400 mt-2">{v.tagline}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{v.tagline}</p>
                   </Link>
                 ))}
               </div>
@@ -179,9 +179,9 @@ export function ModelPageLayout({
           );
         })()}
 
-        <section className="border-l-2 border-amber-500 pl-6 py-2">
-          <h2 className="text-xl font-serif mb-2 text-zinc-100">MonzaHaus thesis</h2>
-          <p className="text-sm text-zinc-400 leading-relaxed">{model.thesis}</p>
+        <section className="rounded-xl bg-primary/[0.04] px-6 py-4">
+          <h2 className="text-xl font-serif mb-2 text-foreground">MonzaHaus thesis</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">{model.thesis}</p>
         </section>
 
         {(() => {
@@ -196,25 +196,25 @@ export function ModelPageLayout({
                 {prevModel && (
                   <Link
                     href={`/models/porsche/${prevModel.slug}`}
-                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">Previous generation</p>
-                    <p className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Previous generation</p>
+                    <p className="text-lg font-serif mt-1 group-hover:text-primary transition">
                       ← {prevModel.fullName}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">{prevModel.specs.yearRange}</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">{prevModel.specs.yearRange}</p>
                   </Link>
                 )}
                 {nextModel && (
                   <Link
                     href={`/models/porsche/${nextModel.slug}`}
-                    className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                    className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                   >
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">Next generation</p>
-                    <p className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Next generation</p>
+                    <p className="text-lg font-serif mt-1 group-hover:text-primary transition">
                       {nextModel.fullName} →
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">{nextModel.specs.yearRange}</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">{nextModel.specs.yearRange}</p>
                   </Link>
                 )}
               </div>
@@ -223,7 +223,7 @@ export function ModelPageLayout({
                   {adj.comparisonPrev && prevModel && (
                     <Link
                       href={`/compare/${adj.comparisonPrev}`}
-                      className="text-amber-400 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       Compare: {prevModel.shortName} vs {model.shortName} →
                     </Link>
@@ -231,7 +231,7 @@ export function ModelPageLayout({
                   {adj.comparisonNext && nextModel && (
                     <Link
                       href={`/compare/${adj.comparisonNext}`}
-                      className="text-amber-400 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       Compare: {model.shortName} vs {nextModel.shortName} →
                     </Link>
@@ -242,12 +242,12 @@ export function ModelPageLayout({
           );
         })()}
 
-        <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
+        <section className="text-xs text-muted-foreground/80 pt-8 border-t border-border">
           Market data and commentary are provided for informational purposes and do
           not constitute investment advice. For live listings, see our{" "}
           <Link
             href={`/cars/porsche?series=${model.slug}`}
-            className="text-amber-400 hover:underline"
+            className="text-primary hover:underline"
           >
             {model.shortName} marketplace
           </Link>

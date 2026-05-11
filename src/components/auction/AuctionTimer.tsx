@@ -54,7 +54,7 @@ export function AuctionTimer({ endTime, className }: AuctionTimerProps) {
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500",
+          "inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground/80",
           className
         )}
       >
@@ -85,7 +85,7 @@ export function AuctionTimer({ endTime, className }: AuctionTimerProps) {
           ? "text-destructive animate-pulse"
           : isWarning
             ? "text-destructive"
-            : "text-zinc-400",
+            : "text-muted-foreground",
         className
       )}
     >
@@ -97,10 +97,10 @@ export function AuctionTimer({ endTime, className }: AuctionTimerProps) {
       {segments.map((seg, i) => (
         <span key={seg.label} className="flex items-baseline gap-px">
           {i > 0 && (
-            <span className="mx-0.5 text-zinc-600">:</span>
+            <span className="mx-0.5 text-muted-foreground/60">:</span>
           )}
           <span className="font-semibold">{seg.value}</span>
-          <span className="text-[10px] text-zinc-500">{seg.label}</span>
+          <span className="text-[10px] text-muted-foreground/80">{seg.label}</span>
         </span>
       ))}
     </span>

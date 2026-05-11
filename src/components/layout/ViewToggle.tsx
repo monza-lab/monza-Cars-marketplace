@@ -28,7 +28,7 @@ export function ViewToggle() {
     <div
       role="tablist"
       aria-label="Marketplace view"
-      className="inline-flex items-center gap-0.5 rounded-full border border-border bg-foreground/[0.03] p-0.5"
+      className="hidden md:inline-flex items-center gap-0.5 rounded-full border border-border bg-foreground/[0.03] p-0.5"
     >
       <button
         role="tab"

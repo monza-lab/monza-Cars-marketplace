@@ -60,7 +60,7 @@ export function CTASection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Join thousands of collectors and investors who trust Monza Lab
+              Join thousands of collectors and investors who trust MonzaHaus
               for their acquisition intelligence.
             </motion.p>
 

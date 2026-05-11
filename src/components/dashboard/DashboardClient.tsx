@@ -32,6 +32,7 @@ import {
   SlidersHorizontal,
   Flame,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
@@ -39,6 +40,7 @@ import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from ".
 import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
 import { selectBestDatabaseImage } from "./utils/aggregation"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
 // FilterSidebar removed — filters now live only on brand detail pages
@@ -243,28 +245,12 @@ const platformShort: Record<string, string> = {
   ELFERSPOT: "ES",
 }
 
-// ─── UNIVERSAL MOCK DATA ───
-// This ensures EVERY car shows rich data in the Context Panel
+// ─── EDITORIAL COPY ───
+// Porsche-only by product design. Keys for other marques were trimmed because
+// they were dead branches: the dashboard only renders the Porsche entry.
 const mockWhyBuy: Record<string, string> = {
-  McLaren: "The McLaren F1 represents the pinnacle of analog supercar engineering. Extreme scarcity with only 64 road cars ensures lasting collector interest and consistent auction presence.",
   Porsche: "The 911 Carrera RS 2.7 is the foundation of Porsche's motorsport legacy. As the first homologation special, it carries historical significance that transcends typical collector car metrics. Strong club support and cross-generational appeal make this a cornerstone holding.",
-  Ferrari: "Ferrari's timeless design combined with the legendary Colombo V12 creates an investment-grade asset. Classiche certification ensures authenticity. This model has demonstrated remarkable price stability even during market corrections.",
-  Lamborghini: "Lamborghini's first true supercar remains the most desirable variant. Polo Storico certification adds provenance value. The mid-engine layout influenced every supercar that followed, cementing its historical importance.",
-  Nissan: "The R34 GT-R represents the peak of Japanese engineering excellence. With 25-year import eligibility now active in the US, demand continues to grow as 25-year import eligibility expands the collector base. Low production numbers and strong enthusiast community support lasting value.",
-  Toyota: "The A80 Supra has achieved icon status, bolstered by pop culture prominence and bulletproof 2JZ reliability. Clean, stock examples are increasingly rare as many were modified. Turbo 6-speed variants command significant premiums.",
-  BMW: "The E30 M3 is widely regarded as the quintessential driver's car. Motorsport heritage and timeless design ensure lasting desirability. Sport Evolution and lightweight variants show strongest collector demand.",
-  Mercedes: "Mercedes-Benz classics combine engineering excellence with timeless elegance. Strong parts availability and active restoration community support long-term ownership. Coupe and Cabriolet variants show strongest appreciation.",
-  "Aston Martin": "The quintessential British grand tourer. James Bond association ensures global recognition. Strong club support and active restoration community. DB-series cars show consistent appreciation and strong auction presence.",
-  Jaguar: "British elegance meets Le Mans-winning pedigree. The XJ220 was underappreciated for decades but collector interest is growing as the market recognizes its engineering significance.",
-  Mazda: "The RX-7 FD represents the pinnacle of rotary engine development. Spirit R editions are especially collectible. As the final true rotary sports car, scarcity supports strong collector value.",
-  Honda: "Honda's engineering excellence shines in the S2000. The F20C/F22C engines are legendary for their 9,000 RPM redline. CR variants command significant premiums for their track-focused specification.",
-  Shelby: "Carroll Shelby's Cobra is the ultimate American sports car legend. 427 examples represent the pinnacle of analog performance. CSX-documented cars command top dollar at auction.",
-  Chevrolet: "The C2 Corvette Stingray is America's sports car at its most beautiful. Big block variants with manual transmissions are the collector's choice. Strong club support ensures lasting value.",
-  Bugatti: "The EB110 represents Bugatti's modern renaissance. Quad-turbo V12, carbon chassis, and AWD were revolutionary for 1991. With only 139 built, scarcity drives strong appreciation.",
-  Lancia: "The Stratos is the most successful rally car ever, dominating World Rally Championship from 1974-1976. Ferrari Dino V6 power and Bertone design ensure eternal collector appeal.",
-  "De Tomaso": "Italian design meets American V8 power. The Mangusta's Giugiaro styling and rare production numbers make it an undervalued blue chip. Recognition is growing among serious collectors.",
-  Alpine: "The A110 is France's answer to the Porsche 911. Lightweight, agile, and proven in competition. The 1600S is the ultimate road specification. Values rising as recognition spreads globally.",
-  default: "This vehicle represents a compelling opportunity in the collector car market. Strong fundamentals, limited production, and growing collector interest suggest strong collector market presence.",
+  default: "Investment-grade Porsche with strong fundamentals, limited production and active collector demand.",
 }
 
 const REGION_FLAGS: Record<string, string> = { US: "\u{1F1FA}\u{1F1F8}", UK: "\u{1F1EC}\u{1F1E7}", EU: "\u{1F1EA}\u{1F1FA}", JP: "\u{1F1EF}\u{1F1F5}" }
@@ -343,7 +329,8 @@ function aggregateBrands(auctions: Auction[], rates: Record<string, number>, dbT
       priceMin: prices.length > 0 ? Math.min(...prices) : 0,
       priceMax: prices.length > 0 ? Math.max(...prices) : 0,
       medianPriceUsd,
-      avgTrend: "Active Market", // [HARDCODED]
+      // Honest-by-data: trend label only when computed from real history.
+      avgTrend: "",
       representativeImage,
       representativeCar: `${mostExpensiveCar.year} ${mostExpensiveCar.make} ${mostExpensiveCar.model}`,
       categories: categories as string[],
@@ -768,7 +755,65 @@ function FamilyCard({ family, index = 0 }: { family: PorscheFamily; index?: numb
   )
 }
 
+// ─── MOBILE: TESIS BANNER (compact, editorial) ───
+function MobileTesisBanner({ liveCount }: { liveCount: number }) {
+  return (
+    <div className="border-b border-border bg-foreground/[0.02]">
+      <div className="px-4 py-2 flex items-baseline justify-between gap-3">
+        <span className="text-[9px] font-semibold tracking-[0.22em] uppercase text-foreground/85 shrink-0">
+          {/* [HARDCODED] */}Intelligence, not a marketplace
+        </span>
+        {liveCount > 0 && (
+          <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">
+            {liveCount.toLocaleString()} {/* [HARDCODED] */}tracked
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── MOBILE: FAMILY CHIPS (discovery) ───
+function MobileFamilyChips() {
+  const config = getBrandConfig("porsche")
+  if (!config) return null
+
+  return (
+    <div className="px-4 pt-4 pb-2">
+      <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2.5">
+        {/* [HARDCODED] */}Discover by family
+      </p>
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+        {config.familyGroups.map((group) => {
+          const firstSeries = group.seriesIds[0]
+          const href = firstSeries ? `/cars/porsche?family=${firstSeries}` : `/cars/porsche`
+          return (
+            <Link
+              key={group.label}
+              href={href}
+              prefetch={false}
+              className="shrink-0 px-3.5 py-1.5 rounded-full bg-foreground/5 border border-border text-[12px] font-medium text-foreground/85 active:bg-primary/10 active:border-primary/25 transition-colors whitespace-nowrap"
+            >
+              {group.label}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── HOME ADVISOR BAND — wraps shared AdvisorBand with home padding ───
+function MobileAdvisorBand() {
+  return (
+    <div className="px-4 py-3">
+      <AdvisorBand />
+    </div>
+  )
+}
+
 // ─── MOBILE: REGION PILLS (sticky) ───
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function MobileRegionPills() {
   const { selectedRegion, setSelectedRegion } = useRegion()
   const t = useTranslations("dashboard")
@@ -828,15 +873,12 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
           }
         />
 
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent dark:from-background dark:via-background/30 pointer-events-none" />
+        {/* Gradient overlay — vertical: ensures bottom legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 dark:from-background dark:via-background/60 dark:to-background/15 pointer-events-none" />
+        {/* Side gradient — supports text on bright backgrounds */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/10 to-transparent dark:from-background/65 dark:via-background/10 pointer-events-none" />
 
-        {/* Market delta pill */}
-        <div className="absolute top-4 left-4">
-          <MarketDeltaPill priceUsd={brand.priceMax} medianUsd={brand.medianPriceUsd} />
-        </div>
-
-        {/* Car count */}
+        {/* Car count — only honest signal we have at the brand-aggregate level */}
         <div className="absolute top-4 right-4">
           <span className="rounded-full bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-foreground">
             {t("brandCard.carsCount", { count: brand.carCount })}
@@ -845,17 +887,28 @@ function MobileHeroBrand({ brand }: { brand: Brand }) {
 
         {/* Overlaid info at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h2 className="text-3xl font-bold text-foreground tracking-tight">
+          <h2
+            className="text-3xl font-bold text-white tracking-tight"
+            style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
+          >
             {brand.name}
           </h2>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
+          <p
+            className="text-[13px] text-white/85 mt-0.5"
+            style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+          >
             {brand.representativeCar}
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[16px] font-display font-medium text-primary">
+            <span
+              className="text-[16px] font-display font-medium text-primary"
+              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
+            >
               {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
             </span>
-            <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            {brand.avgTrend && (
+              <span className="text-[12px] text-positive font-medium">{brand.avgTrend}</span>
+            )}
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-3">
@@ -921,7 +974,9 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
           <span className="text-[12px] tabular-nums text-primary">
             {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
-          <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          {brand.avgTrend && (
+            <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          )}
         </div>
       </div>
 
@@ -934,11 +989,11 @@ function MobileBrandRow({ brand }: { brand: Brand }) {
   )
 }
 
-// ─── MOBILE: LIVE AUCTIONS SECTION ───
+// ─── MOBILE: LATEST REPORTS SECTION (honest-by-data) ───
 function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
-  const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
+  const locale = useLocale()
   const now = useClockNow()
 
   const timeBaseLabels = {
@@ -946,8 +1001,6 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
     hour: t("asset.timeHour"),
     minute: t("asset.timeMin"),
   }
-  const endedText = t("asset.ended")
-  const soldText = t("asset.sold")
 
   const liveAuctions = useMemo(() => {
     return auctions
@@ -958,96 +1011,177 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
         if (pa !== pb) return pa - pb
         return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
       })
-      .slice(0, 8)
+      .slice(0, 16)
   }, [auctions, now])
 
   if (liveAuctions.length === 0) return null
 
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       {/* Section header */}
-      <div className="px-4 py-3 flex items-center gap-2">
-        <div className="size-2 rounded-full bg-positive animate-pulse" />
+      <div className="px-4 py-3 flex items-baseline justify-between">
         <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-          {t("mobileFeed.liveListings")}
+          {/* [HARDCODED] */}Latest reports
         </span>
-        <span className="text-[10px] font-display font-medium text-primary">
-          {totalLiveCount}
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          {totalLiveCount.toLocaleString(locale)} {/* [HARDCODED] */}tracked
         </span>
       </div>
 
-      {/* Auction rows */}
-      <div className="divide-y divide-border">
-        {liveAuctions.map((auction) => {
-          const isEndingSoon = auction.status === "ENDING_SOON"
-          const remaining = timeLeft(auction.endTime, { ...timeBaseLabels, ended: isAuctionPlatform(auction.platform) ? endedText : soldText })
-
+      {/* Card list — honest-by-data, click goes to MonzaHaus report */}
+      <div className="space-y-3 px-4">
+        {liveAuctions.map((auction, index) => {
+          // Inject advisor band every 6 cards (after positions 5, 11, ...)
+          const showBand = index > 0 && index % 6 === 0
           return (
-            <Link
-              key={auction.id}
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
-              className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
-            >
-              {/* Thumbnail */}
-              <div className="relative w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-card">
-                <SafeImage
-                  src={auction.images[0]}
-                  alt={auction.title}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  fallback={
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Car className="size-3.5 text-muted-foreground" />
-                    </div>
-                  }
-                />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-foreground truncate">
-                  {auction.year} {auction.make} {auction.model}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[12px] font-display font-medium text-primary">
-                    {auction.currentBid > 0 ? formatPrice(auction.currentBid) : /* [HARDCODED] */ "POA"}
-                  </span>
-                  {isAuctionPlatform(auction.platform) && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {tAuction("bids.count", { count: auction.bidCount })}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Platform + Time/Type badge */}
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                {isAuctionPlatform(auction.platform) ? (
-                  <div className="flex items-center gap-1">
-                    <Clock className={`size-3 ${isEndingSoon ? "text-destructive" : "text-muted-foreground"}`} />
-                    <span className={`text-[10px] tabular-nums font-medium ${
-                      isEndingSoon ? "text-destructive" : "text-muted-foreground"
-                    }`}>
-                      {remaining}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm bg-primary/8 text-primary">
-                    {/* [HARDCODED] */}Listing
-                  </span>
-                )}
-                <span className="text-[8px] text-muted-foreground">
-                  {platformShort[auction.platform] || auction.platform}
-                </span>
-              </div>
-            </Link>
+            <div key={auction.id}>
+              {showBand && <MobileAdvisorBand />}
+              <MobileReportCard
+                auction={auction}
+                now={now}
+                timeLabels={timeBaseLabels}
+                formatPrice={formatPrice}
+              />
+            </div>
           )
         })}
       </div>
+
+      {/* End-of-feed CTA → /cars/porsche */}
+      <div className="px-4 mt-5">
+        <Link
+          href="/cars/porsche"
+          className="block w-full text-center rounded-full border border-border bg-foreground/[0.02] px-4 py-3 text-[12px] font-medium text-foreground/85 active:bg-foreground/[0.06] transition-colors"
+        >
+          {/* [HARDCODED] */}See all {totalLiveCount.toLocaleString(locale)} reports →
+        </Link>
+      </div>
     </div>
+  )
+}
+
+// ─── MOBILE: REPORT CARD (honest-by-data, BrowseCard adapted) ───
+function MobileReportCard({
+  auction,
+  now,
+  timeLabels,
+  formatPrice,
+}: {
+  auction: Auction
+  now: number
+  timeLabels: { day: string; hour: string; minute: string }
+  formatPrice: (n: number) => string
+}) {
+  const locale = useLocale()
+  const platformLabel = platformShort[auction.platform] || auction.platform
+  const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
+  const reportHref = `/cars/${makeSlug}/${auction.id}`
+  const sourceUrl = (auction as Auction & { sourceUrl?: string | null }).sourceUrl
+  const fairUs = auction.fairValueByRegion?.US
+  const region = auction.canonicalMarket ?? null
+  const endMs = new Date(auction.endTime).getTime()
+  // Honest-by-data: countdown only when the auction is real and active
+  const showCountdown =
+    isAuctionPlatform(auction.platform) &&
+    auction.bidCount > 0 &&
+    Number.isFinite(endMs) &&
+    endMs > now
+  const remaining = showCountdown
+    ? timeLeft(auction.endTime, { ...timeLabels, ended: "" })
+    : null
+
+  return (
+    <Link
+      href={reportHref}
+      aria-label={`View MonzaHaus report — ${auction.title}`}
+      className="group flex items-stretch gap-3 rounded-xl bg-card border border-border overflow-hidden active:border-primary/30 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {/* Thumbnail with platform pill overlay */}
+      <div className="relative w-28 h-28 shrink-0 bg-muted overflow-hidden">
+        <SafeImage
+          src={auction.images[0]}
+          alt={auction.title}
+          fill
+          className="object-cover"
+          sizes="112px"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Car className="size-4 text-muted-foreground" />
+            </div>
+          }
+        />
+        <div className="absolute top-1.5 left-1.5">
+          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/90 border border-border backdrop-blur-md">
+            {platformLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 min-w-0 py-2.5 pr-3 flex flex-col">
+        <h3 className="text-[13px] font-display font-medium text-foreground line-clamp-1">
+          {auction.title}
+        </h3>
+
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="text-[15px] font-display font-medium text-primary tabular-nums leading-tight">
+            {auction.currentBid > 0 ? formatPrice(auction.currentBid) : "—"}
+          </span>
+          {typeof auction.mileage === "number" && auction.mileage > 0 ? (
+            <span className="text-[10px] text-muted-foreground tabular-nums">
+              {auction.mileage.toLocaleString(locale)} {auction.mileageUnit || "mi"}
+            </span>
+          ) : null}
+        </div>
+
+        {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {/* [HARDCODED] */}Fair {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
+          </p>
+        )}
+
+        <div className="mt-auto pt-1.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 text-[10px] text-muted-foreground">
+            {showCountdown && remaining && (
+              <span className="flex items-center gap-1 shrink-0">
+                <Clock className="size-3" />
+                {remaining}
+              </span>
+            )}
+            {auction.bidCount > 0 && (
+              <span className="flex items-center gap-1 shrink-0">
+                <Gavel className="size-3" />
+                {auction.bidCount}
+              </span>
+            )}
+            {region && (
+              <span className="font-medium tracking-wider shrink-0">
+                {region}
+              </span>
+            )}
+          </div>
+          {sourceUrl ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                window.open(sourceUrl, "_blank", "noopener,noreferrer")
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-foreground/80 active:border-primary/40 active:text-primary transition-colors shrink-0"
+              title={`View original listing on ${platformLabel}`}
+            >
+              {/* [HARDCODED] */}View on {platformLabel}
+              <ExternalLink className="size-2.5" />
+            </button>
+          ) : (
+            <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+          )}
+        </div>
+      </div>
+    </Link>
   )
 }
 
@@ -1282,8 +1416,8 @@ function DiscoverySidebar({
                     onClick={() => onSelectBrand(brand.slug)}
                     className={`w-full text-left px-4 py-2.5 border-b border-border/50 transition-all group ${
                       isActive
-                        ? "bg-primary/6 border-l-2 border-l-primary"
-                        : "hover:bg-foreground/2 border-l-2 border-l-transparent"
+                        ? "bg-primary/8"
+                        : "hover:bg-foreground/2"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1329,8 +1463,8 @@ function DiscoverySidebar({
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
-                              ? "bg-primary/8 border-l-2 border-l-primary"
-                              : "hover:bg-foreground/3 border-l-2 border-l-transparent"
+                              ? "bg-primary/8"
+                              : "hover:bg-foreground/3"
                           }`}
                         >
                           <span className={`text-[11px] font-medium transition-colors ${
@@ -2097,7 +2231,8 @@ function BrandContextPanel({ brand, allBrands, auctions, regionalValByFamily }: 
           avgPrice: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length),
           medianPrice,
           count: data.count,
-          trend: "Stable", // [HARDCODED]
+          // Honest-by-data: trend left empty until we compute real history.
+          trend: "",
         }
       })
       .sort((a, b) => b.avgPrice - a.avgPrice)
@@ -2399,10 +2534,10 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
 
   return (
     <>
-      {/* ═══ MOBILE LAYOUT — Vertical Scrollable Feed ═══ */}
+      {/* ═══ MOBILE LAYOUT — Data-First Vertical Feed ═══ */}
       <div className="md:hidden min-h-[100dvh] w-full bg-background pt-[var(--app-header-h,3.5rem)]">
-        {/* Sticky region pills */}
-        <MobileRegionPills />
+        {/* Tesis banner — intelligence, not marketplace */}
+        <MobileTesisBanner liveCount={liveNowCount} />
 
         {/* Scrollable vertical feed */}
         <div className="pb-24">
@@ -2415,6 +2550,9 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
             <>
               {/* Hero: first brand */}
               <MobileHeroBrand brand={brands[0]} />
+
+              {/* Family chips — discovery */}
+              <MobileFamilyChips />
 
               {/* Section: All Brands */}
               {brands.length > 1 && (
@@ -2433,7 +2571,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
                 </div>
               )}
 
-              {/* Section: Live Auctions */}
+              {/* Section: Latest Reports */}
               <MobileLiveAuctions auctions={filteredAuctions} totalLiveCount={liveNowCount} />
             </>
           )}
@@ -2465,6 +2603,13 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
             {porscheFamilies.map((family, idx) => (
               <FamilyCard key={family.slug} family={family} index={idx} />
             ))}
+            {/* Advisor band at the end of the feed — discovery-to-ask handoff */}
+            <div className="snap-start px-8 pt-6 pb-12 max-w-3xl mx-auto">
+              <AdvisorBand
+                title={/* [HARDCODED] */ "Not sure which Porsche fits?"}
+                subtitle={/* [HARDCODED] */ "The advisor reads the market with you — inspections, fair value, comps."}
+              />
+            </div>
           </div>
 
           {/* COLUMN C: CONTEXT PANEL (28%) — synced with active family in scroll */}

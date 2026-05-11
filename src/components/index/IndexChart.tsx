@@ -63,8 +63,8 @@ export function IndexChart<ID extends string>({
             onClick={() => setEnabled((e) => ({ ...e, [s.id]: !e[s.id] }))}
             className={`px-3 py-1.5 text-xs rounded-full border transition ${
               enabled[s.id]
-                ? "text-zinc-100 bg-zinc-900"
-                : "border-zinc-700 text-zinc-500 bg-transparent"
+                ? "text-foreground bg-card"
+                : "border-border text-muted-foreground/80 bg-transparent"
             }`}
             style={enabled[s.id] ? { borderColor: s.color } : undefined}
           >
@@ -73,7 +73,7 @@ export function IndexChart<ID extends string>({
         ))}
       </div>
 
-      <div className="h-[420px] w-full rounded-lg border border-zinc-800 bg-black/30 p-4">
+      <div className="h-[420px] w-full rounded-lg border border-border bg-black/30 p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 12, right: 24, bottom: 12, left: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />

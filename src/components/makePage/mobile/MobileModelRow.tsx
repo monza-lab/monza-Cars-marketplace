@@ -59,9 +59,15 @@ export function MobileModelRow({
           {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[12px] tabular-nums text-primary">
-            {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
-          </span>
+          {model.priceMin > 0 && model.priceMax > 0 ? (
+            <span className="text-[12px] tabular-nums text-primary">
+              {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
+            </span>
+          ) : (
+            <span className="text-[11px] text-muted-foreground italic">
+              {/* [HARDCODED] */}Price on request
+            </span>
+          )}
           {platformBadge && (
             <span className={`px-1.5 py-0.5 rounded text-[8px] font-semibold ${platformBadge.color}`}>
               {platformBadge.short}

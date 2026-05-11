@@ -1,13 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { PricingCards, type PlanId } from "@/components/payments/PricingCards"
 import { CheckoutModal } from "@/components/payments/CheckoutModal"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { Shield, BarChart3, Globe, TrendingUp, Coins, FileBarChart } from "lucide-react"
+import { Shield, BarChart3, Globe, TrendingUp, Coins, FileBarChart, ChevronDown } from "lucide-react"
 import { track } from "@/lib/analytics/events"
-
-// ─── REPORT FEATURES ───
 
 const REPORT_FEATURES = [
   {
@@ -42,8 +41,6 @@ const REPORT_FEATURES = [
   },
 ]
 
-// ─── FAQ ───
-
 const FAQ_ITEMS = [
   {
     q: "Do reports expire?",
@@ -71,9 +68,32 @@ const FAQ_ITEMS = [
   },
 ]
 
-// ─── PAGE ───
+function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-b border-border last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-4 py-4 text-left"
+      >
+        <span className="text-[13px] font-medium text-foreground">{q}</span>
+        <ChevronDown
+          className={`size-4 text-muted-foreground shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <p className="text-[12px] text-muted-foreground leading-relaxed pb-4 pr-6">
+          {a}
+        </p>
+      )}
+    </div>
+  )
+}
 
 export default function PricingPage() {
+  const t = useTranslations("pricing")
   const { profile } = useAuth()
   const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null)
 
@@ -85,40 +105,58 @@ export default function PricingPage() {
     setCheckoutPlan(planId)
   }
 
+  const balance = profile?.pistonsBalance ?? profile?.creditsBalance ?? 0
+
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
-      {/* Hero */}
-      <div className="text-center px-4 mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
-          <Coins className="size-3 text-primary" />
-          <span className="text-[11px] font-medium text-primary">
-            300 free Pistons every month
-          </span>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Due Diligence for Porsche Buyers
+    <div className="min-h-screen bg-background pt-[var(--app-header-h,3.5rem)] md:pt-24 pb-32 md:pb-16">
+      {/* Hero — compact mobile */}
+      <div className="px-4 pt-6 md:pt-4 pb-8 md:pb-12 text-center max-w-2xl mx-auto">
+        <p className="text-[11px] font-medium tracking-wide text-primary/80">
+          {t("heroEyebrow")}
+        </p>
+        <h1 className="mt-3 font-display text-[28px] md:text-[40px] leading-tight font-medium text-foreground">
+          {t("heroTitle")}
         </h1>
-        <p className="text-[15px] text-muted-foreground max-w-xl mx-auto">
-          One report costs 100 Pistons. Higher plans unlock more monthly Pistons,
-          while top-ups never expire.
+        <p className="mt-3 text-[13px] md:text-[15px] text-muted-foreground leading-relaxed">
+          {t("heroDescription")}
+        </p>
+
+        {/* Anchor — due diligence stack */}
+        <p className="mt-5 text-[11px] text-muted-foreground/80 italic max-w-md mx-auto">
+          {t("heroAnchor")}
         </p>
       </div>
 
       {/* Pricing Cards */}
-      <div className="px-4 mb-16">
+      <div className="px-4 mb-12 md:mb-16">
         <PricingCards onSelectPlan={handleSelectPlan} />
       </div>
 
+      {/* Balance pill (auth users) */}
+      {profile && (
+        <div className="px-4 mb-10 md:mb-12 flex justify-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground/[0.04] border border-border">
+            <Coins className="size-3 text-primary" />
+            <span className="text-[11px] text-muted-foreground">
+              {t("currentBalance")}
+            </span>
+            <span className="text-[12px] font-semibold tabular-nums text-foreground">
+              {balance.toLocaleString()} {t("pistonsLabel")}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* What's included */}
-      <div className="max-w-4xl mx-auto px-4 mb-16">
-        <h2 className="text-xl font-bold text-foreground text-center mb-8">
-          What&apos;s Included in Every Report
+      <div className="max-w-4xl mx-auto px-4 mb-12 md:mb-16">
+        <h2 className="font-display text-[20px] md:text-[24px] font-medium text-foreground text-center mb-6 md:mb-8">
+          {t("whatIncluded")}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
           {REPORT_FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="p-5 rounded-xl border border-border bg-foreground/2"
+              className="p-4 md:p-5 rounded-xl border border-border bg-foreground/[0.02]"
             >
               <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 mb-3">
                 <feature.icon className="size-4 text-primary" />
@@ -134,44 +172,26 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* FAQ */}
-      <div className="max-w-2xl mx-auto px-4 mb-16">
-        <h2 className="text-xl font-bold text-foreground text-center mb-8">
-          Frequently Asked Questions
+      {/* FAQ — accordion */}
+      <div className="max-w-2xl mx-auto px-4 mb-10">
+        <h2 className="font-display text-[20px] md:text-[24px] font-medium text-foreground text-center mb-4 md:mb-6">
+          {t("faqTitle")}
         </h2>
-        <div className="space-y-4">
-          {FAQ_ITEMS.map((item) => (
-            <div
-              key={item.q}
-              className="p-5 rounded-xl border border-border bg-foreground/2"
-            >
-              <h3 className="text-[13px] font-semibold text-foreground mb-2">
-                {item.q}
-              </h3>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                {item.a}
-              </p>
-            </div>
+        <div className="rounded-2xl border border-border bg-foreground/[0.02] px-5">
+          {FAQ_ITEMS.map((item, i) => (
+            <FaqItem key={item.q} q={item.q} a={item.a} defaultOpen={i === 0} />
           ))}
         </div>
       </div>
 
-      {/* Bottom CTA */}
-      <div className="text-center px-4">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Shield className="size-4 text-muted-foreground" />
+      {/* Trust footer */}
+      <div className="text-center px-4 mb-6">
+        <div className="inline-flex items-center gap-2.5">
+          <Shield className="size-3.5 text-muted-foreground" />
           <span className="text-[12px] text-muted-foreground">
-            30-day money-back guarantee
+            {t("guarantee")}
           </span>
         </div>
-        {profile && (
-          <p className="text-[11px] text-muted-foreground">
-            Current balance:{" "}
-            <span className="text-primary font-semibold">
-              {profile.pistonsBalance ?? profile.creditsBalance} Pistons
-            </span>
-          </p>
-        )}
       </div>
 
       {/* Checkout Modal */}

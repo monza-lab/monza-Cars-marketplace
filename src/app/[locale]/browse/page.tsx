@@ -15,9 +15,9 @@ export async function generateMetadata({
 }) {
   await params;
   return {
-    title: "Browse Collection | Monza Lab",
+    title: "Browse Collection | MonzaHaus",
     description:
-      "Browse every collector Porsche in the Monza Lab marketplace. Filter by series, year, price, transmission. Live auctions and recent sales.",
+      "Browse every collector Porsche in the MonzaHaus marketplace. Filter by series, year, price, transmission. Live auctions and recent sales.",
   };
 }
 

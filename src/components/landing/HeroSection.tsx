@@ -6,13 +6,10 @@ import { Link, useRouter } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { Search, TrendingUp, Shield, Car } from "lucide-react"
 
+// Porsche-only doctrine (skill `monzahaus-growth`). Other makes are
+// documented future expansion (llms.txt) but not surfaced in UI.
 const popularMakes = [
   { name: "Porsche", slug: "porsche" },
-  { name: "BMW", slug: "bmw" },
-  { name: "Ferrari", slug: "ferrari" },
-  { name: "Mercedes", slug: "mercedes" },
-  { name: "Toyota", slug: "toyota" },
-  { name: "Ford", slug: "ford" },
 ]
 
 interface HeroStats {

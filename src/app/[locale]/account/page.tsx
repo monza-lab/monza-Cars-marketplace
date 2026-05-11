@@ -11,7 +11,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <MonzaInfinityLoader />
+      <MonzaInfinityLoader label="Loading account" />
     )
   }
 

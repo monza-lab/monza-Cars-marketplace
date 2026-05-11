@@ -32,15 +32,15 @@ export function IndexPageLayout<ID extends string>({
   methodology: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-black text-zinc-100">
+    <div className="min-h-screen bg-black text-foreground">
       <div className="mx-auto max-w-6xl px-6 py-12 space-y-10">
         <header className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-amber-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary">
             MonzaHaus Index · v1
           </p>
           <h1 className="text-4xl md:text-5xl font-serif leading-tight">{title}</h1>
-          <p className="max-w-3xl text-zinc-400 text-lg">{subtitle}</p>
-          <div className="flex flex-wrap gap-3 text-xs text-zinc-500">
+          <p className="max-w-3xl text-muted-foreground text-lg">{subtitle}</p>
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground/80">
             <span>
               Last updated:{" "}
               <time dateTime={payload.generatedAt}>
@@ -50,7 +50,7 @@ export function IndexPageLayout<ID extends string>({
             <span aria-hidden>·</span>
             <span>Sample size: {payload.sampleSize.toLocaleString()} sales</span>
             <span aria-hidden>·</span>
-            <a href={csvUrl} className="text-amber-400 hover:underline">
+            <a href={csvUrl} className="text-primary hover:underline">
               Download CSV
             </a>
           </div>
@@ -62,9 +62,9 @@ export function IndexPageLayout<ID extends string>({
             {payload.summaries.map((s) => (
               <div
                 key={s.series}
-                className="border border-zinc-800 rounded-lg p-4 bg-zinc-950"
+                className="border border-border rounded-lg p-4 bg-card"
               >
-                <div className="text-xs text-zinc-500">{s.label}</div>
+                <div className="text-xs text-muted-foreground/80">{s.label}</div>
                 <div className="text-2xl font-serif mt-2">
                   {formatUsd(s.latestMedian)}
                 </div>
@@ -72,7 +72,7 @@ export function IndexPageLayout<ID extends string>({
                   <span
                     className={
                       s.yoyChangePct == null
-                        ? "text-zinc-600"
+                        ? "text-muted-foreground/60"
                         : s.yoyChangePct >= 0
                           ? "text-emerald-400"
                           : "text-red-400"
@@ -80,8 +80,8 @@ export function IndexPageLayout<ID extends string>({
                   >
                     YoY {formatPct(s.yoyChangePct)}
                   </span>
-                  <span className="text-zinc-600">·</span>
-                  <span className="text-zinc-500">
+                  <span className="text-muted-foreground/60">·</span>
+                  <span className="text-muted-foreground/80">
                     n = {s.sampleSize.toLocaleString()}
                   </span>
                 </div>
@@ -94,21 +94,21 @@ export function IndexPageLayout<ID extends string>({
           <h2 className="text-xl font-serif mb-4">Quarterly median — historical</h2>
           <Suspense
             fallback={
-              <div className="h-[420px] rounded-lg border border-zinc-800 bg-zinc-950 animate-pulse" />
+              <div className="h-[420px] rounded-lg border border-border bg-card animate-pulse" />
             }
           >
             <IndexChart buckets={payload.buckets} series={config.series} />
           </Suspense>
         </section>
 
-        <section className="prose prose-invert max-w-3xl text-zinc-400">
-          <h2 className="text-xl font-serif text-zinc-100">Methodology</h2>
+        <section className="prose dark:prose-invert max-w-3xl text-muted-foreground">
+          <h2 className="text-xl font-serif text-foreground">Methodology</h2>
           {methodology}
           <p>
             This index is published under{" "}
             <Link
               href="https://creativecommons.org/licenses/by/4.0/"
-              className="text-amber-400 hover:underline"
+              className="text-primary hover:underline"
             >
               CC BY 4.0
             </Link>

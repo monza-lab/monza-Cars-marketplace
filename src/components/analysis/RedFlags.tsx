@@ -46,11 +46,11 @@ function getSeverityStyles(index: number, total: number) {
   // Lower severity
   return {
     container:
-      "bg-amber-500/6 border-amber-500/20 hover:bg-amber-500/10",
+      "bg-primary/6 border-primary/20 hover:bg-primary/10",
     icon: "text-destructive",
-    dot: "bg-amber-400",
+    dot: "bg-primary/80",
     label: "Monitor",
-    labelClass: "text-destructive bg-amber-500/15",
+    labelClass: "text-destructive bg-primary/15",
   };
 }
 
@@ -84,7 +84,7 @@ export function RedFlags({ redFlags, className }: RedFlagsProps) {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-zinc-300 leading-relaxed">{flag}</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{flag}</p>
             </div>
 
             {/* Severity label */}

@@ -56,7 +56,7 @@ export function VinIntelBlock({ vinIntel, vin }: VinIntelBlockProps) {
       {vinIntel.warnings.length > 0 && (
         <ul className="space-y-1">
           {vinIntel.warnings.map((w, i) => (
-            <li key={i} className="text-[12px] text-amber-600 dark:text-amber-400">{w}</li>
+            <li key={i} className="text-[12px] text-primary dark:text-primary">{w}</li>
           ))}
         </ul>
       )}

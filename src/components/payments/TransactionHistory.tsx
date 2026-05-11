@@ -19,47 +19,6 @@ interface Transaction {
   amount: number // positive = added, negative = used
 }
 
-// ─── MOCK DATA ───
-// Backend will replace with getTransactionHistory() API call
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: "tx-1",
-    date: "2026-03-01",
-    type: "FREE_MONTHLY",
-    description: "Free monthly credits",
-    amount: 3,
-  },
-  {
-    id: "tx-2",
-    date: "2026-02-28",
-    type: "ANALYSIS_USED",
-    description: "Analysis — 2023 Porsche 992 GT3 RS",
-    amount: -1,
-  },
-  {
-    id: "tx-3",
-    date: "2026-02-15",
-    type: "ANALYSIS_USED",
-    description: "Analysis — 1996 Porsche 993 Turbo",
-    amount: -1,
-  },
-  {
-    id: "tx-4",
-    date: "2026-02-01",
-    type: "FREE_MONTHLY",
-    description: "Free monthly credits",
-    amount: 3,
-  },
-  {
-    id: "tx-5",
-    date: "2026-01-20",
-    type: "ANALYSIS_USED",
-    description: "Analysis — 2019 Porsche 991 GT3 Touring",
-    amount: -1,
-  },
-]
-
 // ─── BADGE CONFIG ───
 
 const TYPE_CONFIG: Record<
@@ -94,10 +53,14 @@ const TYPE_CONFIG: Record<
 }
 
 // ─── COMPONENT ───
+// Honest-by-data: transactions must come from a real API call. Pass an empty
+// array (default) until the backend wires getTransactionHistory().
 
-export function TransactionHistory() {
-  const transactions = MOCK_TRANSACTIONS // TODO: replace with API call
+interface TransactionHistoryProps {
+  transactions?: Transaction[]
+}
 
+export function TransactionHistory({ transactions = [] }: TransactionHistoryProps) {
   return (
     <div className="rounded-2xl border border-border bg-foreground/2 overflow-hidden">
       {/* Header */}

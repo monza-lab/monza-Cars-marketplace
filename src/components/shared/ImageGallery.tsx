@@ -66,11 +66,11 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
     return (
       <div
         className={cn(
-          "flex aspect-[16/10] items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50",
+          "flex aspect-[16/10] items-center justify-center rounded-xl border border-border bg-card/50",
           className
         )}
       >
-        <p className="text-sm text-zinc-500">No images available</p>
+        <p className="text-sm text-muted-foreground/80">No images available</p>
       </div>
     );
   }
@@ -78,11 +78,11 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
   return (
     <div className={cn("space-y-3", className)}>
       {/* Main image */}
-      <div className="group relative overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/50">
+      <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-card/50">
         <div className="relative aspect-[16/10]">
           {/* Loading skeleton */}
           {!mainLoaded && (
-            <Skeleton className="absolute inset-0 rounded-xl bg-zinc-800/50" />
+            <Skeleton className="absolute inset-0 rounded-xl bg-foreground/5/50" />
           )}
 
           <AnimatePresence mode="wait">
@@ -113,7 +113,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
           {/* Fullscreen button */}
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 opacity-0 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
+            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-lg border border-border/50 bg-card/80 text-foreground/80 opacity-0 backdrop-blur-sm transition-all hover:border-primary/30 hover:text-destructive group-hover:opacity-100"
             aria-label="View fullscreen"
           >
             <Expand className="size-4" />
@@ -126,9 +126,9 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 onClick={goToPrevious}
                 disabled={!hasPrev}
                 className={cn(
-                  "absolute left-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm transition-all",
+                  "absolute left-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-border/50 bg-card/80 backdrop-blur-sm transition-all",
                   hasPrev
-                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
+                    ? "text-foreground/80 opacity-0 hover:border-primary/30 hover:text-destructive group-hover:opacity-100"
                     : "pointer-events-none opacity-0"
                 )}
                 aria-label="Previous image"
@@ -139,9 +139,9 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 onClick={goToNext}
                 disabled={!hasNext}
                 className={cn(
-                  "absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm transition-all",
+                  "absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg border border-border/50 bg-card/80 backdrop-blur-sm transition-all",
                   hasNext
-                    ? "text-zinc-300 opacity-0 hover:border-amber-500/30 hover:text-destructive group-hover:opacity-100"
+                    ? "text-foreground/80 opacity-0 hover:border-primary/30 hover:text-destructive group-hover:opacity-100"
                     : "pointer-events-none opacity-0"
                 )}
                 aria-label="Next image"
@@ -153,7 +153,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
           {/* Image counter badge */}
           {images.length > 1 && (
-            <div className="absolute bottom-3 right-3 rounded-md border border-zinc-700/50 bg-zinc-900/80 px-2 py-1 text-xs font-medium text-zinc-300 backdrop-blur-sm">
+            <div className="absolute bottom-3 right-3 rounded-md border border-border/50 bg-card/80 px-2 py-1 text-xs font-medium text-foreground/80 backdrop-blur-sm">
               {selectedIndex + 1} / {images.length}
             </div>
           )}
@@ -162,7 +162,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
       {/* Thumbnail strip */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-zinc-700">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
           {images.map((image, index) => (
             <button
               key={index}
@@ -170,14 +170,14 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
               className={cn(
                 "relative shrink-0 overflow-hidden rounded-lg border-2 transition-all duration-200",
                 index === selectedIndex
-                  ? "border-amber-500 shadow-lg shadow-amber-500/20"
-                  : "border-zinc-800 opacity-60 hover:border-zinc-600 hover:opacity-100"
+                  ? "border-primary/40 shadow-lg shadow-primary/20"
+                  : "border-border opacity-60 hover:border-primary/30 hover:opacity-100"
               )}
               aria-label={`View image ${index + 1}`}
             >
               <div className="relative size-16 md:h-18 md:w-24">
                 {!thumbnailsLoaded[index] && (
-                  <Skeleton className="absolute inset-0 bg-zinc-800/50" />
+                  <Skeleton className="absolute inset-0 bg-foreground/5/50" />
                 )}
                 <Image
                   src={image}
@@ -197,7 +197,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
               {/* Active indicator glow */}
               {index === selectedIndex && (
-                <div className="absolute inset-0 bg-amber-500/10" />
+                <div className="absolute inset-0 bg-primary/10" />
               )}
             </button>
           ))}
@@ -207,7 +207,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
       {/* Lightbox / Fullscreen Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent
-          className="max-w-[95vw] border-zinc-800 bg-zinc-950/95 p-0 backdrop-blur-xl sm:max-w-[90vw]"
+          className="max-w-[95vw] border-border bg-card/95 p-0 backdrop-blur-xl sm:max-w-[90vw]"
           showCloseButton={false}
         >
           <DialogTitle className="sr-only">
@@ -218,7 +218,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
             {/* Close button */}
             <button
               onClick={() => setLightboxOpen(false)}
-              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-900/80 text-zinc-300 backdrop-blur-sm transition-all hover:border-amber-500/30 hover:text-destructive"
+              className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full border border-border/50 bg-card/80 text-foreground/80 backdrop-blur-sm transition-all hover:border-primary/30 hover:text-destructive"
               aria-label="Close lightbox"
             >
               <X className="size-5" />
@@ -257,9 +257,9 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   onClick={goToPrevious}
                   disabled={!hasPrev}
                   className={cn(
-                    "absolute left-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm",
+                    "absolute left-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-border/50 bg-card/80 backdrop-blur-sm",
                     hasPrev
-                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-destructive"
+                      ? "text-foreground/80 hover:border-primary/30 hover:bg-foreground/5/80 hover:text-destructive"
                       : "pointer-events-none opacity-30"
                   )}
                   aria-label="Previous image"
@@ -272,9 +272,9 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   onClick={goToNext}
                   disabled={!hasNext}
                   className={cn(
-                    "absolute right-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-zinc-700/50 bg-zinc-900/80 backdrop-blur-sm",
+                    "absolute right-4 top-1/2 -translate-y-1/2 size-12 rounded-full border border-border/50 bg-card/80 backdrop-blur-sm",
                     hasNext
-                      ? "text-zinc-300 hover:border-amber-500/30 hover:bg-zinc-800/80 hover:text-destructive"
+                      ? "text-foreground/80 hover:border-primary/30 hover:bg-foreground/5/80 hover:text-destructive"
                       : "pointer-events-none opacity-30"
                   )}
                   aria-label="Next image"
@@ -286,7 +286,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
 
             {/* Lightbox counter */}
             {images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-zinc-700/50 bg-zinc-900/80 px-4 py-1.5 text-sm font-medium text-zinc-300 backdrop-blur-sm">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-border/50 bg-card/80 px-4 py-1.5 text-sm font-medium text-foreground/80 backdrop-blur-sm">
                 {selectedIndex + 1} / {images.length}
               </div>
             )}

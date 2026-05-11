@@ -68,7 +68,7 @@ export default function Error({
 
         {/* Bottom tag */}
         <p className="mt-12 text-[10px] uppercase tracking-widest text-muted-foreground">
-          Monza Lab &middot; Investment-Grade Automotive Assets
+          MonzaHaus &middot; Investment-Grade Automotive Assets
         </p>
       </div>
     </div>

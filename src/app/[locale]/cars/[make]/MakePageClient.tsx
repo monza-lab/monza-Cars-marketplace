@@ -831,7 +831,11 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
         </div>
 
         <div className="pb-24">
-          {filteredModels.length === 0 ? (
+          {isLoadingCars && filteredModels.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+            </div>
+          ) : filteredModels.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center px-8 py-20">
               <Car className="size-12 text-muted-foreground mb-4" />
               <h3 className="text-[15px] font-semibold text-foreground mb-2">{t("empty.title")}</h3>
@@ -952,8 +956,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             onClick={() => handleSiblingClick(s.id)}
                             className={`w-full flex items-center justify-between px-4 py-2 transition-all ${
                               isActive
-                                ? "bg-primary/6 border-l-2 border-l-primary"
-                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
+                                ? "bg-primary/8"
+                                : "hover:bg-foreground/4"
                             }`}
                           >
                             <span className={`text-[11px] font-medium ${
@@ -993,8 +997,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                             onClick={() => scrollToCar(i)}
                             className={`w-full flex items-center gap-2 px-4 py-1.5 transition-all ${
                               isActive
-                                ? "bg-primary/6 border-l-2 border-l-primary"
-                                : "border-l-2 border-l-transparent hover:bg-foreground/2"
+                                ? "bg-primary/8"
+                                : "hover:bg-foreground/4"
                             }`}
                           >
                             <span className={`text-[9px] tabular-nums w-4 shrink-0 ${
@@ -1246,12 +1250,12 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                       </div>
                     )}
                     {!hasMore && infiniteScrollCars.length > 0 && (
-                      <p className="text-center text-zinc-500 py-8">
+                      <p className="text-center text-muted-foreground/80 py-8">
                         Showing all {infiniteScrollCars.length} listings
                       </p>
                     )}
                     {!isLoadingCars && !hasMore && infiniteScrollCars.length === 0 && (
-                      <div className="text-center text-zinc-500 py-16">
+                      <div className="text-center text-muted-foreground/80 py-16">
                         <p>No listings found for these filters.</p>
                       </div>
                     )}

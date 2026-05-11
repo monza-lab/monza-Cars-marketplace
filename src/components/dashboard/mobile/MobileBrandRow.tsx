@@ -46,7 +46,9 @@ export function MobileBrandRow({ brand }: { brand: Brand }) {
           <span className="text-[12px] tabular-nums text-primary">
             {formatPrice(brand.priceMin)} – {formatPrice(brand.priceMax)}
           </span>
-          <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          {brand.avgTrend && (
+            <span className="text-[10px] text-positive font-medium">{brand.avgTrend}</span>
+          )}
         </div>
       </div>
 

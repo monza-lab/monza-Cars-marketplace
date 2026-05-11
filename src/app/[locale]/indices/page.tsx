@@ -77,16 +77,16 @@ export default async function IndexHubPage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-black text-zinc-100">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-6xl px-6 py-16 space-y-12">
           <header className="space-y-6 max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">
               MonzaHaus Index
             </p>
             <h1 className="text-4xl md:text-6xl font-serif leading-tight">
               Market data for collector car investors.
             </h1>
-            <p className="text-lg text-zinc-400">
+            <p className="text-lg text-muted-foreground">
               Proprietary quarterly indices aggregating public auction results across
               Bring a Trailer, Cars &amp; Bids, Classic.com, Elferspot, RM Sotheby&apos;s
               and AutoScout24. Open data, CC BY 4.0. Updated hourly.
@@ -100,7 +100,7 @@ export default async function IndexHubPage({ params }: PageProps) {
                 <Link
                   key={idx.slug}
                   href={`/${loc}/indices/${idx.slug}`}
-                  className="group border border-zinc-800 rounded-lg p-6 bg-zinc-950 hover:border-amber-600/50 transition"
+                  className="group border border-border rounded-lg p-6 bg-card hover:border-primary/40 transition"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -108,11 +108,11 @@ export default async function IndexHubPage({ params }: PageProps) {
                       Live
                     </span>
                   </div>
-                  <h3 className="text-xl font-serif mb-2 group-hover:text-amber-400 transition">
+                  <h3 className="text-xl font-serif mb-2 group-hover:text-primary transition">
                     {idx.name}
                   </h3>
-                  <p className="text-sm text-zinc-400 mb-4">{idx.tagline}</p>
-                  <span className="text-xs text-amber-500 group-hover:underline">
+                  <p className="text-sm text-muted-foreground mb-4">{idx.tagline}</p>
+                  <span className="text-xs text-primary group-hover:underline">
                     View index →
                   </span>
                 </Link>
@@ -126,23 +126,23 @@ export default async function IndexHubPage({ params }: PageProps) {
               {upcoming.map((idx) => (
                 <div
                   key={idx.slug}
-                  className="border border-zinc-800/50 rounded-lg p-6 bg-zinc-950/50"
+                  className="border border-border/50 rounded-lg p-6 bg-card/50"
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="h-2 w-2 rounded-full bg-zinc-600" />
-                    <span className="text-xs uppercase tracking-wider text-zinc-500">
+                    <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground/80">
                       Upcoming
                     </span>
                   </div>
-                  <h3 className="text-xl font-serif mb-2 text-zinc-400">{idx.name}</h3>
-                  <p className="text-sm text-zinc-500">{idx.tagline}</p>
+                  <h3 className="text-xl font-serif mb-2 text-muted-foreground">{idx.name}</h3>
+                  <p className="text-sm text-muted-foreground/80">{idx.tagline}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="prose prose-invert max-w-3xl text-zinc-400">
-            <h2 className="text-xl font-serif text-zinc-100">About the MonzaHaus Index</h2>
+          <section className="prose dark:prose-invert max-w-3xl text-muted-foreground">
+            <h2 className="text-xl font-serif text-foreground">About the MonzaHaus Index</h2>
             <p>
               Every index uses the same methodology: quarterly median hammer prices from
               public auction sales, grouped by generation or trim. Median over mean to
@@ -153,7 +153,7 @@ export default async function IndexHubPage({ params }: PageProps) {
               All data is free to use under{" "}
               <Link
                 href="https://creativecommons.org/licenses/by/4.0/"
-                className="text-amber-400 hover:underline"
+                className="text-primary hover:underline"
               >
                 CC BY 4.0
               </Link>

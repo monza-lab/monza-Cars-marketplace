@@ -55,17 +55,17 @@ function CostBar({
       className="space-y-1.5"
     >
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm text-zinc-300">
+        <span className="flex items-center gap-2 text-sm text-foreground/80">
           <Icon className={cn("size-4", item.color)} />
           {item.label}
         </span>
-        <span className="text-sm font-semibold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+        <span className="text-sm font-medium text-foreground tabular-nums">
           {formatPrice(item.amount ?? 0)}
         </span>
       </div>
 
       {/* Bar */}
-      <div className="h-2 w-full rounded-full bg-zinc-800/80 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-foreground/5/80 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${widthPct}%` }}
@@ -101,7 +101,7 @@ function FiveYearProjection({
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-medium">
         5-Year Ownership Projection
       </p>
 
@@ -113,7 +113,7 @@ function FiveYearProjection({
           return (
             <div key={p.year} className="flex-1 flex flex-col items-center gap-1">
               {/* Amount label */}
-              <span className="text-[10px] font-medium text-zinc-400 tabular-nums">
+              <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
                 {formatPrice(p.cost ?? 0)}
               </span>
 
@@ -129,13 +129,13 @@ function FiveYearProjection({
                 className={cn(
                   "w-full rounded-t-sm min-h-[4px]",
                   hasMajorService
-                    ? "bg-gradient-to-t from-amber-600 to-amber-400"
-                    : "bg-gradient-to-t from-amber-700/80 to-amber-500/80"
+                    ? "bg-gradient-to-t from-primary to-primary/80"
+                    : "bg-gradient-to-t from-primary/80 to-primary/65"
                 )}
               />
 
               {/* Year label */}
-              <span className="text-[10px] text-zinc-500 font-medium">
+              <span className="text-[10px] text-muted-foreground/80 font-medium">
                 Y{p.year}
               </span>
             </div>
@@ -143,7 +143,7 @@ function FiveYearProjection({
         })}
       </div>
 
-      <p className="text-[10px] text-zinc-600 text-center">
+      <p className="text-[10px] text-muted-foreground/60 text-center">
         * Major service estimated in Year 3
       </p>
     </div>
@@ -169,7 +169,7 @@ export function OwnershipCosts({
         amount: yearlyMaintenance,
         icon: Wrench,
         color: "text-destructive",
-        barColor: "bg-gradient-to-r from-amber-600 to-amber-400",
+        barColor: "bg-gradient-to-r from-primary to-primary/80",
       },
       {
         label: "Insurance (est.)",
@@ -203,23 +203,23 @@ export function OwnershipCosts({
 
       {/* Major service description */}
       {majorServiceDescription && (
-        <div className="rounded-md bg-zinc-800/40 border border-zinc-700/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
+        <div className="rounded-md bg-foreground/5/40 border border-border/40 p-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-1">
             Major Service Details
           </p>
-          <p className="text-xs text-zinc-400 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {majorServiceDescription}
           </p>
         </div>
       )}
 
       {/* Annual total */}
-      <div className="flex items-center justify-between rounded-md bg-amber-500/8 border border-amber-500/20 p-3">
-        <span className="flex items-center gap-2 text-sm font-medium text-zinc-200">
+      <div className="flex items-center justify-between rounded-md bg-primary/8 border border-primary/20 p-3">
+        <span className="flex items-center gap-2 text-sm font-medium text-foreground/90">
           <DollarSign className="size-4 text-destructive" />
           Total Annual Cost
         </span>
-        <span className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+        <span className="text-lg font-display font-medium text-foreground tabular-nums">
           {formatPrice(annualTotal ?? 0)}
         </span>
       </div>

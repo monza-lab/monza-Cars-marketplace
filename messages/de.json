@@ -7,7 +7,34 @@
     "about": "Über uns",
     "menu": "Menü",
     "searchHistory": "Verlauf",
-    "pricing": "Preise"
+    "pricing": "Preise",
+    "menuTitle": "Menü",
+    "advisor": "Advisor",
+    "advisorAria": "Advisor-Chat öffnen",
+    "account": "Konto",
+    "accountTitle": "Konto",
+    "appVersion": "MonzaHaus · v1.0",
+    "discover": "Entdecken",
+    "discoverPorsche": "Porsche-Kollektion",
+    "discoverKnowledge": "Wissens-Leitfäden",
+    "discoverIndices": "Marktindizes",
+    "discoverTrends": "Markttrends",
+    "discoverVin": "VIN-Decoder",
+    "discoverBuy": "Einen Porsche kaufen",
+    "plans": "Tarife & Abrechnung",
+    "plansPricing": "Preise & Pistons",
+    "plansBilling": "Abrechnung & Verlauf",
+    "preferences": "Einstellungen",
+    "preferencesTheme": "Theme",
+    "preferencesThemeLight": "Hell",
+    "preferencesThemeDark": "Dunkel",
+    "preferencesThemeSystem": "System",
+    "preferencesLanguage": "Sprache",
+    "preferencesCurrency": "Währung",
+    "help": "Hilfe & Rechtliches",
+    "helpAdvisor": "Mit dem Advisor sprechen",
+    "helpPrivacy": "Datenschutz",
+    "helpTerms": "Nutzungsbedingungen"
   },
   "mobile": {
     "aiOracle": "KI-Orakel",
@@ -24,7 +51,51 @@
     "noResults": "Keine Ergebnisse für \"{query}\"",
     "tryAnother": "Versuchen Sie eine andere Marke oder ein anderes Modell",
     "searchPlaceholder": "Nach Marke, Modell, Jahr suchen...",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "recent": "Zuletzt",
+    "clear": "Löschen",
+    "market": "Markt",
+    "status": "Status",
+    "priceUsd": "Preis (USD)",
+    "applyFilters": "{count} Filter anwenden →",
+    "applyFiltersPlural": "{count} Filter anwenden →",
+    "browseByFamily": "Nach Familie durchsuchen",
+    "trendingNow": "Im Trend",
+    "modelsSeries": "Modelle & Serien",
+    "listings": "Inserate",
+    "seeAllResults": "Alle Ergebnisse für \"{query}\" anzeigen →",
+    "noResultsTitle": "Keine Ergebnisse für \"{query}\"",
+    "advisorContextHint": "Der Advisor kann tieferen Kontext liefern.",
+    "askTheAdvisor": "Den Advisor fragen →",
+    "searchTypingPlaceholder": "Suche 992, GT3, Manual…",
+    "advisor": "Advisor",
+    "home": "Startseite"
+  },
+  "cookies": {
+    "body": "Wir verwenden notwendige Cookies für den Betrieb der Website und optionale, um die Nutzung zu messen und das Produkt zu verbessern.",
+    "learnMore": "Cookie-Richtlinie",
+    "accept": "Alle akzeptieren",
+    "reject": "Alle ablehnen"
+  },
+  "accountSheet": {
+    "alreadyHaveAccount": "Schon ein Konto?",
+    "signIn": "Anmelden →",
+    "pistons": "Pistons",
+    "buy": "Kaufen →",
+    "available": "verfügbar",
+    "creditsResetHint": "Kostenlose Credits werden am 1. jedes Monats zurückgesetzt",
+    "watchlist": "Watchlist",
+    "watchlistEmpty": "Noch keine gespeicherten Porsches. Tippen Sie auf das Lesezeichen, um es hier zu verfolgen.",
+    "recentReports": "Aktuelle Berichte",
+    "recentReportsEmpty": "Noch keine Berichte. Erstellen Sie Ihren ersten, um ihn hier zu sehen.",
+    "browsePorsches": "Porsches durchsuchen →",
+    "currentPlan": "Aktueller Tarif",
+    "unlimitedReportsActive": "Unbegrenzte Berichte während aktiv",
+    "freeReportsHint": "3 kostenlose Berichte / Monat",
+    "manage": "Verwalten",
+    "upgrade": "Upgrade",
+    "searchHistory": "Suchverlauf",
+    "billingHistory": "Abrechnung & Verlauf"
   },
   "menu": {
     "profile": {
@@ -52,6 +123,7 @@
     "share": "Teilen",
     "archive": "Archivieren",
     "newChat": "Neuer Chat",
+    "conversations": "Gespräche",
     "sharedWatermark": "Geteilte Unterhaltung — Marktdaten sind aktuell, Preise könnten veraltet sein",
     "suggestions": {
       "compareGt3s": "Top 3 997.2 GT3 vergleichen",
@@ -112,7 +184,7 @@
       "graceRemaining": "{used}/{total} {tier} heute genutzt",
       "tierPillInstant": "Instant · 1 Kolben",
       "tierPillMarketplace": "Marketplace · ~5 Kolben",
-      "tierPillDeepResearch": "Deep Research · ~25 Kolben",
+      "tierPillDeepResearch": "Tiefenrecherche",
       "debitGhost": "-{amount} {amount, plural, one {Kolben} other {Kolben}}",
       "upgradeCta": "Auf PRO upgraden"
     }
@@ -402,6 +474,15 @@
   "pricing": {
     "title": "Wählen Sie Ihren Plan",
     "subtitle": "Umfassende Investitionsanalyse für klügere Kaufentscheidungen",
+    "heroEyebrow": "300 kostenlose Pistons jeden Monat — keine Karte erforderlich",
+    "heroTitle": "Due Diligence für Porsche-Käufer",
+    "heroDescription": "Ein Bericht kostet 100 Pistons. Höhere Tarife schalten mehr monatliche Pistons frei. Aufladungen verfallen nie.",
+    "heroAnchor": "Eine PPI kostet $400. Ein Porsche PPS, $250. $59/Monat zu zahlen, um zu wissen, ob der Deal sich lohnt, ist Due Diligence, kein Kostenfaktor.",
+    "currentBalance": "Aktueller Kontostand",
+    "pistonsLabel": "Pistons",
+    "whatIncluded": "Was jeder Bericht enthält",
+    "faqTitle": "Häufige Fragen",
+    "guarantee": "30 Tage Geld-zurück-Garantie",
     "single": {
       "name": "Einzelbericht",
       "price": "$29",
@@ -1275,9 +1356,10 @@
     "justNow": "Gerade eben"
   },
   "footer": {
-    "copyright": "© 2025 Monza Lab",
+    "copyright": "© 2026 Monza Lab LLC",
     "privacy": "Datenschutz",
-    "terms": "Nutzungsbedingungen"
+    "terms": "Nutzungsbedingungen",
+    "cookies": "Cookies"
   },
   "seo": {
     "make": {

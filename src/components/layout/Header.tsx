@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, LogOut, Bookmark, FileText, Bell, Settings, Phone, ChevronRight, Clock, Globe, Award, Calendar, LinkIcon, ShieldCheck, Scale } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, FileText, ChevronRight, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, ScrollText, MessageCircle } from "lucide-react";
 import { Piston } from "@/components/icons/Piston";
 import {
   Sheet,
@@ -20,13 +20,12 @@ import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { MonzaHausWordmark } from "@/components/brand/MonzaHausWordmark";
-import { LanguageSwitcher } from "./LanguageSwitcher";
+import { AccountSheetContent } from "@/components/account/AccountSheetContent";
 import { ViewToggle } from "./ViewToggle";
 import { saveSearchQuery } from "@/lib/searchHistory";
 import { getBrandConfig } from "@/lib/brandConfig";
 import { CurrencyDropdown } from "./CurrencyDropdown";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
 import { PistonsWalletModal } from "@/components/advisor/PistonsWalletModal";
 import { AdvisorConversation } from "@/components/advisor/AdvisorConversation";
 import { useAdvisorChatHandoffOptional } from "@/components/advisor/AdvisorHandoffContext";
@@ -401,6 +400,96 @@ function OracleOverlay({
 // ─── INLINE LANGUAGE SWITCHER (for hamburger menu) ───
 const LOCALE_LABELS: Record<string, string> = { en: "EN", es: "ES", de: "DE", ja: "JA" }
 
+// ─── MENU PRIMITIVES — used inside the right-side Sheet ───
+function MenuSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section className="px-3 pt-4 pb-1">
+      <p className="px-3 text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground/80 mb-1">
+        {label}
+      </p>
+      <div className="space-y-0.5">{children}</div>
+    </section>
+  )
+}
+
+function MenuLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+}) {
+  return (
+    <SheetClose asChild>
+      <Link
+        href={href}
+        className="group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-foreground/[0.04] active:bg-foreground/[0.07] transition-colors"
+      >
+        <Icon className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        <span className="flex-1 text-left text-[13px] text-foreground/85 group-hover:text-foreground transition-colors">
+          {label}
+        </span>
+        <ChevronRight className="size-3.5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
+      </Link>
+    </SheetClose>
+  )
+}
+
+function ThemeRow() {
+  const t = useTranslations()
+  const { theme, setTheme } = useTheme()
+  const options: { value: "light" | "dark" | "system"; label: string }[] = [
+    { value: "light", label: t("nav.preferencesThemeLight") },
+    { value: "dark", label: t("nav.preferencesThemeDark") },
+    { value: "system", label: t("nav.preferencesThemeSystem") },
+  ]
+  return (
+    <div className="px-3 py-2">
+      <p className="text-[12px] text-foreground/85 mb-2">{t("nav.preferencesTheme")}</p>
+      <div className="flex items-center gap-0.5 rounded-full bg-foreground/[0.05] border border-border p-0.5">
+        {options.map(opt => {
+          const active = (theme ?? "system") === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setTheme(opt.value)}
+              className={`flex-1 h-7 rounded-full text-[11px] font-medium transition-all ${
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function LanguageRow() {
+  const t = useTranslations()
+  return (
+    <div className="px-3 py-2 flex items-center justify-between">
+      <p className="text-[12px] text-foreground/85">{t("nav.preferencesLanguage")}</p>
+      <InlineLanguageSwitcher />
+    </div>
+  )
+}
+
+function CurrencyRow() {
+  const t = useTranslations()
+  return (
+    <div className="px-3 py-2 flex items-center justify-between">
+      <p className="text-[12px] text-foreground/85">{t("nav.preferencesCurrency")}</p>
+      <CurrencyDropdown />
+    </div>
+  )
+}
+
 function InlineLanguageSwitcher() {
   const locale = useLocale()
   const pathname = usePathname()
@@ -457,6 +546,17 @@ export function Header() {
   // a region pill must also write the choice into the URL — that's what
   // BrowseClient reads via useClassicFilters to filter its grid.
   const isBrowsePage = /^\/(?:[a-z]{2}\/)?browse$/.test(pathname);
+  // Route-aware header — only show controls where they actually apply.
+  // Listings pages (home, /browse, /cars/{make}) get both ViewToggle and
+  // Region pills, because that's where the user is actually looking at
+  // cars and may want to switch view OR filter by country. Everywhere
+  // else (advisor, report, pricing, tools, knowledge…) the header stays
+  // clean.
+  const isHomePage = /^\/(?:[a-z]{2})?\/?$/.test(pathname);
+  const isCarsListPage = /^\/(?:[a-z]{2}\/)?cars\/[^/]+\/?$/.test(pathname);
+  const isListingsRoute = isHomePage || isBrowsePage || isCarsListPage;
+  const showViewToggle = isListingsRoute;
+  const showRegionPills = isListingsRoute;
   // On /browse the URL is the source of truth for the active region. Read
   // from the query param so the active pill matches the current filter
   // even when the user lands via direct URL like /browse?region=US.
@@ -468,7 +568,7 @@ export function Header() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [walletOpen, setWalletOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -493,13 +593,14 @@ export function Header() {
 
     const timeout = setTimeout(() => {
       if (!isDeleting) {
-        // Typing forward
+        // Typing forward — slower for editorial calm (was 25-55ms; now 35-75ms)
         if (charIndex < currentPhrase.length) {
           setTypedPlaceholder(currentPhrase.slice(0, charIndex + 1))
           setCharIndex(charIndex + 1)
         } else {
-          // Pause at end, then start deleting
-          setTimeout(() => setIsDeleting(true), 2000)
+          // Pause at end longer so the user can read the full phrase
+          // before it starts deleting (was 2000ms; now 4000ms)
+          setTimeout(() => setIsDeleting(true), 4000)
         }
       } else {
         // Deleting
@@ -512,7 +613,7 @@ export function Header() {
           setPhraseIndex((phraseIndex + 1) % TYPING_PHRASES.length)
         }
       }
-    }, isDeleting ? 25 : 55)
+    }, isDeleting ? 35 : 75)
 
     return () => clearTimeout(timeout)
   }, [charIndex, isDeleting, phraseIndex, isFocused, query])
@@ -638,8 +739,10 @@ export function Header() {
             />
           </Link>
 
-          {/* View Toggle: Monza | Classic */}
-          <ViewToggle />
+          {/* View Toggle: Monza | Classic — only on home (where the dual
+              feed view is the actual UX). Off on cars list, advisor, report,
+              tools etc. so the header stays calm. */}
+          {showViewToggle && <ViewToggle />}
 
           {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
           <div className="hidden md:block flex-1 max-w-xl relative">
@@ -792,7 +895,10 @@ export function Header() {
             </AnimatePresence>
           </div>
 
-          {/* Region Filter — with pink separators */}
+          {/* Region Filter — only where filtering by region actually does
+              something: /cars/{make} list and /browse. On other pages (home,
+              advisor, report, tools…) the region pills were noise. */}
+          {showRegionPills && (
           <div
             className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
             aria-disabled={isMarketLocked}
@@ -836,11 +942,10 @@ export function Header() {
             })}
           </div>
 
-          {/* Currency Dropdown */}
-          <div className="hidden md:flex items-center ml-2">
-            <div className="w-px h-3.5 bg-primary/20 mx-1" />
-            <CurrencyDropdown />
-          </div>
+          )}
+
+          {/* Currency moved to Menu › Preferences (header was overcrowded;
+              currency is a personal preference, lives next to Theme/Language). */}
 
           {/* Right: Actions — anchored to far right */}
           <div className="flex items-center gap-4 shrink-0 ml-auto">
@@ -848,7 +953,7 @@ export function Header() {
             {isAuthenticated && (
               <button
                 onClick={() => setWalletOpen(true)}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 border border-border hover:bg-foreground/10 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-label={t("auth.pistons.walletTitle")}
               >
                 <Piston className={`size-3 ${hasUnlimited || creditsRemaining > 0 ? 'text-primary' : 'text-destructive'}`} />
@@ -863,221 +968,145 @@ export function Header() {
               </button>
             )}
 
-            {/* Account / Sign In */}
+            {/* Advisor pill (desktop) — high-priority funnel: Pistons + retention
+                driver. Active state when on /advisor. Outline style so it doesn't
+                fight the primary "Buy" CTAs on the page. */}
+            <Link
+              href="/advisor"
+              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                pathname?.startsWith("/advisor")
+                  ? "bg-primary/15 border-primary/30 text-primary"
+                  : "border-primary/30 text-primary/85 hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+              }`}
+              aria-label={t("nav.advisorAria")}
+            >
+              <MessageCircle className="size-3.5" />
+              {t("nav.advisor")}
+            </Link>
+
+            {/* Account button (desktop) — opens the same AccountSheetContent
+                used by the mobile bottom sheet. Click no longer signs out;
+                sign-out lives inside the sheet. */}
             {authLoading ? (
               <div className="hidden md:flex size-8 items-center justify-center">
                 <div className="size-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
               </div>
             ) : isAuthenticated ? (
-                <button
-                  onClick={() => signOut()}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
-                  title={t("auth.signOut")}
-                >
-                  <User className="size-4" />
-                  <span className="text-[11px] font-medium">
-                    {profile?.name?.split(" ")[0] || t("mobile.account")}
-                  </span>
-                </button>
+              <button
+                onClick={() => setAccountSheetOpen(true)}
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                title={t("nav.account")}
+              >
+                <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
+                  <User className="size-3.5 text-primary" />
+                </div>
+                <span className="text-[11px] font-medium">
+                  {profile?.name?.split(" ")[0] || t("nav.account")}
+                </span>
+              </button>
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide"
+                className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t('auth.signIn')}
               </button>
             )}
 
-            {/* Language Switcher */}
-            <LanguageSwitcher />
-
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hidden md:flex items-center justify-center size-8 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-            </button>
+            {/* Theme + Language moved to Menu › Preferences. Header was
+                overcrowded; both already exist inside the Menu sheet, so
+                having them outside was duplication. */}
 
             {/* Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors">
+                <button className="flex items-center gap-2 text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded">
                   <Menu className="size-4" />
                   <span className="hidden md:inline">{t('nav.menu')}</span>
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="border-l border-primary/8 bg-background w-[340px] p-0 flex flex-col overflow-hidden">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Menu</SheetTitle>
+                <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
+                  <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
+                    {t("nav.menuTitle")}
+                  </SheetTitle>
                 </SheetHeader>
 
                 {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
 
-                  {/* ── Profile Card ── */}
-                  {isAuthenticated ? (
-                    <div className="px-6 pt-6 pb-5">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/20 flex items-center justify-center">
-                          <User className="size-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground truncate">
-                            {profile?.name || "Collector"}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {user?.email || "member@monza.com"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="px-6 pt-6 pb-5">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-11 rounded-full bg-foreground/4 border border-border flex items-center justify-center">
-                          <User className="size-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-semibold text-foreground">{t("menu.profile.welcome")}</p>
-                          <p className="text-[11px] text-muted-foreground">{t("menu.profile.signInHint")}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowAuthModal(true)}
-                        className="mt-4 w-full rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-colors"
-                      >
-                        {t('auth.signIn')}
-                      </button>
-                    </div>
-                  )}
+                  {/* (Profile + Pistons used to live here in `hidden md:block`.
+                      They moved to the Account sheet — opened from the
+                      [👤 Edgar] button in the header — to mirror the mobile
+                      Account / Menu split. The Menu is now navigation +
+                      preferences only, no personal data.) */}
 
-                  {/* ── Credits ── */}
-                  <div className="mx-5 rounded-xl bg-primary/4 border border-primary/8 p-4">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-2">
-                        <Piston className={`size-3.5 ${creditsRemaining > 0 ? "text-primary" : "text-destructive"}`} />
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.credits.label")}</span>
-                      </div>
-                      <span className="text-[14px] tabular-nums font-bold text-foreground">
-                        {isAuthenticated ? creditsRemaining.toLocaleString() : "0"}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-1">/ 10,000</span>
-                      </span>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="h-[5px] rounded-full bg-foreground/4 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/70 transition-all duration-500"
-                        style={{ width: `${Math.min((creditsRemaining / 10000) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between mt-2.5">
-                      <span className="text-[10px] text-muted-foreground">{t("menu.credits.perReport")}</span>
-                      <button className="text-[10px] font-semibold text-primary hover:text-primary/80 transition-colors">
-                        {t("menu.credits.buy")}
-                      </button>
-                    </div>
-                  </div>
+                  {/* ─── DISCOVER ─── */}
+                  <MenuSection label={t("nav.discover")}>
+                    <MenuLink href="/cars/porsche" icon={Car} label={t("nav.discoverPorsche")} />
+                    <MenuLink href="/knowledge" icon={BookOpen} label={t("nav.discoverKnowledge")} />
+                    <MenuLink href="/indices" icon={BarChart3} label={t("nav.discoverIndices")} />
+                    <MenuLink href="/history" icon={TrendingUp} label={t("nav.discoverTrends")} />
+                    <MenuLink href="/tools/porsche-vin-decoder" icon={Wrench} label={t("nav.discoverVin")} />
+                    <MenuLink href="/buy/porsche" icon={ScrollText} label={t("nav.discoverBuy")} />
+                  </MenuSection>
 
-                  {/* ── Watchlist ── */}
-                  {isAuthenticated && (
-                    <div className="px-5 pt-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Bookmark className="size-3.5 text-primary" />
-                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.watchlist.title")}</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground px-2 py-3">
-                        {t("menu.watchlist.empty")}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ── Recent Analyses ── */}
-                  {isAuthenticated && (
-                    <div className="px-5 pt-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="size-3.5 text-primary" />
-                          <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("menu.recentAnalyses.title")}</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground px-2 py-3">
-                        {t("menu.recentAnalyses.empty")}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* ── Quick Links ── */}
-                  <div className="px-5 pt-6 pb-2">
-                    <div className="h-px bg-foreground/5 mb-4" />
-
-                    {/* Search History — only for logged-in users */}
+                  {/* ─── PLANS & BILLING ─── */}
+                  <MenuSection label={t("nav.plans")}>
+                    <MenuLink href="/pricing" icon={Piston} label={t("nav.plansPricing")} />
                     {isAuthenticated && (
-                      <SheetClose asChild>
-                        <Link
-                          href="/search-history"
-                          className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
-                        >
-                          <Clock className="size-4 text-muted-foreground transition-colors" />
-                          <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">
-                            {t("nav.searchHistory")}
-                          </span>
-                          <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
-                        </Link>
-                      </SheetClose>
+                      <MenuLink href="/account" icon={FileText} label={t("nav.plansBilling")} />
                     )}
+                  </MenuSection>
 
-                    {[
-                      { icon: Bell, label: "Notifications", badge: "3" },
-                      { icon: Phone, label: "Contact Advisor", badge: null },
-                      { icon: Settings, label: "Settings", badge: null },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        className="flex items-center gap-3 w-full py-2.5 px-2 rounded-lg hover:bg-foreground/2 transition-colors group"
-                      >
-                        <item.icon className="size-4 text-muted-foreground transition-colors" />
-                        <span className="flex-1 text-left text-[13px] text-muted-foreground group-hover:text-foreground transition-colors">{item.label}</span>
-                        {item.badge && (
-                          <span className="size-4.5 flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground leading-none px-1.5 py-0.5">
-                            {item.badge}
-                          </span>
-                        )}
-                        <ChevronRight className="size-3.5 text-muted-foreground transition-colors" />
-                      </button>
-                    ))}
+                  {/* ─── PREFERENCES ─── */}
+                  <MenuSection label={t("nav.preferences")}>
+                    <ThemeRow />
+                    <LanguageRow />
+                    <CurrencyRow />
+                  </MenuSection>
 
-                    {/* Language in quick links */}
-                    <div className="flex items-center gap-3 w-full py-2.5 px-2">
-                      <Globe className="size-4 text-muted-foreground" />
-                      <span className="flex-1 text-left text-[13px] text-muted-foreground">Language</span>
-                      <InlineLanguageSwitcher />
-                    </div>
-                  </div>
+                  {/* ─── HELP & LEGAL ─── */}
+                  <MenuSection label={t("nav.help")}>
+                    <MenuLink href="/advisor" icon={MessageCircle} label={t("nav.helpAdvisor")} />
+                    <MenuLink href="/legal/privacy" icon={ShieldCheck} label={t("nav.helpPrivacy")} />
+                    <MenuLink href="/legal/terms" icon={ScrollText} label={t("nav.helpTerms")} />
+                  </MenuSection>
+
+                  {/* App version footer */}
+                  <p className="px-6 pt-3 text-[10px] tracking-[0.2em] uppercase text-muted-foreground/60">
+                    {t("nav.appVersion")}
+                  </p>
                 </div>
 
-                {/* ── Footer: Sign Out (pinned) ── */}
-                {isAuthenticated && (
-                  <div className="shrink-0 px-5 py-4 border-t border-border">
-                    <SheetClose asChild>
-                      <button
-                        onClick={() => signOut()}
-                        className="flex items-center gap-2.5 w-full py-2 px-2 rounded-lg text-[13px] text-muted-foreground hover:text-destructive hover:bg-foreground/2 transition-colors"
-                      >
-                        <LogOut className="size-4" />
-                        {t('auth.signOut')}
-                      </button>
-                    </SheetClose>
-                  </div>
-                )}
+                {/* (Sign-out moved to the Account sheet so it lives next to
+                    the rest of "TÚ" — same place on mobile and desktop.) */}
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </div>
+
+      {/* ACCOUNT SHEET (desktop) — TÚ side. Mirror of mobile MobileProfileSheet,
+          opened by the [👤 Edgar] button in the header. Sign-out lives inside. */}
+      <Sheet open={accountSheetOpen} onOpenChange={setAccountSheetOpen}>
+        <SheetContent
+          side="right"
+          className="border-l border-primary/8 bg-background w-[360px] p-0 flex flex-col overflow-hidden"
+        >
+          <SheetHeader className="px-6 pt-6 pb-3 shrink-0">
+            <SheetTitle className="font-display text-[20px] font-medium text-foreground text-left">
+              {t("nav.accountTitle")}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-5 pb-6">
+            <AccountSheetContent
+              onClose={() => setAccountSheetOpen(false)}
+              onOpenAuth={() => setShowAuthModal(true)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* PISTONS WALLET MODAL */}
       <PistonsWalletModal

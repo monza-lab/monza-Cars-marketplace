@@ -23,7 +23,7 @@ export function MarketDeltaPill({ priceUsd, medianUsd, className }: MarketDeltaP
   const isBelow = rounded < 0
   const toneClass = isBelow
     ? "bg-positive/20 text-positive"
-    : "bg-amber-500/15 text-amber-600 dark:text-amber-300"
+    : "bg-primary/15 text-primary dark:text-primary"
 
   return (
     <span

@@ -41,10 +41,10 @@ export async function generateMetadata({ params }: ReportPageProps) {
     car = await fetchLiveListingById(id)
   }
 
-  if (!car) return { title: "Not Found | Monza Lab" }
+  if (!car) return { title: "Not Found | MonzaHaus" }
 
   return {
-    title: `Investment Dossier: ${car.title} | Monza Lab`,
+    title: `Investment Dossier: ${car.title} | MonzaHaus`,
     description: `Comprehensive investment analysis for ${car.title}. Valuation, risk assessment, ownership economics, and market context.`,
   }
 }

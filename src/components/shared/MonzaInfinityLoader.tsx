@@ -71,7 +71,7 @@ export function MonzaInfinityLoader({ label = "Loading cars" }: { label?: string
 
       {/* Bottom branding */}
       <p className="absolute bottom-8 text-[10px] uppercase tracking-[0.25em] text-foreground/10 font-medium">
-        Monza Lab
+        MonzaHaus
       </p>
     </div>
   )

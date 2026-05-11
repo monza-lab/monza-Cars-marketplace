@@ -96,7 +96,7 @@ export function PlatformPartnersSection() {
         >
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/10" />
           <span className="shrink-0 text-[10px] font-medium tracking-[0.15em] uppercase text-muted-foreground/60">
-            Unified in Monza Lab
+            Unified in MonzaHaus
           </span>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/10" />
         </motion.div>

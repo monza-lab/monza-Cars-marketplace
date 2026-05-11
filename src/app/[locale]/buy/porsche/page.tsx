@@ -198,16 +198,16 @@ export default async function BuyPorschePage({ params }: PageProps) {
         ]}
       />
 
-      <div className="min-h-screen bg-black text-zinc-100">
-        <div className="mx-auto max-w-4xl px-6 py-12 space-y-14">
+      <div className="min-h-screen bg-background text-foreground pt-[var(--app-header-h,3.5rem)] md:pt-[var(--app-header-h,5rem)] pb-24 md:pb-12">
+        <div className="mx-auto max-w-4xl px-4 md:px-6 pt-6 md:pt-8 space-y-10 md:space-y-14">
           <header className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-500">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary">
               MonzaHaus · Buyer&apos;s Framework
             </p>
             <h1 className="text-4xl md:text-6xl font-serif leading-tight">
               How to buy a Porsche.
             </h1>
-            <p className="text-lg text-zinc-400 max-w-3xl">
+            <p className="text-lg text-muted-foreground max-w-3xl">
               The complete framework for serious buyers. Choose the generation,
               identify blue-chip variants, understand import logistics, verify
               authenticity, and read the market — with live data and country-specific
@@ -221,21 +221,21 @@ export default async function BuyPorschePage({ params }: PageProps) {
               {BUY_STEPS.map((step, i) => (
                 <li
                   key={step.name}
-                  className="border border-zinc-800 rounded-lg p-5 bg-zinc-950"
+                  className="border border-border rounded-lg p-5 bg-card"
                 >
                   <div className="flex items-baseline gap-3">
-                    <span className="text-amber-500 font-serif text-xl shrink-0">
+                    <span className="text-primary font-serif text-xl shrink-0">
                       {i + 1}.
                     </span>
                     <div className="flex-1">
-                      <h3 className="text-lg font-serif text-zinc-100">{step.name}</h3>
-                      <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+                      <h3 className="text-lg font-serif text-foreground">{step.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                         {step.text}
                       </p>
                       {step.url && (
                         <Link
                           href={step.url.startsWith("http") ? step.url : `/${loc}${step.url.replace(/^\/en/, "")}`}
-                          className="text-xs text-amber-400 hover:underline mt-2 inline-block"
+                          className="text-xs text-primary hover:underline mt-2 inline-block"
                         >
                           MonzaHaus reference →
                         </Link>
@@ -254,13 +254,13 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={m.slug}
                   href={`/${loc}/models/porsche/${m.slug}`}
-                  className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
-                  <p className="text-xs text-zinc-500">{m.specs.yearRange}</p>
-                  <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                  <p className="text-xs text-muted-foreground/80">{m.specs.yearRange}</p>
+                  <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
                     {m.fullName}
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-2">{m.tagline}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{m.tagline}</p>
                 </Link>
               ))}
             </div>
@@ -273,13 +273,13 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={v.slug}
                   href={`/${loc}/variants/porsche/${v.slug}`}
-                  className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
-                  <p className="text-xs text-zinc-500">{v.yearRange}</p>
-                  <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                  <p className="text-xs text-muted-foreground/80">{v.yearRange}</p>
+                  <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
                     {v.shortName}
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-2">{v.tagline}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{v.tagline}</p>
                 </Link>
               ))}
             </div>
@@ -292,15 +292,15 @@ export default async function BuyPorschePage({ params }: PageProps) {
                 <Link
                   key={g.slug}
                   href={`/${loc}/guides/import/${g.slug}`}
-                  className="group border border-zinc-800 rounded-lg p-4 bg-zinc-950 hover:border-amber-600/40 transition"
+                  className="group border border-border rounded-lg p-4 bg-card hover:border-primary/40 transition"
                 >
-                  <p className="text-xs uppercase tracking-wider text-zinc-500">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                     Import to
                   </p>
-                  <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+                  <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
                     {g.country}
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-2">{g.tagline}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{g.tagline}</p>
                 </Link>
               ))}
             </div>
@@ -310,15 +310,15 @@ export default async function BuyPorschePage({ params }: PageProps) {
             <h2 className="text-2xl font-serif mb-6">Tools</h2>
             <Link
               href={`/${loc}/tools/porsche-vin-decoder`}
-              className="group block border border-zinc-800 rounded-lg p-5 bg-zinc-950 hover:border-amber-600/40 transition max-w-lg"
+              className="group block border border-border rounded-lg p-5 bg-card hover:border-primary/40 transition max-w-lg"
             >
-              <p className="text-xs uppercase tracking-wider text-zinc-500">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground/80">
                 Free tool
               </p>
-              <h3 className="text-lg font-serif mt-1 group-hover:text-amber-400 transition">
+              <h3 className="text-lg font-serif mt-1 group-hover:text-primary transition">
                 Porsche VIN Decoder
               </h3>
-              <p className="text-xs text-zinc-400 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Identify year, plant, generation, and serial from any 17-character
                 Porsche VIN. Authentication first, everything else after.
               </p>
@@ -331,15 +331,15 @@ export default async function BuyPorschePage({ params }: PageProps) {
               {BUY_FAQS.map((faq) => (
                 <details
                   key={faq.question}
-                  className="border border-zinc-800 rounded-lg p-4 bg-zinc-950 group"
+                  className="border border-border rounded-lg p-4 bg-card group"
                 >
-                  <summary className="cursor-pointer font-medium text-zinc-100 list-none flex justify-between items-center gap-4">
+                  <summary className="cursor-pointer font-medium text-foreground list-none flex justify-between items-center gap-4">
                     <span>{faq.question}</span>
-                    <span className="text-amber-500 text-xl group-open:rotate-45 transition-transform">
+                    <span className="text-primary text-xl group-open:rotate-45 transition-transform">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </p>
                 </details>
@@ -347,7 +347,7 @@ export default async function BuyPorschePage({ params }: PageProps) {
             </div>
           </section>
 
-          <section className="text-xs text-zinc-500 pt-8 border-t border-zinc-900">
+          <section className="text-xs text-muted-foreground/80 pt-8 border-t border-border">
             MonzaHaus is an independent collector car intelligence platform focused
             exclusively on Porsche. We aggregate public auction data, publish the
             MonzaHaus Index, and provide authority-grade buyer content for every

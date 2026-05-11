@@ -21,7 +21,7 @@ export function SignalsMissingSection({ signals }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+    <section className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
       <h2 className="text-lg font-semibold mb-1">{t("title")}</h2>
       <p className="text-xs text-muted-foreground mb-4">{t("subtitle")}</p>
       <ul className="space-y-2">
@@ -30,7 +30,7 @@ export function SignalsMissingSection({ signals }: Props) {
           const qKey = s.question_for_seller_i18n_key.replace(/^report\.questions\./, "")
           return (
             <li key={s.key} className="flex items-start gap-3">
-              <HelpCircle className="size-4 text-amber-500 mt-0.5 shrink-0" />
+              <HelpCircle className="size-4 text-primary mt-0.5 shrink-0" />
               <p className="text-sm text-foreground">{tQuestions(qKey)}</p>
             </li>
           )

@@ -190,7 +190,7 @@ function getStatusColor(
 const STATUS_STYLES = {
   running: "border-sky-500/40 bg-sky-500/10",
   healthy: "border-emerald-500/30 bg-emerald-500/5",
-  "zero-output-success": "border-amber-500/30 bg-amber-500/5",
+  "zero-output-success": "border-primary/30 bg-primary/5",
   degraded: "border-orange-500/30 bg-orange-500/5",
   failed: "border-red-500/30 bg-red-500/5",
 };
@@ -198,7 +198,7 @@ const STATUS_STYLES = {
 const STATUS_DOT = {
   running: "bg-sky-400 animate-pulse",
   healthy: "bg-emerald-500",
-  "zero-output-success": "bg-amber-400",
+  "zero-output-success": "bg-primary/80",
   degraded: "bg-orange-400",
   failed: "bg-red-500",
 };
@@ -366,7 +366,7 @@ export default function ScrapersDashboardClient({
             </div>
             <a
               href="./data-quality"
-              className="px-3 py-1.5 rounded border border-border bg-muted/50 text-xs text-foreground hover:text-amber-700 dark:hover:text-amber-300 hover:border-amber-500/50 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded border border-border bg-muted/50 text-xs text-foreground hover:text-primary/85 dark:hover:text-primary hover:border-primary/50 transition-colors whitespace-nowrap"
               title="Source-centric, ingestion-truth view"
             >
               Data Quality →
@@ -386,7 +386,7 @@ export default function ScrapersDashboardClient({
                 {issueCount} issues
               </Badge>
             )}
-            {liveError && <span className="text-amber-600 dark:text-amber-400 text-xs">{liveError}</span>}
+            {liveError && <span className="text-primary dark:text-primary text-xs">{liveError}</span>}
           </div>
         </div>
 
@@ -467,7 +467,7 @@ export default function ScrapersDashboardClient({
                             </span>
                           </div>
                           {stale && (
-                            <div className="text-amber-700 dark:text-amber-300 text-xs">
+                            <div className="text-primary/85 dark:text-primary text-xs">
                               Expected cadence missed ({Math.round(SCRAPER_CADENCE_MS[name] / (60 * 60 * 1000))}h)
                             </div>
                           )}
@@ -505,7 +505,7 @@ export default function ScrapersDashboardClient({
                           {run.bot_blocked != null && run.bot_blocked > 0 && (
                             <div className="flex justify-between text-muted-foreground">
                               <span>Bot blocked</span>
-                              <span className="text-amber-600 dark:text-amber-400">
+                              <span className="text-primary dark:text-primary">
                                 {run.bot_blocked}
                               </span>
                             </div>
@@ -694,7 +694,7 @@ export default function ScrapersDashboardClient({
                                 run.bot_blocked > 0 && (
                                   <>
                                     <span>Bot blocked</span>
-                                    <span className="text-amber-600 dark:text-amber-400">
+                                    <span className="text-primary dark:text-primary">
                                       {run.bot_blocked}
                                     </span>
                                   </>
@@ -823,7 +823,7 @@ export default function ScrapersDashboardClient({
                             ].map((pct, i) => (
                               <td key={i} className={`p-2 text-center tabular-nums text-xs ${
                                 pct >= 90 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" :
-                                pct >= 50 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" :
+                                pct >= 50 ? "bg-primary/10 text-primary/85 dark:text-primary" :
                                 "bg-red-500/10 text-red-700 dark:text-red-400"
                               }`}>
                                 {pct}%
@@ -954,7 +954,7 @@ function DailyTrendsSection({
                     {agg.total_written}
                   </span>
                   <span
-                    className={`text-right ${agg.total_errors > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground/60"}`}
+                    className={`text-right ${agg.total_errors > 0 ? "text-primary dark:text-primary" : "text-muted-foreground/60"}`}
                   >
                     {agg.total_errors}
                   </span>
@@ -1024,7 +1024,7 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
                           row.avg_quality >= 70
                             ? "text-emerald-600 dark:text-emerald-400"
                             : row.avg_quality >= 40
-                              ? "text-amber-600 dark:text-amber-400"
+                              ? "text-primary dark:text-primary"
                               : "text-red-600 dark:text-red-400"
                         }
                       >
@@ -1043,7 +1043,7 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
                         imgPct >= 80
                           ? "text-emerald-600 dark:text-emerald-400"
                           : imgPct >= 50
-                            ? "text-amber-600 dark:text-amber-400"
+                            ? "text-primary dark:text-primary"
                             : "text-red-600 dark:text-red-400"
                       }
                     >
@@ -1059,7 +1059,7 @@ function DataQualitySection({ data }: { data: DataQuality[] }) {
                         pricePct >= 80
                           ? "text-emerald-600 dark:text-emerald-400"
                           : pricePct >= 50
-                            ? "text-amber-600 dark:text-amber-400"
+                            ? "text-primary dark:text-primary"
                             : "text-red-600 dark:text-red-400"
                       }
                     >

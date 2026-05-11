@@ -52,9 +52,9 @@ export class ErrorBoundary extends React.Component<
         >
           <div className="relative w-full max-w-md">
             {/* Background glow effect */}
-            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-red-900/20 via-amber-900/20 to-red-900/20 blur-xl" />
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-red-900/20 via-primary/15 to-red-900/20 blur-xl" />
 
-            <div className="relative rounded-2xl border border-zinc-800/80 bg-zinc-950/90 p-8 shadow-2xl backdrop-blur-sm">
+            <div className="relative rounded-2xl border border-border/80 bg-card/90 p-8 shadow-2xl backdrop-blur-sm">
               {/* Top accent line */}
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
 
@@ -70,10 +70,10 @@ export class ErrorBoundary extends React.Component<
 
               {/* Error message */}
               <div className="mb-6 text-center">
-                <h3 className="mb-2 text-lg font-semibold tracking-tight text-zinc-100">
+                <h3 className="mb-2 text-lg font-semibold tracking-tight text-foreground">
                   Something went wrong
                 </h3>
-                <p className="text-sm leading-relaxed text-zinc-400">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   An unexpected error occurred. Please try again or contact
                   support if the problem persists.
                 </p>
@@ -82,10 +82,10 @@ export class ErrorBoundary extends React.Component<
               {/* Error details (collapsible) */}
               {this.state.error && (
                 <details className="mb-6 group">
-                  <summary className="cursor-pointer text-xs font-medium text-zinc-500 transition-colors hover:text-destructive">
+                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground/80 transition-colors hover:text-destructive">
                     View error details
                   </summary>
-                  <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
+                  <div className="mt-3 rounded-lg border border-border bg-card/50 p-3">
                     <code className="block overflow-x-auto whitespace-pre-wrap text-xs text-destructive/80">
                       {this.state.error.message}
                     </code>
@@ -97,7 +97,7 @@ export class ErrorBoundary extends React.Component<
               <div className="flex justify-center">
                 <Button
                   onClick={this.handleReset}
-                  className="group relative overflow-hidden border border-amber-500/20 bg-gradient-to-r from-amber-600 to-amber-500 px-6 text-zinc-950 shadow-lg shadow-amber-500/10 transition-all hover:from-amber-500 hover:to-amber-400 hover:shadow-amber-500/20"
+                  className="group relative overflow-hidden border border-primary/30 bg-gradient-to-r from-primary to-primary/85 px-6 text-primary-foreground shadow-lg shadow-primary/10 transition-all hover:from-primary/90 hover:to-primary/75 hover:shadow-primary/20"
                 >
                   <RefreshCw className="mr-2 size-4 transition-transform group-hover:rotate-180" />
                   Try Again
@@ -105,7 +105,7 @@ export class ErrorBoundary extends React.Component<
               </div>
 
               {/* Bottom accent line */}
-              <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
             </div>
           </div>
         </div>

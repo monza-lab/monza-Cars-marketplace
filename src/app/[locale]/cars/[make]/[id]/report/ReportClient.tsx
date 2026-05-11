@@ -31,6 +31,7 @@ import {
   History,
   Download,
 } from "lucide-react"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
@@ -54,7 +55,7 @@ import { OutOfReportsModal } from "@/components/payments/OutOfReportsModal"
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-primary/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
@@ -261,9 +262,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const fairHigh = report?.fair_value_high ?? marketStats?.primaryFairValueHigh ?? 0
   const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const bidInCurrency = convertFromUsd(car.currentBid)
-  const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
-  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
+  // Honest-by-data: pricePosition is null when no real fair-value band.
+  // We do NOT clamp above 100 — when the listing is over fair, the user must see it.
+  const hasFairValue = fairHigh > fairLow && fairLow > 0
+  const pricePositionRaw = hasFairValue
+    ? ((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100
+    : null
+  const pricePosition = pricePositionRaw !== null ? Math.max(0, Math.round(pricePositionRaw)) : null
+  const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = car.fairValueByRegion
   const bestRegion = findBestRegion(pricing)
@@ -275,13 +281,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
   // Risk score: derived from signal completeness (detected / (detected + missing)).
   // Higher signal coverage ⇒ lower uncertainty ⇒ lower risk score.
+  // Honest-by-data: null when signals haven't been extracted yet (no fake 50/100 default).
   const detectedCount = report?.signals_detected.length ?? 0
   const missingCount = report?.signals_missing.length ?? 0
   const totalSignalCount = detectedCount + missingCount
   const signalCoverage = totalSignalCount > 0 ? detectedCount / totalSignalCount : 0
-  const riskScore = hasSignals
+  const riskScore: number | null = hasSignals
     ? Math.round(100 - signalCoverage * 70) // 30–100 range
-    : 50 // neutral default when signals not yet extracted
+    : null
 
   // Verdict logic — purely factual: based on price delta vs specific-car fair value midpoint.
   const specificMid = report?.specific_car_fair_value_mid ?? 0
@@ -508,7 +515,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.rect(M, vy - 4, 26, 8, "F")
       pdf.setFontSize(8); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text((verdict ?? "hold").toUpperCase(), M + 13, vy + 1, { align: "center" })
-      gray(); pdf.text(`Risk: ${riskScore}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
+      gray(); pdf.text(`Risk: ${riskScore ?? "—"}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
       // Personalized "Prepared for" — prominent
       const prepY = vy + 16
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
@@ -614,8 +621,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         { lbl: "SIGNALS DETECTED", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
         { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0],pal.primary[1],pal.primary[2]] },
         { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
-        { lbl: "MARKET POSITION", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
-        { lbl: "RISK SCORE", val: `${riskScore}/100`, clr: riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
+        { lbl: "MARKET POSITION", val: `${pricePosition ?? 0}%`, clr: (pricePosition ?? 0) <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "RISK SCORE", val: `${riskScore ?? "—"}/100`, clr: (riskScore ?? 0) < 35 ? [52,211,153] : ((riskScore ?? 100) < 55) ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
         { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
       ]
       const mw = (CW - 6) / 3
@@ -651,13 +658,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.setFillColor(r, g, b); pdf.rect(M + 4 + gi, gY, 1.2, 4, "F")
       }
       // Position dot
-      const dotX = M + 4 + (pricePosition / 100) * gW
+      const dotX = M + 4 + ((pricePosition ?? 0) / 100) * gW
       pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(dotX, gY + 2, 2.5, "F")
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(dotX, gY + 2, 1.8, "F")
       pdf.setFontSize(6); gray()
       pdf.text(fmtPdf(fairLow, regionRange.currency), M + 4, gY + 9)
       pdf.text(fmtPdf(fairHigh, regionRange.currency), M + 4 + gW, gY + 9, { align: "right" })
-      pdf.setFontSize(7); white(); pdf.text(`${pricePosition.toFixed(0)}%`, dotX, gY + 9, { align: "center" })
+      pdf.setFontSize(7); white(); pdf.text(`${(pricePosition ?? 0).toFixed(0)}%`, dotX, gY + 9, { align: "center" })
       y += 28
 
       // ═══ PAGE 5: VEHICLE IDENTITY ═══
@@ -805,7 +812,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         const b2 = pct < 0.5 ? Math.round(153 + (pal.primary[2] - 153) * pct * 2) : Math.round(pal.primary[2] + (113 - pal.primary[2]) * (pct - 0.5) * 2)
         pdf.setFillColor(r2, g2, b2); pdf.rect(M + 4 + gi, g2Y, 1.2, 4, "F")
       }
-      const d2X = M + 4 + (pricePosition / 100) * g2W
+      const d2X = M + 4 + ((pricePosition ?? 0) / 100) * g2W
       pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(d2X, g2Y + 2, 2.5, "F")
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(d2X, g2Y + 2, 1.8, "F")
       pdf.setFontSize(7)
@@ -837,7 +844,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.text(`${detectedCount}/${totalSignalCount || "—"}`, M + 4, y + 18)
       pdf.setFontSize(10); pdf.text(synthesisLabel, M + 40, y + 18)
       pdf.setFontSize(7); gray()
-      pdf.text(`Price Position: ${pricePosition.toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
+      pdf.text(`Price Position: ${(pricePosition ?? 0).toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
       y += 38
 
       // Price vs Fair Value card
@@ -858,11 +865,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       // Position bar
       const pvGY = y + 25; const pvGW = CW - 8
       pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, pvGY, pvGW, 3, "F")
-      const pvDot = M + 4 + (pricePosition / 100) * pvGW
+      const pvDot = M + 4 + ((pricePosition ?? 0) / 100) * pvGW
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(M + 4, pvGY, pvDot - M - 4, 3, "F")
       pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(pvDot, pvGY + 1.5, 2, "F")
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(pvDot, pvGY + 1.5, 1.3, "F")
-      pdf.setFontSize(7); gray(); pdf.text(`${pricePosition.toFixed(0)}% of fair range`, M + 4, pvGY + 8)
+      pdf.setFontSize(7); gray(); pdf.text(`${(pricePosition ?? 0).toFixed(0)}% of fair range`, M + 4, pvGY + 8)
       y += 42
 
       // ═══ PAGE 8: RISK ASSESSMENT ═══
@@ -872,7 +879,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       card(M, y, CW, 26)
       pdf.setFontSize(6); dim(); pdf.text("RISK SCORE", M + 4, y + 5)
       pdf.setFontSize(20)
-      const rsClr = riskScore < 35 ? [52,211,153] : riskScore < 55 ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113]
+      const rsClr = ((riskScore ?? 100) < 35) ? [52,211,153] : ((riskScore ?? 100) < 55) ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113]
       pdf.setTextColor(rsClr[0], rsClr[1], rsClr[2])
       pdf.text(`${riskScore}`, M + 4, y + 16)
       pdf.setFontSize(9); gray(); pdf.text("/100", M + 18, y + 16)
@@ -885,7 +892,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         const gb = pct < 0.35 ? 153 : pct < 0.55 ? 36 : 113
         pdf.setFillColor(gr, gg, gb); pdf.rect(M + 4 + gi, rGY, 1.2, 3, "F")
       }
-      const rDot = M + 4 + (riskScore / 100) * (CW - 8)
+      const rDot = M + 4 + ((riskScore ?? 0) / 100) * (CW - 8)
       pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(rDot, rGY + 1.5, 2, "F")
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
@@ -920,11 +927,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       // Risk context card
       y += 11 + flags.length * 7 + 4
-      const riskLevel = riskScore < 35 ? "low" : riskScore < 55 ? "moderate" : "elevated"
+      const riskLevel = ((riskScore ?? 100) < 35) ? "low" : ((riskScore ?? 100) < 55) ? "moderate" : "elevated"
       card(M, y, CW, 18)
       pdf.setFontSize(6); dim(); pdf.text("RISK CONTEXT", M + 4, y + 5)
       pdf.setFontSize(8); white()
-      const riskCtx = pdf.splitTextToSize(`Score ${riskScore}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk — proceed with caution and specialist inspection."}`, CW - 8)
+      const riskCtx = pdf.splitTextToSize(`Score ${riskScore ?? "—"}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk — proceed with caution and specialist inspection."}`, CW - 8)
       pdf.text(riskCtx, M + 4, y + 11)
 
       // ═══ PAGE 9: DUE DILIGENCE ═══
@@ -944,8 +951,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       // Action Items if Purchasing — derived from real data
       const actionItems: string[] = []
       if (flags.length > 0) actionItems.push(`Comprehensive inspection focusing on: ${flags[0].toLowerCase()}`)
-      if (isBelowFair) actionItems.push(`Listed below fair value — strong negotiation position at ${pricePosition.toFixed(0)}% of fair range`)
-      else actionItems.push(`Listed at ${pricePosition.toFixed(0)}% of fair range — negotiate toward ${fmtPdf(fairLow, regionRange.currency)}`)
+      if (isBelowFair) actionItems.push(`Listed below fair value — strong negotiation position at ${(pricePosition ?? 0).toFixed(0)}% of fair range`)
+      else actionItems.push(`Listed at ${(pricePosition ?? 0).toFixed(0)}% of fair range — negotiate toward ${fmtPdf(fairLow, regionRange.currency)}`)
       if (hasArbitrage) actionItems.push(`Consider buying in ${regionLabels[bestRegion]?.short || bestRegion} to save $${Math.round(arbitrageSavings).toLocaleString()}`)
       if (car.vin) actionItems.push("Run VIN history report before committing")
       actionItems.push("Verify service records and maintenance history with authorized dealer")
@@ -1050,8 +1057,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       // Verdict metrics card (3 cols)
       const vMetrics = [
         { lbl: "SIGNALS", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
-        { lbl: "FAIR VALUE", val: `${pricePosition}%`, clr: pricePosition <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
-        { lbl: "RISK", val: `${riskScore}/100`, clr: rsClr },
+        { lbl: "FAIR VALUE", val: `${pricePosition ?? 0}%`, clr: (pricePosition ?? 0) <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
+        { lbl: "RISK", val: `${riskScore ?? "—"}/100`, clr: rsClr },
       ]
       const vmW = (CW - 6) / 3
       vMetrics.forEach((vm, i) => {
@@ -1066,7 +1073,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       card(M, y, CW, 48)
       pdf.setFontSize(6); dim(); pdf.text("SUMMARY", M + 4, y + 5)
       let sy = y + 10
-      sy = cardRow("Price Position", `${pricePosition.toFixed(0)}% of fair range`, M, sy, CW)
+      sy = cardRow("Price Position", `${(pricePosition ?? 0).toFixed(0)}% of fair range`, M, sy, CW)
       sy = cardRow("Below Fair Value?", isBelowFair ? "YES" : "NO", M, sy, CW)
       sy = cardRow("Best Buy Region", regionLabels[bestRegion]?.short || bestRegion, M, sy, CW)
       if (hasArbitrage) { sy = cardRow("Arbitrage Savings", `$${Math.round(arbitrageSavings).toLocaleString()}`, M, sy, CW) }
@@ -1202,9 +1209,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ["Fair Value Low (USD)", fairLow],
         ["Fair Value High (USD)", fairHigh],
         ["Fair Value Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
-        ["Price Position (%)", pricePosition],
+        ["Price Position (%)", pricePosition ?? "—"],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
-        ["Risk Score (0-100)", riskScore],
+        ["Risk Score (0-100)", riskScore ?? "—"],
         ["Trend", car.trend],
         [""],
         ["ARBITRAGE"],
@@ -1262,7 +1269,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ["PRICE ANALYSIS"],
         ["Listing Price (USD)", car.currentBid],
         ["Fair Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
-        ["Price Position (%)", pricePosition],
+        ["Price Position (%)", pricePosition ?? "—"],
         ["Discount/Premium (USD)", Math.round(car.currentBid - (fairLow + fairHigh) / 2)],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
       )
@@ -1640,9 +1647,20 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 {/* Market Position */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
-                  <p className={`text-[24px] font-bold tabular-nums mt-1 ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>
-                    {pricePosition.toFixed(0)}%
-                  </p>
+                  {pricePosition !== null ? (
+                    <>
+                      <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
+                        {pricePosition}%
+                      </p>
+                      {pricePosition > 100 && (
+                        <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                      {/* [HARDCODED] */}Awaiting comparable sales
+                    </p>
+                  )}
                 </div>
                 {/* Similar Cars */}
                 <div className="rounded-xl bg-card border border-border p-4">
@@ -1652,17 +1670,23 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 {/* Risk Score */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${riskScore <= 30 ? "bg-positive" : riskScore <= 50 ? "bg-amber-400" : "bg-destructive"}`}
-                        style={{ width: `${riskScore}%` }}
-                      />
+                  {riskScore !== null ? (
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
+                          style={{ width: `${riskScore}%` }}
+                        />
+                      </div>
+                      <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
+                        {riskScore}/100
+                      </span>
                     </div>
-                    <span className={`text-[12px] font-bold ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>
-                      {riskScore}/100
-                    </span>
-                  </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                      {/* [HARDCODED] */}Generate the full report to see signal coverage
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1710,8 +1734,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     <History className="size-4 text-primary" />
                     <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
                   </div>
-                  <div className="border-l-2 border-primary/20 pl-4">
-                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                  <div className="pl-4 border-l border-border">
+                    <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                   </div>
                 </div>
 
@@ -1824,7 +1848,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                         <CheckCircle2 className="size-3.5 text-positive" />
                         <span className="text-[11px] font-medium text-positive">{t("valuation.belowFair")}</span>
                       </>
-                    ) : pricePosition > 80 ? (
+                    ) : (pricePosition ?? 0) > 80 ? (
                       <>
                         <AlertTriangle className="size-3.5 text-destructive" />
                         <span className="text-[11px] font-medium text-destructive">{t("valuation.aboveFair")}</span>
@@ -1910,14 +1934,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[12px] font-semibold text-primary">Listing Price vs Fair Value</span>
-                        <span className={`text-[14px] tabular-nums font-bold ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition.toFixed(0)}%</span>
+                        <span className={`text-[14px] tabular-nums font-bold ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</span>
                       </div>
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(pricePosition, 100)}%` }}
+                          animate={{ width: `${Math.min(pricePosition ?? 0, 100)}%` }}
                           transition={{ duration: 0.8, delay: 0.1 }}
-                          className={`h-full rounded-full bg-gradient-to-r ${pricePosition <= 100 ? "from-emerald-400 to-emerald-400/60" : "from-primary to-primary/60"}`}
+                          className={`h-full rounded-full bg-gradient-to-r ${((pricePosition ?? 0) <= 100) ? "from-emerald-400 to-emerald-400/60" : "from-primary to-primary/60"}`}
                         />
                       </div>
                     </div>
@@ -2029,7 +2053,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-amber-400/30 to-red-400/30" />
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-primary/30 to-red-400/30" />
                         <motion.div
                           initial={{ left: 0 }}
                           animate={{ left: `calc(${riskScore}% - 8px)` }}
@@ -2045,7 +2069,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`text-[28px] font-black ${riskScore <= 30 ? "text-positive" : riskScore <= 50 ? "text-destructive" : "text-destructive"}`}>
+                      <span className={`text-[28px] font-black ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-destructive" : "text-destructive"}`}>
                         {riskScore}
                       </span>
                       <span className="text-[12px] text-muted-foreground">/100</span>
@@ -2263,14 +2287,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
-                      <p className={`text-[20px] font-black ${pricePosition <= 100 ? "text-positive" : "text-primary"}`}>{pricePosition.toFixed(0)}%</p>
+                      <p className={`text-[20px] font-black ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</p>
                     </div>
                     <div className="h-8 w-px bg-foreground/10" />
                     <div className="text-center">
                       <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
                       <p className={`text-[20px] font-black ${
-                        riskScore < 35 ? "text-positive" :
-                        riskScore < 55 ? "text-primary" :
+                        ((riskScore ?? 100) < 35) ? "text-positive" :
+                        ((riskScore ?? 100) < 55) ? "text-primary" :
                         "text-destructive"
                       }`}>{riskScore}/100</p>
                     </div>
@@ -2307,7 +2331,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
                   <div className="space-y-2">
                     {[
-                      `Priced at ${pricePosition.toFixed(0)}% of the fair value range`,
+                      `Priced at ${(pricePosition ?? 0).toFixed(0)}% of the fair value range`,
                       isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
                       ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
                       hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
@@ -2349,6 +2373,18 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 </p>
               </section>
             ) : null}
+
+            {/* ═══ ADVISOR HANDOFF ═══
+                After the user has read the full dossier, the natural next
+                step is "ask about what's missing." Pre-populates the chat
+                with this car's title so the conversation starts in context. */}
+            <div className="mt-10 mb-4">
+              <AdvisorBand
+                title={/* [HARDCODED] */ "Anything still unclear?"}
+                subtitle={/* [HARDCODED] */ "The advisor can dig deeper on any signal in this report."}
+                prompt={`I just read the full report on this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Walk me through the most important risks and what to verify before bidding.`}
+              />
+            </div>
 
           </div>
         </div>

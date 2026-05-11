@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Brain,
   ChevronDown,
   TrendingUp,
   TrendingDown,
@@ -104,14 +103,14 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-zinc-800 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "flex w-full items-center justify-between gap-3 px-4 py-3",
-          "text-left text-sm font-medium text-zinc-200",
-          "hover:bg-zinc-800/60 transition-colors"
+          "text-left text-sm font-medium text-foreground/90",
+          "hover:bg-foreground/5/60 transition-colors"
         )}
       >
         <span className="flex items-center gap-2">
@@ -120,7 +119,7 @@ function CollapsibleSection({
           {count !== undefined && (
             <Badge
               variant="secondary"
-              className="ml-1 bg-zinc-800 text-zinc-400 text-[10px] px-1.5"
+              className="ml-1 bg-foreground/5 text-muted-foreground text-[10px] px-1.5"
             >
               {count}
             </Badge>
@@ -130,7 +129,7 @@ function CollapsibleSection({
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="size-4 text-zinc-500" />
+          <ChevronDown className="size-4 text-muted-foreground/80" />
         </motion.span>
       </button>
 
@@ -160,7 +159,7 @@ function KeyStrengthsList({ strengths }: { strengths: string[] }) {
   return (
     <ul className="space-y-2">
       {strengths.map((s, i) => (
-        <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+        <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
           <Shield className="size-4 mt-0.5 shrink-0 text-positive" />
           <span>{s}</span>
         </li>
@@ -180,27 +179,27 @@ function InvestmentOutlookSection({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-zinc-300 leading-relaxed">
+      <p className="text-sm text-foreground/80 leading-relaxed">
         {outlook.summary}
       </p>
 
       <div className="grid grid-cols-2 gap-3">
         {outlook.appreciationPotential && (
-          <div className="rounded-md bg-zinc-800/50 border border-zinc-700/50 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
+          <div className="rounded-md bg-foreground/5/50 border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-1">
               Appreciation
             </p>
-            <p className="text-sm font-medium text-zinc-200">
+            <p className="text-sm font-medium text-foreground/90">
               {outlook.appreciationPotential}
             </p>
           </div>
         )}
         {outlook.liquidityRating && (
-          <div className="rounded-md bg-zinc-800/50 border border-zinc-700/50 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
+          <div className="rounded-md bg-foreground/5/50 border border-border/50 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-1">
               Liquidity
             </p>
-            <p className="text-sm font-medium text-zinc-200">
+            <p className="text-sm font-medium text-foreground/90">
               {outlook.liquidityRating}
             </p>
           </div>
@@ -233,7 +232,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
   return (
     <Card
       className={cn(
-        "bg-zinc-950 border-zinc-800 text-zinc-100 shadow-2xl shadow-black/40",
+        "bg-card border-border text-foreground shadow-2xl shadow-black/40",
         className
       )}
     >
@@ -241,9 +240,9 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="size-5 text-destructive" />
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent font-bold">
-              AI Analysis
+            <Scale className="size-5 text-primary" />
+            <span className="font-display font-medium text-foreground">
+              Investment Analysis
             </span>
           </CardTitle>
 
@@ -251,7 +250,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             <Badge
               variant="outline"
               className={cn(
-                "border-amber-500/40 text-destructive tabular-nums text-xs",
+                "border-primary/40 text-destructive tabular-nums text-xs",
                 confidenceScore >= 80 &&
                   "border-positive/40 text-positive",
                 confidenceScore < 50 && "border-destructive/40 text-destructive"
@@ -265,16 +264,16 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
 
       <CardContent className="space-y-5">
         {/* Bid Target */}
-        <div className="rounded-lg bg-gradient-to-br from-amber-500/10 via-zinc-900 to-zinc-900 border border-amber-500/20 p-5">
+        <div className="rounded-lg bg-gradient-to-br from-primary/10 via-zinc-900 to-zinc-900 border border-primary/20 p-5">
           <p className="text-[11px] uppercase tracking-widest text-destructive/80 mb-2 font-medium">
             Recommended Bid Range
           </p>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-3xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="text-3xl font-display font-medium text-foreground tabular-nums">
               {formatPrice(bidTarget.low ?? 0)}
             </span>
-            <span className="text-zinc-500 text-lg">&ndash;</span>
-            <span className="text-3xl font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="text-muted-foreground/80 text-lg">&ndash;</span>
+            <span className="text-3xl font-display font-medium text-foreground tabular-nums">
               {formatPrice(bidTarget.high ?? 0)}
             </span>
           </div>
@@ -295,7 +294,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           )}
         </div>
 
-        <Separator className="bg-zinc-800" />
+        <Separator className="bg-foreground/5" />
 
         {/* Collapsible Sections */}
         <div className="space-y-3">
@@ -384,7 +383,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
         <div className="flex items-center justify-center pt-2">
           <Badge
             variant="outline"
-            className="border-zinc-700 text-zinc-500 text-[10px] gap-1.5 font-normal"
+            className="border-border text-muted-foreground/80 text-[10px] gap-1.5 font-normal"
           >
             <Scale className="size-3 text-destructive" />
             Powered by Claude AI

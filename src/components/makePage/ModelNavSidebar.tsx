@@ -85,7 +85,7 @@ export function ModelNavSidebar({
                 key={model.slug}
                 onClick={() => onSelectModel(index)}
                 className={`w-full text-left flex gap-2.5 px-3 py-2 border-b border-border/50 transition-all ${index === currentModelIndex
-                    ? "bg-primary/8 border-l-2 border-l-primary"
+                    ? "bg-primary/8"
                     : "hover:bg-foreground/2"
                   }`}
               >

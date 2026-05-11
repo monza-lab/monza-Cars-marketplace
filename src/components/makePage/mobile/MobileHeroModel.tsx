@@ -65,9 +65,15 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
             {model.years} · {model.carCount} {model.carCount === 1 ? "car" : "cars"}
           </p>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-[16px] font-display font-medium text-primary">
-              {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
-            </span>
+            {model.priceMin > 0 && model.priceMax > 0 ? (
+              <span className="text-[16px] font-display font-medium text-primary">
+                {formatPrice(model.priceMin)} – {formatPrice(model.priceMax)}
+              </span>
+            ) : (
+              <span className="text-[13px] text-white/70 italic">
+                {/* [HARDCODED] */}Price on request
+              </span>
+            )}
           </div>
           {/* Categories */}
           <div className="flex flex-wrap gap-1.5 mt-2.5">

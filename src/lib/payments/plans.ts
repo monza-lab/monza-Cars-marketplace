@@ -81,7 +81,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     pistons: 10000,
     reports: "unlimited",
     perReport: "Unlimited reports",
-    badge: "LEGACY UNLIMITED",
+    badge: "Most popular",
     features: [
       "10,000 Pistons every month",
       "Unlimited reports",

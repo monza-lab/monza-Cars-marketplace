@@ -42,8 +42,8 @@ function formatMileage(miles: number) {
 }
 
 const PLATFORM_STYLES: Record<string, string> = {
-  "Bring a Trailer": "bg-amber-500/15 text-destructive border-amber-500/30",
-  BaT: "bg-amber-500/15 text-destructive border-amber-500/30",
+  "Bring a Trailer": "bg-primary/15 text-destructive border-primary/30",
+  BaT: "bg-primary/15 text-destructive border-primary/30",
   "Cars & Bids": "bg-blue-500/15 text-blue-400 border-blue-500/30",
   Hemmings: "bg-positive/15 text-positive border-positive/30",
   "RM Sotheby's": "bg-purple-500/15 text-purple-400 border-purple-500/30",
@@ -56,7 +56,7 @@ const PLATFORM_STYLES: Record<string, string> = {
 function getPlatformStyle(platform: string) {
   return (
     PLATFORM_STYLES[platform] ??
-    "bg-zinc-500/15 text-zinc-400 border-zinc-500/30"
+    "bg-foreground/5/15 text-muted-foreground border-border/30"
   );
 }
 
@@ -78,7 +78,7 @@ function PriceComparison({
   if (Math.abs(diff) < currentPrice * 0.02) {
     // Within 2% - essentially the same
     return (
-      <span className="flex items-center gap-1 text-xs text-zinc-500">
+      <span className="flex items-center gap-1 text-xs text-muted-foreground/80">
         <Minus className="size-3" />
         Similar
       </span>
@@ -122,20 +122,20 @@ export function ComparableSales({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Summary bar */}
-      <div className="flex items-center justify-between rounded-md bg-zinc-800/50 border border-zinc-700/50 px-4 py-2.5">
+      <div className="flex items-center justify-between rounded-md bg-foreground/5/50 border border-border/50 px-4 py-2.5">
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
             Avg. Comparable Sale
           </p>
-          <p className="text-lg font-bold bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+          <p className="text-lg font-display font-medium text-foreground tabular-nums">
             {formatPrice(Math.round(avgPrice) ?? 0)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
             Comparables Found
           </p>
-          <p className="text-lg font-bold text-zinc-200">
+          <p className="text-lg font-bold text-foreground/90">
             {comparables.length}
           </p>
         </div>
@@ -150,8 +150,8 @@ export function ComparableSales({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, duration: 0.2 }}
             className={cn(
-              "group rounded-md border border-zinc-800/60 bg-zinc-900/60 p-3",
-              "hover:bg-zinc-800/50 hover:border-zinc-700/60 transition-colors"
+              "group rounded-md border border-border/60 bg-card/60 p-3",
+              "hover:bg-foreground/5/50 hover:border-border/60 transition-colors"
             )}
           >
             <div className="flex items-start justify-between gap-3">
@@ -171,7 +171,7 @@ export function ComparableSales({
                       href={comp.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-destructive"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/80 hover:text-destructive"
                       title="View listing"
                     >
                       <ExternalLink className="size-3" />
@@ -179,11 +179,11 @@ export function ComparableSales({
                   )}
                 </div>
 
-                <p className="text-sm font-medium text-zinc-200 truncate">
+                <p className="text-sm font-medium text-foreground/90 truncate">
                   {comp.title}
                 </p>
 
-                <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500">
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground/80">
                   <span className="flex items-center gap-1">
                     <Calendar className="size-3" />
                     {comp.soldDate}

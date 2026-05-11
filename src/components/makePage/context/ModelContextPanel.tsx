@@ -223,7 +223,7 @@ export function ModelContextPanel({
           </div>
         )}
 
-        {/* 5. LIQUIDITY & MARKET DEPTH */}
+        {/* 5. LIQUIDITY & MARKET DEPTH (only with real completed sales) */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Gauge className="size-4 text-primary" />
@@ -231,36 +231,42 @@ export function ModelContextPanel({
               Liquidity & Market Depth
             </span>
           </div>
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">Auctions / Year</span>
-              <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">Avg Days to Sell</span>
-              <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
-              <span className="text-[12px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</span>
-            </div>
-            {/* Demand score visual */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] text-muted-foreground">Demand Score</span>
-                <span className="text-[12px] font-display font-medium text-primary">{depth.demandScore}/10</span>
+          {depth ? (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">Auctions / Year</span>
+                <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</span>
               </div>
-              <div className="flex gap-1">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-[6px] flex-1 rounded-sm ${i < depth.demandScore ? "bg-primary/50" : "bg-foreground/4"
-                      }`}
-                  />
-                ))}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">Avg Days to Sell</span>
+                <span className="text-[12px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">Sell-Through Rate</span>
+                <span className="text-[12px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</span>
+              </div>
+              {/* Demand score visual */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground">Demand Score</span>
+                  <span className="text-[12px] font-display font-medium text-primary">{depth.demandScore}/10</span>
+                </div>
+                <div className="flex gap-1">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-[6px] flex-1 rounded-sm ${i < depth.demandScore ? "bg-primary/50" : "bg-foreground/4"
+                        }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+              {/* [HARDCODED] */}Awaiting completed sales to compute liquidity for this model.
+            </p>
+          )}
         </div>
 
         {/* 6. SIMILAR MODELS */}

@@ -109,24 +109,8 @@ const STATUS_OPTIONS = [
   { value: "upcoming", key: "upcoming" as const },
 ]
 
-const POPULAR_MAKES = [
-  "",
-  "Porsche",
-  "BMW",
-  "Mercedes-Benz",
-  "Ferrari",
-  "Lamborghini",
-  "Audi",
-  "Toyota",
-  "Ford",
-  "Chevrolet",
-  "Nissan",
-  "Land Rover",
-  "Jaguar",
-  "Aston Martin",
-  "Alfa Romeo",
-  "Lotus",
-]
+// Porsche-only by product design.
+const POPULAR_MAKES = ["", "Porsche"]
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -161,7 +145,7 @@ function getReserveBadge(
     case "no_reserve":
       return {
         key: "noReserve",
-        className: "bg-amber-500/20 text-destructive border-amber-500/30",
+        className: "bg-primary/20 text-destructive border-primary/30",
       }
     case "met":
       return {
@@ -191,7 +175,7 @@ function getPlatformColor(platform: string): string {
     case "collectingcars":
       return "bg-purple-500/20 text-purple-400 border-purple-500/30"
     default:
-      return "bg-zinc-500/20 text-zinc-400 border-zinc-500/30"
+      return "bg-foreground/8 text-muted-foreground border-border"
   }
 }
 
@@ -209,15 +193,15 @@ function getPlatformLabel(platform: string): string {
 function AuctionCardSkeleton({ view }: { view: "grid" | "list" }) {
   if (view === "list") {
     return (
-      <Card className="border-zinc-800/60 bg-zinc-900/50 overflow-hidden">
+      <Card className="border-border/60 bg-card/50 overflow-hidden">
         <div className="flex flex-col sm:flex-row">
-          <Skeleton className="h-48 w-full sm:h-auto sm:w-64 bg-zinc-800" />
+          <Skeleton className="h-48 w-full sm:h-auto sm:w-64 bg-foreground/5" />
           <CardContent className="flex-1 p-4">
-            <Skeleton className="h-5 w-3/4 mb-2 bg-zinc-800" />
-            <Skeleton className="h-4 w-1/2 mb-4 bg-zinc-800" />
+            <Skeleton className="h-5 w-3/4 mb-2 bg-foreground/5" />
+            <Skeleton className="h-4 w-1/2 mb-4 bg-foreground/5" />
             <div className="flex gap-4">
-              <Skeleton className="h-8 w-24 bg-zinc-800" />
-              <Skeleton className="h-8 w-24 bg-zinc-800" />
+              <Skeleton className="h-8 w-24 bg-foreground/5" />
+              <Skeleton className="h-8 w-24 bg-foreground/5" />
             </div>
           </CardContent>
         </div>
@@ -226,14 +210,14 @@ function AuctionCardSkeleton({ view }: { view: "grid" | "list" }) {
   }
 
   return (
-    <Card className="border-zinc-800/60 bg-zinc-900/50 overflow-hidden">
-      <Skeleton className="h-48 w-full bg-zinc-800" />
+    <Card className="border-border/60 bg-card/50 overflow-hidden">
+      <Skeleton className="h-48 w-full bg-foreground/5" />
       <CardContent className="p-4">
-        <Skeleton className="h-5 w-3/4 mb-2 bg-zinc-800" />
-        <Skeleton className="h-4 w-1/2 mb-4 bg-zinc-800" />
+        <Skeleton className="h-5 w-3/4 mb-2 bg-foreground/5" />
+        <Skeleton className="h-4 w-1/2 mb-4 bg-foreground/5" />
         <div className="flex justify-between">
-          <Skeleton className="h-8 w-24 bg-zinc-800" />
-          <Skeleton className="h-8 w-20 bg-zinc-800" />
+          <Skeleton className="h-8 w-24 bg-foreground/5" />
+          <Skeleton className="h-8 w-20 bg-foreground/5" />
         </div>
       </CardContent>
     </Card>
@@ -279,7 +263,7 @@ function AuctionCard({
   if (view === "list") {
     return (
       <Link href={`/auctions/${auction.id}`} className="block group">
-        <Card className="border-zinc-800/60 bg-zinc-900/50 overflow-hidden transition-all duration-300 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 group-hover:bg-zinc-900/80">
+        <Card className="border-border/60 bg-card/50 overflow-hidden transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 group-hover:bg-card/80">
           <div className="flex flex-col sm:flex-row">
             {/* Image */}
             <div className="relative h-48 w-full sm:h-auto sm:w-64 shrink-0 overflow-hidden">
@@ -293,8 +277,8 @@ function AuctionCard({
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-zinc-800">
-                  <Car className="size-12 text-zinc-600" />
+                <div className="flex h-full w-full items-center justify-center bg-foreground/5">
+                  <Car className="size-12 text-muted-foreground/60" />
                 </div>
               )}
               {/* Platform badge */}
@@ -308,7 +292,7 @@ function AuctionCard({
               </div>
               {auction.hasAnalysis && (
                 <div className="absolute top-2 right-2">
-                  <Badge className="bg-amber-500/90 text-black text-[10px] font-semibold border-0">
+                  <Badge className="bg-primary/90 text-black text-[10px] font-semibold border-0">
                     {t("badges.aiAnalyzed")}
                   </Badge>
                 </div>
@@ -318,10 +302,10 @@ function AuctionCard({
             {/* Content */}
             <CardContent className="flex flex-1 flex-col justify-between gap-3 p-4">
               <div>
-                <h3 className="font-semibold text-zinc-100 text-base leading-tight mb-1 group-hover:text-destructive transition-colors">
+                <h3 className="font-semibold text-foreground text-base leading-tight mb-1 group-hover:text-destructive transition-colors">
                   {auction.title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground/80">
                   {auction.mileage !== null && (
                     <span>
                       {auction.mileage.toLocaleString(locale)} {t("units.milesLong")}
@@ -336,7 +320,7 @@ function AuctionCard({
                 <div className="flex items-center gap-4">
                   {/* Current bid */}
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-0.5">
                       {hasEnded ? t("card.soldFor") : t("card.currentBid")}
                     </p>
                     <p className="text-lg font-bold text-destructive">
@@ -345,10 +329,10 @@ function AuctionCard({
                   </div>
                   {/* Bids */}
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-0.5">
                       {t("card.bids")}
                     </p>
-                    <p className="text-sm font-medium text-zinc-300">
+                    <p className="text-sm font-medium text-foreground/80">
                       {auction.bidCount}
                     </p>
                   </div>
@@ -369,7 +353,7 @@ function AuctionCard({
                       className={`text-[10px] ${
                         isEnding
                           ? "bg-destructive/20 text-destructive border-destructive/30 animate-pulse"
-                          : "bg-zinc-800 text-zinc-400 border-zinc-700"
+                          : "bg-foreground/5 text-muted-foreground border-border"
                       }`}
                     >
                       <Clock className="size-3 mr-1" />
@@ -383,7 +367,7 @@ function AuctionCard({
                   ) : (
                     <Badge
                       variant="outline"
-                      className="text-[10px] bg-zinc-800 text-zinc-500 border-zinc-700"
+                      className="text-[10px] bg-foreground/5 text-muted-foreground/80 border-border"
                     >
                       {endedLabel}
                     </Badge>
@@ -400,7 +384,7 @@ function AuctionCard({
   // Grid view
   return (
     <Link href={`/auctions/${auction.id}`} className="block group">
-      <Card className="border-zinc-800/60 bg-zinc-900/50 overflow-hidden transition-all duration-300 hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 group-hover:bg-zinc-900/80 h-full flex flex-col">
+      <Card className="border-border/60 bg-card/50 overflow-hidden transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 group-hover:bg-card/80 h-full flex flex-col">
         {/* Image */}
         <div className="relative aspect-[16/10] overflow-hidden">
           {auction.imageUrl ? (
@@ -413,8 +397,8 @@ function AuctionCard({
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-zinc-800">
-              <Car className="size-12 text-zinc-600" />
+            <div className="flex h-full w-full items-center justify-center bg-foreground/5">
+              <Car className="size-12 text-muted-foreground/60" />
             </div>
           )}
 
@@ -427,7 +411,7 @@ function AuctionCard({
               {getPlatformLabel(auction.platform)}
             </Badge>
             {auction.hasAnalysis && (
-              <Badge className="bg-amber-500/90 text-black text-[10px] font-semibold border-0">
+              <Badge className="bg-primary/90 text-black text-[10px] font-semibold border-0">
                 {t("badges.aiAnalyzed")}
               </Badge>
             )}
@@ -438,7 +422,7 @@ function AuctionCard({
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6">
               <div
                 className={`flex items-center gap-1 text-xs font-medium ${
-                  isEnding ? "text-destructive" : "text-zinc-300"
+                  isEnding ? "text-destructive" : "text-foreground/80"
                 }`}
               >
                 <Clock className="size-3" />
@@ -457,10 +441,10 @@ function AuctionCard({
         {/* Content */}
         <CardContent className="flex flex-1 flex-col justify-between gap-3 p-4">
           <div>
-            <h3 className="font-semibold text-zinc-100 text-sm leading-tight mb-1.5 line-clamp-2 group-hover:text-destructive transition-colors">
+            <h3 className="font-semibold text-foreground text-sm leading-tight mb-1.5 line-clamp-2 group-hover:text-destructive transition-colors">
               {auction.title}
             </h3>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground/80">
               {auction.mileage !== null && (
                 <span>
                   {auction.mileage.toLocaleString(locale)} {t("units.milesShort")}
@@ -468,24 +452,24 @@ function AuctionCard({
               )}
               {auction.transmission && (
                 <>
-                  <span className="text-zinc-700">|</span>
+                  <span className="text-muted-foreground/40">|</span>
                   <span>{auction.transmission}</span>
                 </>
               )}
               {auction.location && (
                 <>
-                  <span className="text-zinc-700">|</span>
+                  <span className="text-muted-foreground/40">|</span>
                   <span>{auction.location}</span>
                 </>
               )}
             </div>
           </div>
 
-          <Separator className="bg-zinc-800/80" />
+          <Separator className="bg-foreground/5/80" />
 
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-0.5">
                 {hasEnded ? t("card.soldFor") : t("card.currentBid")}
               </p>
               <p className="text-lg font-bold text-destructive">
@@ -501,7 +485,7 @@ function AuctionCard({
                   {t(`reserve.${reserveBadge.key}`)}
                 </Badge>
               )}
-              <div className="flex items-center gap-1 text-xs text-zinc-500">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground/80">
                 <Gavel className="size-3" />
                 {auction.bidCount}
               </div>
@@ -536,7 +520,7 @@ function FilterSidebar({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-200 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-foreground/90 uppercase tracking-wider">
           {t("filters.title")}
         </h3>
         {hasActiveFilters && (
@@ -551,21 +535,21 @@ function FilterSidebar({
 
       {/* Platform */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t("filters.platform")}
         </label>
         <Select
           value={filters.platform}
           onValueChange={(v) => onFilterChange("platform", v)}
         >
-          <SelectTrigger className="w-full bg-zinc-900/80 border-zinc-800 text-zinc-200 h-9 text-sm">
+          <SelectTrigger className="w-full bg-card/80 border-border text-foreground/90 h-9 text-sm">
             <SelectValue placeholder={t("filters.allPlatforms")} />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
+          <SelectContent className="bg-card border-border">
             <SelectItem
               key={ALL}
               value={ALL}
-              className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
+              className="text-foreground/90 focus:bg-foreground/5 focus:text-destructive"
             >
               {t("filters.allPlatforms")}
             </SelectItem>
@@ -573,7 +557,7 @@ function FilterSidebar({
               <SelectItem
                 key={p.value}
                 value={p.value}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
+                className="text-foreground/90 focus:bg-foreground/5 focus:text-destructive"
               >
                 {p.label}
               </SelectItem>
@@ -584,22 +568,22 @@ function FilterSidebar({
 
       {/* Make */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t("filters.make")}
         </label>
         <Select
           value={filters.make}
           onValueChange={(v) => onFilterChange("make", v)}
         >
-          <SelectTrigger className="w-full bg-zinc-900/80 border-zinc-800 text-zinc-200 h-9 text-sm">
+          <SelectTrigger className="w-full bg-card/80 border-border text-foreground/90 h-9 text-sm">
             <SelectValue placeholder={t("filters.allMakes")} />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800 max-h-60">
+          <SelectContent className="bg-card border-border max-h-60">
             {POPULAR_MAKES.map((m) => (
               <SelectItem
                 key={m || "__all__"}
                 value={m || ALL}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
+                className="text-foreground/90 focus:bg-foreground/5 focus:text-destructive"
               >
                 {m || t("filters.allMakes")}
               </SelectItem>
@@ -610,34 +594,34 @@ function FilterSidebar({
 
       {/* Model - free text */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t("filters.model")}
         </label>
         <Input
           placeholder={t("filters.modelPlaceholder")}
           value={filters.model}
           onChange={(e) => onFilterChange("model", e.target.value)}
-          className="bg-zinc-900/80 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 h-9 text-sm"
+          className="bg-card/80 border-border text-foreground/90 placeholder:text-muted-foreground/60 h-9 text-sm"
         />
       </div>
 
       {/* Status */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {t("filters.status")}
         </label>
         <Select
           value={filters.status}
           onValueChange={(v) => onFilterChange("status", v)}
         >
-          <SelectTrigger className="w-full bg-zinc-900/80 border-zinc-800 text-zinc-200 h-9 text-sm">
+          <SelectTrigger className="w-full bg-card/80 border-border text-foreground/90 h-9 text-sm">
             <SelectValue placeholder={t("filters.allStatuses")} />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
+          <SelectContent className="bg-card border-border">
             <SelectItem
               key={ALL}
               value={ALL}
-              className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
+              className="text-foreground/90 focus:bg-foreground/5 focus:text-destructive"
             >
               {t("filters.allStatuses")}
             </SelectItem>
@@ -645,7 +629,7 @@ function FilterSidebar({
               <SelectItem
                 key={s.value || "__all__"}
                 value={s.value}
-                className="text-zinc-200 focus:bg-zinc-800 focus:text-destructive"
+                className="text-foreground/90 focus:bg-foreground/5 focus:text-destructive"
               >
                 {t(`statuses.${s.key}`)}
               </SelectItem>
@@ -654,9 +638,9 @@ function FilterSidebar({
         </Select>
       </div>
 
-      <Separator className="bg-zinc-800" />
+      <Separator className="bg-foreground/5" />
 
-      <p className="text-xs text-zinc-600">
+      <p className="text-xs text-muted-foreground/60">
         {t("filters.resultsFound", { count: resultCount })}
       </p>
     </div>
@@ -697,21 +681,21 @@ function MobileFilters({
         variant="outline"
         size="sm"
         onClick={onToggle}
-        className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive"
+        className="bg-card/80 border-border text-foreground/80 hover:bg-foreground/5 hover:text-destructive"
       >
         <SlidersHorizontal className="size-4 mr-1.5" />
         {t("filters.title")}
         {activeCount > 0 && (
-          <Badge className="ml-1.5 bg-amber-500/20 text-destructive border-amber-500/30 text-[10px] px-1.5">
+          <Badge className="ml-1.5 bg-primary/20 text-destructive border-primary/30 text-[10px] px-1.5">
             {activeCount}
           </Badge>
         )}
       </Button>
 
       {open && (
-        <div className="mt-3 rounded-lg border border-zinc-800 bg-zinc-900/90 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="mt-3 rounded-lg border border-border bg-card/90 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-300">
+            <span className="text-sm font-medium text-foreground/80">
               {t("filters.mobileTitle")}
             </span>
             <div className="flex items-center gap-2">
@@ -724,7 +708,7 @@ function MobileFilters({
                 </button>
               )}
               <button onClick={onToggle}>
-                <X className="size-4 text-zinc-500 hover:text-zinc-300" />
+                <X className="size-4 text-muted-foreground/80 hover:text-foreground/80" />
               </button>
             </div>
           </div>
@@ -734,18 +718,18 @@ function MobileFilters({
               value={filters.platform}
               onValueChange={(v) => onFilterChange("platform", v)}
             >
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-200 h-9 text-xs">
+              <SelectTrigger className="bg-foreground/5 border-border text-foreground/90 h-9 text-xs">
                 <SelectValue placeholder={t("filters.platform")} />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800">
-                <SelectItem key={ALL} value={ALL} className="text-zinc-200 text-xs">
+              <SelectContent className="bg-card border-border">
+                <SelectItem key={ALL} value={ALL} className="text-foreground/90 text-xs">
                   {t("filters.allPlatforms")}
                 </SelectItem>
                 {PLATFORMS.map((p) => (
                   <SelectItem
                     key={p.value}
                     value={p.value}
-                    className="text-zinc-200 text-xs"
+                    className="text-foreground/90 text-xs"
                   >
                     {p.label}
                   </SelectItem>
@@ -757,15 +741,15 @@ function MobileFilters({
               value={filters.make}
               onValueChange={(v) => onFilterChange("make", v)}
             >
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-200 h-9 text-xs">
+              <SelectTrigger className="bg-foreground/5 border-border text-foreground/90 h-9 text-xs">
                 <SelectValue placeholder={t("filters.make")} />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800 max-h-60">
+              <SelectContent className="bg-card border-border max-h-60">
                 {POPULAR_MAKES.map((m) => (
                   <SelectItem
                     key={m || "__all__"}
                     value={m || ALL}
-                    className="text-zinc-200 text-xs"
+                    className="text-foreground/90 text-xs"
                   >
                     {m || t("filters.allMakes")}
                   </SelectItem>
@@ -777,25 +761,25 @@ function MobileFilters({
               placeholder={t("filters.model")}
               value={filters.model}
               onChange={(e) => onFilterChange("model", e.target.value)}
-              className="bg-zinc-800 border-zinc-700 text-zinc-200 placeholder:text-zinc-600 h-9 text-xs"
+              className="bg-foreground/5 border-border text-foreground/90 placeholder:text-muted-foreground/60 h-9 text-xs"
             />
 
             <Select
               value={filters.status}
               onValueChange={(v) => onFilterChange("status", v)}
             >
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-200 h-9 text-xs">
+              <SelectTrigger className="bg-foreground/5 border-border text-foreground/90 h-9 text-xs">
                 <SelectValue placeholder={t("filters.status")} />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800">
-                <SelectItem key={ALL} value={ALL} className="text-zinc-200 text-xs">
+              <SelectContent className="bg-card border-border">
+                <SelectItem key={ALL} value={ALL} className="text-foreground/90 text-xs">
                   {t("filters.allStatuses")}
                 </SelectItem>
                 {STATUS_OPTIONS.map((s) => (
                   <SelectItem
                     key={s.value}
                     value={s.value}
-                    className="text-zinc-200 text-xs"
+                    className="text-foreground/90 text-xs"
                   >
                     {t(`statuses.${s.key}`)}
                   </SelectItem>
@@ -818,19 +802,19 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-      <div className="rounded-full bg-zinc-800/60 p-5 mb-5">
-        <Car className="size-10 text-zinc-600" />
+      <div className="rounded-full bg-foreground/5/60 p-5 mb-5">
+        <Car className="size-10 text-muted-foreground/60" />
       </div>
-      <h3 className="text-lg font-semibold text-zinc-200 mb-2">
+      <h3 className="text-lg font-semibold text-foreground/90 mb-2">
         {t("empty.title")}
       </h3>
-      <p className="text-sm text-zinc-500 max-w-sm mb-6">
+      <p className="text-sm text-muted-foreground/80 max-w-sm mb-6">
         {t("empty.subtitle")}
       </p>
       <Button
         variant="outline"
         onClick={onReset}
-        className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive"
+        className="bg-card border-border text-foreground/80 hover:bg-foreground/5 hover:text-destructive"
       >
         {t("empty.clearFilters")}
       </Button>
@@ -999,22 +983,22 @@ export default function AuctionsClient() {
   }, [searchInput])
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-40">
+      <div className="border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 py-6">
             {/* Title row */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-zinc-50 tracking-tight">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
                   {t("header.title")}
                 </h1>
-                <p className="text-sm text-zinc-500 mt-0.5">
+                <p className="text-sm text-muted-foreground/80 mt-0.5">
                   {t("header.subtitle")}
                 </p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-600">
+              <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground/60">
                 <div className="h-2 w-2 rounded-full bg-positive animate-pulse" />
                 {tStatus("live")}
               </div>
@@ -1022,12 +1006,12 @@ export default function AuctionsClient() {
 
             {/* Search bar */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
               <Input
                 placeholder={t("header.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-10 bg-zinc-900/80 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 h-10"
+                className="pl-10 bg-card/80 border-border text-foreground/90 placeholder:text-muted-foreground/60 h-10"
               />
               {searchInput && (
                 <button
@@ -1037,7 +1021,7 @@ export default function AuctionsClient() {
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <X className="size-4 text-zinc-500 hover:text-zinc-300" />
+                  <X className="size-4 text-muted-foreground/80 hover:text-foreground/80" />
                 </button>
               )}
             </div>
@@ -1054,7 +1038,7 @@ export default function AuctionsClient() {
                 />
 
                 {/* Result count */}
-                <p className="text-sm text-zinc-500 hidden sm:block">
+                <p className="text-sm text-muted-foreground/80 hidden sm:block">
                   {loading ? (
                     <span className="inline-flex items-center gap-1.5">
                       <Loader2 className="size-3 animate-spin" />
@@ -1062,7 +1046,7 @@ export default function AuctionsClient() {
                     </span>
                   ) : (
                     <>
-                      <span className="font-medium text-zinc-300">
+                      <span className="font-medium text-foreground/80">
                         {total}
                       </span>{" "}
                       {t("results.listingsLabel", { count: total })}
@@ -1077,16 +1061,16 @@ export default function AuctionsClient() {
                   value={filters.sort}
                   onValueChange={(v) => handleFilterChange("sort", v)}
                 >
-                  <SelectTrigger className="bg-zinc-900/80 border-zinc-800 text-zinc-300 h-8 text-xs w-[160px]">
-                    <ArrowUpDown className="size-3 mr-1 text-zinc-500" />
+                  <SelectTrigger className="bg-card/80 border-border text-foreground/80 h-8 text-xs w-[160px]">
+                    <ArrowUpDown className="size-3 mr-1 text-muted-foreground/80" />
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                  <SelectContent className="bg-card border-border">
                     {SORT_OPTIONS.map((s) => (
                       <SelectItem
                         key={s.value}
                         value={s.value}
-                        className="text-zinc-200 text-xs focus:bg-zinc-800 focus:text-destructive"
+                        className="text-foreground/90 text-xs focus:bg-foreground/5 focus:text-destructive"
                       >
                         {t(`sort.${s.key}`)}
                       </SelectItem>
@@ -1095,13 +1079,13 @@ export default function AuctionsClient() {
                 </Select>
 
                 {/* View toggle */}
-                <div className="hidden sm:flex items-center rounded-md border border-zinc-800 bg-zinc-900/80">
+                <div className="hidden sm:flex items-center rounded-md border border-border bg-card/80">
                   <button
                     onClick={() => setView("grid")}
                     className={`p-1.5 rounded-l-md transition-colors ${
                       view === "grid"
-                        ? "bg-amber-500/20 text-destructive"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        ? "bg-primary/20 text-destructive"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
                     }`}
                   >
                     <LayoutGrid className="size-4" />
@@ -1110,8 +1094,8 @@ export default function AuctionsClient() {
                     onClick={() => setView("list")}
                     className={`p-1.5 rounded-r-md transition-colors ${
                       view === "list"
-                        ? "bg-amber-500/20 text-destructive"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        ? "bg-primary/20 text-destructive"
+                        : "text-muted-foreground/80 hover:text-foreground/80"
                     }`}
                   >
                     <List className="size-4" />
@@ -1129,7 +1113,7 @@ export default function AuctionsClient() {
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-[200px]">
-              <Card className="border-zinc-800/60 bg-zinc-900/30 p-5">
+              <Card className="border-border/60 bg-card/30 p-5">
                 <FilterSidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
@@ -1206,23 +1190,23 @@ export default function AuctionsClient() {
                   size="sm"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page <= 1}
-                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive disabled:opacity-30"
+                  className="bg-card/80 border-border text-foreground/80 hover:bg-foreground/5 hover:text-destructive disabled:opacity-30"
                 >
                   <ChevronLeft className="size-4 mr-1" />
                   Previous
                 </Button>
-                <span className="text-sm text-zinc-400 px-4">
+                <span className="text-sm text-muted-foreground px-4">
                   Page{" "}
-                  <span className="font-medium text-zinc-200">{page}</span>
+                  <span className="font-medium text-foreground/90">{page}</span>
                   {" "}of{" "}
-                  <span className="font-medium text-zinc-200">{totalPages}</span>
+                  <span className="font-medium text-foreground/90">{totalPages}</span>
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page >= totalPages}
-                  className="bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-destructive disabled:opacity-30"
+                  className="bg-card/80 border-border text-foreground/80 hover:bg-foreground/5 hover:text-destructive disabled:opacity-30"
                 >
                   Next
                   <ChevronRight className="size-4 ml-1" />

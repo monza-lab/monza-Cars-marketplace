@@ -35,6 +35,7 @@ import {
   BarChart3,
   DollarSign,
 } from "lucide-react"
+import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
@@ -66,7 +67,7 @@ import { formatPoint } from "@/lib/landedCost/format"
 
 // ─── PLATFORM LABELS ───
 const platformLabels: Record<string, { short: string; color: string }> = {
-  BRING_A_TRAILER: { short: "BaT", color: "bg-amber-500/20 text-destructive" },
+  BRING_A_TRAILER: { short: "BaT", color: "bg-primary/20 text-destructive" },
   CARS_AND_BIDS: { short: "C&B", color: "bg-blue-500/20 text-blue-400" },
   COLLECTING_CARS: { short: "CC", color: "bg-purple-500/20 text-purple-400" },
   AUTO_SCOUT_24: { short: "AS24", color: "bg-green-500/20 text-green-400" },
@@ -123,7 +124,7 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/20 overflow-hidden">
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-4 hover:bg-foreground/3 transition-colors"
@@ -160,7 +161,7 @@ function StatCard({ label, value, icon }: {
   icon: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl bg-card border border-border border-l-2 border-l-primary/30 p-4">
+    <div className="rounded-xl bg-card border border-border p-4">
       <div className="flex items-center gap-2 text-primary/60 mb-2">
         {icon}
         <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{label}</span>
@@ -269,16 +270,17 @@ function CarNavSidebar({
   const flags: string[] = dbAnalysis?.redFlags ?? []
   const platform = platformLabels[car.platform]
 
-  // Market position: where current price sits within selected region's fair value range
+  // Market position: where current price sits within selected region's fair value range.
+  // Honest-by-data: pricePosition is null when we don't have a real fair-value band.
   const regionRange = car.fairValueByRegion[activeRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const fairLow = regionRange.low
   const fairHigh = regionRange.high
-  // Convert currentBid (USD) to selected currency for comparison
+  const hasFairValue = fairHigh > fairLow && fairLow > 0
   const bidInCurrency = convertFromUsd(car.currentBid)
-  const pricePosition = fairHigh > fairLow
+  const pricePosition = hasFairValue
     ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
-    : 50
-  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
+    : null
+  const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
   const priceLabel = getPriceLabel(car.platform, car.status)
 
   return (
@@ -314,8 +316,8 @@ function CarNavSidebar({
         <p className="text-[20px] font-display font-medium text-primary mt-0.5">{formatPrice(car.currentBid)}</p>
       </div>
 
-      {/* ── Market Position (hidden when no price data) ── */}
-      {car.currentBid > 0 && (
+      {/* ── Market Position (only with real fair-value band) ── */}
+      {car.currentBid > 0 && pricePosition !== null && (
       <div className="px-4 py-3 shrink-0 border-b border-border">
         {/* [HARDCODED] */}
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Market Position</span>
@@ -349,6 +351,18 @@ function CarNavSidebar({
             </>
           )}
         </div>
+      </div>
+      )}
+
+      {/* ── Fair value pending state (when no comparable data yet) ── */}
+      {car.currentBid > 0 && pricePosition === null && (
+      <div className="px-4 py-3 shrink-0 border-b border-border">
+        <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-1.5 block">
+          {/* [HARDCODED] */}Market Position
+        </span>
+        <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+          {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+        </p>
       </div>
       )}
 
@@ -507,9 +521,13 @@ function CarContextPanel({
   )
 
   // Market position: where is the current bid relative to fair value?
+  // Honest-by-data: pricePosition is null when no real fair-value band exists.
   const regionRange = pricing[activeRegion as keyof typeof pricing] || pricing.US
+  const hasFairBand = regionRange.high > regionRange.low && regionRange.low > 0
   const fairMid = (regionRange.low + regionRange.high) / 2
-  const pricePosition = fairMid > 0 ? Math.round((car.currentBid / fairMid) * 100) : 50
+  const pricePosition = hasFairBand && fairMid > 0
+    ? Math.round((car.currentBid / fairMid) * 100)
+    : null
 
   return (
     <div className="h-full flex flex-col overflow-hidden border-l border-border">
@@ -550,7 +568,13 @@ function CarContextPanel({
             <div>
               {/* [HARDCODED] */}
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
-              <p className="text-[13px] tabular-nums font-semibold text-positive">{car.trend}</p>
+              {car.trend ? (
+                <p className={`text-[13px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>{car.trend}</p>
+              ) : (
+                <p className="text-[12px] text-muted-foreground italic">
+                  {/* [HARDCODED] */}Awaiting history
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -617,7 +641,7 @@ function CarContextPanel({
           </div>
         </div>
 
-        {/* 3. MARKET POSITION */}
+        {/* 3. MARKET POSITION (only when we have a real fair-value band) */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-3">
             <Scale className="size-4 text-primary" />
@@ -626,39 +650,47 @@ function CarContextPanel({
               Market Position
             </span>
           </div>
-          {/* Price vs Fair Value gauge */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1.5">
+          {pricePosition !== null ? (
+            <>
+              {/* Price vs Fair Value gauge */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  {/* [HARDCODED] */}
+                  <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+                  <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
+                    {pricePosition}%
+                  </span>
+                </div>
+                <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
+                    style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+                  <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
+                </div>
+              </div>
+              {/* Position label */}
               {/* [HARDCODED] */}
-              <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-              <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
-                {pricePosition}%
-              </span>
-            </div>
-            <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
-              <div
-                className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
-                style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
-              <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
-            </div>
-          </div>
-          {/* Position label */}
-          {/* [HARDCODED] */}
-          <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
-            <span className="text-[11px] text-muted-foreground">
-              {pricePosition <= 85
-                ? "Priced well below fair value range — strong buyer opportunity"
-                : pricePosition <= 100
-                  ? "Priced within the lower half of fair value range"
-                  : pricePosition <= 115
-                    ? "Priced at market — fair value for current conditions"
-                    : "Priced above fair value midpoint — verify condition justifies premium"}
-            </span>
-          </div>
+              <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {pricePosition <= 85
+                    ? "Priced well below fair value range — strong buyer opportunity"
+                    : pricePosition <= 100
+                      ? "Priced within the lower half of fair value range"
+                      : pricePosition <= 115
+                        ? "Priced at market — fair value for current conditions"
+                        : "Priced above fair value midpoint — verify condition justifies premium"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+              {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+            </p>
+          )}
         </div>
 
         {/* 5. SHIPPING COSTS */}
@@ -883,15 +915,17 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const shipping = null as { domestic: number; euImport: number; ukImport: number } | null
 
   // ─── Investment Passport computations (for mobile) ───
-  // Use real per-region fair values from DB
+  // Honest-by-data: only render position when we have a real fair-value band.
   const mobilePricing = car.fairValueByRegion
   const regionRange = mobilePricing[lockedRegion as keyof typeof mobilePricing] || mobilePricing.US
   const fairLow = dbMarketData?.lowPrice ?? regionRange.low
   const fairHigh = dbMarketData?.highPrice ?? regionRange.high
+  const hasFairValue = fairHigh > fairLow && fairLow > 0
   const bidInCurrency = convertFromUsd(car.currentBid)
-  const pricePosition = fairHigh > fairLow
-    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100) : 50
-  const isBelowFair = bidInCurrency < (fairLow + fairHigh) / 2
+  const pricePosition = hasFairValue
+    ? Math.min(Math.max(((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100, 0), 100)
+    : null
+  const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = mobilePricing
   const bestRegion = findBestRegion(pricing)
@@ -1047,7 +1081,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <p className="text-2xl font-display font-medium text-primary">
                     {formatPrice(car.currentBid)}
                   </p>
-                  <span className="text-[12px] tabular-nums font-semibold text-positive">{car.trend}</span>
+                  {car.trend && (
+                    <span className={`text-[12px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                      {car.trend}
+                    </span>
+                  )}
                 </div>
                 {landedCostTeaser && (
                   <p className="mt-1 text-[11px] tabular-nums text-white/60 flex items-center gap-1.5">
@@ -1095,17 +1133,21 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {/* Cell 1: Trend */}
+              {/* Cell 1: Trend (only when we have real history) */}
               <div className="rounded-xl bg-foreground/3 border border-border p-3">
                 {/* [HARDCODED] */}
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Trend
                 </span>
-                <span className={`text-[28px] font-bold tabular-nums ${
-                  car.trendValue > 0 ? "text-positive"
-                  : car.trendValue < 0 ? "text-destructive"
-                  : "text-muted-foreground"
-                }`}>{car.trend}</span>
+                {car.trend && car.trendValue !== 0 ? (
+                  <span className={`text-[28px] font-bold tabular-nums ${
+                    car.trendValue > 0 ? "text-positive" : "text-destructive"
+                  }`}>{car.trend}</span>
+                ) : (
+                  <span className="text-[14px] text-muted-foreground italic block mt-1">
+                    {/* [HARDCODED] */}Awaiting price history
+                  </span>
+                )}
               </div>
 
               {/* Cell 2: Market Position */}
@@ -1113,16 +1155,24 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   {t("investmentPassport.marketPosition")}
                 </span>
-                <div className="relative h-[6px] rounded-full bg-foreground/4 overflow-hidden mt-2 mb-1.5">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
-                    style={{ left: `calc(${pricePosition}% - 4px)` }}
-                  />
-                </div>
-                <span className={`text-[11px] font-medium ${isBelowFair ? "text-positive" : "text-destructive"}`}>
-                  {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
-                </span>
+                {pricePosition !== null ? (
+                  <>
+                    <div className="relative h-[6px] rounded-full bg-foreground/4 overflow-hidden mt-2 mb-1.5">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 size-[8px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/30"
+                        style={{ left: `calc(${pricePosition}% - 4px)` }}
+                      />
+                    </div>
+                    <span className={`text-[11px] font-medium ${isBelowFair ? "text-positive" : "text-destructive"}`}>
+                      {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground italic block mt-2">
+                    {/* [HARDCODED] */}Pending comps
+                  </span>
+                )}
               </div>
 
               {/* Cell 3: Fair Value */}
@@ -1131,9 +1181,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Fair Value
                 </span>
-                <span className="text-[22px] font-bold tabular-nums text-foreground">
-                  {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
-                </span>
+                {hasFairValue ? (
+                  <span className="text-[22px] font-bold tabular-nums text-foreground">
+                    {formatPrice(Math.round((regionRange.low + regionRange.high) / 2))}
+                  </span>
+                ) : (
+                  <span className="text-[14px] text-muted-foreground italic">
+                    {/* [HARDCODED] */}Awaiting comparable sales
+                  </span>
+                )}
               </div>
 
             </div>
@@ -1197,8 +1253,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* 3. Seller's Description */}
           <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
-            <div className="border-l-2 border-primary/20 pl-4">
-              <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+            <div className="pl-4 border-l border-border">
+              <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
             </div>
             <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
           </CollapsibleSection>
@@ -1258,37 +1314,46 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 Market Position
               </span>
             </div>
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-1.5">
+            {pricePosition !== null ? (
+              <>
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    {/* [HARDCODED] */}
+                    <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
+                    <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
+                      {pricePosition}%
+                    </span>
+                  </div>
+                  <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
+                      style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
+                    <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
+                  </div>
+                </div>
                 {/* [HARDCODED] */}
-                <span className="text-[10px] text-muted-foreground">Price vs Fair Value</span>
-                <span className={`text-[11px] tabular-nums font-bold ${pricePosition <= 90 ? "text-positive" : pricePosition <= 110 ? "text-primary" : "text-destructive"}`}>
-                  {pricePosition}%
-                </span>
-              </div>
-              <div className="h-[8px] rounded-full bg-foreground/4 overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${pricePosition <= 90 ? "bg-positive/50" : pricePosition <= 110 ? "bg-primary/50" : "bg-destructive/50"}`}
-                  style={{ width: `${Math.min(pricePosition, 150) / 1.5}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.low)}</span>
-                <span className="text-[9px] text-muted-foreground">{formatPrice(regionRange.high)}</span>
-              </div>
-            </div>
-            {/* [HARDCODED] */}
-            <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
-              <span className="text-[11px] text-muted-foreground">
-                {pricePosition <= 85
-                  ? "Priced well below fair value — strong buyer opportunity"
-                  : pricePosition <= 100
-                    ? "Priced within the lower half of fair value range"
-                    : pricePosition <= 115
-                      ? "Priced at market — fair value for current conditions"
-                      : "Priced above fair value — verify condition justifies premium"}
-              </span>
-            </div>
+                <div className="rounded-lg bg-foreground/3 border border-border px-3 py-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    {pricePosition <= 85
+                      ? "Priced well below fair value — strong buyer opportunity"
+                      : pricePosition <= 100
+                        ? "Priced within the lower half of fair value range"
+                        : pricePosition <= 115
+                          ? "Priced at market — fair value for current conditions"
+                          : "Priced above fair value — verify condition justifies premium"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-[12px] text-muted-foreground italic leading-relaxed">
+                {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+                The Advisor can pull deeper context on a specific listing.
+              </p>
+            )}
           </div>
 
           {/* 7. Sale Information */}
@@ -1480,6 +1545,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             </CollapsibleSection>
           )}
 
+          {/* Contextual Advisor — pre-populated with this car's title */}
+          <AdvisorBand
+            title={/* [HARDCODED] */ "Questions about this one?"}
+            subtitle={/* [HARDCODED] */ "Inspection points, fair value, what to negotiate."}
+            prompt={`Tell me what to know before buying this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Inspection priorities, fair value, and red flags.`}
+          />
+
         </div>
 
         {/* ═══ MOBILE CTA ═══ */}
@@ -1565,8 +1637,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <History className="size-4 text-primary" />
                   <h2 className="text-[12px] font-semibold text-foreground">{t("sellersDescription")}</h2>
                 </div>
-                <div className="border-l-2 border-primary/20 pl-4">
-                  <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                <div className="pl-4 border-l border-border">
+                  <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
               </div>
@@ -1688,6 +1760,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </span>
                 </div>
               </Link>
+
+              {/* Contextual Advisor band — desktop column B */}
+              <div className="mt-6">
+                <AdvisorBand
+                  title={/* [HARDCODED] */ "Questions about this one?"}
+                  subtitle={/* [HARDCODED] */ "Inspection points, fair value, what to negotiate."}
+                  prompt={`Tell me what to know before buying this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Inspection priorities, fair value, and red flags.`}
+                />
+              </div>
 
               {/* Bottom spacing */}
               <div className="h-8" />

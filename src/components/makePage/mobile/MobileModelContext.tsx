@@ -86,7 +86,7 @@ export function MobileModelContext({
         </div>
       )}
 
-      {/* Panel 2: Market Depth — 2x2 grid */}
+      {/* Panel 2: Market Depth — only with real completed-sale data */}
       <div className="rounded-2xl bg-card border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
           <Gauge className="size-3.5 text-primary" />
@@ -94,24 +94,30 @@ export function MobileModelContext({
             {t("mobileContext.marketDepth")}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.listingsPerYear")}</p>
-            <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</p>
+        {depth ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.listingsPerYear")}</p>
+              <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.auctionsPerYear}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.avgDaysToSell")}</p>
+              <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.sellThroughRate")}</p>
+              <p className="text-[14px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.demandScore")}</p>
+              <p className="text-[14px] font-display font-medium text-primary">{depth.demandScore}/10</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.avgDaysToSell")}</p>
-            <p className="text-[14px] tabular-nums font-semibold text-foreground">{depth.avgDaysToSell}d</p>
-          </div>
-          <div>
-            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.sellThroughRate")}</p>
-            <p className="text-[14px] tabular-nums font-semibold text-positive">{depth.sellThroughRate}%</p>
-          </div>
-          <div>
-            <p className="text-[9px] text-muted-foreground uppercase">{t("mobileContext.demandScore")}</p>
-            <p className="text-[14px] font-display font-medium text-primary">{depth.demandScore}/10</p>
-          </div>
-        </div>
+        ) : (
+          <p className="text-[12px] text-muted-foreground italic leading-relaxed">
+            {/* [HARDCODED] */}Awaiting completed sales to compute depth for this model.
+          </p>
+        )}
       </div>
     </div>
   )

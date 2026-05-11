@@ -20,32 +20,9 @@ import { useLocale, useTranslations } from "next-intl";
 
 const ALL = "__all__";
 
-const MAKE_VALUES = [
-  "Porsche",
-  "Ferrari",
-  "Lamborghini",
-  "McLaren",
-  "BMW",
-  "Mercedes-Benz",
-  "Aston Martin",
-  "Bugatti",
-  "Pagani",
-  "Koenigsegg",
-  "Toyota",
-  "Nissan",
-  "Honda",
-  "Lexus",
-  "Mazda",
-  "Mitsubishi",
-  "Subaru",
-  "Ford",
-  "Jaguar",
-  "Maserati",
-  "Lancia",
-  "Audi",
-  "Alpine",
-  "De Tomaso",
-];
+// MonzaHaus is Porsche-only by product design. Other marques previously listed
+// here (Ferrari, BMW, etc.) confused users into thinking we covered them.
+const MAKE_VALUES = ["Porsche"];
 
 const PLATFORMS = [
   { value: "BRING_A_TRAILER", label: "Bring a Trailer" },
@@ -115,7 +92,10 @@ export function SearchClient() {
   const { formatPrice } = useCurrency();
   const { query, debouncedQuery, setQuery } = useSearch(300);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedMake, setSelectedMake] = useState(ALL);
+  // Always Porsche — product is Porsche-only. Kept as state to preserve
+  // existing query-building logic without further refactor.
+  const [selectedMake, setSelectedMake] = useState<string>("Porsche");
+  void setSelectedMake
   const [selectedPlatform, setSelectedPlatform] = useState(ALL);
   const [selectedStatus, setSelectedStatus] = useState(ALL);
   const [priceMin, setPriceMin] = useState("");
@@ -163,7 +143,7 @@ export function SearchClient() {
   ].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSelectedMake(ALL);
+    setSelectedMake("Porsche");
     setSelectedPlatform(ALL);
     setSelectedStatus(ALL);
     setPriceMin("");
@@ -177,18 +157,18 @@ export function SearchClient() {
       {/* ═══════════════════════════════════════════════════════════════════════
           COMPACT HEADER — Search + Title + Filters inline
           ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-none px-6 py-4 border-b border-border">
-        {/* Top Row: Title + Search + Sort */}
-        <div className="flex items-center gap-6">
+      <div className="flex-none px-4 py-4 md:px-6 border-b border-border">
+        {/* Top Row: Title + Search + Sort — stacks on mobile */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
           {/* Title */}
           <div className="shrink-0">
-            <h1 className="text-xl font-semibold text-foreground tracking-tight">
+            <h1 className="text-lg md:text-xl font-semibold text-foreground tracking-tight">
               {t("header.title")} <span className="font-semibold">{t("header.titleAccent")}</span>
             </h1>
           </div>
 
           {/* Search Bar */}
-          <div className="relative flex-1 max-w-xl">
+          <div className="relative flex-1 md:max-w-xl">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
@@ -210,7 +190,7 @@ export function SearchClient() {
           </div>
 
           {/* Results Count + Sort */}
-          <div className="flex items-center gap-4 shrink-0 ml-auto">
+          <div className="flex items-center justify-between gap-3 shrink-0 md:ml-auto md:justify-start">
             <span className="text-[11px] tracking-[0.1em] text-muted-foreground tabular-nums">
               {t("header.results", { count: total })}
             </span>
@@ -229,8 +209,8 @@ export function SearchClient() {
           </div>
         </div>
 
-        {/* Bottom Row: Quick Filters */}
-        <div className="flex items-center gap-2 mt-3">
+        {/* Bottom Row: Quick Filters — horizontal scroll on mobile */}
+        <div className="flex items-center gap-2 mt-3 -mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto no-scrollbar">
           <Button
             variant="outline"
             size="sm"
@@ -266,22 +246,8 @@ export function SearchClient() {
             </button>
           ))}
 
-          {/* Make Chip */}
-          <Select value={selectedMake} onValueChange={setSelectedMake}>
-            <SelectTrigger className="h-7 w-auto min-w-[100px] rounded-full border-border bg-transparent text-[10px] tracking-[0.05em] text-muted-foreground hover:border-primary/20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key={ALL} value={ALL}>
-                {t("filters.allMakes")}
-              </SelectItem>
-              {MAKE_VALUES.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Make chip removed — MonzaHaus is Porsche-only by product design.
+              The dropdown with a single option just added noise. */}
 
           {/* Platform Chip */}
           <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>

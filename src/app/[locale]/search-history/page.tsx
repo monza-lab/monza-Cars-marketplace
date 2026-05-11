@@ -11,7 +11,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "searchHistory" })
 
   return {
-    title: `${t("title")} | Monza Lab`,
+    title: `${t("title")} | MonzaHaus`,
   }
 }
 
