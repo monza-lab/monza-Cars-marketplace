@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
-import Image from "next/image"
 import { Link } from "@/i18n/navigation"
 import { motion } from "framer-motion"
 import { useLocale, useTranslations } from "next-intl"
@@ -39,6 +38,7 @@ import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from 
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
 import { listingPriceUsd, computeRegionalValFromAuctions } from "./utils/valuation"
 import { selectBestDatabaseImage } from "./utils/aggregation"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
@@ -494,36 +494,6 @@ function timeLeft(
   if (days > 0) return `${days}${labels.day} ${hrs}${labels.hour}`
   const mins = Math.floor((diff % 3600000) / 60000)
   return `${hrs}${labels.hour} ${mins}${labels.minute}`
-}
-
-// ─── SAFE IMAGE: renders fallback when the URL exists but fails to load ───
-function SafeImage({
-  src,
-  alt,
-  fallback,
-  fallbackSrc,
-  ...props
-}: React.ComponentProps<typeof Image> & { fallback: React.ReactNode; fallbackSrc?: string }) {
-  const [useFallback, setUseFallback] = useState(false)
-  const [fallbackFailed, setFallbackFailed] = useState(false)
-
-  const activeSrc = !useFallback ? src : fallbackSrc
-  if (!activeSrc || (useFallback && fallbackFailed)) return <>{fallback}</>
-  return (
-    <Image
-      key={String(activeSrc)}
-      src={activeSrc}
-      alt={alt}
-      onError={() => {
-        if (!useFallback && fallbackSrc) {
-          setUseFallback(true)
-        } else {
-          setFallbackFailed(true)
-        }
-      }}
-      {...props}
-    />
-  )
 }
 
 // ─── COLUMN B: BRAND CARD (NEW - replaces AssetCard on landing) ───
