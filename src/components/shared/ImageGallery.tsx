@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Expand, X, Car as CarIcon } from "lucide-react";
+import { SafeImage } from "@/components/dashboard/cards/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
               transition={{ duration: 0.3 }}
               className="relative size-full"
             >
-              <Image
+              <SafeImage
                 src={images[selectedIndex]}
                 alt={`${alt} - Image ${selectedIndex + 1}`}
                 fill
@@ -106,6 +106,11 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 priority={selectedIndex === 0}
                 onLoad={() => setMainLoaded(true)}
                 referrerPolicy="no-referrer"
+                fallback={
+                  <div className="absolute inset-0 flex items-center justify-center bg-card">
+                    <CarIcon className="size-12 text-muted-foreground/25" />
+                  </div>
+                }
               />
             </motion.div>
           </AnimatePresence>
@@ -179,7 +184,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                 {!thumbnailsLoaded[index] && (
                   <Skeleton className="absolute inset-0 bg-foreground/5/50" />
                 )}
-                <Image
+                <SafeImage
                   src={image}
                   alt={`${alt} - Thumbnail ${index + 1}`}
                   fill
@@ -192,6 +197,11 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     setThumbnailsLoaded((prev) => ({ ...prev, [index]: true }))
                   }
                   referrerPolicy="no-referrer"
+                  fallback={
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <CarIcon className="size-4 text-muted-foreground/25" />
+                    </div>
+                  }
                 />
               </div>
 
@@ -235,7 +245,7 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                   transition={{ duration: 0.2 }}
                   className="relative h-full w-full"
                 >
-                  <Image
+                  <SafeImage
                     src={images[selectedIndex]}
                     alt={`${alt} - Image ${selectedIndex + 1}`}
                     fill
@@ -243,6 +253,11 @@ export function ImageGallery({ images, alt, className }: ImageGalleryProps) {
                     sizes="90vw"
                     priority
                     referrerPolicy="no-referrer"
+                    fallback={
+                      <div className="absolute inset-0 flex items-center justify-center bg-card">
+                        <CarIcon className="size-16 text-muted-foreground/25" />
+                      </div>
+                    }
                   />
                 </motion.div>
               </AnimatePresence>

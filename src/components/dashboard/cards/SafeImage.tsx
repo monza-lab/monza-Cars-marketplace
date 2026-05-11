@@ -19,7 +19,8 @@ export function SafeImage({
   alt,
   fallback,
   fallbackSrc,
-  ...props
+  onLoad: callerOnLoad,
+  ...restProps
 }: React.ComponentProps<typeof Image> & { fallback: React.ReactNode; fallbackSrc?: string }) {
   const [useFallback, setUseFallback] = useState(false)
   const [fallbackFailed, setFallbackFailed] = useState(false)
@@ -39,9 +40,11 @@ export function SafeImage({
       // tiny (e.g. AutoTrader's no_image.png served via 307 redirect).
       if (img.naturalWidth * img.naturalHeight < MIN_IMAGE_AREA) {
         handleError()
+      } else {
+        callerOnLoad?.(e)
       }
     },
-    [handleError],
+    [handleError, callerOnLoad],
   )
 
   const activeSrc = !useFallback ? src : fallbackSrc
@@ -57,7 +60,7 @@ export function SafeImage({
       alt={alt}
       onError={handleError}
       onLoad={handleLoad}
-      {...props}
+      {...restProps}
     />
   )
 }
