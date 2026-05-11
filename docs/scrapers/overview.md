@@ -1,282 +1,176 @@
 # Scraper Architecture Overview
 
-## Architecture Diagram
+Last updated: 2026-05-12
+
+## Active Scrapers
+
+| # | Scraper | Source | Runtime | Schedule | Strategy |
+|---|---------|--------|---------|----------|----------|
+| 1 | AutoScout24 | Dealer listings (EU) | GitHub Actions | Daily 05:00 UTC | HTTP shards → Supabase |
+| 2 | AutoTrader UK | Dealer listings (UK) | GitHub Actions | Daily 02:00 UTC | GraphQL `at-gateway` → Supabase |
+| 3 | AutoTrader Enrichment | Detail enrichment | **Windows Task Scheduler** | 4×/day (10:00, 13:00, 16:00, 19:00 CET) | Product-page API + HTML + GraphQL |
+| 4 | Elferspot | Dealer listings (DE) | Vercel Cron | 2-phase: discovery + enrichment | HTTP + detail enrichment |
+| 5 | BeForward | Dealer listings (JP→export) | Vercel Cron | Daily 03:00 UTC | HTTP summary-only |
+| 6 | Classic.com | Dealer + auction (US) | GitHub Actions | Daily | Scrapling (Playwright) |
+| 7 | BaT (Porsche) | Auctions | Vercel Cron | Daily 01:00 UTC | HTTP + detail scrape |
+| 8 | BaT (Ferrari) | Auctions | Vercel Cron | Daily 00:00 UTC | HTTP + detail scrape |
+
+---
+
+## AutoTrader Enrichment
+
+### Why Windows Task Scheduler?
+
+AutoTrader uses Cloudflare protection that blocks all datacenter IPs:
+- **Vercel cron** → 403 (removed from `vercel.json` in commit `4306257`)
+- **GitHub Actions** → 403 (Azure/AWS datacenter IPs)
+- **Local machine** → Works (residential IP)
+
+The product-page REST API (`/product-page/v1/advert/{id}`) is equally blocked from datacenter IPs — not just the HTML/browser paths.
+
+### Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                    ENTRY POINTS                                     │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                     │
-│   ┌─────────────────────────────────────────┐    ┌─────────────────────────────┐    │
-│   │           CLI (ferrari_collector)       │    │      Cron API              │    │
-│   │  src/features/ferrari_collector/cli.ts  │    │  src/app/api/cron/route.ts │    │
-│   └─────────────────────┬───────────────────┘    └──────────────┬──────────────┘    │
-│                         │                                         │                  │
-│   --mode=daily         │                                         │                  │
-│   --mode=backfill      │                                         │                  │
-│                         │                                         │                  │
-└─────────────────────────┼─────────────────────────────────────────┼──────────────────┘
-                          │                                         │
-                          ▼                                         ▼
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                          FERRARI COLLECTOR                                          │
-│                    (Ferrari-specific, Supabase-focused)                             │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │  src/features/ferrari_collector/                                              │  │
-│  │                                                                              │  │
-│  │  ┌─────────────┐ ┌──────────┐ ┌────────────┐ ┌───────────────┐ ┌────────┐  │  │
-│  │  │ collector.ts │ │ discover │ │ normalize  │ │ supabase_    │ │ cli.ts │  │  │
-│  │  │  Orchestrates│ │ Filters  │ │ Transforms │ │ writer.ts    │ │ Entry  │  │  │
-│  │  │  all sources │ │ Ferrari  │ │ to schema  │ │ Upserts data │ │ point  │  │  │
-│  │  └──────┬──────┘ └────┬─────┘ └──────┬─────┘ └───────┬───────┘ └────────┘  │  │
-│  │         │            │             │               │                         │  │
-│  │         │            ▼             │               ▼                         │  │
-│  │         │    Keeps only Ferrari    │      Supabase (listings, photos)        │  │
-│  │         │                          │                                        │  │
-│  └─────────┼──────────────────────────┼────────────────────────────────────────┘  │
-│            │                          │                                           │
-│            ▼                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐   │
-│  │                     PLATFORM SCRAPERS (Used by ferrari_collector)           │   │
-│  │  ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐  │   │
-│  │  │ bringATrailer.ts    │ │ carsAndBids.ts      │ │ collectingCars.ts   │  │   │
-│  │  │                     │ │                     │ │                     │  │   │
-│  │  │ scrapeBringATrailer │ │ scrapeCarsAndBids   │ │ scrapeCollectingCars│  │   │
-│  │  │ parseAuctionCard    │ │ parseAuctionCard    │ │ parseAuctionCard    │  │   │
-│  │  │ scrapeDetail        │ │ scrapeDetail        │ │ scrapeDetail        │  │   │
-│  │  └─────────────────────┘ └─────────────────────┘ └─────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────────────────────────┘   │
-│            │                          │                                           │
-│            ▼                          ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐   │
-│  │              ALTERNATIVE: Generic Scraper (NOT used by ferrari_collector)    │   │
-│  │  src/lib/scraper.ts                                                         │   │
-│  │  - Simple cheerio-based price/status extraction                              │   │
-│  │  - 24hr in-memory cache                                                    │   │
-│  │  - Used for quick price lookups, not production data collection             │   │
-│  └─────────────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+Windows Task Scheduler (4×/day, 10:00–19:00 CET)
+    │
+    ▼
+scripts/autotrader-enrich-scheduled.bat
+    │
+    ▼
+scripts/autotrader-enrich.ts
+    │
+    ▼
+fetchAutoTraderDetail()  [src/features/scrapers/autotrader_collector/detail.ts]
+    │
+    ├─► Strategy 1: Product-page REST API  (/product-page/v1/advert/{id})
+    ├─► Strategy 2: HTML scrape + Cheerio
+    ├─► Strategy 3: GraphQL at-gateway fallback (missing mileage/images)
+    └─► Strategy 4: Scrapling fallback (headless browser, if available)
+    │
+    ▼
+Supabase updates (enriches null fields, delists 404s)
+```
+
+### Scheduled Tasks
+
+| Task Name | Time (CET) | What it does |
+|-----------|------------|--------------|
+| `Monza\AutoTrader-Enrich-10h` | 10:00 | Enrich up to 500 listings |
+| `Monza\AutoTrader-Enrich-13h` | 13:00 | Enrich up to 500 listings |
+| `Monza\AutoTrader-Enrich-16h` | 16:00 | Enrich up to 500 listings |
+| `Monza\AutoTrader-Enrich-19h` | 19:00 | Enrich up to 500 listings |
+
+**Requirement:** PC must be on and logged in (tasks run in interactive mode).
+
+### Enrichment behavior
+
+- Queries active AutoTrader listings missing `engine`, `transmission`, `mileage`, `description_text`, `current_bid`, or `photos_count < 5`
+- Ordered by `updated_at ASC` (oldest first)
+- Only updates null fields (never overwrites existing data)
+- Delists listings that return 404 from the product-page API
+- Circuit-breaks after 10 consecutive failures
+- 20-minute time budget per run
+- Logs to `scripts/logs/autotrader-enrich.log`
+
+### CLI usage
+
+```bash
+# Standard run (500 listings, 2s delay)
+npx tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000
+
+# Dry run (no DB writes)
+npx tsx scripts/autotrader-enrich.ts --limit=100 --dryRun
+
+# Custom time budget
+npx tsx scripts/autotrader-enrich.ts --limit=1000 --timeBudgetMs=1800000
+```
+
+### Managing scheduled tasks
+
+```powershell
+# View all Monza tasks
+schtasks /query /tn "Monza\*" /fo LIST
+
+# Delete all enrichment tasks
+schtasks /delete /tn "Monza\AutoTrader-Enrich-10h" /f
+schtasks /delete /tn "Monza\AutoTrader-Enrich-13h" /f
+schtasks /delete /tn "Monza\AutoTrader-Enrich-16h" /f
+schtasks /delete /tn "Monza\AutoTrader-Enrich-19h" /f
+
+# Run manually
+scripts\autotrader-enrich-scheduled.bat
 ```
 
 ---
 
 ## Code Map
 
-### Entry Points
+### Unified Scraper Framework (`src/features/scrapers/`)
 
-| File | Purpose | Usage |
-|------|---------|-------|
-| `src/features/ferrari_collector/cli.ts` | CLI entry point | `npx tsx src/features/ferrari_collector/cli.ts --mode=daily` |
-| `src/app/api/cron/route.ts` | Cron API endpoint | Automated daily scraping via cron job |
+All scrapers live under `src/features/scrapers/` with shared utilities:
 
-### Ferrari Collector (`src/features/ferrari_collector/`)
+| Directory | Scraper |
+|-----------|---------|
+| `autotrader_collector/` | AutoTrader UK (collector + enrichment) |
+| `autoscout24_collector/` | AutoScout24 (EU shards) |
+| `beforward_porsche_collector/` | BeForward (JP export) |
+| `classic_collector/` | Classic.com (US) |
+| `elferspot_collector/` | Elferspot (DE) |
+| `collectors/` | Auction scrapers (BaT, C&B, Collecting Cars) |
+| `common/` | Shared utilities (proxy, monitoring, backfill, cleanup) |
 
-| File | Purpose |
-|------|---------|
-| `collector.ts` | Main orchestrator - coordinates scraping, filtering, normalization, and writing |
-| `cli.ts` | CLI argument parsing and run execution |
-| `discover.ts` | Filters listings to keep only Ferrari vehicles |
-| `normalize.ts` | Transforms raw scraper output to Supabase schema |
-| `supabase_writer.ts` | Upserts data to Supabase (listings, photos tables) |
-| `checkpoint.ts` | Pagination checkpointing for resumable runs |
-| `net.ts` | Rate limiting, retry logic, HTTP utilities |
-| `types.ts` | TypeScript type definitions |
-| `logging.ts` | Structured JSON logging |
+### AutoTrader Detail Fetcher (`autotrader_collector/detail.ts`)
 
-### Platform Scrapers (`src/lib/scrapers/`)
+Multi-strategy detail extraction used by both the Vercel cron route and the CLI enrichment script:
 
-| File | Platform | Exports |
-|------|----------|---------|
-| `bringATrailer.ts` | Bring a Trailer | `scrapeBringATrailer`, `parseAuctionCard`, `scrapeDetail` |
-| `carsAndBids.ts` | Cars & Bids | `scrapeCarsAndBids`, `parseAuctionCard`, `scrapeDetail` |
-| `collectingCars.ts` | Collecting Cars | `scrapeCollectingCars`, `parseAuctionCard`, `scrapeDetail` |
-| `index.ts` | Orchestrator | `scrapeAll`, `scrapePlatform`, `scrapeAllWithBackfill` |
+| Strategy | Method | Reliability |
+|----------|--------|-------------|
+| 1. Product-page API | `GET /product-page/v1/advert/{id}` — structured JSON | Best (when not CF-blocked) |
+| 2. HTML scrape | Cheerio parsing of detail page | Good |
+| 3. GraphQL fallback | `POST /at-gateway` with `SearchResultsListingsGridQuery` | Good for mileage/images |
+| 4. Scrapling | Python headless browser (`StealthyFetcher`) | Last resort |
 
-### Alternative Scraper (`src/lib/scraper.ts`)
+### Shared Monitoring (`common/monitoring/`)
 
-| File | Purpose |
-|------|---------|
-| `scraper.ts` | Simple zero-cost scraper with cheerio, 24hr cache |
+All scrapers record runs to the `scraper_runs` Supabase table via:
+- `markScraperRunStarted()` — marks run as active
+- `recordScraperRun()` — writes final metrics (discovered, written, errors, duration)
+- `clearScraperRunActive()` — clears active flag
 
 ---
 
-## Scraping Flows
+## Runtime Environments
 
-### Flow 1: Daily Incremental Sync
+| Environment | IP Type | Cloudflare Risk | Used For |
+|-------------|---------|-----------------|----------|
+| Vercel Cron | Datacenter (AWS) | High | Elferspot, BeForward, BaT, cleanup, validation |
+| GitHub Actions | Datacenter (Azure) | High | AS24, AutoTrader collector, Classic.com |
+| Windows Task Scheduler | Residential | **None** | AutoTrader enrichment |
 
-```
-CLI (--mode=daily)
-    │
-    ▼
-collector.ts::runFerrariCollector()
-    │
-    ├─► For each source (BaT, CarsAndBids, CollectingCars)
-    │       │
-    │       ▼
-    │   scrapeActiveListings() ──► scrapeBringATrailer/scrapeCarsAndBids/scrapeCollectingCars
-    │       │                               │
-    │       │                               ▼
-    │       │                           Listing pages (maxPages)
-    │       │                           Returns: url, title, make, model, year, mileage, endTime
-    │       │
-    │       ▼
-    │   discoverFerrariListingUrls() ──► Filters for Ferrari only
-    │       │
-    │       ▼
-    │   For each Ferrari listing
-    │       │
-    │       ├─► fetchAuctionData() ──► Basic data (title, price, status, endTime)
-    │       │
-    │       ├─► scrapeDetail() (optional) ──► Full details: VIN, engine, transmission, colors, images
-    │       │
-    │       ▼
-    │   normalize.ts ──► Transforms to Supabase schema
-    │       │
-    │       ▼
-    │   supabase_writer.ts::upsertAll() ──► Writes to listings, photos tables
-    │       │
-    │       ▼
-    │   checkpoint.ts::saveCheckpoint() ──► Saves pagination state
-    │
-    ▼
-Result: { runId, sourceCounts, errors }
-```
+### Cloudflare-Blocked Endpoints
 
-**Command:**
-```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily
-```
-
-**What it does:**
-- Scrapes active listings from all 3 platforms
-- Filters for Ferrari only
-- Fetches basic auction data
-- Optionally fetches full detail (VIN, images, etc.)
-- Writes to Supabase
-- Checkpoints pagination state
-
----
-
-### Flow 2: Historical Backfill
-
-```
-CLI (--mode=backfill --dateFrom=YYYY-MM-DD --dateTo=YYYY-MM-DD)
-    │
-    ▼
-collector.ts::runFerrariCollector()
-    │
-    ├─► For each source
-    │       │
-    │       ▼
-    │   scrapeEndedListings() ──► Paginates through ended auctions
-    │       │                    within date range
-    │       │
-    │       ▼
-    │   discoverFerrariListingUrls() ──► Filters for Ferrari
-    │       │
-    │       ▼
-    │   Same as daily: fetch → normalize → write
-    │
-    ▼
-Result: Backfilled historical data
-```
-
-**Command:**
-```bash
-npx tsx src/features/ferrari_collector/cli.ts \
-  --mode=backfill \
-  --dateFrom=2026-01-01 \
-  --dateTo=2026-01-07
-```
-
-**What it does:**
-- Scrapes ended/completed listings within date range
-- Backfills historical Ferrari sales data
-- Respects checkpoint state for resumability
-
----
-
-### Flow 3: Cron API (All Platforms)
-
-```
-Cron Job (scheduled)
-    │
-    ▼
-src/app/api/cron/route.ts
-    │
-    ▼
-scrapeAllWithBackfill() ──► src/lib/scrapers/index.ts
-    │
-    ├─► scrapeBringATrailer()
-    ├─► scrapeCarsAndBids()
-    └─► scrapeCollectingCars()
-        │
-        ▼
-    For each auction
-        │
-        ▼
-    orm.auction.upsert() ──► Writes to database
-```
-
-**What it does:**
-- Runs all platform scrapers in parallel
-- Different from ferrari_collector (no Ferrari filter, writes to different schema)
-- Uses legacy ORM instead of Supabase client
+These AutoTrader endpoints are blocked from datacenter IPs:
+- `/product-page/v1/advert/{id}` (REST API)
+- `/at-gateway` (GraphQL)
+- `/car-details/{id}` (HTML pages)
+- `/car-search` (search pages)
 
 ---
 
 ## Data Output
 
-### Ferrari Collector → Supabase
+All scrapers write to the `listings` table in Supabase:
 
-| Table | Fields |
+| Field | Source |
 |-------|--------|
-| `listings` | source, source_id, source_url, year, make, model, trim, body_style, color_exterior, color_interior, mileage, mileage_unit, vin, hammer_price, original_currency, country, region, city, auction_house, auction_date, sale_date, status, photos_count, description_text, scrape_timestamp |
-| `photos` | listing_id, url, order |
-
-### Cron API -> ORM
-
-| Model | Fields |
-|-------|--------|
-| `auction` | externalId, platform, title, make, model, year, mileage, mileageUnit, transmission, engine, exteriorColor, interiorColor, location, currentBid, bidCount, endTime, url, imageUrl, description, sellerNotes, status, vin, images, scrapedAt |
-| `priceHistory` | auctionId, bid, recordedAt |
-| `marketData` | make, model, yearStart, yearEnd, avgPrice, lowPrice, highPrice, totalSales |
-
----
-
-## Key Differences
-
-| Aspect | Ferrari Collector | Cron API |
-|--------|-------------------|-----------|
-| Scope | Ferrari only | All makes |
-| Output | Supabase | ORM/Database |
-| Filtering | Ferrari filter | None |
-| Checkpointing | Yes | No |
-| Use case | Ferrari-focused data | Full platform data |
-
----
-
-## Running the Scrapers
-
-### Daily Ferrari Sync
-```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily
-```
-
-### Historical Backfill
-```bash
-npx tsx src/features/ferrari_collector/cli.ts \
-  --mode=backfill \
-  --dateFrom=2026-01-01 \
-  --dateTo=2026-01-07
-```
-
-### Dry Run (no writes)
-```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily --dryRun
-```
-
-### Disable Detail Scraping
-```bash
-npx tsx src/features/ferrari_collector/cli.ts --mode=daily --noDetails
-```
+| `source`, `source_id`, `source_url` | Scraper identity |
+| `year`, `make`, `model`, `trim` | Vehicle identification |
+| `engine`, `transmission`, `body_style` | Specs (often from enrichment) |
+| `color_exterior`, `color_interior` | Colors |
+| `mileage`, `mileage_unit` | Odometer (converted to km) |
+| `vin` | Vehicle identification number |
+| `current_bid`, `hammer_price`, `final_price` | Pricing |
+| `images`, `photos_count` | Gallery |
+| `description_text` | Listing description |
+| `status` | `active`, `sold`, `unsold`, `delisted` |
+| `country`, `region`, `city` | Location |

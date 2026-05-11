@@ -1,4 +1,4 @@
-name: AutoTrader Enrichment (Scrapling)
+name: AutoTrader Enrichment
 
 on:
   schedule:
@@ -13,12 +13,9 @@ on:
         default: '500'
       delay_ms:
         description: 'Delay between requests (ms)'
-        default: '3000'
+        default: '2000'
       dry_run:
         description: 'Skip DB writes'
-        default: 'false'
-      preflight:
-        description: 'Run pre-flight check only'
         default: 'false'
 
 concurrency:
@@ -28,7 +25,7 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -37,28 +34,14 @@ jobs:
         with:
           node-version: '20'
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Scrapling
-        run: |
-          python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install "scrapling[fetchers,shell]"
-          scrapling install
-
       - run: npm ci
 
       - name: Run AutoTrader enrichment
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SCRAPLING_PYTHON: python3.11
-          AT_FORCE_SCRAPLING: '1'
-          AT_PROXY_URL: ${{ secrets.AT_PROXY_URL }}
         run: |
-          npx tsx scripts/autotrader-enrich-scrapling.ts \
+          npx tsx scripts/autotrader-enrich.ts \
             --limit=${{ github.event.inputs.limit || '500' }} \
-            --delayMs=${{ github.event.inputs.delay_ms || '3000' }} \
-            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }} \
-            ${{ github.event.inputs.preflight == 'true' && '--preflight' || '' }}
+            --delayMs=${{ github.event.inputs.delay_ms || '2000' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
