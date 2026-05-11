@@ -2,12 +2,15 @@ name: AutoTrader Enrichment (Scrapling)
 
 on:
   schedule:
-    - cron: '30 3 * * *'     # 03:30 UTC daily (after collector at 02:00)
+    - cron: '30 3 * * *'     # 03:30 UTC (after collector at 02:00)
+    - cron: '30 9 * * *'     # 09:30 UTC
+    - cron: '30 15 * * *'    # 15:30 UTC
+    - cron: '30 21 * * *'    # 21:30 UTC
   workflow_dispatch:
     inputs:
       limit:
         description: 'Max listings to enrich'
-        default: '300'
+        default: '500'
       delay_ms:
         description: 'Delay between requests (ms)'
         default: '3000'
@@ -55,7 +58,7 @@ jobs:
           AT_PROXY_URL: ${{ secrets.AT_PROXY_URL }}
         run: |
           npx tsx scripts/autotrader-enrich-scrapling.ts \
-            --limit=${{ github.event.inputs.limit || '300' }} \
+            --limit=${{ github.event.inputs.limit || '500' }} \
             --delayMs=${{ github.event.inputs.delay_ms || '3000' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }} \
             ${{ github.event.inputs.preflight == 'true' && '--preflight' || '' }}
