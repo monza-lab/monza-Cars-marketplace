@@ -378,6 +378,20 @@
       "arbitrageDesc": "This vehicle is priced significantly below fair value in {region}. Potential savings of {amount} vs highest regional average.",
       "comparables": "Recent Comparable Sales"
     },
+    "regionContext": {
+      "tailoredFor": "Tailored for {region}",
+      "tailoredDescription": "Fair value, comparables and arbitrage signals are weighted toward your market. Other regions remain visible for cross-market context.",
+      "noRegionTitle": "Set your market to personalize this report",
+      "noRegionDescription": "Tell us where you'd buy from — fair value, comps and arbitrage signals re-weight to your region.",
+      "chooseRegion": "Choose region",
+      "changeRegion": "Change",
+      "regionLabel": {
+        "US": "United States",
+        "EU": "Europe",
+        "UK": "United Kingdom",
+        "JP": "Japan"
+      }
+    },
     "performance": {
       "brandReturn": "{make} 5-Year Return",
       "vsBenchmarks": "vs. Market Benchmarks",
@@ -491,7 +505,7 @@
     "economyReport": "Full investment report",
     "topupSectionTitle": "How many Pistons?",
     "topupSelected": "Selected",
-    "topupEquivalence": "≈ {reports} reports · {marketplace} marketplace · {deep} deep research",
+    "topupEquivalence": "≈ {reports, plural, one {# report} other {# reports}} · {marketplace} marketplace · {deep} deep research",
     "topupNeverExpire": "never expire",
     "topupCta": "Recargar",
     "topupCustomToggle": "Or enter a custom amount",

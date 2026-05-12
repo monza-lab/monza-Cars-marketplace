@@ -47,9 +47,9 @@ describe("TopUpPresets", () => {
 
   it("shows the equivalence summary for the default preset (1,000 Pistons)", () => {
     renderWithIntl(<TopUpPresets onSelect={vi.fn()} />)
-    // 1,000 Pistons → 1 report / 20 marketplace / 4 deep research
+    // 1,000 Pistons → 1 report (singular!) / 20 marketplace / 4 deep research
     // (calibrated so Heavy preset caps at 10 reports — see TopUpPresets.tsx)
-    expect(screen.getByText(/1 reports/)).toBeInTheDocument()
+    expect(screen.getByText(/1 report\b/)).toBeInTheDocument()
     expect(screen.getByText(/20 marketplace/)).toBeInTheDocument()
     expect(screen.getByText(/4 deep research/)).toBeInTheDocument()
   })

@@ -377,6 +377,20 @@
       "arbitrageDesc": "Dieses Fahrzeug ist in {region} deutlich unter dem fairen Wert bepreist. Potenzielle Ersparnis von {amount} gegenüber dem höchsten regionalen Durchschnitt.",
       "comparables": "Aktuelle vergleichbare Verkäufe"
     },
+    "regionContext": {
+      "tailoredFor": "Zugeschnitten auf {region}",
+      "tailoredDescription": "Fairer Wert, Vergleichswerte und Arbitrage-Signale sind auf Ihren Markt gewichtet. Andere Regionen bleiben für den marktübergreifenden Kontext sichtbar.",
+      "noRegionTitle": "Wählen Sie Ihren Markt, um diesen Bericht zu personalisieren",
+      "noRegionDescription": "Sagen Sie uns, wo Sie kaufen würden — fairer Wert, Vergleichswerte und Arbitrage-Signale werden auf Ihre Region gewichtet.",
+      "chooseRegion": "Region wählen",
+      "changeRegion": "Ändern",
+      "regionLabel": {
+        "US": "Vereinigte Staaten",
+        "EU": "Europa",
+        "UK": "Vereinigtes Königreich",
+        "JP": "Japan"
+      }
+    },
     "performance": {
       "brandReturn": "{make} 5-Jahres-Rendite",
       "vsBenchmarks": "vs. Markt-Benchmarks",
@@ -490,7 +504,7 @@
     "economyReport": "Vollständiger Investment-Bericht",
     "topupSectionTitle": "Wie viele Pistons?",
     "topupSelected": "Ausgewählt",
-    "topupEquivalence": "≈ {reports} Berichte · {marketplace} Marketplace · {deep} Deep Research",
+    "topupEquivalence": "≈ {reports, plural, one {# Bericht} other {# Berichte}} · {marketplace} Marketplace · {deep} Deep Research",
     "topupNeverExpire": "verfallen nie",
     "topupCta": "Aufladen",
     "topupCustomToggle": "Oder gib einen individuellen Betrag ein",

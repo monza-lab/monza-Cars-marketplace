@@ -16,15 +16,16 @@ function renderWithIntl(ui: React.ReactNode) {
 describe("PistonsEconomyTable", () => {
   it("renders all 4 economy rows in full variant", () => {
     renderWithIntl(<PistonsEconomyTable variant="full" />)
-    expect(screen.getByText(/1 Piston/)).toBeInTheDocument()
-    expect(screen.getByText(/~5 Pistons/)).toBeInTheDocument()
-    expect(screen.getByText(/~25 Pistons/)).toBeInTheDocument()
-    expect(screen.getByText(/100 Pistons/)).toBeInTheDocument()
+    // Recalibrated costs (10/50/250/1000) — see TopUpPresets.tsx constants.
+    expect(screen.getByText("10 Pistons")).toBeInTheDocument()
+    expect(screen.getByText("~50 Pistons")).toBeInTheDocument()
+    expect(screen.getByText("~250 Pistons")).toBeInTheDocument()
+    expect(screen.getByText("1,000 Pistons")).toBeInTheDocument()
   })
 
   it("renders compact variant with the same 4 rows", () => {
     renderWithIntl(<PistonsEconomyTable variant="compact" />)
-    expect(screen.getByText(/1 Piston/)).toBeInTheDocument()
-    expect(screen.getByText(/100 Pistons/)).toBeInTheDocument()
+    expect(screen.getByText("10 Pistons")).toBeInTheDocument()
+    expect(screen.getByText("1,000 Pistons")).toBeInTheDocument()
   })
 })

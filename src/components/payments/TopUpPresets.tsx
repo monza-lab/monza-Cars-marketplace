@@ -70,8 +70,11 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
                 </span>
               )}
               {/* PRICE is the decision the user makes. Largest, clearest,
-                  in foreground. The Pistons amount is descriptor below. */}
-              <p className="font-display text-[36px] md:text-[44px] font-medium text-foreground tabular-nums leading-none">
+                  in foreground. The Pistons amount is descriptor below.
+                  NOTE: no `tabular-nums` on the price — Cormorant's "1"
+                  glyph reads as "$ 1 3" with extra spacing in tabular
+                  mode. Proportional kerning is correct for short prices. */}
+              <p className="font-display text-[36px] md:text-[44px] font-medium text-foreground leading-none">
                 ${preset.price}
               </p>
               <p className="mt-3 text-[13px] text-foreground/85 tabular-nums">
@@ -92,7 +95,7 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
           {t("pricing.topupSelected")}
         </p>
         <div>
-          <p className="font-display text-[32px] md:text-[40px] font-medium text-foreground tabular-nums leading-none">
+          <p className="font-display text-[32px] md:text-[40px] font-medium text-foreground leading-none">
             ${selected.price}
           </p>
           <p className="mt-1.5 text-[12px] text-muted-foreground tabular-nums">
