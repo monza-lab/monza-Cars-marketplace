@@ -201,15 +201,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {resolvedSearch.v1 === "1" ? (
-        <ReportClient
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
-        />
-      ) : (
+      {resolvedSearch.v2 === "1" ? (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
@@ -220,6 +212,14 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportTier={reportTier}
           reportHash={reportHash}
           reportVersion={reportVersion}
+        />
+      ) : (
+        <ReportClient
+          car={car}
+          similarCars={similarCars}
+          existingReport={existingReport}
+          marketStats={marketStats}
+          dbComparables={dbComparables}
         />
       )}
     </Suspense>

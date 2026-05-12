@@ -1635,14 +1635,24 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 {/* Current Price */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                  <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                  {car.currentBid > 0 ? (
+                    <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                  ) : (
+                    <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
+                  )}
                 </div>
                 {/* Fair Value */}
                 <div className="rounded-xl bg-card border border-border p-4">
                   <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
-                  <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
-                    {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
-                  </p>
+                  {hasFairValue ? (
+                    <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
+                      {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
+                    </p>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                      Insufficient comparable data
+                    </p>
+                  )}
                 </div>
                 {/* Market Position */}
                 <div className="rounded-xl bg-card border border-border p-4">
@@ -1782,85 +1792,94 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
               <PaywallSection sectionId="valuation">
                 <SectionHeader id="valuation" title={t("sections.valuation")} />
 
-                {/* Regional breakdown bars */}
+                {/* Regional breakdown bars — only show when we have real regional data */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.regionalBreakdown")}</h3>
-                  <div className="space-y-4">
-                    {(["US", "EU", "UK", "JP"] as const).map(r => {
-                      const rp = pricing[r]
-                      const avgUsd = (rp.low + rp.high) / 2
-                      const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
-                      const isBest = r === bestRegion
-                      const isUserRegion = r === effectiveRegion
-                      return (
-                        <div key={r}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[14px]">{regionLabels[r].flag}</span>
-                              <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
-                              {isBest && (
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-positive/15 text-positive border border-positive/20">
-                                  {t("valuation.bestBuy")}
-                                </span>
-                              )}
-                              {isUserRegion && !isBest && (
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-primary/15 text-primary border border-primary/20">
-                                  {t("valuation.yourMarket")}
-                                </span>
-                              )}
+                  {maxRegionalUsd > 0 ? (
+                    <div className="space-y-4">
+                      {(["US", "EU", "UK", "JP"] as const).map(r => {
+                        const rp = pricing[r]
+                        const avgUsd = (rp.low + rp.high) / 2
+                        if (avgUsd === 0) return null
+                        const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
+                        const isBest = r === bestRegion
+                        const isUserRegion = r === effectiveRegion
+                        return (
+                          <div key={r}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[14px]">{regionLabels[r].flag}</span>
+                                <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
+                                {isBest && (
+                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-positive/15 text-positive border border-positive/20">
+                                    {t("valuation.bestBuy")}
+                                  </span>
+                                )}
+                                {isUserRegion && !isBest && (
+                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-primary/15 text-primary border border-primary/20">
+                                    {t("valuation.yourMarket")}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[12px] tabular-nums text-muted-foreground">
+                                {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)} – {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
+                              </span>
                             </div>
-                            <span className="text-[12px] tabular-nums text-muted-foreground">
-                              {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)} – {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
-                            </span>
+                            <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${barWidth}%` }}
+                                transition={{ duration: 0.8, delay: 0.1 }}
+                                className={`h-full rounded-full ${isBest ? "bg-positive" : "bg-primary/40"}`}
+                              />
+                            </div>
                           </div>
-                          <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${barWidth}%` }}
-                              transition={{ duration: 0.8, delay: 0.1 }}
-                              className={`h-full rounded-full ${isBest ? "bg-positive" : "bg-primary/40"}`}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground italic">
+                      Regional valuation data not yet available
+                    </p>
+                  )}
                 </div>
 
-                {/* Market position gauge */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
-                    <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
-                    <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
+                {/* Market position gauge — only when we have fair value data */}
+                {hasFairValue && (
+                  <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
+                      <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
+                      <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
+                    </div>
+                    <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/40"
+                        style={{ left: `calc(${pricePosition}% - 7px)` }}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      {isBelowFair ? (
+                        <>
+                          <CheckCircle2 className="size-3.5 text-positive" />
+                          <span className="text-[11px] font-medium text-positive">{t("valuation.belowFair")}</span>
+                        </>
+                      ) : (pricePosition ?? 0) > 80 ? (
+                        <>
+                          <AlertTriangle className="size-3.5 text-destructive" />
+                          <span className="text-[11px] font-medium text-destructive">{t("valuation.aboveFair")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Target className="size-3.5 text-destructive" />
+                          <span className="text-[11px] font-medium text-destructive">{t("valuation.atFair")}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/40"
-                      style={{ left: `calc(${pricePosition}% - 7px)` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    {isBelowFair ? (
-                      <>
-                        <CheckCircle2 className="size-3.5 text-positive" />
-                        <span className="text-[11px] font-medium text-positive">{t("valuation.belowFair")}</span>
-                      </>
-                    ) : (pricePosition ?? 0) > 80 ? (
-                      <>
-                        <AlertTriangle className="size-3.5 text-destructive" />
-                        <span className="text-[11px] font-medium text-destructive">{t("valuation.aboveFair")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Target className="size-3.5 text-destructive" />
-                        <span className="text-[11px] font-medium text-destructive">{t("valuation.atFair")}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
+                )}
 
                 {/* Modifiers applied list — adjustments to specific-car fair value */}
                 <div className="mb-4">
