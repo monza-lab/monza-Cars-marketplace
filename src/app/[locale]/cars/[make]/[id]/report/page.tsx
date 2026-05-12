@@ -20,6 +20,7 @@ import { ReportClient } from "./ReportClient"
 import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport, MarketIntelD2, ReportTier } from "@/lib/fairValue/types"
+import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getComparablesForModel } from "@/lib/db/queries"
 import {
   computeArbitrageForCar,
@@ -187,6 +188,17 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     }
   }
 
+  // ─── V3 section fetch ────────────────────────────────────────────────
+  let v3Report: HausReportV3 | null = null
+  try {
+    const { fetchReportSections } = await import("@/lib/reports/reportSections")
+    const { assembleV3ReportFromSections } = await import("@/lib/reports/assembleV3Report")
+    const sections = await fetchReportSections(car.id, 1)
+    if (sections.length > 0) {
+      v3Report = assembleV3ReportFromSections(sections, car.id)
+    }
+  } catch { /* V3 not available */ }
+
   return (
     <Suspense
       fallback={
@@ -201,7 +213,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {existingReport ? (
+      {(existingReport || v3Report) ? (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
@@ -212,12 +224,13 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportTier={reportTier}
           reportHash={reportHash}
           reportVersion={reportVersion}
+          v3Report={v3Report}
         />
       ) : (
         <ReportClient
           car={car}
           similarCars={similarCars}
-          existingReport={existingReport}
+          existingReport={null}
           marketStats={marketStats}
           dbComparables={dbComparables}
         />

@@ -52,6 +52,33 @@ import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
+import type {
+  PipelineProgress,
+  StepStatus,
+  ReportSectionKey,
+} from "@/lib/reports/types-v3"
+
+// ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
+const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
+  { sectionKey: "listing_scrape", label: "Reading Listing" },
+  { sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
+  { sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
+  { sectionKey: "fair_value", label: "Computing Fair Value" },
+  { sectionKey: "technical_analysis", label: "Technical Deep-Dive" },
+  { sectionKey: "investment_analysis", label: "Investment Analysis" },
+  { sectionKey: "due_diligence", label: "Due Diligence" },
+  { sectionKey: "market_research", label: "Market Research" },
+  { sectionKey: "buyer_services", label: "Buyer Services" },
+  { sectionKey: "final_synthesis", label: "Final Report" },
+]
+
+interface V3GenerationStep {
+  sectionKey: ReportSectionKey
+  label: string
+  status: StepStatus
+  durationMs?: number
+  completionNote?: string
+}
 
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
@@ -189,6 +216,113 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const [downloadingExcel, setDownloadingExcel] = useState(false)
   const [showDownloadSheet, setShowDownloadSheet] = useState(false)
 
+  // ─── V3 Generation State ───
+  const [isGeneratingV3, setIsGeneratingV3] = useState(false)
+  const [v3Steps, setV3Steps] = useState<V3GenerationStep[]>(() =>
+    V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus }))
+  )
+  const [v3Error, setV3Error] = useState<string | null>(null)
+  const v3AbortRef = useRef<AbortController | null>(null)
+
+  const handleGenerateV3 = useCallback(async () => {
+    setIsGeneratingV3(true)
+    setV3Error(null)
+    setV3Steps(V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus })))
+
+    const controller = new AbortController()
+    v3AbortRef.current = controller
+
+    try {
+      const res = await fetch("/api/analyze/v3", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: car.id }),
+        signal: controller.signal,
+      })
+
+      // Non-stream responses (cached, error)
+      if (res.headers.get("Content-Type")?.includes("application/json")) {
+        const json = await res.json()
+        if (!res.ok) {
+          setV3Error(json.error ?? "Generation failed")
+          setIsGeneratingV3(false)
+          return
+        }
+        if (json.cached) {
+          setV3Steps(prev => prev.map(s => ({ ...s, status: "completed" as StepStatus })))
+          setIsGeneratingV3(false)
+          // Reload to show V2 with the full report
+          window.location.reload()
+          return
+        }
+      }
+
+      // SSE stream
+      const reader = res.body?.getReader()
+      if (!reader) {
+        setV3Error("No response stream")
+        setIsGeneratingV3(false)
+        return
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+
+        let currentEvent = ""
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith("data: ") && currentEvent) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (currentEvent === "progress") {
+                const progress = data as PipelineProgress
+                setV3Steps(prev =>
+                  prev.map(s =>
+                    s.sectionKey === progress.sectionKey
+                      ? {
+                          ...s,
+                          status: progress.status,
+                          durationMs: progress.durationMs,
+                          completionNote: progress.completionNote,
+                        }
+                      : s
+                  )
+                )
+              } else if (currentEvent === "complete") {
+                setIsGeneratingV3(false)
+                // Reload to show V2 with the full report
+                window.location.reload()
+                return
+              } else if (currentEvent === "error") {
+                setV3Error(data.message ?? "Pipeline failed")
+                setIsGeneratingV3(false)
+              }
+            } catch {
+              // Ignore malformed JSON lines
+            }
+            currentEvent = ""
+          }
+        }
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setV3Error(err instanceof Error ? err.message : "Generation failed")
+    } finally {
+      setIsGeneratingV3(false)
+      v3AbortRef.current = null
+    }
+  }, [car.id])
+
   // Check access on mount
   useEffect(() => {
     if (!tokensLoading) {
@@ -199,16 +333,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const handleUnlock = () => {
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
-      // If we already unlocked locally but the DB has no HausReport yet, kick off
-      // the real generation pipeline so the server component can reload a populated report.
-      if (!existingReport) void triggerGeneration()
+      if (!existingReport) void handleGenerateV3()
       return
     }
     const success = consumeForAnalysis(car.id)
     if (success) {
       setHasAccess(true)
-      // Fire /api/analyze → persist HausReport → hook reloads the page on success.
-      if (!existingReport) void triggerGeneration()
+      if (!existingReport) void handleGenerateV3()
     } else {
       setShowPricing(true)
     }
@@ -227,6 +358,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         setPurchaseSuccess(false)
         setShowPricing(false)
         setHasAccess(true)
+        if (!existingReport) void handleGenerateV3()
       }, 1500)
     }, 1500)
   }
@@ -1562,12 +1694,24 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
           <div className="p-4 border-t border-border">
             <button
               onClick={handleUnlock}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-background hover:bg-primary/80 transition-colors"
+              disabled={isGeneratingV3}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-background hover:bg-primary/80 transition-colors disabled:opacity-50"
             >
-              <Lock className="size-3.5" />
-              {t("unlockReport")}
+              {isGeneratingV3 ? (
+                <>
+                  <div className="size-3.5 rounded-full border-2 border-background/30 border-t-background animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Lock className="size-3.5" />
+                  {t("unlockReport")}
+                </>
+              )}
             </button>
-            <p className="text-[9px] text-muted-foreground text-center mt-2">{t("unlockCost")}</p>
+            {!isGeneratingV3 && (
+              <p className="text-[9px] text-muted-foreground text-center mt-2">{t("unlockCost")}</p>
+            )}
           </div>
         )}
       </div>
@@ -1607,6 +1751,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
               <p className="text-[11px] md:text-[13px] text-white/60 mt-1">{t("subtitle")}</p>
             </div>
           </div>
+
+          {/* V3 inline stepper removed — now rendered as full-screen overlay below */}
 
           <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
 
@@ -2705,6 +2851,174 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         neededPistons={1000}
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
+
+      {/* ═══ V3 GENERATION OVERLAY (full-screen modal) ═══ */}
+      <AnimatePresence>
+        {(isGeneratingV3 || v3Error) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-8 w-8">
+                    {isGeneratingV3 ? (
+                      <div className="h-8 w-8 rounded-full border-[3px] border-primary border-t-transparent animate-spin" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="font-serif text-[18px] font-semibold text-foreground">
+                      {isGeneratingV3 ? "Generating Investment Dossier" : "Generation Failed"}
+                    </h2>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {isGeneratingV3
+                        ? `${car.year} ${car.make} ${car.model}`
+                        : "Something went wrong"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steps */}
+              {isGeneratingV3 && (
+                <div className="px-6 py-4 space-y-1.5 max-h-[50vh] overflow-y-auto">
+                  {v3Steps.map((step, idx) => {
+                    const completedCount = v3Steps.filter(s => s.status === "completed").length
+                    return (
+                      <div
+                        key={step.sectionKey}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                          step.status === "in_progress"
+                            ? "bg-primary/5 border border-primary/20"
+                            : step.status === "completed"
+                              ? "bg-emerald-500/5"
+                              : step.status === "failed"
+                                ? "bg-destructive/5"
+                                : ""
+                        }`}
+                      >
+                        {/* Step number / status icon */}
+                        {step.status === "pending" && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-[10px] font-medium text-muted-foreground">
+                            {idx + 1}
+                          </span>
+                        )}
+                        {step.status === "in_progress" && (
+                          <div className="relative h-5 w-5">
+                            <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                          </div>
+                        )}
+                        {step.status === "completed" && (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                        {step.status === "failed" && (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </div>
+                        )}
+
+                        <span className={`flex-1 text-[13px] ${
+                          step.status === "in_progress"
+                            ? "font-semibold text-foreground"
+                            : step.status === "completed"
+                              ? "text-muted-foreground"
+                              : step.status === "failed"
+                                ? "text-destructive"
+                                : "text-muted-foreground/60"
+                        }`}>
+                          {step.label}
+                        </span>
+
+                        {step.durationMs != null && step.status === "completed" && (
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            {(step.durationMs / 1000).toFixed(1)}s
+                          </span>
+                        )}
+                        {step.status === "failed" && step.completionNote && (
+                          <span className="text-[10px] text-destructive truncate max-w-[140px]">
+                            {step.completionNote}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Progress bar */}
+              {isGeneratingV3 && (
+                <div className="px-6 pb-2">
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{
+                        width: `${(v3Steps.filter(s => s.status === "completed").length / v3Steps.length) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+                    {v3Steps.filter(s => s.status === "completed").length} of {v3Steps.length} steps completed
+                  </p>
+                </div>
+              )}
+
+              {/* Error state */}
+              {v3Error && !isGeneratingV3 && (
+                <div className="px-6 py-6">
+                  <div className="rounded-lg bg-destructive/10 p-4 text-[13px] text-destructive mb-4">
+                    {v3Error}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setV3Error(null) }}
+                      className="flex-1 rounded-lg border border-border px-4 py-2.5 text-[13px] font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateV3()}
+                      className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-[13px] font-semibold text-background hover:bg-primary/80 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer hint */}
+              {isGeneratingV3 && (
+                <div className="px-6 pb-4 pt-1">
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    This may take 30–60 seconds. Do not close this page.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

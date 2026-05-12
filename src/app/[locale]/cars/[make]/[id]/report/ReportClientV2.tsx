@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
@@ -8,6 +8,12 @@ import type { HausReport, HausReportV2, MarketIntelD2, ReportTier } from "@/lib/
 import type { ModelMarketStats } from "@/lib/reports/types"
 import type { DbComparableRow } from "@/lib/db/queries"
 import { adaptV1ReportToV2 } from "@/lib/fairValue/adaptV1ToV2"
+import type {
+  HausReportV3,
+  PipelineProgress,
+  StepStatus,
+  ReportSectionKey,
+} from "@/lib/reports/types-v3"
 
 import { ReportHeader } from "@/components/report/ReportHeader"
 import { VerdictBlock } from "@/components/report/VerdictBlock"
@@ -29,6 +35,38 @@ import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
 import { VinIntelBlock } from "@/components/report/VinIntelBlock"
 import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
 
+// ─── V3 dedicated section components ─────────────────────────────────
+import { ExecutiveSummarySection } from "@/components/report/v3/ExecutiveSummarySection"
+import { TechnicalAnalysisSection } from "@/components/report/v3/TechnicalAnalysisSection"
+import { InvestmentStrategySection } from "@/components/report/v3/InvestmentStrategySection"
+import { DueDiligenceSection } from "@/components/report/v3/DueDiligenceSection"
+import { MarketResearchSection } from "@/components/report/v3/MarketResearchSection"
+import { BuyerServicesSection } from "@/components/report/v3/BuyerServicesSection"
+import { OwnershipCostSection } from "@/components/report/v3/OwnershipCostSection"
+import { ResaleTimelineSection } from "@/components/report/v3/ResaleTimelineSection"
+
+// ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
+const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
+  { sectionKey: "listing_scrape", label: "Reading Listing" },
+  { sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
+  { sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
+  { sectionKey: "fair_value", label: "Computing Fair Value" },
+  { sectionKey: "technical_analysis", label: "Technical Deep-Dive" },
+  { sectionKey: "investment_analysis", label: "Investment Analysis" },
+  { sectionKey: "due_diligence", label: "Due Diligence" },
+  { sectionKey: "market_research", label: "Market Research" },
+  { sectionKey: "buyer_services", label: "Buyer Services" },
+  { sectionKey: "final_synthesis", label: "Final Report" },
+]
+
+interface GenerationStep {
+  sectionKey: ReportSectionKey
+  label: string
+  status: StepStatus
+  durationMs?: number
+  completionNote?: string
+}
+
 interface ReportClientV2Props {
   car: CollectorCar
   similarCars: SimilarCarResult[]
@@ -39,6 +77,7 @@ interface ReportClientV2Props {
   reportTier?: ReportTier | null
   reportHash?: string | null
   reportVersion?: number | null
+  v3Report?: HausReportV3 | null
 }
 
 export function ReportClientV2({
@@ -50,36 +89,218 @@ export function ReportClientV2({
   reportTier,
   reportHash,
   reportVersion,
+  v3Report: initialV3Report,
 }: ReportClientV2Props) {
   const router = useRouter()
   const [downloadSheetOpen, setDownloadSheetOpen] = useState(false)
   const [seeSampleOpen, setSeeSampleOpen] = useState(false)
 
-  // Not-yet-generated state: inform the user to generate first. We intentionally
-  // don't gate the new UI behind a full generation flow here — that lives in V1.
-  // Phase 3's orchestrator re-integrates generation into V2.
+  // ─── V3 state ───────────────────────────────────────────────────────
+  const [isGeneratingV3, setIsGeneratingV3] = useState(false)
+  const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>(() =>
+    V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus }))
+  )
+  const [v3Data, setV3Data] = useState<HausReportV3 | null>(initialV3Report ?? null)
+  const [v3Error, setV3Error] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const handleGenerateV3 = useCallback(async (force = false) => {
+    setIsGeneratingV3(true)
+    setV3Error(null)
+    setGenerationSteps(V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus })))
+
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    try {
+      const res = await fetch("/api/analyze/v3", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: car.id, force }),
+        signal: controller.signal,
+      })
+
+      // Non-stream responses (cached, error)
+      if (res.headers.get("Content-Type")?.includes("application/json")) {
+        const json = await res.json()
+        if (!res.ok) {
+          setV3Error(json.error ?? "Generation failed")
+          setIsGeneratingV3(false)
+          return
+        }
+        if (json.cached) {
+          // Reconstruct V3 report from cached sections
+          const sections = json.sections as { key: ReportSectionKey; data: unknown }[]
+          const assembled: HausReportV3 = {
+            listingId: car.id,
+            reportVersion: 3,
+            listingScrape: sections.find(s => s.key === "listing_scrape")?.data as HausReportV3["listingScrape"] ?? null,
+            vehicleIdentity: sections.find(s => s.key === "vehicle_identity")?.data as HausReportV3["vehicleIdentity"] ?? null,
+            marketData: sections.find(s => s.key === "market_data_bundle")?.data as HausReportV3["marketData"] ?? null,
+            technicalAnalysis: sections.find(s => s.key === "technical_analysis")?.data as HausReportV3["technicalAnalysis"] ?? null,
+            investmentAnalysis: sections.find(s => s.key === "investment_analysis")?.data as HausReportV3["investmentAnalysis"] ?? null,
+            dueDiligence: sections.find(s => s.key === "due_diligence")?.data as HausReportV3["dueDiligence"] ?? null,
+            marketResearch: sections.find(s => s.key === "market_research")?.data as HausReportV3["marketResearch"] ?? null,
+            buyerServices: sections.find(s => s.key === "buyer_services")?.data as HausReportV3["buyerServices"] ?? null,
+            finalSynthesis: sections.find(s => s.key === "final_synthesis")?.data as HausReportV3["finalSynthesis"] ?? null,
+            generatedAt: new Date().toISOString(),
+            totalDurationMs: 0,
+            stepsCompleted: sections.length,
+            stepsFailed: 10 - sections.length,
+          }
+          setV3Data(assembled)
+          setGenerationSteps(prev => prev.map(s => ({ ...s, status: "completed" as StepStatus })))
+          setIsGeneratingV3(false)
+          return
+        }
+      }
+
+      // SSE stream
+      const reader = res.body?.getReader()
+      if (!reader) {
+        setV3Error("No response stream")
+        setIsGeneratingV3(false)
+        return
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() ?? ""
+
+        let currentEvent = ""
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith("data: ") && currentEvent) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (currentEvent === "progress") {
+                const progress = data as PipelineProgress
+                setGenerationSteps(prev =>
+                  prev.map(s =>
+                    s.sectionKey === progress.sectionKey
+                      ? {
+                          ...s,
+                          status: progress.status,
+                          durationMs: progress.durationMs,
+                          completionNote: progress.completionNote,
+                        }
+                      : s
+                  )
+                )
+              } else if (currentEvent === "complete") {
+                setV3Data(data.report as HausReportV3)
+                setIsGeneratingV3(false)
+              } else if (currentEvent === "error") {
+                setV3Error(data.message ?? "Pipeline failed")
+                setIsGeneratingV3(false)
+              }
+            } catch {
+              // Ignore malformed JSON lines
+            }
+            currentEvent = ""
+          }
+        }
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setV3Error(err instanceof Error ? err.message : "Generation failed")
+    } finally {
+      setIsGeneratingV3(false)
+      abortRef.current = null
+    }
+  }, [car.id])
+
+  // Derive listing type from v3 vehicle identity
+  const listingType = v3Data?.vehicleIdentity?.listingType ?? "classified"
+
+  // ─── V3-only mode: no V2 report but V3 sections exist ──────────────
   if (!existingReport) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-        <h1 className="font-serif text-[22px] font-semibold">
-          {/* [HARDCODED] */}No Haus Report generated for this listing yet
-        </h1>
-        <p className="mt-2 max-w-md text-[13px] text-muted-foreground">
-          {/* [HARDCODED] */}Return to the classic report view to generate one, then come back here
-          to see the new layout.
-        </p>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mt-4 rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground"
-        >
-          {/* [HARDCODED] */}Go back
-        </button>
+      <main className="flex min-h-screen flex-col bg-background pb-20 md:pb-0">
+        <ReportHeader
+          carTitle={composeCarTitle(car)}
+          carThumbUrl={car.images?.[0] ?? null}
+          generatedAt={v3Data?.generatedAt ?? new Date().toISOString()}
+          reportVersion={3}
+          tier="tier_3"
+          onDownloadClick={() => setDownloadSheetOpen(true)}
+        />
+
+        <div className="mx-auto w-full max-w-3xl px-4 space-y-6 mt-6">
+          {/* V3 generation in progress */}
+          {isGeneratingV3 && (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="font-serif text-[18px] font-semibold mb-4">
+                Generating Investment Dossier
+              </h2>
+              <GenerationStepper steps={generationSteps} />
+            </div>
+          )}
+
+          {v3Error && !isGeneratingV3 && (
+            <div className="rounded-lg bg-destructive/10 p-4 text-[13px] text-destructive">
+              {v3Error}
+              <button
+                type="button"
+                onClick={() => handleGenerateV3(true)}
+                className="ml-3 underline hover:no-underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* V3 sections — dedicated components */}
+          {v3Data && !isGeneratingV3 && (
+            <>
+              <ExecutiveSummarySection data={v3Data.finalSynthesis} />
+              <TechnicalAnalysisSection data={v3Data.technicalAnalysis} />
+              <InvestmentStrategySection data={v3Data.investmentAnalysis} listingType={listingType} />
+              <OwnershipCostSection data={v3Data.investmentAnalysis?.ownershipCosts ?? null} />
+              <ResaleTimelineSection data={v3Data.investmentAnalysis?.resaleTimeline ?? null} />
+              <DueDiligenceSection data={v3Data.dueDiligence} />
+              <MarketResearchSection data={v3Data.marketResearch} />
+              <BuyerServicesSection data={v3Data.buyerServices} />
+
+              {/* V3 metadata footer */}
+              <div className="border-t border-border pt-4 text-[11px] text-muted-foreground">
+                <p>V3 Report generated at {new Date(v3Data.generatedAt).toLocaleString()}</p>
+                <p>{v3Data.stepsCompleted}/10 steps completed in {(v3Data.totalDurationMs / 1000).toFixed(1)}s</p>
+              </div>
+
+              <div className="flex justify-center pb-8">
+                <button
+                  type="button"
+                  onClick={() => handleGenerateV3(true)}
+                  className="text-[12px] text-muted-foreground underline hover:text-foreground transition-colors"
+                >
+                  Regenerate Report
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <DownloadSheet
+          open={downloadSheetOpen}
+          onClose={() => setDownloadSheetOpen(false)}
+          listingId={car.id}
+          reportHash={null}
+        />
       </main>
     )
   }
 
-  // Adapt the v1 report shape into a v2 HausReportV2 for the new blocks.
+  // ─── V2+V3 mode: existing V2 report with optional V3 sections ──────
   const thisVinPriceUsd = deriveAskingUsd(car)
   const v2: HausReportV2 = adaptV1ReportToV2({
     v1Report: existingReport,
@@ -196,6 +417,65 @@ export function ReportClientV2({
           modifierVersion="v1.0"
           extractionVersion={v2.extraction_version ?? "—"}
         />
+
+        {/* ─── V3 Sections (dedicated components) ─────────────────── */}
+        {isGeneratingV3 && (
+          <div className="mt-10 border-t border-border pt-8">
+            <h2 className="font-serif text-[18px] font-semibold mb-4">
+              Generating V3 Dossier
+            </h2>
+            <GenerationStepper steps={generationSteps} />
+          </div>
+        )}
+
+        {v3Error && !isGeneratingV3 && (
+          <div className="mt-6 rounded-lg bg-destructive/10 p-4 text-[13px] text-destructive">
+            {v3Error}
+          </div>
+        )}
+
+        {v3Data && !isGeneratingV3 && (
+          <div className="mt-10 border-t border-border pt-8 space-y-6">
+            <ExecutiveSummarySection data={v3Data.finalSynthesis} />
+            <TechnicalAnalysisSection data={v3Data.technicalAnalysis} />
+            <InvestmentStrategySection data={v3Data.investmentAnalysis} listingType={listingType} />
+            <OwnershipCostSection data={v3Data.investmentAnalysis?.ownershipCosts ?? null} />
+            <ResaleTimelineSection data={v3Data.investmentAnalysis?.resaleTimeline ?? null} />
+            <DueDiligenceSection data={v3Data.dueDiligence} />
+            <MarketResearchSection data={v3Data.marketResearch} />
+            <BuyerServicesSection data={v3Data.buyerServices} />
+
+            {/* V3 metadata footer */}
+            <div className="border-t border-border pt-4 text-[11px] text-muted-foreground">
+              <p>V3 Report generated at {new Date(v3Data.generatedAt).toLocaleString()}</p>
+              <p>{v3Data.stepsCompleted}/10 steps completed in {(v3Data.totalDurationMs / 1000).toFixed(1)}s</p>
+            </div>
+          </div>
+        )}
+
+        {!isGeneratingV3 && !v3Data && (
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => handleGenerateV3()}
+              className="rounded-lg bg-primary/10 px-5 py-2.5 text-[13px] font-semibold text-primary hover:bg-primary/20 transition-colors"
+            >
+              Generate V3 Investment Dossier
+            </button>
+          </div>
+        )}
+
+        {v3Data && !isGeneratingV3 && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => handleGenerateV3(true)}
+              className="text-[12px] text-muted-foreground underline hover:text-foreground transition-colors"
+            >
+              Regenerate V3 Report
+            </button>
+          </div>
+        )}
       </div>
 
       <DownloadSheet
@@ -216,6 +496,65 @@ export function ReportClientV2({
       />
     </main>
   )
+}
+
+// ─── V3 Generation Stepper ───────────────────────────────────────────
+
+function GenerationStepper({ steps }: { steps: GenerationStep[] }) {
+  return (
+    <div className="space-y-2">
+      {steps.map((step) => (
+        <div
+          key={step.sectionKey}
+          className="flex items-center gap-3 rounded-lg border border-border/50 px-4 py-2.5"
+        >
+          <StepStatusIcon status={step.status} />
+          <span className="flex-1 text-[13px] font-medium">
+            {step.label}
+          </span>
+          {step.durationMs != null && step.status === "completed" && (
+            <span className="text-[11px] text-muted-foreground">
+              {(step.durationMs / 1000).toFixed(1)}s
+            </span>
+          )}
+          {step.status === "failed" && step.completionNote && (
+            <span className="text-[11px] text-destructive truncate max-w-[200px]">
+              {step.completionNote}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function StepStatusIcon({ status }: { status: StepStatus }) {
+  switch (status) {
+    case "pending":
+      return <div className="h-4 w-4 rounded-full border-2 border-border" />
+    case "in_progress":
+      return (
+        <div className="relative h-4 w-4">
+          <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      )
+    case "completed":
+      return (
+        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500">
+          <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )
+    case "failed":
+      return (
+        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive">
+          <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+      )
+  }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
