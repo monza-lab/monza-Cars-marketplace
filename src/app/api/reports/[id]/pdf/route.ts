@@ -36,6 +36,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  try {
   const { id } = await params
 
   // 1. Resolve car (curated or live)
@@ -168,6 +169,14 @@ export async function GET(
       "X-Report-Hash": reportHash,
     },
   })
+
+  } catch (err) {
+    console.error("[pdf/route] PDF generation failed:", err)
+    return NextResponse.json(
+      { error: "pdf_generation_failed", message: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    )
+  }
 }
 
 function deriveAskingUsd(car: { soldPriceUsd?: number | null; askingPriceUsd?: number | null; currentBid: number; price: number }): number {
