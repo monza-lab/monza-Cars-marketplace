@@ -8,6 +8,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog'
 import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { Loader2, ChevronDown } from 'lucide-react'
 
 interface AuthModalProps {
@@ -381,6 +382,33 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                     : /* [HARDCODED] */ 'Create account →'}
                 </button>
               </p>
+
+              {/* Privacy + Terms notice on signup. Required at point of
+                  collection under CCPA "notice at collection" + GDPR Art.
+                  13 transparency. Renders only on signup; the same notice
+                  is also visible inside the docs but having it here closes
+                  the gap. */}
+              {isSignup && (
+                <p className="text-center text-[10.5px] text-muted-foreground/70 leading-relaxed px-2 pt-1">
+                  {t('signupLegalNotice')}{' '}
+                  <Link
+                    href="/legal/terms"
+                    onClick={() => onOpenChange(false)}
+                    className="text-muted-foreground hover:text-foreground underline underline-offset-2"
+                  >
+                    {t('signupLegalTerms')}
+                  </Link>{' '}
+                  {t('signupLegalAnd')}{' '}
+                  <Link
+                    href="/legal/privacy"
+                    onClick={() => onOpenChange(false)}
+                    className="text-muted-foreground hover:text-foreground underline underline-offset-2"
+                  >
+                    {t('signupLegalPrivacy')}
+                  </Link>
+                  .
+                </p>
+              )}
             </>
           )}
         </div>

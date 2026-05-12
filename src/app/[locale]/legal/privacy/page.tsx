@@ -46,7 +46,7 @@ function EnContent() {
       <p>
         Monza Lab LLC is a single-member limited liability company organized under the laws of the State of Wyoming, USA, with EIN 30-1486916. Our
         principal place of business is 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, United States. For privacy-related inquiries, contact us at{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>.
       </p>
       <p>This Privacy Policy applies to all properties owned and operated by Monza Lab LLC, including:</p>
       <ul>
@@ -169,7 +169,7 @@ function EnContent() {
       </p>
       <p className="text-[12px] text-muted-foreground">
         <em>To be appointed before EU launch.</em> If you reside in the EEA or UK and need to exercise your rights before then, contact us at{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> and we will respond directly.
+        <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> and we will respond directly.
       </p>
 
       <h2>11. Your Rights</h2>
@@ -196,7 +196,7 @@ function EnContent() {
         your personal data violates applicable law.
       </p>
       <p>
-        To exercise any of these rights, contact us at <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>. We will respond within the
+        To exercise any of these rights, contact us at <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>. We will respond within the
         timeframes required by applicable law.
       </p>
 
@@ -235,7 +235,7 @@ function EnContent() {
         Attn: Privacy<br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, United States<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. All rights reserved.</p>
     </>
@@ -264,7 +264,7 @@ function EsContent() {
       <p>
         Monza Lab LLC es una sociedad de responsabilidad limitada de un solo miembro organizada bajo las leyes del Estado de Wyoming, EE. UU., con
         EIN 30-1486916. Nuestra sede principal se encuentra en 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, Estados Unidos. Para consultas sobre
-        privacidad, contáctanos en <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        privacidad, contáctanos en <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>.
       </p>
       <p>Esta Política aplica a todas las propiedades operadas por Monza Lab LLC, incluyendo monzalab.com, monzaindex.ai y monzahaus.com.</p>
 
@@ -347,7 +347,7 @@ function EsContent() {
         <strong>Residentes EEA/UK (RGPD):</strong> puedes presentar una reclamación ante tu autoridad supervisora local si crees que nuestro
         procesamiento viola la ley aplicable.
       </p>
-      <p>Para ejercer cualquiera de estos derechos, contáctanos en <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.</p>
+      <p>Para ejercer cualquiera de estos derechos, contáctanos en <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>.</p>
 
       <h2>10. Seguridad de los Datos</h2>
       <p>
@@ -380,7 +380,7 @@ function EsContent() {
         Attn: Privacy<br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, Estados Unidos<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. Todos los derechos reservados.</p>
     </>
@@ -409,7 +409,7 @@ function DeContent() {
       <p>
         Monza Lab LLC ist eine Single-Member-LLC, gegründet nach dem Recht des US-Bundesstaates Wyoming, mit EIN 30-1486916. Unser Hauptsitz ist 150
         SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, USA. Bei datenschutzrechtlichen Anfragen erreichen Sie uns unter{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>.
       </p>
 
       <h2>2. Welche Daten wir erheben</h2>
@@ -487,7 +487,7 @@ function DeContent() {
         <strong>EWR/UK-Einwohner (DSGVO):</strong> Sie können Beschwerde bei Ihrer örtlichen Aufsichtsbehörde einlegen.
       </p>
       <p>
-        Zur Ausübung dieser Rechte kontaktieren Sie <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        Zur Ausübung dieser Rechte kontaktieren Sie <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>.
       </p>
 
       <h2>10. Datensicherheit</h2>
@@ -517,7 +517,7 @@ function DeContent() {
         Attn: Privacy<br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, USA<br />
-        E-Mail: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        E-Mail: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. Alle Rechte vorbehalten.</p>
     </>
@@ -542,7 +542,7 @@ function JaContent() {
       <h2>1. 当社について</h2>
       <p>
         Monza Lab LLCは、米国ワイオミング州法に基づき設立されたシングルメンバーLLC（EIN 30-1486916）です。本社所在地: 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, USA。
-        プライバシーに関するお問い合わせは <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> までお願いします。
+        プライバシーに関するお問い合わせは <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> までお願いします。
       </p>
 
       <h2>2. 収集する情報</h2>
@@ -607,7 +607,7 @@ function JaContent() {
       </ul>
       <p><strong>カリフォルニア州住民（CCPA/CPRA）:</strong> 追加の権利があります。当社は個人情報を販売しません。</p>
       <p><strong>EEA/UK住民（GDPR）:</strong> 監督機関への苦情申立てが可能です。</p>
-      <p>権利を行使するには <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> までご連絡ください。</p>
+      <p>権利を行使するには <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> までご連絡ください。</p>
 
       <h2>10. データセキュリティ</h2>
       <p>合理的な管理的・技術的・物理的安全管理措置を講じていますが、伝送・保存方法に絶対的な安全性はありません。</p>
@@ -627,7 +627,7 @@ function JaContent() {
         Attn: Privacy<br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, USA<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. All rights reserved.</p>
     </>
