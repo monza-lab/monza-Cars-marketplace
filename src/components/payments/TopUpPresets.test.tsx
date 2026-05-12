@@ -40,17 +40,17 @@ describe("TopUpPresets", () => {
     renderWithIntl(<TopUpPresets onSelect={onSelect} />)
     // Click the Heavy preset card first (to set selection)
     fireEvent.click(screen.getByRole("button", { name: /10,000 Pistons/i }))
-    // Then click the Recargar CTA which uses onSelect
-    fireEvent.click(screen.getByRole("button", { name: /recargar/i }))
+    // Then click the Top up CTA which uses onSelect
+    fireEvent.click(screen.getByRole("button", { name: /top up/i }))
     expect(onSelect).toHaveBeenCalledWith("topup_heavy")
   })
 
   it("shows the equivalence summary for the default preset (1,000 Pistons)", () => {
     renderWithIntl(<TopUpPresets onSelect={vi.fn()} />)
-    // 1,000 Pistons → 1 report (singular!) / 20 marketplace / 4 deep research
+    // 1,000 Pistons → 1 report (singular) / 20 Marketplace searches / 4 Deep Research sessions
     // (calibrated so Heavy preset caps at 10 reports — see TopUpPresets.tsx)
     expect(screen.getByText(/1 report\b/)).toBeInTheDocument()
-    expect(screen.getByText(/20 marketplace/)).toBeInTheDocument()
-    expect(screen.getByText(/4 deep research/)).toBeInTheDocument()
+    expect(screen.getByText(/20 Marketplace searches/)).toBeInTheDocument()
+    expect(screen.getByText(/4 Deep Research sessions/)).toBeInTheDocument()
   })
 })

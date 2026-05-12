@@ -33,7 +33,17 @@
     "help": "Help & Legal",
     "helpAdvisor": "Talk to the advisor",
     "helpPrivacy": "Privacy",
-    "helpTerms": "Terms"
+    "helpTerms": "Terms",
+    "searchPhrases": [
+      "Search 992 GT3 RS, Turbo S, Targa…",
+      "What's a 1995 Porsche 993 worth?",
+      "Find a 997 GT3 with manual gearbox",
+      "Compare 991 GT3 vs 992 GT3",
+      "Porsche 964 Carrera RS investment outlook",
+      "Search 718 Spyder, Boxster GTS…",
+      "How much is a Porsche 930 Turbo?",
+      "Best Porsche under $100K right now"
+    ]
   },
   "mobile": {
     "aiOracle": "AI Oracle",
@@ -318,7 +328,7 @@
     "confidential": "Confidential",
     "unlockReport": "Unlock Full Report",
     "unlockDesc": "Get access to the complete investment dossier with detailed valuation, risk analysis, and actionable recommendations.",
-    "unlockCost": "100 Pistons",
+    "unlockCost": "1,000 Pistons",
     "freePreview": "Free Preview",
     "sections": {
       "summary": "Executive Summary",
@@ -503,6 +513,7 @@
     "economyMarketplace": "Marketplace search",
     "economyDeepResearch": "Deep Research",
     "economyReport": "Full investment report",
+    "badgeBestValue": "Best value",
     "topupSectionTitle": "How many Pistons?",
     "topupSelected": "Selected",
     "topupEquivalence": "≈ {reports, plural, one {# report} other {# reports}} · {marketplace, plural, one {# Marketplace search} other {# Marketplace searches}} · {deep, plural, one {# Deep Research session} other {# Deep Research sessions}}",
@@ -1022,7 +1033,8 @@
     "best": "Best",
     "verified": "Verified",
     "critical": "Critical",
-    "recommended": "Recommended"
+    "recommended": "Recommended",
+    "photoPending": "Photo refresh pending"
   },
   "search": {
     "header": {

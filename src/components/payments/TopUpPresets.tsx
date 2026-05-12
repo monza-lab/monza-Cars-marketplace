@@ -64,9 +64,9 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
                   : "border-border bg-foreground/[0.02] hover:border-border/80"
               }`}
             >
-              {preset.badge && (
+              {(preset.badgeKey || preset.badge) && (
                 <span className="inline-block text-[9px] font-semibold tracking-[0.18em] uppercase text-primary/85 mb-2">
-                  {preset.badge}
+                  {preset.badgeKey ? t(preset.badgeKey) : preset.badge}
                 </span>
               )}
               {/* PRICE is the decision the user makes. Largest, clearest,

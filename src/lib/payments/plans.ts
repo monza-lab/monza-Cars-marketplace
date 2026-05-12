@@ -23,6 +23,10 @@ export interface PricingPlan {
   reports: number | "unlimited"
   perReport: string
   badge?: string
+  /** i18n key for the badge label. When set, components should render
+   *  `t(badgeKey)` so the badge speaks the user's locale. Falls back to
+   *  the legacy `badge` literal if not set. */
+  badgeKey?: string
   features: string[]
   cta: string
   billingMode: "payment" | "subscription"
@@ -222,7 +226,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     pistons: 10000,
     reports: 10,
     perReport: "$9.90/report",
-    badge: "Best value",
+    badgeKey: "pricing.badgeBestValue",
     features: [
       "10,000 Pistons",
       "Never expires",

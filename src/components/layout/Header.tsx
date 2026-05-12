@@ -523,7 +523,11 @@ function InlineLanguageSwitcher() {
 }
 
 // ─── TYPING PLACEHOLDER PHRASES ───
-const TYPING_PHRASES = [
+// Sourced from i18n (`nav.searchPhrases`) at render time so the typing
+// animation speaks the user's locale. The English fallback below is a
+// defensive net only — if a locale ever ships without `nav.searchPhrases`,
+// we still get a non-empty array instead of breaking the animation.
+const TYPING_PHRASES_FALLBACK = [
   "Search 992 GT3 RS, Turbo S, Targa...",
   "What's a 1995 Porsche 993 worth?",
   "Find a 997 GT3 with manual gearbox",
@@ -579,7 +583,20 @@ export function Header() {
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Typing animation for placeholder
+  // Typing animation for placeholder — phrases come from i18n so the
+  // animation speaks the user's locale. t.raw() returns the array as-is.
+  const localizedPhrases = (() => {
+    try {
+      const raw = t.raw("nav.searchPhrases")
+      if (Array.isArray(raw) && raw.length > 0 && raw.every(p => typeof p === "string")) {
+        return raw as string[]
+      }
+    } catch {
+      // i18n key missing — fall through to fallback below
+    }
+    return TYPING_PHRASES_FALLBACK
+  })()
+
   const [typedPlaceholder, setTypedPlaceholder] = useState("")
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
@@ -589,7 +606,7 @@ export function Header() {
     // Don't animate if user is focused or typing
     if (isFocused || query) return
 
-    const currentPhrase = TYPING_PHRASES[phraseIndex]
+    const currentPhrase = localizedPhrases[phraseIndex]
 
     const timeout = setTimeout(() => {
       if (!isDeleting) {
@@ -610,13 +627,13 @@ export function Header() {
         } else {
           // Move to next phrase
           setIsDeleting(false)
-          setPhraseIndex((phraseIndex + 1) % TYPING_PHRASES.length)
+          setPhraseIndex((phraseIndex + 1) % localizedPhrases.length)
         }
       }
     }, isDeleting ? 35 : 75)
 
     return () => clearTimeout(timeout)
-  }, [charIndex, isDeleting, phraseIndex, isFocused, query])
+  }, [charIndex, isDeleting, phraseIndex, isFocused, query, localizedPhrases])
 
   // Auth state
   const { user, profile, loading: authLoading, signOut } = useAuth();

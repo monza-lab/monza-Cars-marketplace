@@ -34,7 +34,17 @@
     "help": "Hilfe & Rechtliches",
     "helpAdvisor": "Mit dem Advisor sprechen",
     "helpPrivacy": "Datenschutz",
-    "helpTerms": "Nutzungsbedingungen"
+    "helpTerms": "Nutzungsbedingungen",
+    "searchPhrases": [
+      "Suche 992 GT3 RS, Turbo S, Targa…",
+      "Was ist ein 1995er Porsche 993 wert?",
+      "Finde einen 997 GT3 mit Schaltgetriebe",
+      "Vergleiche 991 GT3 vs 992 GT3",
+      "Porsche 964 Carrera RS Investmentausblick",
+      "Suche 718 Spyder, Boxster GTS…",
+      "Wie viel kostet ein Porsche 930 Turbo?",
+      "Bester Porsche unter $100K aktuell"
+    ]
   },
   "mobile": {
     "aiOracle": "KI-Orakel",
@@ -103,7 +113,7 @@
       "signInHint": "Anmelden, um mit der Analyse zu beginnen"
     },
     "credits": {
-      "label": "Kolben",
+      "label": "Pistons",
       "perReport": "1 Credit pro Analyse",
       "buy": "Mehr kaufen"
     },
@@ -137,7 +147,7 @@
     "signUp": "Registrieren",
     "signOut": "Abmelden",
     "createAccount": "Kostenloses Konto erstellen",
-    "credits": "Kolben",
+    "credits": "Pistons",
     "buy": "Kaufen",
     "buyCredits": "Guthaben Kaufen",
     "freeCredits": "Melden Sie sich an für 3 kostenlose Analyse-Credits",
@@ -177,19 +187,19 @@
     "sendMagicLink": "Magic Link senden",
     "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink.",
     "pistons": {
-      "label": "Kolben",
-      "walletTitle": "Deine Kolben",
+      "label": "Pistons",
+      "walletTitle": "Deine Pistons",
       "nextReset": "Nächste Zurücksetzung: {date}",
       "todayUsage": "Heutige Nutzung",
       "recentDebits": "Letzte Abbuchungen",
-      "topUp": "Kolben aufladen",
+      "topUp": "Pistons aufladen",
       "viewActivity": "Gesamte Aktivität ansehen",
-      "lowBalance": "Nur noch {count, plural, one {# Kolben} other {# Kolben}} übrig",
+      "lowBalance": "Nur noch {count, plural, one {# Piston} other {# Pistons}} übrig",
       "graceRemaining": "{used}/{total} {tier} heute genutzt",
-      "tierPillInstant": "Instant · 1 Kolben",
-      "tierPillMarketplace": "Marketplace · ~5 Kolben",
+      "tierPillInstant": "Instant · 1 Piston",
+      "tierPillMarketplace": "Marketplace · ~5 Pistons",
       "tierPillDeepResearch": "Tiefenrecherche",
-      "debitGhost": "-{amount} {amount, plural, one {Kolben} other {Kolben}}",
+      "debitGhost": "-{amount} {amount, plural, one {Piston} other {Pistons}}",
       "upgradeCta": "Auf PRO upgraden"
     }
   },
@@ -317,7 +327,7 @@
     "confidential": "Vertraulich",
     "unlockReport": "Vollständigen Bericht freischalten",
     "unlockDesc": "Erhalten Sie Zugang zum vollständigen Investment-Dossier mit detaillierter Bewertung, Risikoanalyse und umsetzbaren Empfehlungen.",
-    "unlockCost": "100 Pistons",
+    "unlockCost": "1.000 Pistons",
     "freePreview": "Kostenlose Vorschau",
     "sections": {
       "summary": "Zusammenfassung",
@@ -502,6 +512,7 @@
     "economyMarketplace": "Marketplace-Suche",
     "economyDeepResearch": "Deep Research",
     "economyReport": "Vollständiger Investment-Bericht",
+    "badgeBestValue": "Bester Wert",
     "topupSectionTitle": "Wie viele Pistons?",
     "topupSelected": "Ausgewählt",
     "topupEquivalence": "≈ {reports, plural, one {# Bericht} other {# Berichte}} · {marketplace, plural, one {# Marketplace-Suche} other {# Marketplace-Suchen}} · {deep, plural, one {# Deep-Research-Sitzung} other {# Deep-Research-Sitzungen}}",
@@ -1021,7 +1032,8 @@
     "best": "Best",
     "verified": "Verifiziert",
     "critical": "Kritisch",
-    "recommended": "Empfohlen"
+    "recommended": "Empfohlen",
+    "photoPending": "Foto wird aktualisiert"
   },
   "search": {
     "header": {
