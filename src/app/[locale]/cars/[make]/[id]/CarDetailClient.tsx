@@ -49,6 +49,7 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
+import { useAuth } from "@/lib/auth/AuthProvider"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
 import { ListingHook } from "@/components/detail/ListingHook"
 import { formatPoint } from "@/lib/landedCost/format"
@@ -860,6 +861,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     hasAnalyzed,
   } = useTokens()
 
+  const { signInWithGoogle } = useAuth()
+
   // Registration gate: only shown if user is not registered
   const showRegistrationGate = !tokensLoading && !isRegistered
 
@@ -876,9 +879,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     setShowWelcome(true)
   }
 
-  const handleGoogleSignIn = () => {
-    register("Google User", "user@gmail.com")
-    setShowWelcome(true)
+  const handleGoogleSignIn = async () => {
+    const { error } = await signInWithGoogle()
+    if (error) {
+      console.error("Google sign-in failed:", error)
+    }
   }
 
   // "Generate Full Analysis" CTA handler

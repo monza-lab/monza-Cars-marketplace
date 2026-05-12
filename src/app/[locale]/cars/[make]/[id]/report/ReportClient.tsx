@@ -397,7 +397,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const dim = () => pdf.setTextColor(pal.dim[0], pal.dim[1], pal.dim[2])
       const accentBar = () => { pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F") }
 
-      const clientName = user?.name || "Valued Client"
+      const clientName = authProfile?.name || user?.name || "Valued Client"
       const firstName = clientName.split(" ")[0]
 
       const chrome = (title: string) => {
@@ -1231,7 +1231,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
-        ...(user?.name ? [[`Prepared for: ${user.name}`]] : []),
+        ...((authProfile?.name || user?.name) ? [[`Prepared for: ${authProfile?.name || user?.name}`]] : []),
         ["CONFIDENTIAL — www.monzahaus.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
