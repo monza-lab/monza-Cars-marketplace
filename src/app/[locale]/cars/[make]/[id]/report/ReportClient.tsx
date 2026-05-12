@@ -50,7 +50,7 @@ import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { OutOfReportsModal } from "@/components/payments/OutOfReportsModal"
+import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
@@ -2670,10 +2670,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         )}
       </AnimatePresence>
 
-      <OutOfReportsModal
+      <OutOfPistonsModal
         open={outOfReportsOpen}
         onOpenChange={setOutOfReportsOpen}
-        nextResetDate={authProfile?.creditResetDate}
+        neededPistons={100}
+        currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
     </div>
   )
