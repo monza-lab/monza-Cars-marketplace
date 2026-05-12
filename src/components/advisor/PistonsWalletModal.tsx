@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 import { Piston } from "@/components/icons/Piston"
+import { PistonsEconomyTable } from "@/components/payments/PistonsEconomyTable"
 import { useTranslations } from "next-intl"
 
 export type UserTier = "FREE" | "PRO"
@@ -78,6 +79,10 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
             <span className="text-[10px] tracking-widest uppercase text-muted-foreground">{planLabel}</span>
           </div>
           <p className="text-[11px] text-muted-foreground">{t("nextReset", { date: props.nextResetDate.toLocaleDateString() })}</p>
+        </div>
+
+        <div className="px-5 pb-4">
+          <PistonsEconomyTable variant="compact" />
         </div>
 
         <div className="px-5 pb-4 border-t border-border/60 pt-3">
