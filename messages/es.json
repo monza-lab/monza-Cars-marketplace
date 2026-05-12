@@ -34,7 +34,17 @@
     "help": "Ayuda y legal",
     "helpAdvisor": "Hablar con el advisor",
     "helpPrivacy": "Privacidad",
-    "helpTerms": "Términos"
+    "helpTerms": "Términos",
+    "searchPhrases": [
+      "Busca 992 GT3 RS, Turbo S, Targa…",
+      "¿Cuánto vale un Porsche 993 de 1995?",
+      "Encuentra un 997 GT3 con caja manual",
+      "Compara 991 GT3 vs 992 GT3",
+      "Perspectiva de inversión: Porsche 964 Carrera RS",
+      "Busca 718 Spyder, Boxster GTS…",
+      "¿Cuánto cuesta un Porsche 930 Turbo?",
+      "Mejor Porsche bajo $100K ahora mismo"
+    ]
   },
   "mobile": {
     "aiOracle": "AI Oracle",
@@ -103,7 +113,7 @@
       "signInHint": "Inicia sesión para comenzar a analizar"
     },
     "credits": {
-      "label": "Pistones",
+      "label": "Pistons",
       "perReport": "1 crédito por análisis",
       "buy": "Comprar más"
     },
@@ -137,7 +147,7 @@
     "signUp": "Registrarse",
     "signOut": "Cerrar Sesión",
     "createAccount": "Crear Cuenta Gratis",
-    "credits": "Pistones",
+    "credits": "Pistons",
     "buy": "Comprar",
     "buyCredits": "Comprar Créditos",
     "freeCredits": "Inicia sesión para obtener 3 créditos gratis",
@@ -164,6 +174,10 @@
     "or": "o",
     "switchToSignUp": "¿No tienes una cuenta? Regístrate",
     "switchToSignIn": "¿Ya tienes una cuenta? Inicia sesión",
+    "signupLegalNotice": "Al crear una cuenta, aceptas nuestros",
+    "signupLegalTerms": "Términos de Servicio",
+    "signupLegalAnd": "y la",
+    "signupLegalPrivacy": "Política de Privacidad",
     "analysisRequiresSignInTitle": "El análisis requiere iniciar sesión",
     "analysisRequiresSignInDesc": "Inicia sesión para analizar este vehículo",
     "newAccountsCredits": "Las cuentas nuevas reciben 3 créditos de análisis gratis",
@@ -173,19 +187,19 @@
     "sendMagicLink": "Enviar Enlace Mágico",
     "magicLinkSent": "Revisa tu correo para el enlace de acceso.",
     "pistons": {
-      "label": "Pistones",
-      "walletTitle": "Tus Pistones",
+      "label": "Pistons",
+      "walletTitle": "Tus Pistons",
       "nextReset": "Próxima renovación: {date}",
       "todayUsage": "Uso de hoy",
       "recentDebits": "Cargos recientes",
-      "topUp": "Recargar Pistones",
+      "topUp": "Recargar Pistons",
       "viewActivity": "Ver toda la actividad",
-      "lowBalance": "Solo quedan {count, plural, one {# Pistón} other {# Pistones}}",
+      "lowBalance": "Solo {count, plural, one {queda # Piston} other {quedan # Pistons}}",
       "graceRemaining": "{used}/{total} {tier} usados hoy",
-      "tierPillInstant": "Instant · 1 Pistón",
-      "tierPillMarketplace": "Marketplace · ~5 Pistones",
+      "tierPillInstant": "Instant · 1 Piston",
+      "tierPillMarketplace": "Marketplace · ~5 Pistons",
       "tierPillDeepResearch": "Investigación Profunda",
-      "debitGhost": "-{amount} {amount, plural, one {Pistón} other {Pistones}}",
+      "debitGhost": "-{amount} {amount, plural, one {Piston} other {Pistons}}",
       "upgradeCta": "Mejorar a PRO"
     }
   },
@@ -313,7 +327,7 @@
     "confidential": "Confidencial",
     "unlockReport": "Desbloquear Reporte Completo",
     "unlockDesc": "Obtén acceso al dossier de inversión completo con valoración detallada, análisis de riesgo y recomendaciones accionables.",
-    "unlockCost": "100 Pistones",
+    "unlockCost": "1,000 Pistons",
     "freePreview": "Vista Previa Gratuita",
     "sections": {
       "summary": "Resumen Ejecutivo",
@@ -372,6 +386,20 @@
       "arbitrageAlert": "Oportunidad de Arbitraje",
       "arbitrageDesc": "Este vehículo tiene un precio significativamente inferior al valor justo en {region}. Ahorro potencial de {amount} vs el promedio regional más alto.",
       "comparables": "Ventas Comparables Recientes"
+    },
+    "regionContext": {
+      "tailoredFor": "Personalizado para {region}",
+      "tailoredDescription": "Valor justo, comparables y señales de arbitraje están priorizados para tu mercado. Las demás regiones siguen visibles para contexto cruzado.",
+      "noRegionTitle": "Define tu mercado para personalizar este reporte",
+      "noRegionDescription": "Dinos desde dónde comprarías — valor justo, comparables y señales de arbitraje se reponderan a tu región.",
+      "chooseRegion": "Elegir región",
+      "changeRegion": "Cambiar",
+      "regionLabel": {
+        "US": "Estados Unidos",
+        "EU": "Europa",
+        "UK": "Reino Unido",
+        "JP": "Japón"
+      }
     },
     "performance": {
       "brandReturn": "Retorno de {make} a 5 Años",
@@ -475,9 +503,31 @@
     "title": "Elige Tu Plan",
     "subtitle": "Desbloquea análisis de inversión integral para decisiones más inteligentes",
     "heroEyebrow": "300 Pistons gratis cada mes — sin tarjeta",
-    "heroTitle": "Due diligence para compradores Porsche",
-    "heroDescription": "Un reporte cuesta 100 Pistons. Los planes superiores desbloquean más Pistons mensuales. Los top-ups nunca expiran.",
+    "heroTitle": "Recarga tu wallet",
+    "heroSubtitle": "Los Pistons son tu moneda. Recarga una vez o suscríbete. Tu wallet de investigación.",
+    "heroDescription": "Un reporte cuesta 1,000 Pistons. Los planes superiores desbloquean más Pistons mensuales. Las recargas nunca expiran.",
     "heroAnchor": "Una PPI cuesta $400. Un Porsche PPS, $250. Pagar $59/mes para saber si el deal vale la pena es due diligence, no gasto.",
+    "economyTitle": "Cómo gastas Pistons",
+    "economyChat": "Chat con el Advisor",
+    "economyMarketplace": "Búsqueda en Marketplace",
+    "economyComparison": "Comparar varios coches",
+    "economyReport": "Reporte de inversión completo",
+    "economyFree": "Gratis",
+    "badgeBestValue": "Mejor valor",
+    "topupSectionTitle": "¿Cuántos Pistons?",
+    "topupSelected": "Seleccionado",
+    "topupEquivalence": "≈ {reports, plural, one {# reporte} other {# reportes}} · {comparisons, plural, one {# comparación} other {# comparaciones}} · {chats, plural, one {# chat} other {# chats}}",
+    "topupNeverExpire": "nunca expiran",
+    "topupCta": "Recargar",
+    "topupCustomToggle": "O ingresa un monto personalizado",
+    "topupCustomLabel": "Monto personalizado de Pistons",
+    "topupCustomPriceHint": "${price} · nunca expira",
+    "subSectionTitle": "¿Vas a usar mucho?",
+    "subBadgeMostPopular": "Más popular",
+    "subFeatures": "Investigación ilimitada · Watchlist · Alertas",
+    "subCancelAnytime": "Cancela cuando quieras",
+    "subCta": "Suscribirme",
+    "anchorNarrative": "Una PPI cuesta $400. Un Porsche PPS, $250. Pagar $59/mes para saber si el deal vale la pena es due diligence, no gasto.",
     "currentBalance": "Balance actual",
     "pistonsLabel": "Pistons",
     "whatIncluded": "Qué incluye cada reporte",
@@ -527,6 +577,15 @@
     "successTitle": "¡Reporte Desbloqueado!",
     "successDesc": "Ahora tienes acceso completo a este dossier de inversión.",
     "processing": "Procesando..."
+  },
+  "outOfPistons": {
+    "title": "Necesitas {needed} Pistons. Tienes {have}.",
+    "topupTitle": "{pistons} Pistons",
+    "topupHint": "${price} · nunca expira",
+    "topupCta": "Comprar",
+    "tipPrefix": "Tip:",
+    "tipBody": "Rennsport te da investigación ilimitada por $59/mes.",
+    "seePlans": "Ver planes"
   },
   "auctionDetail": {
     "actions": {
@@ -974,7 +1033,8 @@
     "best": "Mejor",
     "verified": "Verificado",
     "critical": "Crítico",
-    "recommended": "Recomendado"
+    "recommended": "Recomendado",
+    "photoPending": "Foto en actualización"
   },
   "search": {
     "header": {

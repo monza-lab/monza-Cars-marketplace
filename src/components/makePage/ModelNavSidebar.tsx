@@ -9,6 +9,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import { timeLeft, type Model } from "@/lib/makePageHelpers"
+import { byPhotoFirst } from "@/lib/photoSort"
 
 // ─── MODEL NAV SIDEBAR (Left column) ───
 export function ModelNavSidebar({
@@ -36,7 +37,7 @@ export function ModelNavSidebar({
   const liveCars = useMemo(() =>
     cars
       .filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON")
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()),
+      .sort(byPhotoFirst<CollectorCar>((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())),
     [cars]
   )
 
@@ -154,7 +155,7 @@ export function ModelNavSidebar({
                 return (
                   <Link
                     key={car.id}
-                    href={`/cars/${makeSlug}/${car.id}`}
+                    href={`/cars/${makeSlug}/${car.id}/report`}
                     className="group flex gap-2.5 px-3 py-2 border-b border-border/50 hover:bg-foreground/2 transition-all"
                   >
                     {/* Thumbnail */}

@@ -42,6 +42,7 @@ import { SignalsMissingSection } from "@/components/report/SignalsMissingSection
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
 import { LandedCostBlock } from "@/components/report/LandedCostBlock"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
+import { ReportRegionBanner } from "@/components/report/ReportRegionBanner"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
@@ -50,7 +51,7 @@ import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { OutOfReportsModal } from "@/components/payments/OutOfReportsModal"
+import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 
 // ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
 
@@ -1615,6 +1616,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SectionHeader id="summary" title={t("sections.summary")} />
 
+              {/* Region-tailored banner — visible reassurance that user's stated market is honored */}
+              <div className="mb-4">
+                <ReportRegionBanner />
+              </div>
+
               {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
               {report && (
                 <div className="rounded-2xl border border-border bg-card p-5 mb-4">
@@ -1795,53 +1801,57 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 {/* Regional breakdown bars — only show when we have real regional data */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.regionalBreakdown")}</h3>
-                  {maxRegionalUsd > 0 ? (
-                    <div className="space-y-4">
-                      {(["US", "EU", "UK", "JP"] as const).map(r => {
-                        const rp = pricing[r]
-                        const avgUsd = (rp.low + rp.high) / 2
-                        if (avgUsd === 0) return null
-                        const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
-                        const isBest = r === bestRegion
-                        const isUserRegion = r === effectiveRegion
-                        return (
-                          <div key={r}>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[14px]">{regionLabels[r].flag}</span>
-                                <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
-                                {isBest && (
-                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-positive/15 text-positive border border-positive/20">
-                                    {t("valuation.bestBuy")}
-                                  </span>
-                                )}
-                                {isUserRegion && !isBest && (
-                                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-primary/15 text-primary border border-primary/20">
-                                    {t("valuation.yourMarket")}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[12px] tabular-nums text-muted-foreground">
-                                {formatRegionalPrice(convertFromUsd(rp.low), currencySymbol)} – {formatRegionalPrice(convertFromUsd(rp.high), currencySymbol)}
-                              </span>
-                            </div>
-                            <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${barWidth}%` }}
-                                transition={{ duration: 0.8, delay: 0.1 }}
-                                className={`h-full rounded-full ${isBest ? "bg-positive" : "bg-primary/40"}`}
-                              />
+                  <div className="space-y-4">
+                    {(() => {
+                      const base = ["US", "EU", "UK", "JP"] as const
+                      const ordered = [
+                        effectiveRegion,
+                        ...base.filter(r => r !== effectiveRegion),
+                      ] as readonly typeof base[number][]
+                      return ordered.map(r => {
+                      const rp = pricing[r]
+                      const avgUsd = (rp.low + rp.high) / 2
+                      const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
+                      const isBest = r === bestRegion
+                      const isUserRegion = r === effectiveRegion
+                      return (
+                        <div
+                          key={r}
+                          className={
+                            isUserRegion
+                              ? "rounded-lg border border-primary/25 bg-primary/[0.04] px-3 py-2.5 -mx-3"
+                              : ""
+                          }
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px]">{regionLabels[r].flag}</span>
+                              <span className="text-[12px] font-medium text-foreground">{regionLabels[r].short}</span>
+                              {isBest && (
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-positive/15 text-positive border border-positive/20">
+                                  {t("valuation.bestBuy")}
+                                </span>
+                              )}
+                              {isUserRegion && !isBest && (
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-primary/15 text-primary border border-primary/20">
+                                  {t("valuation.yourMarket")}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground italic">
-                      Regional valuation data not yet available
-                    </p>
-                  )}
+                          <div className="relative h-[8px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${barWidth}%` }}
+                              transition={{ duration: 0.8, delay: 0.1 }}
+                              className={`h-full rounded-full ${isBest ? "bg-positive" : "bg-primary/40"}`}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })
+                    })()}
+                  </div>
                 </div>
 
                 {/* Market position gauge — only when we have fair value data */}
@@ -2689,10 +2699,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         )}
       </AnimatePresence>
 
-      <OutOfReportsModal
+      <OutOfPistonsModal
         open={outOfReportsOpen}
         onOpenChange={setOutOfReportsOpen}
-        nextResetDate={authProfile?.creditResetDate}
+        neededPistons={1000}
+        currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
     </div>
   )

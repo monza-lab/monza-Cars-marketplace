@@ -5,6 +5,9 @@ export type PlanKey =
   | "jerrycan"
   | "fuel_cell"
   | "boxenstopp"
+  | "topup_entry"
+  | "topup_active"
+  | "topup_heavy"
 
 export type LegacyPlanKey = "single" | "pack" | "monthly"
 export type CheckoutPlanKey = PlanKey | LegacyPlanKey
@@ -20,12 +23,21 @@ export interface PricingPlan {
   reports: number | "unlimited"
   perReport: string
   badge?: string
+  /** i18n key for the badge label. When set, components should render
+   *  `t(badgeKey)` so the badge speaks the user's locale. Falls back to
+   *  the legacy `badge` literal if not set. */
+  badgeKey?: string
   features: string[]
   cta: string
   billingMode: "payment" | "subscription"
   unlimitedReports: boolean
   stripeProductId: string | null
   tagline: string
+  /** Whether this plan is shown in the public /pricing page and
+   *  related UI. Legacy plans stay in the registry so historical
+   *  customers keep their plans, but they aren't offered to new
+   *  customers. Defaults to false when omitted. */
+  visibleInPricing?: boolean
 }
 
 export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
@@ -49,6 +61,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: false,
     stripeProductId: process.env.STRIPE_PRODUCT_ZUFFENHAUSEN_MONTHLY ?? null,
     tagline: "Starter monthly allowance",
+    visibleInPricing: false,
   },
   weissach: {
     id: "weissach",
@@ -71,6 +84,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: false,
     stripeProductId: process.env.STRIPE_PRODUCT_WEISSACH_MONTHLY ?? null,
     tagline: "Best balance for active hunters",
+    visibleInPricing: false,
   },
   rennsport: {
     id: "rennsport",
@@ -93,6 +107,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: true,
     stripeProductId: process.env.STRIPE_PRODUCT_RENNSPORT_MONTHLY ?? null,
     tagline: "For unlimited report workflows",
+    visibleInPricing: true,
   },
   jerrycan: {
     id: "jerrycan",
@@ -114,6 +129,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: false,
     stripeProductId: process.env.STRIPE_PRODUCT_JERRYCAN ?? null,
     tagline: "Small refill",
+    visibleInPricing: false,
   },
   fuel_cell: {
     id: "fuel_cell",
@@ -135,6 +151,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: false,
     stripeProductId: process.env.STRIPE_PRODUCT_FUEL_CELL ?? null,
     tagline: "Mid-sized refill",
+    visibleInPricing: false,
   },
   boxenstopp: {
     id: "boxenstopp",
@@ -156,6 +173,71 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     unlimitedReports: false,
     stripeProductId: process.env.STRIPE_PRODUCT_BOXENSTOPP ?? null,
     tagline: "Large refill",
+    visibleInPricing: false,
+  },
+  topup_entry: {
+    id: "topup_entry",
+    name: "1,000 Pistons",
+    price: 13,
+    priceCents: 1300,
+    period: "one-time",
+    pistons: 1000,
+    reports: 1,
+    perReport: "$13/report",
+    features: [
+      "1,000 Pistons",
+      "Never expires",
+      "Stacks with any plan",
+    ],
+    cta: "Add 1,000 Pistons",
+    billingMode: "payment",
+    unlimitedReports: false,
+    stripeProductId: process.env.STRIPE_PRODUCT_TOPUP_ENTRY ?? null,
+    tagline: "Quick refill",
+    visibleInPricing: true,
+  },
+  topup_active: {
+    id: "topup_active",
+    name: "2,500 Pistons",
+    price: 30,
+    priceCents: 3000,
+    period: "one-time",
+    pistons: 2500,
+    reports: 2,
+    perReport: "$15/report",
+    features: [
+      "2,500 Pistons",
+      "Never expires",
+      "Stacks with any plan",
+    ],
+    cta: "Add 2,500 Pistons",
+    billingMode: "payment",
+    unlimitedReports: false,
+    stripeProductId: process.env.STRIPE_PRODUCT_TOPUP_ACTIVE ?? null,
+    tagline: "Active hunter",
+    visibleInPricing: true,
+  },
+  topup_heavy: {
+    id: "topup_heavy",
+    name: "10,000 Pistons",
+    price: 99,
+    priceCents: 9900,
+    period: "one-time",
+    pistons: 10000,
+    reports: 10,
+    perReport: "$9.90/report",
+    badgeKey: "pricing.badgeBestValue",
+    features: [
+      "10,000 Pistons",
+      "Never expires",
+      "Stacks with any plan",
+    ],
+    cta: "Add 10,000 Pistons",
+    billingMode: "payment",
+    unlimitedReports: false,
+    stripeProductId: process.env.STRIPE_PRODUCT_TOPUP_HEAVY ?? null,
+    tagline: "Heavy research",
+    visibleInPricing: true,
   },
 }
 
@@ -180,4 +262,23 @@ export function isPlanId(value: string): value is CheckoutPlanKey {
 export function getPricingPlan(value: string): PricingPlan | null {
   const key = resolvePlanKey(value)
   return key ? PRICING_PLANS[key] : null
+}
+
+/** Returns top-up (one-time payment) plans that should appear in the
+ *  public pricing UI, sorted by ascending price. Used by /pricing and
+ *  the OutOfPistonsModal preset list. */
+export function getVisibleTopUps(): PricingPlan[] {
+  return Object.values(PRICING_PLANS)
+    .filter(p => p.visibleInPricing === true && p.billingMode === "payment")
+    .sort((a, b) => a.price - b.price)
+}
+
+/** Returns subscription plans that should appear in the public
+ *  pricing UI, sorted by ascending price. Today returns only Rennsport;
+ *  Zuffenhausen and Weissach stay hidden but remain in the registry for
+ *  historical customers. */
+export function getVisibleSubs(): PricingPlan[] {
+  return Object.values(PRICING_PLANS)
+    .filter(p => p.visibleInPricing === true && p.billingMode === "subscription")
+    .sort((a, b) => a.price - b.price)
 }

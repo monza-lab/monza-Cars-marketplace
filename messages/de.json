@@ -34,7 +34,17 @@
     "help": "Hilfe & Rechtliches",
     "helpAdvisor": "Mit dem Advisor sprechen",
     "helpPrivacy": "Datenschutz",
-    "helpTerms": "Nutzungsbedingungen"
+    "helpTerms": "Nutzungsbedingungen",
+    "searchPhrases": [
+      "Suche 992 GT3 RS, Turbo S, Targa…",
+      "Was ist ein 1995er Porsche 993 wert?",
+      "Finde einen 997 GT3 mit Schaltgetriebe",
+      "Vergleiche 991 GT3 vs 992 GT3",
+      "Porsche 964 Carrera RS Investmentausblick",
+      "Suche 718 Spyder, Boxster GTS…",
+      "Wie viel kostet ein Porsche 930 Turbo?",
+      "Bester Porsche unter $100K aktuell"
+    ]
   },
   "mobile": {
     "aiOracle": "KI-Orakel",
@@ -103,7 +113,7 @@
       "signInHint": "Anmelden, um mit der Analyse zu beginnen"
     },
     "credits": {
-      "label": "Kolben",
+      "label": "Pistons",
       "perReport": "1 Credit pro Analyse",
       "buy": "Mehr kaufen"
     },
@@ -137,7 +147,7 @@
     "signUp": "Registrieren",
     "signOut": "Abmelden",
     "createAccount": "Kostenloses Konto erstellen",
-    "credits": "Kolben",
+    "credits": "Pistons",
     "buy": "Kaufen",
     "buyCredits": "Guthaben Kaufen",
     "freeCredits": "Melden Sie sich an für 3 kostenlose Analyse-Credits",
@@ -164,6 +174,10 @@
     "or": "oder",
     "switchToSignUp": "Noch kein Konto? Registrieren",
     "switchToSignIn": "Haben Sie bereits ein Konto? Anmelden",
+    "signupLegalNotice": "Mit der Erstellung eines Kontos akzeptieren Sie unsere",
+    "signupLegalTerms": "Nutzungsbedingungen",
+    "signupLegalAnd": "und die",
+    "signupLegalPrivacy": "Datenschutzerklärung",
     "analysisRequiresSignInTitle": "Analyse erfordert Anmeldung",
     "analysisRequiresSignInDesc": "Melden Sie sich an, um dieses Fahrzeug zu analysieren",
     "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits",
@@ -173,19 +187,19 @@
     "sendMagicLink": "Magic Link senden",
     "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink.",
     "pistons": {
-      "label": "Kolben",
-      "walletTitle": "Deine Kolben",
+      "label": "Pistons",
+      "walletTitle": "Deine Pistons",
       "nextReset": "Nächste Zurücksetzung: {date}",
       "todayUsage": "Heutige Nutzung",
       "recentDebits": "Letzte Abbuchungen",
-      "topUp": "Kolben aufladen",
+      "topUp": "Pistons aufladen",
       "viewActivity": "Gesamte Aktivität ansehen",
-      "lowBalance": "Nur noch {count, plural, one {# Kolben} other {# Kolben}} übrig",
+      "lowBalance": "Nur noch {count, plural, one {# Piston} other {# Pistons}} übrig",
       "graceRemaining": "{used}/{total} {tier} heute genutzt",
-      "tierPillInstant": "Instant · 1 Kolben",
-      "tierPillMarketplace": "Marketplace · ~5 Kolben",
+      "tierPillInstant": "Instant · 1 Piston",
+      "tierPillMarketplace": "Marketplace · ~5 Pistons",
       "tierPillDeepResearch": "Tiefenrecherche",
-      "debitGhost": "-{amount} {amount, plural, one {Kolben} other {Kolben}}",
+      "debitGhost": "-{amount} {amount, plural, one {Piston} other {Pistons}}",
       "upgradeCta": "Auf PRO upgraden"
     }
   },
@@ -313,7 +327,7 @@
     "confidential": "Vertraulich",
     "unlockReport": "Vollständigen Bericht freischalten",
     "unlockDesc": "Erhalten Sie Zugang zum vollständigen Investment-Dossier mit detaillierter Bewertung, Risikoanalyse und umsetzbaren Empfehlungen.",
-    "unlockCost": "100 Pistons",
+    "unlockCost": "1.000 Pistons",
     "freePreview": "Kostenlose Vorschau",
     "sections": {
       "summary": "Zusammenfassung",
@@ -372,6 +386,20 @@
       "arbitrageAlert": "Arbitrage-Möglichkeit",
       "arbitrageDesc": "Dieses Fahrzeug ist in {region} deutlich unter dem fairen Wert bepreist. Potenzielle Ersparnis von {amount} gegenüber dem höchsten regionalen Durchschnitt.",
       "comparables": "Aktuelle vergleichbare Verkäufe"
+    },
+    "regionContext": {
+      "tailoredFor": "Zugeschnitten auf {region}",
+      "tailoredDescription": "Fairer Wert, Vergleichswerte und Arbitrage-Signale sind auf Ihren Markt gewichtet. Andere Regionen bleiben für den marktübergreifenden Kontext sichtbar.",
+      "noRegionTitle": "Wählen Sie Ihren Markt, um diesen Bericht zu personalisieren",
+      "noRegionDescription": "Sagen Sie uns, wo Sie kaufen würden — fairer Wert, Vergleichswerte und Arbitrage-Signale werden auf Ihre Region gewichtet.",
+      "chooseRegion": "Region wählen",
+      "changeRegion": "Ändern",
+      "regionLabel": {
+        "US": "Vereinigte Staaten",
+        "EU": "Europa",
+        "UK": "Vereinigtes Königreich",
+        "JP": "Japan"
+      }
     },
     "performance": {
       "brandReturn": "{make} 5-Jahres-Rendite",
@@ -475,9 +503,31 @@
     "title": "Wählen Sie Ihren Plan",
     "subtitle": "Umfassende Investitionsanalyse für klügere Kaufentscheidungen",
     "heroEyebrow": "300 kostenlose Pistons jeden Monat — keine Karte erforderlich",
-    "heroTitle": "Due Diligence für Porsche-Käufer",
-    "heroDescription": "Ein Bericht kostet 100 Pistons. Höhere Tarife schalten mehr monatliche Pistons frei. Aufladungen verfallen nie.",
+    "heroTitle": "Lade dein Wallet auf",
+    "heroSubtitle": "Pistons sind deine Währung. Einmal aufladen oder abonnieren. Dein Research-Wallet.",
+    "heroDescription": "Ein Bericht kostet 1.000 Pistons. Höhere Tarife schalten mehr monatliche Pistons frei. Aufladungen verfallen nie.",
     "heroAnchor": "Eine PPI kostet $400. Ein Porsche PPS, $250. $59/Monat zu zahlen, um zu wissen, ob der Deal sich lohnt, ist Due Diligence, kein Kostenfaktor.",
+    "economyTitle": "Wie du Pistons ausgibst",
+    "economyChat": "Chat mit dem Advisor",
+    "economyMarketplace": "Marketplace-Suche",
+    "economyComparison": "Mehrere Fahrzeuge vergleichen",
+    "economyReport": "Vollständiger Investment-Bericht",
+    "economyFree": "Kostenlos",
+    "badgeBestValue": "Bester Wert",
+    "topupSectionTitle": "Wie viele Pistons?",
+    "topupSelected": "Ausgewählt",
+    "topupEquivalence": "≈ {reports, plural, one {# Bericht} other {# Berichte}} · {comparisons, plural, one {# Vergleich} other {# Vergleiche}} · {chats, plural, one {# Chat} other {# Chats}}",
+    "topupNeverExpire": "verfallen nie",
+    "topupCta": "Aufladen",
+    "topupCustomToggle": "Oder gib einen individuellen Betrag ein",
+    "topupCustomLabel": "Individueller Pistons-Betrag",
+    "topupCustomPriceHint": "${price} · verfällt nie",
+    "subSectionTitle": "Du nutzt es viel?",
+    "subBadgeMostPopular": "Am beliebtesten",
+    "subFeatures": "Unbegrenzte Recherche · Watchlist · Alerts",
+    "subCancelAnytime": "Jederzeit kündbar",
+    "subCta": "Abonnieren",
+    "anchorNarrative": "Eine PPI kostet $400. Ein Porsche PPS, $250. $59/Monat zu zahlen, um zu wissen, ob der Deal sich lohnt, ist Due Diligence, kein Kostenfaktor.",
     "currentBalance": "Aktueller Kontostand",
     "pistonsLabel": "Pistons",
     "whatIncluded": "Was jeder Bericht enthält",
@@ -527,6 +577,15 @@
     "successTitle": "Bericht freigeschaltet!",
     "successDesc": "Sie haben jetzt vollen Zugang zu diesem Investment-Dossier.",
     "processing": "Verarbeitung..."
+  },
+  "outOfPistons": {
+    "title": "Du brauchst {needed} Pistons. Du hast {have}.",
+    "topupTitle": "{pistons} Pistons",
+    "topupHint": "${price} · verfällt nie",
+    "topupCta": "Kaufen",
+    "tipPrefix": "Tipp:",
+    "tipBody": "Rennsport gibt dir unbegrenzte Recherche für $59/Monat.",
+    "seePlans": "Pläne ansehen"
   },
   "auctionDetail": {
     "actions": {
@@ -974,7 +1033,8 @@
     "best": "Best",
     "verified": "Verifiziert",
     "critical": "Kritisch",
-    "recommended": "Empfohlen"
+    "recommended": "Empfohlen",
+    "photoPending": "Foto wird aktualisiert"
   },
   "search": {
     "header": {

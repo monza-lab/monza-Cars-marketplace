@@ -129,7 +129,7 @@ function EnContent() {
 
       <h2>Contact</h2>
       <p>
-        Questions about this Policy? Write to <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> or see our{" "}
+        Questions about this Policy? Write to <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> or see our{" "}
         <Link href="/legal/privacy">Privacy Policy</Link> for the full data practices document.
       </p>
     </>
@@ -166,7 +166,7 @@ function EsContent() {
       </p>
       <h2>Contacto</h2>
       <p>
-        Preguntas: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> ·{" "}
+        Preguntas: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> ·{" "}
         <Link href="/legal/privacy">Política de Privacidad</Link>.
       </p>
     </>
@@ -200,7 +200,7 @@ function DeContent() {
       </p>
       <h2>Kontakt</h2>
       <p>
-        Fragen: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> ·{" "}
+        Fragen: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> ·{" "}
         <Link href="/legal/privacy">Datenschutzerklärung</Link>.
       </p>
     </>
@@ -232,7 +232,7 @@ function JaContent() {
       </p>
       <h2>お問い合わせ</h2>
       <p>
-        ご質問: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> ·{" "}
+        ご質問: <a href="mailto:privacy@monzalab.com">privacy@monzalab.com</a> ·{" "}
         <Link href="/legal/privacy">プライバシーポリシー</Link>.
       </p>
     </>

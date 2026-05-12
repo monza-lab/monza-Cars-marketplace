@@ -19,7 +19,7 @@ export function MobileHeroModel({ model, make }: { model: Model; make: string })
   const homeHref = "/"
 
   return (
-    <Link href={`/cars/${makeSlug}/${model.representativeCar.id}`} className="block relative">
+    <Link href={`/cars/${makeSlug}/${model.representativeCar.id}/report`} className="block relative">
       <div className="relative h-[40dvh] min-h-[280px] w-full overflow-hidden">
         <Image
           src={model.representativeImage}

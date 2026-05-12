@@ -163,7 +163,7 @@ export function CarContextPanel({
       {/* CTA */}
       <div className="shrink-0 px-5 py-3 border-t border-border space-y-2">
         <Link
-          href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+          href={`/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-primary-foreground hover:bg-primary/80 transition-all"
         >
           <FileText className="size-4" />

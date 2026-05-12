@@ -8,6 +8,7 @@ import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
+import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
 
 // ─── CAR CARD IN GRID ───
 export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
@@ -27,7 +28,7 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
       layout
     >
       <Link
-        href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+        href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
         className="group block rounded-2xl bg-card border border-primary/8 overflow-hidden hover:border-primary/20 transition-all duration-300"
       >
         {/* Image */}
@@ -61,6 +62,9 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
               car.platform === "CARS_AND_BIDS" ? "C&B" :
                 car.platform === "COLLECTING_CARS" ? "CC" :
                   car.platform === "AUTO_SCOUT_24" ? "AS24" : car.platform}
+          </div>
+          <div className="absolute bottom-3 left-3">
+            <PhotoPendingPill car={car} />
           </div>
         </div>
 

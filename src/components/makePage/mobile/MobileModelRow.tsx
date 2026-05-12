@@ -29,7 +29,7 @@ export function MobileModelRow({
     <div className="flex items-center gap-3 px-4 py-3.5">
       {/* Thumbnail — links to car detail */}
       <Link
-        href={`/cars/${makeSlug}/${model.representativeCar.id}`}
+        href={`/cars/${makeSlug}/${model.representativeCar.id}/report`}
         className="relative w-20 h-14 rounded-xl overflow-hidden shrink-0 bg-card"
       >
         <Image
@@ -49,7 +49,7 @@ export function MobileModelRow({
 
       {/* Info — links to car detail */}
       <Link
-        href={`/cars/${makeSlug}/${model.representativeCar.id}`}
+        href={`/cars/${makeSlug}/${model.representativeCar.id}/report`}
         className="flex-1 min-w-0"
       >
         <p className="text-[14px] font-semibold text-foreground truncate">

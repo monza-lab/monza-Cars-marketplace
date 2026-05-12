@@ -34,7 +34,17 @@
     "help": "ヘルプと法的事項",
     "helpAdvisor": "Advisorに相談",
     "helpPrivacy": "プライバシー",
-    "helpTerms": "利用規約"
+    "helpTerms": "利用規約",
+    "searchPhrases": [
+      "992 GT3 RS、Turbo S、Targaを検索…",
+      "1995年式Porsche 993の価値は？",
+      "マニュアル車の997 GT3を探す",
+      "991 GT3 vs 992 GT3を比較",
+      "Porsche 964 Carrera RS 投資見通し",
+      "718 Spyder、Boxster GTSを検索…",
+      "Porsche 930 Turboの価格は？",
+      "今おすすめの$100K以下のPorsche"
+    ]
   },
   "mobile": {
     "aiOracle": "AIオラクル",
@@ -103,7 +113,7 @@
       "signInHint": "サインインして分析を開始"
     },
     "credits": {
-      "label": "ピストン",
+      "label": "Pistons",
       "perReport": "分析1件につき1クレジット",
       "buy": "追加購入"
     },
@@ -137,7 +147,7 @@
     "signUp": "登録",
     "signOut": "ログアウト",
     "createAccount": "無料アカウント作成",
-    "credits": "ピストン",
+    "credits": "Pistons",
     "buy": "購入",
     "buyCredits": "クレジット購入",
     "freeCredits": "ログインして3つの無料分析クレジットを取得",
@@ -164,6 +174,10 @@
     "or": "または",
     "switchToSignUp": "アカウントをお持ちでないですか？ 登録",
     "switchToSignIn": "すでにアカウントをお持ちですか？ ログイン",
+    "signupLegalNotice": "アカウントを作成することで、以下に同意したものとみなされます:",
+    "signupLegalTerms": "利用規約",
+    "signupLegalAnd": "および",
+    "signupLegalPrivacy": "プライバシーポリシー",
     "analysisRequiresSignInTitle": "分析にはログインが必要です",
     "analysisRequiresSignInDesc": "この車両を分析するにはログインしてください",
     "newAccountsCredits": "新規アカウントは分析クレジットを3つ無料で受け取れます",
@@ -173,19 +187,19 @@
     "sendMagicLink": "マジックリンクを送信",
     "magicLinkSent": "受信トレイを確認し、ログインリンクをクリックしてください。",
     "pistons": {
-      "label": "ピストン",
-      "walletTitle": "あなたのピストン",
+      "label": "Pistons",
+      "walletTitle": "あなたのPistons",
       "nextReset": "次回リセット: {date}",
       "todayUsage": "今日の使用量",
       "recentDebits": "最近の利用",
-      "topUp": "ピストンを追加",
+      "topUp": "Pistonsを追加",
       "viewActivity": "すべての履歴を見る",
-      "lowBalance": "残り {count} ピストン",
+      "lowBalance": "残り {count} Pistons",
       "graceRemaining": "{used}/{total} {tier} を今日使用",
-      "tierPillInstant": "Instant · 1 ピストン",
-      "tierPillMarketplace": "Marketplace · ~5 ピストン",
-      "tierPillDeepResearch": "ディープリサーチ",
-      "debitGhost": "-{amount} ピストン",
+      "tierPillInstant": "Instant · 1 Piston",
+      "tierPillMarketplace": "Marketplace · ~5 Pistons",
+      "tierPillDeepResearch": "Deep Research",
+      "debitGhost": "-{amount} Pistons",
       "upgradeCta": "PROにアップグレード"
     }
   },
@@ -313,7 +327,7 @@
     "confidential": "機密",
     "unlockReport": "フルレポートを解除",
     "unlockDesc": "詳細な評価、リスク分析、実行可能な推奨事項を含む完全な投資ドシエにアクセスできます。",
-    "unlockCost": "100 Pistons",
+    "unlockCost": "1,000 Pistons",
     "freePreview": "無料プレビュー",
     "sections": {
       "summary": "エグゼクティブサマリー",
@@ -372,6 +386,20 @@
       "arbitrageAlert": "裁定取引の機会",
       "arbitrageDesc": "{region}でこの車両は適正価格を大幅に下回っています。最高地域平均と比較して{amount}の潜在的節約。",
       "comparables": "最近の比較販売"
+    },
+    "regionContext": {
+      "tailoredFor": "{region}向けに最適化",
+      "tailoredDescription": "適正価格、比較対象、裁定取引シグナルはあなたの市場に重み付けされています。他の地域もクロスマーケットの参考として表示されます。",
+      "noRegionTitle": "このレポートをパーソナライズするには市場を設定してください",
+      "noRegionDescription": "購入予定地域を教えてください — 適正価格、比較対象、裁定取引シグナルがあなたの地域に再調整されます。",
+      "chooseRegion": "地域を選択",
+      "changeRegion": "変更",
+      "regionLabel": {
+        "US": "アメリカ",
+        "EU": "ヨーロッパ",
+        "UK": "イギリス",
+        "JP": "日本"
+      }
     },
     "performance": {
       "brandReturn": "{make} 5年リターン",
@@ -475,9 +503,31 @@
     "title": "プランを選択",
     "subtitle": "より賢い購入判断のための包括的な投資分析をアンロック",
     "heroEyebrow": "毎月300の無料Pistons — カード不要",
-    "heroTitle": "Porsche購入者のためのデューデリジェンス",
-    "heroDescription": "1レポートにつき100 Pistons。上位プランで月間Pistonsが増加。トップアップは無期限。",
+    "heroTitle": "ウォレットをチャージ",
+    "heroSubtitle": "Pistonsはあなたの通貨です。一度チャージするか、サブスクリプションへ。あなたのリサーチウォレット。",
+    "heroDescription": "1レポートにつき1,000 Pistons。上位プランで月間Pistonsが増加。チャージは無期限。",
     "heroAnchor": "PPIは$400。Porsche PPSは$250。取引が見合うかを知るために月$59を払うのはデューデリジェンスであり、出費ではありません。",
+    "economyTitle": "Pistonsの使い方",
+    "economyChat": "Advisorとチャット",
+    "economyMarketplace": "Marketplace検索",
+    "economyComparison": "複数の車を比較",
+    "economyReport": "完全な投資レポート",
+    "economyFree": "無料",
+    "badgeBestValue": "ベストバリュー",
+    "topupSectionTitle": "Pistons何個?",
+    "topupSelected": "選択中",
+    "topupEquivalence": "≈ レポート{reports}件 · 比較{comparisons}件 · チャット{chats}件",
+    "topupNeverExpire": "無期限",
+    "topupCta": "チャージ",
+    "topupCustomToggle": "またはカスタム金額を入力",
+    "topupCustomLabel": "Pistonsのカスタム金額",
+    "topupCustomPriceHint": "${price} · 無期限",
+    "subSectionTitle": "たくさん使う予定?",
+    "subBadgeMostPopular": "人気No.1",
+    "subFeatures": "無制限リサーチ · ウォッチリスト · アラート",
+    "subCancelAnytime": "いつでもキャンセル可",
+    "subCta": "登録",
+    "anchorNarrative": "PPIは$400、Porsche PPSは$250。月$59を支払って取引が見合うか知ることはデューデリジェンスであり、出費ではありません。",
     "currentBalance": "現在のバランス",
     "pistonsLabel": "Pistons",
     "whatIncluded": "各レポートに含まれるもの",
@@ -527,6 +577,15 @@
     "successTitle": "レポートがアンロックされました！",
     "successDesc": "この投資ドシエへの完全なアクセスが可能になりました。",
     "processing": "処理中..."
+  },
+  "outOfPistons": {
+    "title": "{needed} Pistons必要です。残り{have} Pistons。",
+    "topupTitle": "{pistons} Pistons",
+    "topupHint": "${price} · 無期限",
+    "topupCta": "購入",
+    "tipPrefix": "ヒント:",
+    "tipBody": "Rennsportなら$59/月で無制限リサーチ。",
+    "seePlans": "プランを見る"
   },
   "auctionDetail": {
     "actions": {
@@ -974,7 +1033,8 @@
     "best": "ベスト",
     "verified": "認証済み",
     "critical": "重要",
-    "recommended": "推奨"
+    "recommended": "推奨",
+    "photoPending": "写真を更新中"
   },
   "search": {
     "header": {

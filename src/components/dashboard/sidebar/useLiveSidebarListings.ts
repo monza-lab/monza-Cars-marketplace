@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { extractSeries, getBrandConfig } from "@/lib/brandConfig"
+import { byPhotoFirst } from "@/lib/photoSort"
 
 export type LiveSidebarAuction = {
   id: string
@@ -54,12 +55,14 @@ function isLiveStatus(status: string): boolean {
 }
 
 function sortLiveAuctions<T extends LiveSidebarAuction>(auctions: T[]): T[] {
-  return [...auctions].sort((a, b) => {
-    const aTime = new Date(a.endTime).getTime()
-    const bTime = new Date(b.endTime).getTime()
-    if (aTime !== bTime) return aTime - bTime
-    return a.id.localeCompare(b.id)
-  })
+  return [...auctions].sort(
+    byPhotoFirst<T>((a, b) => {
+      const aTime = new Date(a.endTime).getTime()
+      const bTime = new Date(b.endTime).getTime()
+      if (aTime !== bTime) return aTime - bTime
+      return a.id.localeCompare(b.id)
+    }),
+  )
 }
 
 function matchesFamily<T extends LiveSidebarAuction>(auction: T, activeFamilyName?: string): boolean {

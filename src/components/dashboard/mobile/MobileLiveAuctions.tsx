@@ -8,6 +8,7 @@ import { Clock, Car } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
 import type { Auction } from "../types"
+import { byPhotoFirst } from "@/lib/photoSort"
 
 export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
@@ -25,7 +26,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
     const now = Date.now()
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())
+      .sort(byPhotoFirst<Auction>((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()))
       .slice(0, 8)
   }, [auctions])
 
@@ -53,7 +54,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
           return (
             <Link
               key={auction.id}
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
               className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
             >
               {/* Thumbnail */}

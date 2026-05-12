@@ -6,6 +6,9 @@ import { Send, ArrowRight } from "lucide-react"
 import { Piston } from "@/components/icons/Piston"
 import { MonzaHausHelmet } from "@/components/brand/MonzaHausHelmet"
 import { useAdvisorStream, type StreamedMessage } from "./useAdvisorStream"
+import { AdvisorMarkdown } from "./AdvisorMarkdown"
+import { useRegion } from "@/lib/RegionContext"
+import { detectRegionFromMessage } from "@/lib/regionDetection"
 
 export interface AdvisorConversationProps {
   conversationId: string | null
@@ -33,6 +36,7 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
     conversationId: props.conversationId,
     onConversationIdChanged: props.onConversationIdChanged,
   })
+  const { selectedRegion, setSelectedRegion } = useRegion()
 
   useEffect(() => {
     if (props.initialMessages && props.initialMessages.length > 0) {
@@ -66,6 +70,13 @@ export function AdvisorConversation(props: AdvisorConversationProps) {
   async function handleSend(text?: string) {
     const msg = (text ?? input).trim()
     if (!msg || stream.isStreaming) return
+    // Auto-promote region preference from explicit user mentions ("I'm in Germany",
+    // "estoy en Europa"). Only when the user hasn't already chosen one — we never
+    // override an active selection so a typo or off-hand mention can't flip it.
+    if (selectedRegion === null) {
+      const detected = detectRegionFromMessage(msg)
+      if (detected) setSelectedRegion(detected)
+    }
     setInput("")
     await stream.send(msg, {
       surface: props.surface,
@@ -303,8 +314,12 @@ function MessageBubble({ m }: { m: StreamedMessage }) {
             isDone={Boolean(tc.summary)}
           />
         ))}
-        <div className="rounded-2xl bg-foreground/4 border border-border px-3.5 py-2 text-[13px] whitespace-pre-wrap">
-          {m.content || (m.isStreaming ? "…" : "")}
+        <div className="rounded-2xl bg-foreground/4 border border-border px-3.5 py-2">
+          {m.content ? (
+            <AdvisorMarkdown content={m.content} />
+          ) : (
+            <span className="text-[13px] text-muted-foreground">{m.isStreaming ? "…" : ""}</span>
+          )}
         </div>
         {m.pistonsDebited !== undefined && m.pistonsDebited > 0 && (
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">

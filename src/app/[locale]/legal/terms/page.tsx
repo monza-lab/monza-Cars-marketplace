@@ -38,7 +38,7 @@ function EnContent() {
       <h2>1. Who We Are</h2>
       <p>
         Monza Lab LLC, EIN 30-1486916, principal place of business 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, United States. Contact:{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>.
       </p>
 
       <h2>2. Description of the Service</h2>
@@ -79,7 +79,7 @@ function EnContent() {
       <h2>6. Refunds</h2>
       <p>
         We offer a 30-day money-back guarantee on first-time paid plans and top-ups. To request a refund within 30 days of a charge, email{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>. Outside the 30-day window, charges are non-refundable except where required by
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>. Outside the 30-day window, charges are non-refundable except where required by
         law (including any mandatory consumer-protection rights you have in your country).
       </p>
 
@@ -146,7 +146,7 @@ function EnContent() {
       </p>
       <p>
         <strong>Informal resolution.</strong> Before filing a claim, you agree to contact us at{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> and try to resolve the dispute informally for at least thirty (30) days.
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a> and try to resolve the dispute informally for at least thirty (30) days.
       </p>
       <p>
         <strong>Arbitration; class-action waiver.</strong> Any dispute that cannot be resolved informally will be settled by binding arbitration
@@ -157,7 +157,7 @@ function EnContent() {
       </p>
       <p>
         <strong>Right to opt out of arbitration.</strong> You may opt out of arbitration within 30 days of first accepting these Terms by emailing{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> with subject line &ldquo;Arbitration opt-out.&rdquo;
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a> with subject line &ldquo;Arbitration opt-out.&rdquo;
       </p>
       <p>
         <strong>Mandatory consumer rights.</strong> Nothing in this section limits any non-waivable consumer-protection rights you have under the
@@ -183,7 +183,7 @@ function EnContent() {
         <strong>Monza Lab LLC</strong><br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, United States<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. All rights reserved.</p>
     </>
@@ -203,7 +203,7 @@ function EsContent() {
       <h2>1. Quiénes Somos</h2>
       <p>
         Monza Lab LLC, EIN 30-1486916, sede principal: 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, EE. UU. Contacto:{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>.
       </p>
 
       <h2>2. Descripción del Servicio</h2>
@@ -243,7 +243,7 @@ function EsContent() {
       <h2>6. Reembolsos</h2>
       <p>
         Ofrecemos garantía de devolución de 30 días en primeros planes pagos y top-ups. Para solicitar reembolso dentro de 30 días, escribe a{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>. Fuera de ese plazo no hay reembolso, salvo cuando lo exija la ley (incluidos los
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>. Fuera de ese plazo no hay reembolso, salvo cuando lo exija la ley (incluidos los
         derechos no renunciables de protección al consumidor en tu país).
       </p>
 
@@ -304,7 +304,7 @@ function EsContent() {
       </p>
       <p>
         <strong>Resolución informal.</strong> Antes de presentar una reclamación, contáctanos en{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> e intenta resolver la disputa de forma informal por al menos treinta (30) días.
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a> e intenta resolver la disputa de forma informal por al menos treinta (30) días.
       </p>
       <p>
         <strong>Arbitraje; renuncia a acciones colectivas.</strong> Cualquier disputa no resuelta informalmente se resolverá mediante arbitraje
@@ -313,7 +313,7 @@ function EsContent() {
       </p>
       <p>
         <strong>Opt-out de arbitraje.</strong> Puedes optar por no someterte a arbitraje dentro de 30 días tras aceptar estos Términos enviando un
-        email a <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a> con asunto &ldquo;Arbitration opt-out.&rdquo;
+        email a <a href="mailto:legal@monzalab.com">legal@monzalab.com</a> con asunto &ldquo;Arbitration opt-out.&rdquo;
       </p>
       <p>
         <strong>Derechos de consumidor inalienables.</strong> Nada en esta sección limita derechos no renunciables que tengas bajo la ley de tu país,
@@ -336,7 +336,7 @@ function EsContent() {
         <strong>Monza Lab LLC</strong><br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, EE. UU.<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. Todos los derechos reservados.</p>
     </>
@@ -356,7 +356,7 @@ function DeContent() {
       <h2>1. Wer wir sind</h2>
       <p>
         Monza Lab LLC, EIN 30-1486916, Hauptsitz: 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, USA. Kontakt:{" "}
-        <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>.
+        <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>.
       </p>
 
       <h2>2. Beschreibung des Dienstes</h2>
@@ -439,7 +439,7 @@ function DeContent() {
         <strong>Monza Lab LLC</strong><br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, USA<br />
-        E-Mail: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        E-Mail: <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. Alle Rechte vorbehalten.</p>
     </>
@@ -457,7 +457,7 @@ function JaContent() {
       <h2>1. 当社について</h2>
       <p>
         Monza Lab LLC、EIN 30-1486916、本社所在地: 150 SE 2nd Ave, Ste 1403-6691, Miami, FL 33131, USA。
-        お問い合わせ: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>。
+        お問い合わせ: <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>。
       </p>
 
       <h2>2. サービス概要</h2>
@@ -531,7 +531,7 @@ function JaContent() {
         <strong>Monza Lab LLC</strong><br />
         150 SE 2nd Ave, Ste 1403-6691<br />
         Miami, FL 33131, USA<br />
-        Email: <a href="mailto:edgar@monzalab.com">edgar@monzalab.com</a>
+        Email: <a href="mailto:legal@monzalab.com">legal@monzalab.com</a>
       </address>
       <p className="text-[11px] text-muted-foreground/70 mt-8">© 2026 Monza Lab LLC. All rights reserved.</p>
     </>

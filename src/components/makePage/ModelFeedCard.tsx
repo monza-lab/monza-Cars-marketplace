@@ -133,7 +133,7 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           {cardContent}
         </button>
       ) : (
-        <Link href={`/cars/${makeSlug}/${model.representativeCar.id}`} className={containerClass}>
+        <Link href={`/cars/${makeSlug}/${model.representativeCar.id}/report`} className={containerClass}>
           {cardContent}
         </Link>
       )}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { extractSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
+import { partitionByPhoto } from "@/lib/photoSort";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -337,12 +338,18 @@ export function useInfiniteAuctions(
   // ── Derived: filtered cars (when family is set) ──
   // Note: cars are already filtered by family in fetchPage (with title),
   // so this is just a safety net — must also pass title for consistency.
-  const visibleCars = resolvedFamily
-    ? cars.filter(
-        (car) =>
-          extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
-      )
-    : cars;
+  const visibleCars = useMemo(() => {
+    const filtered = resolvedFamily
+      ? cars.filter(
+          (car) =>
+            extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
+        )
+      : cars;
+    // Deprioritize (don't drop) cars without photos so the first impression
+    // of every infinite-scroll feed is visually trustworthy.
+    const { withPhoto, withoutPhoto } = partitionByPhoto(filtered);
+    return withPhoto.concat(withoutPhoto);
+  }, [cars, resolvedFamily, make]);
 
   // ── Return ──
   return {

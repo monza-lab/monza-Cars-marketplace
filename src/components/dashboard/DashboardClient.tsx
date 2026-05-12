@@ -43,6 +43,8 @@ import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
+import { byPhotoFirst } from "@/lib/photoSort"
+import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── Upgrade low-res image URLs to high-res ───
@@ -975,12 +977,14 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const liveAuctions = useMemo(() => {
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort((a, b) => {
-        const pa = getPlatformSortPriority(a.platform)
-        const pb = getPlatformSortPriority(b.platform)
-        if (pa !== pb) return pa - pb
-        return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
-      })
+      .sort(
+        byPhotoFirst<Auction>((a, b) => {
+          const pa = getPlatformSortPriority(a.platform)
+          const pb = getPlatformSortPriority(b.platform)
+          if (pa !== pb) return pa - pb
+          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
+        }),
+      )
       .slice(0, 16)
   }, [auctions, now])
 
@@ -1045,7 +1049,7 @@ function MobileReportCard({
   const locale = useLocale()
   const platformLabel = platformShort[auction.platform] || auction.platform
   const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
-  const reportHref = `/cars/${makeSlug}/${auction.id}`
+  const reportHref = `/cars/${makeSlug}/${auction.id}/report`
   const sourceUrl = (auction as Auction & { sourceUrl?: string | null }).sourceUrl
   const fairUs = auction.fairValueByRegion?.US
   const region = auction.canonicalMarket ?? null
@@ -1086,6 +1090,9 @@ function MobileReportCard({
           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/90 border border-border backdrop-blur-md">
             {platformLabel}
           </span>
+        </div>
+        <div className="absolute bottom-1.5 left-1.5">
+          <PhotoPendingPill car={auction} />
         </div>
       </div>
 
@@ -1497,7 +1504,7 @@ function DiscoverySidebar({
               return (
                 <Link
                   key={auction.id}
-                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
                   className="group relative block px-4 py-2.5 border-b border-border/50 hover:bg-foreground/2 transition-all"
                 >
                   <div className="flex gap-3">
@@ -1719,7 +1726,7 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
               </button>
             )}
             <Link
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
               className="flex-1 rounded-full border border-border py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
             >
               {t("asset.fullAnalysis")}
@@ -1830,7 +1837,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
               {similarCars.map((car) => (
                 <Link
                   key={car.id}
-                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
                   className="flex items-center justify-between py-2 px-2 rounded-lg bg-foreground/2 hover:bg-foreground/4 transition-colors cursor-pointer group"
                 >
                   <div className="flex-1 min-w-0">
