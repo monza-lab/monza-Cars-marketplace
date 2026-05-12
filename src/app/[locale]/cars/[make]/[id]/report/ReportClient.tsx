@@ -2673,7 +2673,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       <OutOfPistonsModal
         open={outOfReportsOpen}
         onOpenChange={setOutOfReportsOpen}
-        neededPistons={100}
+        neededPistons={1000}
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
     </div>

@@ -178,8 +178,8 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     priceCents: 1300,
     period: "one-time",
     pistons: 1000,
-    reports: 10,
-    perReport: "$1.30/report",
+    reports: 1,
+    perReport: "$13/report",
     features: [
       "1,000 Pistons",
       "Never expires",
@@ -199,8 +199,8 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     priceCents: 3000,
     period: "one-time",
     pistons: 2500,
-    reports: 25,
-    perReport: "$1.20/report",
+    reports: 2,
+    perReport: "$15/report",
     features: [
       "2,500 Pistons",
       "Never expires",
@@ -220,8 +220,8 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     priceCents: 9900,
     period: "one-time",
     pistons: 10000,
-    reports: 100,
-    perReport: "$0.99/report",
+    reports: 10,
+    perReport: "$9.90/report",
     badge: "Best value",
     features: [
       "10,000 Pistons",

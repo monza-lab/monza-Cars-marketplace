@@ -16,9 +16,11 @@ interface TopUpPresetsProps {
 
 // Pistons-cost-per-action — must mirror the Pistons Economy Table.
 // If you change one, change the other.
-const PISTONS_PER_REPORT = 100
-const PISTONS_PER_MARKETPLACE = 5
-const PISTONS_PER_DEEP_RESEARCH = 25
+// Calibrated so the largest preset (10,000 Pistons / $99) caps at
+// 10 reports max — anyone needing more is steered to Rennsport sub.
+const PISTONS_PER_REPORT = 1000
+const PISTONS_PER_MARKETPLACE = 50
+const PISTONS_PER_DEEP_RESEARCH = 250
 
 function formatPistons(n: number): string {
   return n.toLocaleString("en-US")
