@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
-  searchParams?: Promise<{ mock?: string; v2?: string; v1?: string }>
+  searchParams?: Promise<{ mock?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -201,7 +201,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {resolvedSearch.v2 === "1" ? (
+      {existingReport ? (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
