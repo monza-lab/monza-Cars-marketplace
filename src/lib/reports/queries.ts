@@ -833,28 +833,51 @@ export async function saveHausReport(
 ): Promise<void> {
   const supabase = getServiceClient()
 
-  const { error } = await supabase.from("listing_reports").upsert(
-    {
-      listing_id: listingId,
-      fair_value_low: report.fair_value_low,
-      fair_value_high: report.fair_value_high,
-      median_price: report.median_price,
-      specific_car_fair_value_low: report.specific_car_fair_value_low,
-      specific_car_fair_value_mid: report.specific_car_fair_value_mid,
-      specific_car_fair_value_high: report.specific_car_fair_value_high,
-      comparable_layer_used: report.comparable_layer_used,
-      comparables_count: report.comparables_count,
-      modifiers_applied_json: report.modifiers_applied,
-      modifiers_total_percent: report.modifiers_total_percent,
-      signals_extracted_at: report.signals_extracted_at,
-      extraction_version: report.extraction_version,
-      landed_cost_json: report.landed_cost,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "listing_id" },
-  )
+  const basePayload = {
+    listing_id: listingId,
+    fair_value_low: report.fair_value_low,
+    fair_value_high: report.fair_value_high,
+    median_price: report.median_price,
+    specific_car_fair_value_low: report.specific_car_fair_value_low,
+    specific_car_fair_value_mid: report.specific_car_fair_value_mid,
+    specific_car_fair_value_high: report.specific_car_fair_value_high,
+    comparable_layer_used: report.comparable_layer_used,
+    comparables_count: report.comparables_count,
+    modifiers_applied_json: report.modifiers_applied,
+    modifiers_total_percent: report.modifiers_total_percent,
+    signals_extracted_at: report.signals_extracted_at,
+    extraction_version: report.extraction_version,
+    landed_cost_json: report.landed_cost,
+    updated_at: new Date().toISOString(),
+  }
 
-  if (error) throw new Error(`saveHausReport failed: ${error.message}`)
+  // Try with intelligence fields first
+  const fullPayload = {
+    ...basePayload,
+    color_intelligence_json: report.color_intelligence ?? null,
+    vin_intelligence_json: report.vin_intelligence ?? null,
+    investment_narrative_json: report.investment_narrative ?? null,
+  }
+
+  const { error } = await supabase
+    .from("listing_reports")
+    .upsert(fullPayload, { onConflict: "listing_id" })
+
+  if (error) {
+    // 42703 = undefined column — intelligence columns not yet migrated
+    if (
+      error.code === "42703" ||
+      /color_intelligence|vin_intelligence|investment_narrative/i.test(error.message ?? "")
+    ) {
+      console.warn("[saveHausReport] Intelligence columns not found, saving without them")
+      const { error: retryError } = await supabase
+        .from("listing_reports")
+        .upsert(basePayload, { onConflict: "listing_id" })
+      if (retryError) throw new Error(`saveHausReport retry failed: ${retryError.message}`)
+      return
+    }
+    throw new Error(`saveHausReport failed: ${error.message}`)
+  }
 }
 
 // Signals we actively look for — used to derive `signals_missing` when assembling
@@ -922,26 +945,35 @@ export function assembleHausReportFromDB(
       question_for_seller_i18n_key: `report.questions.${k}_question`,
     }))
 
+  // Nullable numeric: return null when DB value is null/undefined, not 0
+  const numOrNull = (v: unknown): number | null =>
+    v === null || v === undefined ? null : Number(v)
+
+  // Non-nullable numeric: still use 0 fallback (for counts, percentages)
   const num = (v: unknown, fallback = 0) =>
     v === null || v === undefined ? fallback : Number(v)
 
   return {
     listing_id: String(row.listing_id ?? ""),
-    fair_value_low: num(row.fair_value_low),
-    fair_value_high: num(row.fair_value_high),
+    fair_value_low: numOrNull(row.fair_value_low),
+    fair_value_high: numOrNull(row.fair_value_high),
     median_price: num(row.median_price),
-    specific_car_fair_value_low: num(row.specific_car_fair_value_low),
-    specific_car_fair_value_mid: num(row.specific_car_fair_value_mid),
-    specific_car_fair_value_high: num(row.specific_car_fair_value_high),
-    comparable_layer_used: (row.comparable_layer_used ?? "strict") as HausReport["comparable_layer_used"],
+    specific_car_fair_value_low: numOrNull(row.specific_car_fair_value_low),
+    specific_car_fair_value_mid: numOrNull(row.specific_car_fair_value_mid),
+    specific_car_fair_value_high: numOrNull(row.specific_car_fair_value_high),
+    comparable_layer_used: (row.comparable_layer_used ?? null) as HausReport["comparable_layer_used"],
     comparables_count: num(row.comparables_count),
     signals_detected: detected,
     signals_missing: missing,
     modifiers_applied: (row.modifiers_applied_json ?? []) as AppliedModifier[],
     modifiers_total_percent: num(row.modifiers_total_percent),
     signals_extracted_at: (row.signals_extracted_at as string | null) ?? null,
-    extraction_version: (row.extraction_version as string | undefined) ?? "v1.0",
+    extraction_version: (row.extraction_version as string | null) ?? null,
     landed_cost: (row.landed_cost_json ?? null) as HausReport["landed_cost"],
+    // Intelligence layers (columns may not exist — defensive null)
+    color_intelligence: (row.color_intelligence_json ?? null) as HausReport["color_intelligence"],
+    vin_intelligence: (row.vin_intelligence_json ?? null) as HausReport["vin_intelligence"],
+    investment_narrative: (row.investment_narrative_json ?? null) as HausReport["investment_narrative"],
   }
 }
 

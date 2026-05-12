@@ -145,8 +145,8 @@ function deriveAskingUsd(car: {
   return 0
 }
 
-function deriveVerdict(askingUsd: number, fairMid: number): "BUY" | "WATCH" | "WALK" {
-  if (fairMid === 0) return "WATCH"
+function deriveVerdict(askingUsd: number, fairMid: number | null): "BUY" | "WATCH" | "WALK" | "PENDING" {
+  if (fairMid === 0 || fairMid == null) return "PENDING"
   const delta = ((askingUsd - fairMid) / fairMid) * 100
   if (delta <= -5) return "BUY"
   if (delta >= 10) return "WALK"

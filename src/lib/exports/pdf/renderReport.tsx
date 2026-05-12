@@ -21,8 +21,10 @@ export interface RenderReportInput {
 
 const TOTAL_PAGES = 6
 
-function deriveVerdict(askingUsd: number, fairMid: number): "BUY" | "WATCH" | "WALK" {
-  if (fairMid === 0) return "WATCH"
+export type Verdict = "BUY" | "WATCH" | "WALK" | "PENDING"
+
+function deriveVerdict(askingUsd: number, fairMid: number | null): Verdict {
+  if (fairMid === 0 || fairMid == null) return "PENDING"
   const delta = ((askingUsd - fairMid) / fairMid) * 100
   if (delta <= -5) return "BUY"
   if (delta >= 10) return "WALK"
@@ -30,7 +32,7 @@ function deriveVerdict(askingUsd: number, fairMid: number): "BUY" | "WATCH" | "W
 }
 
 function composeOneLiner(report: HausReportV2, askingUsd: number): string {
-  if (report.specific_car_fair_value_mid === 0) return "Fair value not yet computed"
+  if (!report.specific_car_fair_value_mid) return "Fair value not yet computed"
   const delta =
     ((askingUsd - report.specific_car_fair_value_mid) / report.specific_car_fair_value_mid) * 100
   const deltaStr = delta >= 0 ? `+${delta.toFixed(1)}%` : `${delta.toFixed(1)}%`

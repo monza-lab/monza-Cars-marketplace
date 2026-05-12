@@ -28,7 +28,9 @@ export function RemarkableAndArbitragePage({
       {claims.length === 0 ? (
         <View style={pdfStyles.cardDashed}>
           <Text style={pdfStyles.bodyMuted}>
-            No remarkable findings were extracted for this listing.
+            No remarkable findings extracted yet. Remarkable claims are sourced from
+            structured signals, reference packs, and specialist agents. As more data
+            is collected for this model, claims will appear here automatically.
           </Text>
         </View>
       ) : (
@@ -44,6 +46,16 @@ export function RemarkableAndArbitragePage({
       )}
 
       {/* Arbitrage */}
+      {d2.by_region.length === 0 && (
+        <View style={pdfStyles.cardDashed}>
+          <Text style={[pdfStyles.h2, { marginTop: 0 }]}>Cross-Border Opportunity</Text>
+          <Text style={pdfStyles.bodyMuted}>
+            Cross-border arbitrage data is being collected. As sold listings from
+            multiple regions are captured, price differentials and landed cost
+            estimates will appear here.
+          </Text>
+        </View>
+      )}
       {d2.by_region.length > 0 && (
         <>
           <Text style={pdfStyles.h2}>Cross-Border Opportunity</Text>

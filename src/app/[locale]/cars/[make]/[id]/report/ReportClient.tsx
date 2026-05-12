@@ -1622,7 +1622,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     {tFairValue("specificCarTitle")}
                   </p>
                   <p className="text-2xl font-bold text-foreground tabular-nums">
-                    {formatUsd(report.specific_car_fair_value_low)} – {formatUsd(report.specific_car_fair_value_high)}
+                    {formatUsd(report.specific_car_fair_value_low ?? 0)} – {formatUsd(report.specific_car_fair_value_high ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {tFairValue("baselineSubtitle", { count: report.comparables_count })}

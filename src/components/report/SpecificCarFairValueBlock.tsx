@@ -10,12 +10,12 @@ export interface ComparablesSourceInfo {
 }
 
 interface SpecificCarFairValueBlockProps {
-  fairValueLowUsd: number
-  fairValueMidUsd: number
-  fairValueHighUsd: number
+  fairValueLowUsd: number | null
+  fairValueMidUsd: number | null
+  fairValueHighUsd: number | null
   askingUsd: number
   comparablesCount: number
-  comparableLayer: "strict" | "series" | "family"
+  comparableLayer: "strict" | "series" | "family" | null
   comparablesSources?: ComparablesSourceInfo
   onExplainClick?: () => void
 }
@@ -33,7 +33,8 @@ function formatPlatformsLabel(platforms: string[]): string {
   return `${platforms.slice(0, 3).join(" · ")} +${platforms.length - 3}`
 }
 
-function fmtK(v: number): string {
+function fmtK(v: number | null): string {
+  if (v == null) return "—"
   return `$${Math.round(v / 1000)}K`
 }
 
@@ -47,11 +48,19 @@ export function SpecificCarFairValueBlock({
   comparablesSources,
   onExplainClick,
 }: SpecificCarFairValueBlockProps) {
-  const range = fairValueHighUsd - fairValueLowUsd
+  if (!fairValueMidUsd) {
+    return (
+      <div className="rounded-lg border border-dashed border-muted p-6 text-center text-muted-foreground">
+        <p className="text-sm">Generate report to see specific-car fair value</p>
+      </div>
+    )
+  }
+
+  const range = (fairValueHighUsd ?? 0) - (fairValueLowUsd ?? 0)
   const clampedMarker =
     range <= 0
       ? 50
-      : Math.max(0, Math.min(100, ((askingUsd - fairValueLowUsd) / range) * 100))
+      : Math.max(0, Math.min(100, ((askingUsd - (fairValueLowUsd ?? 0)) / range) * 100))
 
   return (
     <section className="px-4 py-6" aria-labelledby="fair-value-heading">
@@ -65,7 +74,7 @@ export function SpecificCarFairValueBlock({
         {fmtK(fairValueLowUsd)} – {fmtK(fairValueHighUsd)}
       </p>
       <p className="mt-2 text-[12px] text-muted-foreground">
-        {/* [HARDCODED] */}Mid {fmtK(fairValueMidUsd)} · Layer: {comparableLayer} · {comparablesCount} comparables
+        {/* [HARDCODED] */}Mid {fmtK(fairValueMidUsd)} · Layer: {comparableLayer ?? "unknown"} · {comparablesCount} comparables
       </p>
 
       {comparablesSources && (comparablesSources.platforms.length > 0 || comparablesSources.captureDateRange) && (

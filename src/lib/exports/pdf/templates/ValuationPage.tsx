@@ -25,10 +25,31 @@ export function ValuationPage({
   pageNumber,
   totalPages,
 }: Props) {
-  const delta = ((askingUsd - report.specific_car_fair_value_mid) / report.specific_car_fair_value_mid) * 100
+  const hasFairValue = report.specific_car_fair_value_mid != null && report.specific_car_fair_value_mid > 0
+  const delta = hasFairValue
+    ? ((askingUsd - report.specific_car_fair_value_mid!) / report.specific_car_fair_value_mid!) * 100
+    : 0
   const sorted = [...report.modifiers_applied].sort(
     (a, b) => Math.abs(b.baseline_contribution_usd) - Math.abs(a.baseline_contribution_usd)
   )
+
+  if (!hasFairValue) {
+    return (
+      <Page size="A4" style={pdfStyles.page}>
+        <Text style={pdfStyles.h2}>Valuation Breakdown</Text>
+        <Text style={pdfStyles.bodyMuted}>
+          Valuation pending — generate the report to see the full breakdown including
+          baseline computation, modifiers, and specific-car fair value.
+        </Text>
+        <PageFooter
+          hash={report.report_hash}
+          generatedAt={report.generated_at}
+          pageNumber={pageNumber}
+          totalPages={totalPages}
+        />
+      </Page>
+    )
+  }
 
   return (
     <Page size="A4" style={pdfStyles.page}>

@@ -181,11 +181,13 @@ export const pdfStyles = StyleSheet.create({
   },
 })
 
-export function verdictColors(verdict: "BUY" | "WATCH" | "WALK") {
+export function verdictColors(verdict: "BUY" | "WATCH" | "WALK" | "PENDING") {
   if (verdict === "BUY")
     return { color: PDF_COLORS.positive, borderColor: PDF_COLORS.positive }
   if (verdict === "WALK")
     return { color: PDF_COLORS.negative, borderColor: PDF_COLORS.negative }
+  if (verdict === "PENDING")
+    return { color: PDF_COLORS.muted, borderColor: PDF_COLORS.muted }
   return { color: PDF_COLORS.warning, borderColor: PDF_COLORS.warning }
 }
 

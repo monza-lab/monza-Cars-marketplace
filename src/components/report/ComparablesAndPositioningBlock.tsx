@@ -130,11 +130,17 @@ export function ComparablesAndPositioningBlock({
           ) : (
             <>
               <p className="text-[12px] text-muted-foreground">
-                {/* [HARDCODED] */}This VIN falls in the{" "}
-                <strong className="text-foreground">
-                  {d3.vin_percentile_within_variant}{/* [HARDCODED] */}th percentile
-                </strong>{" "}
-                {/* [HARDCODED] */}of variant sold prices in the last 12 months.
+                {d3.vin_percentile_within_variant != null ? (
+                  <>
+                    {/* [HARDCODED] */}This VIN falls in the{" "}
+                    <strong className="text-foreground">
+                      {d3.vin_percentile_within_variant}{/* [HARDCODED] */}th percentile
+                    </strong>{" "}
+                    {/* [HARDCODED] */}of variant sold prices in the last 12 months.
+                  </>
+                ) : (
+                  "Not enough data to compute percentile position."
+                )}
               </p>
               <div className="mt-3 h-48 w-full">
                 <ResponsiveContainer>

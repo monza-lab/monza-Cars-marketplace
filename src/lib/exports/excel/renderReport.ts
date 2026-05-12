@@ -14,7 +14,7 @@ export interface RenderExcelInput {
   regions: RegionalMarketStats[]
   comparables: DbComparableRow[]
   askingUsd: number
-  verdict: "BUY" | "WATCH" | "WALK"
+  verdict: "BUY" | "WATCH" | "WALK" | "PENDING"
 }
 
 export async function renderReportToExcelBuffer(input: RenderExcelInput): Promise<Buffer> {

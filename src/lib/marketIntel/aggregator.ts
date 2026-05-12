@@ -256,7 +256,7 @@ export function computeD3PeerPositioning(input: D3Input): MarketIntelD3 {
   const sorted = [...input.variantSoldPricesUsd].sort((a, b) => a - b)
   const percentile =
     sorted.length === 0
-      ? 50
+      ? null
       : Math.round(
           (sorted.filter((p) => p <= input.thisVinPriceUsd).length / sorted.length) * 100
         )

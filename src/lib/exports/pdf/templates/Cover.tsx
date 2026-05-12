@@ -7,7 +7,7 @@ import { PageFooter } from "./PageFooter"
 interface CoverProps {
   report: HausReportV2
   car: CollectorCar
-  verdict: "BUY" | "WATCH" | "WALK"
+  verdict: "BUY" | "WATCH" | "WALK" | "PENDING"
   askingUsd: number
   totalPages: number
 }
@@ -48,13 +48,21 @@ export function Cover({ report, car, verdict, askingUsd, totalPages }: CoverProp
           <Text style={[pdfStyles.h3, { textAlign: "center" }]}>
             Specific-Car Fair Value
           </Text>
-          <Text style={[pdfStyles.priceDisplay, { textAlign: "center", marginTop: 8 }]}>
-            {fmtK(report.specific_car_fair_value_low)} – {fmtK(report.specific_car_fair_value_high)}
-          </Text>
-          <Text style={[pdfStyles.bodyMuted, { textAlign: "center", marginTop: 6 }]}>
-            Mid {fmtK(report.specific_car_fair_value_mid)} · Asking {fmtK(askingUsd)} ·{" "}
-            {report.comparables_count} comparables · {report.comparable_layer_used} layer
-          </Text>
+          {report.specific_car_fair_value_mid != null ? (
+            <>
+              <Text style={[pdfStyles.priceDisplay, { textAlign: "center", marginTop: 8 }]}>
+                {fmtK(report.specific_car_fair_value_low)} – {fmtK(report.specific_car_fair_value_high)}
+              </Text>
+              <Text style={[pdfStyles.bodyMuted, { textAlign: "center", marginTop: 6 }]}>
+                Mid {fmtK(report.specific_car_fair_value_mid)} · Asking {fmtK(askingUsd)} ·{" "}
+                {report.comparables_count} comparables · {report.comparable_layer_used ?? "pending"} layer
+              </Text>
+            </>
+          ) : (
+            <Text style={[pdfStyles.bodyMuted, { textAlign: "center", marginTop: 8 }]}>
+              Valuation pending
+            </Text>
+          )}
         </View>
       </View>
 

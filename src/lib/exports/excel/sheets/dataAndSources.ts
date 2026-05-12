@@ -121,6 +121,49 @@ export function buildDataAndSourcesSheet(
     row++
   })
 
+  // Color intelligence as synthetic signals
+  let syntheticIdx = report.signals_detected.length + 1
+  if (report.color_intelligence) {
+    const ci = report.color_intelligence
+    const colorSignals = [
+      { key: "exterior_color", value: ci.exteriorColorName ?? "Unknown", source: "color_intelligence" },
+      { key: "exterior_rarity", value: ci.exteriorRarity ?? "Unknown", source: "color_intelligence" },
+      { key: "pts_status", value: ci.isPTS ? "Yes" : "No", source: "color_intelligence" },
+    ]
+    for (const s of colorSignals) {
+      ws.getCell(row, 1).value = syntheticIdx++
+      ws.getCell(row, 2).value = s.key
+      ws.getCell(row, 3).value = s.value
+      ws.getCell(row, 4).value = s.source
+      ws.getCell(row, 5).value = "high"
+      ws.getCell(row, 6).value = ""
+      paintDataRow(ws, row)
+      row++
+    }
+  }
+
+  // VIN intelligence as synthetic signals
+  if (report.vin_intelligence) {
+    const vi = report.vin_intelligence
+    const vinSignals = [
+      { key: "vin_decoded", value: vi.vinDecoded ? "Yes" : "No", source: "vin_intelligence" },
+      { key: "vin_plant", value: vi.plant ?? "Unknown", source: "vin_intelligence" },
+    ]
+    if (vi.warnings?.length) {
+      vinSignals.push({ key: "vin_warnings", value: vi.warnings.join("; "), source: "vin_intelligence" })
+    }
+    for (const s of vinSignals) {
+      ws.getCell(row, 1).value = syntheticIdx++
+      ws.getCell(row, 2).value = s.key
+      ws.getCell(row, 3).value = s.value
+      ws.getCell(row, 4).value = s.source
+      ws.getCell(row, 5).value = "high"
+      ws.getCell(row, 6).value = ""
+      paintDataRow(ws, row)
+      row++
+    }
+  }
+
   row++
   sectionBanner(ws, row, "Modifiers Applied")
   row++

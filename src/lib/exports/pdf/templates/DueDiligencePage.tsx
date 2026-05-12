@@ -73,7 +73,11 @@ export function DueDiligencePage({ report, pageNumber, totalPages }: Props) {
 
       {signals.length === 0 && (
         <View style={pdfStyles.cardDashed}>
-          <Text style={pdfStyles.bodyMuted}>No objective signals were extracted yet.</Text>
+          <Text style={pdfStyles.bodyMuted}>
+            No objective signals have been extracted yet. Generate the report to run
+            structured signal extraction. The questions below are recommended based on
+            standard due diligence for this vehicle category.
+          </Text>
         </View>
       )}
 

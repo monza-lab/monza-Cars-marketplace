@@ -15,7 +15,7 @@ export function buildSummarySheet(
   report: HausReportV2,
   car: CollectorCar,
   askingUsd: number,
-  verdict: "BUY" | "WATCH" | "WALK",
+  verdict: "BUY" | "WATCH" | "WALK" | "PENDING",
 ): void {
   const ws = wb.addWorksheet("Summary", {
     properties: { tabColor: { argb: EXCEL_COLORS.brandRose } },
@@ -91,9 +91,9 @@ export function buildSummarySheet(
   section("Verdict")
   put("Verdict", verdict)
   put("Asking (USD)", askingUsd)
-  put("Fair Value mid (USD)", report.specific_car_fair_value_mid)
+  put("Fair Value mid (USD)", report.specific_car_fair_value_mid ?? "Pending")
   const delta =
-    report.specific_car_fair_value_mid === 0
+    report.specific_car_fair_value_mid == null || report.specific_car_fair_value_mid === 0
       ? 0
       : ((askingUsd - report.specific_car_fair_value_mid) /
           report.specific_car_fair_value_mid) *
@@ -113,17 +113,37 @@ export function buildSummarySheet(
           ? "FF34D399"
           : verdict === "WALK"
             ? "FFFB923C"
-            : "FFFBBF24",
+            : verdict === "PENDING"
+              ? "FF8B8386"
+              : "FFFBBF24",
     },
   }
 
   row++
   section("Fair Value range")
-  put("Low (USD)", report.specific_car_fair_value_low)
-  put("Mid (USD)", report.specific_car_fair_value_mid)
-  put("High (USD)", report.specific_car_fair_value_high)
+  put("Low (USD)", report.specific_car_fair_value_low ?? "Pending")
+  put("Mid (USD)", report.specific_car_fair_value_mid ?? "Pending")
+  put("High (USD)", report.specific_car_fair_value_high ?? "Pending")
   put("Comparables count", report.comparables_count)
-  put("Comparable layer", report.comparable_layer_used)
+  put("Comparable layer", report.comparable_layer_used ?? "unknown")
+
+  row++
+  section("Color Intelligence")
+  put("Exterior Color", report.color_intelligence?.exteriorColorName ?? "Not analyzed")
+  put("Rarity", report.color_intelligence?.exteriorRarity ?? "Unknown")
+  put("PTS", report.color_intelligence?.isPTS ? "Yes" : "No")
+
+  row++
+  section("VIN Intelligence")
+  put("VIN Decoded", report.vin_intelligence?.vinDecoded ? "Yes" : "No")
+  put("Plant", report.vin_intelligence?.plant ?? "Unknown")
+  put("Warnings", report.vin_intelligence?.warnings?.join(", ") || "None")
+
+  row++
+  section("Investment Narrative")
+  put("Narrative", report.investment_narrative?.story
+    ? report.investment_narrative.story.substring(0, 200) + "…"
+    : "Not generated")
 
   row++
   section("Provenance")
@@ -131,7 +151,7 @@ export function buildSummarySheet(
   put("Report tier", report.tier)
   put("Report version", report.report_version)
   put("Report hash", report.report_hash || "—")
-  put("Extraction version", report.extraction_version)
+  put("Extraction version", report.extraction_version ?? "—")
   if (report.report_hash) {
     const verifyCell = ws.getCell(`B${row}`)
     verifyCell.value = {

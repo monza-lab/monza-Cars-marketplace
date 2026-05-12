@@ -27,22 +27,28 @@ export function ComparablesPage({
       <Text style={pdfStyles.h2}>Comparables & Peer Positioning</Text>
       {d3.variant_distribution_bins.length > 0 ? (
         <Text style={pdfStyles.body}>
-          This VIN falls in the{" "}
-          <Text style={pdfStyles.bodyEmphasis}>
-            {d3.vin_percentile_within_variant}th percentile
-          </Text>{" "}
-          of variant sold prices in the last 12 months.
+          {d3.vin_percentile_within_variant != null
+            ? <>This VIN falls in the{" "}
+                <Text style={pdfStyles.bodyEmphasis}>
+                  {d3.vin_percentile_within_variant}th percentile
+                </Text>{" "}
+                of variant sold prices in the last 12 months.</>
+            : "Not enough sold comparables to compute percentile position."}
         </Text>
       ) : (
         <Text style={pdfStyles.bodyMuted}>
-          Not enough sold comparables to compute peer positioning yet.
+          Comparable data is being collected for this model. As sold listings are
+          captured across platforms, comparables will populate here automatically.
         </Text>
       )}
 
       <Text style={[pdfStyles.h3, { marginTop: 10 }]}>Comparables</Text>
       {comparables.length === 0 ? (
         <View style={pdfStyles.cardDashed}>
-          <Text style={pdfStyles.bodyMuted}>No comparables available for this listing yet.</Text>
+          <Text style={pdfStyles.bodyMuted}>
+            Comparable data is being collected for this model. As sold listings are
+            captured across platforms, comparables will populate here automatically.
+          </Text>
         </View>
       ) : (
         <>

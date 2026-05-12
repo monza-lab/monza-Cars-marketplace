@@ -1,18 +1,20 @@
 interface VerdictBlockProps {
-  verdict: "BUY" | "WATCH" | "WALK"
+  verdict: "BUY" | "WATCH" | "WALK" | "PENDING"
   oneLiner: string
   askingUsd: number
-  fairValueMidUsd: number
+  fairValueMidUsd: number | null
   deltaPercent: number
 }
 
-const VERDICT_STYLE: Record<VerdictBlockProps["verdict"], string> = {
+const VERDICT_STYLE: Record<string, string> = {
   BUY: "bg-positive/15 text-positive border-positive/30",
   WATCH: "bg-primary/15 text-primary dark:text-primary border-primary/30",
   WALK: "bg-destructive/15 text-destructive border-destructive/30",
+  PENDING: "bg-muted/15 text-muted-foreground border-muted/30",
 }
 
-function fmtUsd(v: number): string {
+function fmtUsd(v: number | null): string {
+  if (v == null) return "Awaiting analysis"
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
   if (v >= 1_000) return `$${Math.round(v / 1_000)}K`
   return `$${v}`

@@ -155,7 +155,7 @@ export function ReportClientV2({
         <ValuationBreakdownBlock
           baselineMedianUsd={v2.median_price}
           aggregateModifierPercent={v2.modifiers_total_percent}
-          specificCarFairValueMidUsd={v2.specific_car_fair_value_mid}
+          specificCarFairValueMidUsd={v2.specific_car_fair_value_mid ?? 0}
           modifiers={v2.modifiers_applied}
         />
 
@@ -187,14 +187,14 @@ export function ReportClientV2({
           remarkableClaims={v2.remarkable_claims}
           modifierCitationUrls={modifierCitationUrls}
           signalsExtractedAt={v2.signals_extracted_at}
-          extractionVersion={v2.extraction_version}
+          extractionVersion={v2.extraction_version ?? undefined}
         />
 
         <ReportMetadataFooter
           generatedAt={v2.generated_at}
           reportHash={v2.report_hash || null}
           modifierVersion="v1.0"
-          extractionVersion={v2.extraction_version}
+          extractionVersion={v2.extraction_version ?? "—"}
         />
       </div>
 
@@ -238,7 +238,10 @@ function deriveAskingUsd(car: CollectorCar): number {
   return candidates[0] ?? 0
 }
 
-function deriveVerdict(report: HausReportV2, askingUsd: number): "BUY" | "WATCH" | "WALK" {
+type Verdict = "BUY" | "WATCH" | "WALK" | "PENDING"
+
+function deriveVerdict(report: HausReportV2, askingUsd: number): Verdict {
+  if (!report.specific_car_fair_value_mid) return "PENDING"
   const delta = computeDelta(askingUsd, report.specific_car_fair_value_mid)
   if (delta <= -5) return "BUY"
   if (delta >= 10) return "WALK"
@@ -251,8 +254,8 @@ function composeOneLiner(report: HausReportV2, askingUsd: number): string {
   return `Priced ${deltaStr} vs specific-car Fair Value · ${report.comparables_count} comparables · ${report.market_intel.d4.confidence_tier} confidence` // [HARDCODED]
 }
 
-function computeDelta(askingUsd: number, fairMidUsd: number): number {
-  if (!askingUsd || fairMidUsd === 0) return 0
+function computeDelta(askingUsd: number, fairMidUsd: number | null): number {
+  if (!askingUsd || !fairMidUsd) return 0
   return ((askingUsd - fairMidUsd) / fairMidUsd) * 100
 }
 

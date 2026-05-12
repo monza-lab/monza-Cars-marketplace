@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
-  searchParams?: Promise<{ mock?: string; v2?: string }>
+  searchParams?: Promise<{ mock?: string; v2?: string; v1?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -201,7 +201,15 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {resolvedSearch.v2 === "1" ? (
+      {resolvedSearch.v1 === "1" ? (
+        <ReportClient
+          car={car}
+          similarCars={similarCars}
+          existingReport={existingReport}
+          marketStats={marketStats}
+          dbComparables={dbComparables}
+        />
+      ) : (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
@@ -212,14 +220,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportTier={reportTier}
           reportHash={reportHash}
           reportVersion={reportVersion}
-        />
-      ) : (
-        <ReportClient
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
         />
       )}
     </Suspense>

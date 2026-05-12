@@ -40,6 +40,27 @@ import {
   sourceToOriginCountry,
 } from "@/lib/landedCost"
 
+interface ReportGenerationLog {
+  listingId: string
+  userId: string
+  startedAt: string
+  steps: Record<string, { durationMs: number; [key: string]: unknown }>
+  totalDurationMs: number
+  totalSignalsDetected: number
+  totalSignalsMissing: number
+  cached: boolean
+  creditUsed: number
+}
+
+async function timeStep<T>(fn: () => T | Promise<T>): Promise<{ result: T; durationMs: number }> {
+  const start = Date.now()
+  const resultOrPromise = fn()
+  if (resultOrPromise instanceof Promise) {
+    return resultOrPromise.then((result) => ({ result, durationMs: Date.now() - start }))
+  }
+  return Promise.resolve({ result: resultOrPromise, durationMs: Date.now() - start })
+}
+
 // Extract the locale segment from the Referer header (e.g., "/en/cars/..." → "en").
 // Falls back to "en" when the header is missing or malformed.
 function inferLocaleFromReferer(referer: string | null): string {
@@ -137,6 +158,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "listingId is required" }, { status: 400 })
     }
 
+    const pipelineStart = Date.now()
+    const log: Partial<ReportGenerationLog> = {
+      listingId: body.listingId,
+      userId: authUser.id,
+      startedAt: new Date().toISOString(),
+      cached: false,
+      steps: {},
+    }
+
     // 2. Get/create user + reset credits if needed
     const dbUser = await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
     const user = await checkAndResetFreeCredits(dbUser.id)
@@ -166,6 +196,14 @@ export async function POST(request: Request) {
       // v2 metadata: pull hash/tier/version if the BE migration landed.
       // Silent fallback to nulls if the columns don't exist.
       const v2Meta = await getReportMetadataV2(body.listingId)
+      console.info("[analyze] Cache hit:", JSON.stringify({
+        listingId: body.listingId,
+        userId: authUser.id,
+        cached: true,
+        hasSignals: !!cachedHausRow.signals_extracted_at,
+        tier: v2Meta.tier ?? "tier_1",
+        version: v2Meta.version ?? 1,
+      }))
       return NextResponse.json({
         success: true,
         ok: true,
@@ -422,6 +460,15 @@ export async function POST(request: Request) {
       }
     }
 
+    const totalDuration = Date.now() - pipelineStart
+    console.info("[analyze] Report generated:", JSON.stringify({
+      ...log,
+      totalDurationMs: totalDuration,
+      totalSignalsDetected: report.signals_detected.length,
+      totalSignalsMissing: report.signals_missing.length,
+      creditUsed: alreadyGenerated ? 0 : creditUsed,
+    }))
+
     return NextResponse.json({
       success: true,
       ok: true,
@@ -438,6 +485,9 @@ export async function POST(request: Request) {
       v2_metadata_persisted: metaWritten,
     })
   } catch (error) {
+    console.error("[analyze] Report generation failed:", JSON.stringify({
+      error: error instanceof Error ? error.message : String(error),
+    }))
     console.error("Error analyzing listing:", error)
 
     if (error instanceof SyntaxError) {

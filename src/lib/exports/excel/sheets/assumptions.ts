@@ -89,14 +89,28 @@ export function buildAssumptionsSheet(wb: Workbook, report: HausReportV2): void 
 
   section("Market baseline")
   addNamedInput(ws, row++, "Comparables median (USD)", report.median_price, "BASELINE_MEDIAN_USD", NUMBER_FMT.usd, "Monza Haus-computed median of variant sold comps. Edit if you disagree with the basis.")
-  addNamedInput(ws, row++, "Fair Value low (USD)", report.specific_car_fair_value_low, "FAIR_LOW_USD", NUMBER_FMT.usd)
-  addNamedInput(ws, row++, "Fair Value high (USD)", report.specific_car_fair_value_high, "FAIR_HIGH_USD", NUMBER_FMT.usd)
+  addNamedInput(ws, row++, "Fair Value low (USD)", report.specific_car_fair_value_low ?? 0, "FAIR_LOW_USD", NUMBER_FMT.usd)
+  addNamedInput(ws, row++, "Fair Value high (USD)", report.specific_car_fair_value_high ?? 0, "FAIR_HIGH_USD", NUMBER_FMT.usd)
   addNamedInput(ws, row++, "Comparables count", report.comparables_count, "COMPARABLES_COUNT", NUMBER_FMT.plain)
   addNamedInput(ws, row++, "Market delta since capture (%)", 0, "MARKET_DELTA_PCT", NUMBER_FMT.percent, "User-specified market drift since Monza Haus captured the data. Default 0 = use captured numbers as-is.")
 
   row++
   section("Modifiers (aggregate)")
   addNamedInput(ws, row++, "Aggregate modifier (%)", Number((report.modifiers_total_percent / 100).toFixed(4)), "AGG_MODIFIER_PCT", NUMBER_FMT.percent, "Sum of all 12 modifiers applied. Can be overridden.")
+
+  const colorPremiumMod = report.modifiers_applied?.find(
+    (m) => m.key === "color_premium" || m.signal_key === "paint_to_sample"
+  )
+  if (colorPremiumMod) {
+    addNamedInput(
+      ws, row++,
+      "Color premium (%)",
+      Number((colorPremiumMod.delta_percent / 100).toFixed(4)),
+      "COLOR_PREMIUM_PCT",
+      NUMBER_FMT.percent,
+      "Color rarity premium applied. Can be overridden."
+    )
+  }
 
   row++
   section("Landed cost inputs (USD)")

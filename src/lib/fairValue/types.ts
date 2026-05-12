@@ -71,15 +71,15 @@ export interface InvestmentNarrative {
 export interface HausReport {
   // Existing market stats fields (from 2026-03-17 spec — unchanged)
   listing_id: string
-  fair_value_low: number
-  fair_value_high: number
+  fair_value_low: number | null
+  fair_value_high: number | null
   median_price: number
 
   // NEW (this spec): specific-car fair value after modifiers
-  specific_car_fair_value_low: number
-  specific_car_fair_value_mid: number
-  specific_car_fair_value_high: number
-  comparable_layer_used: ComparableLayer
+  specific_car_fair_value_low: number | null
+  specific_car_fair_value_mid: number | null
+  specific_car_fair_value_high: number | null
+  comparable_layer_used: ComparableLayer | null
   comparables_count: number
 
   // NEW: signal extraction results
@@ -90,7 +90,7 @@ export interface HausReport {
 
   // NEW: meta
   signals_extracted_at: string | null  // ISO timestamp; null = signal extraction not yet run
-  extraction_version: string           // e.g., "v1.0"
+  extraction_version: string | null     // e.g., "v1.0"
 
   // Landed cost estimate (destination inferred from locale at generation time).
   // Null when origin is outside the supported matrix, for domestic transactions,
@@ -132,7 +132,7 @@ export interface MarketIntelD2 {
 
 export interface MarketIntelD3 {
   // Peer positioning within variant + adjacent variants
-  vin_percentile_within_variant: number
+  vin_percentile_within_variant: number | null
   variant_distribution_bins: Array<{
     price_bucket_usd_low: number
     price_bucket_usd_high: number
