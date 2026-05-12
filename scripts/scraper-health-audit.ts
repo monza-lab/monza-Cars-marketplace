@@ -32,7 +32,7 @@ loadEnvFromFile(path.resolve(process.cwd(), ".env"));
 const JOB_SPECS: ScraperJobSpec[] = [
   { scraperName: "ferrari", label: "Ferrari Collector", cadence: "daily", cronPath: "/api/cron/ferrari" },
   { scraperName: "porsche", label: "Porsche Collector", cadence: "daily", cronPath: "/api/cron/porsche" },
-  { scraperName: "autotrader", label: "AutoTrader Collector", cadence: "daily", cronPath: "/api/cron/autotrader" },
+  { scraperName: "autotrader", label: "AutoTrader Collector", cadence: "external" },
   { scraperName: "beforward", label: "BeForward Collector", cadence: "daily", cronPath: "/api/cron/beforward" },
   { scraperName: "classic", label: "Classic.com Collector", cadence: "external" },
   { scraperName: "autoscout24", label: "AutoScout24 Collector", cadence: "external" },
@@ -44,7 +44,7 @@ const JOB_SPECS: ScraperJobSpec[] = [
   { scraperName: "enrich-vin", label: "VIN Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-vin" },
   { scraperName: "enrich-titles", label: "Title Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-titles" },
   { scraperName: "enrich-details", label: "AS24 Detail Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-details" },
-  { scraperName: "enrich-autotrader", label: "AutoTrader Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-autotrader" },
+  { scraperName: "enrich-autotrader", label: "AutoTrader Enrichment", cadence: "external" },
   { scraperName: "enrich-beforward", label: "BeForward Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-beforward" },
   { scraperName: "enrich-elferspot", label: "Elferspot Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-elferspot" },
   { scraperName: "enrich-details-bulk", label: "AS24 Bulk Detail Enrichment", cadence: "external" },

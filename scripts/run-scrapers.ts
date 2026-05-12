@@ -109,13 +109,13 @@ const SCRAPERS: ScraperDef[] = [
   {
     id: "beforward",
     name: "BeForward Collector",
-    description: "summary-only, 10 pages",
+    description: "Scrapling, 10 pages",
     phase: "discovery",
     type: "cli",
     command: "npx",
     args: [
       "tsx",
-      "src/features/scrapers/beforward_porsche_collector/cli.ts",
+      "scripts/bf-collector-cli.ts",
       "--summaryOnly",
       "--maxPages=10",
     ],
@@ -163,6 +163,23 @@ const SCRAPERS: ScraperDef[] = [
     defaultSelected: true,
     timeoutMs: 30 * 60_000,
   },
+  {
+    id: "autotrader",
+    name: "AutoTrader Collector",
+    description: "GraphQL gateway, 20 pages",
+    phase: "discovery",
+    type: "cli",
+    command: "npx",
+    args: [
+      "tsx",
+      "src/features/scrapers/autotrader_collector/cli.ts",
+      "--maxPages=20",
+      "--fresh",
+    ],
+    dryRunFlag: "--dryRun",
+    defaultSelected: true,
+    timeoutMs: 10 * 60_000,
+  },
 
   // Enrichment (CLI)
   {
@@ -206,28 +223,59 @@ const SCRAPERS: ScraperDef[] = [
     defaultSelected: false,
     timeoutMs: 25 * 60_000,
   },
-
-  // Cron: Discovery & Enrichment (HTTP)
   {
-    id: "cron-autotrader",
-    name: "AutoTrader Discovery",
-    description: "cron route",
-    phase: "cron-enrichment",
-    type: "cron",
-    cronRoute: "/api/cron/autotrader",
-    defaultSelected: false,
-    timeoutMs: 5 * 60_000,
-  },
-  {
-    id: "cron-autotrader-enrich",
+    id: "at-enrich",
     name: "AutoTrader Enrichment",
-    description: "cron route",
-    phase: "cron-enrichment",
-    type: "cron",
-    cronRoute: "/api/cron/enrich-autotrader",
-    defaultSelected: false,
-    timeoutMs: 5 * 60_000,
+    description: "500 listings, residential IP",
+    phase: "enrichment",
+    type: "cli",
+    command: "npx",
+    args: [
+      "tsx",
+      "scripts/autotrader-enrich.ts",
+      "--limit=500",
+      "--delayMs=2000",
+    ],
+    dryRunFlag: "--dryRun",
+    defaultSelected: true,
+    timeoutMs: 25 * 60_000,
   },
+  {
+    id: "classic-images",
+    name: "Classic.com Image Backfill",
+    description: "Playwright/Scrapling, 200 listings",
+    phase: "enrichment",
+    type: "cli",
+    command: "npx",
+    args: [
+      "tsx",
+      "scripts/backfill-classic-images.ts",
+      "--maxListings=200",
+    ],
+    defaultSelected: false,
+    timeoutMs: 45 * 60_000,
+  },
+  {
+    id: "bf-images",
+    name: "BeForward Image Backfill",
+    description: "Scrapling, 400 listings",
+    phase: "enrichment",
+    type: "cli",
+    command: "npx",
+    args: [
+      "tsx",
+      "scripts/bf-bulk-backfill-images.ts",
+      "--limit=400",
+      "--concurrency=3",
+      "--rate-ms=3000",
+      "--scrapling",
+    ],
+    dryRunFlag: "--dry-run",
+    defaultSelected: true,
+    timeoutMs: 90 * 60_000,
+  },
+
+  // Cron: Enrichment (HTTP)
   {
     id: "cron-beforward-enrich",
     name: "BeForward Enrichment",
@@ -245,6 +293,26 @@ const SCRAPERS: ScraperDef[] = [
     phase: "cron-enrichment",
     type: "cron",
     cronRoute: "/api/cron/enrich-elferspot",
+    defaultSelected: false,
+    timeoutMs: 5 * 60_000,
+  },
+  {
+    id: "cron-enrich-details",
+    name: "AS24 Detail Enrichment",
+    description: "AutoScout24 detail pages, cron route",
+    phase: "cron-enrichment",
+    type: "cron",
+    cronRoute: "/api/cron/enrich-details",
+    defaultSelected: false,
+    timeoutMs: 5 * 60_000,
+  },
+  {
+    id: "cron-backfill-photos-elferspot",
+    name: "Elferspot Photo Backfill",
+    description: "Elferspot detail page images, cron route",
+    phase: "cron-enrichment",
+    type: "cron",
+    cronRoute: "/api/cron/backfill-photos-elferspot",
     defaultSelected: false,
     timeoutMs: 5 * 60_000,
   },
@@ -300,8 +368,30 @@ const SCRAPERS: ScraperDef[] = [
     defaultSelected: false,
     timeoutMs: 5 * 60_000,
   },
+  {
+    id: "cron-refresh-valuation",
+    name: "Refresh Valuation Factors",
+    description: "recompute pricing factors, cron route",
+    phase: "cron-maintenance",
+    type: "cron",
+    cronRoute: "/api/cron/refresh-valuation-factors",
+    defaultSelected: false,
+    timeoutMs: 5 * 60_000,
+  },
 
   // Post-run (CLI)
+  {
+    id: "at-delist-check",
+    name: "AutoTrader Delist Check",
+    description: "remove 404 listings",
+    phase: "post-run",
+    type: "cli",
+    command: "npx",
+    args: ["tsx", "scripts/autotrader-delist-check.ts", "--delayMs=500"],
+    dryRunFlag: "--dryRun",
+    defaultSelected: true,
+    timeoutMs: 15 * 60_000,
+  },
   {
     id: "liveness",
     name: "Liveness Checker",
@@ -890,12 +980,12 @@ async function main(): Promise<void> {
     }
 
     // Select only enrichment scrapers by explicit ID.
-    // Excludes: cron-autotrader (discovery, would add new incomplete rows),
-    //           cron-validate / cron-cleanup (could change listing status mid-loop).
+    // Excludes: cron-validate / cron-cleanup (could change listing status mid-loop).
     const ENRICH_IDS = new Set([
-      "bat-detail", "classic-enrich", "as24-enrich",           // CLI enrichment
-      "cron-autotrader-enrich", "cron-beforward-enrich",       // Cron enrichment
-      "cron-elferspot-enrich",
+      "bat-detail", "classic-enrich", "as24-enrich", "at-enrich", // CLI enrichment
+      "classic-images", "bf-images",                              // CLI: image backfill
+      "cron-beforward-enrich", "cron-elferspot-enrich",          // Cron enrichment
+      "cron-enrich-details", "cron-backfill-photos-elferspot", // Cron enrichment (detail/photo)
       "cron-vin", "cron-titles", "cron-images",                // Cron maintenance (data-filling only)
     ]);
     const enrichScrapers = SCRAPERS.filter(
