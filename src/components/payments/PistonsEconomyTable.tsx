@@ -2,7 +2,7 @@
 
 import { useId } from "react"
 import { useTranslations } from "next-intl"
-import { MessageCircle, Search, Layers, FileText } from "lucide-react"
+import { MessageCircle, Search, Scale, FileText } from "lucide-react"
 
 interface PistonsEconomyTableProps {
   /**
@@ -18,14 +18,16 @@ interface PistonsEconomyTableProps {
 interface Row {
   icon: typeof MessageCircle
   labelKey: string
-  cost: string
+  /** Cost string. `null` means the row is free — we render the
+   *  localized `pricing.economyFree` label instead of a Pistons count. */
+  cost: string | null
 }
 
 const ROWS: Row[] = [
-  { icon: MessageCircle, labelKey: "pricing.economyChat",         cost: "10 Pistons" },
-  { icon: Search,        labelKey: "pricing.economyMarketplace",  cost: "~50 Pistons" },
-  { icon: Layers,        labelKey: "pricing.economyDeepResearch", cost: "~250 Pistons" },
-  { icon: FileText,      labelKey: "pricing.economyReport",       cost: "1,000 Pistons" },
+  { icon: MessageCircle, labelKey: "pricing.economyChat",        cost: "10 Pistons" },
+  { icon: Search,        labelKey: "pricing.economyMarketplace", cost: null },
+  { icon: Scale,         labelKey: "pricing.economyComparison",  cost: "~250 Pistons" },
+  { icon: FileText,      labelKey: "pricing.economyReport",      cost: "1,000 Pistons" },
 ]
 
 export function PistonsEconomyTable({ variant, className = "" }: PistonsEconomyTableProps) {
@@ -72,7 +74,7 @@ export function PistonsEconomyTable({ variant, className = "" }: PistonsEconomyT
                   isFull ? "text-[13px]" : "text-[11px]"
                 }`}
               >
-                {row.cost}
+                {row.cost ?? t("pricing.economyFree")}
               </span>
             </li>
           )

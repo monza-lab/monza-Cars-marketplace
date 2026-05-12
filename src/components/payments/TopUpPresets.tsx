@@ -16,11 +16,14 @@ interface TopUpPresetsProps {
 
 // Pistons-cost-per-action — must mirror the Pistons Economy Table.
 // If you change one, change the other.
+// Marketplace search is free (zero cost), so it's not in the
+// equivalence — surfacing "N searches" when N is unbounded would be
+// confusing. We surface the things the user actually spends Pistons on.
 // Calibrated so the largest preset (10,000 Pistons / $99) caps at
 // 10 reports max — anyone needing more is steered to Rennsport sub.
 const PISTONS_PER_REPORT = 1000
-const PISTONS_PER_MARKETPLACE = 50
-const PISTONS_PER_DEEP_RESEARCH = 250
+const PISTONS_PER_COMPARISON = 250
+const PISTONS_PER_CHAT = 10
 
 function formatPistons(n: number): string {
   return n.toLocaleString("en-US")
@@ -35,8 +38,8 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
   if (!selected) return null
 
   const reports = Math.floor(selected.pistons / PISTONS_PER_REPORT)
-  const marketplace = Math.floor(selected.pistons / PISTONS_PER_MARKETPLACE)
-  const deepResearch = Math.floor(selected.pistons / PISTONS_PER_DEEP_RESEARCH)
+  const comparisons = Math.floor(selected.pistons / PISTONS_PER_COMPARISON)
+  const chats = Math.floor(selected.pistons / PISTONS_PER_CHAT)
 
   return (
     <section className={`space-y-4 ${className}`} aria-labelledby="topup-section-title">
@@ -105,8 +108,8 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
         <p className="text-[12px] text-muted-foreground">
           {t("pricing.topupEquivalence", {
             reports: reports,
-            marketplace: marketplace,
-            deep: deepResearch,
+            comparisons: comparisons,
+            chats: chats,
           })}
         </p>
         <button
