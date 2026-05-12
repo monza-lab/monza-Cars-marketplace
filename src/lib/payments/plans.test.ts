@@ -55,4 +55,18 @@ describe("PRICING_PLANS — wallet recharge model", () => {
     expect(getPricingPlan("topup_entry")?.pistons).toBe(1000)
     expect(getPricingPlan("topup_heavy")?.pistons).toBe(10000)
   })
+
+  it("excludes plans with visibleInPricing undefined from both helpers", () => {
+    // Defensive: if a future plan is added and forgets the flag, the
+    // strict `=== true` filter in the helpers must keep it out of the
+    // public pricing UI. This locks that contract.
+    const allPlans = Object.values(PRICING_PLANS)
+    const omittedFlag = allPlans.filter(p => p.visibleInPricing === undefined)
+    const visibleTopUpIds = new Set(getVisibleTopUps().map(p => p.id))
+    const visibleSubIds = new Set(getVisibleSubs().map(p => p.id))
+    for (const plan of omittedFlag) {
+      expect(visibleTopUpIds.has(plan.id)).toBe(false)
+      expect(visibleSubIds.has(plan.id)).toBe(false)
+    }
+  })
 })
