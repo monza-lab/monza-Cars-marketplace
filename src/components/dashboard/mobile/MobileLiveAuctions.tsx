@@ -53,7 +53,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
           return (
             <Link
               key={auction.id}
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
               className="flex items-center gap-3 px-4 py-3 active:bg-foreground/3 transition-colors"
             >
               {/* Thumbnail */}

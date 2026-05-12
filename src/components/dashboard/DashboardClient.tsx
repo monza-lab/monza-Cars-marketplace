@@ -1045,7 +1045,7 @@ function MobileReportCard({
   const locale = useLocale()
   const platformLabel = platformShort[auction.platform] || auction.platform
   const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
-  const reportHref = `/cars/${makeSlug}/${auction.id}`
+  const reportHref = `/cars/${makeSlug}/${auction.id}/report`
   const sourceUrl = (auction as Auction & { sourceUrl?: string | null }).sourceUrl
   const fairUs = auction.fairValueByRegion?.US
   const region = auction.canonicalMarket ?? null
@@ -1497,7 +1497,7 @@ function DiscoverySidebar({
               return (
                 <Link
                   key={auction.id}
-                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
                   className="group relative block px-4 py-2.5 border-b border-border/50 hover:bg-foreground/2 transition-all"
                 >
                   <div className="flex gap-3">
@@ -1719,7 +1719,7 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
               </button>
             )}
             <Link
-              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+              href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
               className="flex-1 rounded-full border border-border py-3 text-center text-[12px] font-medium tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
             >
               {t("asset.fullAnalysis")}
@@ -1830,7 +1830,7 @@ function ContextPanel({ auction, allAuctions }: { auction: Auction; allAuctions:
               {similarCars.map((car) => (
                 <Link
                   key={car.id}
-                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
                   className="flex items-center justify-between py-2 px-2 rounded-lg bg-foreground/2 hover:bg-foreground/4 transition-colors cursor-pointer group"
                 >
                   <div className="flex-1 min-w-0">

@@ -27,7 +27,7 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
       layout
     >
       <Link
-        href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
+        href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
         className="group block rounded-2xl bg-card border border-primary/8 overflow-hidden hover:border-primary/20 transition-all duration-300"
       >
         {/* Image */}

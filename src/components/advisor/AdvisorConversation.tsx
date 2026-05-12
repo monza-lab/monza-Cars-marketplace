@@ -6,6 +6,7 @@ import { Send, ArrowRight } from "lucide-react"
 import { Piston } from "@/components/icons/Piston"
 import { MonzaHausHelmet } from "@/components/brand/MonzaHausHelmet"
 import { useAdvisorStream, type StreamedMessage } from "./useAdvisorStream"
+import { AdvisorMarkdown } from "./AdvisorMarkdown"
 
 export interface AdvisorConversationProps {
   conversationId: string | null
@@ -303,8 +304,12 @@ function MessageBubble({ m }: { m: StreamedMessage }) {
             isDone={Boolean(tc.summary)}
           />
         ))}
-        <div className="rounded-2xl bg-foreground/4 border border-border px-3.5 py-2 text-[13px] whitespace-pre-wrap">
-          {m.content || (m.isStreaming ? "…" : "")}
+        <div className="rounded-2xl bg-foreground/4 border border-border px-3.5 py-2">
+          {m.content ? (
+            <AdvisorMarkdown content={m.content} />
+          ) : (
+            <span className="text-[13px] text-muted-foreground">{m.isStreaming ? "…" : ""}</span>
+          )}
         </div>
         {m.pistonsDebited !== undefined && m.pistonsDebited > 0 && (
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-2">

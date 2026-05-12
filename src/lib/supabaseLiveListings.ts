@@ -586,7 +586,7 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
     currentBid,
     bidCount,
     endTime,
-    category: "Live Auctions",
+    category: "Active Listings",
     sourceUrl: row.source_url,
     // New optional fields
     vin: row.vin ?? null,

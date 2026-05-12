@@ -34,6 +34,7 @@ import {
   Send,
   BarChart3,
   DollarSign,
+  ExternalLink,
 } from "lucide-react"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
@@ -44,6 +45,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } from "@/lib/makePageConstants"
+import { getListingMode, getListingModeLabel, getExternalLinkLabel } from "@/lib/listingMode"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
 import { MobileCarCTA } from "@/components/mobile"
@@ -266,9 +268,29 @@ function CarNavSidebar({
 }) {
   const locale = useLocale()
   const { formatPrice, convertFromUsd } = useCurrency()
-  const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
+  const listingMode = getListingMode(car)
+  const isLive = listingMode === "live_auction" || listingMode === "for_sale"
+  const isAuction = listingMode === "live_auction" || listingMode === "ended_auction"
   const flags: string[] = dbAnalysis?.redFlags ?? []
   const platform = platformLabels[car.platform]
+  const platformShortLabel = platform?.short || car.platform.replace(/_/g, " ")
+  const modeLabel = getListingModeLabel(listingMode)
+  const externalLabel = getExternalLinkLabel(listingMode, platformShortLabel)
+  const modeColor = listingMode === "live_auction"
+    ? "border-positive/20 bg-positive/[0.04]"
+    : listingMode === "for_sale"
+      ? "border-primary/20 bg-primary/[0.04]"
+      : "border-border bg-foreground/2"
+  const modeAccent = listingMode === "live_auction"
+    ? "text-positive"
+    : listingMode === "for_sale"
+      ? "text-primary"
+      : "text-muted-foreground"
+  const modeDot = listingMode === "live_auction"
+    ? "bg-positive animate-pulse"
+    : listingMode === "for_sale"
+      ? "bg-primary"
+      : "bg-muted-foreground/40"
 
   // Market position: where current price sits within selected region's fair value range.
   // Honest-by-data: pricePosition is null when we don't have a real fair-value band.
@@ -366,70 +388,55 @@ function CarNavSidebar({
       </div>
       )}
 
-      {/* ── Live listing block (CONDITIONAL) ── */}
-      {isLive && (
-        <div className="mx-3 my-3 shrink-0 rounded-lg border border-positive/20 bg-positive/[0.04] p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="size-1.5 rounded-full bg-positive animate-pulse" />
-              {/* [HARDCODED] */}
-              <span className="text-[10px] font-semibold text-positive uppercase tracking-wider">{isAuctionPlatform(car.platform) ? "Live Auction" : "For Sale"}</span>
-            </div>
-            {platform && (
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
-                {platform.short}
-              </span>
+      {/* ── Listing mode block — unified live / for-sale / ended / sold ── */}
+      <div className={`mx-3 my-3 shrink-0 rounded-lg border p-3 ${modeColor}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className={`size-1.5 rounded-full ${modeDot}`} />
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${modeAccent}`}>
+              {modeLabel}
+            </span>
+          </div>
+          {platform && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
+              {platform.short}
+            </span>
+          )}
+        </div>
+        {isAuction && (car.bidCount > 0 || listingMode === "live_auction") && (
+          <div className="flex items-center justify-between">
+            {car.bidCount > 0 && (
+              <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>
+            )}
+            {listingMode === "live_auction" && (
+              <span className="text-[11px] tabular-nums text-destructive">{timeLeft(car.endTime)}</span>
             )}
           </div>
-          <div className="flex items-center justify-between">
-            {/* [HARDCODED] */}
-            {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[11px] text-muted-foreground">{car.bidCount} bids</span>}
-            {isAuctionPlatform(car.platform) && <span className="text-[11px] tabular-nums text-destructive">{timeLeft(car.endTime)}</span>}
+        )}
+        {!isAuction && listingMode === "sold" && (
+          <div className="flex items-center justify-end">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {getStatusLabel(car.platform, car.status)}
+            </span>
           </div>
-          {car.sourceUrl && (
-            <a
-              href={car.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
-            >
-              {/* [HARDCODED] */}
-              Ver en {platform?.short || car.platform.replace(/_/g, " ")}
-              <ChevronRight className="size-3" />
-            </a>
-          )}
-        </div>
-      )}
-
-      {/* ── Sold / Platform info (when NOT live) ── */}
-      {!isLive && car.status === "ENDED" && (
-        <div className="mx-3 my-3 shrink-0 rounded-lg border border-border bg-foreground/2 p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {platform && (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold ${platform.color}`}>
-                  {platform.short}
-                </span>
-              )}
-              {/* [HARDCODED] */}
-              {isAuctionPlatform(car.platform) && car.bidCount > 0 && <span className="text-[10px] text-muted-foreground">{car.bidCount} bids</span>}
-            </div>
-            <span className="text-[10px] font-medium text-muted-foreground">{getStatusLabel(car.platform, car.status)}</span>
-          </div>
-          {car.sourceUrl && (
-            <a
-              href={car.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border bg-foreground/3 py-1.5 text-[10px] text-muted-foreground hover:bg-foreground/6 transition-colors"
-            >
-              {/* [HARDCODED] */}
-              Ver en {platform?.short || car.platform.replace(/_/g, " ")}
-              <ChevronRight className="size-3" />
-            </a>
-          )}
-        </div>
-      )}
+        )}
+        {car.sourceUrl && (
+          <a
+            href={car.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`mt-3 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[12px] font-semibold tracking-wide transition-all ${
+              isLive
+                ? "bg-primary text-primary-foreground hover:bg-primary/85 shadow-sm"
+                : "border border-border bg-foreground/4 text-foreground hover:bg-foreground/8"
+            }`}
+            aria-label={externalLabel}
+          >
+            <ExternalLink className="size-4" />
+            {externalLabel}
+          </a>
+        )}
+      </div>
 
       {/* ── Specs ── */}
       <div className="px-4 py-3 shrink-0 border-b border-border">
@@ -893,7 +900,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     }, 2500)
   }
 
-  const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
+  const listingMode = getListingMode(car)
+  const isLive = listingMode === "live_auction" || listingMode === "for_sale"
+  const isLiveAuctionRow = listingMode === "live_auction"
+  const mainPlatform = platformLabels[car.platform]
+  const mainPlatformShort = mainPlatform?.short || car.platform.replace(/_/g, " ")
+  const externalCtaLabel = getExternalLinkLabel(listingMode, mainPlatformShort)
 
   // DB analysis is the only source for red flags and critical questions.
   const flags: string[] = dbAnalysis?.redFlags ?? []
@@ -1110,7 +1122,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </p>
                 )}
               </div>
-              {isLive && isAuctionPlatform(car.platform) && (
+              {isLiveAuctionRow && (
                 <>
                   <div className="h-8 w-px bg-white/10" />
                   <div>
@@ -1222,6 +1234,43 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
           </span>
         </Link>
+
+        {/* ═══ EXTERNAL LISTING CTA — "Where is the car?" ═══ */}
+        {car.sourceUrl && (
+          <a
+            href={car.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={externalCtaLabel}
+            className={`mx-4 mt-3 flex items-center gap-4 rounded-2xl p-4 transition-colors ${
+              isLive
+                ? "border border-positive/30 bg-positive/8 active:bg-positive/15"
+                : "border border-border bg-foreground/3 active:bg-foreground/6"
+            }`}
+          >
+            <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${
+              isLive ? "bg-positive/15" : "bg-foreground/8"
+            }`}>
+              <ExternalLink className={`size-6 ${isLive ? "text-positive" : "text-muted-foreground"}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-foreground">{externalCtaLabel}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {isLive
+                  ? "Open the original listing on the source platform"
+                  : "View the closed listing on the source platform"}
+              </p>
+            </div>
+            <span className={`shrink-0 rounded-xl px-4 py-2 text-[12px] font-bold ${
+              isLive
+                ? "bg-positive text-background"
+                : "bg-foreground/10 text-foreground"
+            }`}>
+              {/* [HARDCODED] */}Open
+              <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
+            </span>
+          </a>
+        )}
 
         {/* ═══ CONTINUOUS SCROLL CONTENT ═══ */}
         <div className="px-4 py-6 space-y-4 pb-32">
@@ -1381,7 +1430,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               )}
               <div className="rounded-xl p-3 bg-foreground/2 border border-border">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("status")}</p>
-                <p className={`text-[14px] font-semibold ${car.status === "ACTIVE" || car.status === "ENDING_SOON" ? "text-positive" : "text-muted-foreground"}`}>
+                <p className={`text-[14px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
                   {getStatusLabel(car.platform, car.status)}
                 </p>
               </div>
@@ -1630,6 +1679,36 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 userAlreadyPaid={userAlreadyPaid}
                 onClick={handleOpenReport}
               />
+
+              {/* EXTERNAL LISTING CTA — desktop */}
+              {car.sourceUrl && (
+                <a
+                  href={car.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={externalCtaLabel}
+                  className={`flex items-center gap-4 rounded-xl p-4 transition-colors ${
+                    isLive
+                      ? "border border-positive/30 bg-positive/8 hover:bg-positive/12"
+                      : "border border-border bg-foreground/3 hover:bg-foreground/6"
+                  }`}
+                >
+                  <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${
+                    isLive ? "bg-positive/15" : "bg-foreground/8"
+                  }`}>
+                    <ExternalLink className={`size-5 ${isLive ? "text-positive" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-foreground">{externalCtaLabel}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {isLive
+                        ? "Open the original listing on the source platform"
+                        : "View the closed listing on the source platform"}
+                    </p>
+                  </div>
+                  <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                </a>
+              )}
 
               {/* PROVENANCE */}
               <div className="rounded-xl bg-card border border-border p-5">

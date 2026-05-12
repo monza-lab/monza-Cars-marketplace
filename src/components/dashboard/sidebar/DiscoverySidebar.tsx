@@ -269,7 +269,7 @@ export function DiscoverySidebar({
               return (
                 <Link
                   key={auction.id}
-                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}`}
+                  href={`/cars/${auction.make.toLowerCase().replace(/\s+/g, "-")}/${auction.id}/report`}
                   className="group relative block px-4 py-2.5 border-b border-border/50 hover:bg-foreground/2 transition-all"
                 >
                   <div className="flex gap-3">
