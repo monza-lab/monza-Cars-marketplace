@@ -15,7 +15,11 @@ import {
   fetchSignalsForListing,
   assembleHausReportFromDB,
   getReportMetadataV2,
+  hasAlreadyGenerated,
+  getUserCredits,
 } from "@/lib/reports/queries"
+import { createClient } from "@/lib/supabase/server"
+import { isAdmin } from "@/lib/admin"
 import { ReportClient } from "./ReportClient"
 import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
@@ -199,6 +203,28 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     }
   } catch { /* V3 not available */ }
 
+  // ─── User access check ─────────────────────────────────────────────
+  // A user has access if: (a) they already paid for this report,
+  // (b) they have unlimited_reports, or (c) they are admin.
+  // Unauthenticated users never have access.
+  let userHasAccess = false
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const [alreadyPaid, credits] = await Promise.all([
+        hasAlreadyGenerated(user.id, car.id),
+        getUserCredits(user.id),
+      ])
+      userHasAccess =
+        alreadyPaid ||
+        Boolean(credits?.unlimited_reports) ||
+        isAdmin(user.email)
+    }
+  } catch {
+    // Auth unavailable — leave as false
+  }
+
   return (
     <Suspense
       fallback={
@@ -225,6 +251,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportHash={reportHash}
           reportVersion={reportVersion}
           v3Report={v3Report}
+          userHasAccess={userHasAccess}
         />
       ) : (
         <ReportClient

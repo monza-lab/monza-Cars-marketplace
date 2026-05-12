@@ -23,6 +23,8 @@ import {
   sourceToOriginCountry,
 } from "@/lib/landedCost"
 import type { Country, Currency } from "@/lib/landedCost"
+import { createClient } from "@/lib/supabase/server"
+import { hasAlreadyGenerated } from "@/lib/reports/queries"
 
 const BASE_URL = getSiteUrl()
 
@@ -129,8 +131,16 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     // helper not present yet — leave null
   }
 
-  // TODO: once a user-level paid check is wired in Task 31, replace this stub
-  // with a real check against user_reports. For now, default to false.
+  // Check if the current user has already paid for this report
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && existingReport) {
+      userAlreadyPaid = await hasAlreadyGenerated(user.id, id)
+    }
+  } catch {
+    // Auth unavailable — leave as false
+  }
 
   // Landed-cost teaser — destination from locale, origin from listing platform.
   // Null when domestic, unsupported origin, or missing year/price.
