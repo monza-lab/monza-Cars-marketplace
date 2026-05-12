@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import Image from "next/image"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link, useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -1089,12 +1090,18 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                         className="group flex gap-2.5 px-3 py-2 border-b border-border/50 hover:bg-foreground/2 transition-all"
                       >
                         <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0 bg-card">
-                          <Image
+                          <SafeImage
                             src={car.image || car.images?.[0] || "/cars/placeholder.svg"}
                             alt={car.title}
                             fill
                             className="object-cover"
                             sizes="56px"
+                            referrerPolicy="no-referrer"
+                            fallback={
+                              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                                <Car className="size-3 text-muted-foreground/25" />
+                              </div>
+                            }
                           />
                           <div className="absolute top-0.5 right-0.5 size-2 rounded-full bg-positive animate-pulse" />
                         </div>

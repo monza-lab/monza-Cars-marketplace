@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Image from "next/image";
+import { SafeImage } from "@/components/dashboard/cards/SafeImage";
 import { motion } from "framer-motion";
 import {
   MapPin,
@@ -9,6 +10,7 @@ import {
   Calendar,
   Gauge,
   Info,
+  Car as CarIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/lib/CurrencyContext";
@@ -128,12 +130,18 @@ function SaleCard({ car, index }: { car: CollectorCar; index: number }) {
         <div className="overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5">
           {/* Image */}
           <div className="relative aspect-[16/10] overflow-hidden bg-background">
-            <Image
+            <SafeImage
               src={car.image}
               alt={car.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              referrerPolicy="no-referrer"
+              fallback={
+                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <CarIcon className="size-10 text-muted-foreground/25" />
+                </div>
+              }
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent dark:from-background" />
 

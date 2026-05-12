@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
+import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link, useRouter } from "@/i18n/navigation"
 import { stripHtml } from "@/lib/stripHtml"
 import { motion, AnimatePresence } from "framer-motion"
@@ -180,13 +181,18 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
       className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/4 border border-border hover:border-primary/15 p-3 transition-all"
     >
       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
-        <Image
+        <SafeImage
           src={car.image}
           alt={car.title}
           fill
           className="object-cover"
           sizes="80px"
           referrerPolicy="no-referrer"
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <Car className="size-4 text-muted-foreground/25" />
+            </div>
+          }
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -227,13 +233,18 @@ function SidebarCarCard({ car }: { car: CollectorCar }) {
       className="group flex items-center gap-3 p-2 rounded-lg hover:bg-foreground/4 transition-colors"
     >
       <div className="relative w-14 h-10 rounded-md overflow-hidden shrink-0">
-        <Image
+        <SafeImage
           src={car.image}
           alt={car.title}
           fill
           className="object-cover"
           sizes="56px"
           referrerPolicy="no-referrer"
+          fallback={
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <Car className="size-3 text-muted-foreground/25" />
+            </div>
+          }
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -1026,7 +1037,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
                 {car.images.slice(0, 8).map((img, i) => (
                   <div key={i} className="relative h-full w-full shrink-0 snap-center">
-                    <Image src={img} alt={`${car.title} — ${i + 1}`} fill className="object-cover" priority={i === 0} referrerPolicy="no-referrer" />
+                    <SafeImage
+                      src={img}
+                      alt={`${car.title} — ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      priority={i === 0}
+                      referrerPolicy="no-referrer"
+                      sizes="100vw"
+                      fallback={
+                        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                          <Car className="size-12 text-muted-foreground/25" />
+                        </div>
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -1037,7 +1061,20 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
             </div>
           ) : (
-            <Image src={car.image} alt={car.title} fill className="object-cover" priority referrerPolicy="no-referrer" />
+            <SafeImage
+              src={car.image}
+              alt={car.title}
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+              referrerPolicy="no-referrer"
+              fallback={
+                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <Car className="size-12 text-muted-foreground/25" />
+                </div>
+              }
+            />
           )}
           {/* Always-dark gradient for text readability in both themes */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" />
@@ -1579,7 +1616,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
               {/* HERO IMAGE */}
               <div className="relative aspect-[16/9] rounded-[32px] overflow-hidden">
-                <Image
+                <SafeImage
                   src={car.image}
                   alt={car.title}
                   fill
@@ -1587,6 +1624,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   priority
                   sizes="(min-width: 768px) 50vw, 100vw"
                   referrerPolicy="no-referrer"
+                  fallback={
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <Car className="size-12 text-muted-foreground/25" />
+                    </div>
+                  }
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 {/* Overlays on hero */}
