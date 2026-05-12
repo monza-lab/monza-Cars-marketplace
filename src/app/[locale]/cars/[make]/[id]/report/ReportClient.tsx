@@ -42,6 +42,7 @@ import { SignalsMissingSection } from "@/components/report/SignalsMissingSection
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
 import { LandedCostBlock } from "@/components/report/LandedCostBlock"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
+import { ReportRegionBanner } from "@/components/report/ReportRegionBanner"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
@@ -1615,6 +1616,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SectionHeader id="summary" title={t("sections.summary")} />
 
+              {/* Region-tailored banner — visible reassurance that user's stated market is honored */}
+              <div className="mb-4">
+                <ReportRegionBanner />
+              </div>
+
               {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
               {report && (
                 <div className="rounded-2xl border border-border bg-card p-5 mb-4">
@@ -1786,14 +1792,27 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.regionalBreakdown")}</h3>
                   <div className="space-y-4">
-                    {(["US", "EU", "UK", "JP"] as const).map(r => {
+                    {(() => {
+                      const base = ["US", "EU", "UK", "JP"] as const
+                      const ordered = [
+                        effectiveRegion,
+                        ...base.filter(r => r !== effectiveRegion),
+                      ] as readonly typeof base[number][]
+                      return ordered.map(r => {
                       const rp = pricing[r]
                       const avgUsd = (rp.low + rp.high) / 2
                       const barWidth = maxRegionalUsd > 0 ? (avgUsd / maxRegionalUsd) * 100 : 50
                       const isBest = r === bestRegion
                       const isUserRegion = r === effectiveRegion
                       return (
-                        <div key={r}>
+                        <div
+                          key={r}
+                          className={
+                            isUserRegion
+                              ? "rounded-lg border border-primary/25 bg-primary/[0.04] px-3 py-2.5 -mx-3"
+                              : ""
+                          }
+                        >
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2">
                               <span className="text-[14px]">{regionLabels[r].flag}</span>
@@ -1823,7 +1842,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                           </div>
                         </div>
                       )
-                    })}
+                    })
+                    })()}
                   </div>
                 </div>
 

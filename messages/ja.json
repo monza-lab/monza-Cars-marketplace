@@ -377,6 +377,20 @@
       "arbitrageDesc": "{region}でこの車両は適正価格を大幅に下回っています。最高地域平均と比較して{amount}の潜在的節約。",
       "comparables": "最近の比較販売"
     },
+    "regionContext": {
+      "tailoredFor": "{region}向けに最適化",
+      "tailoredDescription": "適正価格、比較対象、裁定取引シグナルはあなたの市場に重み付けされています。他の地域もクロスマーケットの参考として表示されます。",
+      "noRegionTitle": "このレポートをパーソナライズするには市場を設定してください",
+      "noRegionDescription": "購入予定地域を教えてください — 適正価格、比較対象、裁定取引シグナルがあなたの地域に再調整されます。",
+      "chooseRegion": "地域を選択",
+      "changeRegion": "変更",
+      "regionLabel": {
+        "US": "アメリカ",
+        "EU": "ヨーロッパ",
+        "UK": "イギリス",
+        "JP": "日本"
+      }
+    },
     "performance": {
       "brandReturn": "{make} 5年リターン",
       "vsBenchmarks": "vs. 市場ベンチマーク",
@@ -481,16 +495,16 @@
     "heroEyebrow": "毎月300の無料Pistons — カード不要",
     "heroTitle": "ウォレットをチャージ",
     "heroSubtitle": "Pistonsはあなたの通貨です。一度チャージするか、サブスクリプションへ。あなたのリサーチウォレット。",
-    "heroDescription": "1レポートにつき100 Pistons。上位プランで月間Pistonsが増加。トップアップは無期限。",
+    "heroDescription": "1レポートにつき1,000 Pistons。上位プランで月間Pistonsが増加。チャージは無期限。",
     "heroAnchor": "PPIは$400。Porsche PPSは$250。取引が見合うかを知るために月$59を払うのはデューデリジェンスであり、出費ではありません。",
     "economyTitle": "Pistonsの使い方",
     "economyChat": "Advisorとのクイックチャット",
-    "economyMarketplace": "マーケットプレイス検索",
-    "economyDeepResearch": "Deep research",
+    "economyMarketplace": "Marketplace検索",
+    "economyDeepResearch": "Deep Research",
     "economyReport": "完全な投資レポート",
     "topupSectionTitle": "Pistons何個?",
     "topupSelected": "選択中",
-    "topupEquivalence": "≈ レポート{reports}件 · マーケットプレイス{marketplace}件 · Deep research {deep}件",
+    "topupEquivalence": "≈ レポート{reports}件 · Marketplace検索{marketplace}件 · Deep Research {deep}件",
     "topupNeverExpire": "無期限",
     "topupCta": "チャージ",
     "topupCustomToggle": "またはカスタム金額を入力",
