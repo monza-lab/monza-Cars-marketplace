@@ -9,10 +9,11 @@ import Image from "next/image"
  * `no_image.png` served via 307 redirect for delisted listings).
  *
  * AutoTrader's placeholder is ~1.5 KB / ~200×150 px = 30 000 px².
- * Real car photos optimised by Next.js at w=384 are at least 384×256 = 98 304 px².
- * Threshold set at 50 000 px² to safely separate the two.
+ * On tablets / narrow viewports Next.js may serve w=256 images whose
+ * area is ~43 500 px². Threshold at 36 000 catches the placeholder
+ * while allowing legitimately-optimised small renditions through.
  */
-const MIN_IMAGE_AREA = 50_000
+const MIN_IMAGE_AREA = 36_000
 
 export function SafeImage({
   src,
@@ -38,7 +39,10 @@ export function SafeImage({
       const img = e.currentTarget
       // Detect CDN placeholder images that load successfully but are
       // tiny (e.g. AutoTrader's no_image.png served via 307 redirect).
-      if (img.naturalWidth * img.naturalHeight < MIN_IMAGE_AREA) {
+      // Only run this check when the browser fetched a large enough
+      // rendition. Small thumbnails (sizes="56px") produce naturalWidth
+      // ~64 px even for real photos, which would be falsely flagged.
+      if (img.naturalWidth >= 200 && img.naturalWidth * img.naturalHeight < MIN_IMAGE_AREA) {
         handleError()
       } else {
         callerOnLoad?.(e)
