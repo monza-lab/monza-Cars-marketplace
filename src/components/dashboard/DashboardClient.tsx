@@ -43,6 +43,8 @@ import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
+import { byPhotoFirst } from "@/lib/photoSort"
+import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
 // FilterSidebar removed — filters now live only on brand detail pages
 
 // ─── Upgrade low-res image URLs to high-res ───
@@ -975,12 +977,14 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const liveAuctions = useMemo(() => {
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort((a, b) => {
-        const pa = getPlatformSortPriority(a.platform)
-        const pb = getPlatformSortPriority(b.platform)
-        if (pa !== pb) return pa - pb
-        return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
-      })
+      .sort(
+        byPhotoFirst<Auction>((a, b) => {
+          const pa = getPlatformSortPriority(a.platform)
+          const pb = getPlatformSortPriority(b.platform)
+          if (pa !== pb) return pa - pb
+          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
+        }),
+      )
       .slice(0, 16)
   }, [auctions, now])
 
@@ -1086,6 +1090,9 @@ function MobileReportCard({
           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/90 border border-border backdrop-blur-md">
             {platformLabel}
           </span>
+        </div>
+        <div className="absolute bottom-1.5 left-1.5">
+          <PhotoPendingPill car={auction} />
         </div>
       </div>
 

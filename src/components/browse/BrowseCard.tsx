@@ -9,6 +9,7 @@ import { timeLeft } from "@/lib/makePageHelpers";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill";
 import { SafeImage } from "@/components/dashboard/cards/SafeImage";
+import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill";
 
 const PLATFORM_SHORT: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
@@ -125,6 +126,9 @@ export function BrowseCard({
             <span className="rounded-full px-2 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/80 border border-border backdrop-blur-md">
               {platformLabel}
             </span>
+          </div>
+          <div className="absolute bottom-2.5 left-2.5">
+            <PhotoPendingPill car={car} />
           </div>
         </div>
 

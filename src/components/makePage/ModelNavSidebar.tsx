@@ -9,6 +9,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import { getSeriesConfig } from "@/lib/brandConfig"
 import { timeLeft, type Model } from "@/lib/makePageHelpers"
+import { byPhotoFirst } from "@/lib/photoSort"
 
 // ─── MODEL NAV SIDEBAR (Left column) ───
 export function ModelNavSidebar({
@@ -36,7 +37,7 @@ export function ModelNavSidebar({
   const liveCars = useMemo(() =>
     cars
       .filter(c => c.status === "ACTIVE" || c.status === "ENDING_SOON")
-      .sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()),
+      .sort(byPhotoFirst<CollectorCar>((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())),
     [cars]
   )
 

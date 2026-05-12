@@ -9,6 +9,7 @@ import { FilterBar } from "./filters/FilterBar";
 import { useClassicFilters } from "./filters/useClassicFilters";
 import { applyFilters } from "./filters/applyFilters";
 import { countActiveFilters } from "./filters/types";
+import { partitionByPhoto } from "@/lib/photoSort";
 
 const REMOTE_PAGE_SIZE = 30;
 
@@ -175,7 +176,10 @@ export function BrowseClient({
     [allAuctions, clientFilters],
   );
 
-  const visible = filtered;
+  const visible = useMemo(() => {
+    const { withPhoto, withoutPhoto } = partitionByPhoto(filtered);
+    return withPhoto.concat(withoutPhoto);
+  }, [filtered]);
   const activeCount = countActiveFilters(filters);
 
   const fetchPage = useCallback(

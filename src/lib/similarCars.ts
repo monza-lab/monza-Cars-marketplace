@@ -1,5 +1,6 @@
 import type { CollectorCar } from "./curatedCars"
 import { extractSeries, getSeriesConfig } from "./brandConfig"
+import { hasPhoto } from "./photoSort"
 
 // ─── TYPES ───
 
@@ -121,6 +122,11 @@ export function findSimilarCars(
       return { car, score, matchReasons: reasons }
     })
     .filter(r => r.score >= MIN_SCORE)
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      // Promote candidates with real photos so the rail leads with trustworthy visuals.
+      const photoDiff = Number(hasPhoto(b.car)) - Number(hasPhoto(a.car))
+      if (photoDiff !== 0) return photoDiff
+      return b.score - a.score
+    })
     .slice(0, limit)
 }
