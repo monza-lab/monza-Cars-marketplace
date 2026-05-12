@@ -17,10 +17,14 @@ function renderWithIntl(ui: React.ReactNode) {
 describe("TopUpPresets", () => {
   it("renders the 3 visible top-ups with correct Pistons and prices", () => {
     renderWithIntl(<TopUpPresets onSelect={vi.fn()} />)
-    expect(screen.getByText("1,000")).toBeInTheDocument()
-    expect(screen.getByText("2,500")).toBeInTheDocument()
-    expect(screen.getByText("10,000")).toBeInTheDocument()
-    expect(screen.getByText("$13")).toBeInTheDocument()
+    // After UI rework: price is the dominant element, Pistons amount
+    // is the descriptor below ("1,000 Pistons" lives in one node).
+    expect(screen.getAllByText(/1,000 Pistons/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/2,500 Pistons/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/10,000 Pistons/i).length).toBeGreaterThan(0)
+    // $13 appears both in its preset card and in the "Selected" summary
+    // when it's the default — use getAllByText.
+    expect(screen.getAllByText("$13").length).toBeGreaterThan(0)
     expect(screen.getByText("$30")).toBeInTheDocument()
     expect(screen.getByText("$99")).toBeInTheDocument()
   })

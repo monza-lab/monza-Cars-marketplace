@@ -69,14 +69,13 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
                   {preset.badge}
                 </span>
               )}
-              <p className="font-display text-[28px] md:text-[32px] font-medium text-foreground tabular-nums leading-none">
-                {formatPistons(preset.pistons)}
-              </p>
-              <p className="text-[11px] tracking-wide text-muted-foreground mt-1">
-                Pistons
-              </p>
-              <p className="mt-3 font-display text-[20px] font-medium text-primary tabular-nums">
+              {/* PRICE is the decision the user makes. Largest, clearest,
+                  in foreground. The Pistons amount is descriptor below. */}
+              <p className="font-display text-[36px] md:text-[44px] font-medium text-foreground tabular-nums leading-none">
                 ${preset.price}
+              </p>
+              <p className="mt-3 text-[13px] text-foreground/85 tabular-nums">
+                {formatPistons(preset.pistons)} Pistons
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 {t("pricing.topupNeverExpire")}
@@ -86,14 +85,20 @@ export function TopUpPresets({ onSelect, className = "" }: TopUpPresetsProps) {
         })}
       </div>
 
-      {/* Equivalence + CTA */}
+      {/* Equivalence + CTA. Mirror the price hierarchy from the preset
+          cards: $ first/biggest, Pistons amount as descriptor below. */}
       <div className="rounded-2xl border border-border bg-card p-4 md:p-5 space-y-3">
         <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
           {t("pricing.topupSelected")}
         </p>
-        <p className="font-display text-[20px] md:text-[24px] font-medium text-foreground">
-          {formatPistons(selected.pistons)} Pistons · ${selected.price}
-        </p>
+        <div>
+          <p className="font-display text-[32px] md:text-[40px] font-medium text-foreground tabular-nums leading-none">
+            ${selected.price}
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground tabular-nums">
+            {formatPistons(selected.pistons)} Pistons · {t("pricing.topupNeverExpire")}
+          </p>
+        </div>
         <p className="text-[12px] text-muted-foreground">
           {t("pricing.topupEquivalence", {
             reports: reports,
