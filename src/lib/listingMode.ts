@@ -56,3 +56,12 @@ export function getExternalLinkLabel(mode: ListingMode, platformShort: string): 
       return `View original listing on ${platformShort}`;
   }
 }
+
+import type { ListingType } from "@/lib/reports/types-v3"
+
+/**
+ * Classify a platform as auction or classified for V3 report content branching.
+ */
+export function getListingType(platform: string | null | undefined): ListingType {
+  return isAuctionPlatform(platform) ? "auction" : "classified"
+}

@@ -25,6 +25,9 @@ import {
   getSignedExportUrl,
   uploadExport,
 } from "@/lib/exports/storage"
+import { fetchReportSections } from "@/lib/reports/reportSections"
+import { assembleV3ReportFromSections } from "@/lib/reports/assembleV3Report"
+import type { HausReportV3 } from "@/lib/reports/types-v3"
 
 // Run on Node (react-pdf requires Node APIs, not edge).
 export const runtime = "nodejs"
@@ -44,7 +47,15 @@ export async function GET(
     return NextResponse.json({ error: "listing_not_found" }, { status: 404 })
   }
 
-  // 2. Resolve v1 HausReport from DB
+  // 2. Fetch V3 sections upfront (used for both V1 fallback and V3 PDF pages)
+  let v3Sections: Awaited<ReturnType<typeof fetchReportSections>> = []
+  try {
+    v3Sections = await fetchReportSections(car.id, 1)
+  } catch {
+    // V3 table may not exist yet
+  }
+
+  // 3. Resolve HausReport — try V1 (listing_reports) first, fall back to V3 fair_value section
   let v1Report: HausReport | null = null
   try {
     const reportRow = await getReportForListing(car.id)
@@ -56,8 +67,17 @@ export async function GET(
       )
     }
   } catch {
-    // swallow — empty report flows into the adapter which renders an empty dossier
+    // swallow — will try V3 fallback below
   }
+
+  // V3 fallback: extract the fair_value section which contains a HausReport
+  if (!v1Report) {
+    const fairValueSection = v3Sections.find(s => s.section_key === "fair_value")
+    if (fairValueSection?.section_data) {
+      v1Report = fairValueSection.section_data as HausReport
+    }
+  }
+
   if (!v1Report) {
     return NextResponse.json(
       { error: "report_not_generated", message: "Generate the Haus Report online first." },
@@ -65,7 +85,7 @@ export async function GET(
     )
   }
 
-  // 3. Fetch surrounding context (comparables + market stats)
+  // 4. Fetch surrounding context (comparables + market stats)
   const [allPriced, dbComparables] = await Promise.all([
     fetchPricedListingsForModel(car.make),
     getComparablesForModel(car.make, car.model),
@@ -73,7 +93,7 @@ export async function GET(
   const rates = await getExchangeRates()
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
-  // 4. Adapt to v2 — including pre-computed D2 cross-border arbitrage
+  // 5. Adapt to v2 — including pre-computed D2 cross-border arbitrage
   const askingUsd = deriveAskingUsd(car)
   const targetRegion = inferTargetRegion(car.region)
   const d2Precomputed =
@@ -93,7 +113,7 @@ export async function GET(
     d2Precomputed,
   })
 
-  // 5. Stable hash for this snapshot (ignoring volatile timestamps).
+  // 6. Stable hash for this snapshot (ignoring volatile timestamps).
   //    Used as the storage key if the bucket is available.
   const reportHash =
     v2.report_hash ||
@@ -116,16 +136,21 @@ export async function GET(
     return NextResponse.redirect(signedUrl)
   }
 
-  // 7. Generate fresh PDF
+  // 7. Assemble V3 report from pre-fetched sections (if available)
+  const v3Report: HausReportV3 | null =
+    v3Sections.length > 0 ? assembleV3ReportFromSections(v3Sections, car.id) : null
+
+  // 8. Generate fresh PDF
   const buf = await renderReportToPdfBuffer({
     report: v2,
     car,
     regions: marketStats?.regions ?? [],
     comparables: dbComparables,
     askingUsd,
+    v3Report,
   })
 
-  // 8. Best-effort cache: try to upload to Storage. Silent fallback on failure
+  // 9. Best-effort cache: try to upload to Storage. Silent fallback on failure
   //    (no bucket / BE not migrated yet).
   try {
     await uploadExport(reportHash, "pdf", buf)
@@ -133,7 +158,7 @@ export async function GET(
     // expected when BACKEND-HANDOFF storage bucket hasn't been created yet
   }
 
-  // 9. Return PDF inline — works with or without Storage caching.
+  // 10. Return PDF inline — works with or without Storage caching.
   return new Response(new Uint8Array(buf), {
     status: 200,
     headers: {

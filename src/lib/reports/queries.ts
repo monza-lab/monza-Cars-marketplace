@@ -20,7 +20,7 @@ import { toUsd } from "../exchangeRates"
 import { isAdmin } from "@/lib/admin"
 
 const DEFAULT_MONTHLY_PISTONS = 300
-const REPORT_PISTON_COST = 100
+export const REPORT_PISTON_COST = 100
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!

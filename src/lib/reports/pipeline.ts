@@ -182,7 +182,8 @@ function assignResult(ctx: PipelineContext, result: PipelineStepResult | null) {
  *
  * Parallelization tiers:
  *   Tier 0: Step 1 (listing scrape) — must run first
- *   Tier 1: Steps 2, 3, 4 (identity, market data, fair value) — parallel
+ *   Tier 1: Steps 2, 3 (identity, market data) — parallel
+ *   Tier 1b: Step 4 (fair value) — sequential, needs market data from step 3
  *   Tier 2: Steps 5, 6, 7 (technical, investment, due diligence) — parallel
  *   Tier 3: Steps 8, 9 (market research, buyer services) — parallel
  *   Tier 4: Step 10 (final synthesis) — must run last
@@ -221,9 +222,9 @@ export async function runV3Pipeline(
     allResults.push(step1Result)
   }
 
-  // ─── Tier 1: Steps 2, 3, 4 (parallel) ───
+  // ─── Tier 1: Steps 2, 3 (parallel — identity + market data) ───
   const tier1Results = await runParallel(
-    [STEP_DEFS[1], STEP_DEFS[2], STEP_DEFS[3]],
+    [STEP_DEFS[1], STEP_DEFS[2]],
     ctx,
     executors,
     onProgress
@@ -233,6 +234,13 @@ export async function runV3Pipeline(
       assignResult(ctx, r)
       allResults.push(r)
     }
+  }
+
+  // ─── Tier 1b: Step 4 (fair_value — needs marketData from step 3) ───
+  const step4Result = await runStep(STEP_DEFS[3], ctx, executors, onProgress)
+  if (step4Result) {
+    assignResult(ctx, step4Result)
+    allResults.push(step4Result)
   }
 
   // ─── Tier 2: Steps 5, 6, 7 (parallel) ───
