@@ -22,10 +22,10 @@ interface Row {
 }
 
 const ROWS: Row[] = [
-  { icon: MessageCircle, labelKey: "pricing.economyChat",         cost: "1 Piston" },
-  { icon: Search,        labelKey: "pricing.economyMarketplace",  cost: "~5 Pistons" },
-  { icon: Layers,        labelKey: "pricing.economyDeepResearch", cost: "~25 Pistons" },
-  { icon: FileText,      labelKey: "pricing.economyReport",       cost: "100 Pistons" },
+  { icon: MessageCircle, labelKey: "pricing.economyChat",         cost: "10 Pistons" },
+  { icon: Search,        labelKey: "pricing.economyMarketplace",  cost: "~50 Pistons" },
+  { icon: Layers,        labelKey: "pricing.economyDeepResearch", cost: "~250 Pistons" },
+  { icon: FileText,      labelKey: "pricing.economyReport",       cost: "1,000 Pistons" },
 ]
 
 export function PistonsEconomyTable({ variant, className = "" }: PistonsEconomyTableProps) {
