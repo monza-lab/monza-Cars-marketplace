@@ -138,10 +138,9 @@ export function BrowseClient({
   // mixed sample) and show only what the server returned for this specific
   // filter. Otherwise merge SSR + streamed and deduplicate by id.
   const allAuctions = useMemo(() => {
-    if (hasServerFilters) return remoteCars;
-    const merged = [...auctions, ...remoteCars];
+    const pool = hasServerFilters ? remoteCars : [...auctions, ...remoteCars];
     const seen = new Set<string>();
-    return merged.filter((c) => {
+    return pool.filter((c) => {
       if (seen.has(c.id)) return false;
       seen.add(c.id);
       return true;

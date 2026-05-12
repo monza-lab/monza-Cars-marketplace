@@ -57,6 +57,7 @@ Cross-cutting jobs that apply to all sources:
 | Job | Purpose | Schedule |
 |-----|---------|----------|
 | [Liveness Checker](#8-liveness-checker) | Verify source URLs still resolve | 10:30 UTC |
+| [AutoTrader Delist Check](#3e-delist-check) | Remove 404 AT listings from DB | 22:00 CET (Windows Task) |
 | [Listing Validator](#cross-source-maintenance) | Fix model names, delete junk | 05:30 UTC |
 | [Cleanup](#cross-source-maintenance) | Mark stale auctions, reclassify | 06:00 UTC |
 | [VIN Enrichment](#cross-source-maintenance) | Decode VINs via NHTSA API | 07:00 UTC |
@@ -281,12 +282,34 @@ python scripts/autotrader-scrapling-probe.py "https://www.autotrader.co.uk/car-d
 node scripts/verify-scraper-quality.mjs --scraper=autotrader
 ```
 
+### 3e. Delist Check
+
+Checks ALL active AutoTrader listings against the product-page API and removes any that return 404 (genuinely removed from AutoTrader). This catches stale listings that the enrichment script misses because they already have complete data but whose CDN images now redirect to tiny placeholders.
+
+```bash
+# Standard run (all listings, 500ms delay)
+npx tsx scripts/autotrader-delist-check.ts --delayMs=500
+
+# Dry run (no DB writes)
+npx tsx scripts/autotrader-delist-check.ts --limit=100 --dryRun
+
+# Limit to first N listings
+npx tsx scripts/autotrader-delist-check.ts --limit=500 --delayMs=300
+```
+
+**Script:** `scripts/autotrader-delist-check.ts`
+**Scheduled .bat:** `scripts/autotrader-delist-scheduled.bat`
+**Log file:** `scripts/logs/autotrader-delist.log`
+
+Runs daily at 22:00 CET via Windows Task Scheduler (`Monza\AutoTrader-Delist-22h`). Also included in the TUI full scraper run as a post-run step.
+
 ### Automated schedule
 
 | Step | Time (UTC) | Runtime | Duration |
 |------|------------|---------|----------|
 | Discovery | 02:00 | Vercel Cron | 5 min |
 | Enrichment | 07:45 | Vercel Cron | 5 min |
+| Delist Check | 22:00 CET | Windows Task Scheduler | ~13 min |
 
 ---
 

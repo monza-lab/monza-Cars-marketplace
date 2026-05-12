@@ -84,6 +84,10 @@ export async function backfillImagesForSource(
   // Get the image fetcher for each source
   const fetcherMap = await buildImageFetcherMap();
 
+  const MAX_RATE_LIMIT_RETRIES = 3;
+  const RATE_LIMIT_BACKOFF_MS = 30_000; // 30s, doubles each retry
+  let rateLimitRetries = 0;
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
 
@@ -137,6 +141,7 @@ export async function backfillImagesForSource(
         );
       } else {
         result.backfilled++;
+        rateLimitRetries = 0; // Reset on success
         console.log(
           `[backfill-images] [${i + 1}/${rows.length}] ${row.id} (${source}): ${images.length} images`
         );
@@ -161,12 +166,26 @@ export async function backfillImagesForSource(
         continue;
       }
 
-      // Circuit-break on 403/429/Cloudflare — stop this source only.
-      // This is expected operational behavior (WAF/rate-limit), not an error.
-      if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
+      // 403/Cloudflare — hard block, stop this source.
+      if (/\b403\b/.test(msg) || /cloudflare/i.test(msg)) {
         result.warnings.push(`Circuit-break (${source}): ${msg}`);
         console.log(`[backfill-images] Circuit-break (${source}): ${msg}`);
-        break; // Breaks inner loop; caller iterates sources independently
+        break;
+      }
+
+      // 429 — rate limited. Back off and retry up to 3 times before giving up.
+      if (/\b429\b/.test(msg)) {
+        rateLimitRetries++;
+        if (rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
+          result.warnings.push(`Circuit-break after ${MAX_RATE_LIMIT_RETRIES} rate-limit retries (${source}): ${msg}`);
+          console.log(`[backfill-images] Circuit-break after ${MAX_RATE_LIMIT_RETRIES} retries (${source}): ${msg}`);
+          break;
+        }
+        const backoffMs = RATE_LIMIT_BACKOFF_MS * Math.pow(2, rateLimitRetries - 1);
+        console.log(`[backfill-images] Rate limited (${source}), retry ${rateLimitRetries}/${MAX_RATE_LIMIT_RETRIES} — backing off ${backoffMs / 1000}s`);
+        await new Promise((r) => setTimeout(r, backoffMs));
+        i--; // Retry the same listing
+        continue;
       }
 
       result.errors.push(`Failed ${row.source_url}: ${msg}`);
@@ -199,12 +218,17 @@ async function buildImageFetcherMap(): Promise<Record<string, ImageFetcher>> {
     "@/features/scrapers/auctions/bringATrailerImages"
   );
 
-  // BeForward: use parseDetailHtml (cheerio-only export) with a simple fetch
+  // BeForward: try Scrapling first (bypasses AWS WAF), fall back to plain fetch
   const fetchBeForwardImages: ImageFetcher = async (url) => {
     const { parseDetailHtml } = await import(
       "@/features/scrapers/beforward_porsche_collector/detail"
     );
-    const html = await fetchHtml(url);
+    const { fetchBFHtmlWithScrapling } = await import(
+      "@/features/scrapers/beforward_porsche_collector/scrapling"
+    );
+
+    const scraplingHtml = await fetchBFHtmlWithScrapling(url);
+    const html = scraplingHtml ?? await fetchHtml(url);
     const detail = parseDetailHtml(html);
     return detail.images ?? [];
   };

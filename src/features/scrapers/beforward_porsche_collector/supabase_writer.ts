@@ -93,7 +93,7 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
-  return {
+  const row: Record<string, unknown> = {
     source: listing.source,
     source_id: listing.sourceId,
     source_url: listing.sourceUrl,
@@ -119,7 +119,6 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     list_date: listing.listDate,
     status: listing.status,
     reserve_met: listing.reserveMet,
-    photos_count: listing.photosCount,
     description_text: listing.descriptionText,
     scrape_timestamp: meta.scrapeTimestamp,
     updated_at: meta.scrapeTimestamp,
@@ -131,7 +130,6 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     bid_count: 0,
     reserve_status: null,
     seller_notes: listing.sellerNotes,
-    images: listing.photos,
     engine: truncate(listing.engine, 100),
     transmission: truncate(listing.transmission, 100),
     end_time: listing.endTime?.toISOString() ?? null,
@@ -140,6 +138,16 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     location: listing.locationString,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   };
+
+  // Only include images/photos_count when we actually have photos.
+  // summary-only discovery produces photos=[] — including that in the upsert
+  // would overwrite previously backfilled images on every cron run.
+  if (listing.photos.length > 0) {
+    row.images = listing.photos;
+    row.photos_count = listing.photosCount;
+  }
+
+  return row;
 }
 
 function truncate(value: string | null | undefined, max: number): string | null {

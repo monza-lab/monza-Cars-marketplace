@@ -312,7 +312,8 @@ async function runSource(input: {
 
 /**
  * Scrape active listings from AutoTrader search results.
- * Tries Scrapling first (bypasses Cloudflare), falls back to gateway API.
+ * Tries GraphQL gateway first (returns structured data with year/model/images).
+ * Falls back to Scrapling if gateway is CF-blocked.
  */
 async function scrapeActiveListings(
   source: SourceKey,
@@ -321,19 +322,19 @@ async function scrapeActiveListings(
   model: string | undefined,
   postcode: string | undefined,
 ): Promise<ActiveListingBase[]> {
-  // Try Scrapling first (headless browser bypasses Cloudflare)
+  // 1) Try gateway first — returns structured data (year, model, images)
+  const gatewayListings = await scrapeActiveListingsViaGateway(source, maxPages, make, model, postcode);
+  if (gatewayListings.length > 0) return gatewayListings;
+
+  // 2) Gateway failed (likely CF-blocked from datacenter IP) — try Scrapling
   if (canUseScrapling()) {
+    logEvent({ level: "info", event: "collector.gateway_empty_trying_scrapling", runId: "", source });
     const scraplingListings = await scrapeActiveListingsViaScrapling(source, maxPages, make, model, postcode);
     if (scraplingListings.length > 0) return scraplingListings;
     logEvent({ level: "warn", event: "collector.scrapling_active_empty", runId: "", source });
-    // If Scrapling (headless browser) was CF-blocked, plain HTTP gateway
-    // has zero chance from the same IP — skip the useless fallback.
-    logEvent({ level: "warn", event: "collector.skipping_gateway_after_cf", runId: "", source });
-    return [];
   }
 
-  // Gateway API only (no Scrapling available — e.g. Vercel)
-  return scrapeActiveListingsViaGateway(source, maxPages, make, model, postcode);
+  return [];
 }
 
 async function scrapeActiveListingsViaScrapling(

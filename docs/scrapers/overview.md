@@ -9,6 +9,7 @@ Last updated: 2026-05-12
 | 1 | AutoScout24 | Dealer listings (EU) | GitHub Actions | Daily 05:00 UTC | HTTP shards → Supabase |
 | 2 | AutoTrader UK | Dealer listings (UK) | GitHub Actions | Daily 02:00 UTC | GraphQL `at-gateway` → Supabase |
 | 3 | AutoTrader Enrichment | Detail enrichment | **Windows Task Scheduler** | 4×/day (10:00, 13:00, 16:00, 19:00 CET) | Product-page API + HTML + GraphQL |
+| 3b | AutoTrader Delist Check | Remove 404 listings | **Windows Task Scheduler** | Daily 22:00 CET | Product-page API status check |
 | 4 | Elferspot | Dealer listings (DE) | Vercel Cron | 2-phase: discovery + enrichment | HTTP + detail enrichment |
 | 5 | BeForward | Dealer listings (JP→export) | Vercel Cron | Daily 03:00 UTC | HTTP summary-only |
 | 6 | Classic.com | Dealer + auction (US) | GitHub Actions | Daily | Scrapling (Playwright) |
@@ -59,8 +60,15 @@ Supabase updates (enriches null fields, delists 404s)
 | `Monza\AutoTrader-Enrich-13h` | 13:00 | Enrich up to 500 listings |
 | `Monza\AutoTrader-Enrich-16h` | 16:00 | Enrich up to 500 listings |
 | `Monza\AutoTrader-Enrich-19h` | 19:00 | Enrich up to 500 listings |
+| `Monza\AutoTrader-Delist-22h` | 22:00 | Check all AT listings, delist 404s |
 
 **Requirement:** PC must be on and logged in (tasks run in interactive mode).
+
+### Delist Check
+
+Separate from enrichment, the delist check (`scripts/autotrader-delist-check.ts`) scans ALL active AutoTrader listings against the product-page API. Listings returning 404 are marked as `delisted`. This catches stale listings that enrichment misses because they have complete data but whose CDN images now redirect to tiny placeholder images.
+
+Runs daily at 22:00 CET via `scripts/autotrader-delist-scheduled.bat`.
 
 ### Enrichment behavior
 
@@ -97,8 +105,12 @@ schtasks /delete /tn "Monza\AutoTrader-Enrich-13h" /f
 schtasks /delete /tn "Monza\AutoTrader-Enrich-16h" /f
 schtasks /delete /tn "Monza\AutoTrader-Enrich-19h" /f
 
+# Delete delist check task
+schtasks /delete /tn "Monza\AutoTrader-Delist-22h" /f
+
 # Run manually
 scripts\autotrader-enrich-scheduled.bat
+scripts\autotrader-delist-scheduled.bat
 ```
 
 ---
