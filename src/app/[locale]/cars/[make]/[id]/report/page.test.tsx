@@ -17,6 +17,14 @@ vi.mock("next-intl", () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(async () => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
+  })),
+}));
+
 // Los client components son irrelevantes — sólo nos importa que la
 // función ReportPage resuelva sin tirar 500.
 vi.mock("./ReportClient", () => ({
@@ -84,6 +92,9 @@ vi.mock("@/lib/reports/queries", () => ({
   fetchSignalsForListing: vi.fn().mockResolvedValue([]),
   assembleHausReportFromDB: vi.fn().mockReturnValue(null),
   getReportMetadataV2: vi.fn().mockResolvedValue({ tier: null, report_hash: null, version: null }),
+  getUserCredits: vi.fn().mockResolvedValue(null),
+  hasAlreadyGenerated: vi.fn().mockResolvedValue(false),
+  hasUnlimitedReportAccess: vi.fn().mockReturnValue(false),
 }));
 
 describe("ReportPage SSR robustness", () => {

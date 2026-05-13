@@ -22,6 +22,23 @@ import { isAdmin } from "@/lib/admin"
 const DEFAULT_MONTHLY_PISTONS = 300
 export const REPORT_PISTON_COST = 100
 
+export function hasUnlimitedReportAccess(
+  user: Pick<UserCreditsRow, "unlimited_reports" | "tier" | "email"> | null | undefined,
+): boolean {
+  if (!user) return false
+  return (
+    Boolean(user.unlimited_reports) ||
+    user.tier === "MONTHLY" ||
+    user.tier === "ANNUAL" ||
+    user.tier === "PRO" ||
+    isAdmin(user.email)
+  )
+}
+
+export function normalizeUserReportListingId(listingId: string): string {
+  return listingId.startsWith("live-") ? listingId.slice("live-".length) : listingId
+}
+
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -332,11 +349,12 @@ export async function hasAlreadyGenerated(
   listingId: string,
 ): Promise<boolean> {
   const supabase = getServiceClient()
+  const userReportListingId = normalizeUserReportListingId(listingId)
   const { data } = await supabase
     .from("user_reports")
     .select("id")
     .eq("user_id", userId)
-    .eq("listing_id", listingId)
+    .eq("listing_id", userReportListingId)
     .single()
 
   return !!data
@@ -348,6 +366,8 @@ export async function deductCredit(
   reportId: string,
 ): Promise<DeductResult> {
   const supabase = getServiceClient()
+  const userReportListingId = normalizeUserReportListingId(listingId)
+  const userReportReportId = normalizeUserReportListingId(reportId)
 
   // Check if already generated (free re-access)
   const already = await hasAlreadyGenerated(userId, listingId)
@@ -362,7 +382,7 @@ export async function deductCredit(
 
   if (!user) return { success: false, error: "USER_NOT_FOUND" }
 
-  const isUnlimited = Boolean(user.unlimited_reports) || user.tier === "MONTHLY" || user.tier === "ANNUAL" || isAdmin(user.email)
+  const isUnlimited = hasUnlimitedReportAccess(user as UserCreditsRow)
   const cost = isUnlimited ? 0 : REPORT_PISTON_COST
   const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
   if (!isUnlimited && totalBalance < cost) {
@@ -390,7 +410,7 @@ export async function deductCredit(
       amount: 0,
       type: "REPORT_USED",
       description: `Unlimited report access for listing ${listingId}`,
-      listing_id: listingId,
+      listing_id: userReportListingId,
       stripe_payment_id: null,
     })
   }
@@ -400,8 +420,8 @@ export async function deductCredit(
     .from("user_reports")
     .insert({
       user_id: userId,
-      listing_id: listingId,
-      report_id: reportId,
+      listing_id: userReportListingId,
+      report_id: userReportReportId,
       credit_cost: debitAmount,
     })
 

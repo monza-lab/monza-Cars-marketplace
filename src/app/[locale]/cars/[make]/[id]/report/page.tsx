@@ -17,6 +17,7 @@ import {
   getReportMetadataV2,
   hasAlreadyGenerated,
   getUserCredits,
+  hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
 import { isAdmin } from "@/lib/admin"
@@ -230,7 +231,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           : false
         userHasAccess =
           alreadyPaid ||
-          Boolean(credits?.unlimited_reports) ||
+          hasUnlimitedReportAccess(credits) ||
           isAdmin(user.email)
       }
     } catch {

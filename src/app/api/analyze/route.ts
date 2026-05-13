@@ -15,6 +15,7 @@ import {
   checkAndResetFreeCredits,
   saveReportMetadataV2,
   getReportMetadataV2,
+  hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { computeReportHash } from "@/lib/reports/hash"
 import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
@@ -193,6 +194,26 @@ export async function POST(request: Request) {
       extraction_version?: string | null
     }) | null
     if (cachedHausRow && cachedHausRow.signals_extracted_at) {
+      let creditUsed = 0
+      if (!alreadyGenerated) {
+        const creditResult = await deductCredit(user.id, body.listingId, body.listingId)
+        if (!creditResult.success) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: creditResult.error,
+              message:
+                creditResult.error === "INSUFFICIENT_CREDITS"
+                  ? "You have no Pistons remaining for reports."
+                  : "Could not unlock cached report.",
+              creditsRemaining: totalBalance,
+            },
+            { status: creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500 },
+          )
+        }
+        creditUsed = creditResult.creditUsed
+      }
+
       // v2 metadata: pull hash/tier/version if the BE migration landed.
       // Silent fallback to nulls if the columns don't exist.
       const v2Meta = await getReportMetadataV2(body.listingId)
@@ -210,8 +231,8 @@ export async function POST(request: Request) {
         data: cachedHausRow,
         report: cachedHausRow,
         cached: true,
-        creditUsed: 0,
-        creditsRemaining: totalBalance,
+        creditUsed,
+        creditsRemaining: totalBalance - creditUsed,
         // v2 additions (null when BE migration pending)
         report_hash: v2Meta.report_hash,
         tier: v2Meta.tier ?? "tier_1",
@@ -220,7 +241,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Credits check (if not already generated and no cached report)
-    if (!alreadyGenerated && !user.unlimited_reports && totalBalance < 100) {
+    if (!alreadyGenerated && !hasUnlimitedReportAccess(user) && totalBalance < 100) {
       return NextResponse.json(
         {
           success: false,

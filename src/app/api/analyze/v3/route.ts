@@ -11,6 +11,7 @@ import {
   hasAlreadyGenerated,
   deductCredit,
   REPORT_PISTON_COST,
+  hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { saveHausReport, saveSignals } from "@/lib/reports/queries"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
@@ -48,11 +49,24 @@ export async function POST(req: NextRequest) {
 
   // User + credit initialization
   const dbUser = await getOrCreateUser(user.id, user.email ?? "", user.user_metadata?.full_name)
-  await checkAndResetFreeCredits(dbUser.id)
+  const credits = await checkAndResetFreeCredits(dbUser.id)
   const alreadyGenerated = await hasAlreadyGenerated(dbUser.id, listingId)
+  const userIsAdmin = isAdmin(user.email)
+  const hasUnlimited = hasUnlimitedReportAccess(credits)
 
   // Cache check
   if (!force && await hasV3Report(listingId)) {
+    if (!alreadyGenerated && !userIsAdmin) {
+      const creditResult = await deductCredit(dbUser.id, listingId, listingId)
+      if (!creditResult.success) {
+        const status = creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500
+        return new Response(JSON.stringify({ error: creditResult.error }), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+    }
+
     const sections = await fetchReportSections(listingId, 1)
     return new Response(JSON.stringify({
       cached: true,
@@ -65,9 +79,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Credit check
-  const userIsAdmin = isAdmin(user.email)
-  if (!alreadyGenerated && !dbUser.unlimited_reports && !userIsAdmin) {
-    const balance = (dbUser.credits_balance ?? 0) + (dbUser.pack_credits_balance ?? 0)
+  if (!alreadyGenerated && !hasUnlimited && !userIsAdmin) {
+    const balance = (credits.credits_balance ?? 0) + (credits.pack_credits_balance ?? 0)
     if (balance < REPORT_PISTON_COST) {
       return new Response(JSON.stringify({ error: "Insufficient credits", balance }), {
         status: 402,

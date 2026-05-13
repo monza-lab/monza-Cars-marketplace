@@ -36,6 +36,15 @@ describe("reports/queries exports", () => {
     expect(typeof mod.checkAndResetFreeCredits).toBe("function")
     expect(typeof mod.saveHausReport).toBe("function")
     expect(typeof mod.saveSignals).toBe("function")
+    expect(typeof mod.normalizeUserReportListingId).toBe("function")
+  })
+
+  it("normalizes live route ids for user_reports UUID columns", async () => {
+    const { normalizeUserReportListingId } = await import("./queries")
+    expect(normalizeUserReportListingId("live-5fb98398-2dd1-46e2-84dd-a92c40017ee4")).toBe(
+      "5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+    )
+    expect(normalizeUserReportListingId("curated-slug")).toBe("curated-slug")
   })
 })
 
