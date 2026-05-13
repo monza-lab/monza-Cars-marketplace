@@ -244,6 +244,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       if (res.headers.get("Content-Type")?.includes("application/json")) {
         const json = await res.json()
         if (!res.ok) {
+          if (res.status === 402 || json.error === "Insufficient credits") {
+            setOutOfReportsOpen(true)
+          }
           setV3Error(json.error ?? "Generation failed")
           setIsGeneratingV3(false)
           return
@@ -331,18 +334,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   }, [tokensLoading, car.id, hasAnalyzed])
 
   const handleUnlock = () => {
-    if (hasAnalyzed(car.id)) {
-      setHasAccess(true)
-      if (!existingReport) void handleGenerateV3()
-      return
-    }
-    const success = consumeForAnalysis(car.id)
-    if (success) {
-      setHasAccess(true)
-      if (!existingReport) void handleGenerateV3()
-    } else {
-      setShowPricing(true)
-    }
+    // Always trigger V3 generation — the server handles credit validation
+    // via /api/analyze/v3. The old localStorage token check was blocking
+    // generation for users whose server credits didn't match localStorage.
+    setHasAccess(true)
+    consumeForAnalysis(car.id) // best-effort localStorage sync
+    void handleGenerateV3()
   }
 
   const handlePurchase = (planId: "single" | "explorer" | "unlimited") => {
