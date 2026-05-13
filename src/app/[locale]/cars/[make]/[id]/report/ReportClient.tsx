@@ -270,6 +270,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       const decoder = new TextDecoder()
       let buffer = ""
+      let currentEvent = ""
+      let streamHadError = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -279,7 +281,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         const lines = buffer.split("\n")
         buffer = lines.pop() ?? ""
 
-        let currentEvent = ""
         for (const line of lines) {
           if (line.startsWith("event: ")) {
             currentEvent = line.slice(7).trim()
@@ -302,13 +303,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   )
                 )
               } else if (currentEvent === "complete") {
-                setIsGeneratingV3(false)
-                // Reload to show V2 with the full report
-                window.location.reload()
-                return
+                // Handled after loop — reload to show V2
               } else if (currentEvent === "error") {
                 setV3Error(data.message ?? "Pipeline failed")
-                setIsGeneratingV3(false)
+                streamHadError = true
               }
             } catch {
               // Ignore malformed JSON lines
@@ -316,6 +314,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             currentEvent = ""
           }
         }
+      }
+
+      // Stream ended — reload to show V2 with the full report.
+      // Covers normal completion, timeout, and chunk-split edge cases
+      // where the 'complete' SSE event was lost.
+      if (!streamHadError) {
+        window.location.reload()
+        return
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return

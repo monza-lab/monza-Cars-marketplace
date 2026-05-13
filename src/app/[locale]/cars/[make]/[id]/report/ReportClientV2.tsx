@@ -176,6 +176,8 @@ export function ReportClientV2({
 
       const decoder = new TextDecoder()
       let buffer = ""
+      let currentEvent = ""
+      let streamHadError = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -185,7 +187,6 @@ export function ReportClientV2({
         const lines = buffer.split("\n")
         buffer = lines.pop() ?? ""
 
-        let currentEvent = ""
         for (const line of lines) {
           if (line.startsWith("event: ")) {
             currentEvent = line.slice(7).trim()
@@ -209,14 +210,10 @@ export function ReportClientV2({
                 )
               } else if (currentEvent === "complete") {
                 setV3Data(data.report as HausReportV3)
-                setIsGeneratingV3(false)
-                // Reload if user was on the paywall — server will now see them as paid
-                if (!userHasAccess && typeof window !== "undefined") {
-                  window.location.reload()
-                }
+                // Reload handled after loop
               } else if (currentEvent === "error") {
                 setV3Error(data.message ?? "Pipeline failed")
-                setIsGeneratingV3(false)
+                streamHadError = true
               }
             } catch {
               // Ignore malformed JSON lines
@@ -224,6 +221,14 @@ export function ReportClientV2({
             currentEvent = ""
           }
         }
+      }
+
+      // Stream ended — reload to show V2 with the full report.
+      // Covers normal completion, timeout, and chunk-split edge cases
+      // where the 'complete' SSE event was lost.
+      if (!streamHadError) {
+        window.location.reload()
+        return
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return
