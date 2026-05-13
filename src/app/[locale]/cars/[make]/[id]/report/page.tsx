@@ -219,10 +219,15 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const [alreadyPaid, credits] = await Promise.all([
-          hasAlreadyGenerated(user.id, car.id),
-          getUserCredits(user.id),
-        ])
+        // getUserCredits looks up by supabase_user_id (Auth UUID) — correct.
+        // hasAlreadyGenerated must use the internal DB user ID (user_credits.id),
+        // NOT the Auth UUID, because deductCredit writes user_reports.user_id
+        // with the internal DB ID.
+        const credits = await getUserCredits(user.id)
+        const internalUserId = credits?.id
+        const alreadyPaid = internalUserId
+          ? await hasAlreadyGenerated(internalUserId, car.id)
+          : false
         userHasAccess =
           alreadyPaid ||
           Boolean(credits?.unlimited_reports) ||

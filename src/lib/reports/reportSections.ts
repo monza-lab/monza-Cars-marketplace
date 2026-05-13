@@ -63,21 +63,26 @@ export async function fetchReportSections(
 
 /**
  * Check if a V3 report has already been generated (cache hit).
+ * A valid cache hit requires the final_synthesis row to contain
+ * actual data (executiveSummary), not just an empty object from
+ * a failed/partial AI response.
  */
 export async function hasV3Report(
   listingId: string,
   reportVersion: number = 1
 ): Promise<boolean> {
   const supabase = createAdminClient()
-  const { count, error } = await supabase
+  const { data, error } = await supabase
     .from("report_sections")
-    .select("id", { count: "exact", head: true })
+    .select("section_data")
     .eq("listing_id", listingId)
     .eq("report_version", reportVersion)
     .eq("section_key", "final_synthesis")
+    .single()
 
-  if (error) return false
-  return (count ?? 0) > 0
+  if (error || !data) return false
+  const sd = data.section_data as Record<string, unknown> | null
+  return Boolean(sd?.executiveSummary)
 }
 
 /**
