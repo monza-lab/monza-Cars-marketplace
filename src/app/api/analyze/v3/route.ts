@@ -109,12 +109,10 @@ export async function POST(req: NextRequest) {
           onProgress: (p: PipelineProgress) => {
             send("progress", p)
           },
+          onStepComplete: async (result) => {
+            await saveReportSection(listingId, 1, result)
+          },
         })
-
-        // Persist sections in parallel
-        await Promise.all(
-          results.map((result) => saveReportSection(listingId, 1, result))
-        )
 
         // Also persist fair value to existing tables (backward compat)
         const fairValueResult = results.find(r => r.sectionKey === "fair_value")
