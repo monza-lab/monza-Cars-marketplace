@@ -115,6 +115,8 @@ export function ReportClientV2({
 
     const controller = new AbortController()
     abortRef.current = controller
+    let userAborted = false
+    let needsPaywall = false
 
     try {
       const res = await fetch("/api/analyze/v3", {
@@ -129,10 +131,9 @@ export function ReportClientV2({
         const json = await res.json()
         if (!res.ok) {
           if (res.status === 402 || json.error === "Insufficient credits") {
-            setOutOfReportsOpen(true)
+            needsPaywall = true
           }
           setV3Error(json.error ?? "Generation failed")
-          setIsGeneratingV3(false)
           return
         }
         if (json.cached) {
@@ -157,11 +158,6 @@ export function ReportClientV2({
           }
           setV3Data(assembled)
           setGenerationSteps(prev => prev.map(s => ({ ...s, status: "completed" as StepStatus })))
-          setIsGeneratingV3(false)
-          // Reload if user was on the paywall
-          if (!userHasAccess && typeof window !== "undefined") {
-            window.location.reload()
-          }
           return
         }
       }
@@ -170,14 +166,12 @@ export function ReportClientV2({
       const reader = res.body?.getReader()
       if (!reader) {
         setV3Error("No response stream")
-        setIsGeneratingV3(false)
         return
       }
 
       const decoder = new TextDecoder()
       let buffer = ""
       let currentEvent = ""
-      let streamHadError = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -210,11 +204,8 @@ export function ReportClientV2({
                 )
               } else if (currentEvent === "complete") {
                 setV3Data(data.report as HausReportV3)
-                // Reload handled after loop
-              } else if (currentEvent === "error") {
-                setV3Error(data.message ?? "Pipeline failed")
-                streamHadError = true
               }
+              // complete + error: let the stream finish, finally handles transition
             } catch {
               // Ignore malformed JSON lines
             }
@@ -222,22 +213,29 @@ export function ReportClientV2({
           }
         }
       }
-
-      // Stream ended — reload to show V2 with the full report.
-      // Covers normal completion, timeout, and chunk-split edge cases
-      // where the 'complete' SSE event was lost.
-      if (!streamHadError) {
-        window.location.reload()
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        userAborted = true
         return
       }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return
-      setV3Error(err instanceof Error ? err.message : "Generation failed")
+      // Stream terminated (timeout, network) — sections may be partially saved
+      console.error("[ReportClientV2] Stream error:", err)
     } finally {
       setIsGeneratingV3(false)
       abortRef.current = null
+
+      if (needsPaywall) {
+        setOutOfReportsOpen(true)
+      } else if (!userAborted) {
+        // ALWAYS re-fetch the server component after generation attempt.
+        router.refresh()
+        // Hard fallback: if router.refresh() doesn't update within 2s
+        setTimeout(() => {
+          window.location.href = window.location.pathname
+        }, 2000)
+      }
     }
-  }, [car.id])
+  }, [car.id, router])
 
   // Derive listing type from v3 vehicle identity
   const listingType = v3Data?.vehicleIdentity?.listingType ?? "classified"

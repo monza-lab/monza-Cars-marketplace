@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link } from "@/i18n/navigation"
@@ -171,6 +172,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const hasStats = !!(marketStats && marketStats.totalDataPoints > 0)
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
+  const router = useRouter()
   const locale = useLocale()
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
@@ -231,6 +233,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
     const controller = new AbortController()
     v3AbortRef.current = controller
+    let userAborted = false
+    let needsPaywall = false
 
     try {
       const res = await fetch("/api/analyze/v3", {
@@ -245,17 +249,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         const json = await res.json()
         if (!res.ok) {
           if (res.status === 402 || json.error === "Insufficient credits") {
-            setOutOfReportsOpen(true)
+            needsPaywall = true
           }
           setV3Error(json.error ?? "Generation failed")
-          setIsGeneratingV3(false)
           return
         }
+        // Cached — sections already in DB, just refresh
         if (json.cached) {
           setV3Steps(prev => prev.map(s => ({ ...s, status: "completed" as StepStatus })))
-          setIsGeneratingV3(false)
-          // Reload to show V2 with the full report
-          window.location.reload()
           return
         }
       }
@@ -264,14 +265,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const reader = res.body?.getReader()
       if (!reader) {
         setV3Error("No response stream")
-        setIsGeneratingV3(false)
         return
       }
 
       const decoder = new TextDecoder()
       let buffer = ""
       let currentEvent = ""
-      let streamHadError = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -302,12 +301,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       : s
                   )
                 )
-              } else if (currentEvent === "complete") {
-                // Handled after loop — reload to show V2
-              } else if (currentEvent === "error") {
-                setV3Error(data.message ?? "Pipeline failed")
-                streamHadError = true
               }
+              // complete + error: just let the stream finish, finally handles transition
             } catch {
               // Ignore malformed JSON lines
             }
@@ -315,22 +310,32 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
           }
         }
       }
-
-      // Stream ended — reload to show V2 with the full report.
-      // Covers normal completion, timeout, and chunk-split edge cases
-      // where the 'complete' SSE event was lost.
-      if (!streamHadError) {
-        window.location.reload()
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        userAborted = true
         return
       }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return
-      setV3Error(err instanceof Error ? err.message : "Generation failed")
+      // Stream terminated (timeout, network) — sections may be partially saved
+      console.error("[ReportClient] Stream error:", err)
     } finally {
       setIsGeneratingV3(false)
       v3AbortRef.current = null
+
+      if (needsPaywall) {
+        setOutOfReportsOpen(true)
+      } else if (!userAborted) {
+        // ALWAYS re-fetch the server component after generation attempt.
+        // Sections are saved incrementally, so even partial completions
+        // will show V2 with whatever data was persisted.
+        router.refresh()
+        // Hard fallback: if router.refresh() doesn't swap the component
+        // (e.g. RSC caching), force a full page load after 2s.
+        setTimeout(() => {
+          window.location.href = window.location.pathname
+        }, 2000)
+      }
     }
-  }, [car.id])
+  }, [car.id, router])
 
   // Check access on mount
   useEffect(() => {
