@@ -23,6 +23,7 @@ function isAdmin(email: string | null | undefined): boolean {
 }
 
 export const dynamic = "force-dynamic"
+export const maxDuration = 300 // 5 min — V3 pipeline runs 10 AI steps, typically 60-120s
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
