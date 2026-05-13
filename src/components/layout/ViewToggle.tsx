@@ -32,19 +32,6 @@ export function ViewToggle() {
     >
       <button
         role="tab"
-        aria-selected={active === "monza"}
-        onClick={() => handleSelect("monza")}
-        className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] md:text-[11px] font-medium tracking-wide transition-all ${
-          active === "monza"
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        <MonzaHelmet className="size-3.5 -mt-px" />
-        <span>Monza</span>
-      </button>
-      <button
-        role="tab"
         aria-selected={active === "classic"}
         onClick={() => handleSelect("classic")}
         className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] md:text-[11px] font-medium tracking-wide transition-all ${
@@ -55,6 +42,19 @@ export function ViewToggle() {
       >
         <LayoutGrid className="size-3" />
         <span>Classic</span>
+      </button>
+      <button
+        role="tab"
+        aria-selected={active === "monza"}
+        onClick={() => handleSelect("monza")}
+        className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] md:text-[11px] font-medium tracking-wide transition-all ${
+          active === "monza"
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <MonzaHelmet className="size-3.5 -mt-px" />
+        <span>Monza</span>
       </button>
     </div>
   );

@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Lock, FileText } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import type { CollectorCar } from "@/lib/curatedCars"
@@ -238,116 +237,15 @@ export function ReportClientV2({
   // Derive listing type from v3 vehicle identity
   const listingType = v3Data?.vehicleIdentity?.listingType ?? "classified"
 
-  // ─── Auth helpers for paywall ──────────────────────────────────────
+  // ─── Auth helpers ──────────────────────────────────────────────────
   const { profile: authProfile } = useAuth()
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
 
-  // ─── PAYWALL: show locked preview if user hasn't paid ─────────────
-  if (!userHasAccess) {
-    const carTitle = composeCarTitle(car)
-    const thumbUrl = car.images?.[0] ?? null
-
-    const handleUnlock = () => {
-      // If user is not logged in, redirect to auth
-      if (!authProfile) {
-        router.push("/auth/login")
-        return
-      }
-      // Trigger generation via API (which handles credit deduction)
-      handleGenerateV3()
-    }
-
-    return (
-      <main className="flex min-h-screen flex-col bg-background pb-20 md:pb-0">
-        <ReportHeader
-          carTitle={carTitle}
-          carThumbUrl={thumbUrl}
-          generatedAt={new Date().toISOString()}
-          reportVersion={3}
-          tier="tier_1"
-          onDownloadClick={() => {}}
-        />
-
-        <div className="mx-auto w-full max-w-3xl px-4 mt-8 space-y-6">
-          {/* Locked report preview */}
-          <div className="relative rounded-2xl border border-border bg-card overflow-hidden">
-            {/* Blurred teaser content */}
-            <div className="p-6 space-y-4 blur-sm select-none pointer-events-none" aria-hidden>
-              <div className="h-5 w-3/4 bg-muted-foreground/10 rounded" />
-              <div className="h-4 w-full bg-muted-foreground/8 rounded" />
-              <div className="h-4 w-5/6 bg-muted-foreground/8 rounded" />
-              <div className="h-4 w-2/3 bg-muted-foreground/8 rounded" />
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                <div className="h-20 bg-muted-foreground/6 rounded-lg" />
-                <div className="h-20 bg-muted-foreground/6 rounded-lg" />
-                <div className="h-20 bg-muted-foreground/6 rounded-lg" />
-              </div>
-              <div className="h-4 w-full bg-muted-foreground/8 rounded" />
-              <div className="h-4 w-4/5 bg-muted-foreground/8 rounded" />
-            </div>
-
-            {/* Overlay with unlock CTA */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-[2px]">
-              <div className="flex flex-col items-center gap-4 max-w-sm text-center px-6">
-                <div className="rounded-full bg-primary/10 p-4">
-                  <Lock className="size-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-serif font-semibold text-foreground">
-                  Investment Dossier
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  This report includes fair value analysis, market positioning,
-                  risk signals, and actionable buying intelligence for this vehicle.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  100 Pistons per report
-                </p>
-
-                {/* V3 generation in progress */}
-                {isGeneratingV3 && (
-                  <div className="w-full mt-2">
-                    <GenerationStepper steps={generationSteps} />
-                  </div>
-                )}
-
-                {v3Error && !isGeneratingV3 && (
-                  <div className="rounded-lg bg-destructive/10 p-3 text-[13px] text-destructive w-full">
-                    {v3Error}
-                  </div>
-                )}
-
-                {!isGeneratingV3 && (
-                  <button
-                    type="button"
-                    onClick={handleUnlock}
-                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    <FileText className="size-4" />
-                    {authProfile ? "Unlock Report" : "Sign in to Unlock"}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
-                >
-                  Back to listing
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <OutOfPistonsModal
-          open={outOfReportsOpen}
-          onOpenChange={setOutOfReportsOpen}
-          neededPistons={100}
-          currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
-        />
-      </main>
-    )
-  }
+  // ─── Defensive fallback: V2 is only mounted when userHasAccess is
+  // true (see page.tsx). If we ever land here without access, return
+  // null and let the V1 layout handle the paywall UX — V1 has the
+  // sidebar TOC + hero + sectioned paywall the brand uses everywhere.
+  if (!userHasAccess) return null
 
   // ─── V3-only mode: no V2 report but V3 sections exist ──────────────
   if (!existingReport) {
@@ -367,7 +265,7 @@ export function ReportClientV2({
           {isGeneratingV3 && (
             <div className="rounded-2xl border border-border bg-card p-6">
               <h2 className="font-serif text-[18px] font-semibold mb-4">
-                Generating Investment Dossier
+                Generating Haus Report
               </h2>
               <GenerationStepper steps={generationSteps} />
             </div>
@@ -587,7 +485,7 @@ export function ReportClientV2({
               onClick={() => handleGenerateV3()}
               className="rounded-lg bg-primary/10 px-5 py-2.5 text-[13px] font-semibold text-primary hover:bg-primary/20 transition-colors"
             >
-              Generate V3 Investment Dossier
+              Generate Haus Report
             </button>
           </div>
         )}

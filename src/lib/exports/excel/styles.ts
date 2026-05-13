@@ -26,8 +26,9 @@ export const EXCEL_COLORS = {
   softBeige: "FFF5F2EE",         // Soft Beige (formula / reference tables)
   warmBorder: "FFE8E2DC",        // Warm Border
   lavenderVeil: "FFF1E6F3",      // Lavender Veil (subtle accent surfaces)
-  // Header strip — Ink, not navy
-  headerBg: "FF141413",
+  // Header strip — Lavender Ink Deep (warmer than pure Ink, still
+  // readable with cream text). Sits cleanly on the Warm Cream sheet bg.
+  headerBg: "FF3F2A47",
   headerText: "FFFDFBF9",
   // Cell-role palette
   inputBg: "FFF1E6F3",           // Lavender Veil — "edit me" (replaces warm rose-tint)
@@ -120,8 +121,8 @@ export function titleCell(): { font: Partial<Font>; alignment: Partial<Alignment
     font: {
       name: EXCEL_FONTS.bodyName,
       bold: true,
-      size: 18,
-      color: { argb: EXCEL_COLORS.brandPrimary },
+      size: 20,
+      color: { argb: EXCEL_COLORS.brandLavenderInkDeep },
     },
     alignment: { horizontal: "left", vertical: "middle" },
   }

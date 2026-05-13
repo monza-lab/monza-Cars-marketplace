@@ -12,6 +12,7 @@ import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 import { AdvisorHandoffProvider } from "@/components/advisor/AdvisorHandoffContext";
+import { AdvisorFab } from "@/components/advisor/AdvisorFab";
 import { ConsentProvider } from "@/components/legal/ConsentProvider";
 import { ClientTrackers } from "@/components/legal/ClientTrackers";
 import { CookieBanner } from "@/components/legal/CookieBanner";
@@ -92,6 +93,7 @@ export default async function LocaleLayout({
                   <OrganizationJsonLd />
                   <ClientHeader />
                   <main>{children}</main>
+                  <AdvisorFab />
                   <MobileBottomNav />
                   <AppFooter />
                   <ClientTrackers />

@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: ReportPageProps) {
   if (!car) return { title: "Not Found | MonzaHaus" }
 
   return {
-    title: `Investment Dossier: ${car.title} | MonzaHaus`,
+    title: `Haus Report: ${car.title} | MonzaHaus`,
     description: `Comprehensive investment analysis for ${car.title}. Valuation, risk assessment, ownership economics, and market context.`,
   }
 }
@@ -194,35 +194,43 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
   // ─── V3 section fetch ────────────────────────────────────────────────
   let v3Report: HausReportV3 | null = null
-  try {
-    const { fetchReportSections } = await import("@/lib/reports/reportSections")
-    const { assembleV3ReportFromSections } = await import("@/lib/reports/assembleV3Report")
-    const sections = await fetchReportSections(car.id, 1)
-    if (sections.length > 0) {
-      v3Report = assembleV3ReportFromSections(sections, car.id)
-    }
-  } catch { /* V3 not available */ }
+  if (mockName === "v3") {
+    const fixture = (await import("@/lib/reports/__fixtures__/v3-911-gt3r-rennsport-mock.json")).default
+    v3Report = fixture as unknown as HausReportV3
+  } else {
+    try {
+      const { fetchReportSections } = await import("@/lib/reports/reportSections")
+      const { assembleV3ReportFromSections } = await import("@/lib/reports/assembleV3Report")
+      const sections = await fetchReportSections(car.id, 1)
+      if (sections.length > 0) {
+        v3Report = assembleV3ReportFromSections(sections, car.id)
+      }
+    } catch { /* V3 not available */ }
+  }
 
   // ─── User access check ─────────────────────────────────────────────
   // A user has access if: (a) they already paid for this report,
   // (b) they have unlimited_reports, or (c) they are admin.
   // Unauthenticated users never have access.
-  let userHasAccess = false
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const [alreadyPaid, credits] = await Promise.all([
-        hasAlreadyGenerated(user.id, car.id),
-        getUserCredits(user.id),
-      ])
-      userHasAccess =
-        alreadyPaid ||
-        Boolean(credits?.unlimited_reports) ||
-        isAdmin(user.email)
+  // Mock previews (?mock=*) unlock automatically for design QA.
+  let userHasAccess = Boolean(mockName)
+  if (!userHasAccess) {
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const [alreadyPaid, credits] = await Promise.all([
+          hasAlreadyGenerated(user.id, car.id),
+          getUserCredits(user.id),
+        ])
+        userHasAccess =
+          alreadyPaid ||
+          Boolean(credits?.unlimited_reports) ||
+          isAdmin(user.email)
+      }
+    } catch {
+      // Auth unavailable — leave as false
     }
-  } catch {
-    // Auth unavailable — leave as false
   }
 
   return (
@@ -239,7 +247,14 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {(existingReport || v3Report) ? (
+      {/* Layout rule: V2 (full unlocked report with all sections) is only
+          shown to users with access. Everyone else — including users who
+          have no report yet AND users who have a V3 sitting in DB but
+          haven't paid — sees the V1 layout (sidebar TOC + hero + teaser
+          sections). This guarantees the same paywall UX across the whole
+          funnel. V1 itself never calls the AI; it only renders what we
+          already have from the listing scrape. */}
+      {userHasAccess && (existingReport || v3Report) ? (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
@@ -257,7 +272,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         <ReportClient
           car={car}
           similarCars={similarCars}
-          existingReport={null}
+          existingReport={existingReport}
           marketStats={marketStats}
           dbComparables={dbComparables}
         />

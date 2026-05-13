@@ -1,11 +1,13 @@
 import path from "path"
 import { Font } from "@react-pdf/renderer"
 
-// Monza Haus brand fonts. Registered once on module import.
-// - Cormorant: serif, used for display/hero/titles (brand spec §5).
-// - Karla: sans, used for body/UI/labels.
-// Variable fonts downloaded from Google Fonts `main` branch; served from
-// `public/fonts/monzahaus/` so the same path resolves in dev and on Vercel.
+// MonzaHaus brand fonts. Registered once on module import.
+// Per brand manual v2.1:
+//   - Saira: wordmark only (M + [helmet] + NZAHAUS), 600 UPPERCASE.
+//   - Cormorant: serif, display/hero/titles/prices.
+//   - Karla: sans, body/UI/labels.
+// Variable fonts served from `public/fonts/monzahaus/` so the same path
+// resolves in dev and on Vercel.
 
 const FONT_DIR = path.join(process.cwd(), "public", "fonts", "monzahaus")
 
@@ -15,6 +17,16 @@ export function ensureBrandFontsRegistered(): void {
   if (registered) return
 
   try {
+    Font.register({
+      family: "Saira",
+      fonts: [
+        { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 400 },
+        { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 500 },
+        { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 600 },
+        { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 700 },
+      ],
+    })
+
     Font.register({
       family: "Cormorant",
       fonts: [

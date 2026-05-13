@@ -111,7 +111,7 @@ MonzaHaus aggregates listings from Bring a Trailer, Cars & Bids, AutoScout24, Cl
 
 ## Contact
 
-For data partnerships or inquiries: hello@monzahaus.com
+For data partnerships or inquiries: hello@monzalab.com
 `;
 
 export async function GET() {

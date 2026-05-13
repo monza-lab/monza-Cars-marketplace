@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
-import { Clock, Gavel, ExternalLink, Car as CarIcon } from "lucide-react";
+import { Clock, Gavel, ExternalLink, Car as CarIcon, ChevronRight } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
 import { timeLeft } from "@/lib/makePageHelpers";
@@ -130,6 +130,18 @@ export function BrowseCard({
           <div className="absolute bottom-2.5 left-2.5">
             <PhotoPendingPill car={car} />
           </div>
+
+          {/* Persistent "Open Report" cue — sutil pero presente. Lets the
+              reader know the whole card is clickable and where it leads.
+              Translates slightly + brightens on hover so the affordance
+              also feels alive without being aggressive. */}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-primary/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-md transition-all duration-200 group-hover:bg-primary group-hover:-translate-y-0.5"
+          >
+            Report
+            <ChevronRight className="size-2.5" />
+          </span>
         </div>
 
         <div className="p-3 sm:p-3">

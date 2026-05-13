@@ -319,14 +319,14 @@
     "sampleData": "Beispieldaten"
   },
   "investmentReport": {
-    "title": "Investment-Dossier",
+    "title": "Haus Report",
     "subtitle": "Umfassende Analyse & Bewertung",
     "backToVehicle": "Zurück zum Fahrzeug",
     "generatedFor": "Erstellt für",
     "reportId": "Bericht-ID",
     "confidential": "Vertraulich",
     "unlockReport": "Vollständigen Bericht freischalten",
-    "unlockDesc": "Erhalten Sie Zugang zum vollständigen Investment-Dossier mit detaillierter Bewertung, Risikoanalyse und umsetzbaren Empfehlungen.",
+    "unlockDesc": "Erhalten Sie Zugang zum vollständigen Haus Report mit detaillierter Bewertung, Risikoanalyse und umsetzbaren Empfehlungen.",
     "unlockCost": "1.000 Pistons",
     "freePreview": "Kostenlose Vorschau",
     "sections": {
@@ -495,7 +495,7 @@
     "downloadExcel": "Excel exportieren",
     "downloadExcelDesc": "Rohe Datentabellen",
     "downloadGenerating": "Wird erstellt...",
-    "downloadCoverTitle": "Investment-Dossier",
+    "downloadCoverTitle": "Haus Report",
     "downloadCoverConfidential": "Vertraulich",
     "downloadCoverGenerated": "Erstellt"
   },
@@ -575,7 +575,7 @@
     "currentBalance": "Aktueller Saldo",
     "tokens": "Tokens",
     "successTitle": "Bericht freigeschaltet!",
-    "successDesc": "Sie haben jetzt vollen Zugang zu diesem Investment-Dossier.",
+    "successDesc": "Sie haben jetzt vollen Zugang zu diesem Haus Report.",
     "processing": "Verarbeitung..."
   },
   "outOfPistons": {

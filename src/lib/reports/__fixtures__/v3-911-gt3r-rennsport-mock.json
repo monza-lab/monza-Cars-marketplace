@@ -1,0 +1,377 @@
+{
+  "listingId": "live-24f20bd5-3ae6-41bc-9706-68f6a7ea1e1c",
+  "reportVersion": 3,
+  "listingScrape": {
+    "title": "2024 Porsche 911 GT3 R Rennsport",
+    "year": 2024,
+    "make": "Porsche",
+    "model": "911 GT3 R Rennsport",
+    "trim": "Rennsport",
+    "vin": "WP0ZZZ99ZRS200007",
+    "engine": "4.2L Naturally Aspirated Flat-Six",
+    "transmission": "6-Speed Sequential",
+    "drivetrain": "RWD",
+    "horsepower": 611,
+    "torque": "509 Nm",
+    "weight": "1250 kg",
+    "bodyStyle": "Coupe",
+    "seats": 1,
+    "mileage": 25,
+    "mileageUnit": "mi",
+    "exteriorColor": "Grand Prix White with Heritage Stripes",
+    "interiorColor": "Race Black",
+    "location": "Nashua, New Hampshire, USA",
+    "descriptionFull": "Track-only, non-homologated factory race car. 7th of 77 examples produced for the GT3 R Rennsport limited series. Includes pit equipment, spare parts, and Porsche Motorsport documentation.",
+    "sellerNotes": "Single ownership from new. Maintained by authorized Porsche Motorsport service partner.",
+    "auctionComments": "Reserve set conservatively. Provenance documented through Porsche Heritage.",
+    "lotEssay": "One of the most exclusive modern Porsche track specials, the GT3 R Rennsport pays homage to Porsche's racing heritage with bespoke aerodynamics, naturally aspirated 4.2L flat-six, and motorsport-grade chassis.",
+    "equipmentList": [
+      "Porsche Motorsport Telemetry Package",
+      "Air Jack System",
+      "FT3 Safety Fuel Cell",
+      "Quick-release Steering Wheel",
+      "Pit Equipment Set",
+      "Spare Parts Package",
+      "Carbon-Ceramic Brakes (PCCB)",
+      "Adjustable Aero Package"
+    ],
+    "modifications": [],
+    "photoUrls": [],
+    "photoCount": 42,
+    "currentBid": 918000,
+    "bidCount": 24,
+    "reserveStatus": "unknown",
+    "auctionEndTime": "2026-05-13T22:00:00.000Z",
+    "askingPrice": null,
+    "daysOnMarket": 5,
+    "priceDrops": null,
+    "sellerName": "Private Collector",
+    "sellerType": "private",
+    "sellerLocation": "Nashua, NH, USA",
+    "scrapedAt": "2026-05-12T15:30:00.000Z",
+    "scrapeSuccessful": true,
+    "scrapePartial": false,
+    "sourceUrl": "https://bringatrailer.com/listing/2024-porsche-911-gt3-r-rennsport",
+    "platform": "BaT"
+  },
+  "vehicleIdentity": {
+    "year": 2024,
+    "make": "Porsche",
+    "model": "911 GT3 R Rennsport",
+    "series": "992",
+    "family": "911",
+    "variant": "GT3 R Rennsport",
+    "trim": "Limited Edition",
+    "generationYears": "2019-present",
+    "engine": "4.2L Naturally Aspirated Flat-Six",
+    "transmission": "6-Speed Sequential",
+    "drivetrain": "RWD",
+    "bodyStyle": "Coupe",
+    "horsepower": 611,
+    "factoryOptions": [
+      "Porsche Motorsport Heritage Livery",
+      "Telemetry & Data Logging Package",
+      "Endurance Racing Kit"
+    ],
+    "isSpecialEdition": true,
+    "listingType": "auction"
+  },
+  "marketData": null,
+  "technicalAnalysis": {
+    "modelHistory": "The GT3 R Rennsport debuted in 2023 as a track-only celebration of 75 years of Porsche sports cars. Built on the 992 GT3 R race car platform with bespoke aerodynamics and a naturally aspirated 4.2L flat-six, only 77 units were produced — a deliberate reference to the 1948 Type 360 Cisitalia, Porsche's first racing project.",
+    "whatMakesThisSpecSpecial": "This is example 7 of 77 — exceptionally low production within an already exclusive model. The naturally aspirated 4.2L engine paired with sequential gearbox is the closest factory Porsche has come to a pure analog endurance racer in the modern era. The non-homologated status means it cannot be road-registered, which preserves its track-only purity but limits practical use.",
+    "productionData": {
+      "totalProduction": "77 units",
+      "thisConfigEstimate": "1 of 77",
+      "rarityAssessment": "very_rare",
+      "rarityNote": "Among the rarest modern Porsche track specials. Each unit is individually numbered and documented."
+    },
+    "keyStrengths": [
+      { "point": "Naturally aspirated 4.2L flat-six", "detail": "611 hp without turbocharging — the soundtrack and throttle response are unrivaled in modern motorsport." },
+      { "point": "Sequential gearbox", "detail": "Direct mechanical feel preferred by track-day enthusiasts and gentleman racers." },
+      { "point": "Heritage provenance", "detail": "Built to honor 75 years of Porsche racing — strong long-term collector appeal." },
+      { "point": "Factory support", "detail": "Porsche Motorsport service partner network covers maintenance and parts globally." }
+    ],
+    "commonIssues": [
+      {
+        "issue": "Engine rebuild cycle",
+        "severity": "moderate",
+        "typicalCost": "$45K-$65K",
+        "appliesTo": "Every 50-75 track hours per Porsche Motorsport schedule"
+      },
+      {
+        "issue": "Sequential gearbox wear under improper shifting",
+        "severity": "moderate",
+        "typicalCost": "$25K-$40K",
+        "appliesTo": "If clutch/throttle technique is incorrect during downshifts"
+      },
+      {
+        "issue": "Carbon-ceramic brake disc renewal",
+        "severity": "minor",
+        "typicalCost": "$18K per axle",
+        "appliesTo": "Every 30-40 endurance hours under heavy braking"
+      }
+    ],
+    "reliability": {
+      "rating": "above_average",
+      "maintenanceCostLevel": "very_high",
+      "commonProblems": [
+        "Track use only — not designed for daily reliability metrics",
+        "Requires Porsche Motorsport service partner for major work",
+        "Specialty fluids and consumables (motorsport-grade)"
+      ]
+    },
+    "collectorOutlook": {
+      "investmentGrade": "high",
+      "demandLevel": "high",
+      "futureOutlook": "Limited production, strong heritage narrative, and analog driving experience make this a hedge against the transition to electrified motorsport. Expected to appreciate steadily over 5-10 year horizon, with peak interest tied to Porsche centennial celebrations."
+    }
+  },
+  "investmentAnalysis": {
+    "strategy": {
+      "type": "auction",
+      "maxBidRecommendation": 950000,
+      "bidTiming": "Bid in final 30 minutes — early bids signal intent and invite competition.",
+      "reserveStrategy": "Reserve likely set in $850K-$900K range based on prior 7Rennsport closings. Current bid above reserve threshold.",
+      "openingOffer": null,
+      "walkAwayPrice": 1050000,
+      "negotiationLeverage": [
+        "Limited buyer pool for track-only cars without homologation",
+        "Storage and transport logistics complicate resale",
+        "Engine rebuild clock starts at first track session"
+      ],
+      "strategyInsight": "The $918K current bid is within rational range. Cap your bid at $950K-$975K to leave headroom for the next sale. Above $1M, the spread tightens and resale margin compresses meaningfully.",
+      "potentialRepairs": { "low": 0, "high": 15000, "description": "Pre-purchase inspection and corner-balancing recommended; no known issues from documentation." }
+    },
+    "ownershipCosts": {
+      "year1": {
+        "totalCost": 142000,
+        "breakdown": { "valueChange": 50000, "insurance": 22000, "maintenance": 35000, "majorWork": 35000 },
+        "notes": "Year 1 includes initial track preparation, telemetry recalibration, and one endurance event (engine inspection cycle).",
+        "confidence": "high"
+      },
+      "year3": {
+        "totalCost": 285000,
+        "breakdown": { "valueChange": -15000, "insurance": 66000, "maintenance": 105000, "majorWork": 110000 },
+        "notes": "Mid-cycle includes a planned engine rebuild and gearbox refresh assuming 60 track hours total.",
+        "confidence": "medium"
+      },
+      "year5": {
+        "totalCost": 410000,
+        "breakdown": { "valueChange": -25000, "insurance": 110000, "maintenance": 195000, "majorWork": 105000 },
+        "notes": "Year 5 assumes second engine rebuild and full chassis refresh. Resale window opens.",
+        "confidence": "medium"
+      }
+    },
+    "resaleTimeline": {
+      "year1": {
+        "estimatedRange": { "low": 920000, "high": 985000 },
+        "percentChange": 3.5,
+        "confidence": "medium",
+        "keyFactors": ["Limited supply", "Initial registration / chain of custody premium"]
+      },
+      "year3": {
+        "estimatedRange": { "low": 950000, "high": 1080000 },
+        "percentChange": 9.2,
+        "confidence": "medium",
+        "keyFactors": ["Heritage appreciation", "Track hours determine value", "Porsche 75th continued narrative"]
+      },
+      "year5": {
+        "estimatedRange": { "low": 1050000, "high": 1280000 },
+        "percentChange": 22.5,
+        "confidence": "medium",
+        "keyFactors": ["Approaching Porsche 80th anniversary", "Last-of-an-era ICE motorsport positioning"]
+      },
+      "year10": {
+        "estimatedRange": { "low": 1450000, "high": 1850000 },
+        "percentChange": 70.0,
+        "confidence": "low",
+        "keyFactors": ["Generational milestone collectors", "Motorsport electrification cycle", "Limited surviving low-hour examples"]
+      }
+    },
+    "investmentNarrative": "The GT3 R Rennsport occupies a unique niche: it is simultaneously a museum piece and a usable race car. For collectors who prize provenance over practicality, this 7th-of-77 example represents one of the cleanest entries into Porsche's modern motorsport canon. The naturally aspirated 4.2L flat-six and sequential gearbox configuration is unlikely to be repeated as Porsche pivots toward hybrid and electric platforms — a structural scarcity that should reward patient owners over a 5-10 year horizon."
+  },
+  "dueDiligence": {
+    "questions": [
+      {
+        "category": "essential",
+        "question": "Has the car been driven on track, and if so, how many hours are logged?",
+        "whyItMatters": "Engine rebuild cycle is 50-75 hours. Each hour of track time directly impacts the next major service cost ($45K-$65K)."
+      },
+      {
+        "category": "essential",
+        "question": "Is the original Porsche Motorsport telemetry data available for review?",
+        "whyItMatters": "Telemetry shows actual usage patterns, RPM peaks, and stress events that affect engine longevity."
+      },
+      {
+        "category": "vehicle_specific",
+        "question": "Are all original delivery items present — pit equipment, spares package, documentation?",
+        "whyItMatters": "Complete delivery sets command 8-15% premium and are essential for downstream resale."
+      },
+      {
+        "category": "history",
+        "question": "Who performed maintenance, and are all service records on Porsche Motorsport headed paper?",
+        "whyItMatters": "Non-PMP service voids factory support and significantly impacts resale eligibility."
+      },
+      {
+        "category": "financial",
+        "question": "What is the seller's basis, and is there a tax implication on the sale?",
+        "whyItMatters": "Influences negotiation room and bid ceiling; high-basis seller may hold firm on price."
+      },
+      {
+        "category": "vehicle_specific",
+        "question": "Has the FT3 fuel cell been re-certified within its inspection window?",
+        "whyItMatters": "FIA-spec fuel cells require periodic re-certification; expired cells limit track event eligibility."
+      }
+    ],
+    "riskScore": {
+      "overall": 34,
+      "breakdown": [
+        { "category": "Provenance", "score": 15, "note": "Single ownership, documented chain, Porsche Heritage records." },
+        { "category": "Mechanical condition", "score": 30, "note": "Low hours, factory-spec, but track-only cars need PPI." },
+        { "category": "Liquidity", "score": 55, "note": "Narrow buyer pool — track-only restricts resale velocity." },
+        { "category": "Storage & logistics", "score": 40, "note": "Requires climate-controlled storage and enclosed transport." }
+      ]
+    },
+    "ppiChecklist": [
+      { "item": "Borescope inspection of all six cylinders", "priority": "critical", "specificTo": "Naturally aspirated motorsport engine", "estimatedCost": "$1,800" },
+      { "item": "Sequential gearbox load test and end-float measurement", "priority": "critical", "specificTo": "Sequential transmission with track wear sensitivity", "estimatedCost": "$2,400" },
+      { "item": "Carbon-ceramic brake disc thickness measurement", "priority": "critical", "specificTo": "PCCB renewal cost is significant", "estimatedCost": "$600" },
+      { "item": "FT3 fuel cell certification date verification", "priority": "critical", "specificTo": "Required for FIA-sanctioned events", "estimatedCost": "$300" },
+      { "item": "Telemetry data export and review", "priority": "recommended", "specificTo": "Reveals actual stress history", "estimatedCost": "$500" },
+      { "item": "Suspension corner-balancing measurement", "priority": "recommended", "specificTo": "Track car setup integrity", "estimatedCost": "$1,200" },
+      { "item": "Factory documentation completeness check", "priority": "critical", "specificTo": "Heritage premium depends on complete records", "estimatedCost": "$0" }
+    ]
+  },
+  "marketResearch": {
+    "expertConsensus": {
+      "compiledAnalysis": [
+        {
+          "category": "Investment-grade collectibility",
+          "sentiment": "positive",
+          "summary": "Industry experts consistently rank limited-production Porsche track specials among the most reliable appreciators in the modern era, with the GT3 R Rennsport positioned as a flagship example."
+        },
+        {
+          "category": "Drivability and usability",
+          "sentiment": "mixed",
+          "summary": "Reviewers praise the analog driving experience but caution that track-only status limits ownership scenarios. Best suited to collectors with existing track-day infrastructure."
+        },
+        {
+          "category": "Long-term value preservation",
+          "sentiment": "positive",
+          "summary": "Naturally aspirated, manual-transmission Porsches have outperformed broader market indices over the last decade. The GT3 R Rennsport's hybrid-free, electronics-light configuration aligns with this thesis."
+        }
+      ]
+    },
+    "ownerSentiment": {
+      "commonPraise": [
+        "Unmatched throttle response and sound from the 4.2L flat-six",
+        "Direct mechanical feedback through sequential gearbox",
+        "Porsche Motorsport support network professionalism",
+        "Provenance documentation that holds up under scrutiny"
+      ],
+      "commonComplaints": [
+        "Logistics of track-only ownership (transport, storage, scheduling)",
+        "High cost of consumables (motorsport-spec fluids, brake discs)",
+        "Limited venue compatibility — not all tracks accept non-homologated cars",
+        "Cabin ergonomics optimized for racing, not comfort"
+      ],
+      "ownerTips": [
+        "Establish relationship with a Porsche Motorsport service partner before purchase",
+        "Budget for enclosed transport and climate-controlled storage from day one",
+        "Track time should be planned around the engine rebuild cycle, not the calendar",
+        "Keep all consumable receipts — they document the maintenance narrative for resale"
+      ]
+    },
+    "heritage": "The GT3 R Rennsport sits at the intersection of three Porsche traditions: the GT3 R endurance racing program (now over two decades old), the limited-production 'Rennsport' lineage that includes the 911 R, GT2 RS, and 935, and the company's broader 75-year racing heritage. Each example carries a unique build plate referencing the Type 360 Cisitalia, Porsche's first competition project. This positioning insulates the model from generational fashion swings — its narrative is intrinsically tied to Porsche's identity.",
+    "relevantEvents": [
+      { "name": "Rennsport Reunion", "frequency": "Every 4 years", "location": "Laguna Seca, USA", "description": "The premier Porsche motorsport gathering; flagship venue for GT3 R Rennsport owners to showcase their cars." },
+      { "name": "Porsche Sports Cup", "frequency": "Annual season", "location": "Europe (multi-venue)", "description": "Customer racing series where GT3 R Rennsport examples occasionally participate in invitational classes." },
+      { "name": "Goodwood Festival of Speed", "frequency": "Annual", "location": "West Sussex, UK", "description": "International stage for limited-production Porsche track cars to attract collector and media attention." }
+    ],
+    "ownerClubs": [
+      "Porsche Club of America — Competition Division",
+      "Porsche Motorsport North America (factory program)",
+      "Porsche Owners Club (POC) — Track Series",
+      "Rennsport Society (private, invitation-based)"
+    ]
+  },
+  "buyerServices": {
+    "partsAvailability": {
+      "overallRating": "limited",
+      "oemNote": "All consumables and major service parts available through Porsche Motorsport service partners. Lead times typically 4-8 weeks for non-stock items.",
+      "aftermarketNote": "Aftermarket support is minimal — this is a factory race car. Modifications void the heritage premium and Porsche support eligibility.",
+      "commonParts": [
+        { "name": "Carbon-ceramic brake rotor (front pair)", "availability": "PMP stock", "priceRange": "$18,000-$22,000" },
+        { "name": "Sequential gearbox internals", "availability": "Order from Weissach", "priceRange": "$25,000-$45,000" },
+        { "name": "Engine oil (motorsport spec, per change)", "availability": "PMP stock", "priceRange": "$650-$850" },
+        { "name": "FT3 fuel cell re-certification", "availability": "FIA-approved labs", "priceRange": "$3,500-$5,500" }
+      ]
+    },
+    "insuranceEstimates": {
+      "collectorPolicy": {
+        "annualPremium": { "low": 18000, "high": 26000 },
+        "mileageLimit": "Track-only; no road mileage covered",
+        "providers": ["Hagerty Collector Network", "Chubb Masterpiece", "Grundy Worldwide"]
+      },
+      "dailyDriver": null,
+      "notes": "Track-only cars require specialty coverage with on-track incident provisions. Most policies require a separate event endorsement per track day. Agreed-value coverage is essential at this value level.",
+      "vehicleCategory": "Limited-production track-only competition vehicle"
+    },
+    "regionalVariations": {
+      "strongMarkets": [
+        { "region": "United States", "premiumPercent": "+5-8%", "reason": "Largest pool of private track facilities and PCA chapters" },
+        { "region": "Germany", "premiumPercent": "+3-6%", "reason": "Proximity to Weissach and active Porsche motorsport community" }
+      ],
+      "weakerMarkets": [
+        { "region": "Japan", "discountPercent": "-4-7%", "reason": "Track-only homologation complications and limited venue access" },
+        { "region": "United Kingdom", "discountPercent": "-2-4%", "reason": "Currency headwinds and post-Brexit import friction" }
+      ]
+    },
+    "transportEstimates": {
+      "recommendation": "enclosed",
+      "specialHandling": [
+        "Climate-controlled trailer required (humidity sensitivity for electronics)",
+        "Crew familiar with motorsport tie-downs (no chassis flex during transport)",
+        "Pre- and post-transport corner-balancing recommended"
+      ],
+      "routes": [
+        {
+          "type": "enclosed",
+          "shortHaul": { "perMile": "$3.50-$5.00", "example": "NH → CT (~200mi) ~$900" },
+          "mediumHaul": { "perMile": "$2.80-$4.20", "example": "NH → FL (~1,400mi) ~$5,200" },
+          "longHaul": { "perMile": "$2.40-$3.60", "example": "NH → CA (~3,000mi) ~$9,800" }
+        }
+      ],
+      "seasonalNote": "Winter transport adds 10-15% for de-icing and chain coverage. Summer Northeast → Southeast routes carry premium for hurricane-season logistics.",
+      "insuranceNote": "Verify transporter carries motorsport in-transit coverage at minimum $1.5M agreed-value."
+    },
+    "originalMsrp": {
+      "basePrice": 1043000,
+      "adjustedForInflation": 1075000,
+      "note": "Original delivery in late 2023 at $1.043M base; with Heritage Stripes and telemetry package, build sheets show $1.08M-$1.12M typical."
+    }
+  },
+  "finalSynthesis": {
+    "executiveSummary": {
+      "headline": "Exceptionally rare track-only Porsche with strong heritage narrative — current bid sits within rational acquisition range.",
+      "keyMetrics": {
+        "fairValueRange": "$880K – $975K",
+        "signalsCoverage": "92%",
+        "riskScore": 34,
+        "verdict": "BUY",
+        "marketPosition": "Within range"
+      },
+      "investmentThesis": "The 911 GT3 R Rennsport represents a structurally rare entry into Porsche's modern motorsport canon. As 7 of 77 with low hours, complete documentation, and single-owner provenance, this example checks every box for long-horizon collector positioning. The naturally aspirated 4.2L flat-six and sequential gearbox configuration is unlikely to be repeated, creating a scarcity premium that should compound over 5-10 years."
+    },
+    "finalRecommendation": {
+      "score": 78,
+      "conditionEstimate": "Near-new (25 miles, factory-fresh)",
+      "verdict": "Bid up to $950K. Above $1M, the long-term margin compresses and you become dependent on appreciation rather than positioning."
+    }
+  },
+  "generatedAt": "2026-05-12T16:45:00.000Z",
+  "totalDurationMs": 142500,
+  "stepsCompleted": 9,
+  "stepsFailed": 0
+}

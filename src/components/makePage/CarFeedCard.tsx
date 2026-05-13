@@ -1,7 +1,7 @@
 "use client"
 
 import { Link } from "@/i18n/navigation"
-import { Clock, Gavel, ChevronRight } from "lucide-react"
+import { Clock, Gavel, ChevronRight, ExternalLink } from "lucide-react"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
@@ -50,7 +50,7 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
           </div>
 
           {/* Status badge — top right */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 flex items-center gap-2">
             {isEndingSoon && (
               <span className="flex items-center gap-1.5 rounded-full bg-destructive/30 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-destructive">
                 <Clock className="size-3 animate-pulse" />
@@ -64,6 +64,24 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
               </span>
             )}
           </div>
+
+          {/* "View on source" bottom-left — discreet path back to the
+              marketplace where the car is actually for sale. */}
+          {car.sourceUrl && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                window.open(car.sourceUrl!, "_blank", "noopener,noreferrer")
+              }}
+              className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-background/30 bg-background/70 backdrop-blur-md px-3 py-1.5 text-[10px] font-medium text-foreground hover:bg-background hover:border-primary/40 hover:text-primary transition-colors"
+              title={`View original listing on ${car.platform.replace(/_/g, " ")}`}
+            >
+              View on {platformLabels[car.platform]?.short || car.platform.replace(/_/g, " ")}
+              <ExternalLink className="size-3" />
+            </button>
+          )}
         </div>
 
         {/* BOTTOM: CAR INFO */}

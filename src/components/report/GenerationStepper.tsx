@@ -65,7 +65,7 @@ const ROTATING_MESSAGES: Record<string, string[]> = {
   final_synthesis: [
     "Composing executive summary and investment thesis...",
     "Synthesizing 10 research dimensions into your verdict...",
-    "Your Investment Dossier is almost ready...",
+    "Your Haus Report is almost ready...",
   ],
 }
 
@@ -215,7 +215,7 @@ export function GenerationStepper({
             className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-amber-900/30 via-black/50 to-amber-900/10"
           >
             <h2 className="text-2xl font-bold text-white mb-2">
-              Your Investment Dossier is ready
+              Your Haus Report is ready
             </h2>
             <p className="text-white/70 mb-6">{carTitle}</p>
             <motion.button

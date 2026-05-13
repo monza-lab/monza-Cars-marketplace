@@ -319,14 +319,14 @@
     "sampleData": "サンプルデータ"
   },
   "investmentReport": {
-    "title": "投資ドシエ",
+    "title": "Haus Report",
     "subtitle": "包括的な分析と評価",
     "backToVehicle": "車両に戻る",
     "generatedFor": "生成先",
     "reportId": "レポートID",
     "confidential": "機密",
     "unlockReport": "フルレポートを解除",
-    "unlockDesc": "詳細な評価、リスク分析、実行可能な推奨事項を含む完全な投資ドシエにアクセスできます。",
+    "unlockDesc": "詳細な評価、リスク分析、実行可能な推奨事項を含む完全なHaus Reportにアクセスできます。",
     "unlockCost": "1,000 Pistons",
     "freePreview": "無料プレビュー",
     "sections": {
@@ -495,7 +495,7 @@
     "downloadExcel": "Excelエクスポート",
     "downloadExcelDesc": "生データテーブル",
     "downloadGenerating": "生成中...",
-    "downloadCoverTitle": "投資ドシエ",
+    "downloadCoverTitle": "Haus Report",
     "downloadCoverConfidential": "機密",
     "downloadCoverGenerated": "生成日"
   },
@@ -575,7 +575,7 @@
     "currentBalance": "現在の残高",
     "tokens": "トークン",
     "successTitle": "レポートがアンロックされました！",
-    "successDesc": "この投資ドシエへの完全なアクセスが可能になりました。",
+    "successDesc": "このHaus Reportへの完全なアクセスが可能になりました。",
     "processing": "処理中..."
   },
   "outOfPistons": {

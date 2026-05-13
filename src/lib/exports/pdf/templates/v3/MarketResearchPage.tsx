@@ -1,130 +1,273 @@
 import { Page, Text, View } from "@react-pdf/renderer"
 import type { MarketResearch } from "@/lib/reports/types-v3"
-import { pdfStyles, PDF_COLORS } from "../../styles"
+import { createPdfStyles, getThemeTokens } from "../../styles"
+import type { PdfTheme } from "../../theme"
+import { humanize } from "../../utils"
 import { PageFooter } from "../PageFooter"
 
 interface Props {
   data: MarketResearch
-  reportHash: string
+  reportHash: string | null
   generatedAt: string
   pageNumber: number
   totalPages: number
+  theme: PdfTheme
 }
 
-function sentimentColor(s: "positive" | "mixed" | "negative") {
-  if (s === "positive") return PDF_COLORS.positive
-  if (s === "negative") return PDF_COLORS.negative
-  return PDF_COLORS.warning
+function sentimentDotColor(
+  sentiment: "positive" | "mixed" | "negative",
+  tokens: ReturnType<typeof getThemeTokens>,
+) {
+  if (sentiment === "positive") return tokens.positive
+  if (sentiment === "negative") return tokens.negative
+  return tokens.warning
 }
 
-export function MarketResearchPage({ data, reportHash, generatedAt, pageNumber, totalPages }: Props) {
-  // Defensively handle expertConsensus — AI may return a bare array instead of { compiledAnalysis: [...] }
+export function MarketResearchPage({
+  data,
+  reportHash,
+  generatedAt,
+  pageNumber,
+  totalPages,
+  theme,
+}: Props) {
+  const styles = createPdfStyles(theme)
+  const tokens = getThemeTokens(theme)
+
+  // Defensively handle expertConsensus — AI may return a bare array instead of { compiledAnalysis: [...] }.
   const compiledAnalysis = Array.isArray(data.expertConsensus)
-    ? data.expertConsensus as { category: string; sentiment: "positive" | "mixed" | "negative"; summary: string }[]
+    ? (data.expertConsensus as {
+        category: string
+        sentiment: "positive" | "mixed" | "negative"
+        summary: string
+      }[])
     : data.expertConsensus?.compiledAnalysis ?? []
 
+  const { commonPraise, commonComplaints, ownerTips } = data.ownerSentiment
+  const hasPraise = commonPraise.length > 0
+  const hasComplaints = commonComplaints.length > 0
+  const hasTips = ownerTips.length > 0
+  const hasEvents = data.relevantEvents.length > 0
+  const hasClubs = data.ownerClubs.length > 0
+
   return (
-    <Page size="A4" style={pdfStyles.page}>
-      <View style={{ flex: 1 }}>
-        <Text style={pdfStyles.h2}>Market Research</Text>
+    <Page size="A4" style={styles.page}>
+      {/* Chapter opener */}
+      <View>
+        <Text style={styles.chapterEyebrow}>Chapter 05 · Market</Text>
+        <Text style={[styles.chapter, { marginBottom: 14 }]}>Market Research</Text>
+        <Text style={[styles.lede, { color: tokens.mutedStrong, marginBottom: 22 }]}>
+          How specialists, owners, and the broader marketplace see this car — synthesized from
+          expert commentary, owner reviews, and heritage context.
+        </Text>
+      </View>
 
-        {/* Expert Consensus */}
-        {compiledAnalysis.length > 0 && (
-          <View style={{ marginBottom: 14 }}>
-            <Text style={pdfStyles.h3}>Expert Consensus</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {compiledAnalysis.slice(0, 6).map((item, i) => (
-                <View key={i} style={[pdfStyles.card, { width: "48%" }]} wrap={false}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sentimentColor(item.sentiment) }} />
-                    <Text style={[pdfStyles.bodyEmphasis, { fontSize: 9 }]}>{item.category}</Text>
-                  </View>
-                  <Text style={[pdfStyles.bodyMuted, { lineHeight: 1.4 }]}>{item.summary}</Text>
+      {/* Expert Consensus — 2-col grid of cards */}
+      {compiledAnalysis.length > 0 && (
+        <View>
+          <Text style={styles.h2}>Expert Consensus</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 10,
+              marginBottom: 8,
+            }}
+          >
+            {compiledAnalysis.map((item, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.card,
+                  { width: "48%", marginBottom: 0, paddingTop: 14 },
+                ]}
+                wrap={false}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 6,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: sentimentDotColor(item.sentiment, tokens),
+                    }}
+                  />
+                  <Text style={[styles.eyebrow, { color: tokens.muted }]}>
+                    {humanize(item.sentiment)}
+                  </Text>
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Owner Sentiment */}
-        <Text style={pdfStyles.h3}>Owner Sentiment</Text>
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
-          {/* Praise */}
-          {data.ownerSentiment.commonPraise.length > 0 && (
-            <View style={[pdfStyles.card, { flex: 1 }]}>
-              <Text style={[pdfStyles.bodyEmphasis, { color: PDF_COLORS.positive, marginBottom: 4 }]}>
-                What Owners Love
-              </Text>
-              {data.ownerSentiment.commonPraise.slice(0, 5).map((p, i) => (
-                <View key={i} style={{ flexDirection: "row", marginBottom: 2 }}>
-                  <Text style={[pdfStyles.body, { color: PDF_COLORS.positive, marginRight: 4 }]}>+</Text>
-                  <Text style={[pdfStyles.bodyMuted, { flex: 1 }]}>{p}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-          {/* Complaints */}
-          {data.ownerSentiment.commonComplaints.length > 0 && (
-            <View style={[pdfStyles.card, { flex: 1 }]}>
-              <Text style={[pdfStyles.bodyEmphasis, { color: PDF_COLORS.negative, marginBottom: 4 }]}>
-                Common Complaints
-              </Text>
-              {data.ownerSentiment.commonComplaints.slice(0, 5).map((c, i) => (
-                <View key={i} style={{ flexDirection: "row", marginBottom: 2 }}>
-                  <Text style={[pdfStyles.body, { color: PDF_COLORS.negative, marginRight: 4 }]}>−</Text>
-                  <Text style={[pdfStyles.bodyMuted, { flex: 1 }]}>{c}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Owner Tips */}
-        {data.ownerSentiment.ownerTips.length > 0 && (
-          <View style={{ marginBottom: 14 }}>
-            <Text style={pdfStyles.h3}>Owner Tips</Text>
-            {data.ownerSentiment.ownerTips.slice(0, 5).map((tip, i) => (
-              <View key={i} style={{ flexDirection: "row", marginBottom: 3, paddingLeft: 4 }}>
-                <Text style={[pdfStyles.body, { color: PDF_COLORS.primary, marginRight: 6 }]}>→</Text>
-                <Text style={pdfStyles.body}>{tip}</Text>
+                <Text
+                  style={{
+                    fontFamily: "Cormorant",
+                    fontWeight: 500,
+                    fontSize: 14,
+                    color: tokens.foreground,
+                    letterSpacing: -0.2,
+                    marginBottom: 4,
+                  }}
+                >
+                  {humanize(item.category)}
+                </Text>
+                <Text style={[styles.bodyMuted, { lineHeight: 1.5 }]}>
+                  {item.summary}
+                </Text>
               </View>
             ))}
           </View>
-        )}
+        </View>
+      )}
 
-        {/* Heritage */}
-        {data.heritage && (
-          <View style={[pdfStyles.card, { borderColor: PDF_COLORS.primary }]}>
-            <Text style={pdfStyles.h3}>Heritage & Significance</Text>
-            <Text style={[pdfStyles.body, { marginTop: 4, lineHeight: 1.6 }]}>{data.heritage}</Text>
-          </View>
-        )}
-
-        {/* Events & Clubs */}
-        {(data.relevantEvents.length > 0 || data.ownerClubs.length > 0) && (
-          <View style={{ marginTop: 10 }}>
-            {data.relevantEvents.length > 0 && (
-              <View>
-                <Text style={pdfStyles.h3}>Relevant Events</Text>
-                {data.relevantEvents.slice(0, 4).map((e, i) => (
-                  <View key={i} style={{ marginBottom: 4, paddingLeft: 4 }}>
-                    <Text style={pdfStyles.bodyEmphasis}>{e.name}</Text>
-                    <Text style={pdfStyles.bodyMuted}>{e.frequency} · {e.location}</Text>
+      {/* Owner Sentiment */}
+      {(hasPraise || hasComplaints) && (
+        <View>
+          <Text style={styles.h2}>Owner Sentiment</Text>
+          <View style={{ flexDirection: "row", gap: 10, marginBottom: 4 }}>
+            {hasPraise && (
+              <View style={[styles.card, { flex: 1, marginBottom: 0 }]}>
+                <Text
+                  style={[
+                    styles.h3,
+                    { color: tokens.positive, marginBottom: 8 },
+                  ]}
+                >
+                  What Owners Love
+                </Text>
+                {commonPraise.map((p, i) => (
+                  <View
+                    key={i}
+                    style={{ flexDirection: "row", marginBottom: 4 }}
+                  >
+                    <Text
+                      style={[
+                        styles.body,
+                        { color: tokens.positive, marginRight: 6, width: 8 },
+                      ]}
+                    >
+                      +
+                    </Text>
+                    <Text style={[styles.body, { flex: 1 }]}>{p}</Text>
                   </View>
                 ))}
               </View>
             )}
-            {data.ownerClubs.length > 0 && (
-              <View style={{ marginTop: 6 }}>
-                <Text style={pdfStyles.h3}>Owner Clubs</Text>
-                <Text style={pdfStyles.body}>{data.ownerClubs.join(" · ")}</Text>
+            {hasComplaints && (
+              <View style={[styles.card, { flex: 1, marginBottom: 0 }]}>
+                <Text
+                  style={[
+                    styles.h3,
+                    { color: tokens.negative, marginBottom: 8 },
+                  ]}
+                >
+                  Common Complaints
+                </Text>
+                {commonComplaints.map((c, i) => (
+                  <View
+                    key={i}
+                    style={{ flexDirection: "row", marginBottom: 4 }}
+                  >
+                    <Text
+                      style={[
+                        styles.body,
+                        { color: tokens.negative, marginRight: 6, width: 8 },
+                      ]}
+                    >
+                      −
+                    </Text>
+                    <Text style={[styles.body, { flex: 1 }]}>{c}</Text>
+                  </View>
+                ))}
               </View>
             )}
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
-      <PageFooter hash={reportHash} generatedAt={generatedAt} pageNumber={pageNumber} totalPages={totalPages} />
+      {/* Owner Tips */}
+      {hasTips && (
+        <View style={{ marginTop: 8, marginBottom: 4 }}>
+          <Text style={styles.h3}>Owner Tips</Text>
+          {ownerTips.map((tip, i) => (
+            <View
+              key={i}
+              style={{ flexDirection: "row", marginBottom: 4 }}
+            >
+              <Text
+                style={[
+                  styles.body,
+                  { color: tokens.primary, marginRight: 6, width: 10 },
+                ]}
+              >
+                ›
+              </Text>
+              <Text style={[styles.body, { flex: 1 }]}>{tip}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Heritage — paragraph in serif inside lavender card */}
+      {data.heritage && (
+        <View>
+          <Text style={styles.h2}>Heritage</Text>
+          <View style={styles.cardLavender}>
+            <Text
+              style={{
+                fontFamily: "Cormorant",
+                fontWeight: 400,
+                fontSize: 13,
+                lineHeight: 1.55,
+                letterSpacing: -0.1,
+                color: tokens.foreground,
+              }}
+            >
+              {data.heritage}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Where to Show It — compact list */}
+      {hasEvents && (
+        <View>
+          <Text style={styles.h2}>Where to Show It</Text>
+          {data.relevantEvents.map((e, i) => (
+            <View key={i} style={{ marginBottom: 8 }} wrap={false}>
+              <Text style={styles.bodyEmphasis}>{e.name}</Text>
+              <Text style={[styles.bodyMuted, { marginTop: 1 }]}>
+                {e.frequency} · {e.location}
+              </Text>
+              {e.description && (
+                <Text style={[styles.body, { marginTop: 3 }]}>{e.description}</Text>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Owner Communities — inline · separated list */}
+      {hasClubs && (
+        <View style={{ marginTop: 4 }}>
+          <Text style={styles.h2}>Owner Communities</Text>
+          <Text style={[styles.body, { lineHeight: 1.6 }]}>
+            {data.ownerClubs.join("  ·  ")}
+          </Text>
+        </View>
+      )}
+
+      <PageFooter
+        hash={reportHash}
+        generatedAt={generatedAt}
+        pageNumber={pageNumber}
+        totalPages={totalPages}
+        theme={theme}
+      />
     </Page>
   )
 }

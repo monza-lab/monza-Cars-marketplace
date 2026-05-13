@@ -985,21 +985,9 @@ export function Header() {
               </button>
             )}
 
-            {/* Advisor pill (desktop) — high-priority funnel: Pistons + retention
-                driver. Active state when on /advisor. Outline style so it doesn't
-                fight the primary "Buy" CTAs on the page. */}
-            <Link
-              href="/advisor"
-              className={`hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                pathname?.startsWith("/advisor")
-                  ? "bg-primary/15 border-primary/30 text-primary"
-                  : "border-primary/30 text-primary/85 hover:bg-primary/10 hover:text-primary hover:border-primary/40"
-              }`}
-              aria-label={t("nav.advisorAria")}
-            >
-              <MessageCircle className="size-3.5" />
-              {t("nav.advisor")}
-            </Link>
+            {/* Advisor lives in a floating bottom-right FAB now
+                (see <AdvisorFab/> mounted in the locale layout). Frees
+                top-nav real estate. */}
 
             {/* Account button (desktop) — opens the same AccountSheetContent
                 used by the mobile bottom sheet. Click no longer signs out;

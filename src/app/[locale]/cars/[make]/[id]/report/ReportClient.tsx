@@ -42,7 +42,6 @@ import { SignalsMissingSection } from "@/components/report/SignalsMissingSection
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
 import { LandedCostBlock } from "@/components/report/LandedCostBlock"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
-import { ReportRegionBanner } from "@/components/report/ReportRegionBanner"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
@@ -52,6 +51,7 @@ import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
+import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import type {
   PipelineProgress,
   StepStatus,
@@ -1312,7 +1312,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       // ═══ Sheet 1: Summary ═══
       const coverData: (string | number)[][] = [
-        ["MONZA HAUS — Investment Dossier"],
+        ["MONZAHAUS — Haus Report"],
         [""],
         ["VEHICLE"],
         ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
@@ -1752,6 +1752,20 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             </div>
           </div>
 
+          {/* ═══ Source listing CTA — quick path back to the marketplace ═══
+              Sits right under the cover so it's always visible during
+              the study session. Sutil-pero-presente: outline lavender, no
+              compite con el verdict chips. */}
+          {car.sourceUrl && (
+            <div className="mt-4 md:mt-5">
+              <SourceListingCta
+                sourceUrl={car.sourceUrl}
+                platform={car.platform}
+                variant="inline"
+              />
+            </div>
+          )}
+
           {/* V3 inline stepper removed — now rendered as full-screen overlay below */}
 
           <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
@@ -1761,11 +1775,6 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SectionHeader id="summary" title={t("sections.summary")} />
-
-              {/* Region-tailored banner — visible reassurance that user's stated market is honored */}
-              <div className="mb-4">
-                <ReportRegionBanner />
-              </div>
 
               {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
               {report && (
@@ -1819,8 +1828,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       )}
                     </>
                   ) : (
-                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                      {/* [HARDCODED] */}Awaiting comparable sales
+                    <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
+                      Generate the full report to see how this car prices against comparable sales.
                     </p>
                   )}
                 </div>
@@ -2080,7 +2089,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[12px] text-muted-foreground italic">Awaiting backend data</p>
+                    <div className="rounded-xl border border-dashed border-border bg-card/40 p-5 text-center">
+                      <p className="text-[12px] text-foreground/80 font-medium mb-1">
+                        Comparable sales unlock with the full report
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        We pull recent sold transactions of the same variant to anchor fair value. Generate the report to see them with prices, dates, and platforms.
+                      </p>
+                    </div>
                   )}
                 </div>
               </PaywallSection>
@@ -2273,9 +2289,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-card border border-border p-5">
-                    <p className="text-[13px] text-muted-foreground text-center">
-                      Detailed risk analysis not yet available for this vehicle.
+                  <div className="rounded-xl border border-dashed border-border bg-card/40 p-5 text-center">
+                    <p className="text-[13px] text-foreground/80 font-medium mb-1">
+                      Risk flags surface during the full analysis
+                    </p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      The full report scans the listing for known issues, missing signals, and what to verify before bidding.
                     </p>
                   </div>
                 )}
@@ -2439,14 +2458,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       </>
                     ) : (
                       <>
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-                          Analysis Pending
+                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary/70">
+                          Verdict
                         </span>
-                        <p className="text-[26px] md:text-[32px] font-semibold text-muted-foreground mt-2">
-                          Awaiting full analysis
+                        <p className="font-display text-[28px] md:text-[36px] font-light text-foreground/85 mt-2 tracking-tight">
+                          Buy · Watch · Walk
                         </p>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          Investment verdict unlocks when deep analysis completes.
+                        <p className="text-[12px] text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+                          The verdict weighs fair value, market signals, risk score, and arbitrage. Generate the full report to see where this car lands.
                         </p>
                       </>
                     )}
@@ -2882,7 +2901,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   </div>
                   <div>
                     <h2 className="font-serif text-[18px] font-semibold text-foreground">
-                      {isGeneratingV3 ? "Generating Investment Dossier" : "Generation Failed"}
+                      {isGeneratingV3 ? "Generating Haus Report" : "Generation Failed"}
                     </h2>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {isGeneratingV3
