@@ -17,12 +17,6 @@ import { saveHausReport, saveSignals } from "@/lib/reports/queries"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
 import type { HausReport } from "@/lib/fairValue/types"
 
-function isAdmin(email: string | null | undefined): boolean {
-  if (!email) return false
-  const admins = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim().toLowerCase())
-  return admins.includes(email.toLowerCase())
-}
-
 export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 min — V3 pipeline runs 10 AI steps, typically 60-120s
 
@@ -51,12 +45,11 @@ export async function POST(req: NextRequest) {
   const dbUser = await getOrCreateUser(user.id, user.email ?? "", user.user_metadata?.full_name)
   const credits = await checkAndResetFreeCredits(dbUser.id)
   const alreadyGenerated = await hasAlreadyGenerated(dbUser.id, listingId)
-  const userIsAdmin = isAdmin(user.email)
   const hasUnlimited = hasUnlimitedReportAccess(credits)
 
   // Cache check
   if (!force && await hasV3Report(listingId)) {
-    if (!alreadyGenerated && !userIsAdmin) {
+    if (!alreadyGenerated) {
       const creditResult = await deductCredit(dbUser.id, listingId, listingId)
       if (!creditResult.success) {
         const status = creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500
@@ -79,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Credit check
-  if (!alreadyGenerated && !hasUnlimited && !userIsAdmin) {
+  if (!alreadyGenerated && !hasUnlimited) {
     const balance = (credits.credits_balance ?? 0) + (credits.pack_credits_balance ?? 0)
     if (balance < REPORT_PISTON_COST) {
       return new Response(JSON.stringify({ error: "Insufficient credits", balance }), {
@@ -147,8 +140,17 @@ export async function POST(req: NextRequest) {
         }
 
         // Deduct credit
-        if (!alreadyGenerated && !userIsAdmin) {
-          await deductCredit(dbUser.id, listingId, listingId)
+        if (!alreadyGenerated) {
+          const creditResult = await deductCredit(dbUser.id, listingId, listingId)
+          if (!creditResult.success) {
+            send("error", {
+              message:
+                creditResult.error === "INSUFFICIENT_CREDITS"
+                  ? "Insufficient credits"
+                  : creditResult.error,
+            })
+            return
+          }
         }
 
         send("complete", {

@@ -17,7 +17,6 @@ import type {
   AppliedModifier,
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
-import { isAdmin } from "@/lib/admin"
 
 const DEFAULT_MONTHLY_PISTONS = 300
 export const REPORT_PISTON_COST = 100
@@ -30,8 +29,7 @@ export function hasUnlimitedReportAccess(
     Boolean(user.unlimited_reports) ||
     user.tier === "MONTHLY" ||
     user.tier === "ANNUAL" ||
-    user.tier === "PRO" ||
-    isAdmin(user.email)
+    user.tier === "PRO"
   )
 }
 

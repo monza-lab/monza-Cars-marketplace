@@ -46,6 +46,24 @@ describe("reports/queries exports", () => {
     )
     expect(normalizeUserReportListingId("curated-slug")).toBe("curated-slug")
   })
+
+  it("does not grant free report generation from a hard-coded admin email", async () => {
+    const { hasUnlimitedReportAccess } = await import("./queries")
+    expect(
+      hasUnlimitedReportAccess({
+        email: "caposk8@hotmail.com",
+        tier: "FREE",
+        unlimited_reports: false,
+      }),
+    ).toBe(false)
+    expect(
+      hasUnlimitedReportAccess({
+        email: "driver@example.com",
+        tier: "MONTHLY",
+        unlimited_reports: false,
+      }),
+    ).toBe(true)
+  })
 })
 
 describe("saveHausReport", () => {

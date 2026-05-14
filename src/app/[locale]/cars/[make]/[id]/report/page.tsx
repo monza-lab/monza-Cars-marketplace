@@ -20,7 +20,6 @@ import {
   hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
-import { isAdmin } from "@/lib/admin"
 import { ReportClient } from "./ReportClient"
 import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
@@ -211,7 +210,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
   // ─── User access check ─────────────────────────────────────────────
   // A user has access if: (a) they already paid for this report,
-  // (b) they have unlimited_reports, or (c) they are admin.
+  // or (b) they have explicit unlimited report access.
   // Unauthenticated users never have access.
   // Mock previews (?mock=*) unlock automatically for design QA.
   let userHasAccess = Boolean(mockName)
@@ -231,8 +230,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           : false
         userHasAccess =
           alreadyPaid ||
-          hasUnlimitedReportAccess(credits) ||
-          isAdmin(user.email)
+          hasUnlimitedReportAccess(credits)
       }
     } catch {
       // Auth unavailable — leave as false

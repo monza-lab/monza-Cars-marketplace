@@ -235,6 +235,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     v3AbortRef.current = controller
     let userAborted = false
     let needsPaywall = false
+    let streamError: string | null = null
 
     try {
       const res = await fetch("/api/analyze/v3", {
@@ -301,6 +302,16 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       : s
                   )
                 )
+              } else if (currentEvent === "error") {
+                const message =
+                  typeof data?.message === "string"
+                    ? data.message
+                    : "Generation failed"
+                streamError = message
+                if (/insufficient credits/i.test(message)) {
+                  needsPaywall = true
+                }
+                setV3Error(message)
               }
               // complete + error: just let the stream finish, finally handles transition
             } catch {
@@ -323,7 +334,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       if (needsPaywall) {
         setOutOfReportsOpen(true)
-      } else if (!userAborted) {
+      } else if (!userAborted && !streamError) {
         // ALWAYS re-fetch the server component after generation attempt.
         // Sections are saved incrementally, so even partial completions
         // will show V2 with whatever data was persisted.
