@@ -13,6 +13,29 @@ export interface ReportSectionRow {
   created_at: string
 }
 
+const REQUIRED_V3_SECTIONS: ReportSectionKey[] = [
+  "listing_scrape",
+  "vehicle_identity",
+  "market_data_bundle",
+  "fair_value",
+  "technical_analysis",
+  "investment_analysis",
+  "due_diligence",
+  "market_research",
+  "buyer_services",
+  "final_synthesis",
+]
+
+export function hasCompleteV3Sections(rows: ReportSectionRow[]): boolean {
+  const sectionMap = new Map(rows.map((row) => [row.section_key, row.section_data]))
+  if (!REQUIRED_V3_SECTIONS.every((sectionKey) => sectionMap.has(sectionKey))) {
+    return false
+  }
+
+  const finalSynthesis = sectionMap.get("final_synthesis") as Record<string, unknown> | null
+  return Boolean(finalSynthesis?.executiveSummary)
+}
+
 /**
  * Upsert a single pipeline step result into report_sections.
  */

@@ -61,7 +61,7 @@ import type {
 
 // ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
 const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
-  { sectionKey: "listing_scrape", label: "Reading Listing" },
+  { sectionKey: "listing_scrape", label: "Analyzing Listing" },
   { sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
   { sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { sectionKey: "fair_value", label: "Computing Fair Value" },

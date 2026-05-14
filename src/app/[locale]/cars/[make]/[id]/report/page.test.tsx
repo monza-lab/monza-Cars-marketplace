@@ -1,4 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+
+const ReportClientMock = vi.fn(() => <div data-testid="report-client">preview</div>)
+const ReportClientV2Mock = vi.fn(() => <div data-testid="report-client-v2">full-report</div>)
 
 // Stubear los módulos de Next.js que el page importa transitivamente.
 vi.mock("next/navigation", () => ({
@@ -15,7 +19,7 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
   useTranslations: () => ((key: string) => key) as never,
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
+}))
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
@@ -23,16 +27,16 @@ vi.mock("@/lib/supabase/server", () => ({
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
     },
   })),
-}));
+}))
 
 // Los client components son irrelevantes — sólo nos importa que la
 // función ReportPage resuelva sin tirar 500.
 vi.mock("./ReportClient", () => ({
-  ReportClient: () => null,
-}));
+  ReportClient: ReportClientMock,
+}))
 vi.mock("./ReportClientV2", () => ({
-  ReportClientV2: () => null,
-}));
+  ReportClientV2: ReportClientV2Mock,
+}))
 
 // Datos del carro: usamos un id "live-test" para forzar el path live
 // (que es donde están las llamadas a blindar).
@@ -54,7 +58,7 @@ const mockCar = {
 
 vi.mock("@/lib/curatedCars", () => ({
   CURATED_CARS: [],
-}));
+}))
 
 vi.mock("@/lib/supabaseLiveListings", () => ({
   fetchLiveListingById: vi.fn().mockResolvedValue(mockCar),
@@ -64,28 +68,28 @@ vi.mock("@/lib/supabaseLiveListings", () => ({
   }),
   fetchLiveListingsAsCollectorCars: vi.fn().mockRejectedValue(new Error("supabase down")),
   fetchPricedListingsForModel: vi.fn().mockResolvedValue([]),
-}));
+}))
 
 vi.mock("@/lib/exchangeRates", () => ({
   getExchangeRates: vi.fn().mockRejectedValue(new Error("rates api down")),
-}));
+}))
 
 vi.mock("@/lib/marketIntel/computeArbitrageForCar", () => ({
   computeArbitrageForCar: vi.fn().mockRejectedValue(new Error("arbitrage failed")),
   inferTargetRegion: vi.fn().mockReturnValue("US"),
-}));
+}))
 
 vi.mock("@/lib/marketStats", () => ({
   computeMarketStatsForCar: vi.fn().mockReturnValue({ marketStats: null }),
-}));
+}))
 
 vi.mock("@/lib/similarCars", () => ({
   findSimilarCars: vi.fn().mockReturnValue([]),
-}));
+}))
 
 vi.mock("@/lib/db/queries", () => ({
   getComparablesForModel: vi.fn().mockResolvedValue([]),
-}));
+}))
 
 vi.mock("@/lib/reports/queries", () => ({
   getReportForListing: vi.fn().mockResolvedValue(null),
@@ -95,38 +99,84 @@ vi.mock("@/lib/reports/queries", () => ({
   getUserCredits: vi.fn().mockResolvedValue(null),
   hasAlreadyGenerated: vi.fn().mockResolvedValue(false),
   hasUnlimitedReportAccess: vi.fn().mockReturnValue(false),
-}));
+}))
 
 describe("ReportPage SSR robustness", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks())
 
   it("does NOT throw when fetchLiveListingsAsCollectorCars rejects", async () => {
-    const { default: ReportPage } = await import("./page");
+    const { default: ReportPage } = await import("./page")
     await expect(
       ReportPage({
         params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
         searchParams: Promise.resolve({}),
       }),
-    ).resolves.toBeTruthy();
-  });
+    ).resolves.toBeTruthy()
+  })
 
   it("does NOT throw when getExchangeRates rejects", async () => {
-    const { default: ReportPage } = await import("./page");
+    const { default: ReportPage } = await import("./page")
     await expect(
       ReportPage({
         params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
         searchParams: Promise.resolve({}),
       }),
-    ).resolves.toBeTruthy();
-  });
+    ).resolves.toBeTruthy()
+  })
 
   it("does NOT throw when computeArbitrageForCar rejects", async () => {
-    const { default: ReportPage } = await import("./page");
+    const { default: ReportPage } = await import("./page")
     await expect(
       ReportPage({
         params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
         searchParams: Promise.resolve({}),
       }),
-    ).resolves.toBeTruthy();
-  });
-});
+    ).resolves.toBeTruthy()
+  })
+
+  it("keeps the locked preview client for users without access", async () => {
+    const { default: ReportPage } = await import("./page")
+
+    const markup = renderToStaticMarkup(await ReportPage({
+      params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
+      searchParams: Promise.resolve({}),
+    }))
+
+    expect(markup).toContain('data-testid="report-client"')
+    expect(markup).not.toContain('data-testid="report-client-v2"')
+    expect(ReportClientMock).toHaveBeenCalledOnce()
+    expect(ReportClientV2Mock).not.toHaveBeenCalled()
+  })
+
+  it("routes unlocked users to the full V3 client even before any report exists", async () => {
+    const { default: ReportPage } = await import("./page")
+    const { createClient } = await import("@/lib/supabase/server")
+    const { getUserCredits, hasUnlimitedReportAccess } = await import("@/lib/reports/queries")
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "auth-user-1" } }, error: null }),
+      },
+    } as Awaited<ReturnType<typeof createClient>>)
+    vi.mocked(getUserCredits).mockResolvedValue({
+      id: "internal-user-1",
+    } as Awaited<ReturnType<typeof getUserCredits>>)
+    vi.mocked(hasUnlimitedReportAccess).mockReturnValue(true)
+
+    const markup = renderToStaticMarkup(await ReportPage({
+      params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
+      searchParams: Promise.resolve({}),
+    }))
+
+    expect(markup).toContain('data-testid="report-client-v2"')
+    expect(markup).not.toContain('data-testid="report-client"')
+    expect(ReportClientV2Mock).toHaveBeenCalledOnce()
+    expect(ReportClientMock).not.toHaveBeenCalled()
+    expect(ReportClientV2Mock.mock.calls[0]?.[0]).toMatchObject({
+      userHasAccess: true,
+      existingReport: null,
+      v3Report: null,
+      autoGenerateV3: true,
+    })
+  })
+})

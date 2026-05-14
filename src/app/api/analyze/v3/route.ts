@@ -17,9 +17,14 @@ import {
 import { saveHausReport, saveSignals } from "@/lib/reports/queries"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
 import type { HausReport } from "@/lib/fairValue/types"
+import type { HausReportV3 } from "@/lib/reports/types-v3"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 300 // 5 min — V3 pipeline runs 10 AI steps, typically 60-120s
+
+function isCompleteV3Report(report: HausReportV3): boolean {
+  return report.stepsFailed === 0 && Boolean(report.finalSynthesis?.executiveSummary)
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -120,6 +125,15 @@ export async function POST(req: NextRequest) {
             await saveReportSection(listingId, 1, result)
           },
         })
+
+        if (!isCompleteV3Report(report)) {
+          send("error", {
+            message: "V3 report incomplete: one or more scrape, database, or AI sections failed.",
+            stepsCompleted: report.stepsCompleted,
+            stepsFailed: report.stepsFailed,
+          })
+          return
+        }
 
         // Also persist fair value to existing tables (backward compat)
         const fairValueResult = results.find(r => r.sectionKey === "fair_value")

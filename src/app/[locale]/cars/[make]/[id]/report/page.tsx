@@ -199,10 +199,10 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     v3Report = fixture as unknown as HausReportV3
   } else {
     try {
-      const { fetchReportSections } = await import("@/lib/reports/reportSections")
+      const { fetchReportSections, hasCompleteV3Sections } = await import("@/lib/reports/reportSections")
       const { assembleV3ReportFromSections } = await import("@/lib/reports/assembleV3Report")
       const sections = await fetchReportSections(car.id, 1)
-      if (sections.length > 0) {
+      if (hasCompleteV3Sections(sections)) {
         v3Report = assembleV3ReportFromSections(sections, car.id)
       }
     } catch { /* V3 not available */ }
@@ -251,14 +251,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {/* Layout rule: V2 (full unlocked report with all sections) is only
-          shown to users with access. Everyone else — including users who
-          have no report yet AND users who have a V3 sitting in DB but
-          haven't paid — sees the V1 layout (sidebar TOC + hero + teaser
-          sections). This guarantees the same paywall UX across the whole
-          funnel. V1 itself never calls the AI; it only renders what we
-          already have from the listing scrape. */}
-      {userHasAccess && (existingReport || v3Report) ? (
+      {/* Layout rule: access alone owns the full-report surface. Users
+          without access always stay on the locked preview. That keeps the
+          teaser/paywall UX stable while preventing unlocked users from ever
+          falling back into the legacy full-report client during V3
+          generation or refresh races. */}
+      {userHasAccess ? (
         <ReportClientV2
           car={car}
           similarCars={similarCars}
@@ -271,6 +269,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportVersion={reportVersion}
           v3Report={v3Report}
           userHasAccess={userHasAccess}
+          autoGenerateV3={!v3Report}
         />
       ) : (
         <ReportClient

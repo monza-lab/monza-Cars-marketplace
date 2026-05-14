@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
@@ -49,7 +49,7 @@ import { ResaleTimelineSection } from "@/components/report/v3/ResaleTimelineSect
 
 // ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
 const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
-  { sectionKey: "listing_scrape", label: "Reading Listing" },
+  { sectionKey: "listing_scrape", label: "Analyzing Listing" },
   { sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
   { sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { sectionKey: "fair_value", label: "Computing Fair Value" },
@@ -81,6 +81,7 @@ interface ReportClientV2Props {
   reportVersion?: number | null
   v3Report?: HausReportV3 | null
   userHasAccess?: boolean
+  autoGenerateV3?: boolean
 }
 
 export function ReportClientV2({
@@ -94,6 +95,7 @@ export function ReportClientV2({
   reportVersion,
   v3Report: initialV3Report,
   userHasAccess = false,
+  autoGenerateV3 = false,
 }: ReportClientV2Props) {
   const router = useRouter()
   const [downloadSheetOpen, setDownloadSheetOpen] = useState(false)
@@ -107,6 +109,7 @@ export function ReportClientV2({
   const [v3Data, setV3Data] = useState<HausReportV3 | null>(initialV3Report ?? null)
   const [v3Error, setV3Error] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const autoGenerateStartedRef = useRef(false)
 
   const handleGenerateV3 = useCallback(async (force = false) => {
     setIsGeneratingV3(true)
@@ -237,6 +240,12 @@ export function ReportClientV2({
     }
   }, [car.id, router])
 
+  useEffect(() => {
+    if (!autoGenerateV3 || autoGenerateStartedRef.current || v3Data || isGeneratingV3) return
+    autoGenerateStartedRef.current = true
+    void handleGenerateV3(true)
+  }, [autoGenerateV3, handleGenerateV3, isGeneratingV3, v3Data])
+
   // Derive listing type from v3 vehicle identity
   const listingType = v3Data?.vehicleIdentity?.listingType ?? "classified"
 
@@ -250,8 +259,11 @@ export function ReportClientV2({
   // sidebar TOC + hero + sectioned paywall the brand uses everywhere.
   if (!userHasAccess) return null
 
-  // ─── V3-only mode: no V2 report but V3 sections exist ──────────────
-  if (!existingReport) {
+  // ─── V3 primary mode ───────────────────────────────────────────────
+  // A completed V3 report supersedes any older listing_reports row. Legacy
+  // V1/V2 data is still useful as compatibility storage, but it should not
+  // own the visual report once the 10-step dossier exists.
+  if (!existingReport || v3Data || autoGenerateV3) {
     return (
       <main className="flex min-h-screen flex-col bg-background pb-20 md:pb-0">
         <ReportHeader

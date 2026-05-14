@@ -88,7 +88,29 @@ describe("api/analyze/v3 route", () => {
 
   it("uses a UUID extraction run id when persisting V2 compatibility signals", async () => {
     mockRunV3Pipeline.mockResolvedValue({
-      report: { stepsCompleted: 1, stepsFailed: 0, totalDurationMs: 10 },
+      report: {
+        stepsCompleted: 10,
+        stepsFailed: 0,
+        totalDurationMs: 10,
+        finalSynthesis: {
+          executiveSummary: {
+            headline: "Strong collector car",
+            keyMetrics: {
+              fairValueRange: "$100-$200",
+              signalsCoverage: "high",
+              riskScore: 20,
+              verdict: "BUY",
+              marketPosition: "fair",
+            },
+            investmentThesis: "Test thesis",
+          },
+          finalRecommendation: {
+            score: 80,
+            conditionEstimate: "excellent",
+            verdict: "BUY",
+          },
+        },
+      },
       results: [
         {
           sectionKey: "fair_value",
@@ -132,5 +154,38 @@ describe("api/analyze/v3 route", () => {
     expect(runId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     )
+  })
+
+  it("emits an error and does not deduct credit when the V3 report is incomplete", async () => {
+    mockHasAlreadyGenerated.mockResolvedValue(false)
+    mockRunV3Pipeline.mockResolvedValue({
+      report: {
+        listingId: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+        reportVersion: 3,
+        stepsCompleted: 9,
+        stepsFailed: 1,
+        totalDurationMs: 10,
+        finalSynthesis: null,
+      },
+      results: [],
+    })
+
+    const { POST } = await import("./route")
+    const res = await POST(
+      new Request("https://example.test/api/analyze/v3", {
+        method: "POST",
+        body: JSON.stringify({
+          listingId: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+          force: true,
+        }),
+      }) as never,
+    )
+
+    const body = await res.text()
+
+    expect(body).toContain("event: error")
+    expect(body).toContain("V3 report incomplete")
+    expect(body).not.toContain("event: complete")
+    expect(mockDeductCredit).not.toHaveBeenCalled()
   })
 })

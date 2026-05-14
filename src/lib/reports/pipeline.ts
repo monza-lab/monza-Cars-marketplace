@@ -43,7 +43,12 @@ export interface PipelineContext {
  */
 export type StepExecutor = (
   ctx: PipelineContext
-) => Promise<{ data: unknown; durationMs: number; agentModel: string | null }>
+) => Promise<{
+  data: unknown
+  durationMs: number
+  agentModel: string | null
+  completionNote?: string
+}>
 
 export interface PipelineInput {
   listingId: string
@@ -61,7 +66,7 @@ interface StepDef {
 }
 
 const STEP_DEFS: StepDef[] = [
-  { stepId: 1, sectionKey: "listing_scrape", label: "Reading Listing" },
+  { stepId: 1, sectionKey: "listing_scrape", label: "Analyzing Listing" },
   { stepId: 2, sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
   { stepId: 3, sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { stepId: 4, sectionKey: "fair_value", label: "Computing Fair Value" },
@@ -108,6 +113,9 @@ async function runStep(
 
   try {
     const result = await executor(ctx)
+    if (result.data == null) {
+      throw new Error(`No data returned for ${step.sectionKey}`)
+    }
     const duration = Date.now() - t0
     const stepResult: PipelineStepResult = {
       sectionKey: step.sectionKey,
@@ -116,7 +124,7 @@ async function runStep(
       agentModel: result.agentModel,
     }
 
-    emitProgress(onProgress, step, "completed", undefined, duration)
+    emitProgress(onProgress, step, "completed", result.completionNote, duration)
     return stepResult
   } catch (err) {
     const duration = Date.now() - t0
