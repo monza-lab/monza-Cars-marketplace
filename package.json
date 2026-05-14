@@ -27,6 +27,7 @@
     "generate:factors": "tsx scripts/generate-family-factors.ts",
     "scrapers": "tsx scripts/run-scrapers.ts",
     "scrapers:enrich-loop": "tsx scripts/run-scrapers.ts --enrich-loop",
+    "scrapers:bat-live-refresh": "tsx scripts/bat-live-refresh.ts",
     "postinstall": "node -e \"process.exit(0)\""
   },
   "dependencies": {
