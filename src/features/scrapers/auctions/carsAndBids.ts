@@ -107,6 +107,32 @@ export function parsePrice(text: string | undefined): number | null {
   return isNaN(num) ? null : num;
 }
 
+function cleanAuctionTitle(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  const marker = normalized.search(
+    /(?:\d+\s*[- ]\s*Speed\b|Automatic\b|Manual\b|No Reserve\b|Time Left\b|Bid\s*\$|Watch\b|Sold For\b|Winning Bid\b)/i,
+  );
+  const cleaned = marker >= 0 ? normalized.slice(0, marker).trim() : normalized;
+  return cleaned.replace(/\s+Watch$/i, '').trim();
+}
+
+function parseBidAmount(text: string | undefined): number | null {
+  if (!text) return null;
+  const normalized = text.replace(/\s+/g, ' ').trim();
+
+  const labeledAmounts = Array.from(
+    normalized.matchAll(
+      /(?:current\s*bid|high\s*bid|winning\s*bid|sold\s*for|bid(?:\s*to)?)\s*\$([\d,]+(?:\.\d+)?)/gi,
+    ),
+  );
+  const labeled = labeledAmounts.at(-1)?.[1];
+  if (labeled) return parsePrice(`$${labeled}`);
+
+  const moneyAmounts = Array.from(normalized.matchAll(/\$([\d,]+(?:\.\d+)?)/g));
+  const money = moneyAmounts.at(-1)?.[1];
+  return money ? parsePrice(`$${money}`) : null;
+}
+
 /**
  * Detect auction status (SOLD vs ACTIVE) from HTML element.
  * Evidence-based detection using multiple signals.
@@ -319,10 +345,11 @@ export function parseAuctionCard(
 
   const externalId = extractExternalId(url);
 
-  const title =
+  const rawTitle =
     $el.find('.auction-title, .card-title, h3, h2').first().text().trim() ||
     linkEl.text().trim() ||
     '';
+  const title = cleanAuctionTitle(rawTitle);
 
   if (!title || /^(past|current|featured)/i.test(title)) return null;
 
@@ -335,11 +362,11 @@ export function parseAuctionCard(
 
   // Current bid
   const bidText = $el
-    .find('.current-bid, .bid-amount, [class*="bid"], [class*="price"]')
+    .find('.current-bid, .bid-amount, .high-bid, [class*="current-bid"], [class*="bid-amount"], [class*="high-bid"], [class*="price"]')
     .first()
     .text()
     .trim();
-  const currentBid = parsePrice(bidText);
+  const currentBid = parseBidAmount(bidText) ?? parseBidAmount($el.text());
 
   // Bid count
   const bidCountText = $el
@@ -476,7 +503,7 @@ export async function scrapeDetail(auction: CaBAuction): Promise<CaBAuction> {
       .first()
       .text()
       .trim();
-    const detailBid = parsePrice(detailBidText);
+    const detailBid = parseBidAmount(detailBidText);
 
     const detailBidCountText = $(
       '.bid-count, .total-bids, [class*="bid-count"]',

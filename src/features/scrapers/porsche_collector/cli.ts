@@ -1,5 +1,5 @@
 import { runPorscheCollector } from "./collector";
-import type { CollectorRunConfig, CollectorMode } from "./types";
+import type { CollectorRunConfig, CollectorMode, SourceKey } from "./types";
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
@@ -62,8 +62,29 @@ function readNumber(args: Record<string, string | boolean>, key: string, fallbac
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
+function readNonNegativeNumber(args: Record<string, string | boolean>, key: string, fallback: number): number {
+  const s = readString(args, key);
+  if (!s) return fallback;
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
 function hasFlag(args: Record<string, string | boolean>, key: string): boolean {
   return args[key] === true;
+}
+
+function readSources(args: Record<string, string | boolean>): SourceKey[] | undefined {
+  const raw = readString(args, "sources");
+  if (!raw) return undefined;
+
+  const allowed = new Set<SourceKey>(["BaT", "CarsAndBids", "CollectingCars"]);
+  const sources = raw.split(",").map((value) => value.trim()).filter(Boolean);
+  for (const source of sources) {
+    if (!allowed.has(source as SourceKey)) {
+      throw new Error(`Invalid --sources value: ${source}. Expected comma-separated BaT,CarsAndBids,CollectingCars`);
+    }
+  }
+  return sources as SourceKey[];
 }
 
 function usage(): string {
@@ -81,6 +102,7 @@ function usage(): string {
     "  --endedWindowDays=90",
     "  --maxActivePages=10",
     "  --maxEndedPages=10",
+    "  --sources=BaT,CarsAndBids,CollectingCars",
     "  --checkpointPath=var/porsche_collector/checkpoint.json",
     "  --timeBudgetMs=1500000",
     "  --dryRun",
@@ -108,10 +130,11 @@ async function main(): Promise<void> {
     dateFrom: readString(args, "dateFrom"),
     dateTo: readString(args, "dateTo"),
     maxActivePagesPerSource: readNumber(args, "maxActivePages", 10),
-    maxEndedPagesPerSource: readNumber(args, "maxEndedPages", 10),
+    maxEndedPagesPerSource: readNonNegativeNumber(args, "maxEndedPages", 10),
     scrapeDetails: !hasFlag(args, "noDetails"),
     checkpointPath: readString(args, "checkpointPath") ?? "var/porsche_collector/checkpoint.json",
     dryRun: hasFlag(args, "dryRun"),
+    sources: readSources(args),
     timeBudgetMs: readNumber(args, "timeBudgetMs", 25 * 60 * 1000), // 25 min default
   };
 

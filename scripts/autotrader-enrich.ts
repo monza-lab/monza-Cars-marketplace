@@ -36,6 +36,7 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
+import type { RuntimeEnv } from "../src/features/scrapers/common/monitoring/types";
 
 // ── CLI args ─────────────────────────────────────────────────────────
 function parseArgs() {
@@ -68,6 +69,12 @@ function truncate(v: string | null | undefined, max: number): string | null {
   return v.length <= max ? v : v.slice(0, max);
 }
 
+function getRuntime(): RuntimeEnv {
+  if (process.env.MONZA_WINDOWS_TASK === "1") return "windows_task";
+  if (process.env.GITHUB_ACTIONS === "true") return "github_actions";
+  return "cli";
+}
+
 // ── Main ─────────────────────────────────────────────────────────────
 async function main() {
   const opts = parseArgs();
@@ -89,9 +96,9 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const runtime = process.env.GITHUB_ACTIONS ? "github_actions" as const : "cli" as const;
+  const runtime = getRuntime();
   await markScraperRunStarted({
-    scraperName: "at-enrich",
+    scraperName: "enrich-autotrader",
     runId,
     startedAt: startedAtIso,
     runtime,
@@ -115,7 +122,7 @@ async function main() {
 
   if (listings.length === 0) {
     console.log("Nothing to enrich.");
-    await clearScraperRunActive("at-enrich");
+    await clearScraperRunActive("enrich-autotrader");
     return;
   }
 
@@ -269,7 +276,7 @@ async function main() {
   }
 
   await recordScraperRun({
-    scraper_name: "at-enrich",
+    scraper_name: "enrich-autotrader",
     run_id: runId,
     started_at: startedAtIso,
     finished_at: new Date().toISOString(),
@@ -281,7 +288,7 @@ async function main() {
     errors_count: errors.length,
     error_messages: errors.length > 0 ? errors.slice(0, 10) : undefined,
   });
-  await clearScraperRunActive("at-enrich");
+  await clearScraperRunActive("enrich-autotrader");
 }
 
 main().catch((e) => { console.error(e); process.exitCode = 1; });

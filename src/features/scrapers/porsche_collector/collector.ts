@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 
 import { fetchAuctionData, type ScrapedAuctionData } from "@/features/scrapers/common/scraper";
-import { scrapeBringATrailer } from "@/features/scrapers/auctions/bringATrailer";
-import { scrapeCarsAndBids } from "@/features/scrapers/auctions/carsAndBids";
-import { scrapeCollectingCars } from "@/features/scrapers/auctions/collectingCars";
+import { scrapeBringATrailer, type BaTAuction } from "@/features/scrapers/auctions/bringATrailer";
+import { scrapeCarsAndBids, type CaBAuction } from "@/features/scrapers/auctions/carsAndBids";
+import { scrapeCollectingCars, type CCarsAuction } from "@/features/scrapers/auctions/collectingCars";
 import {
   createTerminalStatusClient,
   fetchTerminalStatusSourceIds,
@@ -16,7 +16,6 @@ import { logEvent } from "./logging";
 import { getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
 import {
   buildLocationString,
-  isPorscheListing,
   isLuxuryCarListing,
   mapAuctionStatus,
   mapReserveStatus,
@@ -51,6 +50,18 @@ type ActiveAuctionBase = {
   mileage: number | null;
   mileageUnit: string | null;
   endTime: Date | null;
+  currentBid: number | null;
+  bidCount: number | null;
+  imageUrl: string | null;
+  images: string[];
+  status: string | null;
+};
+
+type SourceAuction = BaTAuction | CaBAuction | CCarsAuction;
+type EnrichedAuction = SourceAuction & {
+  rawPriceText?: string | null;
+  reserveStatus?: string | null;
+  bodyStyle?: string | null;
 };
 
 export interface CollectorResult {
@@ -59,11 +70,32 @@ export interface CollectorResult {
   errors: string[];
 }
 
+export interface CollectorTimeBudget {
+  startedAtMs: number;
+  deadlineAtMs: number | null;
+}
+
+export function createCollectorTimeBudget(startedAtMs: number, timeBudgetMs?: number): CollectorTimeBudget {
+  return {
+    startedAtMs,
+    deadlineAtMs: timeBudgetMs ? startedAtMs + timeBudgetMs : null,
+  };
+}
+
+export function isCollectorTimeBudgetExhausted(
+  budget: CollectorTimeBudget,
+  nowMs = Date.now(),
+  safetyMs = 15_000,
+): boolean {
+  return budget.deadlineAtMs !== null && nowMs > budget.deadlineAtMs - safetyMs;
+}
+
 export async function runPorscheCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
   const meta: ScrapeMeta = { runId, scrapeTimestamp };
   const limiter = new PerDomainRateLimiter(1000);
+  const timeBudget = createCollectorTimeBudget(Date.now(), config.timeBudgetMs);
 
   logEvent({
     level: "info",
@@ -92,6 +124,11 @@ export async function runPorscheCollector(config: CollectorRunConfig): Promise<C
   const errors: string[] = [];
 
   for (const source of sources) {
+    if (isCollectorTimeBudgetExhausted(timeBudget)) {
+      logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, source });
+      break;
+    }
+
     try {
       const counts = await runSource({
         source,
@@ -102,6 +139,7 @@ export async function runPorscheCollector(config: CollectorRunConfig): Promise<C
         checkpointRef,
         checkpointPath: config.checkpointPath,
         collectorErrors: errors,
+        timeBudget,
       });
       sourceCounts[source] = counts;
       logEvent({ level: "info", event: "collector.source_done", runId, source, counts });
@@ -160,10 +198,10 @@ async function runSource(input: {
   checkpointRef: { value: Awaited<ReturnType<typeof loadCheckpoint>> };
   checkpointPath: string;
   collectorErrors: string[];
+  timeBudget: CollectorTimeBudget;
 }): Promise<SourceScrapeCounts> {
   const { source, config, meta, limiter } = input;
   const runId = meta.runId;
-  const startMs = Date.now();
 
   const counts: SourceScrapeCounts = {
     discovered: 0,
@@ -181,6 +219,11 @@ async function runSource(input: {
 
   // 1) Active listings (daily only)
   if (config.mode === "daily") {
+    if (isCollectorTimeBudgetExhausted(input.timeBudget)) {
+      logEvent({ level: "info", event: "collector.skip_active_discovery", runId, source, reason: "time_budget_exceeded" });
+      return counts;
+    }
+
     const { items: active, scraperErrors } = await scrapeActiveListings(source, config.maxActivePagesPerSource);
     counts.discovered += active.length;
 
@@ -196,7 +239,7 @@ async function runSource(input: {
 
     for (const a of active) {
       // Time-budget guard: stop if we're running low on time
-      if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+      if (isCollectorTimeBudgetExhausted(input.timeBudget)) {
         logEvent({ level: "info", event: "collector.time_budget_exceeded", runId, source });
         break;
       }
@@ -276,7 +319,7 @@ async function runSource(input: {
     return counts;
   }
 
-  if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+  if (isCollectorTimeBudgetExhausted(input.timeBudget)) {
     logEvent({
       level: "info",
       event: "collector.skip_ended_discovery",
@@ -316,7 +359,7 @@ async function runSource(input: {
 
   for (const url of discoveredUrls) {
     // Time-budget guard: stop processing ended listings if running low on time
-    if (config.timeBudgetMs && (Date.now() - startMs) > (config.timeBudgetMs - 15_000)) {
+    if (isCollectorTimeBudgetExhausted(input.timeBudget)) {
       logEvent({ level: "info", event: "collector.ended_time_budget_exceeded", runId, source });
       break;
     }
@@ -408,47 +451,34 @@ async function scrapeActiveListings(source: SourceKey, maxPages: number): Promis
       console.warn(`[porsche_collector] BaT scraper errors:`, errors);
     }
     console.log(`[porsche_collector] BaT discovered ${auctions.length} listings from ${maxPages} pages`);
-    return { scraperErrors: errors, items: auctions.map((a: any) => ({
-      source,
-      url: a.url,
-      externalId: a.externalId ?? null,
-      title: a.title,
-      make: a.make ?? null,
-      model: a.model ?? null,
-      year: typeof a.year === "number" ? a.year : null,
-      mileage: typeof a.mileage === "number" ? a.mileage : null,
-      mileageUnit: a.mileageUnit ?? null,
-      endTime: a.endTime ? new Date(a.endTime) : null,
-    }))};
+    return { scraperErrors: errors, items: auctions.map((auction) => mapActiveAuction(source, auction))};
   }
   if (source === "CarsAndBids") {
     const { auctions, errors } = await scrapeCarsAndBids({ maxPages, scrapeDetails: false });
-    return { scraperErrors: errors, items: auctions.map((a: any) => ({
-      source,
-      url: a.url,
-      externalId: a.externalId ?? null,
-      title: a.title,
-      make: a.make ?? null,
-      model: a.model ?? null,
-      year: typeof a.year === "number" ? a.year : null,
-      mileage: typeof a.mileage === "number" ? a.mileage : null,
-      mileageUnit: a.mileageUnit ?? null,
-      endTime: a.endTime ? new Date(a.endTime) : null,
-    }))};
+    return { scraperErrors: errors, items: auctions.map((auction) => mapActiveAuction(source, auction))};
   }
   const { auctions, errors } = await scrapeCollectingCars({ maxPages, scrapeDetails: false });
-  return { scraperErrors: errors, items: auctions.map((a: any) => ({
+  return { scraperErrors: errors, items: auctions.map((auction) => mapActiveAuction(source, auction)) };
+}
+
+function mapActiveAuction(source: SourceKey, auction: SourceAuction): ActiveAuctionBase {
+  return {
     source,
-    url: a.url,
-    externalId: a.externalId ?? null,
-    title: a.title,
-    make: a.make ?? null,
-    model: a.model ?? null,
-    year: typeof a.year === "number" ? a.year : null,
-    mileage: typeof a.mileage === "number" ? a.mileage : null,
-    mileageUnit: a.mileageUnit ?? null,
-    endTime: a.endTime ? new Date(a.endTime) : null,
-  })) };
+    url: auction.url,
+    externalId: auction.externalId ?? null,
+    title: auction.title,
+    make: auction.make ?? null,
+    model: auction.model ?? null,
+    year: typeof auction.year === "number" ? auction.year : null,
+    mileage: typeof auction.mileage === "number" ? auction.mileage : null,
+    mileageUnit: auction.mileageUnit ?? null,
+    endTime: auction.endTime ? new Date(auction.endTime) : null,
+    currentBid: typeof auction.currentBid === "number" ? auction.currentBid : null,
+    bidCount: typeof auction.bidCount === "number" ? auction.bidCount : null,
+    imageUrl: auction.imageUrl ?? null,
+    images: Array.isArray(auction.images) ? auction.images : [],
+    status: auction.status ?? null,
+  };
 }
 
 async function normalizeFromBaseAndUrl(input: {
@@ -485,21 +515,13 @@ async function normalizeFromBaseAndUrl(input: {
     : new Date(meta.scrapeTimestamp);
   const saleDate = toUtcDateOnly(saleDateSource);
 
-  const status = mapAuctionStatus({
-    sourceStatus: auctionData.status,
-    rawPriceText: auctionData.rawPriceText,
-    currentBid: auctionData.currentBid,
-    endTime,
-    now: new Date(meta.scrapeTimestamp),
-  });
-
   const rawPriceText = auctionData.rawPriceText;
   let originalCurrency = parseCurrencyFromText(rawPriceText);
 
-  let currentBid = auctionData.currentBid ?? null;
-  let bidCount = auctionData.bidCount ?? null;
+  let currentBid = auctionData.currentBid ?? input.base?.currentBid ?? null;
+  let bidCount = auctionData.bidCount ?? input.base?.bidCount ?? null;
 
-  let enriched = input.scrapeDetails
+  const enriched = input.scrapeDetails
     ? await fetchDetailViaExistingScraper({
         source,
         url,
@@ -525,6 +547,18 @@ async function normalizeFromBaseAndUrl(input: {
     bidCount = enriched.bidCount;
   }
 
+  if (!originalCurrency && currentBid != null && currentBid > 0 && (source === "BaT" || source === "CarsAndBids")) {
+    originalCurrency = "USD";
+  }
+
+  const status = mapAuctionStatus({
+    sourceStatus: auctionData.status ?? input.base?.status ?? null,
+    rawPriceText,
+    currentBid,
+    endTime,
+    now: new Date(meta.scrapeTimestamp),
+  });
+
   const hammerPrice = status === "sold" ? currentBid : null;
 
   const mileageKm = normalizeMileageToKm(
@@ -535,7 +569,7 @@ async function normalizeFromBaseAndUrl(input: {
   const locationRaw = enriched?.location ?? null;
   const location = parseLocation(locationRaw);
 
-  const photos = extractPhotoUrls(enriched);
+  const photos = mergePhotoUrls(extractPhotoUrls(enriched), extractPhotoUrls(input.base));
   const photosCount = photos.length;
   // Only reject photo-less active listings when detail scraping was enabled.
   // In cron/summary mode (scrapeDetails=false), photos aren't fetched — listings
@@ -720,6 +754,16 @@ export function extractPhotoUrls(enriched: unknown): string[] {
   return out;
 }
 
+function mergePhotoUrls(...groups: string[][]): string[] {
+  const out: string[] = [];
+  for (const group of groups) {
+    for (const photo of group) {
+      if (!out.includes(photo)) out.push(photo);
+    }
+  }
+  return out;
+}
+
 async function fetchDetailViaExistingScraper(input: {
   source: SourceKey;
   url: string;
@@ -727,7 +771,7 @@ async function fetchDetailViaExistingScraper(input: {
   year: number;
   model: string;
   make: string;
-}): Promise<any | null> {
+}): Promise<EnrichedAuction | null> {
   // We only need fields these scrapers already attempt to parse.
   // They are @ts-nocheck, so we can supply a minimal shape.
   if (input.source === "BaT") {

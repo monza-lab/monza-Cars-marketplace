@@ -77,7 +77,7 @@ const SCRAPER_LABELS: Record<ScraperName, string> = {
 const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   porsche: "Vercel Cron",
   ferrari: "Vercel Cron",
-  autotrader: "Vercel Cron",
+  autotrader: "Windows Task",
   beforward: "Vercel Cron",
   classic: "GitHub Actions",
   autoscout24: "GitHub Actions",
@@ -86,7 +86,7 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   "enrich-vin": "Vercel Cron",
   "enrich-titles": "Vercel Cron",
   "enrich-details": "Vercel Cron",
-  "enrich-autotrader": "Vercel Cron",
+  "enrich-autotrader": "Windows Task",
   "enrich-beforward": "Vercel Cron",
   "enrich-elferspot": "Vercel Cron",
   "backfill-photos-elferspot": "Vercel Cron",
