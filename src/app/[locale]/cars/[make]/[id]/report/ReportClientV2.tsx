@@ -247,7 +247,10 @@ export function ReportClientV2({
   }, [autoGenerateV3, handleGenerateV3, isGeneratingV3, v3Data])
 
   // Derive listing type from v3 vehicle identity
-  const listingType = v3Data?.vehicleIdentity?.listingType ?? "classified"
+  const currentV3Data: HausReportV3 | null = v3Data
+  const v3RenderData = currentV3Data as HausReportV3 | null
+  const v3 = v3RenderData as any
+  const listingType = currentV3Data?.vehicleIdentity?.listingType ?? "classified"
 
   // ─── Auth helpers ──────────────────────────────────────────────────
   const { profile: authProfile } = useAuth()
@@ -263,13 +266,13 @@ export function ReportClientV2({
   // A completed V3 report supersedes any older listing_reports row. Legacy
   // V1/V2 data is still useful as compatibility storage, but it should not
   // own the visual report once the 10-step dossier exists.
-  if (!existingReport || v3Data || autoGenerateV3) {
+  if (!existingReport || v3RenderData || autoGenerateV3) {
     return (
       <main className="flex min-h-screen flex-col bg-background pb-20 md:pb-0">
         <ReportHeader
           carTitle={composeCarTitle(car)}
           carThumbUrl={car.images?.[0] ?? null}
-          generatedAt={v3Data?.generatedAt ?? new Date().toISOString()}
+          generatedAt={v3RenderData?.generatedAt ?? new Date().toISOString()}
           reportVersion={3}
           tier="tier_3"
           onDownloadClick={() => setDownloadSheetOpen(true)}
@@ -300,21 +303,21 @@ export function ReportClientV2({
           )}
 
           {/* V3 sections — dedicated components */}
-          {v3Data && !isGeneratingV3 && (
+          {v3RenderData && !isGeneratingV3 && (
             <>
-              <ExecutiveSummarySection data={v3Data.finalSynthesis} />
-              <TechnicalAnalysisSection data={v3Data.technicalAnalysis} />
-              <InvestmentStrategySection data={v3Data.investmentAnalysis} listingType={listingType} />
-              <OwnershipCostSection data={v3Data.investmentAnalysis?.ownershipCosts ?? null} />
-              <ResaleTimelineSection data={v3Data.investmentAnalysis?.resaleTimeline ?? null} />
-              <DueDiligenceSection data={v3Data.dueDiligence} />
-              <MarketResearchSection data={v3Data.marketResearch} />
-              <BuyerServicesSection data={v3Data.buyerServices} />
+              <ExecutiveSummarySection data={v3.finalSynthesis} />
+              <TechnicalAnalysisSection data={v3.technicalAnalysis} />
+              <InvestmentStrategySection data={v3.investmentAnalysis} listingType={listingType} />
+              <OwnershipCostSection data={v3.investmentAnalysis?.ownershipCosts ?? null} />
+              <ResaleTimelineSection data={v3.investmentAnalysis?.resaleTimeline ?? null} />
+              <DueDiligenceSection data={v3.dueDiligence} />
+              <MarketResearchSection data={v3.marketResearch} />
+              <BuyerServicesSection data={v3.buyerServices} />
 
               {/* V3 metadata footer */}
               <div className="border-t border-border pt-4 text-[11px] text-muted-foreground">
-                <p>V3 Report generated at {new Date(v3Data.generatedAt).toLocaleString()}</p>
-                <p>{v3Data.stepsCompleted}/10 steps completed in {(v3Data.totalDurationMs / 1000).toFixed(1)}s</p>
+                <p>V3 Report generated at {new Date(v3.generatedAt).toLocaleString()}</p>
+                <p>{v3.stepsCompleted}/10 steps completed in {(v3.totalDurationMs / 1000).toFixed(1)}s</p>
               </div>
 
               <div className="flex justify-center pb-8">
@@ -474,26 +477,26 @@ export function ReportClientV2({
           </div>
         )}
 
-        {v3Data && !isGeneratingV3 && (
+        {v3RenderData && !isGeneratingV3 && (
           <div className="mt-10 border-t border-border pt-8 space-y-6">
-            <ExecutiveSummarySection data={v3Data.finalSynthesis} />
-            <TechnicalAnalysisSection data={v3Data.technicalAnalysis} />
-            <InvestmentStrategySection data={v3Data.investmentAnalysis} listingType={listingType} />
-            <OwnershipCostSection data={v3Data.investmentAnalysis?.ownershipCosts ?? null} />
-            <ResaleTimelineSection data={v3Data.investmentAnalysis?.resaleTimeline ?? null} />
-            <DueDiligenceSection data={v3Data.dueDiligence} />
-            <MarketResearchSection data={v3Data.marketResearch} />
-            <BuyerServicesSection data={v3Data.buyerServices} />
+            <ExecutiveSummarySection data={v3.finalSynthesis} />
+            <TechnicalAnalysisSection data={v3.technicalAnalysis} />
+            <InvestmentStrategySection data={v3.investmentAnalysis} listingType={listingType} />
+            <OwnershipCostSection data={v3.investmentAnalysis?.ownershipCosts ?? null} />
+            <ResaleTimelineSection data={v3.investmentAnalysis?.resaleTimeline ?? null} />
+            <DueDiligenceSection data={v3.dueDiligence} />
+            <MarketResearchSection data={v3.marketResearch} />
+            <BuyerServicesSection data={v3.buyerServices} />
 
             {/* V3 metadata footer */}
             <div className="border-t border-border pt-4 text-[11px] text-muted-foreground">
-              <p>V3 Report generated at {new Date(v3Data.generatedAt).toLocaleString()}</p>
-              <p>{v3Data.stepsCompleted}/10 steps completed in {(v3Data.totalDurationMs / 1000).toFixed(1)}s</p>
+              <p>V3 Report generated at {new Date(v3.generatedAt).toLocaleString()}</p>
+              <p>{v3.stepsCompleted}/10 steps completed in {(v3.totalDurationMs / 1000).toFixed(1)}s</p>
             </div>
           </div>
         )}
 
-        {!isGeneratingV3 && !v3Data && (
+        {!isGeneratingV3 && !v3RenderData && (
           <div className="mt-8 flex justify-center">
             <button
               type="button"
@@ -505,7 +508,7 @@ export function ReportClientV2({
           </div>
         )}
 
-        {v3Data && !isGeneratingV3 && (
+        {v3RenderData && !isGeneratingV3 && (
           <div className="mt-4 flex justify-center">
             <button
               type="button"
