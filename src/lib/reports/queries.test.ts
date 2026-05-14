@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // Mock Supabase client
-type SupaResult = { error: null | { message: string } }
+type SupaResult = { error: null | { code?: string; message: string } }
 const mockSelect = vi.fn()
 const mockInsert = vi.fn<(...args: unknown[]) => Promise<SupaResult>>(() =>
   Promise.resolve({ error: null }),
@@ -105,6 +105,72 @@ describe("saveHausReport", () => {
     expect(opts).toEqual({ onConflict: "listing_id" })
   })
 
+  it("strips live prefix before writing to listing_reports UUID column", async () => {
+    const { saveHausReport } = await import("./queries")
+    const report = {
+      fair_value_low: 100,
+      fair_value_high: 200,
+      median_price: 150,
+      specific_car_fair_value_low: 140,
+      specific_car_fair_value_mid: 150,
+      specific_car_fair_value_high: 160,
+      comparable_layer_used: "strict" as const,
+      comparables_count: 7,
+      signals_detected: [],
+      signals_missing: [],
+      modifiers_applied: [],
+      modifiers_total_percent: 0,
+      signals_extracted_at: new Date().toISOString(),
+      extraction_version: "v1.0",
+    }
+
+    await expect(
+      saveHausReport("live-5fb98398-2dd1-46e2-84dd-a92c40017ee4", report),
+    ).resolves.toBeUndefined()
+
+    const [row] = mockUpsert.mock.calls[0] as unknown as [
+      Record<string, unknown>,
+      { onConflict: string },
+    ]
+    expect(row.listing_id).toBe("5fb98398-2dd1-46e2-84dd-a92c40017ee4")
+  })
+
+  it("strips live prefix on schema fallback retry payload", async () => {
+    mockUpsert
+      .mockImplementationOnce(() =>
+        Promise.resolve({ error: { code: "42703", message: "missing column" } }),
+      )
+      .mockImplementationOnce(() => Promise.resolve({ error: null }))
+
+    const { saveHausReport } = await import("./queries")
+    const report = {
+      fair_value_low: 100,
+      fair_value_high: 200,
+      median_price: 150,
+      specific_car_fair_value_low: 140,
+      specific_car_fair_value_mid: 150,
+      specific_car_fair_value_high: 160,
+      comparable_layer_used: "strict" as const,
+      comparables_count: 7,
+      signals_detected: [],
+      signals_missing: [],
+      modifiers_applied: [],
+      modifiers_total_percent: 0,
+      signals_extracted_at: new Date().toISOString(),
+      extraction_version: "v1.0",
+    }
+
+    await expect(
+      saveHausReport("live-5fb98398-2dd1-46e2-84dd-a92c40017ee4", report),
+    ).resolves.toBeUndefined()
+
+    const [retryRow] = mockUpsert.mock.calls[1] as unknown as [
+      Record<string, unknown>,
+      { onConflict: string },
+    ]
+    expect(retryRow.listing_id).toBe("5fb98398-2dd1-46e2-84dd-a92c40017ee4")
+  })
+
   it("throws when supabase returns error", async () => {
     mockUpsert.mockImplementationOnce(() =>
       Promise.resolve({ error: { message: "db down" } }),
@@ -180,6 +246,35 @@ describe("saveSignals", () => {
       value_display: "Gulf Blue (PTS code Y5C)",
       name_i18n_key: "report.signals.paint_to_sample",
     })
+  })
+
+  it("strips live prefix before writing listing_signals UUID rows", async () => {
+    const { saveSignals } = await import("./queries")
+    const signals = [
+      {
+        key: "paint_to_sample",
+        name_i18n_key: "report.signals.paint_to_sample",
+        value_display: "Gulf Blue (PTS code Y5C)",
+        evidence: {
+          source_type: "listing_text" as const,
+          source_ref: "description_text:char_244-311",
+          raw_excerpt: "Paint to Sample Gulf Blue",
+          confidence: "high" as const,
+        },
+      },
+    ]
+
+    await expect(
+      saveSignals(
+        "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+        "2ad3590f-8aba-4c51-b300-9d2f773c26d2",
+        "v3.0",
+        signals,
+      ),
+    ).resolves.toBeUndefined()
+
+    const rows = mockInsert.mock.calls[0][0] as Array<Record<string, unknown>>
+    expect(rows[0].listing_id).toBe("5fb98398-2dd1-46e2-84dd-a92c40017ee4")
   })
 
   it("throws when supabase insert errors", async () => {

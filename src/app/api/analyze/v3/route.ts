@@ -1,4 +1,5 @@
 // src/app/api/analyze/v3/route.ts
+import { randomUUID } from "node:crypto"
 import { NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { fetchLiveListingById } from "@/lib/supabaseLiveListings"
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
             if (fv.signals_detected?.length) {
               await saveSignals(
                 listingId,
-                `v3-${Date.now()}`,
+                randomUUID(),
                 "v3.0",
                 fv.signals_detected
               )
