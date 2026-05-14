@@ -55,8 +55,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Install Playwright browsers (only if Playwright fallback enabled)
-        if: ${{ github.event.inputs.disable_playwright == 'false' }}
+      - name: Install Playwright browsers
         run: |
           npx playwright install-deps chromium
           npx playwright install chromium
