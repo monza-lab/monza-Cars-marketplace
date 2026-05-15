@@ -18,9 +18,10 @@ import type {
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
 import { isAdmin } from "@/lib/admin"
+import { REPORT_PISTON_COST } from "./canAffordReport"
 
 const DEFAULT_MONTHLY_PISTONS = 300
-export const REPORT_PISTON_COST = 100
+export { REPORT_PISTON_COST }
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
