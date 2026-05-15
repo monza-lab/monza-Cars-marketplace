@@ -61,6 +61,14 @@ import type {
   HausReportV3,
 } from "@/lib/reports/types-v3"
 
+// ─── V2 block components reused inside V1 layout for paid users ───────
+import { VinIntelBlock } from "@/components/report/VinIntelBlock"
+import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
+import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
+import { ComparablesAndPositioningBlock } from "@/components/report/ComparablesAndPositioningBlock"
+import { VerdictBlock } from "@/components/report/VerdictBlock"
+import { computeD3PeerPositioning } from "@/lib/marketIntel/aggregator"
+
 // ─── V3 dedicated section components ─────────────────────────────────
 import { ExecutiveSummarySection } from "@/components/report/v3/ExecutiveSummarySection"
 import { TechnicalAnalysisSection } from "@/components/report/v3/TechnicalAnalysisSection"
@@ -478,6 +486,49 @@ export function ReportClient({
   const verdict = !hasSignals ? null :
     deltaVsSpecific <= -5 ? "buy" :
     deltaVsSpecific >= 5 ? "watch" : "hold"
+
+  // ─── V2 block helpers (identity / similar / verdict) ─────────────────
+  // thisVinPriceUsd: best-effort USD price for this listing (mirrors V2's deriveAskingUsd)
+  const thisVinPriceUsd: number = (
+    [car.soldPriceUsd, car.askingPriceUsd, car.currentBid, car.price]
+      .filter((v): v is number => typeof v === "number" && v > 0)
+  )[0] ?? 0
+
+  // d3: peer positioning for ComparablesAndPositioningBlock
+  const v1D3 = computeD3PeerPositioning({
+    thisVinPriceUsd,
+    variantSoldPricesUsd: dbComparables.filter(c => c.soldPrice > 0).map(c => c.soldPrice),
+    adjacentVariants: [],
+  })
+
+  // captureDateRange for ComparablesAndPositioningBlock
+  const comparablesCaptureDateRange: { start: string; end: string } | null = (() => {
+    const dates: string[] = []
+    for (const r of marketStats?.regions ?? []) {
+      if (r.oldestDate) dates.push(r.oldestDate)
+      if (r.newestDate) dates.push(r.newestDate)
+    }
+    for (const c of dbComparables) {
+      if (c.soldDate) dates.push(c.soldDate)
+    }
+    if (dates.length === 0) return null
+    const sorted = [...dates].sort()
+    return { start: sorted[0], end: sorted[sorted.length - 1] }
+  })()
+
+  // VerdictBlock-compatible values (uppercase verdict, V2 style)
+  const v1FairMid = report?.specific_car_fair_value_mid ?? null
+  const v1DeltaPercent = thisVinPriceUsd && v1FairMid
+    ? ((thisVinPriceUsd - v1FairMid) / v1FairMid) * 100
+    : 0
+  const v1VerdictKey: "BUY" | "WATCH" | "WALK" | "PENDING" = !v1FairMid
+    ? "PENDING"
+    : v1DeltaPercent <= -5 ? "BUY"
+    : v1DeltaPercent >= 10 ? "WALK"
+    : "WATCH"
+  const v1OneLiner = v1FairMid
+    ? `Priced ${v1DeltaPercent >= 0 ? "+" : ""}${v1DeltaPercent.toFixed(1)}% vs fair value · ${dbComparables.length} comparables`
+    : "Awaiting full analysis"
 
   // Arbitrage: difference between cheapest and most expensive region
   const cheapestRegionAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
@@ -1931,71 +1982,85 @@ export function ReportClient({
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("identity")} id="section-identity" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="identity">
-                <SectionHeader id="identity" title={t("sections.identity")} />
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
+                    <InvestmentStoryBlock narrative={report?.investment_narrative} />
+                    <ColorIntelBlock colorIntel={report?.color_intelligence} />
+                    <VinIntelBlock
+                      vinIntel={report?.vin_intelligence}
+                      vin={car.vin ?? null}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
 
-                {/* Specs grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                  {[
-                    { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
-                    { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
-                    { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
-                    { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
-                    { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
-                  ].map((spec, i) => (
-                    <div key={i} className="rounded-xl bg-card border border-border p-4">
-                      <div className="flex items-center gap-2 text-primary/60 mb-2">
-                        {spec.icon}
-                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
-                      </div>
-                      <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
+                    {/* Specs grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                      {[
+                        { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
+                        { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
+                        { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
+                        { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
+                        { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
+                      ].map((spec, i) => (
+                        <div key={i} className="rounded-xl bg-card border border-border p-4">
+                          <div className="flex items-center gap-2 text-primary/60 mb-2">
+                            {spec.icon}
+                            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
+                          </div>
+                          <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* Provenance */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <History className="size-4 text-primary" />
-                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
-                  </div>
-                  <div className="pl-4 border-l border-border">
-                    <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-                  </div>
-                </div>
-
-                {/* Platform data */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FileText className="size-4 text-primary" />
-                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
-                        <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
+                    {/* Provenance */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <History className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
+                      </div>
+                      <div className="pl-4 border-l border-border">
+                        <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
-                      <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
-                    </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
-                      <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
-                    </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
-                        <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
-                          {car.status === "ENDED" ? "Ended" : isLive ? `Live · ${timeLeft(car.endTime)}` : car.status}
-                        </span>
+
+                    {/* Platform data */}
+                    <div className="rounded-xl bg-card border border-border p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
+                            <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
+                          <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
+                          <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
+                            <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
+                              {car.status === "ENDED" ? "Ended" : isLive ? `Live · ${timeLeft(car.endTime)}` : car.status}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
