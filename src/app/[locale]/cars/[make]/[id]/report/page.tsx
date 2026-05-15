@@ -21,7 +21,6 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { isAdmin } from "@/lib/admin"
 import { ReportClient } from "./ReportClient"
-import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport, MarketIntelD2, ReportTier } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
@@ -247,36 +246,18 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {/* Layout rule: V2 (full unlocked report with all sections) is only
-          shown to users with access. Everyone else — including users who
-          have no report yet AND users who have a V3 sitting in DB but
-          haven't paid — sees the V1 layout (sidebar TOC + hero + teaser
-          sections). This guarantees the same paywall UX across the whole
-          funnel. V1 itself never calls the AI; it only renders what we
-          already have from the listing scrape. */}
-      {userHasAccess && (existingReport || v3Report) ? (
-        <ReportClientV2
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
-          d2Precomputed={d2Precomputed}
-          reportTier={reportTier}
-          reportHash={reportHash}
-          reportVersion={reportVersion}
-          v3Report={v3Report}
-          userHasAccess={userHasAccess}
-        />
-      ) : (
-        <ReportClient
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
-        />
-      )}
+      {/* Single unified report client. Renders the paywall preview for
+          users without access, and the full V3 report content inside
+          the same layout shell for paid users. */}
+      <ReportClient
+        car={car}
+        similarCars={similarCars}
+        existingReport={existingReport}
+        marketStats={marketStats}
+        dbComparables={dbComparables}
+        v3Report={v3Report}
+        userHasAccess={userHasAccess}
+      />
     </Suspense>
   )
 }

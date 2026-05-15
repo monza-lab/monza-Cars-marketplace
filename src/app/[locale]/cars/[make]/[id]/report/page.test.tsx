@@ -22,9 +22,6 @@ vi.mock("next-intl", () => ({
 vi.mock("./ReportClient", () => ({
   ReportClient: () => null,
 }));
-vi.mock("./ReportClientV2", () => ({
-  ReportClientV2: () => null,
-}));
 
 // Datos del carro: usamos un id "live-test" para forzar el path live
 // (que es donde están las llamadas a blindar).
