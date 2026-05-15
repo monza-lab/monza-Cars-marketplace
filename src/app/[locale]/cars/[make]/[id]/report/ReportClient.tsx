@@ -2550,46 +2550,60 @@ export function ReportClient({
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("similar")} id="section-similar" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="similar">
-                <SectionHeader id="similar" title={t("sections.similar")} />
-                <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="similar" title={t("sections.similar")} />
+                    <ComparablesAndPositioningBlock
+                      d3={v1D3}
+                      thisVinPriceUsd={thisVinPriceUsd}
+                      comparables={dbComparables}
+                      captureDateRange={comparablesCaptureDateRange}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="similar" title={t("sections.similar")} />
+                    <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {similarCars.slice(0, 6).map(sc => (
-                    <Link
-                      key={sc.car.id}
-                      href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
-                      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
-                    >
-                      <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
-                        <SafeImage
-                          src={sc.car.image}
-                          alt={sc.car.title}
-                          fill
-                          className="object-cover"
-                          sizes="80px"
-                          fallback={<div className="absolute inset-0 bg-muted" />}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
-                          <span className="text-[10px] text-positive">{sc.car.trend}</span>
-                        </div>
-                        {sc.matchReasons.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {sc.matchReasons.slice(0, 2).map(reason => (
-                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
-                                {reason}
-                              </span>
-                            ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {similarCars.slice(0, 6).map(sc => (
+                        <Link
+                          key={sc.car.id}
+                          href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
+                          className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
+                        >
+                          <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
+                            <SafeImage
+                              src={sc.car.image}
+                              alt={sc.car.title}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                              fallback={<div className="absolute inset-0 bg-muted" />}
+                            />
                           </div>
-                        )}
-                      </div>
-                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                    </Link>
-                  ))}
-                </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
+                              <span className="text-[10px] text-positive">{sc.car.trend}</span>
+                            </div>
+                            {sc.matchReasons.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {sc.matchReasons.slice(0, 2).map(reason => (
+                                  <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
