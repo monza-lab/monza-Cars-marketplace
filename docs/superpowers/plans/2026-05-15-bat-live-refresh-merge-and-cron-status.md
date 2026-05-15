@@ -280,3 +280,18 @@ Purpose:
 
 - Remove any ambiguity from the five-minute cadence.
 - Prove whether GitHub emits a `schedule` run for this workflow at all.
+
+## Latest Check 2
+
+Checked again on `2026-05-15T01:24:56Z` after pushing the hourly schedule.
+
+Result:
+
+- `BaT Live Refresh` still has only the two manual `workflow_dispatch` runs.
+- No `schedule` run exists yet for workflow ID `277025455`.
+- The workflow remains `active` on `main`.
+
+Conclusion:
+
+- The schedule trigger still is not firing, even with the simplest hourly cron.
+- The likely root cause is GitHub Actions schedule delivery or workflow registration for this specific workflow, not cron syntax and not the scraper logic.
