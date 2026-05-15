@@ -42,4 +42,24 @@ test.describe("Haus Report — free view + paid view", () => {
     // "No adjustments applied" copy appears for empty modifier list
     await expect(page.getByText(/no adjustments applied/i)).toBeVisible()
   })
+
+  test("clicking Unlock opens the ConfirmGenerateModal", async ({ page }) => {
+    await page.goto(`/en/cars/porsche/${TEST_LISTING_ID}/report`)
+
+    // The first Unlock CTA in the sidebar footer
+    await page.getByRole("button", { name: /Unlock\s+\d+\s+pistons/i }).first().click()
+
+    // The modal opens and shows the included-sections list
+    await expect(page.getByText(/Includes\s+9\s+sections/i)).toBeVisible()
+    await expect(page.getByText(/Executive summary/i)).toBeVisible()
+    await expect(page.getByText(/Final verdict/i)).toBeVisible()
+
+    // Both action buttons are present
+    await expect(page.getByRole("button", { name: /Cancel/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Generate report/i })).toBeVisible()
+
+    // ESC closes the modal
+    await page.keyboard.press("Escape")
+    await expect(page.getByText(/Includes\s+9\s+sections/i)).not.toBeVisible()
+  })
 })
