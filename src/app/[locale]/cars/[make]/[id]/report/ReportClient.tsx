@@ -61,6 +61,16 @@ import type {
   HausReportV3,
 } from "@/lib/reports/types-v3"
 
+// ─── V3 dedicated section components ─────────────────────────────────
+import { ExecutiveSummarySection } from "@/components/report/v3/ExecutiveSummarySection"
+import { TechnicalAnalysisSection } from "@/components/report/v3/TechnicalAnalysisSection"
+import { InvestmentStrategySection } from "@/components/report/v3/InvestmentStrategySection"
+import { DueDiligenceSection as V3DueDiligenceSection } from "@/components/report/v3/DueDiligenceSection"
+import { MarketResearchSection } from "@/components/report/v3/MarketResearchSection"
+import { BuyerServicesSection } from "@/components/report/v3/BuyerServicesSection"
+import { OwnershipCostSection } from "@/components/report/v3/OwnershipCostSection"
+import { ResaleTimelineSection } from "@/components/report/v3/ResaleTimelineSection"
+
 // ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
 const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
   { sectionKey: "listing_scrape", label: "Reading Listing" },
@@ -1907,6 +1917,13 @@ export function ReportClient({
                   </div>
                 </div>
               </div>
+
+              {/* V3 Executive Summary — replaces teaser when user has access + V3 data */}
+              {hasAccess && v3Report && (
+                <div className="mt-4">
+                  <ExecutiveSummarySection data={v3Report.finalSynthesis} />
+                </div>
+              )}
             </section>
 
             {/* ═══════════════════════════════════════
@@ -1988,6 +2005,18 @@ export function ReportClient({
             <section ref={setSectionRef("valuation")} id="section-valuation" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="valuation">
                 <SectionHeader id="valuation" title={t("sections.valuation")} />
+
+                {hasAccess && v3Report ? (
+                  <div className="space-y-4">
+                    <InvestmentStrategySection
+                      data={v3Report.investmentAnalysis}
+                      listingType={v3Report.vehicleIdentity?.listingType ?? "classified"}
+                    />
+                    <OwnershipCostSection data={v3Report.investmentAnalysis?.ownershipCosts ?? null} />
+                    <ResaleTimelineSection data={v3Report.investmentAnalysis?.resaleTimeline ?? null} />
+                  </div>
+                ) : (
+                <>
 
                 {/* Regional breakdown bars — only show when we have real regional data */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2135,6 +2164,8 @@ export function ReportClient({
                     </div>
                   )}
                 </div>
+                </>
+                )}
               </PaywallSection>
             </section>
 
@@ -2151,6 +2182,11 @@ export function ReportClient({
             <section ref={setSectionRef("performance")} id="section-performance" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="performance">
                 <SectionHeader id="performance" title={t("sections.performance")} />
+
+                {hasAccess && v3Report ? (
+                  <TechnicalAnalysisSection data={v3Report.technicalAnalysis} />
+                ) : (
+                <>
 
                 {/* Market Position */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2264,6 +2300,8 @@ export function ReportClient({
                     </div>
                   )
                 })()}
+                </>
+                )}
               </PaywallSection>
             </section>
 
@@ -2273,6 +2311,11 @@ export function ReportClient({
             <section ref={setSectionRef("risk")} id="section-risk" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="risk">
                 <SectionHeader id="risk" title={t("sections.risk")} />
+
+                {hasAccess && v3Report ? (
+                  <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                ) : (
+                <>
 
                 {/* Risk gauge */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2334,6 +2377,8 @@ export function ReportClient({
                     </p>
                   </div>
                 )}
+                </>
+                )}
               </PaywallSection>
             </section>
 
@@ -2343,6 +2388,14 @@ export function ReportClient({
             <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="dueDiligence">
                 <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
+
+                {hasAccess && v3Report ? (
+                  <div className="space-y-4">
+                    <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                    <BuyerServicesSection data={v3Report.buyerServices} />
+                  </div>
+                ) : (
+                <>
 
                 {/* Questions to ask */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2396,6 +2449,8 @@ export function ReportClient({
                     ))}
                   </div>
                 </div>
+                </>
+                )}
               </PaywallSection>
             </section>
 
@@ -2406,6 +2461,11 @@ export function ReportClient({
               <PaywallSection sectionId="marketContext">
                 <SectionHeader id="marketContext" title={t("sections.marketContext")} />
 
+                {hasAccess && v3Report ? (
+                  <MarketResearchSection data={v3Report.marketResearch} />
+                ) : (
+                <>
+
                 {/* Brand thesis */}
                 <div className="rounded-xl bg-primary/5 border border-primary/15 p-5 mb-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -2415,6 +2475,8 @@ export function ReportClient({
                   <p className="text-[13px] leading-relaxed text-foreground/80 whitespace-pre-line">{stripHtml(car.thesis)}</p>
                 </div>
 
+                </>
+                )}
               </PaywallSection>
             </section>
 
