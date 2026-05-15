@@ -58,6 +58,7 @@ import type {
   PipelineProgress,
   StepStatus,
   ReportSectionKey,
+  HausReportV3,
 } from "@/lib/reports/types-v3"
 
 // ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
@@ -154,12 +155,22 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
 // ═══════════════════════════════════════════════════════════════
 // ─── MAIN COMPONENT ───
 // ═══════════════════════════════════════════════════════════════
-export function ReportClient({ car, similarCars, existingReport, marketStats, dbComparables = [] }: {
+export function ReportClient({
+  car,
+  similarCars,
+  existingReport,
+  marketStats,
+  dbComparables = [],
+  v3Report = null,
+  userHasAccess = false,
+}: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   existingReport: HausReport | null
   marketStats: ModelMarketStats | null
   dbComparables?: DbComparableRow[]
+  v3Report?: HausReportV3 | null
+  userHasAccess?: boolean
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
@@ -200,7 +211,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     setPlan,
   } = useTokens()
 
-  const [hasAccess, setHasAccess] = useState(false)
+  const [hasAccess, setHasAccess] = useState(userHasAccess)
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
