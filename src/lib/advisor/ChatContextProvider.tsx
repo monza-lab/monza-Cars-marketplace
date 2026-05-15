@@ -10,6 +10,8 @@ type ChatContextValue = {
   open: () => void
   close: () => void
   toggle: () => void
+  conversationId: string | null
+  setConversationId: (id: string | null) => void
 }
 
 const DEFAULT_CONTEXT: ChatContext = {
@@ -25,6 +27,7 @@ const Ctx = createContext<ChatContextValue | null>(null)
 export function ChatContextProvider({ children }: { children: React.ReactNode }) {
   const [context, setContextState] = useState<ChatContext>(DEFAULT_CONTEXT)
   const [isOpen, setIsOpen] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
 
   const setContext = useCallback(
     (next: Partial<ChatContext>) => setContextState(prev => ({ ...prev, ...next })),
@@ -35,8 +38,8 @@ export function ChatContextProvider({ children }: { children: React.ReactNode })
   const toggle = useCallback(() => setIsOpen(prev => !prev), [])
 
   const value = useMemo<ChatContextValue>(
-    () => ({ context, setContext, isOpen, open, close, toggle }),
-    [context, setContext, isOpen, open, close, toggle]
+    () => ({ context, setContext, isOpen, open, close, toggle, conversationId, setConversationId }),
+    [context, setContext, isOpen, open, close, toggle, conversationId, setConversationId]
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useLocale } from "next-intl"
 import { ExternalLink } from "lucide-react"
 import Link from "next/link"
@@ -24,14 +23,15 @@ import { AdvisorConversation } from "./AdvisorConversation"
  * not available in a client-side layout mount.
  *
  * The /advisor route remains alive as a deep link accessible from the drawer header.
+ *
+ * Conversation ID is persisted in ChatContextProvider so it survives drawer close/reopen
+ * within the same browser session. Reload clears it (no backend persistence).
  */
 export function AdvisorDrawer() {
-  const { isOpen, close, context } = useChatContext()
+  const { isOpen, close, context, conversationId, setConversationId } = useChatContext()
   const suggestions = buildSuggestions(context)
   const { profile } = useAuth()
   const locale = useLocale()
-
-  const [conversationId, setConversationId] = useState<string | null>(null)
 
   const userTier: "FREE" | "PRO" = profile?.tier === "PRO" ? "PRO" : "FREE"
 
