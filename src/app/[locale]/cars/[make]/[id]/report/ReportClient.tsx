@@ -52,6 +52,8 @@ import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import { SourceListingCta } from "@/components/funnel/SourceListingCta"
+import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
+import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 import type {
   PipelineProgress,
   StepStatus,
@@ -201,6 +203,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const [hasAccess, setHasAccess] = useState(false)
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
+  const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
   const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
   const { profile: authProfile } = useAuth()
@@ -330,7 +333,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }
   }, [tokensLoading, car.id, hasAnalyzed])
 
-  const handleUnlock = () => {
+  // Confirms the spend after the user reviewed the modal.
+  const executeUnlock = () => {
+    setConfirmGenerateOpen(false)
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
       if (!existingReport) void handleGenerateV3()
@@ -343,6 +348,22 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     } else {
       setShowPricing(true)
     }
+  }
+
+  // Entry point used by every Unlock CTA in the layout.
+  // 1. If we already analyzed this car (cached), skip confirm and reuse.
+  // 2. If balance can't cover the cost, route directly to the top-up flow.
+  // 3. Otherwise open the pedagogical confirmation modal.
+  const handleUnlock = () => {
+    if (hasAnalyzed(car.id)) {
+      executeUnlock()
+      return
+    }
+    if (!canAffordReport(tokens, REPORT_PISTON_COST)) {
+      setShowPricing(true)
+      return
+    }
+    setConfirmGenerateOpen(true)
   }
 
   const handlePurchase = (planId: "single" | "explorer" | "unlimited") => {
@@ -2869,6 +2890,15 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         onOpenChange={setOutOfReportsOpen}
         neededPistons={1000}
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
+      />
+
+      <ConfirmGenerateModal
+        open={confirmGenerateOpen}
+        onOpenChange={setConfirmGenerateOpen}
+        car={car}
+        cost={REPORT_PISTON_COST}
+        balance={tokens}
+        onConfirm={executeUnlock}
       />
 
       {/* ═══ V3 GENERATION OVERLAY (full-screen modal) ═══ */}
