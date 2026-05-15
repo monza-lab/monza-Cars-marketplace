@@ -6,6 +6,10 @@ import type { ChatContext } from "./types"
 type ChatContextValue = {
   context: ChatContext
   setContext: (next: Partial<ChatContext>) => void
+  isOpen: boolean
+  open: () => void
+  close: () => void
+  toggle: () => void
 }
 
 const DEFAULT_CONTEXT: ChatContext = {
@@ -20,11 +24,20 @@ const Ctx = createContext<ChatContextValue | null>(null)
 
 export function ChatContextProvider({ children }: { children: React.ReactNode }) {
   const [context, setContextState] = useState<ChatContext>(DEFAULT_CONTEXT)
+  const [isOpen, setIsOpen] = useState(false)
+
   const setContext = useCallback(
     (next: Partial<ChatContext>) => setContextState(prev => ({ ...prev, ...next })),
     []
   )
-  const value = useMemo<ChatContextValue>(() => ({ context, setContext }), [context, setContext])
+  const open = useCallback(() => setIsOpen(true), [])
+  const close = useCallback(() => setIsOpen(false), [])
+  const toggle = useCallback(() => setIsOpen(prev => !prev), [])
+
+  const value = useMemo<ChatContextValue>(
+    () => ({ context, setContext, isOpen, open, close, toggle }),
+    [context, setContext, isOpen, open, close, toggle]
+  )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

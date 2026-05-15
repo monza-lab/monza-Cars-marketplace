@@ -1,10 +1,10 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { MessageCircle } from "lucide-react"
 import { MonzaHausHelmet } from "@/components/brand/MonzaHausHelmet"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 
 /**
  * Floating Advisor button — bottom-right on every page.
@@ -23,6 +23,7 @@ import { MonzaHausHelmet } from "@/components/brand/MonzaHausHelmet"
 export function AdvisorFab() {
   const pathname = usePathname() ?? ""
   const t = useTranslations()
+  const { open } = useChatContext()
 
   // Hide on /advisor itself
   if (pathname.startsWith("/advisor")) return null
@@ -36,8 +37,9 @@ export function AdvisorFab() {
   }
 
   return (
-    <Link
-      href="/advisor"
+    <button
+      type="button"
+      onClick={open}
       aria-label={t("nav.advisorAria")}
       className="
         fixed right-4 md:right-6
@@ -88,6 +90,6 @@ export function AdvisorFab() {
       <span className="text-[12px] font-semibold tracking-wide whitespace-nowrap">
         {t("nav.advisor")}
       </span>
-    </Link>
+    </button>
   )
 }
