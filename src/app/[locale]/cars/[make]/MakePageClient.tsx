@@ -20,6 +20,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { useLocale, useTranslations } from "next-intl"
 import { type FamilyFilters } from "@/components/filters/FamilySearchAndFilters"
 import { AdvancedFilters } from "@/components/filters/AdvancedFilters"
@@ -140,6 +141,22 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [feedStatusFilter, setFeedStatusFilter] = useState<"all" | "live" | "ended">("all")
   const feedRef = useRef<HTMLDivElement>(null)
   const carIndexRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
+  const { setContext } = useChatContext()
+
+  // Publish surface context to AdvisorDrawer. Updates whenever the active series changes.
+  // Resets to "other" on unmount so stale suggestions don't bleed into other pages.
+  useEffect(() => {
+    setContext({
+      surface: "marketplace-series",
+      locale,
+      car: null,
+      activeSection: null,
+      seriesId: selectedFamilyForFeed ?? null,
+    })
+    return () => {
+      setContext({ surface: "other", car: null, activeSection: null, seriesId: null })
+    }
+  }, [setContext, locale, selectedFamilyForFeed])
 
   // ─── INFINITE SCROLL HOOK — replaces the old `cars` prop ───
   const {

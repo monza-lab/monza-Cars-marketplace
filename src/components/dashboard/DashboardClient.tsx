@@ -8,6 +8,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { formatUsd, resolveRegion } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { filterLiveSidebarAuctions, useLiveSidebarListings } from "./sidebar/useLiveSidebarListings"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import {
   Clock,
   MapPin,
@@ -2406,6 +2407,16 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
   const valuationAuctions = valuationListings && valuationListings.length > 0 ? valuationListings : auctions
+  const locale = useLocale()
+  const { setContext } = useChatContext()
+
+  // Publish surface context to AdvisorDrawer on mount. Resets to "other" on unmount.
+  useEffect(() => {
+    setContext({ surface: "dashboard", locale, car: null, activeSection: null, seriesId: null })
+    return () => {
+      setContext({ surface: "other", car: null, activeSection: null, seriesId: null })
+    }
+  }, [setContext, locale])
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
