@@ -333,9 +333,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }
   }, [tokensLoading, car.id, hasAnalyzed])
 
-  // Confirms the spend after the user reviewed the modal.
+  // Confirms the spend after the user reviewed the modal. Modal close
+  // is the last side effect so React batches it with the access/loading
+  // state changes — keeps the transition to GenerationStepper free of
+  // flicker. The cached path never opened the modal, so its early
+  // return doesn't need a close call.
   const executeUnlock = () => {
-    setConfirmGenerateOpen(false)
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
       if (!existingReport) void handleGenerateV3()
@@ -348,6 +351,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     } else {
       setShowPricing(true)
     }
+    setConfirmGenerateOpen(false)
   }
 
   // Entry point used by every Unlock CTA in the layout.
