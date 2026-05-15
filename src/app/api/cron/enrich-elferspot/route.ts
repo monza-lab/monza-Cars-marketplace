@@ -6,6 +6,7 @@ import {
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
+import { buildMissingAnyFilter } from "@/features/scrapers/common/enrichmentLoopPolicy";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -47,13 +48,18 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Query Elferspot active listings missing description (proxy for unenriched)
+    // Query Elferspot active listings missing fields tracked by the quality gate.
     const { data: rows, error: fetchErr } = await client
       .from("listings")
       .select("id,source_url")
       .eq("source", "Elferspot")
       .eq("status", "active")
-      .is("description_text", null)
+      .or(
+        buildMissingAnyFilter([
+          { field: "description_text", type: "text" },
+          { field: "hammer_price", type: "numeric" },
+        ]),
+      )
       .order("updated_at", { ascending: true })
       .limit(50);
 

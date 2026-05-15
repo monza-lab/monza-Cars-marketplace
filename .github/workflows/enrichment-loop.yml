@@ -72,3 +72,11 @@ jobs:
             --max-iterations=${{ github.event.inputs.max_iterations || '5' }} \
             --pause=${{ github.event.inputs.pause_minutes || '2' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+
+      - name: Upload enrichment loop logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: enrichment-loop-logs
+          path: logs/scraper-runs/*.json
+          if-no-files-found: ignore
