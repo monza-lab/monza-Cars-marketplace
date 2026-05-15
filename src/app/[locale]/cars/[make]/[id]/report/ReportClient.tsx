@@ -1871,109 +1871,111 @@ export function ReportClient({
                 §1 — EXECUTIVE SUMMARY (always visible)
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <SectionHeader id="summary" title={t("sections.summary")} />
-
-              {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
-              {report && (
-                <div className="rounded-2xl border border-border bg-card p-5 mb-4">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                    {tFairValue("specificCarTitle")}
-                  </p>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">
-                    {formatUsd(report.specific_car_fair_value_low ?? 0)} – {formatUsd(report.specific_car_fair_value_high ?? 0)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {tFairValue("baselineSubtitle", { count: report.comparables_count })}
-                  </p>
-                </div>
-              )}
-
-              {/* 5-metric grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {/* Current Price */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                  {car.currentBid > 0 ? (
-                    <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
-                  ) : (
-                    <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
-                  )}
-                </div>
-                {/* Fair Value */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
-                  {hasFairValue ? (
-                    <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
-                      {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
-                    </p>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                      Insufficient comparable data
-                    </p>
-                  )}
-                </div>
-                {/* Market Position */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
-                  {pricePosition !== null ? (
-                    <>
-                      <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
-                        {pricePosition}%
-                      </p>
-                      {pricePosition > 100 && (
-                        <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
-                      Generate the full report to see how this car prices against comparable sales.
-                    </p>
-                  )}
-                </div>
-                {/* Similar Cars */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
-                  <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
-                </div>
-                {/* Risk Score */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
-                  {riskScore !== null ? (
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
-                          style={{ width: `${riskScore}%` }}
-                        />
-                      </div>
-                      <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
-                        {riskScore}/100
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                      {/* [HARDCODED] */}Generate the full report to see signal coverage
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Verdict one-liner */}
-              <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
-                <div className="flex items-start gap-3">
-                  <Scale className="size-5 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[12px] font-semibold text-primary mb-1">{t("summary.verdict")}</p>
-                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* V3 Executive Summary — replaces teaser when user has access + V3 data */}
-              {hasAccess && v3Report && (
-                <div className="mt-4">
+              {hasAccess && v3Report ? (
+                <>
+                  <SectionHeader id="summary" title={t("sections.summary")} />
                   <ExecutiveSummarySection data={v3Report.finalSynthesis} />
-                </div>
+                </>
+              ) : (
+                <>
+                  <SectionHeader id="summary" title={t("sections.summary")} />
+
+                  {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
+                  {report && (
+                    <div className="rounded-2xl border border-border bg-card p-5 mb-4">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                        {tFairValue("specificCarTitle")}
+                      </p>
+                      <p className="text-2xl font-bold text-foreground tabular-nums">
+                        {formatUsd(report.specific_car_fair_value_low ?? 0)} – {formatUsd(report.specific_car_fair_value_high ?? 0)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {tFairValue("baselineSubtitle", { count: report.comparables_count })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 5-metric grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Current Price */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
+                      {car.currentBid > 0 ? (
+                        <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                      ) : (
+                        <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
+                      )}
+                    </div>
+                    {/* Fair Value */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
+                      {hasFairValue ? (
+                        <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
+                          {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
+                        </p>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                          Insufficient comparable data
+                        </p>
+                      )}
+                    </div>
+                    {/* Market Position */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
+                      {pricePosition !== null ? (
+                        <>
+                          <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
+                            {pricePosition}%
+                          </p>
+                          {pricePosition > 100 && (
+                            <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
+                          Generate the full report to see how this car prices against comparable sales.
+                        </p>
+                      )}
+                    </div>
+                    {/* Similar Cars */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                      <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
+                    </div>
+                    {/* Risk Score */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
+                      {riskScore !== null ? (
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
+                              style={{ width: `${riskScore}%` }}
+                            />
+                          </div>
+                          <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
+                            {riskScore}/100
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                          {/* [HARDCODED] */}Generate the full report to see signal coverage
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Verdict one-liner */}
+                  <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
+                    <div className="flex items-start gap-3">
+                      <Scale className="size-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[12px] font-semibold text-primary mb-1">{t("summary.verdict")}</p>
+                        <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </section>
 
