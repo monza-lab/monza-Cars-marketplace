@@ -44,6 +44,7 @@ import { LandedCostBlock } from "@/components/report/LandedCostBlock"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
@@ -203,6 +204,8 @@ export function ReportClient({
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
   const locale = useLocale()
+  const { setContext } = useChatContext()
+
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const tFairValue = useTranslations("report.fairValue")
@@ -216,6 +219,28 @@ export function ReportClient({
   const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>(
     Object.fromEntries(SECTION_IDS.map(id => [id, null])) as Record<SectionId, HTMLElement | null>
   )
+
+  // Publish surface context to AdvisorDrawer / AdvisorPageShell.
+  // Fires on mount and whenever the user scrolls to a new section.
+  // Resets to "other" on unmount so stale report suggestions don't bleed into other pages.
+  useEffect(() => {
+    setContext({
+      surface: "report",
+      locale,
+      car,
+      // SectionId union matches ChatContext["activeSection"] exactly; cast is safe
+      activeSection: activeSection as "summary" | "identity" | "valuation" | "performance" | "risk" | "dueDiligence" | "marketContext" | "similar" | "verdict" | null,
+      seriesId: null,
+    })
+    return () => {
+      setContext({
+        surface: "other",
+        car: null,
+        activeSection: null,
+        seriesId: null,
+      })
+    }
+  }, [setContext, locale, car, activeSection])
 
   // Token system
   const {

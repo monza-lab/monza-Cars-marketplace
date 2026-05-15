@@ -7,6 +7,8 @@ import { Share2, Archive, Menu, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AdvisorConversation } from "./AdvisorConversation"
 import { AdvisorSidebar } from "./AdvisorSidebar"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
+import { buildSuggestions as buildContextualSuggestions } from "@/lib/advisor/buildSuggestions"
 import type { StreamedMessage } from "./useAdvisorStream"
 import type { AdvisorConversation as ConversationRow } from "@/lib/advisor/persistence/conversations"
 
@@ -27,6 +29,8 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
   const t = useTranslations()
   const router = useRouter()
   const [conversationId, setConversationId] = useState<string | null>(props.conversationId)
+  const { context } = useChatContext()
+  const suggestionChips = buildContextualSuggestions(context)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
@@ -224,7 +228,7 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
             userTier={props.userTier}
             initialMessages={props.initialMessages}
             readOnly={props.readOnly}
-            suggestionChips={conversationId ? undefined : buildSuggestions(t)}
+            suggestionChips={conversationId ? undefined : suggestionChips}
             autoSendOnMount={props.autoSendOnMount}
           />
         </div>
@@ -233,11 +237,3 @@ export function AdvisorPageShell(props: AdvisorPageShellProps) {
   )
 }
 
-function buildSuggestions(t: ReturnType<typeof useTranslations>) {
-  return [
-    { label: t("advisor.suggestions.compareGt3s"), prompt: "Compare the top 3 997.2 GT3s on sale today." },
-    { label: t("advisor.suggestions.inspection993"), prompt: "What's the inspection checklist for a 993 Carrera?" },
-    { label: t("advisor.suggestions.best992"), prompt: "What are the biggest 992 price movers this quarter?" },
-    { label: t("advisor.suggestions.imsRisk"), prompt: "Explain IMS bearing risk across 996/997 generations." },
-  ]
-}

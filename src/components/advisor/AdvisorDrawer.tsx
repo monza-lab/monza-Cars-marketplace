@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { useChatContext } from "@/lib/advisor/ChatContextProvider"
+import { buildSuggestions } from "@/lib/advisor/buildSuggestions"
 import { AdvisorConversation } from "./AdvisorConversation"
 
 /**
@@ -26,6 +27,7 @@ import { AdvisorConversation } from "./AdvisorConversation"
  */
 export function AdvisorDrawer() {
   const { isOpen, close, context } = useChatContext()
+  const suggestions = buildSuggestions(context)
   const { profile } = useAuth()
   const locale = useLocale()
 
@@ -90,6 +92,7 @@ export function AdvisorDrawer() {
             initialContext={
               context.car ? { listingId: context.car.id } : context.seriesId ? { seriesId: context.seriesId } : undefined
             }
+            suggestionChips={conversationId ? undefined : suggestions}
           />
         </div>
       </SheetContent>
