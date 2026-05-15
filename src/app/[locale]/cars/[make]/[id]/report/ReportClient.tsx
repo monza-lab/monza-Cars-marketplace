@@ -2619,108 +2619,123 @@ export function ReportClient({
                 ═══════════════════════════════════════ */}
             <section ref={setSectionRef("verdict")} id="section-verdict" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="verdict">
-                <SectionHeader id="verdict" title={t("sections.verdict")} />
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="verdict" title={t("sections.verdict")} />
+                    <VerdictBlock
+                      verdict={v1VerdictKey}
+                      oneLiner={v1OneLiner}
+                      askingUsd={thisVinPriceUsd}
+                      fairValueMidUsd={v1FairMid}
+                      deltaPercent={v1DeltaPercent}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="verdict" title={t("sections.verdict")} />
 
-                {/* Verdict card */}
-                <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
-                  <div className="text-center mb-6">
-                    {verdict ? (
-                      <>
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
-                        <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
-                          verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-primary" : "text-destructive"
-                        }`}>
-                          {t(`verdict.${verdict}`)}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary/70">
-                          Verdict
-                        </span>
-                        <p className="font-display text-[28px] md:text-[36px] font-light text-foreground/85 mt-2 tracking-tight">
-                          Buy · Watch · Walk
-                        </p>
-                        <p className="text-[12px] text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-                          The verdict weighs fair value, market signals, risk score, and arbitrage. Generate the full report to see where this car lands.
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-center gap-4 mb-6">
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Signals</span>
-                      <p className={`text-[20px] font-black ${detectedCount > 0 ? "text-positive" : "text-muted-foreground"}`}>
-                        {detectedCount}/{totalSignalCount || "—"}
-                      </p>
-                    </div>
-                    <div className="h-8 w-px bg-foreground/10" />
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
-                      <p className={`text-[20px] font-black ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</p>
-                    </div>
-                    <div className="h-8 w-px bg-foreground/10" />
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
-                      <p className={`text-[20px] font-black ${
-                        ((riskScore ?? 100) < 35) ? "text-positive" :
-                        ((riskScore ?? 100) < 55) ? "text-primary" :
-                        "text-destructive"
-                      }`}>{riskScore}/100</p>
-                    </div>
-                  </div>
-
-                  {/* Factual synthesis (replaces grade narrative) */}
-                  {report && (
-                    <p className="text-sm text-foreground text-center mb-4">
-                      {tVerdict("factualSummary", {
-                        deltaPercent: deltaVsSpecific,
-                        detected: detectedCount,
-                        total: totalSignalCount,
-                      })}
-                    </p>
-                  )}
-
-                  {/* Strategy */}
-                  <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
-                    <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
-                    {verdict ? (
-                      <p className="text-[12px] text-muted-foreground leading-relaxed">
-                        {t(`verdict.${verdict}Strategy`)}
-                      </p>
-                    ) : (
-                      <p className="text-[12px] text-muted-foreground leading-relaxed italic">
-                        Strategy recommendation will appear once the full investment analysis is generated.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Key takeaways */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
-                  <div className="space-y-2">
-                    {[
-                      `Priced at ${(pricePosition ?? 0).toFixed(0)}% of the fair value range`,
-                      isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
-                      hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
-                    ].map((takeaway, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
-                        <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
-                        <span className="text-[13px] text-foreground/80">{takeaway}</span>
+                    {/* Verdict card */}
+                    <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
+                      <div className="text-center mb-6">
+                        {verdict ? (
+                          <>
+                            <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
+                            <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
+                              verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-primary" : "text-destructive"
+                            }`}>
+                              {t(`verdict.${verdict}`)}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary/70">
+                              Verdict
+                            </span>
+                            <p className="font-display text-[28px] md:text-[36px] font-light text-foreground/85 mt-2 tracking-tight">
+                              Buy · Watch · Walk
+                            </p>
+                            <p className="text-[12px] text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+                              The verdict weighs fair value, market signals, risk score, and arbitrage. Generate the full report to see where this car lands.
+                            </p>
+                          </>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Disclaimer */}
-                <div className="rounded-xl bg-foreground/2 border border-border p-4">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-                    {t("verdict.disclaimer")}
-                  </p>
-                </div>
+                      <div className="flex items-center justify-center gap-4 mb-6">
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Signals</span>
+                          <p className={`text-[20px] font-black ${detectedCount > 0 ? "text-positive" : "text-muted-foreground"}`}>
+                            {detectedCount}/{totalSignalCount || "—"}
+                          </p>
+                        </div>
+                        <div className="h-8 w-px bg-foreground/10" />
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
+                          <p className={`text-[20px] font-black ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</p>
+                        </div>
+                        <div className="h-8 w-px bg-foreground/10" />
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
+                          <p className={`text-[20px] font-black ${
+                            ((riskScore ?? 100) < 35) ? "text-positive" :
+                            ((riskScore ?? 100) < 55) ? "text-primary" :
+                            "text-destructive"
+                          }`}>{riskScore}/100</p>
+                        </div>
+                      </div>
+
+                      {/* Factual synthesis (replaces grade narrative) */}
+                      {report && (
+                        <p className="text-sm text-foreground text-center mb-4">
+                          {tVerdict("factualSummary", {
+                            deltaPercent: deltaVsSpecific,
+                            detected: detectedCount,
+                            total: totalSignalCount,
+                          })}
+                        </p>
+                      )}
+
+                      {/* Strategy */}
+                      <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
+                        <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
+                        {verdict ? (
+                          <p className="text-[12px] text-muted-foreground leading-relaxed">
+                            {t(`verdict.${verdict}Strategy`)}
+                          </p>
+                        ) : (
+                          <p className="text-[12px] text-muted-foreground leading-relaxed italic">
+                            Strategy recommendation will appear once the full investment analysis is generated.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Key takeaways */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
+                      <div className="space-y-2">
+                        {[
+                          `Priced at ${(pricePosition ?? 0).toFixed(0)}% of the fair value range`,
+                          isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
+                          ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
+                          hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
+                        ].map((takeaway, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                            <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
+                            <span className="text-[13px] text-foreground/80">{takeaway}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Disclaimer */}
+                    <div className="rounded-xl bg-foreground/2 border border-border p-4">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                        {t("verdict.disclaimer")}
+                      </p>
+                    </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
