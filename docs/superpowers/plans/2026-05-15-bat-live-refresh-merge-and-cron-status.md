@@ -252,3 +252,31 @@ Known unrelated tracked dirty file:
 supabase/.temp/cli-latest
 ```
 
+## Latest Check
+
+Checked again on `2026-05-15T01:00:52Z`.
+
+Result:
+
+- `BaT Live Refresh` still has only the two manual `workflow_dispatch` runs.
+- No `schedule` run exists yet for workflow ID `277025455`.
+- The workflow remains `active` on `main`.
+
+Current conclusion:
+
+- The scraper code is working under manual GitHub Actions execution.
+- The cron trigger itself is still not firing.
+- Most likely root cause is GitHub Actions scheduler delivery for this workflow, not the live refresh script.
+
+## Verification Change
+
+Updated the workflow schedule to a single hourly cron:
+
+```yaml
+- cron: '17 * * * *'
+```
+
+Purpose:
+
+- Remove any ambiguity from the five-minute cadence.
+- Prove whether GitHub emits a `schedule` run for this workflow at all.

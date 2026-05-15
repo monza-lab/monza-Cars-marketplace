@@ -2,9 +2,8 @@ name: BaT Live Refresh
 
 on:
   schedule:
-    # Offset from the busiest five-minute boundaries because GitHub can delay/drop
-    # scheduled runs during high Actions load.
-    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
+    # Single hourly tick to prove GitHub schedule delivery first.
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       limit:
