@@ -29,6 +29,7 @@ import { useTheme } from "next-themes";
 import { PistonsWalletModal } from "@/components/advisor/PistonsWalletModal";
 import { AdvisorConversation } from "@/components/advisor/AdvisorConversation";
 import { useAdvisorChatHandoffOptional } from "@/components/advisor/AdvisorHandoffContext";
+import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport";
 
 // ─── SMART SEARCH ENGINE (powered by brandConfig) ───
 
@@ -730,12 +731,14 @@ export function Header() {
         {/* Glass background — Obsidian */}
         <div className="absolute inset-0 h-full bg-background/85 backdrop-blur-xl border-b border-border" />
 
-        {/* Free user CTA banner */}
-        {profile && profile.tier === "FREE" && creditsRemaining <= 3 && (
+        {/* Low-pistons CTA banner — shown when FREE user can't afford a single Haus Report */}
+        {/* TODO: paid tiers with a low balance may also need a warning — out of scope for now */}
+        {profile && profile.tier === "FREE" && creditsRemaining < REPORT_PISTON_COST && (
           <div className="relative bg-primary/[0.06] border-b border-primary/20 px-4 py-2 text-center">
             <span className="text-[11px] text-foreground">
-              <strong>{creditsRemaining}</strong>{" "}
-              Free Reports left this month ·{" "}
+              {creditsRemaining === 0
+                ? "Out of pistons — top up to generate a Haus Report ·"
+                : `Only ${creditsRemaining} pistons left — not enough for a report (100 needed) ·`}{" "}
               <Link
                 href="/pricing"
                 className="text-primary font-semibold hover:underline"

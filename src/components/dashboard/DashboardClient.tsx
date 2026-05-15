@@ -2567,7 +2567,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[var(--app-header-h,80px)]">
+      <div className="hidden md:flex min-h-[100dvh] w-full flex-col bg-background pt-[var(--app-header-h,80px)]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
