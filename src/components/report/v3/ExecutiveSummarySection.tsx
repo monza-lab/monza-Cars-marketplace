@@ -1,5 +1,7 @@
 import type { FinalSynthesis, Verdict } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
+import { Info } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
 interface ExecutiveSummarySectionProps {
   data: FinalSynthesis | null
@@ -46,32 +48,94 @@ export function ExecutiveSummarySection({ data }: ExecutiveSummarySectionProps) 
       <p className="text-lg font-medium text-foreground">{headline}</p>
 
       {/* Key metrics grid */}
+      <TooltipProvider>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <div className="rounded-lg border border-border bg-background/50 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Fair Value</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Fair Value</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is fair value?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Estimated price range a similar example should command on the open market today, based on recent sold comparables and adjusted for spec, condition, and region.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <p className="mt-1 text-sm font-semibold font-mono text-foreground">{keyMetrics.fairValueRange}</p>
         </div>
         <div className="rounded-lg border border-border bg-background/50 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Signals</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Signals</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is signals coverage?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Number of investment-relevant attributes we identified vs the total we look for. Higher coverage means we had more facts to verify.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <p className="mt-1 text-sm font-semibold font-mono text-foreground">{keyMetrics.signalsCoverage}</p>
         </div>
         <div className="rounded-lg border border-border bg-background/50 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk Score</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk Score</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is risk score?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Composite risk reading from 0 (low) to 100 (high). Higher scores mean more uncertainty: missing service records, modifications, or signals we couldn&apos;t verify.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <div className="mt-1">
             <RiskMeter score={keyMetrics.riskScore} />
           </div>
         </div>
         <div className="rounded-lg border border-border bg-background/50 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Verdict</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Verdict</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is verdict?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Our acquisition recommendation based on price vs fair value and risk level. BUY = strong opportunity. WATCH = neutral. WALK = pass. PENDING = needs data.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <span className={`mt-1 inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-bold tracking-wide ${VERDICT_STYLE[keyMetrics.verdict]}`}>
             {keyMetrics.verdict}
           </span>
         </div>
         <div className="rounded-lg border border-border bg-background/50 p-3">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Market Position</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Market Position</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is market position?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Where the asking price sits inside the Fair Value range. 0% means at the bottom of the range; 100% at the top. Negative means below fair value (potential opportunity).
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <p className="mt-1 text-sm font-semibold text-foreground">{keyMetrics.marketPosition}</p>
         </div>
       </div>
+      </TooltipProvider>
 
       {/* Investment thesis */}
       <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">

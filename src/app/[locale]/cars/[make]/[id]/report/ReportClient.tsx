@@ -30,7 +30,9 @@ import {
   Globe,
   History,
   Download,
+  Info,
 } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
@@ -1921,6 +1923,7 @@ export function ReportClient({
                   )}
 
                   {/* 5-metric grid */}
+                  <TooltipProvider>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {/* Current Price */}
                     <div className="rounded-xl bg-card border border-border p-4">
@@ -1933,7 +1936,19 @@ export function ReportClient({
                     </div>
                     {/* Fair Value */}
                     <div className="rounded-xl bg-card border border-border p-4">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is fair value?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Estimated price range a similar example should command on the open market today, based on recent sold comparables and adjusted for spec, condition, and region.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       {hasFairValue ? (
                         <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
                           {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
@@ -1946,7 +1961,19 @@ export function ReportClient({
                     </div>
                     {/* Market Position */}
                     <div className="rounded-xl bg-card border border-border p-4">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is market position?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Where the asking price sits inside the Fair Value range. 0% means at the bottom of the range; 100% at the top. Negative means below fair value (potential opportunity).
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       {pricePosition !== null ? (
                         <>
                           <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
@@ -1964,12 +1991,36 @@ export function ReportClient({
                     </div>
                     {/* Similar Cars */}
                     <div className="rounded-xl bg-card border border-border p-4">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is similar cars?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Number of comparable listings the system is currently tracking for the same model, year, and trim window.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
                     </div>
                     {/* Risk Score */}
                     <div className="rounded-xl bg-card border border-border p-4">
-                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is risk score?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Composite risk reading from 0 (low) to 100 (high). Higher scores mean more uncertainty: missing service records, modifications, or signals we couldn&apos;t verify.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       {riskScore !== null ? (
                         <div className="flex items-center gap-3 mt-2">
                           <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
@@ -1989,6 +2040,7 @@ export function ReportClient({
                       )}
                     </div>
                   </div>
+                  </TooltipProvider>
 
                   {/* Verdict one-liner */}
                   <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
