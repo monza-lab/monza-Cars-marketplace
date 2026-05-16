@@ -112,22 +112,28 @@
       <tr>
         <td align="center" style="padding: 48px 16px;">
 
-          <!-- ─── Wordmark — Saira + helmet ─── -->
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 32px;">
+          <!--
+            ─── Wordmark — MonzaHaus (Saira 600 + official helmet) ───
+            Mirrors src/components/brand/MonzaHausWordmark.tsx exactly:
+            font-size 22px → helmet ≈ 0.78em × 0.79em (17px × 17px), the
+            helmet sits where the "O" would, lavender-deep tone (shell
+            #D6BEDC, visor #0E0E0D, strap #0E0E0D). Built table-based so
+            Outlook, Gmail, Apple Mail and iOS Mail all align identically.
+          -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 32px; border-collapse: collapse;">
             <tr>
-              <td align="center" valign="middle" style="font-family: 'Saira', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: 0.025em; text-transform: uppercase; color: #141413; line-height: 1;">
-                M<!--
-                  Helmet — official Monza Lab mark. Inline SVG for crisp rendering
-                  across email clients that support it. Outlook falls back to whitespace,
-                  which we keep tidy with surrounding letter spacing.
-                -->
-                <span style="display: inline-block; width: 18px; height: 18px; vertical-align: middle; margin: 0 1px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 121" width="18" height="18" aria-hidden="true">
-                    <path d="M60 3C36 3 12 18 7 40C2 57 2 72 6 86L15 103C23 113 38 118 57 118L60 118L63 118C82 118 97 113 105 103L114 86C118 72 118 57 113 40C108 18 84 3 60 3Z" fill="#D6BEDC"/>
-                    <path d="M14 46C14 36 33 30 60 30C87 30 106 36 106 46L106 68C105 77 86 83 60 83C34 83 15 77 14 68Z" fill="#0E0E0D"/>
-                    <path d="M26 90Q60 86 94 90" stroke="#0E0E0D" stroke-width="3" stroke-linecap="round" fill="none"/>
-                  </svg>
-                </span>NZAHAUS
+              <td valign="middle" style="font-family: 'Saira', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 1; letter-spacing: 0.025em; text-transform: uppercase; color: #141413; padding: 0;">
+                M
+              </td>
+              <td valign="middle" style="padding: 0 1px; line-height: 1; font-size: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 121" width="17" height="17" aria-label="MonzaHaus" role="img" style="display: block;">
+                  <path d="M60 3C36 3 12 18 7 40C2 57 2 72 6 86L15 103C23 113 38 118 57 118L60 118L63 118C82 118 97 113 105 103L114 86C118 72 118 57 113 40C108 18 84 3 60 3Z" fill="#D6BEDC"/>
+                  <path d="M14 46C14 36 33 30 60 30C87 30 106 36 106 46L106 68C105 77 86 83 60 83C34 83 15 77 14 68Z" fill="#0E0E0D"/>
+                  <path d="M26 90Q60 86 94 90" stroke="#0E0E0D" stroke-width="3" stroke-linecap="round" fill="none"/>
+                </svg>
+              </td>
+              <td valign="middle" style="font-family: 'Saira', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 600; font-size: 22px; line-height: 1; letter-spacing: 0.025em; text-transform: uppercase; color: #141413; padding: 0;">
+                NZAHAUS
               </td>
             </tr>
           </table>
@@ -329,6 +335,13 @@
           >
             <tr>
               <td align="center" class="px-mobile" style="padding: 0 16px;">
+                <!--
+                  Footer tagline only — the wordmark already lives at the top
+                  of the email as the single canonical brand mark. Repeating
+                  "MonzaHaus" as plain text without the helmet would break
+                  consistency with the brand-manual rule that the wordmark is
+                  the only typeset form of the name.
+                -->
                 <p
                   class="font-mark"
                   style="
@@ -341,7 +354,7 @@
                     color: #9A8E88;
                   "
                 >
-                  MonzaHaus · Investment-Grade Automotive Assets
+                  Investment-Grade Automotive Assets
                 </p>
                 <p
                   style="
