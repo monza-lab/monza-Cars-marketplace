@@ -33,7 +33,13 @@ import {
   Flame,
   ChevronDown,
   ExternalLink,
+  Heart,
+  Radio,
 } from "lucide-react"
+import { useWatchlist } from "@/hooks/useWatchlist"
+import { WatchlistSidebarSection } from "./sidebar/WatchlistSidebarSection"
+
+type BottomTab = "watchlist" | "live"
 import { getBrandImage, getModelImage } from "@/lib/modelImages"
 import { extractSeries, getSeriesConfig, getSeriesThesis, getBrandConfig } from "@/lib/brandConfig"
 import { filterAuctionsForRegion, isAuctionPlatform, isListingPlatform } from "./platformMapping"
@@ -1363,6 +1369,18 @@ function DiscoverySidebar({
     minute: t("asset.timeMin"),
   }
 
+  // Bottom-section tab state — defaults to Watchlist if user has saved cars,
+  // otherwise Live. User can override via the tab buttons.
+  const tW = useTranslations("watchlist")
+  const { count: watchlistCount } = useWatchlist()
+  const [activeTab, setActiveTab] = useState<BottomTab>("live")
+  const [didInitTab, setDidInitTab] = useState(false)
+  useEffect(() => {
+    if (didInitTab) return
+    setActiveTab(watchlistCount > 0 ? "watchlist" : "live")
+    setDidInitTab(true)
+  }, [watchlistCount, didInitTab])
+
   return (
     <div className="h-full flex flex-col border-r border-border overflow-hidden">
 
@@ -1435,9 +1453,15 @@ function DiscoverySidebar({
                       {activeBrandFamilies.map((family) => {
                         const familySlug = family.name.toLowerCase()
                         const isFamilyActive = activeFamilyName === family.name || activeFamilyName?.toLowerCase().startsWith(familySlug)
+                        // Navigate straight to cars view for this family — skips the
+                        // intermediate "family card" step in the central feed.
                         return (
-                        <button
+                        <Link
                           key={family.name}
+                          href={{
+                            pathname: `/cars/${brand.slug}`,
+                            query: { family: family.slug },
+                          }}
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
@@ -1460,7 +1484,7 @@ function DiscoverySidebar({
                                 : `${family.yearMin}–${family.yearMax}`}
                             </span>
                           </div>
-                        </button>
+                        </Link>
                         )
                       })}
                     </div>
@@ -1472,21 +1496,68 @@ function DiscoverySidebar({
         </div>
       </div>
 
-      {/* ═══ BOTTOM HALF: LIVE BIDS ═══ */}
+      {/* ═══ BOTTOM HALF: WATCHLIST + LIVE BIDS (tabs) ═══ */}
       <div className="flex-1 min-h-0 flex flex-col border-t border-border">
 
-        {/* Live header */}
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-card">
-          <div className="size-2 rounded-full bg-positive animate-pulse" />
-          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
-            {t("sidebar.liveNow")}
-          </span>
-          <span className="text-[10px] font-display font-medium text-primary">
-            {activeFamilyCount ?? liveCount}
-          </span>
+        {/* Tab bar — Watchlist | Live */}
+        <div className="shrink-0 flex items-stretch bg-card border-b border-border/50">
+          <button
+            type="button"
+            onClick={() => setActiveTab("watchlist")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+              activeTab === "watchlist"
+                ? "text-foreground bg-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+            }`}
+            aria-pressed={activeTab === "watchlist"}
+          >
+            <Heart
+              className={`size-3 ${activeTab === "watchlist" ? "fill-primary text-primary" : ""}`}
+              strokeWidth={1.75}
+            />
+            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+              {tW("tabWatchlist")}
+            </span>
+            {watchlistCount > 0 && (
+              <span className={`text-[10px] font-display font-medium ${activeTab === "watchlist" ? "text-primary" : "text-muted-foreground"}`}>
+                {watchlistCount}
+              </span>
+            )}
+            {activeTab === "watchlist" && (
+              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("live")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+              activeTab === "live"
+                ? "text-foreground bg-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+            }`}
+            aria-pressed={activeTab === "live"}
+          >
+            <Radio
+              className={`size-3 ${activeTab === "live" ? "text-positive" : ""}`}
+              strokeWidth={1.75}
+            />
+            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+              {tW("tabLive")}
+            </span>
+            <span className={`text-[10px] font-display font-medium ${activeTab === "live" ? "text-primary" : "text-muted-foreground"}`}>
+              {activeFamilyCount ?? liveCount}
+            </span>
+            {activeTab === "live" && (
+              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+            )}
+          </button>
         </div>
 
+        {/* Watchlist tab content */}
+        {activeTab === "watchlist" && <WatchlistSidebarSection />}
+
         {/* Live auctions list (scrollable) */}
+        {activeTab === "live" && (
         <div ref={scrollRootRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {isLoading && liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
@@ -1571,6 +1642,7 @@ function DiscoverySidebar({
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   )
@@ -2567,7 +2639,12 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex min-h-[100dvh] w-full flex-col bg-background pt-[var(--app-header-h,80px)]">
+      {/*
+        Fixed-height wrapper (h-[100dvh] rather than min-h) so the 3-column
+        grid is bound to the viewport. Each column scrolls internally on its
+        own — sidebar, feed, context panel — instead of the whole page.
+      */}
+      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background pt-[var(--app-header-h,80px)]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}
