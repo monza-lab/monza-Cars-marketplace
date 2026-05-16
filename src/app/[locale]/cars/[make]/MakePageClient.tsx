@@ -1517,6 +1517,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                 key={variantFilteredFeedCars[activeCarIndex].id}
                 car={variantFilteredFeedCars[activeCarIndex]}
                 make={make}
+                siblingCars={regionFilteredCars}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
               />
             ) : selectedModel ? (
