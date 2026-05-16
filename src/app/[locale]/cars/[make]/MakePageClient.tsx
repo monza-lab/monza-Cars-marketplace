@@ -135,17 +135,11 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
 
-  // Bottom-section tab in left sidebar — Watchlist vs Live. Default Watchlist
-  // when the user has saved cars, otherwise Live (matches home behavior).
+  // Bottom-section tab in left sidebar — Live is the default. Watchlist
+  // lives on the right and is one tap away (matches home).
   const tW = useTranslations("watchlist")
   const { count: watchlistCount } = useWatchlist()
   const [activeBottomTab, setActiveBottomTab] = useState<BottomTab>("live")
-  const [didInitBottomTab, setDidInitBottomTab] = useState(false)
-  useEffect(() => {
-    if (didInitBottomTab) return
-    setActiveBottomTab(watchlistCount > 0 ? "watchlist" : "live")
-    setDidInitBottomTab(true)
-  }, [watchlistCount, didInitBottomTab])
   const { openChatConversationId } = useAdvisorChatHandoff()
   useEffect(() => {
     if (openChatConversationId) setShowAdvisorChat(true)
@@ -1093,34 +1087,8 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
 
             {/* BOTTOM: WATCHLIST + LIVE BIDS (tabs) */}
             <div className="shrink-0 max-h-[35%] flex flex-col border-t border-border overflow-hidden">
-              {/* Tab bar — Watchlist | Live */}
+              {/* Tab bar — Live | Watchlist */}
               <div className="shrink-0 flex items-stretch bg-card border-b border-border/50">
-                <button
-                  type="button"
-                  onClick={() => setActiveBottomTab("watchlist")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
-                    activeBottomTab === "watchlist"
-                      ? "text-foreground bg-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
-                  }`}
-                  aria-pressed={activeBottomTab === "watchlist"}
-                >
-                  <Heart
-                    className={`size-3 ${activeBottomTab === "watchlist" ? "fill-primary text-primary" : ""}`}
-                    strokeWidth={1.75}
-                  />
-                  <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
-                    {tW("tabWatchlist")}
-                  </span>
-                  {watchlistCount > 0 && (
-                    <span className={`text-[10px] font-display font-medium ${activeBottomTab === "watchlist" ? "text-primary" : "text-muted-foreground"}`}>
-                      {watchlistCount}
-                    </span>
-                  )}
-                  {activeBottomTab === "watchlist" && (
-                    <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
-                  )}
-                </button>
                 <button
                   type="button"
                   onClick={() => setActiveBottomTab("live")}
@@ -1144,6 +1112,32 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                     </span>
                   )}
                   {activeBottomTab === "live" && (
+                    <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("watchlist")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+                    activeBottomTab === "watchlist"
+                      ? "text-foreground bg-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+                  }`}
+                  aria-pressed={activeBottomTab === "watchlist"}
+                >
+                  <Heart
+                    className={`size-3 ${activeBottomTab === "watchlist" ? "fill-primary text-primary" : ""}`}
+                    strokeWidth={1.75}
+                  />
+                  <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+                    {tW("tabWatchlist")}
+                  </span>
+                  {watchlistCount > 0 && (
+                    <span className={`text-[10px] font-display font-medium ${activeBottomTab === "watchlist" ? "text-primary" : "text-muted-foreground"}`}>
+                      {watchlistCount}
+                    </span>
+                  )}
+                  {activeBottomTab === "watchlist" && (
                     <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
                   )}
                 </button>

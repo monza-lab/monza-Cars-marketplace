@@ -1369,17 +1369,11 @@ function DiscoverySidebar({
     minute: t("asset.timeMin"),
   }
 
-  // Bottom-section tab state — defaults to Watchlist if user has saved cars,
-  // otherwise Live. User can override via the tab buttons.
+  // Bottom-section tab state — Live is the default (always shows non-empty
+  // content for first-time visitors). Watchlist is one tap away on the right.
   const tW = useTranslations("watchlist")
   const { count: watchlistCount } = useWatchlist()
   const [activeTab, setActiveTab] = useState<BottomTab>("live")
-  const [didInitTab, setDidInitTab] = useState(false)
-  useEffect(() => {
-    if (didInitTab) return
-    setActiveTab(watchlistCount > 0 ? "watchlist" : "live")
-    setDidInitTab(true)
-  }, [watchlistCount, didInitTab])
 
   return (
     <div className="h-full flex flex-col border-r border-border overflow-hidden">
@@ -1499,8 +1493,32 @@ function DiscoverySidebar({
       {/* ═══ BOTTOM HALF: WATCHLIST + LIVE BIDS (tabs) ═══ */}
       <div className="flex-1 min-h-0 flex flex-col border-t border-border">
 
-        {/* Tab bar — Watchlist | Live */}
+        {/* Tab bar — Live | Watchlist */}
         <div className="shrink-0 flex items-stretch bg-card border-b border-border/50">
+          <button
+            type="button"
+            onClick={() => setActiveTab("live")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+              activeTab === "live"
+                ? "text-foreground bg-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+            }`}
+            aria-pressed={activeTab === "live"}
+          >
+            <Radio
+              className={`size-3 ${activeTab === "live" ? "text-positive" : ""}`}
+              strokeWidth={1.75}
+            />
+            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+              {tW("tabLive")}
+            </span>
+            <span className={`text-[10px] font-display font-medium ${activeTab === "live" ? "text-primary" : "text-muted-foreground"}`}>
+              {activeFamilyCount ?? liveCount}
+            </span>
+            {activeTab === "live" && (
+              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+            )}
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab("watchlist")}
@@ -1524,30 +1542,6 @@ function DiscoverySidebar({
               </span>
             )}
             {activeTab === "watchlist" && (
-              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("live")}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
-              activeTab === "live"
-                ? "text-foreground bg-background"
-                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
-            }`}
-            aria-pressed={activeTab === "live"}
-          >
-            <Radio
-              className={`size-3 ${activeTab === "live" ? "text-positive" : ""}`}
-              strokeWidth={1.75}
-            />
-            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
-              {tW("tabLive")}
-            </span>
-            <span className={`text-[10px] font-display font-medium ${activeTab === "live" ? "text-primary" : "text-muted-foreground"}`}>
-              {activeFamilyCount ?? liveCount}
-            </span>
-            {activeTab === "live" && (
               <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
             )}
           </button>
