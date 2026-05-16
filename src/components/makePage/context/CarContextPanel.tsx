@@ -217,9 +217,19 @@ export function CarContextPanel({
           </div>
 
           {recentSales.length === 0 ? (
-            <p className="pb-3 text-[11px] text-muted-foreground italic">
-              No closed comparables in this series yet.
-            </p>
+            <div className="-mx-5 pb-1 border-t border-border/60">
+              <div className="px-5 py-5 flex flex-col items-center text-center">
+                <div className="size-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-2.5">
+                  <Clock className="size-4 text-primary-foreground" strokeWidth={1.5} />
+                </div>
+                <p className="text-[11.5px] font-medium text-foreground">
+                  No closed auctions yet
+                </p>
+                <p className="text-[10.5px] text-muted-foreground mt-1 max-w-[200px] leading-relaxed">
+                  Recent sales of this series will populate here as auctions close.
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="-mx-5 border-t border-border/60">
               {recentSales.map((c) => {
@@ -301,15 +311,8 @@ export function CarContextPanel({
                   key={line}
                   className="flex items-center gap-2.5 px-4 py-2.5"
                 >
-                  <Lock className="size-3 text-muted-foreground/50 shrink-0" strokeWidth={2} />
-                  <span
-                    className="text-[11.5px] text-muted-foreground select-none"
-                    style={{
-                      filter: "blur(2.5px)",
-                      WebkitUserSelect: "none",
-                    }}
-                    aria-hidden="true"
-                  >
+                  <Lock className="size-3 text-primary shrink-0" strokeWidth={2} />
+                  <span className="text-[11.5px] text-foreground/85">
                     {line}
                   </span>
                 </li>
