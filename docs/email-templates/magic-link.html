@@ -1,0 +1,380 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Your MonzaHaus sign-in link</title>
+
+    <!--
+      Brand: MonzaHaus · Salon · Heritage Lavender v2.1
+      Variables: Supabase Auth — {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }}
+
+      Tested with: Gmail web, Apple Mail, Outlook 2019+, iOS Mail, Android Gmail.
+      Table-based layout for legacy client support (Outlook).
+    -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500&family=Karla:wght@400;500;600&family=Saira:wght@600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Reset */
+      body, table, td, p, a, li, blockquote {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table, td {
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+        border-collapse: collapse;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+        border: 0;
+        height: auto;
+        line-height: 100%;
+        outline: none;
+        text-decoration: none;
+      }
+
+      /* Brand tokens */
+      .salon-cream { background-color: #FDFBF9; }
+      .salon-card { background-color: #FFFFFF; }
+      .salon-ink { color: #141413; }
+      .salon-stone-dark { color: #6B6365; }
+      .salon-lavender-ink { color: #3F2A47; }
+      .salon-lavender-deep { background-color: #D6BEDC; }
+      .salon-border-color { border-color: #E8E2DC; }
+
+      /* Typography */
+      .font-display {
+        font-family: 'Cormorant', Georgia, 'Times New Roman', serif;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+      }
+      .font-body {
+        font-family: 'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+      .font-mark {
+        font-family: 'Saira', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+      }
+
+      /* Hover */
+      .cta-button:hover {
+        background-color: #B89FBE !important;
+      }
+
+      /* Mobile */
+      @media only screen and (max-width: 600px) {
+        .container { width: 100% !important; max-width: 100% !important; }
+        .px-mobile { padding-left: 24px !important; padding-right: 24px !important; }
+        .py-mobile { padding-top: 32px !important; padding-bottom: 32px !important; }
+        .title-mobile { font-size: 26px !important; line-height: 1.15 !important; }
+      }
+    </style>
+  </head>
+
+  <body
+    class="salon-cream font-body"
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #FDFBF9;
+      font-family: 'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      color: #141413;
+      -webkit-font-smoothing: antialiased;
+    "
+  >
+    <!-- Preheader (preview text, hidden) -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+      Your one-tap sign-in link for MonzaHaus. Expires in 60 minutes.
+    </div>
+
+    <!-- Outer wrapper -->
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      width="100%"
+      style="background-color: #FDFBF9;"
+    >
+      <tr>
+        <td align="center" style="padding: 48px 16px;">
+
+          <!-- ─── Wordmark — Saira + helmet ─── -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 32px;">
+            <tr>
+              <td align="center" valign="middle" style="font-family: 'Saira', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: 0.025em; text-transform: uppercase; color: #141413; line-height: 1;">
+                M<!--
+                  Helmet — official Monza Lab mark. Inline SVG for crisp rendering
+                  across email clients that support it. Outlook falls back to whitespace,
+                  which we keep tidy with surrounding letter spacing.
+                -->
+                <span style="display: inline-block; width: 18px; height: 18px; vertical-align: middle; margin: 0 1px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 121" width="18" height="18" aria-hidden="true">
+                    <path d="M60 3C36 3 12 18 7 40C2 57 2 72 6 86L15 103C23 113 38 118 57 118L60 118L63 118C82 118 97 113 105 103L114 86C118 72 118 57 113 40C108 18 84 3 60 3Z" fill="#D6BEDC"/>
+                    <path d="M14 46C14 36 33 30 60 30C87 30 106 36 106 46L106 68C105 77 86 83 60 83C34 83 15 77 14 68Z" fill="#0E0E0D"/>
+                    <path d="M26 90Q60 86 94 90" stroke="#0E0E0D" stroke-width="3" stroke-linecap="round" fill="none"/>
+                  </svg>
+                </span>NZAHAUS
+              </td>
+            </tr>
+          </table>
+
+          <!-- ─── Card ─── -->
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="560"
+            class="container"
+            style="
+              width: 560px;
+              max-width: 560px;
+              background-color: #FFFFFF;
+              border: 1px solid #E8E2DC;
+              border-radius: 18px;
+              box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 16px 48px rgba(20, 20, 19, 0.05);
+            "
+          >
+            <tr>
+              <td class="px-mobile py-mobile" style="padding: 48px 48px 40px;">
+
+                <!-- Subtle lavender accent — radial glow on top -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td align="center" style="padding-bottom: 28px;">
+                      <!-- Mail icon in lavender circle -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td
+                            width="64"
+                            height="64"
+                            align="center"
+                            valign="middle"
+                            style="
+                              width: 64px;
+                              height: 64px;
+                              background-color: #F1E6F3;
+                              border-radius: 999px;
+                              border: 1px solid rgba(214, 190, 220, 0.4);
+                            "
+                          >
+                            <!-- Envelope SVG -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3F2A47" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Title -->
+                <h1
+                  class="font-display title-mobile"
+                  style="
+                    margin: 0 0 12px;
+                    font-family: 'Cormorant', Georgia, 'Times New Roman', serif;
+                    font-weight: 400;
+                    font-size: 32px;
+                    line-height: 1.1;
+                    letter-spacing: -0.015em;
+                    color: #141413;
+                    text-align: center;
+                  "
+                >
+                  Sign in to MonzaHaus
+                </h1>
+
+                <!-- Body -->
+                <p
+                  style="
+                    margin: 0 0 32px;
+                    font-family: 'Karla', sans-serif;
+                    font-size: 15px;
+                    line-height: 1.6;
+                    color: #6B6365;
+                    text-align: center;
+                  "
+                >
+                  Tap the button below to access your collector
+                  intelligence terminal. This link is valid for the next
+                  <strong style="color: #141413; font-weight: 500;">60 minutes</strong>
+                  and works one time only.
+                </p>
+
+                <!-- CTA — Lavender Deep button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td align="center" style="padding-bottom: 24px;">
+                      <!--[if mso]>
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:52px;v-text-anchor:middle;width:240px;" arcsize="20%" stroke="f" fillcolor="#D6BEDC">
+                        <w:anchorlock/>
+                        <center style="color:#3F2A47;font-family:'Karla',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.02em;">Open MonzaHaus</center>
+                      </v:roundrect>
+                      <![endif]-->
+                      <!--[if !mso]><!-- -->
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        target="_blank"
+                        class="cta-button"
+                        style="
+                          display: inline-block;
+                          background-color: #D6BEDC;
+                          color: #3F2A47;
+                          font-family: 'Karla', sans-serif;
+                          font-size: 14px;
+                          font-weight: 600;
+                          letter-spacing: 0.02em;
+                          text-decoration: none;
+                          padding: 16px 36px;
+                          border-radius: 10px;
+                          border: 1px solid rgba(63, 42, 71, 0.08);
+                          mso-padding-alt: 0;
+                          text-align: center;
+                          transition: background-color 0.2s ease;
+                        "
+                      >
+                        Open MonzaHaus
+                      </a>
+                      <!--<![endif]-->
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Fallback link -->
+                <p
+                  style="
+                    margin: 16px 0 0;
+                    font-family: 'Karla', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.55;
+                    color: #6B6365;
+                    text-align: center;
+                  "
+                >
+                  Button not working? Paste this link into your browser:
+                </p>
+                <p
+                  style="
+                    margin: 6px 0 0;
+                    font-family: 'Geist Mono', 'SF Mono', Menlo, Consolas, monospace;
+                    font-size: 11px;
+                    line-height: 1.45;
+                    color: #5D3F66;
+                    text-align: center;
+                    word-break: break-all;
+                  "
+                >
+                  <a
+                    href="{{ .ConfirmationURL }}"
+                    style="color: #5D3F66; text-decoration: underline; text-decoration-color: rgba(93, 63, 102, 0.4); text-underline-offset: 3px;"
+                  >{{ .ConfirmationURL }}</a>
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- Hairline divider -->
+            <tr>
+              <td style="padding: 0 48px;">
+                <div style="height: 1px; background-color: #E8E2DC; line-height: 1px; font-size: 1px;">&nbsp;</div>
+              </td>
+            </tr>
+
+            <!-- Footer copy inside card -->
+            <tr>
+              <td class="px-mobile" style="padding: 24px 48px 32px;">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: 'Karla', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.6;
+                    color: #6B6365;
+                    text-align: center;
+                  "
+                >
+                  Didn't request this email? It's safe to ignore — no one
+                  can sign in without this link.
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- ─── Footer ─── -->
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="560"
+            class="container"
+            style="width: 560px; max-width: 560px; margin-top: 32px;"
+          >
+            <tr>
+              <td align="center" class="px-mobile" style="padding: 0 16px;">
+                <p
+                  class="font-mark"
+                  style="
+                    margin: 0 0 6px;
+                    font-family: 'Saira', sans-serif;
+                    font-weight: 600;
+                    font-size: 10px;
+                    letter-spacing: 0.25em;
+                    text-transform: uppercase;
+                    color: #9A8E88;
+                  "
+                >
+                  MonzaHaus · Investment-Grade Automotive Assets
+                </p>
+                <p
+                  style="
+                    margin: 0;
+                    font-family: 'Karla', sans-serif;
+                    font-size: 11px;
+                    line-height: 1.5;
+                    color: #9A8E88;
+                  "
+                >
+                  You're receiving this email because someone requested a
+                  sign-in link for your MonzaHaus account.
+                </p>
+                <p
+                  style="
+                    margin: 16px 0 0;
+                    font-family: 'Karla', sans-serif;
+                    font-size: 11px;
+                    line-height: 1.5;
+                    color: #9A8E88;
+                  "
+                >
+                  <a
+                    href="{{ .SiteURL }}"
+                    style="color: #5D3F66; text-decoration: none;"
+                  >monzahaus.com</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
