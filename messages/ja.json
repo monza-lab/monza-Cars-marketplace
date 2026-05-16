@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "ウォッチリスト",
+    "tabWatchlist": "ウォッチ",
+    "tabLive": "Live",
+    "empty": "まだ保存された車はありません",
+    "emptyHint": "ハートをタップして、ここに保存しましょう",
+    "count": "{count, plural, =0 {0台} =1 {1台} other {#台}}",
+    "add": "ウォッチリストに追加",
+    "remove": "ウォッチリストから削除",
+    "clearAll": "すべて削除"
+  },
   "nav": {
     "liveListings": "ライブリスト",
     "liveAuctions": "ライブオークション",

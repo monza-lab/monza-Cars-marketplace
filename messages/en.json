@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "Watchlist",
+    "tabWatchlist": "Watchlist",
+    "tabLive": "Live",
+    "empty": "No cars saved yet",
+    "emptyHint": "Tap the heart on any listing to save it here",
+    "count": "{count, plural, =0 {No cars} =1 {1 car} other {# cars}}",
+    "add": "Add to watchlist",
+    "remove": "Remove from watchlist",
+    "clearAll": "Clear all"
+  },
   "nav": {
     "liveListings": "Live Listings",
     "marketSearch": "Market Search",

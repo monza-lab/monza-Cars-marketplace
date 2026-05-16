@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "Beobachtungsliste",
+    "tabWatchlist": "Beobachtung",
+    "tabLive": "Live",
+    "empty": "Noch keine Fahrzeuge gespeichert",
+    "emptyHint": "Tippe auf das Herz, um ein Fahrzeug hier zu speichern",
+    "count": "{count, plural, =0 {Keine Fahrzeuge} =1 {1 Fahrzeug} other {# Fahrzeuge}}",
+    "add": "Zur Beobachtungsliste",
+    "remove": "Aus Beobachtungsliste entfernen",
+    "clearAll": "Alle entfernen"
+  },
   "nav": {
     "liveListings": "Live-Inserate",
     "liveAuctions": "Live-Auktionen",

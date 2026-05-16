@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { AuctionTimer } from "./AuctionTimer";
 import { isAuctionPlatform, getPriceLabel, getStatusLabel } from "@/lib/makePageConstants";
+import { WatchButton } from "@/components/cars/WatchButton";
 import type {
   Auction,
   Platform,
@@ -137,15 +138,30 @@ export function AuctionCard({ auction, className }: AuctionCardProps) {
             {platformCfg.label}
           </span>
 
-          {/* Status badge — smart: "For Sale" for marketplace, "Ended" for auctions */}
-          <span
-            className={cn(
-              "absolute right-3 top-3 rounded-full text-[10px] font-medium tracking-[0.1em] border px-2.5 py-0.5 backdrop-blur-sm",
-              statusCfg.className
-            )}
-          >
-            {getStatusLabel(platform, status)}
-          </span>
+          {/* Status badge + Watch — top right */}
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <span
+              className={cn(
+                "rounded-full text-[10px] font-medium tracking-[0.1em] border px-2.5 py-0.5 backdrop-blur-sm",
+                statusCfg.className
+              )}
+            >
+              {getStatusLabel(platform, status)}
+            </span>
+            <WatchButton
+              item={{
+                id,
+                brand: make,
+                model,
+                year: year ?? null,
+                priceUsd: currentBid ?? null,
+                image: heroImage ?? null,
+                platform: platform ?? null,
+                href: `/auctions/${id}`,
+              }}
+              variant="overlay"
+            />
+          </div>
 
           {/* No Reserve */}
           {reserveStatus === "NO_RESERVE" && (
