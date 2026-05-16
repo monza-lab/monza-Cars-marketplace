@@ -199,9 +199,15 @@ export function DiscoverySidebar({
                       {activeBrandFamilies.map((family) => {
                         const familySlug = family.name.toLowerCase()
                         const isFamilyActive = activeFamilyName === family.name || activeFamilyName?.toLowerCase().startsWith(familySlug)
+                        // Navigate straight to cars view for this family — skips the
+                        // intermediate "family card" step in the central feed.
                         return (
-                        <button
+                        <Link
                           key={family.name}
+                          href={{
+                            pathname: `/cars/${brand.slug}`,
+                            query: { family: family.slug },
+                          }}
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
@@ -224,7 +230,7 @@ export function DiscoverySidebar({
                                 : `${family.yearMin}–${family.yearMax}`}
                             </span>
                           </div>
-                        </button>
+                        </Link>
                         )
                       })}
                     </div>
