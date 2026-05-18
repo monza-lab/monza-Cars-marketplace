@@ -1,3 +1,6 @@
+import { Info } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+
 interface VerdictBlockProps {
   verdict: "BUY" | "WATCH" | "WALK" | "PENDING"
   oneLiner: string
@@ -48,6 +51,7 @@ export function VerdictBlock({
         </p>
       </div>
 
+      <TooltipProvider>
       <dl className="mx-auto mt-6 grid max-w-lg grid-cols-3 gap-2 border-t border-border pt-4 text-center">
         <div>
           <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{/* [HARDCODED] */}Asking</dt>
@@ -56,7 +60,19 @@ export function VerdictBlock({
           </dd>
         </div>
         <div>
-          <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{/* [HARDCODED] */}Fair Value</dt>
+          <dt className="inline-flex items-center justify-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {/* [HARDCODED] */}Fair Value
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="What is fair value?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                  <Info className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                Estimated price range a similar example should command on the open market today, based on recent sold comparables and adjusted for spec, condition, and region.
+              </TooltipContent>
+            </Tooltip>
+          </dt>
           <dd className="mt-1 font-mono text-[14px] font-semibold md:text-[16px]">
             {fmtUsd(fairValueMidUsd)}
           </dd>
@@ -66,6 +82,7 @@ export function VerdictBlock({
           <dd className="mt-1 font-mono text-[14px] font-semibold md:text-[16px]">{deltaStr}</dd>
         </div>
       </dl>
+      </TooltipProvider>
     </section>
   )
 }

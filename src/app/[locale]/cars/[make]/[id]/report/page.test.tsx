@@ -2,7 +2,6 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const ReportClientMock = vi.fn(() => <div data-testid="report-client">preview</div>)
-const ReportClientV2Mock = vi.fn(() => <div data-testid="report-client-v2">full-report</div>)
 
 // Stubear los módulos de Next.js que el page importa transitivamente.
 vi.mock("next/navigation", () => ({
@@ -33,9 +32,6 @@ vi.mock("@/lib/supabase/server", () => ({
 // función ReportPage resuelva sin tirar 500.
 vi.mock("./ReportClient", () => ({
   ReportClient: ReportClientMock,
-}))
-vi.mock("./ReportClientV2", () => ({
-  ReportClientV2: ReportClientV2Mock,
 }))
 
 // Datos del carro: usamos un id "live-test" para forzar el path live
@@ -143,12 +139,13 @@ describe("ReportPage SSR robustness", () => {
     }))
 
     expect(markup).toContain('data-testid="report-client"')
-    expect(markup).not.toContain('data-testid="report-client-v2"')
     expect(ReportClientMock).toHaveBeenCalledOnce()
-    expect(ReportClientV2Mock).not.toHaveBeenCalled()
+    expect(ReportClientMock.mock.calls[0]?.[0]).toMatchObject({
+      userHasAccess: false,
+    })
   })
 
-  it("routes unlocked users to the full V3 client even before any report exists", async () => {
+  it("passes unlocked access into the unified report client even before any report exists", async () => {
     const { default: ReportPage } = await import("./page")
     const { createClient } = await import("@/lib/supabase/server")
     const { getUserCredits, hasUnlimitedReportAccess } = await import("@/lib/reports/queries")
@@ -168,15 +165,12 @@ describe("ReportPage SSR robustness", () => {
       searchParams: Promise.resolve({}),
     }))
 
-    expect(markup).toContain('data-testid="report-client-v2"')
-    expect(markup).not.toContain('data-testid="report-client"')
-    expect(ReportClientV2Mock).toHaveBeenCalledOnce()
-    expect(ReportClientMock).not.toHaveBeenCalled()
-    expect(ReportClientV2Mock.mock.calls[0]?.[0]).toMatchObject({
+    expect(markup).toContain('data-testid="report-client"')
+    expect(ReportClientMock).toHaveBeenCalledOnce()
+    expect(ReportClientMock.mock.calls[0]?.[0]).toMatchObject({
       userHasAccess: true,
       existingReport: null,
       v3Report: null,
-      autoGenerateV3: true,
     })
   })
 })

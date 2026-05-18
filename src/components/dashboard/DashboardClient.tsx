@@ -8,6 +8,7 @@ import { useRegion } from "@/lib/RegionContext"
 import { formatUsd, resolveRegion } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { filterLiveSidebarAuctions, useLiveSidebarListings } from "./sidebar/useLiveSidebarListings"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import {
   Clock,
   MapPin,
@@ -2406,6 +2407,16 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
   const t = useTranslations("dashboard")
   const feedRef = useRef<HTMLDivElement>(null)
   const valuationAuctions = valuationListings && valuationListings.length > 0 ? valuationListings : auctions
+  const locale = useLocale()
+  const { setContext } = useChatContext()
+
+  // Publish surface context to AdvisorDrawer on mount. Resets to "other" on unmount.
+  useEffect(() => {
+    setContext({ surface: "dashboard", locale, car: null, activeSection: null, seriesId: null })
+    return () => {
+      setContext({ surface: "other", car: null, activeSection: null, seriesId: null })
+    }
+  }, [setContext, locale])
 
   // Filter auctions by region (maps to source platform), then aggregate
   const filteredAuctions = useMemo(() => {
@@ -2556,7 +2567,7 @@ export function DashboardClient({ auctions, valuationListings, regionalValByFami
       </div>
 
       {/* ═══ DESKTOP LAYOUT (3-column) ═══ */}
-      <div className="hidden md:flex h-[100dvh] w-full flex-col bg-background overflow-hidden pt-[var(--app-header-h,80px)]">
+      <div className="hidden md:flex min-h-[100dvh] w-full flex-col bg-background pt-[var(--app-header-h,80px)]">
         {/* 3-COLUMN LAYOUT */}
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
           {/* COLUMN A: DISCOVERY SIDEBAR (22%) */}

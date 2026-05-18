@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -31,7 +31,9 @@ import {
   Globe,
   History,
   Download,
+  Info,
 } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
@@ -45,6 +47,7 @@ import { LandedCostBlock } from "@/components/report/LandedCostBlock"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
@@ -53,13 +56,34 @@ import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import { SourceListingCta } from "@/components/funnel/SourceListingCta"
+import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
+import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 import type {
   PipelineProgress,
   StepStatus,
   ReportSectionKey,
+  HausReportV3,
 } from "@/lib/reports/types-v3"
 
-// ─── V3 Step definitions (mirrors pipeline.ts STEP_DEFS) ─────────────
+// â”€â”€â”€ V2 block components reused inside V1 layout for paid users â”€â”€â”€â”€â”€â”€â”€
+import { VinIntelBlock } from "@/components/report/VinIntelBlock"
+import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
+import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
+import { ComparablesAndPositioningBlock } from "@/components/report/ComparablesAndPositioningBlock"
+import { VerdictBlock } from "@/components/report/VerdictBlock"
+import { computeD3PeerPositioning } from "@/lib/marketIntel/aggregator"
+
+// â”€â”€â”€ V3 dedicated section components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+import { ExecutiveSummarySection } from "@/components/report/v3/ExecutiveSummarySection"
+import { TechnicalAnalysisSection } from "@/components/report/v3/TechnicalAnalysisSection"
+import { InvestmentStrategySection } from "@/components/report/v3/InvestmentStrategySection"
+import { DueDiligenceSection as V3DueDiligenceSection } from "@/components/report/v3/DueDiligenceSection"
+import { MarketResearchSection } from "@/components/report/v3/MarketResearchSection"
+import { BuyerServicesSection } from "@/components/report/v3/BuyerServicesSection"
+import { OwnershipCostSection } from "@/components/report/v3/OwnershipCostSection"
+import { ResaleTimelineSection } from "@/components/report/v3/ResaleTimelineSection"
+
+// â”€â”€â”€ V3 Step definitions (mirrors pipeline.ts STEP_DEFS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
   { sectionKey: "listing_scrape", label: "Analyzing Listing" },
   { sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
@@ -81,7 +105,7 @@ interface V3GenerationStep {
   completionNote?: string
 }
 
-// ─── DATA CONSTANTS (display helpers only — no fabricated data) ───
+// â”€â”€â”€ DATA CONSTANTS (display helpers only â€” no fabricated data) â”€â”€â”€
 
 const platformLabels: Record<string, { short: string; color: string }> = {
   BRING_A_TRAILER: { short: "BaT", color: "bg-primary/20 text-destructive" },
@@ -94,13 +118,13 @@ const platformLabels: Record<string, { short: string; color: string }> = {
 }
 
 const regionLabels: Record<string, { flag: string; short: string }> = {
-  US: { flag: "🇺🇸", short: "US" },
-  EU: { flag: "🇪🇺", short: "EU" },
-  UK: { flag: "🇬🇧", short: "UK" },
-  JP: { flag: "🇯🇵", short: "JP" },
+  US: { flag: "ðŸ‡ºðŸ‡¸", short: "US" },
+  EU: { flag: "ðŸ‡ªðŸ‡º", short: "EU" },
+  UK: { flag: "ðŸ‡¬ðŸ‡§", short: "UK" },
+  JP: { flag: "ðŸ‡¯ðŸ‡µ", short: "JP" },
 }
 
-// ─── HELPERS ───
+// â”€â”€â”€ HELPERS â”€â”€â”€
 function timeLeft(endTime: Date): string {
   const diff = endTime.getTime() - Date.now()
   if (diff <= 0) return "Ended"
@@ -123,7 +147,7 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
   return best
 }
 
-// ─── SECTION IDS for scroll-spy ───
+// â”€â”€â”€ SECTION IDS for scroll-spy â”€â”€â”€
 const SECTION_IDS = [
   "summary",
   "identity",
@@ -150,15 +174,25 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
   verdict: Award,
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ─── MAIN COMPONENT ───
-// ═══════════════════════════════════════════════════════════════
-export function ReportClient({ car, similarCars, existingReport, marketStats, dbComparables = [] }: {
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â”€â”€â”€ MAIN COMPONENT â”€â”€â”€
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+export function ReportClient({
+  car,
+  similarCars,
+  existingReport,
+  marketStats,
+  dbComparables = [],
+  v3Report = null,
+  userHasAccess = false,
+}: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   existingReport: HausReport | null
   marketStats: ModelMarketStats | null
   dbComparables?: DbComparableRow[]
+  v3Report?: HausReportV3 | null
+  userHasAccess?: boolean
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
@@ -174,6 +208,8 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
   const router = useRouter()
   const locale = useLocale()
+  const { setContext } = useChatContext()
+
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
   const tFairValue = useTranslations("report.fairValue")
@@ -188,6 +224,28 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     Object.fromEntries(SECTION_IDS.map(id => [id, null])) as Record<SectionId, HTMLElement | null>
   )
 
+  // Publish surface context to AdvisorDrawer / AdvisorPageShell.
+  // Fires on mount and whenever the user scrolls to a new section.
+  // Resets to "other" on unmount so stale report suggestions don't bleed into other pages.
+  useEffect(() => {
+    setContext({
+      surface: "report",
+      locale,
+      car,
+      // SectionId union matches ChatContext["activeSection"] exactly; cast is safe
+      activeSection: activeSection as "summary" | "identity" | "valuation" | "performance" | "risk" | "dueDiligence" | "marketContext" | "similar" | "verdict" | null,
+      seriesId: null,
+    })
+    return () => {
+      setContext({
+        surface: "other",
+        car: null,
+        activeSection: null,
+        seriesId: null,
+      })
+    }
+  }, [setContext, locale, car, activeSection])
+
   // Token system
   const {
     user,
@@ -200,9 +258,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     setPlan,
   } = useTokens()
 
-  const [hasAccess, setHasAccess] = useState(false)
+  const [hasAccess, setHasAccess] = useState(userHasAccess)
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
+  const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
   const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
   const { profile: authProfile } = useAuth()
@@ -218,7 +277,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const [downloadingExcel, setDownloadingExcel] = useState(false)
   const [showDownloadSheet, setShowDownloadSheet] = useState(false)
 
-  // ─── V3 Generation State ───
+  // â”€â”€â”€ V3 Generation State â”€â”€â”€
   const [isGeneratingV3, setIsGeneratingV3] = useState(false)
   const [v3Steps, setV3Steps] = useState<V3GenerationStep[]>(() =>
     V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus }))
@@ -255,7 +314,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
           setV3Error(json.error ?? "Generation failed")
           return
         }
-        // Cached — sections already in DB, just refresh
+        // Cached â€” sections already in DB, just refresh
         if (json.cached) {
           setV3Steps(prev => prev.map(s => ({ ...s, status: "completed" as StepStatus })))
           return
@@ -326,7 +385,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         userAborted = true
         return
       }
-      // Stream terminated (timeout, network) — sections may be partially saved
+      // Stream terminated (timeout, network) â€” sections may be partially saved
       console.error("[ReportClient] Stream error:", err)
     } finally {
       setIsGeneratingV3(false)
@@ -355,14 +414,43 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }
   }, [tokensLoading, car.id, hasAnalyzed])
 
-  const handleUnlock = () => {
-    // Always trigger V3 generation — the server handles credit validation
-    // via /api/analyze/v3. The old localStorage token check was blocking
-    // generation for users whose server credits didn't match localStorage.
+  const spendableBalance =
+    authProfile?.pistonsBalance ??
+    authProfile?.creditsBalance ??
+    tokens
+
+  // Confirms the spend after the user reviewed the modal. The server still
+  // validates credits in /api/analyze/v3; local token consumption only keeps
+  // the legacy client balance in sync.
+  const executeUnlock = () => {
+    if (hasAnalyzed(car.id)) {
+      setHasAccess(true)
+      if (!existingReport) void handleGenerateV3()
+      setConfirmGenerateOpen(false)
+      return
+    }
+    consumeForAnalysis(car.id)
     setHasAccess(true)
-    consumeForAnalysis(car.id) // best-effort localStorage sync
-    void handleGenerateV3()
+    if (!existingReport) void handleGenerateV3()
+    setConfirmGenerateOpen(false)
   }
+
+  // Entry point used by every Unlock CTA in the layout.
+  // 1. If we already analyzed this car (cached), skip confirm and reuse.
+  // 2. If balance can't cover the cost, route directly to the top-up flow.
+  // 3. Otherwise open the pedagogical confirmation modal.
+  const handleUnlock = () => {
+    if (hasAnalyzed(car.id)) {
+      executeUnlock()
+      return
+    }
+    if (!canAffordReport(spendableBalance, REPORT_PISTON_COST)) {
+      setShowPricing(true)
+      return
+    }
+    setConfirmGenerateOpen(true)
+  }
+
 
   const handlePurchase = (planId: "single" | "explorer" | "unlimited") => {
     setPurchaseProcessing(planId)
@@ -382,20 +470,20 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }, 1500)
   }
 
-  // ─── COMPUTED DATA (DB-only — no fabricated fallbacks) ───
+  // â”€â”€â”€ COMPUTED DATA (DB-only â€” no fabricated fallbacks) â”€â”€â”€
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
 
-  // Red flags & questions: legacy fields not in HausReport — derived from signals_missing going forward.
-  // For now, fall back to empty arrays until signal→question mapping is wired.
+  // Red flags & questions: legacy fields not in HausReport â€” derived from signals_missing going forward.
+  // For now, fall back to empty arrays until signalâ†’question mapping is wired.
   const flags: string[] = []
   const questions: string[] = []
   const strengths: string[] = []
   const hasDbRiskData = flags.length > 0
   const hasDbQuestions = questions.length > 0
 
-  // No fake comparables — regional stats replace this
+  // No fake comparables â€” regional stats replace this
   // Real comparable sales from the Comparable table. Empty array when the
-  // backend hasn't populated it yet — the UI renders an honest empty state.
+  // backend hasn't populated it yet â€” the UI renders an honest empty state.
   const marketAvgForDelta = marketStats
     ? (marketStats.primaryFairValueLow + marketStats.primaryFairValueHigh) / 2
     : null
@@ -415,7 +503,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const bidInCurrency = convertFromUsd(car.currentBid)
   // Honest-by-data: pricePosition is null when no real fair-value band.
-  // We do NOT clamp above 100 — when the listing is over fair, the user must see it.
+  // We do NOT clamp above 100 â€” when the listing is over fair, the user must see it.
   const hasFairValue = fairHigh > fairLow && fairLow > 0
   const pricePositionRaw = hasFairValue
     ? ((bidInCurrency - fairLow) / (fairHigh - fairLow)) * 100
@@ -432,17 +520,17 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
   )
 
   // Risk score: derived from signal completeness (detected / (detected + missing)).
-  // Higher signal coverage ⇒ lower uncertainty ⇒ lower risk score.
+  // Higher signal coverage â‡’ lower uncertainty â‡’ lower risk score.
   // Honest-by-data: null when signals haven't been extracted yet (no fake 50/100 default).
   const detectedCount = report?.signals_detected.length ?? 0
   const missingCount = report?.signals_missing.length ?? 0
   const totalSignalCount = detectedCount + missingCount
   const signalCoverage = totalSignalCount > 0 ? detectedCount / totalSignalCount : 0
   const riskScore: number | null = hasSignals
-    ? Math.round(100 - signalCoverage * 70) // 30–100 range
+    ? Math.round(100 - signalCoverage * 70) // 30â€“100 range
     : null
 
-  // Verdict logic — purely factual: based on price delta vs specific-car fair value midpoint.
+  // Verdict logic â€” purely factual: based on price delta vs specific-car fair value midpoint.
   const specificMid = report?.specific_car_fair_value_mid ?? 0
   const isAboveFair = car.price > 0 && fairHigh > 0 && car.price > fairHigh
   const deltaVsSpecific = hasSignals && specificMid > 0
@@ -452,12 +540,55 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     deltaVsSpecific <= -5 ? "buy" :
     deltaVsSpecific >= 5 ? "watch" : "hold"
 
+  // â”€â”€â”€ V2 block helpers (identity / similar / verdict) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // thisVinPriceUsd: best-effort USD price for this listing (mirrors V2's deriveAskingUsd)
+  const thisVinPriceUsd: number = (
+    [car.soldPriceUsd, car.askingPriceUsd, car.currentBid, car.price]
+      .filter((v): v is number => typeof v === "number" && v > 0)
+  )[0] ?? 0
+
+  // d3: peer positioning for ComparablesAndPositioningBlock
+  const v1D3 = computeD3PeerPositioning({
+    thisVinPriceUsd,
+    variantSoldPricesUsd: dbComparables.filter(c => c.soldPrice > 0).map(c => c.soldPrice),
+    adjacentVariants: [],
+  })
+
+  // captureDateRange for ComparablesAndPositioningBlock
+  const comparablesCaptureDateRange: { start: string; end: string } | null = (() => {
+    const dates: string[] = []
+    for (const r of marketStats?.regions ?? []) {
+      if (r.oldestDate) dates.push(r.oldestDate)
+      if (r.newestDate) dates.push(r.newestDate)
+    }
+    for (const c of dbComparables) {
+      if (c.soldDate) dates.push(c.soldDate)
+    }
+    if (dates.length === 0) return null
+    const sorted = [...dates].sort()
+    return { start: sorted[0], end: sorted[sorted.length - 1] }
+  })()
+
+  // VerdictBlock-compatible values (uppercase verdict, V2 style)
+  const v1FairMid = report?.specific_car_fair_value_mid ?? null
+  const v1DeltaPercent = thisVinPriceUsd && v1FairMid
+    ? ((thisVinPriceUsd - v1FairMid) / v1FairMid) * 100
+    : 0
+  const v1VerdictKey: "BUY" | "WATCH" | "WALK" | "PENDING" = !v1FairMid
+    ? "PENDING"
+    : v1DeltaPercent <= -5 ? "BUY"
+    : v1DeltaPercent >= 10 ? "WALK"
+    : "WATCH"
+  const v1OneLiner = v1FairMid
+    ? `Priced ${v1DeltaPercent >= 0 ? "+" : ""}${v1DeltaPercent.toFixed(1)}% vs fair value Â· ${dbComparables.length} comparables`
+    : "Awaiting full analysis"
+
   // Arbitrage: difference between cheapest and most expensive region
   const cheapestRegionAvgUsd = (pricing[bestRegion as keyof typeof pricing].low + pricing[bestRegion as keyof typeof pricing].high) / 2
   const arbitrageSavings = maxRegionalUsd - cheapestRegionAvgUsd
   const hasArbitrage = arbitrageSavings > car.currentBid * 0.05
 
-  // ─── SCROLL SPY ───
+  // â”€â”€â”€ SCROLL SPY â”€â”€â”€
   const handleScrollSpy = useCallback(() => {
     const offset = 120
     let current: SectionId = "summary"
@@ -491,7 +622,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     setTimeout(() => setCopiedQuestions(false), 2000)
   }
 
-  // ─── PDF DOWNLOAD (pure jsPDF — no html2canvas) ───
+  // â”€â”€â”€ PDF DOWNLOAD (pure jsPDF â€” no html2canvas) â”€â”€â”€
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true)
     try {
@@ -505,13 +636,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const CW = W - M * 2 // content width
       let pg = 0
 
-      // ─── Theme-aware color palette ───
+      // â”€â”€â”€ Theme-aware color palette â”€â”€â”€
       const isDark = resolvedTheme === "dark"
       const pal = isDark ? {
-        bg: [14, 14, 13] as const,           // #0E0E0D — Noir (v2.1)
+        bg: [14, 14, 13] as const,           // #0E0E0D â€” Noir (v2.1)
         fg: [232, 226, 222] as const,        // #E8E2DE
-        card: [22, 17, 20] as const,         // #161114 — Noir Card (v2.1)
-        primary: [225, 204, 229] as const,   // #E1CCE5 — Heritage Lavender (v2.1)
+        card: [22, 17, 20] as const,         // #161114 â€” Noir Card (v2.1)
+        primary: [225, 204, 229] as const,   // #E1CCE5 â€” Heritage Lavender (v2.1)
         muted: [107, 99, 101] as const,      // #6B6365
         dim: [80, 72, 75] as const,
         border: [42, 34, 38] as const,       // #2A2226
@@ -524,16 +655,16 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         greenTintBg: [15, 25, 20] as const,
         redTintBg: [30, 18, 18] as const,
       } : {
-        bg: [253, 251, 249] as const,        // #FDFBF9 — Warm Cream
-        fg: [20, 20, 19] as const,           // #141413 — Ink (v2.1)
-        card: [245, 242, 238] as const,      // #F5F2EE — Soft Beige
-        primary: [214, 190, 220] as const,   // #D6BEDC — Lavender Deep (v2.1)
-        muted: [154, 142, 136] as const,     // #9A8E88 — Stone
+        bg: [253, 251, 249] as const,        // #FDFBF9 â€” Warm Cream
+        fg: [20, 20, 19] as const,           // #141413 â€” Ink (v2.1)
+        card: [245, 242, 238] as const,      // #F5F2EE â€” Soft Beige
+        primary: [214, 190, 220] as const,   // #D6BEDC â€” Lavender Deep (v2.1)
+        muted: [154, 142, 136] as const,     // #9A8E88 â€” Stone
         dim: [185, 175, 168] as const,
         border: [232, 226, 220] as const,    // #E8E2DC
         barBg: [238, 233, 228] as const,
         barFill: [214, 190, 220] as const,   // Lavender Deep tint for filled bar
-        onPrimary: [63, 42, 71] as const,    // #3F2A47 — Lavender Ink Deep
+        onPrimary: [63, 42, 71] as const,    // #3F2A47 â€” Lavender Ink Deep
         letterBody: [100, 90, 85] as const,
         closingText: [120, 110, 105] as const,
         footerDim: [175, 165, 158] as const,
@@ -541,7 +672,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         redTintBg: [255, 242, 240] as const,
       }
 
-      // ─── Helpers ───
+      // â”€â”€â”€ Helpers â”€â”€â”€
       const bg = () => { pdf.setFillColor(pal.bg[0], pal.bg[1], pal.bg[2]); pdf.rect(0, 0, W, H, "F") }
       const pink = () => pdf.setTextColor(pal.primary[0], pal.primary[1], pal.primary[2])
       const white = () => pdf.setTextColor(pal.fg[0], pal.fg[1], pal.fg[2])
@@ -598,27 +729,27 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         else if (color === "green") pdf.setTextColor(52, 211, 153)
         else if (color === "red") pdf.setTextColor(248, 113, 113)
         else gray()
-        pdf.text("●", M, y)
+        pdf.text("â—", M, y)
         pdf.setFontSize(8); white()
         const lines = pdf.splitTextToSize(text, CW - 6)
         pdf.text(lines, M + 5, y)
         return y + lines.length * 4.2
       }
 
-      // ─── PDF-safe helpers ───
+      // â”€â”€â”€ PDF-safe helpers â”€â”€â”€
       // Clean title: strip listing cruft, normalize to "{year} {make} {model} {trim}"
       const cleanTitle = (c: typeof car) => {
         const parts = [String(c.year), c.make, c.model]
-        if (c.trim && c.trim !== "—" && c.trim !== c.model) parts.push(c.trim)
+        if (c.trim && c.trim !== "â€”" && c.trim !== c.model) parts.push(c.trim)
         return parts.join(" ").replace(/\*+/g, "").replace(/\s+/g, " ").trim()
       }
       const pdfTitle = cleanTitle(car)
 
       // PDF-safe currency formatter: avoid CJK characters that jsPDF can't render
       const fmtPdf = (amount: number, currency: string) => {
-        if (currency === "JPY") return `¥${Math.round(amount).toLocaleString()}`
-        if (currency === "GBP") return `£${Math.round(amount).toLocaleString()}`
-        if (currency === "EUR") return `€${Math.round(amount).toLocaleString()}`
+        if (currency === "JPY") return `Â¥${Math.round(amount).toLocaleString()}`
+        if (currency === "GBP") return `Â£${Math.round(amount).toLocaleString()}`
+        if (currency === "EUR") return `â‚¬${Math.round(amount).toLocaleString()}`
         return `$${Math.round(amount).toLocaleString()}`
       }
 
@@ -626,7 +757,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const rawThesis = stripHtml(car.thesis) || ""
       const isGenericThesis = !rawThesis || rawThesis.length < 50 || /Live auction listing from|Live Data/i.test(rawThesis)
       const pdfThesis = isGenericThesis
-        ? `${pdfTitle} — ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}–${fmtPdf(fairHigh, regionRange.currency)}.`
+        ? `${pdfTitle} â€” ${car.transmission}, ${car.mileage.toLocaleString()} ${car.mileageUnit}. Currently listed at $${car.currentBid.toLocaleString()} on ${car.platform.replace(/_/g, " ")}. Fair value range: ${fmtPdf(fairLow, regionRange.currency)}â€“${fmtPdf(fairHigh, regionRange.currency)}.`
         : rawThesis
 
       // Fetch car images for PDF embedding (up to 6)
@@ -647,7 +778,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       }
       const carImageData = carImagesData[0] || null
 
-      // ═══ PAGE 1: COVER ═══
+      // â•â•â• PAGE 1: COVER â•â•â•
       bg()
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 2, "F")
       pdf.setFontSize(8); pink(); pdf.text("MONZA HAUS", M, 20)
@@ -660,27 +791,27 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.text(tLines, M, 87)
       const tEnd = 87 + tLines.length * 11
       pdf.setFontSize(9); gray()
-      pdf.text(`Fair Value: ${fmtPdf(fairLow, regionRange.currency)} – ${fmtPdf(fairHigh, regionRange.currency)}    Signals: ${detectedCount}/${totalSignalCount || "—"}`, M, tEnd + 8)
+      pdf.text(`Fair Value: ${fmtPdf(fairLow, regionRange.currency)} â€“ ${fmtPdf(fairHigh, regionRange.currency)}    Signals: ${detectedCount}/${totalSignalCount || "â€”"}`, M, tEnd + 8)
       const vy = tEnd + 18
       const vBadgeClr = verdict === "buy" ? [52, 211, 153] : verdict === "hold" ? [251, 191, 36] : pal.primary
       pdf.setFillColor(vBadgeClr[0], vBadgeClr[1], vBadgeClr[2])
       pdf.rect(M, vy - 4, 26, 8, "F")
       pdf.setFontSize(8); pdf.setTextColor(pal.onPrimary[0], pal.onPrimary[1], pal.onPrimary[2])
       pdf.text((verdict ?? "hold").toUpperCase(), M + 13, vy + 1, { align: "center" })
-      gray(); pdf.text(`Risk: ${riskScore ?? "—"}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
-      // Personalized "Prepared for" — prominent
+      gray(); pdf.text(`Risk: ${riskScore ?? "â€”"}/100  |  Position: ${pricePosition}% of fair value  |  Similar: ${similarCars.length} vehicles`, M + 30, vy + 1)
+      // Personalized "Prepared for" â€” prominent
       const prepY = vy + 16
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.2); pdf.line(M, prepY, M + 20, prepY)
       pdf.setFontSize(8); dim(); pdf.text("PREPARED EXCLUSIVELY FOR", M, prepY + 7)
       pdf.setFontSize(18); white(); pdf.text(clientName, M, prepY + 17)
       pdf.setFontSize(8); gray()
       pdf.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), M, prepY + 24)
-      // Financial box — dynamic position below "Prepared for" section
+      // Financial box â€” dynamic position below "Prepared for" section
       const bY = Math.max(prepY + 34, 180)
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.setLineWidth(0.3); pdf.rect(M, bY, CW, 38, "S")
       label("LISTING PRICE", M + 8, bY + 9); label("FAIR VALUE (USD)", M + 65, bY + 9); label("BEST REGION", M + 135, bY + 9)
       pdf.setFontSize(12); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 8, bY + 21)
-      white(); pdf.text(`$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
+      white(); pdf.text(`$${pricing.US.low.toLocaleString()} â€“ $${pricing.US.high.toLocaleString()}`, M + 65, bY + 21)
       pdf.text(regionLabels[bestRegion]?.short || "US", M + 135, bY + 21)
       pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2]); pdf.line(M + 58, bY + 3, M + 58, bY + 35); pdf.line(M + 128, bY + 3, M + 128, bY + 35)
       pdf.setFontSize(6.5); dim(); pdf.text("CONFIDENTIAL", M, H - 15); pdf.text("www.monzahaus.com", W - M, H - 15, { align: "right" })
@@ -688,7 +819,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       const secNames = ["Executive Summary", "Vehicle Identity", "Regional Valuation", "Performance & Returns", "Risk Assessment", "Due Diligence", "Market Context", "Similar Vehicles", "Final Verdict"]
 
-      // ═══ PAGE 2: PERSONAL LETTER ═══
+      // â•â•â• PAGE 2: PERSONAL LETTER â•â•â•
       pdf.addPage(); bg(); chrome("Welcome")
       // Decorative top line
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
@@ -701,11 +832,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const letterBody = [
         `Thank you for trusting MONZA Haus with your investment analysis of the ${pdfTitle}.`,
         "",
-        "We understand that acquiring a collector vehicle is more than a financial decision — it's a deeply personal one. Every car tells a story, and the right one becomes part of yours.",
+        "We understand that acquiring a collector vehicle is more than a financial decision â€” it's a deeply personal one. Every car tells a story, and the right one becomes part of yours.",
         "",
         `This dossier was prepared exclusively for you. Inside, you'll find a comprehensive analysis covering ${secNames.length} key dimensions: from regional valuation and arbitrage opportunities to technical deep-dives, condition assessments, and our final investment verdict.`,
         "",
-        "Our goal is simple: to give you the clarity and confidence to make the best decision — whether that's bidding today or waiting for the right moment.",
+        "Our goal is simple: to give you the clarity and confidence to make the best decision â€” whether that's bidding today or waiting for the right moment.",
         "",
         "We're honored to be part of your journey.",
       ]
@@ -731,7 +862,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFontSize(7); dim()
       pdf.text("\"The best investment you can make is an informed one.\"", W / 2, H - 33, { align: "center" })
 
-      // ═══ PAGE 3: TABLE OF CONTENTS ═══
+      // â•â•â• PAGE 3: TABLE OF CONTENTS â•â•â•
       pdf.addPage(); bg(); chrome("Contents")
       pdf.setFontSize(18); white(); pdf.text("Contents", M, 30)
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4); pdf.line(M, 34, M + 28, 34)
@@ -743,7 +874,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.setFontSize(8); dim(); pdf.text(String(i + 3), W - M - 3, y, { align: "right" })
       })
 
-      // ─── Card helper: themed card with border like the web ───
+      // â”€â”€â”€ Card helper: themed card with border like the web â”€â”€â”€
       const card = (x: number, y: number, w: number, h: number) => {
         pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2])
         pdf.rect(x, y, w, h, "F")
@@ -765,16 +896,16 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         return y + 5.5
       }
 
-      // ═══ PAGE 4: EXECUTIVE SUMMARY ═══
+      // â•â•â• PAGE 4: EXECUTIVE SUMMARY â•â•â•
       pdf.addPage(); bg(); chrome("Executive Summary")
       let y = sectionTitle(1, "Executive Summary", 16)
       // 6-metric card grid (3 cols x 2 rows)
       const mData = [
-        { lbl: "SIGNALS DETECTED", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
+        { lbl: "SIGNALS DETECTED", val: `${detectedCount}/${totalSignalCount || "â€”"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
         { lbl: "CURRENT PRICE", val: `$${car.currentBid.toLocaleString()}`, clr: [pal.primary[0],pal.primary[1],pal.primary[2]] },
-        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} – $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
+        { lbl: "FAIR VALUE", val: `$${pricing.US.low.toLocaleString()} â€“ $${pricing.US.high.toLocaleString()}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
         { lbl: "MARKET POSITION", val: `${pricePosition ?? 0}%`, clr: (pricePosition ?? 0) <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
-        { lbl: "RISK SCORE", val: `${riskScore ?? "—"}/100`, clr: (riskScore ?? 0) < 35 ? [52,211,153] : ((riskScore ?? 100) < 55) ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
+        { lbl: "RISK SCORE", val: `${riskScore ?? "â€”"}/100`, clr: (riskScore ?? 0) < 35 ? [52,211,153] : ((riskScore ?? 100) < 55) ? [pal.primary[0],pal.primary[1],pal.primary[2]] : [248,113,113] },
         { lbl: "SIMILAR CARS", val: `${similarCars.length}`, clr: [pal.fg[0],pal.fg[1],pal.fg[2]] },
       ]
       const mw = (CW - 6) / 3
@@ -800,7 +931,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       // Price position gauge card
       card(M, y, CW, 22)
       pdf.setFontSize(6); dim(); pdf.text("PRICE POSITION IN FAIR RANGE", M + 4, y + 5)
-      // Gradient bar: green → pink → red
+      // Gradient bar: green â†’ pink â†’ red
       const gY = y + 9; const gW = CW - 8
       for (let gi = 0; gi < gW; gi++) {
         const pct = gi / gW
@@ -819,12 +950,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFontSize(7); white(); pdf.text(`${(pricePosition ?? 0).toFixed(0)}%`, dotX, gY + 9, { align: "center" })
       y += 28
 
-      // ═══ PAGE 5: VEHICLE IDENTITY ═══
+      // â•â•â• PAGE 5: VEHICLE IDENTITY â•â•â•
       pdf.addPage(); bg(); chrome("Vehicle Identity")
       y = sectionTitle(2, "Vehicle Identity", 16)
-      // Specs card (2 columns) — include all available fields
+      // Specs card (2 columns) â€” include all available fields
       const specs: [string, string][] = [
-        ["Year", String(car.year)], ["Make", car.make], ["Model", car.model], ["Trim", car.trim || "—"],
+        ["Year", String(car.year)], ["Make", car.make], ["Model", car.model], ["Trim", car.trim || "â€”"],
         ["Engine", car.engine], ["Transmission", car.transmission],
         ["Mileage", `${car.mileage.toLocaleString()} ${car.mileageUnit}`], ["Location", car.location],
       ]
@@ -863,11 +994,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFillColor(statClr[0], statClr[1], statClr[2]); pdf.circle(M + 4 + 47, y + 4.5, 1, "F")
       pdf.setFontSize(7); pdf.setTextColor(statClr[0], statClr[1], statClr[2]); pdf.text(car.status, M + 50, y + 5)
       pdf.setFontSize(8); pink(); pdf.text(`$${car.currentBid.toLocaleString()}`, M + 4, y + 12)
-      pdf.setFontSize(7); gray(); pdf.text(`${car.bidCount} bids · ${car.platform.replace(/_/g, " ")}`, M + 4, y + 17)
+      pdf.setFontSize(7); gray(); pdf.text(`${car.bidCount} bids Â· ${car.platform.replace(/_/g, " ")}`, M + 4, y + 17)
       y += 28
 
       // History card
-      const histText = stripHtml(car.history) || "—"
+      const histText = stripHtml(car.history) || "â€”"
       const histLines = pdf.splitTextToSize(histText, CW - 10)
       const histH = Math.max(16, 8 + histLines.length * 4)
       card(M, y, CW, histH)
@@ -877,7 +1008,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.text(histLines, M + 5, y + 11)
       y += histH + 4
 
-      // Description card (from listing — if available)
+      // Description card (from listing â€” if available)
       const descText = stripHtml(car.description || car.sellerNotes || "")
       if (descText && descText.length > 10) {
         const descTrunc = descText.length > 600 ? descText.slice(0, 600) + "..." : descText
@@ -892,7 +1023,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         y += descH + 4
       }
 
-      // ═══ PHOTO GALLERY PAGE (if multiple images) ═══
+      // â•â•â• PHOTO GALLERY PAGE (if multiple images) â•â•â•
       if (carImagesData.length > 1) {
         pdf.addPage(); bg(); chrome("Vehicle Gallery")
         y = 16
@@ -926,7 +1057,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         })
       }
 
-      // ═══ PAGE 6: REGIONAL VALUATION ═══
+      // â•â•â• PAGE 6: REGIONAL VALUATION â•â•â•
       pdf.addPage(); bg(); chrome("Regional Valuation")
       y = sectionTitle(3, "Regional Valuation", 16)
       // Regional bars card
@@ -943,7 +1074,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.text(regionLabels[r].short, M + 4, ry)
         if (isBest) badge("BEST BUY", M + 18, ry, 20, 60, 45, 52, 211, 153)
         pdf.setFontSize(7); gray()
-        pdf.text(`${fmtPdf(rp.low, rp.currency)} – ${fmtPdf(rp.high, rp.currency)}`, W - M - 4, ry, { align: "right" })
+        pdf.text(`${fmtPdf(rp.low, rp.currency)} â€“ ${fmtPdf(rp.high, rp.currency)}`, W - M - 4, ry, { align: "right" })
         // Bar
         const bw = (barPct / 100) * (CW - 8)
         pdf.setFillColor(pal.barBg[0], pal.barBg[1], pal.barBg[2]); pdf.rect(M + 4, ry + 3, CW - 8, 3.5, "F")
@@ -968,7 +1099,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFillColor(pal.fg[0], pal.fg[1], pal.fg[2]); pdf.circle(d2X, g2Y + 2, 2.5, "F")
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.circle(d2X, g2Y + 2, 1.8, "F")
       pdf.setFontSize(7)
-      if (isBelowFair) { pdf.setTextColor(52, 211, 153); pdf.text("Below fair value — potential opportunity", M + 4, g2Y + 9) }
+      if (isBelowFair) { pdf.setTextColor(52, 211, 153); pdf.text("Below fair value â€” potential opportunity", M + 4, g2Y + 9) }
       else { pdf.setTextColor(251, 191, 36); pdf.text("At or above fair value midpoint", M + 4, g2Y + 9) }
       y += 28
 
@@ -979,11 +1110,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.setFontSize(8); pdf.setTextColor(52, 211, 153)
         pdf.text("ARBITRAGE OPPORTUNITY", M + 4, y + 5)
         pdf.setFontSize(7.5); pdf.setTextColor(pal.muted[0], pal.muted[1], pal.muted[2])
-        pdf.text(`Buy in ${regionLabels[bestRegion]?.short || bestRegion} — save $${Math.round(arbitrageSavings).toLocaleString()} vs most expensive region`, M + 4, y + 11)
+        pdf.text(`Buy in ${regionLabels[bestRegion]?.short || bestRegion} â€” save $${Math.round(arbitrageSavings).toLocaleString()} vs most expensive region`, M + 4, y + 11)
         y += 18
       }
 
-      // ═══ PAGE 8: PERFORMANCE & RETURNS ═══
+      // â•â•â• PAGE 8: PERFORMANCE & RETURNS â•â•â•
       pdf.addPage(); bg(); chrome("Performance & Returns")
       y = sectionTitle(4, "Performance & Returns", 16)
 
@@ -993,7 +1124,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       const synthesisLabel = detectedCount >= 5 ? "Well-Documented" : detectedCount >= 2 ? "Partial Coverage" : totalSignalCount > 0 ? "Sparse" : "Pending"
       const synthesisClr = detectedCount >= 5 ? [52,211,153] : detectedCount >= 2 ? [96,165,250] : [251,191,36]
       pdf.setFontSize(22); pdf.setTextColor(synthesisClr[0], synthesisClr[1], synthesisClr[2])
-      pdf.text(`${detectedCount}/${totalSignalCount || "—"}`, M + 4, y + 18)
+      pdf.text(`${detectedCount}/${totalSignalCount || "â€”"}`, M + 4, y + 18)
       pdf.setFontSize(10); pdf.text(synthesisLabel, M + 40, y + 18)
       pdf.setFontSize(7); gray()
       pdf.text(`Price Position: ${(pricePosition ?? 0).toFixed(0)}%  |  Risk Score: ${riskScore}/100  |  Similar: ${similarCars.length} vehicles`, M + 4, y + 26)
@@ -1024,7 +1155,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFontSize(7); gray(); pdf.text(`${(pricePosition ?? 0).toFixed(0)}% of fair range`, M + 4, pvGY + 8)
       y += 42
 
-      // ═══ PAGE 8: RISK ASSESSMENT ═══
+      // â•â•â• PAGE 8: RISK ASSESSMENT â•â•â•
       pdf.addPage(); bg(); chrome("Risk Assessment")
       y = sectionTitle(5, "Risk Assessment", 16)
       // Risk gauge card
@@ -1049,7 +1180,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       pdf.setFillColor(rsClr[0], rsClr[1], rsClr[2]); pdf.circle(rDot, rGY + 1.5, 1.3, "F")
       y += 32
 
-      // Key strengths card (Collectibility / Why Buy) — not available on HausReport v1
+      // Key strengths card (Collectibility / Why Buy) â€” not available on HausReport v1
       const keyStrengths: string[] = []
       if (keyStrengths.length > 0) {
         const ksH = 7 + keyStrengths.length * 7
@@ -1083,10 +1214,10 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       card(M, y, CW, 18)
       pdf.setFontSize(6); dim(); pdf.text("RISK CONTEXT", M + 4, y + 5)
       pdf.setFontSize(8); white()
-      const riskCtx = pdf.splitTextToSize(`Score ${riskScore ?? "—"}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk — proceed with caution and specialist inspection."}`, CW - 8)
+      const riskCtx = pdf.splitTextToSize(`Score ${riskScore ?? "â€”"}/100 indicates ${riskLevel} risk. Key concerns center on ${flags[0]?.toLowerCase() || "general market conditions"}. ${riskLevel === "low" ? "This vehicle presents a favorable risk profile for investment." : riskLevel === "moderate" ? "Recommend thorough pre-purchase inspection." : "Elevated risk â€” proceed with caution and specialist inspection."}`, CW - 8)
       pdf.text(riskCtx, M + 4, y + 11)
 
-      // ═══ PAGE 9: DUE DILIGENCE ═══
+      // â•â•â• PAGE 9: DUE DILIGENCE â•â•â•
       pdf.addPage(); bg(); chrome("Due Diligence")
       y = sectionTitle(6, "Due Diligence", 16)
       // Questions card
@@ -1100,11 +1231,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       })
       y += 11 + questions.length * 6.5 + 4
 
-      // Action Items if Purchasing — derived from real data
+      // Action Items if Purchasing â€” derived from real data
       const actionItems: string[] = []
       if (flags.length > 0) actionItems.push(`Comprehensive inspection focusing on: ${flags[0].toLowerCase()}`)
-      if (isBelowFair) actionItems.push(`Listed below fair value — strong negotiation position at ${(pricePosition ?? 0).toFixed(0)}% of fair range`)
-      else actionItems.push(`Listed at ${(pricePosition ?? 0).toFixed(0)}% of fair range — negotiate toward ${fmtPdf(fairLow, regionRange.currency)}`)
+      if (isBelowFair) actionItems.push(`Listed below fair value â€” strong negotiation position at ${(pricePosition ?? 0).toFixed(0)}% of fair range`)
+      else actionItems.push(`Listed at ${(pricePosition ?? 0).toFixed(0)}% of fair range â€” negotiate toward ${fmtPdf(fairLow, regionRange.currency)}`)
       if (hasArbitrage) actionItems.push(`Consider buying in ${regionLabels[bestRegion]?.short || bestRegion} to save $${Math.round(arbitrageSavings).toLocaleString()}`)
       if (car.vin) actionItems.push("Run VIN history report before committing")
       actionItems.push("Verify service records and maintenance history with authorized dealer")
@@ -1120,11 +1251,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.text(aiLines, M + 12, aiy)
       })
 
-      // ═══ PAGE 10: MARKET CONTEXT ═══
+      // â•â•â• PAGE 10: MARKET CONTEXT â•â•â•
       pdf.addPage(); bg(); chrome("Market Context")
       y = sectionTitle(7, "Market Context", 16)
 
-      // Market overview card — trend + total data points (HausReport v1 doesn't include trend; fall back to car.trend).
+      // Market overview card â€” trend + total data points (HausReport v1 doesn't include trend; fall back to car.trend).
       const trendPct = 0
       const trendDir = car.trend ?? "stable"
       const totalComps = report?.comparables_count ?? similarCars.length
@@ -1149,12 +1280,12 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
       // Current market conditions
       const mktConditions: string[] = []
-      if (trendDir === "up") mktConditions.push(`Market trending upward at ${trendPct > 0 ? "+" : ""}${trendPct.toFixed(1)}% — rising demand for this model`)
-      else if (trendDir === "down") mktConditions.push(`Market trending downward at ${trendPct.toFixed(1)}% — potential buying opportunity`)
-      else mktConditions.push("Market is stable — prices holding steady across comparable sales")
-      if (totalComps >= 10) mktConditions.push(`Strong data depth with ${totalComps} comparable sales — high confidence in valuation`)
-      else if (totalComps >= 3) mktConditions.push(`${totalComps} comparable sales available — reasonable confidence in pricing`)
-      else mktConditions.push("Limited comparable data — valuations carry higher uncertainty")
+      if (trendDir === "up") mktConditions.push(`Market trending upward at ${trendPct > 0 ? "+" : ""}${trendPct.toFixed(1)}% â€” rising demand for this model`)
+      else if (trendDir === "down") mktConditions.push(`Market trending downward at ${trendPct.toFixed(1)}% â€” potential buying opportunity`)
+      else mktConditions.push("Market is stable â€” prices holding steady across comparable sales")
+      if (totalComps >= 10) mktConditions.push(`Strong data depth with ${totalComps} comparable sales â€” high confidence in valuation`)
+      else if (totalComps >= 3) mktConditions.push(`${totalComps} comparable sales available â€” reasonable confidence in pricing`)
+      else mktConditions.push("Limited comparable data â€” valuations carry higher uncertainty")
       if (sources.length > 0) mktConditions.push(`Data sourced from: ${sources.join(", ")}`)
 
       const mktCondH = 7 + mktConditions.length * 7
@@ -1175,13 +1306,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       comps.forEach((s, i) => {
         const sy = y + 11 + i * 10
         pdf.setFontSize(8); white(); pdf.text(s.title, M + 4, sy)
-        pdf.setFontSize(7); gray(); pdf.text(`${s.date} · ${s.platform}`, M + 4, sy + 4.5)
+        pdf.setFontSize(7); gray(); pdf.text(`${s.date} Â· ${s.platform}`, M + 4, sy + 4.5)
         pdf.setFontSize(9); white(); pdf.text(`$${s.price.toLocaleString()}`, W - M - 28, sy, { align: "right" })
         const dClr = s.delta > 0 ? [52,211,153] : [248,113,113]
         badge(`${s.delta > 0 ? "+" : ""}${s.delta}%`, W - M - 22, sy, dClr[0] > 200 ? 40 : 15, dClr[1] > 150 ? 30 : 25, dClr[2] > 150 ? 25 : 18, dClr[0], dClr[1], dClr[2])
       })
 
-      // ═══ PAGE 15: SIMILAR VEHICLES ═══
+      // â•â•â• PAGE 15: SIMILAR VEHICLES â•â•â•
       pdf.addPage(); bg(); chrome("Similar Vehicles")
       y = sectionTitle(9, "Similar Vehicles", 16)
       const maxSimBid = Math.max(car.currentBid, ...similarCars.map(sc => sc.car.currentBid))
@@ -1197,7 +1328,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         y += 20
       })
 
-      // ═══ PAGE 16: FINAL VERDICT ═══
+      // â•â•â• PAGE 16: FINAL VERDICT â•â•â•
       pdf.addPage(); bg(); chrome("Final Verdict")
       y = sectionTitle(10, "Final Verdict", 16)
       // Large verdict badge
@@ -1208,9 +1339,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       y += 25
       // Verdict metrics card (3 cols)
       const vMetrics = [
-        { lbl: "SIGNALS", val: `${detectedCount}/${totalSignalCount || "—"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
+        { lbl: "SIGNALS", val: `${detectedCount}/${totalSignalCount || "â€”"}`, clr: detectedCount > 0 ? [52,211,153] : [pal.muted[0],pal.muted[1],pal.muted[2]] },
         { lbl: "FAIR VALUE", val: `${pricePosition ?? 0}%`, clr: (pricePosition ?? 0) <= 100 ? [52,211,153] : [pal.primary[0],pal.primary[1],pal.primary[2]] },
-        { lbl: "RISK", val: `${riskScore ?? "—"}/100`, clr: rsClr },
+        { lbl: "RISK", val: `${riskScore ?? "â€”"}/100`, clr: rsClr },
       ]
       const vmW = (CW - 6) / 3
       vMetrics.forEach((vm, i) => {
@@ -1251,9 +1382,9 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         pdf.text(urlText, M + 25, sy)
       }
 
-      // ═══ CLOSING PAGE: THANK YOU ═══
+      // â•â•â• CLOSING PAGE: THANK YOU â•â•â•
       pdf.addPage(); bg()
-      // No chrome on this page — clean, personal
+      // No chrome on this page â€” clean, personal
       pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F")
       // Centered decorative line
       pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.setLineWidth(0.4)
@@ -1270,7 +1401,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         "Whether you choose to bid today or continue exploring,",
         "MONZA Haus is here to support your journey.",
         "",
-        "Great cars find great owners — and we believe",
+        "Great cars find great owners â€” and we believe",
         `the ${pdfTitle} deserves someone who truly`,
         "understands its value.",
       ]
@@ -1322,23 +1453,23 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }
   }
 
-  // ─── EXCEL DOWNLOAD ───
+  // â”€â”€â”€ EXCEL DOWNLOAD â”€â”€â”€
   const handleDownloadExcel = async () => {
     setDownloadingExcel(true)
     try {
       const XLSX = await import("xlsx")
       const wb = XLSX.utils.book_new()
 
-      // ═══ Sheet 1: Summary ═══
+      // â•â•â• Sheet 1: Summary â•â•â•
       const coverData: (string | number)[][] = [
-        ["MONZAHAUS — Haus Report"],
+        ["MONZAHAUS â€” Haus Report"],
         [""],
         ["VEHICLE"],
-        ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" && car.trim !== car.model ? " " + car.trim : ""}`],
+        ["Full Title", `${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "â€”" && car.trim !== car.model ? " " + car.trim : ""}`],
         ["Year", car.year],
         ["Make", car.make],
         ["Model", car.model],
-        ["Trim", car.trim || "—"],
+        ["Trim", car.trim || "â€”"],
         ["Engine", car.engine],
         ["Transmission", car.transmission],
         ["Mileage", car.mileage],
@@ -1356,14 +1487,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ["Category", car.category],
         [""],
         ["INVESTMENT ANALYSIS"],
-        ["Signals Detected", `${detectedCount}/${totalSignalCount || "—"}`],
+        ["Signals Detected", `${detectedCount}/${totalSignalCount || "â€”"}`],
         ["Verdict", (verdict ?? "hold").toUpperCase()],
         ["Fair Value Low (USD)", fairLow],
         ["Fair Value High (USD)", fairHigh],
         ["Fair Value Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
-        ["Price Position (%)", pricePosition ?? "—"],
+        ["Price Position (%)", pricePosition ?? "â€”"],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
-        ["Risk Score (0-100)", riskScore ?? "—"],
+        ["Risk Score (0-100)", riskScore ?? "â€”"],
         ["Trend", car.trend],
         [""],
         ["ARBITRAGE"],
@@ -1384,14 +1515,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
         ...((authProfile?.name || user?.name) ? [[`Prepared for: ${authProfile?.name || user?.name}`]] : []),
-        ["CONFIDENTIAL — www.monzahaus.com"],
+        ["CONFIDENTIAL â€” www.monzahaus.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
       ws1["!cols"] = [{ wch: 28 }, { wch: 50 }]
       ws1["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
       XLSX.utils.book_append_sheet(wb, ws1, "Summary")
 
-      // ═══ Sheet 2: Regional Valuation ═══
+      // â•â•â• Sheet 2: Regional Valuation â•â•â•
       const valuationRows: (string | number)[][] = [
         ["REGIONAL FAIR VALUE COMPARISON"],
         [""],
@@ -1421,7 +1552,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ["PRICE ANALYSIS"],
         ["Listing Price (USD)", car.currentBid],
         ["Fair Midpoint (USD)", Math.round((fairLow + fairHigh) / 2)],
-        ["Price Position (%)", pricePosition ?? "—"],
+        ["Price Position (%)", pricePosition ?? "â€”"],
         ["Discount/Premium (USD)", Math.round(car.currentBid - (fairLow + fairHigh) / 2)],
         ["Below Fair Value?", isBelowFair ? "YES" : "NO"],
       )
@@ -1430,7 +1561,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
       ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }]
       XLSX.utils.book_append_sheet(wb, ws2, "Valuation")
 
-      // ═══ Sheet 3: Similar Vehicles ═══
+      // â•â•â• Sheet 3: Similar Vehicles â•â•â•
       if (similarCars.length > 0) {
         const simRows: (string | number)[][] = [
           ["SIMILAR VEHICLES ON MARKET"],
@@ -1478,7 +1609,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         XLSX.utils.book_append_sheet(wb, wsSim, "Similar Vehicles")
       }
 
-      // ═══ Sheet 4: Comparable Sales ═══
+      // â•â•â• Sheet 4: Comparable Sales â•â•â•
       if (comps.length > 0) {
         const compsRows: (string | number)[][] = [
           ["COMPARABLE SALES"],
@@ -1505,7 +1636,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         XLSX.utils.book_append_sheet(wb, ws3, "Comparable Sales")
       }
 
-      // ═══ Sheet 5: Regional Market Data (if available) ═══
+      // â•â•â• Sheet 5: Regional Market Data (if available) â•â•â•
       if (regions.length > 0) {
         const regionRows: (string | number)[][] = [
           ["REGIONAL MARKET DATA"],
@@ -1532,7 +1663,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         XLSX.utils.book_append_sheet(wb, wsSold, "Regional Data")
       }
 
-      // ═══ Sheet 6: Due Diligence (only if data available) ═══
+      // â•â•â• Sheet 6: Due Diligence (only if data available) â•â•â•
       if (flags.length > 0 || questions.length > 0) {
         const ddRows: (string | number)[][] = [
           ["DUE DILIGENCE CHECKLIST"],
@@ -1540,7 +1671,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         ]
         if (flags.length > 0) {
           ddRows.push(
-            ["RED FLAGS — Key Risk Areas"],
+            ["RED FLAGS â€” Key Risk Areas"],
             ["#", "Risk Item"],
             ...flags.map((f, i) => [i + 1, f]),
             [""],
@@ -1548,7 +1679,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         }
         if (questions.length > 0) {
           ddRows.push(
-            ["SELLER QUESTIONS — Pre-Purchase"],
+            ["SELLER QUESTIONS â€” Pre-Purchase"],
             ["#", "Question"],
             ...questions.map((q, i) => [i + 1, q]),
           )
@@ -1569,7 +1700,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     }
   }
 
-  // ─── PAYWALL BLUR WRAPPER ───
+  // â”€â”€â”€ PAYWALL BLUR WRAPPER â”€â”€â”€
   const PaywallSection = ({ children, sectionId }: { children: React.ReactNode; sectionId: SectionId }) => {
     if (sectionId === "summary" || hasAccess) return <>{children}</>
     return (
@@ -1593,7 +1724,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
     )
   }
 
-  // ─── SECTION HEADER ───
+  // â”€â”€â”€ SECTION HEADER â”€â”€â”€
   const SectionHeader = ({ id, title }: { id: SectionId; title: string }) => {
     const Icon = SECTION_ICONS[id]
     const sectionNumber = SECTION_IDS.indexOf(id) + 1
@@ -1612,7 +1743,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ═══ STICKY NAV — Desktop: sidebar, Mobile: top pills ═══ */}
+      {/* â•â•â• STICKY NAV â€” Desktop: sidebar, Mobile: top pills â•â•â• */}
 
       {/* MOBILE: Sticky top pills */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
@@ -1735,11 +1866,11 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         )}
       </div>
 
-      {/* ═══ MAIN CONTENT ═══ */}
+      {/* â•â•â• MAIN CONTENT â•â•â• */}
       <div className="md:ml-[240px] pt-[52px] md:pt-[var(--app-header-h,80px)]">
         <div className={`max-w-[840px] mx-auto px-4 md:px-8 ${hasAccess ? "pb-32" : "pb-24"}`}>
 
-          {/* ═══ COVER / HERO ═══ */}
+          {/* â•â•â• COVER / HERO â•â•â• */}
           <div className="relative aspect-[16/9] md:aspect-[21/9] rounded-2xl md:rounded-3xl overflow-hidden mt-4 md:mt-6">
             <SafeImage
               src={car.image}
@@ -1771,7 +1902,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             </div>
           </div>
 
-          {/* ═══ Source listing CTA — quick path back to the marketplace ═══
+          {/* â•â•â• Source listing CTA â€” quick path back to the marketplace â•â•â•
               Sits right under the cover so it's always visible during
               the study session. Sutil-pero-presente: outline lavender, no
               compite con el verdict chips. */}
@@ -1785,194 +1916,279 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
             </div>
           )}
 
-          {/* V3 inline stepper removed — now rendered as full-screen overlay below */}
+          {/* V3 inline stepper removed â€” now rendered as full-screen overlay below */}
 
           <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
 
-            {/* ═══════════════════════════════════════
-                §1 — EXECUTIVE SUMMARY (always visible)
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§1 â€” EXECUTIVE SUMMARY (always visible)
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <SectionHeader id="summary" title={t("sections.summary")} />
+              {hasAccess && v3Report ? (
+                <>
+                  <SectionHeader id="summary" title={t("sections.summary")} />
+                  <ExecutiveSummarySection data={v3Report.finalSynthesis} />
+                </>
+              ) : (
+                <>
+                  <SectionHeader id="summary" title={t("sections.summary")} />
 
-              {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
-              {report && (
-                <div className="rounded-2xl border border-border bg-card p-5 mb-4">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                    {tFairValue("specificCarTitle")}
-                  </p>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">
-                    {formatUsd(report.specific_car_fair_value_low ?? 0)} – {formatUsd(report.specific_car_fair_value_high ?? 0)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {tFairValue("baselineSubtitle", { count: report.comparables_count })}
-                  </p>
-                </div>
-              )}
-
-              {/* 5-metric grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {/* Current Price */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                  {car.currentBid > 0 ? (
-                    <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
-                  ) : (
-                    <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
-                  )}
-                </div>
-                {/* Fair Value */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
-                  {hasFairValue ? (
-                    <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
-                      {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
-                    </p>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                      Insufficient comparable data
-                    </p>
-                  )}
-                </div>
-                {/* Market Position */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
-                  {pricePosition !== null ? (
-                    <>
-                      <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
-                        {pricePosition}%
+                  {/* Specific-Car Fair Value headline (replaces legacy Grade) */}
+                  {report && (
+                    <div className="rounded-2xl border border-border bg-card p-5 mb-4">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                        {tFairValue("specificCarTitle")}
                       </p>
-                      {pricePosition > 100 && (
-                        <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
-                      Generate the full report to see how this car prices against comparable sales.
-                    </p>
-                  )}
-                </div>
-                {/* Similar Cars */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
-                  <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
-                </div>
-                {/* Risk Score */}
-                <div className="rounded-xl bg-card border border-border p-4">
-                  <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
-                  {riskScore !== null ? (
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
-                          style={{ width: `${riskScore}%` }}
-                        />
-                      </div>
-                      <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
-                        {riskScore}/100
-                      </span>
+                      <p className="text-2xl font-bold text-foreground tabular-nums">
+                        {formatUsd(report.specific_car_fair_value_low ?? 0)} â€“ {formatUsd(report.specific_car_fair_value_high ?? 0)}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {tFairValue("baselineSubtitle", { count: report.comparables_count })}
+                      </p>
                     </div>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                      {/* [HARDCODED] */}Generate the full report to see signal coverage
-                    </p>
                   )}
-                </div>
-              </div>
 
-              {/* Verdict one-liner */}
-              <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
-                <div className="flex items-start gap-3">
-                  <Scale className="size-5 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[12px] font-semibold text-primary mb-1">{t("summary.verdict")}</p>
-                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                  {/* 5-metric grid */}
+                  <TooltipProvider>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Current Price */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
+                      {car.currentBid > 0 ? (
+                        <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                      ) : (
+                        <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
+                      )}
+                    </div>
+                    {/* Fair Value */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.fairValue")}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is fair value?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Estimated price range a similar example should command on the open market today, based on recent sold comparables and adjusted for spec, condition, and region.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      {hasFairValue ? (
+                        <p className="text-[14px] tabular-nums font-semibold text-foreground mt-2">
+                          {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} â€“ {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}
+                        </p>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                          Insufficient comparable data
+                        </p>
+                      )}
+                    </div>
+                    {/* Market Position */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is market position?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Where the asking price sits inside the Fair Value range. 0% means at the bottom of the range; 100% at the top. Negative means below fair value (potential opportunity).
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      {pricePosition !== null ? (
+                        <>
+                          <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
+                            {pricePosition}%
+                          </p>
+                          {pricePosition > 100 && (
+                            <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
+                          Generate the full report to see how this car prices against comparable sales.
+                        </p>
+                      )}
+                    </div>
+                    {/* Similar Cars */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Similar Cars</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is similar cars?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Number of comparable listings the system is currently tracking for the same model, year, and trim window.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <p className="text-[24px] font-bold tabular-nums text-foreground mt-1">{similarCars.length}</p>
+                    </div>
+                    {/* Risk Score */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.riskScore")}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label="What is risk score?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+                              <Info className="size-3" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                            Composite risk reading from 0 (low) to 100 (high). Higher scores mean more uncertainty: missing service records, modifications, or signals we couldn&apos;t verify.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      {riskScore !== null ? (
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex-1 h-[6px] rounded-full bg-foreground/[0.04] overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${((riskScore ?? 100) <= 30) ? "bg-positive" : ((riskScore ?? 100) <= 50) ? "bg-primary/80" : "bg-destructive"}`}
+                              style={{ width: `${riskScore}%` }}
+                            />
+                          </div>
+                          <span className={`text-[12px] font-bold ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-primary" : "text-destructive"}`}>
+                            {riskScore}/100
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
+                          {/* [HARDCODED] */}Generate the full report to see signal coverage
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
+                  </TooltipProvider>
+
+                  {/* Verdict one-liner */}
+                  <div className="mt-4 rounded-xl bg-primary/5 border border-primary/15 p-4">
+                    <div className="flex items-start gap-3">
+                      <Scale className="size-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[12px] font-semibold text-primary mb-1">{t("summary.verdict")}</p>
+                        <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.thesis)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
-            {/* ═══════════════════════════════════════
-                §2 — VEHICLE IDENTITY & PROVENANCE
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§2 â€” VEHICLE IDENTITY & PROVENANCE
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("identity")} id="section-identity" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="identity">
-                <SectionHeader id="identity" title={t("sections.identity")} />
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
+                    <InvestmentStoryBlock narrative={report?.investment_narrative} />
+                    <ColorIntelBlock colorIntel={report?.color_intelligence} />
+                    <VinIntelBlock
+                      vinIntel={report?.vin_intelligence}
+                      vin={car.vin ?? null}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
 
-                {/* Specs grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                  {[
-                    { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
-                    { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
-                    { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
-                    { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
-                    { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
-                  ].map((spec, i) => (
-                    <div key={i} className="rounded-xl bg-card border border-border p-4">
-                      <div className="flex items-center gap-2 text-primary/60 mb-2">
-                        {spec.icon}
-                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
-                      </div>
-                      <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
+                    {/* Specs grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                      {[
+                        { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
+                        { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
+                        { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
+                        { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
+                        { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
+                      ].map((spec, i) => (
+                        <div key={i} className="rounded-xl bg-card border border-border p-4">
+                          <div className="flex items-center gap-2 text-primary/60 mb-2">
+                            {spec.icon}
+                            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
+                          </div>
+                          <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* Provenance */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <History className="size-4 text-primary" />
-                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
-                  </div>
-                  <div className="pl-4 border-l border-border">
-                    <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-                  </div>
-                </div>
-
-                {/* Platform data */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FileText className="size-4 text-primary" />
-                    <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
-                        <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
+                    {/* Provenance */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <History className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
+                      </div>
+                      <div className="pl-4 border-l border-border">
+                        <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
-                      <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
-                    </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
-                      <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
-                    </div>
-                    <div>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
-                        <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
-                          {car.status === "ENDED" ? "Ended" : isLive ? `Live · ${timeLeft(car.endTime)}` : car.status}
-                        </span>
+
+                    {/* Platform data */}
+                    <div className="rounded-xl bg-card border border-border p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
+                            <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
+                          <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
+                          <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
+                            <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
+                              {car.status === "ENDED" ? "Ended" : isLive ? `Live Â· ${timeLeft(car.endTime)}` : car.status}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §3 — MARKET VALUATION & REGIONAL ARBITRAGE
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§3 â€” MARKET VALUATION & REGIONAL ARBITRAGE
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("valuation")} id="section-valuation" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="valuation">
                 <SectionHeader id="valuation" title={t("sections.valuation")} />
 
-                {/* Regional breakdown bars — only show when we have real regional data */}
+                {hasAccess && v3Report ? (
+                  <div className="space-y-4">
+                    <InvestmentStrategySection
+                      data={v3Report.investmentAnalysis}
+                      listingType={v3Report.vehicleIdentity?.listingType ?? "classified"}
+                    />
+                    <OwnershipCostSection data={v3Report.investmentAnalysis?.ownershipCosts ?? null} />
+                    <ResaleTimelineSection data={v3Report.investmentAnalysis?.resaleTimeline ?? null} />
+                  </div>
+                ) : (
+                <>
+
+                {/* Regional breakdown bars â€” only show when we have real regional data */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
                   <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">{t("valuation.regionalBreakdown")}</h3>
                   <div className="space-y-4">
@@ -2028,7 +2244,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   </div>
                 </div>
 
-                {/* Market position gauge — only when we have fair value data */}
+                {/* Market position gauge â€” only when we have fair value data */}
                 {hasFairValue && (
                   <div className="rounded-xl bg-card border border-border p-5 mb-4">
                     <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
@@ -2065,7 +2281,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   </div>
                 )}
 
-                {/* Modifiers applied list — adjustments to specific-car fair value */}
+                {/* Modifiers applied list â€” adjustments to specific-car fair value */}
                 <div className="mb-4">
                   <ModifiersAppliedList modifiers={report?.modifiers_applied ?? []} />
                 </div>
@@ -2096,7 +2312,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                         <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-foreground/2 border border-border">
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium text-foreground truncate">{sale.title}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} · {sale.platform}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{sale.date} Â· {sale.platform}</p>
                           </div>
                           <div className="text-right shrink-0 ml-3">
                             <p className="text-[16px] font-bold tabular-nums text-foreground">{formatPrice(sale.price)}</p>
@@ -2118,22 +2334,29 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     </div>
                   )}
                 </div>
+                </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §3b — SIGNALS DETECTED
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§3b â€” SIGNALS DETECTED
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SignalsDetectedSection signals={report?.signals_detected ?? []} />
             </section>
 
-            {/* ═══════════════════════════════════════
-                §4 — INVESTMENT PERFORMANCE
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§4 â€” INVESTMENT PERFORMANCE
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("performance")} id="section-performance" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="performance">
                 <SectionHeader id="performance" title={t("sections.performance")} />
+
+                {hasAccess && v3Report ? (
+                  <TechnicalAnalysisSection data={v3Report.technicalAnalysis} />
+                ) : (
+                <>
 
                 {/* Market Position */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2156,14 +2379,14 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Fair Value: {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} – {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
+                      <span>Fair Value: {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} â€“ {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
                       <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
                     </div>
                   </div>
                   {isBelowFair && (
                     <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-positive/[0.05] border border-positive/10">
                       <TrendingUp className="size-3.5 text-positive" />
-                      <span className="text-[11px] text-positive">Priced below fair value — potential opportunity</span>
+                      <span className="text-[11px] text-positive">Priced below fair value â€” potential opportunity</span>
                     </div>
                   )}
                 </div>
@@ -2247,15 +2470,22 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     </div>
                   )
                 })()}
+                </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §5 — RISK ASSESSMENT
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§5 â€” RISK ASSESSMENT
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("risk")} id="section-risk" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="risk">
                 <SectionHeader id="risk" title={t("sections.risk")} />
+
+                {hasAccess && v3Report ? (
+                  <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                ) : (
+                <>
 
                 {/* Risk gauge */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2287,7 +2517,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   </div>
                 </div>
 
-                {/* Red flags — only show when DB data available */}
+                {/* Red flags â€” only show when DB data available */}
                 {hasDbRiskData ? (
                   <div className="rounded-xl bg-card border border-border p-5">
                     <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.knownIssues")}</h3>
@@ -2317,15 +2547,25 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     </p>
                   </div>
                 )}
+                </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §6 — DUE DILIGENCE TOOLKIT
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§6 â€” DUE DILIGENCE TOOLKIT
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="dueDiligence">
                 <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
+
+                {hasAccess && v3Report ? (
+                  <div className="space-y-4">
+                    <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                    <BuyerServicesSection data={v3Report.buyerServices} />
+                  </div>
+                ) : (
+                <>
 
                 {/* Questions to ask */}
                 <div className="rounded-xl bg-card border border-border p-5 mb-4">
@@ -2379,15 +2619,22 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                     ))}
                   </div>
                 </div>
+                </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §7 — MARKET CONTEXT
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§7 â€” MARKET CONTEXT
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("marketContext")} id="section-marketContext" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="marketContext">
                 <SectionHeader id="marketContext" title={t("sections.marketContext")} />
+
+                {hasAccess && v3Report ? (
+                  <MarketResearchSection data={v3Report.marketResearch} />
+                ) : (
+                <>
 
                 {/* Brand thesis */}
                 <div className="rounded-xl bg-primary/5 border border-primary/15 p-5 mb-4">
@@ -2398,175 +2645,206 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   <p className="text-[13px] leading-relaxed text-foreground/80 whitespace-pre-line">{stripHtml(car.thesis)}</p>
                 </div>
 
+                </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §9 — SIMILAR VEHICLES
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§9 â€” SIMILAR VEHICLES
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("similar")} id="section-similar" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="similar">
-                <SectionHeader id="similar" title={t("sections.similar")} />
-                <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="similar" title={t("sections.similar")} />
+                    <ComparablesAndPositioningBlock
+                      d3={v1D3}
+                      thisVinPriceUsd={thisVinPriceUsd}
+                      comparables={dbComparables}
+                      captureDateRange={comparablesCaptureDateRange}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="similar" title={t("sections.similar")} />
+                    <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {similarCars.slice(0, 6).map(sc => (
-                    <Link
-                      key={sc.car.id}
-                      href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
-                      className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
-                    >
-                      <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
-                        <SafeImage
-                          src={sc.car.image}
-                          alt={sc.car.title}
-                          fill
-                          className="object-cover"
-                          sizes="80px"
-                          fallback={<div className="absolute inset-0 bg-muted" />}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
-                          <span className="text-[10px] text-positive">{sc.car.trend}</span>
-                        </div>
-                        {sc.matchReasons.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {sc.matchReasons.slice(0, 2).map(reason => (
-                              <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
-                                {reason}
-                              </span>
-                            ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {similarCars.slice(0, 6).map(sc => (
+                        <Link
+                          key={sc.car.id}
+                          href={`/cars/${sc.car.make.toLowerCase().replace(/\s+/g, "-")}/${sc.car.id}`}
+                          className="group flex items-center gap-4 rounded-xl bg-foreground/2 hover:bg-foreground/[0.04] border border-border hover:border-primary/15 p-3 transition-all"
+                        >
+                          <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
+                            <SafeImage
+                              src={sc.car.image}
+                              alt={sc.car.title}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                              fallback={<div className="absolute inset-0 bg-muted" />}
+                            />
                           </div>
-                        )}
-                      </div>
-                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                    </Link>
-                  ))}
-                </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">{sc.car.title}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[12px] tabular-nums font-semibold text-primary">{formatPrice(sc.car.currentBid)}</span>
+                              <span className="text-[10px] text-positive">{sc.car.trend}</span>
+                            </div>
+                            {sc.matchReasons.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {sc.matchReasons.slice(0, 2).map(reason => (
+                                  <span key={reason} className="text-[9px] px-1.5 py-0.5 rounded bg-foreground/5 text-muted-foreground">
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══════════════════════════════════════
-                §9b — SIGNALS MISSING (pre-verdict)
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§9b â€” SIGNALS MISSING (pre-verdict)
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <SignalsMissingSection signals={report?.signals_missing ?? []} />
             </section>
 
-            {/* ═══════════════════════════════════════
-                §10 — INVESTMENT VERDICT
-                ═══════════════════════════════════════ */}
+            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                Â§10 â€” INVESTMENT VERDICT
+                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("verdict")} id="section-verdict" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="verdict">
-                <SectionHeader id="verdict" title={t("sections.verdict")} />
+                {hasAccess && v3Report ? (
+                  <>
+                    <SectionHeader id="verdict" title={t("sections.verdict")} />
+                    <VerdictBlock
+                      verdict={v1VerdictKey}
+                      oneLiner={v1OneLiner}
+                      askingUsd={thisVinPriceUsd}
+                      fairValueMidUsd={v1FairMid}
+                      deltaPercent={v1DeltaPercent}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <SectionHeader id="verdict" title={t("sections.verdict")} />
 
-                {/* Verdict card */}
-                <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
-                  <div className="text-center mb-6">
-                    {verdict ? (
-                      <>
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
-                        <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
-                          verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-primary" : "text-destructive"
-                        }`}>
-                          {t(`verdict.${verdict}`)}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary/70">
-                          Verdict
-                        </span>
-                        <p className="font-display text-[28px] md:text-[36px] font-light text-foreground/85 mt-2 tracking-tight">
-                          Buy · Watch · Walk
-                        </p>
-                        <p className="text-[12px] text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-                          The verdict weighs fair value, market signals, risk score, and arbitrage. Generate the full report to see where this car lands.
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-center gap-4 mb-6">
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Signals</span>
-                      <p className={`text-[20px] font-black ${detectedCount > 0 ? "text-positive" : "text-muted-foreground"}`}>
-                        {detectedCount}/{totalSignalCount || "—"}
-                      </p>
-                    </div>
-                    <div className="h-8 w-px bg-foreground/10" />
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
-                      <p className={`text-[20px] font-black ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</p>
-                    </div>
-                    <div className="h-8 w-px bg-foreground/10" />
-                    <div className="text-center">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
-                      <p className={`text-[20px] font-black ${
-                        ((riskScore ?? 100) < 35) ? "text-positive" :
-                        ((riskScore ?? 100) < 55) ? "text-primary" :
-                        "text-destructive"
-                      }`}>{riskScore}/100</p>
-                    </div>
-                  </div>
-
-                  {/* Factual synthesis (replaces grade narrative) */}
-                  {report && (
-                    <p className="text-sm text-foreground text-center mb-4">
-                      {tVerdict("factualSummary", {
-                        deltaPercent: deltaVsSpecific,
-                        detected: detectedCount,
-                        total: totalSignalCount,
-                      })}
-                    </p>
-                  )}
-
-                  {/* Strategy */}
-                  <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
-                    <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
-                    {verdict ? (
-                      <p className="text-[12px] text-muted-foreground leading-relaxed">
-                        {t(`verdict.${verdict}Strategy`)}
-                      </p>
-                    ) : (
-                      <p className="text-[12px] text-muted-foreground leading-relaxed italic">
-                        Strategy recommendation will appear once the full investment analysis is generated.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Key takeaways */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
-                  <div className="space-y-2">
-                    {[
-                      `Priced at ${(pricePosition ?? 0).toFixed(0)}% of the fair value range`,
-                      isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
-                      ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
-                      hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
-                    ].map((takeaway, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
-                        <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
-                        <span className="text-[13px] text-foreground/80">{takeaway}</span>
+                    {/* Verdict card */}
+                    <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-card to-card border border-primary/20 p-6 md:p-8 mb-4">
+                      <div className="text-center mb-6">
+                        {verdict ? (
+                          <>
+                            <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">{t("verdict.recommendation")}</span>
+                            <p className={`text-[40px] md:text-[48px] font-black mt-1 ${
+                              verdict === "buy" ? "text-positive" : verdict === "hold" ? "text-primary" : "text-destructive"
+                            }`}>
+                              {t(`verdict.${verdict}`)}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[9px] font-semibold tracking-[0.2em] uppercase text-primary/70">
+                              Verdict
+                            </span>
+                            <p className="font-display text-[28px] md:text-[36px] font-light text-foreground/85 mt-2 tracking-tight">
+                              Buy Â· Watch Â· Walk
+                            </p>
+                            <p className="text-[12px] text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+                              The verdict weighs fair value, market signals, risk score, and arbitrage. Generate the full report to see where this car lands.
+                            </p>
+                          </>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Disclaimer */}
-                <div className="rounded-xl bg-foreground/2 border border-border p-4">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-                    {t("verdict.disclaimer")}
-                  </p>
-                </div>
+                      <div className="flex items-center justify-center gap-4 mb-6">
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Signals</span>
+                          <p className={`text-[20px] font-black ${detectedCount > 0 ? "text-positive" : "text-muted-foreground"}`}>
+                            {detectedCount}/{totalSignalCount || "â€”"}
+                          </p>
+                        </div>
+                        <div className="h-8 w-px bg-foreground/10" />
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">% of Fair Range</span>
+                          <p className={`text-[20px] font-black ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</p>
+                        </div>
+                        <div className="h-8 w-px bg-foreground/10" />
+                        <div className="text-center">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Risk</span>
+                          <p className={`text-[20px] font-black ${
+                            ((riskScore ?? 100) < 35) ? "text-positive" :
+                            ((riskScore ?? 100) < 55) ? "text-primary" :
+                            "text-destructive"
+                          }`}>{riskScore}/100</p>
+                        </div>
+                      </div>
+
+                      {/* Factual synthesis (replaces grade narrative) */}
+                      {report && (
+                        <p className="text-sm text-foreground text-center mb-4">
+                          {tVerdict("factualSummary", {
+                            deltaPercent: deltaVsSpecific,
+                            detected: detectedCount,
+                            total: totalSignalCount,
+                          })}
+                        </p>
+                      )}
+
+                      {/* Strategy */}
+                      <div className="rounded-xl bg-foreground/[0.03] border border-border p-4">
+                        <h4 className="text-[11px] font-semibold text-foreground mb-2">{t("verdict.strategyTitle")}</h4>
+                        {verdict ? (
+                          <p className="text-[12px] text-muted-foreground leading-relaxed">
+                            {t(`verdict.${verdict}Strategy`)}
+                          </p>
+                        ) : (
+                          <p className="text-[12px] text-muted-foreground leading-relaxed italic">
+                            Strategy recommendation will appear once the full investment analysis is generated.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Key takeaways */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("verdict.keyTakeaways")}</h3>
+                      <div className="space-y-2">
+                        {[
+                          `Priced at ${(pricePosition ?? 0).toFixed(0)}% of the fair value range`,
+                          isBelowFair ? `Currently priced below fair value in ${effectiveRegion}` : `Trading near fair value in ${effectiveRegion}`,
+                          ...(report ? [`${detectedCount} of ${totalSignalCount || 0} high-value signals detected`] : []),
+                          hasArbitrage ? `Arbitrage opportunity: ${formatUsd(arbitrageSavings)} savings via ${regionLabels[bestRegion]?.short} market` : `${car.make} brand showing consistent appreciation trend`,
+                        ].map((takeaway, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                            <CheckCircle2 className="size-4 text-primary mt-0.5 shrink-0" />
+                            <span className="text-[13px] text-foreground/80">{takeaway}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Disclaimer */}
+                    <div className="rounded-xl bg-foreground/2 border border-border p-4">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                        {t("verdict.disclaimer")}
+                      </p>
+                    </div>
+                  </>
+                )}
               </PaywallSection>
             </section>
 
-            {/* ═══ LANDED COST ═══ */}
+            {/* â•â•â• LANDED COST â•â•â• */}
             {report?.landed_cost ? (
               <>
                 <LandedCostBlock breakdown={report.landed_cost} locale={locale} />
@@ -2581,13 +2859,13 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                   Landed cost not estimated for vehicles originating in this
                   country.{" "}
                   <Link href="/contact" className="underline">
-                    Contact Monza Haus for a custom quote →
+                    Contact Monza Haus for a custom quote â†’
                   </Link>
                 </p>
               </section>
             ) : null}
 
-            {/* ═══ ADVISOR HANDOFF ═══
+            {/* â•â•â• ADVISOR HANDOFF â•â•â•
                 After the user has read the full dossier, the natural next
                 step is "ask about what's missing." Pre-populates the chat
                 with this car's title so the conversation starts in context. */}
@@ -2595,7 +2873,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
               <AdvisorBand
                 title={/* [HARDCODED] */ "Anything still unclear?"}
                 subtitle={/* [HARDCODED] */ "The advisor can dig deeper on any signal in this report."}
-                prompt={`I just read the full report on this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "—" ? " " + car.trim : ""}. Walk me through the most important risks and what to verify before bidding.`}
+                prompt={`I just read the full report on this ${car.year} ${car.make} ${car.model}${car.trim && car.trim !== "â€”" ? " " + car.trim : ""}. Walk me through the most important risks and what to verify before bidding.`}
               />
             </div>
 
@@ -2603,7 +2881,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         </div>
       </div>
 
-      {/* ═══ MOBILE: Floating download button ═══ */}
+      {/* â•â•â• MOBILE: Floating download button â•â•â• */}
       {hasAccess && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-primary/10">
           <div className="px-4 py-2.5">
@@ -2628,7 +2906,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         </div>
       )}
 
-      {/* ═══ DOWNLOAD SHEET ═══ */}
+      {/* â•â•â• DOWNLOAD SHEET â•â•â• */}
       <AnimatePresence>
         {showDownloadSheet && (
           <motion.div
@@ -2700,7 +2978,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         )}
       </AnimatePresence>
 
-      {/* ═══ PRICING MODAL ═══ */}
+      {/* â•â•â• PRICING MODAL â•â•â• */}
       <AnimatePresence>
         {showPricing && (
           <motion.div
@@ -2761,7 +3039,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
 
                   {/* Plans grid */}
                   <div className="px-6 pt-5 pb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {/* ─── SINGLE REPORT ─── */}
+                    {/* â”€â”€â”€ SINGLE REPORT â”€â”€â”€ */}
                     <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
                       <div className="mb-4">
                         <h4 className="text-[13px] font-semibold text-foreground">{tPricing("single.name")}</h4>
@@ -2793,7 +3071,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       </button>
                     </div>
 
-                    {/* ─── EXPLORER PACK (HIGHLIGHTED) ─── */}
+                    {/* â”€â”€â”€ EXPLORER PACK (HIGHLIGHTED) â”€â”€â”€ */}
                     <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col relative">
                       <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
                         <span className="px-3 py-1 rounded-full bg-primary text-background text-[9px] font-bold uppercase tracking-wider">
@@ -2831,7 +3109,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
                       </button>
                     </div>
 
-                    {/* ─── UNLIMITED ─── */}
+                    {/* â”€â”€â”€ UNLIMITED â”€â”€â”€ */}
                     <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
                       <div className="mb-4">
                         <h4 className="text-[13px] font-semibold text-foreground">{tPricing("unlimited.name")}</h4>
@@ -2890,7 +3168,16 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
 
-      {/* ═══ V3 GENERATION OVERLAY (full-screen modal) ═══ */}
+      <ConfirmGenerateModal
+        open={confirmGenerateOpen}
+        onOpenChange={setConfirmGenerateOpen}
+        car={car}
+        cost={REPORT_PISTON_COST}
+        balance={spendableBalance}
+        onConfirm={executeUnlock}
+      />
+
+      {/* â•â•â• V3 GENERATION OVERLAY (full-screen modal) â•â•â• */}
       <AnimatePresence>
         {(isGeneratingV3 || v3Error) && (
           <motion.div
@@ -3049,7 +3336,7 @@ export function ReportClient({ car, similarCars, existingReport, marketStats, db
               {isGeneratingV3 && (
                 <div className="px-6 pb-4 pt-1">
                   <p className="text-[10px] text-muted-foreground text-center">
-                    This may take 30–60 seconds. Do not close this page.
+                    This may take 30â€“60 seconds. Do not close this page.
                   </p>
                 </div>
               )}

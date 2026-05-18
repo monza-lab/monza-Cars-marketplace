@@ -49,6 +49,7 @@ import { isAuctionPlatform, getPriceLabel, getStatusLabel, getPlatformName } fro
 import { getListingMode, getListingModeLabel, getExternalLinkLabel } from "@/lib/listingMode"
 import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
+import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
 import { useAuth } from "@/lib/auth/AuthProvider"
@@ -847,6 +848,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   useEffect(() => {
     if (openChatConversationId) setShowAdvisorChat(true)
   }, [openChatConversationId])
+  const { setContext } = useChatContext()
+  // Publish surface context to AdvisorDrawer on mount and whenever the car changes.
+  // Resets to "other" on unmount so stale car suggestions don't bleed into other pages.
+  useEffect(() => {
+    setContext({ surface: "car-detail", locale, car, activeSection: null, seriesId: null })
+    return () => {
+      setContext({ surface: "other", car: null, activeSection: null, seriesId: null })
+    }
+  }, [setContext, locale, car])
   const [gateName, setGateName] = useState("")
   const [gateEmail, setGateEmail] = useState("")
   const [gateErrors, setGateErrors] = useState<{ name?: boolean; email?: boolean }>({})

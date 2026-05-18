@@ -14,22 +14,16 @@ import {
   getReportForListing,
   fetchSignalsForListing,
   assembleHausReportFromDB,
-  getReportMetadataV2,
   hasAlreadyGenerated,
   getUserCredits,
   hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
 import { ReportClient } from "./ReportClient"
-import { ReportClientV2 } from "./ReportClientV2"
 import { findSimilarCars } from "@/lib/similarCars"
-import type { HausReport, MarketIntelD2, ReportTier } from "@/lib/fairValue/types"
+import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getComparablesForModel } from "@/lib/db/queries"
-import {
-  computeArbitrageForCar,
-  inferTargetRegion,
-} from "@/lib/marketIntel/computeArbitrageForCar"
 
 export const dynamic = "force-dynamic"
 
@@ -131,36 +125,8 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   })
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
 
-  // D2 — Cross-border arbitrage (spec §5.7). Resolve landed cost to the
-  // target region of the listing so the Arbitrage block ships populated.
-  const askingForArbitrage =
-    car.soldPriceUsd ??
-    car.askingPriceUsd ??
-    car.currentBid ??
-    car.price ??
-    0
-  const targetRegion = inferTargetRegion(car.region)
-  const d2Precomputed: MarketIntelD2 =
-    askingForArbitrage > 0
-      ? await computeArbitrageForCar({
-          pricedListings: allPriced,
-          thisVinPriceUsd: askingForArbitrage,
-          targetRegion,
-          carYear: car.year,
-        }).catch((err) => {
-          console.warn(
-            "[report] computeArbitrageForCar failed, returning empty D2:",
-            err instanceof Error ? err.message : err,
-          )
-          return { by_region: [], target_region: targetRegion, narrative_insight: null }
-        })
-      : { by_region: [], target_region: targetRegion, narrative_insight: null }
-
   // Resolve HausReport — via mock fixture (?mock=992gt3|sparse) or DB.
   let existingReport: HausReport | null = null
-  let reportTier: ReportTier | null = null
-  let reportHash: string | null = null
-  let reportVersion: number | null = null
   if (mockName === "992gt3") {
     const fixture = (await import("@/lib/fairValue/__fixtures__/992-gt3-pts-mock.json")).default
     existingReport = fixture as HausReport
@@ -169,8 +135,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     existingReport = fixture as HausReport
   } else {
     try {
-      // Task 31: assemble HausReport from the `listing_reports` row + `listing_signals` rows.
-      // Task 29's saveHausReport/saveSignals now populate these columns during /api/analyze.
       const reportRow = await getReportForListing(car.id)
       if (reportRow) {
         const signalRows = await fetchSignalsForListing(car.id)
@@ -178,12 +142,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           reportRow as unknown as Record<string, unknown>,
           signalRows,
         )
-        // Pull the tier / hash / version the orchestrator persisted so the v2
-        // adapter reflects the true tier instead of defaulting to tier_1.
-        const meta = await getReportMetadataV2(car.id)
-        reportTier = meta.tier
-        reportHash = meta.report_hash
-        reportVersion = meta.version
       } else {
         existingReport = null
       }
@@ -251,35 +209,18 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       }
     >
-      {/* Layout rule: access alone owns the full-report surface. Users
-          without access always stay on the locked preview. That keeps the
-          teaser/paywall UX stable while preventing unlocked users from ever
-          falling back into the legacy full-report client during V3
-          generation or refresh races. */}
-      {userHasAccess ? (
-        <ReportClientV2
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
-          d2Precomputed={d2Precomputed}
-          reportTier={reportTier}
-          reportHash={reportHash}
-          reportVersion={reportVersion}
-          v3Report={v3Report}
-          userHasAccess={userHasAccess}
-          autoGenerateV3={!v3Report}
-        />
-      ) : (
-        <ReportClient
-          car={car}
-          similarCars={similarCars}
-          existingReport={existingReport}
-          marketStats={marketStats}
-          dbComparables={dbComparables}
-        />
-      )}
+      {/* Single unified report client. Renders the paywall preview for
+          users without access, and the full V3 report content inside
+          the same layout shell for paid users. */}
+      <ReportClient
+        car={car}
+        similarCars={similarCars}
+        existingReport={existingReport}
+        marketStats={marketStats}
+        dbComparables={dbComparables}
+        v3Report={v3Report}
+        userHasAccess={userHasAccess}
+      />
     </Suspense>
   )
 }

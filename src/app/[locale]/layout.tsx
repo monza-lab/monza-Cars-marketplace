@@ -13,6 +13,8 @@ import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 import { AdvisorHandoffProvider } from "@/components/advisor/AdvisorHandoffContext";
 import { AdvisorFab } from "@/components/advisor/AdvisorFab";
+import { AdvisorDrawer } from "@/components/advisor/AdvisorDrawer";
+import { ChatContextProvider } from "@/lib/advisor/ChatContextProvider";
 import { ConsentProvider } from "@/components/legal/ConsentProvider";
 import { ClientTrackers } from "@/components/legal/ClientTrackers";
 import { CookieBanner } from "@/components/legal/CookieBanner";
@@ -90,14 +92,17 @@ export default async function LocaleLayout({
             <RegionProvider>
               <CurrencyProvider>
                 <AdvisorHandoffProvider>
-                  <OrganizationJsonLd />
-                  <ClientHeader />
-                  <main>{children}</main>
-                  <AdvisorFab />
-                  <MobileBottomNav />
-                  <AppFooter />
-                  <ClientTrackers />
-                  <CookieBanner />
+                  <ChatContextProvider>
+                    <OrganizationJsonLd />
+                    <ClientHeader />
+                    <main>{children}</main>
+                    <AdvisorFab />
+                    <AdvisorDrawer />
+                    <MobileBottomNav />
+                    <AppFooter />
+                    <ClientTrackers />
+                    <CookieBanner />
+                  </ChatContextProvider>
                 </AdvisorHandoffProvider>
               </CurrencyProvider>
             </RegionProvider>

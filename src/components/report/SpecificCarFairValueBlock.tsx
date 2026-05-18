@@ -1,7 +1,8 @@
 "use client"
 
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Info } from "lucide-react"
 import { SourceBadge } from "./primitives/SourceBadge"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
 export interface ComparablesSourceInfo {
   platforms: string[]
@@ -64,12 +65,26 @@ export function SpecificCarFairValueBlock({
 
   return (
     <section className="px-4 py-6" aria-labelledby="fair-value-heading">
-      <h2
-        id="fair-value-heading"
-        className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
-      >
-        {/* [HARDCODED] */}Specific-Car Fair Value
-      </h2>
+      <TooltipProvider>
+      <div className="flex items-center gap-1.5">
+        <h2
+          id="fair-value-heading"
+          className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          {/* [HARDCODED] */}Specific-Car Fair Value
+        </h2>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" aria-label="What is specific-car fair value?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
+              <Info className="size-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+            Estimated price range a similar example should command on the open market today, based on recent sold comparables and adjusted for spec, condition, and region.
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      </TooltipProvider>
       <p className="mt-2 font-mono text-[28px] font-bold leading-none tracking-tight md:text-[36px]">
         {fmtK(fairValueLowUsd)} – {fmtK(fairValueHighUsd)}
       </p>

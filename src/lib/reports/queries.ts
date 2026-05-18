@@ -17,9 +17,11 @@ import type {
   AppliedModifier,
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
+import { isAdmin } from "@/lib/admin"
+import { REPORT_PISTON_COST } from "./canAffordReport"
 
 const DEFAULT_MONTHLY_PISTONS = 300
-export const REPORT_PISTON_COST = 100
+export { REPORT_PISTON_COST }
 
 export function hasUnlimitedReportAccess(
   user: Pick<UserCreditsRow, "unlimited_reports" | "tier" | "email"> | null | undefined,
