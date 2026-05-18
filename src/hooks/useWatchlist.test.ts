@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useWatchlist, type WatchlistItem } from './useWatchlist'
 
 const KEY = 'monza:watchlist:v1'
@@ -77,13 +77,24 @@ describe('useWatchlist', () => {
     expect(result.current.items).toEqual([])
   })
 
-  it('persists across mounts via localStorage', () => {
+  it('hydrates stored items from an effect, not during render', async () => {
+    localStorage.setItem(KEY, JSON.stringify([makeItem('car-1', { brand: 'Ferrari', model: '296 GTB' })]))
+    const getItem = vi.spyOn(Storage.prototype, 'getItem')
+
+    const { result } = renderHook(() => useWatchlist())
+
+    await waitFor(() => expect(result.current.ids).toEqual(['car-1']))
+    expect(result.current.items[0].brand).toBe('Ferrari')
+    expect(getItem).toHaveBeenCalledTimes(1)
+  })
+
+  it('persists across mounts via localStorage', async () => {
     const first = renderHook(() => useWatchlist())
     act(() => first.result.current.add(makeItem('car-1', { brand: 'Ferrari', model: '296 GTB' })))
     first.unmount()
 
     const second = renderHook(() => useWatchlist())
-    expect(second.result.current.ids).toEqual(['car-1'])
+    await waitFor(() => expect(second.result.current.ids).toEqual(['car-1']))
     expect(second.result.current.items[0].brand).toBe('Ferrari')
   })
 
@@ -93,7 +104,7 @@ describe('useWatchlist', () => {
     expect(result.current.items).toEqual([])
   })
 
-  it('drops invalid entries in stored array', () => {
+  it('drops invalid entries in stored array', async () => {
     localStorage.setItem(
       KEY,
       JSON.stringify([
@@ -104,7 +115,7 @@ describe('useWatchlist', () => {
       ]),
     )
     const { result } = renderHook(() => useWatchlist())
-    expect(result.current.ids).toEqual(['car-1', 'car-3'])
+    await waitFor(() => expect(result.current.ids).toEqual(['car-1', 'car-3']))
   })
 
   it('syncs across instances via custom event', () => {

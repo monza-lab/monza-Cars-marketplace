@@ -47,10 +47,11 @@ function writeStorage(items: WatchlistItem[]) {
 }
 
 export function useWatchlist() {
-  const [items, setItems] = useState<WatchlistItem[]>(() => readStorage())
+  const [items, setItems] = useState<WatchlistItem[]>([])
 
   useEffect(() => {
     const handler = () => setItems(readStorage())
+    handler()
     window.addEventListener('storage', handler)
     window.addEventListener(EVENT_NAME, handler)
     return () => {
