@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "Watchlist",
+    "tabWatchlist": "Watchlist",
+    "tabLive": "Live",
+    "empty": "No cars saved yet",
+    "emptyHint": "Tap the heart on any listing to save it here",
+    "count": "{count, plural, =0 {No cars} =1 {1 car} other {# cars}}",
+    "add": "Add to watchlist",
+    "remove": "Remove from watchlist",
+    "clearAll": "Clear all"
+  },
   "nav": {
     "liveListings": "Live Listings",
     "marketSearch": "Market Search",
@@ -187,6 +198,12 @@
     "magicLinkDesc": "We will email you a one-tap sign-in link. No password needed.",
     "sendMagicLink": "Send Magic Link",
     "magicLinkSent": "Check your inbox for the sign-in link.",
+    "magicLinkSentTitle": "Check your inbox",
+    "magicLinkSentBody": "We sent a one-tap sign-in link to",
+    "magicLinkSentHint": "It usually arrives in under a minute. Don't forget to check spam.",
+    "magicLinkResend": "Resend email",
+    "magicLinkResendCooldown": "Sent — try again in {seconds}s",
+    "magicLinkTryAnother": "Try a different email",
     "pistons": {
       "label": "Pistons",
       "walletTitle": "Your Pistons",

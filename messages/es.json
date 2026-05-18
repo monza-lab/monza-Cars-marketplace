@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "Mi Lista",
+    "tabWatchlist": "Mi Lista",
+    "tabLive": "Live",
+    "empty": "Aún no has guardado carros",
+    "emptyHint": "Toca el corazón en cualquier listing para guardarlo aquí",
+    "count": "{count, plural, =0 {Sin carros} =1 {1 carro} other {# carros}}",
+    "add": "Agregar a Mi Lista",
+    "remove": "Quitar de Mi Lista",
+    "clearAll": "Vaciar lista"
+  },
   "nav": {
     "liveListings": "Anuncios en Vivo",
     "liveAuctions": "Subastas en Vivo",
@@ -186,6 +197,12 @@
     "magicLinkDesc": "Te enviaremos un enlace de inicio de sesión por correo. Sin contraseña.",
     "sendMagicLink": "Enviar Enlace Mágico",
     "magicLinkSent": "Revisa tu correo para el enlace de acceso.",
+    "magicLinkSentTitle": "Revisa tu correo",
+    "magicLinkSentBody": "Te enviamos un enlace de acceso de un solo toque a",
+    "magicLinkSentHint": "Suele llegar en menos de un minuto. No olvides revisar spam.",
+    "magicLinkResend": "Reenviar correo",
+    "magicLinkResendCooldown": "Enviado — intenta de nuevo en {seconds}s",
+    "magicLinkTryAnother": "Probar con otro correo",
     "pistons": {
       "label": "Pistons",
       "walletTitle": "Tus Pistons",

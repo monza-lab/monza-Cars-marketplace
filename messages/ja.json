@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "ウォッチリスト",
+    "tabWatchlist": "ウォッチ",
+    "tabLive": "Live",
+    "empty": "まだ保存された車はありません",
+    "emptyHint": "ハートをタップして、ここに保存しましょう",
+    "count": "{count, plural, =0 {0台} =1 {1台} other {#台}}",
+    "add": "ウォッチリストに追加",
+    "remove": "ウォッチリストから削除",
+    "clearAll": "すべて削除"
+  },
   "nav": {
     "liveListings": "ライブリスト",
     "liveAuctions": "ライブオークション",
@@ -186,6 +197,12 @@
     "magicLinkDesc": "ログイン用のリンクをメールで送ります。パスワードは不要です。",
     "sendMagicLink": "マジックリンクを送信",
     "magicLinkSent": "受信トレイを確認し、ログインリンクをクリックしてください。",
+    "magicLinkSentTitle": "受信トレイをご確認ください",
+    "magicLinkSentBody": "ワンタップサインインリンクを以下に送信しました",
+    "magicLinkSentHint": "通常1分以内に届きます。迷惑メールフォルダもご確認ください。",
+    "magicLinkResend": "メールを再送信",
+    "magicLinkResendCooldown": "送信済み — {seconds}秒後に再試行",
+    "magicLinkTryAnother": "別のメールアドレスを使用",
     "pistons": {
       "label": "Pistons",
       "walletTitle": "あなたのPistons",

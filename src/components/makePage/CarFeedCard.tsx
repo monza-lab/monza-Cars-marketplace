@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { platformLabels, getPriceLabel, isAuctionPlatform, getStatusLabel } from "@/lib/makePageConstants"
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
+import { WatchButton } from "@/components/cars/WatchButton"
 
 // ─── CAR FEED CARD (Full-height card for individual cars) ───
 export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) {
@@ -49,7 +50,7 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
             <MarketDeltaPill priceUsd={car.currentBid} medianUsd={null} className="text-[10px] font-bold tracking-[0.1em]" />
           </div>
 
-          {/* Status badge — top right */}
+          {/* Status badge + Watch — top right */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
             {isEndingSoon && (
               <span className="flex items-center gap-1.5 rounded-full bg-destructive/30 backdrop-blur-md px-3 py-1.5 text-[10px] font-semibold text-destructive">
@@ -63,6 +64,19 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
                 Live
               </span>
             )}
+            <WatchButton
+              item={{
+                id: car.id,
+                brand: make,
+                model: car.model,
+                year: car.year ?? null,
+                priceUsd: car.currentBid ?? null,
+                image: car.image ?? null,
+                platform: car.platform ?? null,
+                href: `/cars/${makeSlug}/${car.id}/report`,
+              }}
+              variant="overlay"
+            />
           </div>
 
           {/* "View on source" bottom-left — discreet path back to the

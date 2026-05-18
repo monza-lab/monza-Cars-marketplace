@@ -9,6 +9,7 @@ import { useCurrency } from "@/lib/CurrencyContext"
 import { useLocale, useTranslations } from "next-intl"
 import { timeLeft } from "@/lib/makePageHelpers"
 import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
+import { WatchButton } from "@/components/cars/WatchButton"
 
 // ─── CAR CARD IN GRID ───
 export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
@@ -56,12 +57,27 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
             </div>
           )}
 
-          {/* Platform badge - real data source */}
-          <div className="absolute top-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-medium bg-foreground/10 text-foreground/70 border border-border/80">
-            {car.platform === "BRING_A_TRAILER" ? "BaT" :
-              car.platform === "CARS_AND_BIDS" ? "C&B" :
-                car.platform === "COLLECTING_CARS" ? "CC" :
-                  car.platform === "AUTO_SCOUT_24" ? "AS24" : car.platform}
+          {/* Platform badge + Watch — top right */}
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            <div className="rounded-full px-2.5 py-1 text-[10px] font-medium bg-foreground/10 text-foreground/70 border border-border/80 backdrop-blur-md">
+              {car.platform === "BRING_A_TRAILER" ? "BaT" :
+                car.platform === "CARS_AND_BIDS" ? "C&B" :
+                  car.platform === "COLLECTING_CARS" ? "CC" :
+                    car.platform === "AUTO_SCOUT_24" ? "AS24" : car.platform}
+            </div>
+            <WatchButton
+              item={{
+                id: car.id,
+                brand: car.make,
+                model: car.model,
+                year: car.year ?? null,
+                priceUsd: car.currentBid ?? null,
+                image: car.image ?? car.images?.[0] ?? null,
+                platform: car.platform ?? null,
+                href: `/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`,
+              }}
+              variant="overlay"
+            />
           </div>
           <div className="absolute bottom-3 left-3">
             <PhotoPendingPill car={car} />

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { Loader2, ChevronDown } from 'lucide-react'
+import { Loader2, ChevronDown, Mail } from 'lucide-react'
 
 interface AuthModalProps {
   open: boolean
@@ -28,6 +28,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
   const [error, setError] = useState<string | null>(null)
   const [magicSent, setMagicSent] = useState(false)
   const [signupConfirmation, setSignupConfirmation] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const {
     signIn,
@@ -45,10 +46,18 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
       setError(null)
       setShowPassword(false)
       setLoading(null)
+      setResendCooldown(0)
     } else {
       setMode(defaultMode)
     }
   }, [open, defaultMode])
+
+  // Countdown for resend cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
 
   const handleGoogle = async () => {
     setLoading('google')
@@ -126,13 +135,39 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
   }
 
   const handleResendConfirmation = async () => {
-    if (!email) return
+    if (!email || resendCooldown > 0) return
     setLoading('magic')
     try {
       await resendConfirmationEmail(email)
+      setResendCooldown(30)
     } finally {
       setLoading(null)
     }
+  }
+
+  const handleResendMagic = async () => {
+    if (!email || resendCooldown > 0) return
+    setLoading('magic')
+    setError(null)
+    try {
+      const { error } = await signInWithMagicLink(email)
+      if (error) {
+        setError(error.message)
+      } else {
+        setResendCooldown(30)
+      }
+    } catch {
+      setError(t('unexpectedError'))
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const handleTryAnother = () => {
+    setMagicSent(false)
+    setSignupConfirmation(false)
+    setError(null)
+    setResendCooldown(0)
   }
 
   const isSignup = mode === 'signup'
@@ -169,25 +204,52 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
         <div className="px-6 pb-6 sm:pb-7 pt-4 space-y-3.5">
           {/* States: magic sent or signup confirmation */}
           {(magicSent || signupConfirmation) ? (
-            <div className="rounded-2xl border border-primary/20 bg-primary/[0.05] p-5 text-center">
-              <p className="text-[14px] font-semibold text-foreground">
-                {/* [HARDCODED] */}Check your inbox
-              </p>
-              <p className="mt-1.5 text-[12px] text-muted-foreground">
-                {/* [HARDCODED] */}We sent a one-tap link to
+            <div className="flex flex-col items-center text-center py-3">
+              {/* Mail icon in Heritage Lavender circle */}
+              <div className="size-14 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-4 shadow-[0_0_0_4px_rgba(214,190,220,0.08)]">
+                <Mail className="size-6 text-primary-foreground" strokeWidth={1.75} />
+              </div>
+
+              {/* Title — Cormorant display */}
+              <h3 className="font-display text-[22px] sm:text-[24px] leading-tight font-medium text-foreground">
+                {t('magicLinkSentTitle')}
+              </h3>
+
+              {/* Body with email highlighted */}
+              <p className="mt-2 text-[13px] text-muted-foreground max-w-[300px]">
+                {t('magicLinkSentBody')}
                 <br />
-                <span className="text-foreground font-medium">{email}</span>
+                <span className="text-foreground font-medium break-all">{email}</span>
               </p>
-              {signupConfirmation && (
+
+              {/* Secondary hint */}
+              <p className="mt-3 text-[11.5px] text-muted-foreground/85 max-w-[280px] leading-relaxed">
+                {t('magicLinkSentHint')}
+              </p>
+
+              {/* Actions */}
+              <div className="mt-5 w-full flex flex-col gap-2">
                 <button
                   type="button"
-                  onClick={handleResendConfirmation}
-                  disabled={loading === 'magic'}
-                  className="mt-3 text-[11px] text-muted-foreground hover:text-primary underline underline-offset-2"
+                  onClick={signupConfirmation ? handleResendConfirmation : handleResendMagic}
+                  disabled={loading === 'magic' || resendCooldown > 0}
+                  className="w-full py-3 rounded-xl bg-foreground/[0.06] border border-border text-foreground text-[13px] font-medium hover:bg-foreground/[0.09] active:bg-foreground/[0.12] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
-                  {t('resendConfirmation')}
+                  {loading === 'magic' ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  {resendCooldown > 0
+                    ? t('magicLinkResendCooldown', { seconds: resendCooldown })
+                    : t('magicLinkResend')}
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={handleTryAnother}
+                  className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-foreground/25 hover:decoration-foreground transition-colors py-1"
+                >
+                  {t('magicLinkTryAnother')}
+                </button>
+              </div>
             </div>
           ) : (
             <>

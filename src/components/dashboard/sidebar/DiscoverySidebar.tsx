@@ -1,17 +1,21 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { useRegion } from "@/lib/RegionContext"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { getBrandConfig, getSeriesConfig } from "@/lib/brandConfig"
-import { Clock, Car, ChevronRight } from "lucide-react"
+import { Clock, Car, ChevronRight, Heart, Radio } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
 import { platformShort } from "../constants"
 import { filterLiveSidebarAuctions, useLiveSidebarListings } from "./useLiveSidebarListings"
+import { WatchlistSidebarSection } from "./WatchlistSidebarSection"
+import { useWatchlist } from "@/hooks/useWatchlist"
 import type { Auction, Brand, LiveRegionTotals } from "../types"
+
+type BottomTab = "watchlist" | "live"
 
 interface DiscoverySidebarProps {
   auctions: Auction[]
@@ -128,6 +132,12 @@ export function DiscoverySidebar({
     minute: t("asset.timeMin"),
   }
 
+  // Bottom-section tab state — Live is the default (non-empty for first-time
+  // visitors). Watchlist sits on the right, one tap away.
+  const tW = useTranslations("watchlist")
+  const { count: watchlistCount } = useWatchlist()
+  const [activeTab, setActiveTab] = useState<BottomTab>("live")
+
   return (
     <div className="h-full flex flex-col border-r border-border overflow-hidden">
 
@@ -199,9 +209,15 @@ export function DiscoverySidebar({
                       {activeBrandFamilies.map((family) => {
                         const familySlug = family.name.toLowerCase()
                         const isFamilyActive = activeFamilyName === family.name || activeFamilyName?.toLowerCase().startsWith(familySlug)
+                        // Navigate straight to cars view for this family — skips the
+                        // intermediate "family card" step in the central feed.
                         return (
-                        <button
+                        <Link
                           key={family.name}
+                          href={{
+                            pathname: `/cars/${brand.slug}`,
+                            query: { family: family.slug },
+                          }}
                           onClick={() => onSelectFamily?.(family.name)}
                           className={`w-full flex items-center justify-between px-4 pl-7 py-2 transition-colors group/fam ${
                             isFamilyActive
@@ -224,7 +240,7 @@ export function DiscoverySidebar({
                                 : `${family.yearMin}–${family.yearMax}`}
                             </span>
                           </div>
-                        </button>
+                        </Link>
                         )
                       })}
                     </div>
@@ -236,21 +252,68 @@ export function DiscoverySidebar({
         </div>
       </div>
 
-      {/* ═══ BOTTOM HALF: LIVE BIDS ═══ */}
+      {/* ═══ BOTTOM HALF: WATCHLIST + LIVE BIDS (tabs) ═══ */}
       <div className="flex-1 min-h-0 flex flex-col border-t border-border">
 
-        {/* Live header */}
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-card">
-          <div className="size-2 rounded-full bg-positive animate-pulse" />
-          <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-muted-foreground">
-            {t("sidebar.liveNow")}
-          </span>
-          <span className="text-[10px] font-display font-medium text-primary">
-            {activeFamilyCount ?? liveCount}
-          </span>
+        {/* Tab bar — Live | Watchlist */}
+        <div className="shrink-0 flex items-stretch bg-card border-b border-border/50">
+          <button
+            type="button"
+            onClick={() => setActiveTab("live")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+              activeTab === "live"
+                ? "text-foreground bg-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+            }`}
+            aria-pressed={activeTab === "live"}
+          >
+            <Radio
+              className={`size-3 ${activeTab === "live" ? "text-positive" : ""}`}
+              strokeWidth={1.75}
+            />
+            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+              {tW("tabLive")}
+            </span>
+            <span className={`text-[10px] font-display font-medium ${activeTab === "live" ? "text-primary" : "text-muted-foreground"}`}>
+              {activeFamilyCount ?? liveCount}
+            </span>
+            {activeTab === "live" && (
+              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("watchlist")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+              activeTab === "watchlist"
+                ? "text-foreground bg-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+            }`}
+            aria-pressed={activeTab === "watchlist"}
+          >
+            <Heart
+              className={`size-3 ${activeTab === "watchlist" ? "fill-primary text-primary" : ""}`}
+              strokeWidth={1.75}
+            />
+            <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+              {tW("tabWatchlist")}
+            </span>
+            {watchlistCount > 0 && (
+              <span className={`text-[10px] font-display font-medium ${activeTab === "watchlist" ? "text-primary" : "text-muted-foreground"}`}>
+                {watchlistCount}
+              </span>
+            )}
+            {activeTab === "watchlist" && (
+              <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+            )}
+          </button>
         </div>
 
+        {/* Watchlist tab content */}
+        {activeTab === "watchlist" && <WatchlistSidebarSection />}
+
         {/* Live auctions list (scrollable) */}
+        {activeTab === "live" && (
         <div ref={scrollRootRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
           {isLoading && liveAuctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-20 text-center px-4">
@@ -327,6 +390,7 @@ export function DiscoverySidebar({
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   )

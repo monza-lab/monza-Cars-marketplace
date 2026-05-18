@@ -170,7 +170,9 @@
 
   /* ─── MUTED ─── */
   --muted: rgba(20, 20, 19, 0.04);
-  --muted-foreground: #9A8E88;
+  /* Stone Dark (#6B6365) on Warm Cream → ~5.4:1, passes WCAG AA.
+     Was #9A8E88 (~2.8:1) which failed AA — Cami's feedback. */
+  --muted-foreground: #6B6365;
 
   /* ─── ACCENT ─── */
   --accent: rgba(214, 190, 220, 0.20);

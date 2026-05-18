@@ -12,7 +12,13 @@ import {
   Search,
   SlidersHorizontal,
   X,
+  Heart,
+  Radio,
 } from "lucide-react"
+import { useWatchlist } from "@/hooks/useWatchlist"
+import { WatchlistSidebarSection } from "@/components/dashboard/sidebar/WatchlistSidebarSection"
+
+type BottomTab = "watchlist" | "live"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { LiveListingRegionTotals } from "@/lib/supabaseLiveListings"
 import type { DbMarketDataRow, DbComparableRow, DbSoldRecord, DbAnalysisRow } from "@/lib/db/queries"
@@ -128,6 +134,12 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
   const [sortBy, setSortBy] = useState("price-desc")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
+
+  // Bottom-section tab in left sidebar — Live is the default. Watchlist
+  // lives on the right and is one tap away (matches home).
+  const tW = useTranslations("watchlist")
+  const { count: watchlistCount } = useWatchlist()
+  const [activeBottomTab, setActiveBottomTab] = useState<BottomTab>("live")
   const { openChatConversationId } = useAdvisorChatHandoff()
   useEffect(() => {
     if (openChatConversationId) setShowAdvisorChat(true)
@@ -1073,24 +1085,69 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
               <div className="flex-1" />
             )}
 
-            {/* LIVE BIDS (always at bottom) */}
+            {/* BOTTOM: WATCHLIST + LIVE BIDS (tabs) */}
             <div className="shrink-0 max-h-[35%] flex flex-col border-t border-border overflow-hidden">
-              {/* Live header */}
-              <div className="shrink-0 px-3 py-1.5 flex items-center gap-2 bg-background/40">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-positive opacity-75" />
-                  <span className="relative inline-flex size-2 rounded-full bg-positive" />
-                </span>
-                <span className="text-[10px] font-semibold tracking-[0.15em] uppercase text-positive">
-                  LATEST LISTINGS
-                </span>
-                {displayLiveTotal !== null && displayLiveTotal > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-positive/10 text-[9px] font-bold text-positive">
-                    {displayLiveTotal}
+              {/* Tab bar — Live | Watchlist */}
+              <div className="shrink-0 flex items-stretch bg-card border-b border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("live")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+                    activeBottomTab === "live"
+                      ? "text-foreground bg-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+                  }`}
+                  aria-pressed={activeBottomTab === "live"}
+                >
+                  <Radio
+                    className={`size-3 ${activeBottomTab === "live" ? "text-positive" : ""}`}
+                    strokeWidth={1.75}
+                  />
+                  <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+                    {tW("tabLive")}
                   </span>
-                )}
+                  {displayLiveTotal !== null && displayLiveTotal > 0 && (
+                    <span className={`text-[10px] font-display font-medium ${activeBottomTab === "live" ? "text-primary" : "text-muted-foreground"}`}>
+                      {displayLiveTotal}
+                    </span>
+                  )}
+                  {activeBottomTab === "live" && (
+                    <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveBottomTab("watchlist")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors relative ${
+                    activeBottomTab === "watchlist"
+                      ? "text-foreground bg-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-foreground/2"
+                  }`}
+                  aria-pressed={activeBottomTab === "watchlist"}
+                >
+                  <Heart
+                    className={`size-3 ${activeBottomTab === "watchlist" ? "fill-primary text-primary" : ""}`}
+                    strokeWidth={1.75}
+                  />
+                  <span className="text-[9px] font-semibold tracking-[0.22em] uppercase">
+                    {tW("tabWatchlist")}
+                  </span>
+                  {watchlistCount > 0 && (
+                    <span className={`text-[10px] font-display font-medium ${activeBottomTab === "watchlist" ? "text-primary" : "text-muted-foreground"}`}>
+                      {watchlistCount}
+                    </span>
+                  )}
+                  {activeBottomTab === "watchlist" && (
+                    <span className="absolute bottom-0 inset-x-3 h-px bg-primary" />
+                  )}
+                </button>
               </div>
-              {/* Scrollable live bids */}
+
+              {/* Watchlist tab content */}
+              {activeBottomTab === "watchlist" && <WatchlistSidebarSection />}
+
+              {/* Live cars list (scrollable) */}
+              {activeBottomTab === "live" && (
               <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                 {liveCars.length === 0 ? (
                   <div className="px-4 py-6 text-center">
@@ -1146,6 +1203,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   })
                 )}
               </div>
+              )}
             </div>
           </div>
 
@@ -1453,6 +1511,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                 key={variantFilteredFeedCars[activeCarIndex].id}
                 car={variantFilteredFeedCars[activeCarIndex]}
                 make={make}
+                siblingCars={regionFilteredCars}
                 onOpenAdvisor={() => setShowAdvisorChat(true)}
               />
             ) : selectedModel ? (

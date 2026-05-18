@@ -1,4 +1,15 @@
 {
+  "watchlist": {
+    "title": "Beobachtungsliste",
+    "tabWatchlist": "Beobachtung",
+    "tabLive": "Live",
+    "empty": "Noch keine Fahrzeuge gespeichert",
+    "emptyHint": "Tippe auf das Herz, um ein Fahrzeug hier zu speichern",
+    "count": "{count, plural, =0 {Keine Fahrzeuge} =1 {1 Fahrzeug} other {# Fahrzeuge}}",
+    "add": "Zur Beobachtungsliste",
+    "remove": "Aus Beobachtungsliste entfernen",
+    "clearAll": "Alle entfernen"
+  },
   "nav": {
     "liveListings": "Live-Inserate",
     "liveAuctions": "Live-Auktionen",
@@ -186,6 +197,12 @@
     "magicLinkDesc": "Wir senden Ihnen einen Anmeldelink per E-Mail — ganz ohne Passwort.",
     "sendMagicLink": "Magic Link senden",
     "magicLinkSent": "Bitte prüfen Sie Ihr Postfach auf den Anmeldelink.",
+    "magicLinkSentTitle": "Sieh in deinem Posteingang nach",
+    "magicLinkSentBody": "Wir haben dir einen One-Tap-Anmeldelink gesendet an",
+    "magicLinkSentHint": "Der Link kommt meist in weniger als einer Minute. Prüfe auch den Spam-Ordner.",
+    "magicLinkResend": "E-Mail erneut senden",
+    "magicLinkResendCooldown": "Gesendet — erneut versuchen in {seconds}s",
+    "magicLinkTryAnother": "Andere E-Mail verwenden",
     "pistons": {
       "label": "Pistons",
       "walletTitle": "Deine Pistons",
