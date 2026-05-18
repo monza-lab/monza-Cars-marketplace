@@ -23,6 +23,22 @@ import { REPORT_PISTON_COST } from "./canAffordReport"
 const DEFAULT_MONTHLY_PISTONS = 300
 export { REPORT_PISTON_COST }
 
+export function hasUnlimitedReportAccess(
+  user: Pick<UserCreditsRow, "unlimited_reports" | "tier" | "email"> | null | undefined,
+): boolean {
+  if (!user) return false
+  return (
+    Boolean(user.unlimited_reports) ||
+    user.tier === "MONTHLY" ||
+    user.tier === "ANNUAL" ||
+    user.tier === "PRO"
+  )
+}
+
+export function normalizeUserReportListingId(listingId: string): string {
+  return listingId.startsWith("live-") ? listingId.slice("live-".length) : listingId
+}
+
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -37,10 +53,11 @@ export async function getReportForListing(
   listingId: string,
 ): Promise<ListingReport | null> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
   const { data, error } = await supabase
     .from("listing_reports")
     .select("*")
-    .eq("listing_id", listingId)
+    .eq("listing_id", reportListingId)
     .single()
 
   if (error || !data) return null
@@ -60,6 +77,7 @@ export async function saveReportMetadataV2(
   version: number,
 ): Promise<boolean> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
   try {
     const { error } = await supabase
       .from("listing_reports")
@@ -68,7 +86,7 @@ export async function saveReportMetadataV2(
         tier,
         version,
       })
-      .eq("listing_id", listingId)
+      .eq("listing_id", reportListingId)
     if (error) {
       // 42703 = undefined column — BE migration pending. Silent.
       if (
@@ -96,11 +114,12 @@ export async function getReportMetadataV2(
   listingId: string,
 ): Promise<{ report_hash: string | null; tier: "tier_1" | "tier_2" | "tier_3" | null; version: number | null }> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
   try {
     const { data, error } = await supabase
       .from("listing_reports")
       .select("report_hash, tier, version")
-      .eq("listing_id", listingId)
+      .eq("listing_id", reportListingId)
       .maybeSingle()
     if (error) {
       return { report_hash: null, tier: null, version: null }
@@ -166,9 +185,10 @@ export async function saveReport(
   llmData: Partial<ListingReport> | null,
 ): Promise<ListingReport> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
 
   const row: Record<string, unknown> = {
-    listing_id: listingId,
+    listing_id: reportListingId,
     updated_at: new Date().toISOString(),
   }
 
@@ -333,11 +353,12 @@ export async function hasAlreadyGenerated(
   listingId: string,
 ): Promise<boolean> {
   const supabase = getServiceClient()
+  const userReportListingId = normalizeUserReportListingId(listingId)
   const { data } = await supabase
     .from("user_reports")
     .select("id")
     .eq("user_id", userId)
-    .eq("listing_id", listingId)
+    .eq("listing_id", userReportListingId)
     .single()
 
   return !!data
@@ -349,6 +370,8 @@ export async function deductCredit(
   reportId: string,
 ): Promise<DeductResult> {
   const supabase = getServiceClient()
+  const userReportListingId = normalizeUserReportListingId(listingId)
+  const userReportReportId = normalizeUserReportListingId(reportId)
 
   // Check if already generated (free re-access)
   const already = await hasAlreadyGenerated(userId, listingId)
@@ -363,7 +386,7 @@ export async function deductCredit(
 
   if (!user) return { success: false, error: "USER_NOT_FOUND" }
 
-  const isUnlimited = Boolean(user.unlimited_reports) || user.tier === "MONTHLY" || user.tier === "ANNUAL" || isAdmin(user.email)
+  const isUnlimited = hasUnlimitedReportAccess(user as UserCreditsRow)
   const cost = isUnlimited ? 0 : REPORT_PISTON_COST
   const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
   if (!isUnlimited && totalBalance < cost) {
@@ -391,7 +414,7 @@ export async function deductCredit(
       amount: 0,
       type: "REPORT_USED",
       description: `Unlimited report access for listing ${listingId}`,
-      listing_id: listingId,
+      listing_id: userReportListingId,
       stripe_payment_id: null,
     })
   }
@@ -401,8 +424,8 @@ export async function deductCredit(
     .from("user_reports")
     .insert({
       user_id: userId,
-      listing_id: listingId,
-      report_id: reportId,
+      listing_id: userReportListingId,
+      report_id: userReportReportId,
       credit_cost: debitAmount,
     })
 
@@ -833,9 +856,10 @@ export async function saveHausReport(
   report: Omit<HausReport, "listing_id">,
 ): Promise<void> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
 
   const basePayload = {
-    listing_id: listingId,
+    listing_id: reportListingId,
     fair_value_low: report.fair_value_low,
     fair_value_high: report.fair_value_high,
     median_price: report.median_price,
@@ -909,12 +933,13 @@ export async function fetchSignalsForListing(
   listingId: string,
 ): Promise<ListingSignalRow[]> {
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
   const { data, error } = await supabase
     .from("listing_signals")
     .select(
       "signal_key, signal_value_json, evidence_source_type, evidence_source_ref, evidence_raw_excerpt, evidence_confidence",
     )
-    .eq("listing_id", listingId)
+    .eq("listing_id", reportListingId)
     .order("extracted_at", { ascending: false })
   if (error) throw new Error(`fetchSignalsForListing failed: ${error.message}`)
   return (data ?? []) as ListingSignalRow[]
@@ -986,9 +1011,10 @@ export async function saveSignals(
 ): Promise<void> {
   if (signals.length === 0) return
   const supabase = getServiceClient()
+  const reportListingId = normalizeUserReportListingId(listingId)
 
   const rows = signals.map((s) => ({
-    listing_id: listingId,
+    listing_id: reportListingId,
     extraction_run_id: runId,
     signal_key: s.key,
     signal_value_json: {

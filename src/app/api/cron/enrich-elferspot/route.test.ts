@@ -5,14 +5,13 @@ import { GET } from "./route";
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
+const mockLimit = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
 const mockSelect = vi.fn().mockReturnValue({
   eq: vi.fn().mockReturnValue({
     eq: vi.fn().mockReturnValue({
-      is: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
+      or: mockOr,
     }),
   }),
 });
@@ -71,6 +70,9 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(data.success).toBe(true);
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
+    expect(mockOr).toHaveBeenCalledWith(
+      "description_text.is.null,description_text.eq.,hammer_price.is.null"
+    );
   });
 
   it("calls monitoring lifecycle functions", async () => {

@@ -13,6 +13,29 @@ export interface ReportSectionRow {
   created_at: string
 }
 
+const REQUIRED_V3_SECTIONS: ReportSectionKey[] = [
+  "listing_scrape",
+  "vehicle_identity",
+  "market_data_bundle",
+  "fair_value",
+  "technical_analysis",
+  "investment_analysis",
+  "due_diligence",
+  "market_research",
+  "buyer_services",
+  "final_synthesis",
+]
+
+export function hasCompleteV3Sections(rows: ReportSectionRow[]): boolean {
+  const sectionMap = new Map(rows.map((row) => [row.section_key, row.section_data]))
+  if (!REQUIRED_V3_SECTIONS.every((sectionKey) => sectionMap.has(sectionKey))) {
+    return false
+  }
+
+  const finalSynthesis = sectionMap.get("final_synthesis") as Record<string, unknown> | null
+  return Boolean(finalSynthesis?.executiveSummary)
+}
+
 /**
  * Upsert a single pipeline step result into report_sections.
  */
@@ -63,21 +86,26 @@ export async function fetchReportSections(
 
 /**
  * Check if a V3 report has already been generated (cache hit).
+ * A valid cache hit requires the final_synthesis row to contain
+ * actual data (executiveSummary), not just an empty object from
+ * a failed/partial AI response.
  */
 export async function hasV3Report(
   listingId: string,
   reportVersion: number = 1
 ): Promise<boolean> {
   const supabase = createAdminClient()
-  const { count, error } = await supabase
+  const { data, error } = await supabase
     .from("report_sections")
-    .select("id", { count: "exact", head: true })
+    .select("section_data")
     .eq("listing_id", listingId)
     .eq("report_version", reportVersion)
     .eq("section_key", "final_synthesis")
+    .single()
 
-  if (error) return false
-  return (count ?? 0) > 0
+  if (error || !data) return false
+  const sd = data.section_data as Record<string, unknown> | null
+  return Boolean(sd?.executiveSummary)
 }
 
 /**

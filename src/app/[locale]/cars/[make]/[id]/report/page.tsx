@@ -16,9 +16,9 @@ import {
   assembleHausReportFromDB,
   hasAlreadyGenerated,
   getUserCredits,
+  hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
-import { isAdmin } from "@/lib/admin"
 import { ReportClient } from "./ReportClient"
 import { findSimilarCars } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
@@ -157,10 +157,10 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     v3Report = fixture as unknown as HausReportV3
   } else {
     try {
-      const { fetchReportSections } = await import("@/lib/reports/reportSections")
+      const { fetchReportSections, hasCompleteV3Sections } = await import("@/lib/reports/reportSections")
       const { assembleV3ReportFromSections } = await import("@/lib/reports/assembleV3Report")
       const sections = await fetchReportSections(car.id, 1)
-      if (sections.length > 0) {
+      if (hasCompleteV3Sections(sections)) {
         v3Report = assembleV3ReportFromSections(sections, car.id)
       }
     } catch { /* V3 not available */ }
@@ -168,7 +168,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
   // ─── User access check ─────────────────────────────────────────────
   // A user has access if: (a) they already paid for this report,
-  // (b) they have unlimited_reports, or (c) they are admin.
+  // or (b) they have explicit unlimited report access.
   // Unauthenticated users never have access.
   // Mock previews (?mock=*) unlock automatically for design QA.
   let userHasAccess = Boolean(mockName)
@@ -177,14 +177,18 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const [alreadyPaid, credits] = await Promise.all([
-          hasAlreadyGenerated(user.id, car.id),
-          getUserCredits(user.id),
-        ])
+        // getUserCredits looks up by supabase_user_id (Auth UUID) — correct.
+        // hasAlreadyGenerated must use the internal DB user ID (user_credits.id),
+        // NOT the Auth UUID, because deductCredit writes user_reports.user_id
+        // with the internal DB ID.
+        const credits = await getUserCredits(user.id)
+        const internalUserId = credits?.id
+        const alreadyPaid = internalUserId
+          ? await hasAlreadyGenerated(internalUserId, car.id)
+          : false
         userHasAccess =
           alreadyPaid ||
-          Boolean(credits?.unlimited_reports) ||
-          isAdmin(user.email)
+          hasUnlimitedReportAccess(credits)
       }
     } catch {
       // Auth unavailable — leave as false

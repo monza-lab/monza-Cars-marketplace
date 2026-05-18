@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 function isCaBScraplingEnabled(): boolean {
-  return !process.env.VERCEL;
+  return !process.env.VERCEL && !process.env.VITEST;
 }
 
 export function canUseCaBScraplingFallback(): boolean {

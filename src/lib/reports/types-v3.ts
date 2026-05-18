@@ -46,6 +46,24 @@ export interface ScrapedListingFull {
   scrapePartial: boolean
   sourceUrl: string
   platform: string
+  /**
+   * Internal Step 1 metadata. Keep customer-facing UI copy separate from these
+   * fields; users should see listing analysis copy, not implementation details.
+   */
+  analysisStrategy?: "inline_live_source" | "database_fallback" | "policy_skipped"
+  fallbackReason?:
+    | "missing_source_url"
+    | "unknown_source"
+    | "verified_database_data"
+    | "source_unavailable"
+    | "empty_source_response"
+  analysisSource?: string | null
+  analysisFieldCounts?: {
+    photos: number
+    equipment: number
+    modifications: number
+    descriptionCharacters: number
+  }
 }
 
 // ─── Step 2 output: Vehicle identity ──────────────────────────────────────────

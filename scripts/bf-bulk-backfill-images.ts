@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Bulk backfill of BeForward listing images using plain fetch + Scrapling fallback.
  *
@@ -33,6 +32,7 @@ import * as path from "path";
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseDetailHtml } from "../src/features/scrapers/beforward_porsche_collector/detail";
+import { classifyScraplingBody } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 // -- env (supports .env.local locally; CI injects via process.env) ------------
 try {
@@ -234,8 +234,16 @@ async function scraplingFetch(url: string, mode: "http" | "dynamic"): Promise<Fe
     if (parsed.status === 404 || parsed.status === 410) return { kind: "dead", status: parsed.status };
     if (parsed.status === 403 || parsed.status === 429)
       return { kind: "blocked", status: parsed.status, message: `HTTP ${parsed.status}` };
-    if (!parsed.html || parsed.html.length < 5000)
-      return { kind: "error", message: `Short scrapling body (${parsed.html?.length ?? 0})` };
+    const body = classifyScraplingBody({
+      mode,
+      htmlLength: parsed.html?.length ?? 0,
+    });
+    if (body.kind === "blocked") {
+      return { kind: "blocked", status: 0, message: body.message ?? "Short scrapling body" };
+    }
+    if (body.kind === "error") {
+      return { kind: "error", message: body.message ?? "Short scrapling body" };
+    }
     return { kind: "ok", html: parsed.html };
   } catch (err) {
     return { kind: "error", message: `parse scrapling out: ${(err as Error).message}` };

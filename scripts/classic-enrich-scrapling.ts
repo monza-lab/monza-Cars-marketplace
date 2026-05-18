@@ -38,6 +38,7 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
+import { buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -102,13 +103,13 @@ async function main() {
   });
 
   // Query Classic.com listings needing enrichment:
-  // description_text IS NULL = summary-only (never detail-fetched)
+  // NULL and empty string both fail the quality gate, so both must be retried.
   const { data: listings, error } = await supabase
     .from("listings")
     .select("id, source_url, title, images, description_text, engine, mileage, vin, transmission, color_exterior, color_interior, body_style, photos_count, hammer_price, location, seller_notes")
     .eq("source", "ClassicCom")
     .eq("status", "active")
-    .is("description_text", null)
+    .or(buildMissingAnyFilter([{ field: "description_text", type: "text" }]))
     .order("updated_at", { ascending: true })
     .limit(opts.limit);
 
@@ -144,8 +145,8 @@ async function main() {
           console.log(`  SKIP: ${listing.source_url} — Scrapling returned null`);
         }
         await new Promise((r) => setTimeout(r, opts.delayMs));
-      } catch (err: any) {
-        console.log(`  ERROR: ${listing.source_url} — ${err.message}`);
+      } catch (err: unknown) {
+        console.log(`  ERROR: ${listing.source_url} — ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     console.log(`\nPre-flight: ${passed}/${sample.length} returned enriched data`);
@@ -277,8 +278,8 @@ async function main() {
       if (written % 25 === 0) {
         console.log(`  Progress: ${written} updated, ${i + 1}/${listings.length} processed`);
       }
-    } catch (err: any) {
-      errors.push(`${listing.source_url}: ${err.message}`);
+    } catch (err: unknown) {
+      errors.push(`${listing.source_url}: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     // Rate limit

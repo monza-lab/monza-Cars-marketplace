@@ -1,0 +1,49 @@
+name: BaT Live Refresh
+
+on:
+  schedule:
+    # Single hourly tick to prove GitHub schedule delivery first.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max active Porsche BaT listings to refresh'
+        default: '60'
+      time_budget_ms:
+        description: 'Time budget in milliseconds'
+        default: '480000'
+      delay_ms:
+        description: 'Delay between BaT requests in milliseconds'
+        default: '2500'
+      dry_run:
+        description: 'Skip DB writes'
+        default: 'false'
+
+concurrency:
+  group: bat-live-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Run BaT live refresh
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npx tsx scripts/bat-live-refresh.ts \
+            --limit=${{ github.event.inputs.limit || '60' }} \
+            --timeBudgetMs=${{ github.event.inputs.time_budget_ms || '480000' }} \
+            --delayMs=${{ github.event.inputs.delay_ms || '2500' }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
