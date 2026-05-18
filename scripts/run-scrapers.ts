@@ -18,6 +18,7 @@ import path from "node:path";
 import prompts from "prompts";
 import { createClient } from "@supabase/supabase-js";
 import { checkQuality, printQualityReport, type QualityCheckResult } from "./enrich-loop-quality";
+import { isCriticalNoOutput } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 // ── Env loading (same pattern as other scripts) ─────────────────────
 
@@ -89,10 +90,19 @@ const SCRAPERS: ScraperDef[] = [
     phase: "discovery",
     type: "cli",
     command: "npx",
-    args: ["tsx", "src/features/scrapers/porsche_collector/cli.ts", "--mode=daily"],
+    args: [
+      "tsx",
+      "src/features/scrapers/porsche_collector/cli.ts",
+      "--mode=daily",
+      "--sources=BaT",
+      "--maxActivePages=2",
+      "--maxEndedPages=0",
+      "--noDetails",
+      "--timeBudgetMs=240000",
+    ],
     dryRunFlag: "--dryRun",
     defaultSelected: true,
-    timeoutMs: 27 * 60_000,
+    timeoutMs: 6 * 60_000,
   },
   {
     id: "ferrari",
@@ -218,7 +228,12 @@ const SCRAPERS: ScraperDef[] = [
     phase: "enrichment",
     type: "cli",
     command: "npx",
-    args: ["tsx", "scripts/as24-enrich-scrapling.ts", "--limit=500"],
+    args: [
+      "tsx",
+      "scripts/as24-enrich-scrapling.ts",
+      "--limit=800",
+      "--delayMs=1000",
+    ],
     dryRunFlag: "--dryRun",
     defaultSelected: false,
     timeoutMs: 25 * 60_000,
@@ -579,6 +594,58 @@ interface RunResult {
   stdout: string;
   stderr: string;
   cronResponse?: unknown;
+}
+
+function readNumericField(value: unknown, keys: string[]): number {
+  if (!value || typeof value !== "object") return 0;
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    const raw = record[key];
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  }
+  return 0;
+}
+
+function parseCliProgress(result: RunResult): { discovered: number; written: number } {
+  if (result.id !== "bf-images") return { discovered: 0, written: 0 };
+
+  const activeMatch = result.stdout.match(/active \(fetch\):\s+(\d+)/i);
+  const filledMatch = result.stdout.match(/images filled:\s+(\d+)/i);
+  return {
+    discovered: activeMatch ? Number(activeMatch[1]) : 0,
+    written: filledMatch ? Number(filledMatch[1]) : 0,
+  };
+}
+
+function classifyLoopResult(result: RunResult): RunResult {
+  const cronDiscovered = readNumericField(result.cronResponse, [
+    "discovered",
+    "totalDiscovered",
+  ]);
+  const cronWritten = readNumericField(result.cronResponse, [
+    "written",
+    "enriched",
+    "backfilled",
+    "totalBackfilled",
+  ]);
+  const cliProgress = parseCliProgress(result);
+  const discovered = cronDiscovered || cliProgress.discovered;
+  const written = cronWritten || cliProgress.written;
+
+  if (!isCriticalNoOutput({ id: result.id, status: result.status, discovered, written })) {
+    return result;
+  }
+
+  return {
+    ...result,
+    status: "failed",
+    stderr: [
+      result.stderr,
+      `Critical enrichment job made no progress: discovered=${discovered}, written=${written}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  };
 }
 
 function formatDuration(ms: number): string {
@@ -1017,10 +1084,11 @@ async function main(): Promise<void> {
 
       for (const scraper of enrichScrapers) {
         console.log(`\n=== Running: ${scraper.name} ===\n`);
-        const result =
+        const result = classifyLoopResult(
           scraper.type === "cli"
             ? await runCliScraper(scraper, flags.dryRun)
-            : await runCronScraper(scraper, flags.dryRun);
+            : await runCronScraper(scraper, flags.dryRun),
+        );
         iterResults.push(result);
         console.log(
           `\n>> ${scraper.name}: ${result.status.toUpperCase()} (${formatDuration(result.durationMs)})`
@@ -1115,10 +1183,11 @@ async function main(): Promise<void> {
   for (const scraper of selected) {
     console.log(`\n=== Running: ${scraper.name} ===\n`);
 
-    const result =
+    const result = classifyLoopResult(
       scraper.type === "cli"
         ? await runCliScraper(scraper, flags.dryRun)
-        : await runCronScraper(scraper, flags.dryRun);
+        : await runCronScraper(scraper, flags.dryRun),
+    );
 
     results.push(result);
 

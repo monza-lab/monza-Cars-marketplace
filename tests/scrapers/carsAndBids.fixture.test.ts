@@ -43,6 +43,24 @@ describe('C&B: parseAuctionCard with HTML fixture', () => {
     const el = $('div').get(0);
     expect(parseAuctionCard($, el)).toBeNull();
   });
+
+  it('cleans live card text before parsing title and bid amount', () => {
+    const $ = cheerio.load(`
+      <div class="auction-card">
+        <a href="/auctions/3pGnz5yn/2016-porsche-boxster-spyder">
+          <img src="https://cdn.carsandbids.com/cab-live.jpg" />
+          2016 Porsche Boxster Spyder6-Speed Manual, 375-hp Flat-6No ReserveTime Left6 DaysBid$55,000
+        </a>
+      </div>
+    `);
+    const auction = parseAuctionCard($, $('.auction-card').get(0));
+
+    expect(auction).not.toBeNull();
+    expect(auction!.title).toBe('2016 Porsche Boxster Spyder');
+    expect(auction!.model).toBe('Boxster Spyder');
+    expect(auction!.currentBid).toBe(55000);
+    expect(auction!.images).toEqual(['https://cdn.carsandbids.com/cab-live.jpg']);
+  });
 });
 
 // ---------------------------------------------------------------------------

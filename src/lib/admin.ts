@@ -1,6 +1,7 @@
 /**
  * Centralized admin check.
- * Admin users bypass pistons (credits) for report generation and advisor usage.
+ * Admin users can access internal admin tooling.
+ * Report generation monetization is controlled by user_credits tier/unlimited flags.
  */
 
 const ADMIN_EMAILS: string[] = [

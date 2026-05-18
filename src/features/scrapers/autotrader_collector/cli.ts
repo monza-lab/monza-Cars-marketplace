@@ -1,7 +1,15 @@
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
+import crypto from "node:crypto";
 
 import { runCollector } from "./collector";
+import {
+  clearScraperRunActive,
+  clearStaleActiveRun,
+  markScraperRunStarted,
+  recordScraperRun,
+  type RuntimeEnv,
+} from "../common/monitoring";
 
 function loadEnvFromFile(relPath: string): void {
   const abs = resolvePath(process.cwd(), relPath);
@@ -58,9 +66,43 @@ function hasFlag(args: Record<string, string | boolean>, key: string): boolean {
   return args[key] === true;
 }
 
+function getRuntime(): RuntimeEnv {
+  if (process.env.MONZA_WINDOWS_TASK === "1") return "windows_task";
+  if (process.env.GITHUB_ACTIONS === "true") return "github_actions";
+  return "cli";
+}
+
+function summarizeCounts(sourceCounts: Awaited<ReturnType<typeof runCollector>>["sourceCounts"]): {
+  discovered: number;
+  written: number;
+  errors: number;
+  sourceCounts: Record<string, { discovered: number; written: number }>;
+} {
+  let discovered = 0;
+  let written = 0;
+  let errors = 0;
+  const summary: Record<string, { discovered: number; written: number }> = {};
+
+  for (const [source, counts] of Object.entries(sourceCounts)) {
+    discovered += counts.discovered;
+    written += counts.written;
+    errors += counts.errored;
+    summary[source] = {
+      discovered: counts.discovered,
+      written: counts.written,
+    };
+  }
+
+  return { discovered, written, errors, sourceCounts: summary };
+}
+
 async function main(): Promise<void> {
   bootstrapEnv();
   const args = parseArgv(process.argv.slice(2));
+  const startedAt = new Date();
+  const startedAtIso = startedAt.toISOString();
+  const liveRunId = crypto.randomUUID();
+  const runtime = getRuntime();
 
   const checkpointPath = readString(args, "checkpointPath") ?? "var/autotrader_collector/checkpoint.json";
 
@@ -69,28 +111,79 @@ async function main(): Promise<void> {
     console.log(`[autotrader] Deleted checkpoint: ${checkpointPath}`);
   }
 
-  const result = await runCollector({
-    mode: (readString(args, "mode") as "daily" | "backfill") ?? "daily",
-    make: readString(args, "make") ?? "Porsche",
-    model: readString(args, "model"),
-    postcode: readString(args, "postcode") ?? "SW1A 1AA",
-    maxActivePagesPerSource: readNumber(args, "maxPages", 5),
-    scrapeDetails: !hasFlag(args, "noDetails"),
-    checkpointPath,
-    dryRun: hasFlag(args, "dryRun"),
+  await clearStaleActiveRun("autotrader", 120);
+  await markScraperRunStarted({
+    scraperName: "autotrader",
+    runId: liveRunId,
+    startedAt: startedAtIso,
+    runtime,
   });
 
-  const totalDiscovered = Object.values(result.sourceCounts).reduce((s, c) => s + c.discovered, 0);
-  const totalWritten = Object.values(result.sourceCounts).reduce((s, c) => s + c.written, 0);
+  try {
+    const result = await runCollector({
+      mode: (readString(args, "mode") as "daily" | "backfill") ?? "daily",
+      make: readString(args, "make") ?? "Porsche",
+      model: readString(args, "model"),
+      postcode: readString(args, "postcode") ?? "SW1A 1AA",
+      maxActivePagesPerSource: readNumber(args, "maxPages", 5),
+      scrapeDetails: !hasFlag(args, "noDetails"),
+      checkpointPath,
+      dryRun: hasFlag(args, "dryRun"),
+    });
 
-  console.log(JSON.stringify({
-    event: "collector.result",
-    runId: result.runId,
-    discovered: totalDiscovered,
-    written: totalWritten,
-    sourceCounts: result.sourceCounts,
-    errorCount: result.errors.length,
-  }));
+    const totals = summarizeCounts(result.sourceCounts);
+    const zeroOutput = !hasFlag(args, "dryRun") && totals.discovered === 0;
+    const errorMessages = zeroOutput
+      ? [...result.errors, "Zero output: AutoTrader discovered no listings"]
+      : result.errors;
+
+    await recordScraperRun({
+      scraper_name: "autotrader",
+      run_id: result.runId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: result.errors.length === 0 && !zeroOutput,
+      runtime,
+      duration_ms: Date.now() - startedAt.getTime(),
+      discovered: totals.discovered,
+      written: totals.written,
+      errors_count: totals.errors + errorMessages.length,
+      source_counts: totals.sourceCounts,
+      error_messages: errorMessages.length > 0 ? errorMessages : undefined,
+    });
+
+    console.log(JSON.stringify({
+      event: "collector.result",
+      runId: result.runId,
+      discovered: totals.discovered,
+      written: totals.written,
+      sourceCounts: result.sourceCounts,
+      errorCount: errorMessages.length,
+      runtime,
+    }));
+
+    if (zeroOutput || result.errors.length > 0) {
+      process.exitCode = 1;
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await recordScraperRun({
+      scraper_name: "autotrader",
+      run_id: liveRunId,
+      started_at: startedAtIso,
+      finished_at: new Date().toISOString(),
+      success: false,
+      runtime,
+      duration_ms: Date.now() - startedAt.getTime(),
+      discovered: 0,
+      written: 0,
+      errors_count: 1,
+      error_messages: [message],
+    });
+    throw err;
+  } finally {
+    await clearScraperRunActive("autotrader");
+  }
 }
 
 main().catch((err) => {

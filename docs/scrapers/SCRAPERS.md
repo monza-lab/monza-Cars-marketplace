@@ -46,7 +46,7 @@ SCRAPLING_PYTHON=python
 |---|---------|--------|--------|---------|----------|
 | 1 | [Porsche Collector](#1-porsche-collector) | BaT, C&B, CollectingCars | HTTP / HTML | Vercel Cron | 01:00 UTC |
 | 2 | [Ferrari Collector](#2-ferrari-collector) | BaT, C&B, CollectingCars | HTTP / HTML | Vercel Cron | 00:00 UTC |
-| 3 | [AutoTrader Collector](#3-autotrader-collector) | AutoTrader UK | GraphQL API + Scrapling | Vercel Cron | 02:00 UTC |
+| 3 | [AutoTrader Collector](#3-autotrader-collector) | AutoTrader UK | GraphQL API + Scrapling | Windows Task | 09:00 Europe/Berlin |
 | 4 | [BeForward Collector](#4-beforward-collector) | BeForward | HTTP / HTML | Vercel Cron | 03:00 UTC |
 | 5 | [Classic.com Collector](#5-classiccom-collector) | Classic.com (US) | Scrapling + Playwright | GitHub Actions | 04:00 UTC |
 | 6 | [AutoScout24 Collector](#6-autoscout24-collector) | AutoScout24 (8 EU countries) | Scrapling + Playwright | GitHub Actions | 05:00 UTC |
@@ -57,7 +57,7 @@ Cross-cutting jobs that apply to all sources:
 | Job | Purpose | Schedule |
 |-----|---------|----------|
 | [Liveness Checker](#8-liveness-checker) | Verify source URLs still resolve | 10:30 UTC |
-| [AutoTrader Delist Check](#3e-delist-check) | Remove 404 AT listings from DB | 22:00 CET (Windows Task) |
+| [AutoTrader Delist Check](#3e-delist-check) | Remove 404 AT listings from DB | 22:00 Europe/Berlin (Windows Task) |
 | [Listing Validator](#cross-source-maintenance) | Fix model names, delete junk | 05:30 UTC |
 | [Cleanup](#cross-source-maintenance) | Mark stale auctions, reclassify | 06:00 UTC |
 | [VIN Enrichment](#cross-source-maintenance) | Decode VINs via NHTSA API | 07:00 UTC |
@@ -244,21 +244,33 @@ node scripts/verify-scraper-quality.mjs --scraper=ferrari
 
 ### 3a. Discovery
 
-This collector runs exclusively via the cron route (no standalone CLI):
+This collector runs locally through Windows Task Scheduler because the AutoTrader path is sensitive to datacenter IP behavior and can exceed serverless cron assumptions.
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/autotrader
+npx tsx src/features/scrapers/autotrader_collector/cli.ts --maxPages=20 --fresh
 ```
+
+**Scheduled .bat:** `scripts/autotrader-discovery-scheduled.bat`  
+**Windows task:** `\Monza\AutoTrader-Discovery-09h`  
+**Unified local log:** `scripts/logs/autotrader-windows.log`  
+**Central monitoring:** `scraper_runs.scraper_name = 'autotrader'`, `runtime = 'windows_task'`
+
+The GitHub Actions workflow `.github/workflows/autotrader-collector.yml` is retained for manual fallback via `workflow_dispatch`, but it no longer has a scheduled cron trigger.
 
 ### 3b. Enrichment
 
 Re-visits listings to recover missing price, mileage, images, VIN, colors, engine, transmission, body style, and description. Recovery order: product-page JSON → HTML fallback → search-gateway fallback.
 
 ```bash
-curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/enrich-autotrader
+npx tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000
 ```
 
-Response: `200` for true no-op or successful writes, `500` when rows are found but nothing is written.
+**Scheduled .bat:** `scripts/autotrader-enrich-scheduled.bat`  
+**Windows tasks:** `\Monza\AutoTrader-Enrich-10h`, `13h`, `16h`, `19h`  
+**Unified local log:** `scripts/logs/autotrader-windows.log`  
+**Central monitoring:** `scraper_runs.scraper_name = 'enrich-autotrader'`, `runtime = 'windows_task'`
+
+The GitHub Actions workflow `.github/workflows/autotrader-enrich.yml` is retained for manual fallback via `workflow_dispatch`, but it no longer has scheduled cron triggers.
 
 ### 3c. Scrapling Photo Probe
 
@@ -299,17 +311,17 @@ npx tsx scripts/autotrader-delist-check.ts --limit=500 --delayMs=300
 
 **Script:** `scripts/autotrader-delist-check.ts`
 **Scheduled .bat:** `scripts/autotrader-delist-scheduled.bat`
-**Log file:** `scripts/logs/autotrader-delist.log`
+**Unified local log:** `scripts/logs/autotrader-windows.log`
 
-Runs daily at 22:00 CET via Windows Task Scheduler (`Monza\AutoTrader-Delist-22h`). Also included in the TUI full scraper run as a post-run step.
+Runs daily at 22:00 Europe/Berlin via Windows Task Scheduler (`\Monza\AutoTrader-Delist-22h`). Also included in the TUI full scraper run as a post-run step.
 
 ### Automated schedule
 
-| Step | Time (UTC) | Runtime | Duration |
+| Step | Local Time | Runtime | Duration |
 |------|------------|---------|----------|
-| Discovery | 02:00 | Vercel Cron | 5 min |
-| Enrichment | 07:45 | Vercel Cron | 5 min |
-| Delist Check | 22:00 CET | Windows Task Scheduler | ~13 min |
+| Discovery | 09:00 Europe/Berlin | Windows Task Scheduler | ~10 min |
+| Enrichment | 10:00, 13:00, 16:00, 19:00 Europe/Berlin | Windows Task Scheduler | <= 25 min |
+| Delist Check | 22:00 Europe/Berlin | Windows Task Scheduler | ~13 min |
 
 ---
 
@@ -1208,13 +1220,13 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" http://localhost:3000/api/cron/
 
 ## Daily Schedule Summary
 
-All times in UTC. Staggered to avoid overlapping.
+Cloud schedules are UTC. Windows Task Scheduler entries use Europe/Berlin local time. Staggered to avoid overlapping.
 
 ```
 00:00  Ferrari Collector          (Vercel Cron, 5 min)
 01:00  Porsche Collector          (Vercel Cron, 5 min)
 01:30  BaT Detail Scraper         (GitHub Actions, 30 min)
-02:00  AutoTrader Collector       (Vercel Cron, 5 min)
+09:00  AutoTrader Collector       (Windows Task, Europe/Berlin local time)
 03:00  BeForward Collector        (Vercel Cron, 5 min)
 04:00  Classic.com Collector      (GitHub Actions, 45 min, Scrapling-first)
 04:30  Classic.com Image Backfill (GitHub Actions, 45 min)
@@ -1227,7 +1239,8 @@ All times in UTC. Staggered to avoid overlapping.
 07:00  VIN Enrichment             (Vercel Cron, 1 min)
 07:15  Title Enrichment           (Vercel Cron, 1 min)
 07:30  AutoScout24 Enrichment     (GitHub Actions, 20 min, Scrapling)
-07:45  AutoTrader Enrichment      (Vercel Cron, 5 min)
+10/13/16/19 AutoTrader Enrichment (Windows Task, Europe/Berlin local time)
+22:00  AutoTrader Delist Check    (Windows Task, Europe/Berlin local time)
 09:15  Elferspot Collector        (Vercel Cron, 5 min)
 09:45  Elferspot Enrichment       (Vercel Cron, 5 min)
 10:30  Liveness Checker           (GitHub Actions, 60 min)
@@ -1237,6 +1250,7 @@ All times in UTC. Staggered to avoid overlapping.
 **Why two runtimes?**
 - **Vercel Cron** (max 5 min): Lightweight HTTP-based scrapers that fit within serverless limits.
 - **GitHub Actions** (30-90 min): Heavy Playwright browser scrapers that need more time and memory.
+- **Windows Task Scheduler**: AutoTrader discovery/enrichment/delist tasks that benefit from the local Windows network path. All AutoTrader Windows task output is written to `scripts/logs/autotrader-windows.log`, and Discovery/Enrichment also write to `scraper_runs`.
 - **Enrichment Loop** (up to 6h): Iterates all enrichment scrapers until data quality targets are met.
 
 ---

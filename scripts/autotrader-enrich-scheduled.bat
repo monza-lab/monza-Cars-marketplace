@@ -1,15 +1,22 @@
 @echo off
-REM AutoTrader Enrichment — Windows Scheduled Task launcher
-REM Runs 4x/day between 10:00-19:00 CET via Task Scheduler
+REM AutoTrader Enrichment - Windows Scheduled Task launcher
+REM Runs 4x/day between 10:00-19:00 CET via Task Scheduler.
 
-cd /d "C:\Users\capos\Documents\Personal\AI\MONZA\monza-Cars-marketplace"
+setlocal
+set "ROOT=C:\Users\capos\Documents\Personal\AI\MONZA\monza-Cars-marketplace"
+set "LOG=scripts\logs\autotrader-windows.log"
 
-REM Log start
-echo [%date% %time%] AutoTrader enrichment starting >> scripts\logs\autotrader-enrich.log
+cd /d "%ROOT%"
+if not exist scripts\logs mkdir scripts\logs
 
-REM Run enrichment (500 listings, 2s delay, 20min budget)
-"C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000 >> scripts\logs\autotrader-enrich.log 2>&1
+echo [%date% %time%] AutoTrader enrichment starting >> "%LOG%"
 
-REM Log end
-echo [%date% %time%] AutoTrader enrichment finished >> scripts\logs\autotrader-enrich.log
-echo. >> scripts\logs\autotrader-enrich.log
+set "MONZA_WINDOWS_TASK=1"
+
+"C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000 >> "%LOG%" 2>&1
+set "EXIT_CODE=%ERRORLEVEL%"
+
+echo [%date% %time%] AutoTrader enrichment finished exit_code=%EXIT_CODE% >> "%LOG%"
+echo. >> "%LOG%"
+
+exit /b %EXIT_CODE%

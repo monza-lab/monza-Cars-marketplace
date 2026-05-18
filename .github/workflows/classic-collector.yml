@@ -7,10 +7,10 @@ on:
     inputs:
       max_pages:
         description: 'Max search pages'
-        default: '170'
+        default: '20'
       max_listings:
         description: 'Max listings to process'
-        default: '5000'
+        default: '1000'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -28,7 +28,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
@@ -55,8 +55,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Install Playwright browsers (only if Playwright fallback enabled)
-        if: ${{ github.event.inputs.disable_playwright == 'false' }}
+      - name: Install Playwright browsers
         run: |
           npx playwright install-deps chromium
           npx playwright install chromium
@@ -70,8 +69,8 @@ jobs:
           CLASSIC_DISABLE_PLAYWRIGHT_FALLBACK: ${{ github.event.inputs.disable_playwright != 'false' && '1' || '' }}
         run: |
           npx tsx src/features/scrapers/classic_collector/cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '170' }} \
-            --maxListings=${{ github.event.inputs.max_listings || '5000' }} \
+            --maxPages=${{ github.event.inputs.max_pages || '20' }} \
+            --maxListings=${{ github.event.inputs.max_listings || '1000' }} \
             --navigationDelayMs=3000 \
             --pageTimeoutMs=30000 \
             ${{ github.event.inputs.summary_only == 'true' && '--summaryOnly' || '' }} \

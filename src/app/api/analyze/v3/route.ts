@@ -1,4 +1,5 @@
 // src/app/api/analyze/v3/route.ts
+import { randomUUID } from "node:crypto"
 import { NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { fetchLiveListingById } from "@/lib/supabaseLiveListings"
@@ -11,18 +12,19 @@ import {
   hasAlreadyGenerated,
   deductCredit,
   REPORT_PISTON_COST,
+  hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { saveHausReport, saveSignals } from "@/lib/reports/queries"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
 import type { HausReport } from "@/lib/fairValue/types"
-
-function isAdmin(email: string | null | undefined): boolean {
-  if (!email) return false
-  const admins = (process.env.ADMIN_EMAILS ?? "").split(",").map(e => e.trim().toLowerCase())
-  return admins.includes(email.toLowerCase())
-}
+import type { HausReportV3 } from "@/lib/reports/types-v3"
 
 export const dynamic = "force-dynamic"
+export const maxDuration = 300 // 5 min — V3 pipeline runs 10 AI steps, typically 60-120s
+
+function isCompleteV3Report(report: HausReportV3): boolean {
+  return report.stepsFailed === 0 && Boolean(report.finalSynthesis?.executiveSummary)
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -47,11 +49,23 @@ export async function POST(req: NextRequest) {
 
   // User + credit initialization
   const dbUser = await getOrCreateUser(user.id, user.email ?? "", user.user_metadata?.full_name)
-  await checkAndResetFreeCredits(dbUser.id)
+  const credits = await checkAndResetFreeCredits(dbUser.id)
   const alreadyGenerated = await hasAlreadyGenerated(dbUser.id, listingId)
+  const hasUnlimited = hasUnlimitedReportAccess(credits)
 
   // Cache check
   if (!force && await hasV3Report(listingId)) {
+    if (!alreadyGenerated) {
+      const creditResult = await deductCredit(dbUser.id, listingId, listingId)
+      if (!creditResult.success) {
+        const status = creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500
+        return new Response(JSON.stringify({ error: creditResult.error }), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+    }
+
     const sections = await fetchReportSections(listingId, 1)
     return new Response(JSON.stringify({
       cached: true,
@@ -64,9 +78,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Credit check
-  const userIsAdmin = isAdmin(user.email)
-  if (!alreadyGenerated && !dbUser.unlimited_reports && !userIsAdmin) {
-    const balance = (dbUser.credits_balance ?? 0) + (dbUser.pack_credits_balance ?? 0)
+  if (!alreadyGenerated && !hasUnlimited) {
+    const balance = (credits.credits_balance ?? 0) + (credits.pack_credits_balance ?? 0)
     if (balance < REPORT_PISTON_COST) {
       return new Response(JSON.stringify({ error: "Insufficient credits", balance }), {
         status: 402,
@@ -108,12 +121,19 @@ export async function POST(req: NextRequest) {
           onProgress: (p: PipelineProgress) => {
             send("progress", p)
           },
+          onStepComplete: async (result) => {
+            await saveReportSection(listingId, 1, result)
+          },
         })
 
-        // Persist sections in parallel
-        await Promise.all(
-          results.map((result) => saveReportSection(listingId, 1, result))
-        )
+        if (!isCompleteV3Report(report)) {
+          send("error", {
+            message: "V3 report incomplete: one or more scrape, database, or AI sections failed.",
+            stepsCompleted: report.stepsCompleted,
+            stepsFailed: report.stepsFailed,
+          })
+          return
+        }
 
         // Also persist fair value to existing tables (backward compat)
         const fairValueResult = results.find(r => r.sectionKey === "fair_value")
@@ -124,7 +144,7 @@ export async function POST(req: NextRequest) {
             if (fv.signals_detected?.length) {
               await saveSignals(
                 listingId,
-                `v3-${Date.now()}`,
+                randomUUID(),
                 "v3.0",
                 fv.signals_detected
               )
@@ -135,8 +155,17 @@ export async function POST(req: NextRequest) {
         }
 
         // Deduct credit
-        if (!alreadyGenerated && !userIsAdmin) {
-          await deductCredit(dbUser.id, listingId, listingId)
+        if (!alreadyGenerated) {
+          const creditResult = await deductCredit(dbUser.id, listingId, listingId)
+          if (!creditResult.success) {
+            send("error", {
+              message:
+                creditResult.error === "INSUFFICIENT_CREDITS"
+                  ? "Insufficient credits"
+                  : creditResult.error,
+            })
+            return
+          }
         }
 
         send("complete", {

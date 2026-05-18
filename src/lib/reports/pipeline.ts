@@ -43,13 +43,20 @@ export interface PipelineContext {
  */
 export type StepExecutor = (
   ctx: PipelineContext
-) => Promise<{ data: unknown; durationMs: number; agentModel: string | null }>
+) => Promise<{
+  data: unknown
+  durationMs: number
+  agentModel: string | null
+  completionNote?: string
+}>
 
 export interface PipelineInput {
   listingId: string
   car: CollectorCar
   executors: Record<string, StepExecutor>
   onProgress: (progress: PipelineProgress) => void
+  /** Called after each step completes successfully — used to persist sections incrementally */
+  onStepComplete?: (result: PipelineStepResult) => Promise<void>
 }
 
 interface StepDef {
@@ -59,7 +66,7 @@ interface StepDef {
 }
 
 const STEP_DEFS: StepDef[] = [
-  { stepId: 1, sectionKey: "listing_scrape", label: "Reading Listing" },
+  { stepId: 1, sectionKey: "listing_scrape", label: "Analyzing Listing" },
   { stepId: 2, sectionKey: "vehicle_identity", label: "Identifying Vehicle" },
   { stepId: 3, sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { stepId: 4, sectionKey: "fair_value", label: "Computing Fair Value" },
@@ -106,6 +113,9 @@ async function runStep(
 
   try {
     const result = await executor(ctx)
+    if (result.data == null) {
+      throw new Error(`No data returned for ${step.sectionKey}`)
+    }
     const duration = Date.now() - t0
     const stepResult: PipelineStepResult = {
       sectionKey: step.sectionKey,
@@ -114,7 +124,7 @@ async function runStep(
       agentModel: result.agentModel,
     }
 
-    emitProgress(onProgress, step, "completed", undefined, duration)
+    emitProgress(onProgress, step, "completed", result.completionNote, duration)
     return stepResult
   } catch (err) {
     const duration = Date.now() - t0
@@ -191,7 +201,7 @@ function assignResult(ctx: PipelineContext, result: PipelineStepResult | null) {
 export async function runV3Pipeline(
   input: PipelineInput
 ): Promise<{ report: HausReportV3; results: PipelineStepResult[] }> {
-  const { listingId, car, executors, onProgress } = input
+  const { listingId, car, executors, onProgress, onStepComplete } = input
   const allResults: PipelineStepResult[] = []
   const pipelineStart = Date.now()
 
@@ -215,12 +225,20 @@ export async function runV3Pipeline(
     emitProgress(onProgress, step, "pending")
   }
 
-  // ─── Tier 0: Step 1 (listing scrape) ───
-  const step1Result = await runStep(STEP_DEFS[0], ctx, executors, onProgress)
-  if (step1Result) {
-    assignResult(ctx, step1Result)
-    allResults.push(step1Result)
+  // Helper: assign result to context, persist to DB, collect
+  async function collectResult(r: PipelineStepResult | null) {
+    if (!r) return
+    assignResult(ctx, r)
+    allResults.push(r)
+    if (onStepComplete) {
+      try { await onStepComplete(r) } catch (e) {
+        console.error(`[pipeline] Failed to persist ${r.sectionKey}:`, e)
+      }
+    }
   }
+
+  // ─── Tier 0: Step 1 (listing scrape) ───
+  await collectResult(await runStep(STEP_DEFS[0], ctx, executors, onProgress))
 
   // ─── Tier 1: Steps 2, 3 (parallel — identity + market data) ───
   const tier1Results = await runParallel(
@@ -229,19 +247,10 @@ export async function runV3Pipeline(
     executors,
     onProgress
   )
-  for (const r of tier1Results) {
-    if (r) {
-      assignResult(ctx, r)
-      allResults.push(r)
-    }
-  }
+  for (const r of tier1Results) await collectResult(r)
 
   // ─── Tier 1b: Step 4 (fair_value — needs marketData from step 3) ───
-  const step4Result = await runStep(STEP_DEFS[3], ctx, executors, onProgress)
-  if (step4Result) {
-    assignResult(ctx, step4Result)
-    allResults.push(step4Result)
-  }
+  await collectResult(await runStep(STEP_DEFS[3], ctx, executors, onProgress))
 
   // ─── Tier 2: Steps 5, 6, 7 (parallel) ───
   const tier2Results = await runParallel(
@@ -250,12 +259,7 @@ export async function runV3Pipeline(
     executors,
     onProgress
   )
-  for (const r of tier2Results) {
-    if (r) {
-      assignResult(ctx, r)
-      allResults.push(r)
-    }
-  }
+  for (const r of tier2Results) await collectResult(r)
 
   // ─── Tier 3: Steps 8, 9 (parallel) ───
   const tier3Results = await runParallel(
@@ -264,19 +268,10 @@ export async function runV3Pipeline(
     executors,
     onProgress
   )
-  for (const r of tier3Results) {
-    if (r) {
-      assignResult(ctx, r)
-      allResults.push(r)
-    }
-  }
+  for (const r of tier3Results) await collectResult(r)
 
   // ─── Tier 4: Step 10 (final synthesis) ───
-  const step10Result = await runStep(STEP_DEFS[9], ctx, executors, onProgress)
-  if (step10Result) {
-    assignResult(ctx, step10Result)
-    allResults.push(step10Result)
-  }
+  await collectResult(await runStep(STEP_DEFS[9], ctx, executors, onProgress))
 
   // ─── Assemble V3 report ───
   const totalDurationMs = Date.now() - pipelineStart
