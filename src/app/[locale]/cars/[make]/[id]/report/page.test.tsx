@@ -76,6 +76,14 @@ vi.mock("@/lib/db/queries", () => ({
   getComparablesForModel: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn().mockResolvedValue({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+    },
+  }),
+}));
+
 vi.mock("@/lib/reports/queries", () => ({
   getReportForListing: vi.fn().mockResolvedValue(null),
   fetchSignalsForListing: vi.fn().mockResolvedValue([]),

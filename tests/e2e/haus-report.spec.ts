@@ -44,15 +44,19 @@ test.describe("Haus Report — free view + paid view", () => {
   })
 
   test("clicking Unlock opens the ConfirmGenerateModal", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("monza_tokens", "1000")
+    })
     await page.goto(`/en/cars/porsche/${TEST_LISTING_ID}/report`)
 
     // The first Unlock CTA in the sidebar footer
-    await page.getByRole("button", { name: /Unlock\s+\d+\s+pistons/i }).first().click()
+    await page.getByRole("button", { name: /unlock full report/i }).first().click()
 
     // The modal opens and shows the included-sections list
-    await expect(page.getByText(/Includes\s+9\s+sections/i)).toBeVisible()
-    await expect(page.getByText(/Executive summary/i)).toBeVisible()
-    await expect(page.getByText(/Final verdict/i)).toBeVisible()
+    const dialog = page.getByRole("dialog")
+    await expect(dialog.getByText(/Includes\s+9\s+sections/i)).toBeVisible()
+    await expect(dialog.getByText(/Executive summary/i)).toBeVisible()
+    await expect(dialog.getByText(/Final verdict/i)).toBeVisible()
 
     // Both action buttons are present
     await expect(page.getByRole("button", { name: /Cancel/i })).toBeVisible()
@@ -60,6 +64,6 @@ test.describe("Haus Report — free view + paid view", () => {
 
     // ESC closes the modal
     await page.keyboard.press("Escape")
-    await expect(page.getByText(/Includes\s+9\s+sections/i)).not.toBeVisible()
+    await expect(dialog).not.toBeVisible()
   })
 })
