@@ -59,6 +59,7 @@ import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
 import { ReportSummaryRail } from "@/components/report/ReportSummaryRail"
 import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
+import { resolveReportAccess, resolveVisibleV3Report } from "./reportAccess"
 import type {
   PipelineProgress,
   StepStatus,
@@ -198,6 +199,7 @@ export function ReportClient({
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
   void creditsRemaining
+  void triggerGeneration
 
   // Prefer the server-fetched HausReport; fall back to any report the hook just produced.
   // The hook's triggerGeneration now reloads the page on success, so the server component
@@ -284,11 +286,18 @@ export function ReportClient({
     V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus }))
   )
   const [v3Error, setV3Error] = useState<string | null>(null)
+  const [streamedV3Report, setStreamedV3Report] = useState<HausReportV3 | null>(null)
   const v3AbortRef = useRef<AbortController | null>(null)
+  const visibleV3Report = resolveVisibleV3Report({
+    serverReport: v3Report,
+    streamedReport: streamedV3Report,
+  })
+  const reportAlreadyGenerated = Boolean(existingReport || visibleV3Report)
 
   const handleGenerateV3 = useCallback(async () => {
     setIsGeneratingV3(true)
     setV3Error(null)
+    setStreamedV3Report(null)
     setV3Steps(V3_STEP_LABELS.map(s => ({ ...s, status: "pending" as StepStatus })))
 
     const controller = new AbortController()
@@ -296,6 +305,7 @@ export function ReportClient({
     let userAborted = false
     let needsPaywall = false
     let streamError: string | null = null
+    let completedWithReport = false
 
     try {
       const res = await fetch("/api/analyze/v3", {
@@ -372,6 +382,15 @@ export function ReportClient({
                   needsPaywall = true
                 }
                 setV3Error(message)
+              } else if (currentEvent === "complete") {
+                if (data?.report) {
+                  completedWithReport = true
+                  setStreamedV3Report(data.report as HausReportV3)
+                  setHasAccess(true)
+                  setV3Steps(prev =>
+                    prev.map(s => ({ ...s, status: "completed" as StepStatus }))
+                  )
+                }
               }
               // complete + error: just let the stream finish, finally handles transition
             } catch {
@@ -394,7 +413,7 @@ export function ReportClient({
 
       if (needsPaywall) {
         setOutOfReportsOpen(true)
-      } else if (!userAborted && !streamError) {
+      } else if (!userAborted && !streamError && !completedWithReport) {
         // ALWAYS re-fetch the server component after generation attempt.
         // Sections are saved incrementally, so even partial completions
         // will show V2 with whatever data was persisted.
@@ -411,9 +430,12 @@ export function ReportClient({
   // Check access on mount
   useEffect(() => {
     if (!tokensLoading) {
-      setHasAccess(hasAnalyzed(car.id))
+      setHasAccess(resolveReportAccess({
+        serverHasAccess: userHasAccess,
+        localHasAnalyzed: hasAnalyzed(car.id),
+      }))
     }
-  }, [tokensLoading, car.id, hasAnalyzed])
+  }, [tokensLoading, car.id, hasAnalyzed, userHasAccess])
 
   const spendableBalance =
     authProfile?.pistonsBalance ??
@@ -426,13 +448,13 @@ export function ReportClient({
   const executeUnlock = () => {
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
-      if (!existingReport) void handleGenerateV3()
+      if (!reportAlreadyGenerated) void handleGenerateV3()
       setConfirmGenerateOpen(false)
       return
     }
     consumeForAnalysis(car.id)
     setHasAccess(true)
-    if (!existingReport) void handleGenerateV3()
+    if (!reportAlreadyGenerated) void handleGenerateV3()
     setConfirmGenerateOpen(false)
   }
 
@@ -466,7 +488,7 @@ export function ReportClient({
         setPurchaseSuccess(false)
         setShowPricing(false)
         setHasAccess(true)
-        if (!existingReport) void handleGenerateV3()
+        if (!reportAlreadyGenerated) void handleGenerateV3()
       }, 1500)
     }, 1500)
   }
@@ -1964,10 +1986,10 @@ export function ReportClient({
                 Section 1 - EXECUTIVE SUMMARY (always visible)
                 --------------------------------------- */}
             <section ref={setSectionRef("summary")} id="section-summary" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              {hasAccess && v3Report ? (
+              {hasAccess && visibleV3Report ? (
                 <>
                   <SectionHeader id="summary" title={t("sections.summary")} />
-                  <ExecutiveSummarySection data={v3Report.finalSynthesis} />
+                  <ExecutiveSummarySection data={visibleV3Report.finalSynthesis} />
                 </>
               ) : (
                 <>
@@ -2129,14 +2151,14 @@ export function ReportClient({
               <PaywallSection sectionId="valuation">
                 <SectionHeader id="valuation" title={t("sections.valuation")} />
 
-                {hasAccess && v3Report ? (
+                {hasAccess && visibleV3Report ? (
                   <div className="space-y-4">
                     <InvestmentStrategySection
-                      data={v3Report.investmentAnalysis}
-                      listingType={v3Report.vehicleIdentity?.listingType ?? "classified"}
+                      data={visibleV3Report.investmentAnalysis}
+                      listingType={visibleV3Report.vehicleIdentity?.listingType ?? "classified"}
                     />
-                    <OwnershipCostSection data={v3Report.investmentAnalysis?.ownershipCosts ?? null} />
-                    <ResaleTimelineSection data={v3Report.investmentAnalysis?.resaleTimeline ?? null} />
+                    <OwnershipCostSection data={visibleV3Report.investmentAnalysis?.ownershipCosts ?? null} />
+                    <ResaleTimelineSection data={visibleV3Report.investmentAnalysis?.resaleTimeline ?? null} />
                   </div>
                 ) : (
                 <>
@@ -2299,8 +2321,8 @@ export function ReportClient({
               <PaywallSection sectionId="performance">
                 <SectionHeader id="performance" title={t("sections.performance")} />
 
-                {hasAccess && v3Report ? (
-                  <TechnicalAnalysisSection data={v3Report.technicalAnalysis} />
+                {hasAccess && visibleV3Report ? (
+                  <TechnicalAnalysisSection data={visibleV3Report.technicalAnalysis} />
                 ) : (
                 <>
 
@@ -2426,7 +2448,7 @@ export function ReportClient({
                 --------------------------------------- */}
             <section ref={setSectionRef("identity")} id="section-identity" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="identity">
-                {hasAccess && v3Report ? (
+                {hasAccess && visibleV3Report ? (
                   <>
                     <SectionHeader id="identity" title={t("sections.identity")} />
                     <InvestmentStoryBlock narrative={report?.investment_narrative} />
@@ -2515,8 +2537,8 @@ export function ReportClient({
               <PaywallSection sectionId="marketContext">
                 <SectionHeader id="marketContext" title={t("sections.marketContext")} />
 
-                {hasAccess && v3Report ? (
-                  <MarketResearchSection data={v3Report.marketResearch} />
+                {hasAccess && visibleV3Report ? (
+                  <MarketResearchSection data={visibleV3Report.marketResearch} />
                 ) : (
                 <>
 
@@ -2539,7 +2561,7 @@ export function ReportClient({
                 --------------------------------------- */}
             <section ref={setSectionRef("similar")} id="section-similar" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="similar">
-                {hasAccess && v3Report ? (
+                {hasAccess && visibleV3Report ? (
                   <>
                     <SectionHeader id="similar" title={t("sections.similar")} />
                     <ComparablesAndPositioningBlock
@@ -2603,10 +2625,10 @@ export function ReportClient({
               <PaywallSection sectionId="dueDiligence">
                 <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
 
-                {hasAccess && v3Report ? (
+                {hasAccess && visibleV3Report ? (
                   <div className="space-y-4">
-                    <V3DueDiligenceSection data={v3Report.dueDiligence} />
-                    <BuyerServicesSection data={v3Report.buyerServices} />
+                    <V3DueDiligenceSection data={visibleV3Report.dueDiligence} />
+                    <BuyerServicesSection data={visibleV3Report.buyerServices} />
                   </div>
                 ) : (
                 <>
@@ -2673,7 +2695,7 @@ export function ReportClient({
                 --------------------------------------- */}
             <section ref={setSectionRef("verdict")} id="section-verdict" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="verdict">
-                {hasAccess && v3Report ? (
+                {hasAccess && visibleV3Report ? (
                   <>
                     <SectionHeader id="verdict" title={t("sections.verdict")} />
                     <VerdictBlock
@@ -3298,8 +3320,8 @@ export function ReportClient({
       <ReportSummaryRail
         car={car}
         verdict={(
-          v3Report?.finalSynthesis?.finalRecommendation?.verdict
-            ? (v3Report.finalSynthesis.finalRecommendation.verdict.toLowerCase() as "buy" | "watch" | "walk" | "hold")
+          visibleV3Report?.finalSynthesis?.finalRecommendation?.verdict
+            ? (visibleV3Report.finalSynthesis.finalRecommendation.verdict.toLowerCase() as "buy" | "watch" | "walk" | "hold")
             : verdict
         )}
         fairValueLow={report?.specific_car_fair_value_low ?? null}
