@@ -75,14 +75,17 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
       (parsedRange ? (parsedRange.low + parsedRange.high) / 2 : null)
     const headline = v3.finalSynthesis?.executiveSummary?.headline ?? null
 
-    // Page numbering — V3 flow has 10 pages total
+    // Page numbering — V3 flow has 10 pages total.
+    // Order mirrors the web report: macro → micro.
+    // Verdict (Cover + Exec) → market (Strategy + Research) → spec
+    // (Technical) → checks (Due Diligence) → action (Buyer Services).
     const PG_COVER = 1
     const PG_TOC = 2
     const PG_EXEC = 3
-    const PG_TECH = 4
-    const PG_INVEST = 5
-    const PG_DD = 6
-    const PG_MARKET = 7
+    const PG_INVEST = 4
+    const PG_MARKET = 5
+    const PG_TECH = 6
+    const PG_DD = 7
     const PG_BUYER = 8
     const PG_CITATIONS = 9
     const PG_DISCLAIMER = 10
@@ -90,10 +93,10 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
 
     const tocEntries = [
       { number: "01", title: "Executive Summary", summary: "The verdict, the thesis, the score.", page: PG_EXEC },
-      { number: "02", title: "Technical Deep-Dive", summary: "Model history, what makes this spec special, known issues.", page: PG_TECH },
-      { number: "03", title: "Investment Strategy", summary: "Bid ceiling, ownership costs, resale timeline.", page: PG_INVEST },
-      { number: "04", title: "Due Diligence", summary: "Risk score, questions to ask, pre-purchase checklist.", page: PG_DD },
-      { number: "05", title: "Market Research", summary: "Expert consensus, owner sentiment, heritage.", page: PG_MARKET },
+      { number: "02", title: "Investment Strategy", summary: "Bid ceiling, ownership costs, resale timeline.", page: PG_INVEST },
+      { number: "03", title: "Market Research", summary: "Expert consensus, owner sentiment, heritage.", page: PG_MARKET },
+      { number: "04", title: "Technical Deep-Dive", summary: "Model history, what makes this spec special, known issues.", page: PG_TECH },
+      { number: "05", title: "Due Diligence", summary: "Risk score, questions to ask, pre-purchase checklist.", page: PG_DD },
       { number: "06", title: "Buyer Services & Logistics", summary: "Parts, insurance, regional markets, transport.", page: PG_BUYER },
       { number: "07", title: "Sources", summary: "Every citation in this dossier.", page: PG_CITATIONS },
       { number: "08", title: "The Fine Print", summary: "Disclaimer, methodology, independence.", page: PG_DISCLAIMER },
@@ -143,14 +146,6 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
           totalPages={TOTAL}
           theme={theme}
         />
-        <TechnicalAnalysisPage
-          data={v3.technicalAnalysis!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_TECH}
-          totalPages={TOTAL}
-          theme={theme}
-        />
         <InvestmentStrategyPage
           data={v3.investmentAnalysis!}
           listingType={v3.vehicleIdentity?.listingType ?? "classified"}
@@ -160,19 +155,27 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
           totalPages={TOTAL}
           theme={theme}
         />
-        <DueDiligenceV3Page
-          data={v3.dueDiligence!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_DD}
-          totalPages={TOTAL}
-          theme={theme}
-        />
         <MarketResearchPage
           data={v3.marketResearch!}
           reportHash={reportHash}
           generatedAt={generatedAt}
           pageNumber={PG_MARKET}
+          totalPages={TOTAL}
+          theme={theme}
+        />
+        <TechnicalAnalysisPage
+          data={v3.technicalAnalysis!}
+          reportHash={reportHash}
+          generatedAt={generatedAt}
+          pageNumber={PG_TECH}
+          totalPages={TOTAL}
+          theme={theme}
+        />
+        <DueDiligenceV3Page
+          data={v3.dueDiligence!}
+          reportHash={reportHash}
+          generatedAt={generatedAt}
+          pageNumber={PG_DD}
           totalPages={TOTAL}
           theme={theme}
         />

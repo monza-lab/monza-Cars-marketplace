@@ -1,4 +1,4 @@
-import { Page, Text, View } from "@react-pdf/renderer"
+import { Page, Text, View, Link } from "@react-pdf/renderer"
 import { createPdfStyles, getThemeTokens } from "../styles"
 import type { PdfTheme } from "../theme"
 import { PageFooter } from "./PageFooter"
@@ -106,20 +106,28 @@ export function CitationsPage({
                         [{String(i + 1).padStart(2, "0")}]
                       </Text>
                       <View style={{ flex: 1 }}>
-                        <Text
+                        <Link
+                          src={c.url}
                           style={{
                             fontFamily: "Karla",
                             fontWeight: 500,
                             fontSize: 10,
                             color: tokens.foreground,
+                            textDecoration: "none",
                           }}
                         >
                           {c.label}
-                        </Text>
-                        <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
+                        </Link>
+                        <Link
+                          src={c.url}
+                          style={[
+                            styles.bodyMuted,
+                            { marginTop: 2, color: tokens.primary, textDecoration: "none" },
+                          ]}
+                        >
                           {domain}
                           {path ? ` · ${path}` : ""}
-                        </Text>
+                        </Link>
                       </View>
                     </View>
                   )

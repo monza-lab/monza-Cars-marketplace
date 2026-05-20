@@ -54,7 +54,7 @@ export function MarketResearchPage({
     <Page size="A4" style={styles.page}>
       {/* Chapter opener */}
       <View>
-        <Text style={styles.chapterEyebrow}>Chapter 05 · Market</Text>
+        <Text style={styles.chapterEyebrow}>Chapter 03 · Market</Text>
         <Text style={[styles.chapter, { marginBottom: 14 }]}>Market Research</Text>
         <Text style={[styles.lede, { color: tokens.mutedStrong, marginBottom: 22 }]}>
           How specialists, owners, and the broader marketplace see this car — synthesized from

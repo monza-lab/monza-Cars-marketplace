@@ -25,8 +25,10 @@ export function createPdfStyles(theme: PdfTheme) {
       fontFamily: FONT_SANS,
       fontWeight: 400,
       fontSize: 10,
-      paddingTop: 48,
-      paddingBottom: 56,
+      // Tighter vertical paddings let multi-page sections breathe less
+      // and reduce the trailing-empty-space problem on short chapters.
+      paddingTop: 38,
+      paddingBottom: 44,
       paddingHorizontal: 48,
       flexDirection: "column",
     },
@@ -76,8 +78,8 @@ export function createPdfStyles(theme: PdfTheme) {
     chapter: {
       fontFamily: FONT_SERIF,
       fontWeight: 300,
-      fontSize: 44,
-      letterSpacing: -1.2,
+      fontSize: 38,
+      letterSpacing: -1,
       color: c.foreground,
       lineHeight: 1.05,
       marginBottom: 4,
@@ -89,7 +91,7 @@ export function createPdfStyles(theme: PdfTheme) {
       color: c.primary,
       textTransform: "uppercase",
       letterSpacing: 3.5,
-      marginBottom: 14,
+      marginBottom: 10,
     },
     // H1/H2 — within-page hierarchy.
     h1: {

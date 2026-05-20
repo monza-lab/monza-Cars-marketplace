@@ -40,7 +40,7 @@ export function TechnicalAnalysisPage({
     <Page size="A4" style={styles.page}>
       {/* Chapter opener */}
       <View>
-        <Text style={styles.chapterEyebrow}>Chapter 02 · Technical</Text>
+        <Text style={styles.chapterEyebrow}>Chapter 04 · Technical</Text>
         <Text style={[styles.chapter, { marginBottom: 14 }]}>
           Technical Deep-Dive
         </Text>

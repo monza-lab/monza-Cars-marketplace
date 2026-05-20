@@ -55,7 +55,7 @@ export function DueDiligenceV3Page({
     <Page size="A4" style={styles.page}>
       {/* Chapter opener */}
       <View>
-        <Text style={styles.chapterEyebrow}>Chapter 04 · Risk</Text>
+        <Text style={styles.chapterEyebrow}>Chapter 05 · Risk</Text>
         <Text style={[styles.chapter, { marginBottom: 14 }]}>Due Diligence</Text>
         <Text style={[styles.lede, { color: tokens.mutedStrong, marginBottom: 22 }]}>
           What to verify before committing — a structured risk assessment, the

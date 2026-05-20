@@ -59,7 +59,7 @@ export function InvestmentStrategyPage({
     <Page size="A4" style={styles.page}>
       {/* ── Chapter opener ───────────────────────────────────────── */}
       <View>
-        <Text style={styles.chapterEyebrow}>Chapter 03 · Strategy</Text>
+        <Text style={styles.chapterEyebrow}>Chapter 02 · Strategy</Text>
         <Text style={[styles.chapter, { marginBottom: 14 }]}>Investment Strategy</Text>
         <Text style={[styles.lede, { color: tokens.mutedStrong, marginBottom: 22 }]}>
           {strategy.strategyInsight}
