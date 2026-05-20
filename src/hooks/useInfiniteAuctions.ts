@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { extractSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
 import { partitionByPhoto } from "@/lib/photoSort";
 import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
+import type { CollectorCar } from "@/lib/curatedCars";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ interface Aggregates {
 }
 
 interface UseInfiniteAuctionsResult {
-  cars: any[];                    // accumulated auction objects across pages
+  cars: CollectorCar[];           // accumulated auction objects across pages
   total: number;                  // aggregates.liveNow (DB count)
   totalCount: number | null;      // planned DB count for current filters (all statuses the query returns)
   totalLiveCount: number | null;  // planned DB count restricted to status='active'
@@ -35,6 +36,15 @@ interface UseInfiniteAuctionsResult {
   error: string | null;
   sentinelRef: (node: HTMLElement | null) => void;  // ref callback for sentinel div
   reset: () => void;
+}
+
+interface AuctionsApiResponse {
+  auctions?: CollectorCar[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
+  aggregates?: Aggregates;
+  totalCount?: number;
+  totalLiveCount?: number;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -61,7 +71,7 @@ export function useInfiniteAuctions(
   const resolvedFamily = resolveSeriesIdForFamily(make, family) ?? family;
 
   // ── State ──
-  const [cars, setCars] = useState<any[]>([]);
+  const [cars, setCars] = useState<CollectorCar[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [aggregates, setAggregates] = useState<Aggregates | null>(null);
@@ -116,7 +126,7 @@ export function useInfiniteAuctions(
       pageCursor: string | null,
       isFirstPage: boolean,
       capturedRequestId: number,
-    ): Promise<{ filteredNew: any[]; nextCursor: string | null; pageHasMore: boolean }> => {
+    ): Promise<{ filteredNew: CollectorCar[]; nextCursor: string | null; pageHasMore: boolean }> => {
       const url = buildUrl(pageCursor);
 
       const res = await fetch(url, { cache: "no-store" });
@@ -124,7 +134,7 @@ export function useInfiniteAuctions(
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as AuctionsApiResponse;
 
       // Discard stale response
       if (capturedRequestId !== requestIdRef.current) {
@@ -142,20 +152,20 @@ export function useInfiniteAuctions(
         setTotalLiveCount(data.totalLiveCount);
       }
 
-      const rawAuctions: any[] = data.auctions ?? [];
+      const rawAuctions = data.auctions ?? [];
       const nextCursor: string | null = data.nextCursor ?? null;
       const pageHasMore: boolean = data.hasMore ?? false;
 
       // Client-side safety net: only active listings reach the UI
       const activeAuctions = rawAuctions.filter(
-        (c: any) => c.status === "ACTIVE" || c.status === "ENDING_SOON"
+        (c) => c.status === "ACTIVE" || c.status === "ENDING_SOON"
       );
 
       // Client-side family filter
       let filtered = activeAuctions;
       if (resolvedFamily) {
         filtered = activeAuctions.filter(
-          (car: any) =>
+          (car) =>
             extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
         );
       }
@@ -183,7 +193,7 @@ export function useInfiniteAuctions(
 
     try {
       let currentCursor = cursorRef.current;
-      let accumulatedNew: any[] = [];
+      let accumulatedNew: CollectorCar[] = [];
       let currentHasMore = true;
 
       // Fetch pages, auto-fetching more if family filter yields too few results
@@ -229,9 +239,9 @@ export function useInfiniteAuctions(
       setCursor(currentCursor);
       cursorRef.current = currentCursor;
       setHasMore(currentHasMore);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (capturedRequestId !== requestIdRef.current) return;
-      setError(err?.message ?? "Failed to fetch auctions");
+      setError(err instanceof Error ? err.message : "Failed to fetch auctions");
     } finally {
       if (capturedRequestId === requestIdRef.current) {
         setIsLoading(false);

@@ -189,7 +189,7 @@ export function BrowseClient({
     // feed in useInfiniteAuctions — keep the marketplace looking curated.
     const { withPhoto } = partitionByPhoto(filtered);
     return withPhoto.filter((car) => {
-      const url = car.images?.[0] ?? car.image ?? "";
+      const url = car.images?.[0] ?? "";
       return !isImageUrlFailed(url);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

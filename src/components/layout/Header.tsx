@@ -293,7 +293,9 @@ function OracleOverlay({
 
   // Reset conversation state each time the overlay opens.
   useEffect(() => {
-    if (!isOpen) setConversationId(null);
+    if (isOpen) return;
+    const timer = window.setTimeout(() => setConversationId(null), 0);
+    return () => window.clearTimeout(timer);
   }, [isOpen]);
 
   // Close on ESC
@@ -359,7 +361,7 @@ function OracleOverlay({
               <div className="px-6 pt-4 shrink-0">
                 <p className="text-[13px] text-muted-foreground">
                   <span className="text-muted-foreground/60">{t("oracle.youAsked")}</span>{" "}
-                  <span className="text-foreground">"{query}"</span>
+                  <span className="text-foreground">&ldquo;{query}&rdquo;</span>
                 </p>
               </div>
 
