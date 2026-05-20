@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import Image from "next/image"
+import { markImageUrlFailed } from "@/lib/imageFailureStore"
 
 /**
  * Minimum natural-pixel area for a "real" car photo. Images below this
@@ -27,12 +28,20 @@ export function SafeImage({
   const [fallbackFailed, setFallbackFailed] = useState(false)
 
   const handleError = useCallback(() => {
+    // Report the URL to the runtime failure store so the feed hooks
+    // can drop the card on the next render. We do this on the very
+    // first failure (before falling back to fallbackSrc) because a
+    // card whose primary image fails is the one we want to hide —
+    // we don't want a feed of fallback graphics.
+    if (typeof src === "string") {
+      markImageUrlFailed(src)
+    }
     if (!useFallback && fallbackSrc) {
       setUseFallback(true)
     } else {
       setFallbackFailed(true)
     }
-  }, [useFallback, fallbackSrc])
+  }, [useFallback, fallbackSrc, src])
 
   const handleLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {

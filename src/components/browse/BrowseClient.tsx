@@ -10,6 +10,7 @@ import { useClassicFilters } from "./filters/useClassicFilters";
 import { applyFilters } from "./filters/applyFilters";
 import { countActiveFilters } from "./filters/types";
 import { partitionByPhoto } from "@/lib/photoSort";
+import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
 
 const REMOTE_PAGE_SIZE = 30;
 
@@ -180,12 +181,19 @@ export function BrowseClient({
     [allAuctions, clientFilters],
   );
 
+  // Re-render whenever a new image failure is reported so the memo below
+  // sheds cars whose primary image just broke at runtime.
+  const failureVersion = useImageFailureVersion();
   const visible = useMemo(() => {
     // Classic view also hides cars without photos. Same reason as the Monza
     // feed in useInfiniteAuctions — keep the marketplace looking curated.
     const { withPhoto } = partitionByPhoto(filtered);
-    return withPhoto;
-  }, [filtered]);
+    return withPhoto.filter((car) => {
+      const url = car.images?.[0] ?? car.image ?? "";
+      return !isImageUrlFailed(url);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, failureVersion]);
   const activeCount = countActiveFilters(filters);
 
   const fetchPage = useCallback(

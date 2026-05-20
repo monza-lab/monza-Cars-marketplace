@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { extractSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
 import { partitionByPhoto } from "@/lib/photoSort";
+import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -338,6 +339,11 @@ export function useInfiniteAuctions(
   // ── Derived: filtered cars (when family is set) ──
   // Note: cars are already filtered by family in fetchPage (with title),
   // so this is just a safety net — must also pass title for consistency.
+  // Subscribe to the runtime image-failure store. Every time a card's
+  // primary image errors out (CORS, 404, 307→placeholder, tiny CDN pixel),
+  // SafeImage bumps the store's version and we re-evaluate `visibleCars`
+  // to drop the offending car from the feed.
+  const failureVersion = useImageFailureVersion();
   const visibleCars = useMemo(() => {
     const filtered = resolvedFamily
       ? cars.filter(
@@ -349,8 +355,14 @@ export function useInfiniteAuctions(
     // breaks the collector-grade first impression. Backend keeps the rows
     // for analytics, but the public feed only surfaces photographed cars.
     const { withPhoto } = partitionByPhoto(filtered);
-    return withPhoto;
-  }, [cars, resolvedFamily, make]);
+    return withPhoto.filter((car) => {
+      const url = car.images?.[0] ?? car.image ?? "";
+      return !isImageUrlFailed(url);
+    });
+    // failureVersion intentionally listed so this memo re-runs whenever
+    // a new image failure is reported.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cars, resolvedFamily, make, failureVersion]);
 
   // ── Return ──
   return {
