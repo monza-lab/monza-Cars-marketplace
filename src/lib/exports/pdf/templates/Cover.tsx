@@ -74,7 +74,7 @@ export function Cover({
             textTransform: "uppercase",
           }}
         >
-          Haus Report · v{reportVersionLabel ?? report.report_version ?? 3}
+          Haus Report
         </Text>
       </View>
 

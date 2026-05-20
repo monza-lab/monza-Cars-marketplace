@@ -176,8 +176,10 @@ export function BrowseClient({
   );
 
   const visible = useMemo(() => {
-    const { withPhoto, withoutPhoto } = partitionByPhoto(filtered);
-    return withPhoto.concat(withoutPhoto);
+    // Classic view also hides cars without photos. Same reason as the Monza
+    // feed in useInfiniteAuctions — keep the marketplace looking curated.
+    const { withPhoto } = partitionByPhoto(filtered);
+    return withPhoto;
   }, [filtered]);
   const activeCount = countActiveFilters(filters);
 
@@ -317,7 +319,15 @@ export function BrowseClient({
       <NoMarketplaceBanner />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && remoteLoading ? (
+          /* Region/filter change in progress — show a spinner instead of the
+             empty state, which used to flash for ~1s and look like an error
+             while the new query was still in flight. */
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="size-10 rounded-full border-2 border-border border-t-primary animate-spin mb-4" />
+            <p className="text-[13px] text-muted-foreground">Loading cars…</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="size-14 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
               <SlidersHorizontal className="size-5 text-muted-foreground" />

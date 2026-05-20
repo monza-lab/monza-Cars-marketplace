@@ -345,10 +345,11 @@ export function useInfiniteAuctions(
             extractSeries(car.model ?? "", car.year ?? 0, car.make ?? make, car.title ?? "") === resolvedFamily,
         )
       : cars;
-    // Deprioritize (don't drop) cars without photos so the first impression
-    // of every infinite-scroll feed is visually trustworthy.
-    const { withPhoto, withoutPhoto } = partitionByPhoto(filtered);
-    return withPhoto.concat(withoutPhoto);
+    // Hide cars without real photos — a feed full of placeholder thumbs
+    // breaks the collector-grade first impression. Backend keeps the rows
+    // for analytics, but the public feed only surfaces photographed cars.
+    const { withPhoto } = partitionByPhoto(filtered);
+    return withPhoto;
   }, [cars, resolvedFamily, make]);
 
   // ── Return ──
