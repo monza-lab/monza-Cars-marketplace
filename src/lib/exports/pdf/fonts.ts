@@ -22,7 +22,11 @@ export function ensureBrandFontsRegistered(): void {
       fonts: [
         { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 400 },
         { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 500 },
-        { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 600 },
+        // The wordmark uses 600 (SemiBold). Saira.ttf is a variable font and
+        // react-pdf can't activate the weight axis, so it always rendered as
+        // Regular. Static Saira-SemiBold.ttf (from Google Fonts CDN) matches
+        // the web wordmark weight exactly.
+        { src: path.join(FONT_DIR, "Saira-SemiBold.ttf"), fontWeight: 600 },
         { src: path.join(FONT_DIR, "Saira.ttf"), fontWeight: 700 },
       ],
     })

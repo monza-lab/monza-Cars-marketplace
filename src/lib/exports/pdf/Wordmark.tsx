@@ -41,10 +41,10 @@ export function Helmet({
 }) {
   const colors = getHelmetColors(theme)
   const shell = shellColor ?? colors.shell
-  // Helmet at full cap-height parity with surrounding Saira letters
-  // so the "O" replacement reads as the proper logo, not a small dot.
-  const w = size * 1.05
-  const h = size * 1.06
+  // Match the web wordmark exactly: helmet sized at 0.78em × 0.79em
+  // (cap-height parity, not full em). See MonzaHausHelmet.tsx.
+  const w = size * 0.78
+  const h = size * 0.79
 
   return (
     <Svg viewBox="0 0 120 121" style={{ width: w, height: h }}>
@@ -79,20 +79,20 @@ export function Wordmark({ theme, size = 14, shellColor, letterColor }: Wordmark
     <View
       style={{
         flexDirection: "row",
-        // baseline alignment to match the site's wordmark, then nudge the
-        // helmet container down by ~7% of em (mirrors the site's
-        // `transform: translateY(0.07em)` on the helmet inset).
-        alignItems: "baseline",
+        // Center cross-axis alignment puts the helmet on the vertical middle
+        // of the letter line. From there we offset down with `top` so the
+        // helmet sits squarely inside the cap-line, like the "O" it replaces.
+        alignItems: "center",
       }}
     >
       <Text style={letterStyle}>M</Text>
       <View
         style={{
           marginHorizontal: size * 0.03,
-          // POSITIVE marginTop pushes the helmet DOWN onto the baseline.
-          // Earlier we had a negative value which pulled it above the cap
-          // line — that's why the casco "salía hacia arriba".
-          marginTop: size * 0.18,
+          // Push down from the centered position so the helmet's top sits
+          // around the cap-height of the surrounding letters. ~0.08em below
+          // center hits the visual sweet spot for a Saira SemiBold line.
+          top: size * 0.29,
         }}
       >
         <Helmet size={size} theme={theme} shellColor={shellColor} />

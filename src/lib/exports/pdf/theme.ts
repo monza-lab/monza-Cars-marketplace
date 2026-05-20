@@ -84,10 +84,10 @@ export function getPdfTokens(theme: PdfTheme): PdfColorTokens {
 /**
  * Helmet (casco) glyph colors per surface — used by the Wordmark component.
  *
- * In dark surfaces we use Lavender Ink Deep (#3F2A47) for the visor/strap
- * instead of pure noir so the helmet's interior reads distinctly against
- * a noir background (the canonical brand SVG includes a noir rect behind
- * the helmet to provide that contrast; we render without that rect).
+ * Mirrors the web's MonzaHausHelmet tones exactly (lavender-on-cream /
+ * lavender-on-noir). On dark the visor reads as a noir cutout against the
+ * noir background — intentional negative-space effect, matching the brand
+ * manual v2.1.
  */
 export function getHelmetColors(theme: PdfTheme): {
   shell: string
@@ -97,5 +97,5 @@ export function getHelmetColors(theme: PdfTheme): {
   if (theme === "light") {
     return { shell: "#D6BEDC", visor: "#0E0E0D", strap: "#0E0E0D" }
   }
-  return { shell: "#E1CCE5", visor: "#3F2A47", strap: "#3F2A47" }
+  return { shell: "#E1CCE5", visor: "#0E0E0D", strap: "#0E0E0D" }
 }
