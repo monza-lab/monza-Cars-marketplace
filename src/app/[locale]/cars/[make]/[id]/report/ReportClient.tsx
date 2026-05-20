@@ -57,6 +57,7 @@ import { useAuth } from "@/lib/auth/AuthProvider"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
+import { ReportSummaryRail } from "@/components/report/ReportSummaryRail"
 import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 import type {
   PipelineProgress,
@@ -148,15 +149,16 @@ function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
 }
 
 // â”€â”€â”€ SECTION IDS for scroll-spy â”€â”€â”€
+// Ordered macro → micro: verdict-style summary, market, performance, then
+// the vehicle-specific details. Risk consolidates into Due Diligence.
 const SECTION_IDS = [
   "summary",
-  "identity",
   "valuation",
   "performance",
-  "risk",
-  "dueDiligence",
+  "identity",
   "marketContext",
   "similar",
+  "dueDiligence",
   "verdict",
 ] as const
 
@@ -167,7 +169,6 @@ const SECTION_ICONS: Record<SectionId, React.ComponentType<{ className?: string 
   identity: Car,
   valuation: Globe,
   performance: TrendingUp,
-  risk: AlertTriangle,
   dueDiligence: HelpCircle,
   marketContext: BarChart3,
   similar: Users,
@@ -208,7 +209,7 @@ export function ReportClient({
 
   const router = useRouter()
   const locale = useLocale()
-  const { setContext } = useChatContext()
+  const { setContext, open: openAdvisor } = useChatContext()
 
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
@@ -233,7 +234,7 @@ export function ReportClient({
       locale,
       car,
       // SectionId union matches ChatContext["activeSection"] exactly; cast is safe
-      activeSection: activeSection as "summary" | "identity" | "valuation" | "performance" | "risk" | "dueDiligence" | "marketContext" | "similar" | "verdict" | null,
+      activeSection: activeSection as "summary" | "identity" | "valuation" | "performance" | "dueDiligence" | "marketContext" | "similar" | "verdict" | null,
       seriesId: null,
     })
     return () => {
@@ -478,7 +479,6 @@ export function ReportClient({
   const flags: string[] = []
   const questions: string[] = []
   const strengths: string[] = []
-  const hasDbRiskData = flags.length > 0
   const hasDbQuestions = questions.length > 0
 
   // No fake comparables â€” regional stats replace this
@@ -1867,7 +1867,7 @@ export function ReportClient({
       </div>
 
       {/* â•â•â• MAIN CONTENT â•â•â• */}
-      <div className="md:ml-[240px] pt-[52px] md:pt-[var(--app-header-h,80px)]">
+      <div className="md:ml-[240px] xl:mr-[240px] pt-[52px] md:pt-[var(--app-header-h,80px)]">
         <div className={`max-w-[840px] mx-auto px-4 md:px-8 ${hasAccess ? "pb-32" : "pb-24"}`}>
 
           {/* â•â•â• COVER / HERO â•â•â• */}
@@ -2083,93 +2083,6 @@ export function ReportClient({
             </section>
 
             {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-                Â§2 â€” VEHICLE IDENTITY & PROVENANCE
-                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-            <section ref={setSectionRef("identity")} id="section-identity" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="identity">
-                {hasAccess && v3Report ? (
-                  <>
-                    <SectionHeader id="identity" title={t("sections.identity")} />
-                    <InvestmentStoryBlock narrative={report?.investment_narrative} />
-                    <ColorIntelBlock colorIntel={report?.color_intelligence} />
-                    <VinIntelBlock
-                      vinIntel={report?.vin_intelligence}
-                      vin={car.vin ?? null}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <SectionHeader id="identity" title={t("sections.identity")} />
-
-                    {/* Specs grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                      {[
-                        { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
-                        { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
-                        { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
-                        { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
-                        { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
-                      ].map((spec, i) => (
-                        <div key={i} className="rounded-xl bg-card border border-border p-4">
-                          <div className="flex items-center gap-2 text-primary/60 mb-2">
-                            {spec.icon}
-                            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
-                          </div>
-                          <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Provenance */}
-                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <History className="size-4 text-primary" />
-                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
-                      </div>
-                      <div className="pl-4 border-l border-border">
-                        <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-                      </div>
-                    </div>
-
-                    {/* Platform data */}
-                    <div className="rounded-xl bg-card border border-border p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FileText className="size-4 text-primary" />
-                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
-                            <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
-                          <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
-                          <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
-                        </div>
-                        <div>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
-                            <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
-                              {car.status === "ENDED" ? "Ended" : isLive ? `Live Â· ${timeLeft(car.endTime)}` : car.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </PaywallSection>
-            </section>
-
-            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 Â§3 â€” MARKET VALUATION & REGIONAL ARBITRAGE
                 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("valuation")} id="section-valuation" className="scroll-mt-[70px] md:scroll-mt-[100px]">
@@ -2340,13 +2253,6 @@ export function ReportClient({
             </section>
 
             {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-                Â§3b â€” SIGNALS DETECTED
-                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-            <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <SignalsDetectedSection signals={report?.signals_detected ?? []} />
-            </section>
-
-            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 Â§4 â€” INVESTMENT PERFORMANCE
                 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
             <section ref={setSectionRef("performance")} id="section-performance" className="scroll-mt-[70px] md:scroll-mt-[100px]">
@@ -2476,150 +2382,88 @@ export function ReportClient({
             </section>
 
             {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-                Â§5 â€” RISK ASSESSMENT
+                Â§2 â€” VEHICLE IDENTITY & PROVENANCE
                 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-            <section ref={setSectionRef("risk")} id="section-risk" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="risk">
-                <SectionHeader id="risk" title={t("sections.risk")} />
-
+            <section ref={setSectionRef("identity")} id="section-identity" className="scroll-mt-[70px] md:scroll-mt-[100px]">
+              <PaywallSection sectionId="identity">
                 {hasAccess && v3Report ? (
-                  <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
+                    <InvestmentStoryBlock narrative={report?.investment_narrative} />
+                    <ColorIntelBlock colorIntel={report?.color_intelligence} />
+                    <VinIntelBlock
+                      vinIntel={report?.vin_intelligence}
+                      vin={car.vin ?? null}
+                    />
+                  </>
                 ) : (
-                <>
+                  <>
+                    <SectionHeader id="identity" title={t("sections.identity")} />
 
-                {/* Risk gauge */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.overallScore")}</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/30 via-primary/30 to-red-400/30" />
-                        <motion.div
-                          initial={{ left: 0 }}
-                          animate={{ left: `calc(${riskScore}% - 8px)` }}
-                          transition={{ duration: 0.8 }}
-                          className="absolute top-1/2 -translate-y-1/2 size-[16px] rounded-full bg-white border-2 border-background shadow-lg"
-                          style={{ left: `calc(${riskScore}% - 8px)` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-[9px] text-positive">{t("risk.low")}</span>
-                        <span className="text-[9px] text-destructive">{t("risk.moderate")}</span>
-                        <span className="text-[9px] text-destructive">{t("risk.high")}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-[28px] font-black ${((riskScore ?? 100) <= 30) ? "text-positive" : ((riskScore ?? 100) <= 50) ? "text-destructive" : "text-destructive"}`}>
-                        {riskScore}
-                      </span>
-                      <span className="text-[12px] text-muted-foreground">/100</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Red flags â€” only show when DB data available */}
-                {hasDbRiskData ? (
-                  <div className="rounded-xl bg-card border border-border p-5">
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("risk.knownIssues")}</h3>
-                    <div className="space-y-2">
-                      {flags.map((flag, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-border">
-                          <AlertTriangle className="size-4 text-primary mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] text-foreground">{flag}</p>
+                    {/* Specs grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                      {[
+                        { label: t("identity.engine"), value: car.engine, icon: <Gauge className="size-4" /> },
+                        { label: t("identity.transmission"), value: car.transmission, icon: <Cog className="size-4" /> },
+                        { label: t("identity.mileage"), value: `${car.mileage.toLocaleString()} ${car.mileageUnit}`, icon: <TrendingUp className="size-4" /> },
+                        { label: t("identity.location"), value: car.location, icon: <MapPin className="size-4" /> },
+                        { label: t("identity.category"), value: car.category, icon: <Car className="size-4" /> },
+                      ].map((spec, i) => (
+                        <div key={i} className="rounded-xl bg-card border border-border p-4">
+                          <div className="flex items-center gap-2 text-primary/60 mb-2">
+                            {spec.icon}
+                            <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{spec.label}</span>
                           </div>
-                          <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                            i < 2 ? "bg-primary/15 text-primary" : "bg-foreground/5 text-muted-foreground"
-                          }`}>
-                            {i < 2 ? t("risk.critical") : t("risk.monitor")}
-                          </span>
+                          <span className="text-[14px] font-semibold text-foreground">{spec.value}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-border bg-card/40 p-5 text-center">
-                    <p className="text-[13px] text-foreground/80 font-medium mb-1">
-                      Risk flags surface during the full analysis
-                    </p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      The full report scans the listing for known issues, missing signals, and what to verify before bidding.
-                    </p>
-                  </div>
-                )}
-                </>
-                )}
-              </PaywallSection>
-            </section>
 
-            {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-                Â§6 â€” DUE DILIGENCE TOOLKIT
-                â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-            <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <PaywallSection sectionId="dueDiligence">
-                <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
-
-                {hasAccess && v3Report ? (
-                  <div className="space-y-4">
-                    <V3DueDiligenceSection data={v3Report.dueDiligence} />
-                    <BuyerServicesSection data={v3Report.buyerServices} />
-                  </div>
-                ) : (
-                <>
-
-                {/* Questions to ask */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("dueDiligence.questionsToAsk")}</h3>
-                    <button
-                      onClick={handleCopyQuestions}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
-                    >
-                      {copiedQuestions ? <Check className="size-3 text-positive" /> : <Copy className="size-3" />}
-                      {copiedQuestions ? t("dueDiligence.copied") : t("dueDiligence.copyAll")}
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {questions.map((q, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
-                        <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
-                          {i + 1}
-                        </span>
-                        <span className="text-[13px] text-foreground/80">{q}</span>
+                    {/* Provenance */}
+                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <History className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="pl-4 border-l border-border">
+                        <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
+                      </div>
+                    </div>
 
-                {/* Inspection checklist */}
-                <div className="rounded-xl bg-card border border-border p-5">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("dueDiligence.inspectionChecklist")}</h3>
-                  <div className="space-y-2">
-                    {[
-                      { item: "Compression test all cylinders", critical: true },
-                      { item: "Full chassis and suspension inspection", critical: true },
-                      { item: "Paint depth measurement (all panels)", critical: false },
-                      { item: "Electronics and switchgear test", critical: false },
-                      { item: "Road test (minimum 30 minutes)", critical: true },
-                      { item: "Fluid analysis (engine oil, transmission)", critical: false },
-                    ].map((check, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
-                        <div className="flex items-center gap-3">
-                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-primary/10" : "bg-foreground/5"}`}>
-                            <CheckCircle2 className={`size-3 ${check.critical ? "text-primary" : "text-muted-foreground"}`} />
+                    {/* Platform data */}
+                    <div className="rounded-xl bg-card border border-border p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="size-4 text-primary" />
+                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.platformData")}</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.platform")}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            {platform && <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${platform.color}`}>{platform.short}</span>}
+                            <span className="text-[12px] text-muted-foreground">{car.platform.replace(/_/g, " ")}</span>
                           </div>
-                          <span className="text-[13px] text-foreground/80">{check.item}</span>
                         </div>
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                          check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
-                        }`}>
-                          {check.critical ? t("dueDiligence.required") : t("dueDiligence.recommended")}
-                        </span>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.currentBid")}</span>
+                          <p className="text-[16px] tabular-nums font-bold text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.bidCount")}</span>
+                          <p className="text-[14px] font-semibold text-foreground mt-1">{car.bidCount}</p>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("identity.status")}</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {isLive && <div className="size-1.5 rounded-full bg-positive animate-pulse" />}
+                            <span className={`text-[12px] font-semibold ${isLive ? "text-positive" : "text-muted-foreground"}`}>
+                              {car.status === "ENDED" ? "Ended" : isLive ? `Live Â· ${timeLeft(car.endTime)}` : car.status}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                </>
+                    </div>
+                  </>
                 )}
               </PaywallSection>
             </section>
@@ -2713,10 +2557,75 @@ export function ReportClient({
             </section>
 
             {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-                Â§9b â€” SIGNALS MISSING (pre-verdict)
+                Â§6 â€” DUE DILIGENCE TOOLKIT
                 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-            <section className="scroll-mt-[70px] md:scroll-mt-[100px]">
-              <SignalsMissingSection signals={report?.signals_missing ?? []} />
+            <section ref={setSectionRef("dueDiligence")} id="section-dueDiligence" className="scroll-mt-[70px] md:scroll-mt-[100px]">
+              <PaywallSection sectionId="dueDiligence">
+                <SectionHeader id="dueDiligence" title={t("sections.dueDiligence")} />
+
+                {hasAccess && v3Report ? (
+                  <div className="space-y-4">
+                    <V3DueDiligenceSection data={v3Report.dueDiligence} />
+                    <BuyerServicesSection data={v3Report.buyerServices} />
+                  </div>
+                ) : (
+                <>
+
+                {/* Questions to ask */}
+                <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">{t("dueDiligence.questionsToAsk")}</h3>
+                    <button
+                      onClick={handleCopyQuestions}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground/[0.03] border border-border text-[10px] font-medium text-muted-foreground hover:text-primary hover:border-primary/20 transition-all"
+                    >
+                      {copiedQuestions ? <Check className="size-3 text-positive" /> : <Copy className="size-3" />}
+                      {copiedQuestions ? t("dueDiligence.copied") : t("dueDiligence.copyAll")}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {questions.map((q, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-foreground/2">
+                        <span className="flex items-center justify-center size-6 rounded-full bg-primary/10 text-[10px] font-bold text-primary shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="text-[13px] text-foreground/80">{q}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Inspection checklist */}
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("dueDiligence.inspectionChecklist")}</h3>
+                  <div className="space-y-2">
+                    {[
+                      { item: "Compression test all cylinders", critical: true },
+                      { item: "Full chassis and suspension inspection", critical: true },
+                      { item: "Paint depth measurement (all panels)", critical: false },
+                      { item: "Electronics and switchgear test", critical: false },
+                      { item: "Road test (minimum 30 minutes)", critical: true },
+                      { item: "Fluid analysis (engine oil, transmission)", critical: false },
+                    ].map((check, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-foreground/2">
+                        <div className="flex items-center gap-3">
+                          <div className={`size-5 rounded-md flex items-center justify-center ${check.critical ? "bg-primary/10" : "bg-foreground/5"}`}>
+                            <CheckCircle2 className={`size-3 ${check.critical ? "text-primary" : "text-muted-foreground"}`} />
+                          </div>
+                          <span className="text-[13px] text-foreground/80">{check.item}</span>
+                        </div>
+                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                          check.critical ? "bg-primary/15 text-primary" : "bg-muted-foreground/20 text-muted-foreground"
+                        }`}>
+                          {check.critical ? t("dueDiligence.required") : t("dueDiligence.recommended")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                </>
+                )}
+              </PaywallSection>
             </section>
 
             {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -3344,6 +3253,27 @@ export function ReportClient({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* â•â•â• SUMMARY RAIL â€” sticky right column on xl+, sticky bottom on mobile â•â•â• */}
+      <ReportSummaryRail
+        verdict={(
+          v3Report?.finalSynthesis?.finalRecommendation?.verdict
+            ? (v3Report.finalSynthesis.finalRecommendation.verdict.toLowerCase() as "buy" | "watch" | "walk" | "hold")
+            : verdict
+        )}
+        fairValueLow={report?.specific_car_fair_value_low ?? null}
+        fairValueHigh={report?.specific_car_fair_value_high ?? null}
+        fairValueMid={report?.specific_car_fair_value_mid ?? null}
+        askingPrice={car.currentBid > 0 ? car.currentBid : (car.price ?? 0)}
+        formatPrice={formatPrice}
+        riskScore={riskScore}
+        signalsDetected={detectedCount}
+        signalsTotal={totalSignalCount}
+        hasAccess={hasAccess}
+        onDownload={() => setShowDownloadSheet(true)}
+        onAdvisor={openAdvisor}
+        isGeneratingExports={downloadingPdf || downloadingExcel}
+      />
     </div>
   )
 }
