@@ -123,6 +123,11 @@ export function BrowseClient({
     const t = setTimeout(() => setActiveServerKey(serverFilterKey), 300);
     return () => clearTimeout(t);
   }, [serverFilterKey]);
+  // True while the user has changed a server filter but the debounce
+  // hasn't fired yet (300ms window). Used to keep the loading state up
+  // so the empty-state copy ("No reports match") never flashes before
+  // the new fetch actually starts.
+  const isFilterPending = serverFilterKey !== activeServerKey;
 
   // Extra cars streamed in from /api/mock-auctions as the user scrolls or changes filters.
   const [remoteCars, setRemoteCars] = useState<DashboardAuction[]>([]);
@@ -319,10 +324,11 @@ export function BrowseClient({
       <NoMarketplaceBanner />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
-        {filtered.length === 0 && remoteLoading ? (
+        {filtered.length === 0 && (remoteLoading || isFilterPending) ? (
           /* Region/filter change in progress — show a spinner instead of the
              empty state, which used to flash for ~1s and look like an error
-             while the new query was still in flight. */
+             while the new query was still in flight. isFilterPending covers
+             the 300ms debounce window before the fetch actually begins. */
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="size-10 rounded-full border-2 border-border border-t-primary animate-spin mb-4" />
             <p className="text-[13px] text-muted-foreground">Loading cars…</p>
