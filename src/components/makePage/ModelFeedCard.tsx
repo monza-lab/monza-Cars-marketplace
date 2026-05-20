@@ -17,8 +17,8 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
 
   const cardContent = (
     <>
-      {/* TOP: CINEMATIC IMAGE */}
-        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+      {/* TOP: CINEMATIC IMAGE — fills remaining space, content-priority layout */}
+        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
           {model.representativeImage ? (
             <Image
               src={model.representativeImage}
@@ -58,8 +58,8 @@ export function ModelFeedCard({ model, make, onClick, index = 0 }: { model: Mode
           </div>
         </div>
 
-        {/* BOTTOM: MODEL INFO */}
-        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
+        {/* BOTTOM: MODEL INFO — sized by content, never compressed */}
+        <div className="shrink-0 w-full bg-card p-6 flex flex-col">
           {/* Model name + subtitle */}
           <div>
             <h2 className="text-3xl font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">

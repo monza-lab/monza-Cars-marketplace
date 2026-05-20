@@ -28,8 +28,8 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
         onClick={onClick}
         className="flex-1 flex flex-col rounded-[32px] overflow-hidden bg-card border border-border group cursor-pointer hover:border-primary/20 transition-all duration-300 text-left"
       >
-        {/* TOP: CINEMATIC IMAGE */}
-        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+        {/* TOP: CINEMATIC IMAGE — fills remaining space, content-priority layout */}
+        <div className="relative flex-1 min-h-0 w-full overflow-hidden">
           {gen.representativeImage ? (
             <Image
               src={gen.representativeImage}
@@ -62,8 +62,8 @@ export function GenerationFeedCard({ gen, familyName, make, onClick }: { gen: Ge
           </div>
         </div>
 
-        {/* BOTTOM: GENERATION INFO */}
-        <div className="flex-1 w-full bg-card p-6 flex flex-col justify-between">
+        {/* BOTTOM: GENERATION INFO — sized by content, never compressed */}
+        <div className="shrink-0 w-full bg-card p-6 flex flex-col">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary mb-1">
               {make} {familyName}
