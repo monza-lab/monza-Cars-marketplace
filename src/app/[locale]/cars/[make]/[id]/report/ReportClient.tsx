@@ -209,7 +209,7 @@ export function ReportClient({
 
   const router = useRouter()
   const locale = useLocale()
-  const { setContext, open: openAdvisor } = useChatContext()
+  const { setContext } = useChatContext()
 
   const t = useTranslations("investmentReport")
   const tPricing = useTranslations("pricing")
@@ -3266,13 +3266,8 @@ export function ReportClient({
         fairValueMid={report?.specific_car_fair_value_mid ?? null}
         askingPrice={car.currentBid > 0 ? car.currentBid : (car.price ?? 0)}
         formatPrice={formatPrice}
-        riskScore={riskScore}
-        signalsDetected={detectedCount}
-        signalsTotal={totalSignalCount}
-        hasAccess={hasAccess}
-        onDownload={() => setShowDownloadSheet(true)}
-        onAdvisor={openAdvisor}
-        isGeneratingExports={downloadingPdf || downloadingExcel}
+        similarCars={similarCars}
+        makeSlug={car.make.toLowerCase().replace(/\s+/g, "-")}
       />
     </div>
   )
