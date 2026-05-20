@@ -84,7 +84,7 @@ export function CarCard({ car, index }: { car: CollectorCar; index: number }) {
           </div>
 
           {/* Persistent "Report" cue — sutil pero presente. Lets the
-              reader know the entire card opens the investment report. */}
+              reader know the entire card opens the Haus Report. */}
           <span
             aria-hidden="true"
             className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-primary/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-md transition-all duration-200 group-hover:bg-primary group-hover:-translate-y-0.5"

@@ -786,7 +786,7 @@ function CarContextPanel({
               <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; costs</p>
             </div>
             <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
@@ -1278,7 +1278,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <FileText className="size-6 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+            <p className="text-[14px] font-semibold text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation · Risks · Comps · Costs</p>
           </div>
           <span className="shrink-0 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-primary-foreground">
@@ -1886,7 +1886,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <FileText className="size-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Full Investment Report</p>
+                    <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; ownership costs</p>
                   </div>
                   <span className="flex items-center gap-2 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-[12px] font-semibold text-primary-foreground">
@@ -2188,7 +2188,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       </div>
                       <div>
                         <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Download PDF</p>
-                        <p className="text-[11px] text-muted-foreground">{/* [HARDCODED] */}Full investment report</p>
+                        <p className="text-[11px] text-muted-foreground">{/* [HARDCODED] */}Full Haus Report</p>
                       </div>
                     </button>
 

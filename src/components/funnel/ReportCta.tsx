@@ -58,7 +58,7 @@ export function ReportCta({
         className={`inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-[12px] font-semibold uppercase tracking-wider text-primary-foreground hover:bg-primary/85 transition-colors shadow-[0_8px_24px_rgba(94,63,102,0.25)] ${className}`}
       >
         <FileText className="size-4" />
-        {label ?? "Get the Investment Report"}
+        {label ?? "Get the Haus Report"}
       </Link>
     )
   }
@@ -77,7 +77,7 @@ export function ReportCta({
             MonzaHaus
           </p>
           <p className="text-[15px] font-semibold text-foreground leading-tight">
-            {label ?? "Get the Investment Report"}
+            {label ?? "Get the Haus Report"}
           </p>
           {subline ? (
             <p className="text-[11px] text-muted-foreground mt-1">{subline}</p>
@@ -99,7 +99,7 @@ export function ReportCta({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-semibold text-foreground">
-          {label ?? "Investment Report"}
+          {label ?? "Haus Report"}
         </p>
         <p className="text-[10px] text-muted-foreground mt-0.5">
           {subline ?? "Valuation, risks, comps & costs"}

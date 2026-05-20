@@ -310,7 +310,7 @@ export function ModelContextPanel({
               <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">Full Investment Report</p>
+              <p className="text-[12px] font-semibold text-foreground">Full Haus Report</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Valuation, risks, comps &amp; costs</p>
             </div>
             <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />

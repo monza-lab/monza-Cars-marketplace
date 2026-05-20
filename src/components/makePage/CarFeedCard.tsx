@@ -160,7 +160,7 @@ export function CarFeedCard({ car, make }: { car: CollectorCar; make: string }) 
           {/* CTA — always visible at bottom */}
           <div className="mt-auto pt-3 flex items-center justify-center rounded-xl bg-primary py-2.5 group-hover:bg-primary/80 transition-colors">
             <span className="text-[12px] font-semibold tracking-[0.1em] uppercase text-primary-foreground">
-              View Investment Report
+              View Haus Report
             </span>
             <ChevronRight className="size-4 text-primary-foreground ml-1" />
           </div>

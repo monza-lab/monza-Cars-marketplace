@@ -20,7 +20,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What can I do with Pistons?",
-    a: "Pistons are your in-app currency: chat with the advisor (1 Piston), run marketplace queries (~5), deep research (~25), or generate a full investment report (100).",
+    a: "Pistons are your in-app currency: chat with the advisor (1 Piston), run marketplace queries (~5), deep research (~25), or generate a full Haus Report (100).",
   },
   {
     q: "What's the difference between top-up and subscription?",

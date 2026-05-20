@@ -68,7 +68,7 @@ function detectAuctionUrl(input: string): SearchItem | null {
       return {
         type: "link",
         label: `Analyze listing from ${platform.name}`,
-        subtitle: "Paste detected — get full investment report",
+        subtitle: "Paste detected — get a Haus Report",
         keywords: [],
         url: trimmed.startsWith("http") ? trimmed : `https://${trimmed}`,
       }
@@ -80,7 +80,7 @@ function detectAuctionUrl(input: string): SearchItem | null {
     return {
       type: "link",
       label: "Analyze this listing",
-      subtitle: "Paste a link to get an investment report",
+      subtitle: "Paste a link to get a Haus Report",
       keywords: [],
       url: trimmed,
     }

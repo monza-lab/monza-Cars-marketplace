@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Get Started — Free Porsche Market Report",
   description:
-    "Generate your first Porsche investment report for free. AI-powered market intelligence from real auction data.",
+    "Generate your first Porsche Haus Report for free. AI-powered market intelligence from real auction data.",
   robots: { index: false, follow: false },
 }
 
