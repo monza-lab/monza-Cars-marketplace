@@ -1,6 +1,9 @@
+"use client"
+
+import { useState } from "react"
 import type { FinalSynthesis, Verdict } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
-import { Info } from "lucide-react"
+import { Info, Lightbulb, ChevronDown } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
 interface ExecutiveSummarySectionProps {
@@ -33,10 +36,15 @@ function RiskMeter({ score }: { score: number }) {
 }
 
 export function ExecutiveSummarySection({ data }: ExecutiveSummarySectionProps) {
+  const [thesisExpanded, setThesisExpanded] = useState(false)
   if (!data?.executiveSummary) return null
 
   const { executiveSummary, finalRecommendation } = data
   const { headline, keyMetrics, investmentThesis } = executiveSummary
+  // A thesis under this length doesn't need an expand toggle — the user can
+  // read it without scrolling. Threshold chosen so a typical 3-line block
+  // stays inline and only longer paragraphs collapse.
+  const thesisIsLong = investmentThesis.length > 260
 
   return (
     <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
@@ -137,10 +145,34 @@ export function ExecutiveSummarySection({ data }: ExecutiveSummarySectionProps) 
       </div>
       </TooltipProvider>
 
-      {/* Investment thesis */}
-      <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-2">Investment Thesis</h3>
-        <p className="text-sm leading-relaxed text-muted-foreground">{investmentThesis}</p>
+      {/* Investment thesis â€” lavender-accented, collapsible for long copy */}
+      <div className="rounded-lg bg-primary/8 dark:bg-primary/[0.07] border border-primary/25 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Lightbulb className="size-3.5 text-primary" />
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+            Investment Thesis
+          </h3>
+        </div>
+        <p
+          className={`text-[13px] leading-relaxed text-foreground/85 ${
+            thesisIsLong && !thesisExpanded ? "line-clamp-3" : ""
+          }`}
+        >
+          {investmentThesis}
+        </p>
+        {thesisIsLong && (
+          <button
+            type="button"
+            onClick={() => setThesisExpanded((v) => !v)}
+            className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+            aria-expanded={thesisExpanded}
+          >
+            {thesisExpanded ? "Show less" : "Read full thesis"}
+            <ChevronDown
+              className={`size-3 transition-transform ${thesisExpanded ? "rotate-180" : ""}`}
+            />
+          </button>
+        )}
       </div>
 
       {/* Final recommendation */}

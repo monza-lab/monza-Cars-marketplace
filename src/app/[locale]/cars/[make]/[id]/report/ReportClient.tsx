@@ -1871,43 +1871,83 @@ export function ReportClient({
         <div className={`max-w-[840px] mx-auto px-4 md:px-8 ${hasAccess ? "pb-32" : "pb-24"}`}>
 
           {/* â•â•â• COVER / HERO â•â•â• */}
-          <div className="relative aspect-[16/9] md:aspect-[21/9] rounded-2xl md:rounded-3xl overflow-hidden mt-4 md:mt-6">
-            <SafeImage
-              src={car.image}
-              alt={car.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="(min-width: 768px) 840px, 100vw"
-              fallback={
-                <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                  <span className="text-muted-foreground text-lg">{car.title}</span>
-                </div>
-              }
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-            <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold border border-primary/20 backdrop-blur-md">
-                  {t("title")}
-                </span>
-                {!hasAccess && (
-                  <span className="px-2 py-0.5 rounded-full bg-black/30 text-white/70 text-[9px] font-medium backdrop-blur-md">
-                    {t("freePreview")}
+          {/* COVER / HERO — 2-column on md+ (image left, title + meta + source
+              CTA on the right) so the verdict and asking are visible in the
+              first fold without scroll. Mobile keeps the stacked image-over-
+              title-overlay layout because there's no room for a side panel. */}
+          <div className="grid md:grid-cols-[1.55fr_1fr] md:gap-5 mt-4 md:mt-6">
+            {/* Image */}
+            <div className="relative aspect-[16/9] md:aspect-[4/3] rounded-2xl md:rounded-3xl overflow-hidden">
+              <SafeImage
+                src={car.image}
+                alt={car.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(min-width: 768px) 500px, 100vw"
+                fallback={
+                  <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                    <span className="text-muted-foreground text-lg">{car.title}</span>
+                  </div>
+                }
+              />
+              {/* Mobile-only overlay — keeps the title legible over the photo
+                  before the md+ side panel takes over. */}
+              <div className="md:hidden absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+              <div className="md:hidden absolute bottom-4 left-4 right-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold border border-primary/20 backdrop-blur-md">
+                    {t("title")}
                   </span>
-                )}
+                  {!hasAccess && (
+                    <span className="px-2 py-0.5 rounded-full bg-black/30 text-white/70 text-[9px] font-medium backdrop-blur-md">
+                      {t("freePreview")}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-[20px] font-bold text-white leading-tight">
+                  {car.title}
+                </h1>
+                <p className="text-[11px] text-white/60 mt-1">{t("subtitle")}</p>
               </div>
-              <h1 className="text-[20px] md:text-[28px] font-bold text-white">{car.title}</h1>
-              <p className="text-[11px] md:text-[13px] text-white/60 mt-1">{t("subtitle")}</p>
+            </div>
+
+            {/* Title + meta + source CTA (md+ side panel) */}
+            <div className="hidden md:flex flex-col justify-between py-1">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[9px] font-bold border border-primary/25 tracking-wider uppercase">
+                    {t("title")}
+                  </span>
+                  {!hasAccess && (
+                    <span className="px-2 py-0.5 rounded-full bg-muted-foreground/15 text-muted-foreground text-[9px] font-medium tracking-wider uppercase">
+                      {t("freePreview")}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-[24px] lg:text-[28px] font-bold text-foreground leading-tight">
+                  {car.title}
+                </h1>
+                <p className="text-[12px] lg:text-[13px] text-muted-foreground mt-2 leading-relaxed">
+                  {t("subtitle")}
+                </p>
+              </div>
+              {car.sourceUrl && (
+                <div className="mt-4">
+                  <SourceListingCta
+                    sourceUrl={car.sourceUrl}
+                    platform={car.platform}
+                    variant="inline"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* â•â•â• Source listing CTA â€” quick path back to the marketplace â•â•â•
-              Sits right under the cover so it's always visible during
-              the study session. Sutil-pero-presente: outline lavender, no
-              compite con el verdict chips. */}
+          {/* Mobile-only source CTA — lives below the stacked image instead of
+              inside the (hidden) side panel. */}
           {car.sourceUrl && (
-            <div className="mt-4 md:mt-5">
+            <div className="md:hidden mt-4">
               <SourceListingCta
                 sourceUrl={car.sourceUrl}
                 platform={car.platform}
