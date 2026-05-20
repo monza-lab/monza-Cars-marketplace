@@ -1,9 +1,9 @@
-import { Page, Text, View } from "@react-pdf/renderer"
+import { Text, View } from "@react-pdf/renderer"
+import { PageWrap } from "../PageWrap"
 import type { TechnicalAnalysis } from "@/lib/reports/types-v3"
 import { createPdfStyles, getThemeTokens } from "../../styles"
 import type { PdfTheme } from "../../theme"
 import { humanize, truncate } from "../../utils"
-import { PageFooter } from "../PageFooter"
 
 interface Props {
   data: TechnicalAnalysis
@@ -12,6 +12,8 @@ interface Props {
   pageNumber: number
   totalPages: number
   theme: PdfTheme
+  /** When false, embed in parent Page (no PageFooter). */
+  wrap?: boolean
 }
 
 function severityColor(
@@ -30,6 +32,7 @@ export function TechnicalAnalysisPage({
   pageNumber,
   totalPages,
   theme,
+  wrap = true,
 }: Props) {
   const styles = createPdfStyles(theme)
   const tokens = getThemeTokens(theme)
@@ -37,7 +40,7 @@ export function TechnicalAnalysisPage({
   const lede = truncate(data.modelHistory, 250)
 
   return (
-    <Page size="A4" style={styles.page}>
+    <PageWrap wrap={wrap} theme={theme} hash={reportHash} generatedAt={generatedAt}>
       {/* Chapter opener */}
       <View>
         <Text style={styles.chapterEyebrow}>Chapter 04 · Technical</Text>
@@ -358,14 +361,6 @@ export function TechnicalAnalysisPage({
           </Text>
         </View>
       ) : null}
-
-      <PageFooter
-        hash={reportHash}
-        generatedAt={generatedAt}
-        pageNumber={pageNumber}
-        totalPages={totalPages}
-        theme={theme}
-      />
-    </Page>
+    </PageWrap>
   )
 }

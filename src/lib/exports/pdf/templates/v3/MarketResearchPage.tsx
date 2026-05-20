@@ -1,9 +1,9 @@
-import { Page, Text, View } from "@react-pdf/renderer"
+import { Text, View } from "@react-pdf/renderer"
+import { PageWrap } from "../PageWrap"
 import type { MarketResearch } from "@/lib/reports/types-v3"
 import { createPdfStyles, getThemeTokens } from "../../styles"
 import type { PdfTheme } from "../../theme"
 import { humanize } from "../../utils"
-import { PageFooter } from "../PageFooter"
 
 interface Props {
   data: MarketResearch
@@ -12,6 +12,8 @@ interface Props {
   pageNumber: number
   totalPages: number
   theme: PdfTheme
+  /** When false, embed in parent Page (no PageFooter). */
+  wrap?: boolean
 }
 
 function sentimentDotColor(
@@ -30,6 +32,7 @@ export function MarketResearchPage({
   pageNumber,
   totalPages,
   theme,
+  wrap = true,
 }: Props) {
   const styles = createPdfStyles(theme)
   const tokens = getThemeTokens(theme)
@@ -51,7 +54,7 @@ export function MarketResearchPage({
   const hasClubs = data.ownerClubs.length > 0
 
   return (
-    <Page size="A4" style={styles.page}>
+    <PageWrap wrap={wrap} theme={theme} hash={reportHash} generatedAt={generatedAt}>
       {/* Chapter opener */}
       <View>
         <Text style={styles.chapterEyebrow}>Chapter 03 · Market</Text>
@@ -260,14 +263,6 @@ export function MarketResearchPage({
           </Text>
         </View>
       )}
-
-      <PageFooter
-        hash={reportHash}
-        generatedAt={generatedAt}
-        pageNumber={pageNumber}
-        totalPages={totalPages}
-        theme={theme}
-      />
-    </Page>
+    </PageWrap>
   )
 }

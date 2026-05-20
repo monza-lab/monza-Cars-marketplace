@@ -1,4 +1,4 @@
-import { Document, renderToBuffer } from "@react-pdf/renderer"
+import { Document, Page, View, renderToBuffer } from "@react-pdf/renderer"
 import type { HausReportV2 } from "@/lib/fairValue/types"
 import type { RegionalMarketStats } from "@/lib/reports/types"
 import type { CollectorCar } from "@/lib/curatedCars"
@@ -6,10 +6,12 @@ import type { DbComparableRow } from "@/lib/db/queries"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { ensureBrandFontsRegistered } from "./fonts"
 import type { PdfTheme } from "./theme"
+import { createPdfStyles, getThemeTokens } from "./styles"
 import { Cover } from "./templates/Cover"
 import { TableOfContents } from "./templates/TableOfContents"
 import { CitationsPage, gatherCitations } from "./templates/CitationsPage"
 import { DisclaimerPage } from "./templates/DisclaimerPage"
+import { PageFooter } from "./templates/PageFooter"
 // Legacy V2 templates — kept for the no-V3 fallback path only
 import { RemarkableAndArbitragePage } from "./templates/RemarkableAndArbitragePage"
 import { ValuationPage } from "./templates/ValuationPage"
@@ -36,6 +38,24 @@ export interface RenderReportInput {
 }
 
 export type Verdict = "BUY" | "WATCH" | "WALK" | "PENDING"
+
+/**
+ * Thin lavender separator inserted between V3 chapters in the continuous
+ * flow Page. Adds vertical breathing room before the next chapter's
+ * eyebrow without forcing a hard page break.
+ */
+function SectionDivider({ color }: { color: string }) {
+  return (
+    <View
+      style={{
+        marginTop: 32,
+        marginBottom: 24,
+        height: 1,
+        backgroundColor: color,
+      }}
+    />
+  )
+}
 
 function deriveVerdict(askingUsd: number, fairMid: number | null): Verdict {
   if (fairMid === 0 || fairMid == null) return "PENDING"
@@ -110,6 +130,12 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
     }))
     const citations = gatherCitations(modifierCitations, v3.marketResearch?.expertConsensus?.compiledAnalysis ?? null)
 
+    // Theme tokens + page styles for the continuous-flow Page that hosts
+    // all six V3 chapters. Defined inline so they pick up the same theme
+    // as every chapter inside.
+    const pageStyles = createPdfStyles(theme)
+    const pageTokens = getThemeTokens(theme)
+
     const doc = (
       <Document
         title={`Haus Report ${input.car.year} ${input.car.make} ${input.car.model}`}
@@ -138,55 +164,77 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
           totalPages={TOTAL}
           theme={theme}
         />
-        <ExecutiveSummaryPage
-          data={v3.finalSynthesis!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_EXEC}
-          totalPages={TOTAL}
-          theme={theme}
-        />
-        <InvestmentStrategyPage
-          data={v3.investmentAnalysis!}
-          listingType={v3.vehicleIdentity?.listingType ?? "classified"}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_INVEST}
-          totalPages={TOTAL}
-          theme={theme}
-        />
-        <MarketResearchPage
-          data={v3.marketResearch!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_MARKET}
-          totalPages={TOTAL}
-          theme={theme}
-        />
-        <TechnicalAnalysisPage
-          data={v3.technicalAnalysis!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_TECH}
-          totalPages={TOTAL}
-          theme={theme}
-        />
-        <DueDiligenceV3Page
-          data={v3.dueDiligence!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_DD}
-          totalPages={TOTAL}
-          theme={theme}
-        />
-        <BuyerServicesPage
-          data={v3.buyerServices!}
-          reportHash={reportHash}
-          generatedAt={generatedAt}
-          pageNumber={PG_BUYER}
-          totalPages={TOTAL}
-          theme={theme}
-        />
+        {/* ── Continuous flow Page —  the 6 V3 chapters share one Page so
+            short chapters no longer leave trailing black space; the next
+            chapter starts wherever the previous one ended. PageFooter is
+            fixed inside this Page and renders on every physical page. ── */}
+        <Page size="A4" style={pageStyles.page}>
+          <ExecutiveSummaryPage
+            data={v3.finalSynthesis!}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_EXEC}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <SectionDivider color={pageTokens.borderSoft} />
+          <InvestmentStrategyPage
+            data={v3.investmentAnalysis!}
+            listingType={v3.vehicleIdentity?.listingType ?? "classified"}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_INVEST}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <SectionDivider color={pageTokens.borderSoft} />
+          <MarketResearchPage
+            data={v3.marketResearch!}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_MARKET}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <SectionDivider color={pageTokens.borderSoft} />
+          <TechnicalAnalysisPage
+            data={v3.technicalAnalysis!}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_TECH}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <SectionDivider color={pageTokens.borderSoft} />
+          <DueDiligenceV3Page
+            data={v3.dueDiligence!}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_DD}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <SectionDivider color={pageTokens.borderSoft} />
+          <BuyerServicesPage
+            data={v3.buyerServices!}
+            reportHash={reportHash}
+            generatedAt={generatedAt}
+            pageNumber={PG_BUYER}
+            totalPages={TOTAL}
+            theme={theme}
+            wrap={false}
+          />
+          <PageFooter
+            hash={reportHash}
+            generatedAt={generatedAt}
+            theme={theme}
+          />
+        </Page>
         <CitationsPage
           citations={citations}
           reportHash={reportHash}

@@ -1,9 +1,9 @@
-import { Page, Text, View } from "@react-pdf/renderer"
+import { Text, View } from "@react-pdf/renderer"
+import { PageWrap } from "../PageWrap"
 import type { BuyerServices } from "@/lib/reports/types-v3"
 import { createPdfStyles, getThemeTokens } from "../../styles"
 import type { PdfTheme } from "../../theme"
 import { humanize, fmtCurrency, fmtCurrencyFull } from "../../utils"
-import { PageFooter } from "../PageFooter"
 
 interface Props {
   data: BuyerServices
@@ -12,6 +12,8 @@ interface Props {
   pageNumber: number
   totalPages: number
   theme: PdfTheme
+  /** When false, embed in parent Page (no PageFooter). */
+  wrap?: boolean
 }
 
 function partsRatingDescription(
@@ -38,6 +40,7 @@ export function BuyerServicesPage({
   pageNumber,
   totalPages,
   theme,
+  wrap = true,
 }: Props) {
   const styles = createPdfStyles(theme)
   const tokens = getThemeTokens(theme)
@@ -52,7 +55,7 @@ export function BuyerServicesPage({
   const dailyPremium = insurance.dailyDriver?.annualPremium ?? null
 
   return (
-    <Page size="A4" style={styles.page}>
+    <PageWrap wrap={wrap} theme={theme} hash={reportHash} generatedAt={generatedAt}>
       {/* Chapter opener */}
       <View>
         <Text style={styles.chapterEyebrow}>Chapter 06 · Operations</Text>
@@ -534,14 +537,6 @@ export function BuyerServicesPage({
           ) : null}
         </View>
       ) : null}
-
-      <PageFooter
-        hash={reportHash}
-        generatedAt={generatedAt}
-        pageNumber={pageNumber}
-        totalPages={totalPages}
-        theme={theme}
-      />
-    </Page>
+    </PageWrap>
   )
 }

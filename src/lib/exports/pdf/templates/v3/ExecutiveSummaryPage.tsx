@@ -1,8 +1,8 @@
-import { Page, Text, View } from "@react-pdf/renderer"
+import { Text, View } from "@react-pdf/renderer"
+import { PageWrap } from "../PageWrap"
 import type { FinalSynthesis } from "@/lib/reports/types-v3"
 import { createPdfStyles, getThemeTokens, verdictColorsForTheme } from "../../styles"
 import type { PdfTheme } from "../../theme"
-import { PageFooter } from "../PageFooter"
 
 interface Props {
   data: FinalSynthesis
@@ -11,6 +11,8 @@ interface Props {
   pageNumber: number
   totalPages: number
   theme: PdfTheme
+  /** When false, embed in parent Page (no PageFooter). */
+  wrap?: boolean
 }
 
 function riskColor(score: number, tokens: ReturnType<typeof getThemeTokens>) {
@@ -26,6 +28,7 @@ export function ExecutiveSummaryPage({
   pageNumber,
   totalPages,
   theme,
+  wrap = true,
 }: Props) {
   const styles = createPdfStyles(theme)
   const tokens = getThemeTokens(theme)
@@ -34,7 +37,7 @@ export function ExecutiveSummaryPage({
   const vColors = verdictColorsForTheme(km.verdict, theme)
 
   return (
-    <Page size="A4" style={styles.page}>
+    <PageWrap wrap={wrap} theme={theme} hash={reportHash} generatedAt={generatedAt}>
       {/* Chapter opener */}
       <View>
         <Text style={styles.chapterEyebrow}>Chapter 01 · The Verdict</Text>
@@ -202,14 +205,6 @@ export function ExecutiveSummaryPage({
           </View>
         </View>
       ) : null}
-
-      <PageFooter
-        hash={reportHash}
-        generatedAt={generatedAt}
-        pageNumber={pageNumber}
-        totalPages={totalPages}
-        theme={theme}
-      />
-    </Page>
+    </PageWrap>
   )
 }
