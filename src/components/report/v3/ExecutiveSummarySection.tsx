@@ -145,7 +145,7 @@ export function ExecutiveSummarySection({ data }: ExecutiveSummarySectionProps) 
       </div>
       </TooltipProvider>
 
-      {/* Investment thesis â€” lavender-accented, collapsible for long copy */}
+      {/* Investment thesis - lavender-accented, collapsible for long copy */}
       <div className="rounded-lg bg-primary/8 dark:bg-primary/[0.07] border border-primary/25 p-4">
         <div className="flex items-center gap-2 mb-2">
           <Lightbulb className="size-3.5 text-primary" />

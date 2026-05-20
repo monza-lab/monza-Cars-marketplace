@@ -36,7 +36,7 @@ export function PageFooter({
 
   return (
     <>
-      {/* Editorial helmet glyph â€” fills the natural breathing room above
+      {/* Editorial helmet glyph - fills the natural breathing room above
           the footer on every page, including chapters with trailing empty
           space, so the page never feels half-finished. */}
       <View
