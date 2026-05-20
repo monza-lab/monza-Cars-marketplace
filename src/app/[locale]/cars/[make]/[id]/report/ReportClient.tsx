@@ -3256,6 +3256,7 @@ export function ReportClient({
 
       {/* â•â•â• SUMMARY RAIL â€” sticky right column on xl+, sticky bottom on mobile â•â•â• */}
       <ReportSummaryRail
+        car={car}
         verdict={(
           v3Report?.finalSynthesis?.finalRecommendation?.verdict
             ? (v3Report.finalSynthesis.finalRecommendation.verdict.toLowerCase() as "buy" | "watch" | "walk" | "hold")

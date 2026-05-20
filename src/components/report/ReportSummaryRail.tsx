@@ -6,10 +6,13 @@ import { ChevronUp, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import type { SimilarCarResult } from "@/lib/similarCars"
+import type { CollectorCar } from "@/lib/curatedCars"
+import { extractSeries } from "@/lib/brandConfig"
 
 type Verdict = "buy" | "watch" | "walk" | "hold" | null
 
 interface ReportSummaryRailProps {
+  car: CollectorCar
   verdict: Verdict
   fairValueLow: number | null
   fairValueHigh: number | null
@@ -51,6 +54,7 @@ const PENDING_STYLE = {
 }
 
 export function ReportSummaryRail({
+  car,
   verdict,
   fairValueLow,
   fairValueHigh,
@@ -66,6 +70,24 @@ export function ReportSummaryRail({
     verdict && VERDICT_STYLE[verdict] ? VERDICT_STYLE[verdict] : PENDING_STYLE
   const hasFair = fairValueLow != null && fairValueHigh != null
   const hasAsking = askingPrice > 0
+
+  // Build the "View all similar" deep link into Classic view (/browse).
+  // Series narrows the pool to this car's generation; price ±20% catches
+  // the band where peer comparables actually live. Falls back to bare
+  // /browse if we can't infer a series, so the CTA still navigates.
+  const browseAllHref = (() => {
+    const params = new URLSearchParams()
+    const series = extractSeries(car.model, car.year, car.make, car.title)
+    if (series) params.set("series", series)
+    if (hasAsking) {
+      const min = Math.floor(askingPrice * 0.8)
+      const max = Math.ceil(askingPrice * 1.2)
+      params.set("priceMin", String(min))
+      params.set("priceMax", String(max))
+    }
+    const qs = params.toString()
+    return qs ? `/browse?${qs}` : "/browse"
+  })()
 
   const midForDelta =
     fairValueMid ?? (hasFair ? (fairValueLow! + fairValueHigh!) / 2 : null)
@@ -238,13 +260,13 @@ export function ReportSummaryRail({
                 )
               })}
               {similarCars.length > peers.length && (
-                <a
-                  href="#section-similar"
+                <Link
+                  href={browseAllHref}
                   className="mt-2 mx-2 flex items-center justify-center gap-1 rounded-lg border border-border bg-card hover:border-primary/30 px-3 py-2 text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  View all {similarCars.length} similar
+                  View all in same range
                   <ChevronRight className="size-3" />
-                </a>
+                </Link>
               )}
             </div>
           )}
