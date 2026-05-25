@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import Image from "next/image"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { UnifiedSearch } from "@/components/search/UnifiedSearch"
 import {
   Search,
   Car,
@@ -763,90 +764,20 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           transition={{ type: "spring", damping: 30, stiffness: 300 }}
           className="fixed inset-0 z-[60] bg-background flex flex-col"
         >
-          {/* Sticky search input */}
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-3 shrink-0">
-            <form onSubmit={handleSubmit} className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-              <input
-                ref={inputRef}
-                type="search"
-                inputMode="search"
-                autoComplete="off"
-                autoCorrect="off"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("searchTypingPlaceholder")}
-                className="w-full bg-foreground/[0.05] border border-border rounded-xl pl-12 pr-24 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30 focus:bg-foreground/[0.08] transition-colors"
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery("")}
-                    aria-label="Clear search"
-                    className="size-8 flex items-center justify-center rounded-full bg-foreground/10 text-muted-foreground active:bg-foreground/15"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-3 h-8 text-[13px] font-medium text-muted-foreground active:text-foreground"
-                >
-                  {t("cancel")}
-                </button>
-              </div>
-            </form>
+          {/* Cancel bar */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border px-4 py-2 shrink-0 flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 h-8 text-[13px] font-medium text-muted-foreground active:text-foreground"
+            >
+              {t("cancel")}
+            </button>
           </div>
 
-          {/* Scrollable content */}
+          {/* UnifiedSearch fills the rest of the sheet */}
           <div className="flex-1 overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
-            {query.length < 2 ? (
-              <SearchEmptyState
-                recent={recent}
-                onRecentClick={handleRecentClick}
-                onClearRecent={handleClearRecent}
-                region={region}
-                setRegion={setRegion}
-                status={status}
-                setStatus={setStatus}
-                priceBucket={priceBucket}
-                setPriceBucket={setPriceBucket}
-                familyGroups={familyGroups}
-                onFamilyClick={handleFamilyClick}
-                trending={trending}
-                trendingLoaded={trendingLoaded}
-                onTrendingClick={(c) => {
-                  router.push(`/cars/${c.make.toLowerCase().replace(/\s+/g, "-")}/${c.id}`)
-                  onClose()
-                }}
-                onSubmitAll={handleSubmit}
-                activeFilterCount={activeFilterCount}
-              />
-            ) : (
-              <SearchResultsState
-                query={query}
-                taxonomyResults={taxonomyResults}
-                trendingResults={trendingResults}
-                region={region}
-                status={status}
-                priceBucket={priceBucket}
-                onClearRegion={() => setRegion("all")}
-                onClearStatus={() => setStatus("all")}
-                onClearPrice={() => setPriceBucket("any")}
-                onTaxonomyClick={handleTaxonomyClick}
-                onListingClick={(c) => {
-                  router.push(`/cars/${c.make.toLowerCase().replace(/\s+/g, "-")}/${c.id}`)
-                  onClose()
-                }}
-                onAskAdvisor={() => {
-                  router.push("/advisor")
-                  onClose()
-                }}
-                onSubmitAll={handleSubmit}
-              />
-            )}
+            <UnifiedSearch variant="sheet" autoFocus onClose={onClose} />
           </div>
         </motion.div>
       )}
