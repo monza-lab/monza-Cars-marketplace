@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link } from "@/i18n/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, MotionConfig } from "framer-motion"
+import { useIsMobile } from "@/lib/useMediaQuery"
 import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowLeft,
@@ -208,6 +209,7 @@ export function ReportClient({
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
   const router = useRouter()
+  const isMobile = useIsMobile()
   const locale = useLocale()
   const { setContext } = useChatContext()
 
@@ -1742,7 +1744,9 @@ export function ReportClient({
   }
 
   return (
+    <MotionConfig reducedMotion={isMobile ? "always" : "user"}>
     <div className="min-h-screen bg-background">
+
       {/* â•â•â• STICKY NAV â€” Desktop: sidebar, Mobile: top pills â•â•â• */}
 
       {/* MOBILE: Sticky top pills */}
@@ -3311,5 +3315,6 @@ export function ReportClient({
         makeSlug={car.make.toLowerCase().replace(/\s+/g, "-")}
       />
     </div>
+    </MotionConfig>
   )
 }
