@@ -688,17 +688,32 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Global ⌘K / Ctrl+K shortcut to open the unified search
+  // Global ⌘K / Ctrl+K shortcut + Esc to close + click-outside to close. Gated
+  // on showUnifiedSearch so the mousedown listener only fires while open.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
         setShowUnifiedSearch((v) => !v)
+        return
+      }
+      if (e.key === "Escape" && showUnifiedSearch) {
+        setShowUnifiedSearch(false)
       }
     }
+    function handleMouseDown(e: MouseEvent) {
+      if (!showUnifiedSearch) return
+      if (!unifiedSearchRef.current) return
+      if (unifiedSearchRef.current.contains(e.target as Node)) return
+      setShowUnifiedSearch(false)
+    }
     document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [])
+    document.addEventListener("mousedown", handleMouseDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      document.removeEventListener("mousedown", handleMouseDown)
+    }
+  }, [showUnifiedSearch])
 
   // Navigate to result
   const handleResultSelect = useCallback((item: SearchItem) => {
@@ -1032,37 +1047,27 @@ export function Header() {
         onOpenChange={setShowAuthModal}
       />
 
-      {/* UNIFIED SEARCH MODAL — centered command palette with backdrop */}
-      <AnimatePresence>
-        {showUnifiedSearch && (
-          <>
-            <motion.div
-              key="search-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => setShowUnifiedSearch(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59]"
+      {/* UNIFIED SEARCH MODAL — centered command palette with backdrop. The
+          backdrop is a non-interactive visual layer; close-on-outside-click
+          and close-on-Esc live in the useEffect above. */}
+      {showUnifiedSearch && (
+        <>
+          <div
+            aria-hidden
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59]"
+          />
+          <div
+            ref={unifiedSearchRef}
+            className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(720px,calc(100vw-32px))] z-[60]"
+          >
+            <UnifiedSearch
+              variant="header"
+              autoFocus
+              onClose={() => setShowUnifiedSearch(false)}
             />
-            <motion.div
-              key="search-modal"
-              ref={unifiedSearchRef}
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.98 }}
-              transition={{ duration: 0.18 }}
-              className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(720px,calc(100vw-32px))] z-[60]"
-            >
-              <UnifiedSearch
-                variant="header"
-                autoFocus
-                onClose={() => setShowUnifiedSearch(false)}
-              />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
     </>
   );
 }
