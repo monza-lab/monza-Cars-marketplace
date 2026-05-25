@@ -93,8 +93,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
   try {
     // When filtering by a specific series, scope server-side via the series' year
     // range so we don't return empty for popular series buried beyond the top N.
+    // Overfetch generously — we drop rows without images below.
     const seriesConfig = seriesFilter ? getSeriesConfig(seriesFilter, "porsche") : null
-    const overfetch = seriesFilter ? limit * 8 : limit * 3
+    const overfetch = seriesFilter ? limit * 12 : limit * 6
 
     let query = supabase
       .from("listings")
@@ -141,6 +142,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
           series,
         }
       })
+      // Search results must have a real image. A row with no usable image
+      // looks broken in the dropdown thumbnail slot and erodes trust.
+      .filter((l) => !!l.image)
 
     const filtered = seriesFilter
       ? mapped.filter((l) => l.series?.toLowerCase() === seriesFilter)
