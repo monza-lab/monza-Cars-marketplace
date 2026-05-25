@@ -78,11 +78,11 @@ export const carSortOptions = [
 ]
 
 export const SORT_LABELS: Record<string, string> = {
-  "price-desc": "Precio ↓",
-  "price-asc": "Precio ↑",
-  "year-desc": "Año ↓",
-  "year-asc": "Año ↑",
-  "count-desc": "Cantidad",
+  "price-desc": "Price ↓",
+  "price-asc": "Price ↑",
+  "year-desc": "Year ↓",
+  "year-asc": "Year ↑",
+  "count-desc": "Count",
 }
 
 // ─── PLATFORM LABELS ───
