@@ -71,7 +71,16 @@ import type {
 import { VinIntelBlock } from "@/components/report/VinIntelBlock"
 import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
 import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
-import { ComparablesAndPositioningBlock } from "@/components/report/ComparablesAndPositioningBlock"
+import dynamic from "next/dynamic"
+const ComparablesAndPositioningBlock = dynamic(
+  () => import("@/components/report/ComparablesAndPositioningBlock").then(m => m.ComparablesAndPositioningBlock),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-lg border border-border bg-card/30 animate-pulse" />
+    ),
+  },
+)
 import { VerdictBlock } from "@/components/report/VerdictBlock"
 import { computeD3PeerPositioning } from "@/lib/marketIntel/aggregator"
 

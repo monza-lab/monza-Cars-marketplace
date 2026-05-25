@@ -38,7 +38,16 @@ import {
   Palette,
   BadgeCheck,
 } from "lucide-react"
-import { PriceChart } from "@/components/auction/PriceChart"
+import dynamic from "next/dynamic"
+const PriceChart = dynamic(
+  () => import("@/components/auction/PriceChart").then(m => m.PriceChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-lg border border-border bg-card/30 animate-pulse" />
+    ),
+  },
+)
 import { useCurrency } from "@/lib/CurrencyContext"
 import type { PriceHistoryEntry } from "@/types/auction"
 
