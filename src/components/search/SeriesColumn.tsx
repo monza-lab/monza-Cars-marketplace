@@ -14,9 +14,11 @@ interface SeriesColumnProps {
 export function SeriesColumn({ items, activeId, onHover, onSelect, variant }: SeriesColumnProps) {
   const isStack = variant === "sheet"
 
+  const scrollClass = isStack ? "" : "max-h-[360px] overflow-y-auto"
+
   if (items.length === 0) {
     return (
-      <div className={isStack ? "" : "max-h-[60vh] overflow-y-auto"}>
+      <div className={scrollClass}>
         <p className="px-3 pt-2 pb-1 text-[9px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
           Series
         </p>
@@ -26,7 +28,7 @@ export function SeriesColumn({ items, activeId, onHover, onSelect, variant }: Se
   }
 
   return (
-    <div className={isStack ? "" : "max-h-[60vh] overflow-y-auto"}>
+    <div className={scrollClass}>
       <p className="px-3 pt-2 pb-1 text-[9px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
         Series
       </p>

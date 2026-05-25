@@ -673,7 +673,8 @@ export function Header() {
     label: t(`nav.${link.key}`),
   }));
 
-  // Close dropdown on outside click
+  // Close legacy dropdown on outside click (the new UnifiedSearch modal has
+  // its own backdrop and Esc handling)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -682,15 +683,21 @@ export function Header() {
       ) {
         setShowDropdown(false)
       }
-      if (
-        unifiedSearchRef.current &&
-        !unifiedSearchRef.current.contains(e.target as Node)
-      ) {
-        setShowUnifiedSearch(false)
-      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Global ⌘K / Ctrl+K shortcut to open the unified search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setShowUnifiedSearch((v) => !v)
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
   }, [])
 
   // Navigate to result
@@ -773,28 +780,22 @@ export function Header() {
               tools etc. so the header stays calm. */}
           {showViewToggle && <ViewToggle />}
 
-          {/* Center: Unified Search trigger (hidden on mobile). The desktop
-              autocomplete UI lives inside UnifiedSearch below; this header
-              shows a slim trigger that opens the dropdown. */}
-          <div ref={unifiedSearchRef} className="hidden md:block flex-1 max-w-xl relative">
-            {!showUnifiedSearch ? (
-              <button
-                type="button"
-                onClick={() => setShowUnifiedSearch(true)}
-                className="w-full flex items-center gap-3 text-left text-muted-foreground py-2 hover:text-foreground transition-colors"
-              >
+          {/* Center: Unified Search trigger (hidden on mobile). Clicking
+              opens a centered modal-style command palette. ⌘K also opens. */}
+          <div className="hidden md:block flex-1 max-w-xl relative">
+            <button
+              type="button"
+              onClick={() => setShowUnifiedSearch(true)}
+              className="w-full flex items-center justify-between gap-3 text-left text-muted-foreground py-2 hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-3 min-w-0">
                 <Search className="size-4 shrink-0" />
-                <span className="text-[14px] font-light tracking-tight">Search 992, GT3, 997 Turbo...</span>
-              </button>
-            ) : (
-              <div className="absolute top-full left-0 right-0 mt-2 z-[60]">
-                <UnifiedSearch
-                  variant="header"
-                  autoFocus
-                  onClose={() => setShowUnifiedSearch(false)}
-                />
-              </div>
-            )}
+                <span className="text-[14px] font-light tracking-tight truncate">Search 992, GT3, 997 Turbo...</span>
+              </span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 h-5 text-[10px] font-medium bg-foreground/[0.06] border border-border rounded text-muted-foreground">
+                ⌘K
+              </kbd>
+            </button>
           </div>
 
           {/* Region Filter — only where filtering by region actually does
@@ -1030,6 +1031,38 @@ export function Header() {
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
       />
+
+      {/* UNIFIED SEARCH MODAL — centered command palette with backdrop */}
+      <AnimatePresence>
+        {showUnifiedSearch && (
+          <>
+            <motion.div
+              key="search-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setShowUnifiedSearch(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59]"
+            />
+            <motion.div
+              key="search-modal"
+              ref={unifiedSearchRef}
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(720px,calc(100vw-32px))] z-[60]"
+            >
+              <UnifiedSearch
+                variant="header"
+                autoFocus
+                onClose={() => setShowUnifiedSearch(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

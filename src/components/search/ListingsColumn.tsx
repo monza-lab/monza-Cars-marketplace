@@ -46,6 +46,7 @@ export function ListingsColumn({
   onSelect,
 }: ListingsColumnProps) {
   const isStack = variant === "sheet"
+  const scrollClass = isStack ? "" : "max-h-[360px] overflow-y-auto"
   const viewAllHref = activeSeries
     ? `/cars/porsche?family=${encodeURIComponent(activeSeries)}`
     : query.trim()
@@ -53,7 +54,7 @@ export function ListingsColumn({
       : "/search"
 
   return (
-    <div className={isStack ? "" : "max-h-[60vh] overflow-y-auto"}>
+    <div className={scrollClass}>
       <p className="px-3 pt-2 pb-1 text-[9px] font-semibold tracking-[0.22em] uppercase text-muted-foreground">
         Listings
       </p>
