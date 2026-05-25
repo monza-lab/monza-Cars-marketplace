@@ -1297,15 +1297,15 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                 ) : !isLoadingCars && variantFilteredFeedCars.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center px-8">
                     <Car className="size-12 text-muted-foreground mb-4" />
-                    <h3 className="text-[15px] font-semibold text-foreground mb-2">No hay carros</h3>
+                    <h3 className="text-[15px] font-semibold text-foreground mb-2">No cars</h3>
                     <p className="text-[13px] text-muted-foreground mb-6">
-                      No se encontraron carros para esta generación
+                      No cars found for this generation
                     </p>
                     <button
                       onClick={handleBackToGenerations}
                       className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold"
                     >
-                      Volver a generaciones
+                      Back to generations
                     </button>
                   </div>
                 ) : (
@@ -1388,15 +1388,15 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
               displayCars.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center px-8">
                   <Search className="size-12 text-muted-foreground mb-4" />
-                  <h3 className="text-[15px] font-semibold text-foreground mb-2">No hay resultados</h3>
+                  <h3 className="text-[15px] font-semibold text-foreground mb-2">No results</h3>
                   <p className="text-[13px] text-muted-foreground mb-6">
-                    No se encontraron carros que coincidan con tu búsqueda
+                    No cars matched your search
                   </p>
                   <button
                     onClick={() => setActiveFilters(null)}
                     className="px-6 py-3 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold"
                   >
-                    Limpiar filtros
+                    Clear filters
                   </button>
                 </div>
               ) : (
@@ -1405,7 +1405,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                   <div className="flex items-center justify-between pb-3 border-b border-border">
                     <div>
                       <p className="text-[13px] font-semibold text-foreground">
-                        {displayCars.length} {displayCars.length === 1 ? "resultado" : "resultados"}
+                        {displayCars.length} {displayCars.length === 1 ? "result" : "results"}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         {activeFilters.searchQuery && `"${activeFilters.searchQuery}"`}
@@ -1419,7 +1419,7 @@ export function MakePageClient({ make, liveRegionTotals, liveNowCount, dbMarketD
                       className="text-[11px] text-primary hover:text-foreground transition-colors flex items-center gap-1"
                     >
                       <X className="size-3" />
-                      Limpiar
+                      Clear
                     </button>
                   </div>
 

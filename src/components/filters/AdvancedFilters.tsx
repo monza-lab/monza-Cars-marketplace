@@ -42,7 +42,7 @@ const MILEAGE_OPTIONS = [
 
 const TRANSMISSION_OPTIONS = [
   { id: "Manual", label: "Manual" },
-  { id: "Automatic", label: "Automática" },
+  { id: "Automatic", label: "Automatic" },
 ]
 
 const COLOR_OPTIONS = [
@@ -131,7 +131,7 @@ export function AdvancedFilters({
       <div className="px-5 py-2.5 border-b border-border">
         <div className="flex items-center justify-between">
           <h3 className="text-[9px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-            Filtros
+            Filters
           </h3>
           {hasActiveFilters && (
             <button
@@ -139,7 +139,7 @@ export function AdvancedFilters({
               className="flex items-center gap-1 text-[10px] text-primary hover:text-foreground transition-colors"
             >
               <X className="size-3" />
-              Limpiar todo
+              Clear all
             </button>
           )}
         </div>
@@ -148,7 +148,7 @@ export function AdvancedFilters({
       {/* Scrollable filters */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Price Range */}
-        <FilterSection icon={DollarSign} title="Precio" hasSelection={priceRange[0] !== minPrice || priceRange[1] !== maxPrice}>
+        <FilterSection icon={DollarSign} title="Price" hasSelection={priceRange[0] !== minPrice || priceRange[1] !== maxPrice}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">${(priceRange[0] / 1000).toFixed(0)}k</span>
@@ -167,7 +167,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Year Range */}
-        <FilterSection icon={Calendar} title="Año" hasSelection={yearRange[0] !== minYear || yearRange[1] !== maxYear}>
+        <FilterSection icon={Calendar} title="Year" hasSelection={yearRange[0] !== minYear || yearRange[1] !== maxYear}>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">{yearRange[0]}</span>
@@ -200,7 +200,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Transmission */}
-        <FilterSection icon={Cog} title="Transmisión" hasSelection={selectedTransmissions.length > 0}>
+        <FilterSection icon={Cog} title="Transmission" hasSelection={selectedTransmissions.length > 0}>
           <div className="space-y-2">
             {TRANSMISSION_OPTIONS.map((option) => (
               <CheckboxOption
@@ -214,7 +214,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Body Type */}
-        <FilterSection icon={Car} title="Carrocería" hasSelection={selectedBodyTypes.length > 0}>
+        <FilterSection icon={Car} title="Body" hasSelection={selectedBodyTypes.length > 0}>
           <div className="flex flex-wrap gap-2">
             {BODY_TYPE_OPTIONS.map((bt) => (
               <button
@@ -252,7 +252,7 @@ export function AdvancedFilters({
         </FilterSection>
 
         {/* Status */}
-        <FilterSection icon={Calendar} title="Estado" hasSelection={selectedStatuses.length > 0}>
+        <FilterSection icon={Calendar} title="Status" hasSelection={selectedStatuses.length > 0}>
           <div className="flex flex-wrap gap-2">
             {STATUS_OPTIONS.map((status) => (
               <button

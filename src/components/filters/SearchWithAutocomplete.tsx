@@ -271,7 +271,7 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
         <input
           ref={inputRef}
           type="text"
-          placeholder="Buscar GT3, Turbo, 992..."
+          placeholder="Search GT3, Turbo, 992..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
