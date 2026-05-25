@@ -12,19 +12,19 @@ import {
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Porsche Turbo Index — 50 Years of 911 Turbo Market Values (930 through 992)",
   es: "MonzaHaus Porsche Turbo Index — 50 Años de Valores de Mercado del 911 Turbo (930 al 992)",
   de: "MonzaHaus Porsche Turbo Index — 50 Jahre 911 Turbo Marktwerte (930 bis 992)",
   ja: "MonzaHaus Porsche Turboインデックス — 50年の911 Turbo市場相場(930から992まで)",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Cross-generation market index for Porsche 911 Turbo (930, 964, 993, 996, 997, 991, 992). Quarterly median sale prices, investment trends, and full dataset download.",
   es: "Índice cross-generación para Porsche 911 Turbo (930, 964, 993, 996, 997, 991, 992). Medianas trimestrales, tendencias de inversión y descarga del dataset completo.",
   de: "Generationsübergreifender Marktindex für Porsche 911 Turbo (930, 964, 993, 996, 997, 991, 992). Quartalsweise Median-Verkaufspreise und vollständiger Datensatz.",

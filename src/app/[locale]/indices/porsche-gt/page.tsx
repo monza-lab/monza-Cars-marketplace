@@ -9,19 +9,19 @@ import { porscheGtIndexConfig, getPorscheGtIndex } from "@/lib/index/porscheGt";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Porsche GT Index — GT3, GT3 RS, GT2 RS, GT4 & Air-Cooled RS Market Values",
   es: "MonzaHaus Porsche GT Index — Valores de GT3, GT3 RS, GT2 RS, GT4 y RS Air-Cooled",
   de: "MonzaHaus Porsche GT Index — Marktwerte für GT3, GT3 RS, GT2 RS, GT4 und luftgekühlte RS",
   ja: "MonzaHaus Porsche GTインデックス — GT3, GT3 RS, GT2 RS, GT4, 空冷RSの市場相場",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Cross-generational market index for Porsche GT lineage: GT3, GT3 RS, GT2, GT2 RS, GT4, and pre-GT air-cooled 964 RS / 993 RS. Median sale prices, YoY trends, CSV dataset.",
   es: "Índice cross-generación para el linaje GT de Porsche: GT3, GT3 RS, GT2 RS, GT4 y los RS air-cooled 964/993. Medianas de venta, tendencias y descarga CSV.",
   de: "Generationsübergreifender Marktindex für die Porsche GT-Linie: GT3, GT3 RS, GT2 RS, GT4 und die luftgekühlten 964 RS / 993 RS. Median-Preise und CSV-Datensatz.",

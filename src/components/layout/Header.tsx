@@ -1070,7 +1070,7 @@ export function Header() {
                   {/* ─── PREFERENCES ─── */}
                   <MenuSection label={t("nav.preferences")}>
                     <ThemeRow />
-                    <LanguageRow />
+                    {/* LanguageRow hidden — English-only mode (see src/i18n/routing.ts) */}
                     <CurrencyRow />
                   </MenuSection>
 

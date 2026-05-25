@@ -51,7 +51,7 @@ export async function generateMetadata({
 
   // Build hreflang alternates for all locales
   const languages: Record<string, string> = {};
-  for (const loc of ["en", "es", "de", "ja"]) {
+  for (const loc of ["en"]) {
     languages[loc] = `${BASE_URL}/${loc}`;
   }
 

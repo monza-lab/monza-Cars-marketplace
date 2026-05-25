@@ -3,10 +3,10 @@ import { getTranslations } from "next-intl/server";
 import { getSiteUrl } from "./siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 type Locale = (typeof LOCALES)[number];
 
-const OG_LOCALE: Record<Locale, string> = {
+const OG_LOCALE: Record<string, string> = {
   en: "en_US",
   es: "es_ES",
   de: "de_DE",
@@ -20,7 +20,7 @@ function capitalize(s: string) {
     .join(" ");
 }
 
-function pathFor(locale: Locale, make: string, series?: string) {
+function pathFor(locale: string, make: string, series?: string) {
   const q = series ? `?series=${encodeURIComponent(series)}` : "";
   return `${BASE_URL}/${locale}/cars/${make}${q}`;
 }
@@ -30,7 +30,7 @@ export async function buildMakePageMetadata({
   make,
   series,
 }: {
-  locale: Locale;
+  locale: string;
   make: string;
   series?: string;
 }): Promise<Metadata> {

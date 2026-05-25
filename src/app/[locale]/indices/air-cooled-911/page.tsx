@@ -9,19 +9,19 @@ import { airCooled911IndexConfig, getAirCooled911Index } from "@/lib/index/airCo
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Air-Cooled 911 Index — Live Market Values for Porsche 993, 964, SC & G-Body",
   es: "MonzaHaus Air-Cooled 911 Index — Valores de Mercado en Vivo para Porsche 993, 964, SC y G-Body",
   de: "MonzaHaus Air-Cooled 911 Index — Live-Marktwerte für Porsche 993, 964, SC & G-Body",
   ja: "MonzaHaus 空冷911インデックス — Porsche 993, 964, SC & G-Bodyのライブ市場相場",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Live and historical market index for air-cooled Porsche 911 models (993, 964, G-Body, 930, early 911). Quarterly median sale prices, YoY trends, and full dataset download.",
   es: "Índice de mercado en vivo e histórico para Porsche 911 refrigerados por aire (993, 964, G-Body, 930, primeros 911). Medianas trimestrales, tendencias anuales y descarga del dataset completo.",
   de: "Live- und historischer Marktindex für luftgekühlte Porsche 911 Modelle (993, 964, G-Body, 930, frühe 911). Quartalsweise Median-Verkaufspreise, YoY-Trends und vollständiger Datensatz.",

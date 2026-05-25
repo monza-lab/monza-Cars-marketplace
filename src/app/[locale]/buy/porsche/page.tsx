@@ -12,16 +12,16 @@ import { PORSCHE_VARIANTS } from "@/lib/variants/registry";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "How to Buy a Porsche — Complete 2026 Buyer's Framework | MonzaHaus",
   es: "Cómo Comprar un Porsche — Guía Completa del Comprador 2026 | MonzaHaus",
   de: "Porsche kaufen — Vollständiger Käufer-Leitfaden 2026 | MonzaHaus",
   ja: "Porsche購入ガイド 2026 — 完全な購入フレームワーク | MonzaHaus",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "The complete framework for buying a Porsche in 2026. Choose the generation, identify blue-chip variants, understand import logistics, verify authenticity, and read the market — with live market data and country-specific guides.",
   es: "El framework completo para comprar un Porsche en 2026. Elegir generación, identificar variantes grado inversión, entender importación, verificar autenticidad y leer el mercado — con datos de mercado en vivo y guías por país.",
   de: "Der vollständige Leitfaden zum Porsche-Kauf 2026. Generation wählen, Investment-grade-Varianten identifizieren, Import verstehen, Echtheit prüfen und den Markt lesen — mit Live-Marktdaten und länderspezifischen Anleitungen.",

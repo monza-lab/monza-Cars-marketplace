@@ -8,8 +8,20 @@ const localeInternalPrefix = new RegExp(
   `^/(${routing.locales.join('|')})/(api|trpc|_next|_vercel)(?:/|$)`
 )
 
+// English-only mode: strip legacy locale prefixes from incoming URLs.
+// /es/x → /x, /de/x → /x, /ja/x → /x. Lets old links + indexed pages
+// resolve to the English version instead of 404ing. Remove this block
+// when re-enabling other locales (see src/i18n/routing.ts).
+const HIDDEN_LOCALES = ['es', 'de', 'ja'] as const
+const hiddenLocalePrefix = new RegExp(`^/(${HIDDEN_LOCALES.join('|')})(/|$)`)
+
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
+
+  if (hiddenLocalePrefix.test(pathname)) {
+    const stripped = pathname.replace(hiddenLocalePrefix, '/') || '/'
+    return NextResponse.redirect(new URL(`${stripped}${search}`, request.url), 308)
+  }
 
   const segments = pathname.split("/").filter(Boolean)
   if (

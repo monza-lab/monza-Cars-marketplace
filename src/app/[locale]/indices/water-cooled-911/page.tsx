@@ -12,19 +12,19 @@ import {
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Water-Cooled 911 Index — Live Market Values for Porsche 996, 997, 991 & 992",
   es: "MonzaHaus Water-Cooled 911 Index — Valores de Mercado en Vivo para Porsche 996, 997, 991 y 992",
   de: "MonzaHaus Water-Cooled 911 Index — Live-Marktwerte für Porsche 996, 997, 991 & 992",
   ja: "MonzaHaus 水冷911インデックス — Porsche 996, 997, 991 & 992のライブ市場相場",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Live and historical market index for water-cooled Porsche 911 generations (996, 997, 991, 992). Quarterly median sale prices, YoY trends, and full dataset download.",
   es: "Índice de mercado en vivo e histórico para Porsche 911 refrigerados por agua (996, 997, 991, 992). Medianas trimestrales, tendencias anuales y descarga del dataset completo.",
   de: "Live- und historischer Marktindex für wassergekühlte Porsche 911 Generationen (996, 997, 991, 992). Quartalsweise Median-Verkaufspreise, YoY-Trends und vollständiger Datensatz.",

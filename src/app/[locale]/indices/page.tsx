@@ -8,16 +8,16 @@ import { INDEX_REGISTRY } from "@/lib/index/registry";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Index — Market Data for Collector Car Investors",
   es: "MonzaHaus Index — Datos de Mercado para Inversores de Autos de Colección",
   de: "MonzaHaus Index — Marktdaten für Sammlerfahrzeug-Investoren",
   ja: "MonzaHaus インデックス — コレクターカー投資家のための市場データ",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Proprietary quarterly market indices for investment-grade collector cars. Median sale prices, YoY trends, and downloadable datasets — free, CC BY 4.0.",
   es: "Índices de mercado trimestrales propietarios para autos de colección grado inversión. Medianas, tendencias anuales y datasets descargables — gratis, CC BY 4.0.",
   de: "Proprietäre quartalsweise Marktindizes für Sammlerfahrzeuge in Investmentqualität. Median-Preise, YoY-Trends und ladbare Datensätze — kostenlos, CC BY 4.0.",

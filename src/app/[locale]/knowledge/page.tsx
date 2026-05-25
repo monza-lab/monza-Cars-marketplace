@@ -8,16 +8,16 @@ import { KNOWLEDGE_ARTICLES } from "@/lib/knowledge/registry";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "MonzaHaus Knowledge Base — Porsche Authority Guides | MonzaHaus",
   es: "MonzaHaus Knowledge Base — Guías Autoritativas Porsche | MonzaHaus",
   de: "MonzaHaus Wissensdatenbank — Autoritative Porsche-Leitfäden | MonzaHaus",
   ja: "MonzaHaus ナレッジベース — Porscheの権威ある解説 | MonzaHaus",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Deep-dive guides on the technical, authentication, and reliability topics every Porsche owner and buyer needs. IMS bearing, Mezger engine, Certificate of Authenticity, pre-purchase inspection, and more.",
   es: "Guías en profundidad sobre temas técnicos, de autenticidad y fiabilidad que todo propietario y comprador Porsche necesita. IMS bearing, motor Mezger, Certificate of Authenticity, inspección pre-compra y más.",
   de: "Vertiefte Leitfäden zu Technik-, Echtheits- und Zuverlässigkeitsthemen, die jeder Porsche-Besitzer und -Käufer braucht. IMS-Lager, Mezger-Motor, Certificate of Authenticity, Kaufinspektion und mehr.",
