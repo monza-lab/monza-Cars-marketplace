@@ -6,10 +6,76 @@ import {
   markScraperRunStarted,
   recordScraperRun,
 } from "@/features/scrapers/common/monitoring";
-import { buildMissingAnyFilter } from "@/features/scrapers/common/enrichmentLoopPolicy";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+const PRICE_COVERED_STATUSES = [
+  "sold",
+  "price_on_request",
+  "hidden",
+  "not_listed",
+  "detail_unavailable",
+  "blocked_unverified",
+];
+
+const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
+
+type EnrichmentMeta = {
+  elferspot?: {
+    priceStatus?: string;
+    descriptionStatus?: string;
+    checkedAt?: string;
+  };
+};
+
+type EnrichmentRow = {
+  id: string;
+  source_url: string;
+  enrichment_meta: EnrichmentMeta | null;
+};
+
+type SupabaseClientLike = {
+  from: (table: "listings") => any;
+};
+
+function buildElferspotMeta(
+  existingMeta: EnrichmentMeta | null,
+  update: {
+    priceStatus: string;
+    descriptionStatus?: string;
+    checkedAt?: string;
+  },
+) {
+  return {
+    ...(existingMeta ?? {}),
+    elferspot: {
+      ...(existingMeta?.elferspot ?? {}),
+      ...update,
+      checkedAt: update.checkedAt ?? new Date().toISOString(),
+    },
+  };
+}
+
+async function fetchRows(client: SupabaseClientLike, filter: "description" | "price", limit: number) {
+  const q = client
+    .from("listings")
+    .select("id,source_url,enrichment_meta")
+    .eq("source", "Elferspot")
+    .eq("status", "active")
+    .order("updated_at", { ascending: true })
+    .limit(limit);
+
+  if (filter === "description") {
+    return q.or("description_text.is.null,description_text.eq.");
+  }
+
+  return q
+    .is("hammer_price", null)
+    .or(
+      `enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.${PRICE_COVERED_STATUS_FILTER}`,
+    );
+}
 
 export async function GET(request: Request) {
   const startTime = Date.now();
@@ -48,25 +114,21 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Query Elferspot active listings missing fields tracked by the quality gate.
-    const { data: rows, error: fetchErr } = await client
-      .from("listings")
-      .select("id,source_url")
-      .eq("source", "Elferspot")
-      .eq("status", "active")
-      .or(
-        buildMissingAnyFilter([
-          { field: "description_text", type: "text" },
-          { field: "hammer_price", type: "numeric" },
-        ]),
-      )
-      .order("updated_at", { ascending: true })
-      .limit(50);
-
-    if (fetchErr || !rows) {
-      throw new Error(fetchErr?.message ?? "No rows returned");
+    const descriptionRows = await fetchRows(client, "description", 50);
+    if (descriptionRows.error || !descriptionRows.data) {
+      throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
 
+    const remaining = Math.max(0, 50 - descriptionRows.data.length);
+    const priceRows = remaining > 0
+      ? await fetchRows(client, "price", remaining)
+      : { data: [] as EnrichmentRow[], error: null };
+
+    if (priceRows.error || !priceRows.data) {
+      throw new Error(priceRows.error?.message ?? "No price rows returned");
+    }
+
+    const rows = [...descriptionRows.data, ...priceRows.data] as EnrichmentRow[];
     const discovered = rows.length;
     let enriched = 0;
     const errors: string[] = [];
@@ -101,6 +163,7 @@ export async function GET(request: Request) {
           updated_at: new Date().toISOString(),
           last_verified_at: new Date().toISOString(),
         };
+        const existingMeta = row.enrichment_meta ?? {};
 
         if (detail.price) {
           update.hammer_price = detail.price;
@@ -125,6 +188,12 @@ export async function GET(request: Request) {
         // seller_name and seller_type columns don't exist in listings table
         if (detail.location) update.location = detail.location;
         if (detail.locationCountry) update.country = detail.locationCountry;
+        if (detail.priceStatus !== "unknown" || detail.descriptionStatus === "present") {
+          update.enrichment_meta = buildElferspotMeta(existingMeta, {
+            priceStatus: detail.priceStatus,
+            descriptionStatus: detail.descriptionStatus,
+          });
+        }
 
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
@@ -157,10 +226,30 @@ export async function GET(request: Request) {
         }
 
         if (/\b(403|429)\b/.test(msg)) {
+          await client
+            .from("listings")
+            .update({
+              enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
+                priceStatus: "blocked_unverified",
+                descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+              }),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
           errors.push(`Circuit-break: ${msg}`);
           break;
         }
 
+        await client
+          .from("listings")
+          .update({
+            enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
+              priceStatus: "detail_unavailable",
+              descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+            }),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", row.id);
         errors.push(`Failed ${row.source_url}: ${msg}`);
       }
     }

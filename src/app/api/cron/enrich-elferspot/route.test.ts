@@ -5,23 +5,21 @@ import { GET } from "./route";
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
-const mockLimit = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockOr = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockIs = vi.fn().mockReturnValue({ or: mockOr });
+const mockLimit = vi.fn().mockReturnValue({ or: mockOr, is: mockIs });
 const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
-const mockOr = vi.fn().mockReturnValue({ order: mockOrder });
-const mockSelect = vi.fn().mockReturnValue({
-  eq: vi.fn().mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      or: mockOr,
-    }),
-  }),
-});
+const mockEqStatus = vi.fn().mockReturnValue({ order: mockOrder });
+const mockEqSource = vi.fn().mockReturnValue({ eq: mockEqStatus });
+const mockSelect = vi.fn().mockReturnValue({ eq: mockEqSource });
+const mockFrom = vi.fn(() => ({
+  select: mockSelect,
+  update: mockUpdate,
+}));
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: mockSelect,
-      update: mockUpdate,
-    })),
+    from: mockFrom,
   })),
 }));
 
@@ -70,9 +68,18 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(data.success).toBe(true);
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
+    expect(mockOr).toHaveBeenCalledWith("description_text.is.null,description_text.eq.");
+    expect(mockIs).toHaveBeenCalledWith("hammer_price", null);
     expect(mockOr).toHaveBeenCalledWith(
-      "description_text.is.null,description_text.eq.,hammer_price.is.null"
+      'enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.("sold","price_on_request","hidden","not_listed","detail_unavailable","blocked_unverified")'
     );
+  });
+
+  it("queries missing descriptions before price-only gaps", async () => {
+    await GET(makeRequest());
+
+    expect(mockFrom).toHaveBeenCalledWith("listings");
+    expect(mockOr).toHaveBeenCalledWith("description_text.is.null,description_text.eq.");
   });
 
   it("calls monitoring lifecycle functions", async () => {

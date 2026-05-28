@@ -59,6 +59,7 @@ describe("parseDetailPage", () => {
   it("combines JSON-LD and Cheerio data", () => {
     const detail = parseDetailPage(FIXTURE_HTML)
     expect(detail.price).toBe(224990)
+    expect(detail.priceStatus).toBe("numeric")
     expect(detail.images.length).toBe(2)
     expect(detail.images[0]).toContain("cdn.elferspot.com")
     expect(detail.images[0]).toContain("?class=xl")
@@ -69,14 +70,18 @@ describe("parseDetailPage", () => {
     expect(detail.sellerType).toBe("dealer")
     expect(detail.locationCountry).toBe("Germany")
     expect(detail.descriptionText).toContain("Rare GT3 Touring")
+    expect(detail.descriptionStatus).toBe("present")
     expect(detail.descriptionText).not.toContain("Translated by DeepL")
     expect(detail.engine).toContain("4.0L")
   })
 
   it("handles missing price (Price on request)", () => {
-    const html = FIXTURE_HTML.replace('"price": "224990",', '"price": "",')
+    const html = FIXTURE_HTML
+      .replace('"price": "224990",', '"price": "",')
+      .replace("</body>", '<div class="price"><span class="p">Price on request</span></div></body>')
     const detail = parseDetailPage(html)
     expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("price_on_request")
   })
 
   it("extracts price from sidebar when JSON-LD has no price", () => {
@@ -88,5 +93,28 @@ describe("parseDetailPage", () => {
     const detail = parseDetailPage(html)
     expect(detail.price).toBe(189900)
     expect(detail.currency).toBe("EUR")
+    expect(detail.priceStatus).toBe("numeric")
+  })
+
+  it("uses JSON-LD WebPage description when highlight blocks are missing", () => {
+    const html = `
+      <html><head><script type="application/ld+json">
+      {"@context":"https://schema.org","@graph":[{"@type":"WebPage","description":"A documented 964 Turbo in Guards Red."}]}
+      </script></head><body><div class="price"><span class="p">Sold</span></div></body></html>`
+
+    const detail = parseDetailPage(html)
+
+    expect(detail.descriptionText).toBe("A documented 964 Turbo in Guards Red.")
+    expect(detail.descriptionStatus).toBe("present")
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("sold")
+  })
+
+  it("extracts numeric EUR price from visible price block", () => {
+    const html = `<html><body><div class="price"><span class="p">EUR 87,990</span></div></body></html>`
+    const detail = parseDetailPage(html)
+    expect(detail.price).toBe(87990)
+    expect(detail.currency).toBe("EUR")
+    expect(detail.priceStatus).toBe("numeric")
   })
 })

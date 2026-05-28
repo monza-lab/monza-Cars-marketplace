@@ -26,13 +26,13 @@ describe("normalizeListing", () => {
   }
 
   const detail: ElferspotDetail = {
-    price: 224990, currency: "EUR", year: 2023, mileageKm: 12500,
+    price: 224990, priceStatus: "numeric", currency: "EUR", year: 2023, mileageKm: 12500,
     transmission: "PDK", bodyType: "Coup\u00e9", driveType: "Rear drive",
     colorExterior: "Green", model: "992 GT3", firstRegistration: "2023-06-15",
     fuel: "Gasoline", engine: "4.0L 510 HP", colorInterior: "Black",
     vin: "WP0ZZZ99ZPS123456", sellerName: "Auto M\u00fcller", sellerType: "dealer",
     location: "Munich", locationCountry: "Germany", descriptionText: "Perfect condition",
-    images: ["https://cdn.elferspot.com/img1.jpeg"], condition: "Accident-free",
+    descriptionStatus: "present", images: ["https://cdn.elferspot.com/img1.jpeg"], condition: "Accident-free",
   }
 
   it("produces a valid normalized listing", () => {
@@ -46,10 +46,13 @@ describe("normalizeListing", () => {
     expect(result!.transmission).toBe("Automatic") // PDK -> Automatic
     expect(result!.body_style).toBe("Coupe") // Coup\u00e9 -> Coupe
     expect(result!.vin).toBe("WP0ZZZ99ZPS123456")
+    expect(result!.enrichment_meta.elferspot.priceStatus).toBe("numeric")
+    expect(result!.enrichment_meta.elferspot.descriptionStatus).toBe("present")
   })
 
   it("handles null price (Price on request)", () => {
-    const result = normalizeListing(summary, { ...detail, price: null })
+    const result = normalizeListing(summary, { ...detail, price: null, priceStatus: "price_on_request" })
     expect(result!.price).toBeNull()
+    expect(result!.enrichment_meta.elferspot.priceStatus).toBe("price_on_request")
   })
 })

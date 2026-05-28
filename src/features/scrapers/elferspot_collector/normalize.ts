@@ -47,6 +47,13 @@ export interface NormalizedElferspot {
   status: "active"
   fuel: string | null
   scrape_timestamp: string
+  enrichment_meta: {
+    elferspot: {
+      priceStatus: ElferspotDetail["priceStatus"]
+      descriptionStatus: ElferspotDetail["descriptionStatus"]
+      checkedAt: string
+    }
+  }
 }
 
 export function normalizeListing(
@@ -62,6 +69,8 @@ export function normalizeListing(
   // Extract trim from the model name (e.g., "992 GT3 Touring" -> "GT3 Touring")
   const trimMatch = modelRaw.replace(/^\d{3}\.?\d?\s*/i, "").trim()
   const trim = trimMatch || null
+
+  const checkedAt = new Date().toISOString()
 
   return {
     source: "Elferspot",
@@ -90,6 +99,13 @@ export function normalizeListing(
     seller_name: detail?.sellerName ?? null,
     status: "active",
     fuel: detail?.fuel ?? null,
-    scrape_timestamp: new Date().toISOString(),
+    scrape_timestamp: checkedAt,
+    enrichment_meta: {
+      elferspot: {
+        priceStatus: detail?.priceStatus ?? "unknown",
+        descriptionStatus: detail?.descriptionStatus ?? (detail?.descriptionText ? "present" : "missing"),
+        checkedAt,
+      },
+    },
   }
 }

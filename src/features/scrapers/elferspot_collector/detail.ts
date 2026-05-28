@@ -19,6 +19,12 @@ interface JsonLdVehicle {
   firstRegistration: string | null
 }
 
+function flattenJsonLd(parsed: unknown): unknown[] {
+  if (!parsed || typeof parsed !== "object") return []
+  const record = parsed as Record<string, unknown>
+  return Array.isArray(record["@graph"]) ? record["@graph"] : [parsed]
+}
+
 export function extractJsonLd(html: string): JsonLdVehicle | null {
   const $ = cheerio.load(html)
   let vehicle: JsonLdVehicle | null = null
@@ -30,27 +36,29 @@ export function extractJsonLd(html: string): JsonLdVehicle | null {
       const parsed = JSON.parse(raw)
 
       // Handle @graph arrays or direct objects
-      const items = Array.isArray(parsed["@graph"]) ? parsed["@graph"] : [parsed]
+      const items = flattenJsonLd(parsed)
       for (const item of items) {
-        if (item["@type"] === "Vehicle" || item["@type"]?.includes("Vehicle")) {
-          const offer = item.offers || {}
-          const mileage = item.mileageFromOdometer
-          const priceRaw = offer.price ?? item.price
+        if (!item || typeof item !== "object") continue
+        const record = item as Record<string, any>
+        if (record["@type"] === "Vehicle" || record["@type"]?.includes("Vehicle")) {
+          const offer = record.offers || {}
+          const mileage = record.mileageFromOdometer
+          const priceRaw = offer.price ?? record.price
           const price = priceRaw ? parseFloat(String(priceRaw)) : null
 
           vehicle = {
             price: price && Number.isFinite(price) && price > 0 ? price : null,
             currency: offer.priceCurrency || "EUR",
-            model: item.model || null,
-            year: item.dateVehicleFirstRegistered
-              ? new Date(item.dateVehicleFirstRegistered).getFullYear()
+            model: record.model || null,
+            year: record.dateVehicleFirstRegistered
+              ? new Date(record.dateVehicleFirstRegistered).getFullYear()
               : null,
             mileageKm: mileage?.value ? parseInt(String(mileage.value), 10) : null,
-            transmission: item.vehicleTransmission || null,
-            bodyType: item.bodyType || null,
-            driveType: item.driveWheelConfiguration || null,
-            colorExterior: item.color || null,
-            firstRegistration: item.dateVehicleFirstRegistered || null,
+            transmission: record.vehicleTransmission || null,
+            bodyType: record.bodyType || null,
+            driveType: record.driveWheelConfiguration || null,
+            colorExterior: record.color || null,
+            firstRegistration: record.dateVehicleFirstRegistered || null,
           }
           return false // stop iterating
         }
@@ -61,6 +69,43 @@ export function extractJsonLd(html: string): JsonLdVehicle | null {
   })
 
   return vehicle
+}
+
+export function extractWebPageDescription(html: string): string | null {
+  const $ = cheerio.load(html)
+  let description: string | null = null
+
+  $('script[type="application/ld+json"]').each((_i, el) => {
+    if (description) return false
+    try {
+      const raw = $(el).html()
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      const items = flattenJsonLd(parsed)
+      for (const item of items) {
+        if (!item || typeof item !== "object") continue
+        const record = item as Record<string, unknown>
+        if (record["@type"] === "WebPage" && typeof record.description === "string" && record.description.trim()) {
+          description = record.description.trim()
+          return false
+        }
+      }
+    } catch {
+      // Invalid JSON-LD, skip
+    }
+  })
+
+  return description
+}
+
+function classifyElferspotPrice(priceText: string, price: number | null) {
+  const text = priceText.toLowerCase()
+  if (price && price > 0) return "numeric" as const
+  if (text.includes("sold")) return "sold" as const
+  if (text.includes("price on request") || text.includes("poa")) return "price_on_request" as const
+  if (text.includes("reserved")) return "hidden" as const
+  if (!priceText.trim()) return "not_listed" as const
+  return "unknown" as const
 }
 
 export function parseDetailPage(html: string): ElferspotDetail {
@@ -119,7 +164,7 @@ export function parseDetailPage(html: string): ElferspotDetail {
     const text = $(el).text().trim()
     if (text) descParts.push(text)
   })
-  const descriptionText = descParts.length > 0 ? descParts.join("\n") : null
+  const descriptionText = descParts.length > 0 ? descParts.join("\n") : extractWebPageDescription(html)
 
   // Seller name from sidebar
   const sellerName = $(".sidebar-section-heading.sidebar-toggle strong").first().text().trim() || null
@@ -137,9 +182,9 @@ export function parseDetailPage(html: string): ElferspotDetail {
   // Price fallback from sidebar (if JSON-LD price is null)
   let price = jsonLd?.price ?? null
   let currency = jsonLd?.currency ?? "EUR"
+  const visiblePriceText = $("div.price").first().text().trim()
   if (!price) {
-    const priceText = $("div.price span.p").first().text().trim()
-    const priceMatch = priceText.match(/([A-Z]{3})\s*([\d.,]+)/)
+    const priceMatch = visiblePriceText.match(/([A-Z]{3})\s*([\d.,]+)/)
     if (priceMatch) {
       currency = priceMatch[1]
       const numStr = priceMatch[2].replace(/[.,](?=\d{3})/g, "").replace(",", ".")
@@ -157,6 +202,7 @@ export function parseDetailPage(html: string): ElferspotDetail {
   return {
     // JSON-LD primary, spec table fallback
     price,
+    priceStatus: classifyElferspotPrice(visiblePriceText, price),
     currency,
     year: jsonLd?.year ?? null,
     mileageKm: jsonLd?.mileageKm ?? null,
@@ -176,6 +222,7 @@ export function parseDetailPage(html: string): ElferspotDetail {
     location: null,
     locationCountry,
     descriptionText,
+    descriptionStatus: descriptionText ? "present" : "missing",
     images,
     condition,
   }

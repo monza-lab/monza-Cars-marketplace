@@ -42,6 +42,7 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     scrape_timestamp: listing.scrape_timestamp,
     updated_at: new Date().toISOString(),
     last_verified_at: new Date().toISOString(),
+    enrichment_meta: listing.enrichment_meta,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   }
 

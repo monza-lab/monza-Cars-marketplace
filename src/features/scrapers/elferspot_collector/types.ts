@@ -27,6 +27,7 @@ export interface ElferspotListingSummary {
 export interface ElferspotDetail {
   // JSON-LD fields
   price: number | null
+  priceStatus: "numeric" | "sold" | "price_on_request" | "hidden" | "not_listed" | "unknown"
   currency: string
   year: number | null
   mileageKm: number | null
@@ -46,6 +47,7 @@ export interface ElferspotDetail {
   location: string | null
   locationCountry: string | null
   descriptionText: string | null
+  descriptionStatus: "present" | "missing"
   images: string[]
   condition: string | null
 }
