@@ -19,12 +19,6 @@ const AVAILABILITY_LABEL: Record<string, string> = {
   scarce: "Scarce",
 }
 
-function fmtRange(range: { low: number; high: number }): string {
-  const fmt = (v: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v)
-  return `${fmt(range.low)} — ${fmt(range.high)}`
-}
-
 export function BuyerServicesSection({ data }: BuyerServicesSectionProps) {
   if (!data) return null
 
@@ -69,84 +63,6 @@ export function BuyerServicesSection({ data }: BuyerServicesSectionProps) {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Insurance estimates */}
-      {data.insuranceEstimates && (
-        <div className="rounded-lg border border-border bg-background/50 p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-2">Insurance Estimates</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-3">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Collector Policy</p>
-              <p className="mt-1 text-sm font-bold font-mono text-foreground">
-                {fmtRange(data.insuranceEstimates.collectorPolicy.annualPremium)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Mileage limit: {data.insuranceEstimates.collectorPolicy.mileageLimit}
-              </p>
-              {data.insuranceEstimates.collectorPolicy.providers.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Providers: {data.insuranceEstimates.collectorPolicy.providers.join(", ")}
-                </p>
-              )}
-            </div>
-            {data.insuranceEstimates.dailyDriver && (
-              <div className="rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700/40 p-3">
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Daily Driver Policy</p>
-                <p className="mt-1 text-sm font-bold font-mono text-foreground">
-                  {fmtRange(data.insuranceEstimates.dailyDriver.annualPremium)}
-                </p>
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2 italic">
-            {data.insuranceEstimates.notes} &middot; Category: {data.insuranceEstimates.vehicleCategory}
-          </p>
-        </div>
-      )}
-
-      {/* Transport estimates */}
-      {data.transportEstimates && (
-        <div className="rounded-lg border border-border bg-background/50 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-foreground">Transport Estimates</h3>
-            <span className="text-xs font-medium text-muted-foreground capitalize">
-              Recommended: {data.transportEstimates.recommendation}
-            </span>
-          </div>
-          {(data.transportEstimates?.specialHandling?.length ?? 0) > 0 && (
-            <div className="mb-2">
-              <p className="text-xs text-muted-foreground">
-                Special handling: {data.transportEstimates.specialHandling.join(", ")}
-              </p>
-            </div>
-          )}
-          {data.transportEstimates.routes.map((route, i) => (
-            <div key={i} className="mb-2 last:mb-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{route.type} Transport</p>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div>
-                  <p className="text-muted-foreground">Short Haul</p>
-                  <p className="font-mono text-foreground">{route.shortHaul.perMile}/mi</p>
-                  <p className="text-[10px] text-muted-foreground">{route.shortHaul.example}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Medium Haul</p>
-                  <p className="font-mono text-foreground">{route.mediumHaul.perMile}/mi</p>
-                  <p className="text-[10px] text-muted-foreground">{route.mediumHaul.example}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Long Haul</p>
-                  <p className="font-mono text-foreground">{route.longHaul.perMile}/mi</p>
-                  <p className="text-[10px] text-muted-foreground">{route.longHaul.example}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-          {data.transportEstimates.seasonalNote && (
-            <p className="text-xs text-muted-foreground mt-2 italic">{data.transportEstimates.seasonalNote}</p>
           )}
         </div>
       )}

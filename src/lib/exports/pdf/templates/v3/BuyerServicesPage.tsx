@@ -3,7 +3,7 @@ import { PageWrap } from "../PageWrap"
 import type { BuyerServices } from "@/lib/reports/types-v3"
 import { createPdfStyles, getThemeTokens } from "../../styles"
 import type { PdfTheme } from "../../theme"
-import { humanize, fmtCurrency, fmtCurrencyFull } from "../../utils"
+import { humanize, fmtCurrencyFull } from "../../utils"
 
 interface Props {
   data: BuyerServices
@@ -46,13 +46,8 @@ export function BuyerServicesPage({
   const tokens = getThemeTokens(theme)
 
   const parts = data.partsAvailability
-  const insurance = data.insuranceEstimates
   const regions = data.regionalVariations
-  const transport = data.transportEstimates
   const msrp = data.originalMsrp
-
-  const collectorPremium = insurance.collectorPolicy.annualPremium
-  const dailyPremium = insurance.dailyDriver?.annualPremium ?? null
 
   return (
     <PageWrap wrap={wrap} theme={theme} hash={reportHash} generatedAt={generatedAt}>
@@ -60,14 +55,13 @@ export function BuyerServicesPage({
       <View>
         <Text style={styles.chapterEyebrow}>Chapter 06 · Operations</Text>
         <Text style={[styles.chapter, { marginBottom: 14 }]}>
-          Buyer Services & Logistics
+          Buyer Services
         </Text>
         <Text
           style={[styles.lede, { color: tokens.mutedStrong, marginBottom: 22 }]}
         >
-          Owning a collector vehicle is a logistics exercise. Here is what to
-          budget for parts, insurance, and transport — and where the regional
-          markets stand.
+          Owning a collector vehicle is an operational exercise. Here is what
+          to know about parts availability and where the regional markets stand.
         </Text>
       </View>
 
@@ -163,99 +157,6 @@ export function BuyerServicesPage({
         </View>
       ) : null}
 
-      {/* ─── Insurance ────────────────────────────────────────────── */}
-      <Text style={styles.h2}>Insurance</Text>
-      <View style={[styles.card, { paddingVertical: 16 }]}>
-        <Text style={styles.h3}>Collector Policy · Annual Premium</Text>
-        <Text style={[styles.priceDisplay, { fontSize: 26, marginTop: 4 }]}>
-          {fmtCurrency(collectorPremium.low)}
-          <Text style={{ color: tokens.muted, fontSize: 18 }}> — </Text>
-          {fmtCurrency(collectorPremium.high)}
-          <Text
-            style={{
-              fontFamily: "Karla",
-              fontSize: 10,
-              color: tokens.muted,
-              fontWeight: 400,
-            }}
-          >
-            {"  "}/ yr
-          </Text>
-        </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            gap: 16,
-            marginTop: 10,
-            paddingTop: 10,
-            borderTopWidth: 1,
-            borderTopColor: tokens.border,
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.h3}>Mileage Limit</Text>
-            <Text style={[styles.bodyEmphasis, { marginTop: 2 }]}>
-              {insurance.collectorPolicy.mileageLimit}
-            </Text>
-          </View>
-          <View style={{ flex: 2 }}>
-            <Text style={styles.h3}>Providers</Text>
-            <Text style={[styles.body, { marginTop: 2 }]}>
-              {insurance.collectorPolicy.providers.join(" · ")}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {dailyPremium ? (
-        <View style={[styles.cardSoft, { marginBottom: 8 }]}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.h3}>Daily-Driver Add-On</Text>
-              <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
-                If used outside of show-and-display.
-              </Text>
-            </View>
-            <Text
-              style={{
-                fontFamily: "Cormorant",
-                fontWeight: 500,
-                fontSize: 18,
-                letterSpacing: -0.3,
-                color: tokens.foreground,
-              }}
-            >
-              {fmtCurrency(dailyPremium.low)} — {fmtCurrency(dailyPremium.high)}
-              <Text
-                style={{
-                  fontFamily: "Karla",
-                  fontSize: 9,
-                  color: tokens.muted,
-                  fontWeight: 400,
-                }}
-              >
-                {"  "}/ yr
-              </Text>
-            </Text>
-          </View>
-        </View>
-      ) : null}
-
-      {insurance.notes || insurance.vehicleCategory ? (
-        <Text style={[styles.bodyMuted, { marginBottom: 12 }]}>
-          {insurance.vehicleCategory
-            ? `${humanize(insurance.vehicleCategory)}. `
-            : ""}
-          {insurance.notes}
-        </Text>
-      ) : null}
-
       {/* ─── Regional Markets ─────────────────────────────────────── */}
       {regions.strongMarkets.length > 0 || regions.weakerMarkets.length > 0 ? (
         <>
@@ -346,130 +247,6 @@ export function BuyerServicesPage({
             </View>
           </View>
         </>
-      ) : null}
-
-      {/* ─── Transport ────────────────────────────────────────────── */}
-      <Text style={styles.h2}>Transport</Text>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 8,
-        }}
-      >
-        <Text
-          style={[
-            styles.tagPrimary,
-            { fontSize: 8, paddingHorizontal: 10, paddingVertical: 4 },
-          ]}
-        >
-          {humanize(transport.recommendation)}
-        </Text>
-        {transport.specialHandling.length > 0 ? (
-          <Text style={[styles.bodyMuted, { flex: 1 }]}>
-            Handling: {transport.specialHandling.slice(0, 3).join(" · ")}
-          </Text>
-        ) : null}
-      </View>
-
-      {transport.routes.slice(0, 2).map((route, ri) => (
-        <View key={ri} style={styles.cardSoft} wrap={false}>
-          <Text style={styles.h3}>{humanize(route.type)} Transport</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              marginTop: 8,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.bodyMuted, { fontSize: 8 }]}>
-                Short Haul
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Cormorant",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: tokens.foreground,
-                  marginTop: 2,
-                  letterSpacing: -0.2,
-                }}
-              >
-                {route.shortHaul.perMile}
-              </Text>
-              <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
-                {route.shortHaul.example}
-              </Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderLeftWidth: 1,
-                borderLeftColor: tokens.border,
-                paddingLeft: 10,
-              }}
-            >
-              <Text style={[styles.bodyMuted, { fontSize: 8 }]}>
-                Medium Haul
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Cormorant",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: tokens.foreground,
-                  marginTop: 2,
-                  letterSpacing: -0.2,
-                }}
-              >
-                {route.mediumHaul.perMile}
-              </Text>
-              <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
-                {route.mediumHaul.example}
-              </Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                borderLeftWidth: 1,
-                borderLeftColor: tokens.border,
-                paddingLeft: 10,
-              }}
-            >
-              <Text style={[styles.bodyMuted, { fontSize: 8 }]}>
-                Long Haul
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Cormorant",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: tokens.foreground,
-                  marginTop: 2,
-                  letterSpacing: -0.2,
-                }}
-              >
-                {route.longHaul.perMile}
-              </Text>
-              <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
-                {route.longHaul.example}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ))}
-
-      {transport.seasonalNote ? (
-        <Text style={[styles.bodyMuted, { marginTop: 2 }]}>
-          {transport.seasonalNote}
-        </Text>
-      ) : null}
-      {transport.insuranceNote ? (
-        <Text style={[styles.bodyMuted, { marginTop: 4 }]}>
-          {transport.insuranceNote}
-        </Text>
       ) : null}
 
       {/* ─── Original MSRP ────────────────────────────────────────── */}

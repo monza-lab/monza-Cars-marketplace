@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Search, SlidersHorizontal, X, Car, DollarSign,
   Loader2, Clock, ChevronDown,
@@ -15,6 +16,13 @@ import {
 } from "@/components/ui/select";
 import { useSearch } from "@/hooks/useSearch";
 import { useCurrency } from "@/lib/CurrencyContext";
+import { UnifiedSearch } from "@/components/search/UnifiedSearch";
+
+function UnifiedSearchWithUrlQuery() {
+  const searchParams = useSearchParams();
+  const initial = searchParams.get("q") ?? "";
+  return <UnifiedSearch variant="inline" initialQuery={initial} />;
+}
 
 import { useLocale, useTranslations } from "next-intl";
 
@@ -154,6 +162,14 @@ export function SearchClient() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
+      {/* Unified search — series + listings side by side, prefilled with the
+          page's q so the user lands on something useful immediately. */}
+      <div className="px-4 pt-4 md:px-6">
+        <div className="max-w-3xl mx-auto">
+          <UnifiedSearchWithUrlQuery />
+        </div>
+      </div>
+
       {/* ═══════════════════════════════════════════════════════════════════════
           COMPACT HEADER — Search + Title + Filters inline
           ═══════════════════════════════════════════════════════════════════════ */}

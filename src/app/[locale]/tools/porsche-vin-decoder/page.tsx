@@ -10,16 +10,16 @@ import { VinDecoderClient } from "@/components/tools/VinDecoderClient";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
-const TITLES: Record<(typeof LOCALES)[number], string> = {
+const TITLES: Record<string, string> = {
   en: "Porsche VIN Decoder — Free Tool to Identify Year, Plant, Generation | MonzaHaus",
   es: "Decodificador VIN Porsche — Herramienta Gratis para Año, Planta, Generación | MonzaHaus",
   de: "Porsche Fahrgestellnummer-Decoder — Baujahr, Werk, Generation | MonzaHaus",
   ja: "Porsche VINデコーダー — 年式・工場・世代を無料で識別 | MonzaHaus",
 };
 
-const DESCRIPTIONS: Record<(typeof LOCALES)[number], string> = {
+const DESCRIPTIONS: Record<string, string> = {
   en: "Free Porsche VIN decoder. Enter any 17-character VIN and get model year, plant, generation hint, and serial number. Covers 911, Boxster, Cayman, Cayenne, Panamera, Macan (1981+).",
   es: "Decodificador VIN Porsche gratis. Ingresa cualquier VIN de 17 caracteres y obtén año, planta, pista de generación y número de serie. Cubre 911, Boxster, Cayman, Cayenne, Panamera, Macan (1981+).",
   de: "Kostenloser Porsche VIN-Decoder. Geben Sie eine 17-stellige Fahrgestellnummer ein und erhalten Sie Baujahr, Werk, Generationshinweis und Seriennummer. Abdeckung: 911, Boxster, Cayman, Cayenne, Panamera, Macan (ab 1981).",

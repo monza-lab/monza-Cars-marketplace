@@ -4,10 +4,10 @@ import { stripHtml } from "@/lib/stripHtml";
 import { getSiteUrl } from "./siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 type Locale = (typeof LOCALES)[number];
 
-const OG_LOCALE: Record<Locale, string> = {
+const OG_LOCALE: Record<string, string> = {
   en: "en_US",
   es: "es_ES",
   de: "de_DE",
@@ -23,7 +23,7 @@ type CarInput = {
   image?: string | null;
 } | null;
 
-function pathFor(locale: Locale, make: string, id: string) {
+function pathFor(locale: string, make: string, id: string) {
   return `${BASE_URL}/${locale}/cars/${make}/${id}`;
 }
 
@@ -33,7 +33,7 @@ export async function buildCarDetailMetadata({
   id,
   car,
 }: {
-  locale: Locale;
+  locale: string;
   make: string;
   id: string;
   car: CarInput;

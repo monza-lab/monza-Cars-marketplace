@@ -18,6 +18,7 @@ import { ChatContextProvider } from "@/lib/advisor/ChatContextProvider";
 import { ConsentProvider } from "@/components/legal/ConsentProvider";
 import { ClientTrackers } from "@/components/legal/ClientTrackers";
 import { CookieBanner } from "@/components/legal/CookieBanner";
+import { MobileMotionProvider } from "@/components/MobileMotionProvider";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -50,7 +51,7 @@ export async function generateMetadata({
 
   // Build hreflang alternates for all locales
   const languages: Record<string, string> = {};
-  for (const loc of ["en", "es", "de", "ja"]) {
+  for (const loc of ["en"]) {
     languages[loc] = `${BASE_URL}/${loc}`;
   }
 
@@ -93,15 +94,17 @@ export default async function LocaleLayout({
               <CurrencyProvider>
                 <AdvisorHandoffProvider>
                   <ChatContextProvider>
-                    <OrganizationJsonLd />
-                    <ClientHeader />
-                    <main>{children}</main>
-                    <AdvisorFab />
-                    <AdvisorDrawer />
-                    <MobileBottomNav />
-                    <AppFooter />
-                    <ClientTrackers />
-                    <CookieBanner />
+                    <MobileMotionProvider>
+                      <OrganizationJsonLd />
+                      <ClientHeader />
+                      <main>{children}</main>
+                      <AdvisorFab />
+                      <AdvisorDrawer />
+                      <MobileBottomNav />
+                      <AppFooter />
+                      <ClientTrackers />
+                      <CookieBanner />
+                    </MobileMotionProvider>
                   </ChatContextProvider>
                 </AdvisorHandoffProvider>
               </CurrencyProvider>

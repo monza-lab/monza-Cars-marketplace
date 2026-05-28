@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { setRequestLocale } from "next-intl/server"
+import { setRequestLocale, getTranslations } from "next-intl/server"
+import { Link } from "@/i18n/navigation"
+import { ArrowLeft } from "lucide-react"
 import { CURATED_CARS } from "@/lib/curatedCars"
 import {
   fetchLiveListingById,
@@ -85,7 +86,23 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         </div>
       )
     }
-    notFound()
+    const { make } = await params
+    const t = await getTranslations({ locale, namespace: "carDetail" })
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6 text-center">
+        <div className="max-w-xl space-y-5">
+          <h1 className="text-2xl font-semibold text-foreground">{t("unavailableTitle")}</h1>
+          <p className="text-muted-foreground">{t("unavailableDescription")}</p>
+          <Link
+            href={`/cars/${make}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground/[0.04] border border-border text-foreground/90 text-[13px] font-medium hover:bg-foreground/[0.08] transition-colors"
+          >
+            <ArrowLeft className="size-4" />
+            {t("unavailableCta")}
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   // Fetch similar cars

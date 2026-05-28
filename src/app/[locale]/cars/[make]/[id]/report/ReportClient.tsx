@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link } from "@/i18n/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, MotionConfig } from "framer-motion"
+import { useIsMobile } from "@/lib/useMediaQuery"
 import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowLeft,
@@ -71,7 +72,16 @@ import type {
 import { VinIntelBlock } from "@/components/report/VinIntelBlock"
 import { ColorIntelBlock } from "@/components/report/ColorIntelBlock"
 import { InvestmentStoryBlock } from "@/components/report/InvestmentStoryBlock"
-import { ComparablesAndPositioningBlock } from "@/components/report/ComparablesAndPositioningBlock"
+import dynamic from "next/dynamic"
+const ComparablesAndPositioningBlock = dynamic(
+  () => import("@/components/report/ComparablesAndPositioningBlock").then(m => m.ComparablesAndPositioningBlock),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-lg border border-border bg-card/30 animate-pulse" />
+    ),
+  },
+)
 import { VerdictBlock } from "@/components/report/VerdictBlock"
 import { computeD3PeerPositioning } from "@/lib/marketIntel/aggregator"
 
@@ -210,6 +220,7 @@ export function ReportClient({
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
 
   const router = useRouter()
+  const isMobile = useIsMobile()
   const locale = useLocale()
   const { setContext } = useChatContext()
 
@@ -1764,6 +1775,7 @@ export function ReportClient({
   }
 
   return (
+    <MotionConfig reducedMotion={isMobile ? "always" : "user"}>
     <div className="min-h-screen bg-background">
       {/* --- STICKY NAV - Desktop: sidebar, Mobile: top pills --- */}
 
@@ -3333,5 +3345,6 @@ export function ReportClient({
         makeSlug={car.make.toLowerCase().replace(/\s+/g, "-")}
       />
     </div>
+    </MotionConfig>
   )
 }

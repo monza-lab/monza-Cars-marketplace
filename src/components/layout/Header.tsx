@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, FileText, ChevronRight, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, ScrollText, MessageCircle } from "lucide-react";
+import { ArrowRight, Menu, User, X, TrendingUp, BarChart3, Car, FileText, ChevronRight, Award, Calendar, LinkIcon, ShieldCheck, Scale, BookOpen, Wrench, ScrollText, MessageCircle, Search } from "lucide-react";
+import { UnifiedSearch } from "@/components/search/UnifiedSearch";
 import { Piston } from "@/components/icons/Piston";
 import {
   Sheet,
@@ -584,7 +585,9 @@ export function Header() {
   const [searchResults, setSearchResults] = useState<SearchItem[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showUnifiedSearch, setShowUnifiedSearch] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const unifiedSearchRef = useRef<HTMLDivElement>(null)
 
   // Typing animation for placeholder — phrases come from i18n so the
   // animation speaks the user's locale. t.raw() returns the array as-is.
@@ -672,7 +675,8 @@ export function Header() {
     label: t(`nav.${link.key}`),
   }));
 
-  // Close dropdown on outside click
+  // Close legacy dropdown on outside click (the new UnifiedSearch modal has
+  // its own backdrop and Esc handling)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -685,6 +689,33 @@ export function Header() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Global ⌘K / Ctrl+K shortcut + Esc to close + click-outside to close. Gated
+  // on showUnifiedSearch so the mousedown listener only fires while open.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setShowUnifiedSearch((v) => !v)
+        return
+      }
+      if (e.key === "Escape" && showUnifiedSearch) {
+        setShowUnifiedSearch(false)
+      }
+    }
+    function handleMouseDown(e: MouseEvent) {
+      if (!showUnifiedSearch) return
+      if (!unifiedSearchRef.current) return
+      if (unifiedSearchRef.current.contains(e.target as Node)) return
+      setShowUnifiedSearch(false)
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    document.addEventListener("mousedown", handleMouseDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      document.removeEventListener("mousedown", handleMouseDown)
+    }
+  }, [showUnifiedSearch])
 
   // Navigate to result
   const handleResultSelect = useCallback((item: SearchItem) => {
@@ -766,155 +797,22 @@ export function Header() {
               tools etc. so the header stays calm. */}
           {showViewToggle && <ViewToggle />}
 
-          {/* Center: Search Input with Smart Autocomplete (hidden on mobile) */}
+          {/* Center: Unified Search trigger (hidden on mobile). Clicking
+              opens a centered modal-style command palette. ⌘K also opens. */}
           <div className="hidden md:block flex-1 max-w-xl relative">
-            <form onSubmit={handleSubmit}>
-              <div className="relative flex items-center">
-                {/* Typing overlay when not focused and no query */}
-                {!isFocused && !query && (
-                  <div
-                    className="absolute inset-0 flex items-center pointer-events-none select-none"
-                    onClick={() => inputRef.current?.focus()}
-                  >
-                    <span className="text-[15px] font-light text-muted-foreground tracking-tight">
-                      {typedPlaceholder}
-                    </span>
-                    <span className="inline-block w-[2px] h-[18px] bg-primary ml-[1px] animate-blink" />
-                  </div>
-                )}
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setQuery(val)
-                    // Check for auction URL paste first
-                    const linkResult = detectAuctionUrl(val)
-                    const results = linkResult ? [linkResult] : searchItems(val)
-                    setSearchResults(results)
-                    setShowDropdown(results.length > 0 && val.trim().length > 0)
-                    setActiveIndex(0)
-                  }}
-                  onFocus={() => {
-                    setIsFocused(true)
-                    if (query.trim() && searchResults.length > 0) setShowDropdown(true)
-                  }}
-                  onBlur={() => {
-                    setIsFocused(false)
-                    // Delay to allow click on dropdown items
-                    setTimeout(() => setShowDropdown(false), 200)
-                  }}
-                  onKeyDown={(e) => {
-                    if (!showDropdown || searchResults.length === 0) return
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault()
-                      setActiveIndex(prev => (prev + 1) % searchResults.length)
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault()
-                      setActiveIndex(prev => (prev - 1 + searchResults.length) % searchResults.length)
-                    } else if (e.key === "Escape") {
-                      setShowDropdown(false)
-                    }
-                  }}
-                  placeholder={isFocused ? "Search 992, GT3, Turbo, 993..." : ""}
-                  className="w-full bg-transparent text-[15px] font-light text-foreground placeholder:text-muted-foreground focus:outline-none tracking-tight"
-                />
-                {query.trim() && (
-                  <button
-                    type="submit"
-                    className="absolute right-0 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors"
-                  >
-                    <ArrowRight className="size-4" />
-                  </button>
-                )}
-              </div>
-            </form>
-
-            {/* Smart Autocomplete Dropdown */}
-            <AnimatePresence>
-              {showDropdown && searchResults.length > 0 && (
-                <motion.div
-                  ref={dropdownRef}
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-background/[0.97] backdrop-blur-2xl border border-border rounded-xl shadow-2xl shadow-black/50 overflow-hidden z-[60]"
-                >
-                  {/* Results */}
-                  <div className="py-1.5 max-h-[360px] overflow-y-auto">
-                    {searchResults.map((item, idx) => {
-                      const Icon = SEARCH_TYPE_ICON[item.type] || ShieldCheck
-                      const isActive = idx === activeIndex
-                      return (
-                        <button
-                          key={`${item.type}-${item.label}-${idx}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            handleResultSelect(item)
-                          }}
-                          onMouseEnter={() => setActiveIndex(idx)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
-                            isActive
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-foreground/5"
-                          }`}
-                        >
-                          <div className={`flex items-center justify-center size-7 rounded-lg ${
-                            isActive ? "bg-primary/15" : "bg-foreground/4"
-                          }`}>
-                            <Icon className={`size-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                          </div>
-                          <div className="flex-1 text-left min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[12px] font-medium truncate ${
-                                isActive ? "text-primary" : "text-muted-foreground"
-                              }`}>
-                                {item.label}
-                              </span>
-                              {item.yearRange && (
-                                <span className="text-[9px] tabular-nums text-muted-foreground shrink-0">
-                                  {item.yearRange}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-muted-foreground truncate block">
-                              {item.subtitle}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className={`text-[9px] tabular-nums px-1.5 py-0.5 rounded-full ${
-                              isActive
-                                ? "bg-primary/15 text-primary"
-                                : "bg-foreground/4 text-muted-foreground"
-                            }`}>
-                              {item.type === "family" ? t("search.resultType.family") : item.type === "series" ? t("search.resultType.series") : item.type === "link" ? t("search.resultType.link") : t("search.resultType.variant")}
-                            </span>
-                            <ChevronRight className={`size-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Footer hint */}
-                  <div className="px-4 py-2 border-t border-border flex items-center justify-between">
-                    <span className="text-[9px] text-muted-foreground">
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mr-1">↑↓</kbd>
-                      {t("search.hint.navigate")}
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mx-1">↵</kbd>
-                      {t("search.hint.select")}
-                      <kbd className="px-1 py-0.5 bg-foreground/4 rounded text-[8px] mx-1">esc</kbd>
-                      {t("search.hint.close")}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground">
-                      {t("search.poweredBy")}
-                    </span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <button
+              type="button"
+              onClick={() => setShowUnifiedSearch(true)}
+              className="w-full flex items-center justify-between gap-3 text-left text-muted-foreground py-2 hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-3 min-w-0">
+                <Search className="size-4 shrink-0" />
+                <span className="text-[14px] font-light tracking-tight truncate">Search 992, GT3, 997 Turbo...</span>
+              </span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 h-5 text-[10px] font-medium bg-foreground/[0.06] border border-border rounded text-muted-foreground">
+                ⌘K
+              </kbd>
+            </button>
           </div>
 
           {/* Region Filter — only where filtering by region actually does
@@ -1072,7 +970,7 @@ export function Header() {
                   {/* ─── PREFERENCES ─── */}
                   <MenuSection label={t("nav.preferences")}>
                     <ThemeRow />
-                    <LanguageRow />
+                    {/* LanguageRow hidden — English-only mode (see src/i18n/routing.ts) */}
                     <CurrencyRow />
                   </MenuSection>
 
@@ -1150,6 +1048,28 @@ export function Header() {
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
       />
+
+      {/* UNIFIED SEARCH MODAL — centered command palette with backdrop. The
+          backdrop is a non-interactive visual layer; close-on-outside-click
+          and close-on-Esc live in the useEffect above. */}
+      {showUnifiedSearch && (
+        <>
+          <div
+            aria-hidden
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59]"
+          />
+          <div
+            ref={unifiedSearchRef}
+            className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(720px,calc(100vw-32px))] z-[60]"
+          >
+            <UnifiedSearch
+              variant="header"
+              autoFocus
+              onClose={() => setShowUnifiedSearch(false)}
+            />
+          </div>
+        </>
+      )}
     </>
   );
 }

@@ -44,7 +44,7 @@ export function OrganizationJsonLd() {
       },
       "query-input": "required name=search_term_string",
     },
-    inLanguage: ["en", "es", "de", "ja"],
+    inLanguage: ["en"],
   };
 
   const softwareSchema = {

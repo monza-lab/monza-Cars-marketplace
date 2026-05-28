@@ -284,7 +284,7 @@ export function FilterSidebar() {
       <div className="flex-1 overflow-y-auto no-scrollbar">
 
         {/* FILTRO: MODELO / FAMILIA (PRIMERO - lógica del usuario) */}
-        <FilterSection title="Modelo / Familia" defaultOpen={true}>
+        <FilterSection title="Model / Family" defaultOpen={true}>
           <div className="space-y-2">
             {MODEL_FAMILIES.map((family) => (
               <button
@@ -319,7 +319,7 @@ export function FilterSidebar() {
         </FilterSection>
 
         {/* FILTRO: GENERACIÓN (Contextual - se filtra según familia) */}
-        <FilterSection title="Generación" defaultOpen={false}>
+        <FilterSection title="Generation" defaultOpen={false}>
           <div className="space-y-2">
             {availableGenerations.map((gen) => (
               <button
@@ -354,7 +354,7 @@ export function FilterSidebar() {
         </FilterSection>
 
         {/* FILTRO: VARIANTE */}
-        <FilterSection title="Variante" defaultOpen={true}>
+        <FilterSection title="Variant" defaultOpen={true}>
           <div className="flex flex-wrap gap-2">
             {POPULAR_VARIANTS.map((variant) => (
               <button
@@ -373,7 +373,7 @@ export function FilterSidebar() {
         </FilterSection>
 
         {/* FILTRO: RENDIMIENTO */}
-        <FilterSection title="Rendimiento" icon={Gauge}>
+        <FilterSection title="Performance" icon={Gauge}>
           <div className="space-y-4">
             {/* HP Slider */}
             <div>
@@ -422,7 +422,7 @@ export function FilterSidebar() {
         </FilterSection>
 
         {/* FILTRO: PRECIO */}
-        <FilterSection title="Precio MSRP" icon={DollarSign}>
+        <FilterSection title="MSRP" icon={DollarSign}>
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
@@ -449,7 +449,7 @@ export function FilterSidebar() {
         </FilterSection>
 
         {/* FILTRO: ESPECIFICACIONES */}
-        <FilterSection title="Especificaciones" icon={Shield}>
+        <FilterSection title="Specifications" icon={Shield}>
           <div className="space-y-2.5">
             <button
               onClick={() => setOnlyManual(!onlyManual)}
@@ -487,7 +487,7 @@ export function FilterSidebar() {
                 {onlyAWD && <Check className="size-3 text-primary-foreground" />}
               </div>
               <span className="text-[11px] font-medium text-muted-foreground">
-                Tracción AWD
+                AWD Drivetrain
               </span>
             </button>
 
@@ -523,7 +523,7 @@ export function FilterSidebar() {
         </div>
 
         <button className="w-full py-3 bg-gradient-to-r from-primary to-primary/90 rounded-lg text-[11px] font-semibold tracking-wider text-primary-foreground hover:shadow-lg hover:shadow-primary/30 transition-all uppercase">
-          Ver Resultados
+          View Results
         </button>
 
         {activeFiltersCount > 0 && (
@@ -531,7 +531,7 @@ export function FilterSidebar() {
             onClick={clearAllFilters}
             className="w-full py-2 bg-foreground/3 border border-border rounded-lg text-[10px] font-medium text-muted-foreground hover:bg-foreground/6 hover:text-primary transition-all"
           >
-            Limpiar filtros ({activeFiltersCount})
+            Clear filters ({activeFiltersCount})
           </button>
         )}
       </div>

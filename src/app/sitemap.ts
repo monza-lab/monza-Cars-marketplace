@@ -3,7 +3,7 @@ import { getSiteUrl } from "@/lib/seo/siteUrl"
 
 const BASE_URL = getSiteUrl()
 
-const LOCALES = ["en", "es", "de", "ja"] as const
+const LOCALES = ["en"] as const
 
 const STATIC_ROUTES = [
   "",            // homepage

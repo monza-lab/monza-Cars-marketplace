@@ -280,7 +280,7 @@ export function FamilySearchAndFilters({
         {generations.length > 1 && (
           <div className="mt-3 space-y-2">
             <p className="text-[9px] text-muted-foreground uppercase tracking-wider">
-              Generación
+              Generation
             </p>
             <div className="flex flex-wrap gap-1.5">
               {generations.map(gen => (
@@ -305,7 +305,7 @@ export function FamilySearchAndFilters({
       {!hideSearch && (
         <div className="px-5 py-2 bg-primary/3 border-t border-primary/10">
           <p className="text-[9px] text-muted-foreground text-center">
-            ↓ Scroll para ver análisis de mercado, precios y más
+            ↓ Scroll to see market analysis, prices and more
           </p>
         </div>
       )}

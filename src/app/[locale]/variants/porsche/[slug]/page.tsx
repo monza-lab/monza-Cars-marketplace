@@ -15,7 +15,7 @@ import { getPorscheModel } from "@/lib/models/registry";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 
 const BASE_URL = getSiteUrl();
-const LOCALES = ["en", "es", "de", "ja"] as const;
+const LOCALES = ["en"] as const;
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;

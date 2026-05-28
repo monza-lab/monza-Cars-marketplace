@@ -5,7 +5,8 @@ import Image from "next/image"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { Link, useRouter } from "@/i18n/navigation"
 import { stripHtml } from "@/lib/stripHtml"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, MotionConfig } from "framer-motion"
+import { useIsMobile } from "@/lib/useMediaQuery"
 import { useLocale, useTranslations } from "next-intl"
 import {
   ArrowLeft,
@@ -834,6 +835,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const { selectedRegion, setSelectedRegion } = useRegion()
   const { formatPrice, convertFromUsd } = useCurrency()
   const router = useRouter()
+  const isMobile = useIsMobile()
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
   const handleOpenReport = () => router.push(`/cars/${makeSlug}/${car.id}/report`)
   const lockedRegion = car.canonicalMarket ?? car.region
@@ -1010,6 +1012,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   }, [showRegistrationGate])
 
   return (
+    <MotionConfig reducedMotion={isMobile ? "always" : "user"}>
     <div className="min-h-screen bg-background">
       {/* ═══════════════════════════════════════════════════════════
           MOBILE LAYOUT — Investment Passport + Continuous Scroll
@@ -2299,5 +2302,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         }}
       />
     </div>
+    </MotionConfig>
   )
 }
