@@ -30,6 +30,8 @@ import { hasAlreadyGenerated } from "@/lib/reports/queries"
 
 const BASE_URL = getSiteUrl()
 
+export const dynamic = "force-dynamic"
+
 interface CarDetailPageProps {
   params: Promise<{ make: string; id: string; locale: string }>
 }
