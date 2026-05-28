@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, X, ArrowRight, Scale, Award, Calendar, ShieldCheck } from "lucide-react"
 
@@ -205,6 +205,12 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
   const hasResults = results.length > 0 || popularResults.length > 0
 
   // Close dropdown when clicking outside
+  const handleSelect = useCallback((result: SearchResult) => {
+    setQuery(result.name)
+    setIsOpen(false)
+    onSelect?.(result)
+  }, [onSelect])
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -249,13 +255,7 @@ export function SearchWithAutocomplete({ onSelect }: { onSelect?: (result: Searc
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isOpen, results, popularResults, activeIndex])
-
-  const handleSelect = (result: SearchResult) => {
-    setQuery(result.name)
-    setIsOpen(false)
-    onSelect?.(result)
-  }
+  }, [isOpen, results, popularResults, activeIndex, handleSelect])
 
   const handleClear = () => {
     setQuery("")

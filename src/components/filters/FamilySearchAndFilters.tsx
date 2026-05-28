@@ -124,7 +124,10 @@ export function FamilySearchAndFilters({
   const [selectedGenerations, setSelectedGenerations] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const onFilterChangeRef = useRef(onFilterChange)
-  onFilterChangeRef.current = onFilterChange
+
+  useEffect(() => {
+    onFilterChangeRef.current = onFilterChange
+  }, [onFilterChange])
 
   const generations = GENERATIONS_BY_FAMILY[familyName] || []
   const variants = VARIANTS_BY_FAMILY[familyName] || []

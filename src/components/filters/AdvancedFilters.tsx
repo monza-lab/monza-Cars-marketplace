@@ -11,6 +11,7 @@ import {
   Car,
   X,
   ChevronDown,
+  type LucideIcon,
 } from "lucide-react"
 import { BODY_TYPE_OPTIONS } from "@/lib/brandConfig"
 
@@ -79,7 +80,10 @@ export function AdvancedFilters({
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [selectedBodyTypes, setSelectedBodyTypes] = useState<string[]>([])
   const onFiltersChangeRef = useRef(onFiltersChange)
-  onFiltersChangeRef.current = onFiltersChange
+
+  useEffect(() => {
+    onFiltersChangeRef.current = onFiltersChange
+  }, [onFiltersChange])
 
   // Notify parent of filter changes
   useEffect(() => {
@@ -281,7 +285,7 @@ function FilterSection({
   children,
   hasSelection = false,
 }: {
-  icon: any
+  icon: LucideIcon
   title: string
   children: React.ReactNode
   hasSelection?: boolean

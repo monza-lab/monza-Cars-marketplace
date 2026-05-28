@@ -680,7 +680,9 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   // Load recent + trending when sheet opens
   useEffect(() => {
     if (!isOpen) return
-    setRecent(getSearchHistory().slice(0, 6))
+    const recentTimer = window.setTimeout(() => {
+      setRecent(getSearchHistory().slice(0, 6))
+    }, 0)
     if (!trendingLoaded) {
       const ac = new AbortController()
       // Porsche-only — explicit make param + defense-in-depth client filter.
@@ -693,8 +695,12 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           setTrendingLoaded(true)
         })
         .catch(() => setTrendingLoaded(true))
-      return () => ac.abort()
+      return () => {
+        window.clearTimeout(recentTimer)
+        ac.abort()
+      }
     }
+    return () => window.clearTimeout(recentTimer)
   }, [isOpen, trendingLoaded])
 
   // Focus input + reset query on close
@@ -703,7 +709,8 @@ function MobileSearchSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =
       setTimeout(() => inputRef.current?.focus(), 120)
     }
     if (!isOpen) {
-      setQuery("")
+      const resetTimer = window.setTimeout(() => setQuery(""), 0)
+      return () => window.clearTimeout(resetTimer)
     }
   }, [isOpen])
 

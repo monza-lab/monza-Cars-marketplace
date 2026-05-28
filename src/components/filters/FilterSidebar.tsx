@@ -12,6 +12,7 @@ import {
   Shield,
   Scale,
   ChevronUp,
+  type LucideIcon,
 } from "lucide-react"
 import { SearchWithAutocomplete } from "./SearchWithAutocomplete"
 
@@ -150,7 +151,7 @@ function FilterSection({
   defaultOpen = false,
 }: {
   title: string
-  icon?: any
+  icon?: LucideIcon
   children: React.ReactNode
   defaultOpen?: boolean
 }) {
