@@ -1,15 +1,13 @@
 import Stripe from "stripe"
 import { NextResponse } from "next/server"
 import {
-  activateStripeSubscription,
   deactivateStripeSubscription,
   findUserByStripeCustomerId,
   findUserByStripeSubscriptionId,
-  getUserCredits,
-  grantStripePurchase,
   renewSubscriptionCredits,
   updateStripeSubscriptionStatus,
 } from "@/lib/reports/queries"
+import { fulfillCheckoutSession } from "@/lib/payments/fulfillment"
 import { getStripeClient } from "@/lib/payments/stripe"
 import { getPricingPlan, resolvePlanKey } from "@/lib/payments/plans"
 import { sendServerCapiEvent } from "@/lib/marketing/metaCapiServer"
@@ -26,61 +24,8 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     return
   }
 
-  // Resolve supabase auth UUID → user_credits.id
-  const userProfile = await getUserCredits(appUserId)
-  if (!userProfile) {
-    console.error(`[stripe-webhook] user_credits not found for supabase_user_id=${appUserId}`)
-    return
-  }
-  const userCreditsId = userProfile.id
-
-  if (plan.billingMode === "subscription") {
-    const customerId = typeof session.customer === "string" ? session.customer : null
-    const subscriptionId = typeof session.subscription === "string" ? session.subscription : null
-    if (!customerId || !subscriptionId) return
-
-    const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId)
-    // Stripe API 2026-03-25: current_period_end moved from Subscription to SubscriptionItem
-    const firstItem = subscription.items?.data?.[0] as unknown as { current_period_end?: number } | undefined
-    const currentPeriodEnd = firstItem?.current_period_end
-    await activateStripeSubscription(userCreditsId, {
-      stripeCustomerId: customerId,
-      stripeSubscriptionId: subscriptionId,
-      subscriptionStatus: subscription.status,
-      subscriptionPeriodEnd:
-        typeof currentPeriodEnd === "number"
-          ? new Date(currentPeriodEnd * 1000).toISOString()
-          : null,
-      stripePaymentId: session.id,
-      subscriptionPlanKey: resolvedPlanKey,
-      monthlyAllowancePistons: plan.pistons,
-      unlimitedReports: plan.unlimitedReports,
-    })
-
-    await sendServerCapiEvent({
-      eventName: "Purchase",
-      eventId: `purchase_${session.id}`,
-      email: session.customer_details?.email ?? undefined,
-      externalId: appUserId,
-      customData: {
-        value: plan.price,
-        currency: "USD",
-        content_ids: [resolvedPlanKey],
-        content_type: "product",
-        content_name: plan.name,
-      },
-    }).catch((err) => console.error("[meta-capi-purchase] failed", err))
-
-    return
-  }
-
-  await grantStripePurchase(
-    userCreditsId,
-    plan.pistons,
-    session.id,
-    resolvedPlanKey,
-    typeof session.customer === "string" ? session.customer : null,
-  )
+  const result = await fulfillCheckoutSession(session)
+  if (result.status !== "fulfilled") return
 
   await sendServerCapiEvent({
     eventName: "Purchase",
@@ -98,7 +43,6 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function applyInvoicePaid(invoice: Stripe.Invoice) {
-  // Only handle subscription renewal invoices (not the first invoice)
   const billingReason = (invoice as unknown as { billing_reason?: string }).billing_reason
   if (billingReason !== "subscription_cycle") return
 
@@ -127,7 +71,6 @@ async function applyInvoicePaid(invoice: Stripe.Invoice) {
 
 async function applySubscriptionUpdate(subscription: Stripe.Subscription) {
   const customerId = typeof subscription.customer === "string" ? subscription.customer : null
-  // Stripe API 2026-03-25: current_period_end moved from Subscription to SubscriptionItem
   const firstItem = subscription.items?.data?.[0] as unknown as { current_period_end?: number } | undefined
   const currentPeriodEnd = firstItem?.current_period_end
   const user = customerId

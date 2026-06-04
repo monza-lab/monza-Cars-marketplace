@@ -19,6 +19,21 @@ export default function CheckoutSuccessPage() {
   const ready = profileLoaded || timeoutFired
 
   useEffect(() => {
+    const sessionId =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("session_id") ?? ""
+        : ""
+
+    if (sessionId) {
+      void fetch("/api/checkout/reconcile-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      })
+        .then(() => refreshProfile())
+        .catch((error) => console.error("[checkout-success] reconcile failed", error))
+    }
+
     // Stripe webhook may land before or after the user returns.
     // Poll profile up to 10 seconds, then stop and show the success view anyway.
     const interval = setInterval(() => {
