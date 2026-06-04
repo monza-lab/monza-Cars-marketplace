@@ -235,6 +235,12 @@ export function TechnicalAnalysisPage({
       {data.reliability ? (
         <View style={{ marginTop: 6 }}>
           <Text style={styles.h2}>Reliability</Text>
+          <Text style={[styles.bodyMuted, { marginTop: -4, marginBottom: 8, fontSize: 8.5 }]}>
+            Methodology: the reliability rating weighs model-generation
+            reliability, known failure patterns, expected maintenance cost
+            level, severity of common issues, and whether the problems listed
+            here materially affect this specific car.
+          </Text>
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 8 }}>
             <View style={[styles.cardSoft, { flex: 1 }]}>
               <Text style={styles.h3}>Rating</Text>

@@ -1,5 +1,6 @@
 import type { DueDiligenceReport } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
+import { Info } from "lucide-react"
 
 interface DueDiligenceSectionProps {
   data: DueDiligenceReport | null
@@ -75,6 +76,8 @@ export function DueDiligenceSection({ data }: DueDiligenceSectionProps) {
       : overallRisk <= 60
         ? "text-amber-600 dark:text-amber-400"
         : "text-red-600 dark:text-red-400"
+  const riskMethodology =
+    "Risk score methodology: 0 means lower uncertainty and 100 means higher uncertainty. The score weighs pricing, provenance, condition, and market evidence, then increases when service history, PPI findings, ownership history, modifications, or comparable data are missing or unfavorable."
 
   return (
     <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
@@ -86,7 +89,18 @@ export function DueDiligenceSection({ data }: DueDiligenceSectionProps) {
       {/* Risk score */}
       <div className="rounded-lg border border-border bg-background/50 p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground">Risk Assessment</h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-foreground">Risk Assessment</h3>
+            <button
+              type="button"
+              aria-label="Risk score methodology"
+              title={riskMethodology}
+              className="text-muted-foreground/70 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+            >
+              <Info className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">{riskMethodology}</span>
+            </button>
+          </div>
           <div className="text-center">
             <span className={`text-2xl font-bold font-mono ${riskColor}`}>{overallRisk}</span>
             <span className="text-sm text-muted-foreground">/100</span>

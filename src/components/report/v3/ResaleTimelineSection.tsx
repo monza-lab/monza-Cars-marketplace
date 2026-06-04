@@ -1,5 +1,6 @@
 import type { ResaleProjection } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
+import { Info } from "lucide-react"
 
 interface ResaleTimelineSectionProps {
   data: {
@@ -75,11 +76,24 @@ export function ResaleTimelineSection({ data }: ResaleTimelineSectionProps) {
   const minPct = Math.min(...entries.map((e) => e.projection.percentChange))
   const maxPct = Math.max(...entries.map((e) => e.projection.percentChange))
   const range = Math.max(Math.abs(minPct), Math.abs(maxPct), 1)
+  const methodology =
+    "Resale timeline methodology: projections combine recent comparable sales, current fair value, observed market trend, mileage sensitivity, model-generation demand, ownership cost assumptions, and the key factors listed on each horizon. Confidence reflects data depth, recency, and how directly the comparables match this car."
 
   return (
     <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <h2 className="text-xl font-semibold text-foreground">Resale Timeline</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-foreground">Resale Timeline</h2>
+          <button
+            type="button"
+            aria-label="Resale timeline methodology"
+            title={methodology}
+            className="text-muted-foreground/70 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+          >
+            <Info className="size-4" aria-hidden="true" />
+            <span className="sr-only">{methodology}</span>
+          </button>
+        </div>
         <DataTrustBadge level="ai_estimated" />
       </div>
 
