@@ -333,6 +333,12 @@ export function InvestmentStrategyPage({
 
       {/* ── Resale Timeline ──────────────────────────────────────── */}
       <Text style={styles.h2}>Resale Timeline</Text>
+      <Text style={[styles.bodyMuted, { marginTop: -4, marginBottom: 8, fontSize: 8.5 }]}>
+        Methodology: projections combine recent comparable sales, current fair
+        value, market trend, mileage sensitivity, model-generation demand,
+        ownership cost assumptions, and the key factors listed on each horizon.
+        Confidence reflects data depth, recency, and comparable fit.
+      </Text>
       <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
         {resaleYears.map((key) => {
           const p = resaleTimeline[key]

@@ -1,5 +1,6 @@
 import type { BuyerServices } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
+import { Info } from "lucide-react"
 
 interface BuyerServicesSectionProps {
   data: BuyerServices | null
@@ -27,6 +28,10 @@ export function BuyerServicesSection({ data }: BuyerServicesSectionProps) {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <h2 className="text-xl font-semibold text-foreground">Buyer Services</h2>
         <DataTrustBadge level="ai_estimated" />
+      </div>
+
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-200">
+        Please cross-check these prices with your Porsche dealer in your region. If you need support with parts pricing, availability, or local dealer questions, ask the advisor in the chat.
       </div>
 
       {/* Parts availability */}
@@ -92,6 +97,10 @@ export function BuyerServicesSection({ data }: BuyerServicesSectionProps) {
           {data.originalMsrp.note && (
             <p className="text-xs text-muted-foreground mt-1">{data.originalMsrp.note}</p>
           )}
+          <div className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            <Info className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
+            <p>Regional taxes, options, dealer availability, and superseded part numbers can change landed prices. Confirm final values with a Porsche dealer near the vehicle or buyer.</p>
+          </div>
         </div>
       )}
     </section>

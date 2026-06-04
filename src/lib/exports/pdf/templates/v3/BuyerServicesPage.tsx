@@ -65,6 +65,17 @@ export function BuyerServicesPage({
         </Text>
       </View>
 
+      <View style={[styles.cardLavender, { marginBottom: 12, paddingVertical: 10 }]} wrap={false}>
+        <Text style={[styles.h3, { color: tokens.primary, marginBottom: 4 }]}>
+          Dealer Cross-Check
+        </Text>
+        <Text style={styles.bodyMuted}>
+          Cross-check these prices with your Porsche dealer in your region.
+          If you need support with part numbers, local pricing, or dealer
+          questions, ask the advisor in the chat.
+        </Text>
+      </View>
+
       {/* ─── Parts & Service ──────────────────────────────────────── */}
       <Text style={styles.h2}>Parts & Service</Text>
       <View
@@ -312,6 +323,11 @@ export function BuyerServicesPage({
               {msrp.note}
             </Text>
           ) : null}
+          <Text style={[styles.bodyMuted, { marginTop: 6, fontSize: 8.5 }]}>
+            Regional taxes, options, dealer availability, and superseded part
+            numbers can change landed prices. Confirm final values with a
+            Porsche dealer near the vehicle or buyer.
+          </Text>
         </View>
       ) : null}
     </PageWrap>

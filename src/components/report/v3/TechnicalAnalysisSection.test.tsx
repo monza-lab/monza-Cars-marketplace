@@ -40,4 +40,12 @@ describe("TechnicalAnalysisSection", () => {
     expect(screen.queryByRole("heading", { name: "Key Strengths" })).not.toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Common Issues" })).not.toBeInTheDocument()
   })
+
+  it("explains why the reliability rating was assigned", () => {
+    render(<TechnicalAnalysisSection data={technicalAnalysis} />)
+
+    expect(screen.getByRole("button", { name: /why this reliability rating/i })).toBeInTheDocument()
+    expect(screen.getByText(/rating weighs model-generation reliability/i)).toBeInTheDocument()
+    expect(screen.getByText(/common problems listed here/i)).toBeInTheDocument()
+  })
 })

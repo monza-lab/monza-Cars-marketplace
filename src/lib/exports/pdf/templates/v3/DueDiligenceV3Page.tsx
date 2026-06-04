@@ -79,6 +79,9 @@ export function DueDiligenceV3Page({
           }}
         >
           <Text style={styles.h3}>Overall Risk</Text>
+          <Text style={[styles.bodyMuted, { marginTop: 2, fontSize: 8.5 }]}>
+            0 is lower uncertainty; 100 is higher uncertainty.
+          </Text>
           <Text
             style={[
               styles.priceLarge,
@@ -103,6 +106,12 @@ export function DueDiligenceV3Page({
 
         <View style={{ flex: 1 }}>
           <Text style={[styles.h3, { marginBottom: 8 }]}>Risk Breakdown</Text>
+          <Text style={[styles.bodyMuted, { marginBottom: 8, fontSize: 8.5 }]}>
+            Methodology weighs pricing, provenance, condition, and market
+            evidence, then increases risk when service history, PPI findings,
+            ownership history, modifications, or comparable data are missing or
+            unfavorable.
+          </Text>
           {data.riskScore.breakdown.map((b, i) => {
             const barColor = riskColor(b.score, tokens)
             const pct = Math.max(0, Math.min(100, b.score))

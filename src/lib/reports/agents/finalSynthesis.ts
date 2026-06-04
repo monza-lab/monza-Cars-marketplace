@@ -4,6 +4,20 @@ import { buildCarContext, buildPricingContext } from "./prompts/helpers"
 import type { PipelineContext } from "../pipeline"
 import type { FinalSynthesis } from "../types-v3"
 
+function normalizeRecommendationScore(data: FinalSynthesis): FinalSynthesis {
+  const score = data.finalRecommendation?.score
+  if (typeof score !== "number" || !Number.isFinite(score)) return data
+
+  const normalizedScore = score > 0 && score <= 10 ? Math.round(score * 10) : Math.round(score)
+  return {
+    ...data,
+    finalRecommendation: {
+      ...data.finalRecommendation,
+      score: Math.max(0, Math.min(100, normalizedScore)),
+    },
+  }
+}
+
 export async function executeFinalSynthesis(
   ctx: PipelineContext
 ): Promise<{ data: FinalSynthesis | null; durationMs: number; agentModel: string | null }> {
@@ -62,7 +76,9 @@ ${signalsCoverage} signals verified
 
 ## Required Output (JSON)
 - executiveSummary: { headline: string (one powerful sentence), keyMetrics: { fairValueRange: string, signalsCoverage: "${signalsCoverage} signals verified", riskScore: ${riskScore}, verdict: "BUY"|"WATCH"|"WALK", marketPosition: string (e.g. "12% below fair value") }, investmentThesis: string (100-200 words, substantive) }
-- finalRecommendation: { score: number (1-10), conditionEstimate: string, verdict: string (200-300 words wrapping everything up) }`
+- finalRecommendation: { score: number (0-100), conditionEstimate: string, verdict: string (200-300 words wrapping everything up) }
+
+Score methodology: 100 means the car strongly fulfills the investment, condition, provenance, pricing, and market requirements with low uncertainty. Scores near 80-95 are appropriate when most requirements are fulfilled. Do not use a 1-10 scale.`
 
   const result = await generateJson<FinalSynthesis>({
     systemPrompt: FINAL_SYNTHESIS_SYSTEM,
@@ -76,5 +92,5 @@ ${signalsCoverage} signals verified
     return { data: null, durationMs: Date.now() - t0, agentModel: "gemini-2.5-flash" }
   }
 
-  return { data: result.data, durationMs: Date.now() - t0, agentModel: "gemini-2.5-flash" }
+  return { data: normalizeRecommendationScore(result.data), durationMs: Date.now() - t0, agentModel: "gemini-2.5-flash" }
 }

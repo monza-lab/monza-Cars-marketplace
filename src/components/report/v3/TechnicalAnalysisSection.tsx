@@ -1,5 +1,6 @@
 import type { TechnicalAnalysis } from "@/lib/reports/types-v3"
 import { DataTrustBadge } from "../DataTrustBadge"
+import { Info } from "lucide-react"
 
 interface TechnicalAnalysisSectionProps {
   data: TechnicalAnalysis | null
@@ -56,6 +57,8 @@ export function TechnicalAnalysisSection({ data }: TechnicalAnalysisSectionProps
 
   const hasStrengths = (data.keyStrengths?.length ?? 0) > 0
   const hasCommonIssues = (data.commonIssues?.length ?? 0) > 0
+  const reliabilityMethodology =
+    "Why this reliability rating: the rating weighs model-generation reliability, known failure patterns, expected maintenance cost level, severity of common issues, and whether the common problems listed here materially affect this specific car."
 
   return (
     <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
@@ -143,7 +146,18 @@ export function TechnicalAnalysisSection({ data }: TechnicalAnalysisSectionProps
       {data.reliability && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-lg border border-border bg-background/50 p-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Reliability</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Reliability</p>
+              <button
+                type="button"
+                aria-label="Why this reliability rating"
+                title={reliabilityMethodology}
+                className="text-muted-foreground/70 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+              >
+                <Info className="size-3" aria-hidden="true" />
+                <span className="sr-only">{reliabilityMethodology}</span>
+              </button>
+            </div>
             <p className="mt-1 text-sm font-semibold text-foreground">
               {RELIABILITY_LABEL[data.reliability.rating] ?? data.reliability.rating}
             </p>
