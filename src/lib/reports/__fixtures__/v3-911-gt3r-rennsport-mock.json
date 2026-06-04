@@ -87,10 +87,22 @@
       "rarityNote": "Among the rarest modern Porsche track specials. Each unit is individually numbered and documented."
     },
     "keyStrengths": [
-      { "point": "Naturally aspirated 4.2L flat-six", "detail": "611 hp without turbocharging — the soundtrack and throttle response are unrivaled in modern motorsport." },
-      { "point": "Sequential gearbox", "detail": "Direct mechanical feel preferred by track-day enthusiasts and gentleman racers." },
-      { "point": "Heritage provenance", "detail": "Built to honor 75 years of Porsche racing — strong long-term collector appeal." },
-      { "point": "Factory support", "detail": "Porsche Motorsport service partner network covers maintenance and parts globally." }
+      {
+        "point": "Naturally aspirated 4.2L flat-six",
+        "detail": "611 hp without turbocharging — the soundtrack and throttle response are unrivaled in modern motorsport."
+      },
+      {
+        "point": "Sequential gearbox",
+        "detail": "Direct mechanical feel preferred by track-day enthusiasts and gentleman racers."
+      },
+      {
+        "point": "Heritage provenance",
+        "detail": "Built to honor 75 years of Porsche racing — strong long-term collector appeal."
+      },
+      {
+        "point": "Factory support",
+        "detail": "Porsche Motorsport service partner network covers maintenance and parts globally."
+      }
     ],
     "commonIssues": [
       {
@@ -141,52 +153,94 @@
         "Engine rebuild clock starts at first track session"
       ],
       "strategyInsight": "The $918K current bid is within rational range. Cap your bid at $950K-$975K to leave headroom for the next sale. Above $1M, the spread tightens and resale margin compresses meaningfully.",
-      "potentialRepairs": { "low": 0, "high": 15000, "description": "Pre-purchase inspection and corner-balancing recommended; no known issues from documentation." }
+      "potentialRepairs": {
+        "low": 0,
+        "high": 15000,
+        "description": "Pre-purchase inspection and corner-balancing recommended; no known issues from documentation."
+      }
     },
     "ownershipCosts": {
       "year1": {
-        "totalCost": 142000,
-        "breakdown": { "valueChange": 50000, "insurance": 22000, "maintenance": 35000, "majorWork": 35000 },
+        "totalCost": 120000,
+        "breakdown": {
+          "valueChange": 50000,
+          "maintenance": 35000,
+          "majorWork": 35000
+        },
         "notes": "Year 1 includes initial track preparation, telemetry recalibration, and one endurance event (engine inspection cycle).",
         "confidence": "high"
       },
       "year3": {
-        "totalCost": 285000,
-        "breakdown": { "valueChange": -15000, "insurance": 66000, "maintenance": 105000, "majorWork": 110000 },
+        "totalCost": 200000,
+        "breakdown": {
+          "valueChange": -15000,
+          "maintenance": 105000,
+          "majorWork": 110000
+        },
         "notes": "Mid-cycle includes a planned engine rebuild and gearbox refresh assuming 60 track hours total.",
         "confidence": "medium"
       },
       "year5": {
-        "totalCost": 410000,
-        "breakdown": { "valueChange": -25000, "insurance": 110000, "maintenance": 195000, "majorWork": 105000 },
+        "totalCost": 275000,
+        "breakdown": {
+          "valueChange": -25000,
+          "maintenance": 195000,
+          "majorWork": 105000
+        },
         "notes": "Year 5 assumes second engine rebuild and full chassis refresh. Resale window opens.",
         "confidence": "medium"
       }
     },
     "resaleTimeline": {
       "year1": {
-        "estimatedRange": { "low": 920000, "high": 985000 },
+        "estimatedRange": {
+          "low": 920000,
+          "high": 985000
+        },
         "percentChange": 3.5,
         "confidence": "medium",
-        "keyFactors": ["Limited supply", "Initial registration / chain of custody premium"]
+        "keyFactors": [
+          "Limited supply",
+          "Initial registration / chain of custody premium"
+        ]
       },
       "year3": {
-        "estimatedRange": { "low": 950000, "high": 1080000 },
+        "estimatedRange": {
+          "low": 950000,
+          "high": 1080000
+        },
         "percentChange": 9.2,
         "confidence": "medium",
-        "keyFactors": ["Heritage appreciation", "Track hours determine value", "Porsche 75th continued narrative"]
+        "keyFactors": [
+          "Heritage appreciation",
+          "Track hours determine value",
+          "Porsche 75th continued narrative"
+        ]
       },
       "year5": {
-        "estimatedRange": { "low": 1050000, "high": 1280000 },
+        "estimatedRange": {
+          "low": 1050000,
+          "high": 1280000
+        },
         "percentChange": 22.5,
         "confidence": "medium",
-        "keyFactors": ["Approaching Porsche 80th anniversary", "Last-of-an-era ICE motorsport positioning"]
+        "keyFactors": [
+          "Approaching Porsche 80th anniversary",
+          "Last-of-an-era ICE motorsport positioning"
+        ]
       },
       "year10": {
-        "estimatedRange": { "low": 1450000, "high": 1850000 },
-        "percentChange": 70.0,
+        "estimatedRange": {
+          "low": 1450000,
+          "high": 1850000
+        },
+        "percentChange": 70,
         "confidence": "low",
-        "keyFactors": ["Generational milestone collectors", "Motorsport electrification cycle", "Limited surviving low-hour examples"]
+        "keyFactors": [
+          "Generational milestone collectors",
+          "Motorsport electrification cycle",
+          "Limited surviving low-hour examples"
+        ]
       }
     },
     "investmentNarrative": "The GT3 R Rennsport occupies a unique niche: it is simultaneously a museum piece and a usable race car. For collectors who prize provenance over practicality, this 7th-of-77 example represents one of the cleanest entries into Porsche's modern motorsport canon. The naturally aspirated 4.2L flat-six and sequential gearbox configuration is unlikely to be repeated as Porsche pivots toward hybrid and electric platforms — a structural scarcity that should reward patient owners over a 5-10 year horizon."
@@ -227,20 +281,71 @@
     "riskScore": {
       "overall": 34,
       "breakdown": [
-        { "category": "Provenance", "score": 15, "note": "Single ownership, documented chain, Porsche Heritage records." },
-        { "category": "Mechanical condition", "score": 30, "note": "Low hours, factory-spec, but track-only cars need PPI." },
-        { "category": "Liquidity", "score": 55, "note": "Narrow buyer pool — track-only restricts resale velocity." },
-        { "category": "Storage & logistics", "score": 40, "note": "Requires climate-controlled storage and enclosed transport." }
+        {
+          "category": "Provenance",
+          "score": 15,
+          "note": "Single ownership, documented chain, Porsche Heritage records."
+        },
+        {
+          "category": "Mechanical condition",
+          "score": 30,
+          "note": "Low hours, factory-spec, but track-only cars need PPI."
+        },
+        {
+          "category": "Liquidity",
+          "score": 55,
+          "note": "Narrow buyer pool — track-only restricts resale velocity."
+        },
+        {
+          "category": "Storage & logistics",
+          "score": 40,
+          "note": "Requires climate-controlled storage and enclosed transport."
+        }
       ]
     },
     "ppiChecklist": [
-      { "item": "Borescope inspection of all six cylinders", "priority": "critical", "specificTo": "Naturally aspirated motorsport engine", "estimatedCost": "$1,800" },
-      { "item": "Sequential gearbox load test and end-float measurement", "priority": "critical", "specificTo": "Sequential transmission with track wear sensitivity", "estimatedCost": "$2,400" },
-      { "item": "Carbon-ceramic brake disc thickness measurement", "priority": "critical", "specificTo": "PCCB renewal cost is significant", "estimatedCost": "$600" },
-      { "item": "FT3 fuel cell certification date verification", "priority": "critical", "specificTo": "Required for FIA-sanctioned events", "estimatedCost": "$300" },
-      { "item": "Telemetry data export and review", "priority": "recommended", "specificTo": "Reveals actual stress history", "estimatedCost": "$500" },
-      { "item": "Suspension corner-balancing measurement", "priority": "recommended", "specificTo": "Track car setup integrity", "estimatedCost": "$1,200" },
-      { "item": "Factory documentation completeness check", "priority": "critical", "specificTo": "Heritage premium depends on complete records", "estimatedCost": "$0" }
+      {
+        "item": "Borescope inspection of all six cylinders",
+        "priority": "critical",
+        "specificTo": "Naturally aspirated motorsport engine",
+        "estimatedCost": "$1,800"
+      },
+      {
+        "item": "Sequential gearbox load test and end-float measurement",
+        "priority": "critical",
+        "specificTo": "Sequential transmission with track wear sensitivity",
+        "estimatedCost": "$2,400"
+      },
+      {
+        "item": "Carbon-ceramic brake disc thickness measurement",
+        "priority": "critical",
+        "specificTo": "PCCB renewal cost is significant",
+        "estimatedCost": "$600"
+      },
+      {
+        "item": "FT3 fuel cell certification date verification",
+        "priority": "critical",
+        "specificTo": "Required for FIA-sanctioned events",
+        "estimatedCost": "$300"
+      },
+      {
+        "item": "Telemetry data export and review",
+        "priority": "recommended",
+        "specificTo": "Reveals actual stress history",
+        "estimatedCost": "$500"
+      },
+      {
+        "item": "Suspension corner-balancing measurement",
+        "priority": "recommended",
+        "specificTo": "Track car setup integrity",
+        "estimatedCost": "$1,200"
+      },
+      {
+        "item": "Factory documentation completeness check",
+        "priority": "critical",
+        "specificTo": "Heritage premium depends on complete records",
+        "estimatedCost": "$0"
+      }
     ]
   },
   "marketResearch": {
@@ -285,9 +390,24 @@
     },
     "heritage": "The GT3 R Rennsport sits at the intersection of three Porsche traditions: the GT3 R endurance racing program (now over two decades old), the limited-production 'Rennsport' lineage that includes the 911 R, GT2 RS, and 935, and the company's broader 75-year racing heritage. Each example carries a unique build plate referencing the Type 360 Cisitalia, Porsche's first competition project. This positioning insulates the model from generational fashion swings — its narrative is intrinsically tied to Porsche's identity.",
     "relevantEvents": [
-      { "name": "Rennsport Reunion", "frequency": "Every 4 years", "location": "Laguna Seca, USA", "description": "The premier Porsche motorsport gathering; flagship venue for GT3 R Rennsport owners to showcase their cars." },
-      { "name": "Porsche Sports Cup", "frequency": "Annual season", "location": "Europe (multi-venue)", "description": "Customer racing series where GT3 R Rennsport examples occasionally participate in invitational classes." },
-      { "name": "Goodwood Festival of Speed", "frequency": "Annual", "location": "West Sussex, UK", "description": "International stage for limited-production Porsche track cars to attract collector and media attention." }
+      {
+        "name": "Rennsport Reunion",
+        "frequency": "Every 4 years",
+        "location": "Laguna Seca, USA",
+        "description": "The premier Porsche motorsport gathering; flagship venue for GT3 R Rennsport owners to showcase their cars."
+      },
+      {
+        "name": "Porsche Sports Cup",
+        "frequency": "Annual season",
+        "location": "Europe (multi-venue)",
+        "description": "Customer racing series where GT3 R Rennsport examples occasionally participate in invitational classes."
+      },
+      {
+        "name": "Goodwood Festival of Speed",
+        "frequency": "Annual",
+        "location": "West Sussex, UK",
+        "description": "International stage for limited-production Porsche track cars to attract collector and media attention."
+      }
     ],
     "ownerClubs": [
       "Porsche Club of America — Competition Division",
@@ -302,49 +422,53 @@
       "oemNote": "All consumables and major service parts available through Porsche Motorsport service partners. Lead times typically 4-8 weeks for non-stock items.",
       "aftermarketNote": "Aftermarket support is minimal — this is a factory race car. Modifications void the heritage premium and Porsche support eligibility.",
       "commonParts": [
-        { "name": "Carbon-ceramic brake rotor (front pair)", "availability": "PMP stock", "priceRange": "$18,000-$22,000" },
-        { "name": "Sequential gearbox internals", "availability": "Order from Weissach", "priceRange": "$25,000-$45,000" },
-        { "name": "Engine oil (motorsport spec, per change)", "availability": "PMP stock", "priceRange": "$650-$850" },
-        { "name": "FT3 fuel cell re-certification", "availability": "FIA-approved labs", "priceRange": "$3,500-$5,500" }
+        {
+          "name": "Carbon-ceramic brake rotor (front pair)",
+          "availability": "PMP stock",
+          "priceRange": "$18,000-$22,000"
+        },
+        {
+          "name": "Sequential gearbox internals",
+          "availability": "Order from Weissach",
+          "priceRange": "$25,000-$45,000"
+        },
+        {
+          "name": "Engine oil (motorsport spec, per change)",
+          "availability": "PMP stock",
+          "priceRange": "$650-$850"
+        },
+        {
+          "name": "FT3 fuel cell re-certification",
+          "availability": "FIA-approved labs",
+          "priceRange": "$3,500-$5,500"
+        }
       ]
-    },
-    "insuranceEstimates": {
-      "collectorPolicy": {
-        "annualPremium": { "low": 18000, "high": 26000 },
-        "mileageLimit": "Track-only; no road mileage covered",
-        "providers": ["Hagerty Collector Network", "Chubb Masterpiece", "Grundy Worldwide"]
-      },
-      "dailyDriver": null,
-      "notes": "Track-only cars require specialty coverage with on-track incident provisions. Most policies require a separate event endorsement per track day. Agreed-value coverage is essential at this value level.",
-      "vehicleCategory": "Limited-production track-only competition vehicle"
     },
     "regionalVariations": {
       "strongMarkets": [
-        { "region": "United States", "premiumPercent": "+5-8%", "reason": "Largest pool of private track facilities and PCA chapters" },
-        { "region": "Germany", "premiumPercent": "+3-6%", "reason": "Proximity to Weissach and active Porsche motorsport community" }
-      ],
-      "weakerMarkets": [
-        { "region": "Japan", "discountPercent": "-4-7%", "reason": "Track-only homologation complications and limited venue access" },
-        { "region": "United Kingdom", "discountPercent": "-2-4%", "reason": "Currency headwinds and post-Brexit import friction" }
-      ]
-    },
-    "transportEstimates": {
-      "recommendation": "enclosed",
-      "specialHandling": [
-        "Climate-controlled trailer required (humidity sensitivity for electronics)",
-        "Crew familiar with motorsport tie-downs (no chassis flex during transport)",
-        "Pre- and post-transport corner-balancing recommended"
-      ],
-      "routes": [
         {
-          "type": "enclosed",
-          "shortHaul": { "perMile": "$3.50-$5.00", "example": "NH → CT (~200mi) ~$900" },
-          "mediumHaul": { "perMile": "$2.80-$4.20", "example": "NH → FL (~1,400mi) ~$5,200" },
-          "longHaul": { "perMile": "$2.40-$3.60", "example": "NH → CA (~3,000mi) ~$9,800" }
+          "region": "United States",
+          "premiumPercent": "+5-8%",
+          "reason": "Largest pool of private track facilities and PCA chapters"
+        },
+        {
+          "region": "Germany",
+          "premiumPercent": "+3-6%",
+          "reason": "Proximity to Weissach and active Porsche motorsport community"
         }
       ],
-      "seasonalNote": "Winter transport adds 10-15% for de-icing and chain coverage. Summer Northeast → Southeast routes carry premium for hurricane-season logistics.",
-      "insuranceNote": "Verify transporter carries motorsport in-transit coverage at minimum $1.5M agreed-value."
+      "weakerMarkets": [
+        {
+          "region": "Japan",
+          "discountPercent": "-4-7%",
+          "reason": "Track-only homologation complications and limited venue access"
+        },
+        {
+          "region": "United Kingdom",
+          "discountPercent": "-2-4%",
+          "reason": "Currency headwinds and post-Brexit import friction"
+        }
+      ]
     },
     "originalMsrp": {
       "basePrice": 1043000,

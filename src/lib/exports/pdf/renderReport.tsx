@@ -117,7 +117,7 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
       { number: "03", title: "Market Research", summary: "Expert consensus, owner sentiment, heritage.", page: PG_MARKET },
       { number: "04", title: "Technical Deep-Dive", summary: "Model history, what makes this spec special, known issues.", page: PG_TECH },
       { number: "05", title: "Due Diligence", summary: "Risk score, questions to ask, pre-purchase checklist.", page: PG_DD },
-      { number: "06", title: "Buyer Services & Logistics", summary: "Parts, insurance, regional markets, transport.", page: PG_BUYER },
+      { number: "06", title: "Buyer Services", summary: "Parts availability, regional markets, original MSRP.", page: PG_BUYER },
       { number: "07", title: "Sources", summary: "Every citation in this dossier.", page: PG_CITATIONS },
       { number: "08", title: "The Fine Print", summary: "Disclaimer, methodology, independence.", page: PG_DISCLAIMER },
     ]

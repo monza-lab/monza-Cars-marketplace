@@ -19,18 +19,21 @@ const CONFIDENCE_STYLE: Record<string, string> = {
   low: "text-red-600 dark:text-red-400",
 }
 
+function displayTotal(projection: CostProjection): number {
+  return projection.breakdown.valueChange + projection.breakdown.maintenance + (projection.breakdown.majorWork ?? 0)
+}
+
 function CostRow({ label, projection }: { label: string; projection: CostProjection }) {
   const { breakdown } = projection
   return (
     <tr className="border-b border-border/50 last:border-0">
       <td className="py-2.5 font-medium text-foreground">{label}</td>
       <td className="py-2.5 text-right font-mono text-muted-foreground">{fmtUsd(breakdown.valueChange)}</td>
-      <td className="py-2.5 text-right font-mono text-muted-foreground">{fmtUsd(breakdown.insurance)}</td>
       <td className="py-2.5 text-right font-mono text-muted-foreground">{fmtUsd(breakdown.maintenance)}</td>
       <td className="py-2.5 text-right font-mono text-muted-foreground">
-        {breakdown.majorWork != null ? fmtUsd(breakdown.majorWork) : "—"}
+        {breakdown.majorWork != null ? fmtUsd(breakdown.majorWork) : "-"}
       </td>
-      <td className="py-2.5 text-right font-mono font-semibold text-foreground">{fmtUsd(projection.totalCost)}</td>
+      <td className="py-2.5 text-right font-mono font-semibold text-foreground">{fmtUsd(displayTotal(projection))}</td>
       <td className="py-2.5 text-right">
         <span className={`text-xs font-medium capitalize ${CONFIDENCE_STYLE[projection.confidence] ?? ""}`}>
           {projection.confidence}
@@ -57,12 +60,11 @@ export function OwnershipCostSection({ data }: OwnershipCostSectionProps) {
       </div>
 
       <div className="overflow-x-auto -mx-2">
-        <table className="w-full text-sm min-w-[600px]">
+        <table className="w-full text-sm min-w-[520px]">
           <thead>
             <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
               <th className="text-left pb-2 font-medium">Period</th>
               <th className="text-right pb-2 font-medium">Value Change</th>
-              <th className="text-right pb-2 font-medium">Insurance</th>
               <th className="text-right pb-2 font-medium">Maintenance</th>
               <th className="text-right pb-2 font-medium">Major Work</th>
               <th className="text-right pb-2 font-medium">Total</th>
@@ -77,7 +79,6 @@ export function OwnershipCostSection({ data }: OwnershipCostSectionProps) {
         </table>
       </div>
 
-      {/* Notes */}
       <div className="space-y-1.5 border-t border-border pt-3">
         {rows.map((row) =>
           row.projection.notes ? (

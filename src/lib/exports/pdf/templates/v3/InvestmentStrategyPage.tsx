@@ -217,20 +217,6 @@ export function InvestmentStrategyPage({
               textAlign: "right",
             }}
           >
-            Insurance
-          </Text>
-          <Text
-            style={{
-              fontFamily: "Karla",
-              fontWeight: 600,
-              fontSize: 7,
-              color: tokens.muted,
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
-              flex: 1,
-              textAlign: "right",
-            }}
-          >
             Maintenance
           </Text>
           <Text
@@ -267,6 +253,7 @@ export function InvestmentStrategyPage({
           const c = ownershipCosts[key]
           const valueColor =
             c.breakdown.valueChange >= 0 ? tokens.positive : tokens.negative
+          const displayedTotal = c.breakdown.valueChange + c.breakdown.maintenance + (c.breakdown.majorWork ?? 0)
           return (
             <View
               key={key}
@@ -315,14 +302,6 @@ export function InvestmentStrategyPage({
                   { flex: 1, fontSize: 9, textAlign: "right", color: tokens.foreground },
                 ]}
               >
-                {fmtCurrencyFull(c.breakdown.insurance)}
-              </Text>
-              <Text
-                style={[
-                  styles.mono,
-                  { flex: 1, fontSize: 9, textAlign: "right", color: tokens.foreground },
-                ]}
-              >
                 {fmtCurrencyFull(c.breakdown.maintenance)}
               </Text>
               <Text
@@ -345,7 +324,7 @@ export function InvestmentStrategyPage({
                   },
                 ]}
               >
-                {fmtCurrencyFull(c.totalCost)}
+                {fmtCurrencyFull(displayedTotal)}
               </Text>
             </View>
           )

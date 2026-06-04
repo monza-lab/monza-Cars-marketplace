@@ -25,9 +25,7 @@ ${regionalData}
 
 ## Required Output (JSON)
 - partsAvailability: { overallRating: "readily_available"|"available"|"limited"|"scarce", oemNote: string, aftermarketNote: string, commonParts: array of { name: string, availability: string, priceRange: string } (5-8 items) }
-- insuranceEstimates: { collectorPolicy: { annualPremium: { low: number, high: number }, mileageLimit: string, providers: string[] }, dailyDriver: { annualPremium: { low: number, high: number } } | null, notes: string, vehicleCategory: string }
 - regionalVariations: { strongMarkets: array of { region: string, premiumPercent: string, reason: string }, weakerMarkets: array of { region: string, discountPercent: string, reason: string } }
-- transportEstimates: { recommendation: "enclosed"|"open"|"either", specialHandling: string[], routes: array of { type: "enclosed"|"open", shortHaul: { perMile: string, example: string }, mediumHaul: { perMile: string, example: string }, longHaul: { perMile: string, example: string } }, seasonalNote: string, insuranceNote: string }
 - originalMsrp: { basePrice: number|null, adjustedForInflation: number|null, note: string } | null`
 
   const result = await generateJson<BuyerServices>({

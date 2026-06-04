@@ -147,10 +147,11 @@ export function TechnicalAnalysisPage({
         </View>
       ) : null}
 
-      {/* Key strengths */}
       {data.keyStrengths.length > 0 ? (
         <View style={{ marginTop: 6 }}>
-          <Text style={styles.h2}>Key Strengths</Text>
+          <Text style={styles.h2}>
+            Key Strengths of This specific car and common issues of this model generation
+          </Text>
           <View style={{ marginTop: 4 }}>
             {data.keyStrengths.slice(0, 6).map((s, i) => (
               <View
@@ -185,10 +186,9 @@ export function TechnicalAnalysisPage({
         </View>
       ) : null}
 
-      {/* Known issues */}
       {data.commonIssues.length > 0 ? (
         <View style={{ marginTop: 6 }}>
-          <Text style={styles.h2}>Known Issues</Text>
+          <Text style={styles.h2}>Common issues of this model generation</Text>
           {data.commonIssues.slice(0, 5).map((issue, i) => (
             <View
               key={i}

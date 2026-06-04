@@ -59,7 +59,7 @@ ${strategyGuidance}
 ## Required Output (JSON)
 Provide a JSON object with:
 - strategy: { type: "${listingType}", maxBidRecommendation: number|null, bidTiming: string|null, reserveStrategy: string|null, openingOffer: number|null, walkAwayPrice: number|null, negotiationLeverage: string[], strategyInsight: string (200-400 words), potentialRepairs: { low: number, high: number, description: string } }
-- ownershipCosts: { year1, year3, year5 } each: { totalCost: number, breakdown: { valueChange: number, insurance: number, maintenance: number, majorWork: number|null }, notes: string, confidence: "high"|"medium"|"low" }
+- ownershipCosts: { year1, year3, year5 } each: { totalCost: number, breakdown: { valueChange: number, maintenance: number, majorWork: number|null }, notes: string, confidence: "high"|"medium"|"low" }
 - resaleTimeline: { year1, year3, year5, year10 } each: { estimatedRange: { low: number, high: number }, percentChange: number, confidence: "high"|"medium"|"low", keyFactors: string[] (2-3 factors) }
 - investmentNarrative: string (500-800 words, substantive investment analysis)`
 }

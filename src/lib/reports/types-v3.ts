@@ -163,7 +163,6 @@ export interface CostProjection {
   totalCost: number
   breakdown: {
     valueChange: number
-    insurance: number
     maintenance: number
     majorWork: number | null
   }
@@ -262,31 +261,9 @@ export interface BuyerServices {
     aftermarketNote: string
     commonParts: { name: string; availability: string; priceRange: string }[]
   }
-  insuranceEstimates: {
-    collectorPolicy: {
-      annualPremium: { low: number; high: number }
-      mileageLimit: string
-      providers: string[]
-    }
-    dailyDriver: { annualPremium: { low: number; high: number } } | null
-    notes: string
-    vehicleCategory: string
-  }
   regionalVariations: {
     strongMarkets: { region: string; premiumPercent: string; reason: string }[]
     weakerMarkets: { region: string; discountPercent: string; reason: string }[]
-  }
-  transportEstimates: {
-    recommendation: "enclosed" | "open" | "either"
-    specialHandling: string[]
-    routes: {
-      type: "enclosed" | "open"
-      shortHaul: { perMile: string; example: string }
-      mediumHaul: { perMile: string; example: string }
-      longHaul: { perMile: string; example: string }
-    }[]
-    seasonalNote: string
-    insuranceNote: string
   }
   originalMsrp: {
     basePrice: number | null
