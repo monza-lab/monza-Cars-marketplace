@@ -27,6 +27,10 @@ const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
 const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
   tier === "deep_research" && userTier === "PRO" ? 3 : 2
 
+function buildSystemPrompt(systemPrompt: string, locale: RunAdvisorTurnInput["locale"]): string {
+  return systemPrompt.replaceAll("{{locale}}", locale)
+}
+
 /**
  * Feature-flag gate. We keep the env var as a kill switch, but the advisor is
  * otherwise open because both the search overlay and car-specific chat are
@@ -206,7 +210,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
 
     const stream = streamWithTools({
       model,
-      systemPrompt: skill.systemPrompt.replace("{{locale}}", input.locale),
+      systemPrompt: buildSystemPrompt(skill.systemPrompt, input.locale),
       messages: streamMessages,
       tools: toolDefs,
       temperature: skill.temperature,
@@ -297,7 +301,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   if (!accumulatedText.trim() && toolCallSummaries.length > 0) {
     const synthesisStream = streamWithTools({
       model: MODEL_BY_TIER(classification.tier),
-      systemPrompt: skill.systemPrompt.replace("{{locale}}", input.locale),
+      systemPrompt: buildSystemPrompt(skill.systemPrompt, input.locale),
       messages: streamMessages,
       tools: [],
       temperature: skill.temperature,

@@ -12,7 +12,7 @@ vi.mock("@/lib/ai/gemini", () => ({
 vi.mock("@/lib/ai/skills/loader", () => ({
   loadSkill: () => ({
     kind: "chat",
-    systemPrompt: "You are an advisor. Locale: {{locale}}.",
+    systemPrompt: "You are an advisor. Locale: {{locale}}. Repeat locale: {{locale}}.",
     model: "gemini-2.5-flash",
     temperature: 0.3,
   }),
@@ -84,6 +84,26 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
     expect(events[0]).toBe("classified")
     expect(events).toContain("content_delta")
     expect(events[events.length - 1]).toBe("done")
+  })
+
+  it("substitutes every locale placeholder before calling Gemini", async () => {
+    for await (const _ev of runAdvisorTurn({
+      userText: "Was ist ein 997.2 GT3?",
+      conversationId: "conv-locale",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "u1",
+      anonymousSessionId: null,
+      locale: "de",
+      initialContext: null,
+    })) {
+      // exhaust stream
+    }
+
+    const firstCall = streamWithToolsMock.mock.calls[0]?.[0]
+    expect(firstCall?.systemPrompt).toContain("Locale: de")
+    expect(firstCall?.systemPrompt).toContain("Repeat locale: de")
+    expect(firstCall?.systemPrompt).not.toContain("{{locale}}")
   })
 })
 

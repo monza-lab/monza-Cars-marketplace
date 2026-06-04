@@ -147,4 +147,13 @@ describe("loadSkill", () => {
     expect(skill.userPromptTemplate).toBe("")
     expect(skill.systemPrompt).toContain("You are the MonzaHaus advisor.")
   })
+
+  it("advisor skill answers in the latest user message language before falling back to UI locale", () => {
+    const skill = loadSkill("advisor")
+
+    expect(skill.systemPrompt).toContain("Detect the natural language of the user's latest message")
+    expect(skill.systemPrompt).toContain("answer in that detected language")
+    expect(skill.systemPrompt).toContain("Use the supplied UI locale only when the latest user message is too short or ambiguous")
+    expect(skill.systemPrompt).toContain("Tool output language never controls the answer language")
+  })
 })
