@@ -1506,5 +1506,83 @@
       "warranty_remaining": { "name": "Warranty remaining", "description": "Factory or CPO warranty still active" },
       "seller_tier_specialist": { "name": "Porsche specialist seller", "description": "Sold by a curated specialist dealer" }
     }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Collector Car Intelligence",
+      "headline": "The collector car market is a $50 billion blind spot.",
+      "subline": "MonzaHaus gives you the data, context, and conviction to navigate it. Built for collectors who treat cars as assets.",
+      "cta": "Explore the Market",
+      "ctaSecondary": "Get a Free Report"
+    },
+    "problem": {
+      "opacity": {
+        "title": "Pricing data is scattered across a dozen sources",
+        "desc": "Auction results, dealer asks, and private sales live in silos. No single view of what a car is actually worth across markets."
+      },
+      "gut": {
+        "title": "Six-figure decisions made on gut feeling",
+        "desc": "Without comparable sales, regional pricing, and trend data, every acquisition is a gamble dressed up as expertise."
+      },
+      "knowledge": {
+        "title": "Critical knowledge locked in forums and hearsay",
+        "desc": "Provenance, variant differences, inspection priorities, and market context are tribal knowledge. Until now."
+      }
+    },
+    "ecosystem": {
+      "title": "One platform. Every angle.",
+      "subtitle": "Everything a serious collector needs to make informed decisions, in one place.",
+      "intelligence": {
+        "title": "Market Intelligence",
+        "desc": "Live listings from auctions and dealers across the US, Europe, UK, and Japan. Tracked, organized, and priced in your currency."
+      },
+      "reports": {
+        "title": "Investment Reports",
+        "desc": "Comprehensive dossiers with fair value analysis, comparable sales, risk scoring, and actionable bid targets for any listing."
+      },
+      "knowledge": {
+        "title": "Knowledge Base",
+        "desc": "Model guides, variant breakdowns, generation comparisons, and buyer education written for collectors, not enthusiasts."
+      },
+      "indices": {
+        "title": "Market Indices",
+        "desc": "Track price trends across air-cooled, water-cooled, GT, and Turbo segments. Know where the market is heading."
+      },
+      "advisor": {
+        "title": "Market Advisor",
+        "desc": "Ask anything about any Porsche. Get answers grounded in real market data, not opinions."
+      }
+    },
+    "proof": {
+      "listings": { "label": "Listings tracked", "suffix": "+" },
+      "regions": { "label": "Markets covered", "suffix": "" },
+      "sources": { "label": "Data sources", "suffix": "" },
+      "reports": { "label": "Reports generated", "suffix": "+" }
+    },
+    "vision": {
+      "headline": "More than a platform.",
+      "body": "MonzaHaus is building the definitive ecosystem for collector car intelligence. Data, knowledge, and community, designed for people who see cars as more than machines. This is where conviction meets information."
+    },
+    "cta": {
+      "headline": "See the market clearly.",
+      "subline": "Join collectors who make decisions with data, not hope.",
+      "primary": "Explore the Market",
+      "secondary": "Get a Free Report",
+      "reassurance": "No account required to browse."
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to MonzaHaus",
+      "browse": "Browse thousands of collector Porsches across 4 regions",
+      "reports": "Get investment-grade reports on any listing",
+      "trends": "Track market trends with real-time indices",
+      "cta": "Start Exploring"
+    },
+    "tips": {
+      "regions": "Filter listings by region — US, UK, EU, or Japan",
+      "search": "Search any Porsche by model, year, or paste an auction URL",
+      "advisor": "Ask our market advisor anything about the collector market"
+    }
   }
 }

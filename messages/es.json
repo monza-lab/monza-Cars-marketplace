@@ -1505,5 +1505,83 @@
       "warranty_remaining": { "name": "Garantía vigente", "description": "Garantía de fábrica o CPO aún activa" },
       "seller_tier_specialist": { "name": "Vendedor especialista Porsche", "description": "Vendido por un dealer especialista curado" }
     }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Inteligencia de Autos de Coleccion",
+      "headline": "El mercado de autos de coleccion es un punto ciego de $50 mil millones.",
+      "subline": "MonzaHaus te da los datos, el contexto y la conviccion para navegarlo. Creado para coleccionistas que ven los autos como activos.",
+      "cta": "Explorar el Mercado",
+      "ctaSecondary": "Obtener un Reporte Gratis"
+    },
+    "problem": {
+      "opacity": {
+        "title": "Los datos de precios estan dispersos en decenas de fuentes",
+        "desc": "Resultados de subastas, precios de dealers y ventas privadas viven en silos. No hay una vista unica de cuanto vale realmente un auto en todos los mercados."
+      },
+      "gut": {
+        "title": "Decisiones de seis cifras basadas en instinto",
+        "desc": "Sin ventas comparables, precios regionales y datos de tendencia, cada adquisicion es una apuesta disfrazada de expertise."
+      },
+      "knowledge": {
+        "title": "Conocimiento critico encerrado en foros y rumores",
+        "desc": "Provenance, diferencias de variantes, prioridades de inspeccion y contexto de mercado son conocimiento tribal. Hasta ahora."
+      }
+    },
+    "ecosystem": {
+      "title": "Una plataforma. Cada angulo.",
+      "subtitle": "Todo lo que un coleccionista serio necesita para tomar decisiones informadas, en un solo lugar.",
+      "intelligence": {
+        "title": "Inteligencia de Mercado",
+        "desc": "Listados en vivo de subastas y dealers en EE.UU., Europa, UK y Japon. Rastreados, organizados y en tu moneda."
+      },
+      "reports": {
+        "title": "Reportes de Inversion",
+        "desc": "Dossiers generados con AI: analisis de valor justo, ventas comparables, scoring de riesgo y objetivos de oferta."
+      },
+      "knowledge": {
+        "title": "Base de Conocimiento",
+        "desc": "Guias de modelos, comparaciones de variantes y educacion de comprador. Escritos para coleccionistas, no entusiastas."
+      },
+      "indices": {
+        "title": "Indices de Mercado",
+        "desc": "Sigue tendencias de precios en segmentos air-cooled, water-cooled, GT y Turbo. Sabe hacia donde va el mercado."
+      },
+      "advisor": {
+        "title": "Asesor AI",
+        "desc": "Pregunta lo que quieras sobre cualquier Porsche. Respuestas basadas en datos reales, no opiniones."
+      }
+    },
+    "proof": {
+      "listings": { "label": "Listados rastreados", "suffix": "+" },
+      "regions": { "label": "Mercados cubiertos", "suffix": "" },
+      "sources": { "label": "Fuentes de datos", "suffix": "" },
+      "reports": { "label": "Reportes generados", "suffix": "+" }
+    },
+    "vision": {
+      "headline": "Mas que una plataforma.",
+      "body": "MonzaHaus esta construyendo el ecosistema definitivo para inteligencia de autos de coleccion. Datos, conocimiento y comunidad, disenado para personas que ven los autos como mas que maquinas."
+    },
+    "cta": {
+      "headline": "Ve el mercado con claridad.",
+      "subline": "Unete a coleccionistas que toman decisiones con datos, no esperanza.",
+      "primary": "Explorar el Mercado",
+      "secondary": "Obtener un Reporte Gratis",
+      "reassurance": "No se requiere cuenta para navegar."
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenido a MonzaHaus",
+      "browse": "Explora miles de Porsches de coleccion en 4 regiones",
+      "reports": "Obtiene reportes de inversion con AI en cualquier listado",
+      "trends": "Sigue tendencias de mercado con indices en tiempo real",
+      "cta": "Comenzar a Explorar"
+    },
+    "tips": {
+      "regions": "Filtra listados por region — EE.UU., UK, EU o Japon",
+      "search": "Busca cualquier Porsche por modelo, ano o pega una URL de subasta",
+      "advisor": "Pregunta a nuestro asesor AI lo que quieras sobre el mercado"
+    }
   }
 }
