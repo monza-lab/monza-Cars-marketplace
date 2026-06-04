@@ -783,7 +783,7 @@ export function Header() {
         )}
 
         {/* COMPACT HEADER — Single Row (smaller on mobile) */}
-        <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-4 md:gap-6">
+        <div className="relative h-14 md:h-20 px-4 md:px-6 flex items-center gap-3 lg:gap-4 xl:gap-6">
           {/* Left: Logo — MonzaHaus wordmark (Saira 600 + helmet) */}
           <Link href={homeHref} className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
             <MonzaHausWordmark
@@ -795,11 +795,15 @@ export function Header() {
           {/* View Toggle: Monza | Classic — only on home (where the dual
               feed view is the actual UX). Off on cars list, advisor, report,
               tools etc. so the header stays calm. */}
-          {showViewToggle && <ViewToggle />}
+          {showViewToggle && (
+            <div className="hidden lg:block shrink-0">
+              <ViewToggle />
+            </div>
+          )}
 
           {/* Center: Unified Search trigger (hidden on mobile). Clicking
               opens a centered modal-style command palette. ⌘K also opens. */}
-          <div className="hidden md:block flex-1 max-w-xl relative">
+          <div className="hidden md:block flex-1 min-w-[13rem] lg:min-w-[16rem] max-w-xl relative">
             <button
               type="button"
               onClick={() => setShowUnifiedSearch(true)}
@@ -820,7 +824,7 @@ export function Header() {
               advisor, report, tools…) the region pills were noise. */}
           {showRegionPills && (
           <div
-            className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
+            className={`hidden xl:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
             aria-disabled={isMarketLocked}
             title={isMarketLocked ? "Locked to vehicle market on detail pages" : undefined}
           >
@@ -868,7 +872,7 @@ export function Header() {
               currency is a personal preference, lives next to Theme/Language). */}
 
           {/* Right: Actions — anchored to far right */}
-          <div className="flex items-center gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 shrink-0 ml-auto">
             {/* Credits - only show when authenticated, click → Pistons Wallet modal */}
             {isAuthenticated && (
               <button
@@ -882,7 +886,7 @@ export function Header() {
                 ) : (
                   <>
                     <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                    <span className="text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                    <span className="hidden lg:inline text-[10px] text-muted-foreground">{t('auth.credits')}</span>
                   </>
                 )}
               </button>
@@ -908,7 +912,7 @@ export function Header() {
                 <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
                   <User className="size-3.5 text-primary" />
                 </div>
-                <span className="text-[11px] font-medium">
+                <span className="hidden xl:inline text-[11px] font-medium">
                   {profile?.name?.split(" ")[0] || t("nav.account")}
                 </span>
               </button>
