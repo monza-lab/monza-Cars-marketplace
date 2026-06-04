@@ -21,10 +21,10 @@ import {
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
 import { ReportClient } from "./ReportClient"
-import { findSimilarCars } from "@/lib/similarCars"
+import { findStrictReportPeers } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
-import { getComparablesForModel } from "@/lib/db/queries"
+import { getStrictComparablesForModel } from "@/lib/db/queries"
 
 export const dynamic = "force-dynamic"
 
@@ -118,14 +118,14 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
       )
     }
   }
-  const similarCars = findSimilarCars(car, allCandidates, 6)
+  const similarCars = findStrictReportPeers(car, allCandidates, 6)
 
   // Fetch priced listings + compute market stats in parallel
   const [allPriced, dbComparables] = await Promise.all([
     fetchPricedListingsForModel(car.make),
-    getComparablesForModel(car.make, car.model).catch((err) => {
+    getStrictComparablesForModel(car.make, car.model).catch((err) => {
       console.warn(
-        "[report] getComparablesForModel failed, continuing without DB comparables:",
+        "[report] getStrictComparablesForModel failed, continuing without DB comparables:",
         err instanceof Error ? err.message : err,
       )
       return []

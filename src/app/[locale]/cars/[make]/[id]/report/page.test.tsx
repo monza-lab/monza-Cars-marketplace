@@ -1,7 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const ReportClientMock = vi.fn(() => <div data-testid="report-client">preview</div>)
+type ReportClientProps = {
+  userHasAccess: boolean
+  existingReport: unknown
+  v3Report: unknown
+  dbComparables: unknown[]
+  similarCars: unknown[]
+}
+
+const ReportClientMock = vi.fn((props: ReportClientProps) => {
+  void props
+  return <div data-testid="report-client">preview</div>
+})
 
 // Stubear los módulos de Next.js que el page importa transitivamente.
 vi.mock("next/navigation", () => ({
@@ -18,6 +29,18 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
   useTranslations: () => ((key: string) => key) as never,
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+vi.mock("next-intl/navigation", () => ({
+  createNavigation: () => ({
+    Link: ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+      <a href={href} {...props}>{children}</a>
+    ),
+  }),
+}))
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
 }))
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -80,11 +103,22 @@ vi.mock("@/lib/marketStats", () => ({
 }))
 
 vi.mock("@/lib/similarCars", () => ({
-  findSimilarCars: vi.fn().mockReturnValue([]),
+  findStrictReportPeers: vi.fn().mockReturnValue([
+    { car: { ...mockCar, id: "live-peer", model: "911" }, score: 100, matchReasons: ["Same model variant"] },
+  ]),
 }))
 
 vi.mock("@/lib/db/queries", () => ({
-  getComparablesForModel: vi.fn().mockResolvedValue([]),
+  getStrictComparablesForModel: vi.fn().mockResolvedValue([
+    {
+      title: "2020 Porsche 911",
+      platform: "BRING_A_TRAILER",
+      soldDate: "2026-01-01T00:00:00.000Z",
+      soldPrice: 100000,
+      mileage: 5000,
+      condition: "excellent",
+    },
+  ]),
 }))
 
 vi.mock("@/lib/reports/queries", () => ({
@@ -154,7 +188,7 @@ describe("ReportPage SSR robustness", () => {
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: { id: "auth-user-1" } }, error: null }),
       },
-    } as Awaited<ReturnType<typeof createClient>>)
+    } as unknown as Awaited<ReturnType<typeof createClient>>)
     vi.mocked(getUserCredits).mockResolvedValue({
       id: "internal-user-1",
     } as Awaited<ReturnType<typeof getUserCredits>>)
@@ -171,6 +205,28 @@ describe("ReportPage SSR robustness", () => {
       userHasAccess: true,
       existingReport: null,
       v3Report: null,
+    })
+  })
+
+  it("passes strict historical comparables and strict live peers to ReportClient", async () => {
+    const { default: ReportPage } = await import("./page")
+    const { getStrictComparablesForModel } = await import("@/lib/db/queries")
+    const { findStrictReportPeers } = await import("@/lib/similarCars")
+
+    renderToStaticMarkup(await ReportPage({
+      params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),
+      searchParams: Promise.resolve({}),
+    }))
+
+    expect(getStrictComparablesForModel).toHaveBeenCalledWith("Porsche", "911")
+    expect(findStrictReportPeers).toHaveBeenCalled()
+    expect(ReportClientMock.mock.calls[0]?.[0]).toMatchObject({
+      dbComparables: [
+        expect.objectContaining({ title: "2020 Porsche 911", soldPrice: 100000 }),
+      ],
+      similarCars: [
+        expect.objectContaining({ score: 100, matchReasons: ["Same model variant"] }),
+      ],
     })
   })
 })

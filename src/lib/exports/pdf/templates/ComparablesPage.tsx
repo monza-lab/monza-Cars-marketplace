@@ -37,21 +37,12 @@ export function ComparablesPage({
         </Text>
       ) : (
         <Text style={pdfStyles.bodyMuted}>
-          Comparable data is being collected for this model. As sold listings are
-          captured across platforms, comparables will populate here automatically.
+          Sold distribution is unavailable for this strict peer set.
         </Text>
       )}
 
       <Text style={[pdfStyles.h3, { marginTop: 10 }]}>Comparables</Text>
-      {comparables.length === 0 ? (
-        <View style={pdfStyles.cardDashed}>
-          <Text style={pdfStyles.bodyMuted}>
-            Comparable data is being collected for this model. As sold listings are
-            captured across platforms, comparables will populate here automatically.
-          </Text>
-        </View>
-      ) : (
-        <>
+      <>
           <View
             style={{
               flexDirection: "row",
@@ -93,8 +84,7 @@ export function ComparablesPage({
               + {comparables.length - 14} more in full report online
             </Text>
           )}
-        </>
-      )}
+      </>
 
       {regions.length > 0 && (
         <>

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import ExcelJS from "exceljs"
 import { renderReportToExcelBuffer } from "./renderReport"
 import type { HausReportV2 } from "@/lib/fairValue/types"
 import type { CollectorCar } from "@/lib/curatedCars"
@@ -15,6 +16,7 @@ const sampleReport: HausReportV2 = {
   comparables_count: 14,
   signals_detected: [],
   signals_missing: [],
+  landed_cost: null,
   modifiers_applied: [
     {
       key: "paint_to_sample",
@@ -79,6 +81,36 @@ const sampleCar = {
 } as unknown as CollectorCar
 
 describe("renderReportToExcelBuffer", () => {
+  it("omits the Comparable Sales table when strict comparables are empty", async () => {
+    const buf = await renderReportToExcelBuffer({
+      report: { ...sampleReport, comparables_count: 0 },
+      car: sampleCar,
+      regions: [],
+      comparables: [],
+      askingUsd: 225000,
+      verdict: "WATCH",
+    })
+
+    const wb = new ExcelJS.Workbook()
+    const workbookBuffer = buf.buffer.slice(
+      buf.byteOffset,
+      buf.byteOffset + buf.byteLength,
+    ) as Parameters<typeof wb.xlsx.load>[0]
+    await wb.xlsx.load(workbookBuffer)
+    const allText = wb.worksheets
+      .flatMap((ws) => ws.getSheetValues())
+      .flatMap((row) => Array.isArray(row) ? row : [])
+      .map((cell) =>
+        typeof cell === "object" && cell && "text" in cell
+          ? String(cell.text)
+          : String(cell ?? ""),
+      )
+      .join("\n")
+
+    expect(allText).not.toContain("Comparable Sales")
+    expect(allText).not.toContain("sold transactions used to anchor fair value")
+  }, 30000)
+
   it("produces a non-empty xlsx buffer", async () => {
     const buf = await renderReportToExcelBuffer({
       report: sampleReport,

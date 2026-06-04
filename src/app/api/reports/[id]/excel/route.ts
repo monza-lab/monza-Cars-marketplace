@@ -11,7 +11,7 @@ import {
   fetchSignalsForListing,
   assembleHausReportFromDB,
 } from "@/lib/reports/queries"
-import { getComparablesForModel } from "@/lib/db/queries"
+import { getStrictComparablesForModel } from "@/lib/db/queries"
 import type { HausReport } from "@/lib/fairValue/types"
 import { adaptV1ReportToV2 } from "@/lib/fairValue/adaptV1ToV2"
 import {
@@ -64,7 +64,7 @@ export async function GET(
 
   const [allPriced, dbComparables] = await Promise.all([
     fetchPricedListingsForModel(car.make),
-    getComparablesForModel(car.make, car.model),
+    getStrictComparablesForModel(car.make, car.model),
   ])
   const rates = await getExchangeRates()
   const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)

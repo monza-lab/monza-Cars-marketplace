@@ -1,4 +1,5 @@
 import { dbQuery } from './sql'
+import { buildReportPeerIdentity } from '@/lib/reportPeerIdentity'
 
 type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS'
 type AuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE'
@@ -546,6 +547,37 @@ export async function getComparablesForModel(make: string, model: string, limit 
     return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
   } catch (e) {
     logDbQueryError('getComparablesForModel', e)
+    return []
+  }
+}
+
+export async function getStrictComparablesForModel(
+  make: string,
+  model: string,
+  limit = 10,
+): Promise<DbComparableRow[]> {
+  const identity = buildReportPeerIdentity({ make, model })
+  if (!identity) return []
+
+  try {
+    const rows = await withDbTimeout(
+      () => dbQuery<DbComparableRow>(
+        `
+          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
+          FROM "Comparable" c
+          JOIN "Auction" a ON a.id = c."auctionId"
+          WHERE btrim(regexp_replace(lower(regexp_replace(regexp_replace(a.make, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $1
+            AND btrim(regexp_replace(lower(regexp_replace(regexp_replace(a.model, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $2
+          ORDER BY c."soldDate" DESC NULLS LAST
+          LIMIT $3
+        `,
+        [identity.make, identity.modelIdentity, limit],
+      ),
+      'getStrictComparablesForModel',
+    )
+    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
+  } catch (e) {
+    logDbQueryError('getStrictComparablesForModel', e)
     return []
   }
 }

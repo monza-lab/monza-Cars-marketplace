@@ -2,7 +2,7 @@ import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { fetchPricedListingsForModel } from "@/lib/supabaseLiveListings"
 import { getExchangeRates } from "@/lib/exchangeRates"
 import { computeArbitrageForCar } from "@/lib/marketIntel/computeArbitrageForCar"
-import { getComparablesForModel } from "@/lib/db/queries"
+import { getStrictComparablesForModel } from "@/lib/db/queries"
 import type { PipelineContext } from "../pipeline"
 import type { MarketDataBundle } from "../types-v3"
 
@@ -24,8 +24,14 @@ export async function executeMarketDataBundle(
 
   let dbComparables: any[] = []
   try {
-    dbComparables = await getComparablesForModel(make, car.model ?? "")
-  } catch { /* non-fatal */ }
+    dbComparables = await getStrictComparablesForModel(make, car.model ?? "")
+  } catch (err) {
+    console.warn(
+      "[market_data_bundle] getStrictComparablesForModel failed, continuing without DB comparables:",
+      err instanceof Error ? err.message : err,
+    )
+    dbComparables = []
+  }
 
   let arbitrage = null
   if (marketStats) {

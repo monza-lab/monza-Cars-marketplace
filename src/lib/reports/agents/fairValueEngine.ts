@@ -63,6 +63,7 @@ export async function executeFairValueEngine(
 
   const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
   const specificFV = computeSpecificCarFairValue({ baselineUsd, totalPercent })
+  const strictComparablesCount = marketData?.comparablesCount ?? 0
 
   let narrative = null
   try {
@@ -93,8 +94,8 @@ export async function executeFairValueEngine(
     specific_car_fair_value_low: specificFV.low,
     specific_car_fair_value_mid: specificFV.mid,
     specific_car_fair_value_high: specificFV.high,
-    comparable_layer_used: null,
-    comparables_count: marketData?.comparablesCount ?? 0,
+    comparable_layer_used: strictComparablesCount > 0 ? "strict" : null,
+    comparables_count: strictComparablesCount,
     signals_detected: detected,
     signals_missing: [],
     modifiers_applied: appliedModifiers,

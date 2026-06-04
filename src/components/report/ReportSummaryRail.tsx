@@ -7,7 +7,6 @@ import { useState } from "react"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import type { SimilarCarResult } from "@/lib/similarCars"
 import type { CollectorCar } from "@/lib/curatedCars"
-import { extractSeries } from "@/lib/brandConfig"
 
 type Verdict = "buy" | "watch" | "walk" | "hold" | null
 
@@ -71,20 +70,12 @@ export function ReportSummaryRail({
   const hasFair = fairValueLow != null && fairValueHigh != null
   const hasAsking = askingPrice > 0
 
-  // Build the "View all similar" deep link into Classic view (/browse).
-  // Series narrows the pool to this car's generation; price ±20% catches
-  // the band where peer comparables actually live. Falls back to bare
-  // /browse if we can't infer a series, so the CTA still navigates.
+  // Keep report peer navigation tied to the visible strict same-model set.
+  // Do not add series or price-band filters here; those are broad comparable
+  // signals reserved for non-report surfaces.
   const browseAllHref = (() => {
     const params = new URLSearchParams()
-    const series = extractSeries(car.model, car.year, car.make, car.title)
-    if (series) params.set("series", series)
-    if (hasAsking) {
-      const min = Math.floor(askingPrice * 0.8)
-      const max = Math.ceil(askingPrice * 1.2)
-      params.set("priceMin", String(min))
-      params.set("priceMax", String(max))
-    }
+    params.set("query", `${car.make} ${car.model}`.trim())
     const qs = params.toString()
     return qs ? `/browse?${qs}` : "/browse"
   })()
@@ -179,20 +170,14 @@ export function ReportSummaryRail({
         </div>
 
         {/* Peer comps — the substance of the rail */}
+        {peers.length > 0 && (
         <div className="flex-1 overflow-y-auto">
           <div className="px-4 pt-4 pb-2">
             <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
-              Similar at this price
+              Live same-model listings
             </span>
           </div>
 
-          {peers.length === 0 ? (
-            <div className="mx-4 mb-3 rounded-xl border border-dashed border-border bg-card/40 p-4 text-center">
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Peer comparables surface during the full analysis.
-              </p>
-            </div>
-          ) : (
             <div className="px-2 pb-3 space-y-1">
               {peers.map((peer) => {
                 const peerCar = peer.car
@@ -264,13 +249,13 @@ export function ReportSummaryRail({
                   href={browseAllHref}
                   className="mt-2 mx-2 flex items-center justify-center gap-1 rounded-lg border border-border bg-card hover:border-primary/30 px-3 py-2 text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  View all in same range
+                  View all same-model listings
                   <ChevronRight className="size-3" />
                 </Link>
               )}
             </div>
-          )}
         </div>
+        )}
       </aside>
 
       {/* ── MOBILE rail — sticky bottom bar ─────────────────────────── */}
@@ -312,20 +297,22 @@ export function ReportSummaryRail({
               </p>
             </div>
           )}
-          <button
-            onClick={() => setMobileExpanded((v) => !v)}
-            className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[10px] font-medium text-foreground"
-            aria-label={mobileExpanded ? "Hide peers" : "Show peers"}
-          >
-            <span>{peers.length} peers</span>
-            <motion.span
-              animate={{ rotate: mobileExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ display: "inline-block" }}
+          {peers.length > 0 && (
+            <button
+              onClick={() => setMobileExpanded((v) => !v)}
+              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[10px] font-medium text-foreground"
+              aria-label={mobileExpanded ? "Hide peers" : "Show peers"}
             >
-              <ChevronUp className="size-3.5" />
-            </motion.span>
-          </button>
+              <span>{peers.length} peers</span>
+              <motion.span
+                animate={{ rotate: mobileExpanded ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: "inline-block" }}
+              >
+                <ChevronUp className="size-3.5" />
+              </motion.span>
+            </button>
+          )}
         </div>
 
         <AnimatePresence initial={false}>

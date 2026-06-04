@@ -39,6 +39,10 @@ export interface RenderReportInput {
 
 export type Verdict = "BUY" | "WATCH" | "WALK" | "PENDING"
 
+export function shouldRenderComparablesPage(comparables: DbComparableRow[]): boolean {
+  return comparables.length > 0
+}
+
 /**
  * Thin lavender separator inserted between V3 chapters in the continuous
  * flow Page. Adds vertical breathing room before the next chapter's
@@ -262,6 +266,10 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
   const verdict = deriveVerdict(input.askingUsd, input.report.specific_car_fair_value_mid)
   const verdictOneLiner = composeOneLiner(input.report, input.askingUsd)
   const TOTAL_PAGES_V2 = 6
+  const hasComparablesPage = shouldRenderComparablesPage(input.comparables)
+  const totalPages = hasComparablesPage ? TOTAL_PAGES_V2 : TOTAL_PAGES_V2 - 1
+  const dueDiligencePageNumber = hasComparablesPage ? 5 : 4
+  const closingPageNumber = hasComparablesPage ? 6 : 5
   const doc = (
     <Document
       title={`Haus Report ${input.car.year} ${input.car.make} ${input.car.model}`}
@@ -277,7 +285,7 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
         fairValueHigh={input.report.specific_car_fair_value_high ?? null}
         fairValueMid={input.report.specific_car_fair_value_mid ?? null}
         askingUsd={input.askingUsd}
-        totalPages={TOTAL_PAGES_V2}
+        totalPages={totalPages}
         headline={null}
         theme={theme}
       />
@@ -285,28 +293,30 @@ export async function renderReportToPdfBuffer(input: RenderReportInput): Promise
         report={input.report}
         thisVinPriceUsd={input.askingUsd}
         pageNumber={2}
-        totalPages={TOTAL_PAGES_V2}
+        totalPages={totalPages}
       />
       <ValuationPage
         report={input.report}
         askingUsd={input.askingUsd}
         verdictOneLiner={verdictOneLiner}
         pageNumber={3}
-        totalPages={TOTAL_PAGES_V2}
+        totalPages={totalPages}
       />
-      <ComparablesPage
-        report={input.report}
-        comparables={input.comparables}
-        regions={input.regions}
-        pageNumber={4}
-        totalPages={TOTAL_PAGES_V2}
-      />
-      <DueDiligencePage report={input.report} pageNumber={5} totalPages={TOTAL_PAGES_V2} />
+      {hasComparablesPage && (
+        <ComparablesPage
+          report={input.report}
+          comparables={input.comparables}
+          regions={input.regions}
+          pageNumber={4}
+          totalPages={totalPages}
+        />
+      )}
+      <DueDiligencePage report={input.report} pageNumber={dueDiligencePageNumber} totalPages={totalPages} />
       <ClosingPage
         report={input.report}
         regions={input.regions}
-        pageNumber={6}
-        totalPages={TOTAL_PAGES_V2}
+        pageNumber={closingPageNumber}
+        totalPages={totalPages}
       />
     </Document>
   )

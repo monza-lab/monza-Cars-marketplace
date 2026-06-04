@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { renderReportToPdfBuffer } from "./renderReport"
+import { renderReportToPdfBuffer, shouldRenderComparablesPage } from "./renderReport"
 import type { HausReportV2 } from "@/lib/fairValue/types"
 import type { CollectorCar } from "@/lib/curatedCars"
 
@@ -29,6 +29,7 @@ const sampleReport: HausReportV2 = {
   signals_missing: [
     { key: "service_records", name_i18n_key: "x", question_for_seller_i18n_key: "y" },
   ],
+  landed_cost: null,
   modifiers_applied: [
     {
       key: "paint_to_sample",
@@ -104,6 +105,37 @@ const sampleCar = {
 } as unknown as CollectorCar
 
 describe("renderReportToPdfBuffer", () => {
+  it("does not render the Comparables page when strict comparables are empty", () => {
+    expect(shouldRenderComparablesPage([])).toBe(false)
+  })
+
+  it("renders the Comparables page when strict comparables exist", () => {
+    expect(shouldRenderComparablesPage([
+      {
+        title: "2022 Porsche 911 GT3",
+        platform: "BRING_A_TRAILER",
+        soldDate: "2026-01-01T00:00:00.000Z",
+        soldPrice: 225000,
+        mileage: 1200,
+        condition: "excellent",
+      },
+    ])).toBe(true)
+  })
+
+  it("still produces a valid PDF buffer when strict comparables are empty", async () => {
+    const buf = await renderReportToPdfBuffer({
+      report: { ...sampleReport, comparables_count: 0 },
+      car: sampleCar,
+      regions: [],
+      comparables: [],
+      askingUsd: 225000,
+    })
+
+    expect(buf.byteLength).toBeGreaterThan(1000)
+    const header = buf.subarray(0, 5).toString("ascii")
+    expect(header).toBe("%PDF-")
+  }, 30000)
+
   it("produces a non-empty PDF buffer for a well-formed report", async () => {
     const buf = await renderReportToPdfBuffer({
       report: sampleReport,

@@ -1,6 +1,7 @@
 import type { CollectorCar } from "./curatedCars"
 import { extractSeries, getSeriesConfig } from "./brandConfig"
 import { hasPhoto } from "./photoSort"
+import { buildReportPeerIdentity, matchesReportPeerIdentity } from "./reportPeerIdentity"
 
 // ─── TYPES ───
 
@@ -127,6 +128,42 @@ export function findSimilarCars(
       const photoDiff = Number(hasPhoto(b.car)) - Number(hasPhoto(a.car))
       if (photoDiff !== 0) return photoDiff
       return b.score - a.score
+    })
+    .slice(0, limit)
+}
+
+export function findStrictReportPeers(
+  target: CollectorCar,
+  candidates: CollectorCar[],
+  limit = 6,
+): SimilarCarResult[] {
+  const targetIdentity = buildReportPeerIdentity({
+    make: target.make,
+    model: target.model,
+  })
+  if (!targetIdentity) return []
+
+  return candidates
+    .filter((candidate) => candidate.id !== target.id)
+    .filter((candidate) =>
+      matchesReportPeerIdentity(targetIdentity, {
+        make: candidate.make,
+        model: candidate.model,
+      }),
+    )
+    .map((candidate) => ({
+      car: candidate,
+      score: 100,
+      matchReasons: ["Same model variant"],
+    }))
+    .sort((a, b) => {
+      const photoDiff = Number(hasPhoto(b.car)) - Number(hasPhoto(a.car))
+      if (photoDiff !== 0) return photoDiff
+      const aPrice = a.car.currentBid || a.car.price || 0
+      const bPrice = b.car.currentBid || b.car.price || 0
+      const targetPrice = target.currentBid || target.price || 0
+      if (targetPrice <= 0) return bPrice - aPrice
+      return Math.abs(aPrice - targetPrice) - Math.abs(bPrice - targetPrice)
     })
     .slice(0, limit)
 }

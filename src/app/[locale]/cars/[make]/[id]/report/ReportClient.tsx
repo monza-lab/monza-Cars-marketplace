@@ -2506,7 +2506,7 @@ export function ReportClient({
                 --------------------------------------- */}
             <section ref={setSectionRef("similar")} id="section-similar" className="scroll-mt-[70px] md:scroll-mt-[100px]">
               <PaywallSection sectionId="similar">
-                {hasAccess && visibleV3Report ? (
+                {hasAccess && visibleV3Report && dbComparables.length > 0 ? (
                   <>
                     <SectionHeader id="similar" title={t("sections.similar")} />
                     <ComparablesAndPositioningBlock
@@ -2516,7 +2516,7 @@ export function ReportClient({
                       captureDateRange={comparablesCaptureDateRange}
                     />
                   </>
-                ) : (
+                ) : !hasAccess || !visibleV3Report ? (
                   <>
                     <SectionHeader id="similar" title={t("sections.similar")} />
                     <p className="text-[11px] text-muted-foreground mb-4">{t("similar.compareNote")}</p>
@@ -2559,7 +2559,7 @@ export function ReportClient({
                       ))}
                     </div>
                   </>
-                )}
+                ) : null}
               </PaywallSection>
             </section>
 
