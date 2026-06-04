@@ -187,13 +187,14 @@ export async function GET(request: Request) {
     const client = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    const enrichmentClient = client as unknown as SupabaseClientLike;
 
-    const descriptionRows = await fetchRows(client, "description", batchLimit);
+    const descriptionRows = await fetchRows(enrichmentClient, "description", batchLimit);
     if (descriptionRows.error || !descriptionRows.data) {
       throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
 
-    const priceRows = await fetchRows(client, "price", batchLimit);
+    const priceRows = await fetchRows(enrichmentClient, "price", batchLimit);
     if (priceRows.error || !priceRows.data) {
       throw new Error(priceRows.error?.message ?? "No price rows returned");
     }
