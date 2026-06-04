@@ -15,6 +15,12 @@ const ELFERSPOT_PRICE_COVERED_STATUSES = [
   "blocked_unverified",
 ];
 
+const ELFERSPOT_DESCRIPTION_COVERED_STATUSES = [
+  "missing",
+  "detail_unavailable",
+  "blocked_unverified",
+];
+
 export interface QualityTarget {
   source: string;       // "AutoScout24", "ALL", etc.
   field: string;        // column name
@@ -42,7 +48,7 @@ export const DEFAULT_TARGETS: QualityTarget[] = [
   { source: "AutoScout24", field: "trim", targetPct: 90, label: "AS24 trim" },
   { source: "ClassicCom", field: "description_text", targetPct: 90, label: "Classic descriptions" },
   { source: "ClassicCom", field: "mileage", targetPct: 80, label: "Classic mileage" },
-  { source: "Elferspot", field: "description_text", targetPct: 100, label: "Elferspot descriptions" },
+  { source: "Elferspot", field: "description_coverage", targetPct: 100, label: "Elferspot descriptions" },
   { source: "Elferspot", field: "price_coverage", targetPct: 100, label: "Elferspot prices" },
   { source: "BeForward", field: "images", targetPct: 95, label: "BeForward images" },
   { source: "BringATrailer", field: "description_text", targetPct: 90, label: "BaT descriptions" },
@@ -82,6 +88,17 @@ async function countFillRate(
       .in("enrichment_meta->elferspot->>priceStatus", ELFERSPOT_PRICE_COVERED_STATUSES);
 
     return { total: total ?? 0, filled: (numeric.count ?? 0) + (audited.count ?? 0) };
+  }
+
+  if (source === "Elferspot" && field === "description_coverage") {
+    const described = await baseQueryFor(source)
+      .not("description_text", "is", null)
+      .neq("description_text", "");
+    const auditedMissing = await baseQueryFor(source)
+      .or("description_text.is.null,description_text.eq.")
+      .in("enrichment_meta->elferspot->>descriptionStatus", ELFERSPOT_DESCRIPTION_COVERED_STATUSES);
+
+    return { total: total ?? 0, filled: (described.count ?? 0) + (auditedMissing.count ?? 0) };
   }
 
   // Get filled count — depends on field type

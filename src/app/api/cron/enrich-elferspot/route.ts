@@ -20,6 +20,16 @@ const PRICE_COVERED_STATUSES = [
 ];
 
 const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
+const DESCRIPTION_COVERED_STATUSES = [
+  "missing",
+  "detail_unavailable",
+  "blocked_unverified",
+];
+const DESCRIPTION_COVERED_STATUS_FILTER = `(${DESCRIPTION_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
+const DEFAULT_BATCH_LIMIT = 250;
+const MAX_BATCH_LIMIT = 300;
+const DEFAULT_DELAY_MS = 1_000;
+const MAX_DELAY_MS = 5_000;
 
 type EnrichmentMeta = {
   elferspot?: {
@@ -29,17 +39,29 @@ type EnrichmentMeta = {
   };
 };
 
-type EnrichmentRow = {
+export type EnrichmentRow = {
   id: string;
   source_url: string;
   enrichment_meta: EnrichmentMeta | null;
 };
 
-type SupabaseClientLike = {
-  from: (table: "listings") => any;
+type QueryError = { message?: string } | null;
+type SelectResult<T> = { data: T[] | null; error: QueryError };
+type SelectBuilder<T> = PromiseLike<SelectResult<T>> & {
+  eq: (...args: unknown[]) => SelectBuilder<T>;
+  order: (...args: unknown[]) => SelectBuilder<T>;
+  limit: (...args: unknown[]) => SelectBuilder<T>;
+  or: (...args: unknown[]) => SelectBuilder<T>;
+  is: (...args: unknown[]) => SelectBuilder<T>;
 };
 
-function buildElferspotMeta(
+type SupabaseClientLike = {
+  from: (table: "listings") => {
+    select: (...args: unknown[]) => SelectBuilder<EnrichmentRow>;
+  };
+};
+
+export function buildElferspotMeta(
   existingMeta: EnrichmentMeta | null,
   update: {
     priceStatus: string;
@@ -57,6 +79,52 @@ function buildElferspotMeta(
   };
 }
 
+export function resolveBatchLimit(request: Request) {
+  const parsedUrl = new URL(request.url);
+  const rawLimit = parsedUrl.searchParams.get("limit") ?? process.env.ELFERSPOT_ENRICH_LIMIT;
+  const parsed = rawLimit ? Number.parseInt(rawLimit, 10) : DEFAULT_BATCH_LIMIT;
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_BATCH_LIMIT;
+  return Math.min(parsed, MAX_BATCH_LIMIT);
+}
+
+export function resolveDelayMs(request: Request) {
+  const parsedUrl = new URL(request.url);
+  const rawDelay = parsedUrl.searchParams.get("delayMs") ?? process.env.ELFERSPOT_ENRICH_DELAY_MS;
+  const parsed = rawDelay ? Number.parseInt(rawDelay, 10) : DEFAULT_DELAY_MS;
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_DELAY_MS;
+  return Math.min(parsed, MAX_DELAY_MS);
+}
+
+export function mergeRowsForEnrichment(
+  descriptionRows: EnrichmentRow[],
+  priceRows: EnrichmentRow[],
+  limit: number,
+) {
+  const rows: EnrichmentRow[] = [];
+  const seen = new Set<string>();
+  let descriptionIndex = 0;
+  let priceIndex = 0;
+
+  function pushNext(sourceRows: EnrichmentRow[], index: number) {
+    while (index < sourceRows.length) {
+      const row = sourceRows[index++];
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      rows.push(row);
+      break;
+    }
+    return index;
+  }
+
+  while (rows.length < limit && (descriptionIndex < descriptionRows.length || priceIndex < priceRows.length)) {
+    descriptionIndex = pushNext(descriptionRows, descriptionIndex);
+    if (rows.length >= limit) break;
+    priceIndex = pushNext(priceRows, priceIndex);
+  }
+
+  return rows;
+}
+
 async function fetchRows(client: SupabaseClientLike, filter: "description" | "price", limit: number) {
   const q = client
     .from("listings")
@@ -67,7 +135,11 @@ async function fetchRows(client: SupabaseClientLike, filter: "description" | "pr
     .limit(limit);
 
   if (filter === "description") {
-    return q.or("description_text.is.null,description_text.eq.");
+    return q
+      .or("description_text.is.null,description_text.eq.")
+      .or(
+        `enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.${DESCRIPTION_COVERED_STATUS_FILTER}`,
+      );
   }
 
   return q
@@ -81,6 +153,8 @@ export async function GET(request: Request) {
   const startTime = Date.now();
   const startedAtIso = new Date(startTime).toISOString();
   const runId = crypto.randomUUID();
+  const batchLimit = resolveBatchLimit(request);
+  const delayMs = resolveDelayMs(request);
 
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -114,25 +188,24 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const descriptionRows = await fetchRows(client, "description", 50);
+    const descriptionRows = await fetchRows(client, "description", batchLimit);
     if (descriptionRows.error || !descriptionRows.data) {
       throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
 
-    const remaining = Math.max(0, 50 - descriptionRows.data.length);
-    const priceRows = remaining > 0
-      ? await fetchRows(client, "price", remaining)
-      : { data: [] as EnrichmentRow[], error: null };
-
+    const priceRows = await fetchRows(client, "price", batchLimit);
     if (priceRows.error || !priceRows.data) {
       throw new Error(priceRows.error?.message ?? "No price rows returned");
     }
 
-    const rows = [...descriptionRows.data, ...priceRows.data] as EnrichmentRow[];
+    const rows = mergeRowsForEnrichment(
+      descriptionRows.data as EnrichmentRow[],
+      priceRows.data as EnrichmentRow[],
+      batchLimit,
+    );
     const discovered = rows.length;
     let enriched = 0;
     const errors: string[] = [];
-    const DELAY_MS = 2_500;
     const TIME_BUDGET_MS = 270_000;
     let timeBudgetReached = false;
 
@@ -145,7 +218,7 @@ export async function GET(request: Request) {
       }
 
       if (i > 0) {
-        await new Promise((r) => setTimeout(r, DELAY_MS));
+        await new Promise((r) => setTimeout(r, delayMs));
       }
 
       try {
@@ -154,7 +227,13 @@ export async function GET(request: Request) {
         if (!detail) {
           await client
             .from("listings")
-            .update({ description_text: "", updated_at: new Date().toISOString() })
+            .update({
+              enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
+                priceStatus: "detail_unavailable",
+                descriptionStatus: "detail_unavailable",
+              }),
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", row.id);
           continue;
         }
@@ -188,12 +267,10 @@ export async function GET(request: Request) {
         // seller_name and seller_type columns don't exist in listings table
         if (detail.location) update.location = detail.location;
         if (detail.locationCountry) update.country = detail.locationCountry;
-        if (detail.priceStatus !== "unknown" || detail.descriptionStatus === "present") {
-          update.enrichment_meta = buildElferspotMeta(existingMeta, {
-            priceStatus: detail.priceStatus,
-            descriptionStatus: detail.descriptionStatus,
-          });
-        }
+        update.enrichment_meta = buildElferspotMeta(existingMeta, {
+          priceStatus: detail.priceStatus,
+          descriptionStatus: detail.descriptionStatus,
+        });
 
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
@@ -210,7 +287,7 @@ export async function GET(request: Request) {
         } else {
           await client
             .from("listings")
-            .update({ description_text: "", updated_at: new Date().toISOString() })
+            .update({ enrichment_meta: update.enrichment_meta, updated_at: new Date().toISOString() })
             .eq("id", row.id);
         }
       } catch (err) {
@@ -231,7 +308,7 @@ export async function GET(request: Request) {
             .update({
               enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
                 priceStatus: "blocked_unverified",
-                descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+                descriptionStatus: "blocked_unverified",
               }),
               updated_at: new Date().toISOString(),
             })
@@ -245,7 +322,7 @@ export async function GET(request: Request) {
           .update({
             enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
               priceStatus: "detail_unavailable",
-              descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+              descriptionStatus: "detail_unavailable",
             }),
             updated_at: new Date().toISOString(),
           })
@@ -279,6 +356,8 @@ export async function GET(request: Request) {
       enriched,
       errors,
       timeBudgetReached,
+      batchLimit,
+      delayMs,
       successReason: timeBudgetReached
         ? "time_budget_reached"
         : errors.length === 0

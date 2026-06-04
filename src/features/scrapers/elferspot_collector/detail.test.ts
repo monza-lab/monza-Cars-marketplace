@@ -84,6 +84,20 @@ describe("parseDetailPage", () => {
     expect(detail.priceStatus).toBe("price_on_request")
   })
 
+  it("covers Elferspot on-application prices", () => {
+    const html = `<html><body><div class="price">on application</div></body></html>`
+    const detail = parseDetailPage(html)
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("price_on_request")
+  })
+
+  it("covers auction listings offered without reserve", () => {
+    const html = `<html><body><div class="price">Offered without reserve</div></body></html>`
+    const detail = parseDetailPage(html)
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("not_listed")
+  })
+
   it("extracts price from sidebar when JSON-LD has no price", () => {
     const html = `<html><head><script type="application/ld+json">{
       "@type": "Vehicle", "model": "993 Turbo"
@@ -114,6 +128,26 @@ describe("parseDetailPage", () => {
     const html = `<html><body><div class="price"><span class="p">EUR 87,990</span></div></body></html>`
     const detail = parseDetailPage(html)
     expect(detail.price).toBe(87990)
+    expect(detail.currency).toBe("EUR")
+    expect(detail.priceStatus).toBe("numeric")
+  })
+
+  it("extracts numeric price from currency symbols and class-based price blocks", () => {
+    const html = `<html><body><aside><p class="info-bar-price">€ 129.900</p></aside></body></html>`
+    const detail = parseDetailPage(html)
+    expect(detail.price).toBe(129900)
+    expect(detail.currency).toBe("EUR")
+    expect(detail.priceStatus).toBe("numeric")
+  })
+
+  it("parses comma-formatted JSON-LD offer prices", () => {
+    const html = `<html><head><script type="application/ld+json">{
+      "@type": "Vehicle",
+      "model": "991 Carrera S",
+      "offers": { "@type": "Offer", "price": "129,900", "priceCurrency": "EUR" }
+    }</script></head><body></body></html>`
+    const detail = parseDetailPage(html)
+    expect(detail.price).toBe(129900)
     expect(detail.currency).toBe("EUR")
     expect(detail.priceStatus).toBe("numeric")
   })

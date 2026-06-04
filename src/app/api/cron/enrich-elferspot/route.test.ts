@@ -1,13 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "./route";
+import {
+  buildElferspotMeta,
+  GET,
+  mergeRowsForEnrichment,
+  resolveBatchLimit,
+  resolveDelayMs,
+  type EnrichmentRow,
+} from "./route";
 
 // Mock Supabase
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
-const mockOr = vi.fn().mockResolvedValue({ data: [], error: null });
-const mockIs = vi.fn().mockReturnValue({ or: mockOr });
-const mockLimit = vi.fn().mockReturnValue({ or: mockOr, is: mockIs });
+const mockQueryResult = { data: [], error: null };
+type MockQueryBuilder = PromiseLike<typeof mockQueryResult> & {
+  or: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
+};
+const mockQueryBuilder = {
+  or: vi.fn(() => mockQueryBuilder),
+  is: vi.fn(() => mockQueryBuilder),
+  then: (resolve: (value: typeof mockQueryResult) => unknown, reject: (reason?: unknown) => unknown) =>
+    Promise.resolve(mockQueryResult).then(resolve, reject),
+} satisfies MockQueryBuilder;
+const mockOr = mockQueryBuilder.or;
+const mockIs = mockQueryBuilder.is;
+const mockLimit = vi.fn().mockReturnValue(mockQueryBuilder);
 const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
 const mockEqStatus = vi.fn().mockReturnValue({ order: mockOrder });
 const mockEqSource = vi.fn().mockReturnValue({ eq: mockEqStatus });
@@ -69,6 +87,9 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
     expect(mockOr).toHaveBeenCalledWith("description_text.is.null,description_text.eq.");
+    expect(mockOr).toHaveBeenCalledWith(
+      'enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.("missing","detail_unavailable","blocked_unverified")'
+    );
     expect(mockIs).toHaveBeenCalledWith("hammer_price", null);
     expect(mockOr).toHaveBeenCalledWith(
       'enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.("sold","price_on_request","hidden","not_listed","detail_unavailable","blocked_unverified")'
@@ -105,5 +126,48 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(response.status).toBe(500);
     const data = await response.json();
     expect(data.error).toContain("Supabase");
+  });
+
+  it("clamps the optional batch limit", () => {
+    expect(resolveBatchLimit(new Request("http://localhost/api/cron/enrich-elferspot?limit=75"))).toBe(75);
+    expect(resolveBatchLimit(new Request("http://localhost/api/cron/enrich-elferspot?limit=999"))).toBe(300);
+    expect(resolveBatchLimit(new Request("http://localhost/api/cron/enrich-elferspot?limit=bad"))).toBe(250);
+  });
+
+  it("clamps the optional inter-row delay", () => {
+    expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=250"))).toBe(250);
+    expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=99999"))).toBe(5000);
+    expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=bad"))).toBe(1000);
+  });
+
+  it("alternates description and price rows while deduping overlaps", () => {
+    const row = (id: string): EnrichmentRow => ({
+      id,
+      source_url: `https://www.elferspot.com/en/car/${id}/`,
+      enrichment_meta: null,
+    });
+
+    expect(
+      mergeRowsForEnrichment(
+        [row("description-1"), row("overlap"), row("description-2")],
+        [row("price-1"), row("overlap"), row("price-2")],
+        5,
+      ).map((item) => item.id),
+    ).toEqual(["description-1", "price-1", "overlap", "price-2", "description-2"]);
+  });
+
+  it("preserves existing Elferspot meta while writing current audit statuses", () => {
+    expect(
+      buildElferspotMeta(
+        { elferspot: { priceStatus: "unknown", descriptionStatus: "missing", checkedAt: "old" } },
+        { priceStatus: "numeric", descriptionStatus: "present", checkedAt: "new" },
+      ),
+    ).toEqual({
+      elferspot: {
+        priceStatus: "numeric",
+        descriptionStatus: "present",
+        checkedAt: "new",
+      },
+    });
   });
 });

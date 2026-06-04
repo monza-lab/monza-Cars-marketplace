@@ -5,6 +5,12 @@ import type { ElferspotDetail } from "./types"
 
 /** Currencies allowed by the monza_currency DB enum */
 const ALLOWED_CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "CHF"])
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  "€": "EUR",
+  "$": "USD",
+  "£": "GBP",
+  "¥": "JPY",
+}
 
 interface JsonLdVehicle {
   price: number | null
@@ -25,6 +31,35 @@ function flattenJsonLd(parsed: unknown): unknown[] {
   return Array.isArray(record["@graph"]) ? record["@graph"] : [parsed]
 }
 
+function normalizeText(text: string): string {
+  return text.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
+}
+
+function parsePriceNumber(raw: string): number | null {
+  const numeric = raw.replace(/[^\d.,'\s]/g, "").replace(/[\s']/g, "")
+  if (!/\d/.test(numeric)) return null
+
+  const normalized = numeric
+    .replace(/[.,](?=\d{3}(\D|$))/g, "")
+    .replace(",", ".")
+  const parsed = parseFloat(normalized)
+
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null
+}
+
+function parsePriceText(raw: string): { price: number; currency: string } | null {
+  const text = normalizeText(raw)
+  if (!text) return null
+
+  const codeMatch = text.match(/\b(USD|EUR|GBP|JPY|CHF)\b/i)
+  const symbolMatch = text.match(/[€$£¥]/)
+  const price = parsePriceNumber(text)
+  if (!price) return null
+
+  const currency = codeMatch?.[1]?.toUpperCase() ?? (symbolMatch ? CURRENCY_SYMBOLS[symbolMatch[0]] : "EUR")
+  return { price, currency }
+}
+
 export function extractJsonLd(html: string): JsonLdVehicle | null {
   const $ = cheerio.load(html)
   let vehicle: JsonLdVehicle | null = null
@@ -39,26 +74,34 @@ export function extractJsonLd(html: string): JsonLdVehicle | null {
       const items = flattenJsonLd(parsed)
       for (const item of items) {
         if (!item || typeof item !== "object") continue
-        const record = item as Record<string, any>
-        if (record["@type"] === "Vehicle" || record["@type"]?.includes("Vehicle")) {
-          const offer = record.offers || {}
-          const mileage = record.mileageFromOdometer
+        const record = item as Record<string, unknown>
+        const type = record["@type"]
+        const isVehicle = Array.isArray(type)
+          ? type.includes("Vehicle")
+          : typeof type === "string" && type.includes("Vehicle")
+        if (isVehicle) {
+          const offerRaw = Array.isArray(record.offers) ? record.offers[0] : record.offers
+          const offer = offerRaw && typeof offerRaw === "object" ? offerRaw as Record<string, unknown> : {}
+          const mileage = record.mileageFromOdometer && typeof record.mileageFromOdometer === "object"
+            ? record.mileageFromOdometer as Record<string, unknown>
+            : null
           const priceRaw = offer.price ?? record.price
-          const price = priceRaw ? parseFloat(String(priceRaw)) : null
+          const price = priceRaw ? parsePriceNumber(String(priceRaw)) : null
+          const firstRegistration = typeof record.dateVehicleFirstRegistered === "string"
+            ? record.dateVehicleFirstRegistered
+            : null
 
           vehicle = {
             price: price && Number.isFinite(price) && price > 0 ? price : null,
-            currency: offer.priceCurrency || "EUR",
-            model: record.model || null,
-            year: record.dateVehicleFirstRegistered
-              ? new Date(record.dateVehicleFirstRegistered).getFullYear()
-              : null,
+            currency: typeof offer.priceCurrency === "string" ? offer.priceCurrency : "EUR",
+            model: typeof record.model === "string" ? record.model : null,
+            year: firstRegistration ? new Date(firstRegistration).getFullYear() : null,
             mileageKm: mileage?.value ? parseInt(String(mileage.value), 10) : null,
-            transmission: record.vehicleTransmission || null,
-            bodyType: record.bodyType || null,
-            driveType: record.driveWheelConfiguration || null,
-            colorExterior: record.color || null,
-            firstRegistration: record.dateVehicleFirstRegistered || null,
+            transmission: typeof record.vehicleTransmission === "string" ? record.vehicleTransmission : null,
+            bodyType: typeof record.bodyType === "string" ? record.bodyType : null,
+            driveType: typeof record.driveWheelConfiguration === "string" ? record.driveWheelConfiguration : null,
+            colorExterior: typeof record.color === "string" ? record.color : null,
+            firstRegistration,
           }
           return false // stop iterating
         }
@@ -101,9 +144,24 @@ export function extractWebPageDescription(html: string): string | null {
 function classifyElferspotPrice(priceText: string, price: number | null) {
   const text = priceText.toLowerCase()
   if (price && price > 0) return "numeric" as const
-  if (text.includes("sold")) return "sold" as const
-  if (text.includes("price on request") || text.includes("poa")) return "price_on_request" as const
-  if (text.includes("reserved")) return "hidden" as const
+  if (text.includes("sold") || text.includes("verkauft") || text.includes("vendu") || text.includes("verkocht")) {
+    return "sold" as const
+  }
+  if (
+    text.includes("price on request") ||
+    text.includes("on application") ||
+    text.includes("on request") ||
+    text.includes("preis auf anfrage") ||
+    text.includes("prix sur demande") ||
+    text.includes("prijs op aanvraag") ||
+    text.includes("poa")
+  ) {
+    return "price_on_request" as const
+  }
+  if (text.includes("reserved") || text.includes("reserviert") || text.includes("réservé") || text.includes("gereserveerd")) {
+    return "hidden" as const
+  }
+  if (text.includes("without reserve") || text.includes("no reserve")) return "not_listed" as const
   if (!priceText.trim()) return "not_listed" as const
   return "unknown" as const
 }
@@ -164,6 +222,12 @@ export function parseDetailPage(html: string): ElferspotDetail {
     const text = $(el).text().trim()
     if (text) descParts.push(text)
   })
+  if (descParts.length === 0) {
+    $("[itemprop='description'], .listing-description p, .vehicle-description p, .description p").each((_i, el) => {
+      const text = normalizeText($(el).text())
+      if (text && !descParts.includes(text)) descParts.push(text)
+    })
+  }
   const descriptionText = descParts.length > 0 ? descParts.join("\n") : extractWebPageDescription(html)
 
   // Seller name from sidebar
@@ -182,14 +246,19 @@ export function parseDetailPage(html: string): ElferspotDetail {
   // Price fallback from sidebar (if JSON-LD price is null)
   let price = jsonLd?.price ?? null
   let currency = jsonLd?.currency ?? "EUR"
-  const visiblePriceText = $("div.price").first().text().trim()
+  const visiblePriceTexts = $("div.price, .info-bar-price, [class*='price']")
+    .toArray()
+    .map((el) => normalizeText($(el).text()))
+    .filter(Boolean)
+  const visiblePriceText = visiblePriceTexts[0] ?? ""
   if (!price) {
-    const priceMatch = visiblePriceText.match(/([A-Z]{3})\s*([\d.,]+)/)
-    if (priceMatch) {
-      currency = priceMatch[1]
-      const numStr = priceMatch[2].replace(/[.,](?=\d{3})/g, "").replace(",", ".")
-      const parsed = parseFloat(numStr)
-      if (Number.isFinite(parsed) && parsed > 0) price = parsed
+    for (const text of visiblePriceTexts) {
+      const parsed = parsePriceText(text)
+      if (parsed) {
+        price = parsed.price
+        currency = parsed.currency
+        break
+      }
     }
   }
 
