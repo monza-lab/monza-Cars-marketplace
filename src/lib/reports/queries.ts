@@ -27,12 +27,7 @@ export function hasUnlimitedReportAccess(
   user: Pick<UserCreditsRow, "unlimited_reports" | "tier" | "email"> | null | undefined,
 ): boolean {
   if (!user) return false
-  return (
-    Boolean(user.unlimited_reports) ||
-    user.tier === "MONTHLY" ||
-    user.tier === "ANNUAL" ||
-    user.tier === "PRO"
-  )
+  return Boolean(user.unlimited_reports)
 }
 
 export function normalizeUserReportListingId(listingId: string): string {

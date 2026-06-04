@@ -62,7 +62,26 @@ describe("reports/queries exports", () => {
         tier: "MONTHLY",
         unlimited_reports: false,
       }),
+    ).toBe(false)
+    expect(
+      hasUnlimitedReportAccess({
+        email: "driver@example.com",
+        tier: "PRO",
+        unlimited_reports: false,
+      }),
+    ).toBe(false)
+    expect(
+      hasUnlimitedReportAccess({
+        email: "driver@example.com",
+        tier: "PRO",
+        unlimited_reports: true,
+      }),
     ).toBe(true)
+  })
+
+  it("prices Haus Reports at 1000 Pistons", async () => {
+    const { REPORT_PISTON_COST } = await import("./queries")
+    expect(REPORT_PISTON_COST).toBe(1000)
   })
 })
 

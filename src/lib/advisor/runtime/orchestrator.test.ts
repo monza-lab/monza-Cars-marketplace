@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const { streamWithToolsMock } = vi.hoisted(() => ({
+const { streamWithToolsMock, generateJsonMock, debitCreditsMock, appendMessageMock } = vi.hoisted(() => ({
   streamWithToolsMock: vi.fn(),
+  generateJsonMock: vi.fn(),
+  debitCreditsMock: vi.fn(),
+  appendMessageMock: vi.fn(),
 }))
 
 vi.mock("@/lib/ai/gemini", () => ({
   streamWithTools: streamWithToolsMock,
-  generateJson: vi.fn().mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" }),
+  generateJson: generateJsonMock,
 }))
 
 vi.mock("@/lib/ai/skills/loader", () => ({
@@ -19,19 +22,7 @@ vi.mock("@/lib/ai/skills/loader", () => ({
 }))
 
 vi.mock("@/lib/advisor/persistence/messages", () => ({
-  appendMessage: vi.fn(async (input: { conversationId: string; role: string; content: string }) => ({
-    id: `msg-${Math.random().toString(36).slice(2, 8)}`,
-    conversation_id: input.conversationId,
-    role: input.role,
-    content: input.content,
-    tool_calls: null,
-    tier_classification: null,
-    credits_used: 0,
-    latency_ms: null,
-    model: null,
-    is_superseded: false,
-    created_at: new Date().toISOString(),
-  })),
+  appendMessage: appendMessageMock,
   listMessages: vi.fn(async () => []),
 }))
 
@@ -40,7 +31,7 @@ vi.mock("@/lib/advisor/persistence/conversations", () => ({
 }))
 
 vi.mock("@/lib/advisor/persistence/ledger", () => ({
-  debitCredits: vi.fn(async () => ({ newBalance: 0 })),
+  debitCredits: debitCreditsMock,
 }))
 
 vi.mock("./grace", () => ({
@@ -61,6 +52,21 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.ADVISOR_ENABLED = "full"
+    generateJsonMock.mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" })
+    debitCreditsMock.mockResolvedValue({ newBalance: 99 })
+    appendMessageMock.mockImplementation(async (input: { conversationId: string; role: string; content: string; creditsUsed?: number }) => ({
+      id: `msg-${Math.random().toString(36).slice(2, 8)}`,
+      conversation_id: input.conversationId,
+      role: input.role,
+      content: input.content,
+      tool_calls: null,
+      tier_classification: null,
+      credits_used: input.creditsUsed ?? 0,
+      latency_ms: null,
+      model: null,
+      is_superseded: false,
+      created_at: new Date().toISOString(),
+    }))
     streamWithToolsMock.mockImplementation(async function* () {
       yield { type: "text", delta: "The 997.2 GT3 is " }
       yield { type: "text", delta: "a Mezger-engined GT car." }
@@ -86,24 +92,32 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
     expect(events[events.length - 1]).toBe("done")
   })
 
-  it("substitutes every locale placeholder before calling Gemini", async () => {
-    for await (const _ev of runAdvisorTurn({
-      userText: "Was ist ein 997.2 GT3?",
-      conversationId: "conv-locale",
+  it("debits the classified piston cost for signed-in advisor turns", async () => {
+    const doneEvents: Array<{ pistonsDebited?: number }> = []
+    for await (const ev of runAdvisorTurn({
+      userText: "what is a 997.2 GT3",
+      conversationId: "conv-1",
       surface: "chat",
       userTier: "FREE",
       userId: "u1",
       anonymousSessionId: null,
-      locale: "de",
+      locale: "en",
       initialContext: null,
     })) {
-      // exhaust stream
+      if (ev.type === "done") doneEvents.push(ev)
     }
 
-    const firstCall = streamWithToolsMock.mock.calls[0]?.[0]
-    expect(firstCall?.systemPrompt).toContain("Locale: de")
-    expect(firstCall?.systemPrompt).toContain("Repeat locale: de")
-    expect(firstCall?.systemPrompt).not.toContain("{{locale}}")
+    expect(debitCreditsMock).toHaveBeenCalledWith(expect.objectContaining({
+      supabaseUserId: "u1",
+      amount: 1,
+      type: "ADVISOR_INSTANT",
+      conversationId: "conv-1",
+    }))
+    expect(appendMessageMock).toHaveBeenCalledWith(expect.objectContaining({
+      role: "assistant",
+      creditsUsed: 1,
+    }))
+    expect(doneEvents.at(-1)?.pistonsDebited).toBe(1)
   })
 })
 
@@ -111,6 +125,21 @@ describe("runAdvisorTurn (anonymous access)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.ADVISOR_ENABLED = "internal"
+    generateJsonMock.mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" })
+    debitCreditsMock.mockResolvedValue({ newBalance: 0 })
+    appendMessageMock.mockImplementation(async (input: { conversationId: string; role: string; content: string; creditsUsed?: number }) => ({
+      id: `msg-${Math.random().toString(36).slice(2, 8)}`,
+      conversation_id: input.conversationId,
+      role: input.role,
+      content: input.content,
+      tool_calls: null,
+      tier_classification: null,
+      credits_used: input.creditsUsed ?? 0,
+      latency_ms: null,
+      model: null,
+      is_superseded: false,
+      created_at: new Date().toISOString(),
+    }))
     streamWithToolsMock.mockImplementation(async function* () {
       yield { type: "text", delta: "Anonymous access works." }
     })
@@ -134,12 +163,47 @@ describe("runAdvisorTurn (anonymous access)", () => {
     expect(events).toContain("content_delta")
     expect(events[events.length - 1]).toBe("done")
   })
+
+  it("substitutes every locale placeholder before calling Gemini", async () => {
+    for await (const _ev of runAdvisorTurn({
+      userText: "Was ist ein 997.2 GT3?",
+      conversationId: "conv-locale",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "u1",
+      anonymousSessionId: null,
+      locale: "de",
+      initialContext: null,
+    })) {
+      // exhaust stream
+    }
+
+    const firstCall = streamWithToolsMock.mock.calls[0]?.[0]
+    expect(firstCall?.systemPrompt).toContain("Locale: de")
+    expect(firstCall?.systemPrompt).toContain("Repeat locale: de")
+    expect(firstCall?.systemPrompt).not.toContain("{{locale}}")
+  })
 })
 
 describe("runAdvisorTurn (signed-in access)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.ADVISOR_ENABLED = "internal"
+    generateJsonMock.mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" })
+    debitCreditsMock.mockResolvedValue({ newBalance: 99 })
+    appendMessageMock.mockImplementation(async (input: { conversationId: string; role: string; content: string; creditsUsed?: number }) => ({
+      id: `msg-${Math.random().toString(36).slice(2, 8)}`,
+      conversation_id: input.conversationId,
+      role: input.role,
+      content: input.content,
+      tool_calls: null,
+      tier_classification: null,
+      credits_used: input.creditsUsed ?? 0,
+      latency_ms: null,
+      model: null,
+      is_superseded: false,
+      created_at: new Date().toISOString(),
+    }))
     streamWithToolsMock.mockImplementation(async function* () {
       yield { type: "text", delta: "Signed-in access works." }
     })
@@ -169,6 +233,21 @@ describe("runAdvisorTurn (tool follow-up)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.ADVISOR_ENABLED = "full"
+    generateJsonMock.mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" })
+    debitCreditsMock.mockResolvedValue({ newBalance: 99 })
+    appendMessageMock.mockImplementation(async (input: { conversationId: string; role: string; content: string; creditsUsed?: number }) => ({
+      id: `msg-${Math.random().toString(36).slice(2, 8)}`,
+      conversation_id: input.conversationId,
+      role: input.role,
+      content: input.content,
+      tool_calls: null,
+      tier_classification: null,
+      credits_used: input.creditsUsed ?? 0,
+      latency_ms: null,
+      model: null,
+      is_superseded: false,
+      created_at: new Date().toISOString(),
+    }))
   })
 
   it("feeds the tool call back into the next Gemini round and yields a final answer", async () => {

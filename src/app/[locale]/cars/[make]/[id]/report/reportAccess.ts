@@ -17,3 +17,23 @@ export function resolveVisibleV3Report<T>({
 }): T | null {
   return serverReport ?? streamedReport
 }
+
+export function shouldRefreshProfileAfterGenerationAttempt({
+  needsPaywall,
+  userAborted,
+}: {
+  needsPaywall: boolean
+  userAborted: boolean
+}): boolean {
+  return !needsPaywall && !userAborted
+}
+
+export function shouldRequestReportGenerationOnUnlock({
+  hasAuthenticatedProfile,
+  reportAlreadyGenerated,
+}: {
+  hasAuthenticatedProfile: boolean
+  reportAlreadyGenerated: boolean
+}): boolean {
+  return hasAuthenticatedProfile || !reportAlreadyGenerated
+}

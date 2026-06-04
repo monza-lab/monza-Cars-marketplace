@@ -9,6 +9,7 @@ import { touchLastMessage } from "@/lib/advisor/persistence/conversations"
 import type { AdvisorSseEvent } from "./streaming"
 import { generateTitle } from "./titleGen"
 import { logAdvisorEvent } from "./observability"
+import { debitCredits, type AdvisorDebitType } from "@/lib/advisor/persistence/ledger"
 import type { Schema } from "@google/generative-ai"
 
 const MAX_TOOL_CALLS = 8
@@ -26,6 +27,12 @@ const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
 // content_delta — a silent, broken-looking reply for the user.
 const LOOP_BUDGET = (tier: Tier, userTier: "FREE" | "PRO") =>
   tier === "deep_research" && userTier === "PRO" ? 3 : 2
+
+const DEBIT_TYPE_BY_TIER: Record<Tier, AdvisorDebitType> = {
+  instant: "ADVISOR_INSTANT",
+  marketplace: "ADVISOR_MARKETPLACE",
+  deep_research: "ADVISOR_DEEP_RESEARCH",
+}
 
 function buildSystemPrompt(systemPrompt: string, locale: RunAdvisorTurnInput["locale"]): string {
   return systemPrompt.replaceAll("{{locale}}", locale)
@@ -102,11 +109,23 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   const cached = advisorQueryCache.get(userKey, hash)
   if (cached) {
     yield { type: "content_delta", delta: cached.content }
+    const pistonsToDebit = input.userId ? classification.estimatedPistons : 0
+    if (pistonsToDebit > 0) {
+      await debitCredits({
+        supabaseUserId: input.userId,
+        anonymousSessionId: null,
+        amount: pistonsToDebit,
+        type: DEBIT_TYPE_BY_TIER[classification.tier],
+        conversationId: input.conversationId,
+        messageId: null,
+        description: `Advisor ${classification.tier} turn`,
+      })
+    }
     await appendMessage({ conversationId: input.conversationId, role: "user", content: input.userText })
     const asstMsg = await appendMessage({
       conversationId: input.conversationId, role: "assistant", content: cached.content,
       toolCalls: cached.toolCalls, tierClassification: classification.tier,
-      creditsUsed: 0, latencyMs: Date.now() - startedAt, model: "cache",
+      creditsUsed: pistonsToDebit, latencyMs: Date.now() - startedAt, model: "cache",
     })
     await touchLastMessage(input.conversationId)
     logAdvisorEvent({
@@ -117,10 +136,10 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
       userTier: input.userTier,
       tier: classification.tier,
       model: "cache",
-      pistons: 0,
+      pistons: pistonsToDebit,
       latencyMs: Date.now() - startedAt,
     })
-    yield { type: "done", pistonsDebited: 0, messageId: asstMsg.id }
+    yield { type: "done", pistonsDebited: pistonsToDebit, messageId: asstMsg.id }
     return
   }
 
@@ -331,7 +350,18 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   }
 
   // 7. Persist assistant message, debit, touch conversation
-  const pistonsToDebit = 0
+  const pistonsToDebit = input.userId ? classification.estimatedPistons : 0
+  if (pistonsToDebit > 0) {
+    await debitCredits({
+      supabaseUserId: input.userId,
+      anonymousSessionId: null,
+      amount: pistonsToDebit,
+      type: DEBIT_TYPE_BY_TIER[classification.tier],
+      conversationId: input.conversationId,
+      messageId: null,
+      description: `Advisor ${classification.tier} turn`,
+    })
+  }
   const asstMsg = await appendMessage({
     conversationId: input.conversationId,
     role: "assistant",
@@ -349,7 +379,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     anonymousSessionId: input.anonymousSessionId,
     userTier: input.userTier,
     tier: classification.tier,
-    pistons: 0,
+    pistons: pistonsToDebit,
   })
   await touchLastMessage(input.conversationId)
 
@@ -365,7 +395,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     userTier: input.userTier,
     tier: classification.tier,
     model: MODEL_BY_TIER(classification.tier),
-    pistons: 0,
+    pistons: pistonsToDebit,
     latencyMs: totalLatency,
   })
 

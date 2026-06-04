@@ -771,7 +771,7 @@ export function Header() {
             <span className="text-[11px] text-foreground">
               {creditsRemaining === 0
                 ? "Out of pistons — top up to generate a Haus Report ·"
-                : `Only ${creditsRemaining} pistons left — not enough for a report (100 needed) ·`}{" "}
+                : `Only ${creditsRemaining} pistons left — not enough for a report (${REPORT_PISTON_COST.toLocaleString("en-US")} needed) ·`}{" "}
               <Link
                 href="/pricing"
                 className="text-primary font-semibold hover:underline"

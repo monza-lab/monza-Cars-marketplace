@@ -16,6 +16,7 @@ import {
   saveReportMetadataV2,
   getReportMetadataV2,
   hasUnlimitedReportAccess,
+  REPORT_PISTON_COST,
 } from "@/lib/reports/queries"
 import { computeReportHash } from "@/lib/reports/hash"
 import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
@@ -238,13 +239,13 @@ export async function POST(request: Request) {
     }
 
     // 5. Credits check (if not already generated and no cached report)
-    if (!alreadyGenerated && !hasUnlimitedReportAccess(user) && totalBalance < 100) {
+    if (!alreadyGenerated && !hasUnlimitedReportAccess(user) && totalBalance < REPORT_PISTON_COST) {
       return NextResponse.json(
         {
           success: false,
           error: "INSUFFICIENT_CREDITS",
           message: "You have no Pistons remaining for reports.",
-          creditsRemaining: 0,
+          creditsRemaining: totalBalance,
         },
         { status: 402 },
       )
@@ -475,6 +476,19 @@ export async function POST(request: Request) {
       const creditResult = await deductCredit(user.id, body.listingId, body.listingId)
       if (creditResult.success) {
         creditUsed = creditResult.creditUsed
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: creditResult.error,
+            message:
+              creditResult.error === "INSUFFICIENT_CREDITS"
+                ? "You have no Pistons remaining for reports."
+                : "Could not debit Pistons for this report.",
+            creditsRemaining: totalBalance,
+          },
+          { status: creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500 },
+        )
       }
     }
 

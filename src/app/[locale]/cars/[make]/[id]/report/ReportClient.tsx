@@ -60,7 +60,12 @@ import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
 import { ReportSummaryRail } from "@/components/report/ReportSummaryRail"
 import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
-import { resolveReportAccess, resolveVisibleV3Report } from "./reportAccess"
+import {
+  resolveReportAccess,
+  resolveVisibleV3Report,
+  shouldRequestReportGenerationOnUnlock,
+  shouldRefreshProfileAfterGenerationAttempt,
+} from "./reportAccess"
 import type {
   PipelineProgress,
   StepStatus,
@@ -278,7 +283,7 @@ export function ReportClient({
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
   const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
-  const { profile: authProfile } = useAuth()
+  const { profile: authProfile, refreshProfile } = useAuth()
 
   // Show paywall when API returns INSUFFICIENT_CREDITS
   useEffect(() => {
@@ -422,6 +427,10 @@ export function ReportClient({
       setIsGeneratingV3(false)
       v3AbortRef.current = null
 
+      if (shouldRefreshProfileAfterGenerationAttempt({ needsPaywall, userAborted })) {
+        await refreshProfile()
+      }
+
       if (needsPaywall) {
         setOutOfReportsOpen(true)
       } else if (!userAborted && !streamError && !completedWithReport) {
@@ -436,7 +445,7 @@ export function ReportClient({
         }, 2000)
       }
     }
-  }, [car.id, router])
+  }, [car.id, refreshProfile, router])
 
   // Check access on mount
   useEffect(() => {
@@ -452,6 +461,10 @@ export function ReportClient({
     authProfile?.pistonsBalance ??
     authProfile?.creditsBalance ??
     tokens
+  const shouldRequestServerReportUnlock = shouldRequestReportGenerationOnUnlock({
+    hasAuthenticatedProfile: Boolean(authProfile),
+    reportAlreadyGenerated,
+  })
 
   // Confirms the spend after the user reviewed the modal. The server still
   // validates credits in /api/analyze/v3; local token consumption only keeps
@@ -459,13 +472,13 @@ export function ReportClient({
   const executeUnlock = () => {
     if (hasAnalyzed(car.id)) {
       setHasAccess(true)
-      if (!reportAlreadyGenerated) void handleGenerateV3()
+      if (shouldRequestServerReportUnlock) void handleGenerateV3()
       setConfirmGenerateOpen(false)
       return
     }
     consumeForAnalysis(car.id)
     setHasAccess(true)
-    if (!reportAlreadyGenerated) void handleGenerateV3()
+    if (shouldRequestServerReportUnlock) void handleGenerateV3()
     setConfirmGenerateOpen(false)
   }
 
@@ -499,7 +512,7 @@ export function ReportClient({
         setPurchaseSuccess(false)
         setShowPricing(false)
         setHasAccess(true)
-        if (!reportAlreadyGenerated) void handleGenerateV3()
+        if (shouldRequestServerReportUnlock) void handleGenerateV3()
       }, 1500)
     }, 1500)
   }

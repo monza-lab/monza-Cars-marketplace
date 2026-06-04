@@ -42,7 +42,7 @@ vi.mock("@/lib/reports/queries", () => ({
   checkAndResetFreeCredits: mockCheckAndResetFreeCredits,
   hasAlreadyGenerated: mockHasAlreadyGenerated,
   deductCredit: mockDeductCredit,
-  REPORT_PISTON_COST: 100,
+  REPORT_PISTON_COST: 1000,
   hasUnlimitedReportAccess: mockHasUnlimitedReportAccess,
   saveHausReport: mockSaveHausReport,
   saveSignals: mockSaveSignals,
