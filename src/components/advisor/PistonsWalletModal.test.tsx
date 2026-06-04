@@ -14,7 +14,7 @@ function renderWithIntl(ui: React.ReactElement) {
 }
 
 describe("PistonsWalletModal", () => {
-  it("renders the balance and tier", () => {
+  it("renders unlimited credits and plan for PRO tier", () => {
     renderWithIntl(
       <PistonsWalletModal
         open
@@ -28,8 +28,9 @@ describe("PistonsWalletModal", () => {
         onClose={() => {}}
       />
     )
-    expect(screen.getByText(/847/)).toBeInTheDocument()
-    expect(screen.getByText(/PRO/)).toBeInTheDocument()
+    expect(screen.getByText("Unlimited")).toBeInTheDocument()
+    expect(screen.getByText("Genshpod")).toBeInTheDocument()
+    expect(screen.getByText(/Unlimited credits while your subscription is active/i)).toBeInTheDocument()
   })
 
   it("does not emit duplicate key warnings when open", () => {

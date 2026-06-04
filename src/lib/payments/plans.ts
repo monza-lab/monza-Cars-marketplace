@@ -88,25 +88,25 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
   },
   rennsport: {
     id: "rennsport",
-    name: "Rennsport",
+    name: "Genshpod",
     price: 59,
     priceCents: 5900,
     period: "monthly",
     pistons: 10000,
     reports: "unlimited",
-    perReport: "Unlimited reports",
+    perReport: "Unlimited credits",
     badge: "Most popular",
     features: [
-      "10,000 Pistons every month",
-      "Unlimited reports",
-      "Deep Research reserve included",
-      "Legacy unlimited Reports preserved",
+      "Unlimited credits",
+      "Unlimited Advisor research and reports",
+      "Watchlist and alerts included",
+      "Cancel anytime",
     ],
-    cta: "Choose Rennsport",
+    cta: "Choose Genshpod",
     billingMode: "subscription",
     unlimitedReports: true,
     stripeProductId: process.env.STRIPE_PRODUCT_RENNSPORT_MONTHLY ?? null,
-    tagline: "For unlimited report workflows",
+    tagline: "For unlimited credit workflows",
     visibleInPricing: true,
   },
   jerrycan: {
@@ -274,7 +274,7 @@ export function getVisibleTopUps(): PricingPlan[] {
 }
 
 /** Returns subscription plans that should appear in the public
- *  pricing UI, sorted by ascending price. Today returns only Rennsport;
+ *  pricing UI, sorted by ascending price. Today returns only Genshpod;
  *  Zuffenhausen and Weissach stay hidden but remain in the registry for
  *  historical customers. */
 export function getVisibleSubs(): PricingPlan[] {

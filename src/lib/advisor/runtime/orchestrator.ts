@@ -34,6 +34,12 @@ const DEBIT_TYPE_BY_TIER: Record<Tier, AdvisorDebitType> = {
   deep_research: "ADVISOR_DEEP_RESEARCH",
 }
 
+function billablePistonsFor(input: Pick<RunAdvisorTurnInput, "userId" | "userTier">, estimatedPistons: number): number {
+  if (!input.userId) return 0
+  if (input.userTier === "PRO") return 0
+  return estimatedPistons
+}
+
 function buildSystemPrompt(systemPrompt: string, locale: RunAdvisorTurnInput["locale"]): string {
   return systemPrompt.replaceAll("{{locale}}", locale)
 }
@@ -109,7 +115,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   const cached = advisorQueryCache.get(userKey, hash)
   if (cached) {
     yield { type: "content_delta", delta: cached.content }
-    const pistonsToDebit = input.userId ? classification.estimatedPistons : 0
+    const pistonsToDebit = billablePistonsFor(input, classification.estimatedPistons)
     if (pistonsToDebit > 0) {
       await debitCredits({
         supabaseUserId: input.userId,
@@ -350,7 +356,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   }
 
   // 7. Persist assistant message, debit, touch conversation
-  const pistonsToDebit = input.userId ? classification.estimatedPistons : 0
+  const pistonsToDebit = billablePistonsFor(input, classification.estimatedPistons)
   if (pistonsToDebit > 0) {
     await debitCredits({
       supabaseUserId: input.userId,

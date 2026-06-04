@@ -119,6 +119,29 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
     }))
     expect(doneEvents.at(-1)?.pistonsDebited).toBe(1)
   })
+
+  it("does not debit PRO subscription users because Genshpod has unlimited credits", async () => {
+    const doneEvents: Array<{ pistonsDebited?: number }> = []
+    for await (const ev of runAdvisorTurn({
+      userText: "what is a 997.2 GT3",
+      conversationId: "conv-pro",
+      surface: "chat",
+      userTier: "PRO",
+      userId: "u-pro",
+      anonymousSessionId: null,
+      locale: "en",
+      initialContext: null,
+    })) {
+      if (ev.type === "done") doneEvents.push(ev)
+    }
+
+    expect(debitCreditsMock).not.toHaveBeenCalled()
+    expect(appendMessageMock).toHaveBeenCalledWith(expect.objectContaining({
+      role: "assistant",
+      creditsUsed: 0,
+    }))
+    expect(doneEvents.at(-1)?.pistonsDebited).toBe(0)
+  })
 })
 
 describe("runAdvisorTurn (anonymous access)", () => {

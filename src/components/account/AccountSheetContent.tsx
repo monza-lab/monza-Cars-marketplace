@@ -28,15 +28,17 @@ export function AccountSheetContent({
   const isAuthenticated = !!user
   const creditsRemaining = profile?.creditsBalance ?? 0
   const tier = profile?.tier ?? "FREE"
-  const isSubscribed = tier === "MONTHLY" || tier === "ANNUAL"
+  const isSubscribed =
+    tier === "MONTHLY" ||
+    tier === "ANNUAL" ||
+    tier === "PRO" ||
+    Boolean(profile?.unlimitedReports)
   const planLabel =
     tier === "FREE"
       ? "Free"
-      : tier === "MONTHLY"
-        ? "Rennsport · Monthly"
-        : tier === "ANNUAL"
-          ? "Rennsport · Annual"
-          : "Pack"
+      : isSubscribed
+        ? "Genshpod"
+        : "Pack"
 
   const handleSignOut = async () => {
     await signOut()
@@ -135,14 +137,14 @@ export function AccountSheetContent({
                 creditsRemaining > 0 ? "text-primary" : "text-destructive"
               }`}
             >
-              {creditsRemaining.toLocaleString()}
+              {isSubscribed ? "Unlimited" : creditsRemaining.toLocaleString()}
             </span>
             <span className="text-[11px] text-muted-foreground">
               {t("accountSheet.available")}
             </span>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            {t("accountSheet.creditsResetHint")}
+            {isSubscribed ? t("accountSheet.unlimitedReportsActive") : t("accountSheet.creditsResetHint")}
           </p>
         </div>
       </section>

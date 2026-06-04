@@ -14,10 +14,12 @@ function renderWithIntl(ui: React.ReactNode) {
 }
 
 describe("SubRecommendationCard", () => {
-  it("renders Rennsport name, price, and badge", () => {
+  it("renders Genshpod as unlimited credits at $59/mo", () => {
     renderWithIntl(<SubRecommendationCard onSubscribe={vi.fn()} />)
-    expect(screen.getByText("Rennsport")).toBeInTheDocument()
+    expect(screen.getByText("Genshpod")).toBeInTheDocument()
     expect(screen.getByText(/\$59/)).toBeInTheDocument()
+    expect(screen.getByText(/Unlimited credits/i)).toBeInTheDocument()
+    expect(screen.queryByText(/10,000 Pistons every month/i)).not.toBeInTheDocument()
     expect(screen.getByText(/Most popular/i)).toBeInTheDocument()
   })
 

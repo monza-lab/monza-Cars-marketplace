@@ -20,7 +20,7 @@ interface TopUpPresetsProps {
 // equivalence — surfacing "N searches" when N is unbounded would be
 // confusing. We surface the things the user actually spends Pistons on.
 // Calibrated so the largest preset (10,000 Pistons / $99) caps at
-// 10 reports max — anyone needing more is steered to Rennsport sub.
+// 10 reports max; anyone needing more is steered to the Genshpod subscription.
 const PISTONS_PER_REPORT = 1000
 const PISTONS_PER_COMPARISON = 250
 const PISTONS_PER_CHAT = 10

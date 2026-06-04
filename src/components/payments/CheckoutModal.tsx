@@ -129,7 +129,7 @@ export function CheckoutModal({
             </h2>
             <p className="mt-1 text-[13px] text-muted-foreground">
               {plan.reports === "unlimited"
-                ? /* [HARDCODED] */ "Unlimited reports · monthly Pistons allowance · export"
+                ? /* [HARDCODED] */ "Unlimited credits · monthly subscription · export"
                 : plan.reports === 1
                 ? /* [HARDCODED] */ "1 report · never expires"
                 : /* [HARDCODED] */ `${plan.reports} reports · never expire`}
@@ -143,14 +143,14 @@ export function CheckoutModal({
                 {/* [HARDCODED] */}Better value
               </p>
               <p className="text-[12px] text-foreground leading-relaxed">
-                {/* [HARDCODED] */}For just $30 more, <strong>Rennsport ($59/mo)</strong> gives you{" "}
-                <strong>unlimited reports + 10,000 Pistons monthly</strong>. Two Fuel Cells already cost more.
+                {/* [HARDCODED] */}For less than the heavy reload, <strong>Genshpod ($59/mo)</strong> gives you{" "}
+                <strong>unlimited credits</strong> while your subscription is active.
               </p>
               <button
                 onClick={handleSwitchToMonthly}
                 className="mt-3 text-[12px] font-semibold text-primary hover:underline"
               >
-                {/* [HARDCODED] */}Switch to Rennsport →
+                {/* [HARDCODED] */}Switch to Genshpod →
               </button>
             </div>
           )}

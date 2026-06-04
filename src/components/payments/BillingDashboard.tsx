@@ -16,8 +16,13 @@ export function BillingDashboard() {
   const credits = profile?.creditsBalance ?? 0
   const packCredits = profile?.packCreditsBalance ?? 0
   const tier = profile?.tier ?? "FREE"
-  const isSubscribed = tier === "MONTHLY" || tier === "ANNUAL"
+  const isSubscribed =
+    tier === "MONTHLY" ||
+    tier === "ANNUAL" ||
+    tier === "PRO" ||
+    Boolean(profile?.unlimitedReports)
   const hasUnlimited = isSubscribed
+  const planLabel = isSubscribed ? "Genshpod" : tier
   const periodEnd = profile?.subscriptionPeriodEnd
     ? new Date(profile.subscriptionPeriodEnd).toLocaleDateString("en-US", {
         month: "long",
@@ -64,8 +69,10 @@ export function BillingDashboard() {
             <Coins className="size-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-[14px] font-semibold text-foreground">Reports Balance</h3>
-            <p className="text-[11px] text-muted-foreground">Your available Reports</p>
+            <h3 className="text-[14px] font-semibold text-foreground">Credits Balance</h3>
+            <p className="text-[11px] text-muted-foreground">
+              {hasUnlimited ? "Unlimited credits while subscribed" : "Your available Pistons"}
+            </p>
           </div>
         </div>
 
@@ -78,7 +85,7 @@ export function BillingDashboard() {
               </span>
             </div>
             {hasUnlimited ? (
-              <span className="text-2xl font-bold text-primary">∞</span>
+              <span className="text-2xl font-bold text-primary">Unlimited</span>
             ) : (
               <span
                 className={`text-2xl font-bold ${
@@ -113,7 +120,7 @@ export function BillingDashboard() {
                 : "bg-foreground/5 text-muted-foreground"
             }`}
           >
-            {tier}
+            {planLabel}
           </span>
         </div>
 

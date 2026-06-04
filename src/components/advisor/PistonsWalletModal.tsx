@@ -42,7 +42,8 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
   const t = useTranslations("auth.pistons")
   if (!props.open) return null
   const isFree = props.tier === "FREE"
-  const planLabel = (props.planName ?? props.tier)
+  const hasUnlimitedCredits = props.tier === "PRO"
+  const planLabel = (hasUnlimitedCredits ? "Genshpod" : (props.planName ?? props.tier))
     .replaceAll("_", " ")
     .replace(/\b\w/g, (m) => m.toUpperCase())
 
@@ -75,10 +76,16 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
         <div className="px-5 py-4">
           <div className="flex items-center gap-3 mb-1">
             <Piston className="size-5 text-primary" />
-            <span className="text-[22px] font-display text-foreground">{props.balance.toLocaleString()}</span>
+            <span className="text-[22px] font-display text-foreground">
+              {hasUnlimitedCredits ? "Unlimited" : props.balance.toLocaleString()}
+            </span>
             <span className="text-[10px] tracking-widest uppercase text-muted-foreground">{planLabel}</span>
           </div>
-          <p className="text-[11px] text-muted-foreground">{t("nextReset", { date: props.nextResetDate.toLocaleDateString() })}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {hasUnlimitedCredits
+              ? "Unlimited credits while your subscription is active"
+              : t("nextReset", { date: props.nextResetDate.toLocaleDateString() })}
+          </p>
         </div>
 
         <div className="px-5 pb-4">
