@@ -267,7 +267,6 @@
     "endingSoon": "まもなく終了",
     "sold": "売却済み",
     "ended": "終了",
-    "sold": "売却済み",
     "noLongerAvailable": "掲載終了",
     "noSale": "不成立",
     "live": "ライブ"
@@ -548,11 +547,11 @@
     "subCancelAnytime": "いつでもキャンセル可",
     "subCta": "登録",
     "anchorNarrative": "PPIは$400、Porsche PPSは$250。月$59を支払って取引が見合うか知ることはデューデリジェンスであり、出費ではありません。",
-    "currentBalance": "現在のバランス",
+    "currentBalance": "現在の残高",
     "pistonsLabel": "Pistons",
     "whatIncluded": "各レポートに含まれるもの",
     "faqTitle": "よくある質問",
-    "guarantee": "30日間返金保証",
+    "guarantee": "30日間返金保証。いつでもキャンセル可能。",
     "single": {
       "name": "シングルレポート",
       "price": "$29",
@@ -591,8 +590,6 @@
       "feature3": "新データへの早期アクセス",
       "feature4": "専用アドバイザーライン"
     },
-    "guarantee": "30日間返金保証。いつでもキャンセル可能。",
-    "currentBalance": "現在の残高",
     "tokens": "トークン",
     "successTitle": "レポートがアンロックされました！",
     "successDesc": "このHaus Reportへの完全なアクセスが可能になりました。",
@@ -705,7 +702,7 @@
           "demand": "高い"
         },
         "Nissan": {
-          "strategy": "JDM市場はボラティリティが高い一方で上昇モメンタムも強いです。輸入書類と適合性の確認が必須。V-SpecやN\u00fcrは大きなプレミアムが付きます。ノーマルで手が入っていない個体は希少化しており、仕様よりコンディションが重要です。",
+          "strategy": "JDM市場はボラティリティが高い一方で上昇モメンタムも強いです。輸入書類と適合性の確認が必須。V-SpecやNürは大きなプレミアムが付きます。ノーマルで手が入っていない個体は希少化しており、仕様よりコンディションが重要です。",
           "complexity": "中",
           "demand": "極めて高い"
         },
@@ -781,33 +778,128 @@
       },
       "comparables": {
         "Lamborghini": [
-          { "title": "1971 Miura P400 SV", "price": 2650000, "date": "2025年11月", "platform": "RM Sotheby's" },
-          { "title": "1972 Miura P400 SV", "price": 2350000, "date": "2025年8月", "platform": "Gooding" },
-          { "title": "1969 Miura P400 S", "price": 1980000, "date": "2025年5月", "platform": "Bonhams" },
-          { "title": "1970 Miura P400 S", "price": 1850000, "date": "2025年3月", "platform": "RM Sotheby's" },
-          { "title": "1971 Miura P400 SV", "price": 2480000, "date": "2025年1月", "platform": "Gooding" }
+          {
+            "title": "1971 Miura P400 SV",
+            "price": 2650000,
+            "date": "2025年11月",
+            "platform": "RM Sotheby's"
+          },
+          {
+            "title": "1972 Miura P400 SV",
+            "price": 2350000,
+            "date": "2025年8月",
+            "platform": "Gooding"
+          },
+          {
+            "title": "1969 Miura P400 S",
+            "price": 1980000,
+            "date": "2025年5月",
+            "platform": "Bonhams"
+          },
+          {
+            "title": "1970 Miura P400 S",
+            "price": 1850000,
+            "date": "2025年3月",
+            "platform": "RM Sotheby's"
+          },
+          {
+            "title": "1971 Miura P400 SV",
+            "price": 2480000,
+            "date": "2025年1月",
+            "platform": "Gooding"
+          }
         ],
         "Porsche": [
-          { "title": "1973 911 Carrera RS 2.7", "price": 1450000, "date": "2025年10月", "platform": "RM Sotheby's" },
-          { "title": "1973 911 Carrera RS", "price": 1320000, "date": "2025年7月", "platform": "Gooding" },
-          { "title": "1972 911 2.7 RS", "price": 1180000, "date": "2025年4月", "platform": "BaT" },
-          { "title": "1973 911 RS Lightweight", "price": 1650000, "date": "2025年2月", "platform": "Bonhams" },
-          { "title": "1973 911 Carrera RS", "price": 1280000, "date": "2024年12月", "platform": "RM Sotheby's" }
+          {
+            "title": "1973 911 Carrera RS 2.7",
+            "price": 1450000,
+            "date": "2025年10月",
+            "platform": "RM Sotheby's"
+          },
+          {
+            "title": "1973 911 Carrera RS",
+            "price": 1320000,
+            "date": "2025年7月",
+            "platform": "Gooding"
+          },
+          {
+            "title": "1972 911 2.7 RS",
+            "price": 1180000,
+            "date": "2025年4月",
+            "platform": "BaT"
+          },
+          {
+            "title": "1973 911 RS Lightweight",
+            "price": 1650000,
+            "date": "2025年2月",
+            "platform": "Bonhams"
+          },
+          {
+            "title": "1973 911 Carrera RS",
+            "price": 1280000,
+            "date": "2024年12月",
+            "platform": "RM Sotheby's"
+          }
         ],
         "Ferrari": [
-          { "title": "2008 Ferrari F430", "price": 210000, "date": "2025年9月", "platform": "BaT" },
-          { "title": "2007 Ferrari F430", "price": 198000, "date": "2025年6月", "platform": "C&B" },
-          { "title": "2009 Ferrari 430 Scuderia", "price": 345000, "date": "2025年2月", "platform": "RM Sotheby's" }
+          {
+            "title": "2008 Ferrari F430",
+            "price": 210000,
+            "date": "2025年9月",
+            "platform": "BaT"
+          },
+          {
+            "title": "2007 Ferrari F430",
+            "price": 198000,
+            "date": "2025年6月",
+            "platform": "C&B"
+          },
+          {
+            "title": "2009 Ferrari 430 Scuderia",
+            "price": 345000,
+            "date": "2025年2月",
+            "platform": "RM Sotheby's"
+          }
         ],
         "Nissan": [
-          { "title": "2002 Nissan Skyline GT-R V-Spec II", "price": 185000, "date": "2025年11月", "platform": "BaT" },
-          { "title": "1999 Nissan Skyline GT-R", "price": 152000, "date": "2025年7月", "platform": "C&B" },
-          { "title": "2002 Nissan Skyline GT-R V-Spec II N\u00fcr", "price": 240000, "date": "2025年3月", "platform": "BaT" }
+          {
+            "title": "2002 Nissan Skyline GT-R V-Spec II",
+            "price": 185000,
+            "date": "2025年11月",
+            "platform": "BaT"
+          },
+          {
+            "title": "1999 Nissan Skyline GT-R",
+            "price": 152000,
+            "date": "2025年7月",
+            "platform": "C&B"
+          },
+          {
+            "title": "2002 Nissan Skyline GT-R V-Spec II Nür",
+            "price": 240000,
+            "date": "2025年3月",
+            "platform": "BaT"
+          }
         ],
         "default": [
-          { "title": "類似モデル（直近）", "price": 125000, "date": "2025年11月", "platform": "BaT" },
-          { "title": "類似モデル（中頃）", "price": 118000, "date": "2025年7月", "platform": "C&B" },
-          { "title": "類似モデル（以前）", "price": 112000, "date": "2025年3月", "platform": "BaT" }
+          {
+            "title": "類似モデル（直近）",
+            "price": 125000,
+            "date": "2025年11月",
+            "platform": "BaT"
+          },
+          {
+            "title": "類似モデル（中頃）",
+            "price": 118000,
+            "date": "2025年7月",
+            "platform": "C&B"
+          },
+          {
+            "title": "類似モデル（以前）",
+            "price": 112000,
+            "date": "2025年3月",
+            "platform": "BaT"
+          }
         ]
       },
       "registry": {
@@ -820,13 +912,38 @@
             "exteriorCode": "20.517.A",
             "interiorColor": "Senape",
             "interiorMaterial": "フルレザー（パンチングインサート）",
-            "keyOptions": ["Weissachパッケージ", "マッチングナンバー", "工具一式", "ブック/記録"]
+            "keyOptions": [
+              "Weissachパッケージ",
+              "マッチングナンバー",
+              "工具一式",
+              "ブック/記録"
+            ]
           },
           "spottings": [
-            { "year": 2018, "event": "Concorso d'Eleganza", "location": "イタリア・ヴィラ・デステ", "source": "レジストリ" },
-            { "year": 2020, "event": "プライベートセール", "location": "モナコ", "source": "RM Sotheby's" },
-            { "year": 2022, "event": "整備記録", "location": "イタリア・モデナ", "source": "ファクトリー記録" },
-            { "year": 2024, "event": "現在の出品", "location": "米国カリフォルニア", "source": "BaT" }
+            {
+              "year": 2018,
+              "event": "Concorso d'Eleganza",
+              "location": "イタリア・ヴィラ・デステ",
+              "source": "レジストリ"
+            },
+            {
+              "year": 2020,
+              "event": "プライベートセール",
+              "location": "モナコ",
+              "source": "RM Sotheby's"
+            },
+            {
+              "year": 2022,
+              "event": "整備記録",
+              "location": "イタリア・モデナ",
+              "source": "ファクトリー記録"
+            },
+            {
+              "year": 2024,
+              "event": "現在の出品",
+              "location": "米国カリフォルニア",
+              "source": "BaT"
+            }
           ],
           "verified": true
         },
@@ -839,13 +956,38 @@
             "exteriorCode": "L90E",
             "interiorColor": "Black",
             "interiorMaterial": "レザー調（Pepitaインサート）",
-            "keyOptions": ["ライトウェイト", "スポーツシート", "ダックテール", "真正性証明書"]
+            "keyOptions": [
+              "ライトウェイト",
+              "スポーツシート",
+              "ダックテール",
+              "真正性証明書"
+            ]
           },
           "spottings": [
-            { "year": 2015, "event": "レストア完了", "location": "ドイツ・シュトゥットガルト", "source": "Porsche Classic" },
-            { "year": 2019, "event": "オークション結果", "location": "米国モントレー（CA）", "source": "Gooding & Co" },
-            { "year": 2021, "event": "プライベートコレクション", "location": "スイス・チューリッヒ", "source": "レジストリ" },
-            { "year": 2024, "event": "現在の出品", "location": "米国ニューヨーク", "source": "BaT" }
+            {
+              "year": 2015,
+              "event": "レストア完了",
+              "location": "ドイツ・シュトゥットガルト",
+              "source": "Porsche Classic"
+            },
+            {
+              "year": 2019,
+              "event": "オークション結果",
+              "location": "米国モントレー（CA）",
+              "source": "Gooding & Co"
+            },
+            {
+              "year": 2021,
+              "event": "プライベートコレクション",
+              "location": "スイス・チューリッヒ",
+              "source": "レジストリ"
+            },
+            {
+              "year": 2024,
+              "event": "現在の出品",
+              "location": "米国ニューヨーク",
+              "source": "BaT"
+            }
           ],
           "verified": true
         },
@@ -858,13 +1000,38 @@
             "exteriorCode": "300",
             "interiorColor": "Nero",
             "interiorMaterial": "フルレザー（デイトナシート）",
-            "keyOptions": ["Classiche認定", "カーボンパッケージ", "スクーデリアシールド", "フル整備履歴"]
+            "keyOptions": [
+              "Classiche認定",
+              "カーボンパッケージ",
+              "スクーデリアシールド",
+              "フル整備履歴"
+            ]
           },
           "spottings": [
-            { "year": 2017, "event": "Classiche認定", "location": "イタリア・マラネロ", "source": "Ferrari SpA" },
-            { "year": 2020, "event": "メジャーサービス", "location": "米国ビバリーヒルズ（CA）", "source": "正規ディーラー" },
-            { "year": 2023, "event": "コンクール出場", "location": "米国ペブルビーチ（CA）", "source": "レジストリ" },
-            { "year": 2024, "event": "現在の出品", "location": "米国マイアミ（FL）", "source": "C&B" }
+            {
+              "year": 2017,
+              "event": "Classiche認定",
+              "location": "イタリア・マラネロ",
+              "source": "Ferrari SpA"
+            },
+            {
+              "year": 2020,
+              "event": "メジャーサービス",
+              "location": "米国ビバリーヒルズ（CA）",
+              "source": "正規ディーラー"
+            },
+            {
+              "year": 2023,
+              "event": "コンクール出場",
+              "location": "米国ペブルビーチ（CA）",
+              "source": "レジストリ"
+            },
+            {
+              "year": 2024,
+              "event": "現在の出品",
+              "location": "米国マイアミ（FL）",
+              "source": "C&B"
+            }
           ],
           "verified": true
         },
@@ -877,13 +1044,38 @@
             "exteriorCode": "TV2",
             "interiorColor": "Black",
             "interiorMaterial": "アルカンターラ（レザーボルスター）",
-            "keyOptions": ["V-Spec II", "NISMOマフラー", "Mine's ECU", "輸入書類一式"]
+            "keyOptions": [
+              "V-Spec II",
+              "NISMOマフラー",
+              "Mine's ECU",
+              "輸入書類一式"
+            ]
           },
           "spottings": [
-            { "year": 2016, "event": "日本からの輸出", "location": "日本・東京", "source": "JEVIC証明" },
-            { "year": 2018, "event": "米国輸入/適合", "location": "米国ロサンゼルス（CA）", "source": "通関書類" },
-            { "year": 2022, "event": "プロによるディテール", "location": "米国シアトル（WA）", "source": "売主記録" },
-            { "year": 2024, "event": "現在の出品", "location": "米国ポートランド（OR）", "source": "BaT" }
+            {
+              "year": 2016,
+              "event": "日本からの輸出",
+              "location": "日本・東京",
+              "source": "JEVIC証明"
+            },
+            {
+              "year": 2018,
+              "event": "米国輸入/適合",
+              "location": "米国ロサンゼルス（CA）",
+              "source": "通関書類"
+            },
+            {
+              "year": 2022,
+              "event": "プロによるディテール",
+              "location": "米国シアトル（WA）",
+              "source": "売主記録"
+            },
+            {
+              "year": 2024,
+              "event": "現在の出品",
+              "location": "米国ポートランド（OR）",
+              "source": "BaT"
+            }
           ],
           "verified": true
         },
@@ -896,11 +1088,24 @@
             "exteriorCode": "-",
             "interiorColor": "Factory Interior",
             "interiorMaterial": "Original Specification",
-            "keyOptions": ["整備記録あり", "クリーンタイトル"]
+            "keyOptions": [
+              "整備記録あり",
+              "クリーンタイトル"
+            ]
           },
           "spottings": [
-            { "year": 2020, "event": "前オーナー", "location": "米国", "source": "タイトル履歴" },
-            { "year": 2024, "event": "現在の出品", "location": "米国", "source": "オークションプラットフォーム" }
+            {
+              "year": 2020,
+              "event": "前オーナー",
+              "location": "米国",
+              "source": "タイトル履歴"
+            },
+            {
+              "year": 2024,
+              "event": "現在の出品",
+              "location": "米国",
+              "source": "オークションプラットフォーム"
+            }
           ],
           "verified": false
         }
@@ -1492,18 +1697,54 @@
       "confirm_original_paint": "PPI時に塗装メーターの測定と確認を依頼してください。"
     },
     "modifiers": {
-      "mileage_delta": { "name": "走行距離 vs 類似比較", "description": "類似販売に対する走行距離に基づく調整" },
-      "transmission_manual": { "name": "トランスミッションの嗜好", "description": "このシリーズにおける マニュアル vs PDK のプレミアム" },
-      "year_within_generation": { "name": "モデルイヤーのプレミアム", "description": "世代の生産期間内での位置付け" },
-      "paint_to_sample": { "name": "Paint-to-Sample", "description": "工場の特別注文塗装色" },
-      "service_records_complete": { "name": "整備履歴完備", "description": "スタンプ付きの整備履歴が文書化されている" },
-      "low_previous_owners": { "name": "所有履歴", "description": "前オーナーの人数が少ない" },
-      "original_paint": { "name": "オリジナルペイント", "description": "再塗装なし、オリジナルの工場仕上げ" },
-      "accident_disclosed": { "name": "事故歴の開示", "description": "売り手が過去の事故歴を開示" },
-      "modifications_disclosed": { "name": "アフターマーケットの改造", "description": "純正以外のパーツや改造が開示されている" },
-      "documentation_provided": { "name": "書類の提供", "description": "ウィンドウスティッカー、PPI、または Carfax が利用可能" },
-      "warranty_remaining": { "name": "保証残存", "description": "メーカー保証または CPO 保証が有効" },
-      "seller_tier_specialist": { "name": "Porsche スペシャリスト販売", "description": "厳選されたスペシャリストディーラーによる販売" }
+      "mileage_delta": {
+        "name": "走行距離 vs 類似比較",
+        "description": "類似販売に対する走行距離に基づく調整"
+      },
+      "transmission_manual": {
+        "name": "トランスミッションの嗜好",
+        "description": "このシリーズにおける マニュアル vs PDK のプレミアム"
+      },
+      "year_within_generation": {
+        "name": "モデルイヤーのプレミアム",
+        "description": "世代の生産期間内での位置付け"
+      },
+      "paint_to_sample": {
+        "name": "Paint-to-Sample",
+        "description": "工場の特別注文塗装色"
+      },
+      "service_records_complete": {
+        "name": "整備履歴完備",
+        "description": "スタンプ付きの整備履歴が文書化されている"
+      },
+      "low_previous_owners": {
+        "name": "所有履歴",
+        "description": "前オーナーの人数が少ない"
+      },
+      "original_paint": {
+        "name": "オリジナルペイント",
+        "description": "再塗装なし、オリジナルの工場仕上げ"
+      },
+      "accident_disclosed": {
+        "name": "事故歴の開示",
+        "description": "売り手が過去の事故歴を開示"
+      },
+      "modifications_disclosed": {
+        "name": "アフターマーケットの改造",
+        "description": "純正以外のパーツや改造が開示されている"
+      },
+      "documentation_provided": {
+        "name": "書類の提供",
+        "description": "ウィンドウスティッカー、PPI、または Carfax が利用可能"
+      },
+      "warranty_remaining": {
+        "name": "保証残存",
+        "description": "メーカー保証または CPO 保証が有効"
+      },
+      "seller_tier_specialist": {
+        "name": "Porsche スペシャリスト販売",
+        "description": "厳選されたスペシャリストディーラーによる販売"
+      }
     }
   },
   "landing": {
@@ -1512,7 +1753,7 @@
       "headline": "コレクターカー市場は500億ドルのブラインドスポット。",
       "subline": "MonzaHausはデータ、コンテキスト、確信を提供します。車を資産として捉えるコレクターのために。",
       "cta": "マーケットを探索",
-      "ctaSecondary": "無料レポートを取得"
+      "ctaSecondary": "3件の無料レポートで始める"
     },
     "problem": {
       "opacity": {
@@ -1553,10 +1794,22 @@
       }
     },
     "proof": {
-      "listings": { "label": "追跡リスティング", "suffix": "+" },
-      "regions": { "label": "カバー市場", "suffix": "" },
-      "sources": { "label": "データソース", "suffix": "" },
-      "reports": { "label": "生成レポート", "suffix": "+" }
+      "listings": {
+        "label": "追跡リスティング",
+        "suffix": "+"
+      },
+      "regions": {
+        "label": "カバー市場",
+        "suffix": ""
+      },
+      "sources": {
+        "label": "データソース",
+        "suffix": ""
+      },
+      "reports": {
+        "label": "生成レポート",
+        "suffix": "+"
+      }
     },
     "vision": {
       "headline": "プラットフォーム以上のもの。",
@@ -1566,8 +1819,8 @@
       "headline": "市場を明確に見る。",
       "subline": "希望ではなくデータで決断するコレクターの仲間入り。",
       "primary": "マーケットを探索",
-      "secondary": "無料レポートを取得",
-      "reassurance": "閲覧にアカウント不要。"
+      "secondary": "3件の無料レポートで始める",
+      "reassurance": "新規アカウントに3,000 Pistons付与 — 3件のフルレポートに十分。"
     }
   },
   "onboarding": {
