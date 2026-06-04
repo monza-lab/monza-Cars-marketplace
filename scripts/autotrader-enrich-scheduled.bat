@@ -13,7 +13,7 @@ echo [%date% %time%] AutoTrader enrichment starting >> "%LOG%"
 
 set "MONZA_WINDOWS_TASK=1"
 
-"C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000 >> "%LOG%" 2>&1
+call "C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000 >> "%LOG%" 2>&1
 set "EXIT_CODE=%ERRORLEVEL%"
 
 echo [%date% %time%] AutoTrader enrichment finished exit_code=%EXIT_CODE% >> "%LOG%"

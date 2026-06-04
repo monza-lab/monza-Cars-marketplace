@@ -1,0 +1,138 @@
+{
+  "generated_at": "2026-06-04T17:50:19.507Z",
+  "make": "Porsche",
+  "status": "active",
+  "total_rows": 22931,
+  "sources": [
+    {
+      "source": "AutoScout24",
+      "totalActiveRows": 16940,
+      "vinNonNullRows": 1,
+      "vin17Rows": 1,
+      "shortChassisOrSerialRows": 0,
+      "invalidIdentifierRows": 0,
+      "samples": {
+        "vin17": [
+          "WP0Z...8245"
+        ],
+        "chassisOrSerial": [],
+        "invalid": []
+      }
+    },
+    {
+      "source": "Elferspot",
+      "totalActiveRows": 3876,
+      "vinNonNullRows": 1072,
+      "vin17Rows": 1072,
+      "shortChassisOrSerialRows": 0,
+      "invalidIdentifierRows": 0,
+      "samples": {
+        "vin17": [
+          "WP0C...5790",
+          "WP0A...5742",
+          "WP0E...1003",
+          "WP0Z...0301",
+          "WP0E...1489"
+        ],
+        "chassisOrSerial": [],
+        "invalid": []
+      }
+    },
+    {
+      "source": "AutoTrader",
+      "totalActiveRows": 812,
+      "vinNonNullRows": 4,
+      "vin17Rows": 4,
+      "shortChassisOrSerialRows": 0,
+      "invalidIdentifierRows": 0,
+      "samples": {
+        "vin17": [
+          "DEFA...RAPR"
+        ],
+        "chassisOrSerial": [],
+        "invalid": []
+      }
+    },
+    {
+      "source": "ClassicCom",
+      "totalActiveRows": 752,
+      "vinNonNullRows": 752,
+      "vin17Rows": 718,
+      "shortChassisOrSerialRows": 34,
+      "invalidIdentifierRows": 0,
+      "samples": {
+        "vin17": [
+          "WP0A...3287",
+          "WP0A...9700",
+          "WP0C...0864",
+          "WP0C...5770",
+          "WP0C...4664"
+        ],
+        "chassisOrSerial": [
+          "9116...0103",
+          "91...10",
+          "1199...7922",
+          "AZ...14",
+          "11...35"
+        ],
+        "invalid": []
+      }
+    },
+    {
+      "source": "BeForward",
+      "totalActiveRows": 424,
+      "vinNonNullRows": 71,
+      "vin17Rows": 36,
+      "shortChassisOrSerialRows": 8,
+      "invalidIdentifierRows": 27,
+      "samples": {
+        "vin17": [
+          "WP0Z...7975",
+          "WP0Z...3870",
+          "WP0Z...2634",
+          "WP0Z...3084",
+          "WP0Z...0361"
+        ],
+        "chassisOrSerial": [
+          "992S...4194",
+          "981M...3854",
+          "9872...6327",
+          "987M...0664",
+          "WP0Z...1939"
+        ],
+        "invalid": [
+          "WP0C...8***",
+          "WP0C...I***",
+          "WP0A...D***",
+          "WP0A...T***",
+          "WP0B...I***"
+        ]
+      }
+    },
+    {
+      "source": "BaT",
+      "totalActiveRows": 127,
+      "vinNonNullRows": 123,
+      "vin17Rows": 103,
+      "shortChassisOrSerialRows": 20,
+      "invalidIdentifierRows": 0,
+      "samples": {
+        "vin17": [
+          "WP0A...1893",
+          "WP0C...0345",
+          "WP0C...6920",
+          "WP0A...1079",
+          "WP0A...2815"
+        ],
+        "chassisOrSerial": [
+          "9114...1421",
+          "12...67",
+          "9118...2360",
+          "4752...5089",
+          "9118...1686"
+        ],
+        "invalid": []
+      }
+    }
+  ]
+}

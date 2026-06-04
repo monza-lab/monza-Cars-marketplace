@@ -1,0 +1,10 @@
+[mcp_servers.supabase]
+args = [
+    "-y",
+    "@supabase/mcp-server-supabase@latest",
+]
+command = "npx"
+env_vars = ["SUPABASE_ACCESS_TOKEN"]
+
+[mcp_servers.vercel]
+url = "https://mcp.vercel.com"

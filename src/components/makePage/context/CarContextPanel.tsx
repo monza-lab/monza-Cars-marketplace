@@ -7,30 +7,27 @@ import {
   Clock,
   Gauge,
   Award,
-  TrendingUp,
   FileText,
   Lock,
   Car as CarIcon,
+  Cog,
+  DollarSign,
 } from "lucide-react"
 import type { CollectorCar } from "@/lib/curatedCars"
 import { useCurrency } from "@/lib/CurrencyContext"
-import { useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
 import { stripHtml } from "@/lib/stripHtml"
-import { formatUsdValue } from "@/components/dashboard/utils/valuation"
-import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { SafeImage } from "@/components/dashboard/cards/SafeImage"
 import { extractSeries } from "@/lib/brandConfig"
 import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 
 // ─── CAR CONTEXT PANEL (right panel for individual car view) ───
 // Investment-intelligence layout focused on driving Report conversion:
-//   1. Position vs market (delta pill)
+//   1. Listing facts required before report generation
 //   2. Signals row (chips)
 //   3. Recent sales — 3 closed comps from same series
 //   4. Report tease (locked bullets) + Unlock CTA
 //
-// The redundant Specifications and Listing Source blocks were removed —
-// the car card on the feed already shows mileage, year, platform.
 // The Ask Advisor button was also removed: the floating AdvisorFab is
 // already visible globally; one entry-point is enough per viewport.
 
@@ -47,17 +44,13 @@ export function CarContextPanel({
    *  an Ask Advisor button (the AdvisorFab already covers this entry point). */
   onOpenAdvisor?: () => void
 }) {
-  const tAuction = useTranslations("auctionDetail")
   const { formatPrice } = useCurrency()
+  const locale = useLocale()
 
-  // Fair Value range — US market.
-  const fvUS = car.fairValueByRegion?.US
-  const fairValueLow = fvUS?.low ?? null
-  const fairValueHigh = fvUS?.high ?? null
-  const fairValueMid =
-    fairValueLow !== null && fairValueHigh !== null
-      ? (fairValueLow + fairValueHigh) / 2
-      : null
+  const listingPrice = car.askingPriceUsd ?? car.price ?? car.currentBid
+  const mileage = car.mileage > 0
+    ? `${car.mileage.toLocaleString(locale)} ${car.mileageUnit}`
+    : "Mileage not listed"
 
   // Derive signal chips — only show what we can prove from data.
   const signals = useMemo(() => {
@@ -131,47 +124,51 @@ export function CarContextPanel({
           )}
         </div>
 
-        {/* 2. POSITION vs MARKET — the headline metric */}
+        {/* 2. LISTING FACTS - required before report generation */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="size-4 text-primary" />
+            <FileText className="size-4 text-primary" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Position vs Market
+              Listing facts
             </span>
           </div>
 
-          {/* Asking price (big) + delta pill */}
-          <div className="flex items-baseline justify-between mb-1.5">
-            <div>
-              <span className="text-[8px] text-muted-foreground uppercase tracking-wider">
-                Asking
-              </span>
-              <p className="text-[20px] font-display font-medium text-foreground leading-none mt-0.5">
-                {formatPrice(car.currentBid)}
+          {/* Core listing facts */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-border/70 bg-card/70 p-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-muted-foreground">
+                <DollarSign className="size-3.5 text-primary" />
+                <span className="text-[8px] uppercase tracking-wider">Price</span>
+              </div>
+              <p className="text-[15px] font-display font-medium text-foreground tabular-nums">
+                {car.currentBid > 0 ? formatPrice(car.currentBid) : "POA"}
               </p>
             </div>
-            {fairValueMid !== null && car.currentBid > 0 && (
-              <MarketDeltaPill
-                priceUsd={car.currentBid}
-                medianUsd={fairValueMid}
-                className="text-[11px] font-bold tracking-[0.08em] px-2.5 py-1"
-              />
-            )}
+            <div className="rounded-xl border border-border/70 bg-card/70 p-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-muted-foreground">
+                <FileText className="size-3.5 text-primary" />
+                <span className="text-[8px] uppercase tracking-wider">Listing price</span>
+              </div>
+              <p className="text-[15px] font-display font-medium text-foreground tabular-nums">
+                {listingPrice > 0 ? formatPrice(listingPrice) : "POA"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border/70 bg-card/70 p-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-muted-foreground">
+                <Gauge className="size-3.5 text-primary" />
+                <span className="text-[8px] uppercase tracking-wider">Mileage</span>
+              </div>
+              <p className="text-[13px] font-medium text-foreground">{mileage}</p>
+            </div>
+            <div className="rounded-xl border border-border/70 bg-card/70 p-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-muted-foreground">
+                <Cog className="size-3.5 text-primary" />
+                <span className="text-[8px] uppercase tracking-wider">Transmission</span>
+              </div>
+              <p className="text-[13px] font-medium text-foreground break-words">{car.transmission || "Not listed"}</p>
+            </div>
           </div>
 
-          {/* Fair value range — subdued, contextual */}
-          {fairValueLow !== null && fairValueHigh !== null && (
-            <div className="mt-3 pt-3 border-t border-border/60">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">
-                  Fair value range
-                </span>
-                <span className="text-[11px] tabular-nums font-medium text-foreground">
-                  {formatUsdValue(fairValueLow)} – {formatUsdValue(fairValueHigh)}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* 3. SIGNALS — quick visual cues */}
@@ -295,7 +292,7 @@ export function CarContextPanel({
           <div className="flex items-center gap-2 mb-3">
             <Lock className="size-4 text-primary" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              What's inside the Report
+              What&apos;s inside the Report
             </span>
           </div>
 

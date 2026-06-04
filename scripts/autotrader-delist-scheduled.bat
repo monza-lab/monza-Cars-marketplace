@@ -13,7 +13,7 @@ echo [%date% %time%] AutoTrader delist check starting >> "%LOG%"
 
 set "MONZA_WINDOWS_TASK=1"
 
-"C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-delist-check.ts --delayMs=500 >> "%LOG%" 2>&1
+call "C:\Program Files\nodejs\npx.cmd" tsx scripts/autotrader-delist-check.ts --delayMs=500 >> "%LOG%" 2>&1
 set "EXIT_CODE=%ERRORLEVEL%"
 
 echo [%date% %time%] AutoTrader delist check finished exit_code=%EXIT_CODE% >> "%LOG%"
