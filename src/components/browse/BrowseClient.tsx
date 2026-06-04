@@ -14,6 +14,32 @@ import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStor
 
 const REMOTE_PAGE_SIZE = 30;
 
+export function selectClassicBrowsePool({
+  auctions,
+  remoteCars,
+  hasActiveServerFilters,
+  isFilterPending,
+}: {
+  auctions: DashboardAuction[];
+  remoteCars: DashboardAuction[];
+  hasActiveServerFilters: boolean;
+  isFilterPending: boolean;
+}): DashboardAuction[] {
+  if (isFilterPending) return [];
+  return hasActiveServerFilters ? remoteCars : [...auctions, ...remoteCars];
+}
+
+function parseActiveServerFilters(key: string): Record<string, string> {
+  try {
+    const parsed = JSON.parse(key) as Record<string, string>;
+    const { _status: _ignored, ...filters } = parsed;
+    void _ignored;
+    return filters;
+  } catch {
+    return {};
+  }
+}
+
 type ApiCar = {
   id: string;
   title: string;
@@ -113,7 +139,6 @@ export function BrowseClient({
     return params;
   }, [filters.q, filters.series, filters.region, filters.platform]);
 
-  const hasServerFilters = Object.keys(serverFilters).length > 0;
   const serverFilterKey = useMemo(
     () => JSON.stringify({ ...serverFilters, _status: filters.status }),
     [serverFilters, filters.status],
@@ -129,6 +154,13 @@ export function BrowseClient({
   // so the empty-state copy ("No reports match") never flashes before
   // the new fetch actually starts.
   const isFilterPending = serverFilterKey !== activeServerKey;
+  const activeServerFilters = useMemo(
+    () => parseActiveServerFilters(activeServerKey),
+    [activeServerKey],
+  );
+  const hasActiveServerFilters = Object.keys(activeServerFilters).length > 0;
+  const activeServerKeyRef = useRef(activeServerKey);
+  activeServerKeyRef.current = activeServerKey;
 
   // Extra cars streamed in from /api/mock-auctions as the user scrolls or changes filters.
   const [remoteCars, setRemoteCars] = useState<DashboardAuction[]>([]);
@@ -145,14 +177,19 @@ export function BrowseClient({
   // mixed sample) and show only what the server returned for this specific
   // filter. Otherwise merge SSR + streamed and deduplicate by id.
   const allAuctions = useMemo(() => {
-    const pool = hasServerFilters ? remoteCars : [...auctions, ...remoteCars];
+    const pool = selectClassicBrowsePool({
+      auctions,
+      remoteCars,
+      hasActiveServerFilters,
+      isFilterPending,
+    });
     const seen = new Set<string>();
     return pool.filter((c) => {
       if (seen.has(c.id)) return false;
       seen.add(c.id);
       return true;
     });
-  }, [hasServerFilters, auctions, remoteCars]);
+  }, [auctions, remoteCars, hasActiveServerFilters, isFilterPending]);
   // When the server has already filtered on a field, we must NOT re-filter
   // it on the client. The server uses SQL patterns (getModelPatternsForSeries,
   // title/model ILIKE) while applyFilters uses extractSeries — they disagree
@@ -167,15 +204,15 @@ export function BrowseClient({
   // but its canonicalMarket is "EU". Re-filtering on the client by
   // canonicalMarket guarantees what the user filters matches what they see.
   const clientFilters = useMemo(() => {
-    if (!hasServerFilters) return filters;
+    if (!hasActiveServerFilters) return filters;
     return {
       ...filters,
-      q: serverFilters.query ? "" : filters.q,
-      series: serverFilters.family ? [] : filters.series,
+      q: activeServerFilters.query ? "" : filters.q,
+      series: activeServerFilters.family ? [] : filters.series,
       // region intentionally NOT cleared — see comment above.
-      platform: serverFilters.platform ? [] : filters.platform,
+      platform: activeServerFilters.platform ? [] : filters.platform,
     };
-  }, [filters, hasServerFilters, serverFilters]);
+  }, [filters, hasActiveServerFilters, activeServerFilters]);
   const filtered = useMemo(
     () => applyFilters(allAuctions, clientFilters),
     [allAuctions, clientFilters],
@@ -204,7 +241,7 @@ export function BrowseClient({
       });
       // Always show only active listings — sold data is kept for analysis only.
       params.set("status", "ACTIVE");
-      for (const [k, v] of Object.entries(serverFilters)) params.set(k, v);
+      for (const [k, v] of Object.entries(activeServerFilters)) params.set(k, v);
       if (cursor) params.set("cursor", cursor);
       const res = await fetch(`/api/mock-auctions?${params.toString()}`, {
         cache: "no-store",
@@ -217,7 +254,7 @@ export function BrowseClient({
         hasMore: boolean;
       };
     },
-    [serverFilters, filters.status],
+    [activeServerFilters],
   );
 
   // Use refs to avoid recreating the callback (and the observer) on every state change.
@@ -232,8 +269,10 @@ export function BrowseClient({
     if (remoteLoadingRef.current || !remoteHasMoreRef.current) return;
     remoteLoadingRef.current = true;
     setRemoteLoading(true);
+    const requestKey = activeServerKeyRef.current;
     try {
       const data = await fetchPage(remoteCursorRef.current);
+      if (activeServerKeyRef.current !== requestKey) return;
       const fresh = data.auctions.map(toDashboardAuction);
       // Append all results — deduplication against SSR pool happens in allAuctions memo
       if (fresh.length > 0) {
@@ -266,12 +305,13 @@ export function BrowseClient({
     setRemoteCars([]);
     setRemoteCursor(null);
     setRemoteHasMore(true);
-    if (!hasServerFilters) return () => ac.abort();
+    if (!hasActiveServerFilters) return () => ac.abort();
     setRemoteLoading(true);
+    const requestKey = activeServerKey;
     (async () => {
       try {
         const data = await fetchPage(null, ac.signal);
-        if (ac.signal.aborted) return;
+        if (ac.signal.aborted || activeServerKeyRef.current !== requestKey) return;
         // When server filters are active we replace the pool — ignore SSR ids
         // so a streamed car matching the filter isn't deduped against them.
         const fresh = data.auctions.map(toDashboardAuction);
