@@ -27,7 +27,6 @@ import {
   BarChart3,
   Copy,
   Check,
-  Target,
   Award,
   Globe,
   History,
@@ -66,6 +65,7 @@ import {
   shouldRequestReportGenerationOnUnlock,
   shouldRefreshProfileAfterGenerationAttempt,
 } from "./reportAccess"
+import { resolveCurrentPriceUsd } from "./reportListingFacts"
 import type {
   PipelineProgress,
   StepStatus,
@@ -547,6 +547,10 @@ export function ReportClient({
   const fairLow = report?.fair_value_low ?? marketStats?.primaryFairValueLow ?? 0
   const fairHigh = report?.fair_value_high ?? marketStats?.primaryFairValueHigh ?? 0
   const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
+  const currentPriceUsd = resolveCurrentPriceUsd(car)
+  const mileageLabel = car.mileage > 0
+    ? `${car.mileage.toLocaleString(locale)} ${car.mileageUnit}`
+    : "Not listed"
   const bidInCurrency = convertFromUsd(car.currentBid)
   // Honest-by-data: pricePosition is null when no real fair-value band.
   // We do NOT clamp above 100 - when the listing is over fair, the user must see it.
@@ -2041,8 +2045,8 @@ export function ReportClient({
                     {/* Current Price */}
                     <div className="rounded-xl bg-card border border-border p-4">
                       <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">{t("summary.currentPrice")}</span>
-                      {car.currentBid > 0 ? (
-                        <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(car.currentBid)}</p>
+                      {currentPriceUsd > 0 ? (
+                        <p className="text-[20px] font-bold tabular-nums text-primary mt-1">{formatPrice(currentPriceUsd)}</p>
                       ) : (
                         <p className="text-[14px] font-semibold text-muted-foreground mt-2">POA</p>
                       )}
@@ -2072,35 +2076,21 @@ export function ReportClient({
                         </p>
                       )}
                     </div>
-                    {/* Market Position */}
+                    {/* Mileage */}
                     <div className="rounded-xl bg-card border border-border p-4">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Market Position</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button type="button" aria-label="What is market position?" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full">
-                              <Info className="size-3" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
-                            Where the asking price sits inside the Fair Value range. 0% means at the bottom of the range; 100% at the top. Negative means below fair value (potential opportunity).
-                          </TooltipContent>
-                        </Tooltip>
+                        <Gauge className="size-3 text-primary/70" />
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Mileage</span>
                       </div>
-                      {pricePosition !== null ? (
-                        <>
-                          <p className={`text-[24px] font-bold tabular-nums mt-1 ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>
-                            {pricePosition}%
-                          </p>
-                          {pricePosition > 100 && (
-                            <p className="text-[10px] text-primary mt-0.5">{/* [HARDCODED] */}Above fair value</p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-[12px] text-muted-foreground mt-2 leading-snug">
-                          Generate the full report to see how this car prices against comparable sales.
-                        </p>
-                      )}
+                      <p className="text-[20px] font-bold tabular-nums text-foreground mt-1">{mileageLabel}</p>
+                    </div>
+                    {/* Transmission */}
+                    <div className="rounded-xl bg-card border border-border p-4">
+                      <div className="flex items-center gap-1.5">
+                        <Cog className="size-3 text-primary/70" />
+                        <span className="text-[9px] font-medium tracking-[0.15em] uppercase text-muted-foreground">Transmission</span>
+                      </div>
+                      <p className="text-[14px] font-semibold text-foreground mt-2 leading-tight break-words">{car.transmission || "Not listed"}</p>
                     </div>
                     {/* Similar Cars */}
                     <div className="rounded-xl bg-card border border-border p-4">
@@ -2244,43 +2234,6 @@ export function ReportClient({
                   </div>
                 </div>
 
-                {/* Market position gauge - only when we have fair value data */}
-                {hasFairValue && (
-                  <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                    <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">{t("valuation.marketPositionGauge")}</h3>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)}</span>
-                      <span className="text-[9px] text-muted-foreground">{effectiveRegion} Fair Value Range</span>
-                      <span className="text-[10px] tabular-nums text-muted-foreground">{formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
-                    </div>
-                    <div className="relative h-[12px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-400/20 via-primary/20 to-red-400/20" />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-primary border-2 border-background shadow-lg shadow-primary/40"
-                        style={{ left: `calc(${pricePosition}% - 7px)` }}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5">
-                      {isBelowFair ? (
-                        <>
-                          <CheckCircle2 className="size-3.5 text-positive" />
-                          <span className="text-[11px] font-medium text-positive">{t("valuation.belowFair")}</span>
-                        </>
-                      ) : (pricePosition ?? 0) > 80 ? (
-                        <>
-                          <AlertTriangle className="size-3.5 text-destructive" />
-                          <span className="text-[11px] font-medium text-destructive">{t("valuation.aboveFair")}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Target className="size-3.5 text-destructive" />
-                          <span className="text-[11px] font-medium text-destructive">{t("valuation.atFair")}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Modifiers applied list - adjustments to specific-car fair value */}
                 <div className="mb-4">
                   <ModifiersAppliedList modifiers={report?.modifiers_applied ?? []} />
@@ -2350,39 +2303,6 @@ export function ReportClient({
                   <TechnicalAnalysisSection data={visibleV3Report.technicalAnalysis} />
                 ) : (
                 <>
-
-                {/* Market Position */}
-                <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-4">
-                    Market Position
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] font-semibold text-primary">Listing Price vs Fair Value</span>
-                        <span className={`text-[14px] tabular-nums font-bold ${((pricePosition ?? 0) <= 100) ? "text-positive" : "text-primary"}`}>{(pricePosition ?? 0).toFixed(0)}%</span>
-                      </div>
-                      <div className="relative h-[10px] rounded-full bg-foreground/[0.04] overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(pricePosition ?? 0, 100)}%` }}
-                          transition={{ duration: 0.8, delay: 0.1 }}
-                          className={`h-full rounded-full bg-gradient-to-r ${((pricePosition ?? 0) <= 100) ? "from-emerald-400 to-emerald-400/60" : "from-primary to-primary/60"}`}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>Fair Value: {formatRegionalPrice(convertFromUsd(fairLow), currencySymbol)} - {formatRegionalPrice(convertFromUsd(fairHigh), currencySymbol)}</span>
-                      <span>{isBelowFair ? "Below fair value" : "At or above fair value"}</span>
-                    </div>
-                  </div>
-                  {isBelowFair && (
-                    <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-positive/[0.05] border border-positive/10">
-                      <TrendingUp className="size-3.5 text-positive" />
-                      <span className="text-[11px] text-positive">Priced below fair value - potential opportunity</span>
-                    </div>
-                  )}
-                </div>
 
                 {/* Similar Cars Price Comparison */}
                 {similarCars.length > 0 && (() => {
