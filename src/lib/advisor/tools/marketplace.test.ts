@@ -103,6 +103,7 @@ describe("marketplace tools", () => {
           mileage: 20000,
           source: "Bring a Trailer",
           country: "US",
+          source_url: "https://bringatrailer.com/listing/2011-porsche-911-gt3/",
         },
       ])
       const tool = findTool("search_listings")
@@ -111,6 +112,43 @@ describe("marketplace tools", () => {
       if (res.ok) {
         expect(res.summary).toMatch(/match/i)
         expect(res.summary.length).toBeGreaterThan(0)
+      }
+    })
+
+    it("includes clickable app links for suggested listings", async () => {
+      vi.mocked(fetchAdvisorListings).mockResolvedValue([
+        {
+          id: "1",
+          year: 2011,
+          make: "Porsche",
+          model: "911 GT3",
+          trim: null,
+          hammer_price: 185000,
+          original_currency: "USD",
+          sale_date: null,
+          status: "active",
+          mileage: 20000,
+          source: "Bring a Trailer",
+          country: "US",
+          source_url: "https://bringatrailer.com/listing/2011-porsche-911-gt3/",
+        },
+      ])
+
+      const tool = findTool("search_listings")
+      const res = await tool.handler({ query: "911 GT3" }, ctx)
+
+      expect(res.ok).toBe(true)
+      if (res.ok) {
+        expect(res.summary).toContain("[2011 Porsche 911 GT3](/en/cars/porsche/live-1)")
+        expect(res.data).toMatchObject({
+          results: [
+            {
+              id: "live-1",
+              appUrl: "/en/cars/porsche/live-1",
+              sourceUrl: "https://bringatrailer.com/listing/2011-porsche-911-gt3/",
+            },
+          ],
+        })
       }
     })
   })
@@ -149,6 +187,51 @@ describe("marketplace tools", () => {
       const res = await tool.handler({ id: "live-1" }, ctx)
       expect(res.ok).toBe(true)
       if (res.ok) expect(res.summary).toMatch(/GT3/)
+    })
+
+    it("includes a clickable app link for listing detail", async () => {
+      vi.mocked(fetchLiveListingById).mockResolvedValue({
+        id: "live-1",
+        title: "2011 Porsche 911 GT3",
+        year: 2011,
+        make: "Porsche",
+        model: "911 GT3",
+        trim: null,
+        price: 185000,
+        trend: "up",
+        trendValue: 3,
+        thesis: "",
+        image: "",
+        images: [],
+        engine: "",
+        transmission: "",
+        mileage: 25000,
+        mileageUnit: "mi",
+        location: "California, USA",
+        region: "US",
+        fairValueByRegion: {} as never,
+        history: "",
+        platform: "BRING_A_TRAILER",
+        status: "ACTIVE",
+        currentBid: 185000,
+        bidCount: 12,
+        endTime: new Date(),
+        category: "GT3",
+        sourceUrl: "https://bringatrailer.com/listing/2011-porsche-911-gt3/",
+      })
+
+      const tool = findTool("get_listing")
+      const res = await tool.handler({ id: "live-1" }, ctx)
+
+      expect(res.ok).toBe(true)
+      if (res.ok) {
+        expect(res.summary).toContain("[2011 Porsche 911 GT3](/en/cars/porsche/live-1)")
+        expect(res.data).toMatchObject({
+          id: "live-1",
+          appUrl: "/en/cars/porsche/live-1",
+          sourceUrl: "https://bringatrailer.com/listing/2011-porsche-911-gt3/",
+        })
+      }
     })
 
     it("returns not_found on missing", async () => {

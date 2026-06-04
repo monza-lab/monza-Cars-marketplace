@@ -22,9 +22,19 @@ function formatPrice(n: number | null | undefined, currency: string = "USD"): st
   return `${symbol}${Math.round(n).toLocaleString("en-US")}`
 }
 
-function rowToSearchResult(r: PricedListingRow) {
+function makeSlug(make: string): string {
+  return make.trim().toLowerCase().replace(/\s+/g, "-")
+}
+
+function listingAppUrl(locale: string, make: string, id: string): string {
+  const listingId = id.startsWith("live-") ? id : `live-${id}`
+  return `/${locale}/cars/${makeSlug(make)}/${listingId}`
+}
+
+function rowToSearchResult(r: PricedListingRow, locale: string) {
+  const id = `live-${r.id}`
   return {
-    id: `live-${r.id}`,
+    id,
     year: r.year,
     make: r.make,
     model: r.model,
@@ -34,6 +44,8 @@ function rowToSearchResult(r: PricedListingRow) {
     mileage: r.mileage,
     status: r.status,
     source: r.source,
+    sourceUrl: r.source_url ?? null,
+    appUrl: listingAppUrl(locale, r.make, id),
     country: r.country,
   }
 }
@@ -70,7 +82,7 @@ export const searchListings: ToolDef = {
       limit: { type: "number", description: "Max results, default 10." },
     },
   },
-  async handler(args) {
+  async handler(args, ctx) {
     const query = typeof args.query === "string" ? args.query.trim() : ""
     const seriesId = typeof args.seriesId === "string" ? args.seriesId : null
     const variantId = typeof args.variantId === "string" ? args.variantId.toLowerCase() : null
@@ -109,7 +121,7 @@ export const searchListings: ToolDef = {
       .filter((c) => (seriesId ? extractSeries(c.model, c.year, c.make) === seriesId : true))
       .filter((c) => (query ? `${c.title}`.toLowerCase().includes(query.toLowerCase()) : true))
 
-    const liveResults = rows.slice(0, limit).map(rowToSearchResult)
+    const liveResults = rows.slice(0, limit).map((row) => rowToSearchResult(row, ctx.locale))
     const curatedResults = curated.slice(0, Math.max(0, limit - liveResults.length)).map((c) => ({
       id: c.id,
       year: c.year,
@@ -121,13 +133,15 @@ export const searchListings: ToolDef = {
       mileage: c.mileage,
       status: c.status,
       source: c.platform,
+      sourceUrl: c.sourceUrl ?? null,
+      appUrl: listingAppUrl(ctx.locale, c.make, c.id),
       country: c.location,
     }))
     const results = [...liveResults, ...curatedResults]
 
     const top3 = results.slice(0, 3).map((r) => {
       const title = `${r.year} ${r.make} ${r.model}${r.trim ? ` ${r.trim}` : ""}`
-      return `${title} @ ${formatPrice(r.currentBid, r.currency)}`
+      return `[${title}](${r.appUrl}) @ ${formatPrice(r.currentBid, r.currency)}`
     })
 
     const criteria =
@@ -155,16 +169,17 @@ export const getListing: ToolDef = {
     },
     required: ["id"],
   },
-  async handler(args) {
+  async handler(args, ctx) {
     const id = typeof args.id === "string" ? args.id : ""
     if (!id) return { ok: false, error: "missing_arg:id" }
     const car = await fetchLiveListingById(id)
     if (!car) return { ok: false, error: "not_found" }
     const title = `${car.year} ${car.make} ${car.model}${car.trim ? ` ${car.trim}` : ""}`
+    const appUrl = listingAppUrl(ctx.locale, car.make, car.id)
     const summary = truncate(
-      `${title} at ${formatPrice(car.currentBid, "USD")}, ${car.mileage.toLocaleString("en-US")} ${car.mileageUnit}, ${car.location}`,
+      `[${title}](${appUrl}) at ${formatPrice(car.currentBid, "USD")}, ${car.mileage.toLocaleString("en-US")} ${car.mileageUnit}, ${car.location}`,
     )
-    return { ok: true, data: car, summary }
+    return { ok: true, data: { ...car, appUrl }, summary }
   },
 }
 

@@ -58,7 +58,7 @@ export async function fetchAdvisorListings(options: {
     let q = supabase
       .from("listings")
       .select(
-        "id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,country",
+        "id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,source_url,country",
       )
       .ilike("make", normalizedMake)
       .gt("listing_price", 0)

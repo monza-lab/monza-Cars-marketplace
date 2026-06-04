@@ -1134,6 +1134,7 @@ export interface PricedListingRow {
   status: string
   mileage: number | null
   source: string
+  source_url?: string | null
   country: string | null
 }
 
@@ -1158,7 +1159,7 @@ export async function fetchPricedListingsForModel(
       // Project canonical listing_price as hammer_price to keep the consumer
       // shape identical. listing_price is the COALESCE of all raw price
       // columns, so a single .gt is sufficient.
-      .select("id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,country")
+      .select("id,year,make,model,trim,hammer_price:listing_price,original_currency,sale_date,status,mileage,source,source_url,country")
       .ilike("make", normalizedMake)
       .gt("listing_price", 0)
       .order("sale_date", { ascending: false })
