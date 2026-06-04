@@ -65,6 +65,54 @@ Cross-cutting jobs that apply to all sources:
 
 ---
 
+## Vehicle Identifier Retrieval
+
+Source-native identifier retrieval is separate from VIN decoding. Scrapers first extract marketplace-published `VIN`, `Chassis`, `Chassis No.`, `Chassis Number`, `Frame`, or `Serial` values. The `enrich-vin` job only decodes values that already exist; it does not retrieve missing identifiers from marketplace pages.
+
+Current classifier behavior:
+
+| Kind | Meaning | Handling |
+|------|---------|----------|
+| `vin_17` | 17-character VIN candidate excluding I/O/Q | May be written to `listings.vin` and decoded later |
+| `chassis_or_serial` | Labeled source-native chassis/frame/serial value, usually pre-1981 or marketplace-native | Preserved as identifier context; not treated as a decodable VIN |
+| `invalid` | Empty, noisy, or unlabeled short value | Ignored |
+
+Marketplace classification:
+
+| Marketplace | Retrieval status | Notes |
+|-------------|------------------|-------|
+| Classic.com | Strong source-native VIN | Existing detail parser has excellent coverage; keep behavior protected |
+| Bring a Trailer | Strong source-native VIN/chassis | Detail parser handles `VIN`, `Chassis`, `Chassis Number`, `Serial`, and `Frame` labels |
+| Cars & Bids | Source-native VIN/chassis | Detail parser now classifies `VIN`, `Chassis`, `Frame`, and `Serial` labels |
+| Collecting Cars | Source-native VIN/chassis | Detail parser now classifies `VIN`, `Chassis Number`, `Chassis`, `Frame`, and `Serial` labels |
+| Elferspot | Source-native VIN/chassis, improvable coverage | Detail parser prefers JSON-LD `vehicleIdentificationNumber` and labeled fields before generic VIN fallback |
+| BeForward | Source-native chassis-heavy | `Chassis No.` is classified; true 17-character VINs go to `vin`, non-VIN chassis values are preserved in `enrichment_meta.beforward.vehicleIdentifier` |
+| AutoTrader UK | Source-limited unless product payload exposes a field | Product-page payload keys are audited for identifier names; unlabeled body tokens are ignored |
+| AutoScout24 | Source-limited unless page structure changes | Playwright and Scrapling paths check structured page data, JSON-LD, and labeled VIN/chassis/frame/serial fields; do not spend VIN-specific work without a source-exposed field |
+
+Latest active Porsche audit, generated 2026-06-04 by `scripts/vin-retrieval-audit.ts`:
+
+| Source | Active rows | Identifier rows | VIN-17 | Short chassis/serial | Invalid/noisy |
+|--------|------------:|----------------:|-------:|---------------------:|--------------:|
+| AutoScout24 | 16,940 | 1 | 1 | 0 | 0 |
+| Elferspot | 3,876 | 1,072 | 1,072 | 0 | 0 |
+| AutoTrader UK | 812 | 4 | 4 | 0 | 0 |
+| Classic.com | 752 | 752 | 718 | 34 | 0 |
+| BeForward | 424 | 71 | 36 | 8 | 27 |
+| Bring a Trailer | 127 | 123 | 103 | 20 | 0 |
+
+V3 report gate: VIN/chassis intelligence may be shown opportunistically per listing. It should not become a prominent report section until active VIN/chassis coverage materially improves or the report UI explicitly handles missing values without implying data quality where no source-native identifier exists.
+
+Audit command:
+
+```bash
+npx tsx scripts/vin-retrieval-audit.ts --make=Porsche --status=active
+```
+
+The command writes a redacted per-source artifact under `agents/testscripts/artifacts/`.
+
+---
+
 ## 1. Porsche Collector
 
 **What it does:** Scrapes Porsche auction listings from 3 platforms — Bring a Trailer (BaT), Cars & Bids, and Collecting Cars. Includes a dedicated BaT detail scraper for enrichment and cross-source image backfill.
@@ -266,7 +314,7 @@ npx tsx scripts/autotrader-enrich.ts --limit=500 --delayMs=2000
 ```
 
 **Scheduled .bat:** `scripts/autotrader-enrich-scheduled.bat`  
-**Windows tasks:** `\Monza\AutoTrader-Enrich-10h`, `13h`, `16h`, `19h`  
+**Windows task:** `\Monza\AutoTrader-Enrichment` with daily triggers at 10:00, 13:00, 16:00, and 19:00 Europe/Berlin
 **Unified local log:** `scripts/logs/autotrader-windows.log`  
 **Central monitoring:** `scraper_runs.scraper_name = 'enrich-autotrader'`, `runtime = 'windows_task'`
 
@@ -879,7 +927,7 @@ Config: 50 listings per run, 2.5s delay, 270s time budget. On 404/410: marks lis
 | `engine` | Spec table (cylinder capacity + power) |
 | `color_exterior` | JSON-LD `color` |
 | `color_interior` | Spec table (interior color) |
-| `vin` | Body text regex (17-char VIN) |
+| `vin` | JSON-LD `vehicleIdentificationNumber`, labeled VIN/chassis/frame/serial fields, then generic 17-char VIN fallback |
 | `description_text` | `div.highlights-float` paragraphs |
 | `images` | `a.photoswipe-image` hrefs (full-size gallery) |
 | `seller_name` | Sidebar heading |

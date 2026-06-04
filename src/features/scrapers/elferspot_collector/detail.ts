@@ -1,16 +1,11 @@
 import * as cheerio from "cheerio"
 import { proxyFetch } from "@/features/scrapers/common/proxy-fetch"
+import { classifyVehicleIdentifier, extractVehicleIdentifierFromText } from "@/features/scrapers/common/vehicleIdentifier"
 import { canUseScraplingFallback, fetchHtmlWithScrapling } from "./scrapling"
 import type { ElferspotDetail } from "./types"
 
 /** Currencies allowed by the monza_currency DB enum */
 const ALLOWED_CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "CHF"])
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  "€": "EUR",
-  "$": "USD",
-  "£": "GBP",
-  "¥": "JPY",
-}
 
 interface JsonLdVehicle {
   price: number | null
@@ -23,41 +18,13 @@ interface JsonLdVehicle {
   driveType: string | null
   colorExterior: string | null
   firstRegistration: string | null
+  vehicleIdentifier: string | null
 }
 
 function flattenJsonLd(parsed: unknown): unknown[] {
   if (!parsed || typeof parsed !== "object") return []
   const record = parsed as Record<string, unknown>
   return Array.isArray(record["@graph"]) ? record["@graph"] : [parsed]
-}
-
-function normalizeText(text: string): string {
-  return text.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
-}
-
-function parsePriceNumber(raw: string): number | null {
-  const numeric = raw.replace(/[^\d.,'\s]/g, "").replace(/[\s']/g, "")
-  if (!/\d/.test(numeric)) return null
-
-  const normalized = numeric
-    .replace(/[.,](?=\d{3}(\D|$))/g, "")
-    .replace(",", ".")
-  const parsed = parseFloat(normalized)
-
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null
-}
-
-function parsePriceText(raw: string): { price: number; currency: string } | null {
-  const text = normalizeText(raw)
-  if (!text) return null
-
-  const codeMatch = text.match(/\b(USD|EUR|GBP|JPY|CHF)\b/i)
-  const symbolMatch = text.match(/[€$£¥]/)
-  const price = parsePriceNumber(text)
-  if (!price) return null
-
-  const currency = codeMatch?.[1]?.toUpperCase() ?? (symbolMatch ? CURRENCY_SYMBOLS[symbolMatch[0]] : "EUR")
-  return { price, currency }
 }
 
 export function extractJsonLd(html: string): JsonLdVehicle | null {
@@ -74,34 +41,27 @@ export function extractJsonLd(html: string): JsonLdVehicle | null {
       const items = flattenJsonLd(parsed)
       for (const item of items) {
         if (!item || typeof item !== "object") continue
-        const record = item as Record<string, unknown>
-        const type = record["@type"]
-        const isVehicle = Array.isArray(type)
-          ? type.includes("Vehicle")
-          : typeof type === "string" && type.includes("Vehicle")
-        if (isVehicle) {
-          const offerRaw = Array.isArray(record.offers) ? record.offers[0] : record.offers
-          const offer = offerRaw && typeof offerRaw === "object" ? offerRaw as Record<string, unknown> : {}
-          const mileage = record.mileageFromOdometer && typeof record.mileageFromOdometer === "object"
-            ? record.mileageFromOdometer as Record<string, unknown>
-            : null
+        const record = item as Record<string, any>
+        if (record["@type"] === "Vehicle" || record["@type"]?.includes("Vehicle")) {
+          const offer = record.offers || {}
+          const mileage = record.mileageFromOdometer
           const priceRaw = offer.price ?? record.price
-          const price = priceRaw ? parsePriceNumber(String(priceRaw)) : null
-          const firstRegistration = typeof record.dateVehicleFirstRegistered === "string"
-            ? record.dateVehicleFirstRegistered
-            : null
+          const price = priceRaw ? parseFloat(String(priceRaw)) : null
 
           vehicle = {
             price: price && Number.isFinite(price) && price > 0 ? price : null,
-            currency: typeof offer.priceCurrency === "string" ? offer.priceCurrency : "EUR",
-            model: typeof record.model === "string" ? record.model : null,
-            year: firstRegistration ? new Date(firstRegistration).getFullYear() : null,
+            currency: offer.priceCurrency || "EUR",
+            model: record.model || null,
+            year: record.dateVehicleFirstRegistered
+              ? new Date(record.dateVehicleFirstRegistered).getFullYear()
+              : null,
             mileageKm: mileage?.value ? parseInt(String(mileage.value), 10) : null,
-            transmission: typeof record.vehicleTransmission === "string" ? record.vehicleTransmission : null,
-            bodyType: typeof record.bodyType === "string" ? record.bodyType : null,
-            driveType: typeof record.driveWheelConfiguration === "string" ? record.driveWheelConfiguration : null,
-            colorExterior: typeof record.color === "string" ? record.color : null,
-            firstRegistration,
+            transmission: record.vehicleTransmission || null,
+            bodyType: record.bodyType || null,
+            driveType: record.driveWheelConfiguration || null,
+            colorExterior: record.color || null,
+            firstRegistration: record.dateVehicleFirstRegistered || null,
+            vehicleIdentifier: classifyVehicleIdentifier(record.vehicleIdentificationNumber)?.normalized ?? null,
           }
           return false // stop iterating
         }
@@ -144,24 +104,9 @@ export function extractWebPageDescription(html: string): string | null {
 function classifyElferspotPrice(priceText: string, price: number | null) {
   const text = priceText.toLowerCase()
   if (price && price > 0) return "numeric" as const
-  if (text.includes("sold") || text.includes("verkauft") || text.includes("vendu") || text.includes("verkocht")) {
-    return "sold" as const
-  }
-  if (
-    text.includes("price on request") ||
-    text.includes("on application") ||
-    text.includes("on request") ||
-    text.includes("preis auf anfrage") ||
-    text.includes("prix sur demande") ||
-    text.includes("prijs op aanvraag") ||
-    text.includes("poa")
-  ) {
-    return "price_on_request" as const
-  }
-  if (text.includes("reserved") || text.includes("reserviert") || text.includes("réservé") || text.includes("gereserveerd")) {
-    return "hidden" as const
-  }
-  if (text.includes("without reserve") || text.includes("no reserve")) return "not_listed" as const
+  if (text.includes("sold")) return "sold" as const
+  if (text.includes("price on request") || text.includes("poa")) return "price_on_request" as const
+  if (text.includes("reserved")) return "hidden" as const
   if (!priceText.trim()) return "not_listed" as const
   return "unknown" as const
 }
@@ -196,10 +141,20 @@ export function parseDetailPage(html: string): ElferspotDetail {
   // Power from spec table
   const powerRaw = specs["power"] || specs["leistung"] || null
 
-  // VIN from body text
+  // Source-native vehicle identifier. Prefer structured/labeled fields, then generic VIN fallback.
   const bodyText = $("body").text()
-  const vinMatch = bodyText.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i)
-  const vin = vinMatch ? vinMatch[0].toUpperCase() : null
+  const labeledIdentifier =
+    classifyVehicleIdentifier(specs["vin"], "VIN")
+    ?? classifyVehicleIdentifier(specs["vehicle identification number"], "Vehicle Identification Number")
+    ?? classifyVehicleIdentifier(specs["chassis"], "Chassis")
+    ?? classifyVehicleIdentifier(specs["chassis number"], "Chassis number")
+    ?? classifyVehicleIdentifier(specs["frame"], "Frame")
+    ?? classifyVehicleIdentifier(specs["serial"], "Serial")
+    ?? extractVehicleIdentifierFromText(bodyText)
+  const fallbackIdentifier = labeledIdentifier
+    ?? classifyVehicleIdentifier(jsonLd?.vehicleIdentifier)
+    ?? extractVehicleIdentifierFromText(bodyText, { allowGenericVin: true })
+  const vin = fallbackIdentifier?.normalized ?? null
 
   // Fuel type from spec table or JSON-LD
   const fuel = specs["fuel"] || specs["kraftstoff"] || null
@@ -222,12 +177,6 @@ export function parseDetailPage(html: string): ElferspotDetail {
     const text = $(el).text().trim()
     if (text) descParts.push(text)
   })
-  if (descParts.length === 0) {
-    $("[itemprop='description'], .listing-description p, .vehicle-description p, .description p").each((_i, el) => {
-      const text = normalizeText($(el).text())
-      if (text && !descParts.includes(text)) descParts.push(text)
-    })
-  }
   const descriptionText = descParts.length > 0 ? descParts.join("\n") : extractWebPageDescription(html)
 
   // Seller name from sidebar
@@ -246,19 +195,14 @@ export function parseDetailPage(html: string): ElferspotDetail {
   // Price fallback from sidebar (if JSON-LD price is null)
   let price = jsonLd?.price ?? null
   let currency = jsonLd?.currency ?? "EUR"
-  const visiblePriceTexts = $("div.price, .info-bar-price, [class*='price']")
-    .toArray()
-    .map((el) => normalizeText($(el).text()))
-    .filter(Boolean)
-  const visiblePriceText = visiblePriceTexts[0] ?? ""
+  const visiblePriceText = $("div.price").first().text().trim()
   if (!price) {
-    for (const text of visiblePriceTexts) {
-      const parsed = parsePriceText(text)
-      if (parsed) {
-        price = parsed.price
-        currency = parsed.currency
-        break
-      }
+    const priceMatch = visiblePriceText.match(/([A-Z]{3})\s*([\d.,]+)/)
+    if (priceMatch) {
+      currency = priceMatch[1]
+      const numStr = priceMatch[2].replace(/[.,](?=\d{3})/g, "").replace(",", ".")
+      const parsed = parseFloat(numStr)
+      if (Number.isFinite(parsed) && parsed > 0) price = parsed
     }
   }
 

@@ -40,4 +40,28 @@ describe("beforward_porsche_collector detail parser", () => {
     expect(parsed.sellingPoints).toContain("Non Smoker");
     expect(parsed.images.length).toBe(1);
   });
+
+  it("classifies a 17-character chassis number as a VIN while retaining chassisNo", () => {
+    const html = SAMPLE_HTML.replace(
+      "</table>",
+      '<tr><th class="gray">Chassis No.</th><td>wp0aa299xys123456</td></tr></table>',
+    );
+
+    const parsed = parseDetailHtml(html);
+
+    expect(parsed.vin).toBe("WP0AA299XYS123456");
+    expect(parsed.chassisNo).toBe("WP0AA299XYS123456");
+  });
+
+  it("keeps shorter source-native chassis values out of vin", () => {
+    const html = SAMPLE_HTML.replace(
+      "</table>",
+      '<tr><th class="gray">Chassis No.</th><td>WP0ZZZ99Z</td></tr></table>',
+    );
+
+    const parsed = parseDetailHtml(html);
+
+    expect(parsed.vin).toBeNull();
+    expect(parsed.chassisNo).toBe("WP0ZZZ99Z");
+  });
 });

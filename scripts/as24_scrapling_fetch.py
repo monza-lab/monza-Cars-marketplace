@@ -213,7 +213,27 @@ def _extract_detail_from_next_data(page_props: dict, vehicle: dict) -> None:
     if not vehicle["trim"]:
         vehicle["trim"] = v.get("modelVersionInput") or v.get("variant") or tracking.get("variant")
     if not vehicle["vin"]:
-        vehicle["vin"] = listing.get("vin") or v.get("vin")
+        vehicle["vin"] = _pick_identifier(
+            [
+                ("VIN", listing.get("vin")),
+                ("VIN", v.get("vin")),
+                ("Vehicle Identification Number", listing.get("vehicleIdentificationNumber")),
+                ("Vehicle Identification Number", v.get("vehicleIdentificationNumber")),
+                ("Chassis number", listing.get("chassisNumber")),
+                ("Chassis number", v.get("chassisNumber")),
+                ("Chassis", listing.get("chassis")),
+                ("Chassis", v.get("chassis")),
+                ("Frame", listing.get("frame")),
+                ("Frame", v.get("frame")),
+                ("Serial", listing.get("serial")),
+                ("Serial", v.get("serial")),
+                ("VIN", _find_detail(listing.get("vehicleDetails"), "VIN")),
+                ("Vehicle Identification Number", _find_detail(listing.get("vehicleDetails"), "Vehicle Identification Number")),
+                ("Chassis number", _find_detail(listing.get("vehicleDetails"), "Chassis")),
+                ("Frame", _find_detail(listing.get("vehicleDetails"), "Frame")),
+                ("Serial", _find_detail(listing.get("vehicleDetails"), "Serial")),
+            ]
+        )
     if not vehicle["transmission"]:
         vehicle["transmission"] = v.get("transmission") or _find_detail(listing.get("vehicleDetails"), "Gear")
     if not vehicle["bodyStyle"]:
@@ -260,7 +280,15 @@ def _extract_from_json_ld(raw_html: str, vehicle: dict) -> None:
             continue
 
         if not vehicle["vin"]:
-            vehicle["vin"] = data.get("vehicleIdentificationNumber")
+            vehicle["vin"] = _pick_identifier(
+                [
+                    ("Vehicle Identification Number", data.get("vehicleIdentificationNumber")),
+                    ("Chassis number", data.get("chassisNumber")),
+                    ("Chassis", data.get("chassis")),
+                    ("Frame", data.get("frame")),
+                    ("Serial", data.get("serial")),
+                ]
+            )
         if not vehicle["bodyStyle"]:
             vehicle["bodyStyle"] = data.get("bodyType")
         if not vehicle["engine"]:
@@ -290,6 +318,27 @@ def _extract_from_json_ld(raw_html: str, vehicle: dict) -> None:
 def _safe_int(val) -> int | None:
     if val is None:
         return None
+
+def _pick_identifier(candidates: list[tuple[str, object]]) -> str | None:
+    for label, value in candidates:
+        identifier = _classify_identifier(value, label)
+        if identifier:
+            return identifier
+    return None
+
+def _classify_identifier(value: object, label: str) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = re.sub(r"[\s._-]+", "", value.strip().upper())
+    if not normalized or not re.fullmatch(r"[A-Z0-9]+", normalized):
+        return None
+    if re.fullmatch(r"[A-HJ-NPR-Z0-9]{17}", normalized):
+        return normalized
+    if len(normalized) == 17:
+        return None
+    if re.search(r"\b(chassis|frame|serial)\b", label, re.I) and len(normalized) >= 5:
+        return normalized
+    return None
     try:
         n = int(val)
         return n if n > 0 else None

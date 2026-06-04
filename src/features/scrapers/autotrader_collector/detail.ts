@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { fetchHtml } from "./net";
 import { proxyFetch } from "../common/proxy-fetch";
+import { classifyVehicleIdentifier, extractVehicleIdentifierFromText } from "../common/vehicleIdentifier";
 import { extractAutoTraderImages, normalizeAutoTraderImageUrl } from "./imageUrls";
 import { fetchAutoTraderSearchListing } from "./searchResults";
 import { fetchATDetailWithScrapling, canUseScrapling } from "./scrapling";
@@ -274,10 +275,43 @@ function pickSpecValue(specs: Map<string, string>, ...labels: string[]): string 
 
 function parseVin(text: string | null | undefined): string | null {
   if (!text) return null;
-  const labeled = text.match(/\b(?:vin|chassis(?: number)?|frame(?: number)?)\b[:\s#-]*([A-HJ-NPR-Z0-9]{17})\b/i);
-  if (labeled?.[1]) return labeled[1].toUpperCase();
-  const generic = text.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i);
-  return generic?.[0]?.toUpperCase() ?? null;
+  return extractVehicleIdentifierFromText(text)?.normalized ?? null;
+}
+
+function findPayloadIdentifier(input: unknown, depth = 0): string | null {
+  if (!input || typeof input !== "object" || depth > 6) return null;
+
+  if (Array.isArray(input)) {
+    for (const item of input) {
+      const found = findPayloadIdentifier(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const identifierKeys = new Map([
+    ["vin", "VIN"],
+    ["vehicleidentificationnumber", "Vehicle Identification Number"],
+    ["chassis", "Chassis"],
+    ["chassisnumber", "Chassis number"],
+    ["frame", "Frame"],
+    ["serial", "Serial"],
+  ]);
+
+  for (const [key, value] of Object.entries(input)) {
+    const sourceLabel = identifierKeys.get(normalizeSpecKey(key));
+    if (sourceLabel && typeof value === "string") {
+      const identifier = classifyVehicleIdentifier(value, sourceLabel);
+      if (identifier) return identifier.normalized;
+    }
+  }
+
+  for (const value of Object.values(input)) {
+    const found = findPayloadIdentifier(value, depth + 1);
+    if (found) return found;
+  }
+
+  return null;
 }
 
 function parseAutoTraderProductPagePayload(payload: AutoTraderProductPagePayload): Partial<AutoTraderDetailParsed> {
@@ -306,6 +340,13 @@ function parseAutoTraderProductPagePayload(payload: AutoTraderProductPagePayload
     .map((image) => image?.url ?? null)
     .map((image) => (typeof image === "string" ? normalizeAutoTraderImageUrl(image) : null))
     .filter((image): image is string => image !== null);
+  const sourceIdentifier =
+    findPayloadIdentifier(payload)
+    ?? classifyVehicleIdentifier(pickSpecValue(specs, "VIN", "Vehicle Identification Number"), "VIN")?.normalized
+    ?? classifyVehicleIdentifier(pickSpecValue(specs, "Chassis", "Chassis number"), "Chassis number")?.normalized
+    ?? classifyVehicleIdentifier(pickSpecValue(specs, "Frame"), "Frame")?.normalized
+    ?? classifyVehicleIdentifier(pickSpecValue(specs, "Serial"), "Serial")?.normalized
+    ?? null;
 
   return {
     title,
@@ -316,7 +357,7 @@ function parseAutoTraderProductPagePayload(payload: AutoTraderProductPagePayload
     location: payload.keyInformation?.marketExtensionHeaderDescription?.trim() ?? null,
     description: description || null,
     images,
-    vin: null,
+    vin: sourceIdentifier,
     exteriorColor: pickSpecValue(specs, "Body colour", "Body color", "Exterior colour", "Exterior color", "Colour", "Color"),
     interiorColor: null,
     transmission: pickSpecValue(specs, "Gearbox", "Transmission"),

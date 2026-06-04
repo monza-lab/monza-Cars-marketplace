@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 
+import { classifyVehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { fetchHtml, getDomainFromUrl, PerDomainRateLimiter, withRetry } from "./net";
 import { fetchBFHtmlWithScrapling } from "./scrapling";
 import type { DetailParsed } from "./types";
@@ -39,6 +40,8 @@ export function parseDetailHtml(html: string): DetailParsed {
   const features = parseFeatureList($, "FEATURES");
   const sellingPoints = parseFeatureList($, "SELLING POINTS");
   const images = parseGalleryImages(html, $);
+  const chassisIdentifier = classifyVehicleIdentifier(specs.get("Chassis No."), "Chassis No.");
+  const chassisNo = chassisIdentifier?.normalized ?? normalizeNullable(specs.get("Chassis No."));
 
   return {
     title,
@@ -55,14 +58,14 @@ export function parseDetailHtml(html: string): DetailParsed {
     engine: normalizeNullable(specs.get("Engine Size")),
     exteriorColor: normalizeNullable(specs.get("Ext. Color")),
     interiorColor: null,
-    vin: normalizeNullable(specs.get("Chassis No.")),
+    vin: chassisIdentifier?.kind === "vin_17" ? chassisIdentifier.normalized : null,
     location: normalizeNullable(specs.get("Location")),
     fuel: normalizeNullable(specs.get("Fuel")),
     drive: normalizeNullable(specs.get("Drive")),
     doors: parseNumber(specs.get("Doors") ?? null),
     seats: parseNumber(specs.get("Seats") ?? null),
     modelCode: normalizeNullable(specs.get("Model Code")),
-    chassisNo: normalizeNullable(specs.get("Chassis No.")),
+    chassisNo,
     engineCode: normalizeNullable(specs.get("Engine Code")),
     subRefNo: normalizeNullable(specs.get("Sub Ref No")),
     features,

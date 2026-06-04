@@ -4,6 +4,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
+import { classifyVehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { fetchHtml } from "./net";
 import { parseDetailHtml } from "./detail";
 import { mapStatus } from "./normalize";
@@ -93,6 +94,7 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
+  const vinIdentifier = classifyVehicleIdentifier(listing.vin, "VIN");
   const row: Record<string, unknown> = {
     source: listing.source,
     source_id: listing.sourceId,
@@ -106,7 +108,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     color_interior: listing.interiorColor,
     mileage: listing.mileageKm,
     mileage_unit: listing.mileageUnitStored,
-    vin: truncate(listing.vin, 17),
+    vin: vinIdentifier?.kind === "vin_17" ? vinIdentifier.normalized : null,
     hammer_price: listing.pricing.hammerPrice,
     original_currency: listing.pricing.originalCurrency,
     buyers_premium_percent: null,
@@ -145,6 +147,13 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
   if (listing.photos.length > 0) {
     row.images = listing.photos;
     row.photos_count = listing.photosCount;
+  }
+  if (listing.sourceVehicleIdentifier) {
+    row.enrichment_meta = {
+      beforward: {
+        vehicleIdentifier: listing.sourceVehicleIdentifier,
+      },
+    };
   }
 
   return row;

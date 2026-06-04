@@ -70,6 +70,67 @@ describe("beforward_porsche_collector normalize", () => {
     expect(out?.status).toBe("active");
     expect(out?.photosCount).toBe(1);
     expect(out?.pricing.currentBid).toBe(61160);
+    expect(out?.sourceVehicleIdentifier).toMatchObject({
+      normalized: "WP0ZZZ99ZHS111949",
+      kind: "vin_17",
+      sourceLabel: "Chassis No.",
+    });
+  });
+
+  it("carries a source-native chassis identifier separately from vin", () => {
+    const summary: ListingSummary = {
+      page: 1,
+      sourceUrl: "https://www.beforward.jp/porsche/911/cc227877/id/14244419/",
+      refNo: "CC227877",
+      title: "1973 PORSCHE 911",
+      priceUsd: 61160,
+      totalPriceUsd: 62631,
+      mileageKm: 51793,
+      year: 1973,
+      location: "Osaka",
+    };
+    const detail: DetailParsed = {
+      title: "1973 PORSCHE 911 CC227877",
+      refNo: "CC227877",
+      sourceStatus: "In-Stock",
+      schemaAvailability: "https://schema.org/InStock",
+      schemaPriceUsd: 61160,
+      year: 1973,
+      make: "Porsche",
+      model: "911",
+      trim: null,
+      mileageKm: 51793,
+      transmission: "Manual",
+      engine: "2,400cc",
+      exteriorColor: "White",
+      interiorColor: null,
+      vin: null,
+      location: "OSAKA",
+      fuel: "Petrol",
+      drive: "2wheel drive",
+      doors: 2,
+      seats: 4,
+      modelCode: null,
+      chassisNo: "9113601234",
+      engineCode: null,
+      subRefNo: null,
+      features: [],
+      sellingPoints: [],
+      images: [],
+    };
+
+    const out = normalizeListing({
+      summary,
+      detail,
+      meta: { runId: "run-1", scrapeTimestamp: "2026-02-22T00:00:00.000Z" },
+    });
+
+    expect(out?.vin).toBeNull();
+    expect(out?.sourceVehicleIdentifier).toMatchObject({
+      normalized: "9113601234",
+      kind: "chassis_or_serial",
+      sourceLabel: "Chassis No.",
+    });
   });
 
   it("normalizes summary-only listing", () => {

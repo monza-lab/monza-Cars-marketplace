@@ -1,5 +1,6 @@
 import type { DetailParsed, ListingSummary, NormalizedListing, NormalizedListingStatus, NormalizedLocation, ScrapeMeta } from "./types";
 
+import { classifyVehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { deriveSourceId } from "./id";
 
 export function normalizeListing(input: {
@@ -27,6 +28,9 @@ export function normalizeListing(input: {
   const photosCount = photos.length;
   const sourceId = deriveSourceId({ refNo: input.detail.refNo ?? input.summary.refNo, sourceUrl: input.summary.sourceUrl });
   const saleDate = listDate;
+  const sourceVehicleIdentifier =
+    classifyVehicleIdentifier(input.detail.chassisNo, "Chassis No.")
+    ?? classifyVehicleIdentifier(input.detail.vin, "VIN");
 
   const normalized: NormalizedListing = {
     source: "BeForward",
@@ -49,7 +53,8 @@ export function normalizeListing(input: {
     transmission: input.detail.transmission,
     exteriorColor: input.detail.exteriorColor,
     interiorColor: input.detail.interiorColor,
-    vin: input.detail.vin,
+    vin: sourceVehicleIdentifier?.kind === "vin_17" ? sourceVehicleIdentifier.normalized : null,
+    sourceVehicleIdentifier,
     mileageKm: input.detail.mileageKm ?? input.summary.mileageKm,
     mileageUnitStored: "km",
     status,
@@ -118,6 +123,7 @@ export function normalizeListingFromSummary(input: {
     exteriorColor: null,
     interiorColor: null,
     vin: null,
+    sourceVehicleIdentifier: null,
     mileageKm: input.summary.mileageKm,
     mileageUnitStored: "km",
     status: "active",

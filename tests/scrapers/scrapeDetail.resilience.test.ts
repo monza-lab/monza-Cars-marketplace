@@ -57,7 +57,7 @@ function makeCCAuction(overrides: Partial<CCarsAuction> = {}): CCarsAuction {
     endTime: null, url: 'https://collectingcars.com/cars/resilience-test',
     imageUrl: 'https://img.test/cc.jpg', description: 'Original desc',
     sellerNotes: 'Original notes', status: 'active',
-    vin: 'WPOZZZ96ZNS490123', images: ['https://img.test/cc.jpg'],
+    vin: 'WP0ZZZ96ZNS490123', images: ['https://img.test/cc.jpg'],
     ...overrides,
   };
 }
@@ -319,7 +319,7 @@ describe('CC: scrapeDetail resilience', () => {
 
     expect(result.currentBid).toBe(185000);
     expect(result.location).toBe('London');
-    expect(result.vin).toBe('WPOZZZ96ZNS490123');
+    expect(result.vin).toBe('WP0ZZZ96ZNS490123');
   });
 
   it('handles empty HTML response', async () => {

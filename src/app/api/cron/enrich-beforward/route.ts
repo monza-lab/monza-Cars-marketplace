@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { classifyVehicleIdentifier, type VehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { parseDetailHtml } from "@/features/scrapers/beforward_porsche_collector/detail";
 import {
   clearScraperRunActive,
@@ -20,6 +21,24 @@ const FETCH_HEADERS: Record<string, string> = {
 function truncate(value: string | null | undefined, max: number): string | null {
   if (value == null) return null;
   return value.length <= max ? value : value.slice(0, max);
+}
+
+type JsonObject = Record<string, unknown>;
+
+function mergeBeForwardIdentifierMeta(existing: unknown, identifier: VehicleIdentifier): JsonObject {
+  const base = existing && typeof existing === "object" && !Array.isArray(existing)
+    ? { ...(existing as JsonObject) }
+    : {};
+  const existingBeForward = base.beforward && typeof base.beforward === "object" && !Array.isArray(base.beforward)
+    ? { ...(base.beforward as JsonObject) }
+    : {};
+  return {
+    ...base,
+    beforward: {
+      ...existingBeForward,
+      vehicleIdentifier: identifier,
+    },
+  };
 }
 
 export async function GET(request: Request) {
@@ -64,7 +83,7 @@ export async function GET(request: Request) {
 
     const { data: rows, error: fetchErr } = await client
       .from("listings")
-      .select("id,source_url,images")
+      .select("id,source_url,images,enrichment_meta")
       .eq("source", "BeForward")
       .eq("status", "active")
       .is("trim", null)
@@ -136,7 +155,14 @@ export async function GET(request: Request) {
         if (detail.engine) update.engine = truncate(detail.engine, 100);
         if (detail.transmission) update.transmission = truncate(detail.transmission, 100);
         if (detail.exteriorColor) update.color_exterior = truncate(detail.exteriorColor, 100);
-        if (detail.vin) update.vin = truncate(detail.vin, 17);
+        const sourceIdentifier =
+          classifyVehicleIdentifier(detail.vin, "VIN")
+          ?? classifyVehicleIdentifier(detail.chassisNo, "Chassis No.");
+        if (sourceIdentifier?.kind === "vin_17") {
+          update.vin = sourceIdentifier.normalized;
+        } else if (sourceIdentifier) {
+          update.enrichment_meta = mergeBeForwardIdentifierMeta(row.enrichment_meta, sourceIdentifier);
+        }
         const hasImages = Array.isArray(row.images) && row.images.length > 0;
         if (!hasImages && detail.images && detail.images.length > 0) {
           update.images = detail.images;

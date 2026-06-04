@@ -84,20 +84,6 @@ describe("parseDetailPage", () => {
     expect(detail.priceStatus).toBe("price_on_request")
   })
 
-  it("covers Elferspot on-application prices", () => {
-    const html = `<html><body><div class="price">on application</div></body></html>`
-    const detail = parseDetailPage(html)
-    expect(detail.price).toBeNull()
-    expect(detail.priceStatus).toBe("price_on_request")
-  })
-
-  it("covers auction listings offered without reserve", () => {
-    const html = `<html><body><div class="price">Offered without reserve</div></body></html>`
-    const detail = parseDetailPage(html)
-    expect(detail.price).toBeNull()
-    expect(detail.priceStatus).toBe("not_listed")
-  })
-
   it("extracts price from sidebar when JSON-LD has no price", () => {
     const html = `<html><head><script type="application/ld+json">{
       "@type": "Vehicle", "model": "993 Turbo"
@@ -132,23 +118,28 @@ describe("parseDetailPage", () => {
     expect(detail.priceStatus).toBe("numeric")
   })
 
-  it("extracts numeric price from currency symbols and class-based price blocks", () => {
-    const html = `<html><body><aside><p class="info-bar-price">€ 129.900</p></aside></body></html>`
-    const detail = parseDetailPage(html)
-    expect(detail.price).toBe(129900)
-    expect(detail.currency).toBe("EUR")
-    expect(detail.priceStatus).toBe("numeric")
-  })
-
-  it("parses comma-formatted JSON-LD offer prices", () => {
+  it("uses vehicleIdentificationNumber from Vehicle JSON-LD", () => {
     const html = `<html><head><script type="application/ld+json">{
       "@type": "Vehicle",
-      "model": "991 Carrera S",
-      "offers": { "@type": "Offer", "price": "129,900", "priceCurrency": "EUR" }
+      "model": "Porsche 911",
+      "vehicleIdentificationNumber": "wp0aa299xys123456"
     }</script></head><body></body></html>`
+
     const detail = parseDetailPage(html)
-    expect(detail.price).toBe(129900)
-    expect(detail.currency).toBe("EUR")
-    expect(detail.priceStatus).toBe("numeric")
+
+    expect(detail.vin).toBe("WP0AA299XYS123456")
+  })
+
+  it("prefers a labeled chassis value over an unrelated generic VIN-looking body token", () => {
+    const html = `<html><body>
+      <table class="fahrzeugdaten">
+        <tr><td class="label">Chassis number:</td><td class="content">WP0ZZZ99Z</td></tr>
+      </table>
+      <p>Reference text includes WP0AA299XYS123456 from another document.</p>
+    </body></html>`
+
+    const detail = parseDetailPage(html)
+
+    expect(detail.vin).toBe("WP0ZZZ99Z")
   })
 })

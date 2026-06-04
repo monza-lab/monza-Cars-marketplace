@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import * as cheerio from 'cheerio';
+import { classifyVehicleIdentifier } from '../common/vehicleIdentifier';
 import { fetchCaBHtmlWithScrapling } from './carsAndBidsScrapling';
 
 // ---------------------------------------------------------------------------
@@ -182,6 +183,27 @@ export function parseMileage(text: string | undefined): number | null {
   const cleaned = text.replace(/[^0-9]/g, '');
   const num = parseInt(cleaned, 10);
   return isNaN(num) ? null : num;
+}
+
+function pickVehicleIdentifier(specs: Map<string, string>): string | null {
+  const candidates: Array<[string, string | undefined]> = [
+    ['VIN', specs.get('vin')],
+    ['Chassis', specs.get('chassis')],
+    ['Chassis number', specs.get('chassis number')],
+    ['Frame', specs.get('frame')],
+    ['Frame number', specs.get('frame number')],
+    ['Serial', specs.get('serial')],
+    ['Serial number', specs.get('serial number')],
+  ];
+
+  for (const [label, value] of candidates) {
+    const identifier = classifyVehicleIdentifier(value, label);
+    if (identifier) return identifier.normalized;
+    if (value && /^[A-HJ-NPR-Z0-9]{17}$/i.test(value.replace(/[^A-Za-z0-9]/g, ''))) {
+      return value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    }
+  }
+  return null;
 }
 
 /**
@@ -485,7 +507,7 @@ export async function scrapeDetail(auction: CaBAuction): Promise<CaBAuction> {
       specs.get('interior color') || specs.get('interior') || null;
     const location =
       specs.get('location') || specs.get('seller location') || null;
-    const vin = specs.get('vin') || specs.get('chassis') || null;
+    const vin = pickVehicleIdentifier(specs);
 
     // Images
     const images: string[] = [];

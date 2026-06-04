@@ -31,7 +31,8 @@ vi.mock("@/features/scrapers/beforward_porsche_collector/detail", () => ({
     engine: "3.0L Flat-6",
     transmission: "Manual",
     exteriorColor: "Guards Red",
-    vin: "WP0ZZZ99Z",
+    vin: null,
+    chassisNo: "WP0ZZZ99Z",
     fuel: "Gasoline",
   })),
 }));
@@ -40,6 +41,7 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   markScraperRunStarted: vi.fn().mockResolvedValue(undefined),
   recordScraperRun: vi.fn().mockResolvedValue(undefined),
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
+  clearStaleActiveRun: vi.fn().mockResolvedValue(undefined),
 }));
 
 import {
@@ -114,7 +116,7 @@ describe("GET /api/cron/enrich-beforward", () => {
     expect(data.duration).toMatch(/^\d+ms$/);
   });
 
-  it("truncates long VIN and fields to fit VARCHAR constraints", async () => {
+  it("preserves non-VIN chassis metadata without truncating it into vin", async () => {
     // Mock parseDetailHtml to return oversized values
     const detailMod = await import("@/features/scrapers/beforward_porsche_collector/detail");
     vi.mocked(detailMod.parseDetailHtml).mockReturnValueOnce({
@@ -122,7 +124,8 @@ describe("GET /api/cron/enrich-beforward", () => {
       engine: "B".repeat(120),
       transmission: "C".repeat(110),
       exteriorColor: "D".repeat(105),
-      vin: "WVWZZZ3CZWE123456789", // 20 chars, exceeds VARCHAR(17)
+      vin: null,
+      chassisNo: "WVWZZZ3CZWE123456789",
       fuel: "Gasoline",
       images: [],
     } as any);
@@ -131,6 +134,7 @@ describe("GET /api/cron/enrich-beforward", () => {
       id: "bef-trunc",
       source_url: "https://example.com/be-forward/trunc",
       images: [],
+      enrichment_meta: { existing: true },
     };
 
     mockSelect.mockReturnValueOnce({
@@ -154,14 +158,25 @@ describe("GET /api/cron/enrich-beforward", () => {
     expect(updatePayload.engine.length).toBe(100);
     expect(updatePayload.transmission.length).toBe(100);
     expect(updatePayload.color_exterior.length).toBe(100);
-    expect(updatePayload.vin.length).toBe(17);
-    expect(updatePayload.vin).toBe("WVWZZZ3CZWE123456");
+    expect(updatePayload).not.toHaveProperty("vin");
+    expect(updatePayload.enrichment_meta).toEqual({
+      existing: true,
+      beforward: {
+        vehicleIdentifier: {
+          raw: "WVWZZZ3CZWE123456789",
+          normalized: "WVWZZZ3CZWE123456789",
+          kind: "chassis_or_serial",
+          sourceLabel: "Chassis No.",
+        },
+      },
+    });
   });
 
   it("does not write a missing fuel column", async () => {
     const row = {
       id: "bef-1",
       source_url: "https://example.com/be-forward/1",
+      enrichment_meta: null,
     };
 
     mockSelect.mockReturnValueOnce({
@@ -188,7 +203,15 @@ describe("GET /api/cron/enrich-beforward", () => {
       engine: "3.0L Flat-6",
       transmission: "Manual",
       color_exterior: "Guards Red",
-      vin: "WP0ZZZ99Z",
+      enrichment_meta: {
+        beforward: {
+          vehicleIdentifier: {
+            normalized: "WP0ZZZ99Z",
+            kind: "chassis_or_serial",
+          },
+        },
+      },
     });
+    expect(updatePayload).not.toHaveProperty("vin");
   });
 });

@@ -86,10 +86,10 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(data.success).toBe(true);
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
-    expect(mockOr).toHaveBeenCalledWith("description_text.is.null,description_text.eq.");
     expect(mockOr).toHaveBeenCalledWith(
-      'enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.("missing","detail_unavailable","blocked_unverified")'
+      'description_text.is.null,description_text.eq.,enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.("missing","detail_unavailable","blocked_unverified")'
     );
+    expect(mockOr).toHaveBeenCalledWith("vin.is.null,vin.eq.");
     expect(mockIs).toHaveBeenCalledWith("hammer_price", null);
     expect(mockOr).toHaveBeenCalledWith(
       'enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.("sold","price_on_request","hidden","not_listed","detail_unavailable","blocked_unverified")'
@@ -100,7 +100,9 @@ describe("GET /api/cron/enrich-elferspot", () => {
     await GET(makeRequest());
 
     expect(mockFrom).toHaveBeenCalledWith("listings");
-    expect(mockOr).toHaveBeenCalledWith("description_text.is.null,description_text.eq.");
+    expect(mockOr).toHaveBeenCalledWith(
+      'description_text.is.null,description_text.eq.,enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.("missing","detail_unavailable","blocked_unverified")'
+    );
   });
 
   it("calls monitoring lifecycle functions", async () => {
@@ -140,7 +142,7 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=bad"))).toBe(1000);
   });
 
-  it("alternates description and price rows while deduping overlaps", () => {
+  it("alternates description, VIN, and price rows while deduping overlaps", () => {
     const row = (id: string): EnrichmentRow => ({
       id,
       source_url: `https://www.elferspot.com/en/car/${id}/`,
@@ -150,10 +152,11 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(
       mergeRowsForEnrichment(
         [row("description-1"), row("overlap"), row("description-2")],
+        [row("vin-1")],
         [row("price-1"), row("overlap"), row("price-2")],
         5,
       ).map((item) => item.id),
-    ).toEqual(["description-1", "price-1", "overlap", "price-2", "description-2"]);
+    ).toEqual(["description-1", "vin-1", "price-1", "overlap", "description-2"]);
   });
 
   it("preserves existing Elferspot meta while writing current audit statuses", () => {
@@ -166,6 +169,30 @@ describe("GET /api/cron/enrich-elferspot", () => {
       elferspot: {
         priceStatus: "numeric",
         descriptionStatus: "present",
+        checkedAt: "new",
+      },
+    });
+  });
+
+  it("preserves source-native chassis identifiers in Elferspot meta", () => {
+    expect(
+      buildElferspotMeta(null, {
+        vehicleIdentifier: {
+          raw: "9113601234",
+          normalized: "9113601234",
+          kind: "chassis_or_serial",
+          sourceLabel: "Chassis",
+        },
+        checkedAt: "new",
+      }),
+    ).toEqual({
+      elferspot: {
+        vehicleIdentifier: {
+          raw: "9113601234",
+          normalized: "9113601234",
+          kind: "chassis_or_serial",
+          sourceLabel: "Chassis",
+        },
         checkedAt: "new",
       },
     });

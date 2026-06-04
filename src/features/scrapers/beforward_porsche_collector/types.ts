@@ -1,3 +1,5 @@
+import type { VehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
+
 export type CollectorMode = "daily";
 
 export type SourceKey = "BeForward";
@@ -102,6 +104,7 @@ export interface NormalizedListing {
   exteriorColor: string | null;
   interiorColor: string | null;
   vin: string | null;
+  sourceVehicleIdentifier: VehicleIdentifier | null;
   mileageKm: number | null;
   mileageUnitStored: "km";
   status: NormalizedListingStatus;

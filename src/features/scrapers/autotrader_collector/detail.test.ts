@@ -35,6 +35,18 @@ describe("parseAutoTraderHtml", () => {
     expect(result.vin).toBe("WP0ZZZ99ZTS392145");
   });
 
+  it("does not extract unlabeled VIN-looking body tokens", () => {
+    const html = '<html><body><p>Advert reference WP0ZZZ99ZTS392145 is not a VIN field.</p></body></html>';
+    const result = parseAutoTraderHtml(html);
+    expect(result.vin).toBeNull();
+  });
+
+  it("extracts labeled chassis identifiers from body text", () => {
+    const html = '<html><body><p>Chassis number: WP0ZZZ99Z</p></body></html>';
+    const result = parseAutoTraderHtml(html);
+    expect(result.vin).toBe("WP0ZZZ99Z");
+  });
+
   it("does not extract VIN from short strings", () => {
     const html = '<html><body><p>Reference: ABC123</p></body></html>';
     const result = parseAutoTraderHtml(html);
@@ -118,6 +130,7 @@ describe("parseAutoTraderHtml", () => {
     expect(detail.transmission).toBe("Automatic");
     expect(detail.bodyStyle).toBe("SUV");
     expect(detail.description).toContain("Line one");
+    expect(detail.vin).toBeNull();
     expect(detail.images).toEqual([
       "https://m.atcdn.co.uk/a/media/hero.jpg",
       "https://m.atcdn.co.uk/a/media/one.jpg",
@@ -183,5 +196,32 @@ describe("parseAutoTraderHtml", () => {
       "https://m.atcdn.co.uk/a/media/hero.jpg",
       "https://m.atcdn.co.uk/a/media/side.jpg",
     ]);
+  });
+
+  it("extracts source-native VIN fields from product-page JSON payloads", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            vehicleIdentificationNumber: "wp0aa299xys123456",
+            heading: { title: "2000 Porsche Boxster" },
+            gallery: { images: [] },
+            overview: { keySpecification: [] },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response("<html><body><p>Reference WP0ZZZ99ZTS392145 only.</p></body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        }),
+      );
+
+    const detail = await fetchAutoTraderDetail(
+      "https://www.autotrader.co.uk/car-details/202603261021846",
+    );
+
+    expect(detail.vin).toBe("WP0AA299XYS123456");
   });
 });

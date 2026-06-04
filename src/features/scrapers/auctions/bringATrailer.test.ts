@@ -160,4 +160,20 @@ describe("BaT detail recovery", () => {
     expect(out.mileage).toBe(36000);
     expect(out.mileageUnit).toBe("miles");
   });
+
+  it("extracts keyed pre-1981 chassis number labels", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(`
+      <html><body>
+        <div class="essentials">
+          <li>Chassis Number: 9113601234</li>
+        </div>
+      </body></html>
+    `, { status: 200 })) as any);
+
+    const pending = scrapeDetail(baseAuction as any);
+    await vi.advanceTimersByTimeAsync(2500);
+    const out = await pending;
+
+    expect(out.vin).toBe("9113601234");
+  });
 });

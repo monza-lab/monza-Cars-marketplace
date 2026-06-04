@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { classifyVehicleIdentifier, type VehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { fetchDetailPage } from "@/features/scrapers/elferspot_collector/detail";
 import {
   clearScraperRunActive,
@@ -20,21 +21,13 @@ const PRICE_COVERED_STATUSES = [
 ];
 
 const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
-const DESCRIPTION_COVERED_STATUSES = [
-  "missing",
-  "detail_unavailable",
-  "blocked_unverified",
-];
-const DESCRIPTION_COVERED_STATUS_FILTER = `(${DESCRIPTION_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
-const DEFAULT_BATCH_LIMIT = 250;
-const MAX_BATCH_LIMIT = 300;
-const DEFAULT_DELAY_MS = 1_000;
-const MAX_DELAY_MS = 5_000;
+const DESCRIPTION_COVERED_STATUS_FILTER = `("missing","detail_unavailable","blocked_unverified")`;
 
 type EnrichmentMeta = {
   elferspot?: {
     priceStatus?: string;
     descriptionStatus?: string;
+    vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
   };
 };
@@ -45,27 +38,16 @@ export type EnrichmentRow = {
   enrichment_meta: EnrichmentMeta | null;
 };
 
-type QueryError = { message?: string } | null;
-type SelectResult<T> = { data: T[] | null; error: QueryError };
-type SelectBuilder<T> = PromiseLike<SelectResult<T>> & {
-  eq: (...args: unknown[]) => SelectBuilder<T>;
-  order: (...args: unknown[]) => SelectBuilder<T>;
-  limit: (...args: unknown[]) => SelectBuilder<T>;
-  or: (...args: unknown[]) => SelectBuilder<T>;
-  is: (...args: unknown[]) => SelectBuilder<T>;
-};
-
 type SupabaseClientLike = {
-  from: (table: "listings") => {
-    select: (...args: unknown[]) => SelectBuilder<EnrichmentRow>;
-  };
+  from: (table: "listings") => any;
 };
 
 export function buildElferspotMeta(
   existingMeta: EnrichmentMeta | null,
   update: {
-    priceStatus: string;
+    priceStatus?: string;
     descriptionStatus?: string;
+    vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
   },
 ) {
@@ -79,53 +61,44 @@ export function buildElferspotMeta(
   };
 }
 
-export function resolveBatchLimit(request: Request) {
-  const parsedUrl = new URL(request.url);
-  const rawLimit = parsedUrl.searchParams.get("limit") ?? process.env.ELFERSPOT_ENRICH_LIMIT;
-  const parsed = rawLimit ? Number.parseInt(rawLimit, 10) : DEFAULT_BATCH_LIMIT;
-  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_BATCH_LIMIT;
-  return Math.min(parsed, MAX_BATCH_LIMIT);
+export function resolveBatchLimit(request: Request): number {
+  const raw = new URL(request.url).searchParams.get("limit");
+  const parsed = raw ? Number.parseInt(raw, 10) : 250;
+  if (!Number.isFinite(parsed) || parsed <= 0) return 250;
+  return Math.min(parsed, 300);
 }
 
-export function resolveDelayMs(request: Request) {
-  const parsedUrl = new URL(request.url);
-  const rawDelay = parsedUrl.searchParams.get("delayMs") ?? process.env.ELFERSPOT_ENRICH_DELAY_MS;
-  const parsed = rawDelay ? Number.parseInt(rawDelay, 10) : DEFAULT_DELAY_MS;
-  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_DELAY_MS;
-  return Math.min(parsed, MAX_DELAY_MS);
+export function resolveDelayMs(request: Request): number {
+  const raw = new URL(request.url).searchParams.get("delayMs");
+  const parsed = raw ? Number.parseInt(raw, 10) : 1000;
+  if (!Number.isFinite(parsed) || parsed < 0) return 1000;
+  return Math.min(parsed, 5000);
 }
 
 export function mergeRowsForEnrichment(
   descriptionRows: EnrichmentRow[],
+  vinRows: EnrichmentRow[],
   priceRows: EnrichmentRow[],
   limit: number,
-) {
+): EnrichmentRow[] {
   const rows: EnrichmentRow[] = [];
   const seen = new Set<string>();
-  let descriptionIndex = 0;
-  let priceIndex = 0;
+  const maxLength = Math.max(descriptionRows.length, vinRows.length, priceRows.length);
 
-  function pushNext(sourceRows: EnrichmentRow[], index: number) {
-    while (index < sourceRows.length) {
-      const row = sourceRows[index++];
-      if (seen.has(row.id)) continue;
-      seen.add(row.id);
+  for (let i = 0; i < maxLength && rows.length < limit; i++) {
+    for (const bucket of [descriptionRows, vinRows, priceRows]) {
+      const row = bucket[i];
+      if (!row || seen.has(row.id)) continue;
       rows.push(row);
-      break;
+      seen.add(row.id);
+      if (rows.length >= limit) break;
     }
-    return index;
-  }
-
-  while (rows.length < limit && (descriptionIndex < descriptionRows.length || priceIndex < priceRows.length)) {
-    descriptionIndex = pushNext(descriptionRows, descriptionIndex);
-    if (rows.length >= limit) break;
-    priceIndex = pushNext(priceRows, priceIndex);
   }
 
   return rows;
 }
 
-async function fetchRows(client: SupabaseClientLike, filter: "description" | "price", limit: number) {
+async function fetchRows(client: SupabaseClientLike, filter: "description" | "vin" | "price", limit: number) {
   const q = client
     .from("listings")
     .select("id,source_url,enrichment_meta")
@@ -135,11 +108,13 @@ async function fetchRows(client: SupabaseClientLike, filter: "description" | "pr
     .limit(limit);
 
   if (filter === "description") {
-    return q
-      .or("description_text.is.null,description_text.eq.")
-      .or(
-        `enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.${DESCRIPTION_COVERED_STATUS_FILTER}`,
-      );
+    return q.or(
+      `description_text.is.null,description_text.eq.,enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.${DESCRIPTION_COVERED_STATUS_FILTER}`,
+    );
+  }
+
+  if (filter === "vin") {
+    return q.or("vin.is.null,vin.eq.");
   }
 
   return q
@@ -151,10 +126,10 @@ async function fetchRows(client: SupabaseClientLike, filter: "description" | "pr
 
 export async function GET(request: Request) {
   const startTime = Date.now();
-  const startedAtIso = new Date(startTime).toISOString();
-  const runId = crypto.randomUUID();
   const batchLimit = resolveBatchLimit(request);
   const delayMs = resolveDelayMs(request);
+  const startedAtIso = new Date(startTime).toISOString();
+  const runId = crypto.randomUUID();
 
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -187,20 +162,33 @@ export async function GET(request: Request) {
     const client = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const enrichmentClient = client as unknown as SupabaseClientLike;
 
-    const descriptionRows = await fetchRows(enrichmentClient, "description", batchLimit);
+    const descriptionRows = await fetchRows(client, "description", batchLimit);
     if (descriptionRows.error || !descriptionRows.data) {
       throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
 
-    const priceRows = await fetchRows(enrichmentClient, "price", batchLimit);
+    const remainingAfterDescriptions = Math.max(0, batchLimit - descriptionRows.data.length);
+    const vinRows = remainingAfterDescriptions > 0
+      ? await fetchRows(client, "vin", remainingAfterDescriptions)
+      : { data: [] as EnrichmentRow[], error: null };
+
+    if (vinRows.error || !vinRows.data) {
+      throw new Error(vinRows.error?.message ?? "No VIN rows returned");
+    }
+
+    const remaining = Math.max(0, batchLimit - descriptionRows.data.length - vinRows.data.length);
+    const priceRows = remaining > 0
+      ? await fetchRows(client, "price", remaining)
+      : { data: [] as EnrichmentRow[], error: null };
+
     if (priceRows.error || !priceRows.data) {
       throw new Error(priceRows.error?.message ?? "No price rows returned");
     }
 
     const rows = mergeRowsForEnrichment(
       descriptionRows.data as EnrichmentRow[],
+      vinRows.data as EnrichmentRow[],
       priceRows.data as EnrichmentRow[],
       batchLimit,
     );
@@ -228,13 +216,7 @@ export async function GET(request: Request) {
         if (!detail) {
           await client
             .from("listings")
-            .update({
-              enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
-                priceStatus: "detail_unavailable",
-                descriptionStatus: "detail_unavailable",
-              }),
-              updated_at: new Date().toISOString(),
-            })
+            .update({ description_text: "", updated_at: new Date().toISOString() })
             .eq("id", row.id);
           continue;
         }
@@ -259,7 +241,16 @@ export async function GET(request: Request) {
         if (detail.engine) update.engine = detail.engine;
         if (detail.colorExterior) update.color_exterior = detail.colorExterior;
         if (detail.colorInterior) update.color_interior = detail.colorInterior;
-        if (detail.vin) update.vin = detail.vin;
+        if (detail.vin) {
+          const identifier = classifyVehicleIdentifier(detail.vin, "VIN");
+          if (identifier?.kind === "vin_17") {
+            update.vin = identifier.normalized;
+          } else if (identifier) {
+            update.enrichment_meta = buildElferspotMeta(existingMeta, {
+              vehicleIdentifier: identifier,
+            });
+          }
+        }
         if (detail.descriptionText) update.description_text = detail.descriptionText;
         if (detail.images && detail.images.length > 0) {
           update.images = detail.images;
@@ -268,10 +259,15 @@ export async function GET(request: Request) {
         // seller_name and seller_type columns don't exist in listings table
         if (detail.location) update.location = detail.location;
         if (detail.locationCountry) update.country = detail.locationCountry;
-        update.enrichment_meta = buildElferspotMeta(existingMeta, {
-          priceStatus: detail.priceStatus,
-          descriptionStatus: detail.descriptionStatus,
-        });
+        if (detail.priceStatus !== "unknown" || detail.descriptionStatus === "present") {
+          update.enrichment_meta = buildElferspotMeta(
+            (update.enrichment_meta as EnrichmentMeta | null) ?? existingMeta,
+            {
+              priceStatus: detail.priceStatus,
+              descriptionStatus: detail.descriptionStatus,
+            },
+          );
+        }
 
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
@@ -288,7 +284,7 @@ export async function GET(request: Request) {
         } else {
           await client
             .from("listings")
-            .update({ enrichment_meta: update.enrichment_meta, updated_at: new Date().toISOString() })
+            .update({ description_text: "", updated_at: new Date().toISOString() })
             .eq("id", row.id);
         }
       } catch (err) {
@@ -309,7 +305,7 @@ export async function GET(request: Request) {
             .update({
               enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
                 priceStatus: "blocked_unverified",
-                descriptionStatus: "blocked_unverified",
+                descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
               }),
               updated_at: new Date().toISOString(),
             })
@@ -323,7 +319,7 @@ export async function GET(request: Request) {
           .update({
             enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
               priceStatus: "detail_unavailable",
-              descriptionStatus: "detail_unavailable",
+              descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
             }),
             updated_at: new Date().toISOString(),
           })
@@ -357,8 +353,6 @@ export async function GET(request: Request) {
       enriched,
       errors,
       timeBudgetReached,
-      batchLimit,
-      delayMs,
       successReason: timeBudgetReached
         ? "time_budget_reached"
         : errors.length === 0

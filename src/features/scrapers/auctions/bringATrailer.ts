@@ -375,6 +375,7 @@ function extractKeyedVinCandidate(key: string, value: string): string | null {
 
   const normalized = value.replace(/[^A-Za-z0-9]/g, "").trim();
   if (normalized.length < 6 || normalized.length > 20) return null;
+  if (normalized.length === 17 && !/^[A-HJ-NPR-Z0-9]{17}$/i.test(normalized)) return null;
   return normalized.toUpperCase();
 }
 
@@ -512,7 +513,7 @@ function extractBaTDetailSignals(html: string, title: string, description: strin
       const candidate = parseEngineFromText(value);
       if (candidate) signals.engine = updateSignal(signals.engine, candidate, 100);
     }
-    if (key === 'vin' || key === 'chassis' || key === 'serial' || key === 'frame') {
+    if (/^(vin|chassis(?: number)?|serial(?: number)?|frame(?: number)?)$/i.test(key)) {
       const candidate = extractKeyedVinCandidate(key, value);
       if (candidate) signals.vin = updateSignal(signals.vin, candidate, 100);
     }

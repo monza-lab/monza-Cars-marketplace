@@ -89,7 +89,7 @@ describe('CC: scrapeDetail with HTML fixture', () => {
     expect(enriched.exteriorColor).toBe('Grand Prix White');
     expect(enriched.interiorColor).toBe('Grey Cloth');
     expect(enriched.location).toBe('London, United Kingdom');
-    expect(enriched.vin).toBe('WPOZZZ96ZNS490123');
+    expect(enriched.vin).toBe('WP0ZZZ96ZNS490123');
     expect(enriched.description).toContain('Exceptional example');
     expect(enriched.images.length).toBe(4);
     expect(enriched.currentBid).toBe(195000);

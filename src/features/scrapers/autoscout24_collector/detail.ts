@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 
 import type { AS24DetailParsed } from "./types";
 import { isAkamaiChallenge, waitForChallengeResolution } from "./browser";
+import { classifyVehicleIdentifier, extractVehicleIdentifierFromText } from "../common/vehicleIdentifier";
 
 export interface DetailFetchOptions {
   page: Page;
@@ -71,10 +72,14 @@ export function parseDetailHtml(html: string): AS24DetailParsed {
   // Location
   const locationText = $('[data-testid="dealer-location"], [class*="dealer-location"], [class*="listing-location"]').first().text().trim() || null;
 
-  // VIN
+  // Source-native vehicle identifier. Prefer structured/labeled values before
+  // falling back to generic VIN-shaped text.
   const bodyText = $("body").text();
-  const vinMatch = bodyText.match(/\bVIN\b[:\s]*([A-HJ-NPR-Z0-9]{17})\b/i);
-  const vin = vinMatch ? vinMatch[1].toUpperCase() : null;
+  const vin =
+    jsonLd.vehicleIdentifier ??
+    pickSpecIdentifier(specs) ??
+    extractVehicleIdentifierFromText(bodyText, { allowGenericVin: true })?.normalized ??
+    null;
 
   // Features list
   const features: string[] = [];
@@ -125,10 +130,11 @@ interface JsonLdData {
   model: string | null;
   mileageKm: number | null;
   images: string[];
+  vehicleIdentifier: string | null;
 }
 
 function parseDetailJsonLd($: cheerio.CheerioAPI): JsonLdData {
-  const result: JsonLdData = { title: null, price: null, currency: null, year: null, make: null, model: null, mileageKm: null, images: [] };
+  const result: JsonLdData = { title: null, price: null, currency: null, year: null, make: null, model: null, mileageKm: null, images: [], vehicleIdentifier: null };
 
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
@@ -148,6 +154,17 @@ function parseDetailJsonLd($: cheerio.CheerioAPI): JsonLdData {
 
       const mileage = data.mileageFromOdometer as Record<string, unknown> | undefined;
       if (mileage?.value) result.mileageKm = Number(mileage.value) || null;
+      if (!result.vehicleIdentifier) {
+        result.vehicleIdentifier =
+          classifyVehicleIdentifier(data.vehicleIdentificationNumber, "Vehicle Identification Number")?.normalized ??
+          classifyVehicleIdentifier(data.chassisNumber, "Chassis number")?.normalized ??
+          classifyVehicleIdentifier(data.chassis, "Chassis")?.normalized ??
+          classifyVehicleIdentifier(data.frameNumber, "Frame number")?.normalized ??
+          classifyVehicleIdentifier(data.frame, "Frame")?.normalized ??
+          classifyVehicleIdentifier(data.serialNumber, "Serial number")?.normalized ??
+          classifyVehicleIdentifier(data.serial, "Serial")?.normalized ??
+          null;
+      }
 
       if (typeof data.image === "string") result.images.push(data.image);
       if (Array.isArray(data.image)) {
@@ -161,6 +178,32 @@ function parseDetailJsonLd($: cheerio.CheerioAPI): JsonLdData {
   });
 
   return result;
+}
+
+function pickSpecIdentifier(specs: Map<string, string>): string | null {
+  const normalizedSpecs = new Map<string, string>();
+  for (const [key, value] of specs) {
+    normalizedSpecs.set(key.toLowerCase().replace(/\s+/g, " ").trim(), value);
+  }
+
+  const candidates: Array<[string, string | undefined]> = [
+    ["VIN", normalizedSpecs.get("vin")],
+    ["Vehicle Identification Number", normalizedSpecs.get("vehicle identification number")],
+    ["Chassis No.", normalizedSpecs.get("chassis no.") ?? normalizedSpecs.get("chassis no")],
+    ["Chassis number", normalizedSpecs.get("chassis number")],
+    ["Chassis", normalizedSpecs.get("chassis")],
+    ["Frame number", normalizedSpecs.get("frame number")],
+    ["Frame", normalizedSpecs.get("frame")],
+    ["Serial number", normalizedSpecs.get("serial number")],
+    ["Serial", normalizedSpecs.get("serial")],
+  ];
+
+  for (const [label, value] of candidates) {
+    const identifier = classifyVehicleIdentifier(value, label);
+    if (identifier) return identifier.normalized;
+  }
+
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
