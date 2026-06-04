@@ -8,7 +8,7 @@ import { getPricingPlan, resolvePlanKey } from "@/lib/payments/plans"
 import { getStripeClient } from "@/lib/payments/stripe"
 
 export type CheckoutFulfillmentResult =
-  | { status: "fulfilled"; planId: string; mode: Stripe.Checkout.Session.Mode | null }
+  | { status: "fulfilled"; planId: string; mode: Stripe.Checkout.Session["mode"] }
   | { status: "ignored"; reason: string }
 
 export async function fulfillCheckoutSession(
