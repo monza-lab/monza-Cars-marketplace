@@ -33,6 +33,11 @@ type ReportLivePeerRow = {
   platform: string | null
   current_bid: number | null
   bid_count: number | null
+  rarity_score: number | null
+  rarity_tier: string | null
+  rarity_signals_json: string[] | null
+  rarity_scored_at: string | null
+  rarity_score_version: string | null
   reserve_status: string | null
   seller_notes: string | null
   images: string[] | null
@@ -88,6 +93,11 @@ export async function fetchStrictLiveReportPeerCandidates(
             l.platform,
             l.current_bid,
             l.bid_count,
+            l.rarity_score,
+            l.rarity_tier,
+            l.rarity_signals_json,
+            l.rarity_scored_at::text AS rarity_scored_at,
+            l.rarity_score_version,
             l.reserve_status,
             l.seller_notes,
             l.images,
@@ -114,8 +124,9 @@ export async function fetchStrictLiveReportPeerCandidates(
           id, year, make, model, trim, source, source_url, status, sale_date,
           country, region, city, hammer_price, original_currency, mileage,
           mileage_unit, vin, color_exterior, color_interior, description_text,
-          body_style, title, platform, current_bid, bid_count, reserve_status,
-          seller_notes, images, engine, transmission, end_time, start_time,
+          body_style, title, platform, current_bid, bid_count, rarity_score,
+          rarity_tier, rarity_signals_json, rarity_scored_at, rarity_score_version,
+          reserve_status, seller_notes, images, engine, transmission, end_time, start_time,
           final_price, location
         FROM strict_live_peers
         WHERE "peerPrice" > 0

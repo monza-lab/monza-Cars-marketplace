@@ -46,6 +46,11 @@ describe("fetchStrictLiveReportPeerCandidates", () => {
           platform: "AUTO_TRADER",
           current_bid: 56960,
           bid_count: 0,
+          rarity_score: 72,
+          rarity_tier: "rare",
+          rarity_signals_json: ["limited_variant"],
+          rarity_scored_at: "2026-06-04T12:00:00Z",
+          rarity_score_version: "listing-rarity-v3",
           reserve_status: null,
           seller_notes: null,
           images: [],
@@ -75,6 +80,7 @@ describe("fetchStrictLiveReportPeerCandidates", () => {
     expect(String(sql)).toContain("FROM listings")
     expect(String(sql)).toContain("status::text = 'active'")
     expect(String(sql)).toContain('"peerPrice" > 0')
+    expect(String(sql)).toContain("rarity_score")
     expect(String(sql)).toContain("regexp_replace")
     expect(String(sql)).toContain("ABS")
     expect(values).toEqual(["porsche", "718 cayman", "target", 41718, 12])
