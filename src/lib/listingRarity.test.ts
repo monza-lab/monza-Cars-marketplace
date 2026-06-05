@@ -8,7 +8,7 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v4");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v5");
   });
 
   it("scores explicit rare factory build signals deterministically", () => {
@@ -147,6 +147,34 @@ describe("listing rarity scoring", () => {
     });
     expect(carreraRs.score).toBeGreaterThan(turbo930.score);
     expect(genericModernGt4Rs.score).toBeLessThan(80);
+  });
+
+  it("values air-cooled Paint-to-Sample cars even when the generation code is absent", () => {
+    const airCooledPts = scoreListingRarity({
+      year: 1991,
+      model: "911 Carrera 2",
+      title: "1991 Porsche 911 Carrera 2 Paint-to-Sample Amethyst Metallic 5-Speed",
+      mileage: 34000,
+      mileageUnit: "mi",
+    });
+
+    const genericModernGt4Rs = scoreListingRarity({
+      year: 2024,
+      model: "718 Cayman",
+      title: "2024 Porsche 718 Cayman GT4 RS PCCB Approved",
+      mileage: 1000,
+      mileageUnit: "mi",
+    });
+
+    expect(airCooledPts).toMatchObject({
+      tier: "unique",
+      signals: expect.arrayContaining([
+        "paint_to_sample",
+        "classic_significance",
+        "manual_transmission",
+      ]),
+    });
+    expect(airCooledPts.score).toBeGreaterThan(genericModernGt4Rs.score);
   });
 
   it("does not treat RSR-style tribute wording as an actual RSR homologation car", () => {

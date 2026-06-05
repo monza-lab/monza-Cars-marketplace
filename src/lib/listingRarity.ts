@@ -1,4 +1,4 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v4";
+export const RARITY_SCORE_VERSION = "listing-rarity-v5";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
@@ -347,6 +347,10 @@ function addAirCooledClassicSignals(
     addSignalOnce(signals, "classic_significance");
   }
 
+  if (signals.includes("paint_to_sample")) {
+    addSignalOnce(signals, "classic_significance");
+  }
+
   const airCooledHomologation = /\b(carrera rs|rs america|rsr\b(?![\s-]?style)|speedster|turbo s leichtbau)\b/i;
   if (airCooledHomologation.test(headline)) {
     addSignalOnce(signals, "homologation_special");
@@ -410,6 +414,7 @@ export function scoreListingRarity(input: ListingRarityInput): {
     score += 20;
     if (signals.includes("homologation_special")) score += 14;
     if (signals.includes("turbo_heritage")) score += 8;
+    if (signals.includes("paint_to_sample")) score += 16;
   }
 
   const lateModern = typeof input.year === "number" && input.year >= 2013;
