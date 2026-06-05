@@ -6,9 +6,9 @@ import { CURATED_CARS } from "@/lib/curatedCars"
 import {
   fetchLiveListingById,
   fetchLiveListingByIdWithStatus,
-  fetchLiveListingsAsCollectorCars,
   fetchPricedListingsForModel,
 } from "@/lib/supabaseLiveListings"
+import { fetchStrictLiveReportPeerCandidates } from "@/lib/reportLivePeers"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
 import { getExchangeRates } from "@/lib/exchangeRates"
 import {
@@ -109,11 +109,11 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   const allCandidates = CURATED_CARS.filter(c => c.id !== car.id)
   if (car.id.startsWith("live-")) {
     try {
-      const live = await fetchLiveListingsAsCollectorCars({ limit: 60, includePriceHistory: false })
+      const live = await fetchStrictLiveReportPeerCandidates(car)
       allCandidates.push(...live.filter(c => c.id !== car.id))
     } catch (err) {
       console.warn(
-        "[report] fetchLiveListingsAsCollectorCars failed, continuing without live candidates:",
+        "[report] fetchStrictLiveReportPeerCandidates failed, continuing without live candidates:",
         err instanceof Error ? err.message : err,
       )
     }

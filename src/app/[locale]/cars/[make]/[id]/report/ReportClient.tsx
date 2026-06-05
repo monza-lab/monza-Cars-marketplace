@@ -527,9 +527,9 @@ export function ReportClient({
   const strengths: string[] = []
   const hasDbQuestions = questions.length > 0
 
-  // No fake comparables - regional stats replace this
-  // Real comparable sales from the Comparable table. Empty array when the
-  // backend hasn't populated it yet - the UI renders an honest empty state.
+  // No fake comparables - regional stats replace this.
+  // Real comparable sales come from strict same-model listings: explicit sold
+  // rows plus priced listings old enough to be treated as sold.
   const marketAvgForDelta = marketStats
     ? (marketStats.primaryFairValueLow + marketStats.primaryFairValueHigh) / 2
     : null

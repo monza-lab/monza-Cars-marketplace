@@ -563,12 +563,34 @@ export async function getStrictComparablesForModel(
     const rows = await withDbTimeout(
       () => dbQuery<DbComparableRow>(
         `
-          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
-          FROM "Comparable" c
-          JOIN "Auction" a ON a.id = c."auctionId"
-          WHERE btrim(regexp_replace(lower(regexp_replace(regexp_replace(a.make, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $1
-            AND btrim(regexp_replace(lower(regexp_replace(regexp_replace(a.model, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $2
-          ORDER BY c."soldDate" DESC NULLS LAST
+          WITH listing_comparables AS (
+            SELECT
+              l.title,
+              l.platform::text AS platform,
+              COALESCE(l.sale_date::timestamp, l.end_time, l.updated_at, l.scrape_timestamp, l.created_at) AS "soldDate",
+              COALESCE(
+                l.sold_price::double precision,
+                l.final_price,
+                l.current_bid,
+                l.price_usd::double precision,
+                l.listing_price::double precision
+              ) AS "soldPrice",
+              l.mileage,
+              l.condition_description AS condition,
+              l.status::text AS status
+            FROM listings l
+            WHERE btrim(regexp_replace(lower(regexp_replace(regexp_replace(l.make, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $1
+              AND btrim(regexp_replace(lower(regexp_replace(regexp_replace(l.model, '[.,;:()[\\]{}''"\`]', ' ', 'g'), '[-_/]+', ' ', 'g')), '\\s+', ' ', 'g')) = $2
+          )
+          SELECT title, platform, "soldDate", "soldPrice", mileage, condition
+          FROM listing_comparables
+          WHERE "soldDate" IS NOT NULL
+            AND "soldPrice" > 0
+            AND (
+              status = 'sold'
+              OR "soldDate" < now() - interval '30 days'
+            )
+          ORDER BY "soldDate" DESC NULLS LAST
           LIMIT $3
         `,
         [identity.make, identity.modelIdentity, limit],

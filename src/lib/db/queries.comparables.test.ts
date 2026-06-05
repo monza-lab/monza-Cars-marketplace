@@ -12,7 +12,7 @@ describe("strict comparable queries", () => {
     dbQueryMock.mockReset()
   })
 
-  it("queries exact normalized make and model identity without wildcard broadening", async () => {
+  it("queries old priced listings as exact normalized historical comparables without wildcard broadening", async () => {
     dbQueryMock.mockResolvedValueOnce({
       rows: [
         {
@@ -33,6 +33,9 @@ describe("strict comparable queries", () => {
     expect(rows[0].soldDate).toBe("2026-01-01T00:00:00.000Z")
     expect(dbQueryMock).toHaveBeenCalledTimes(1)
     const [sql, values] = dbQueryMock.mock.calls[0]
+    expect(String(sql)).toContain("FROM listings")
+    expect(String(sql)).toContain("interval '30 days'")
+    expect(String(sql)).toContain("> 0")
     expect(String(sql)).toContain("regexp_replace")
     expect(String(sql)).toContain("lower")
     expect(String(sql)).toContain("btrim")

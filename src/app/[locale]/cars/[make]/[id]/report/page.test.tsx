@@ -85,8 +85,13 @@ vi.mock("@/lib/supabaseLiveListings", () => ({
     car: mockCar,
     transientError: false,
   }),
-  fetchLiveListingsAsCollectorCars: vi.fn().mockRejectedValue(new Error("supabase down")),
   fetchPricedListingsForModel: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock("@/lib/reportLivePeers", () => ({
+  fetchStrictLiveReportPeerCandidates: vi.fn().mockResolvedValue([
+    { ...mockCar, id: "live-peer", model: "911" },
+  ]),
 }))
 
 vi.mock("@/lib/exchangeRates", () => ({
@@ -134,7 +139,10 @@ vi.mock("@/lib/reports/queries", () => ({
 describe("ReportPage SSR robustness", () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it("does NOT throw when fetchLiveListingsAsCollectorCars rejects", async () => {
+  it("does NOT throw when fetchStrictLiveReportPeerCandidates rejects", async () => {
+    const { fetchStrictLiveReportPeerCandidates } = await import("@/lib/reportLivePeers")
+    vi.mocked(fetchStrictLiveReportPeerCandidates).mockRejectedValueOnce(new Error("supabase down"))
+
     const { default: ReportPage } = await import("./page")
     await expect(
       ReportPage({
@@ -211,6 +219,7 @@ describe("ReportPage SSR robustness", () => {
   it("passes strict historical comparables and strict live peers to ReportClient", async () => {
     const { default: ReportPage } = await import("./page")
     const { getStrictComparablesForModel } = await import("@/lib/db/queries")
+    const { fetchStrictLiveReportPeerCandidates } = await import("@/lib/reportLivePeers")
     const { findStrictReportPeers } = await import("@/lib/similarCars")
 
     renderToStaticMarkup(await ReportPage({
@@ -219,6 +228,7 @@ describe("ReportPage SSR robustness", () => {
     }))
 
     expect(getStrictComparablesForModel).toHaveBeenCalledWith("Porsche", "911")
+    expect(fetchStrictLiveReportPeerCandidates).toHaveBeenCalledWith(mockCar)
     expect(findStrictReportPeers).toHaveBeenCalled()
     expect(ReportClientMock.mock.calls[0]?.[0]).toMatchObject({
       dbComparables: [
