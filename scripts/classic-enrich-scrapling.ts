@@ -38,7 +38,7 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
-import { buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import { buildMissingDetailOrCriticalSpecFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -102,14 +102,13 @@ async function main() {
     runtime,
   });
 
-  // Query Classic.com listings needing enrichment:
-  // NULL and empty string both fail the quality gate, so both must be retried.
+  // Query Classic.com listings needing enrichment: missing details or critical specs.
   const { data: listings, error } = await supabase
     .from("listings")
     .select("id, source_url, title, images, description_text, engine, mileage, vin, transmission, color_exterior, color_interior, body_style, photos_count, hammer_price, location, seller_notes")
     .eq("source", "ClassicCom")
     .eq("status", "active")
-    .or(buildMissingAnyFilter([{ field: "description_text", type: "text" }]))
+    .or(buildMissingDetailOrCriticalSpecFilter(["description_text"]))
     .order("updated_at", { ascending: true })
     .limit(opts.limit);
 
@@ -176,11 +175,13 @@ async function main() {
     try {
       const content = await fetchClassicDetailWithScrapling(listing.source_url);
       if (!content) {
-        // Mark as attempted so we don't re-query it
+        // Mark as attempted without erasing an existing description on spec-only retries.
         if (!opts.dryRun) {
+          const marker: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          if (!listing.description_text) marker.description_text = "";
           await supabase
             .from("listings")
-            .update({ description_text: "", updated_at: new Date().toISOString() })
+            .update(marker)
             .eq("id", listing.id);
         }
         skipped++;
@@ -253,8 +254,8 @@ async function main() {
         updates.location = detail.raw.location;
       }
 
-      // If no description extracted, mark as attempted
-      if (!updates.description_text) {
+      // If no description existed or was extracted, mark as attempted.
+      if (!updates.description_text && !listing.description_text) {
         updates.description_text = "";
       }
 

@@ -148,6 +148,33 @@ describe("classic detail parsing", () => {
     expect(parsed.raw.price).toBe(258900);
     expect(parsed.raw.hammerPrice).toBeNull();
   });
+
+  it("records source-provided missing critical specs as not specified", () => {
+    const parsed = parseClassicDetailContent(
+      {
+        title: "1957 Porsche 356 Replica Speedster",
+        bodyText: [
+          "FOR SALE",
+          "Specs",
+          "Year",
+          "1957",
+          "Make",
+          "Porsche",
+          "Model Family",
+          "356 Replica",
+          "Engine",
+          "-",
+          "Transmission",
+          "-",
+        ].join("\n"),
+        images: [],
+      },
+      "https://www.classic.com/veh/1957-porsche-356-replica-speedster-abc123",
+    );
+
+    expect(parsed.raw.engine).toBe("Not specified");
+    expect(parsed.raw.transmission).toBe("Not specified");
+  });
 });
 
 describe("extractClassicVehicleImagesFromHtml", () => {

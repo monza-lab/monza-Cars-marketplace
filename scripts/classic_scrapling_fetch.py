@@ -15,6 +15,7 @@ import io
 import json
 import os
 import sys
+from contextlib import redirect_stdout
 from html.parser import HTMLParser
 from concurrent.futures import ProcessPoolExecutor
 
@@ -24,7 +25,10 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
-from scrapling.fetchers.requests import Fetcher
+try:
+    from scrapling.fetchers.requests import Fetcher
+except ModuleNotFoundError:
+    from scrapling.fetchers import Fetcher
 
 
 BLOCK_TAGS = {
@@ -148,7 +152,13 @@ def fetch_html(url: str) -> str:
         # Scrapling treats `retries` as the number of attempts. Zero means
         # "do not enter the request loop", which falls through to
         # "No active session available." Use at least one attempt.
-        response = Fetcher.get(url, impersonate="chrome", timeout=10, retries=1)
+        with redirect_stdout(sys.stderr):
+            try:
+                response = Fetcher.get(url, impersonate="chrome", timeout=10, retries=1)
+            except TypeError as exc:
+                if "impersonate" not in str(exc):
+                    raise
+                response = Fetcher.get(url, timeout=10, retries=1, stealthy_headers=True)
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError(f"Scrapling fetch failed: {exc}") from exc
 

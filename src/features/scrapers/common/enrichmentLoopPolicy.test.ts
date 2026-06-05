@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildMissingCriticalSpecFilter,
+  buildMissingDetailOrCriticalSpecFilter,
   buildMissingAnyFilter,
   classifyScraplingBody,
   isCriticalNoOutput,
@@ -14,6 +16,15 @@ describe("enrichment loop policy", () => {
         { field: "hammer_price", type: "numeric" },
       ]),
     ).toBe("description_text.is.null,description_text.eq.,hammer_price.is.null");
+  });
+
+  it("builds enrichment filters that always include critical spec gaps", () => {
+    expect(buildMissingCriticalSpecFilter()).toBe(
+      "engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
+    expect(buildMissingDetailOrCriticalSpecFilter(["trim"])).toBe(
+      "trim.is.null,trim.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
   });
 
   it("treats short Scrapling HTTP bodies as blocked so callers can escalate", () => {
@@ -30,15 +41,24 @@ describe("enrichment loop policy", () => {
     });
   });
 
-  it("flags critical enrichment jobs that discover work but write nothing", () => {
+  it("flags critical detail jobs that discover work but write nothing", () => {
     expect(
       isCriticalNoOutput({
-        id: "cron-vin",
+        id: "cron-enrich-details",
         status: "ok",
         discovered: 500,
         written: 0,
       }),
     ).toBe(true);
+
+    expect(
+      isCriticalNoOutput({
+        id: "cron-titles",
+        status: "ok",
+        discovered: 500,
+        written: 0,
+      }),
+    ).toBe(false);
 
     expect(
       isCriticalNoOutput({

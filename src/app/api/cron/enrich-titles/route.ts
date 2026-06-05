@@ -7,6 +7,7 @@ import {
   parseBodyStyleFromText,
   parseTrimFromText,
 } from "@/features/scrapers/common/titleEnrichment";
+import { buildMissingAnyFilter } from "@/features/scrapers/common/enrichmentLoopPolicy";
 import {
   markScraperRunStarted,
   recordScraperRun,
@@ -15,6 +16,8 @@ import {
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Title parsing is CPU-only, very fast
+const TITLE_BATCH_SIZE = 1000;
+const MAX_TITLE_CANDIDATES = 5000;
 
 function truncate(value: string | null | undefined, max: number): string | null {
   if (value == null) return null;
@@ -46,16 +49,35 @@ export async function GET(request: Request) {
       { auth: { persistSession: false, autoRefreshToken: false } },
     );
 
-    const { data: listings, error } = await supabase
-      .from("listings")
-      .select("id, title, engine, transmission, body_style, trim")
-      .or("engine.is.null,transmission.is.null,body_style.is.null,trim.is.null")
-      .eq("status", "active")
-      .not("title", "is", null)
-      .order("updated_at", { ascending: true })
-      .limit(1000);
+    const missingTitleFields = buildMissingAnyFilter([
+      { field: "engine", type: "text" },
+      { field: "transmission", type: "text" },
+      { field: "body_style", type: "text" },
+      { field: "trim", type: "text" },
+    ]);
 
-    if (error) throw new Error(`Query error: ${error.message}`);
+    const listings: Array<{
+      id: string;
+      title: string | null;
+      engine: string | null;
+      transmission: string | null;
+      body_style: string | null;
+      trim: string | null;
+    }> = [];
+    for (let offset = 0; offset < MAX_TITLE_CANDIDATES; offset += TITLE_BATCH_SIZE) {
+      const { data, error } = await supabase
+        .from("listings")
+        .select("id, title, engine, transmission, body_style, trim")
+        .or(missingTitleFields)
+        .eq("status", "active")
+        .not("title", "is", null)
+        .order("updated_at", { ascending: true })
+        .range(offset, offset + TITLE_BATCH_SIZE - 1);
+
+      if (error) throw new Error(`Query error: ${error.message}`);
+      listings.push(...(data ?? []));
+      if (!data || data.length < TITLE_BATCH_SIZE) break;
+    }
 
     const discovered = listings.length;
     let written = 0;

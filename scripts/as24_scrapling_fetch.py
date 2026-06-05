@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sys
+from contextlib import redirect_stdout
 from concurrent.futures import ProcessPoolExecutor
 
 # Force UTF-8 stdout/stderr on Windows (avoids charmap codec errors)
@@ -23,14 +24,23 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
-from scrapling.fetchers.requests import Fetcher
+try:
+    from scrapling.fetchers.requests import Fetcher
+except ModuleNotFoundError:
+    from scrapling.fetchers import Fetcher
 
 
 # ── Fetch ──────────────────────────────────────────────────────────────
 
 def fetch_html(url: str, timeout: int = 15) -> str:
     try:
-        response = Fetcher.get(url, impersonate="chrome", timeout=timeout, retries=1)
+        with redirect_stdout(sys.stderr):
+            try:
+                response = Fetcher.get(url, impersonate="chrome", timeout=timeout, retries=1)
+            except TypeError as exc:
+                if "impersonate" not in str(exc):
+                    raise
+                response = Fetcher.get(url, timeout=timeout, retries=1, stealthy_headers=True)
     except Exception as exc:
         raise RuntimeError(f"Scrapling fetch failed: {exc}") from exc
 

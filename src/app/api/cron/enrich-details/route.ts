@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
+import { buildMissingDetailOrCriticalSpecFilter } from "@/features/scrapers/common/enrichmentLoopPolicy";
 import {
   clearScraperRunActive,
   clearStaleActiveRun,
@@ -62,13 +63,13 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Query AS24 active listings missing detail fields (trim IS NULL as proxy)
+    // Query AS24 active listings missing detail marker or critical spec fields.
     const { data: rows, error: fetchErr } = await client
       .from("listings")
-      .select("id,source_url")
+      .select("id,source_url,trim")
       .eq("source", "AutoScout24")
       .eq("status", "active")
-      .is("trim", null)
+      .or(buildMissingDetailOrCriticalSpecFilter(["trim"]))
       .order("updated_at", { ascending: true })
       .limit(100);
 
@@ -131,9 +132,11 @@ export async function GET(request: Request) {
         } catch (parseErr) {
           errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
           // Only mark as attempted on genuine parse failures (HTML was fetched OK but structure unexpected)
+          const marker: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          if (!row.trim) marker.trim = "";
           await client
             .from("listings")
-            .update({ trim: "", updated_at: new Date().toISOString() })
+            .update(marker)
             .eq("id", row.id);
           continue;
         }
@@ -171,10 +174,12 @@ export async function GET(request: Request) {
             enriched++;
           }
         } else {
-          // Mark as "attempted" — set trim to empty string to prevent re-processing
+          // Mark as attempted without erasing an existing trim on spec-only retries.
+          const marker: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          if (!row.trim) marker.trim = "";
           const { error: markerErr } = await client
             .from("listings")
-            .update({ trim: "", updated_at: new Date().toISOString() })
+            .update(marker)
             .eq("id", row.id);
           if (markerErr) {
             errors.push(`Marker failed (${row.id}): ${markerErr.message}`);

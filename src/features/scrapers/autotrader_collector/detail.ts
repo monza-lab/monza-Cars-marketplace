@@ -5,6 +5,7 @@ import { classifyVehicleIdentifier, extractVehicleIdentifierFromText } from "../
 import { extractAutoTraderImages, normalizeAutoTraderImageUrl } from "./imageUrls";
 import { fetchAutoTraderSearchListing } from "./searchResults";
 import { fetchATDetailWithScrapling, canUseScrapling } from "./scrapling";
+import { parseEngineFromText } from "../common/titleEnrichment";
 
 export interface AutoTraderDetailParsed {
   title: string | null;
@@ -348,6 +349,10 @@ function parseAutoTraderProductPagePayload(payload: AutoTraderProductPagePayload
     ?? classifyVehicleIdentifier(pickSpecValue(specs, "Serial"), "Serial")?.normalized
     ?? null;
 
+  const engine =
+    pickSpecValue(specs, "Engine", "Engine size", "Engine size litres", "Engine litres")
+    ?? parseEngineFromText([title, description].filter(Boolean).join(" "));
+
   return {
     title,
     price: price ?? null,
@@ -361,7 +366,7 @@ function parseAutoTraderProductPagePayload(payload: AutoTraderProductPagePayload
     exteriorColor: pickSpecValue(specs, "Body colour", "Body color", "Exterior colour", "Exterior color", "Colour", "Color"),
     interiorColor: null,
     transmission: pickSpecValue(specs, "Gearbox", "Transmission"),
-    engine: pickSpecValue(specs, "Engine", "Engine size", "Engine size litres", "Engine litres"),
+    engine,
     bodyStyle: pickSpecValue(specs, "Body type"),
   };
 }
@@ -404,6 +409,7 @@ export function parseAutoTraderHtml(html: string): AutoTraderDetailParsed {
   const engine = $('[data-testid="engine"]').first().text().trim()
     || $('[class*="engine"]').first().text().trim()
     || bodyText.match(/\b\d(?:\.\d)?\s?l\b/i)?.[0]
+    || parseEngineFromText([title, description].filter(Boolean).join(" "))
     || null;
 
   const exteriorColor = $('[data-testid="exterior-color"]').first().text().trim()

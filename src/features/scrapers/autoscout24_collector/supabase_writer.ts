@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
+import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -112,6 +113,17 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
+  const rarity = scoreListingRarity({
+    year: listing.year,
+    model: listing.model,
+    trim: listing.trim,
+    title: listing.title,
+    descriptionText: listing.descriptionText,
+    sellerNotes: listing.sellerNotes,
+    mileage: listing.mileageKm,
+    mileageUnit: listing.mileageUnitStored,
+  });
+
   return {
     source: listing.source,
     source_id: listing.sourceId,
@@ -148,6 +160,11 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     platform: listing.platform,
     current_bid: listing.pricing.currentBid,
     bid_count: listing.pricing.bidCount ?? 0,
+    rarity_score: rarity.score,
+    rarity_tier: rarity.tier,
+    rarity_signals_json: rarity.signals,
+    rarity_scored_at: meta.scrapeTimestamp,
+    rarity_score_version: RARITY_SCORE_VERSION,
     reserve_status: listing.reserveStatus,
     seller_notes: listing.sellerNotes,
     images: listing.photos,

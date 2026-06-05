@@ -8,6 +8,7 @@ import { classifyVehicleIdentifier } from "@/features/scrapers/common/vehicleIde
 import { fetchHtml } from "./net";
 import { parseDetailHtml } from "./detail";
 import { mapStatus } from "./normalize";
+import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -94,6 +95,16 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
+  const rarity = scoreListingRarity({
+    year: listing.year,
+    model: listing.model,
+    trim: listing.trim,
+    title: listing.title,
+    descriptionText: listing.descriptionText,
+    sellerNotes: listing.sellerNotes,
+    mileage: listing.mileageKm,
+    mileageUnit: listing.mileageUnitStored,
+  });
   const vinIdentifier = classifyVehicleIdentifier(listing.vin, "VIN");
   const row: Record<string, unknown> = {
     source: listing.source,
@@ -130,6 +141,11 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     platform: listing.platform,
     current_bid: listing.pricing.currentBid,
     bid_count: 0,
+    rarity_score: rarity.score,
+    rarity_tier: rarity.tier,
+    rarity_signals_json: rarity.signals,
+    rarity_scored_at: meta.scrapeTimestamp,
+    rarity_score_version: RARITY_SCORE_VERSION,
     reserve_status: null,
     seller_notes: listing.sellerNotes,
     engine: truncate(listing.engine, 100),

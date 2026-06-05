@@ -32,6 +32,7 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
+import { buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -121,13 +122,30 @@ async function main() {
     runtime,
   });
 
+  const missingDetailFilter = [
+    buildMissingAnyFilter([
+      { field: "engine", type: "text" },
+      { field: "transmission", type: "text" },
+      { field: "mileage", type: "numeric" },
+      { field: "vin", type: "text" },
+      { field: "color_exterior", type: "text" },
+      { field: "color_interior", type: "text" },
+      { field: "body_style", type: "text" },
+      { field: "description_text", type: "text" },
+      { field: "seller_notes", type: "text" },
+      { field: "current_bid", type: "numeric" },
+    ]),
+    "images.is.null",
+    "images.eq.{}",
+  ].join(",");
+
   // Query BaT listings needing enrichment
   const { data: listings, error } = await supabase
     .from("listings")
     .select("id, source_url, title, images, description_text, seller_notes, engine, mileage, vin, transmission, color_exterior, color_interior, body_style, current_bid, hammer_price, original_currency")
     .eq("source", "BaT")
     .eq("status", "active")
-    .or("engine.is.null,mileage.is.null,vin.is.null,transmission.is.null,color_exterior.is.null,color_interior.is.null,body_style.is.null,description_text.is.null,seller_notes.is.null,images.eq.{},current_bid.is.null")
+    .or(missingDetailFilter)
     .order("scrape_timestamp", { ascending: true })
     .limit(opts.limit);
 

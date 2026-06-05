@@ -66,6 +66,12 @@ export interface CollectorCar {
   canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
   /** Series id (e.g. "992"). */
   family?: string | null;
+  /** Deterministic rarity scoring persisted on the listing row. */
+  rarityScore?: number | null;
+  rarityTier?: "unique" | "very_rare" | "rare" | "uncommon" | "common" | null;
+  raritySignals?: string[] | null;
+  rarityScoredAt?: string | null;
+  rarityScoreVersion?: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

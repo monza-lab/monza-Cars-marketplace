@@ -78,6 +78,11 @@ export type DashboardAuction = {
   valuationBasis?: "sold" | "asking" | "unknown";
   canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
   family?: string | null;
+  rarityScore?: number | null;
+  rarityTier?: "unique" | "very_rare" | "rare" | "uncommon" | "common" | null;
+  raritySignals?: string[] | null;
+  rarityScoredAt?: string | null;
+  rarityScoreVersion?: string | null;
 };
 
 export type DashboardRegionTotals = {
@@ -187,6 +192,11 @@ export function transformCar(car: CollectorCar): DashboardAuction {
     valuationBasis: car.valuationBasis ?? "unknown",
     canonicalMarket: car.canonicalMarket ?? null,
     family: car.family ?? null,
+    rarityScore: car.rarityScore ?? null,
+    rarityTier: car.rarityTier ?? null,
+    raritySignals: car.raritySignals ?? null,
+    rarityScoredAt: car.rarityScoredAt ?? null,
+    rarityScoreVersion: car.rarityScoreVersion ?? null,
   };
 }
 
@@ -195,6 +205,10 @@ export function serializeEndTime(endTime: Date | null | undefined): string {
 }
 
 function sortDashboardCars(a: CollectorCar, b: CollectorCar): number {
+  const aScore = a.rarityScore ?? Number.NEGATIVE_INFINITY;
+  const bScore = b.rarityScore ?? Number.NEGATIVE_INFINITY;
+  if (aScore !== bScore) return bScore - aScore;
+
   const aTime = a.endTime instanceof Date ? a.endTime.getTime() : Number.MAX_SAFE_INTEGER;
   const bTime = b.endTime instanceof Date ? b.endTime.getTime() : Number.MAX_SAFE_INTEGER;
   if (aTime !== bTime) return aTime - bTime;
@@ -240,7 +254,9 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
     }
   }
 
-  const balancedRows = Array.from(regionalDeduped.values()).slice(0, DASHBOARD_DISPLAY_LIMIT);
+  const balancedRows = Array.from(regionalDeduped.values())
+    .sort(sortDashboardCars)
+    .slice(0, DASHBOARD_DISPLAY_LIMIT);
   if (balancedRows.length > 0) {
     if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) {
       return balancedRows;
@@ -268,7 +284,9 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
       if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) break;
     }
 
-    return balancedRows.slice(0, DASHBOARD_DISPLAY_LIMIT);
+    return balancedRows
+      .sort(sortDashboardCars)
+      .slice(0, DASHBOARD_DISPLAY_LIMIT);
   }
 
   const primary = await fetchPaginatedListings({
@@ -279,7 +297,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
     timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
   });
   if (primary.cars.length > 0) {
-    return primary.cars;
+    return [...primary.cars].sort(sortDashboardCars);
   }
 
   if (primary.transientError) {

@@ -100,6 +100,9 @@ function buildDetailParsed(content: ClassicDetailContent, url: string): DetailPa
       if (match) {
         const val = match[1].trim();
         if (val && val !== "-") specs[key] = val;
+        if (val === "-" && (key === "Engine" || key === "Transmission")) {
+          specs[key] = "Not specified";
+        }
       }
     }
   }

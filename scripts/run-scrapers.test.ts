@@ -23,4 +23,11 @@ describe("scraper runner enrichment profile", () => {
     expect(as24Block).toContain('"--delayMs=1000"');
     expect(as24Block).toContain("timeoutMs: 25 * 60_000");
   });
+
+  it("gives BaT enough detail capacity to clear current spec gaps in one pass", () => {
+    const source = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const batBlock = source.match(/id: "bat-detail",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
+
+    expect(batBlock).toContain('"--limit=200"');
+  });
 });

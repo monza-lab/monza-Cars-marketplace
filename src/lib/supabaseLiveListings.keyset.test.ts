@@ -28,7 +28,11 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 // Helper to build minimal ListingRow-like objects for the mock
-function makeRow(id: string, end_time: string | null = null) {
+function makeRow(
+  id: string,
+  end_time: string | null = null,
+  rarity_score: number | null = null,
+) {
   return {
     id,
     year: 2020,
@@ -42,7 +46,6 @@ function makeRow(id: string, end_time: string | null = null) {
     country: "USA",
     region: null,
     city: null,
-    hammer_price: null,
     original_currency: null,
     hammer_price: 50000,
     mileage: null,
@@ -65,6 +68,11 @@ function makeRow(id: string, end_time: string | null = null) {
     start_time: null,
     final_price: null,
     location: null,
+    rarity_score,
+    rarity_tier: rarity_score == null ? null : "rare",
+    rarity_signals_json: rarity_score == null ? null : ["paint_to_sample"],
+    rarity_scored_at: rarity_score == null ? null : "2026-04-18T10:00:00Z",
+    rarity_score_version: rarity_score == null ? null : "listing-rarity-v1",
   };
 }
 
@@ -95,9 +103,9 @@ describe("fetchPaginatedListings — keyset cursor pagination", () => {
     const pageSize = 3;
     // Return exactly pageSize rows (not pageSize+1), so hasMore should be false
     const rows = [
-      makeRow("id-1", "2026-04-20T10:00:00Z"),
-      makeRow("id-2", "2026-04-21T10:00:00Z"),
-      makeRow("id-3", "2026-04-22T10:00:00Z"),
+      makeRow("id-1", "2026-04-20T10:00:00Z", 80),
+      makeRow("id-2", "2026-04-21T10:00:00Z", 70),
+      makeRow("id-3", "2026-04-22T10:00:00Z", 60),
     ];
 
     chain.limit.mockResolvedValueOnce({ data: rows, error: null });
@@ -120,10 +128,10 @@ describe("fetchPaginatedListings — keyset cursor pagination", () => {
     const pageSize = 3;
     // Return pageSize+1 rows to trigger overflow
     const rows = [
-      makeRow("id-1", "2026-04-20T10:00:00Z"),
-      makeRow("id-2", "2026-04-21T10:00:00Z"),
-      makeRow("id-3", "2026-04-22T10:00:00Z"),
-      makeRow("id-4", "2026-04-23T10:00:00Z"), // the overflow row
+      makeRow("id-1", "2026-04-20T10:00:00Z", 90),
+      makeRow("id-2", "2026-04-21T10:00:00Z", 80),
+      makeRow("id-3", "2026-04-22T10:00:00Z", 70),
+      makeRow("id-4", "2026-04-23T10:00:00Z", 60), // the overflow row
     ];
 
     chain.limit.mockResolvedValueOnce({ data: rows, error: null });
@@ -141,13 +149,15 @@ describe("fetchPaginatedListings — keyset cursor pagination", () => {
     expect(result.cars).toHaveLength(pageSize); // trimmed to pageSize
     // nextCursor must reference the last KEPT row (index pageSize-1 = "id-3")
     expect(result.nextCursor).toEqual({
+      rarityScore: 70,
       endTime: "2026-04-22T10:00:00Z",
       id: "id-3",
     });
   });
 
-  it("case 3: cursor with non-null endTime → .or() called with keyset clause", async () => {
+  it("case 3: cursor with rarity score and non-null endTime → .or() called with the rarity-first keyset clause", async () => {
     const pageSize = 5;
+    const cursorRarityScore = 70;
     const cursorEndTime = "2026-04-22T10:00:00Z";
     const cursorId = "id-3";
 
@@ -158,21 +168,35 @@ describe("fetchPaginatedListings — keyset cursor pagination", () => {
     await fetchPaginatedListings({
       make: "Porsche",
       pageSize,
-      cursor: { endTime: cursorEndTime, id: cursorId },
+      cursor: { rarityScore: cursorRarityScore, endTime: cursorEndTime, id: cursorId },
       status: "all",
     });
 
     // Verify .or() was called with the exact keyset OR clause
     const orCalls = chain.or.mock.calls as [string][];
     const keysetOrCall = orCalls.find(([clause]) =>
+      clause.includes(`rarity_score.lt.${cursorRarityScore}`) &&
+      clause.includes(`rarity_score.eq.${cursorRarityScore}`) &&
       clause.includes(`end_time.gt.${cursorEndTime}`) &&
-      clause.includes(`end_time.eq.${cursorEndTime}`) &&
       clause.includes(`id.lt.${cursorId}`)
     );
 
     expect(keysetOrCall).toBeDefined();
     expect(keysetOrCall?.[0]).toBe(
-      `end_time.gt.${cursorEndTime},and(end_time.eq.${cursorEndTime},id.lt.${cursorId})`
+      `rarity_score.lt.${cursorRarityScore},and(rarity_score.eq.${cursorRarityScore},end_time.gt.${cursorEndTime}),and(rarity_score.eq.${cursorRarityScore},end_time.eq.${cursorEndTime},id.lt.${cursorId}),and(rarity_score.eq.${cursorRarityScore},end_time.is.null),rarity_score.is.null`
     );
+  });
+
+  it("orders active listings by rarity score before end time", async () => {
+    const { fetchPaginatedListings } = await import("./supabaseLiveListings");
+
+    await fetchPaginatedListings({
+      make: "Porsche",
+      status: "active",
+    });
+
+    expect(chain.order).toHaveBeenNthCalledWith(1, "rarity_score", { ascending: false, nullsFirst: false });
+    expect(chain.order).toHaveBeenNthCalledWith(2, "end_time", { ascending: true, nullsFirst: false });
+    expect(chain.order).toHaveBeenNthCalledWith(3, "id", { ascending: false });
   });
 });

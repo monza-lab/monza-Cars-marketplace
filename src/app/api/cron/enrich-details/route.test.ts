@@ -5,6 +5,11 @@ import { GET } from "./route";
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
+const mockOr = vi.fn().mockReturnValue({
+  order: vi.fn().mockReturnValue({
+    limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+  }),
+});
 const mockSelect = vi.fn().mockReturnValue({
   eq: vi.fn().mockReturnValue({
     eq: vi.fn().mockReturnValue({
@@ -13,6 +18,7 @@ const mockSelect = vi.fn().mockReturnValue({
           limit: vi.fn().mockResolvedValue({ data: [], error: null }),
         }),
       }),
+      or: mockOr,
     }),
   }),
 });
@@ -36,6 +42,7 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   markScraperRunStarted: vi.fn().mockResolvedValue(undefined),
   recordScraperRun: vi.fn().mockResolvedValue(undefined),
   clearScraperRunActive: vi.fn().mockResolvedValue(undefined),
+  clearStaleActiveRun: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
@@ -74,6 +81,9 @@ describe("GET /api/cron/enrich-details", () => {
     expect(data.success).toBe(true);
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
+    expect(mockOr).toHaveBeenCalledWith(
+      "trim.is.null,trim.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
   });
 
   it("calls monitoring lifecycle functions", async () => {
@@ -122,6 +132,14 @@ describe("GET /api/cron/enrich-details", () => {
               }),
             }),
           }),
+          or: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: [{ id: "test-id", source_url: "https://www.autoscout24.com/offers/test", trim: null }],
+                error: null,
+              }),
+            }),
+          }),
         }),
       }),
     });
@@ -129,7 +147,7 @@ describe("GET /api/cron/enrich-details", () => {
     // Mock fetch returning valid HTML
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      text: vi.fn().mockResolvedValue("<html><body>empty page</body></html>"),
+      text: vi.fn().mockResolvedValue("<html><body>listingDetails empty page</body></html>"),
     }) as unknown as typeof fetch;
 
     // Mock parseDetailHtml returning no useful fields

@@ -31,12 +31,14 @@ if (existsSync(envPath)) {
 
 import { fetchAutoTraderDetail } from "../src/features/scrapers/autotrader_collector/detail";
 import { proxyFetch } from "../src/features/scrapers/common/proxy-fetch";
+import { parseEngineFromText } from "../src/features/scrapers/common/titleEnrichment";
 import {
   markScraperRunStarted,
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
 import type { RuntimeEnv } from "../src/features/scrapers/common/monitoring/types";
+import { buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 // ── CLI args ─────────────────────────────────────────────────────────
 function parseArgs() {
@@ -104,13 +106,25 @@ async function main() {
     runtime,
   });
 
+  const missingDetailFilter = [
+    "current_bid.lte.0",
+    "photos_count.lt.5",
+    buildMissingAnyFilter([
+      { field: "current_bid", type: "numeric" },
+      { field: "engine", type: "text" },
+      { field: "transmission", type: "text" },
+      { field: "mileage", type: "numeric" },
+      { field: "description_text", type: "text" },
+    ]),
+  ].join(",");
+
   // Query active AutoTrader listings needing enrichment
   const { data: listings, error } = await supabase
     .from("listings")
     .select("id, source_url, title, engine, transmission, mileage, vin, color_exterior, description_text, images, photos_count, current_bid")
     .eq("source", "AutoTrader")
     .eq("status", "active")
-    .or("current_bid.is.null,current_bid.lte.0,engine.is.null,transmission.is.null,mileage.is.null,description_text.is.null,photos_count.lt.5")
+    .or(missingDetailFilter)
     .order("updated_at", { ascending: true })
     .limit(opts.limit);
 
@@ -167,7 +181,12 @@ async function main() {
           updates.current_bid = detail.price;
           updates.hammer_price = detail.price;
         }
-        if (!listing.engine && detail.engine) updates.engine = truncate(detail.engine, 100);
+        if (!listing.engine) {
+          const engineFromText = parseEngineFromText(
+            [detail.title, detail.description, listing.title].filter(Boolean).join(" "),
+          );
+          updates.engine = truncate(detail.engine ?? engineFromText ?? "Not specified", 100);
+        }
         if (!listing.transmission && detail.transmission) updates.transmission = truncate(detail.transmission, 100);
         if (!listing.mileage && detail.mileage != null) {
           const km = detail.mileageUnit === "km" ? detail.mileage : Math.round(detail.mileage * 1.609344);

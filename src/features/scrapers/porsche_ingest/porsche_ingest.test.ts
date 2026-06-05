@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CanonicalListingSchema } from "./contracts/listing";
 import { buildListingFingerprint, dedupeListings } from "./services/dedupe";
 import { normalizeRawListing } from "./services/normalize";
+import { buildRarityFields } from "./repository/supabase_writer";
 
 describe("porsche_ingest normalize + dedupe", () => {
   it("normalizes BaT payload into canonical contract", () => {
@@ -128,5 +129,44 @@ describe("porsche_ingest normalize + dedupe", () => {
       city: "Munich",
     });
     expect(fingerprint).toBe("2017|911|50000|88000|munich");
+  });
+
+  it("builds rarity fields for canonical Porsche listings", () => {
+    const fields = buildRarityFields(
+      CanonicalListingSchema.parse({
+        source: "BaT",
+        source_id: "bat-1",
+        source_url: "https://bringatrailer.com/listing/1",
+        make: "Porsche",
+        model: "992 GT3",
+        year: 2022,
+        title: "2022 Porsche 992 GT3 Touring Paint-to-Sample",
+        status: "sold",
+        sale_date: "2026-06-04",
+        mileage_unit: "km",
+        auction_house: "Bring a Trailer",
+        images: [],
+        raw_payload: {},
+        description_text: "Paint-to-Sample Gulf Blue. PCCB, bucket seats, accident-free, original paint, one owner, 3,200 miles.",
+        mileage: 3200,
+      }),
+    );
+
+    expect(fields).toEqual({
+      rarity_score: 100,
+      rarity_tier: "unique",
+      rarity_signals_json: [
+        "paint_to_sample",
+        "pccb",
+        "bucket_seats",
+        "accident_free",
+        "original_paint",
+        "low_owner_count",
+        "low_mileage",
+        "gt_model",
+      ],
+      rarity_scored_at: expect.any(String),
+      rarity_score_version: "listing-rarity-v3",
+    });
   });
 });

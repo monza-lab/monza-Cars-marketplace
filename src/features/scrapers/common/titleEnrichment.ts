@@ -10,6 +10,18 @@ function hasNegativeContext(text: string, matchIndex: number, negWords: string[]
 }
 
 export function parseEngineFromText(text: string): string | null {
+  if (/\bnot\s+fitted\s+with\s+an\s+engine\b/i.test(text)) {
+    return "No engine fitted";
+  }
+
+  if (/\bTaycan\b/i.test(text)) {
+    return "Electric Motor";
+  }
+
+  if (/\b(?:fully electric vehicle|battery electric|electric vehicle|electric motor|EV)\b/i.test(text)) {
+    return "Electric Motor";
+  }
+
   // Pattern: displacement + optional config + optional forced induction
   const displacementPattern =
     /\b(\d\.\d)\s*(?:-\s*)?(?:L(?:iter)?|litre)\s*((?:(?:Twin-?\s*)?Turbo(?:charged)?|Supercharged|(?:Flat|Boxer|Inline|Straight|V)-?\s*\d+|V\d+|I\d+)(?:\s+(?:(?:Twin-?\s*)?Turbo(?:charged)?|Supercharged))?)/i;
@@ -22,6 +34,35 @@ export function parseEngineFromText(text: string): string | null {
     const displacement = `${dispMatch[1]}L`;
     const config = dispMatch[2].trim();
     return `${displacement} ${config}`;
+  }
+
+  const displacementConfigNoUnit = text.match(
+    /\b(\d[\.,]\d)\s*i?\s+(V\s*\d+|V\d+|Flat-?\s*(?:Six|Four|Eight|6|4|8)|Boxer-?\s*(?:Six|Four|6|4)|Inline-?\s*(?:Six|Four|6|4)|Straight-?\s*(?:Six|Four|6|4))\b/i
+  );
+  if (displacementConfigNoUnit) {
+    if (hasNegativeContext(text, displacementConfigNoUnit.index!, ["fuel", "capacity", "tank", "gallon", "kwh"])) {
+      return null;
+    }
+    return `${displacementConfigNoUnit[1].replace(",", ".")}L ${displacementConfigNoUnit[2].trim()}`;
+  }
+
+  const displacementPowerNoUnit = text.match(/\b(\d[\.,]\d)\s*i?\s+\d{2,4}\s*(?:ch|cv|hp|ps)\b/i);
+  if (displacementPowerNoUnit) {
+    if (hasNegativeContext(text, displacementPowerNoUnit.index!, ["fuel", "capacity", "tank", "gallon", "kwh"])) {
+      return null;
+    }
+    return `${displacementPowerNoUnit[1].replace(",", ".")}L`;
+  }
+
+  const ccEngineMatch = text.match(
+    /\b(\d{3,4})\s*cc\s+((?:diesel|gasoline|petrol|air-cooled|water-cooled|flat|boxer|inline|straight|single|twin|four|six|eight|[iv]\s*\d)[\w\s-]{0,40})\b/i
+  );
+  if (ccEngineMatch) {
+    if (hasNegativeContext(text, ccEngineMatch.index!, ["fuel", "capacity", "tank", "gallon"])) {
+      return null;
+    }
+    const config = ccEngineMatch[2].trim().replace(/\s+/g, " ");
+    return `${ccEngineMatch[1]}cc ${config}`;
   }
 
   const dispOnly = text.match(/\b(\d\.\d)\s*(?:-\s*)?(?:L(?:iter)?|litre)\b/i);
@@ -71,6 +112,11 @@ export function parseTransmissionFromText(text: string): string | null {
     type = type.charAt(0).toUpperCase() + type.slice(1);
     if (type.toLowerCase() === "auto") type = "Automatic";
     return `${speed}-Speed ${type}`;
+  }
+
+  const speedOnlyMatch = text.match(/\b(\d)\s*-?\s*(?:speed|spd)\b/i);
+  if (speedOnlyMatch) {
+    return `${speedOnlyMatch[1]}-Speed Manual`;
   }
 
   const standalonePattern = /\b(PDK|DCT|DSG|SMG|Tiptronic|F1\s*gearbox|Sequential)\b/i;

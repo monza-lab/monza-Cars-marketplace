@@ -53,6 +53,11 @@ type ListingRow = {
   platform: string | null;
   current_bid: number | null;
   bid_count: number | null;
+  rarity_score: number | null;
+  rarity_tier: string | null;
+  rarity_signals_json: string[] | null;
+  rarity_scored_at: string | null;
+  rarity_score_version: string | null;
   reserve_status: string | null;
   seller_notes: string | null;
   images: string[] | null;
@@ -122,11 +127,11 @@ function normalizeDbStatusFilter(statusFilter?: string): string | undefined {
 
 // ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
 
 // ─── Narrow select (without joins — fallback if photos_media join fails) ───
 const SELECT_NARROW =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
+  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
 
 // ─── Mappers ───
 
@@ -600,6 +605,15 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
     valuationBasis: derived.basis,
     canonicalMarket: derived.canonicalMarket,
     family: derived.family,
+    rarityScore: row.rarity_score ?? null,
+    rarityTier: row.rarity_tier === null
+      ? null
+      : row.rarity_tier as CollectorCar["rarityTier"],
+    raritySignals: Array.isArray(row.rarity_signals_json)
+      ? row.rarity_signals_json.filter((value): value is string => typeof value === "string")
+      : null,
+    rarityScoredAt: row.rarity_scored_at ?? null,
+    rarityScoreVersion: row.rarity_score_version ?? null,
   };
 }
 
@@ -864,6 +878,7 @@ async function queryAllListingsDirect(
 
     if (dbStatusFilter === "active") {
       query = applyLiveStatusFilter(query);
+      query = query.order("rarity_score", { ascending: false, nullsFirst: false });
       query = query.order("end_time", { ascending: true, nullsFirst: false });
       query = query.order("id", { ascending: false });
     } else {
@@ -908,6 +923,7 @@ async function queryListingsMany(
 
     if (dbStatusFilter === "active") {
       query = applyLiveStatusFilter(query, nowIso);
+      query = query.order("rarity_score", { ascending: false, nullsFirst: false });
       query = query.order("end_time", { ascending: true, nullsFirst: false });
       query = query.order("id", { ascending: false });
     } else {
@@ -1471,6 +1487,53 @@ const SORT_COLUMN_MAP: Record<string, string> = {
   trendValue: "hammer_price",
 };
 
+type RarityCursor = {
+  rarityScore: number | null;
+  endTime: string | null;
+  id: string;
+};
+
+function toRarityCursor(row: ListingRow): RarityCursor {
+  return {
+    rarityScore: row.rarity_score ?? null,
+    endTime: row.end_time ?? null,
+    id: row.id,
+  };
+}
+
+function buildRarityKeysetClause(cursor: RarityCursor): string {
+  const score = cursor.rarityScore;
+  const id = cursor.id;
+  const endTime = cursor.endTime;
+
+  if (score === null) {
+    if (endTime === null) {
+      return `and(rarity_score.is.null,end_time.is.null,id.lt.${id})`;
+    }
+    return [
+      `and(rarity_score.is.null,end_time.gt.${endTime})`,
+      `and(rarity_score.is.null,end_time.eq.${endTime},id.lt.${id})`,
+      `and(rarity_score.is.null,end_time.is.null,id.lt.${id})`,
+    ].join(",");
+  }
+
+  if (endTime === null) {
+    return [
+      `rarity_score.lt.${score}`,
+      `and(rarity_score.eq.${score},end_time.is.null,id.lt.${id})`,
+      `rarity_score.is.null`,
+    ].join(",");
+  }
+
+  return [
+    `rarity_score.lt.${score}`,
+    `and(rarity_score.eq.${score},end_time.gt.${endTime})`,
+    `and(rarity_score.eq.${score},end_time.eq.${endTime},id.lt.${id})`,
+    `and(rarity_score.eq.${score},end_time.is.null)`,
+    `rarity_score.is.null`,
+  ].join(",");
+}
+
 /**
  * Apply the filters shared by the paginated rows query and the live-count
  * HEAD query. Keeps the two queries in sync so the counts always describe
@@ -1544,7 +1607,7 @@ function applyPaginatedListingFilters<T>(
 export async function fetchPaginatedListings(options: {
   make: string;
   pageSize?: number;
-  cursor?: { endTime: string | null; id: string } | null;
+  cursor?: { rarityScore: number | null; endTime: string | null; id: string } | null;
   region?: string | null;
   platform?: string | null;
   query?: string | null;
@@ -1559,7 +1622,7 @@ export async function fetchPaginatedListings(options: {
 }): Promise<{
   cars: CollectorCar[];
   hasMore: boolean;
-  nextCursor: { endTime: string | null; id: string } | null;
+  nextCursor: { rarityScore: number | null; endTime: string | null; id: string } | null;
   totalCount: number | null;
   totalLiveCount: number | null;
   transientError?: boolean;
@@ -1621,26 +1684,15 @@ export async function fetchPaginatedListings(options: {
     });
 
     // Keyset cursor filter — applied AFTER all other filters.
-    // Uses the partial index: listings_active_endtime_id_idx ON (end_time ASC NULLS LAST, id DESC)
+    // Uses the rarity-first live index aligned to the ORDER BY below.
     if (options.cursor) {
-      const { endTime, id } = options.cursor;
-      if (endTime !== null) {
-        // Rows with (end_time > cursor.endTime) OR (end_time == cursor.endTime AND id < cursor.id)
-        // OR end_time IS NULL (classified/dealer listings sort LAST via NULLS LAST).
-        // Without the null branch, NULL end_time rows are invisible to keyset pagination
-        // because NULL > any_timestamp is never true in SQL.
-        query = query.or(
-          `end_time.gt.${endTime},and(end_time.eq.${endTime},id.lt.${id}),end_time.is.null`,
-        );
-      } else {
-        // endTime null means we're past all non-null rows; paginate by id among the nulls.
-        query = query.is("end_time", null).lt("id", id);
-      }
+      query = query.or(buildRarityKeysetClause(options.cursor));
     }
 
     // TODO: sortBy / sortOrder params are accepted for API compatibility but ignored here.
     // Keyset pagination requires a FIXED ORDER BY that matches the cursor comparison.
     // Client-side sort of the loaded pages covers the sort UX for now.
+    query = query.order("rarity_score", { ascending: false, nullsFirst: false });
     query = query.order("end_time", { ascending: true, nullsFirst: false });
     query = query.order("id", { ascending: false });
 
@@ -1674,7 +1726,7 @@ export async function fetchPaginatedListings(options: {
     // skipped on the next page.
     const lastRaw = rawPage[rawPage.length - 1] ?? null;
     const nextCursor = hasMore && lastRaw
-      ? { endTime: lastRaw.end_time ?? null, id: lastRaw.id }
+      ? toRarityCursor(lastRaw)
       : null;
 
     // Junk filtering as post-processing — pages may return fewer than

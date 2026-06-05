@@ -202,7 +202,7 @@ const SCRAPERS: ScraperDef[] = [
     args: [
       "tsx",
       "scripts/bat-detail-scraper.ts",
-      "--limit=100",
+      "--limit=200",
       "--timeBudgetMs=1800000",
     ],
     dryRunFlag: "--dryRun",

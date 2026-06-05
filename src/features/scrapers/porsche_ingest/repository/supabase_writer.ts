@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { CanonicalListing } from "../contracts/listing";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { buildListingFingerprint } from "../services/dedupe";
+import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
 export type WriteResult = { inserted: number; updated: number; warnings: string[] };
 type WriteOptions = { strictSaleDate?: boolean; listingsOnly?: boolean };
@@ -26,6 +27,27 @@ function createSupabase(): SupabaseClient {
     throw new Error("Missing Supabase env. Expected NEXT_PUBLIC_SUPABASE_URL and service/anon key.");
   }
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+export function buildRarityFields(listing: CanonicalListing): Record<string, unknown> {
+  const rarity = scoreListingRarity({
+    year: listing.year,
+    model: listing.model,
+    trim: null,
+    title: listing.title,
+    descriptionText: listing.description_text ?? null,
+    sellerNotes: null,
+    mileage: listing.mileage ?? null,
+    mileageUnit: listing.mileage_unit ?? null,
+  });
+
+  return {
+    rarity_score: rarity.score,
+    rarity_tier: rarity.tier,
+    rarity_signals_json: rarity.signals,
+    rarity_scored_at: new Date().toISOString(),
+    rarity_score_version: RARITY_SCORE_VERSION,
+  };
 }
 
 async function listingIdAfterUpsert(
@@ -63,6 +85,7 @@ async function listingIdAfterUpsert(
     photos_count: listing.images.length,
     updated_at: new Date().toISOString(),
     scrape_timestamp: new Date().toISOString(),
+    ...buildRarityFields(listing),
   };
 
   const exists = await client

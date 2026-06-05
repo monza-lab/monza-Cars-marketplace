@@ -5,6 +5,8 @@ export interface MissingFieldSpec {
   type: MissingFieldType;
 }
 
+const CRITICAL_SPEC_FIELDS = ["engine", "transmission"] as const;
+
 export function buildMissingAnyFilter(fields: MissingFieldSpec[]): string {
   return fields
     .flatMap((spec) =>
@@ -13,6 +15,19 @@ export function buildMissingAnyFilter(fields: MissingFieldSpec[]): string {
         : [`${spec.field}.is.null`],
     )
     .join(",");
+}
+
+export function buildMissingCriticalSpecFilter(): string {
+  return buildMissingAnyFilter(
+    CRITICAL_SPEC_FIELDS.map((field) => ({ field, type: "text" as const })),
+  );
+}
+
+export function buildMissingDetailOrCriticalSpecFilter(markerFields: string[]): string {
+  return buildMissingAnyFilter([
+    ...markerFields.map((field) => ({ field, type: "text" as const })),
+    ...CRITICAL_SPEC_FIELDS.map((field) => ({ field, type: "text" as const })),
+  ]);
 }
 
 export function classifyScraplingBody(args: {
@@ -34,8 +49,6 @@ const CRITICAL_NO_OUTPUT_IDS = new Set([
   "cron-beforward-enrich",
   "cron-elferspot-enrich",
   "cron-enrich-details",
-  "cron-vin",
-  "cron-titles",
   "cron-images",
 ]);
 

@@ -18,8 +18,10 @@ const spyOr = vi.fn();
 const spyGte = vi.fn();
 const spyLte = vi.fn();
 const spyIn = vi.fn();
+const spyIs = vi.fn();
+const spyLt = vi.fn();
 const spyOrder = vi.fn();
-const spyRange = vi.fn();
+const spyLimit = vi.fn();
 const spyFrom = vi.fn();
 const createdChains: Record<string, (...args: unknown[]) => unknown>[] = [];
 
@@ -42,9 +44,11 @@ function makeChain() {
   chain.gte = wrap(spyGte);
   chain.lte = wrap(spyLte);
   chain.in = wrap(spyIn);
+  chain.is = wrap(spyIs);
+  chain.lt = wrap(spyLt);
   chain.order = wrap(spyOrder);
-  chain.range = (...args: unknown[]) => {
-    spyRange(...args);
+  chain.limit = (...args: unknown[]) => {
+    spyLimit(...args);
     return Promise.resolve({ data: [], error: null });
   };
 
@@ -74,8 +78,10 @@ describe("fetchPaginatedListings", () => {
     spyGte.mockClear();
     spyLte.mockClear();
     spyIn.mockClear();
+    spyIs.mockClear();
+    spyLt.mockClear();
     spyOrder.mockClear();
-    spyRange.mockClear();
+    spyLimit.mockClear();
     spyFrom.mockClear();
     createdChains.length = 0;
   });
@@ -212,5 +218,20 @@ describe("fetchPaginatedListings", () => {
 
     expect(spyFrom).toHaveBeenCalledTimes(1);
     expect(spyFrom).toHaveBeenCalledWith("listings");
+  });
+
+  it("case 5: default path uses a fixed rarity-first ORDER BY for stable keyset pagination", async () => {
+    const { fetchPaginatedListings } = await import("./supabaseLiveListings");
+
+    await fetchPaginatedListings({
+      make: "Porsche",
+      status: "all",
+    });
+
+    expect(spyOrder.mock.calls).toEqual([
+      ["rarity_score", { ascending: false, nullsFirst: false }],
+      ["end_time", { ascending: true, nullsFirst: false }],
+      ["id", { ascending: false }],
+    ]);
   });
 });

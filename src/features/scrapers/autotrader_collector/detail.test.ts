@@ -59,6 +59,28 @@ describe("parseAutoTraderHtml", () => {
     expect(result.engine).toBe("3.0L");
   });
 
+  it("derives electric motor from AutoTrader description text", () => {
+    const html = `
+      <html><body>
+        <h1>Porsche Taycan</h1>
+        <section data-testid="description">As a fully electric vehicle, it offers a substantial battery.</section>
+      </body></html>
+    `;
+    const result = parseAutoTraderHtml(html);
+    expect(result.engine).toBe("Electric Motor");
+  });
+
+  it("derives displacement and config from AutoTrader description text", () => {
+    const html = `
+      <html><body>
+        <h1>Porsche Cayenne</h1>
+        <section data-testid="description">Porsche Cayenne strong and reliable 3.0 v6 diesel euro 5 compliant.</section>
+      </body></html>
+    `;
+    const result = parseAutoTraderHtml(html);
+    expect(result.engine).toBe("3.0L v6");
+  });
+
   it("extracts transmission from class selector", () => {
     const html = '<html><body><span class="spec-transmission">Automatic</span></body></html>';
     const result = parseAutoTraderHtml(html);

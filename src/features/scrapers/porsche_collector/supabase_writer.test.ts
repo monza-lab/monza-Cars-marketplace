@@ -110,4 +110,34 @@ describe("porsche_collector supabase mapping", () => {
     expect(row.reserve_status).toBe("RESERVE_MET");
     expect(row.hammer_price).toBe(145000);
   });
+
+  it("persists deterministic rarity fields for an explicit rare Porsche listing", () => {
+    const rareListing: NormalizedListing = {
+      ...listing,
+      title: "2022 Porsche 992 GT3 Touring Paint-to-Sample",
+      model: "992 GT3",
+      trim: "Touring",
+      descriptionText:
+        "Paint-to-Sample Gulf Blue. PCCB, bucket seats, accident-free, original paint, one owner, 3,200 miles.",
+      sellerNotes: "Rare factory build with documented provenance.",
+      mileageKm: 3200,
+    };
+
+    const row = mapNormalizedListingToListingsRow(rareListing, meta);
+
+    expect(row.rarity_score).toBe(100);
+    expect(row.rarity_tier).toBe("unique");
+    expect(row.rarity_signals_json).toEqual([
+      "paint_to_sample",
+      "pccb",
+      "bucket_seats",
+      "accident_free",
+      "original_paint",
+      "low_owner_count",
+      "low_mileage",
+      "gt_model",
+    ]);
+    expect(row.rarity_scored_at).toBe(meta.scrapeTimestamp);
+    expect(row.rarity_score_version).toBe("listing-rarity-v3");
+  });
 });

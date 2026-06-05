@@ -6,6 +6,8 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
+import { getAllSources } from "../src/features/scrapers/common/sourceRegistry";
+
 const ELFERSPOT_PRICE_COVERED_STATUSES = [
   "sold",
   "price_on_request",
@@ -43,6 +45,18 @@ export interface QualityCheckResult {
   timestamp: string;
 }
 
+function buildSpecCoverageTargets(): QualityTarget[] {
+  const sources = ["ALL", ...getAllSources().map((source) => source.id)];
+
+  return sources.flatMap((source) => {
+    const labelPrefix = source === "ALL" ? "All" : source;
+    return [
+      { source, field: "engine", targetPct: 100, label: `${labelPrefix} engine` },
+      { source, field: "transmission", targetPct: 100, label: `${labelPrefix} transmission` },
+    ];
+  });
+}
+
 export const DEFAULT_TARGETS: QualityTarget[] = [
   { source: "AutoScout24", field: "description_text", targetPct: 90, label: "AS24 descriptions" },
   { source: "AutoScout24", field: "trim", targetPct: 90, label: "AS24 trim" },
@@ -55,8 +69,7 @@ export const DEFAULT_TARGETS: QualityTarget[] = [
   { source: "AutoTrader", field: "description_text", targetPct: 90, label: "AT descriptions" },
   { source: "AutoTrader", field: "images", targetPct: 95, label: "AT images" },
   { source: "ALL", field: "images", targetPct: 95, label: "All images" },
-  { source: "ALL", field: "engine", targetPct: 80, label: "All engine" },
-  { source: "ALL", field: "transmission", targetPct: 80, label: "All transmission" },
+  ...buildSpecCoverageTargets(),
 ];
 
 /**

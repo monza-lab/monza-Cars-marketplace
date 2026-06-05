@@ -24,6 +24,28 @@ describe("titleEnrichment", () => {
     it("should extract supercharged", () => {
       expect(parseEngineFromText("5.2L V10 Supercharged")).toBe("5.2L V10 Supercharged");
     });
+    it("should extract displacement + config without liter suffix from descriptions", () => {
+      expect(parseEngineFromText("Porsche Cayenne strong and reliable 3.0 v6 diesel")).toBe("3.0L v6");
+    });
+    it("should extract displacement from horsepower suffix listings", () => {
+      expect(parseEngineFromText("Porsche 911 Type 991 GTS 3.0 450ch PDK7")).toBe("3.0L");
+      expect(parseEngineFromText("Porsche Boxster 2.7 245CV MANUALE")).toBe("2.7L");
+    });
+    it("should extract displacement + config with market suffixes", () => {
+      expect(parseEngineFromText("Porsche 928 5.0i V8 - 320 MK2")).toBe("5.0L V8");
+    });
+    it("should identify electric vehicle descriptions", () => {
+      expect(parseEngineFromText("As a fully electric vehicle, it offers a substantial battery")).toBe("Electric Motor");
+    });
+    it("should identify Taycan titles as electric", () => {
+      expect(parseEngineFromText("Porsche Taycan 4 Cross Turismo")).toBe("Electric Motor");
+    });
+    it("should identify listings explicitly sold without a fitted engine", () => {
+      expect(parseEngineFromText("The car is not fitted with an engine, and a replacement case is included")).toBe("No engine fitted");
+    });
+    it("should extract cc-based small engine descriptions", () => {
+      expect(parseEngineFromText("power is from an air-cooled 822cc diesel single")).toBe("822cc diesel single");
+    });
     it("should return null for no engine info", () => {
       expect(parseEngineFromText("2020 Porsche Cayenne S")).toBeNull();
     });
@@ -56,6 +78,10 @@ describe("titleEnrichment", () => {
     });
     it("should extract tiptronic", () => {
       expect(parseTransmissionFromText("5-Speed Tiptronic")).toBe("5-Speed Tiptronic");
+    });
+    it("should extract speed-only manual hints from collector titles", () => {
+      expect(parseTransmissionFromText("1995 Porsche 911 Carrera Cabriolet 6-Speed")).toBe("6-Speed Manual");
+      expect(parseTransmissionFromText("1974 Porsche 911 Carrera Targa 5-Speed")).toBe("5-Speed Manual");
     });
     it("should return null for no transmission", () => {
       expect(parseTransmissionFromText("2020 Porsche 911 Carrera")).toBeNull();
@@ -142,10 +168,8 @@ describe("titleEnrichment", () => {
         expected: { engine: null, transmission: null, bodyStyle: null, trim: "Carrera" },
       },
       {
-        // "6-Speed" alone (no type word) does not match the speedPattern which requires a type word.
-        // The standalone and simple patterns also do not match. Result: null.
         input: "2022 Porsche 718 Cayman GT4 RS 6-Speed",
-        expected: { engine: null, transmission: null, bodyStyle: null, trim: "GT4 RS" },
+        expected: { engine: null, transmission: "6-Speed Manual", bodyStyle: null, trim: "GT4 RS" },
       },
       {
         input: "2024 Porsche 911 Turbo S Cabriolet",
@@ -153,7 +177,7 @@ describe("titleEnrichment", () => {
       },
       {
         input: "1989 Porsche 911 Carrera 4 Targa G50 5-Speed",
-        expected: { engine: null, transmission: null, bodyStyle: "Targa", trim: "Carrera 4" },
+        expected: { engine: null, transmission: "5-Speed Manual", bodyStyle: "Targa", trim: "Carrera 4" },
       },
       {
         input: "No Reserve: 2015 Porsche Macan S",
@@ -212,8 +236,6 @@ describe("titleEnrichment", () => {
       },
     ];
 
-    // "1989 Porsche 911 Carrera 4 Targa G50 5-Speed":
-    // speedPattern requires a type word after "speed" — "5-Speed" alone at end → no match → transmission: null
     for (const { input, expected } of [...batCases, ...as24Cases, ...autotraderCases, ...beforwardCases]) {
       it(`parses: "${input.slice(0, 60)}"`, () => {
         if ("engine" in expected && expected.engine !== undefined) {

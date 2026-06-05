@@ -90,6 +90,9 @@ const activeCar = {
   category: "911",
   originalCurrency: "USD",
   family: "992",
+  rarityScore: 80,
+  rarityTier: "very_rare",
+  raritySignals: ["paint_to_sample"],
   trend: "Stable",
 } as const
 
@@ -556,6 +559,82 @@ describe("dashboard cache", () => {
       regionalValByFamily: {},
       seriesCountsByRegion: { all: {}, US: {}, UK: {}, EU: {}, JP: {} },
     })
+  })
+
+  it("preserves rarity-first ordering when regional live samples are merged", async () => {
+    fetchPaginatedListings.mockReset()
+    fetchPaginatedListings
+      .mockResolvedValueOnce({
+        cars: [
+          {
+            ...activeCar,
+            id: "us-high",
+            title: "US high rarity",
+            rarityScore: 95,
+            rarityTier: "unique",
+            endTime: new Date("2026-04-19T00:00:00.000Z"),
+          },
+          {
+            ...activeCar,
+            id: "us-second",
+            title: "US second rarity",
+            rarityScore: 90,
+            rarityTier: "very_rare",
+            endTime: new Date("2026-04-20T00:00:00.000Z"),
+          },
+        ],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 2,
+        totalLiveCount: 2,
+      })
+      .mockResolvedValueOnce({
+        cars: [
+          {
+            ...activeCar,
+            id: "eu-mid",
+            title: "EU mid rarity",
+            region: "EU",
+            rarityScore: 60,
+            rarityTier: "rare",
+            endTime: new Date("2026-04-18T00:00:00.000Z"),
+          },
+        ],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 1,
+        totalLiveCount: 1,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+      .mockResolvedValueOnce({
+        cars: [],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 0,
+        totalLiveCount: 0,
+      })
+
+    const { fetchDashboardDataUncached } = await import("./dashboardCache")
+    const data = await fetchDashboardDataUncached()
+
+    expect(data.auctions.map((auction) => auction.id)).toEqual([
+      "us-high",
+      "us-second",
+      "eu-mid",
+    ])
   })
 
   it("reuses the last successful dashboard snapshot when a later live query returns empty with non-zero liveNow", async () => {

@@ -30,12 +30,18 @@ if (existsSync(envPath)) {
   }
 }
 
-import { fetchAS24DetailWithScrapling } from "../src/features/scrapers/autoscout24_collector/scrapling";
+import {
+  fetchAS24DetailBatchWithScrapling,
+  fetchAS24DetailWithScrapling,
+} from "../src/features/scrapers/autoscout24_collector/scrapling";
+import type { AS24ScraplingDetailResult } from "../src/features/scrapers/autoscout24_collector/types";
 import {
   markScraperRunStarted,
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
+import { buildMissingDetailOrCriticalSpecFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import { parseEngineFromText } from "../src/features/scrapers/common/titleEnrichment";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -43,6 +49,7 @@ function parseArgs() {
     limit: 500,
     timeBudgetMs: 20 * 60 * 1000, // 20 minutes
     delayMs: 2000,
+    batchSize: 12,
     dryRun: false,
     preflight: false,
   };
@@ -55,6 +62,7 @@ function parseArgs() {
       if (key === "limit") opts.limit = parseInt(val, 10);
       if (key === "timeBudgetMs") opts.timeBudgetMs = parseInt(val, 10);
       if (key === "delayMs") opts.delayMs = parseInt(val, 10);
+      if (key === "batchSize") opts.batchSize = parseInt(val, 10);
     } else {
       const key = arg.slice(2);
       if (key === "dryRun") opts.dryRun = true;
@@ -78,6 +86,7 @@ async function main() {
   console.log(`Limit: ${opts.limit}`);
   console.log(`Time budget: ${Math.round(opts.timeBudgetMs / 1000)}s`);
   console.log(`Delay: ${opts.delayMs}ms`);
+  console.log(`Batch size: ${opts.batchSize}`);
   console.log(`Dry run: ${opts.dryRun}`);
   console.log(`Pre-flight: ${opts.preflight}\n`);
 
@@ -99,13 +108,13 @@ async function main() {
     runtime,
   });
 
-  // Query AS24 listings needing enrichment: trim IS NULL = never attempted
+  // Query AS24 listings needing enrichment: never attempted or missing critical specs.
   const { data: listings, error } = await supabase
     .from("listings")
     .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images")
     .eq("source", "AutoScout24")
     .eq("status", "active")
-    .is("trim", null)
+    .or(buildMissingDetailOrCriticalSpecFilter(["trim"]))
     .order("updated_at", { ascending: true })
     .limit(opts.limit);
 
@@ -160,65 +169,86 @@ async function main() {
   let skipped = 0;
   const errors: string[] = [];
 
-  for (let i = 0; i < listings.length; i++) {
+  const batchSize = Math.max(1, Math.min(opts.batchSize, 24));
+
+  for (let i = 0; i < listings.length;) {
     if (Date.now() - startTime > opts.timeBudgetMs) {
       console.log(`\nTime budget reached after ${i} listings.`);
       break;
     }
 
-    const listing = listings[i];
+    const batch = listings.slice(i, i + batchSize);
+    let batchDetails: Array<(AS24ScraplingDetailResult & { url?: string }) | null> | null = null;
 
-    try {
-      const detail = await fetchAS24DetailWithScrapling(listing.source_url);
+    if (batchSize > 1) {
+      batchDetails = await fetchAS24DetailBatchWithScrapling(batch.map((listing) => listing.source_url));
+    }
 
-      // Always set trim to mark as attempted (sentinel — prevents infinite re-processing)
-      const updates: Record<string, unknown> = {
-        trim: "",
-        updated_at: new Date().toISOString(),
-      };
+    for (let batchIndex = 0; batchIndex < batch.length; batchIndex++) {
+      const listing = batch[batchIndex];
 
-      if (detail) {
-        detailsFetched++;
-        // Only update null/empty fields
-        if (detail.trim) updates.trim = truncate(detail.trim, 100);
-        if (!listing.vin && detail.vin) updates.vin = truncate(detail.vin, 17);
-        if (!listing.transmission && detail.transmission) updates.transmission = truncate(detail.transmission, 100);
-        if (!listing.body_style && detail.bodyStyle) updates.body_style = truncate(detail.bodyStyle, 100);
-        if (!listing.engine && detail.engine) updates.engine = truncate(detail.engine, 100);
-        if (!listing.color_exterior && detail.colorExterior) updates.color_exterior = truncate(detail.colorExterior, 100);
-        if (!listing.color_interior && detail.colorInterior) updates.color_interior = truncate(detail.colorInterior, 100);
-        if (!listing.description_text && detail.description) updates.description_text = detail.description;
-        if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1)) {
-          updates.images = detail.images;
-          updates.photos_count = detail.images.length;
+      try {
+        const detail = batchDetails
+          ? batchDetails[batchIndex]
+          : await fetchAS24DetailWithScrapling(listing.source_url);
+
+        const updates: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (!listing.trim) {
+          updates.trim = "";
         }
-      } else {
-        skipped++;
-      }
 
-      if (!opts.dryRun) {
-        const { error: updateErr } = await supabase
-          .from("listings")
-          .update(updates)
-          .eq("id", listing.id);
-
-        if (updateErr) {
-          errors.push(`${listing.id}: ${updateErr.message}`);
+        if (detail) {
+          detailsFetched++;
+          // Only update null/empty fields
+          if (detail.trim) updates.trim = truncate(detail.trim, 100);
+          if (!listing.vin && detail.vin) updates.vin = truncate(detail.vin, 17);
+          if (!listing.transmission && detail.transmission) updates.transmission = truncate(detail.transmission, 100);
+          if (!listing.body_style && detail.bodyStyle) updates.body_style = truncate(detail.bodyStyle, 100);
+          if (!listing.engine) {
+            const engineFromText = parseEngineFromText(
+              [detail.trim, detail.description, listing.title].filter(Boolean).join(" "),
+            );
+            updates.engine = truncate(detail.engine ?? engineFromText ?? "Not specified", 100);
+          }
+          if (!listing.color_exterior && detail.colorExterior) updates.color_exterior = truncate(detail.colorExterior, 100);
+          if (!listing.color_interior && detail.colorInterior) updates.color_interior = truncate(detail.colorInterior, 100);
+          if (!listing.description_text && detail.description) updates.description_text = detail.description;
+          if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1)) {
+            updates.images = detail.images;
+            updates.photos_count = detail.images.length;
+          }
         } else {
+          skipped++;
+        }
+
+        if (!opts.dryRun) {
+          const { error: updateErr } = await supabase
+            .from("listings")
+            .update(updates)
+            .eq("id", listing.id);
+
+          if (updateErr) {
+            errors.push(`${listing.id}: ${updateErr.message}`);
+          } else {
+            written++;
+          }
+        } else {
+          console.log(`  [DRY] ${listing.source_url}: trim=${detail?.trim || "null"}, vin=${detail?.vin || "null"}`);
           written++;
         }
-      } else {
-        console.log(`  [DRY] ${listing.source_url}: trim=${detail?.trim || "null"}, vin=${detail?.vin || "null"}`);
-        written++;
-      }
 
-      if (written > 0 && written % 25 === 0) {
-        console.log(`  Progress: ${written} updated, ${i + 1}/${listings.length} processed`);
+        if (written > 0 && written % 25 === 0) {
+          console.log(`  Progress: ${written} updated, ${i + batchIndex + 1}/${listings.length} processed`);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${listing.source_url}: ${msg}`);
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`${listing.source_url}: ${msg}`);
     }
+
+    i += batch.length;
 
     // Rate limit
     await new Promise((r) => setTimeout(r, opts.delayMs));

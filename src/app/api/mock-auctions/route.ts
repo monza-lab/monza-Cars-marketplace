@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabaseLiveListings";
 import { normalizeSupportedMake, resolveRequestedMake } from "@/lib/makeProfiles";
 import { getModelPatternsForSeries, resolveSeriesIdForFamily } from "@/lib/brandConfig";
+import { decodeMockAuctionsCursor, encodeMockAuctionsCursor } from "./cursor";
 
 // Per-source budget for the non-paginated (dashboard) path.
 // Dashboard only needs enough data for family-level aggregations (counts, sample images).
@@ -53,6 +54,11 @@ function transformCar(car: CollectorCar) {
     valuationBasis: car.valuationBasis ?? "unknown",
     canonicalMarket: car.canonicalMarket ?? null,
     family: car.family ?? null,
+    rarityScore: car.rarityScore ?? null,
+    rarityTier: car.rarityTier ?? null,
+    raritySignals: car.raritySignals ?? null,
+    rarityScoredAt: car.rarityScoredAt ?? null,
+    rarityScoreVersion: car.rarityScoreVersion ?? null,
     fairValueByRegion: car.fairValueByRegion ?? null,
   };
 }
@@ -93,18 +99,10 @@ export async function GET(request: NextRequest) {
       MAX_PAGE_SIZE
     );
 
-    // Decode keyset cursor: base64-encoded JSON { endTime: string | null, id: string }
+    // Decode keyset cursor: base64-encoded JSON { rarityScore: number | null, endTime: string | null, id: string }
     // Falls back to null (first page) if absent or malformed.
     const cursorParam = searchParams.get("cursor") || null;
-    let decodedCursor: { endTime: string | null; id: string } | null = null;
-    if (cursorParam) {
-      try {
-        decodedCursor = JSON.parse(atob(cursorParam)) as { endTime: string | null; id: string };
-      } catch {
-        // Malformed cursor — treat as first page
-        decodedCursor = null;
-      }
-    }
+    const decodedCursor = decodeMockAuctionsCursor(cursorParam);
 
     // Map platform query param to source value for DB filtering
     const platformFilter = platform && platform !== "All Platforms" ? platform : null;
@@ -155,10 +153,8 @@ export async function GET(request: NextRequest) {
 
     const transformed = paginatedResult.cars.map(transformCar);
 
-    // Encode nextCursor: base64(JSON({ endTime, id })) — opaque string for the client
-    const nextCursor = paginatedResult.nextCursor !== null
-      ? btoa(JSON.stringify(paginatedResult.nextCursor))
-      : null;
+    // Encode nextCursor: base64(JSON({ rarityScore, endTime, id })) — opaque string for the client
+    const nextCursor = encodeMockAuctionsCursor(paginatedResult.nextCursor);
 
     const response: Record<string, unknown> = {
       auctions: transformed,
