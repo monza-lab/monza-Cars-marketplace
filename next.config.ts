@@ -63,6 +63,12 @@ const nextConfig: NextConfig = {
   ],
   outputFileTracingExcludes: {
     "*": [
+      "**/agents/testscripts/artifacts/**",
+      "**/docs/superpowers/**",
+      "**/logs/**",
+      "**/scripts/logs/**",
+      "**/test-results/**",
+      "**/var/**",
       "**/node_modules/typescript/**",
       "**/node_modules/@types/**",
       "**/node_modules/@playwright/**",
