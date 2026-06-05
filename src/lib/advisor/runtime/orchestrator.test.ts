@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const { streamWithToolsMock, generateJsonMock, debitCreditsMock, appendMessageMock } = vi.hoisted(() => ({
+const { streamWithToolsMock, generateJsonMock, debitCreditsMock, appendMessageMock, toolNameMock, toolSummaryMock } = vi.hoisted(() => ({
   streamWithToolsMock: vi.fn(),
   generateJsonMock: vi.fn(),
   debitCreditsMock: vi.fn(),
   appendMessageMock: vi.fn(),
+  toolNameMock: { value: "list_knowledge_topics" },
+  toolSummaryMock: { value: "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled" },
 }))
 
 vi.mock("@/lib/ai/gemini", () => ({
@@ -41,16 +43,19 @@ vi.mock("./grace", () => ({
 vi.mock("@/lib/advisor/tools", () => ({
   buildDefaultToolRegistry: () => ({
     register: () => {},
-    listForTier: () => [{ name: "list_knowledge_topics", description: "", parameters: { type: "object", properties: {} } }],
-    invoke: async () => ({ ok: true, summary: "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled", data: {} }),
+    listForTier: () => [{ name: toolNameMock.value, description: "", parameters: { type: "object", properties: {} } }],
+    invoke: async () => ({ ok: true, summary: toolSummaryMock.value, data: {} }),
   }),
 }))
 
 import { runAdvisorTurn } from "./orchestrator"
+import { advisorQueryCache, queryHash } from "./cache"
 
 describe("runAdvisorTurn (happy path, no tools)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    toolNameMock.value = "list_knowledge_topics"
+    toolSummaryMock.value = "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled"
     process.env.ADVISOR_ENABLED = "full"
     generateJsonMock.mockResolvedValue({ ok: true, data: { tier: "instant", reason: "knowledge" }, raw: "" })
     debitCreditsMock.mockResolvedValue({ newBalance: 99 })
@@ -319,5 +324,74 @@ describe("runAdvisorTurn (tool follow-up)", () => {
         content: "2 knowledge articles in engine: mezger-engine, porsche-air-cooled-vs-water-cooled",
       }),
     ]))
+  })
+
+  it("appends exact marketplace links when the model recommends a car but omits the URL", async () => {
+    toolNameMock.value = "search_listings"
+    toolSummaryMock.value = "Found 1 match for \"930\"; top 3: [1987 Porsche 911 Turbo](/en/cars/porsche/live-930) @ $89,000"
+    streamWithToolsMock
+      .mockImplementationOnce(async function* () {
+        yield { type: "tool_call", name: "search_listings", args: { query: "affordable 930", sortBy: "price_asc" } }
+      })
+      .mockImplementationOnce(async function* () {
+        yield { type: "text", delta: "I would start with the 1987 Porsche 911 Turbo at $89,000." }
+      })
+
+    const content: string[] = []
+    for await (const ev of runAdvisorTurn({
+      userText: "Find me an affordable 930",
+      conversationId: "conv-marketplace-link",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "u1",
+      anonymousSessionId: null,
+      locale: "en",
+      initialContext: null,
+    })) {
+      if (ev.type === "content_delta") content.push(ev.delta)
+    }
+
+    const streamed = content.join("")
+    expect(streamed).toContain("I would start with the 1987 Porsche 911 Turbo")
+    expect(streamed).toContain("Exact car link: [1987 Porsche 911 Turbo](/en/cars/porsche/live-930)")
+    expect(appendMessageMock).toHaveBeenCalledWith(expect.objectContaining({
+      role: "assistant",
+      content: expect.stringContaining("[1987 Porsche 911 Turbo](/en/cars/porsche/live-930)"),
+    }))
+  })
+
+  it("repairs cached marketplace answers that were saved without the listing URL", async () => {
+    const userText = "Find me an affordable 930 from cache"
+    const hash = queryHash({ text: userText, tier: "instant", contextFingerprint: "none" })
+    advisorQueryCache.set("u-cache-link", hash, {
+      content: "I would start with the 1987 Porsche 911 Turbo at $89,000.",
+      toolCalls: [{
+        name: "search_listings",
+        args: { query: "affordable 930" },
+        result_summary: "Found 1 match for \"930\"; top 3: [1987 Porsche 911 Turbo](/en/cars/porsche/live-930) @ $89,000",
+      }],
+    })
+
+    const content: string[] = []
+    for await (const ev of runAdvisorTurn({
+      userText,
+      conversationId: "conv-marketplace-cache-link",
+      surface: "chat",
+      userTier: "FREE",
+      userId: "u-cache-link",
+      anonymousSessionId: null,
+      locale: "en",
+      initialContext: null,
+    })) {
+      if (ev.type === "content_delta") content.push(ev.delta)
+    }
+
+    expect(streamWithToolsMock).not.toHaveBeenCalled()
+    expect(content.join("")).toContain("Exact car link: [1987 Porsche 911 Turbo](/en/cars/porsche/live-930)")
+    expect(appendMessageMock).toHaveBeenCalledWith(expect.objectContaining({
+      role: "assistant",
+      model: "cache",
+      content: expect.stringContaining("[1987 Porsche 911 Turbo](/en/cars/porsche/live-930)"),
+    }))
   })
 })

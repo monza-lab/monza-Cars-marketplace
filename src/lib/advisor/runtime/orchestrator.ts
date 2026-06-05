@@ -15,6 +15,9 @@ import type { Schema } from "@google/generative-ai"
 const MAX_TOOL_CALLS = 8
 const TOTAL_TIMEOUT_MS = 60_000
 const TOOL_TIMEOUT_MS = 10_000
+const MARKETPLACE_RECOMMENDATION_TOOLS = new Set(["search_listings", "get_listing"])
+const MARKDOWN_LINK_RE = /\[[^\]\n]{1,180}\]\((?:https?:\/\/[^)\s]+|\/[a-z]{2}\/cars\/[^)\s]+)\)/g
+const URL_RE = /https?:\/\/\S+|\/[a-z]{2}\/cars\/\S+/i
 
 const MODEL_BY_TIER = (tier: Tier) => tier === "deep_research"
   ? (process.env.GEMINI_MODEL_PRO ?? "gemini-2.5-pro")
@@ -42,6 +45,32 @@ function billablePistonsFor(input: Pick<RunAdvisorTurnInput, "userId" | "userTie
 
 function buildSystemPrompt(systemPrompt: string, locale: RunAdvisorTurnInput["locale"]): string {
   return systemPrompt.replaceAll("{{locale}}", locale)
+}
+
+function extractMarketplaceLinks(toolCalls: ToolCallSummary[]): string[] {
+  const seen = new Set<string>()
+  const links: string[] = []
+
+  for (const call of toolCalls) {
+    if (!MARKETPLACE_RECOMMENDATION_TOOLS.has(call.name)) continue
+
+    const matches = call.result_summary.matchAll(MARKDOWN_LINK_RE)
+    for (const match of matches) {
+      const link = match[0]
+      if (seen.has(link)) continue
+      seen.add(link)
+      links.push(link)
+    }
+  }
+
+  return links
+}
+
+function appendMissingMarketplaceLinks(answer: string, toolCalls: ToolCallSummary[]): string {
+  const links = extractMarketplaceLinks(toolCalls)
+  if (links.length === 0 || URL_RE.test(answer)) return answer
+
+  return `${answer.trimEnd()}\n\nExact car link${links.length === 1 ? "" : "s"}: ${links.slice(0, 3).join("; ")}`
 }
 
 /**
@@ -114,7 +143,8 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
   const hash = queryHash({ text: input.userText, tier: classification.tier, contextFingerprint: contextFp })
   const cached = advisorQueryCache.get(userKey, hash)
   if (cached) {
-    yield { type: "content_delta", delta: cached.content }
+    const cachedContent = appendMissingMarketplaceLinks(cached.content, cached.toolCalls)
+    yield { type: "content_delta", delta: cachedContent }
     const pistonsToDebit = billablePistonsFor(input, classification.estimatedPistons)
     if (pistonsToDebit > 0) {
       await debitCredits({
@@ -129,7 +159,7 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
     }
     await appendMessage({ conversationId: input.conversationId, role: "user", content: input.userText })
     const asstMsg = await appendMessage({
-      conversationId: input.conversationId, role: "assistant", content: cached.content,
+      conversationId: input.conversationId, role: "assistant", content: cachedContent,
       toolCalls: cached.toolCalls, tierClassification: classification.tier,
       creditsUsed: pistonsToDebit, latencyMs: Date.now() - startedAt, model: "cache",
     })
@@ -353,6 +383,13 @@ export async function* runAdvisorTurn(input: RunAdvisorTurnInput): AsyncGenerato
         return
       }
     }
+  }
+
+  const linkCompleteText = appendMissingMarketplaceLinks(accumulatedText, toolCallSummaries)
+  if (linkCompleteText !== accumulatedText) {
+    const delta = linkCompleteText.slice(accumulatedText.length)
+    accumulatedText = linkCompleteText
+    yield { type: "content_delta", delta }
   }
 
   // 7. Persist assistant message, debit, touch conversation
