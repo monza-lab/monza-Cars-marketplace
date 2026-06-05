@@ -1505,5 +1505,83 @@
       "warranty_remaining": { "name": "Restgarantie", "description": "Werks- oder CPO-Garantie noch aktiv" },
       "seller_tier_specialist": { "name": "Porsche-Spezialist als Verkäufer", "description": "Verkauft von einem kuratierten Spezialisten-Händler" }
     }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Sammlerfahrzeug-Intelligenz",
+      "headline": "Der Sammlerfahrzeugmarkt ist ein 50-Milliarden-Dollar-Blindflug.",
+      "subline": "MonzaHaus liefert Daten, Kontext und Ueberzeugung. Fuer Sammler, die Autos als Vermoegenswerte betrachten.",
+      "cta": "Markt erkunden",
+      "ctaSecondary": "Starte mit 3 kostenlosen Reports"
+    },
+    "problem": {
+      "opacity": {
+        "title": "Preisdaten sind ueber Dutzende Quellen verstreut",
+        "desc": "Auktionsergebnisse, Haendlerpreise und Privatverkaeufe existieren in Silos. Kein Gesamtbild des tatsaechlichen Wertes."
+      },
+      "gut": {
+        "title": "Sechsstellige Entscheidungen aus dem Bauchgefuehl",
+        "desc": "Ohne vergleichbare Verkaeufe, regionale Preise und Trenddaten ist jeder Kauf ein Gluecksspiel."
+      },
+      "knowledge": {
+        "title": "Kritisches Wissen in Foren und Hoerensagen eingeschlossen",
+        "desc": "Provenienz, Variantenunterschiede, Inspektionsprioritaeten und Marktkontext sind Stammwissen. Bis jetzt."
+      }
+    },
+    "ecosystem": {
+      "title": "Eine Plattform. Jeder Blickwinkel.",
+      "subtitle": "Alles was ein ernsthafter Sammler fuer fundierte Entscheidungen braucht, an einem Ort.",
+      "intelligence": {
+        "title": "Marktintelligenz",
+        "desc": "Live-Angebote von Auktionen und Haendlern in den USA, Europa, UK und Japan. Erfasst, organisiert und in Ihrer Waehrung."
+      },
+      "reports": {
+        "title": "Investment-Reports",
+        "desc": "KI-generierte Dossiers mit Marktwertanalyse, vergleichbaren Verkaeufen, Risikobewertung und Gebotszielen."
+      },
+      "knowledge": {
+        "title": "Wissensdatenbank",
+        "desc": "Modellguides, Variantenvergleiche und Kaeuferbildung. Geschrieben fuer Sammler, nicht Enthusiasten."
+      },
+      "indices": {
+        "title": "Marktindizes",
+        "desc": "Verfolgen Sie Preistrends bei Air-Cooled, Water-Cooled, GT und Turbo. Wissen Sie, wohin der Markt geht."
+      },
+      "advisor": {
+        "title": "KI-Berater",
+        "desc": "Fragen Sie alles ueber jeden Porsche. Antworten basierend auf echten Marktdaten."
+      }
+    },
+    "proof": {
+      "listings": { "label": "Angebote erfasst", "suffix": "+" },
+      "regions": { "label": "Maerkte abgedeckt", "suffix": "" },
+      "sources": { "label": "Datenquellen", "suffix": "" },
+      "reports": { "label": "Reports erstellt", "suffix": "+" }
+    },
+    "vision": {
+      "headline": "Mehr als eine Plattform.",
+      "body": "MonzaHaus baut das definitive Oekosystem fuer Sammlerfahrzeug-Intelligenz. Daten, Wissen und Gemeinschaft, fuer Menschen die Autos als mehr als Maschinen sehen."
+    },
+    "cta": {
+      "headline": "Sehen Sie den Markt klar.",
+      "subline": "Sammler die Entscheidungen mit Daten treffen, nicht mit Hoffnung.",
+      "primary": "Markt erkunden",
+      "secondary": "Starte mit 3 kostenlosen Reports",
+      "reassurance": "Jedes neue Konto erh\u00e4lt 3.000 Pistons — genug f\u00fcr 3 vollst\u00e4ndige Reports."
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Willkommen bei MonzaHaus",
+      "browse": "Durchsuchen Sie Tausende von Sammler-Porsches in 4 Regionen",
+      "reports": "Erhalten Sie KI-gestuetzte Investment-Reports zu jedem Angebot",
+      "trends": "Verfolgen Sie Markttrends mit Echtzeit-Indizes",
+      "cta": "Erkunden starten"
+    },
+    "tips": {
+      "regions": "Angebote nach Region filtern — USA, UK, EU oder Japan",
+      "search": "Suchen Sie jeden Porsche nach Modell, Jahr oder Auktions-URL",
+      "advisor": "Fragen Sie unseren KI-Berater alles ueber den Sammlermarkt"
+    }
   }
 }

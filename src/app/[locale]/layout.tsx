@@ -19,6 +19,8 @@ import { ConsentProvider } from "@/components/legal/ConsentProvider";
 import { ClientTrackers } from "@/components/legal/ClientTrackers";
 import { CookieBanner } from "@/components/legal/CookieBanner";
 import { MobileMotionProvider } from "@/components/MobileMotionProvider";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { OnboardingTooltips } from "@/components/onboarding/OnboardingTooltips";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -104,6 +106,8 @@ export default async function LocaleLayout({
                       <AppFooter />
                       <ClientTrackers />
                       <CookieBanner />
+                      <WelcomeModal />
+                      <OnboardingTooltips />
                     </MobileMotionProvider>
                   </ChatContextProvider>
                 </AdvisorHandoffProvider>

@@ -1,6 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { DashboardClient } from "@/components/dashboard/DashboardClient";
-import { ViewPreferenceRedirect } from "@/components/layout/ViewPreferenceRedirect";
+import { HomeGate } from "@/components/landing/HomeGate";
 import {
   fetchDashboardDataUncached,
   getCachedDashboardData,
@@ -41,28 +40,5 @@ export default async function Home({
 
   const data = await loadDashboardData();
 
-  if (data.auctions.length === 0) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <span className="text-muted-foreground text-sm">
-          No listings found
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <ViewPreferenceRedirect current="monza" />
-      <DashboardClient
-        auctions={data.auctions}
-        valuationListings={data.valuationListings}
-        regionalValByFamily={data.regionalValByFamily}
-        liveRegionTotals={data.regionTotals}
-        liveNowTotal={data.liveNow}
-        seriesCounts={data.seriesCounts}
-        seriesCountsByRegion={data.seriesCountsByRegion}
-      />
-    </>
-  );
+  return <HomeGate data={data} />;
 }

@@ -803,7 +803,7 @@ export function Header() {
 
           {/* Center: Unified Search trigger (hidden on mobile). Clicking
               opens a centered modal-style command palette. ⌘K also opens. */}
-          <div className="hidden md:block flex-1 min-w-[13rem] lg:min-w-[16rem] max-w-xl relative">
+          <div className="hidden md:block flex-1 min-w-[13rem] lg:min-w-[16rem] max-w-xl relative" data-onboarding="search">
             <button
               type="button"
               onClick={() => setShowUnifiedSearch(true)}
@@ -824,7 +824,8 @@ export function Header() {
               advisor, report, tools…) the region pills were noise. */}
           {showRegionPills && (
           <div
-            className={`hidden xl:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
+            data-onboarding="regions"
+            className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
             aria-disabled={isMarketLocked}
             title={isMarketLocked ? "Locked to vehicle market on detail pages" : undefined}
           >

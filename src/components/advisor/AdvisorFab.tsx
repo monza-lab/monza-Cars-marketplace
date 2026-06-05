@@ -40,6 +40,7 @@ export function AdvisorFab() {
     <button
       type="button"
       onClick={open}
+      data-onboarding="advisor"
       aria-label={t("nav.advisorAria")}
       className="
         fixed right-4 md:right-6
