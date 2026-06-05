@@ -14,6 +14,8 @@ const ReportClientMock = vi.fn((props: ReportClientProps) => {
   return <div data-testid="report-client">preview</div>
 })
 
+const AuthRequiredPromptMock = vi.fn((_props: Record<string, unknown>) => <div data-testid="auth-required-prompt">auth</div>)
+
 // Stubear los módulos de Next.js que el page importa transitivamente.
 vi.mock("next/navigation", () => ({
   notFound: () => {
@@ -55,6 +57,10 @@ vi.mock("@/lib/supabase/server", () => ({
 // función ReportPage resuelva sin tirar 500.
 vi.mock("./ReportClient", () => ({
   ReportClient: ReportClientMock,
+}))
+
+vi.mock("@/components/auth/AuthRequiredPrompt", () => ({
+  AuthRequiredPrompt: AuthRequiredPromptMock,
 }))
 
 // Datos del carro: usamos un id "live-test" para forzar el path live
@@ -137,7 +143,15 @@ vi.mock("@/lib/reports/queries", () => ({
 }))
 
 describe("ReportPage SSR robustness", () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const { createClient } = await import("@/lib/supabase/server")
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
+    } as unknown as Awaited<ReturnType<typeof createClient>>)
+  })
 
   it("does NOT throw when fetchStrictLiveReportPeerCandidates rejects", async () => {
     const { fetchStrictLiveReportPeerCandidates } = await import("@/lib/reportLivePeers")
@@ -172,7 +186,7 @@ describe("ReportPage SSR robustness", () => {
     ).resolves.toBeTruthy()
   })
 
-  it("keeps the locked preview client for users without access", async () => {
+  it("shows an auth prompt before rendering report values for users without access", async () => {
     const { default: ReportPage } = await import("./page")
 
     const markup = renderToStaticMarkup(await ReportPage({
@@ -180,11 +194,9 @@ describe("ReportPage SSR robustness", () => {
       searchParams: Promise.resolve({}),
     }))
 
-    expect(markup).toContain('data-testid="report-client"')
-    expect(ReportClientMock).toHaveBeenCalledOnce()
-    expect(ReportClientMock.mock.calls[0]?.[0]).toMatchObject({
-      userHasAccess: false,
-    })
+    expect(markup).toContain('data-testid="auth-required-prompt"')
+    expect(AuthRequiredPromptMock).toHaveBeenCalledOnce()
+    expect(ReportClientMock).not.toHaveBeenCalled()
   })
 
   it("passes unlocked access into the unified report client even before any report exists", async () => {
@@ -218,9 +230,16 @@ describe("ReportPage SSR robustness", () => {
 
   it("passes strict historical comparables and strict live peers to ReportClient", async () => {
     const { default: ReportPage } = await import("./page")
+    const { createClient } = await import("@/lib/supabase/server")
     const { getStrictComparablesForModel } = await import("@/lib/db/queries")
     const { fetchStrictLiveReportPeerCandidates } = await import("@/lib/reportLivePeers")
     const { findStrictReportPeers } = await import("@/lib/similarCars")
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "auth-user-1" } }, error: null }),
+      },
+    } as unknown as Awaited<ReturnType<typeof createClient>>)
 
     renderToStaticMarkup(await ReportPage({
       params: Promise.resolve({ locale: "en", make: "porsche", id: "live-test" }),

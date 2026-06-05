@@ -21,6 +21,7 @@ import {
 } from "@/lib/reports/queries"
 import { createClient } from "@/lib/supabase/server"
 import { ReportClient } from "./ReportClient"
+import { AuthRequiredPrompt } from "@/components/auth/AuthRequiredPrompt"
 import { findStrictReportPeers } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
@@ -100,6 +101,29 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
             <ArrowLeft className="size-4" />
             {t("unavailableCta")}
           </Link>
+        </div>
+      </div>
+    )
+  }
+
+  let authUserId: string | null = null
+  if (!mockName) {
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      authUserId = user?.id ?? null
+    } catch {
+      authUserId = null
+    }
+  }
+
+  if (!mockName && !authUserId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-lg">
+          <AuthRequiredPrompt
+            message="Sign in or create an account to use your 3 free Haus Reports."
+          />
         </div>
       </div>
     )
@@ -191,14 +215,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   let userHasAccess = Boolean(mockName)
   if (!userHasAccess) {
     try {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      if (authUserId) {
         // getUserCredits looks up by supabase_user_id (Auth UUID) — correct.
         // hasAlreadyGenerated must use the internal DB user ID (user_credits.id),
         // NOT the Auth UUID, because deductCredit writes user_reports.user_id
         // with the internal DB ID.
-        const credits = await getUserCredits(user.id)
+        const credits = await getUserCredits(authUserId)
         const internalUserId = credits?.id
         const alreadyPaid = internalUserId
           ? await hasAlreadyGenerated(internalUserId, car.id)

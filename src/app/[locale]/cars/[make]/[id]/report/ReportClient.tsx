@@ -54,6 +54,7 @@ import { useTheme } from "next-themes"
 import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
+import { AuthModal } from "@/components/auth/AuthModal"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
@@ -62,6 +63,7 @@ import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordRepo
 import {
   resolveReportAccess,
   resolveVisibleV3Report,
+  shouldPromptAuthBeforeReportUnlock,
   shouldRequestReportGenerationOnUnlock,
   shouldRefreshProfileAfterGenerationAttempt,
 } from "./reportAccess"
@@ -281,9 +283,10 @@ export function ReportClient({
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
+  const [reportAuthOpen, setReportAuthOpen] = useState(false)
   const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
-  const { profile: authProfile, refreshProfile } = useAuth()
+  const { user: authUser, profile: authProfile, loading: authLoading, refreshProfile } = useAuth()
 
   // Show paywall when API returns INSUFFICIENT_CREDITS
   useEffect(() => {
@@ -461,8 +464,9 @@ export function ReportClient({
     authProfile?.pistonsBalance ??
     authProfile?.creditsBalance ??
     tokens
+  const hasAuthenticatedReportUser = Boolean(authUser || authProfile)
   const shouldRequestServerReportUnlock = shouldRequestReportGenerationOnUnlock({
-    hasAuthenticatedProfile: Boolean(authProfile),
+    hasAuthenticatedProfile: hasAuthenticatedReportUser,
     reportAlreadyGenerated,
   })
 
@@ -483,10 +487,20 @@ export function ReportClient({
   }
 
   // Entry point used by every Unlock CTA in the layout.
-  // 1. If we already analyzed this car (cached), skip confirm and reuse.
-  // 2. If balance can't cover the cost, route directly to the top-up flow.
-  // 3. Otherwise open the pedagogical confirmation modal.
+  // 1. If the visitor is anonymous, prompt auth before any report unlock path.
+  // 2. If we already analyzed this car (cached), skip confirm and reuse.
+  // 3. If balance can't cover the cost, route directly to the top-up flow.
+  // 4. Otherwise open the pedagogical confirmation modal.
   const handleUnlock = () => {
+    if (authLoading) {
+      return
+    }
+    if (shouldPromptAuthBeforeReportUnlock({
+      hasAuthenticatedProfile: hasAuthenticatedReportUser,
+    })) {
+      setReportAuthOpen(true)
+      return
+    }
     if (hasAnalyzed(car.id)) {
       executeUnlock()
       return
@@ -3082,6 +3096,12 @@ export function ReportClient({
         onOpenChange={setOutOfReportsOpen}
         neededPistons={1000}
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
+      />
+
+      <AuthModal
+        open={reportAuthOpen}
+        onOpenChange={setReportAuthOpen}
+        defaultMode="signup"
       />
 
       <ConfirmGenerateModal

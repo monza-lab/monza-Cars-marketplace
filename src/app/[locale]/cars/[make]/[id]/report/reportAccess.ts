@@ -37,3 +37,11 @@ export function shouldRequestReportGenerationOnUnlock({
 }): boolean {
   return hasAuthenticatedProfile || !reportAlreadyGenerated
 }
+
+export function shouldPromptAuthBeforeReportUnlock({
+  hasAuthenticatedProfile,
+}: {
+  hasAuthenticatedProfile: boolean
+}): boolean {
+  return !hasAuthenticatedProfile
+}

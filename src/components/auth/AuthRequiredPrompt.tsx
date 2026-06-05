@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AuthModal } from './AuthModal'
 import { Lock } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useAuth } from '@/lib/auth/AuthProvider'
 
 interface AuthRequiredPromptProps {
   message?: string
@@ -16,8 +18,16 @@ export function AuthRequiredPrompt({
   className = '',
 }: AuthRequiredPromptProps) {
   const t = useTranslations('auth')
+  const router = useRouter()
+  const { user } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const displayMessage = message ?? t('analysisRequiresSignInDesc')
+
+  useEffect(() => {
+    if (user) {
+      router.refresh()
+    }
+  }, [router, user])
 
   return (
     <>

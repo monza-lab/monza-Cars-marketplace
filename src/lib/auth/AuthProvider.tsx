@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
+import { buildAuthRedirectUrl, currentAuthReturnPath } from './redirect'
 
 export interface UserProfile {
   id: string
@@ -183,11 +184,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, name?: string) => {
+    const emailRedirectTo = buildAuthRedirectUrl({
+      origin: window.location.origin,
+      callbackPath: '/auth/confirm',
+      returnPath: currentAuthReturnPath(window.location),
+    })
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        emailRedirectTo,
         data: {
           full_name: name,
         },
@@ -210,33 +216,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const resendConfirmationEmail = async (email: string) => {
+    const emailRedirectTo = buildAuthRedirectUrl({
+      origin: window.location.origin,
+      callbackPath: '/auth/confirm',
+      returnPath: currentAuthReturnPath(window.location),
+    })
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        emailRedirectTo,
       },
     })
     return { error }
   }
 
   const signInWithGoogle = async () => {
+    const redirectTo = buildAuthRedirectUrl({
+      origin: window.location.origin,
+      callbackPath: '/auth/callback',
+      returnPath: currentAuthReturnPath(window.location),
+    })
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     })
     return { error }
   }
 
   const signInWithMagicLink = async (email: string) => {
+    const emailRedirectTo = buildAuthRedirectUrl({
+      origin: window.location.origin,
+      callbackPath: '/auth/confirm',
+      returnPath: currentAuthReturnPath(window.location),
+    })
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         // Magic link lands on /auth/confirm, which now accepts both the older
         // token_hash verification flow and the code exchange flow.
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
+        emailRedirectTo,
       },
     })
     return { error }

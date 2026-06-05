@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   resolveReportAccess,
   resolveVisibleV3Report,
+  shouldPromptAuthBeforeReportUnlock,
   shouldRequestReportGenerationOnUnlock,
   shouldRefreshProfileAfterGenerationAttempt,
 } from "./reportAccess"
@@ -84,6 +85,20 @@ describe("shouldRequestReportGenerationOnUnlock", () => {
     expect(shouldRequestReportGenerationOnUnlock({
       hasAuthenticatedProfile: false,
       reportAlreadyGenerated: true,
+    })).toBe(false)
+  })
+})
+
+describe("shouldPromptAuthBeforeReportUnlock", () => {
+  it("prompts unauthenticated users before report unlock logic can reveal or generate a report", () => {
+    expect(shouldPromptAuthBeforeReportUnlock({
+      hasAuthenticatedProfile: false,
+    })).toBe(true)
+  })
+
+  it("does not prompt authenticated users before the existing Pistons unlock flow", () => {
+    expect(shouldPromptAuthBeforeReportUnlock({
+      hasAuthenticatedProfile: true,
     })).toBe(false)
   })
 })
