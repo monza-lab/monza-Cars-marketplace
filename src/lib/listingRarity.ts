@@ -1,4 +1,4 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v3";
+export const RARITY_SCORE_VERSION = "listing-rarity-v4";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
@@ -153,7 +153,10 @@ const MODEL_SIGNAL_RULES: SignalRule[] = [
       /\bgt[234]\s*rs\b/i,
       /\bcayman r\b/i,
       /\b914-6\b/i,
-      /\brsr\b/i,
+      /\brsr\b(?![\s-]?style)/i,
+      /\bcarrera rs\b/i,
+      /\brs america\b/i,
+      /\bturbo s leichtbau\b/i,
     ],
   },
   {
@@ -181,6 +184,10 @@ const MODEL_SIGNAL_RULES: SignalRule[] = [
       /\bcanepa\b/i,
       /\bcontinental\b/i,
       /\bsport classic\b/i,
+      /\bslantnose\b/i,
+      /\bflachbau\b/i,
+      /\bruf\b/i,
+      /\bturbo s leichtbau\b/i,
     ],
   },
   {
@@ -193,6 +200,12 @@ const MODEL_SIGNAL_RULES: SignalRule[] = [
       /\b356[a-z]*\b/i,
       /\bpre-a\b/i,
       /\b914-6\b/i,
+      /\b930\b/i,
+      /\b964\b/i,
+      /\bcarrera rs\b/i,
+      /\brs america\b/i,
+      /\bslantnose\b/i,
+      /\bflachbau\b/i,
       /\b911s\b/i,
       /\bnarrow-body speedster\b/i,
       /\broadster\b/i,
@@ -206,8 +219,8 @@ const MODEL_SIGNAL_RULES: SignalRule[] = [
 
 const SIGNAL_SCORES: Record<ListingRaritySignal, number> = {
   paint_to_sample: 28,
-  pccb: 16,
-  bucket_seats: 14,
+  pccb: 12,
+  bucket_seats: 10,
   sunroof: 6,
   exclusive_manufaktur: 12,
   painted_wheels: 5,
@@ -220,12 +233,12 @@ const SIGNAL_SCORES: Record<ListingRaritySignal, number> = {
   low_mileage: 0,
   matching_numbers: 10,
   hypercar: 70,
-  homologation_special: 42,
-  gt_model: 28,
+  homologation_special: 36,
+  gt_model: 18,
   turbo_heritage: 18,
   limited_edition: 14,
   weissach_package: 14,
-  classic_significance: 18,
+  classic_significance: 32,
   manual_transmission: 5,
 };
 
@@ -312,10 +325,32 @@ function parseMileageMiles(input: ListingRarityInput): number | null {
 
 function mileageScore(mileageMiles: number | null): number {
   if (mileageMiles === null) return 0;
-  if (mileageMiles <= 2500) return 14;
-  if (mileageMiles <= 5000) return 10;
-  if (mileageMiles <= 10000) return 6;
+  if (mileageMiles <= 2500) return 10;
+  if (mileageMiles <= 5000) return 8;
+  if (mileageMiles <= 10000) return 5;
   return 0;
+}
+
+function isAirCooledYear(year: number | null | undefined): boolean {
+  return typeof year === "number" && year >= 1948 && year <= 1998;
+}
+
+function addAirCooledClassicSignals(
+  signals: ListingRaritySignal[],
+  input: ListingRarityInput,
+  headline: string,
+): void {
+  if (!isAirCooledYear(input.year)) return;
+
+  const airCooledClassic = /\b(930|964|911\s*turbo|turbo\s*3[.,][036]|turbo\s*3[.,]3|turbo\s*3[.,]6|carrera rs|rs america|rsr\b(?![\s-]?style)|speedster|slantnose|flachbau|turbo s leichtbau)\b/i;
+  if (airCooledClassic.test(headline)) {
+    addSignalOnce(signals, "classic_significance");
+  }
+
+  const airCooledHomologation = /\b(carrera rs|rs america|rsr\b(?![\s-]?style)|speedster|turbo s leichtbau)\b/i;
+  if (airCooledHomologation.test(headline)) {
+    addSignalOnce(signals, "homologation_special");
+  }
 }
 
 export function parseListingRaritySignals(input: ListingRarityInput): ListingRaritySignal[] {
@@ -344,6 +379,8 @@ export function parseListingRaritySignals(input: ListingRarityInput): ListingRar
     }
   }
 
+  addAirCooledClassicSignals(signals, input, headline);
+
   return signals;
 }
 
@@ -366,6 +403,32 @@ export function scoreListingRarity(input: ListingRarityInput): {
 
   for (const signal of signals) {
     score += signal === "low_mileage" ? mileageScore(mileageMiles) : SIGNAL_SCORES[signal];
+  }
+
+  const airCooledClassic = isAirCooledYear(input.year) && signals.includes("classic_significance");
+  if (airCooledClassic) {
+    score += 20;
+    if (signals.includes("homologation_special")) score += 14;
+    if (signals.includes("turbo_heritage")) score += 8;
+  }
+
+  const lateModern = typeof input.year === "number" && input.year >= 2013;
+  if (lateModern && !signals.includes("hypercar") && !airCooledClassic) {
+    if (signals.includes("gt_model")) {
+      const modernGtCap = signals.includes("paint_to_sample")
+        ? 96
+        : signals.includes("weissach_package")
+          ? 92
+          : 88;
+      score = Math.min(score, modernGtCap);
+    } else if (signals.includes("homologation_special")) {
+      const modernHomologationCap = signals.includes("paint_to_sample")
+        ? 96
+        : signals.includes("weissach_package")
+          ? 92
+          : 88;
+      score = Math.min(score, modernHomologationCap);
+    }
   }
 
   const boundedScore = Math.max(0, Math.min(score, 100));

@@ -56,7 +56,7 @@ describe("backfill-listing-rarity", () => {
             rarity_score: 5,
             rarity_tier: "common",
             rarity_signals_json: ["manual_transmission"],
-            rarity_score_version: "listing-rarity-v3",
+            rarity_score_version: "listing-rarity-v4",
           },
         ],
       })
@@ -78,7 +78,7 @@ describe("backfill-listing-rarity", () => {
     expect(query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining("status::text = $3"),
-      [null, "listing-rarity-v3", "active", 10],
+      [null, "listing-rarity-v4", "active", 10],
     );
     expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining("update public.listings as l"), [
       expect.any(String),
@@ -90,7 +90,7 @@ describe("backfill-listing-rarity", () => {
         id: "00000000-0000-0000-0000-000000000001",
         rarity_score: expect.any(Number),
         rarity_tier: "unique",
-        rarity_score_version: "listing-rarity-v3",
+        rarity_score_version: "listing-rarity-v4",
       }),
     ]);
   });

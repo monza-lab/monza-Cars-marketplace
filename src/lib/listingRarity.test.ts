@@ -8,7 +8,7 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v3");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v4");
   });
 
   it("scores explicit rare factory build signals deterministically", () => {
@@ -23,7 +23,7 @@ describe("listing rarity scoring", () => {
     });
 
     expect(rarity).toEqual({
-      score: 100,
+      score: 96,
       tier: "unique",
       signals: [
         "paint_to_sample",
@@ -108,6 +108,57 @@ describe("listing rarity scoring", () => {
 
     expect(rare.score).toBeGreaterThan(ordinary.score);
     expect(ordinary.tier).toBe("common");
+  });
+
+  it("recognizes air-cooled 964 and 930 variants as rare classic inventory", () => {
+    const carreraRs = scoreListingRarity({
+      year: 1992,
+      model: "964",
+      title: "1992 Porsche 964 Carrera RS 5-Speed",
+      mileage: null,
+    });
+
+    const turbo930 = scoreListingRarity({
+      year: 1987,
+      model: "911",
+      title: "1987 Porsche 911 Turbo Coupe",
+      mileage: null,
+    });
+
+    const genericModernGt4Rs = scoreListingRarity({
+      year: 2024,
+      model: "718 Cayman",
+      title: "2024 Porsche 718 Cayman GT4 RS PCCB Approved",
+      mileage: 1000,
+      mileageUnit: "mi",
+    });
+
+    expect(carreraRs).toMatchObject({
+      tier: "unique",
+      signals: expect.arrayContaining([
+        "homologation_special",
+        "classic_significance",
+        "manual_transmission",
+      ]),
+    });
+    expect(turbo930).toMatchObject({
+      tier: "very_rare",
+      signals: expect.arrayContaining(["turbo_heritage", "classic_significance"]),
+    });
+    expect(carreraRs.score).toBeGreaterThan(turbo930.score);
+    expect(genericModernGt4Rs.score).toBeLessThan(80);
+  });
+
+  it("does not treat RSR-style tribute wording as an actual RSR homologation car", () => {
+    const tribute = scoreListingRarity({
+      year: 1973,
+      model: "911T",
+      title: "RSR-Style 1973 Porsche 911T Coupe 3.5L",
+      mileage: null,
+    });
+
+    expect(tribute.signals).not.toContain("homologation_special");
+    expect(tribute.signals).not.toContain("classic_significance");
   });
 
   it("does not promote ordinary cars from unrelated rare-model text in descriptions", () => {
