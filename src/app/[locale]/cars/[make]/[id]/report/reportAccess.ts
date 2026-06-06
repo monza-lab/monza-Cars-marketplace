@@ -45,3 +45,29 @@ export function shouldPromptAuthBeforeReportUnlock({
 }): boolean {
   return !hasAuthenticatedProfile
 }
+
+export type ReportPrimaryAction = "download" | "generate" | "unlock"
+
+export function resolveReportPrimaryAction({
+  hasAccess,
+  reportAlreadyGenerated,
+}: {
+  hasAccess: boolean
+  reportAlreadyGenerated: boolean
+}): ReportPrimaryAction {
+  if (hasAccess && reportAlreadyGenerated) return "download"
+  if (hasAccess) return "generate"
+  return "unlock"
+}
+
+export function shouldAllowReportUnlockAttempt({
+  spendableBalance,
+  cost,
+  unlimitedReports,
+}: {
+  spendableBalance: number
+  cost: number
+  unlimitedReports: boolean
+}): boolean {
+  return unlimitedReports || spendableBalance >= cost
+}
