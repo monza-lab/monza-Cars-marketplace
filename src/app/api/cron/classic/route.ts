@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runClassicComCollector } from "@/features/scrapers/classic_collector/collector";
+import { getClassicMonitoringState, runClassicComCollector } from "@/features/scrapers/classic_collector/collector";
 import { refreshStaleListings } from "@/features/scrapers/classic_collector/supabase_writer";
 import {
   clearScraperRunActive,
@@ -43,33 +43,52 @@ export async function GET(request: Request) {
       make: "Porsche",
       location: "US",
       status: "forsale",
-      maxPages: 10,
-      maxListings: 250,
+      maxPages: 25,
+      maxListings: 750,
       headless: true,
       navigationDelayMs: 2000,
       pageTimeoutMs: 20000,
       checkpointPath: "/tmp/classic_collector/checkpoint.json",
       outputPath: "/tmp/classic_collector/listings.jsonl",
       dryRun: false,
+      runId: liveRunId,
       timeBudgetMs: 270_000,
       summaryOnly: true,    // no Scrapling on Vercel → summary-only discovery
       skipMonitoring: true, // cron route handles monitoring
     });
 
-    // Step 2: Mark stale listings as delisted (runs AFTER discover)
-    const refreshResult = await refreshStaleListings({ staleDays: 7, maxUpdates: 100 });
+    // Step 2: Mark stale listings as delisted only when discovery coverage is high enough.
+    const refreshResult = await refreshStaleListings({
+      staleDays: 10,
+      maxUpdates: 100,
+      discoveredCount: result.counts.discovered,
+      minDiscoveryForRefresh: 700,
+    });
+    const collectorMonitoring = getClassicMonitoringState({
+      counts: result.counts,
+      errors: result.errors,
+    });
+    const errorsCount = collectorMonitoring.errorsCount + refreshResult.errors.length;
+    const runSucceeded = collectorMonitoring.success;
+    const refreshFailed = refreshResult.errors.length > 0;
+    const success = runSucceeded && !refreshFailed;
+    const hardErrors = [...(collectorMonitoring.errorMessages ?? []), ...refreshResult.errors];
+    if (hardErrors.length > 0 && refreshResult.reason) {
+      hardErrors.push(refreshResult.reason);
+    }
+    const errorMessages = hardErrors.length > 0 ? hardErrors : undefined;
 
     await recordScraperRun({
       scraper_name: "classic",
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,
       written: result.counts.written,
-      errors_count: result.counts.errors,
+      errors_count: errorsCount,
       details_fetched: result.counts.detailsFetched,
       normalized: result.counts.normalized,
       bot_blocked: result.counts.cloudflareBlocked,
@@ -77,31 +96,36 @@ export async function GET(request: Request) {
       refresh_updated: refreshResult.updated,
       backfill_discovered: result.counts.backfillDiscovered,
       backfill_written: result.counts.backfillWritten,
-      error_messages: result.errors.length > 0 ? result.errors : undefined,
+      error_messages: errorMessages,
     });
 
     await clearScraperRunActive("classic");
     invalidateDashboardCache();
 
-    return NextResponse.json({
-      success: true,
-      runId: result.runId,
-      refresh: {
-        checked: refreshResult.checked,
-        updated: refreshResult.updated,
-        errors: refreshResult.errors,
+    return NextResponse.json(
+      {
+        success,
+        runId: result.runId,
+        refresh: {
+          checked: refreshResult.checked,
+          updated: refreshResult.updated,
+          skipped: refreshResult.skipped ?? false,
+          reason: refreshResult.reason ?? null,
+          errors: refreshResult.errors,
+        },
+        totalResults: result.totalResults,
+        counts: result.counts,
+        errors: result.errors,
+        duration: `${Date.now() - startTime}ms`,
       },
-      totalResults: result.totalResults,
-      counts: result.counts,
-      errors: result.errors,
-      duration: `${Date.now() - startTime}ms`,
-    });
+      { status: success ? 200 : 500 },
+    );
   } catch (error) {
     console.error("[cron/classic] Error:", error);
 
     await recordScraperRun({
       scraper_name: "classic",
-      run_id: "unknown",
+      run_id: liveRunId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
       success: false,
@@ -118,6 +142,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         success: false,
+        runId: liveRunId,
         error: error instanceof Error ? error.message : "Collector failed",
         duration: `${Date.now() - startTime}ms`,
       },

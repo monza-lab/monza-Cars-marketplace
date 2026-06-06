@@ -10,7 +10,7 @@ vi.mock("@/features/scrapers/common/listingValidator", () => ({
   validateListing: vi.fn(() => ({ valid: true })),
 }));
 
-import { createSupabaseWriter } from "./supabase_writer";
+import { createSupabaseWriter, refreshStaleListings } from "./supabase_writer";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 
 function makeListing(overrides: Partial<NormalizedListing> = {}): NormalizedListing {
@@ -128,5 +128,92 @@ describe("classic_collector supabase writer", () => {
         photos_count: 2,
       }),
     );
+  });
+
+  it("preserves existing source_id when updating a source_url conflict", async () => {
+    const update = vi.fn(() => ({
+      eq: () => ({
+        select: () => ({
+          limit: () => Promise.resolve({
+            data: [{ id: "existing-row" }],
+            error: null,
+          }),
+        }),
+      }),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table !== "listings") return {};
+
+      return {
+        upsert: () => ({
+          select: () => ({
+            limit: () => Promise.resolve({
+              data: null,
+              error: { message: 'duplicate key value violates unique constraint "listings_source_url_key"' },
+            }),
+          }),
+        }),
+        select: () => ({
+          eq: () => ({
+            limit: () => Promise.resolve({
+              data: [{
+                id: "existing-row",
+                source_id: "classic-id-existing",
+                images: ["https://images.classic.com/vehicles/existing.jpg"],
+              }],
+              error: null,
+            }),
+          }),
+        }),
+        update,
+        from: mockFrom,
+      };
+    });
+
+    const writer = createSupabaseWriter();
+    const result = await writer.upsertAll(makeListing({ sourceId: "classic-vin-new" }), meta, false);
+
+    expect(result).toEqual({ listingId: "existing-row", wrote: true });
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source_id: "classic-id-existing",
+      }),
+    );
+  });
+
+  it("skips stale refresh when discovery coverage is below the minimum", async () => {
+    mockFrom.mockImplementation(() => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({
+            lt: () => ({
+              order: () => ({
+                limit: () => Promise.resolve({
+                  data: [{ id: "stale-row" }],
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        }),
+      }),
+      update: () => ({
+        in: () => Promise.resolve({ error: null, count: 1 }),
+      }),
+    }));
+
+    const result = await refreshStaleListings({
+      staleDays: 7,
+      maxUpdates: 100,
+      discoveredCount: 240,
+      minDiscoveryForRefresh: 750,
+    });
+
+    expect(result.checked).toBe(0);
+    expect(result.updated).toBe(0);
+    expect(result.skipped).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 });

@@ -22,8 +22,28 @@ import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 const MAX_CONSECUTIVE_CF_BLOCKS = 10;
 const CONTEXT_REFRESH_INTERVAL = 100;
 
+export function getClassicMonitoringState(input: {
+  counts: CollectorCounts;
+  errors: string[];
+}): { success: boolean; errorsCount: number; errorMessages?: string[] } {
+  const uncountedErrors = input.errors.filter((message) =>
+    !message.startsWith("Write error") && !message.startsWith("Normalize failed")
+  ).length;
+  const errorsCount = input.counts.errors + uncountedErrors;
+  const errorMessages = [...input.errors];
+  if (errorMessages.length === 0 && input.counts.errors > 0) {
+    errorMessages.push(`Classic collector reported ${input.counts.errors} errors`);
+  }
+
+  return {
+    success: errorsCount === 0 || input.counts.written > 0,
+    errorsCount,
+    errorMessages: errorMessages.length > 0 ? errorMessages : undefined,
+  };
+}
+
 export async function runClassicComCollector(config: CollectorRunConfig): Promise<CollectorResult> {
-  const runId = crypto.randomUUID();
+  const runId = config.runId ?? crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
   const meta: ScrapeMeta = { runId, scrapeTimestamp };
   const errors: string[] = [];
@@ -304,22 +324,23 @@ export async function runClassicComCollector(config: CollectorRunConfig): Promis
   if (!config.skipMonitoring) {
     const endTime = Date.now();
     const runtime = process.env.GITHUB_ACTIONS ? 'github_actions' as const : 'cli' as const;
+    const monitoring = getClassicMonitoringState({ counts, errors });
 
     await recordScraperRun({
       scraper_name: 'classic',
       run_id: runId,
       started_at: scrapeTimestamp,
       finished_at: new Date(endTime).toISOString(),
-      success: errors.length === 0 || counts.written > 0,
+      success: monitoring.success,
       runtime,
       duration_ms: endTime - new Date(scrapeTimestamp).getTime(),
       discovered: counts.discovered,
       written: counts.written,
-      errors_count: counts.errors,
+      errors_count: monitoring.errorsCount,
       details_fetched: counts.detailsFetched,
       normalized: counts.normalized,
       bot_blocked: counts.cloudflareBlocked,
-      error_messages: errors.length > 0 ? errors : undefined,
+      error_messages: monitoring.errorMessages,
     });
   }
 

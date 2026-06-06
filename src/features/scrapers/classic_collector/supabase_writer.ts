@@ -66,17 +66,19 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
   if (isSourceUrlConflict) {
     const byUrl = await client
       .from("listings")
-      .select("id,images")
+      .select("id,source_id,images")
       .eq("source_url", listing.sourceUrl)
       .limit(1);
     if (byUrl.error) throw new Error(`Supabase listings source_url lookup failed: ${byUrl.error.message}`);
-    const existing = (byUrl.data as Array<{ id: string; images: string[] | null }> | null)?.[0];
+    const existing = (byUrl.data as Array<{ id: string; source_id: string; images: string[] | null }> | null)?.[0];
     if (!existing?.id) throw new Error(`Supabase listings upsert failed: ${message}`);
 
+    const mergedImages = mergeImages(existing.images, listing.photos);
     const patchedRow = {
       ...row,
-      images: mergeImages(existing.images, listing.photos),
-      photos_count: mergeImages(existing.images, listing.photos).length,
+      source_id: existing.source_id,
+      images: mergedImages,
+      photos_count: mergedImages.length,
     };
 
     const patched = await client
@@ -223,6 +225,8 @@ export interface RefreshResult {
   checked: number;
   updated: number;
   errors: string[];
+  skipped?: boolean;
+  reason?: string;
 }
 
 /**
@@ -235,9 +239,27 @@ export interface RefreshResult {
 export async function refreshStaleListings(opts?: {
   staleDays?: number;
   maxUpdates?: number;
+  discoveredCount?: number;
+  minDiscoveryForRefresh?: number;
 }): Promise<RefreshResult> {
   const staleDays = opts?.staleDays ?? 7;
   const maxUpdates = opts?.maxUpdates ?? 200;
+  const minDiscoveryForRefresh = opts?.minDiscoveryForRefresh ?? 0;
+  const discoveredCount = opts?.discoveredCount;
+
+  if (
+    minDiscoveryForRefresh > 0 &&
+    discoveredCount !== undefined &&
+    discoveredCount < minDiscoveryForRefresh
+  ) {
+    return {
+      checked: 0,
+      updated: 0,
+      errors: [],
+      skipped: true,
+      reason: `Classic discovery ${discoveredCount} below stale refresh threshold ${minDiscoveryForRefresh}`,
+    };
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
