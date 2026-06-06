@@ -161,6 +161,8 @@ export function parseDetailPage(html: string): ElferspotDetail {
 
   // Interior color from spec table
   const colorInterior = specs["interior color"] || specs["innenfarbe"] || null
+  const colorExterior = specs["exterior color"] || specs["aussenfarbe"] || specs["außenfarbe"] || specs["color"] || null
+  const transmission = specs["transmission"] || specs["getriebe"] || specs["gearbox"] || specs["schaltung"] || null
 
   // Condition from spec table
   const condition = specs["condition"] || specs["zustand"] || null
@@ -219,10 +221,10 @@ export function parseDetailPage(html: string): ElferspotDetail {
     currency,
     year: jsonLd?.year ?? null,
     mileageKm: jsonLd?.mileageKm ?? null,
-    transmission: jsonLd?.transmission ?? null,
+    transmission: jsonLd?.transmission ?? transmission,
     bodyType: jsonLd?.bodyType ?? null,
     driveType: jsonLd?.driveType ?? null,
-    colorExterior: jsonLd?.colorExterior ?? null,
+    colorExterior: jsonLd?.colorExterior ?? colorExterior,
     model: jsonLd?.model ?? null,
     firstRegistration: jsonLd?.firstRegistration ?? null,
     // Cheerio enrichment

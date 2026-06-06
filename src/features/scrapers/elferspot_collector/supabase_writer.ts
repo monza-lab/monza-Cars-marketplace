@@ -2,18 +2,14 @@ import { createClient } from "@supabase/supabase-js"
 import type { NormalizedElferspot } from "./normalize"
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment"
 
-export async function upsertListing(listing: NormalizedElferspot, dryRun: boolean): Promise<boolean> {
-  if (dryRun) return false
+type ElferspotUpsertRow = Record<string, unknown>
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error("Missing Supabase env vars")
+function hasText(value: string | null): value is string {
+  return typeof value === "string" && value.trim().length > 0
+}
 
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-
-  const row = {
+export function mapElferspotUpsertRow(listing: NormalizedElferspot): ElferspotUpsertRow {
+  const row: ElferspotUpsertRow = {
     source: listing.source,
     source_id: listing.source_id,
     source_url: listing.source_url,
@@ -27,15 +23,6 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     original_currency: listing.original_currency,
     mileage: listing.mileage_km,
     mileage_unit: "km",
-    transmission: listing.transmission,
-    body_style: listing.body_style,
-    engine: listing.engine,
-    color_exterior: listing.color_exterior,
-    color_interior: listing.color_interior,
-    vin: listing.vin,
-    description_text: listing.description_text,
-    images: listing.images,
-    photos_count: listing.photos_count,
     country: listing.country,
     location: listing.location,
     status: listing.status,
@@ -45,6 +32,34 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     enrichment_meta: listing.enrichment_meta,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   }
+
+  if (hasText(listing.transmission)) row.transmission = listing.transmission
+  if (hasText(listing.body_style)) row.body_style = listing.body_style
+  if (hasText(listing.engine)) row.engine = listing.engine
+  if (hasText(listing.color_exterior)) row.color_exterior = listing.color_exterior
+  if (hasText(listing.color_interior)) row.color_interior = listing.color_interior
+  if (hasText(listing.vin)) row.vin = listing.vin
+  if (hasText(listing.description_text)) row.description_text = listing.description_text
+  if (listing.images.length > 0) {
+    row.images = listing.images
+    row.photos_count = listing.photos_count
+  }
+
+  return row
+}
+
+export async function upsertListing(listing: NormalizedElferspot, dryRun: boolean): Promise<boolean> {
+  if (dryRun) return false
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error("Missing Supabase env vars")
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const row = mapElferspotUpsertRow(listing)
 
   const { error } = await client
     .from("listings")

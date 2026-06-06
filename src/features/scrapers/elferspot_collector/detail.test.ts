@@ -75,6 +75,23 @@ describe("parseDetailPage", () => {
     expect(detail.engine).toContain("4.0L")
   })
 
+  it("extracts target fields from the vehicle data table when JSON-LD omits them", () => {
+    const html = `<html><body>
+      <table class="fahrzeugdaten">
+        <tr><td class="label">Cylinder capacity:</td><td class="content">3.6 Liter</td></tr>
+        <tr><td class="label">Power:</td><td class="content">250 HP</td></tr>
+        <tr><td class="label">Transmission:</td><td class="content">Manual gearbox</td></tr>
+        <tr><td class="label">Exterior color:</td><td class="content">Slate Grey</td></tr>
+      </table>
+    </body></html>`
+
+    const detail = parseDetailPage(html)
+
+    expect(detail.engine).toBe("3.6L 250 HP")
+    expect(detail.transmission).toBe("Manual gearbox")
+    expect(detail.colorExterior).toBe("Slate Grey")
+  })
+
   it("handles missing price (Price on request)", () => {
     const html = FIXTURE_HTML
       .replace('"price": "224990",', '"price": "",')

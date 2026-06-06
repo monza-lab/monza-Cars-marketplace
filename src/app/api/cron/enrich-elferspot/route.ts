@@ -22,11 +22,15 @@ const PRICE_COVERED_STATUSES = [
 
 const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
 const DESCRIPTION_COVERED_STATUS_FILTER = `("missing","detail_unavailable","blocked_unverified")`;
+const TARGET_FIELD_COVERED_STATUS_FILTER = `("covered_or_unavailable","detail_unavailable","blocked_unverified")`;
+const TARGET_FIELD_FILTER = "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.";
 
 type EnrichmentMeta = {
   elferspot?: {
     priceStatus?: string;
     descriptionStatus?: string;
+    targetFieldStatus?: string;
+    missingTargetFields?: string[];
     vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
   };
@@ -47,6 +51,8 @@ export function buildElferspotMeta(
   update: {
     priceStatus?: string;
     descriptionStatus?: string;
+    targetFieldStatus?: string;
+    missingTargetFields?: string[];
     vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
   },
@@ -76,6 +82,7 @@ export function resolveDelayMs(request: Request): number {
 }
 
 export function mergeRowsForEnrichment(
+  targetRows: EnrichmentRow[],
   descriptionRows: EnrichmentRow[],
   vinRows: EnrichmentRow[],
   priceRows: EnrichmentRow[],
@@ -83,8 +90,15 @@ export function mergeRowsForEnrichment(
 ): EnrichmentRow[] {
   const rows: EnrichmentRow[] = [];
   const seen = new Set<string>();
-  const maxLength = Math.max(descriptionRows.length, vinRows.length, priceRows.length);
 
+  for (const row of targetRows) {
+    if (seen.has(row.id)) continue;
+    rows.push(row);
+    seen.add(row.id);
+    if (rows.length >= limit) return rows;
+  }
+
+  const maxLength = Math.max(descriptionRows.length, vinRows.length, priceRows.length);
   for (let i = 0; i < maxLength && rows.length < limit; i++) {
     for (const bucket of [descriptionRows, vinRows, priceRows]) {
       const row = bucket[i];
@@ -98,7 +112,7 @@ export function mergeRowsForEnrichment(
   return rows;
 }
 
-async function fetchRows(client: SupabaseClientLike, filter: "description" | "vin" | "price", limit: number) {
+async function fetchRows(client: SupabaseClientLike, filter: "target" | "description" | "vin" | "price", limit: number) {
   const q = client
     .from("listings")
     .select("id,source_url,enrichment_meta")
@@ -106,6 +120,14 @@ async function fetchRows(client: SupabaseClientLike, filter: "description" | "vi
     .eq("status", "active")
     .order("updated_at", { ascending: true })
     .limit(limit);
+
+  if (filter === "target") {
+    return q
+      .or(TARGET_FIELD_FILTER)
+      .or(
+        `enrichment_meta->elferspot->>targetFieldStatus.is.null,enrichment_meta->elferspot->>targetFieldStatus.not.in.${TARGET_FIELD_COVERED_STATUS_FILTER}`,
+      );
+  }
 
   if (filter === "description") {
     return q.or(
@@ -122,6 +144,14 @@ async function fetchRows(client: SupabaseClientLike, filter: "description" | "vi
     .or(
       `enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.${PRICE_COVERED_STATUS_FILTER}`,
     );
+}
+
+function missingTargetFields(update: Record<string, unknown>) {
+  const missing: string[] = [];
+  if (!update.color_exterior) missing.push("color_exterior");
+  if (!update.engine) missing.push("engine");
+  if (!update.transmission) missing.push("transmission");
+  return missing;
 }
 
 export async function GET(request: Request) {
@@ -163,12 +193,20 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const descriptionRows = await fetchRows(client, "description", batchLimit);
+    const targetRows = await fetchRows(client, "target", batchLimit);
+    if (targetRows.error || !targetRows.data) {
+      throw new Error(targetRows.error?.message ?? "No target-field rows returned");
+    }
+
+    const remainingAfterTargets = Math.max(0, batchLimit - targetRows.data.length);
+    const descriptionRows = remainingAfterTargets > 0
+      ? await fetchRows(client, "description", remainingAfterTargets)
+      : { data: [] as EnrichmentRow[], error: null };
     if (descriptionRows.error || !descriptionRows.data) {
       throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
 
-    const remainingAfterDescriptions = Math.max(0, batchLimit - descriptionRows.data.length);
+    const remainingAfterDescriptions = Math.max(0, batchLimit - targetRows.data.length - descriptionRows.data.length);
     const vinRows = remainingAfterDescriptions > 0
       ? await fetchRows(client, "vin", remainingAfterDescriptions)
       : { data: [] as EnrichmentRow[], error: null };
@@ -177,7 +215,7 @@ export async function GET(request: Request) {
       throw new Error(vinRows.error?.message ?? "No VIN rows returned");
     }
 
-    const remaining = Math.max(0, batchLimit - descriptionRows.data.length - vinRows.data.length);
+    const remaining = Math.max(0, batchLimit - targetRows.data.length - descriptionRows.data.length - vinRows.data.length);
     const priceRows = remaining > 0
       ? await fetchRows(client, "price", remaining)
       : { data: [] as EnrichmentRow[], error: null };
@@ -187,12 +225,17 @@ export async function GET(request: Request) {
     }
 
     const rows = mergeRowsForEnrichment(
+      targetRows.data as EnrichmentRow[],
       descriptionRows.data as EnrichmentRow[],
       vinRows.data as EnrichmentRow[],
       priceRows.data as EnrichmentRow[],
       batchLimit,
     );
     const discovered = rows.length;
+    const targetFieldCandidates = (targetRows.data as EnrichmentRow[]).length;
+    let targetFieldUpdates = 0;
+    let targetFieldProcessed = 0;
+    const targetRowIds = new Set((targetRows.data as EnrichmentRow[]).map((row) => row.id));
     let enriched = 0;
     const errors: string[] = [];
     const TIME_BUDGET_MS = 270_000;
@@ -269,6 +312,15 @@ export async function GET(request: Request) {
           );
         }
 
+        const targetMissing = missingTargetFields(update);
+        update.enrichment_meta = buildElferspotMeta(
+          (update.enrichment_meta as EnrichmentMeta | null) ?? existingMeta,
+          {
+            targetFieldStatus: "covered_or_unavailable",
+            missingTargetFields: targetMissing,
+          },
+        );
+
         const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
         if (newFieldCount > 0) {
           const { error: updateErr } = await client
@@ -280,6 +332,8 @@ export async function GET(request: Request) {
             errors.push(`Update failed (${row.id}): ${updateErr.message}`);
           } else {
             enriched++;
+            if (detail.colorExterior || detail.engine || detail.transmission) targetFieldUpdates++;
+            if (targetRowIds.has(row.id)) targetFieldProcessed++;
           }
         } else {
           await client
@@ -306,6 +360,7 @@ export async function GET(request: Request) {
               enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
                 priceStatus: "blocked_unverified",
                 descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+                targetFieldStatus: "blocked_unverified",
               }),
               updated_at: new Date().toISOString(),
             })
@@ -320,6 +375,7 @@ export async function GET(request: Request) {
             enrichment_meta: buildElferspotMeta(row.enrichment_meta, {
               priceStatus: "detail_unavailable",
               descriptionStatus: row.enrichment_meta?.elferspot?.descriptionStatus ?? "missing",
+              targetFieldStatus: "detail_unavailable",
             }),
             updated_at: new Date().toISOString(),
           })
@@ -351,6 +407,10 @@ export async function GET(request: Request) {
       runId,
       discovered,
       enriched,
+      targetFieldCandidates,
+      targetFieldUpdates,
+      targetFieldProcessed,
+      remainingTargetFieldBacklog: Math.max(0, targetFieldCandidates - targetFieldProcessed),
       errors,
       timeBudgetReached,
       successReason: timeBudgetReached

@@ -142,7 +142,7 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=bad"))).toBe(1000);
   });
 
-  it("alternates description, VIN, and price rows while deduping overlaps", () => {
+  it("prioritizes target rows, then alternates description, VIN, and price rows while deduping overlaps", () => {
     const row = (id: string): EnrichmentRow => ({
       id,
       source_url: `https://www.elferspot.com/en/car/${id}/`,
@@ -151,12 +151,13 @@ describe("GET /api/cron/enrich-elferspot", () => {
 
     expect(
       mergeRowsForEnrichment(
+        [row("target-1")],
         [row("description-1"), row("overlap"), row("description-2")],
         [row("vin-1")],
         [row("price-1"), row("overlap"), row("price-2")],
         5,
       ).map((item) => item.id),
-    ).toEqual(["description-1", "vin-1", "price-1", "overlap", "description-2"]);
+    ).toEqual(["target-1", "description-1", "vin-1", "price-1", "overlap"]);
   });
 
   it("preserves existing Elferspot meta while writing current audit statuses", () => {
@@ -172,6 +173,15 @@ describe("GET /api/cron/enrich-elferspot", () => {
         checkedAt: "new",
       },
     });
+  });
+
+  it("queries rows missing target fields before description, VIN, and price gaps", async () => {
+    await GET(makeRequest());
+
+    expect(mockOr).toHaveBeenNthCalledWith(
+      1,
+      "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
   });
 
   it("preserves source-native chassis identifiers in Elferspot meta", () => {
