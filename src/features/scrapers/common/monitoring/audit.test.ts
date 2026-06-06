@@ -85,4 +85,30 @@ describe("summarizeScraperHealth", () => {
     expect(summary.status).toBe("stuck");
     expect(summary.notes).toContain("Active run last updated 45 minutes ago");
   });
+
+  it("marks Elferspot degraded when target-field coverage is below threshold", () => {
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "elferspot",
+        label: "Elferspot",
+        cadence: "daily",
+        cronPath: "/api/cron/elferspot",
+      },
+      [makeRun({ scraper_name: "elferspot", written: 10, errors_count: 0 })],
+      undefined,
+      Date.now(),
+      {
+        source: "Elferspot",
+        activeTotal: 100,
+        targetFields: {
+          color_exterior: { filled: 95, coveredOrExcepted: 95, missing: 5, pct: 95 },
+          engine: { filled: 96, coveredOrExcepted: 96, missing: 4, pct: 96 },
+          transmission: { filled: 94, coveredOrExcepted: 94, missing: 6, pct: 94 },
+        },
+      },
+    );
+
+    expect(summary.status).toBe("degraded");
+    expect(summary.notes.join("; ")).toContain("Elferspot target-field coverage below 100%");
+  });
 });

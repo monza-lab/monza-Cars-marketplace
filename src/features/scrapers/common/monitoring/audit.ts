@@ -27,6 +27,18 @@ export interface ScraperHealthSummary {
   activeAgeMinutes: number | null;
   status: AuditStatus;
   notes: string[];
+  targetFieldCoverage?: ScraperTargetFieldCoverage;
+}
+
+export interface ScraperTargetFieldCoverage {
+  source: string;
+  activeTotal: number;
+  targetFields: Record<string, {
+    filled: number;
+    coveredOrExcepted: number;
+    missing: number;
+    pct: number;
+  }>;
 }
 
 export function summarizeScraperHealth(
@@ -34,6 +46,7 @@ export function summarizeScraperHealth(
   runs: ScraperRun[],
   activeRun: ActiveScraperRun | null | undefined,
   nowMs: number = Date.now(),
+  targetFieldCoverage?: ScraperTargetFieldCoverage,
 ): ScraperHealthSummary {
   const orderedRuns = [...runs].sort(
     (left, right) => Date.parse(right.finished_at) - Date.parse(left.finished_at),
@@ -80,6 +93,17 @@ export function summarizeScraperHealth(
     notes.push(`Active run last updated ${activeAgeMinutes} minutes ago`);
   }
 
+  if (
+    spec.scraperName === "elferspot"
+    && targetFieldCoverage
+    && Object.values(targetFieldCoverage.targetFields).some((field) => field.pct < 100)
+    && status !== "failed"
+    && status !== "stuck"
+  ) {
+    status = "degraded";
+    notes.push("Elferspot target-field coverage below 100%");
+  }
+
   return {
     scraperName: spec.scraperName,
     label: spec.label,
@@ -97,5 +121,6 @@ export function summarizeScraperHealth(
     activeAgeMinutes,
     status,
     notes,
+    targetFieldCoverage,
   };
 }

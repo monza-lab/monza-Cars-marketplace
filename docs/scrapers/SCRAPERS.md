@@ -482,6 +482,19 @@ npx tsx src/features/scrapers/classic_collector/cli.ts --maxPages=20 --proxyServ
 npx tsx src/features/scrapers/classic_collector/cli.ts --help
 ```
 
+### Classic.com coverage safety
+
+The Vercel cron is summary-only and must not delist stale rows unless discovery coverage is high enough. It passes `discoveredCount` into `refreshStaleListings`; if discovery is below the threshold, stale refresh is skipped.
+
+Live check:
+
+```powershell
+npx tsx scripts/classic-cron-live-check.ts --before
+$headers = @{ Authorization = "Bearer $env:CRON_SECRET" }
+Invoke-RestMethod -Uri "$env:NEXT_PUBLIC_APP_URL/api/cron/classic" -Headers $headers -Method GET
+npx tsx scripts/classic-cron-live-check.ts --after
+```
+
 **CLI flags:**
 
 | Flag | Default | Description |

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   summarizeScraperHealth,
   type ScraperJobSpec,
+  type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
 
@@ -99,6 +100,46 @@ function statusRank(status: string): number {
   }
 }
 
+async function countRows(query: PromiseLike<{ count: number | null; error: { message: string } | null }>): Promise<number> {
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+async function fetchElferspotTargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
+  const fields = ["color_exterior", "engine", "transmission"] as const;
+  const base = () =>
+    supabase
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("source", "Elferspot")
+      .eq("status", "active");
+  const activeTotal = await countRows(base());
+  const targetFields: ScraperTargetFieldCoverage["targetFields"] = {};
+
+  for (const field of fields) {
+    const filled = await countRows(base().not(field, "is", null).neq(field, ""));
+    const excepted = await countRows(
+      base()
+        .or(`${field}.is.null,${field}.eq.`)
+        .in("enrichment_meta->elferspot->>targetFieldStatus", [
+          "covered_or_unavailable",
+          "detail_unavailable",
+          "blocked_unverified",
+        ]),
+    );
+    const coveredOrExcepted = filled + excepted;
+    targetFields[field] = {
+      filled,
+      coveredOrExcepted,
+      missing: Math.max(0, activeTotal - coveredOrExcepted),
+      pct: activeTotal === 0 ? 100 : Math.round((coveredOrExcepted / activeTotal) * 1000) / 10,
+    };
+  }
+
+  return { source: "Elferspot", activeTotal, targetFields };
+}
+
 async function main(): Promise<void> {
   const daysBack = Number(getArg("days") ?? "3");
   const strict = getFlag("strict");
@@ -141,11 +182,15 @@ async function main(): Promise<void> {
     activeByName.set(active.scraper_name, active);
   }
 
+  const elferspotTargetCoverage = await fetchElferspotTargetCoverage(supabase);
+
   const summaries = JOB_SPECS.map((spec) =>
     summarizeScraperHealth(
       spec,
       groupedRuns.get(spec.scraperName) ?? [],
       activeByName.get(spec.scraperName),
+      Date.now(),
+      spec.scraperName === "elferspot" ? elferspotTargetCoverage : undefined,
     ),
   );
 

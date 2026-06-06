@@ -21,6 +21,7 @@ export interface CollectorRunConfig {
   checkpointPath: string;
   outputPath: string;
   dryRun: boolean;
+  runId?: string;
   timeBudgetMs?: number;
   skipMonitoring?: boolean;
   summaryOnly?: boolean;

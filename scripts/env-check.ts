@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { EnvSchema } from "../src/features/porsche_ingest/contracts/config";
+import { EnvSchema } from "../src/features/scrapers/porsche_ingest/contracts/config";
 
 function loadEnvFromFile(filePath: string): void {
   if (!existsSync(filePath)) return;
