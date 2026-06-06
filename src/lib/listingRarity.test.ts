@@ -8,7 +8,7 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v5");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v6");
   });
 
   it("scores explicit rare factory build signals deterministically", () => {
@@ -175,6 +175,27 @@ describe("listing rarity scoring", () => {
       ]),
     });
     expect(airCooledPts.score).toBeGreaterThan(genericModernGt4Rs.score);
+  });
+
+  it("keeps generic Speedster listings behind more curated special cars", () => {
+    const speedster = scoreListingRarity({
+      year: 1989,
+      model: "911",
+      title: "1989 Porsche 911 Speedster",
+      mileage: 12000,
+      mileageUnit: "mi",
+    });
+
+    const curatedPts = scoreListingRarity({
+      year: 1991,
+      model: "911 Carrera 2",
+      title: "1991 Porsche 911 Carrera 2 Paint-to-Sample Amethyst Metallic 5-Speed",
+      mileage: 34000,
+      mileageUnit: "mi",
+    });
+
+    expect(speedster.score).toBeLessThan(curatedPts.score);
+    expect(speedster.score).toBeLessThan(95);
   });
 
   it("does not treat RSR-style tribute wording as an actual RSR homologation car", () => {

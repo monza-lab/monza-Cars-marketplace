@@ -1,4 +1,4 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v5";
+export const RARITY_SCORE_VERSION = "listing-rarity-v6";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
@@ -402,6 +402,7 @@ export function scoreListingRarity(input: ListingRarityInput): {
   signals: ListingRaritySignal[];
 } {
   const signals = parseListingRaritySignals(input);
+  const headline = buildHeadlineText(input);
   const mileageMiles = parseMileageMiles(input);
   let score = 0;
 
@@ -434,6 +435,10 @@ export function scoreListingRarity(input: ListingRarityInput): {
           : 88;
       score = Math.min(score, modernHomologationCap);
     }
+  }
+
+  if (/\bspeedster\b/i.test(headline) && !signals.includes("hypercar")) {
+    score = Math.min(score, 94);
   }
 
   const boundedScore = Math.max(0, Math.min(score, 100));
