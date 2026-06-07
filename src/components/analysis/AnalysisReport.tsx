@@ -242,7 +242,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Scale className="size-5 text-primary" />
             <span className="font-display font-medium text-foreground">
-              Investment Analysis
+              Market Analysis
             </span>
           </CardTitle>
 
@@ -371,7 +371,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
           </CollapsibleSection>
 
           <CollapsibleSection
-            title="Investment Outlook"
+            title="Market Outlook"
             icon={TrendingUp}
             accentClass="text-destructive"
           >

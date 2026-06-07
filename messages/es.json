@@ -281,7 +281,7 @@
     "compareAlternatives": "Comparar alternativas",
     "askAbout": "Preguntar sobre {make}...",
     "overview": "Resumen",
-    "investment": "Inversión",
+    "investment": "Adquisición",
     "dueDiligence": "Due Diligence",
     "market": "Mercado",
     "backTo": "Volver a {make}",
@@ -314,7 +314,7 @@
       "service": "Servicio y mantenimiento"
     },
     "investmentPassport": {
-      "title": "Pasaporte de Inversión",
+      "title": "Pasaporte Coleccionista",
       "grade": "Grado",
       "marketPosition": "Posición de Mercado",
       "fiveYearReturn": "Retorno 5 años",
@@ -353,19 +353,19 @@
       "summary": "Resumen Ejecutivo",
       "identity": "Identidad del Vehículo",
       "valuation": "Valoración de Mercado",
-      "performance": "Rendimiento de Inversión",
+      "performance": "Rendimiento de Mercado",
       "risk": "Evaluación de Riesgo",
       "dueDiligence": "Due Diligence",
       "ownership": "Economía de Propiedad",
       "marketContext": "Contexto de Mercado",
       "similar": "Vehículos Similares",
-      "verdict": "Veredicto de Inversión",
+      "verdict": "Veredicto Final",
       "production": "Producción y Patrimonio",
       "technical": "Análisis Técnico",
       "condition": "Guía de Condición"
     },
     "summary": {
-      "investmentGrade": "Grado de Inversión",
+      "investmentGrade": "Grado Coleccionista",
       "currentPrice": "Precio Actual",
       "fairValue": "Rango de Valor Justo",
       "fiveYearReturn": "Retorno a 5 Años",
@@ -496,13 +496,13 @@
       "compareNote": "Vehículos en la misma categoría o marca para comparación"
     },
     "verdict": {
-      "title": "Veredicto de Inversión",
+      "title": "Veredicto Final",
       "recommendation": "Recomendación",
       "buy": "COMPRAR",
       "hold": "MANTENER",
       "watch": "OBSERVAR",
       "pass": "PASAR",
-      "strategyTitle": "Estrategia de Inversión",
+      "strategyTitle": "Estrategia de Adquisición",
       "buyStrategy": "El precio actual representa un valor sólido. Punto de entrada recomendado para asignación de portafolio a largo plazo.",
       "holdStrategy": "Precio de mercado justo. Mantener si se posee, sin urgencia de adquirir a niveles actuales.",
       "watchStrategy": "Monitorear para corrección del 10-15% antes de entrar. Configurar alertas de precio.",
@@ -1029,10 +1029,10 @@
     "featuredAuctions": "Subastas Destacadas",
     "howItWorks": "Cómo Funciona",
     "platformPartners": "Plataformas Asociadas",
-    "investmentThesis": "Tesis de Inversión",
+    "investmentThesis": "Tesis de Mercado",
     "fairValueByRegion": "Valor Justo por Región",
     "performance": "Rendimiento de 5 Años",
-    "investmentProjection": "Proyección de Inversión",
+    "investmentProjection": "Proyección de Mercado",
     "ownershipCost": "Desglose de Costos Anuales",
     "keyInspectionPoints": "Puntos Clave de Inspección",
     "questionsToAsk": "Preguntas para el Vendedor",
@@ -1253,7 +1253,7 @@
       "noAuctions": "Sin subastas en vivo ahora"
     },
     "context": {
-      "investmentThesis": "Tesis de inversión",
+      "investmentThesis": "Tesis de mercado",
       "fiveYearAppreciation": "Apreciación a 5 años",
       "fairValueByRegion": "Valor justo por región",
       "annualOwnershipCost": "Costo anual de propiedad",
@@ -1387,7 +1387,7 @@
       "showResults": "Mostrar {count} resultados"
     },
     "mobileContext": {
-      "investmentThesis": "Tesis de inversión",
+      "investmentThesis": "Tesis de mercado",
       "valuationByMarket": "Valuación por mercado",
       "yourMarket": "TU MERCADO",
       "best": "MEJOR",
@@ -1447,7 +1447,7 @@
       "description": "Explora vehículos {make} de colección con inteligencia de mercado en vivo, datos de subastas y análisis con IA."
     },
     "makeWithSeries": {
-      "title": "{make} {series} — Resultados de Subastas, Valores de Mercado y Análisis de Inversión | MonzaHaus",
+      "title": "{make} {series} — Resultados de Subastas, Valores de Mercado y Análisis de Colección | MonzaHaus",
       "description": "Datos de subastas en vivo e históricas para {make} {series}. Tendencias de mercado, specs y vehículos de colección."
     },
     "car": {
@@ -1536,7 +1536,7 @@
         "desc": "Listados en vivo de subastas y dealers en EE.UU., Europa, UK y Japon. Rastreados, organizados y en tu moneda."
       },
       "reports": {
-        "title": "Reportes de Inversion",
+        "title": "Haus Reports",
         "desc": "Dossiers generados con AI: analisis de valor justo, ventas comparables, scoring de riesgo y objetivos de oferta."
       },
       "knowledge": {

@@ -281,7 +281,7 @@
     "compareAlternatives": "Alternativen vergleichen",
     "askAbout": "Fragen zu {make}...",
     "overview": "Übersicht",
-    "investment": "Investition",
+    "investment": "Erwerb",
     "dueDiligence": "Due Diligence",
     "market": "Markt",
     "backTo": "Zurück zu {make}",
@@ -314,7 +314,7 @@
       "service": "Service & Wartung"
     },
     "investmentPassport": {
-      "title": "Investment-Pass",
+      "title": "Sammler-Pass",
       "grade": "Bewertung",
       "marketPosition": "Marktposition",
       "fiveYearReturn": "5J. Rendite",
@@ -353,19 +353,19 @@
       "summary": "Zusammenfassung",
       "identity": "Fahrzeugidentität",
       "valuation": "Marktbewertung",
-      "performance": "Anlageperformance",
+      "performance": "Marktperformance",
       "risk": "Risikobewertung",
       "dueDiligence": "Sorgfaltsprüfung",
       "ownership": "Besitzkosten",
       "marketContext": "Marktkontext",
       "similar": "Ähnliche Fahrzeuge",
-      "verdict": "Anlageurteil",
+      "verdict": "Gesamturteil",
       "production": "Produktion & Geschichte",
       "technical": "Technische Analyse",
       "condition": "Zustandsführer"
     },
     "summary": {
-      "investmentGrade": "Anlagegrad",
+      "investmentGrade": "Sammlergrad",
       "currentPrice": "Aktueller Preis",
       "fairValue": "Fairer Wertbereich",
       "fiveYearReturn": "5-Jahres-Rendite",
@@ -496,13 +496,13 @@
       "compareNote": "Fahrzeuge in gleicher Kategorie oder Marke zum Vergleich"
     },
     "verdict": {
-      "title": "Anlageurteil",
+      "title": "Gesamturteil",
       "recommendation": "Empfehlung",
       "buy": "KAUFEN",
       "hold": "HALTEN",
       "watch": "BEOBACHTEN",
       "pass": "ABWARTEN",
-      "strategyTitle": "Anlagestrategie",
+      "strategyTitle": "Erwerbsstrategie",
       "buyStrategy": "Die aktuelle Preisgestaltung stellt einen starken Wert dar. Empfohlener Einstiegspunkt für langfristige Portfolio-Allokation.",
       "holdStrategy": "Faire Marktpreisgestaltung. Halten wenn im Besitz, keine Dringlichkeit zum Erwerb auf aktuellem Niveau.",
       "watchStrategy": "Beobachten für 10-15% Korrektur vor Einstieg. Preisalarme setzen.",
@@ -1029,10 +1029,10 @@
     "featuredAuctions": "Ausgewählte Auktionen",
     "howItWorks": "So Funktioniert's",
     "platformPartners": "Plattform-Partner",
-    "investmentThesis": "Investitionsthese",
+    "investmentThesis": "Marktthese",
     "fairValueByRegion": "Fairer Wert nach Region",
     "performance": "5-Jahres-Performance",
-    "investmentProjection": "Investitionsprognose",
+    "investmentProjection": "Marktprognose",
     "ownershipCost": "Jährliche Besitzkosten",
     "keyInspectionPoints": "Wichtige Inspektionspunkte",
     "questionsToAsk": "Fragen an den Verkäufer",
@@ -1253,7 +1253,7 @@
       "noAuctions": "Keine Live-Auktionen gerade"
     },
     "context": {
-      "investmentThesis": "Investitions-These",
+      "investmentThesis": "Marktthese",
       "fiveYearAppreciation": "5-Jahres-Entwicklung",
       "fairValueByRegion": "Fair Value nach Region",
       "annualOwnershipCost": "Jährliche Besitzkosten",
@@ -1387,7 +1387,7 @@
       "showResults": "{count} Ergebnisse anzeigen"
     },
     "mobileContext": {
-      "investmentThesis": "Investitions-These",
+      "investmentThesis": "Marktthese",
       "valuationByMarket": "Bewertung nach Markt",
       "yourMarket": "IHR MARKT",
       "best": "BEST",
@@ -1536,7 +1536,7 @@
         "desc": "Live-Angebote von Auktionen und Haendlern in den USA, Europa, UK und Japan. Erfasst, organisiert und in Ihrer Waehrung."
       },
       "reports": {
-        "title": "Investment-Reports",
+        "title": "Haus Reports",
         "desc": "KI-generierte Dossiers mit Marktwertanalyse, vergleichbaren Verkaeufen, Risikobewertung und Gebotszielen."
       },
       "knowledge": {

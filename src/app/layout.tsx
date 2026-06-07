@@ -89,7 +89,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "MonzaHaus",
-    title: "MonzaHaus | Collector Car Market Intelligence & Porsche Investment Analysis",
+    title: "MonzaHaus | Collector Car Market Intelligence & Porsche Market Analysis",
     description:
       "Track Porsche 911, 992, 997 auction results. AI-powered market intelligence from Bring a Trailer, Cars & Bids, and AutoScout24. Discover investment-grade collector vehicles.",
     locale: "en_US",

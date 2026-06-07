@@ -71,7 +71,7 @@ const STEP_DEFS: StepDef[] = [
   { stepId: 3, sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { stepId: 4, sectionKey: "fair_value", label: "Computing Fair Value" },
   { stepId: 5, sectionKey: "technical_analysis", label: "Technical Deep-Dive" },
-  { stepId: 6, sectionKey: "investment_analysis", label: "Investment Analysis" },
+  { stepId: 6, sectionKey: "investment_analysis", label: "Acquisition Analysis" },
   { stepId: 7, sectionKey: "due_diligence", label: "Due Diligence" },
   { stepId: 8, sectionKey: "market_research", label: "Market Research" },
   { stepId: 9, sectionKey: "buyer_services", label: "Buyer Services" },

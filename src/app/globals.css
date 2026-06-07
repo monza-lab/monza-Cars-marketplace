@@ -591,15 +591,22 @@
   animation: float 6s ease-in-out infinite;
 }
 
-/* Infinity loader worm animation */
-@keyframes infinity-worm {
-  0% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -300; }
+/* Helmet loader — breathing glow behind the helmet */
+@keyframes helmet-glow {
+  0%, 100% { opacity: 0.05; scale: 0.92; }
+  50% { opacity: 0.12; scale: 1.08; }
+}
+.animate-helmet-glow {
+  animation: helmet-glow 3.5s ease-in-out infinite;
 }
 
-.animate-infinity-worm {
-  animation: infinity-worm 3s linear infinite;
-  will-change: stroke-dashoffset;
+/* Helmet loader — subtle scale + opacity breathing */
+@keyframes helmet-breathe {
+  0%, 100% { opacity: 0.82; scale: 1; }
+  50% { opacity: 1; scale: 1.045; }
+}
+.animate-helmet-breathe {
+  animation: helmet-breathe 3s ease-in-out infinite;
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════

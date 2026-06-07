@@ -280,7 +280,7 @@
     "compareAlternatives": "代替品を比較",
     "askAbout": "{make}について質問...",
     "overview": "概要",
-    "investment": "投資",
+    "investment": "取得分析",
     "dueDiligence": "デューデリジェンス",
     "market": "市場",
     "backTo": "{make}に戻る",
@@ -313,7 +313,7 @@
       "service": "整備・メンテナンス"
     },
     "investmentPassport": {
-      "title": "投資パスポート",
+      "title": "コレクターパスポート",
       "grade": "グレード",
       "marketPosition": "市場ポジション",
       "fiveYearReturn": "5年リターン",
@@ -352,19 +352,19 @@
       "summary": "エグゼクティブサマリー",
       "identity": "車両アイデンティティ",
       "valuation": "市場評価",
-      "performance": "投資パフォーマンス",
+      "performance": "市場パフォーマンス",
       "risk": "リスク評価",
       "dueDiligence": "デューデリジェンス",
       "ownership": "所有コスト",
       "marketContext": "市場コンテキスト",
       "similar": "類似車両",
-      "verdict": "投資判定",
+      "verdict": "最終判定",
       "production": "生産と歴史",
       "technical": "技術分析",
       "condition": "コンディションガイド"
     },
     "summary": {
-      "investmentGrade": "投資グレード",
+      "investmentGrade": "コレクターグレード",
       "currentPrice": "現在価格",
       "fairValue": "適正価格範囲",
       "fiveYearReturn": "5年リターン",
@@ -495,13 +495,13 @@
       "compareNote": "比較用の同カテゴリまたは同メーカーの車両"
     },
     "verdict": {
-      "title": "投資判定",
+      "title": "最終判定",
       "recommendation": "推奨",
       "buy": "買い",
       "hold": "保持",
       "watch": "ウォッチ",
       "pass": "見送り",
-      "strategyTitle": "投資戦略",
+      "strategyTitle": "取得戦略",
       "buyStrategy": "現在の価格設定は強い価値を示しています。長期ポートフォリオ配分の推奨エントリーポイント。",
       "holdStrategy": "適正な市場価格設定。所有している場合は保持、現在のレベルでの取得に緊急性なし。",
       "watchStrategy": "エントリー前に10-15%の修正を監視。価格アラートを設定。",
@@ -1234,10 +1234,10 @@
     "featuredAuctions": "注目のオークション",
     "howItWorks": "使い方",
     "platformPartners": "プラットフォームパートナー",
-    "investmentThesis": "投資テーゼ",
+    "investmentThesis": "市場テーゼ",
     "fairValueByRegion": "地域別適正価格",
     "performance": "5年間のパフォーマンス",
-    "investmentProjection": "投資予測",
+    "investmentProjection": "市場予測",
     "ownershipCost": "年間所有コスト",
     "keyInspectionPoints": "重要な検査ポイント",
     "questionsToAsk": "売り手への質問",
@@ -1458,7 +1458,7 @@
       "noAuctions": "現在ライブオークションはありません"
     },
     "context": {
-      "investmentThesis": "投資ポイント",
+      "investmentThesis": "市場ポイント",
       "fiveYearAppreciation": "5年の推移",
       "fairValueByRegion": "地域別フェアバリュー",
       "annualOwnershipCost": "年間所有コスト",
@@ -1592,7 +1592,7 @@
       "showResults": "{count}件を表示"
     },
     "mobileContext": {
-      "investmentThesis": "投資ポイント",
+      "investmentThesis": "市場ポイント",
       "valuationByMarket": "地域別評価",
       "yourMarket": "あなたの市場",
       "best": "最安",
@@ -1652,7 +1652,7 @@
       "description": "コレクター向けの{make}車両を、ライブ市場データ、オークション結果、AIによる市場分析とともに紹介。"
     },
     "makeWithSeries": {
-      "title": "{make} {series} — オークション結果・市場相場・投資分析 | MonzaHaus",
+      "title": "{make} {series} — オークション結果・市場相場・コレクター分析 | MonzaHaus",
       "description": "{make} {series}のライブおよび過去のオークションデータ。市場動向、スペック比較、コレクター向け車両の発見。"
     },
     "car": {
@@ -1777,7 +1777,7 @@
         "desc": "米国、欧州、英国、日本のオークションとディーラーからのライブリスティング。追跡、整理、お好みの通貨で表示。"
       },
       "reports": {
-        "title": "投資レポート",
+        "title": "Haus レポート",
         "desc": "AI生成の分析書：適正価格分析、比較販売、リスクスコアリング、入札目標。"
       },
       "knowledge": {

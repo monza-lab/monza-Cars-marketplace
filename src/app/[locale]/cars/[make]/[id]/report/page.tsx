@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { setRequestLocale, getTranslations } from "next-intl/server"
+import { MonzaInfinityLoader } from "@/components/shared/MonzaInfinityLoader"
 import { Link } from "@/i18n/navigation"
 import { ArrowLeft } from "lucide-react"
 import { CURATED_CARS } from "@/lib/curatedCars"
@@ -236,17 +237,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full border-2 border-border" />
-              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            </div>
-            <p className="text-sm text-muted-foreground">Loading report...</p>
-          </div>
-        </div>
-      }
+      fallback={<MonzaInfinityLoader variant="section" />}
     >
       {/* Single unified report client. Renders the paywall preview for
           users without access, and the full V3 report content inside

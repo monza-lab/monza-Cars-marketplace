@@ -38,10 +38,10 @@ export async function generateMetadata({
   const BASE_URL = getSiteUrl();
 
   const titles: Record<string, string> = {
-    en: "MonzaHaus | Collector Car Market Intelligence & Porsche Investment Analysis",
-    es: "MonzaHaus | Inteligencia de Mercado de Autos de Colección e Inversión en Porsche",
-    de: "MonzaHaus | Sammlerfahrzeug-Marktanalyse & Porsche-Investitionen",
-    ja: "MonzaHaus | コレクターカー市場インテリジェンス＆ポルシェ投資分析",
+    en: "MonzaHaus | Collector Car Market Intelligence & Porsche Market Analysis",
+    es: "MonzaHaus | Inteligencia de Mercado de Autos de Colección y Análisis Porsche",
+    de: "MonzaHaus | Sammlerfahrzeug-Marktanalyse & Porsche-Marktanalyse",
+    ja: "MonzaHaus | コレクターカー市場インテリジェンス＆ポルシェ市場分析",
   };
 
   const descriptions: Record<string, string> = {

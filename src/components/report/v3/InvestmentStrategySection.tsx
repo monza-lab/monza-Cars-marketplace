@@ -101,7 +101,7 @@ export function InvestmentStrategySection({ data, listingType }: InvestmentStrat
       {/* Investment narrative */}
       {data.investmentNarrative && (
         <div className="border-t border-border pt-4">
-          <h3 className="text-sm font-semibold text-foreground mb-1">Investment Narrative</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-1">Market Narrative</h3>
           <p className="text-sm leading-relaxed text-muted-foreground">{data.investmentNarrative}</p>
         </div>
       )}

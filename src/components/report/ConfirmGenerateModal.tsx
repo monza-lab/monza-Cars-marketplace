@@ -11,6 +11,7 @@ interface ConfirmGenerateModalProps {
   cost: number
   balance: number
   onConfirm: () => void
+  isUnlimited?: boolean
 }
 
 const INCLUDED_SECTIONS = [
@@ -32,6 +33,7 @@ export function ConfirmGenerateModal({
   cost,
   balance,
   onConfirm,
+  isUnlimited = false,
 }: ConfirmGenerateModalProps) {
   const balanceAfter = balance - cost
 
@@ -78,21 +80,31 @@ export function ConfirmGenerateModal({
             </ul>
           </div>
 
-          <div className="rounded-xl border border-border bg-foreground/[0.02] p-4 font-mono text-[13px] tabular-nums">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Cost</span>
-              <span className="flex items-center gap-1.5 text-foreground">
-                <Coins className="size-3.5 text-primary" />
-                {cost} pistons
-              </span>
+          {isUnlimited ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-4 text-[13px]">
+              <div className="flex items-center gap-2">
+                <Check className="size-4 text-primary shrink-0" />
+                <span className="font-medium text-foreground">Included with your plan</span>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground ml-6">No pistons deducted</p>
             </div>
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-muted-foreground">Balance</span>
-              <span className="text-foreground">
-                {balance} → {balanceAfter} pistons
-              </span>
+          ) : (
+            <div className="rounded-xl border border-border bg-foreground/[0.02] p-4 font-mono text-[13px] tabular-nums">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Cost</span>
+                <span className="flex items-center gap-1.5 text-foreground">
+                  <Coins className="size-3.5 text-primary" />
+                  {cost} pistons
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-muted-foreground">Balance</span>
+                <span className="text-foreground">
+                  {balance} → {balanceAfter} pistons
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
             <button

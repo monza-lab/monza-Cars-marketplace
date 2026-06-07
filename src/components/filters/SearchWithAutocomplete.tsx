@@ -34,16 +34,16 @@ const PORSCHE_MODELS: SearchResult[] = [
   // 991 Generation
   { type: "model", name: "911 GT3", generation: "992.1", years: "2022-2024", count: 12, subtitle: "Naturally Aspirated" },
   { type: "model", name: "911 GT3 RS", generation: "992.1", years: "2023-2024", count: 8, subtitle: "Ultra Rare" },
-  { type: "model", name: "911 GT3 Touring", generation: "992.1", years: "2022-2024", count: 5, subtitle: "Investment Grade" },
+  { type: "model", name: "911 GT3 Touring", generation: "992.1", years: "2022-2024", count: 5, subtitle: "Collector Grade" },
   { type: "model", name: "911 Turbo", generation: "992.1", years: "2021-2024", count: 10, subtitle: "AWD" },
-  { type: "model", name: "911 Turbo S", generation: "992.1", years: "2020-2024", count: 15, subtitle: "Investment Grade" },
+  { type: "model", name: "911 Turbo S", generation: "992.1", years: "2020-2024", count: 15, subtitle: "Collector Grade" },
   { type: "model", name: "911 Sport Classic", generation: "992.1", years: "2023", count: 2, subtitle: "Ultra Rare - 1250 units" },
   { type: "model", name: "911 S/T", generation: "992.1", years: "2024", count: 1, subtitle: "Ultra Rare - 1963 units" },
   { type: "model", name: "911 Dakar", generation: "992.1", years: "2023-2024", count: 3, subtitle: "Ultra Rare" },
 
   // 991.2 Generation
-  { type: "model", name: "911 GT3", generation: "991.2", years: "2018-2019", count: 18, subtitle: "Investment Grade" },
-  { type: "model", name: "911 GT3 RS", generation: "991.2", years: "2019", count: 10, subtitle: "Investment Grade" },
+  { type: "model", name: "911 GT3", generation: "991.2", years: "2018-2019", count: 18, subtitle: "Collector Grade" },
+  { type: "model", name: "911 GT3 RS", generation: "991.2", years: "2019", count: 10, subtitle: "Collector Grade" },
   { type: "model", name: "911 GT2 RS", generation: "991.2", years: "2018-2019", count: 5, subtitle: "Ultra Rare - 1000 units" },
   { type: "model", name: "911 Speedster", generation: "991.2", years: "2019", count: 3, subtitle: "Ultra Rare - 1948 units" },
 
@@ -79,7 +79,7 @@ const GENERATIONS: SearchResult[] = [
 
 const POPULAR_SEARCHES: SearchResult[] = [
   { type: "popular", name: "Manual + GT3", count: 18, subtitle: "6MT purist" },
-  { type: "popular", name: "Investment Grade", count: 67, subtitle: "Appreciating assets" },
+  { type: "popular", name: "Collector Grade", count: 67, subtitle: "Appreciating assets" },
   { type: "popular", name: "Ultra Rare", count: 23, subtitle: "Limited production" },
   { type: "popular", name: "Naturally Aspirated", count: 45, subtitle: "No turbos" },
   { type: "popular", name: "Manual + RWD", count: 89, subtitle: "Driver's choice" },

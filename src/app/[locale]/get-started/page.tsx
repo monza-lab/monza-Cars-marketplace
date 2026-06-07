@@ -21,7 +21,7 @@ const STEPS = [
     icon: BarChart3,
     title: "Get your AI report",
     description:
-      "Investment grade, regional fair value, comparable sales, bid targets — all in one dossier.",
+      "Collector grade, regional fair value, comparable sales, bid targets — all in one dossier.",
   },
   {
     icon: TrendingUp,

@@ -150,7 +150,7 @@ export function ExecutiveSummarySection({ data }: ExecutiveSummarySectionProps) 
         <div className="flex items-center gap-2 mb-2">
           <Lightbulb className="size-3.5 text-primary" />
           <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-            Investment Thesis
+            Market Thesis
           </h3>
         </div>
         <p

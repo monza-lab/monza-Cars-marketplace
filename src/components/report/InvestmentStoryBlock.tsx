@@ -11,7 +11,7 @@ export function InvestmentStoryBlock({ narrative }: InvestmentStoryBlockProps) {
 
   return (
     <section className="rounded-xl border border-border bg-card p-5 space-y-3">
-      <h3 className="font-serif text-[15px] font-semibold">{/* [HARDCODED] */}Investment Story</h3>
+      <h3 className="font-serif text-[15px] font-semibold">{/* [HARDCODED] */}Market Story</h3>
 
       <div className="prose prose-sm dark:prose-invert max-w-none text-[13px] leading-relaxed">
         {narrative.story.split("\n\n").map((paragraph, i) => (

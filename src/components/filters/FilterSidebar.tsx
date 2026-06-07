@@ -508,7 +508,7 @@ export function FilterSidebar() {
                 {onlyInvestmentGrade && <Check className="size-3 text-primary-foreground" />}
               </div>
               <span className="text-[11px] font-medium text-muted-foreground">
-                Investment Grade
+                Collector Grade
               </span>
             </button>
           </div>

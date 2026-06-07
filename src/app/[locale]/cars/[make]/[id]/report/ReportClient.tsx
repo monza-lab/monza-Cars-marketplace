@@ -112,7 +112,7 @@ const V3_STEP_LABELS: { sectionKey: ReportSectionKey; label: string }[] = [
   { sectionKey: "market_data_bundle", label: "Analyzing Market Data" },
   { sectionKey: "fair_value", label: "Computing Fair Value" },
   { sectionKey: "technical_analysis", label: "Technical Deep-Dive" },
-  { sectionKey: "investment_analysis", label: "Investment Analysis" },
+  { sectionKey: "investment_analysis", label: "Acquisition Analysis" },
   { sectionKey: "due_diligence", label: "Due Diligence" },
   { sectionKey: "market_research", label: "Market Research" },
   { sectionKey: "buyer_services", label: "Buyer Services" },
@@ -499,8 +499,9 @@ export function ReportClient({
   // Entry point used by every Unlock CTA in the layout.
   // 1. If the visitor is anonymous, prompt auth before any report unlock path.
   // 2. If we already analyzed this car (cached), skip confirm and reuse.
-  // 3. If balance can't cover the cost, route directly to the top-up flow.
-  // 4. Otherwise open the pedagogical confirmation modal.
+  // 3. Unlimited users skip the confirm modal — generate directly.
+  // 4. If balance can't cover the cost, route directly to the top-up flow.
+  // 5. Otherwise open the pedagogical confirmation modal.
   const handleUnlock = () => {
     if (authLoading) {
       return
@@ -512,6 +513,10 @@ export function ReportClient({
       return
     }
     if (hasAnalyzed(car.id)) {
+      executeUnlock()
+      return
+    }
+    if (hasUnlimitedReports) {
       executeUnlock()
       return
     }
@@ -1919,6 +1924,26 @@ export function ReportClient({
               )}
             </button>
           </div>
+        ) : hasAccess && !reportAlreadyGenerated ? (
+          <div className="p-3 border-t border-border">
+            <button
+              onClick={() => void handleGenerateV3()}
+              disabled={isGeneratingV3}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-[11px] font-semibold uppercase tracking-wider text-background hover:bg-primary/80 active:scale-[0.97] transition-colors disabled:opacity-50"
+            >
+              {isGeneratingV3 ? (
+                <>
+                  <div className="size-3.5 rounded-full border-2 border-background/30 border-t-background animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="size-3.5" />
+                  Generate Haus Report
+                </>
+              )}
+            </button>
+          </div>
         ) : !tokensLoading && (
           <div className="p-4 border-t border-border">
             <button
@@ -2043,6 +2068,42 @@ export function ReportClient({
           )}
 
           {/* V3 inline stepper removed - now rendered as full-screen overlay below */}
+
+          {/* --- GENERATE CTA for users with access but no report yet --- */}
+          {hasAccess && !reportAlreadyGenerated && !isGeneratingV3 && (
+            <div className="mt-6 md:mt-8 rounded-2xl border border-primary/20 bg-primary/[0.04] p-6 md:p-8">
+              <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-primary">
+                Haus Report
+              </p>
+              <h2 className="mt-2 font-serif text-[22px] md:text-[26px] leading-tight tracking-tight text-foreground">
+                Ready to analyze this vehicle
+              </h2>
+              <p className="mt-2 text-[13px] text-muted-foreground leading-relaxed max-w-md">
+                Generate a comprehensive Haus Report with fair value, risk analysis,
+                market positioning, and actionable recommendations.
+              </p>
+              <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
+                {["Executive summary", "Fair value & comparables", "Technical deep-dive", "Due diligence & risk", "Market context & timing", "Final verdict"].map(s => (
+                  <li key={s} className="flex items-center gap-2 text-[12px] text-foreground">
+                    <Check className="size-3.5 shrink-0 text-primary" />
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+              {hasUnlimitedReports && (
+                <p className="mt-4 text-[11px] text-primary font-medium">
+                  Included with your plan
+                </p>
+              )}
+              <button
+                onClick={() => void handleGenerateV3()}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[12px] font-semibold uppercase tracking-wider text-primary-foreground hover:bg-primary/85 active:scale-[0.97] transition-all"
+              >
+                <FileText className="size-4" />
+                Generate Haus Report
+              </button>
+            </div>
+          )}
 
           <div className="space-y-6 md:space-y-8 mt-6 md:mt-8">
 
@@ -2938,9 +2999,9 @@ export function ReportClient({
         )}
       </AnimatePresence>
 
-      {/* --- PRICING MODAL --- */}
+      {/* --- PRICING MODAL (never shown for unlimited users) --- */}
       <AnimatePresence>
-        {showPricing && (
+        {showPricing && !hasUnlimitedReports && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -3141,6 +3202,7 @@ export function ReportClient({
         cost={REPORT_PISTON_COST}
         balance={spendableBalance}
         onConfirm={executeUnlock}
+        isUnlimited={hasUnlimitedReports}
       />
 
       {/* --- V3 GENERATION OVERLAY (full-screen modal) --- */}

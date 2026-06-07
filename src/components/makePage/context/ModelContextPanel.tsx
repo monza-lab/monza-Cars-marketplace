@@ -95,7 +95,7 @@ export function ModelContextPanel({
           <div className="flex items-center gap-2 mb-1">
             <Shield className="size-4 text-primary" />
             <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
-              Investment Analysis
+              Market Analysis
             </span>
           </div>
           <h2 className="text-[14px] font-display font-normal text-foreground leading-tight">

@@ -183,7 +183,7 @@ export function TechnicalAnalysisSection({ data }: TechnicalAnalysisSectionProps
           <h3 className="text-sm font-semibold text-foreground mb-2">Collector Outlook</h3>
           <div className="flex gap-4 text-sm mb-2">
             <div>
-              <span className="text-muted-foreground">Investment Grade:</span>{" "}
+              <span className="text-muted-foreground">Collector Grade:</span>{" "}
               <span className="font-semibold text-foreground">
                 {INVESTMENT_GRADE_LABEL[data.collectorOutlook.investmentGrade] ?? data.collectorOutlook.investmentGrade}
               </span>

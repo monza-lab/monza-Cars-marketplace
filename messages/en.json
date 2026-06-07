@@ -277,12 +277,12 @@
     "askAnything": "Ask Anything About This Car",
     "viewReport": "View Report",
     "askAdvisor": "Ask Advisor",
-    "isGoodInvestment": "Is this a good investment?",
+    "isGoodInvestment": "Is this a strong acquisition?",
     "fairPrice": "Fair price",
     "compareAlternatives": "Compare alternatives",
     "askAbout": "Ask about {make}...",
     "overview": "Overview",
-    "investment": "Investment",
+    "investment": "Acquisition",
     "dueDiligence": "Due Diligence",
     "market": "Market",
     "backTo": "Back to {make}",
@@ -315,7 +315,7 @@
       "service": "Service & Maintenance"
     },
     "investmentPassport": {
-      "title": "Investment Passport",
+      "title": "Collector Passport",
       "grade": "Grade",
       "marketPosition": "Market Position",
       "fiveYearReturn": "5yr Return",
@@ -355,7 +355,7 @@
       "identity": "Vehicle Identity",
       "production": "Production & Heritage",
       "valuation": "Market Valuation",
-      "performance": "Investment Performance",
+      "performance": "Market Performance",
       "technical": "Technical Deep-Dive",
       "risk": "Risk Assessment",
       "condition": "Condition Guide",
@@ -363,10 +363,10 @@
       "ownership": "Ownership Economics",
       "marketContext": "Market Context",
       "similar": "Similar Vehicles",
-      "verdict": "Investment Verdict"
+      "verdict": "Final Verdict"
     },
     "summary": {
-      "investmentGrade": "Investment Grade",
+      "investmentGrade": "Collector Grade",
       "currentPrice": "Current Price",
       "fairValue": "Fair Value Range",
       "fiveYearReturn": "5-Year Return",
@@ -497,13 +497,13 @@
       "compareNote": "Vehicles in same category or make for comparison"
     },
     "verdict": {
-      "title": "Investment Verdict",
+      "title": "Final Verdict",
       "recommendation": "Recommendation",
       "buy": "BUY",
       "hold": "HOLD",
       "watch": "WATCH",
       "pass": "PASS",
-      "strategyTitle": "Investment Strategy",
+      "strategyTitle": "Acquisition Strategy",
       "buyStrategy": "Current pricing represents strong value. Recommended entry point for long-term portfolio allocation.",
       "holdStrategy": "Fair market pricing. Hold if owned, no urgency to acquire at current levels.",
       "watchStrategy": "Monitor for 10-15% correction before entry. Set price alerts.",
@@ -686,7 +686,7 @@
       "networkError": "Network error while loading auction"
     },
     "whatsapp": {
-      "prefill": "Hi Nicolas, I'm viewing the {year} {make} {model} on Monza Lab. I'd like to receive the Investment Thesis and current valuation."
+      "prefill": "Hi Nicolas, I'm viewing the {year} {make} {model} on Monza Lab. I'd like to receive the Market Thesis and current valuation."
     },
     "mock": {
       "strategy": {
@@ -944,8 +944,8 @@
       "multipleFound": "Found {count} vehicles:",
       "noMatch": "**Monza Lab Collection**\n\nWe have {totalCars} curated investment vehicles.\n\n**Average Appreciation:** +{avgAppreciation}% per year\n\nTry searching brands like \"Porsche\" or \"Ferrari\" — or a specific model.",
       "currentCar": "**{title}**\n\n**Market Analysis:**\n• Median: {median} | {comparables} comparables\n• Trend: **{trend}**\n\n**Fair Value by Region:**\n• 🇺🇸 {usLow} — {usHigh}\n• 🇪🇺 {euLow} — {euHigh}\n• 🇬🇧 {ukLow} — {ukHigh}\n\n**Thesis:**\n{thesis}",
-      "currentCarFallback": "**{title}**\n\nCurrent price: {price}\n\nFor a complete analysis, explore the Investment and Due Diligence tabs above.",
-      "noMatchForQuery": "I couldn't find specific info for \"{query}\".\n\nWant me to analyze the **{title}** you're viewing? I can estimate value, investment outlook, or history."
+      "currentCarFallback": "**{title}**\n\nCurrent price: {price}\n\nFor a complete analysis, explore the Acquisition and Due Diligence tabs above.",
+      "noMatchForQuery": "I couldn't find specific info for \"{query}\".\n\nWant me to analyze the **{title}** you're viewing? I can estimate value, market outlook, or history."
     }
   },
   "pages": {
@@ -1030,10 +1030,10 @@
     "featuredListings": "Featured Listings",
     "howItWorks": "How It Works",
     "platformPartners": "Platform Partners",
-    "investmentThesis": "Investment Thesis",
+    "investmentThesis": "Market Thesis",
     "fairValueByRegion": "Fair Value by Region",
     "performance": "5-Year Performance",
-    "investmentProjection": "Investment Projection",
+    "investmentProjection": "Market Projection",
     "ownershipCost": "Annual Ownership Cost Breakdown",
     "keyInspectionPoints": "Key Inspection Points",
     "questionsToAsk": "Questions to Ask the Seller",
@@ -1254,7 +1254,7 @@
       "noListings": "No live listings right now"
     },
     "context": {
-      "investmentThesis": "Investment Thesis",
+      "investmentThesis": "Market Thesis",
       "fiveYearAppreciation": "5-Year Appreciation",
       "fairValueByRegion": "Fair Value by Region",
       "annualOwnershipCost": "Annual Ownership Cost",
@@ -1388,7 +1388,7 @@
       "showResults": "Show {count} Results"
     },
     "mobileContext": {
-      "investmentThesis": "Investment Thesis",
+      "investmentThesis": "Market Thesis",
       "valuationByMarket": "Valuation by Market",
       "yourMarket": "YOUR MARKET",
       "best": "BEST",
@@ -1444,11 +1444,11 @@
   },
   "seo": {
     "make": {
-      "title": "{make} Collection — Investment Grade Collector Cars | MonzaHaus",
+      "title": "{make} Collection — Collector-Grade Vehicles | MonzaHaus",
       "description": "Explore collector-grade {make} vehicles with live and historical collector-market insights, auction data, and AI-powered market analysis."
     },
     "makeWithSeries": {
-      "title": "{make} {series} — Auction Results, Market Values & Investment Analysis | MonzaHaus",
+      "title": "{make} {series} — Auction Results, Market Values & Collector Analysis | MonzaHaus",
       "description": "Live and historical auction data for {make} {series}. Track market trends, compare specs, and discover collector-grade {series} vehicles."
     },
     "car": {
@@ -1537,7 +1537,7 @@
         "desc": "Live listings from auctions and dealers across the US, Europe, UK, and Japan. Tracked, organized, and priced in your currency."
       },
       "reports": {
-        "title": "Investment Reports",
+        "title": "Haus Reports",
         "desc": "Comprehensive dossiers with fair value analysis, comparable sales, risk scoring, and actionable bid targets for any listing."
       },
       "knowledge": {

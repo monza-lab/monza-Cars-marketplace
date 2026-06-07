@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { getTranslations } from "next-intl/server"
+import { MonzaInfinityLoader } from "@/components/shared/MonzaInfinityLoader"
 import { Link } from "@/i18n/navigation"
 import { ArrowLeft } from "lucide-react"
 import { CURATED_CARS } from "@/lib/curatedCars"
@@ -213,17 +214,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
         ]}
       />
       <Suspense
-        fallback={
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="h-10 w-10 rounded-full border-2 border-border" />
-                <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-primary/40 border-t-transparent animate-spin" />
-              </div>
-              <p className="text-sm text-muted-foreground/80">Loading...</p>
-            </div>
-          </div>
-        }
+        fallback={<MonzaInfinityLoader variant="section" />}
       >
         <CarDetailClient
           car={car}
