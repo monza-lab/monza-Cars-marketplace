@@ -32,6 +32,7 @@ import {
   History,
   Download,
   Info,
+  Sparkles,
 } from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
@@ -59,10 +60,12 @@ import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
 import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
 import { ReportSummaryRail } from "@/components/report/ReportSummaryRail"
-import { canAffordReport, REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
+import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 import {
   resolveReportAccess,
+  resolveReportPrimaryAction,
   resolveVisibleV3Report,
+  shouldAllowReportUnlockAttempt,
   shouldPromptAuthBeforeReportUnlock,
   shouldRequestReportGenerationOnUnlock,
   shouldRefreshProfileAfterGenerationAttempt,
@@ -464,9 +467,14 @@ export function ReportClient({
     authProfile?.pistonsBalance ??
     authProfile?.creditsBalance ??
     tokens
+  const hasUnlimitedReports = Boolean(authProfile?.unlimitedReports)
   const hasAuthenticatedReportUser = Boolean(authUser || authProfile)
   const shouldRequestServerReportUnlock = shouldRequestReportGenerationOnUnlock({
     hasAuthenticatedProfile: hasAuthenticatedReportUser,
+    reportAlreadyGenerated,
+  })
+  const reportPrimaryAction = resolveReportPrimaryAction({
+    hasAccess,
     reportAlreadyGenerated,
   })
 
@@ -480,7 +488,9 @@ export function ReportClient({
       setConfirmGenerateOpen(false)
       return
     }
-    consumeForAnalysis(car.id)
+    if (!hasUnlimitedReports) {
+      consumeForAnalysis(car.id)
+    }
     setHasAccess(true)
     if (shouldRequestServerReportUnlock) void handleGenerateV3()
     setConfirmGenerateOpen(false)
@@ -505,7 +515,11 @@ export function ReportClient({
       executeUnlock()
       return
     }
-    if (!canAffordReport(spendableBalance, REPORT_PISTON_COST)) {
+    if (!shouldAllowReportUnlockAttempt({
+      spendableBalance,
+      cost: REPORT_PISTON_COST,
+      unlimitedReports: hasUnlimitedReports,
+    })) {
       setShowPricing(true)
       return
     }
@@ -1884,11 +1898,11 @@ export function ReportClient({
           })}
         </nav>
 
-        {hasAccess ? (
+        {reportPrimaryAction === "download" ? (
           <div className="p-3 border-t border-border">
             <button
               onClick={() => setShowDownloadSheet(true)}
-              disabled={downloadingPdf || downloadingExcel}
+              disabled={downloadingPdf || downloadingExcel || isGeneratingV3}
               className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-primary text-background hover:bg-primary/80 active:scale-[0.97] transition-all disabled:opacity-50"
             >
               {(downloadingPdf || downloadingExcel) ? (
@@ -1919,13 +1933,20 @@ export function ReportClient({
                 </>
               ) : (
                 <>
-                  <Lock className="size-3.5" />
-                  {t("unlockReport")}
+                  {reportPrimaryAction === "generate" ? (
+                    <Sparkles className="size-3.5" />
+                  ) : (
+                    <Lock className="size-3.5" />
+                  )}
+                  {reportPrimaryAction === "generate" ? "Generate Report" : t("unlockReport")}
                 </>
               )}
             </button>
-            {!isGeneratingV3 && (
+            {!isGeneratingV3 && reportPrimaryAction === "unlock" && (
               <p className="text-[9px] text-muted-foreground text-center mt-2">{t("unlockCost")}</p>
+            )}
+            {!isGeneratingV3 && reportPrimaryAction === "generate" && (
+              <p className="text-[9px] text-muted-foreground text-center mt-2">Included with your plan</p>
             )}
           </div>
         )}
@@ -2812,12 +2833,12 @@ export function ReportClient({
       </div>
 
       {/* --- MOBILE: Floating download button --- */}
-      {hasAccess && (
+      {reportPrimaryAction !== "unlock" && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-primary/10">
           <div className="px-4 py-2.5">
             <button
-              onClick={() => setShowDownloadSheet(true)}
-              disabled={downloadingPdf || downloadingExcel}
+              onClick={reportPrimaryAction === "download" ? () => setShowDownloadSheet(true) : handleUnlock}
+              disabled={downloadingPdf || downloadingExcel || isGeneratingV3}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-primary/20 bg-primary/5 text-primary font-semibold text-[12px] hover:bg-primary/10 active:scale-[0.97] transition-all disabled:opacity-50"
             >
               {(downloadingPdf || downloadingExcel) ? (
@@ -2827,8 +2848,17 @@ export function ReportClient({
                 </>
               ) : (
                 <>
-                  <Download className="size-3.5" />
-                  <span>{t("downloadButton")}</span>
+                  {reportPrimaryAction === "download" ? (
+                    <>
+                      <Download className="size-3.5" />
+                      <span>{t("downloadButton")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-3.5" />
+                      <span>Generate Report</span>
+                    </>
+                  )}
                 </>
               )}
             </button>

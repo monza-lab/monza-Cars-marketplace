@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   resolveReportAccess,
+  resolveReportPrimaryAction,
+  shouldAllowReportUnlockAttempt,
   resolveVisibleV3Report,
   shouldPromptAuthBeforeReportUnlock,
   shouldRequestReportGenerationOnUnlock,
@@ -99,6 +101,47 @@ describe("shouldPromptAuthBeforeReportUnlock", () => {
   it("does not prompt authenticated users before the existing Pistons unlock flow", () => {
     expect(shouldPromptAuthBeforeReportUnlock({
       hasAuthenticatedProfile: true,
+    })).toBe(false)
+  })
+})
+
+describe("resolveReportPrimaryAction", () => {
+  it("shows generation for subscribed access when no V3 report exists yet", () => {
+    expect(resolveReportPrimaryAction({
+      hasAccess: true,
+      reportAlreadyGenerated: false,
+    })).toBe("generate")
+  })
+
+  it("shows download only after an accessible report exists", () => {
+    expect(resolveReportPrimaryAction({
+      hasAccess: true,
+      reportAlreadyGenerated: true,
+    })).toBe("download")
+  })
+
+  it("keeps locked visitors on the unlock action", () => {
+    expect(resolveReportPrimaryAction({
+      hasAccess: false,
+      reportAlreadyGenerated: false,
+    })).toBe("unlock")
+  })
+})
+
+describe("shouldAllowReportUnlockAttempt", () => {
+  it("allows unlimited report subscribers to open generation even with zero spendable Pistons", () => {
+    expect(shouldAllowReportUnlockAttempt({
+      spendableBalance: 0,
+      cost: 1000,
+      unlimitedReports: true,
+    })).toBe(true)
+  })
+
+  it("requires enough spendable Pistons for non-unlimited users", () => {
+    expect(shouldAllowReportUnlockAttempt({
+      spendableBalance: 999,
+      cost: 1000,
+      unlimitedReports: false,
     })).toBe(false)
   })
 })
