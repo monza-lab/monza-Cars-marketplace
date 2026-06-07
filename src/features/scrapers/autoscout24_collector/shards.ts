@@ -41,6 +41,11 @@ const HIGH_VOLUME_YEAR_SPLITS: Record<string, [number, number][]> = {
  * Split into price-range sub-shards to capture full inventory.
  */
 const PRICE_RANGE_SPLITS: Record<string, { from?: number; to?: number }[]> = {
+  macan: [
+    { to: 50000 },
+    { from: 50001, to: 90000 },
+    { from: 90001 },
+  ],
   panamera: [
     { to: 50000 },
     { from: 50001, to: 120000 },
@@ -60,6 +65,18 @@ const PRICE_RANGE_SPLITS: Record<string, { from?: number; to?: number }[]> = {
     { to: 50000 },
     { from: 50001, to: 100000 },
     { from: 100001 },
+  ],
+};
+
+const SECOND_LEVEL_YEAR_SPLITS: Record<string, [number, number][]> = {
+  panamera: [
+    [2009, 2016],
+    [2017, 2020],
+    [2021, 2026],
+  ],
+  taycan: [
+    [2019, 2022],
+    [2023, 2026],
   ],
 };
 
@@ -98,16 +115,32 @@ export function generateShards(options: {
     } else if (PRICE_RANGE_SPLITS[model]) {
       // Saturated model: split by price range to stay under 20-page limit
       const priceSplits = PRICE_RANGE_SPLITS[model];
+      const yearSplits = SECOND_LEVEL_YEAR_SPLITS[model];
       for (const [idx, range] of priceSplits.entries()) {
         const label = ["low", "mid", "high"][idx] ?? `p${idx}`;
-        shards.push({
-          id: `${model}-${label}`,
-          model,
-          priceFrom: range.from,
-          priceTo: range.to,
-          countries: options.countries,
-          maxPages: options.maxPagesPerShard,
-        });
+        if (yearSplits) {
+          for (const [yearFrom, yearTo] of yearSplits) {
+            shards.push({
+              id: `${model}-${label}-${yearFrom}-${yearTo}`,
+              model,
+              yearFrom,
+              yearTo,
+              priceFrom: range.from,
+              priceTo: range.to,
+              countries: options.countries,
+              maxPages: options.maxPagesPerShard,
+            });
+          }
+        } else {
+          shards.push({
+            id: `${model}-${label}`,
+            model,
+            priceFrom: range.from,
+            priceTo: range.to,
+            countries: options.countries,
+            maxPages: options.maxPagesPerShard,
+          });
+        }
       }
     } else {
       // Lower-volume model: all countries together
@@ -134,6 +167,16 @@ export function generateShards(options: {
  * Split a saturated shard (hit 20-page limit) into price-range sub-shards.
  */
 export function splitSaturatedShard(shard: SearchShard): SearchShard[] {
+  const yearSplits = shard.model ? SECOND_LEVEL_YEAR_SPLITS[shard.model] : undefined;
+  if (yearSplits) {
+    return yearSplits.map(([yearFrom, yearTo]) => ({
+      ...shard,
+      id: `${shard.id}-${yearFrom}-${yearTo}`,
+      yearFrom,
+      yearTo,
+    }));
+  }
+
   const priceRanges: { from: number; to?: number }[] = [
     { from: 0, to: 50000 },
     { from: 50000, to: 100000 },

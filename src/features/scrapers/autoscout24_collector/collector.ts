@@ -81,11 +81,16 @@ export function buildHardFailureError(input: HardFailureErrorInput): Error | nul
   return null;
 }
 
+export function buildShardSaturationWarning(input: { shardId: string; maxPages: number }): string {
+  return `discover.shard_saturated: ${input.shardId} reached ${input.maxPages}-page limit`;
+}
+
 export async function runAutoScout24Collector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
   const meta: ScrapeMeta = { runId, scrapeTimestamp };
   const errors: string[] = [];
+  const saturationWarnings: string[] = [];
 
   const counts: CollectorCounts = {
     discovered: 0,
@@ -213,6 +218,11 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
           })();
 
       counts.discovered += discoverResult.listings.length;
+      if (discoverResult.pagesProcessed >= shard.maxPages && discoverResult.listings.length > 0) {
+        const warning = buildShardSaturationWarning({ shardId: shard.id, maxPages: shard.maxPages });
+        saturationWarnings.push(warning);
+        logEvent({ level: "warn", event: "collector.shard_saturation_recorded", runId, shard: shard.id, warning });
+      }
 
       if (discoverResult.listings.length === 0 && discoverResult.pagesProcessed === 0) {
         // Likely blocked
@@ -358,7 +368,9 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
       normalized: counts.normalized,
       skipped_duplicate: counts.skippedDuplicate,
       bot_blocked: counts.akamaiBlocked,
-      error_messages: errors.length > 0 ? errors : undefined,
+      error_messages: errors.length > 0 || saturationWarnings.length > 0
+        ? [...errors, ...saturationWarnings]
+        : undefined,
     });
   }
 
@@ -368,6 +380,7 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
     shardsTotal: allShards.length,
     counts,
     errors,
+    saturationWarnings,
     outputPath: config.outputPath,
   };
 }

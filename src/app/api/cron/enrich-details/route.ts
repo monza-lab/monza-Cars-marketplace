@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
-import { buildMissingDetailOrCriticalSpecFilter } from "@/features/scrapers/common/enrichmentLoopPolicy";
+import {
+  AS24_TARGET_FIELDS,
+  buildUnusableAs24TargetFieldFilter,
+  isUsableTargetFieldValue,
+} from "@/features/scrapers/common/enrichmentLoopPolicy";
 import {
   clearScraperRunActive,
   clearStaleActiveRun,
@@ -12,9 +16,111 @@ import {
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+type TargetFieldStatus =
+  | "complete"
+  | "covered_or_unavailable"
+  | "detail_unavailable"
+  | "blocked_unverified"
+  | "dead_url";
+
+type EnrichmentMeta = Record<string, unknown> & {
+  autoscout24?: Record<string, unknown>;
+};
+
+type EnrichmentRow = {
+  id: string;
+  source_url: string;
+  title: string | null;
+  trim: string | null;
+  transmission: string | null;
+  body_style: string | null;
+  engine: string | null;
+  color_exterior: string | null;
+  color_interior: string | null;
+  vin: string | null;
+  description_text: string | null;
+  images: string[] | null;
+  enrichment_meta: EnrichmentMeta | null;
+};
+
+const COVERED_EXCEPTION_STATUSES = new Set([
+  "covered_or_unavailable",
+  "detail_unavailable",
+  "blocked_unverified",
+  "dead_url",
+]);
+
 function truncate(value: string | null | undefined, max: number): string | null {
   if (value == null) return null;
   return value.length <= max ? value : value.slice(0, max);
+}
+
+function mergeAutoscout24Meta(
+  existing: EnrichmentMeta | null,
+  patch: {
+    detailAttemptedAt: string;
+    targetFieldStatus: TargetFieldStatus;
+    missingTargetFields: string[];
+  },
+): EnrichmentMeta {
+  const base = existing && typeof existing === "object" && !Array.isArray(existing) ? existing : {};
+  const existingAs24 =
+    base.autoscout24 && typeof base.autoscout24 === "object" && !Array.isArray(base.autoscout24)
+      ? base.autoscout24
+      : {};
+  return {
+    ...base,
+    autoscout24: {
+      ...existingAs24,
+      detailAttemptedAt: patch.detailAttemptedAt,
+      targetFieldStatus: patch.targetFieldStatus,
+      missingTargetFields: patch.missingTargetFields,
+    },
+  };
+}
+
+function valueAfterUpdate(row: EnrichmentRow, updates: Record<string, unknown>, field: (typeof AS24_TARGET_FIELDS)[number]): unknown {
+  return Object.prototype.hasOwnProperty.call(updates, field) ? updates[field] : row[field];
+}
+
+function missingTargetFieldsAfterUpdate(row: EnrichmentRow, updates: Record<string, unknown>): string[] {
+  return AS24_TARGET_FIELDS.filter((field) => !isUsableTargetFieldValue(valueAfterUpdate(row, updates, field)));
+}
+
+function hasUsableTargetUpdate(updates: Record<string, unknown>): boolean {
+  return AS24_TARGET_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(updates, field) && isUsableTargetFieldValue(updates[field]));
+}
+
+function hasCoveredTargetException(row: EnrichmentRow): boolean {
+  const autoscout24 = row.enrichment_meta?.autoscout24;
+  if (!autoscout24 || typeof autoscout24 !== "object" || Array.isArray(autoscout24)) return false;
+  const status = autoscout24.targetFieldStatus;
+  return typeof status === "string" && COVERED_EXCEPTION_STATUSES.has(status);
+}
+
+async function countActionableTargetBacklog(client: ReturnType<typeof createClient>): Promise<number> {
+  let count = 0;
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const query = client
+      .from("listings")
+      .select("id,source_url,title,trim,transmission,body_style,engine,color_exterior,color_interior,vin,description_text,images,enrichment_meta")
+      .eq("source", "AutoScout24")
+      .eq("status", "active")
+      .or(buildUnusableAs24TargetFieldFilter())
+      .order("id", { ascending: true });
+
+    const { data, error } =
+      typeof (query as { range?: unknown }).range === "function"
+        ? await (query as { range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }> }).range(from, from + pageSize - 1)
+        : await (query as { limit: (limit: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }> }).limit(pageSize);
+
+    if (error) throw new Error(`Backlog count query failed: ${error.message}`);
+    const rows = (data ?? []) as EnrichmentRow[];
+    count += rows.filter((row) => !hasCoveredTargetException(row)).length;
+    if (rows.length < pageSize) break;
+  }
+  return count;
 }
 
 const FETCH_HEADERS: Record<string, string> = {
@@ -32,25 +138,17 @@ export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json(
-      { success: false, error: "Missing Supabase env vars" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Missing Supabase env vars" }, { status: 500 });
   }
 
-  // Clear any stale active-run marker left behind by a Vercel hard-kill
   await clearStaleActiveRun("enrich-details", 10);
-
   await markScraperRunStarted({
     scraperName: "enrich-details",
     runId,
@@ -63,40 +161,43 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Query AS24 active listings missing detail marker or critical spec fields.
     const { data: rows, error: fetchErr } = await client
       .from("listings")
-      .select("id,source_url,trim")
+      .select("id,source_url,title,trim,transmission,body_style,engine,color_exterior,color_interior,vin,description_text,images,enrichment_meta")
       .eq("source", "AutoScout24")
       .eq("status", "active")
-      .or(buildMissingDetailOrCriticalSpecFilter(["trim"]))
+      .or(buildUnusableAs24TargetFieldFilter())
       .order("updated_at", { ascending: true })
-      .limit(100);
+      .limit(2_000);
 
     if (fetchErr || !rows) {
       throw new Error(fetchErr?.message ?? "No rows returned");
     }
 
-    const discovered = rows.length;
+    const typedRows = (rows as EnrichmentRow[])
+      .filter((row) => !hasCoveredTargetException(row))
+      .slice(0, 100);
+    const discovered = typedRows.length;
+    const targetFieldCandidates = typedRows.filter((row) =>
+      AS24_TARGET_FIELDS.some((field) => !isUsableTargetFieldValue(row[field])),
+    ).length;
+    let targetFieldUpdates = 0;
     let enriched = 0;
+    let detailsFetched = 0;
+    let blocked = 0;
+    let deadUrls = 0;
     const errors: string[] = [];
-    const DELAY_MS = 1_000;
-    const TIME_BUDGET_MS = 240_000;
+    const delayMs = 1_000;
+    const timeBudgetMs = 240_000;
     let timeBudgetReached = false;
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-
-      // Time budget check
-      if (Date.now() - startTime > TIME_BUDGET_MS) {
+    for (let i = 0; i < typedRows.length; i++) {
+      const row = typedRows[i];
+      if (Date.now() - startTime > timeBudgetMs) {
         timeBudgetReached = true;
         break;
       }
-
-      // Rate limit
-      if (i > 0) {
-        await new Promise((r) => setTimeout(r, DELAY_MS));
-      }
+      if (i > 0) await new Promise((r) => setTimeout(r, delayMs));
 
       try {
         const response = await fetch(row.source_url, {
@@ -106,10 +207,19 @@ export async function GET(request: Request) {
 
         if (!response.ok) {
           if (response.status === 404 || response.status === 410) {
-            // Mark as delisted
+            deadUrls++;
+            const now = new Date().toISOString();
             await client
               .from("listings")
-              .update({ status: "delisted", updated_at: new Date().toISOString() })
+              .update({
+                status: "delisted",
+                updated_at: now,
+                enrichment_meta: mergeAutoscout24Meta(row.enrichment_meta, {
+                  detailAttemptedAt: now,
+                  targetFieldStatus: "dead_url",
+                  missingTargetFields: missingTargetFieldsAfterUpdate(row, {}),
+                }),
+              })
               .eq("id", row.id);
             errors.push(`Dead URL (${row.id}): HTTP ${response.status}`);
             continue;
@@ -118,10 +228,20 @@ export async function GET(request: Request) {
         }
 
         const html = await response.text();
-
-        // Detect Akamai challenge pages — skip without marking as attempted
-        // so the listing can be retried later (by bulk script or next run)
         if (html.includes("/_sec/cp_challenge") || html.includes("akam") || (html.length < 5000 && !html.includes("listingDetails"))) {
+          blocked++;
+          const now = new Date().toISOString();
+          await client
+            .from("listings")
+            .update({
+              updated_at: now,
+              enrichment_meta: mergeAutoscout24Meta(row.enrichment_meta, {
+                detailAttemptedAt: now,
+                targetFieldStatus: "blocked_unverified",
+                missingTargetFields: missingTargetFieldsAfterUpdate(row, {}),
+              }),
+            })
+            .eq("id", row.id);
           errors.push(`Akamai challenge (${row.id}): page blocked`);
           continue;
         }
@@ -129,29 +249,33 @@ export async function GET(request: Request) {
         let detail;
         try {
           detail = parseDetailHtml(html);
+          detailsFetched++;
         } catch (parseErr) {
           errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
-          // Only mark as attempted on genuine parse failures (HTML was fetched OK but structure unexpected)
-          const marker: Record<string, unknown> = { updated_at: new Date().toISOString() };
-          if (!row.trim) marker.trim = "";
+          const now = new Date().toISOString();
           await client
             .from("listings")
-            .update(marker)
+            .update({
+              updated_at: now,
+              enrichment_meta: mergeAutoscout24Meta(row.enrichment_meta, {
+                detailAttemptedAt: now,
+                targetFieldStatus: "detail_unavailable",
+                missingTargetFields: missingTargetFieldsAfterUpdate(row, {}),
+              }),
+            })
             .eq("id", row.id);
           continue;
         }
 
-        // Build update payload — only set non-null fields from detail
         const update: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
           last_verified_at: new Date().toISOString(),
         };
-
         if (detail.trim) update.trim = truncate(detail.trim, 100);
-        if (detail.transmission) update.transmission = truncate(detail.transmission, 100);
+        if (detail.transmission && isUsableTargetFieldValue(detail.transmission)) update.transmission = truncate(detail.transmission, 100);
         if (detail.bodyStyle) update.body_style = truncate(detail.bodyStyle, 100);
-        if (detail.engine) update.engine = truncate(detail.engine, 100);
-        if (detail.exteriorColor) update.color_exterior = truncate(detail.exteriorColor, 100);
+        if (detail.engine && isUsableTargetFieldValue(detail.engine)) update.engine = truncate(detail.engine, 100);
+        if (detail.exteriorColor && isUsableTargetFieldValue(detail.exteriorColor)) update.color_exterior = truncate(detail.exteriorColor, 100);
         if (detail.interiorColor) update.color_interior = truncate(detail.interiorColor, 100);
         if (detail.vin) update.vin = truncate(detail.vin, 17);
         if (detail.description) update.description_text = truncate(detail.description, 2000);
@@ -160,45 +284,43 @@ export async function GET(request: Request) {
           update.photos_count = detail.images.length;
         }
 
-        // Only update if we got at least one new field
-        const newFieldCount = Object.keys(update).length - 2; // minus updated_at, last_verified_at
-        if (newFieldCount > 0) {
-          const { error: updateErr } = await client
-            .from("listings")
-            .update(update)
-            .eq("id", row.id);
+        const missingTargetFields = missingTargetFieldsAfterUpdate(row, update);
+        const newFieldCount = Object.keys(update).length - 2;
+        const targetFieldStatus: TargetFieldStatus =
+          missingTargetFields.length === 0
+            ? "complete"
+            : newFieldCount > 0
+              ? "covered_or_unavailable"
+              : "detail_unavailable";
+        update.enrichment_meta = mergeAutoscout24Meta(row.enrichment_meta, {
+          detailAttemptedAt: update.updated_at as string,
+          targetFieldStatus,
+          missingTargetFields,
+        });
 
-          if (updateErr) {
-            errors.push(`Update failed (${row.id}): ${updateErr.message}`);
-          } else {
-            enriched++;
-          }
+        const { error: updateErr } = await client
+          .from("listings")
+          .update(update)
+          .eq("id", row.id);
+
+        if (updateErr) {
+          errors.push(`Update failed (${row.id}): ${updateErr.message}`);
         } else {
-          // Mark as attempted without erasing an existing trim on spec-only retries.
-          const marker: Record<string, unknown> = { updated_at: new Date().toISOString() };
-          if (!row.trim) marker.trim = "";
-          const { error: markerErr } = await client
-            .from("listings")
-            .update(marker)
-            .eq("id", row.id);
-          if (markerErr) {
-            errors.push(`Marker failed (${row.id}): ${markerErr.message}`);
-          }
+          enriched++;
+          if (hasUsableTargetUpdate(update)) targetFieldUpdates++;
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-
-        // Circuit-break on 403/429
         if (/\b(403|429)\b/.test(msg) || /cloudflare/i.test(msg)) {
           errors.push(`Circuit-break: ${msg}`);
           break;
         }
-
         errors.push(`Failed ${row.source_url}: ${msg}`);
       }
     }
 
     const success = (errors.length === 0 || enriched > 0) || timeBudgetReached;
+    const remainingTargetFieldBacklog = await countActionableTargetBacklog(client);
 
     await recordScraperRun({
       scraper_name: "enrich-details",
@@ -211,6 +333,7 @@ export async function GET(request: Request) {
       discovered,
       written: enriched,
       errors_count: errors.length,
+      details_fetched: detailsFetched,
       error_messages: errors.length > 0 ? errors : undefined,
     });
 
@@ -221,6 +344,12 @@ export async function GET(request: Request) {
       runId,
       discovered,
       enriched,
+      targetFieldCandidates,
+      targetFieldUpdates,
+      detailsFetched,
+      remainingTargetFieldBacklog,
+      blocked,
+      deadUrls,
       errors,
       timeBudgetReached,
       duration: `${Date.now() - startTime}ms`,
@@ -250,7 +379,7 @@ export async function GET(request: Request) {
         error: error instanceof Error ? error.message : "Enrichment failed",
         duration: `${Date.now() - startTime}ms`,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

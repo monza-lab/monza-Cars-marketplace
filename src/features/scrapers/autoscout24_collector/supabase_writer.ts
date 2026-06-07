@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
+import { isUsableTargetFieldValue } from "@/features/scrapers/common/enrichmentLoopPolicy";
 import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
 export interface SupabaseWriter {
@@ -124,20 +125,15 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     mileageUnit: listing.mileageUnitStored,
   });
 
-  return {
+  const row: Record<string, unknown> = {
     source: listing.source,
     source_id: listing.sourceId,
     source_url: listing.sourceUrl,
     year: listing.year,
     make: truncate(listing.make, 100),
     model: truncate(listing.model, 100),
-    trim: truncate(listing.trim, 100),
-    body_style: truncate(listing.bodyStyle, 100),
-    color_exterior: truncate(listing.exteriorColor, 100),
-    color_interior: truncate(listing.interiorColor, 100),
     mileage: listing.mileageKm,
     mileage_unit: listing.mileageUnitStored,
-    vin: truncate(listing.vin, 17),
     hammer_price: listing.pricing.hammerPrice,
     original_currency: listing.pricing.originalCurrency,
     buyers_premium_percent: null,
@@ -151,7 +147,6 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     status: listing.status,
     reserve_met: listing.reserveMet,
     photos_count: listing.photosCount,
-    description_text: listing.descriptionText,
     scrape_timestamp: meta.scrapeTimestamp,
     updated_at: meta.scrapeTimestamp,
     last_verified_at: new Date().toISOString(),
@@ -168,20 +163,37 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     reserve_status: listing.reserveStatus,
     seller_notes: listing.sellerNotes,
     images: listing.photos,
-    engine: truncate(listing.engine, 100),
-    transmission: truncate(listing.transmission, 100),
     end_time: listing.endTime?.toISOString() ?? null,
     start_time: listing.startTime?.toISOString() ?? null,
     final_price: listing.finalPrice,
     location: listing.locationString,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
   };
+
+  addNullableDetail(row, "trim", truncate(listing.trim, 100));
+  addNullableDetail(row, "body_style", truncate(listing.bodyStyle, 100));
+  addUsableTargetDetail(row, "color_exterior", truncate(listing.exteriorColor, 100));
+  addNullableDetail(row, "color_interior", truncate(listing.interiorColor, 100));
+  addNullableDetail(row, "vin", truncate(listing.vin, 17));
+  addNullableDetail(row, "description_text", listing.descriptionText);
+  addUsableTargetDetail(row, "engine", truncate(listing.engine, 100));
+  addUsableTargetDetail(row, "transmission", truncate(listing.transmission, 100));
+
+  return row;
 }
 
 function truncate(value: string | null | undefined, max: number): string | null {
   if (value === null || value === undefined) return null;
   if (value.length <= max) return value;
   return value.slice(0, max);
+}
+
+function addNullableDetail(row: Record<string, unknown>, key: string, value: string | null): void {
+  if (value !== null) row[key] = value;
+}
+
+function addUsableTargetDetail(row: Record<string, unknown>, key: string, value: string | null): void {
+  if (isUsableTargetFieldValue(value)) row[key] = value;
 }
 
 async function insertPriceHistorySnapshot(

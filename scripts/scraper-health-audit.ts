@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 import { createClient } from "@supabase/supabase-js";
 import {
   summarizeScraperHealth,
+  type ScraperHealthSummary,
   type ScraperJobSpec,
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
@@ -106,27 +108,58 @@ async function countRows(query: PromiseLike<{ count: number | null; error: { mes
   return count ?? 0;
 }
 
-async function fetchElferspotTargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
-  const fields = ["color_exterior", "engine", "transmission"] as const;
+type TargetCoverageSpec = {
+  source: string;
+  sourceFilter: string;
+  metaNamespace: "elferspot" | "autoscout24";
+  fields: readonly string[];
+  exceptionStatuses: readonly string[];
+};
+
+const TARGET_COVERAGE_SPECS = {
+  elferspot: {
+    source: "Elferspot",
+    sourceFilter: "Elferspot",
+    metaNamespace: "elferspot",
+    fields: ["color_exterior", "engine", "transmission"],
+    exceptionStatuses: ["covered_or_unavailable", "detail_unavailable", "blocked_unverified"],
+  },
+  autoscout24: {
+    source: "AutoScout24",
+    sourceFilter: "AutoScout24",
+    metaNamespace: "autoscout24",
+    fields: ["color_exterior", "engine", "transmission"],
+    exceptionStatuses: ["covered_or_unavailable", "detail_unavailable", "blocked_unverified", "dead_url"],
+  },
+} as const satisfies Record<string, TargetCoverageSpec>;
+
+const PLACEHOLDER_TARGET_VALUES = ["Not specified", "Unknown", "N/A", "-"] as const;
+const PLACEHOLDER_FILTER = `("${PLACEHOLDER_TARGET_VALUES.join('","')}")`;
+
+async function fetchTargetCoverage(
+  supabase: ReturnType<typeof createClient>,
+  spec: TargetCoverageSpec,
+): Promise<ScraperTargetFieldCoverage> {
   const base = () =>
     supabase
       .from("listings")
       .select("id", { count: "exact", head: true })
-      .eq("source", "Elferspot")
+      .eq("source", spec.sourceFilter)
       .eq("status", "active");
   const activeTotal = await countRows(base());
   const targetFields: ScraperTargetFieldCoverage["targetFields"] = {};
 
-  for (const field of fields) {
-    const filled = await countRows(base().not(field, "is", null).neq(field, ""));
+  for (const field of spec.fields) {
+    const filled = await countRows(
+      base()
+        .not(field, "is", null)
+        .neq(field, "")
+        .not(field, "in", PLACEHOLDER_FILTER),
+    );
     const excepted = await countRows(
       base()
-        .or(`${field}.is.null,${field}.eq.`)
-        .in("enrichment_meta->elferspot->>targetFieldStatus", [
-          "covered_or_unavailable",
-          "detail_unavailable",
-          "blocked_unverified",
-        ]),
+        .or(`${field}.is.null,${field}.eq.,${field}.in.${PLACEHOLDER_FILTER}`)
+        .in(`enrichment_meta->${spec.metaNamespace}->>targetFieldStatus`, spec.exceptionStatuses),
     );
     const coveredOrExcepted = filled + excepted;
     targetFields[field] = {
@@ -137,7 +170,57 @@ async function fetchElferspotTargetCoverage(supabase: ReturnType<typeof createCl
     };
   }
 
-  return { source: "Elferspot", activeTotal, targetFields };
+  return { source: spec.source, activeTotal, targetFields };
+}
+
+function fetchElferspotTargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
+  return fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.elferspot);
+}
+
+function fetchAutoscout24TargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
+  return fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.autoscout24);
+}
+
+export function hasAutoscout24ShardSaturationWarning(runs: ScraperRun[]): boolean {
+  const warningPattern = /shard[_\s-]?saturat|20-page limit|reached .*page limit/i;
+
+  function scan(value: unknown): boolean {
+    if (typeof value === "string") return warningPattern.test(value);
+    if (Array.isArray(value)) return value.some(scan);
+    if (value && typeof value === "object") return Object.values(value as Record<string, unknown>).some(scan);
+    return false;
+  }
+
+  return runs.some((run) => scan(run as ScraperRun & Record<string, unknown>));
+}
+
+export function applyAutoscout24HealthGates(
+  summary: ScraperHealthSummary,
+  runs: ScraperRun[],
+): ScraperHealthSummary {
+  if (summary.scraperName !== "autoscout24" || summary.status === "failed" || summary.status === "stuck") {
+    return summary;
+  }
+
+  const notes = [...summary.notes];
+  let status = summary.status;
+  const targetCoverageBelow100 =
+    summary.targetFieldCoverage &&
+    Object.values(summary.targetFieldCoverage.targetFields).some((field) => field.pct < 100);
+
+  if (targetCoverageBelow100) {
+    status = "degraded";
+    notes.push("AutoScout24 target-field coverage below 100%");
+  }
+
+  if (hasAutoscout24ShardSaturationWarning(runs)) {
+    status = "degraded";
+    notes.push("AutoScout24 shard saturation warning present");
+  }
+
+  return status === summary.status && notes.length === summary.notes.length
+    ? summary
+    : { ...summary, status, notes };
 }
 
 async function main(): Promise<void> {
@@ -159,7 +242,7 @@ async function main(): Promise<void> {
   const [{ data: runs, error: runsError }, { data: activeRuns, error: activeError }] = await Promise.all([
     supabase
       .from("scraper_runs")
-      .select("scraper_name,run_id,started_at,finished_at,success,runtime,duration_ms,discovered,written,errors_count,error_messages")
+      .select("*")
       .gte("finished_at", since)
       .order("finished_at", { ascending: false }),
     supabase
@@ -182,15 +265,25 @@ async function main(): Promise<void> {
     activeByName.set(active.scraper_name, active);
   }
 
-  const elferspotTargetCoverage = await fetchElferspotTargetCoverage(supabase);
+  const [elferspotTargetCoverage, autoscout24TargetCoverage] = await Promise.all([
+    fetchElferspotTargetCoverage(supabase),
+    fetchAutoscout24TargetCoverage(supabase),
+  ]);
 
   const summaries = JOB_SPECS.map((spec) =>
-    summarizeScraperHealth(
-      spec,
+    applyAutoscout24HealthGates(
+      summarizeScraperHealth(
+        spec,
+        groupedRuns.get(spec.scraperName) ?? [],
+        activeByName.get(spec.scraperName),
+        Date.now(),
+        spec.scraperName === "elferspot"
+          ? elferspotTargetCoverage
+          : spec.scraperName === "autoscout24"
+            ? autoscout24TargetCoverage
+            : undefined,
+      ),
       groupedRuns.get(spec.scraperName) ?? [],
-      activeByName.get(spec.scraperName),
-      Date.now(),
-      spec.scraperName === "elferspot" ? elferspotTargetCoverage : undefined,
     ),
   );
 
@@ -236,7 +329,11 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
-  process.exitCode = 1;
-});
+const isDirectRun = process.argv[1] ? fileURLToPath(import.meta.url) === path.resolve(process.argv[1]) : false;
+
+if (isDirectRun) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    process.exitCode = 1;
+  });
+}

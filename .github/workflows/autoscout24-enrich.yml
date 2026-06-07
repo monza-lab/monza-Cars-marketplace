@@ -7,7 +7,7 @@ on:
     inputs:
       max_listings:
         description: 'Max listings to enrich'
-        default: '500'
+        default: '800'
       delay_ms:
         description: 'Delay between requests (ms)'
         default: '1000'
@@ -40,15 +40,15 @@ jobs:
       - name: Install scrapling
         run: pip install "scrapling[fetchers]"
 
-      - name: Run bulk enrichment (scrapling)
+      - name: Run target-field backlog enrichment (scrapling)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SCRAPLING_PYTHON: python
         run: |
           npx tsx scripts/as24-enrich-scrapling.ts \
-            --limit=${{ github.event.inputs.max_listings || '500' }} \
-            --delayMs=${{ github.event.inputs.delay_ms || '2000' }} \
+            --limit=${{ github.event.inputs.max_listings || '800' }} \
+            --delayMs=${{ github.event.inputs.delay_ms || '1000' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 
       - name: Verify scraper quality gate

@@ -82,7 +82,7 @@ describe("GET /api/cron/enrich-details", () => {
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
     expect(mockOr).toHaveBeenCalledWith(
-      "trim.is.null,trim.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+      'color_exterior.is.null,color_exterior.eq.,color_exterior.in.("Not specified","Unknown","N/A","-"),engine.is.null,engine.eq.,engine.in.("Not specified","Unknown","N/A","-"),transmission.is.null,transmission.eq.,transmission.in.("Not specified","Unknown","N/A","-")',
     );
   });
 
@@ -119,7 +119,7 @@ describe("GET /api/cron/enrich-details", () => {
     expect(data.duration).toMatch(/^\d+ms$/);
   });
 
-  it("marks listing as attempted when no fields extracted", async () => {
+  it("records metadata without using trim as a sentinel when no fields are extracted", async () => {
     // Mock returning a listing
     mockSelect.mockReturnValueOnce({
       eq: vi.fn().mockReturnValue({
@@ -135,7 +135,21 @@ describe("GET /api/cron/enrich-details", () => {
           or: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
               limit: vi.fn().mockResolvedValue({
-                data: [{ id: "test-id", source_url: "https://www.autoscout24.com/offers/test", trim: null }],
+                data: [{
+                  id: "test-id",
+                  source_url: "https://www.autoscout24.com/offers/test",
+                  title: "Porsche 911",
+                  trim: null,
+                  transmission: "Manual",
+                  body_style: null,
+                  engine: null,
+                  color_exterior: null,
+                  color_interior: null,
+                  vin: null,
+                  description_text: null,
+                  images: [],
+                  enrichment_meta: { keep: true },
+                }],
                 error: null,
               }),
             }),
@@ -164,7 +178,85 @@ describe("GET /api/cron/enrich-details", () => {
     const data = await response.json();
     expect(data.success).toBe(true);
 
-    // Should have called update with trim = '' even though no fields extracted
     expect(mockUpdate).toHaveBeenCalled();
+    const updatePayload = mockUpdate.mock.calls.at(-1)?.[0];
+    expect(updatePayload).not.toHaveProperty("trim");
+    expect(updatePayload.enrichment_meta).toMatchObject({
+      keep: true,
+      autoscout24: {
+        targetFieldStatus: "detail_unavailable",
+        missingTargetFields: ["color_exterior", "engine"],
+      },
+    });
+    expect(data).toMatchObject({
+      targetFieldCandidates: 1,
+      targetFieldUpdates: 0,
+      detailsFetched: 1,
+      blocked: 0,
+      deadUrls: 0,
+    });
+  });
+
+  it("merges target metadata and counts target field updates", async () => {
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          or: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({
+                data: [{
+                  id: "test-id",
+                  source_url: "https://www.autoscout24.com/offers/test",
+                  title: "Porsche 911",
+                  trim: "",
+                  transmission: "Manual",
+                  body_style: null,
+                  engine: null,
+                  color_exterior: null,
+                  color_interior: null,
+                  vin: null,
+                  description_text: null,
+                  images: [],
+                  enrichment_meta: { autoscout24: { previous: "kept" } },
+                }],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      }),
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue("<html><body>listingDetails full page</body></html>"),
+    }) as unknown as typeof fetch;
+
+    vi.mocked(parseDetailHtml).mockReturnValue({
+      title: "", price: null, currency: null, year: null, make: null, model: null,
+      trim: "Carrera", mileageKm: null, transmission: null, fuelType: null, engine: "3.0L",
+      power: null, bodyStyle: null, exteriorColor: "Black", interiorColor: null,
+      vin: null, location: null, country: null, region: null, sellerType: null,
+      sellerName: null, description: null, images: [], firstRegistration: null, features: [],
+    });
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+    const updatePayload = mockUpdate.mock.calls.at(-1)?.[0];
+
+    expect(updatePayload).toMatchObject({
+      trim: "Carrera",
+      engine: "3.0L",
+      color_exterior: "Black",
+      enrichment_meta: {
+        autoscout24: {
+          previous: "kept",
+          targetFieldStatus: "complete",
+          missingTargetFields: [],
+        },
+      },
+    });
+    expect(data.targetFieldCandidates).toBe(1);
+    expect(data.targetFieldUpdates).toBe(1);
   });
 });

@@ -40,8 +40,46 @@ import {
   recordScraperRun,
   clearScraperRunActive,
 } from "../src/features/scrapers/common/monitoring/record";
-import { buildMissingDetailOrCriticalSpecFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import {
+  AS24_TARGET_FIELDS,
+  buildUnusableAs24TargetFieldFilter,
+  isUsableTargetFieldValue,
+} from "../src/features/scrapers/common/enrichmentLoopPolicy";
 import { parseEngineFromText } from "../src/features/scrapers/common/titleEnrichment";
+
+type TargetFieldStatus =
+  | "complete"
+  | "covered_or_unavailable"
+  | "detail_unavailable"
+  | "blocked_unverified"
+  | "dead_url";
+
+type EnrichmentMeta = Record<string, unknown> & {
+  autoscout24?: Record<string, unknown>;
+};
+
+type EnrichmentRow = {
+  id: string;
+  source_url: string;
+  title: string | null;
+  trim: string | null;
+  transmission: string | null;
+  body_style: string | null;
+  engine: string | null;
+  color_exterior: string | null;
+  color_interior: string | null;
+  vin: string | null;
+  description_text: string | null;
+  images: string[] | null;
+  enrichment_meta: EnrichmentMeta | null;
+};
+
+const COVERED_EXCEPTION_STATUSES = new Set([
+  "covered_or_unavailable",
+  "detail_unavailable",
+  "blocked_unverified",
+  "dead_url",
+]);
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -77,6 +115,49 @@ function truncate(value: string | null | undefined, max: number): string | null 
   return value.length <= max ? value : value.slice(0, max);
 }
 
+function mergeAutoscout24Meta(
+  existing: EnrichmentMeta | null,
+  patch: {
+    detailAttemptedAt: string;
+    targetFieldStatus: TargetFieldStatus;
+    missingTargetFields: string[];
+  },
+): EnrichmentMeta {
+  const base = existing && typeof existing === "object" && !Array.isArray(existing) ? existing : {};
+  const existingAs24 =
+    base.autoscout24 && typeof base.autoscout24 === "object" && !Array.isArray(base.autoscout24)
+      ? base.autoscout24
+      : {};
+  return {
+    ...base,
+    autoscout24: {
+      ...existingAs24,
+      detailAttemptedAt: patch.detailAttemptedAt,
+      targetFieldStatus: patch.targetFieldStatus,
+      missingTargetFields: patch.missingTargetFields,
+    },
+  };
+}
+
+function valueAfterUpdate(row: EnrichmentRow, updates: Record<string, unknown>, field: (typeof AS24_TARGET_FIELDS)[number]): unknown {
+  return Object.prototype.hasOwnProperty.call(updates, field) ? updates[field] : row[field];
+}
+
+function missingTargetFieldsAfterUpdate(row: EnrichmentRow, updates: Record<string, unknown>): string[] {
+  return AS24_TARGET_FIELDS.filter((field) => !isUsableTargetFieldValue(valueAfterUpdate(row, updates, field)));
+}
+
+function hasUsableTargetUpdate(updates: Record<string, unknown>): boolean {
+  return AS24_TARGET_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(updates, field) && isUsableTargetFieldValue(updates[field]));
+}
+
+function hasCoveredTargetException(row: EnrichmentRow): boolean {
+  const autoscout24 = row.enrichment_meta?.autoscout24;
+  if (!autoscout24 || typeof autoscout24 !== "object" || Array.isArray(autoscout24)) return false;
+  const status = autoscout24.targetFieldStatus;
+  return typeof status === "string" && COVERED_EXCEPTION_STATUSES.has(status);
+}
+
 async function main() {
   const opts = parseArgs();
   const startTime = Date.now();
@@ -108,24 +189,30 @@ async function main() {
     runtime,
   });
 
-  // Query AS24 listings needing enrichment: never attempted or missing critical specs.
+  // Query AS24 listings needing enrichment: drain target-field gaps before secondary detail gaps.
   const { data: listings, error } = await supabase
     .from("listings")
-    .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images")
+    .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images, enrichment_meta")
     .eq("source", "AutoScout24")
     .eq("status", "active")
-    .or(buildMissingDetailOrCriticalSpecFilter(["trim"]))
+    .or(buildUnusableAs24TargetFieldFilter())
     .order("updated_at", { ascending: true })
-    .limit(opts.limit);
+    .limit(Math.max(opts.limit * 4, 10_000));
 
   if (error) {
     console.error("Query error:", error.message);
     process.exit(1);
   }
 
-  console.log(`Found ${listings.length} AS24 listings needing enrichment\n`);
+  const typedListings = (listings as EnrichmentRow[])
+    .filter((listing) => !hasCoveredTargetException(listing))
+    .slice(0, opts.limit);
+  const targetFieldCandidates = typedListings.filter((listing) =>
+    AS24_TARGET_FIELDS.some((field) => !isUsableTargetFieldValue(listing[field])),
+  ).length;
+  console.log(`Found ${typedListings.length} AS24 listings needing enrichment (${targetFieldCandidates} target-field candidates)\n`);
 
-  if (listings.length === 0) {
+  if (typedListings.length === 0) {
     console.log("Nothing to enrich. Done!");
     await clearScraperRunActive("as24-enrich");
     return;
@@ -134,7 +221,7 @@ async function main() {
   // ── Pre-flight check ──
   if (opts.preflight) {
     console.log("=== PRE-FLIGHT CHECK ===\n");
-    const sample = listings.slice(0, 5);
+    const sample = typedListings.slice(0, 5);
     let passed = 0;
     for (const listing of sample) {
       try {
@@ -165,19 +252,22 @@ async function main() {
 
   // ── Batch execution ──
   let detailsFetched = 0;
+  let targetFieldUpdates = 0;
   let written = 0;
   let skipped = 0;
+  let blocked = 0;
+  let deadUrls = 0;
   const errors: string[] = [];
 
   const batchSize = Math.max(1, Math.min(opts.batchSize, 24));
 
-  for (let i = 0; i < listings.length;) {
+  for (let i = 0; i < typedListings.length;) {
     if (Date.now() - startTime > opts.timeBudgetMs) {
       console.log(`\nTime budget reached after ${i} listings.`);
       break;
     }
 
-    const batch = listings.slice(i, i + batchSize);
+    const batch = typedListings.slice(i, i + batchSize);
     let batchDetails: Array<(AS24ScraplingDetailResult & { url?: string }) | null> | null = null;
 
     if (batchSize > 1) {
@@ -195,24 +285,22 @@ async function main() {
         const updates: Record<string, unknown> = {
           updated_at: new Date().toISOString(),
         };
-        if (!listing.trim) {
-          updates.trim = "";
-        }
 
         if (detail) {
           detailsFetched++;
           // Only update null/empty fields
           if (detail.trim) updates.trim = truncate(detail.trim, 100);
           if (!listing.vin && detail.vin) updates.vin = truncate(detail.vin, 17);
-          if (!listing.transmission && detail.transmission) updates.transmission = truncate(detail.transmission, 100);
+          if (!isUsableTargetFieldValue(listing.transmission) && detail.transmission && isUsableTargetFieldValue(detail.transmission)) updates.transmission = truncate(detail.transmission, 100);
           if (!listing.body_style && detail.bodyStyle) updates.body_style = truncate(detail.bodyStyle, 100);
-          if (!listing.engine) {
+          if (!isUsableTargetFieldValue(listing.engine)) {
             const engineFromText = parseEngineFromText(
               [detail.trim, detail.description, listing.title].filter(Boolean).join(" "),
             );
-            updates.engine = truncate(detail.engine ?? engineFromText ?? "Not specified", 100);
+            const engine = detail.engine ?? engineFromText;
+            if (engine && isUsableTargetFieldValue(engine)) updates.engine = truncate(engine, 100);
           }
-          if (!listing.color_exterior && detail.colorExterior) updates.color_exterior = truncate(detail.colorExterior, 100);
+          if (!isUsableTargetFieldValue(listing.color_exterior) && detail.colorExterior && isUsableTargetFieldValue(detail.colorExterior)) updates.color_exterior = truncate(detail.colorExterior, 100);
           if (!listing.color_interior && detail.colorInterior) updates.color_interior = truncate(detail.colorInterior, 100);
           if (!listing.description_text && detail.description) updates.description_text = detail.description;
           if (detail.images.length > 0 && (!listing.images || listing.images.length <= 1)) {
@@ -222,6 +310,21 @@ async function main() {
         } else {
           skipped++;
         }
+
+        const missingTargetFields = missingTargetFieldsAfterUpdate(listing, updates);
+        const newFieldCount = Object.keys(updates).length - 1;
+        const targetFieldStatus: TargetFieldStatus =
+          missingTargetFields.length === 0
+            ? "complete"
+            : detail
+              ? (newFieldCount > 0 ? "covered_or_unavailable" : "detail_unavailable")
+              : "blocked_unverified";
+        if (!detail) blocked++;
+        updates.enrichment_meta = mergeAutoscout24Meta(listing.enrichment_meta, {
+          detailAttemptedAt: updates.updated_at as string,
+          targetFieldStatus,
+          missingTargetFields,
+        });
 
         if (!opts.dryRun) {
           const { error: updateErr } = await supabase
@@ -233,6 +336,7 @@ async function main() {
             errors.push(`${listing.id}: ${updateErr.message}`);
           } else {
             written++;
+            if (hasUsableTargetUpdate(updates)) targetFieldUpdates++;
           }
         } else {
           console.log(`  [DRY] ${listing.source_url}: trim=${detail?.trim || "null"}, vin=${detail?.vin || "null"}`);
@@ -240,7 +344,7 @@ async function main() {
         }
 
         if (written > 0 && written % 25 === 0) {
-          console.log(`  Progress: ${written} updated, ${i + batchIndex + 1}/${listings.length} processed`);
+          console.log(`  Progress: ${written} updated, ${i + batchIndex + 1}/${typedListings.length} processed`);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -254,6 +358,13 @@ async function main() {
     await new Promise((r) => setTimeout(r, opts.delayMs));
   }
 
+  const { count: remainingTargetFieldBacklog } = await supabase
+    .from("listings")
+    .select("id", { count: "exact", head: true })
+    .eq("source", "AutoScout24")
+    .eq("status", "active")
+    .or(buildUnusableAs24TargetFieldFilter());
+
   // Record run
   await recordScraperRun({
     scraper_name: "as24-enrich",
@@ -263,7 +374,7 @@ async function main() {
     success: errors.length < listings.length / 2,
     runtime,
     duration_ms: Date.now() - startTime,
-    discovered: listings.length,
+    discovered: typedListings.length,
     written,
     errors_count: errors.length,
     details_fetched: detailsFetched,
@@ -272,9 +383,14 @@ async function main() {
   await clearScraperRunActive("as24-enrich");
 
   console.log(`\n=== SUMMARY ===`);
-  console.log(`Listings queried: ${listings.length}`);
+  console.log(`Listings queried: ${typedListings.length}`);
+  console.log(`Target-field candidates: ${targetFieldCandidates}`);
+  console.log(`Target-field updates: ${targetFieldUpdates}`);
   console.log(`Detail pages fetched: ${detailsFetched}`);
+  console.log(`Remaining target-field backlog: ${remainingTargetFieldBacklog ?? "unknown"}`);
   console.log(`DB updates: ${written}`);
+  console.log(`Blocked/unverified: ${blocked}`);
+  console.log(`Dead URLs: ${deadUrls}`);
   console.log(`Skipped (no data): ${skipped}`);
   console.log(`Errors: ${errors.length}`);
   console.log(`Duration: ${Math.round((Date.now() - startTime) / 1000)}s`);

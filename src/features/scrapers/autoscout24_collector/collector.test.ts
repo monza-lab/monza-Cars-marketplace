@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { buildHardFailureError } from "./collector";
+import { buildHardFailureError, buildShardSaturationWarning } from "./collector";
+import { generateShards, splitSaturatedShard } from "./shards";
+import type { AS24CountryCode, SearchShard } from "./types";
 
 describe("buildHardFailureError", () => {
   it("flags repeated Akamai blocks with actionable diagnostics", () => {
@@ -64,5 +66,70 @@ describe("buildHardFailureError", () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe("AutoScout24 saturation shard policy", () => {
+  const countries: AS24CountryCode[] = ["D", "A", "B", "E", "F", "I", "L", "NL"];
+
+  it("does not emit coarse shard ids that saturated in the manual run", () => {
+    const shards = generateShards({
+      countries,
+      models: ["macan", "panamera", "taycan"],
+      maxPagesPerShard: 20,
+    });
+
+    const ids = shards.map((shard) => shard.id);
+
+    expect(ids).not.toContain("macan-all");
+    expect(ids).not.toContain("panamera-low");
+    expect(ids).not.toContain("panamera-mid");
+    expect(ids).not.toContain("panamera-high");
+    expect(ids).not.toContain("taycan-mid");
+    expect(ids).not.toContain("taycan-high");
+  });
+
+  it("uses predictable audit-readable ids for Macan price splits and Panamera/Taycan year splits", () => {
+    const shards = generateShards({
+      countries,
+      models: ["macan", "panamera", "taycan"],
+      maxPagesPerShard: 20,
+    });
+
+    const ids = shards.map((shard) => shard.id);
+
+    expect(ids).toContain("macan-low");
+    expect(ids).toContain("macan-mid");
+    expect(ids).toContain("macan-high");
+    expect(ids).toContain("panamera-low-2009-2016");
+    expect(ids).toContain("panamera-mid-2017-2020");
+    expect(ids).toContain("panamera-high-2021-2026");
+    expect(ids).toContain("taycan-mid-2019-2022");
+    expect(ids).toContain("taycan-high-2023-2026");
+  });
+
+  it("preserves saturated shard lineage when splitting an observed saturated shard", () => {
+    const shard: SearchShard = {
+      id: "panamera-mid",
+      model: "panamera",
+      priceFrom: 50001,
+      priceTo: 120000,
+      countries,
+      maxPages: 20,
+    };
+
+    const splitIds = splitSaturatedShard(shard).map((split) => split.id);
+
+    expect(splitIds).toEqual([
+      "panamera-mid-2009-2016",
+      "panamera-mid-2017-2020",
+      "panamera-mid-2021-2026",
+    ]);
+  });
+
+  it("formats saturation warnings for health audit ingestion", () => {
+    expect(buildShardSaturationWarning({ shardId: "macan-all", maxPages: 20 })).toBe(
+      "discover.shard_saturated: macan-all reached 20-page limit",
+    );
   });
 });

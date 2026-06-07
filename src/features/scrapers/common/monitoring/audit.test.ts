@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ActiveScraperRun, ScraperRun } from "./types";
 import { summarizeScraperHealth } from "./audit";
+import {
+  applyAutoscout24HealthGates,
+  hasAutoscout24ShardSaturationWarning,
+} from "../../../../../scripts/scraper-health-audit";
 
 function makeRun(overrides: Partial<ScraperRun> = {}): ScraperRun {
   return {
@@ -110,5 +114,79 @@ describe("summarizeScraperHealth", () => {
 
     expect(summary.status).toBe("degraded");
     expect(summary.notes.join("; ")).toContain("Elferspot target-field coverage below 100%");
+  });
+
+  it("marks AutoScout24 degraded when target-field coverage is below 100%", () => {
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "autoscout24",
+        label: "AutoScout24",
+        cadence: "external",
+      },
+      [makeRun({ scraper_name: "autoscout24", written: 10, errors_count: 0 })],
+      undefined,
+      Date.now(),
+      {
+        source: "AutoScout24",
+        activeTotal: 100,
+        targetFields: {
+          color_exterior: { filled: 99, coveredOrExcepted: 99, missing: 1, pct: 99 },
+          engine: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+          transmission: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+        },
+      },
+    );
+
+    const gated = applyAutoscout24HealthGates(summary, [makeRun({ scraper_name: "autoscout24", written: 10 })]);
+
+    expect(gated.status).toBe("degraded");
+    expect(gated.notes.join("; ")).toContain("AutoScout24 target-field coverage below 100%");
+  });
+
+  it("marks AutoScout24 degraded when recent run metadata reports shard saturation", () => {
+    const runs = [
+      makeRun({
+        scraper_name: "autoscout24",
+        written: 10,
+        errors_count: 0,
+      }) as ScraperRun & {
+        metadata: { warnings: Array<{ event: string; shard: string; message: string }> };
+      },
+    ];
+    runs[0].metadata = {
+      warnings: [
+        {
+          event: "discover.shard_saturated",
+          shard: "macan-all",
+          message: "Shard reached 20-page limit. Some listings may be missed.",
+        },
+      ],
+    };
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "autoscout24",
+        label: "AutoScout24",
+        cadence: "external",
+      },
+      runs,
+      undefined,
+      Date.now(),
+      {
+        source: "AutoScout24",
+        activeTotal: 100,
+        targetFields: {
+          color_exterior: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+          engine: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+          transmission: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+        },
+      },
+    );
+
+    expect(hasAutoscout24ShardSaturationWarning(runs)).toBe(true);
+
+    const gated = applyAutoscout24HealthGates(summary, runs);
+
+    expect(gated.status).toBe("degraded");
+    expect(gated.notes.join("; ")).toContain("AutoScout24 shard saturation warning present");
   });
 });

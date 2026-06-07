@@ -6,6 +6,10 @@ export interface MissingFieldSpec {
 }
 
 const CRITICAL_SPEC_FIELDS = ["engine", "transmission"] as const;
+export const AS24_TARGET_FIELDS = ["color_exterior", "engine", "transmission"] as const;
+const PLACEHOLDER_TARGET_VALUE_LIST = ["Not specified", "Unknown", "N/A", "-"] as const;
+const PLACEHOLDER_TARGET_VALUES = new Set(PLACEHOLDER_TARGET_VALUE_LIST.map((value) => value.toLowerCase()));
+const PLACEHOLDER_TARGET_FILTER = `("${PLACEHOLDER_TARGET_VALUE_LIST.join('","')}")`;
 
 export function buildMissingAnyFilter(fields: MissingFieldSpec[]): string {
   return fields
@@ -28,6 +32,33 @@ export function buildMissingDetailOrCriticalSpecFilter(markerFields: string[]): 
     ...markerFields.map((field) => ({ field, type: "text" as const })),
     ...CRITICAL_SPEC_FIELDS.map((field) => ({ field, type: "text" as const })),
   ]);
+}
+
+export function buildMissingAs24TargetFieldFilter(): string {
+  return buildMissingAnyFilter(
+    AS24_TARGET_FIELDS.map((field) => ({ field, type: "text" as const })),
+  );
+}
+
+export function buildUnusableAs24TargetFieldFilter(): string {
+  return AS24_TARGET_FIELDS.flatMap((field) => [
+    `${field}.is.null`,
+    `${field}.eq.`,
+    `${field}.in.${PLACEHOLDER_TARGET_FILTER}`,
+  ]).join(",");
+}
+
+export function buildMissingAs24TargetOrDetailFilter(detailFields: string[]): string {
+  return buildMissingAnyFilter([
+    ...AS24_TARGET_FIELDS.map((field) => ({ field, type: "text" as const })),
+    ...detailFields.map((field) => ({ field, type: "text" as const })),
+  ]);
+}
+
+export function isUsableTargetFieldValue(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 && !PLACEHOLDER_TARGET_VALUES.has(normalized);
 }
 
 export function classifyScraplingBody(args: {

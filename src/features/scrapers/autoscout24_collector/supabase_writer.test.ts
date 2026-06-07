@@ -104,7 +104,7 @@ describe("mapNormalizedListingToListingsRow", () => {
     expect(row.transmission).toBe("PDK");
   });
 
-  it("handles null values without error", () => {
+  it("omits nullable detail-only fields when normalized listing values are null", () => {
     const listing = makeListing({
       make: "Porsche",
       model: "911",
@@ -115,16 +115,55 @@ describe("mapNormalizedListingToListingsRow", () => {
       bodyStyle: null,
       exteriorColor: null,
       interiorColor: null,
+      descriptionText: null,
+      auctionDate: null,
+      saleDate: null,
+      listDate: null,
+      reserveMet: null,
+      reserveStatus: null,
+      finalPrice: null,
+      locationString: null,
     });
 
     const row = mapNormalizedListingToListingsRow(listing, meta);
 
-    expect(row.trim).toBeNull();
-    expect(row.vin).toBeNull();
-    expect(row.engine).toBeNull();
-    expect(row.transmission).toBeNull();
-    expect(row.body_style).toBeNull();
-    expect(row.color_exterior).toBeNull();
-    expect(row.color_interior).toBeNull();
+    expect(row).not.toHaveProperty("trim");
+    expect(row).not.toHaveProperty("body_style");
+    expect(row).not.toHaveProperty("color_exterior");
+    expect(row).not.toHaveProperty("color_interior");
+    expect(row).not.toHaveProperty("engine");
+    expect(row).not.toHaveProperty("vin");
+    expect(row).not.toHaveProperty("description_text");
+    expect(row).not.toHaveProperty("transmission");
+
+    expect(row.auction_date).toBeNull();
+    expect(row.sale_date).toBeNull();
+    expect(row.list_date).toBeNull();
+    expect(row.reserve_met).toBeNull();
+    expect(row.reserve_status).toBeNull();
+    expect(row.final_price).toBeNull();
+    expect(row.location).toBeNull();
+  });
+
+  it("preserves transmission from search summary when available", () => {
+    const listing = makeListing({ transmission: "Manual" });
+
+    const row = mapNormalizedListingToListingsRow(listing, meta);
+
+    expect(row.transmission).toBe("Manual");
+  });
+
+  it("omits empty and placeholder target fields that would erase usable details", () => {
+    const listing = makeListing({
+      exteriorColor: "",
+      engine: "Not specified",
+      transmission: "-",
+    });
+
+    const row = mapNormalizedListingToListingsRow(listing, meta);
+
+    expect(row).not.toHaveProperty("color_exterior");
+    expect(row).not.toHaveProperty("engine");
+    expect(row).not.toHaveProperty("transmission");
   });
 });

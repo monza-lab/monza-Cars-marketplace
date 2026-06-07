@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AS24_TARGET_FIELDS,
+  buildMissingAs24TargetFieldFilter,
+  buildUnusableAs24TargetFieldFilter,
+  buildMissingAs24TargetOrDetailFilter,
   buildMissingCriticalSpecFilter,
   buildMissingDetailOrCriticalSpecFilter,
   buildMissingAnyFilter,
   classifyScraplingBody,
+  isUsableTargetFieldValue,
   isCriticalNoOutput,
 } from "./enrichmentLoopPolicy";
 
@@ -25,6 +30,28 @@ describe("enrichment loop policy", () => {
     expect(buildMissingDetailOrCriticalSpecFilter(["trim"])).toBe(
       "trim.is.null,trim.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
     );
+  });
+
+  it("builds AutoScout24 target-field filters with color before secondary details", () => {
+    expect(AS24_TARGET_FIELDS).toEqual(["color_exterior", "engine", "transmission"]);
+    expect(buildMissingAs24TargetFieldFilter()).toBe(
+      "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
+    expect(buildUnusableAs24TargetFieldFilter()).toBe(
+      'color_exterior.is.null,color_exterior.eq.,color_exterior.in.("Not specified","Unknown","N/A","-"),engine.is.null,engine.eq.,engine.in.("Not specified","Unknown","N/A","-"),transmission.is.null,transmission.eq.,transmission.in.("Not specified","Unknown","N/A","-")',
+    );
+    expect(buildMissingAs24TargetOrDetailFilter(["trim", "body_style"])).toBe(
+      "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.,trim.is.null,trim.eq.,body_style.is.null,body_style.eq.",
+    );
+  });
+
+  it("rejects placeholder values as unusable target coverage", () => {
+    for (const value of [null, undefined, "", " ", "Not specified", "Unknown", "N/A", "-"]) {
+      expect(isUsableTargetFieldValue(value)).toBe(false);
+    }
+
+    expect(isUsableTargetFieldValue("Automatic")).toBe(true);
+    expect(isUsableTargetFieldValue("Black")).toBe(true);
   });
 
   it("treats short Scrapling HTTP bodies as blocked so callers can escalate", () => {

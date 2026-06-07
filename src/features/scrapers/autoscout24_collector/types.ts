@@ -167,6 +167,7 @@ export interface CollectorResult {
   shardsTotal: number;
   counts: CollectorCounts;
   errors: string[];
+  saturationWarnings: string[];
   outputPath: string;
 }
 

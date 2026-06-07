@@ -24,6 +24,15 @@ describe("scraper runner enrichment profile", () => {
     expect(as24Block).toContain("timeoutMs: 25 * 60_000");
   });
 
+  it("keeps the scheduled AS24 enrichment job aligned with the target backlog profile", () => {
+    const workflow = readFileSync(".github/workflows/autoscout24-enrich.yml", "utf8");
+
+    expect(workflow).toContain("Run target-field backlog enrichment");
+    expect(workflow).toContain("default: '800'");
+    expect(workflow).toContain("--limit=${{ github.event.inputs.max_listings || '800' }}");
+    expect(workflow).toContain("--delayMs=${{ github.event.inputs.delay_ms || '1000' }}");
+  });
+
   it("gives BaT enough detail capacity to clear current spec gaps in one pass", () => {
     const source = readFileSync("scripts/run-scrapers.ts", "utf8");
     const batBlock = source.match(/id: "bat-detail",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
