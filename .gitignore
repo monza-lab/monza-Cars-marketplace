@@ -74,3 +74,4 @@ videos/**/work-*/
 **/venv/
 .venv/
 venv/
+.env.local.bak*
