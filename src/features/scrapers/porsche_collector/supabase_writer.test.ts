@@ -125,7 +125,7 @@ describe("porsche_collector supabase mapping", () => {
 
     const row = mapNormalizedListingToListingsRow(rareListing, meta);
 
-    expect(row.rarity_score).toBe(100);
+    expect(row.rarity_score).toBe(99);
     expect(row.rarity_tier).toBe("unique");
     expect(row.rarity_signals_json).toEqual([
       "paint_to_sample",
@@ -138,6 +138,6 @@ describe("porsche_collector supabase mapping", () => {
       "gt_model",
     ]);
     expect(row.rarity_scored_at).toBe(meta.scrapeTimestamp);
-    expect(row.rarity_score_version).toBe("listing-rarity-v3");
+    expect(row.rarity_score_version).toBe("listing-rarity-v6");
   });
 });

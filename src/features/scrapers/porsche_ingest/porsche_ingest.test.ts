@@ -153,7 +153,7 @@ describe("porsche_ingest normalize + dedupe", () => {
     );
 
     expect(fields).toEqual({
-      rarity_score: 100,
+      rarity_score: 96,
       rarity_tier: "unique",
       rarity_signals_json: [
         "paint_to_sample",
@@ -166,7 +166,7 @@ describe("porsche_ingest normalize + dedupe", () => {
         "gt_model",
       ],
       rarity_scored_at: expect.any(String),
-      rarity_score_version: "listing-rarity-v3",
+      rarity_score_version: "listing-rarity-v6",
     });
   });
 });

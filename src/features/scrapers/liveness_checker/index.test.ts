@@ -29,6 +29,7 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import { checkSource, runLivenessCheck, type LivenessResult } from "./index";
+import { SOURCE_CONFIGS } from "./sourceConfig";
 
 describe("checkSource", () => {
   beforeEach(() => {
@@ -190,11 +191,11 @@ describe("runLivenessCheck", () => {
 
     const run = await runLivenessCheck({ dryRun: true, delayOverrideMs: 0 });
 
-    // 5 sources in SOURCE_CONFIGS, each gets 1 listing → 5 checked, 5 alive
-    expect(run.totalChecked).toBe(5);
-    expect(run.totalAlive).toBe(5);
+    // Each configured source receives one mocked listing.
+    expect(run.totalChecked).toBe(SOURCE_CONFIGS.length);
+    expect(run.totalAlive).toBe(SOURCE_CONFIGS.length);
     expect(run.totalDead).toBe(0);
     expect(run.durationMs).toBeGreaterThanOrEqual(0);
-    expect(run.results).toHaveLength(5);
+    expect(run.results).toHaveLength(SOURCE_CONFIGS.length);
   });
 });

@@ -19,6 +19,7 @@ vi.mock("@/lib/CurrencyContext", () => ({
 }));
 vi.mock("next-intl", () => ({
   useLocale: () => "en",
+  useTranslations: () => (key: string) => key,
 }));
 
 function makeCar(overrides: Partial<DashboardAuction> = {}): DashboardAuction {

@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MonzaHaus Rarity Methodology</title>
+    <meta
+      name="description"
+      content="A simple Monza-style explainer for how Porsche cards are ranked by rarity and curation."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;500;600;700&family=Karla:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0e0e0d;
+        --bg-soft: #171615;
+        --panel: #121110;
+        --panel-2: #1c1a19;
+        --text: #f7f2ee;
+        --muted: #b7aca4;
+        --stone: #9a8e88;
+        --bone: #e8e2de;
+        --border: rgba(232, 226, 220, 0.14);
+        --lavender: #e1cce5;
+        --lavender-deep: #d6bedc;
+        --emerald: #34d399;
+        --amber: #fb923c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(225, 204, 229, 0.12), transparent 30%),
+          radial-gradient(circle at 85% 12%, rgba(214, 190, 220, 0.09), transparent 24%),
+          linear-gradient(180deg, #0b0b0a 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: "Karla", system-ui, sans-serif;
+        letter-spacing: 0.01em;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 20px 44px;
+      }
+
+      .frame {
+        border: 1px solid var(--border);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+          rgba(12, 11, 10, 0.88);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+        overflow: clip;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.01);
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .brand-kicker {
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        font-size: 0.7rem;
+        color: var(--stone);
+      }
+
+      .brand-title {
+        margin: 0;
+        font-family: "Cormorant", Georgia, serif;
+        font-size: clamp(2.2rem, 4vw, 4.2rem);
+        line-height: 0.9;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+
+      .brand-title span {
+        color: var(--lavender);
+      }
+
+      .badge {
+        align-self: flex-start;
+        border: 1px solid rgba(225, 204, 229, 0.3);
+        background: rgba(225, 204, 229, 0.08);
+        color: var(--lavender);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        white-space: nowrap;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 24px;
+        padding: 28px 20px 22px;
+      }
+
+      .intro {
+        display: grid;
+        gap: 18px;
+        align-content: start;
+      }
+
+      .eyebrow {
+        color: var(--lavender);
+        text-transform: uppercase;
+        letter-spacing: 0.26em;
+        font-size: 0.72rem;
+      }
+
+      .headline {
+        margin: 0;
+        font-family: "Cormorant", Georgia, serif;
+        font-size: clamp(2.8rem, 6vw, 5.5rem);
+        line-height: 0.92;
+        font-weight: 500;
+        letter-spacing: -0.04em;
+        max-width: 9ch;
+      }
+
+      .lede {
+        max-width: 62ch;
+        margin: 0;
+        font-size: 1.02rem;
+        line-height: 1.8;
+        color: var(--bone);
+      }
+
+      .summary {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+        padding: 18px;
+        border: 1px solid var(--border);
+        background:
+          linear-gradient(180deg, rgba(225, 204, 229, 0.06), rgba(225, 204, 229, 0.02)),
+          var(--panel);
+      }
+
+      .summary h2,
+      .section h2 {
+        margin: 0 0 8px;
+        font-family: "Cormorant", Georgia, serif;
+        font-size: 1.9rem;
+        line-height: 1;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+
+      .summary p,
+      .section p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .metric {
+        display: grid;
+        gap: 6px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .metric strong {
+        font-size: 1.02rem;
+        color: var(--text);
+      }
+
+      .metric span {
+        color: var(--stone);
+        line-height: 1.5;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+        padding: 0 20px 24px;
+      }
+
+      .section {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent);
+      }
+
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .factor-list {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .factor {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: start;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .factor .score {
+        min-width: 3.2rem;
+        text-align: right;
+        color: var(--lavender);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .factor .label {
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .factor-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .factor .note {
+        color: var(--stone);
+        line-height: 1.5;
+        font-size: 0.94rem;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .chip {
+        padding: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        display: grid;
+        gap: 8px;
+      }
+
+      .chip h3 {
+        margin: 0;
+        font-size: 0.92rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--lavender);
+      }
+
+      .chip p {
+        margin: 0;
+        color: var(--bone);
+        line-height: 1.55;
+      }
+
+      .flow {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .flow-row {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .flow-row .step {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(225, 204, 229, 0.28);
+        color: var(--lavender);
+        background: rgba(225, 204, 229, 0.06);
+        font-family: "Cormorant", Georgia, serif;
+        font-size: 1.8rem;
+      }
+
+      .flow-row .copy {
+        display: grid;
+        gap: 4px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .flow-row .copy strong {
+        color: var(--text);
+      }
+
+      .flow-row .copy span {
+        color: var(--stone);
+        line-height: 1.55;
+      }
+
+      .table-wrap {
+        margin-top: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--lavender);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(225, 204, 229, 0.04);
+      }
+
+      td {
+        color: var(--bone);
+        line-height: 1.55;
+      }
+
+      td:last-child {
+        color: var(--muted);
+      }
+
+      .example-callout {
+        border-left: 2px solid var(--lavender);
+        padding-left: 14px;
+        margin-top: 14px;
+        color: var(--bone);
+        line-height: 1.7;
+      }
+
+      .footer-note {
+        padding: 0 20px 20px;
+        color: var(--stone);
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+
+      .emerald {
+        color: var(--emerald);
+      }
+
+      .amber {
+        color: var(--amber);
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .content,
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .headline {
+          max-width: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .frame,
+        .summary,
+        .section,
+        .topbar {
+          animation: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .summary {
+          animation-delay: 90ms;
+        }
+
+        .section:nth-of-type(2) {
+          animation-delay: 130ms;
+        }
+
+        .section:nth-of-type(3) {
+          animation-delay: 170ms;
+        }
+
+        @keyframes rise {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <article class="frame">
+        <header class="topbar">
+          <div class="brand">
+            <div class="brand-kicker">MonzaHaus / Rarity Ranking</div>
+            <h1 class="brand-title">Curated <span>before</span> crowded.</h1>
+          </div>
+          <div class="badge">Simple explainer</div>
+        </header>
+
+        <section class="hero">
+          <div class="intro">
+            <div class="eyebrow">How the first page gets shaped</div>
+            <h2 class="headline">Rarity is not just age. It is significance, provenance, and restraint.</h2>
+            <p class="lede">
+              This page shows the same logic we use in the marketplace, in a simple visual form.
+              The goal is not to surface every old Porsche first. The goal is to put the most
+              interesting cars at the top: rare factory builds, special models, air-cooled icons,
+              and unusual PTS cars that feel genuinely special.
+            </p>
+          </div>
+
+          <aside class="summary">
+            <h2>What rises to the top</h2>
+            <p>
+              Cars earn points from rarity signals, then we apply guardrails so the list stays
+              curated instead of repetitive.
+            </p>
+            <div class="metric">
+              <strong>Top priority</strong>
+              <span>Rare factory specification, halo models, classic air-cooled significance.</span>
+            </div>
+            <div class="metric">
+              <strong>Secondary lift</strong>
+              <span>PTS, low mileage, matching numbers, special packages, and provenance clues.</span>
+            </div>
+            <div class="metric">
+              <strong>Guardrails</strong>
+              <span>Modern cars are capped, and overrepresented shapes like Speedsters are restrained.</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="content">
+          <div class="section">
+            <h2>Score logic</h2>
+            <p>
+              We start with the strongest rarity signals first. Then we add supporting details.
+              If two cars are close, the one with deeper significance should stay ahead.
+            </p>
+
+            <ul class="factor-list">
+              <li class="factor">
+                <div class="score">+70</div>
+                <div class="factor-copy">
+                  <div class="label">Hypercar / halo model</div>
+                  <div class="note">Carries the strongest rarity weight. These are the headline cars.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+36</div>
+                <div class="factor-copy">
+                  <div class="label">Homologation special</div>
+                  <div class="note">Cars built for a very specific purpose, not just general appeal.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+32</div>
+                <div class="factor-copy">
+                  <div class="label">Classic significance</div>
+                  <div class="note">Air-cooled icons and historically important cars get a major boost.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+28</div>
+                <div class="factor-copy">
+                  <div class="label">Paint to sample</div>
+                  <div class="note">PTS matters more on old models when the car already has character.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+18</div>
+                <div class="factor-copy">
+                  <div class="label">GT / Turbo heritage</div>
+                  <div class="note">Keeps serious performance variants in front of ordinary trims.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+14</div>
+                <div class="factor-copy">
+                  <div class="label">Limited editions, racing history, club sport</div>
+                  <div class="note">Adds weight for factory rarity, motorsport links, and enthusiast-built edge.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+10</div>
+                <div class="factor-copy">
+                  <div class="label">Matching numbers / bucket seats / low miles</div>
+                  <div class="note">Supporting signs of desirability, but not enough on their own.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="section">
+            <h2>How the ranking behaves</h2>
+            <p>
+              The system is opinionated on purpose. It prefers a few exceptional cars over many
+              similar ones.
+            </p>
+
+            <div class="flow">
+              <div class="flow-row">
+                <div class="step">1</div>
+                <div class="copy">
+                  <strong>Start with model significance</strong>
+                  <span>Rare factory cars and important air-cooled models begin ahead of ordinary listings.</span>
+                </div>
+              </div>
+              <div class="flow-row">
+                <div class="step">2</div>
+                <div class="copy">
+                  <strong>Add the good details</strong>
+                  <span>PTS, matching numbers, original paint, low owner count, and rare options increase the score.</span>
+                </div>
+              </div>
+              <div class="flow-row">
+                <div class="step">3</div>
+                <div class="copy">
+                  <strong>Keep modern cars under control</strong>
+                  <span>Late-model cars can still rank well, but they should not crowd out older icons just because they are newer and shinier.</span>
+                </div>
+              </div>
+              <div class="flow-row">
+                <div class="step">4</div>
+                <div class="copy">
+                  <strong>Prevent one shape from dominating</strong>
+                  <span>Speedsters are capped so they do not appear on every first page and drown out the rest of the selection.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="content" style="padding-top: 0;">
+          <div class="section">
+            <h2>What gets extra credit</h2>
+            <p>
+              Some details are especially powerful when they appear on the right generation of car.
+            </p>
+
+            <div class="grid-2" style="margin-top: 18px;">
+              <div class="chip">
+                <h3>Air-cooled classics</h3>
+                <p>Classic significance gets a bonus. If they also have PTS, homologation, or Turbo heritage, the score compounds.</p>
+              </div>
+              <div class="chip">
+                <h3>PTS on old models</h3>
+                <p>Old Porsches with special colors feel more curated and exclusive than a generic modern build.</p>
+              </div>
+              <div class="chip">
+                <h3>Special factory builds</h3>
+                <p>RS, RS America, Turbo S, 911R, 959, Singer-grade oddities, and similar cars deserve early placement.</p>
+              </div>
+              <div class="chip">
+                <h3>Condition signals</h3>
+                <p>Low miles, original paint, matching numbers, and careful ownership help separate serious cars from ordinary ones.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Examples</h2>
+            <p>
+              A 930 Turbo or 964 Carrera RS can beat a newer ordinary 911 because the older car has
+              more depth. A Speedster can still be high, but it should not occupy every opening slot.
+            </p>
+
+            <div class="table-wrap" role="region" aria-label="Ranking examples">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Usually ranks higher</th>
+                    <th>Usually ranks lower</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>964 Carrera RS, 930 Turbo, 959, 911R</td>
+                    <td>Ordinary modern 911s with no special specification</td>
+                  </tr>
+                  <tr>
+                    <td>Air-cooled PTS cars with honest provenance</td>
+                    <td>Late-model cars with only generic low-mileage appeal</td>
+                  </tr>
+                  <tr>
+                    <td>Factory rare cars with original paint and matching numbers</td>
+                    <td>Common trims with nice photos but no rarity story</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p class="example-callout">
+              The point is not to make the page old-car-only. The point is to make it
+              <span class="emerald">special-car-first</span>, with enough restraint that one body
+              style does not take over the front page.
+            </p>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          Built in the Monza style: dark, editorial, opinionated, and quiet. If you want, I can
+          also make a light version or wire this into the app as a real page.
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

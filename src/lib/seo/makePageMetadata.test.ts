@@ -58,15 +58,13 @@ describe("buildMakePageMetadata", () => {
     expect(meta.title).toContain("Subastas");
   });
 
-  it("emits hreflang alternates for all 4 locales and x-default", async () => {
+  it("emits hreflang alternates for the published English locale and x-default", async () => {
     const meta = await buildMakePageMetadata({ locale: "en", make: "porsche" });
     expect(meta.alternates?.languages).toBeDefined();
     const langs = meta.alternates?.languages as Record<string, string>;
     expect(langs.en).toBeDefined();
-    expect(langs.es).toBeDefined();
-    expect(langs.de).toBeDefined();
-    expect(langs.ja).toBeDefined();
     expect(langs["x-default"]).toBeDefined();
+    expect(Object.keys(langs).sort()).toEqual(["en", "x-default"]);
   });
 
   it("canonical points to locale-specific URL", async () => {
@@ -82,7 +80,8 @@ describe("buildMakePageMetadata", () => {
     });
     expect(meta.alternates?.canonical).toContain("series=993");
     const langs = meta.alternates?.languages as Record<string, string>;
-    expect(langs.de).toContain("series=993");
+    expect(langs.en).toContain("series=993");
+    expect(langs["x-default"]).toContain("series=993");
   });
 
   it("openGraph locale matches request locale", async () => {

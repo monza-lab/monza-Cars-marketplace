@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { parseDetailHtml } from "@/features/scrapers/autoscout24_collector/detail";
 import {
   AS24_TARGET_FIELDS,
@@ -15,6 +15,8 @@ import {
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+type CronSupabaseClient = SupabaseClient<any, any, any, any, any>;
 
 type TargetFieldStatus =
   | "complete"
@@ -42,6 +44,11 @@ type EnrichmentRow = {
   images: string[] | null;
   enrichment_meta: EnrichmentMeta | null;
 };
+
+type QueryPageResult = Promise<{
+  data: unknown[] | null;
+  error: { message: string } | null;
+}>;
 
 const COVERED_EXCEPTION_STATUSES = new Set([
   "covered_or_unavailable",
@@ -98,7 +105,7 @@ function hasCoveredTargetException(row: EnrichmentRow): boolean {
   return typeof status === "string" && COVERED_EXCEPTION_STATUSES.has(status);
 }
 
-async function countActionableTargetBacklog(client: ReturnType<typeof createClient>): Promise<number> {
+async function countActionableTargetBacklog(client: CronSupabaseClient): Promise<number> {
   let count = 0;
   const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
@@ -112,8 +119,8 @@ async function countActionableTargetBacklog(client: ReturnType<typeof createClie
 
     const { data, error } =
       typeof (query as { range?: unknown }).range === "function"
-        ? await (query as { range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }> }).range(from, from + pageSize - 1)
-        : await (query as { limit: (limit: number) => Promise<{ data: unknown[] | null; error: { message: string } | null }> }).limit(pageSize);
+        ? await (query as unknown as { range: (from: number, to: number) => QueryPageResult }).range(from, from + pageSize - 1)
+        : await (query as unknown as { limit: (limit: number) => QueryPageResult }).limit(pageSize);
 
     if (error) throw new Error(`Backlog count query failed: ${error.message}`);
     const rows = (data ?? []) as EnrichmentRow[];

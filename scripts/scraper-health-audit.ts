@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   summarizeScraperHealth,
   type ScraperHealthSummary,
@@ -10,6 +10,8 @@ import {
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
+
+type AuditSupabaseClient = SupabaseClient<any, any, any, any, any>;
 
 function loadEnvFromFile(filePath: string): void {
   if (!existsSync(filePath)) return;
@@ -137,7 +139,7 @@ const PLACEHOLDER_TARGET_VALUES = ["Not specified", "Unknown", "N/A", "-"] as co
 const PLACEHOLDER_FILTER = `("${PLACEHOLDER_TARGET_VALUES.join('","')}")`;
 
 async function fetchTargetCoverage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AuditSupabaseClient,
   spec: TargetCoverageSpec,
 ): Promise<ScraperTargetFieldCoverage> {
   const base = () =>
@@ -173,11 +175,11 @@ async function fetchTargetCoverage(
   return { source: spec.source, activeTotal, targetFields };
 }
 
-function fetchElferspotTargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
+function fetchElferspotTargetCoverage(supabase: AuditSupabaseClient): Promise<ScraperTargetFieldCoverage> {
   return fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.elferspot);
 }
 
-function fetchAutoscout24TargetCoverage(supabase: ReturnType<typeof createClient>): Promise<ScraperTargetFieldCoverage> {
+function fetchAutoscout24TargetCoverage(supabase: AuditSupabaseClient): Promise<ScraperTargetFieldCoverage> {
   return fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.autoscout24);
 }
 

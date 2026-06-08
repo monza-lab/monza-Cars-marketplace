@@ -89,7 +89,8 @@ describe("buildCarDetailMetadata", () => {
     });
     const langs = meta.alternates?.languages as Record<string, string>;
     expect(langs["x-default"]).toContain("/en/cars/porsche/abc");
-    expect(langs.ja).toContain("/ja/cars/porsche/abc");
+    expect(langs.en).toContain("/en/cars/porsche/abc");
+    expect(Object.keys(langs).sort()).toEqual(["en", "x-default"]);
   });
 
   it("openGraph includes car image when provided", async () => {

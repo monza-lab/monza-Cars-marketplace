@@ -67,7 +67,7 @@ describe("validateListing", () => {
   });
   it("fixes model 'Others' when title has valid model", () => {
     const result = validateListing({
-      make: "Porsche", model: "Others", title: "Porsche Cayenne 2021", year: 2021,
+      make: "Porsche", model: "Others", title: "2021 Porsche 911 Carrera", year: 2021,
     });
     expect(result.valid).toBe(true);
     expect(result.fixedModel).toBeTruthy();

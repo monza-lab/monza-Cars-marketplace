@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import sitemap from "./sitemap";
 
 describe("sitemap", () => {
-  it("includes homepage for all 4 locales", () => {
+  it("includes homepage for the published English locale", () => {
     const entries = sitemap();
     const homeUrls = entries
       .filter((e) => /\/(en|es|de|ja)$/.test(e.url))
       .map((e) => e.url);
-    expect(homeUrls).toHaveLength(4);
+    expect(homeUrls).toEqual(["https://monzalab.com/en"]);
   });
 
   it("every entry with alternates includes x-default", () => {
@@ -19,10 +19,11 @@ describe("sitemap", () => {
     }
   });
 
-  it("Porsche series URLs are present for all locales", () => {
+  it("Porsche series URLs are present for the published English locale", () => {
     const entries = sitemap();
     const porsche992 = entries.filter((e) => e.url.includes("series=992"));
-    expect(porsche992.length).toBe(4);
+    expect(porsche992).toHaveLength(1);
+    expect(porsche992[0]?.url).toBe("https://monzalab.com/en/cars/porsche?series=992");
   });
 
   it("priorities are valid (0.0-1.0)", () => {

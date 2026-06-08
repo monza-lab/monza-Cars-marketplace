@@ -18,6 +18,7 @@ vi.mock("@/features/scrapers/common/monitoring", () => ({
   markScraperRunStarted: vi.fn(),
   recordScraperRun: vi.fn(),
   clearScraperRunActive: vi.fn(),
+  clearStaleActiveRun: vi.fn(),
 }));
 
 vi.mock("@/lib/dashboardCache", () => ({
@@ -31,6 +32,7 @@ import {
   markScraperRunStarted,
   recordScraperRun,
   clearScraperRunActive,
+  clearStaleActiveRun,
 } from "@/features/scrapers/common/monitoring";
 
 describe("BeForward Cron Route", () => {
@@ -87,6 +89,7 @@ describe("BeForward Cron Route", () => {
     vi.mocked(markScraperRunStarted).mockResolvedValue(undefined);
     vi.mocked(recordScraperRun).mockResolvedValue(undefined);
     vi.mocked(clearScraperRunActive).mockResolvedValue(undefined);
+    vi.mocked(clearStaleActiveRun).mockResolvedValue(undefined);
 
     const request = new Request("http://localhost:3000/api/cron/beforward", {
       method: "GET",
@@ -113,6 +116,8 @@ describe("BeForward Cron Route", () => {
     expect(data.backfill.backfilled).toBe(10);
 
     // Verify all functions were called
+    expect(clearStaleActiveRun).toHaveBeenCalledWith("beforward", 10);
+
     expect(markScraperRunStarted).toHaveBeenCalledWith({
       scraperName: "beforward",
       runId: expect.any(String),
@@ -127,8 +132,8 @@ describe("BeForward Cron Route", () => {
       summaryOnly: true,
       concurrency: 3,
       rateLimitMs: 4000,
-      checkpointPath: "/tmp/beforward_porsche_collector/checkpoint.json",
-      outputPath: "/tmp/beforward_porsche_collector/listings.jsonl",
+      checkpointPath: "/tmp/beforward_checkpoint.json",
+      outputPath: "/tmp/beforward_listings.jsonl",
       dryRun: false,
     });
 
@@ -171,6 +176,7 @@ describe("BeForward Cron Route", () => {
     vi.mocked(markScraperRunStarted).mockResolvedValue(undefined);
     vi.mocked(recordScraperRun).mockResolvedValue(undefined);
     vi.mocked(clearScraperRunActive).mockResolvedValue(undefined);
+    vi.mocked(clearStaleActiveRun).mockResolvedValue(undefined);
 
     const request = new Request("http://localhost:3000/api/cron/beforward", {
       method: "GET",
@@ -187,6 +193,8 @@ describe("BeForward Cron Route", () => {
     expect(data.error).toBe("Collector failed");
 
     // Verify error was recorded
+    expect(clearStaleActiveRun).toHaveBeenCalledWith("beforward", 10);
+
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({
         scraper_name: "beforward",
