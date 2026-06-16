@@ -267,7 +267,7 @@ export function FilterSidebar() {
         <div className="flex items-center gap-2 mb-3">
           <Scale className="size-5 text-primary" />
           <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
-            Encuentra tu Porsche
+            Find your Porsche
           </h3>
         </div>
 
@@ -427,7 +427,7 @@ export function FilterSidebar() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
-                Rango de precio
+                Price range
               </span>
               <span className="text-[10px] tabular-nums text-primary">
                 ${priceRange[0]}K - ${priceRange[1]}K

@@ -4,7 +4,7 @@ import type { ChatContext, Suggestion } from "./types"
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function carName(car: CollectorCar | null): string {
-  if (!car) return "este Porsche"
+  if (!car) return "this Porsche"
   return `${car.year} ${car.make} ${car.model}`
 }
 
@@ -19,20 +19,20 @@ function normalize(suggestions: Suggestion[], fallback: Suggestion[]): Suggestio
 
 const OTHER_FALLBACK: Suggestion[] = [
   {
-    label: "¿Qué hace MonzaHaus?",
-    prompt: "¿Qué hace MonzaHaus y cómo me puede ayudar?",
+    label: "What does MonzaHaus do?",
+    prompt: "What does MonzaHaus do, and how can it help me?",
   },
   {
-    label: "¿Cómo funcionan los reportes?",
-    prompt: "¿Cómo funcionan los Haus Reports y qué incluyen?",
+    label: "How do reports work?",
+    prompt: "How do Haus Reports work, and what do they include?",
   },
   {
-    label: "¿Qué son los pistons?",
-    prompt: "¿Qué son los pistons y para qué los necesito?",
+    label: "What are Pistons?",
+    prompt: "What are Pistons, and what do I need them for?",
   },
   {
-    label: "Ayuda para empezar",
-    prompt: "Soy nuevo. ¿Cómo empiezo a explorar?",
+    label: "Getting started help",
+    prompt: "I'm new here. How should I start exploring?",
   },
 ]
 
@@ -49,180 +49,180 @@ function reportSuggestions(
     case "summary":
       return [
         {
-          label: "Resume los hallazgos",
-          prompt: `Resume los hallazgos clave del reporte de ${name} en 3 bullets.`,
+          label: "Summarize the findings",
+          prompt: `Summarize the key findings from the ${name} report in 3 bullets.`,
         },
         {
-          label: "¿Qué es lo más importante?",
-          prompt: `¿Qué es lo más importante que debería saber antes de evaluar este ${name}?`,
+          label: "What matters most?",
+          prompt: `What is the most important thing I should know before evaluating this ${name}?`,
         },
         {
-          label: "Ayuda para empezar",
-          prompt: "Soy nuevo. ¿Cómo empiezo a explorar?",
+          label: "Getting started help",
+          prompt: "I'm new here. How should I start exploring?",
         },
         {
-          label: "¿Cómo funcionan los reportes?",
-          prompt: "¿Cómo funcionan los Haus Reports y qué incluyen?",
+          label: "How do reports work?",
+          prompt: "How do Haus Reports work, and what do they include?",
         },
       ]
 
     case "identity":
       return [
         {
-          label: "Explica este VIN",
-          prompt: `Explica qué nos dice el VIN de este ${name}, factory, generación, equipamiento.`,
+          label: "Explain this VIN",
+          prompt: `Explain what this ${name} VIN tells us about its factory, generation, and equipment.`,
         },
         {
-          label: "¿El color es raro?",
-          prompt: `¿Qué tan raro es el color de este ${name}? ¿Hay premium de mercado por el color?`,
+          label: "Is the color rare?",
+          prompt: `How rare is the color on this ${name}? Is there a market premium for it?`,
         },
         {
-          label: "Documentos a pedir",
-          prompt: `¿Qué documentación debo pedirle al vendedor de este ${name}?`,
+          label: "Documents to request",
+          prompt: `What documentation should I ask the seller of this ${name} for?`,
         },
         {
-          label: "Problemas comunes",
-          prompt: `¿Cuáles son los problemas mecánicos comunes de un ${name}?`,
+          label: "Common issues",
+          prompt: `What are the common mechanical issues on a ${name}?`,
         },
       ]
 
     case "valuation":
       return [
         {
-          label: "¿Por qué este fair value?",
-          prompt: `Explica cómo llegan al fair value del reporte para este ${name}. ¿Qué comparables usaron?`,
+          label: "Why this fair value?",
+          prompt: `Explain how the report arrives at the fair value for this ${name}. Which comparables were used?`,
         },
         {
-          label: "¿Está sobre o bajo mercado?",
-          prompt: `¿El precio de venta de este ${name} está sobre o bajo mercado vs comparables recientes?`,
+          label: "Above or below market?",
+          prompt: `Is the asking price of this ${name} above or below market versus recent comparables?`,
         },
         {
-          label: "¿Cuánto ha apreciado?",
-          prompt: `¿Cuánto ha apreciado un ${name} en los últimos 5 años? ¿Qué versión sube más?`,
+          label: "How much has it appreciated?",
+          prompt: `How much has a ${name} appreciated over the last 5 years? Which version has risen the most?`,
         },
         {
-          label: "¿Cómo está el mercado?",
-          prompt: `¿Cómo está el mercado de ${name} ahora mismo? ¿Es buen momento?`,
+          label: "How is the market?",
+          prompt: `How is the market for the ${name} right now? Is this a good moment?`,
         },
       ]
 
     case "performance":
       return [
         {
-          label: "¿Cuánto ha apreciado?",
-          prompt: `¿Cuánto ha apreciado un ${name} en los últimos 5 años? ¿Qué versión sube más?`,
+          label: "How much has it appreciated?",
+          prompt: `How much has a ${name} appreciated over the last 5 years? Which version has risen the most?`,
         },
         {
-          label: "¿Qué versión sube más?",
-          prompt: `Entre las variantes de ${name}, ¿cuál ha apreciado más y por qué?`,
+          label: "Which version is rising fastest?",
+          prompt: `Among the ${name} variants, which one has appreciated the most, and why?`,
         },
         {
-          label: "¿Por qué este fair value?",
-          prompt: `Explica cómo llegan al fair value del reporte para este ${name}. ¿Qué comparables usaron?`,
+          label: "Why this fair value?",
+          prompt: `Explain how the report arrives at the fair value for this ${name}. Which comparables were used?`,
         },
         {
-          label: "¿Cómo está el mercado?",
-          prompt: `¿Cómo está el mercado de ${name} ahora mismo? ¿Es buen momento?`,
+          label: "How is the market?",
+          prompt: `How is the market for the ${name} right now? Is this a good moment?`,
         },
       ]
 
     case "risk":
       return [
         {
-          label: "Explica el risk score",
-          prompt: `Explica el risk score de este ${name}. ¿Qué señales pesan más?`,
+          label: "Explain the risk score",
+          prompt: `Explain the risk score for this ${name}. Which signals matter most?`,
         },
         {
-          label: "¿Inspecciones a hacer?",
-          prompt: `¿Qué inspecciones críticas debo hacer antes de comprar este ${name}?`,
+          label: "Which inspections matter?",
+          prompt: `Which critical inspections should I do before buying this ${name}?`,
         },
         {
-          label: "Problemas comunes",
-          prompt: `¿Cuáles son los problemas mecánicos comunes de un ${name}?`,
+          label: "Common issues",
+          prompt: `What are the common mechanical issues on a ${name}?`,
         },
         {
-          label: "Documentos a pedir",
-          prompt: `¿Qué documentación debo pedirle al vendedor de este ${name}?`,
+          label: "Documents to request",
+          prompt: `What documentation should I ask the seller of this ${name} for?`,
         },
       ]
 
     case "dueDiligence":
       return [
         {
-          label: "Documentos a pedir",
-          prompt: `¿Qué documentación debo pedirle al vendedor de este ${name}?`,
+          label: "Documents to request",
+          prompt: `What documentation should I ask the seller of this ${name} for?`,
         },
         {
-          label: "Verificar service history",
-          prompt: `¿Cómo verifico que el service history de este ${name} es legítimo?`,
+          label: "Verify service history",
+          prompt: `How do I verify that the service history of this ${name} is legitimate?`,
         },
         {
-          label: "¿Inspecciones a hacer?",
-          prompt: `¿Qué inspecciones críticas debo hacer antes de comprar este ${name}?`,
+          label: "Which inspections matter?",
+          prompt: `Which critical inspections should I do before buying this ${name}?`,
         },
         {
-          label: "Explica el risk score",
-          prompt: `Explica el risk score de este ${name}. ¿Qué señales pesan más?`,
+          label: "Explain the risk score",
+          prompt: `Explain the risk score for this ${name}. Which signals matter most?`,
         },
       ]
 
     case "marketContext":
       return [
         {
-          label: "¿Cómo está el mercado?",
-          prompt: `¿Cómo está el mercado de ${name} ahora mismo? ¿Es buen momento?`,
+          label: "How is the market?",
+          prompt: `How is the market for the ${name} right now? Is this a good moment?`,
         },
         {
-          label: "¿Es el momento de comprar?",
-          prompt: `¿Es buen momento para comprar un ${name} en ${currentYear}?`,
+          label: "Is now the time to buy?",
+          prompt: `Is this a good time to buy a ${name} in ${currentYear}?`,
         },
         {
-          label: "¿Cuánto ha apreciado?",
-          prompt: `¿Cuánto ha apreciado un ${name} en los últimos 5 años? ¿Qué versión sube más?`,
+          label: "How much has it appreciated?",
+          prompt: `How much has a ${name} appreciated over the last 5 years? Which version has risen the most?`,
         },
         {
-          label: "¿Está sobre o bajo mercado?",
-          prompt: `¿El precio de venta de este ${name} está sobre o bajo mercado vs comparables recientes?`,
+          label: "Above or below market?",
+          prompt: `Is the asking price of this ${name} above or below market versus recent comparables?`,
         },
       ]
 
     case "similar":
       return [
         {
-          label: "Compara con otros",
-          prompt: `Muéstrame 3 carros similares a este ${name} a la venta hoy.`,
+          label: "Compare with others",
+          prompt: `Show me 3 similar cars to this ${name} that are for sale today.`,
         },
         {
-          label: "Opciones a este precio",
-          prompt: `¿Qué otros Porsche puedo comprar al mismo precio que este ${name}?`,
+          label: "Options at this price",
+          prompt: `What other Porsches can I buy at the same price as this ${name}?`,
         },
         {
-          label: "¿Está sobre o bajo mercado?",
-          prompt: `¿El precio de venta de este ${name} está sobre o bajo mercado vs comparables recientes?`,
+          label: "Above or below market?",
+          prompt: `Is the asking price of this ${name} above or below market versus recent comparables?`,
         },
         {
-          label: "¿Por qué este fair value?",
-          prompt: `Explica cómo llegan al fair value del reporte para este ${name}. ¿Qué comparables usaron?`,
+          label: "Why this fair value?",
+          prompt: `Explain how the report arrives at the fair value for this ${name}. Which comparables were used?`,
         },
       ]
 
     case "verdict":
       return [
         {
-          label: "¿Por qué este verdict?",
-          prompt: `Explica el verdict del reporte para este ${name}. ¿Qué pesa más?`,
+          label: "Why this verdict?",
+          prompt: `Explain the verdict for this ${name}'s report. What weighs most heavily?`,
         },
         {
-          label: "¿Qué cambiaría el verdict?",
-          prompt: `¿Qué tendría que pasar para que el verdict de este ${name} cambie?`,
+          label: "What would change the verdict?",
+          prompt: `What would need to happen for the verdict on this ${name} to change?`,
         },
         {
-          label: "¿Cómo está el mercado?",
-          prompt: `¿Cómo está el mercado de ${name} ahora mismo? ¿Es buen momento?`,
+          label: "How is the market?",
+          prompt: `How is the market for the ${name} right now? Is this a good moment?`,
         },
         {
-          label: "¿Es el momento de comprar?",
-          prompt: `¿Es buen momento para comprar un ${name} en ${currentYear}?`,
+          label: "Is now the time to buy?",
+          prompt: `Is this a good time to buy a ${name} in ${currentYear}?`,
         },
       ]
 
@@ -231,20 +231,20 @@ function reportSuggestions(
       return normalize(
         [
           {
-            label: "Resume los hallazgos",
-            prompt: `Resume los hallazgos clave del reporte de ${name} en 3 bullets.`,
+            label: "Summarize the findings",
+            prompt: `Summarize the key findings from the ${name} report in 3 bullets.`,
           },
           {
-            label: "¿Por qué este fair value?",
-            prompt: `Explica cómo llegan al fair value del reporte para este ${name}. ¿Qué comparables usaron?`,
+            label: "Why this fair value?",
+            prompt: `Explain how the report arrives at the fair value for this ${name}. Which comparables were used?`,
           },
           {
-            label: "Explica el risk score",
-            prompt: `Explica el risk score de este ${name}. ¿Qué señales pesan más?`,
+            label: "Explain the risk score",
+            prompt: `Explain the risk score for this ${name}. Which signals matter most?`,
           },
           {
-            label: "¿Por qué este verdict?",
-            prompt: `Explica el verdict del reporte para este ${name}. ¿Qué pesa más?`,
+            label: "Why this verdict?",
+            prompt: `Explain the verdict for this ${name}'s report. What weighs most heavily?`,
           },
         ],
         OTHER_FALLBACK
@@ -261,40 +261,40 @@ export function buildSuggestions(context: ChatContext): Suggestion[] {
     case "dashboard":
       return [
         {
-          label: "Movers de la semana",
-          prompt: "¿Qué Porsche subieron más esta semana?",
+          label: "Weekly movers",
+          prompt: "Which Porsches moved up the most this week?",
         },
         {
-          label: "Mejor generación para empezar",
-          prompt: "Si quiero empezar a coleccionar Porsche, ¿qué generación recomiendas?",
+          label: "Best generation to start with",
+          prompt: "If I want to start collecting Porsches, which generation do you recommend?",
         },
         {
-          label: "Comparar 992 vs 991",
-          prompt: "Compara la generación 992 contra la 991 en términos de apreciación.",
+          label: "Compare 992 vs 991",
+          prompt: "Compare the 992 generation versus the 991 in terms of appreciation.",
         },
         {
-          label: "Tendencias de mercado",
-          prompt: "Resume las tendencias del mercado collector Porsche este mes.",
+          label: "Market trends",
+          prompt: "Summarize collector Porsche market trends this month.",
         },
       ]
 
     case "marketplace-series":
       return [
         {
-          label: "GT3 vs Turbo comparativa",
-          prompt: "¿Qué debo buscar al comparar las versiones GT3 vs Turbo S de esta generación?",
+          label: "GT3 vs Turbo comparison",
+          prompt: "What should I look for when comparing GT3 versus Turbo S versions of this generation?",
         },
         {
-          label: "Fair value típico",
-          prompt: "¿Cuál es el fair value típico de los modelos de esta generación?",
+          label: "Typical fair value",
+          prompt: "What is the typical fair value for models in this generation?",
         },
         {
-          label: "Mejor entry point",
-          prompt: "¿Cuál es el mejor entry point dentro de esta generación para un primer Porsche?",
+          label: "Best entry point",
+          prompt: "What is the best entry point within this generation for a first Porsche?",
         },
         {
-          label: "Movers de la semana",
-          prompt: "¿Qué modelos de esta generación se movieron más esta semana en precio?",
+          label: "Weekly movers",
+          prompt: "Which models in this generation moved the most in price this week?",
         },
       ]
 
@@ -302,20 +302,20 @@ export function buildSuggestions(context: ChatContext): Suggestion[] {
       const name = carName(car)
       return [
         {
-          label: "¿Vale la pena el reporte?",
-          prompt: `¿Vale la pena generar el Haus Report de este ${name}?`,
+          label: "Is the report worth it?",
+          prompt: `Is it worth generating the Haus Report for this ${name}?`,
         },
         {
-          label: "Puntos débiles del modelo",
-          prompt: `¿Cuáles son los puntos débiles conocidos de un ${name}?`,
+          label: "Model weak points",
+          prompt: `What are the known weak points of a ${name}?`,
         },
         {
-          label: "Comparar con otros",
-          prompt: `Compara este ${name} contra otros del mismo año a la venta.`,
+          label: "Compare with others",
+          prompt: `Compare this ${name} against other same-year cars currently for sale.`,
         },
         {
-          label: "¿Precio razonable?",
-          prompt: `A primera vista, ¿el precio de pedida de este ${name} es razonable?`,
+          label: "Reasonable price?",
+          prompt: `At first glance, is the asking price for this ${name} reasonable?`,
         },
       ]
     }

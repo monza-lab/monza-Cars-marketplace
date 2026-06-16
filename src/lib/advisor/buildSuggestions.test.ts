@@ -83,7 +83,7 @@ describe("buildSuggestions", () => {
     expect(hasYear).toBe(true)
   })
 
-  it("surface=report with activeSection=risk and car=null uses generic fallback — no undefined or {car} literal", () => {
+  it("surface=report with activeSection=risk and car=null uses generic English fallback — no undefined or {car} literal", () => {
     const result = buildSuggestions({
       ...BASE_CONTEXT,
       surface: "report",
@@ -101,7 +101,23 @@ describe("buildSuggestions", () => {
     }
 
     // At least one prompt should use the generic fallback phrase
-    const usesGenericFallback = result.some(s => s.prompt.includes("este Porsche"))
+    const usesGenericFallback = result.some(s => s.prompt.includes("this Porsche"))
     expect(usesGenericFallback).toBe(true)
+  })
+
+  it("surface=dashboard returns English suggestions", () => {
+    const result = buildSuggestions({ ...BASE_CONTEXT, surface: "dashboard" })
+
+    expect(result.map(s => s.label)).toEqual([
+      "Weekly movers",
+      "Best generation to start with",
+      "Compare 992 vs 991",
+      "Market trends",
+    ])
+
+    for (const suggestion of result) {
+      expect(suggestion.label).not.toMatch(/[¿¡]/)
+      expect(suggestion.prompt).not.toMatch(/[¿¡]/)
+    }
   })
 })

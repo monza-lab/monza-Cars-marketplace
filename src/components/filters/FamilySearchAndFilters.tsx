@@ -215,7 +215,7 @@ export function FamilySearchAndFilters({
           <div>
             <h3 className="text-sm font-semibold text-foreground">{familyName}</h3>
             <p className="text-[10px] text-muted-foreground mt-0.5">
-              {totalCars} {totalCars === 1 ? "carro" : "carros"} disponibles
+              {totalCars} {totalCars === 1 ? "car" : "cars"} available
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export function FamilySearchAndFilters({
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={`Buscar variantes (Turbo, GT3, Carrera...)...`}
+              placeholder="Search variants (Turbo, GT3, Carrera...)..."
               className="w-full bg-foreground/3 border border-border rounded-xl pl-10 pr-10 py-2.5 text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/30 transition-colors"
             />
             {searchQuery && (
