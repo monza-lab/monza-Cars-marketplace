@@ -71,15 +71,6 @@ export function CheckoutModal({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok || !json.url) {
-        const isLocal =
-          typeof window !== "undefined" &&
-          (window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1")
-        if (isLocal) {
-          const prefix = locale === "en" ? "" : `/${locale}`
-          window.location.href = `${prefix}/checkout/payment?plan=${plan.id}`
-          return
-        }
         throw new Error(json.error ?? "Failed to start checkout")
       }
       window.location.href = json.url
