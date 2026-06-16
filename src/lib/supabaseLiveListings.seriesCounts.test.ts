@@ -93,7 +93,7 @@ describe("fetchSeriesCounts", () => {
     expect(eq).not.toHaveBeenCalled();
   });
 
-  it("aggregates counts by region and preserves the full series list", async () => {
+  it("aggregates counts by known region and preserves unknown-region rows only in all", async () => {
     eq.mockResolvedValueOnce({
       data: [
         { series: "992", region_by_country: "US", live_count: 3 },
@@ -109,7 +109,7 @@ describe("fetchSeriesCounts", () => {
 
     expect(result).toEqual({
       all: { "992": 5, "991": 4 },
-      US: { "992": 3, "991": 4 },
+      US: { "992": 3 },
       UK: {},
       EU: { "992": 2 },
       JP: {},

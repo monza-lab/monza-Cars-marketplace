@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { derivePrice } from "../pricing/derivePrice";
+import { mapRegion } from "../supabaseLiveListings";
 
 describe("supabaseLiveListings derivation smoke", () => {
   it("derivePrice produces sold basis for BaT sold row", () => {
@@ -40,5 +41,10 @@ describe("supabaseLiveListings derivation smoke", () => {
     expect(d.basis).toBe("asking");
     expect(d.canonicalMarket).toBe("EU");
     expect(d.family).toBe("991");
+  });
+
+  it("maps unknown BeForward listing countries by source instead of EU fallback", () => {
+    expect(mapRegion("Korea", "BeForward")).toBe("JP");
+    expect(mapRegion("Singapore", "BeForward")).toBe("JP");
   });
 });

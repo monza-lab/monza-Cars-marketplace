@@ -41,10 +41,11 @@ describe("fetchLiveListingAggregateCounts", () => {
     expect(result.regionTotalsByLocation).toEqual({ all: 230, US: 125, EU: 80, UK: 15, JP: 10 });
   });
 
-  it("NULL country falls back to US for location totals", async () => {
+  it("unknown location region contributes to all but not regional location totals", async () => {
     eq.mockResolvedValueOnce({
       data: [
         { source: "BaT", region_by_country: null, live_count: 50 },
+        { source: "BeForward", region_by_country: null, live_count: 20 },
       ],
       error: null,
     });
@@ -52,8 +53,11 @@ describe("fetchLiveListingAggregateCounts", () => {
     const { fetchLiveListingAggregateCounts } = await import("./supabaseLiveListings");
     const result = await fetchLiveListingAggregateCounts();
 
-    expect(result.liveNow).toBe(50);
-    expect(result.regionTotalsByLocation.US).toBe(50);
+    expect(result.liveNow).toBe(70);
+    expect(result.regionTotalsByPlatform.US).toBe(50);
+    expect(result.regionTotalsByPlatform.JP).toBe(20);
+    expect(result.regionTotalsByLocation.all).toBe(70);
+    expect(result.regionTotalsByLocation.US).toBe(0);
     expect(result.regionTotalsByLocation.EU).toBe(0);
     expect(result.regionTotalsByLocation.UK).toBe(0);
     expect(result.regionTotalsByLocation.JP).toBe(0);

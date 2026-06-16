@@ -85,8 +85,8 @@ describe("BeForward Cron Route", () => {
       counts: {
         discovered: 75,
         detailsFetched: 0,
-        normalized: 75,
         writeAttempts: 75,
+        normalized: 75,
         written: 20,
         skippedInvalid: 0,
         dryRunSkipped: 0,
@@ -101,6 +101,7 @@ describe("BeForward Cron Route", () => {
       coverageLimited: true,
       coverageReason: "max_pages",
       errors: [],
+      outputPath: "/tmp/beforward_listings.jsonl",
     };
 
     const mockBackfillResult = {
@@ -110,7 +111,7 @@ describe("BeForward Cron Route", () => {
     };
 
     vi.mocked(refreshActiveListings).mockResolvedValue(mockRefreshResult);
-    vi.mocked(runCollector).mockResolvedValue(mockCollectorResult as any);
+    vi.mocked(runCollector).mockResolvedValue(mockCollectorResult);
     vi.mocked(backfillMissingImages).mockResolvedValue(mockBackfillResult);
     vi.mocked(markScraperRunStarted).mockResolvedValue(undefined);
     vi.mocked(recordScraperRun).mockResolvedValue(undefined);
@@ -160,11 +161,11 @@ describe("BeForward Cron Route", () => {
     expect(refreshActiveListings).toHaveBeenCalled();
 
     expect(runCollector).toHaveBeenCalledWith({
-      maxPages: 5,
+      maxPages: 8,
       maxDetails: 0,
       summaryOnly: true,
       concurrency: 3,
-      rateLimitMs: 3500,
+      rateLimitMs: 6000,
       checkpointPath: "/tmp/beforward_fresh_checkpoint.json",
       outputPath: "/tmp/beforward_fresh_listings.jsonl",
       dryRun: false,

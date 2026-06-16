@@ -349,33 +349,55 @@ function mapStatus(status: string): AuctionStatus {
   }
 }
 
-function mapRegion(country: string | null, source?: string | null): Region {
+export function mapRegion(country: string | null, source?: string | null): Region {
   // 1. Try country first
   if (country) {
     const c = country.toUpperCase();
     if (c === "USA" || c === "US" || c === "UNITED STATES") return "US";
     if (c === "UK" || c === "UNITED KINGDOM") return "UK";
     if (c === "JAPAN" || c === "JP") return "JP";
-    if (c === "GERMANY" || c === "FRANCE" || c === "ITALY" || c === "SPAIN" || c === "NETHERLANDS" || c === "BELGIUM" || c === "AUSTRIA" || c === "SWITZERLAND" || c === "PORTUGAL" || c === "SWEDEN") return "EU";
-    return "EU"; // other countries default to EU
+    if (
+      c === "GERMANY" ||
+      c === "FRANCE" ||
+      c === "ITALY" ||
+      c === "SPAIN" ||
+      c === "NETHERLANDS" ||
+      c === "BELGIUM" ||
+      c === "AUSTRIA" ||
+      c === "SWITZERLAND" ||
+      c === "PORTUGAL" ||
+      c === "SWEDEN" ||
+      c === "DENMARK" ||
+      c === "NORWAY" ||
+      c === "FINLAND" ||
+      c === "IRELAND" ||
+      c === "LUXEMBOURG" ||
+      c === "POLAND" ||
+      c === "CZECH REPUBLIC" ||
+      c === "CZECHIA"
+    ) return "EU";
+    return mapRegionFromSource(source);
   }
   // 2. Fallback: derive region from source/platform
-  if (source) {
-    const canonical = resolveCanonicalSource(source, null);
-    switch (canonical) {
-      case "BaT":
-      case "CarsAndBids":
-      case "ClassicCom":
-        return "US";
-      case "AutoScout24":
-      case "CollectingCars":
-      case "Elferspot":
-        return "EU";
-      case "AutoTrader":
-        return "UK";
-      case "BeForward":
-        return "JP";
-    }
+  return mapRegionFromSource(source);
+}
+
+function mapRegionFromSource(source?: string | null): Region {
+  if (!source) return "US";
+  const canonical = resolveCanonicalSource(source, null);
+  switch (canonical) {
+    case "BaT":
+    case "CarsAndBids":
+    case "ClassicCom":
+      return "US";
+    case "AutoScout24":
+    case "CollectingCars":
+    case "Elferspot":
+      return "EU";
+    case "AutoTrader":
+      return "UK";
+    case "BeForward":
+      return "JP";
   }
   return "US"; // ultimate fallback
 }
@@ -820,7 +842,7 @@ export async function fetchLiveListingAggregateCounts(
       else if (canonical === "AutoTrader") platform.UK += n;
       else if (canonical === "BeForward") platform.JP += n;
 
-      if (row.region_by_country === "US" || row.region_by_country === null) location.US += n;
+      if (row.region_by_country === "US") location.US += n;
       else if (row.region_by_country === "UK") location.UK += n;
       else if (row.region_by_country === "JP") location.JP += n;
       else if (row.region_by_country === "EU") location.EU += n;
@@ -1871,15 +1893,14 @@ export async function fetchSeriesCountsByRegion(
 
       incrementSeriesCount(counts.all, row.series, liveCount);
 
-      const region =
-        row.region_by_country === "US" || row.region_by_country === null
-          ? "US"
-          : row.region_by_country === "UK"
-            ? "UK"
-            : row.region_by_country === "JP"
-              ? "JP"
-              : "EU";
-      incrementSeriesCount(counts[region], row.series, liveCount);
+      if (
+        row.region_by_country === "US" ||
+        row.region_by_country === "UK" ||
+        row.region_by_country === "JP" ||
+        row.region_by_country === "EU"
+      ) {
+        incrementSeriesCount(counts[row.region_by_country], row.series, liveCount);
+      }
     }
 
     return counts;

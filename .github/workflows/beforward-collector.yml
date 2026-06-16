@@ -7,7 +7,7 @@ on:
     inputs:
       max_pages:
         description: 'Max discovery pages (25 listings/page)'
-        default: '5'
+        default: '12'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -19,7 +19,7 @@ on:
         default: '2'
       rate_limit_ms:
         description: 'Min ms between requests per domain'
-        default: '4000'
+        default: '6000'
 
 concurrency:
   group: beforward-collector
@@ -57,11 +57,12 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SCRAPLING_PYTHON: python3.11
           BF_FORCE_SCRAPLING: '1'
+          BF_PROXY_URL: ${{ secrets.BF_PROXY_URL }}
         run: |
           npx tsx scripts/bf-collector-cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '5' }} \
+            --maxPages=${{ github.event.inputs.max_pages || '12' }} \
             --concurrency=${{ github.event.inputs.concurrency || '2' }} \
-            --rateLimitMs=${{ github.event.inputs.rate_limit_ms || '4000' }} \
+            --rateLimitMs=${{ github.event.inputs.rate_limit_ms || '6000' }} \
             ${{ github.event.inputs.summary_only == 'true' && '--summaryOnly' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 

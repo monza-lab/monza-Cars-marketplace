@@ -29,12 +29,12 @@ const PROFILES = {
     rateLimitMs: 3000,
   },
   fresh: {
-    maxPages: 5,
+    maxPages: 8,
     summaryOnly: true,
     maxDetails: 0,
     backfillMaxListings: 8,
     refreshBudgetMs: 60_000,
-    rateLimitMs: 3500,
+    rateLimitMs: 6000,
   },
 } as const;
 
