@@ -14,6 +14,16 @@ describe("scraper runner Porsche manual profile", () => {
   });
 });
 
+describe("scraper runner BeForward manual profile", () => {
+  it("runs BeForward as a full summary coverage pass", () => {
+    const source = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const beforwardBlock = source.match(/id: "beforward",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
+
+    expect(beforwardBlock).toContain('"--maxPages=200"');
+    expect(beforwardBlock).toContain('"--summaryOnly=true"');
+  });
+});
+
 describe("scraper runner enrichment profile", () => {
   it("gives AS24 a larger batch with a shorter delay without changing the script budget", () => {
     const source = readFileSync("scripts/run-scrapers.ts", "utf8");

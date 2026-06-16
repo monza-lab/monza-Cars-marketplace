@@ -10,10 +10,31 @@ import { parseDetailHtml } from "./detail";
 import { mapStatus } from "./normalize";
 import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
+export interface SupabaseWriteResult {
+  listingId: string;
+  wrote: boolean;
+  previousStatus?: string | null;
+  currentStatus?: string | null;
+}
+
 export interface SupabaseWriter {
-  upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
+  upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<SupabaseWriteResult>;
   healthCheck(): Promise<void>;
 }
+
+export interface BeForwardCoverageState {
+  nextPage: number;
+  sourceTotalPages: number | null;
+  completedAt: string | null;
+}
+
+const DEFAULT_COVERAGE_STATE: BeForwardCoverageState = {
+  nextPage: 1,
+  sourceTotalPages: null,
+  completedAt: null,
+};
+
+const COVERAGE_STATE_KEY = "beforward_coverage";
 
 export function createDryRunWriter(): SupabaseWriter {
   return {
@@ -23,16 +44,7 @@ export function createDryRunWriter(): SupabaseWriter {
 }
 
 export function createSupabaseWriter(): SupabaseWriter {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const key = serviceRoleKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error("Missing Supabase env vars.");
-  }
-
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const client = createServiceClient();
 
   return {
     healthCheck: async () => {
@@ -52,25 +64,55 @@ export function createSupabaseWriter(): SupabaseWriter {
         year: listing.year,
       });
 
-      if (!validation.valid) {
+      if (!validation.valid && !isAcceptedBeForwardOtherBucket(listing, validation.reason)) {
         console.log(`[beforward] Skipped invalid listing: ${validation.reason} — ${listing.title}`);
         return { listingId: "skipped_invalid", wrote: false };
+      }
+
+      if (!validation.valid) {
+        listing.model = "OTHER";
       }
 
       if (validation.fixedModel) {
         listing.model = validation.fixedModel;
       }
 
-      const listingId = await upsertListing(client, listing, meta);
-      await insertPriceHistorySnapshot(client, listingId, listing, meta);
-      return { listingId, wrote: true };
+      const writeResult = await upsertListing(client, listing, meta);
+      await insertPriceHistorySnapshot(client, writeResult.listingId, listing, meta);
+      return { ...writeResult, wrote: true };
     },
   };
 }
 
-async function upsertListing(client: SupabaseClient, listing: NormalizedListing, meta: ScrapeMeta): Promise<string> {
+function createServiceClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = serviceRoleKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error("Missing Supabase env vars.");
+  }
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function upsertListing(
+  client: SupabaseClient,
+  listing: NormalizedListing,
+  meta: ScrapeMeta,
+): Promise<{ listingId: string; previousStatus: string | null; currentStatus: string }> {
   const row = mapNormalizedListingToListingsRow(listing, meta);
   return retryOnTimeout(async () => {
+    const previous = await client
+      .from("listings")
+      .select("status")
+      .eq("source", listing.source)
+      .eq("source_id", listing.sourceId)
+      .limit(1);
+    if (previous.error) throw new Error(`Supabase listings previous status select failed: ${previous.error.message}`);
+    const previousStatus = ((previous.data as Array<{ status: string | null }> | null)?.[0]?.status) ?? null;
+
     const { data, error } = await client
       .from("listings")
       .upsert(row, { onConflict: "source,source_id" })
@@ -79,7 +121,7 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 
     if (error) throw new Error(`Supabase listings upsert failed: ${error.message}`);
     const id = (data as Array<{ id: string }> | null)?.[0]?.id;
-    if (id) return id;
+    if (id) return { listingId: id, previousStatus, currentStatus: listing.status };
 
     const sel = await client
       .from("listings")
@@ -90,8 +132,49 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
     if (sel.error) throw new Error(`Supabase listings select failed: ${sel.error.message}`);
     const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
     if (!fallback) throw new Error("Supabase listings upsert returned no id");
-    return fallback;
+    return { listingId: fallback, previousStatus, currentStatus: listing.status };
   });
+}
+
+export async function loadCoverageState(): Promise<BeForwardCoverageState> {
+  const client = createServiceClient();
+  const { data, error } = await client
+    .from("scraper_state")
+    .select("state")
+    .eq("scraper_name", COVERAGE_STATE_KEY)
+    .maybeSingle();
+
+  if (error) throw new Error(`Supabase scraper_state select failed: ${error.message}`);
+  return coerceCoverageState((data as { state?: unknown } | null)?.state);
+}
+
+export async function saveCoverageState(state: BeForwardCoverageState): Promise<void> {
+  const client = createServiceClient();
+  const { error } = await client.from("scraper_state").upsert({
+    scraper_name: COVERAGE_STATE_KEY,
+    state,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw new Error(`Supabase scraper_state upsert failed: ${error.message}`);
+}
+
+function coerceCoverageState(raw: unknown): BeForwardCoverageState {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_COVERAGE_STATE };
+  const state = raw as Partial<BeForwardCoverageState>;
+  return {
+    nextPage: typeof state.nextPage === "number" && state.nextPage > 0 ? Math.floor(state.nextPage) : 1,
+    sourceTotalPages: typeof state.sourceTotalPages === "number" && state.sourceTotalPages > 0
+      ? Math.floor(state.sourceTotalPages)
+      : null,
+    completedAt: typeof state.completedAt === "string" ? state.completedAt : null,
+  };
+}
+
+function isAcceptedBeForwardOtherBucket(listing: NormalizedListing, reason: string | undefined): boolean {
+  return listing.source === "BeForward"
+    && listing.model === "OTHER"
+    && reason === "unresolvable-model:OTHER"
+    && (/\/porsche-others(?:\/|$)/i.test(listing.sourceUrl) || /\bPORSCHE\s+(?:PORSCHE\s+)?OTHERS\b/i.test(listing.title));
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {
@@ -206,24 +289,17 @@ async function insertPriceHistorySnapshot(
 
   const time = truncateIsoToHour(meta.scrapeTimestamp);
   await retryOnTimeout(async () => {
-    const exists = await client
-      .from("price_history")
-      .select("time")
-      .eq("listing_id", listingId)
-      .eq("time", time)
-      .limit(1);
-    if (exists.error) throw new Error(`Supabase price_history select failed: ${exists.error.message}`);
-    if ((exists.data ?? []).length > 0) return;
-
-    const { error } = await client.from("price_history").insert({
+    const { error } = await client.from("price_history").upsert({
       time,
       listing_id: listingId,
       status: listing.status,
       price_usd: amount,
       price_eur: null,
       price_gbp: null,
+    }, {
+      onConflict: "listing_id,time",
     });
-    if (error) throw new Error(`Supabase price_history insert failed: ${error.message}`);
+    if (error) throw new Error(`Supabase price_history upsert failed: ${error.message}`);
   });
 }
 
@@ -241,6 +317,7 @@ function truncateIsoToHour(iso: string): string {
 export interface RefreshResult {
   checked: number;
   updated: number;
+  terminalized: number;
   errors: string[];
 }
 
@@ -252,13 +329,12 @@ export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): P
   const timeBudgetMs = opts?.timeBudgetMs ?? 60_000;
   const startTime = Date.now();
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return { checked: 0, updated: 0, errors: ["Missing Supabase env vars"] };
-
-  const client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  let client: SupabaseClient;
+  try {
+    client = createServiceClient();
+  } catch {
+    return { checked: 0, updated: 0, terminalized: 0, errors: ["Missing Supabase env vars"] };
+  }
 
   const { data: activeRows, error: fetchErr } = await client
     .from("listings")
@@ -269,10 +345,10 @@ export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): P
     .limit(30);
 
   if (fetchErr || !activeRows) {
-    return { checked: 0, updated: 0, errors: [fetchErr?.message ?? "No active rows"] };
+    return { checked: 0, updated: 0, terminalized: 0, errors: [fetchErr?.message ?? "No active rows"] };
   }
 
-  const result: RefreshResult = { checked: activeRows.length, updated: 0, errors: [] };
+  const result: RefreshResult = { checked: activeRows.length, updated: 0, terminalized: 0, errors: [] };
   const CONCURRENCY = 5;
 
   for (let i = 0; i < activeRows.length; i += CONCURRENCY) {
@@ -283,18 +359,18 @@ export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): P
 
     const batch = activeRows.slice(i, i + CONCURRENCY);
     const settled = await Promise.allSettled(batch.map(async (row) => {
-      let newStatus: string | null = null;
+      let newStatus: "active" | "sold" | "unsold" | "delisted" | null = null;
 
       try {
         const html = await fetchHtml(row.source_url, 10_000);
+        if (!isReliableBeForwardDetailHtml(html)) return;
         const detail = parseDetailHtml(html);
+        if (!hasExplicitStatusEvidence(detail.sourceStatus, detail.schemaAvailability)) return;
         const detected = mapStatus(detail.sourceStatus, detail.schemaAvailability);
-        if (detected !== "active") {
-          newStatus = detected;
-        }
+        newStatus = detected;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        if (/\b404\b/.test(msg)) {
+        if (/\b(404|410)\b/.test(msg)) {
           newStatus = "delisted";
         } else if (/\b(403|429)\b/.test(msg)) {
           return; // Ambiguous — skip
@@ -304,12 +380,14 @@ export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): P
       }
 
       if (newStatus) {
+        const now = new Date().toISOString();
         const { error: updateErr } = await client
           .from("listings")
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({ status: newStatus, updated_at: now, last_verified_at: now })
           .eq("id", row.id);
         if (updateErr) throw new Error(`Update failed: ${updateErr.message}`);
         result.updated++;
+        if (newStatus !== "active") result.terminalized++;
       }
     }));
 
@@ -325,4 +403,20 @@ export async function refreshActiveListings(opts?: { timeBudgetMs?: number }): P
   }
 
   return result;
+}
+
+export function isReliableBeForwardDetailHtml(html: string): boolean {
+  return html.length > 50_000 && /beforward/i.test(html) && /schema\.org|ga_sale_status|vehicle/i.test(html);
+}
+
+export function hasExplicitStatusEvidence(sourceStatus: string | null, schemaAvailability: string | null): boolean {
+  const src = (sourceStatus ?? "").trim().toLowerCase();
+  const availability = (schemaAvailability ?? "").trim().toLowerCase();
+  return src === "in-stock"
+    || src === "sold"
+    || src === "reserved"
+    || src === "out-of-stock"
+    || availability.includes("instock")
+    || availability.includes("outofstock")
+    || availability.includes("soldout");
 }

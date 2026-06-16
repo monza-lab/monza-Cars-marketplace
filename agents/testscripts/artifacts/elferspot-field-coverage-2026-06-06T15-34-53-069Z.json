@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-06-06T15:34:53.069Z",
+  "recentSince": "2026-06-03T15:34:53.070Z",
+  "totalActive": 3958,
+  "recentActive": 959,
+  "fields": {
+    "color_exterior": {
+      "filled": 3954,
+      "excepted": 4,
+      "coveredOrExcepted": 3958,
+      "missing": 0,
+      "pct": 100
+    },
+    "engine": {
+      "filled": 3952,
+      "excepted": 6,
+      "coveredOrExcepted": 3958,
+      "missing": 0,
+      "pct": 100
+    },
+    "transmission": {
+      "filled": 3954,
+      "excepted": 4,
+      "coveredOrExcepted": 3958,
+      "missing": 0,
+      "pct": 100
+    }
+  },
+  "activeMissingAny": 6,
+  "recentMissingAny": 6,
+  "samples": [
+    {
+      "id": "dd3c1729-d3e1-469e-9837-1f45849795ee",
+      "source_url": "https://www.elferspot.com/en/car/porsche-356-c-1964-3898671/",
+      "color_exterior": "Yellow/Gold",
+      "engine": null,
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:25:56.328Z",
+          "priceStatus": "numeric",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "engine"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:56.076",
+      "updated_at": "2026-06-06T15:25:56.328"
+    },
+    {
+      "id": "9846f61a-b393-4540-9b92-ae282f131d3d",
+      "source_url": "https://www.elferspot.com/en/car/porsche-718-boxster-2016-6015370/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:27:16.158Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:18:30.321",
+      "updated_at": "2026-06-06T15:27:16.158"
+    },
+    {
+      "id": "5739a97a-8772-43f8-b83a-d4ac656f38e3",
+      "source_url": "https://www.elferspot.com/en/car/porsche-981-boxster-2012-6015194/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:27:19.698Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:18:30.422",
+      "updated_at": "2026-06-06T15:27:19.698"
+    },
+    {
+      "id": "f58ae805-accc-4a37-981f-e922da25bebf",
+      "source_url": "https://www.elferspot.com/en/car/porsche-991-carrera-s-2012-6015154/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:27:22.575Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:18:30.479",
+      "updated_at": "2026-06-06T15:27:22.575"
+    },
+    {
+      "id": "dd70d7a2-cc14-4628-a090-a9d6ad6e4689",
+      "source_url": "https://www.elferspot.com/en/car/porsche-991-targa-4s-2015-6015110/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:27:26.284Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:18:30.533",
+      "updated_at": "2026-06-06T15:27:26.284"
+    },
+    {
+      "id": "f9b87709-13d7-4121-b3fd-97191057eb1e",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1990-4446820/",
+      "color_exterior": "Silver",
+      "engine": null,
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T15:34:12.751Z",
+          "priceStatus": "numeric",
+          "descriptionStatus": "present",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "engine"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:16:23.657",
+      "updated_at": "2026-06-06T15:34:12.751"
+    }
+  ]
+}

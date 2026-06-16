@@ -119,15 +119,15 @@ const SCRAPERS: ScraperDef[] = [
   {
     id: "beforward",
     name: "BeForward Collector",
-    description: "Scrapling, 10 pages",
+    description: "Scrapling, full summary coverage",
     phase: "discovery",
     type: "cli",
     command: "npx",
     args: [
       "tsx",
       "scripts/bf-collector-cli.ts",
-      "--summaryOnly",
-      "--maxPages=10",
+      "--maxPages=200",
+      "--summaryOnly=true",
     ],
     dryRunFlag: "--dryRun",
     defaultSelected: true,

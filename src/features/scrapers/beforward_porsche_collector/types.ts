@@ -131,7 +131,12 @@ export interface CollectorCounts {
   discovered: number;
   detailsFetched: number;
   normalized: number;
+  writeAttempts: number;
   written: number;
+  skippedInvalid: number;
+  dryRunSkipped: number;
+  reactivated: number;
+  terminalized: number;
   errors: number;
 }
 
@@ -139,6 +144,12 @@ export interface CollectorResult {
   runId: string;
   totalResults: number | null;
   pageCount: number;
+  sourceTotalPages: number;
+  plannedStartPage: number;
+  plannedEndPage: number;
+  coveragePercent: number | null;
+  coverageLimited: boolean;
+  coverageReason: "complete" | "max_pages" | "time_budget" | "checkpoint" | "unknown";
   processedPages: number;
   counts: CollectorCounts;
   errors: string[];

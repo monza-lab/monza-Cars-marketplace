@@ -1,0 +1,353 @@
+{
+  "generatedAt": "2026-06-06T15:25:25.419Z",
+  "recentSince": "2026-06-03T15:25:25.420Z",
+  "totalActive": 3958,
+  "recentActive": 959,
+  "fields": {
+    "color_exterior": {
+      "filled": 3325,
+      "excepted": 0,
+      "coveredOrExcepted": 3325,
+      "missing": 633,
+      "pct": 84
+    },
+    "engine": {
+      "filled": 3325,
+      "excepted": 0,
+      "coveredOrExcepted": 3325,
+      "missing": 633,
+      "pct": 84
+    },
+    "transmission": {
+      "filled": 3325,
+      "excepted": 0,
+      "coveredOrExcepted": 3325,
+      "missing": 633,
+      "pct": 84
+    }
+  },
+  "activeMissingAny": 633,
+  "recentMissingAny": 633,
+  "samples": [
+    {
+      "id": "f749bf84-8137-44bc-9199-191eb02229b7",
+      "source_url": "https://www.elferspot.com/en/car/porsche-718-cayman-gt4-rs-2022-5976100/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:45.267Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:45.267",
+      "updated_at": "2026-06-06T09:17:45.267"
+    },
+    {
+      "id": "18f2e7dd-4f5d-4839-a420-c7ccce54563f",
+      "source_url": "https://www.elferspot.com/en/car/porsche-991-carrera-4s-2014-5905588/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.481Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.481",
+      "updated_at": "2026-06-06T09:17:55.481"
+    },
+    {
+      "id": "99273767-6dc3-4d49-8940-e443e631e2f6",
+      "source_url": "https://www.elferspot.com/en/car/porsche-997-carrera-s-2008-5823774/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.558Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.558",
+      "updated_at": "2026-06-06T09:17:55.558"
+    },
+    {
+      "id": "6082acd1-191c-4e17-b049-f198066971d3",
+      "source_url": "https://www.elferspot.com/en/car/porsche-996-2-carrera-4s-2002-5981304/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.588Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.588",
+      "updated_at": "2026-06-06T09:17:55.588"
+    },
+    {
+      "id": "1ff3b263-6b4d-45c2-8d4a-13002c6087f3",
+      "source_url": "https://www.elferspot.com/en/car/porsche-997-2-carrera-2008-6020863/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.620Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.62",
+      "updated_at": "2026-06-06T09:17:55.621"
+    },
+    {
+      "id": "322d43d4-e2ab-47df-a5fb-89fc8e872212",
+      "source_url": "https://www.elferspot.com/en/car/porsche-992-2-gt3-touring-2025-5503722/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.653Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.653",
+      "updated_at": "2026-06-06T09:17:55.653"
+    },
+    {
+      "id": "22858b64-8ac2-49e9-b201-fdf1d2a13a0e",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-sc-1981-5954552/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.684Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.684",
+      "updated_at": "2026-06-06T09:17:55.684"
+    },
+    {
+      "id": "081831b5-3278-428f-bfef-eaa7373a7f01",
+      "source_url": "https://www.elferspot.com/en/car/porsche-987-boxster-spyder-2012-5825527/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.714Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.714",
+      "updated_at": "2026-06-06T09:17:55.714"
+    },
+    {
+      "id": "d9ca6789-2ab5-4ddd-b6b5-1ad5d73eedab",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-t-1970-1412009/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.749Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.749",
+      "updated_at": "2026-06-06T09:17:55.749"
+    },
+    {
+      "id": "5ec83bcb-0760-4468-81e9-a8701ef6090d",
+      "source_url": "https://www.elferspot.com/en/car/porsche-718-boxster-style-edition-2023-5878404/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.776Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.776",
+      "updated_at": "2026-06-06T09:17:55.776"
+    },
+    {
+      "id": "9aaf8bae-8e8b-432e-a5a8-2cee3facd705",
+      "source_url": "https://www.elferspot.com/en/car/porsche-996-2-carrera-2002-5885552/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.804Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.804",
+      "updated_at": "2026-06-06T09:17:55.804"
+    },
+    {
+      "id": "ff219483-101b-4e64-acfc-cff61c62e999",
+      "source_url": "https://www.elferspot.com/en/car/porsche-991-carrera-4s-2013-5749347/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.830Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.83",
+      "updated_at": "2026-06-06T09:17:55.83"
+    },
+    {
+      "id": "60ffa2b9-2c9a-476b-b2a4-f708d6cb4da8",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-carrera-3-2-1983-4873243/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.857Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.857",
+      "updated_at": "2026-06-06T09:17:55.857"
+    },
+    {
+      "id": "48fc37cf-b29f-4d90-a70b-70fff2bd96d5",
+      "source_url": "https://www.elferspot.com/en/car/porsche-996-turbo-2001-5576877/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.885Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.885",
+      "updated_at": "2026-06-06T09:17:55.885"
+    },
+    {
+      "id": "57ea3382-1457-4a19-b308-9557354e9440",
+      "source_url": "https://www.elferspot.com/en/car/porsche-993-carrera-4s-1998-5857303/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.915Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.915",
+      "updated_at": "2026-06-06T09:17:55.916"
+    },
+    {
+      "id": "6797188e-8078-441f-8adf-3646f33a29e3",
+      "source_url": "https://www.elferspot.com/en/car/porsche-718-spyder-2020-6020879/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.944Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.944",
+      "updated_at": "2026-06-06T09:17:55.945"
+    },
+    {
+      "id": "f661396a-d019-4cc6-8449-f35c00d43ecd",
+      "source_url": "https://www.elferspot.com/en/car/porsche-992-turbo-50-jahre-2026-6020848/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:55.989Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:55.989",
+      "updated_at": "2026-06-06T09:17:55.989"
+    },
+    {
+      "id": "f5de7000-a6fb-4361-8a94-319c3b39df94",
+      "source_url": "https://www.elferspot.com/en/car/porsche-944-s2-coupe-1989-6020775/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:56.018Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:56.018",
+      "updated_at": "2026-06-06T09:17:56.019"
+    },
+    {
+      "id": "e625a483-1768-406e-8d68-714f18ab52fd",
+      "source_url": "https://www.elferspot.com/en/car/porsche-718-cayman-gt4-2023-6020789/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:56.047Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:56.047",
+      "updated_at": "2026-06-06T09:17:56.047"
+    },
+    {
+      "id": "dd3c1729-d3e1-469e-9837-1f45849795ee",
+      "source_url": "https://www.elferspot.com/en/car/porsche-356-c-1964-3898671/",
+      "color_exterior": null,
+      "engine": null,
+      "transmission": null,
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-06T09:17:56.076Z",
+          "priceStatus": "unknown",
+          "descriptionStatus": "missing"
+        }
+      },
+      "scrape_timestamp": "2026-06-06T09:17:56.076",
+      "updated_at": "2026-06-06T09:17:56.076"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ export function normalizeListing(input: {
   if (!year) return null;
 
   const make = input.detail.make ?? "Porsche";
-  const model = input.detail.model ?? parseModelFromTitle(input.summary.title);
+  const model = input.detail.model ?? parseModelFromSummary(input.summary);
   if (!model) return null;
 
   const location = parseLocation(input.detail.location ?? input.summary.location);
@@ -94,7 +94,7 @@ export function normalizeListingFromSummary(input: {
   const title = input.summary.title.trim();
   if (!title) return null;
   const year = input.summary.year;
-  const model = parseModelFromTitle(title);
+  const model = parseModelFromSummary(input.summary);
   if (!year || !model) return null;
 
   const location = parseLocation(input.summary.location);
@@ -152,6 +152,16 @@ export function normalizeListingFromSummary(input: {
       hasPrice: currentBid !== null,
     }),
   };
+}
+
+function parseModelFromSummary(summary: Pick<ListingSummary, "sourceUrl" | "title">): string | null {
+  if (isPorscheOthersSummary(summary)) return "OTHER";
+  return parseModelFromTitle(summary.title);
+}
+
+function isPorscheOthersSummary(summary: Pick<ListingSummary, "sourceUrl" | "title">): boolean {
+  return /\/porsche-others(?:\/|$)/i.test(summary.sourceUrl)
+    || /\bPORSCHE\s+(?:PORSCHE\s+)?OTHERS\b/i.test(summary.title);
 }
 
 function parseModelFromTitle(title: string): string | null {

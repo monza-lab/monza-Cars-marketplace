@@ -1,0 +1,438 @@
+{
+  "generated_at": "2026-06-05T11:04:34.636Z",
+  "mode": "before",
+  "status_counts": [
+    {
+      "status": "active",
+      "count": 1173
+    },
+    {
+      "status": "sold",
+      "count": 185
+    },
+    {
+      "status": "unsold",
+      "count": 271
+    },
+    {
+      "status": "delisted",
+      "count": 4564
+    }
+  ],
+  "recent_runs": [
+    {
+      "run_id": "52afbaa7-b43f-4215-bce0-ac9c95539846",
+      "started_at": "2026-06-05T09:24:13.575Z",
+      "finished_at": "2026-06-05T09:28:10.517Z",
+      "success": true,
+      "runtime": "vercel_cron",
+      "discovered": 600,
+      "written": 574,
+      "errors_count": 26,
+      "refresh_checked": 0,
+      "refresh_updated": 0,
+      "error_messages": [
+        "Normalize failed: 2022 Ford f 250 limited black widow 1ft8w2bt7ned84 nQBZyNW",
+        "Normalize failed: 2021 Jeep wrangler sahara",
+        "Normalize failed: 2020 Tesla model x long range",
+        "Normalize failed: 2019 Ford mustang ecoboost",
+        "Normalize failed: 2025 Bmw m5",
+        "Normalize failed: 2024 Ford mustang gt premium",
+        "Normalize failed: 2026 Bmw x3 m50 xdrive",
+        "Normalize failed: 2015 Jaguar f type s",
+        "Normalize failed: 2024 Volkswagen golf r performance pack wvwfb7cdxr nQd3kg4",
+        "Normalize failed: 2021 Bmw x5 m",
+        "Normalize failed: 2020 Lincoln nautilus standard",
+        "Normalize failed: 2024 Ford mustang ecoboost premium 1fagp8uh0r51233 WRdBLr4",
+        "Normalize failed: 2020 Mercedes benz g63 amg 4matic w1nyc7hj6lx35633 WLVQY64",
+        "Normalize failed: 2024 Bentley continental gt w12 speed scbct2zg9rc0 p6QlROW",
+        "Normalize failed: 2024 Ford bronco black diamond",
+        "Normalize failed: 2026 Chevrolet corvette zr 1 3lz",
+        "Normalize failed: 2026 Toyota gr supra 30 premium",
+        "Normalize failed: 2023 Ford bronco raptor",
+        "Normalize failed: 2025 Volkswagen golf r performance pack wvwkb7cd1s n1ePLVn",
+        "Normalize failed: 2023 Rolls royce cullinan black badge slatv8c09pu2 WqOkGJ4",
+        "Normalize failed: 2025 Rivian r1t adventure",
+        "Normalize failed: 2025 Bmw m5",
+        "Normalize failed: 2023 Ford bronco raptor",
+        "Normalize failed: 2022 Range rover sport hse silver edition salwr2su nOEvR9p",
+        "Normalize failed: 2023 Maserati quattroporte modena zam56ypm5px42096 Wv1Yv7n",
+        "Normalize failed: 2022 Bmw x7 alpina xb7",
+        "Classic discovery 600 below stale refresh threshold 700"
+      ]
+    },
+    {
+      "run_id": "b871f49a-8a06-47fd-bc24-a79fb38c41bb",
+      "started_at": "2026-06-05T07:59:12.352Z",
+      "finished_at": "2026-06-05T08:25:41.362Z",
+      "success": true,
+      "runtime": "github_actions",
+      "discovered": 480,
+      "written": 459,
+      "errors_count": 21,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": [
+        "Write error [147]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [203]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [219]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [316]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\""
+      ]
+    },
+    {
+      "run_id": "7da840b5-1d6a-42f8-af5f-432557f0f495",
+      "started_at": "2026-06-05T07:31:14.205Z",
+      "finished_at": "2026-06-05T07:33:04.061Z",
+      "success": true,
+      "runtime": "cli",
+      "discovered": 480,
+      "written": 0,
+      "errors_count": 0,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": null
+    },
+    {
+      "run_id": "8e4f65c8-73b4-4eb3-9ac2-b40f6de772bf",
+      "started_at": "2026-06-05T04:00:27.499Z",
+      "finished_at": "2026-06-05T04:03:03.863Z",
+      "success": true,
+      "runtime": "vercel_cron",
+      "discovered": 240,
+      "written": 235,
+      "errors_count": 5,
+      "refresh_checked": 46,
+      "refresh_updated": 46,
+      "error_messages": [
+        "Normalize failed: 2023 Honda civic type r",
+        "Normalize failed: 2020 Tesla model x long range",
+        "Normalize failed: 2019 Ford mustang ecoboost",
+        "Normalize failed: 2025 Bmw m5",
+        "Normalize failed: 2024 Ford mustang gt premium",
+        "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+      ]
+    },
+    {
+      "run_id": "ff487c15-751b-4bb0-b59b-63f52b0dc5cd",
+      "started_at": "2026-06-04T18:33:19.162Z",
+      "finished_at": "2026-06-04T18:35:25.950Z",
+      "success": true,
+      "runtime": "cli",
+      "discovered": 480,
+      "written": 0,
+      "errors_count": 0,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": null
+    },
+    {
+      "run_id": "2856fb71-44b6-4cf9-85be-18446544a542",
+      "started_at": "2026-06-04T15:28:55.777Z",
+      "finished_at": "2026-06-04T15:30:28.752Z",
+      "success": true,
+      "runtime": "cli",
+      "discovered": 480,
+      "written": 0,
+      "errors_count": 0,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": null
+    },
+    {
+      "run_id": "65571b1b-2e4c-4916-bef4-f2e3da8518c0",
+      "started_at": "2026-06-04T08:12:13.954Z",
+      "finished_at": "2026-06-04T08:40:26.382Z",
+      "success": true,
+      "runtime": "github_actions",
+      "discovered": 480,
+      "written": 450,
+      "errors_count": 30,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": [
+        "Write error [86]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [242]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [253]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [436]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\""
+      ]
+    },
+    {
+      "run_id": "0ee22320-7eb2-49d0-bc7b-4cc8d7cb0011",
+      "started_at": "2026-06-04T04:00:15.225Z",
+      "finished_at": "2026-06-04T04:02:55.367Z",
+      "success": true,
+      "runtime": "vercel_cron",
+      "discovered": 240,
+      "written": 236,
+      "errors_count": 4,
+      "refresh_checked": 54,
+      "refresh_updated": 54,
+      "error_messages": [
+        "Normalize failed: 2015 Jaguar f type s",
+        "Normalize failed: 2021 Jeep wrangler sahara",
+        "Normalize failed: 2024 Volkswagen golf r performance pack wvwfb7cdxr nQd3kg4",
+        "Normalize failed: 2021 Bmw x5 m",
+        "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+      ]
+    },
+    {
+      "run_id": "b31e90a4-7f3c-4d03-989c-743754697f79",
+      "started_at": "2026-06-03T17:34:27.958Z",
+      "finished_at": "2026-06-03T17:36:05.090Z",
+      "success": true,
+      "runtime": "cli",
+      "discovered": 480,
+      "written": 0,
+      "errors_count": 0,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": null
+    },
+    {
+      "run_id": "aa202af3-65c1-4366-ac98-fb5f08fbf1b9",
+      "started_at": "2026-06-03T08:47:15.752Z",
+      "finished_at": "2026-06-03T09:13:09.962Z",
+      "success": true,
+      "runtime": "github_actions",
+      "discovered": 480,
+      "written": 458,
+      "errors_count": 22,
+      "refresh_checked": null,
+      "refresh_updated": null,
+      "error_messages": [
+        "Write error [42]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [131]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [143]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\"",
+        "Write error [328]: Supabase listings update by source_url failed: duplicate key value violates unique constraint \"listings_source_source_id_unique\""
+      ]
+    }
+  ],
+  "refresh_window": {
+    "window_start": "2026-05-27T04:03:06.603Z",
+    "window_end": "2026-06-05T04:03:03.863Z",
+    "runs": 10,
+    "total_refresh_checked": 763,
+    "total_refresh_updated": 763,
+    "rows": [
+      {
+        "run_id": "8e4f65c8-73b4-4eb3-9ac2-b40f6de772bf",
+        "started_at": "2026-06-05T04:00:27.499Z",
+        "finished_at": "2026-06-05T04:03:03.863Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 235,
+        "errors_count": 5,
+        "refresh_checked": 46,
+        "refresh_updated": 46,
+        "error_messages": [
+          "Normalize failed: 2023 Honda civic type r",
+          "Normalize failed: 2020 Tesla model x long range",
+          "Normalize failed: 2019 Ford mustang ecoboost",
+          "Normalize failed: 2025 Bmw m5",
+          "Normalize failed: 2024 Ford mustang gt premium",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "0ee22320-7eb2-49d0-bc7b-4cc8d7cb0011",
+        "started_at": "2026-06-04T04:00:15.225Z",
+        "finished_at": "2026-06-04T04:02:55.367Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 236,
+        "errors_count": 4,
+        "refresh_checked": 54,
+        "refresh_updated": 54,
+        "error_messages": [
+          "Normalize failed: 2015 Jaguar f type s",
+          "Normalize failed: 2021 Jeep wrangler sahara",
+          "Normalize failed: 2024 Volkswagen golf r performance pack wvwfb7cdxr nQd3kg4",
+          "Normalize failed: 2021 Bmw x5 m",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "bdab2849-3464-4b32-94db-fd94ce186f93",
+        "started_at": "2026-06-03T04:00:15.813Z",
+        "finished_at": "2026-06-03T04:03:02.912Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 236,
+        "errors_count": 4,
+        "refresh_checked": 49,
+        "refresh_updated": 49,
+        "error_messages": [
+          "Normalize failed: 2024 Bentley continental gt w12 speed scbct2zg9rc0 p6QlROW",
+          "Normalize failed: 2024 Ford bronco black diamond",
+          "Normalize failed: 2026 Chevrolet corvette zr 1 3lz",
+          "Normalize failed: 2026 Toyota gr supra 30 premium",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "585f8a8a-2c46-4103-9fce-d86ad41587c0",
+        "started_at": "2026-06-02T04:00:15.509Z",
+        "finished_at": "2026-06-02T04:02:57.011Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 229,
+        "errors_count": 11,
+        "refresh_checked": 21,
+        "refresh_updated": 21,
+        "error_messages": [
+          "Normalize failed: 2026 Chevrolet corvette zr 1 3lz",
+          "Normalize failed: 2026 Toyota gr supra 30 premium",
+          "Normalize failed: 2023 Rolls royce cullinan black badge slatv8c09pu2 WqOkGJ4",
+          "Normalize failed: 2025 Rivian r1t adventure",
+          "Normalize failed: 2025 Bmw m5",
+          "Normalize failed: 2023 Ford bronco raptor",
+          "Normalize failed: 2022 Range rover sport hse silver edition salwr2su nOEvR9p",
+          "Normalize failed: 2025 Bmw m5",
+          "Normalize failed: 2023 Maserati quattroporte modena zam56ypm5px42096 Wv1Yv7n",
+          "Normalize failed: 2022 Bmw x7 alpina xb7",
+          "Normalize failed: 2025 Mercedes benz amg gle63 s 4matic 4jgfb8kb2sb4 nKj0Av4",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "3c7f773a-cf87-4184-8ede-8925c58a342c",
+        "started_at": "2026-06-01T04:00:15.579Z",
+        "finished_at": "2026-06-01T04:02:56.518Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 229,
+        "errors_count": 11,
+        "refresh_checked": 93,
+        "refresh_updated": 93,
+        "error_messages": [
+          "Normalize failed: 2026 Chevrolet corvette zr 1 3lz",
+          "Normalize failed: 2026 Toyota gr supra 30 premium",
+          "Normalize failed: 2023 Rolls royce cullinan black badge slatv8c09pu2 WqOkGJ4",
+          "Normalize failed: 2025 Rivian r1t adventure",
+          "Normalize failed: 2025 Bmw m5",
+          "Normalize failed: 2023 Ford bronco raptor",
+          "Normalize failed: 2022 Range rover sport hse silver edition salwr2su nOEvR9p",
+          "Normalize failed: 2025 Bmw m5",
+          "Normalize failed: 2023 Maserati quattroporte modena zam56ypm5px42096 Wv1Yv7n",
+          "Normalize failed: 2022 Bmw x7 alpina xb7",
+          "Normalize failed: 2025 Mercedes benz amg gle63 s 4matic 4jgfb8kb2sb4 nKj0Av4",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "78bcf32c-c7c0-49cd-8b9b-d39f99372871",
+        "started_at": "2026-05-31T04:00:15.897Z",
+        "finished_at": "2026-05-31T04:01:25.186Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 0,
+        "written": 0,
+        "errors_count": 0,
+        "refresh_checked": 100,
+        "refresh_updated": 100,
+        "error_messages": null
+      },
+      {
+        "run_id": "aaafa73b-27b6-4c22-acda-4c33381513be",
+        "started_at": "2026-05-30T04:00:15.477Z",
+        "finished_at": "2026-05-30T04:02:54.880Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 238,
+        "errors_count": 2,
+        "refresh_checked": 100,
+        "refresh_updated": 100,
+        "error_messages": [
+          "Normalize failed: 2025 Rivian r1t adventure",
+          "Normalize failed: 2022 Bmw x7 alpina xb7",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "d9a7d21d-c6ba-4f7c-b906-57e90ec479fe",
+        "started_at": "2026-05-29T04:00:16.059Z",
+        "finished_at": "2026-05-29T04:02:50.382Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 233,
+        "errors_count": 7,
+        "refresh_checked": 100,
+        "refresh_updated": 100,
+        "error_messages": [
+          "Normalize failed: 2025 Rivian r1t adventure",
+          "Normalize failed: porsche 356 replica speedster s2139 nQR1xoW",
+          "Normalize failed: 2025 Jeep wrangler rubicon 4xe",
+          "Normalize failed: 2021 Bmw x5 m",
+          "Normalize failed: 2024 Mercedes benz amg gle53 4matic 4jgfd6bb3rb140 WxRrAg4",
+          "Normalize failed: 2023 Dodge charger rt",
+          "Normalize failed: 2020 Toyota 4runner sr5",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "f6762ff5-67a2-4514-8f03-7b76467e8518",
+        "started_at": "2026-05-28T04:00:27.366Z",
+        "finished_at": "2026-05-28T04:03:01.764Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 236,
+        "errors_count": 4,
+        "refresh_checked": 100,
+        "refresh_updated": 100,
+        "error_messages": [
+          "Normalize failed: 2025 Jeep wrangler rubicon 4xe",
+          "Normalize failed: 2020 Toyota 4runner sr5",
+          "Normalize failed: 2024 Volkswagen golf r performance pack wvwfb7cdxr nQd3kg4",
+          "Normalize failed: 2013 Volvo s80 32",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      },
+      {
+        "run_id": "128e1221-0a2f-460f-b8ab-b78da1ffb5f3",
+        "started_at": "2026-05-27T04:00:27.622Z",
+        "finished_at": "2026-05-27T04:03:06.603Z",
+        "success": true,
+        "runtime": "vercel_cron",
+        "discovered": 240,
+        "written": 227,
+        "errors_count": 13,
+        "refresh_checked": 100,
+        "refresh_updated": 100,
+        "error_messages": [
+          "Normalize failed: 2020 Toyota 4runner sr5",
+          "Normalize failed: 2024 Volkswagen golf r performance pack wvwfb7cdxr nQd3kg4",
+          "Normalize failed: 2013 Volvo s80 32",
+          "Normalize failed: 2019 Jeep wrangler rubicon",
+          "Normalize failed: 2020 Toyota tacoma double cab trd sport 3tmcz5an6l nwOP8Vn",
+          "Normalize failed: 2026 Chevrolet corvette zr 1 3lz",
+          "Normalize failed: 2025 Bmw m8 competition",
+          "Normalize failed: 2025 Bmw x5 m60i",
+          "Normalize failed: 2022 Bmw m550i xdrive",
+          "Normalize failed: 2021 Range rover hse westminster",
+          "Normalize failed: 2024 Mercedes benz amg gle53 4matic 4jgfb6bb2rb245 WkXKglp",
+          "Normalize failed: 2024 Bmw m850i",
+          "Normalize failed: 2019 Chevrolet corvette z06 2lz",
+          "Circuit-break (Cloudflare): Cloudflare challenge not resolved"
+        ]
+      }
+    ]
+  },
+  "assessment": {
+    "status": "WARN",
+    "notes": [
+      "active=1173",
+      "latest_success=true",
+      "latest_discovered=600",
+      "latest_written=574",
+      "latest_refresh_updated=0"
+    ]
+  }
+}

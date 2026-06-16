@@ -12,6 +12,8 @@ import { normalizeListing, normalizeListingFromSummary } from "./normalize";
 import { createDryRunWriter, createSupabaseWriter } from "./supabase_writer";
 import type { CollectorCounts, CollectorResult, CollectorRunConfig, ListingSummary, NormalizedListing, ScrapeMeta } from "./types";
 
+const TERMINAL_STATUSES = new Set(["delisted", "sold", "unsold"]);
+
 export async function runBeForwardPorscheCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
@@ -39,7 +41,12 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
     discovered: 0,
     detailsFetched: 0,
     normalized: 0,
+    writeAttempts: 0,
     written: 0,
+    skippedInvalid: 0,
+    dryRunSkipped: 0,
+    reactivated: 0,
+    terminalized: 0,
     errors: 0,
   };
   const errors: string[] = [];
@@ -61,6 +68,25 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
   const startPage = checkpointPage > pageCount
     ? config.startPage
     : Math.max(config.startPage, checkpointPage);
+  const plannedStartPage = startPage;
+  const plannedEndPage = pageCount;
+  const coveragePercent = rawPageCount > 0
+    ? Math.round(((pageCount - startPage + 1) / rawPageCount) * 10_000) / 100
+    : null;
+  const coverageLimited = rawPageCount > pageCount;
+  const coverageReason: CollectorResult["coverageReason"] = coverageLimited ? "max_pages" : "complete";
+
+  logEvent({
+    level: coverageLimited ? "warn" : "info",
+    event: coverageLimited ? "collector.coverage_limited" : "collector.coverage_complete",
+    runId,
+    totalResults,
+    sourceTotalPages: rawPageCount,
+    plannedStartPage,
+    plannedEndPage,
+    coveragePercent,
+  });
+
   let processedPages = 0;
   let remainingDetails = config.maxDetails;
 
@@ -133,8 +159,21 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
       if (!row) { normalizedRows.push(null); continue; }
       counts.normalized++;
       try {
-        await writer.upsertAll(row, meta, config.dryRun);
-        counts.written++;
+        counts.writeAttempts++;
+        const writeResult = await writer.upsertAll(row, meta, config.dryRun);
+        if (writeResult.wrote) {
+          counts.written++;
+          if (writeResult.previousStatus && TERMINAL_STATUSES.has(writeResult.previousStatus) && writeResult.currentStatus === "active") {
+            counts.reactivated++;
+          }
+          if (writeResult.previousStatus === "active" && writeResult.currentStatus && TERMINAL_STATUSES.has(writeResult.currentStatus)) {
+            counts.terminalized++;
+          }
+        } else if (writeResult.listingId === "skipped_invalid") {
+          counts.skippedInvalid++;
+        } else if (writeResult.listingId === "dry_run") {
+          counts.dryRunSkipped++;
+        }
         normalizedRows.push(row);
       } catch (err) {
         counts.errors++;
@@ -190,6 +229,12 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
     counts,
     processedPages,
     pageCount,
+    sourceTotalPages: rawPageCount,
+    plannedStartPage,
+    plannedEndPage,
+    coveragePercent,
+    coverageLimited,
+    coverageReason,
     totalResults,
   });
 
@@ -197,6 +242,12 @@ export async function runBeForwardPorscheCollector(config: CollectorRunConfig): 
     runId,
     totalResults,
     pageCount,
+    sourceTotalPages: rawPageCount,
+    plannedStartPage,
+    plannedEndPage,
+    coveragePercent,
+    coverageLimited,
+    coverageReason,
     processedPages,
     counts,
     errors,

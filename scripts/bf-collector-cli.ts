@@ -49,15 +49,21 @@ function getFlag(name: string, defaultVal: string): string {
   return flag ? flag.split("=")[1] : defaultVal;
 }
 
-function hasFlag(name: string): boolean {
-  return args.includes(`--${name}`);
+function getBooleanFlag(name: string, defaultVal: boolean): boolean {
+  const explicit = args.find((a) => a.startsWith(`--${name}=`));
+  if (explicit) return explicit.split("=")[1] === "true";
+  if (args.includes(`--${name}`)) return true;
+  return defaultVal;
 }
 
 const maxPages = parseInt(getFlag("maxPages", "10"), 10);
+const startPage = parseInt(getFlag("startPage", "1"), 10);
 const concurrency = parseInt(getFlag("concurrency", "3"), 10);
 const rateLimitMs = parseInt(getFlag("rateLimitMs", "4000"), 10);
-const summaryOnly = hasFlag("summaryOnly");
-const dryRun = hasFlag("dryRun");
+const checkpointPath = getFlag("checkpointPath", "var/beforward_porsche_collector/checkpoint.json");
+const outputPath = getFlag("outputPath", "var/beforward_porsche_collector/listings.jsonl");
+const summaryOnly = getBooleanFlag("summaryOnly", false);
+const dryRun = getBooleanFlag("dryRun", false);
 
 // -- Main ---------------------------------------------------------------------
 async function main(): Promise<void> {
@@ -76,8 +82,8 @@ async function main(): Promise<void> {
   const liveRunId = crypto.randomUUID();
 
   console.log(
-    `[bf-collector-cli] Starting: maxPages=${maxPages}, concurrency=${concurrency}, ` +
-      `rateLimitMs=${rateLimitMs}, summaryOnly=${summaryOnly}, dryRun=${dryRun}`
+      `[bf-collector-cli] Starting: maxPages=${maxPages}, concurrency=${concurrency}, ` +
+      `rateLimitMs=${rateLimitMs}, startPage=${startPage}, summaryOnly=${summaryOnly}, dryRun=${dryRun}`
   );
 
   await clearStaleActiveRun("beforward", 10);
@@ -91,11 +97,12 @@ async function main(): Promise<void> {
   try {
     const result = await runCollector({
       maxPages,
+      startPage,
       summaryOnly,
       concurrency,
       rateLimitMs,
-      checkpointPath: "var/beforward_porsche_collector/checkpoint.json",
-      outputPath: "var/beforward_porsche_collector/listings.jsonl",
+      checkpointPath,
+      outputPath,
       dryRun,
     });
 
@@ -126,6 +133,11 @@ async function main(): Promise<void> {
       runId: result.runId,
       totalResults: result.totalResults,
       pageCount: result.pageCount,
+      sourceTotalPages: result.sourceTotalPages,
+      plannedStartPage: result.plannedStartPage,
+      plannedEndPage: result.plannedEndPage,
+      coveragePercent: result.coveragePercent,
+      coverageLimited: result.coverageLimited,
       processedPages: result.processedPages,
       counts: result.counts,
       errors: result.errors.slice(0, 20),

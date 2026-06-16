@@ -155,4 +155,34 @@ describe("beforward_porsche_collector normalize", () => {
     expect(out?.model).toBe("CAYENNE");
     expect(out?.pricing.currentBid).toBe(8630);
   });
+
+  it.each([
+    {
+      sourceUrl: "https://www.beforward.jp/porsche/porsche-others/cb893406/id/13958025/",
+      title: "2016 PORSCHE SPECIAL",
+    },
+    {
+      sourceUrl: "https://www.beforward.jp/porsche/other/cb893406/id/13958025/",
+      title: "2016 PORSCHE PORSCHE OTHERS",
+    },
+  ])("normalizes BeForward porsche-others summaries without rejecting make/model", ({ sourceUrl, title }) => {
+    const out = normalizeListingFromSummary({
+      summary: {
+        page: 1,
+        sourceUrl,
+        refNo: "CB893406",
+        title,
+        priceUsd: 30000,
+        totalPriceUsd: 32000,
+        mileageKm: 50000,
+        year: 2016,
+        location: "Yokohama",
+      },
+      meta: { runId: "r", scrapeTimestamp: "2026-06-07T00:00:00.000Z" },
+    });
+
+    expect(out).not.toBeNull();
+    expect(out?.make).toBe("Porsche");
+    expect(out?.model).toBe("OTHER");
+  });
 });

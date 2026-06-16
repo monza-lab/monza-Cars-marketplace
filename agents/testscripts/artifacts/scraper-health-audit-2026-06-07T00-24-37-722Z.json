@@ -1,0 +1,411 @@
+{
+  "generated_at": "2026-06-07T00:24:37.723Z",
+  "window_days": 3,
+  "since": "2026-06-04T00:24:35.564Z",
+  "issue_count": 9,
+  "summaries": [
+    {
+      "scraperName": "ferrari",
+      "label": "Ferrari Collector",
+      "cadence": "daily",
+      "cronPath": "/api/cron/ferrari",
+      "runsInWindow": 3,
+      "successfulRuns": 3,
+      "failedRuns": 0,
+      "totalDiscovered": 4216,
+      "totalWritten": 462,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-07T00:04:32.607+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 157,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "porsche",
+      "label": "Porsche Collector",
+      "cadence": "daily",
+      "cronPath": "/api/cron/porsche",
+      "runsInWindow": 3,
+      "successfulRuns": 3,
+      "failedRuns": 0,
+      "totalDiscovered": 3662,
+      "totalWritten": 287,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T01:05:08.982+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 80,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "autotrader",
+      "label": "AutoTrader Collector",
+      "cadence": "external",
+      "runsInWindow": 9,
+      "successfulRuns": 9,
+      "failedRuns": 0,
+      "totalDiscovered": 3600,
+      "totalWritten": 3600,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T22:55:28.281+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 400,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "beforward",
+      "label": "BeForward Collector",
+      "cadence": "daily",
+      "cronPath": "/api/cron/beforward",
+      "runsInWindow": 8,
+      "successfulRuns": 8,
+      "failedRuns": 0,
+      "totalDiscovered": 1725,
+      "totalWritten": 1714,
+      "totalErrors": 1,
+      "lastRunAt": "2026-06-06T22:07:55.907+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 250,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "classic",
+      "label": "Classic.com Collector",
+      "cadence": "external",
+      "runsInWindow": 15,
+      "successfulRuns": 15,
+      "failedRuns": 0,
+      "totalDiscovered": 10878,
+      "totalWritten": 7627,
+      "totalErrors": 369,
+      "lastRunAt": "2026-06-06T22:09:51.253+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 0,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "autoscout24",
+      "label": "AutoScout24 Collector",
+      "cadence": "external",
+      "runsInWindow": 12,
+      "successfulRuns": 12,
+      "failedRuns": 0,
+      "totalDiscovered": 24300,
+      "totalWritten": 20772,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T22:34:49.071+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 1836,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "AutoScout24 shard saturation warning present"
+      ],
+      "targetFieldCoverage": {
+        "source": "AutoScout24",
+        "activeTotal": 17544,
+        "targetFields": {
+          "color_exterior": {
+            "filled": 15941,
+            "coveredOrExcepted": 17544,
+            "missing": 0,
+            "pct": 100
+          },
+          "engine": {
+            "filled": 17328,
+            "coveredOrExcepted": 17544,
+            "missing": 0,
+            "pct": 100
+          },
+          "transmission": {
+            "filled": 17544,
+            "coveredOrExcepted": 17544,
+            "missing": 0,
+            "pct": 100
+          }
+        }
+      }
+    },
+    {
+      "scraperName": "elferspot",
+      "label": "Elferspot Collector",
+      "cadence": "daily",
+      "cronPath": "/api/cron/elferspot",
+      "runsInWindow": 3,
+      "successfulRuns": 3,
+      "failedRuns": 0,
+      "totalDiscovered": 2557,
+      "totalWritten": 2557,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T09:19:42.622+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 860,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Elferspot target-field coverage below 100%"
+      ],
+      "targetFieldCoverage": {
+        "source": "Elferspot",
+        "activeTotal": 3956,
+        "targetFields": {
+          "color_exterior": {
+            "filled": 3952,
+            "coveredOrExcepted": 3956,
+            "missing": 0,
+            "pct": 100
+          },
+          "engine": {
+            "filled": 3898,
+            "coveredOrExcepted": 3904,
+            "missing": 52,
+            "pct": 98.7
+          },
+          "transmission": {
+            "filled": 3952,
+            "coveredOrExcepted": 3956,
+            "missing": 0,
+            "pct": 100
+          }
+        }
+      }
+    },
+    {
+      "scraperName": "backfill-images",
+      "label": "Image Backfill",
+      "cadence": "daily",
+      "cronPath": "/api/cron/backfill-images",
+      "runsInWindow": 28,
+      "successfulRuns": 28,
+      "failedRuns": 0,
+      "totalDiscovered": 40,
+      "totalWritten": 20,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-07T00:12:48.73+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 20,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "bat-detail",
+      "label": "BaT Detail Scraper",
+      "cadence": "external",
+      "runsInWindow": 32,
+      "successfulRuns": 32,
+      "failedRuns": 0,
+      "totalDiscovered": 2826,
+      "totalWritten": 831,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T23:18:41.999+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 98,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "validate",
+      "label": "Listing Validator",
+      "cadence": "daily",
+      "cronPath": "/api/cron/validate",
+      "runsInWindow": 9,
+      "successfulRuns": 9,
+      "failedRuns": 0,
+      "totalDiscovered": 94415,
+      "totalWritten": 0,
+      "totalErrors": 12,
+      "lastRunAt": "2026-06-07T00:10:02.668+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 0,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "cleanup",
+      "label": "Cleanup",
+      "cadence": "daily",
+      "cronPath": "/api/cron/cleanup",
+      "runsInWindow": 9,
+      "successfulRuns": 9,
+      "failedRuns": 0,
+      "totalDiscovered": 493289,
+      "totalWritten": 10276,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-07T00:11:36.111+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 3228,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "enrich-vin",
+      "label": "VIN Enrichment",
+      "cadence": "daily",
+      "cronPath": "/api/cron/enrich-vin",
+      "runsInWindow": 29,
+      "successfulRuns": 29,
+      "failedRuns": 0,
+      "totalDiscovered": 11547,
+      "totalWritten": 1950,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-07T00:11:57.358+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 12,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "enrich-titles",
+      "label": "Title Enrichment",
+      "cadence": "daily",
+      "cronPath": "/api/cron/enrich-titles",
+      "runsInWindow": 27,
+      "successfulRuns": 27,
+      "failedRuns": 0,
+      "totalDiscovered": 70290,
+      "totalWritten": 5382,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-07T00:12:03.366+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 36,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "enrich-details",
+      "label": "AS24 Detail Enrichment",
+      "cadence": "daily",
+      "cronPath": "/api/cron/enrich-details",
+      "runsInWindow": 31,
+      "successfulRuns": 25,
+      "failedRuns": 6,
+      "totalDiscovered": 2517,
+      "totalWritten": 1903,
+      "totalErrors": 20,
+      "lastRunAt": "2026-06-07T00:08:59.375+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 0,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "enrich-autotrader",
+      "label": "AutoTrader Enrichment",
+      "cadence": "external",
+      "runsInWindow": 42,
+      "successfulRuns": 42,
+      "failedRuns": 0,
+      "totalDiscovered": 5395,
+      "totalWritten": 4573,
+      "totalErrors": 0,
+      "lastRunAt": "2026-06-06T23:54:06.416+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 408,
+      "activeAgeMinutes": null,
+      "status": "working",
+      "notes": []
+    },
+    {
+      "scraperName": "enrich-beforward",
+      "label": "BeForward Enrichment",
+      "cadence": "daily",
+      "cronPath": "/api/cron/enrich-beforward",
+      "runsInWindow": 45,
+      "successfulRuns": 37,
+      "failedRuns": 8,
+      "totalDiscovered": 3539,
+      "totalWritten": 698,
+      "totalErrors": 12,
+      "lastRunAt": "2026-06-07T00:04:10.594+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 37,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "enrich-elferspot",
+      "label": "Elferspot Enrichment",
+      "cadence": "daily",
+      "cronPath": "/api/cron/enrich-elferspot",
+      "runsInWindow": 45,
+      "successfulRuns": 42,
+      "failedRuns": 3,
+      "totalDiscovered": 8580,
+      "totalWritten": 7249,
+      "totalErrors": 16,
+      "lastRunAt": "2026-06-07T00:08:55.228+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 220,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    },
+    {
+      "scraperName": "enrich-details-bulk",
+      "label": "AS24 Bulk Detail Enrichment",
+      "cadence": "external",
+      "runsInWindow": 0,
+      "successfulRuns": 0,
+      "failedRuns": 0,
+      "totalDiscovered": 0,
+      "totalWritten": 0,
+      "totalErrors": 0,
+      "lastRunAt": null,
+      "lastRunSuccess": null,
+      "lastRunWritten": null,
+      "activeAgeMinutes": null,
+      "status": "idle",
+      "notes": [
+        "No recent runs recorded"
+      ]
+    },
+    {
+      "scraperName": "liveness-check",
+      "label": "Liveness Check",
+      "cadence": "external",
+      "runsInWindow": 9,
+      "successfulRuns": 9,
+      "failedRuns": 0,
+      "totalDiscovered": 4474,
+      "totalWritten": 294,
+      "totalErrors": 5,
+      "lastRunAt": "2026-06-07T00:24:33.907+00:00",
+      "lastRunSuccess": true,
+      "lastRunWritten": 4,
+      "activeAgeMinutes": null,
+      "status": "degraded",
+      "notes": [
+        "Recent runs had errors"
+      ]
+    }
+  ]
+}

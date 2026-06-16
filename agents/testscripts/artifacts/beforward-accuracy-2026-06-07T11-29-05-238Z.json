@@ -1,0 +1,272 @@
+{
+  "generatedAt": "2026-06-07T11:29:05.238Z",
+  "source": "BeForward",
+  "sourceTotal": 3535,
+  "sourcePages": 142,
+  "sourceTotalPages": 142,
+  "sourcePageOneListings": 25,
+  "dbTotal": 5510,
+  "dbActive": 2924,
+  "dbTerminal": 2586,
+  "activeJapan": 1692,
+  "coverageGap": 17.28,
+  "statusCounts": {
+    "active": 2924,
+    "delisted": 1109,
+    "sold": 2,
+    "unsold": 1475
+  },
+  "countryCounts": {
+    "Japan": 3500,
+    "Korea": 2003,
+    "Singapore": 7
+  },
+  "statusCountryCounts": {
+    "active": {
+      "Japan": 1692,
+      "Korea": 1227,
+      "Singapore": 5
+    },
+    "delisted": {
+      "Japan": 812,
+      "Korea": 297
+    },
+    "sold": {
+      "Japan": 2
+    },
+    "unsold": {
+      "Japan": 994,
+      "Korea": 479,
+      "Singapore": 2
+    }
+  },
+  "terminalSample": {
+    "requested": 20,
+    "checked": 20,
+    "live": 0,
+    "terminal": 20,
+    "ambiguous": 0,
+    "rows": [
+      {
+        "id": "71266401-2f89-471b-8e08-b2c106c26bed",
+        "source_url": "https://www.beforward.jp/porsche/911/ca837701/id/12926239/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2017 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "75f8d123-904a-45cd-9232-0c2bc459c5cd",
+        "source_url": "https://www.beforward.jp/porsche/911/cc099822/id/14116688/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2021 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "00dd0e26-8ee8-4342-a5d3-62d993a6276d",
+        "source_url": "https://www.beforward.jp/porsche/porsche-others/cb318730/id/13377792/",
+        "status": "unsold",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-02T12:02:59.497",
+        "title": "2016 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "e25762ff-b9df-415f-a18e-cea1617679f3",
+        "source_url": "https://www.beforward.jp/porsche/cayman/cb429850/id/13490023/",
+        "status": "delisted",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2023 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "e738c1e5-9b48-40ce-9329-e5475bd5a88c",
+        "source_url": "https://www.beforward.jp/porsche/911/cb419650/id/13479868/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2024 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "7195b254-cf40-4b49-bbe4-3e9792206fad",
+        "source_url": "https://www.beforward.jp/porsche/911/cc197207/id/14214595/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "1995 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "8ae6645a-400e-4ab2-9733-fa608fa6c67a",
+        "source_url": "https://www.beforward.jp/porsche/911/cb870045/id/13933825/",
+        "status": "unsold",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-15T19:17:06.656",
+        "title": "2023 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "6b973d6a-cd1b-4b24-ab09-c24bc755e903",
+        "source_url": "https://www.beforward.jp/porsche/911/cc079809/id/14095242/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2023 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "d388a9b5-7933-486c-9265-72c662658619",
+        "source_url": "https://www.beforward.jp/porsche/cayman/cc028443/id/14044130/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-04T03:03:51.426",
+        "title": "2009 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "fd63df55-8a3c-4960-8a1d-4188c59c673f",
+        "source_url": "https://www.beforward.jp/porsche/911/cb829776/id/13894178/",
+        "status": "delisted",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-24T08:00:50.787",
+        "title": "2021 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "6f8852f2-e038-45a4-92d7-5ed769d510b9",
+        "source_url": "https://www.beforward.jp/porsche/911/by060128/id/11204353/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2016 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "661baa52-2f21-4355-977e-cbfac3228c13",
+        "source_url": "https://www.beforward.jp/porsche/911/cc175938/id/14193144/",
+        "status": "unsold",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-02T12:03:31.034",
+        "title": "2025 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "e6cd5bad-257c-4a93-84f5-a580cb3695c7",
+        "source_url": "https://www.beforward.jp/porsche/boxster/cb938762/id/14003349/",
+        "status": "unsold",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-02T12:00:39.67",
+        "title": "2015 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "70e2cb28-6a54-4672-8663-ff04b4d110b4",
+        "source_url": "https://www.beforward.jp/porsche/911/cc189091/id/14206271/",
+        "status": "delisted",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2024 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "d1b7a5ef-cb2b-494f-af0d-025a572d5e7f",
+        "source_url": "https://www.beforward.jp/porsche/911/cb840312/id/13904857/",
+        "status": "delisted",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-23T08:02:38.219",
+        "title": "2017 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "d6c38fe4-e2ae-47ed-948e-9ffeb32a63bb",
+        "source_url": "https://www.beforward.jp/porsche/boxster/cc108834/id/14125458/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2015 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "dde81725-15c3-4435-ad69-c97afe737d44",
+        "source_url": "https://www.beforward.jp/porsche/911/cc073798/id/14089122/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2013 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "6d177a16-0fe5-477c-8998-9ea348737f5e",
+        "source_url": "https://www.beforward.jp/porsche/911/bt422028/id/7810049/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2000 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "86c5ebea-6c74-41b8-99d7-e5949587c63a",
+        "source_url": "https://www.beforward.jp/porsche/911/cb829789/id/13894191/",
+        "status": "delisted",
+        "country": "Korea",
+        "last_verified_at": null,
+        "updated_at": "2026-03-24T08:01:06.97",
+        "title": "2021 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      },
+      {
+        "id": "75d0c7b0-cca0-4fe2-958c-1e8fb0b6a133",
+        "source_url": "https://www.beforward.jp/porsche/cayman/cb524437/id/13585104/",
+        "status": "delisted",
+        "country": "Japan",
+        "last_verified_at": null,
+        "updated_at": "2026-03-30T23:14:31.008",
+        "title": "2018 Porsche",
+        "classification": "terminal",
+        "evidence": "HTTP 404 Not Found"
+      }
+    ]
+  }
+}
