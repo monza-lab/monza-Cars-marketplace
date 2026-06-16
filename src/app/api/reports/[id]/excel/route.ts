@@ -25,6 +25,7 @@ import {
   getSignedExportUrl,
   uploadExport,
 } from "@/lib/exports/storage"
+import { checkReportAccess } from "@/lib/reports/access"
 
 export const runtime = "nodejs"
 
@@ -33,6 +34,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const { id } = await params
+
+  // Authorization — paid report content. Only an authenticated user who has
+  // already generated/paid for this listing's report (or holds unlimited
+  // access) may download it. The report is loaded below via the RLS-bypassing
+  // service-role client, so this is the sole access boundary.
+  const access = await checkReportAccess(id)
+  if (!access.ok) {
+    return access.reason === "unauthenticated"
+      ? NextResponse.json({ error: "auth_required" }, { status: 401 })
+      : NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
 
   let car = CURATED_CARS.find((c) => c.id === id) ?? null
   if (!car && id.startsWith("live-")) {

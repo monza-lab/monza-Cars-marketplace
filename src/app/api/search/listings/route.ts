@@ -4,6 +4,7 @@ import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
 import {
   resolveListingImages,
   LISTING_IMAGE_PLACEHOLDER,
+  sanitizeOrIlikeTerm,
 } from "@/lib/supabaseLiveListings"
 
 export const dynamic = "force-dynamic"
@@ -112,8 +113,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
     }
 
     if (q && !trending) {
-      const escaped = q.replace(/%/g, "\\%").replace(/_/g, "\\_")
-      query = query.or(`title.ilike.%${escaped}%,model.ilike.%${escaped}%`)
+      const safe = sanitizeOrIlikeTerm(q)
+      if (safe) {
+        query = query.or(`title.ilike.%${safe}%,model.ilike.%${safe}%`)
+      }
     }
 
     const { data, count, error } = await query
