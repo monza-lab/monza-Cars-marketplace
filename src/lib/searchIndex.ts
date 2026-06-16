@@ -8,6 +8,18 @@ export interface SeriesMatch {
   order: number
 }
 
+const LISTING_SEARCH_TEXT_COLUMNS = [
+  "title",
+  "model",
+  "trim",
+  "series",
+  "source",
+  "platform",
+  "transmission",
+  "engine",
+  "location",
+] as const
+
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length
   if (m === 0) return n
@@ -68,4 +80,31 @@ export function searchSeries(query: string, make = "porsche"): SeriesMatch[] {
   const q = query.trim().toLowerCase()
   if (!q) return all.map(toMatch)
   return all.filter((s) => seriesMatchesQuery(s, q)).map(toMatch)
+}
+
+export function normalizeListingSearchTokens(query: string): string[] {
+  const seen = new Set<string>()
+  return query
+    .replace(/[%_,()]/g, " ")
+    .replace(/[/-]+/g, " ")
+    .replace(/[^A-Za-z0-9.]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => {
+      const key = token.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
+export function buildListingSearchOrClauses(query: string): string[] {
+  return normalizeListingSearchTokens(query).map((token) => {
+    const clauses = LISTING_SEARCH_TEXT_COLUMNS.map(
+      (column) => `${column}.ilike.%${token}%`,
+    )
+    if (/^\d{4}$/.test(token)) clauses.push(`year.eq.${token}`)
+    return clauses.join(",")
+  })
 }

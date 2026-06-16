@@ -18,6 +18,7 @@ import { getExchangeRates } from "./exchangeRates";
 import { derivePrice } from "./pricing/derivePrice";
 import { computeSegmentStats } from "./pricing/segmentStats";
 import type { DerivedPrice, CanonicalMarket } from "./pricing/types";
+import { buildListingSearchOrClauses } from "./searchIndex";
 
 // NOTE: columns listings.price_usd / price_eur / price_gbp are 100% NULL in production
 // as of 2026-04-18. All USD conversion happens in TS via pricing/derivePrice.
@@ -1612,8 +1613,9 @@ function applyPaginatedListingFilters<T>(
   }
 
   if (options.query) {
-    const escaped = options.query.replace(/[%_]/g, "");
-    q = q.or(`title.ilike.%${escaped}%,model.ilike.%${escaped}%`);
+    for (const clause of buildListingSearchOrClauses(options.query)) {
+      q = q.or(clause);
+    }
   }
 
   return q as T;

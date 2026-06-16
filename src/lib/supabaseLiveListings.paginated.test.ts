@@ -234,4 +234,26 @@ describe("fetchPaginatedListings", () => {
       ["id", { ascending: false }],
     ]);
   });
+
+  it("case 6: free-text search uses token AND semantics across title, model, trim, and series", async () => {
+    const { fetchPaginatedListings } = await import("./supabaseLiveListings");
+
+    await fetchPaginatedListings({
+      make: "Porsche",
+      query: "997 GTS",
+      status: "active",
+    });
+
+    const clauses = spyOr.mock.calls
+      .map(([clause]) => clause)
+      .filter((clause): clause is string => typeof clause === "string");
+
+    expect(clauses.some((clause) => clause.includes("%997 GTS%"))).toBe(false);
+    expect(clauses).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("series.ilike.%997%"),
+        expect.stringContaining("trim.ilike.%GTS%"),
+      ]),
+    );
+  });
 });

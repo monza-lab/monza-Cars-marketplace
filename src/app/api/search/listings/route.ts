@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
+import { buildListingSearchOrClauses } from "@/lib/searchIndex"
 import {
   resolveListingImages,
   LISTING_IMAGE_PLACEHOLDER,
@@ -112,8 +113,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
     }
 
     if (q && !trending) {
-      const escaped = q.replace(/%/g, "\\%").replace(/_/g, "\\_")
-      query = query.or(`title.ilike.%${escaped}%,model.ilike.%${escaped}%`)
+      for (const clause of buildListingSearchOrClauses(q)) {
+        query = query.or(clause)
+      }
     }
 
     const { data, count, error } = await query

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { searchSeries } from "./searchIndex"
+import {
+  buildListingSearchOrClauses,
+  normalizeListingSearchTokens,
+  searchSeries,
+} from "./searchIndex"
 
 describe("searchSeries", () => {
   it("returns all 27 Porsche series when query is empty", () => {
@@ -37,5 +41,22 @@ describe("searchSeries", () => {
     const orders = results.map((r) => r.order)
     const sorted = [...orders].sort((a, b) => a - b)
     expect(orders).toEqual(sorted)
+  })
+})
+
+describe("listing search clauses", () => {
+  it("tokenizes a specific car query into searchable terms", () => {
+    expect(normalizeListingSearchTokens("  997 GTS!! ")).toEqual(["997", "GTS"])
+  })
+
+  it("builds one OR group per token so generation and variant can match different fields", () => {
+    expect(buildListingSearchOrClauses("997 GTS")).toEqual([
+      "title.ilike.%997%,model.ilike.%997%,trim.ilike.%997%,series.ilike.%997%,source.ilike.%997%,platform.ilike.%997%,transmission.ilike.%997%,engine.ilike.%997%,location.ilike.%997%",
+      "title.ilike.%GTS%,model.ilike.%GTS%,trim.ilike.%GTS%,series.ilike.%GTS%,source.ilike.%GTS%,platform.ilike.%GTS%,transmission.ilike.%GTS%,engine.ilike.%GTS%,location.ilike.%GTS%",
+    ])
+  })
+
+  it("adds an exact year predicate for four-digit year tokens", () => {
+    expect(buildListingSearchOrClauses("2011 GTS")[0]).toContain("year.eq.2011")
   })
 })
