@@ -105,6 +105,13 @@ describe("supabaseLiveListings image url normalization", () => {
     expect(normalizeListingImageUrl("https://unknown-images.example.com/photo.jpg")).toBeNull();
   });
 
+  it("rejects stock image hosts from marketplace listing photos", () => {
+    expect(
+      normalizeListingImageUrl("https://images.unsplash.com/photo-1715733965646-965a526d1563?w=1200&h=800&fit=crop")
+    ).toBeNull();
+    expect(normalizeListingImageUrl("https://fastly.picsum.photos/id/1/1200/800.jpg")).toBeNull();
+  });
+
   it("uses neutral placeholder when all candidate images are invalid", () => {
     const resolved = resolveListingImages([
       "https://unknown-images.example.com/photo.jpg",

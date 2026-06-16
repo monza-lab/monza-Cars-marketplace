@@ -28,12 +28,12 @@ describe("selectBestDatabaseImage", () => {
         platform: "ELFERSPOT",
         currentBid: 0,
         price: 180000,
-        images: ["https://images.unsplash.com/photo-1672717901304-5ef5480894ca?w=1200&h=800&fit=crop"],
+        images: ["https://images.classic.com/vehicles/porsche-997-gt3.jpg?w=1200"],
       },
     ]
 
     expect(selectBestDatabaseImage(liveCars, historicalCars)).toBe(
-      "https://images.unsplash.com/photo-1672717901304-5ef5480894ca?w=1200&h=800&fit=crop",
+      "https://images.classic.com/vehicles/porsche-997-gt3.jpg?w=1200",
     )
   })
 })
