@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { FilterPill } from "./FilterPill";
@@ -48,6 +48,8 @@ const STATUS_OPTIONS: { id: StatusFilter; label: string }[] = [
   { id: "live", label: "Live" },
 ];
 
+const SEARCH_COMMIT_DELAY_MS = 300;
+
 function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
@@ -66,6 +68,8 @@ export function FilterBar({
   const [showSort, setShowSort] = useState(false);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
   const activeCount = countActiveFilters(filters);
+
+  const commitFilterQuery = useCallback((q: string) => onChange({ q }), [onChange]);
 
   const modelLabel = useMemo(() => {
     const picks: string[] = [];
@@ -135,23 +139,11 @@ export function FilterBar({
         {/* Row 1: search + counter + sort */}
         <div className="flex items-center gap-2 md:gap-3">
           <div className="relative flex-1 md:max-w-2xl">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-            <input
-              type="text"
+            <SearchQueryInput
+              key={filters.q}
               value={filters.q}
-              onChange={(e) => onChange({ q: e.target.value })}
-              placeholder="Search — 992 GT3, 964 Turbo, Manual…"
-              className="w-full h-11 md:h-9 pl-9 pr-9 rounded-full bg-foreground/[0.03] border border-border text-[16px] md:text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.05] transition-colors"
+              onCommit={commitFilterQuery}
             />
-            {filters.q && (
-              <button
-                onClick={() => onChange({ q: "" })}
-                className="absolute right-2 top-1/2 -translate-y-1/2 size-8 md:size-6 flex items-center justify-center rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Clear search"
-              >
-                <X className="size-4 md:size-3.5" />
-              </button>
-            )}
           </div>
 
           <div className="hidden md:flex items-center gap-3 text-[11px] whitespace-nowrap">
@@ -433,5 +425,76 @@ export function FilterBar({
         onReset={onReset}
       />
     </div>
+  );
+}
+
+function SearchQueryInput({
+  value,
+  onCommit,
+}: {
+  value: string;
+  onCommit: (value: string) => void;
+}) {
+  const [draftQuery, setDraftQuery] = useState(value);
+  const searchCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const committedQueryRef = useRef(value);
+
+  useEffect(() => {
+    return () => {
+      if (searchCommitTimerRef.current) clearTimeout(searchCommitTimerRef.current);
+    };
+  }, []);
+
+  const cancelPendingSearchCommit = useCallback(() => {
+    if (!searchCommitTimerRef.current) return;
+    clearTimeout(searchCommitTimerRef.current);
+    searchCommitTimerRef.current = null;
+  }, []);
+
+  const commitSearchQuery = useCallback(
+    (nextQuery: string) => {
+      cancelPendingSearchCommit();
+      searchCommitTimerRef.current = setTimeout(() => {
+        searchCommitTimerRef.current = null;
+        if (nextQuery !== committedQueryRef.current) onCommit(nextQuery);
+      }, SEARCH_COMMIT_DELAY_MS);
+    },
+    [cancelPendingSearchCommit, onCommit],
+  );
+
+  const handleSearchChange = useCallback(
+    (nextQuery: string) => {
+      setDraftQuery(nextQuery);
+      commitSearchQuery(nextQuery);
+    },
+    [commitSearchQuery],
+  );
+
+  const clearSearch = useCallback(() => {
+    cancelPendingSearchCommit();
+    setDraftQuery("");
+    if (committedQueryRef.current !== "") onCommit("");
+  }, [cancelPendingSearchCommit, onCommit]);
+
+  return (
+    <>
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+      <input
+        type="text"
+        value={draftQuery}
+        onChange={(e) => handleSearchChange(e.target.value)}
+        placeholder="Search — 992 GT3, 964 Turbo, Manual…"
+        className="w-full h-11 md:h-9 pl-9 pr-9 rounded-full bg-foreground/[0.03] border border-border text-[16px] md:text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.05] transition-colors"
+      />
+      {draftQuery && (
+        <button
+          onClick={clearSearch}
+          className="absolute right-2 top-1/2 -translate-y-1/2 size-8 md:size-6 flex items-center justify-center rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Clear search"
+        >
+          <X className="size-4 md:size-3.5" />
+        </button>
+      )}
+    </>
   );
 }
