@@ -5,6 +5,7 @@ import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
 import { isUsableTargetFieldValue } from "@/features/scrapers/common/enrichmentLoopPolicy";
 import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
+import { extractAutoScout24ListingUuid } from "./id";
 
 export interface SupabaseWriter {
   upsertAll(listing: NormalizedListing, meta: ScrapeMeta, dryRun: boolean): Promise<{ listingId: string; wrote: boolean }>;
@@ -58,20 +59,13 @@ export function createSupabaseWriter(): SupabaseWriter {
 async function upsertListing(client: SupabaseClient, listing: NormalizedListing, meta: ScrapeMeta): Promise<string> {
   const row = mapNormalizedListingToListingsRow(listing, meta);
 
-  // Handle source_url conflict: if a row exists with the same source_url but
-  // a different source_id (e.g. AS24 changed the URL slug), update its
-  // source_id first so the onConflict upsert can match it.
-  const { data: existing } = await client
-    .from("listings")
-    .select("id, source_id")
-    .eq("source_url", listing.sourceUrl)
-    .limit(1);
+  const existing = await findExistingListingIdentity(client, listing);
 
-  if (existing?.[0] && existing[0].source_id !== listing.sourceId) {
+  if (existing && existing.source_id !== listing.sourceId) {
     await client
       .from("listings")
       .update({ source_id: listing.sourceId })
-      .eq("id", existing[0].id);
+      .eq("id", existing.id);
   }
 
   let data: Array<{ id: string }> | null = null;
@@ -111,6 +105,65 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
   const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
   if (!fallback) throw new Error("Supabase listings upsert returned no id");
   return fallback;
+}
+
+async function findExistingListingIdentity(
+  client: SupabaseClient,
+  listing: NormalizedListing,
+): Promise<{ id: string; source_id: string | null } | null> {
+  const exact = await client
+    .from("listings")
+    .select("id, source_id")
+    .eq("source", listing.source)
+    .eq("source_id", listing.sourceId)
+    .limit(1);
+  const exactRow = (exact.data as Array<{ id: string; source_id: string | null }> | null)?.[0];
+  if (exactRow) return exactRow;
+
+  // Handle source_url conflict: if a row exists with the same source_url but
+  // a different source_id, update its source_id first so the onConflict upsert can match it.
+  const byUrl = await client
+    .from("listings")
+    .select("id, source_id")
+    .eq("source_url", listing.sourceUrl)
+    .limit(1);
+  const byUrlRow = (byUrl.data as Array<{ id: string; source_id: string | null }> | null)?.[0];
+  if (byUrlRow) return byUrlRow;
+
+  // AS24 decorates the same native offer UUID with different category/model
+  // path fragments across search shards. Match old rows by UUID suffix so a
+  // refreshed listing updates the existing record instead of creating clones.
+  const uuid =
+    extractAutoScout24ListingUuid(listing.sourceId) ??
+    extractAutoScout24ListingUuid(listing.sourceUrl);
+  if (!uuid) return null;
+
+  const byUuid = await client
+    .from("listings")
+    .select("id, source_id, status, last_verified_at, updated_at")
+    .eq("source", listing.source)
+    .or(`source_id.ilike.%${uuid}%,source_url.ilike.%${uuid}%`)
+    .limit(20);
+
+  const candidates = (byUuid.data as Array<{
+    id: string;
+    source_id: string | null;
+    status: string | null;
+    last_verified_at: string | null;
+    updated_at: string | null;
+  }> | null) ?? [];
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => {
+    const activeDelta = Number(b.status === "active") - Number(a.status === "active");
+    if (activeDelta !== 0) return activeDelta;
+    const aTime = Date.parse(a.last_verified_at ?? a.updated_at ?? "");
+    const bTime = Date.parse(b.last_verified_at ?? b.updated_at ?? "");
+    return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
+  });
+
+  return candidates[0] ?? null;
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {

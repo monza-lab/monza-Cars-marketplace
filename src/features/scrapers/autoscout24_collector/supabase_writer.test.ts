@@ -45,7 +45,6 @@ function makeListing(overrides: Partial<NormalizedListing> = {}): NormalizedList
 
 const meta: ScrapeMeta = {
   scrapeTimestamp: "2026-05-07T00:00:00.000Z",
-  runtime: "cli",
   runId: "test-run",
 };
 

@@ -33,6 +33,7 @@ type ListingRow = {
   model: string;
   trim: string | null;
   source: string;
+  source_id?: string | null;
   source_url: string;
   status: string;
   sale_date: string | null;
@@ -128,11 +129,11 @@ function normalizeDbStatusFilter(statusFilter?: string): string | undefined {
 
 // ─── Broad select (with photos_media join for legacy rows) ───
 const SELECT_BROAD =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
+  "id,year,make,model,trim,source,source_id,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location,photos_media(photo_url)";
 
 // ─── Narrow select (without joins — fallback if photos_media join fails) ───
 const SELECT_NARROW =
-  "id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
+  "id,year,make,model,trim,source,source_id,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,location";
 
 // ─── Mappers ───
 
@@ -301,6 +302,83 @@ export function resolveCanonicalSource(source: string | null | undefined, platfo
   if (PLATFORM_ALIASES.Elferspot.some((candidate) => normalizeToken(candidate) === normalizedPlatform)) return "Elferspot";
 
   return null;
+}
+
+const AUTOSCOUT24_UUID_RE =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+function extractAutoScout24ListingUuid(value: string | null | undefined): string | null {
+  const match = (value ?? "").match(AUTOSCOUT24_UUID_RE);
+  return match ? match[0].toLowerCase() : null;
+}
+
+function normalizeDeduplicationText(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeDeduplicationUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+
+  try {
+    const parsed = new URL(value);
+    parsed.hash = "";
+    for (const key of Array.from(parsed.searchParams.keys())) {
+      if (/^utm_/i.test(key) || key === "ref" || key === "fbclid" || key === "cldtidx" || key === "source") {
+        parsed.searchParams.delete(key);
+      }
+    }
+    const normalized = parsed.toString();
+    return normalized.endsWith("/") ? normalized.slice(0, -1) : normalized;
+  } catch {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+}
+
+function listingPriceKey(row: ListingRow): string {
+  const price = row.current_bid ?? row.final_price ?? row.hammer_price;
+  return price === null || price === undefined ? "" : String(Math.trunc(Number(price)));
+}
+
+export function buildListingDeduplicationKey(row: ListingRow): string {
+  const canonicalSource = resolveCanonicalSource(row.source, row.platform) ?? row.source;
+
+  if (canonicalSource === "AutoScout24") {
+    const uuid =
+      extractAutoScout24ListingUuid(row.source_id) ??
+      extractAutoScout24ListingUuid(row.source_url);
+    if (uuid) return `as24:${uuid}`;
+  }
+
+  const sourceUrl = normalizeDeduplicationUrl(row.source_url);
+  if (sourceUrl) return `url:${sourceUrl}`;
+
+  const vin = normalizeDeduplicationText(row.vin);
+  if (vin) return `vin:${canonicalSource}:${vin}`;
+
+  const image = normalizeListingImageUrl(row.images?.[0] ?? null);
+  const title = normalizeDeduplicationText(row.title);
+  const mileage = row.mileage === null || row.mileage === undefined ? "" : String(Math.trunc(row.mileage));
+  const price = listingPriceKey(row);
+  if (image && title && (mileage || price)) {
+    return `visual:${canonicalSource}:${image}:${title}:${mileage}:${price}`;
+  }
+
+  return `row:${row.id}`;
+}
+
+export function dedupeListingRows<T extends ListingRow>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  const deduped: T[] = [];
+
+  for (const row of rows) {
+    const key = buildListingDeduplicationKey(row);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(row);
+  }
+
+  return deduped;
 }
 
 function mapPlatform(source: string, platform: string | null): Platform {
@@ -912,7 +990,8 @@ async function queryAllListingsDirect(
       return [];
     }
 
-    return ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
+    const rows = ((data ?? []) as ListingRow[]).filter((row) => !isJunkListing(row));
+    return dedupeListingRows(rows);
   } catch (err) {
     console.error("[supabaseLiveListings] queryAllListingsDirect threw:", err);
     return [];
@@ -999,7 +1078,7 @@ async function queryListingsMany(
   });
 
   const interleaveLimit = hasLimit ? limit : Number.MAX_SAFE_INTEGER;
-  return interleaveResultsBySource(resultsBySource, interleaveLimit);
+  return dedupeListingRows(interleaveResultsBySource(resultsBySource, interleaveLimit));
 }
 
 async function queryListingSingle(
@@ -1401,7 +1480,7 @@ export async function fetchLiveListingsAsCollectorCars(options?: {
       signal: options?.signal,
     });
     const rawRows = await queryListingsMany(supabase, limit, targetMake, statusFilter, sources);
-    const rows = rawRows.filter((r) => !isJunkListing(r));
+    const rows = dedupeListingRows(rawRows.filter((r) => !isJunkListing(r)));
     if (rows.length === 0) return [];
 
     // Hoist rates once so every row is derived with the correct USD conversion.
@@ -1748,8 +1827,7 @@ export async function fetchPaginatedListings(options: {
 
     // Junk filtering as post-processing — pages may return fewer than
     // pageSize cars, but hasMore stays accurate so the client keeps fetching.
-    const cars = rawPage
-      .filter((r) => !isJunkListing(r))
+    const cars = dedupeListingRows(rawPage.filter((r) => !isJunkListing(r)))
       .map((row) => rowToCollectorCar(row));
 
     const totalCount = includeCount && typeof count === "number" ? count : null;

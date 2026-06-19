@@ -1,5 +1,8 @@
 import crypto from "node:crypto";
 
+const AUTOSCOUT24_UUID_RE =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
 /**
  * Normalize an AutoScout24 URL by stripping tracking params and fragments.
  */
@@ -27,15 +30,25 @@ export function extractListingSlug(url: string): string | null {
   return match ? match[1] : null;
 }
 
+export function extractAutoScout24ListingUuid(value: string | null | undefined): string | null {
+  const match = (value ?? "").match(AUTOSCOUT24_UUID_RE);
+  return match ? match[0].toLowerCase() : null;
+}
+
 /**
  * Derive a stable, deterministic sourceId for deduplication.
- * Priority: explicit ID > URL slug > URL hash.
+ * Priority: AS24 UUID > explicit ID > URL slug > URL hash.
  */
 export function deriveSourceId(input: {
   sourceId?: string | null;
   sourceUrl: string;
 }): string {
   const explicit = (input.sourceId ?? "").trim();
+  const stableUuid =
+    extractAutoScout24ListingUuid(explicit) ??
+    extractAutoScout24ListingUuid(input.sourceUrl);
+
+  if (stableUuid) return `as24-${stableUuid}`;
   if (explicit) return truncateTo200(`as24-${explicit}`);
 
   const slug = extractListingSlug(input.sourceUrl);

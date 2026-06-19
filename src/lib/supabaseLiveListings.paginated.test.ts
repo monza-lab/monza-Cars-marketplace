@@ -102,27 +102,21 @@ describe("fetchPaginatedListings", () => {
 
     // make filter must use eq, not ilike
     const eqCalls = spyEq.mock.calls;
-    const makeEqCall = eqCalls.find(
-      ([col]: [string]) => col === "make",
-    );
+    const makeEqCall = eqCalls.find(([col]) => col === "make");
     expect(makeEqCall).toBeDefined();
     expect(makeEqCall?.[1]).toBe("Porsche");
 
     // ilike("make", ...) must NOT be called
-    const makeiLikeCall = spyIlike.mock.calls.find(
-      ([col]: [string]) => col === "make",
-    );
+    const makeiLikeCall = spyIlike.mock.calls.find(([col]) => col === "make");
     expect(makeiLikeCall).toBeUndefined();
 
     // series eq filter must be applied
-    const seriesEqCall = eqCalls.find(
-      ([col]: [string]) => col === "series",
-    );
+    const seriesEqCall = eqCalls.find(([col]) => col === "series");
     expect(seriesEqCall).toBeDefined();
     expect(seriesEqCall?.[1]).toBe("992");
 
     // No .or() call containing "model.ilike." should exist
-    const modelOrCall = spyOr.mock.calls.find(([clause]: [string]) =>
+    const modelOrCall = spyOr.mock.calls.find(([clause]) =>
       clause.includes("model.ilike."),
     );
     expect(modelOrCall).toBeUndefined();
@@ -138,26 +132,20 @@ describe("fetchPaginatedListings", () => {
     });
 
     // make filter must use eq, not ilike
-    const makeEqCall = spyEq.mock.calls.find(
-      ([col]: [string]) => col === "make",
-    );
+    const makeEqCall = spyEq.mock.calls.find(([col]) => col === "make");
     expect(makeEqCall).toBeDefined();
     expect(makeEqCall?.[1]).toBe("Porsche");
 
     // ilike("make", ...) must NOT be called
-    const makeiLikeCall = spyIlike.mock.calls.find(
-      ([col]: [string]) => col === "make",
-    );
+    const makeiLikeCall = spyIlike.mock.calls.find(([col]) => col === "make");
     expect(makeiLikeCall).toBeUndefined();
 
     // series eq filter must NOT be applied (no series provided)
-    const seriesEqCall = spyEq.mock.calls.find(
-      ([col]: [string]) => col === "series",
-    );
+    const seriesEqCall = spyEq.mock.calls.find(([col]) => col === "series");
     expect(seriesEqCall).toBeUndefined();
 
     // Legacy .or() call with model.ilike. MUST be present
-    const modelOrCall = spyOr.mock.calls.find(([clause]: [string]) =>
+    const modelOrCall = spyOr.mock.calls.find(([clause]) =>
       clause.includes("model.ilike."),
     );
     expect(modelOrCall).toBeDefined();
@@ -176,28 +164,20 @@ describe("fetchPaginatedListings", () => {
     });
 
     // make filter must use eq
-    const makeEqCall = spyEq.mock.calls.find(
-      ([col]: [string]) => col === "make",
-    );
+    const makeEqCall = spyEq.mock.calls.find(([col]) => col === "make");
     expect(makeEqCall).toBeDefined();
 
     // series eq filter applied
-    const seriesEqCall = spyEq.mock.calls.find(
-      ([col]: [string]) => col === "series",
-    );
+    const seriesEqCall = spyEq.mock.calls.find(([col]) => col === "series");
     expect(seriesEqCall).toBeDefined();
     expect(seriesEqCall?.[1]).toBe("991");
 
     // Year range from modelPatterns should still be applied alongside series
-    const gteCall = spyGte.mock.calls.find(
-      ([col]: [string]) => col === "year",
-    );
+    const gteCall = spyGte.mock.calls.find(([col]) => col === "year");
     expect(gteCall).toBeDefined();
     expect(gteCall?.[1]).toBe(2012);
 
-    const lteCall = spyLte.mock.calls.find(
-      ([col]: [string]) => col === "year",
-    );
+    const lteCall = spyLte.mock.calls.find(([col]) => col === "year");
     expect(lteCall).toBeDefined();
     expect(lteCall?.[1]).toBe(2019);
 
@@ -255,5 +235,53 @@ describe("fetchPaginatedListings", () => {
         expect.stringContaining("trim.ilike.%GTS%"),
       ]),
     );
+  });
+
+  it("dedupes AutoScout24 URL variants by native listing UUID", async () => {
+    const { buildListingDeduplicationKey, dedupeListingRows } = await import("./supabaseLiveListings");
+
+    const base = {
+      source: "AutoScout24",
+      platform: "AUTO_SCOUT_24",
+      source_url:
+        "https://www.autoscout24.com/offers/porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-04631d26-6ed8-4c2f-b094-51f66294fada",
+      title: "Porsche 911 911 3.2 Carrera - PTS - Sonderwunsch - Recaro",
+      vin: null,
+      images: ["https://www.autoscout24.net/images/test.webp"],
+      mileage: 188116,
+      hammer_price: 79000,
+      current_bid: 79000,
+      final_price: null,
+    };
+    const rows = [
+      {
+        ...base,
+        id: "plain",
+        source_id:
+          "as24-porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-04631d26-6ed8-4c2f-b094-51f66294fada",
+      },
+      {
+        ...base,
+        id: "category",
+        source_id:
+          "as24-porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-cat_ma57mo1950-04631d26-6ed8-4c2f-b094-51f66294fada",
+        source_url:
+          "https://www.autoscout24.com/offers/porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-cat_ma57mo1950-04631d26-6ed8-4c2f-b094-51f66294fada",
+      },
+      {
+        ...base,
+        id: "model",
+        source_id:
+          "as24-porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-cat_ma57mo1950ge282va266-04631d26-6ed8-4c2f-b094-51f66294fada",
+        source_url:
+          "https://www.autoscout24.com/offers/porsche-911-911-3-2-carrera-pts-sonderwunsch-recaro-gasoline-blue-cat_ma57mo1950ge282va266-04631d26-6ed8-4c2f-b094-51f66294fada",
+      },
+    ];
+
+    type ListingRowForTest = Parameters<typeof buildListingDeduplicationKey>[0];
+    const listingRows = rows as unknown as ListingRowForTest[];
+
+    expect(new Set(listingRows.map(buildListingDeduplicationKey)).size).toBe(1);
+    expect(dedupeListingRows(listingRows).map((row) => row.id)).toEqual(["plain"]);
   });
 });
