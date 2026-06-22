@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser, getUserCredits, getTransactionHistory } from '@/lib/reports/queries'
+import { DEFAULT_MONTHLY_PISTONS, getOrCreateUser, getUserCredits, getTransactionHistory } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { getTodayUsageByType, resolveUserCreditsId } from '@/lib/advisor/persistence/ledger'
 
@@ -65,12 +65,16 @@ export async function GET(request: Request) {
             email: user.email,
             name: user.user_metadata?.full_name || null,
             avatarUrl: user.user_metadata?.avatar_url || null,
-            creditsBalance: 3,
+            creditsBalance: DEFAULT_MONTHLY_PISTONS,
             packCreditsBalance: 0,
+            pistonsBalance: DEFAULT_MONTHLY_PISTONS,
             freeCreditsUsed: 0,
             tier: 'FREE',
             creditResetDate: new Date().toISOString(),
             subscriptionPeriodEnd: null,
+            subscriptionPlanKey: null,
+            monthlyAllowancePistons: DEFAULT_MONTHLY_PISTONS,
+            unlimitedReports: false,
           },
         })
       }
@@ -91,7 +95,7 @@ export async function GET(request: Request) {
         freeCreditsUsed: profile.free_credits_used ?? 0,
         tier: profile.tier,
         subscriptionPlanKey: profile.subscription_plan_key ?? null,
-        monthlyAllowancePistons: profile.monthly_allowance_pistons ?? 300,
+        monthlyAllowancePistons: profile.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS,
         unlimitedReports: profile.unlimited_reports ?? false,
         creditResetDate: profile.credit_reset_date,
         subscriptionPeriodEnd: profile.subscription_period_end ?? null,

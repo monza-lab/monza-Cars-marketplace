@@ -83,6 +83,11 @@ describe("reports/queries exports", () => {
     const { REPORT_PISTON_COST } = await import("./queries")
     expect(REPORT_PISTON_COST).toBe(1000)
   })
+
+  it("grants free users enough monthly Pistons for three Haus Reports", async () => {
+    const { DEFAULT_MONTHLY_PISTONS, REPORT_PISTON_COST } = await import("./queries")
+    expect(DEFAULT_MONTHLY_PISTONS).toBe(REPORT_PISTON_COST * 3)
+  })
 })
 
 describe("saveHausReport", () => {

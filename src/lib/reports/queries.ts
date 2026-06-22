@@ -17,10 +17,9 @@ import type {
   AppliedModifier,
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
-import { isAdmin } from "@/lib/admin"
 import { REPORT_PISTON_COST } from "./canAffordReport"
 
-const DEFAULT_MONTHLY_PISTONS = 300
+export const DEFAULT_MONTHLY_PISTONS = 3000
 export { REPORT_PISTON_COST }
 
 export function hasUnlimitedReportAccess(
@@ -245,7 +244,7 @@ export async function getOrCreateUser(
 
   if (existing) return existing as UserCreditsRow
 
-  // Create new user with 3 free credits
+  // Create new user with enough monthly Pistons for three reports.
   const { data: created, error } = await supabase
     .from("user_credits")
     .insert({

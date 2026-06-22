@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getOrCreateUser } from '@/lib/reports/queries'
+import { DEFAULT_MONTHLY_PISTONS, getOrCreateUser } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persistence/anon-session'
 import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           creditResetDate: profile.credit_reset_date,
           subscriptionPeriodEnd: profile.subscription_period_end ?? null,
           subscriptionPlanKey: profile.subscription_plan_key ?? null,
-          monthlyAllowancePistons: profile.monthly_allowance_pistons ?? 300,
+          monthlyAllowancePistons: profile.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS,
           unlimitedReports: profile.unlimited_reports ?? false,
         },
       })
@@ -122,15 +122,15 @@ export async function POST(request: NextRequest) {
             supabaseId: user.id,
             email: user.email,
             name: user.user_metadata?.full_name ?? null,
-            creditsBalance: 300,
+            creditsBalance: DEFAULT_MONTHLY_PISTONS,
             packCreditsBalance: 0,
-            pistonsBalance: 300,
+            pistonsBalance: DEFAULT_MONTHLY_PISTONS,
             tier: 'FREE',
             freeCreditsUsed: 0,
             creditResetDate: new Date().toISOString(),
             subscriptionPeriodEnd: null,
             subscriptionPlanKey: null,
-            monthlyAllowancePistons: 300,
+            monthlyAllowancePistons: DEFAULT_MONTHLY_PISTONS,
             unlimitedReports: false,
           },
         })
