@@ -70,6 +70,7 @@ import {
   shouldRequestReportGenerationOnUnlock,
   shouldRefreshProfileAfterGenerationAttempt,
 } from "./reportAccess"
+import { buildV3ReportExportModel } from "./reportExportModel"
 import { resolveCurrentPriceUsd } from "./reportListingFacts"
 import type {
   PipelineProgress,
@@ -314,6 +315,9 @@ export function ReportClient({
     serverReport: v3Report,
     streamedReport: streamedV3Report,
   })
+  const v3ExportModel = visibleV3Report
+    ? buildV3ReportExportModel(visibleV3Report)
+    : null
   const reportAlreadyGenerated = Boolean(existingReport || visibleV3Report)
 
   const handleGenerateV3 = useCallback(async () => {
@@ -834,6 +838,99 @@ export function ReportClient({
         if (currency === "GBP") return `GBP ${Math.round(amount).toLocaleString()}`
         if (currency === "EUR") return `EUR ${Math.round(amount).toLocaleString()}`
         return `$${Math.round(amount).toLocaleString()}`
+      }
+
+      if (v3ExportModel) {
+        const writeWrapped = (text: string, x: number, y: number, width: number, lineHeight = 4.5) => {
+          const lines = pdf.splitTextToSize(text, width)
+          pdf.text(lines, x, y)
+          return y + lines.length * lineHeight
+        }
+        const ensureSpace = (needed: number, pageTitle: string) => {
+          if (y + needed <= H - 24) return
+          pdf.addPage()
+          bg()
+          chrome(pageTitle)
+          y = 20
+        }
+
+        bg()
+        pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2])
+        pdf.rect(0, 0, W, 2, "F")
+        pdf.setFontSize(8); pink(); pdf.text("MONZA HAUS", M, 20)
+        pdf.setFontSize(7); dim()
+        pdf.text("V3 Haus Report", W - M, 20, { align: "right" })
+        pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2])
+        pdf.setLineWidth(0.5)
+        pdf.line(M, 54, M + 38, 54)
+        pdf.setFontSize(11); pink(); pdf.text("ACQUISITION DOSSIER", M, 66)
+        pdf.setFontSize(27); white()
+        const titleLines = pdf.splitTextToSize(v3ExportModel.title, CW)
+        pdf.text(titleLines, M, 82)
+        let y = 82 + titleLines.length * 10
+        if (v3ExportModel.subtitle) {
+          pdf.setFontSize(12); gray()
+          y = writeWrapped(v3ExportModel.subtitle, M, y + 8, CW, 5)
+        }
+        const metricY = Math.max(y + 16, 154)
+        const metricWidth = (CW - 8) / 3
+        v3ExportModel.metrics.slice(0, 5).forEach(([labelText, metricValue], index) => {
+          const col = index % 3
+          const rowIndex = Math.floor(index / 3)
+          const x = M + col * (metricWidth + 4)
+          const boxY = metricY + rowIndex * 24
+          pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2])
+          pdf.rect(x, boxY, metricWidth, 19, "F")
+          pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2])
+          pdf.setLineWidth(0.08)
+          pdf.rect(x, boxY, metricWidth, 19, "S")
+          pdf.setFontSize(6); dim(); pdf.text(labelText.toUpperCase(), x + 4, boxY + 6)
+          pdf.setFontSize(metricValue.length > 18 ? 8 : 12); white()
+          pdf.text(pdf.splitTextToSize(metricValue, metricWidth - 8), x + 4, boxY + 14)
+        })
+        pdf.setFontSize(6.5); dim()
+        pdf.text(`Generated ${new Date(v3ExportModel.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`, M, H - 15)
+        pdf.text("www.monzahaus.com", W - M, H - 15, { align: "right" })
+        pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2])
+        pdf.rect(0, H - 2, W, 2, "F")
+
+        pdf.addPage()
+        bg()
+        chrome("Report Data")
+        y = 20
+        v3ExportModel.sections.forEach((section, sectionIndex) => {
+          ensureSpace(24, section.title)
+          pdf.setFontSize(7); pink()
+          pdf.text(`SECTION ${String(sectionIndex + 1).padStart(2, "0")}`, M, y)
+          pdf.setFontSize(15); white()
+          pdf.text(section.title, M, y + 8)
+          pdf.setDrawColor(pal.primary[0], pal.primary[1], pal.primary[2])
+          pdf.setLineWidth(0.3)
+          pdf.line(M, y + 12, M + 28, y + 12)
+          y += 22
+
+          section.rows.forEach(([labelText, rowValue]) => {
+            const wrapped = pdf.splitTextToSize(rowValue, CW - 8)
+            const rowHeight = Math.max(18, 12 + wrapped.length * 4.2)
+            ensureSpace(rowHeight + 3, section.title)
+            pdf.setFillColor(pal.card[0], pal.card[1], pal.card[2])
+            pdf.rect(M, y, CW, rowHeight, "F")
+            pdf.setDrawColor(pal.border[0], pal.border[1], pal.border[2])
+            pdf.setLineWidth(0.08)
+            pdf.rect(M, y, CW, rowHeight, "S")
+            pdf.setFontSize(6); dim()
+            pdf.text(labelText.toUpperCase(), M + 4, y + 6)
+            pdf.setFontSize(8); white()
+            pdf.text(wrapped, M + 4, y + 12)
+            y += rowHeight + 3
+          })
+          y += 8
+        })
+
+        const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
+        const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+        pdf.save(`Monza-Dossier_${carSlug}${userSlug}.pdf`)
+        return
       }
 
       // Smart thesis: fallback when DB thesis is empty or generic
@@ -1542,6 +1639,42 @@ export function ReportClient({
     try {
       const XLSX = await import("xlsx")
       const wb = XLSX.utils.book_new()
+
+      if (v3ExportModel) {
+        const summaryRows: (string | number)[][] = [
+          ["MONZAHAUS - Haus Report"],
+          [""],
+          ["REPORT"],
+          ["Headline", v3ExportModel.title],
+          ["Vehicle", v3ExportModel.subtitle],
+          ["Generated", new Date(v3ExportModel.generatedAt).toISOString()],
+          [""],
+          ["METRICS"],
+          ...v3ExportModel.metrics,
+        ]
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows)
+        summarySheet["!cols"] = [{ wch: 28 }, { wch: 72 }]
+        summarySheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+        XLSX.utils.book_append_sheet(wb, summarySheet, "Summary")
+
+        v3ExportModel.sections.forEach((section) => {
+          const rows: (string | number)[][] = [
+            [section.title.toUpperCase()],
+            [""],
+            ["Field", "Value"],
+            ...section.rows,
+          ]
+          const sheet = XLSX.utils.aoa_to_sheet(rows)
+          sheet["!cols"] = [{ wch: 28 }, { wch: 100 }]
+          sheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+          XLSX.utils.book_append_sheet(wb, sheet, section.title.slice(0, 31))
+        })
+
+        const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
+        const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+        XLSX.writeFile(wb, `Monza-Data_${carSlug}${userSlug}.xlsx`)
+        return
+      }
 
       // --- Sheet 1: Summary ---
       const coverData: (string | number)[][] = [
