@@ -353,6 +353,7 @@ async function scrapeActiveListingsViaScrapling(
         make,
         model,
         postcode: postcode ?? "SW1A 1AA",
+        sort: "most-recent",
       }) + (page > 1 ? `&page=${page}` : "");
 
       const result = await fetchATSearchWithScrapling(searchUrl);
@@ -425,6 +426,10 @@ async function scrapeActiveListingsViaGateway(
       const gateway = await fetchAutoTraderGatewayPage({
         page,
         timeoutMs: 15000,
+        // Sort newest-first so the daily sweep deterministically captures freshly
+        // listed cars on the first pages, instead of relevance ranking that can
+        // bury new listings beyond the page cap.
+        sortBy: "most_recent",
         filters: {
           make,
           model,

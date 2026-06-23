@@ -35,6 +35,8 @@ export interface SearchFilters {
   mileageTo?: number;
   fuelType?: string;
   transmission?: string;
+  /** AutoTrader URL sort param, e.g. "most-recent". Omit for default (relevance). */
+  sort?: string;
 }
 
 interface GatewayListing {
@@ -220,6 +222,8 @@ export async function fetchAutoTraderGatewayPage(input: {
   page: number;
   timeoutMs: number;
   filters: SearchFilters;
+  /** AutoTrader SearchResultsSort enum value, e.g. "relevance" | "most-recent". Defaults to "relevance". */
+  sortBy?: string;
 }): Promise<AutoTraderGatewayPage> {
   const query = `query SearchResultsListingsGridQuery($filters:[FilterInput!]!,$channel:Channel!,$page:Int,$sortBy:SearchResultsSort,$listingType:[ListingType!],$searchId:String!,$featureFlags:[FeatureFlag]){searchResults(input:{facets:[],filters:$filters,channel:$channel,page:$page,sortBy:$sortBy,listingType:$listingType,searchId:$searchId,featureFlags:$featureFlags}){listings{__typename ... on SearchListing{advertId title price vehicleLocation images trackingContext{advertContext{make model year} advertCardFeatures{priceIndicator}}}}page{number results{count}}trackingContext{searchId}}}`;
   const body = {
@@ -229,7 +233,7 @@ export async function fetchAutoTraderGatewayPage(input: {
       filters: buildGatewayFilters(input.filters),
       channel: "cars",
       page: input.page,
-      sortBy: "relevance",
+      sortBy: input.sortBy ?? "relevance",
       listingType: null,
       searchId: `autotrader-${Date.now()}`,
       featureFlags: [],
@@ -328,6 +332,9 @@ export function buildSearchUrl(filters: SearchFilters): string {
   }
   if (filters.transmission) {
     params.set("transmission", filters.transmission);
+  }
+  if (filters.sort) {
+    params.set("sort", filters.sort);
   }
 
   const queryString = params.toString();
