@@ -796,18 +796,18 @@ export function Header() {
               feed view is the actual UX). Off on cars list, advisor, report,
               tools etc. so the header stays calm. */}
           {showViewToggle && (
-            <div className="hidden lg:block shrink-0">
+            <div className="hidden xl:block shrink-0">
               <ViewToggle />
             </div>
           )}
 
           {/* Center: Unified Search trigger (hidden on mobile). Clicking
               opens a centered modal-style command palette. ⌘K also opens. */}
-          <div className="hidden md:block flex-1 min-w-[13rem] lg:min-w-[16rem] max-w-xl relative" data-onboarding="search">
+          <div data-onboarding="search" className="hidden md:block min-w-0 flex-[1_1_18rem] max-w-none xl:max-w-xl relative">
             <button
               type="button"
               onClick={() => setShowUnifiedSearch(true)}
-              className="w-full flex items-center justify-between gap-3 text-left text-muted-foreground py-2 hover:text-foreground transition-colors"
+              className="w-full min-w-0 flex items-center justify-between gap-3 text-left text-muted-foreground py-2 hover:text-foreground transition-colors"
             >
               <span className="flex items-center gap-3 min-w-0">
                 <Search className="size-4 shrink-0" />
@@ -825,7 +825,7 @@ export function Header() {
           {showRegionPills && (
           <div
             data-onboarding="regions"
-            className={`hidden md:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
+            className={`hidden xl:flex items-center shrink-0 transition-opacity ${isMarketLocked ? "opacity-55" : ""}`}
             aria-disabled={isMarketLocked}
             title={isMarketLocked ? "Locked to vehicle market on detail pages" : undefined}
           >
@@ -873,7 +873,7 @@ export function Header() {
               currency is a personal preference, lives next to Theme/Language). */}
 
           {/* Right: Actions — anchored to far right */}
-          <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 shrink-0 ml-auto">
+          <div className="flex items-center gap-2 xl:gap-3 shrink-0 ml-auto">
             {/* Credits - only show when authenticated, click → Pistons Wallet modal */}
             {isAuthenticated && (
               <button
@@ -887,7 +887,7 @@ export function Header() {
                 ) : (
                   <>
                     <span className="text-[12px] font-medium tabular-nums text-foreground">{creditsRemaining}</span>
-                    <span className="hidden lg:inline text-[10px] text-muted-foreground">{t('auth.credits')}</span>
+                    <span className="hidden 2xl:inline text-[10px] text-muted-foreground">{t('auth.credits')}</span>
                   </>
                 )}
               </button>
@@ -913,7 +913,7 @@ export function Header() {
                 <div className="size-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center">
                   <User className="size-3.5 text-primary" />
                 </div>
-                <span className="hidden xl:inline text-[11px] font-medium">
+                <span className="hidden 2xl:inline text-[11px] font-medium">
                   {profile?.name?.split(" ")[0] || t("nav.account")}
                 </span>
               </button>
