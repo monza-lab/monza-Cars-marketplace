@@ -29,8 +29,7 @@
  *   --timeout-ms=<N>    Per-request timeout (default 20000)
  *   --limit=<N>         Cap listings processed (default 400)
  *   --dry-run           No DB writes
- *   --scrapling         Force Scrapling fallback from start
- *   --dynamic           Force Scrapling in dynamic-browser mode (slow)
+ *   --scrapling         Use StealthyFetcher from the start (skip plain fetch)
  */
 
 import * as fs from "fs";
@@ -38,7 +37,7 @@ import * as path from "path";
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseDetailHtml } from "../src/features/scrapers/beforward_porsche_collector/detail";
-import { classifyScraplingBody, buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import { buildMissingAnyFilter } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 import { classifyVehicleIdentifier, type VehicleIdentifier } from "../src/features/scrapers/common/vehicleIdentifier";
 import {
   recordScraperRun,
@@ -81,7 +80,6 @@ const TIMEOUT_MS = Number(flag("timeout-ms", "20000"));
 const LIMIT = flag("limit") ? Number(flag("limit")) : 400;
 const DRY_RUN = boolFlag("dry-run");
 const FORCE_SCRAPLING = boolFlag("scrapling");
-const DYNAMIC_MODE = boolFlag("dynamic");
 
 // Spec fields that gate selection — a row is "needs enrichment" when any of
 // these is missing. `trim` is deliberately excluded: BeForward titles often
@@ -226,57 +224,41 @@ function runPython(args: string[], timeoutMs = 60_000): Promise<{ code: number; 
   });
 }
 
+// The repo's StealthyFetcher wrapper (camoufox) is the ONLY reliable AWS WAF
+// bypass for beforward.jp from datacenter IPs (GitHub Actions). Plain fetch and
+// Scrapling's Fetcher/DynamicFetcher only get the ~2KB WAF challenge stub there.
+const SCRAPLING_SCRIPT_PATH = path.resolve(process.cwd(), "scripts/beforward_scrapling_fetch.py");
+
 let scraplingWarmed = false;
 async function ensureScrapling(): Promise<void> {
   if (scraplingWarmed) return;
   const check = await runPython([
     "-c",
-    "import scrapling; from scrapling.fetchers import Fetcher, DynamicFetcher; print(scrapling.__version__)",
+    "import scrapling; from scrapling.fetchers import StealthyFetcher; print(scrapling.__version__)",
   ]);
   if (check.code !== 0) {
     throw new Error(`Scrapling not importable at ${SCRAPLING_PY}: ${check.stderr.trim()}`);
   }
-  console.log(`  [scrapling] ready at ${SCRAPLING_PY} v${check.stdout.trim()}`);
+  console.log(`  [scrapling] StealthyFetcher ready at ${SCRAPLING_PY} v${check.stdout.trim()}`);
   scraplingWarmed = true;
 }
 
-const SCRAPLING_SCRIPT = `
-import sys, json
-from scrapling.fetchers import Fetcher, DynamicFetcher
-url = sys.argv[1]
-mode = sys.argv[2] if len(sys.argv) > 2 else "http"
-out = {"status": 0, "html": "", "error": ""}
-try:
-    if mode == "dynamic":
-        page = DynamicFetcher.fetch(url, headless=True, timeout=${TIMEOUT_MS})
-    else:
-        page = Fetcher.get(url, timeout=${Math.round(TIMEOUT_MS / 1000)}, stealthy_headers=True)
-    out["status"] = int(page.status or 0)
-    out["html"] = page.html_content or ""
-except Exception as e:
-    out["error"] = str(e)
-print(json.dumps(out))
-`;
-
-async function scraplingFetch(url: string, mode: "http" | "dynamic"): Promise<FetchOutcome> {
+async function scraplingFetch(url: string): Promise<FetchOutcome> {
   try {
     await ensureScrapling();
   } catch (err) {
     return { kind: "error", message: `scrapling unavailable: ${(err as Error).message}` };
   }
-  const budget = mode === "dynamic" ? TIMEOUT_MS + 30_000 : TIMEOUT_MS + 10_000;
-  const res = await runPython(["-c", SCRAPLING_SCRIPT, url, mode], budget);
-  if (res.code !== 0) return { kind: "error", message: res.stderr.slice(0, 200) || "scrapling crash" };
+  // StealthyFetcher's internal timeout is 30s; allow extra for camoufox launch.
+  const res = await runPython([SCRAPLING_SCRIPT_PATH, url], TIMEOUT_MS + 60_000);
+  if (res.code !== 0 && !res.stdout.trim()) {
+    return { kind: "error", message: res.stderr.slice(0, 200) || "scrapling crash" };
+  }
   try {
-    const parsed = JSON.parse(res.stdout) as { status: number; html?: string; error?: string };
-    if (parsed.error) return { kind: "error", message: parsed.error };
-    if (parsed.status === 404 || parsed.status === 410) return { kind: "dead", status: parsed.status };
-    if (parsed.status === 403 || parsed.status === 429)
-      return { kind: "blocked", status: parsed.status, message: `HTTP ${parsed.status}` };
-    const body = classifyScraplingBody({ mode, htmlLength: parsed.html?.length ?? 0 });
-    if (body.kind === "blocked") return { kind: "blocked", status: 0, message: body.message ?? "Short scrapling body" };
-    if (body.kind === "error") return { kind: "error", message: body.message ?? "Short scrapling body" };
-    return { kind: "ok", html: parsed.html ?? "" };
+    const parsed = JSON.parse(res.stdout) as { ok: boolean; html?: string; error?: string };
+    if (parsed.ok && parsed.html) return { kind: "ok", html: parsed.html };
+    if (parsed.error === "waf_blocked") return { kind: "blocked", status: 0, message: "WAF blocked (StealthyFetcher)" };
+    return { kind: "error", message: parsed.error ?? "scrapling returned no html" };
   } catch (err) {
     return { kind: "error", message: `parse scrapling out: ${(err as Error).message}` };
   }
@@ -339,10 +321,10 @@ async function main() {
   const startedAtIso = new Date(startTime).toISOString();
   const runId = crypto.randomUUID();
 
-  console.log("BeForward detail enrichment (Scrapling)");
+  console.log("BeForward detail enrichment (StealthyFetcher)");
   console.log(
     `  concurrency=${CONCURRENCY}, rateMs=${RATE_MS}, timeoutMs=${TIMEOUT_MS}, limit=${LIMIT}, ` +
-      `dryRun=${DRY_RUN}, scrapling=${FORCE_SCRAPLING}, dynamic=${DYNAMIC_MODE}`,
+      `dryRun=${DRY_RUN}, scrapling=${FORCE_SCRAPLING}`,
   );
 
   await clearStaleActiveRun("enrich-beforward", 10);
@@ -365,7 +347,6 @@ async function main() {
   const BLOCKED_STREAK_THRESHOLD = 3;
   const errors: string[] = [];
   let useScrapling = FORCE_SCRAPLING;
-  let scraplingMode: "http" | "dynamic" = DYNAMIC_MODE ? "dynamic" : "http";
 
   async function worker(id: number) {
     while (true) {
@@ -376,7 +357,7 @@ async function main() {
       await waitSlot();
 
       const result = useScrapling
-        ? await scraplingFetch(row.source_url, scraplingMode)
+        ? await scraplingFetch(row.source_url)
         : await plainFetch(row.source_url);
 
       switch (result.kind) {
@@ -408,17 +389,21 @@ async function main() {
 
         case "blocked":
           blockedStreak++;
-          queue.push(row); // requeue
-          if (!useScrapling && blockedStreak >= BLOCKED_STREAK_THRESHOLD) {
-            console.log(`\n  [circuit] ${blockedStreak} blocks — switching to Scrapling (${scraplingMode})`);
-            useScrapling = true;
-            blockedStreak = 0;
-          } else if (useScrapling && scraplingMode === "http" && blockedStreak >= BLOCKED_STREAK_THRESHOLD) {
-            console.log(`\n  [circuit] Scrapling http blocked — switching to dynamic browser`);
-            scraplingMode = "dynamic";
-            blockedStreak = 0;
+          if (!useScrapling) {
+            // Plain fetch blocked — escalate to StealthyFetcher and retry the row.
+            queue.push(row);
+            if (blockedStreak >= BLOCKED_STREAK_THRESHOLD) {
+              console.log(`\n  [circuit] ${blockedStreak} plain blocks — switching to StealthyFetcher`);
+              useScrapling = true;
+              blockedStreak = 0;
+            }
+            await sleep(5_000);
+          } else {
+            // StealthyFetcher is the strongest tool; a block here means IP
+            // reputation (set BF_PROXY_URL). Count as failure, don't loop forever.
+            failed++;
+            errors.push(`blocked ${row.id}: WAF blocked even via StealthyFetcher (consider BF_PROXY_URL)`);
           }
-          await sleep(15_000);
           break;
 
         case "error":
@@ -430,7 +415,7 @@ async function main() {
       const done = enriched + empty + markedDead + failed;
       if (done % 25 === 0 || done === queue.length) {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
-        const via = useScrapling ? `scr[${scraplingMode}]` : "plain";
+        const via = useScrapling ? "stealthy" : "plain";
         process.stdout.write(
           `\r  [w${id}] ${done}/${queue.length}  enriched=${enriched}  empty=${empty}  dead=${markedDead}  fail=${failed}  via=${via}  ${elapsed}s`,
         );
