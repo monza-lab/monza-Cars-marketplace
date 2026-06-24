@@ -133,15 +133,30 @@ export async function GET(request: Request) {
 
         const html = await response.text();
 
+        // beforward.jp sits behind AWS WAF, which serves Vercel/datacenter IPs a
+        // 200-status JS-challenge page (no `table.specification`). Detect it and
+        // record an error instead of silently parsing nothing. The real fix runs
+        // this enrichment from GitHub Actions via Scrapling (bf-enrich-cli.ts);
+        // this route stays honest and non-destructive if invoked manually.
+        const blockedByWaf =
+          html.length < 5000 ||
+          (!/table\.specification|class=["']specification/.test(html) &&
+            /awswaf|_challenge|captcha|security service to protect/i.test(html));
+        if (blockedByWaf) {
+          errors.push(`WAF challenge (${row.id}): blocked, needs Scrapling (GitHub Actions)`);
+          continue;
+        }
+
         let detail;
         try {
           detail = parseDetailHtml(html);
         } catch (parseErr) {
           errors.push(`Parse error (${row.id}): ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
-          // Mark as attempted to avoid re-processing
+          // Stamp verification only — never poison `trim` with "" (that
+          // permanently excluded the row from re-enrichment).
           await client
             .from("listings")
-            .update({ trim: "", updated_at: new Date().toISOString() })
+            .update({ last_verified_at: new Date().toISOString(), updated_at: new Date().toISOString() })
             .eq("id", row.id);
           continue;
         }
@@ -181,10 +196,12 @@ export async function GET(request: Request) {
             enriched++;
           }
         } else {
-          // Mark as attempted
+          // Real page, genuinely no new fields. Stamp verification only — never
+          // poison `trim` with "" (that permanently excluded the row from
+          // re-enrichment and silently degraded data).
           await client
             .from("listings")
-            .update({ trim: "", updated_at: new Date().toISOString() })
+            .update({ last_verified_at: new Date().toISOString(), updated_at: new Date().toISOString() })
             .eq("id", row.id);
         }
       } catch (err) {
