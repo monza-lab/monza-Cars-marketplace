@@ -1,0 +1,77 @@
+name: BeForward Enrichment (Daily)
+
+on:
+  schedule:
+    # 06:30 UTC daily — after the BeForward collector (03:00) and image
+    # backfill (04:30) have populated/refreshed active listings.
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max active listings to enrich'
+        default: '400'
+      concurrency:
+        description: 'Parallel workers'
+        default: '3'
+      rate_ms:
+        description: 'Min ms between requests per domain'
+        default: '4000'
+      force_scrapling:
+        description: 'Force Scrapling from start (beforward.jp blocks plain/Vercel fetches via AWS WAF)'
+        type: boolean
+        default: true
+
+concurrency:
+  group: beforward-enrich
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Scrapling
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "scrapling[fetchers,shell]"
+          scrapling install
+
+      - run: npm ci
+
+      - name: Install Playwright browsers (for Scrapling dynamic mode)
+        run: |
+          npx playwright install-deps chromium
+          npx playwright install chromium
+
+      - name: Run BeForward enrichment
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # Resolve the actual python path from setup-python
+          SCRAPLING_PYTHON="$(which python3)"
+          export SCRAPLING_PYTHON
+          echo "Using Scrapling Python: $SCRAPLING_PYTHON"
+
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force_scrapling || 'true' }}" = "true" ]; then
+            FORCE_FLAG="--scrapling"
+          fi
+
+          npx tsx scripts/bf-enrich-cli.ts \
+            --limit=${{ github.event.inputs.limit || '400' }} \
+            --concurrency=${{ github.event.inputs.concurrency || '3' }} \
+            --rate-ms=${{ github.event.inputs.rate_ms || '4000' }} \
+            $FORCE_FLAG
