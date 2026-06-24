@@ -2,24 +2,15 @@ name: BeForward Enrichment (Daily)
 
 on:
   schedule:
-    # 06:30 UTC daily — after the BeForward collector (03:00) and image
-    # backfill (04:30) have populated/refreshed active listings.
-    - cron: '30 6 * * *'
+    # 06:30 and 18:30 UTC — after the BeForward collector (03:00) and image
+    # backfill (04:30). Two runs/day drain more backlog, each on a fresh
+    # GitHub runner IP (resets any AWS WAF per-IP throttle between runs).
+    - cron: '30 6,18 * * *'
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Max active listings to enrich'
-        default: '400'
-      concurrency:
-        description: 'Parallel workers (keep low; AWS WAF throttles datacenter IPs)'
-        default: '2'
-      rate_ms:
-        description: 'Min ms between requests per domain'
-        default: '4000'
-      force_scrapling:
-        description: 'Force Scrapling from start (beforward.jp blocks plain/Vercel fetches via AWS WAF)'
-        type: boolean
-        default: true
+        description: 'Max active listings to enrich (one persistent StealthySession reuses the AWS WAF token across all)'
+        default: '150'
 
 concurrency:
   group: beforward-enrich
@@ -69,13 +60,5 @@ jobs:
           export SCRAPLING_PYTHON
           echo "Using Scrapling Python: $SCRAPLING_PYTHON"
 
-          FORCE_FLAG=""
-          if [ "${{ github.event.inputs.force_scrapling || 'true' }}" = "true" ]; then
-            FORCE_FLAG="--scrapling"
-          fi
-
           npx tsx scripts/bf-enrich-cli.ts \
-            --limit=${{ github.event.inputs.limit || '400' }} \
-            --concurrency=${{ github.event.inputs.concurrency || '2' }} \
-            --rate-ms=${{ github.event.inputs.rate_ms || '4000' }} \
-            $FORCE_FLAG
+            --limit=${{ github.event.inputs.limit || '400' }}
