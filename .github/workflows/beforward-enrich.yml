@@ -10,7 +10,7 @@ on:
     inputs:
       limit:
         description: 'Max active listings to enrich (one persistent StealthySession reuses the AWS WAF token across all)'
-        default: '150'
+        default: '100'
 
 concurrency:
   group: beforward-enrich
@@ -19,7 +19,7 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v4
