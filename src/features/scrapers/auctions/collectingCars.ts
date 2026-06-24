@@ -515,8 +515,11 @@ export async function scrapeDetail(auction: CCarsAuction): Promise<CCarsAuction>
       specs.get('kilometres') ||
       specs.get('km');
     const mileage = parseMileage(mileageStr);
-    const mileageUnit =
-      mileageStr && /km|kilomet/i.test(mileageStr) ? 'km' : 'miles';
+    const mileageUnit = mileageStr
+      ? /km|kilomet/i.test(mileageStr)
+        ? 'km'
+        : 'miles'
+      : null;
 
     const transmission = specs.get('transmission') || specs.get('gearbox') || null;
     const engine =
@@ -568,7 +571,7 @@ export async function scrapeDetail(auction: CCarsAuction): Promise<CCarsAuction>
     return {
       ...auction,
       mileage: mileage ?? auction.mileage,
-      mileageUnit: mileageUnit || auction.mileageUnit,
+      mileageUnit: mileage !== null && mileageUnit ? mileageUnit : auction.mileageUnit,
       transmission: transmission ?? auction.transmission,
       engine: engine ?? auction.engine,
       exteriorColor: exteriorColor ?? auction.exteriorColor,

@@ -61,4 +61,4 @@ jobs:
           echo "Using Scrapling Python: $SCRAPLING_PYTHON"
 
           npx tsx scripts/bf-enrich-cli.ts \
-            --limit=${{ github.event.inputs.limit || '400' }}
+            --limit=${{ github.event.inputs.limit || '100' }}

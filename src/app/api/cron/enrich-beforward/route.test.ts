@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
+import type { DetailParsed } from "@/features/scrapers/beforward_porsche_collector/types";
 
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
@@ -64,7 +65,7 @@ describe("GET /api/cron/enrich-beforward", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
     vi.spyOn(global, "fetch").mockResolvedValue(
-      new Response("<html><body>ok</body></html>", { status: 200 })
+      new Response(`<html><body><table class="specification"></table>${"x".repeat(5000)}</body></html>`, { status: 200 })
     );
   });
 
@@ -119,16 +120,36 @@ describe("GET /api/cron/enrich-beforward", () => {
   it("preserves non-VIN chassis metadata without truncating it into vin", async () => {
     // Mock parseDetailHtml to return oversized values
     const detailMod = await import("@/features/scrapers/beforward_porsche_collector/detail");
-    vi.mocked(detailMod.parseDetailHtml).mockReturnValueOnce({
+    const oversizedDetail: DetailParsed = {
+      title: "Oversized BeForward fixture",
+      refNo: null,
+      sourceStatus: null,
+      schemaAvailability: null,
+      schemaPriceUsd: null,
+      year: null,
+      make: "Porsche",
+      model: null,
       trim: "A".repeat(150), // exceeds VARCHAR(100)
+      mileageKm: null,
       engine: "B".repeat(120),
       transmission: "C".repeat(110),
       exteriorColor: "D".repeat(105),
+      interiorColor: null,
       vin: null,
+      location: null,
       chassisNo: "WVWZZZ3CZWE123456789",
       fuel: "Gasoline",
+      drive: null,
+      doors: null,
+      seats: null,
+      modelCode: null,
+      engineCode: null,
+      subRefNo: null,
+      features: [],
+      sellingPoints: [],
       images: [],
-    } as any);
+    };
+    vi.mocked(detailMod.parseDetailHtml).mockReturnValueOnce(oversizedDetail);
 
     const row = {
       id: "bef-trunc",

@@ -12,6 +12,7 @@
 
 # scraper data / temp artifacts
 var/
+agents/testscripts/artifacts/scraper-health-audit-*.json
 
 # scraper run logs (local only, feed to LLM)
 logs/
