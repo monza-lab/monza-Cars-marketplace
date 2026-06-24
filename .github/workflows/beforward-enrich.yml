@@ -11,8 +11,8 @@ on:
         description: 'Max active listings to enrich'
         default: '400'
       concurrency:
-        description: 'Parallel workers'
-        default: '3'
+        description: 'Parallel workers (keep low; AWS WAF throttles datacenter IPs)'
+        default: '2'
       rate_ms:
         description: 'Min ms between requests per domain'
         default: '4000'
@@ -59,6 +59,10 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Optional residential proxy — the reliable fix for AWS WAF throttling
+          # GitHub's datacenter IPs. Read by beforward_scrapling_fetch.py. Without
+          # it, a fraction of fetches per run are WAF-blocked (bounded retry helps).
+          BF_PROXY_URL: ${{ secrets.BF_PROXY_URL }}
         run: |
           # Resolve the actual python path from setup-python
           SCRAPLING_PYTHON="$(which python3)"
@@ -72,6 +76,6 @@ jobs:
 
           npx tsx scripts/bf-enrich-cli.ts \
             --limit=${{ github.event.inputs.limit || '400' }} \
-            --concurrency=${{ github.event.inputs.concurrency || '3' }} \
+            --concurrency=${{ github.event.inputs.concurrency || '2' }} \
             --rate-ms=${{ github.event.inputs.rate_ms || '4000' }} \
             $FORCE_FLAG

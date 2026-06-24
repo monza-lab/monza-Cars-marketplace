@@ -74,7 +74,7 @@ const flag = (n: string, d?: string) =>
   process.argv.find((a) => a.startsWith(`--${n}=`))?.split("=").slice(1).join("=") ?? d;
 const boolFlag = (n: string) => process.argv.includes(`--${n}`);
 
-const CONCURRENCY = Number(flag("concurrency", "3"));
+const CONCURRENCY = Number(flag("concurrency", "2"));
 const RATE_MS = Number(flag("rate-ms", "4000"));
 const TIMEOUT_MS = Number(flag("timeout-ms", "20000"));
 const LIMIT = flag("limit") ? Number(flag("limit")) : 400;
@@ -258,10 +258,31 @@ async function scraplingFetch(url: string): Promise<FetchOutcome> {
     const parsed = JSON.parse(res.stdout) as { ok: boolean; html?: string; error?: string };
     if (parsed.ok && parsed.html) return { kind: "ok", html: parsed.html };
     if (parsed.error === "waf_blocked") return { kind: "blocked", status: 0, message: "WAF blocked (StealthyFetcher)" };
-    return { kind: "error", message: parsed.error ?? "scrapling returned no html" };
+
+    // camoufox throws net::ERR_HTTP_RESPONSE_CODE_FAILURE when AWS WAF returns an
+    // error status to the datacenter IP. The listings are live (verified), so
+    // this is a probabilistic WAF block, not a dead URL — treat as retryable.
+    const msg = parsed.error ?? "scrapling returned no html";
+    if (/net::ERR|RESPONSE_CODE_FAILURE|ERR_ABORTED|timeout/i.test(msg)) {
+      return { kind: "blocked", status: 0, message: msg.slice(0, 120) };
+    }
+    return { kind: "error", message: msg };
   } catch (err) {
     return { kind: "error", message: `parse scrapling out: ${(err as Error).message}` };
   }
+}
+
+// Retry the StealthyFetcher fetch a few times on transient WAF blocks before
+// giving up — the per-attempt success rate against AWS WAF from datacenter IPs
+// is well below 1, so a bounded retry recovers most rows.
+async function scraplingFetchWithRetry(url: string, attempts = 3): Promise<FetchOutcome> {
+  let last: FetchOutcome = { kind: "error", message: "no attempt" };
+  for (let i = 0; i < attempts; i++) {
+    last = await scraplingFetch(url);
+    if (last.kind !== "blocked") return last;
+    if (i < attempts - 1) await sleep(3_000 + i * 3_000);
+  }
+  return last;
 }
 
 // -- rate limiter (shared across workers) -------------------------------------
@@ -357,7 +378,7 @@ async function main() {
       await waitSlot();
 
       const result = useScrapling
-        ? await scraplingFetch(row.source_url)
+        ? await scraplingFetchWithRetry(row.source_url)
         : await plainFetch(row.source_url);
 
       switch (result.kind) {
