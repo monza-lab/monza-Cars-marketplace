@@ -73,9 +73,10 @@ const flag = (n: string, d?: string) =>
   process.argv.find((a) => a.startsWith(`--${n}=`))?.split("=").slice(1).join("=") ?? d;
 const boolFlag = (n: string) => process.argv.includes(`--${n}`);
 
-// One persistent session fetches sequentially; with resources blocked it runs
-// ~12-15s/page, so 100 fits the CI 120-minute budget with headroom. Run twice
-// daily to drain more backlog (fresh runner IP each resets any WAF throttle).
+// One persistent session fetches sequentially at ~37s/page (network_idle is
+// required so the AWS WAF challenge fully solves), so 100 runs ~62min — within
+// the CI 120-minute budget. Run twice daily to drain more backlog (each on a
+// fresh runner IP, which resets any WAF per-IP throttle).
 const LIMIT = flag("limit") ? Number(flag("limit")) : 100;
 const DRY_RUN = boolFlag("dry-run");
 

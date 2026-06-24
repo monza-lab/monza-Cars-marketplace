@@ -104,16 +104,16 @@ def main() -> int:
         _emit({"ok": False, "error": "no urls"})
         return 1
 
+    # NOTE: do NOT set disable_resources — the AWS WAF JS challenge needs its
+    # resources to load, and blocking them makes every fetch 405 (verified on CI:
+    # 12/100 with blocking vs 50/50 without). network_idle lets the challenge
+    # fully solve; the token then carries across the session.
     kwargs: dict = {
         "headless": True,
         "network_idle": True,
         "timeout": 30000,
-        "max_pages": 1,           # one page → sequential reuse of the WAF cookie
-        "retries": 2,             # session-level retry on transient failures
-        "disable_resources": True,  # skip images/css/fonts/media — the parser only
-        "block_ads": True,          # needs the HTML (specs table + gallery_images
-        "block_webrtc": True,       # JS var); cuts per-page time ~2-3x. WAF JS and
-        # xhr/document still load, so the challenge still solves and reuses its token.
+        "max_pages": 1,   # one page → sequential reuse of the WAF cookie
+        "retries": 2,     # session-level retry on transient failures
     }
     proxy = _get_proxy_config()
     if proxy:
