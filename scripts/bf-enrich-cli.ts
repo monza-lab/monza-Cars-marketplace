@@ -73,9 +73,10 @@ const flag = (n: string, d?: string) =>
   process.argv.find((a) => a.startsWith(`--${n}=`))?.split("=").slice(1).join("=") ?? d;
 const boolFlag = (n: string) => process.argv.includes(`--${n}`);
 
-// One persistent session fetches sequentially at ~15s/page; 150 fits the CI
-// 90-minute budget with headroom. Run twice daily to drain more (fresh IP each).
-const LIMIT = flag("limit") ? Number(flag("limit")) : 150;
+// One persistent session fetches sequentially; with resources blocked it runs
+// ~12-15s/page, so 100 fits the CI 120-minute budget with headroom. Run twice
+// daily to drain more backlog (fresh runner IP each resets any WAF throttle).
+const LIMIT = flag("limit") ? Number(flag("limit")) : 100;
 const DRY_RUN = boolFlag("dry-run");
 
 // Spec fields that gate selection — a row is "needs enrichment" when any of
