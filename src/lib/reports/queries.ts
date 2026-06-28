@@ -233,6 +233,19 @@ export async function getOrCreateUser(
   email: string,
   displayName?: string,
 ): Promise<UserCreditsRow> {
+  const { profile } = await getOrCreateUserWithStatus(
+    supabaseUserId,
+    email,
+    displayName,
+  )
+  return profile
+}
+
+export async function getOrCreateUserWithStatus(
+  supabaseUserId: string,
+  email: string,
+  displayName?: string,
+): Promise<{ profile: UserCreditsRow; created: boolean }> {
   const supabase = getServiceClient()
 
   // Try to find existing user
@@ -242,7 +255,7 @@ export async function getOrCreateUser(
     .eq("supabase_user_id", supabaseUserId)
     .single()
 
-  if (existing) return existing as UserCreditsRow
+  if (existing) return { profile: existing as UserCreditsRow, created: false }
 
   // Create new user with enough monthly Pistons for three reports.
   const { data: created, error } = await supabase
@@ -275,7 +288,7 @@ export async function getOrCreateUser(
         .select("*")
         .eq("supabase_user_id", supabaseUserId)
         .single()
-      if (retry) return retry as UserCreditsRow
+      if (retry) return { profile: retry as UserCreditsRow, created: false }
     }
     throw new Error(`Failed to create user: ${error.message}`)
   }
@@ -288,7 +301,7 @@ export async function getOrCreateUser(
     description: "Welcome credits",
   })
 
-  return created as UserCreditsRow
+  return { profile: created as UserCreditsRow, created: true }
 }
 
 export async function checkAndResetFreeCredits(

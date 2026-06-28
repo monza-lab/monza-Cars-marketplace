@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { DEFAULT_MONTHLY_PISTONS, getOrCreateUser } from '@/lib/reports/queries'
+import { DEFAULT_MONTHLY_PISTONS, getOrCreateUserWithStatus } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persistence/anon-session'
 import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
+import { sendServerCapiEvent } from '@/lib/marketing/metaCapiServer'
 
 const CREATE_USER_DB_TIMEOUT_MS = 15_000
 
@@ -47,14 +48,28 @@ export async function POST(request: NextRequest) {
     const { name } = body
 
     try {
-      const profile = await withDbTimeout(
-        getOrCreateUser(
+      const { profile, created } = await withDbTimeout(
+        getOrCreateUserWithStatus(
           user.id,
           user.email!,
           name || user.user_metadata?.full_name
         ),
-        '/api/user/create getOrCreateUser'
+        '/api/user/create getOrCreateUserWithStatus'
       )
+
+      if (created) {
+        await sendServerCapiEvent({
+          eventName: 'CompleteRegistration',
+          eventId: `complete_registration_${user.id}`,
+          eventSourceUrl: request.url,
+          email: user.email ?? undefined,
+          externalId: user.id,
+          customData: {
+            content_name: 'free_signup',
+            status: 'completed',
+          },
+        }).catch((err) => console.error('[meta-capi-registration] failed', err))
+      }
 
       // Advisor: merge any anonymous conversations + grace + ledger rows into this new user.
       try {

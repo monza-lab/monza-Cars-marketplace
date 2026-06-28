@@ -37,25 +37,31 @@ a PNG transparente con Playwright. Fuente desde `public/fonts/monzahaus/`.
 
 > Mientras el deploy no esté, el correo muestra el texto "MONZAHAUS" (el respaldo), no se rompe.
 
-## Cambiar el remitente — "MonzaHaus &lt;hello@monzalab.com&gt;"
+## Cambiar el remitente — "MonzaHaus &lt;hello@monzahaus.com&gt;"
 
-> **Decisión:** todos los correos salen de **`hello@monzalab.com`** con nombre visible **MonzaHaus**.
-> (Regla de marca: lo público sale de `@monzalab.com`, no de monzahaus.com.)
+> **Decisión:** todos los correos salen de **`hello@monzahaus.com`** con nombre visible **MonzaHaus**.
 
 Por defecto Supabase envía desde su propio dominio (genérico + cae en spam). Para enviar desde
-`hello@monzalab.com` hay que configurar **SMTP propio** una sola vez:
+`hello@monzahaus.com` hay que configurar **SMTP propio** una sola vez:
 
 ### 1. Resend (servicio de envío)
 1. Crear cuenta en resend.com.
-2. **Domains → Add Domain →** `monzalab.com`.
-3. Agregar en el DNS de `monzalab.com` los registros que muestra Resend (SPF + DKIM) → **Verify**.
+2. **Domains → Add Domain →** `monzahaus.com`.
+3. Agregar en el DNS de `monzahaus.com` los registros que muestra Resend (SPF + DKIM) → **Verify**.
 4. **API Keys → Create** (acceso de envío) → guardar la key.
+
+Registros DNS actuales requeridos por Resend para `monzahaus.com`:
+| Tipo | Nombre | Valor | Prioridad |
+|------|--------|-------|-----------|
+| `TXT` | `resend._domainkey` | `p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC5TPUunSVwvRX4etzAPjgSlL8HKQlDwjBvltAbHPwzu0Z+XQWNVkjrEmKXaDLmxkAF9NDSceZPk2zziItQj2hqvJanesqONOd4E9FNVEJmPd8W4PKWbbe3uDKh8B+DwwCHysMITwltJBuNBuJxw4llmCiAaHZn4otUV0OYGely0QIDAQAB` | - |
+| `MX` | `send` | `feedback-smtp.eu-west-1.amazonses.com` | `10` |
+| `TXT` | `send` | `v=spf1 include:amazonses.com ~all` | - |
 
 ### 2. Supabase → SMTP propio
 Authentication → Emails → **SMTP Settings** → Enable Custom SMTP:
 | Campo | Valor |
 |-------|-------|
-| Sender email | `hello@monzalab.com` |
+| Sender email | `hello@monzahaus.com` |
 | Sender name | `MonzaHaus` |
 | Host | `smtp.resend.com` |
 | Port | `465` |
@@ -64,4 +70,4 @@ Authentication → Emails → **SMTP Settings** → Enable Custom SMTP:
 
 Guardar. Luego subir el límite en Authentication → **Rate Limits** (el default del SMTP integrado es bajo).
 
-> El dominio de envío es `monzalab.com`, así que los registros DNS van en **monzalab.com**, no en monzahaus.com.
+> El dominio de envío es `monzahaus.com`, así que los registros DNS van en **monzahaus.com**.
