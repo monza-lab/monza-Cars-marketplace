@@ -60,12 +60,18 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
   const row = mapNormalizedListingToListingsRow(listing, meta);
 
   const existing = await findExistingListingIdentity(client, listing);
+  if (existing?.omitSourceUrlFromUpsert) {
+    delete row.source_url;
+  }
 
   if (existing && existing.source_id !== listing.sourceId) {
-    await client
+    const update = await client
       .from("listings")
       .update({ source_id: listing.sourceId })
       .eq("id", existing.id);
+    if (update.error && !/duplicate key|unique constraint/i.test(update.error.message)) {
+      throw new Error(`Supabase listings source_id repair failed: ${update.error.message}`);
+    }
   }
 
   let data: Array<{ id: string }> | null = null;
@@ -110,25 +116,30 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 async function findExistingListingIdentity(
   client: SupabaseClient,
   listing: NormalizedListing,
-): Promise<{ id: string; source_id: string | null } | null> {
+): Promise<{ id: string; source_id: string | null; omitSourceUrlFromUpsert?: boolean } | null> {
   const exact = await client
     .from("listings")
-    .select("id, source_id")
+    .select("id, source_id, source_url")
     .eq("source", listing.source)
     .eq("source_id", listing.sourceId)
     .limit(1);
-  const exactRow = (exact.data as Array<{ id: string; source_id: string | null }> | null)?.[0];
-  if (exactRow) return exactRow;
+  const exactRow = (exact.data as Array<{ id: string; source_id: string | null; source_url: string | null }> | null)?.[0];
 
   // Handle source_url conflict: if a row exists with the same source_url but
   // a different source_id, update its source_id first so the onConflict upsert can match it.
   const byUrl = await client
     .from("listings")
-    .select("id, source_id")
+    .select("id, source_id, source_url")
     .eq("source_url", listing.sourceUrl)
     .limit(1);
-  const byUrlRow = (byUrl.data as Array<{ id: string; source_id: string | null }> | null)?.[0];
-  if (byUrlRow) return byUrlRow;
+  const byUrlRow = (byUrl.data as Array<{ id: string; source_id: string | null; source_url: string | null }> | null)?.[0];
+
+  if (exactRow) {
+    return {
+      ...exactRow,
+      omitSourceUrlFromUpsert: Boolean(byUrlRow && byUrlRow.id !== exactRow.id),
+    };
+  }
 
   // AS24 decorates the same native offer UUID with different category/model
   // path fragments across search shards. Match old rows by UUID suffix so a
@@ -136,11 +147,11 @@ async function findExistingListingIdentity(
   const uuid =
     extractAutoScout24ListingUuid(listing.sourceId) ??
     extractAutoScout24ListingUuid(listing.sourceUrl);
-  if (!uuid) return null;
+  if (!uuid) return byUrlRow ?? null;
 
   const byUuid = await client
     .from("listings")
-    .select("id, source_id, status, last_verified_at, updated_at")
+    .select("id, source_id, source_url, status, last_verified_at, updated_at")
     .eq("source", listing.source)
     .or(`source_id.ilike.%${uuid}%,source_url.ilike.%${uuid}%`)
     .limit(20);
@@ -148,12 +159,13 @@ async function findExistingListingIdentity(
   const candidates = (byUuid.data as Array<{
     id: string;
     source_id: string | null;
+    source_url: string | null;
     status: string | null;
     last_verified_at: string | null;
     updated_at: string | null;
   }> | null) ?? [];
 
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) return byUrlRow ?? null;
 
   candidates.sort((a, b) => {
     const activeDelta = Number(b.status === "active") - Number(a.status === "active");
@@ -163,7 +175,13 @@ async function findExistingListingIdentity(
     return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
   });
 
-  return candidates[0] ?? null;
+  const candidate = candidates[0];
+  return candidate
+    ? {
+        ...candidate,
+        omitSourceUrlFromUpsert: Boolean(byUrlRow && byUrlRow.id !== candidate.id),
+      }
+    : byUrlRow ?? null;
 }
 
 export function mapNormalizedListingToListingsRow(listing: NormalizedListing, meta: ScrapeMeta): Record<string, unknown> {

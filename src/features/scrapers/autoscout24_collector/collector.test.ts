@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildHardFailureError, buildShardSaturationWarning } from "./collector";
+import { buildHardFailureError, buildShardSaturationWarning, shouldRecordShardSaturationWarning } from "./collector";
 import { generateShards, splitSaturatedShard } from "./shards";
 import type { AS24CountryCode, SearchShard } from "./types";
 
@@ -131,5 +131,10 @@ describe("AutoScout24 saturation shard policy", () => {
     expect(buildShardSaturationWarning({ shardId: "macan-all", maxPages: 20 })).toBe(
       "discover.shard_saturated: macan-all reached 20-page limit",
     );
+  });
+
+  it("does not record saturation warnings for deliberately capped validation runs", () => {
+    expect(shouldRecordShardSaturationWarning({ pagesProcessed: 1, maxPages: 1, listingsFound: 20 })).toBe(false);
+    expect(shouldRecordShardSaturationWarning({ pagesProcessed: 20, maxPages: 20, listingsFound: 20 })).toBe(true);
   });
 });

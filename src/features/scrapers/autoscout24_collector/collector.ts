@@ -31,6 +31,7 @@ import { recordScraperRun } from "@/features/scrapers/common/monitoring";
 
 const MAX_CONSECUTIVE_BLOCKS = 5;
 const CONTEXT_REFRESH_INTERVAL = 100;
+const AUTOSCOUT24_PAGINATION_LIMIT = 20;
 
 export interface HardFailureErrorInput {
   counts: CollectorCounts;
@@ -83,6 +84,18 @@ export function buildHardFailureError(input: HardFailureErrorInput): Error | nul
 
 export function buildShardSaturationWarning(input: { shardId: string; maxPages: number }): string {
   return `discover.shard_saturated: ${input.shardId} reached ${input.maxPages}-page limit`;
+}
+
+export function shouldRecordShardSaturationWarning(input: {
+  pagesProcessed: number;
+  maxPages: number;
+  listingsFound: number;
+}): boolean {
+  return (
+    input.maxPages >= AUTOSCOUT24_PAGINATION_LIMIT &&
+    input.pagesProcessed >= input.maxPages &&
+    input.listingsFound > 0
+  );
 }
 
 export async function runAutoScout24Collector(config: CollectorRunConfig): Promise<CollectorResult> {
@@ -218,7 +231,11 @@ export async function runAutoScout24Collector(config: CollectorRunConfig): Promi
           })();
 
       counts.discovered += discoverResult.listings.length;
-      if (discoverResult.pagesProcessed >= shard.maxPages && discoverResult.listings.length > 0) {
+      if (shouldRecordShardSaturationWarning({
+        pagesProcessed: discoverResult.pagesProcessed,
+        maxPages: shard.maxPages,
+        listingsFound: discoverResult.listings.length,
+      })) {
         const warning = buildShardSaturationWarning({ shardId: shard.id, maxPages: shard.maxPages });
         saturationWarnings.push(warning);
         logEvent({ level: "warn", event: "collector.shard_saturation_recorded", runId, shard: shard.id, warning });

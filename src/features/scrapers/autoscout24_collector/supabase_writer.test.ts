@@ -1,6 +1,14 @@
-import { describe, it, expect } from "vitest";
-import { mapNormalizedListingToListingsRow } from "./supabase_writer";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createSupabaseWriter, mapNormalizedListingToListingsRow } from "./supabase_writer";
 import type { NormalizedListing, ScrapeMeta } from "./types";
+
+const supabaseMock = vi.hoisted(() => ({
+  createClient: vi.fn(),
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: supabaseMock.createClient,
+}));
 
 function makeListing(overrides: Partial<NormalizedListing> = {}): NormalizedListing {
   return {
@@ -48,7 +56,113 @@ const meta: ScrapeMeta = {
   runId: "test-run",
 };
 
+type FakeResult = { data: unknown[] | null; error: { message: string } | null };
+
+class FakeSupabaseQuery {
+  private operation: "select" | "upsert" | "update" | null = null;
+  private filters: Record<string, unknown> = {};
+
+  constructor(
+    private readonly table: string,
+    private readonly executeQuery: (query: FakeSupabaseQuery) => FakeResult,
+    public payload?: Record<string, unknown>,
+  ) {}
+
+  select(): this {
+    this.operation = this.operation ?? "select";
+    return this;
+  }
+
+  eq(field: string, value: unknown): this {
+    this.filters[field] = value;
+    return this;
+  }
+
+  limit(): this {
+    return this;
+  }
+
+  upsert(payload: Record<string, unknown>): this {
+    this.operation = "upsert";
+    this.payload = payload;
+    return this;
+  }
+
+  update(payload: Record<string, unknown>): this {
+    this.operation = "update";
+    this.payload = payload;
+    return this;
+  }
+
+  get tableName(): string {
+    return this.table;
+  }
+
+  get op(): "select" | "upsert" | "update" | null {
+    return this.operation;
+  }
+
+  get where(): Record<string, unknown> {
+    return this.filters;
+  }
+
+  then<TResult1 = FakeResult, TResult2 = never>(
+    onfulfilled?: ((value: FakeResult) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): Promise<TResult1 | TResult2> {
+    return Promise.resolve(this.executeQuery(this)).then(onfulfilled, onrejected);
+  }
+}
+
+function makeConflictAwareClient() {
+  const upsertPayloads: Array<Record<string, unknown>> = [];
+  const canonicalId = "canonical-as24-row";
+  const conflictingUrl =
+    "https://www.autoscout24.com/offers/porsche-911-filtered-cat_ma57mo1950-68a086af-5e80-4d10-a2ea-7dcd3b427d40";
+
+  const client = {
+    from(table: string) {
+      return new FakeSupabaseQuery(table, (query) => {
+        if (query.tableName === "listings" && query.op === "select") {
+          if (query.where.source_id === "as24-68a086af-5e80-4d10-a2ea-7dcd3b427d40") {
+            return { data: [{ id: canonicalId, source_id: query.where.source_id, source_url: "https://www.autoscout24.com/offers/porsche-911-68a086af-5e80-4d10-a2ea-7dcd3b427d40" }], error: null };
+          }
+          if (query.where.source_url === conflictingUrl) {
+            return { data: [{ id: "older-duplicate-row", source_id: "as24-old-decorated-slug", source_url: conflictingUrl }], error: null };
+          }
+        }
+
+        if (query.tableName === "listings" && query.op === "upsert") {
+          upsertPayloads.push(query.payload ?? {});
+          if (query.payload?.source_url === conflictingUrl) {
+            return {
+              data: null,
+              error: { message: 'duplicate key value violates unique constraint "listings_source_url_unique"' },
+            };
+          }
+          return { data: [{ id: canonicalId }], error: null };
+        }
+
+        return { data: [], error: null };
+      });
+    },
+  };
+
+  return { client, upsertPayloads, conflictingUrl };
+}
+
 describe("mapNormalizedListingToListingsRow", () => {
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  });
+
   it("truncates make, model, trim, vin, engine, transmission to VARCHAR limits", () => {
     const listing = makeListing({
       make: "A".repeat(150),
@@ -164,5 +278,25 @@ describe("mapNormalizedListingToListingsRow", () => {
     expect(row).not.toHaveProperty("color_exterior");
     expect(row).not.toHaveProperty("engine");
     expect(row).not.toHaveProperty("transmission");
+  });
+
+  it("preserves the canonical AS24 row when an older duplicate owns the discovered source_url", async () => {
+    const { client, upsertPayloads, conflictingUrl } = makeConflictAwareClient();
+    supabaseMock.createClient.mockReturnValueOnce(client);
+    const writer = createSupabaseWriter();
+
+    await expect(
+      writer.upsertAll(
+        makeListing({
+          sourceId: "as24-68a086af-5e80-4d10-a2ea-7dcd3b427d40",
+          sourceUrl: conflictingUrl,
+          pricing: { hammerPrice: 100000, originalCurrency: "EUR", currentBid: null, bidCount: 0, rawPriceText: null },
+        }),
+        meta,
+        false,
+      ),
+    ).resolves.toEqual({ listingId: "canonical-as24-row", wrote: true });
+
+    expect(upsertPayloads[0]).not.toHaveProperty("source_url");
   });
 });
