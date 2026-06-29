@@ -215,7 +215,7 @@ export function applyAutoscout24HealthGates(
     notes.push("AutoScout24 target-field coverage below 100%");
   }
 
-  if (hasAutoscout24ShardSaturationWarning(runs)) {
+  if (targetCoverageBelow100 && hasAutoscout24ShardSaturationWarning(runs)) {
     status = "degraded";
     notes.push("AutoScout24 shard saturation warning present");
   }

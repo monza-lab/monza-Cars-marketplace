@@ -59,6 +59,7 @@ export function summarizeScraperHealth(
   const totalWritten = orderedRuns.reduce((sum, run) => sum + (run.written ?? 0), 0);
   const totalErrors = orderedRuns.reduce((sum, run) => sum + (run.errors_count ?? 0), 0);
   const lastRun = orderedRuns[0] ?? null;
+  const lastRunErrors = lastRun?.errors_count ?? 0;
 
   const notes: string[] = [];
   const activeAgeMinutes = activeRun
@@ -78,9 +79,9 @@ export function summarizeScraperHealth(
   } else if (successfulRuns === 0) {
     status = "failed";
     notes.push("All recent runs failed");
-  } else if (totalErrors > 0) {
+  } else if (lastRunErrors > 0) {
     status = "degraded";
-    notes.push("Recent runs had errors");
+    notes.push("Latest run had errors");
   } else if (totalWritten === 0) {
     status = "zero-write";
     notes.push("Recent runs wrote nothing");

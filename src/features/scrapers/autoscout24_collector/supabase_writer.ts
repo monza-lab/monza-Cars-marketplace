@@ -61,7 +61,7 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
 
   const existing = await findExistingListingIdentity(client, listing);
   if (existing?.omitSourceUrlFromUpsert) {
-    delete row.source_url;
+    return updateExistingListingWithoutSourceUrl(client, existing.id, row);
   }
 
   if (existing && existing.source_id !== listing.sourceId) {
@@ -111,6 +111,23 @@ async function upsertListing(client: SupabaseClient, listing: NormalizedListing,
   const fallback = (sel.data as Array<{ id: string }> | null)?.[0]?.id;
   if (!fallback) throw new Error("Supabase listings upsert returned no id");
   return fallback;
+}
+
+async function updateExistingListingWithoutSourceUrl(
+  client: SupabaseClient,
+  id: string,
+  row: Record<string, unknown>,
+): Promise<string> {
+  const updateRow = { ...row };
+  delete updateRow.source_url;
+
+  const { error } = await client
+    .from("listings")
+    .update(updateRow)
+    .eq("id", id);
+
+  if (error) throw new Error(`Supabase listings duplicate URL repair failed: ${error.message}`);
+  return id;
 }
 
 async function findExistingListingIdentity(

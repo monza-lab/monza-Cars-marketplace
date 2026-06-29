@@ -131,7 +131,7 @@ const SCRAPERS: ScraperDef[] = [
     ],
     dryRunFlag: "--dryRun",
     defaultSelected: true,
-    timeoutMs: 10 * 60_000,
+    timeoutMs: 45 * 60_000,
   },
   {
     id: "classic",
@@ -351,7 +351,7 @@ const SCRAPERS: ScraperDef[] = [
     type: "cron",
     cronRoute: "/api/cron/cleanup",
     defaultSelected: false,
-    timeoutMs: 2 * 60_000,
+    timeoutMs: 5 * 60_000,
   },
   {
     id: "cron-vin",

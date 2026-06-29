@@ -22,6 +22,22 @@ describe("scraper runner BeForward manual profile", () => {
     expect(beforwardBlock).toContain('"--maxPages=200"');
     expect(beforwardBlock).toContain('"--summaryOnly=true"');
   });
+
+  it("allows enough time for the observed full 151-page summary run", () => {
+    const source = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const beforwardBlock = source.match(/id: "beforward",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
+
+    expect(beforwardBlock).toContain("timeoutMs: 45 * 60_000");
+  });
+});
+
+describe("scraper runner cron maintenance profile", () => {
+  it("gives cleanup enough local HTTP budget for a full database maintenance pass", () => {
+    const source = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const cleanupBlock = source.match(/id: "cron-cleanup",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
+
+    expect(cleanupBlock).toContain("timeoutMs: 5 * 60_000");
+  });
 });
 
 describe("scraper runner enrichment profile", () => {

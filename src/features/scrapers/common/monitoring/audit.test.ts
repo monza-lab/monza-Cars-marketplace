@@ -63,7 +63,38 @@ describe("summarizeScraperHealth", () => {
     );
 
     expect(summary.status).toBe("degraded");
-    expect(summary.notes).toContain("Recent runs had errors");
+    expect(summary.notes).toContain("Latest run had errors");
+  });
+
+  it("recovers to working when the latest run is clean even if older runs had errors", () => {
+    const now = Date.now();
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "autoscout24",
+        label: "AutoScout24",
+        cadence: "external",
+      },
+      [
+        makeRun({
+          scraper_name: "autoscout24",
+          finished_at: new Date(now).toISOString(),
+          written: 1050,
+          errors_count: 0,
+        }),
+        makeRun({
+          scraper_name: "autoscout24",
+          finished_at: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
+          written: 800,
+          errors_count: 30,
+        }),
+      ],
+      undefined,
+      now,
+    );
+
+    expect(summary.totalErrors).toBe(30);
+    expect(summary.status).toBe("working");
+    expect(summary.notes).not.toContain("Recent runs had errors");
   });
 
   it("marks active runs that stopped updating as stuck", () => {
@@ -143,7 +174,7 @@ describe("summarizeScraperHealth", () => {
     expect(gated.notes.join("; ")).toContain("AutoScout24 target-field coverage below 100%");
   });
 
-  it("marks AutoScout24 degraded when recent run metadata reports shard saturation", () => {
+  it("keeps AutoScout24 working when shard saturation warnings do not leave target-field gaps", () => {
     const runs = [
       makeRun({
         scraper_name: "autoscout24",
@@ -186,7 +217,7 @@ describe("summarizeScraperHealth", () => {
 
     const gated = applyAutoscout24HealthGates(summary, runs);
 
-    expect(gated.status).toBe("degraded");
-    expect(gated.notes.join("; ")).toContain("AutoScout24 shard saturation warning present");
+    expect(gated.status).toBe("working");
+    expect(gated.notes.join("; ")).not.toContain("AutoScout24 shard saturation warning present");
   });
 });

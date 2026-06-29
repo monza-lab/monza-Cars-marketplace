@@ -31,6 +31,9 @@ export function normalizeListing(input: {
   targetMake: string;
 }): NormalizedListing | null {
   const { search, detail, meta } = input;
+  const sourceUrl = search.url?.trim();
+
+  if (!sourceUrl) return null;
 
   if (!isLuxuryCarListing({ make: search.make, title: search.title, targetMake: input.targetMake })) {
     return null;
@@ -42,7 +45,7 @@ export function normalizeListing(input: {
   const model = detail?.model ?? search.model ?? parseModelFromTitle(search.title);
   if (!model) return null;
 
-  const sourceId = deriveSourceId({ sourceId: search.id, sourceUrl: search.url });
+  const sourceId = deriveSourceId({ sourceId: search.id, sourceUrl });
   const location = parseLocation(
     detail?.location ?? search.location,
     detail?.country ?? search.country,
@@ -56,7 +59,7 @@ export function normalizeListing(input: {
   return {
     source: "AutoScout24",
     sourceId,
-    sourceUrl: search.url,
+    sourceUrl,
     title: detail?.title ?? search.title,
     platform: "AUTO_SCOUT_24",
     sellerNotes: null,

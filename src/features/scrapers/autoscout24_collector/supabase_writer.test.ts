@@ -116,6 +116,7 @@ class FakeSupabaseQuery {
 
 function makeConflictAwareClient() {
   const upsertPayloads: Array<Record<string, unknown>> = [];
+  const updatePayloads: Array<Record<string, unknown>> = [];
   const canonicalId = "canonical-as24-row";
   const conflictingUrl =
     "https://www.autoscout24.com/offers/porsche-911-filtered-cat_ma57mo1950-68a086af-5e80-4d10-a2ea-7dcd3b427d40";
@@ -143,12 +144,17 @@ function makeConflictAwareClient() {
           return { data: [{ id: canonicalId }], error: null };
         }
 
+        if (query.tableName === "listings" && query.op === "update") {
+          updatePayloads.push(query.payload ?? {});
+          return { data: [{ id: query.where.id ?? canonicalId }], error: null };
+        }
+
         return { data: [], error: null };
       });
     },
   };
 
-  return { client, upsertPayloads, conflictingUrl };
+  return { client, upsertPayloads, updatePayloads, conflictingUrl };
 }
 
 describe("mapNormalizedListingToListingsRow", () => {
@@ -280,8 +286,8 @@ describe("mapNormalizedListingToListingsRow", () => {
     expect(row).not.toHaveProperty("transmission");
   });
 
-  it("preserves the canonical AS24 row when an older duplicate owns the discovered source_url", async () => {
-    const { client, upsertPayloads, conflictingUrl } = makeConflictAwareClient();
+  it("updates the canonical AS24 row directly when an older duplicate owns the discovered source_url", async () => {
+    const { client, upsertPayloads, updatePayloads, conflictingUrl } = makeConflictAwareClient();
     supabaseMock.createClient.mockReturnValueOnce(client);
     const writer = createSupabaseWriter();
 
@@ -297,6 +303,11 @@ describe("mapNormalizedListingToListingsRow", () => {
       ),
     ).resolves.toEqual({ listingId: "canonical-as24-row", wrote: true });
 
-    expect(upsertPayloads[0]).not.toHaveProperty("source_url");
+    expect(upsertPayloads).toHaveLength(0);
+    expect(updatePayloads[0]).not.toHaveProperty("source_url");
+    expect(updatePayloads[0]).toMatchObject({
+      source: "AutoScout24",
+      source_id: "as24-68a086af-5e80-4d10-a2ea-7dcd3b427d40",
+    });
   });
 });
