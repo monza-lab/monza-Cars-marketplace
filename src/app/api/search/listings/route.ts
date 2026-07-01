@@ -48,6 +48,12 @@ function cap(limit: string | null): number {
   return Math.min(25, Math.max(1, Math.floor(n)))
 }
 
+function searchCandidateLimit(limit: number, hasQuery: boolean, hasSeriesFilter: boolean): number {
+  if (hasSeriesFilter) return Math.max(limit * 12, 120)
+  if (hasQuery) return Math.max(limit * 40, 200)
+  return Math.max(limit * 6, 60)
+}
+
 function pickPrice(row: ListingRowMinimal): number | null {
   if (row.status === "sold") {
     const hp = row.hammer_price
@@ -96,7 +102,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
     // range so we don't return empty for popular series buried beyond the top N.
     // Overfetch generously — we drop rows without images below.
     const seriesConfig = seriesFilter ? getSeriesConfig(seriesFilter, "porsche") : null
-    const overfetch = seriesFilter ? limit * 12 : limit * 6
+    const overfetch = searchCandidateLimit(limit, Boolean(q && !trending), Boolean(seriesFilter))
 
     let query = supabase
       .from("listings")
