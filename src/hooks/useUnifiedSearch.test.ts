@@ -62,22 +62,19 @@ describe("useUnifiedSearch", () => {
     expect(String(mockFetch.mock.calls[0][0])).toContain("trending=true")
   })
 
-  it("debounces query input by ~200ms", async () => {
+  it("fetches the latest query immediately without an artificial debounce", async () => {
     vi.useFakeTimers()
     mockFetch.mockReturnValue(ok(trendingPayload))
     const { result } = renderHook(() => useUnifiedSearch())
     await act(async () => {
-      await vi.runAllTimersAsync()
+      await vi.runOnlyPendingTimersAsync()
     })
     mockFetch.mockReset()
     mockFetch.mockReturnValue(ok(queryPayload))
-    act(() => result.current.setQuery("9"))
-    act(() => result.current.setQuery("99"))
+
     act(() => result.current.setQuery("997"))
-    expect(mockFetch).not.toHaveBeenCalled()
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(250)
-    })
+    await act(async () => {})
+
     expect(mockFetch).toHaveBeenCalledTimes(1)
     expect(String(mockFetch.mock.calls[0][0])).toContain("q=997")
   })
@@ -97,15 +94,13 @@ describe("useUnifiedSearch", () => {
     mockFetch.mockReturnValue(ok(trendingPayload))
     const { result } = renderHook(() => useUnifiedSearch())
     await act(async () => {
-      await vi.runAllTimersAsync()
+      await vi.runOnlyPendingTimersAsync()
     })
     mockFetch.mockReset()
     mockFetch.mockReturnValue(ok(queryPayload))
     act(() => result.current.setActiveSeries("997"))
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(250)
-    })
-    expect(mockFetch).toHaveBeenCalled()
+    await act(async () => {})
+    expect(mockFetch).toHaveBeenCalledTimes(1)
     expect(String(mockFetch.mock.calls[0][0])).toContain("series=997")
   })
 })

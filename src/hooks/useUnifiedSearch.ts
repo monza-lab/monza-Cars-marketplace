@@ -27,7 +27,6 @@ export interface UseUnifiedSearchResult {
   error: string | null
 }
 
-const DEBOUNCE_MS = 200
 const DEFAULT_LIMIT = 10
 
 export function useUnifiedSearch(): UseUnifiedSearchResult {
@@ -38,7 +37,6 @@ export function useUnifiedSearch(): UseUnifiedSearchResult {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const series = useMemo(() => searchSeries(query), [query])
 
@@ -69,20 +67,15 @@ export function useUnifiedSearch(): UseUnifiedSearchResult {
     }
   }, [])
 
-  // Debounced effect for query / activeSeries changes (skips initial mount; that's handled below).
+  // Query and series changes should feel instant. Abort in-flight requests
+  // rather than adding a client-side delay before the newest search starts.
   const hasMountedRef = useRef(false)
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true
       return
     }
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      fetchListings(query, activeSeries)
-    }, DEBOUNCE_MS)
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
+    void fetchListings(query, activeSeries)
   }, [query, activeSeries, fetchListings])
 
   // Initial trending fetch (immediate, no debounce)

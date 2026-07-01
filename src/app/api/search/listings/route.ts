@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { extractSeries, getSeriesConfig } from "@/lib/brandConfig"
-import { buildListingSearchOrClauses } from "@/lib/searchIndex"
+import { buildListingSearchOrClauses, rankListingSearchRows } from "@/lib/searchIndex"
 import {
   resolveListingImages,
   LISTING_IMAGE_PLACEHOLDER,
@@ -144,16 +144,14 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
           series,
         }
       })
-      // Search results must have a real image. A row with no usable image
-      // looks broken in the dropdown thumbnail slot and erodes trust.
-      .filter((l) => !!l.image)
 
     const filtered = seriesFilter
       ? mapped.filter((l) => l.series?.toLowerCase() === seriesFilter)
       : mapped
+    const ranked = q && !trending ? rankListingSearchRows(filtered, q) : filtered
 
     return NextResponse.json({
-      listings: filtered.slice(0, limit),
+      listings: ranked.slice(0, limit),
       total: count ?? filtered.length,
     })
   } catch (err) {
