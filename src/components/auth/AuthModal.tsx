@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
-import { fireMetaEvent } from '@/lib/marketing/metaPixel'
 import {
   Dialog,
   DialogContent,
@@ -66,11 +65,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
       const { error } = await signInWithGoogle()
       if (error) {
         setError(error.message)
-      } else {
-        fireMetaEvent('CompleteRegistration', {
-          pixelParams: { content_name: 'free_signup', status: 'completed' },
-        })
       }
+      // CompleteRegistration is fired server-side on confirmed session
+      // (see /api/user/create) to avoid inflating the count on OAuth init.
     } catch {
       setError(t('unexpectedError'))
     } finally {
@@ -92,12 +89,8 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
         setError(error.message)
       } else {
         setMagicSent(true)
-        if (mode === 'signup') {
-          fireMetaEvent('CompleteRegistration', {
-            pixelParams: { content_name: 'free_signup_magic', status: 'pending_email' },
-            email,
-          })
-        }
+        // No CompleteRegistration here: the email is only *sent*, not confirmed.
+        // The server fires it on confirmed session (see /api/user/create).
       }
     } catch {
       setError(t('unexpectedError'))
@@ -120,10 +113,8 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
         if (error) {
           setError(error.message)
         } else {
-          fireMetaEvent('CompleteRegistration', {
-            pixelParams: { content_name: 'free_signup', status: 'completed' },
-            email,
-          })
+          // No CompleteRegistration here: signup still requires email confirmation.
+          // The server fires it on confirmed session (see /api/user/create).
           setSignupConfirmation(true)
         }
       }

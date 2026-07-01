@@ -48,7 +48,9 @@ export default function GetStartedPage() {
 
   const handleCTA = () => {
     if (user) {
-      router.push(`/${locale}/advisor`)
+      // Post-signup, drop the user into the market where the report loop
+      // lives (pick a Porsche → generate report), not the advisor chat.
+      router.push(`/${locale}/cars/porsche`)
     } else {
       setAuthOpen(true)
     }

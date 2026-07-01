@@ -32,6 +32,12 @@ async function applyCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     eventId: `purchase_${session.id}`,
     email: session.customer_details?.email ?? undefined,
     externalId: appUserId,
+    // Match signals captured at create-session time (see create-session/route.ts)
+    // so this server-to-server event still has a strong Event Match Quality.
+    fbp: session.metadata?.fbp,
+    fbc: session.metadata?.fbc,
+    clientIpAddress: session.metadata?.capiIp,
+    clientUserAgent: session.metadata?.capiUa,
     customData: {
       value: plan.price,
       currency: "USD",

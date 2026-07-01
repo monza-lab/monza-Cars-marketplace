@@ -236,7 +236,6 @@ export function ReportClient({
   const { setContext } = useChatContext()
 
   const t = useTranslations("investmentReport")
-  const tPricing = useTranslations("pricing")
   const tFairValue = useTranslations("report.fairValue")
   const tVerdict = useTranslations("report.verdict")
   const { effectiveRegion } = useRegion()
@@ -279,16 +278,12 @@ export function ReportClient({
     tokens,
     consumeForAnalysis,
     hasAnalyzed,
-    addTokens,
-    setPlan,
   } = useTokens()
 
   const [hasAccess, setHasAccess] = useState(userHasAccess)
   const [copiedQuestions, setCopiedQuestions] = useState(false)
-  const [showPricing, setShowPricing] = useState(false)
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
   const [reportAuthOpen, setReportAuthOpen] = useState(false)
-  const [purchaseProcessing, setPurchaseProcessing] = useState<string | null>(null)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
   const { user: authUser, profile: authProfile, loading: authLoading, refreshProfile } = useAuth()
 
@@ -298,7 +293,6 @@ export function ReportClient({
       setOutOfReportsOpen(true)
     }
   }, [reportError])
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingExcel, setDownloadingExcel] = useState(false)
   const [showDownloadSheet, setShowDownloadSheet] = useState(false)
@@ -529,30 +523,12 @@ export function ReportClient({
       cost: REPORT_PISTON_COST,
       unlimitedReports: hasUnlimitedReports,
     })) {
-      setShowPricing(true)
+      setOutOfReportsOpen(true)
       return
     }
     setConfirmGenerateOpen(true)
   }
 
-
-  const handlePurchase = (planId: "single" | "explorer" | "unlimited") => {
-    setPurchaseProcessing(planId)
-    setTimeout(() => {
-      const tokensToAdd = planId === "single" ? 1000 : planId === "explorer" ? 5000 : 999000
-      addTokens(tokensToAdd)
-      setPlan(planId)
-      consumeForAnalysis(car.id)
-      setPurchaseProcessing(null)
-      setPurchaseSuccess(true)
-      setTimeout(() => {
-        setPurchaseSuccess(false)
-        setShowPricing(false)
-        setHasAccess(true)
-        if (shouldRequestServerReportUnlock) void handleGenerateV3()
-      }, 1500)
-    }, 1500)
-  }
 
   // --- COMPUTED DATA (DB-only - no fabricated fallbacks) ---
   const isLive = car.status === "ACTIVE" || car.status === "ENDING_SOON"
@@ -3127,189 +3103,6 @@ export function ReportClient({
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- PRICING MODAL (never shown for unlimited users) --- */}
-      <AnimatePresence>
-        {showPricing && !hasUnlimitedReports && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[80] flex items-end md:items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-background/70 backdrop-blur-md" onClick={() => !purchaseProcessing && setShowPricing(false)} />
-
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.1 }}
-              className="relative w-full max-w-2xl mx-4 mb-0 md:mb-0 rounded-t-2xl md:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden max-h-[90vh] md:max-h-[85vh] overflow-y-auto"
-            >
-              {/* Top gradient bar */}
-              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
-
-              {/* Close button */}
-              <button
-                onClick={() => !purchaseProcessing && setShowPricing(false)}
-                className="absolute top-4 right-4 z-10 size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-              >
-                <span className="text-[16px]">&times;</span>
-              </button>
-
-              {/* SUCCESS STATE */}
-              {purchaseSuccess ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="px-6 py-16 text-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 15, stiffness: 200, delay: 0.1 }}
-                    className="size-16 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-4"
-                  >
-                    <Check className="size-8 text-positive" />
-                  </motion.div>
-                  <h3 className="text-[20px] font-bold text-foreground">{tPricing("successTitle")}</h3>
-                  <p className="text-[13px] text-muted-foreground mt-2">{tPricing("successDesc")}</p>
-                </motion.div>
-              ) : (
-                <>
-                  {/* Header */}
-                  <div className="px-6 pt-8 pb-2 text-center">
-                    <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                      <Scale className="size-6 text-primary" />
-                    </div>
-                    <h3 className="text-[20px] font-bold text-foreground">{tPricing("title")}</h3>
-                    <p className="text-[12px] text-muted-foreground mt-1 max-w-md mx-auto">{tPricing("subtitle")}</p>
-                  </div>
-
-                  {/* Plans grid */}
-                  <div className="px-6 pt-5 pb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {/* --- SINGLE REPORT --- */}
-                    <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
-                      <div className="mb-4">
-                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("single.name")}</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("single.desc")}</p>
-                      </div>
-                      <div className="mb-4">
-                        <span className="text-[32px] font-black text-foreground">{tPricing("single.price")}</span>
-                        <span className="text-[11px] text-muted-foreground ml-1.5">{tPricing("single.period")}</span>
-                      </div>
-                      <div className="space-y-2 mb-5 flex-1">
-                        {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
-                          <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                            <span className="text-[11px] text-muted-foreground">{tPricing(`single.${key}`)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => handlePurchase("single")}
-                        disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
-                      >
-                        {purchaseProcessing === "single" ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                            {tPricing("processing")}
-                          </span>
-                        ) : tPricing("single.cta")}
-                      </button>
-                    </div>
-
-                    {/* --- EXPLORER PACK (HIGHLIGHTED) --- */}
-                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col relative">
-                      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                        <span className="px-3 py-1 rounded-full bg-primary text-background text-[9px] font-bold uppercase tracking-wider">
-                          {tPricing("explorer.badge")}
-                        </span>
-                      </div>
-                      <div className="mb-4 mt-1">
-                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("explorer.name")}</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("explorer.desc")}</p>
-                      </div>
-                      <div className="mb-1">
-                        <span className="text-[32px] font-black text-foreground">{tPricing("explorer.price")}</span>
-                        <span className="text-[11px] text-muted-foreground ml-1.5">{tPricing("explorer.period")}</span>
-                      </div>
-                      <p className="text-[10px] text-primary tabular-nums font-semibold mb-4">{tPricing("explorer.perReport")}</p>
-                      <div className="space-y-2 mb-5 flex-1">
-                        {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
-                          <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                            <span className="text-[11px] text-muted-foreground">{tPricing(`explorer.${key}`)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => handlePurchase("explorer")}
-                        disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl bg-primary text-background font-semibold text-[12px] hover:bg-primary/80 disabled:opacity-50 active:scale-[0.97] transition-all"
-                      >
-                        {purchaseProcessing === "explorer" ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-background border-t-transparent animate-spin" />
-                            {tPricing("processing")}
-                          </span>
-                        ) : tPricing("explorer.cta")}
-                      </button>
-                    </div>
-
-                    {/* --- UNLIMITED --- */}
-                    <div className="rounded-xl border border-border bg-foreground/2 p-5 flex flex-col">
-                      <div className="mb-4">
-                        <h4 className="text-[13px] font-semibold text-foreground">{tPricing("unlimited.name")}</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{tPricing("unlimited.desc")}</p>
-                      </div>
-                      <div className="mb-4">
-                        <span className="text-[32px] font-black text-foreground">{tPricing("unlimited.price")}</span>
-                        <span className="text-[11px] text-muted-foreground ml-0.5">{tPricing("unlimited.period")}</span>
-                      </div>
-                      <div className="space-y-2 mb-5 flex-1">
-                        {(["feature1", "feature2", "feature3", "feature4"] as const).map(key => (
-                          <div key={key} className="flex items-center gap-2">
-                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                            <span className="text-[11px] text-muted-foreground">{tPricing(`unlimited.${key}`)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => handlePurchase("unlimited")}
-                        disabled={!!purchaseProcessing}
-                        className="w-full py-3 rounded-xl border border-border text-foreground font-semibold text-[12px] hover:bg-accent disabled:opacity-50 transition-all"
-                      >
-                        {purchaseProcessing === "unlimited" ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="size-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                            {tPricing("processing")}
-                          </span>
-                        ) : tPricing("unlimited.cta")}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-6 pb-6 pt-2">
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                      <Coins className="size-3.5 text-primary" />
-                      <span className="text-[11px] text-muted-foreground">
-                        {tPricing("currentBalance")}: <span className="tabular-nums font-semibold text-foreground">{tokens.toLocaleString()}</span> {tPricing("tokens")}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground text-center">
-                      {tPricing("guarantee")}
-                    </p>
-                  </div>
-                </>
-              )}
             </motion.div>
           </motion.div>
         )}

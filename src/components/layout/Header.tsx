@@ -922,7 +922,7 @@ export function Header() {
                 onClick={() => setShowAuthModal(true)}
                 className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/80 transition-colors text-[11px] font-semibold tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                {t('auth.signIn')}
+                {t('auth.createAccount')}
               </button>
             )}
 
@@ -1048,10 +1048,12 @@ export function Header() {
         query={submittedQuery}
       />
 
-      {/* AUTH MODAL */}
+      {/* AUTH MODAL — opens in signup mode: the header CTA is a cold-traffic
+          registration entry point, not a returning-user sign-in. */}
       <AuthModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
+        defaultMode="signup"
       />
 
       {/* UNIFIED SEARCH MODAL — centered command palette with backdrop. The

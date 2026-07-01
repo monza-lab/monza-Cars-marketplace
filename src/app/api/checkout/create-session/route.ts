@@ -39,6 +39,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
     const locale = body.locale && body.locale.length > 0 ? body.locale : "en"
+
+    // Capture Meta match signals from the browser request so the (server-to-server)
+    // Stripe webhook can enrich the Purchase CAPI event — the webhook has no browser
+    // context of its own. Stored in Stripe session metadata (string values only).
+    const cookieHeader = request.headers.get("cookie") ?? ""
+    const capiMeta: Record<string, string> = {}
+    const fbp = cookieHeader.match(/_fbp=([^;]+)/)?.[1]
+    const fbc = cookieHeader.match(/_fbc=([^;]+)/)?.[1]
+    const capiIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    const capiUa = request.headers.get("user-agent") ?? undefined
+    if (fbp) capiMeta.fbp = fbp
+    if (fbc) capiMeta.fbc = fbc
+    if (capiIp) capiMeta.capiIp = capiIp
+    if (capiUa) capiMeta.capiUa = capiUa
+
     const baseUrl = getAppBaseUrl(request)
     const successUrl = `${baseUrl}${getLocalizedPath(locale, "/checkout/success")}?session_id={CHECKOUT_SESSION_ID}`
     const cancelUrl = `${baseUrl}${getLocalizedPath(locale, "/checkout/cancel")}`
@@ -94,6 +109,7 @@ export async function POST(request: Request) {
         appUserId: user.id,
         planId: resolvedPlanKey,
         locale,
+        ...capiMeta,
       },
       subscription_data:
         plan.billingMode === "subscription"

@@ -53,6 +53,7 @@ import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContex
 import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { MobileCarCTA } from "@/components/mobile"
 import { useTokens } from "@/hooks/useTokens"
+import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
 import { ListingHook } from "@/components/detail/ListingHook"
@@ -2088,7 +2089,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                   <div>
                       <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Generate full analyses with Pistons</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Each report costs 100 Pistons &mdash; you have 300 free each month</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs {REPORT_PISTON_COST.toLocaleString("en-US")} Pistons &mdash; you get 3,000 free each month</p>
                   </div>
                 </div>
                   <div className="flex items-start gap-3">
@@ -2198,9 +2199,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     {!hasAnalyzed(car.id) && (
                       <div className="flex items-center justify-center gap-2 pt-2">
                         <Coins className="size-3.5 text-primary" />
-                        {/* [HARDCODED] */}
                         <span className="text-[11px] text-muted-foreground">
-                          100 Pistons used &middot; {tokens.toLocaleString()} remaining
+                          {REPORT_PISTON_COST.toLocaleString("en-US")} Pistons used &middot; {tokens.toLocaleString()} remaining
                         </span>
                       </div>
                     )}

@@ -22,6 +22,12 @@ export async function sendServerCapiEvent(input: {
   eventSourceUrl?: string
   email?: string
   externalId?: string
+  /** Meta browser cookies captured at checkout time (unhashed per CAPI spec). */
+  fbp?: string
+  fbc?: string
+  /** Client network signals captured at checkout time (unhashed per CAPI spec). */
+  clientIpAddress?: string
+  clientUserAgent?: string
   customData?: Record<string, unknown>
 }) {
   if (!PIXEL_ID || !ACCESS_TOKEN) {
@@ -40,6 +46,10 @@ export async function sendServerCapiEvent(input: {
     user_data: {
       em: input.email ? [sha256(input.email)] : undefined,
       external_id: input.externalId ? [sha256(input.externalId)] : undefined,
+      fbp: input.fbp || undefined,
+      fbc: input.fbc || undefined,
+      client_ip_address: input.clientIpAddress || undefined,
+      client_user_agent: input.clientUserAgent || undefined,
     },
     custom_data: input.customData,
   }
