@@ -5,11 +5,14 @@ import Link from "next/link"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { track } from "@/lib/analytics/events"
+import { fireMetaEvent } from "@/lib/marketing/metaPixel"
+import { useConsent } from "@/components/legal/ConsentProvider"
 
 export default function CheckoutSuccessPage() {
   const { profile, refreshProfile } = useAuth()
   const [timeoutFired, setTimeoutFired] = useState(false)
   const trackedRef = useRef(false)
+  const { consent } = useConsent()
 
   const profileLoaded =
     profile?.tier === "MONTHLY" ||
@@ -62,7 +65,20 @@ export default function CheckoutSuccessPage() {
       event: "checkout_completed",
       payload: { planId: profile?.tier ?? "unknown", amount: 0, sessionId },
     })
-  }, [ready, profile])
+    fireMetaEvent("Purchase", {
+      consent,
+      eventId: sessionId ? `purchase_${sessionId}` : undefined,
+      pixelParams: {
+        currency: "USD",
+        content_ids: [profile?.tier ?? "unknown"],
+        content_type: "product",
+      },
+      customData: {
+        currency: "USD",
+        content_ids: [profile?.tier ?? "unknown"],
+      },
+    })
+  }, [ready, profile, consent])
 
   const isSubscription = profile?.tier === "MONTHLY" || profile?.tier === "ANNUAL" || profile?.tier === "PRO"
 

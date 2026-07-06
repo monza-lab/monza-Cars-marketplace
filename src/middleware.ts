@@ -1,9 +1,7 @@
-import createMiddleware from 'next-intl/middleware'
 import { NextRequest, NextResponse } from 'next/server'
 import { routing } from './i18n/routing'
 import { updateSession } from '@/lib/supabase/middleware'
 
-const handleI18nRouting = createMiddleware(routing)
 const localeInternalPrefix = new RegExp(
   `^/(${routing.locales.join('|')})/(api|trpc|_next|_vercel)(?:/|$)`
 )
@@ -19,7 +17,11 @@ export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
   if (hiddenLocalePrefix.test(pathname)) {
-    const stripped = pathname.replace(hiddenLocalePrefix, '/') || '/'
+    let stripped = pathname
+    while (hiddenLocalePrefix.test(stripped)) {
+      stripped = stripped.replace(hiddenLocalePrefix, '/') || '/'
+    }
+    stripped = stripped.replace(/\/{2,}/g, '/') || '/'
     return NextResponse.redirect(new URL(`${stripped}${search}`, request.url), 308)
   }
 
@@ -31,6 +33,10 @@ export default async function proxy(request: NextRequest) {
   ) {
     const canonicalPath = `/${[segments[0], ...segments.slice(2)].join("/")}`
     return NextResponse.redirect(new URL(`${canonicalPath}${search}`, request.url), 308)
+  }
+
+  if (segments[0] === routing.defaultLocale) {
+    return NextResponse.next()
   }
 
   if (localeInternalPrefix.test(pathname)) {
@@ -52,7 +58,15 @@ export default async function proxy(request: NextRequest) {
     return updateSession(request)
   }
 
-  return handleI18nRouting(request)
+  // English-only mode with locale-free public URLs. next-intl's generic
+  // `as-needed` middleware can emit a self-redirect in dev here, so keep the
+  // public URL locale-free and rewrite directly to the internal [locale] tree.
+  const internalUrl = request.nextUrl.clone()
+  internalUrl.pathname =
+    pathname === '/'
+      ? `/${routing.defaultLocale}`
+      : `/${routing.defaultLocale}${pathname}`
+  return NextResponse.rewrite(internalUrl)
 }
 
 export const config = {

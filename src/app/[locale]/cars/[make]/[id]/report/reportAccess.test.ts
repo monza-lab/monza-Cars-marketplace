@@ -11,16 +11,12 @@ import {
 } from "./reportAccess"
 
 describe("resolveReportAccess", () => {
-  it("keeps server-confirmed report access when legacy local token state has not recorded the car", () => {
-    expect(resolveReportAccess({ serverHasAccess: true, localHasAnalyzed: false })).toBe(true)
+  it("uses the server as the only source of report access", () => {
+    expect(resolveReportAccess({ serverHasAccess: true })).toBe(true)
   })
 
-  it("allows legacy local access when the server has not confirmed access yet", () => {
-    expect(resolveReportAccess({ serverHasAccess: false, localHasAnalyzed: true })).toBe(true)
-  })
-
-  it("keeps the report locked when neither access source confirms it", () => {
-    expect(resolveReportAccess({ serverHasAccess: false, localHasAnalyzed: false })).toBe(false)
+  it("keeps the report locked until the server confirms access", () => {
+    expect(resolveReportAccess({ serverHasAccess: false })).toBe(false)
   })
 })
 

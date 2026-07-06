@@ -83,7 +83,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
           </div>
           <p className="text-[11px] text-muted-foreground">
             {hasUnlimitedCredits
-              ? "Unlimited credits while your subscription is active"
+              ? "Unlimited reports while your subscription is active"
               : t("nextReset", { date: props.nextResetDate.toLocaleDateString() })}
           </p>
         </div>

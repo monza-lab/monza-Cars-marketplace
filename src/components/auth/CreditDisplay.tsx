@@ -35,7 +35,7 @@ export function CreditDisplay({ onClick }: CreditDisplayProps) {
         {credits}
       </span>
       <span className="text-xs text-muted-foreground hidden sm:inline">
-        credits
+        Pistons
       </span>
     </button>
   )

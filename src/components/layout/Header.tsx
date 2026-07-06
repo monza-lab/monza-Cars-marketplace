@@ -770,8 +770,8 @@ export function Header() {
           <div className="relative bg-primary/[0.06] border-b border-primary/20 px-4 py-2 text-center">
             <span className="text-[11px] text-foreground">
               {creditsRemaining === 0
-                ? "Out of pistons — top up to generate a Haus Report ·"
-                : `Only ${creditsRemaining} pistons left — not enough for a report (${REPORT_PISTON_COST.toLocaleString("en-US")} needed) ·`}{" "}
+                ? "Out of Pistons — top up to generate a Haus Report ·"
+                : `Only ${creditsRemaining} Pistons left — not enough for a report (${REPORT_PISTON_COST.toLocaleString("en-US")} needed) ·`}{" "}
               <Link
                 href="/pricing"
                 className="text-primary font-semibold hover:underline"

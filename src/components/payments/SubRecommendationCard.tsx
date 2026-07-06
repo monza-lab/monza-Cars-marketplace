@@ -12,7 +12,7 @@ interface SubRecommendationCardProps {
 // We intentionally show only the cheapest visible sub. Today that's
 // Genshpod; if Edgar later flips Weissach back on, the math still
 // surfaces the right card (cheapest first) — but the badge/copy
-// assumes Genshpod's value prop (unlimited credits + bundle), so
+// assumes Genshpod's value prop (unlimited reports + bundle), so
 // flipping more subs visible will need a follow-up.
 export function SubRecommendationCard({ onSubscribe, className = "" }: SubRecommendationCardProps) {
   const t = useTranslations()

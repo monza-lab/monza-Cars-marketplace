@@ -842,7 +842,11 @@ function MobileProfileSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         )}
       </AnimatePresence>
 
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+      <AuthModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        defaultMode="signup"
+      />
 
       {/* Backdrop */}
       <AnimatePresence>

@@ -1,5 +1,6 @@
 export type AnalyticsEvent =
   | { event: "pricing_page_viewed"; payload: { source: string } }
+  | { event: "report_viewed"; payload: { listingId: string; source: "report_page" | "car_detail" } }
   | { event: "plan_clicked"; payload: { planId: string; billingCycle?: string } }
   | { event: "checkout_started"; payload: { planId: string; amount: number; sessionId: string } }
   | { event: "checkout_completed"; payload: { planId: string; amount: number; sessionId: string } }

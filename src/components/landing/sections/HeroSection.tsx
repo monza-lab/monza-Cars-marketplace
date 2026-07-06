@@ -9,6 +9,13 @@ function markExplored() {
   localStorage.setItem("monzahaus-explored", "true")
 }
 
+function scrollToNextSection() {
+  document.getElementById("landing-next-section")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  })
+}
+
 export function HeroSection() {
   const t = useTranslations("landing.hero")
 
@@ -65,26 +72,31 @@ export function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link
-            href="/browse"
+            href="/get-started"
             onClick={markExplored}
             className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[#D6BEDC] text-[#3F2A47] font-sans font-semibold text-sm md:text-[0.9375rem] px-8 py-3.5 transition-all duration-250 hover:bg-[#E1CCE5] hover:scale-[1.02] active:scale-[0.98]"
           >
-            {t("cta")}
+            {t("ctaSecondary")}
           </Link>
           <Link
-            href="/get-started"
+            href="/browse"
             onClick={markExplored}
             className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-[#D6BEDC]/30 text-[#E8E2DE] font-sans font-medium text-sm md:text-[0.9375rem] px-8 py-3.5 transition-all duration-250 hover:border-[#D6BEDC]/60 hover:bg-white/[0.03]"
           >
-            {t("ctaSecondary")}
+            {t("cta")}
           </Link>
         </div>
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1] animate-bounce">
+      <button
+        type="button"
+        aria-label="Scroll to next section"
+        onClick={scrollToNextSection}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1] animate-bounce rounded-full p-2 text-[#6B6365]/60 transition-colors hover:text-[#E8E2DE] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D6BEDC]/60"
+      >
         <ChevronDown className="w-5 h-5 text-[#6B6365]/60" />
-      </div>
+      </button>
     </section>
   )
 }

@@ -52,7 +52,6 @@ import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
-import { useTokens } from "@/hooks/useTokens"
 import { stripHtml } from "@/lib/stripHtml"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
@@ -61,6 +60,9 @@ import { SourceListingCta } from "@/components/funnel/SourceListingCta"
 import { ConfirmGenerateModal } from "@/components/report/ConfirmGenerateModal"
 import { ReportSummaryRail } from "@/components/report/ReportSummaryRail"
 import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
+import { track } from "@/lib/analytics/events"
+import { fireMetaEvent } from "@/lib/marketing/metaPixel"
+import { useConsent } from "@/components/legal/ConsentProvider"
 import {
   resolveReportAccess,
   resolveReportPrimaryAction,
@@ -270,22 +272,13 @@ export function ReportClient({
     }
   }, [setContext, locale, car, activeSection])
 
-  // Token system
-  const {
-    user,
-    isRegistered,
-    isLoading: tokensLoading,
-    tokens,
-    consumeForAnalysis,
-    hasAnalyzed,
-  } = useTokens()
-
+  const { user: authUser, profile: authProfile, loading: authLoading, refreshProfile } = useAuth()
+  const { consent } = useConsent()
   const [hasAccess, setHasAccess] = useState(userHasAccess)
   const [copiedQuestions, setCopiedQuestions] = useState(false)
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false)
   const [reportAuthOpen, setReportAuthOpen] = useState(false)
   const [outOfReportsOpen, setOutOfReportsOpen] = useState(false)
-  const { user: authUser, profile: authProfile, loading: authLoading, refreshProfile } = useAuth()
 
   // Show paywall when API returns INSUFFICIENT_CREDITS
   useEffect(() => {
@@ -451,20 +444,40 @@ export function ReportClient({
     }
   }, [car.id, refreshProfile, router])
 
-  // Check access on mount
+  // Check access on mount. Server entitlements are the only source of truth.
   useEffect(() => {
-    if (!tokensLoading) {
-      setHasAccess(resolveReportAccess({
-        serverHasAccess: userHasAccess,
-        localHasAnalyzed: hasAnalyzed(car.id),
-      }))
-    }
-  }, [tokensLoading, car.id, hasAnalyzed, userHasAccess])
+    setHasAccess(resolveReportAccess({
+      serverHasAccess: userHasAccess,
+    }))
+  }, [userHasAccess])
+
+  useEffect(() => {
+    void track({
+      event: "report_viewed",
+      payload: { listingId: car.id, source: "report_page" },
+    })
+  }, [car.id])
+
+  useEffect(() => {
+    fireMetaEvent("ViewContent", {
+      consent,
+      pixelParams: {
+        content_ids: [car.id],
+        content_type: "vehicle",
+        content_name: car.title,
+      },
+      customData: {
+        content_ids: [car.id],
+        content_type: "vehicle",
+        content_name: car.title,
+      },
+    })
+  }, [car.id, car.title, consent])
 
   const spendableBalance =
     authProfile?.pistonsBalance ??
     authProfile?.creditsBalance ??
-    tokens
+    0
   const hasUnlimitedReports = Boolean(authProfile?.unlimitedReports)
   const hasAuthenticatedReportUser = Boolean(authUser || authProfile)
   const shouldRequestServerReportUnlock = shouldRequestReportGenerationOnUnlock({
@@ -476,19 +489,9 @@ export function ReportClient({
     reportAlreadyGenerated,
   })
 
-  // Confirms the spend after the user reviewed the modal. The server still
-  // validates credits in /api/analyze/v3; local token consumption only keeps
-  // the legacy client balance in sync.
+  // Confirms the spend after the user reviewed the modal. The server validates
+  // and debits credits in /api/analyze/v3.
   const executeUnlock = () => {
-    if (hasAnalyzed(car.id)) {
-      setHasAccess(true)
-      if (shouldRequestServerReportUnlock) void handleGenerateV3()
-      setConfirmGenerateOpen(false)
-      return
-    }
-    if (!hasUnlimitedReports) {
-      consumeForAnalysis(car.id)
-    }
     setHasAccess(true)
     if (shouldRequestServerReportUnlock) void handleGenerateV3()
     setConfirmGenerateOpen(false)
@@ -508,10 +511,6 @@ export function ReportClient({
       hasAuthenticatedProfile: hasAuthenticatedReportUser,
     })) {
       setReportAuthOpen(true)
-      return
-    }
-    if (hasAnalyzed(car.id)) {
-      executeUnlock()
       return
     }
     if (hasUnlimitedReports) {
@@ -743,7 +742,7 @@ export function ReportClient({
       const dim = () => pdf.setTextColor(pal.dim[0], pal.dim[1], pal.dim[2])
       const accentBar = () => { pdf.setFillColor(pal.primary[0], pal.primary[1], pal.primary[2]); pdf.rect(0, 0, W, 1.2, "F") }
 
-      const clientName = authProfile?.name || user?.name || "Valued Client"
+      const clientName = authProfile?.name || authUser?.email || "Valued Client"
       const firstName = clientName.split(" ")[0]
 
       const chrome = (title: string) => {
@@ -904,7 +903,7 @@ export function ReportClient({
         })
 
         const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
-        const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+        const userSlug = authProfile?.name ? `_${authProfile.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
         pdf.save(`Monza-Dossier_${carSlug}${userSlug}.pdf`)
         return
       }
@@ -1600,7 +1599,7 @@ export function ReportClient({
 
       // Save
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
-      const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+      const userSlug = authProfile?.name ? `_${authProfile.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
       pdf.save(`Monza-Dossier_${carSlug}${userSlug}.pdf`)
     } catch (err) {
       console.error("PDF generation failed:", err)
@@ -1647,7 +1646,7 @@ export function ReportClient({
         })
 
         const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
-        const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+        const userSlug = authProfile?.name ? `_${authProfile.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
         XLSX.writeFile(wb, `Monza-Data_${carSlug}${userSlug}.xlsx`)
         return
       }
@@ -1706,7 +1705,7 @@ export function ReportClient({
         ] as (string | number)[][] : []),
         [""],
         [`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`],
-        ...((authProfile?.name || user?.name) ? [[`Prepared for: ${authProfile?.name || user?.name}`]] : []),
+        ...(authProfile?.name ? [[`Prepared for: ${authProfile.name}`]] : []),
         ["CONFIDENTIAL - www.monzahaus.com"],
       ]
       const ws1 = XLSX.utils.aoa_to_sheet(coverData)
@@ -1883,7 +1882,7 @@ export function ReportClient({
       }
 
       const carSlug = `${car.year}-${car.make}-${car.model}`.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")
-      const userSlug = user?.name ? `_${user.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
+      const userSlug = authProfile?.name ? `_${authProfile.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "")}` : ""
       XLSX.writeFile(wb, `Monza-Data_${carSlug}${userSlug}.xlsx`)
     } catch (err) {
       console.error("Excel generation failed:", err)
@@ -2053,7 +2052,7 @@ export function ReportClient({
               )}
             </button>
           </div>
-        ) : !tokensLoading && (
+        ) : (
           <div className="p-4 border-t border-border">
             <button
               onClick={handleUnlock}
@@ -3111,7 +3110,7 @@ export function ReportClient({
       <OutOfPistonsModal
         open={outOfReportsOpen}
         onOpenChange={setOutOfReportsOpen}
-        neededPistons={1000}
+        neededPistons={REPORT_PISTON_COST}
         currentBalance={authProfile?.pistonsBalance ?? authProfile?.creditsBalance ?? 0}
       />
 

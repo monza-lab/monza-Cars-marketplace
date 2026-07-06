@@ -94,10 +94,10 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     period: "monthly",
     pistons: 10000,
     reports: "unlimited",
-    perReport: "Unlimited credits",
+    perReport: "Unlimited reports",
     badge: "Most popular",
     features: [
-      "Unlimited credits",
+      "Unlimited reports",
       "Unlimited Advisor research and reports",
       "Watchlist and alerts included",
       "Cancel anytime",
@@ -106,7 +106,7 @@ export const PRICING_PLANS: Record<PlanKey, PricingPlan> = {
     billingMode: "subscription",
     unlimitedReports: true,
     stripeProductId: process.env.STRIPE_PRODUCT_RENNSPORT_MONTHLY ?? null,
-    tagline: "For unlimited credit workflows",
+    tagline: "For unlimited report workflows",
     visibleInPricing: true,
   },
   jerrycan: {

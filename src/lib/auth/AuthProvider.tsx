@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef, us
 import { createClient } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 import { buildAuthRedirectUrl, currentAuthReturnPath } from './redirect'
+import { readStoredAttribution } from '@/lib/marketing/attribution'
 
 export interface UserProfile {
   id: string
@@ -38,7 +39,7 @@ interface AuthContextType {
   profile: UserProfile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>
   resendConfirmationEmail: (email: string) => Promise<{ error: Error | null }>
   signInWithGoogle: () => Promise<{ error: Error | null }>
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>
@@ -95,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           email: supabaseUser.email,
           name: supabaseUser.user_metadata?.full_name,
+          attribution: readStoredAttribution(),
         }),
       })
 
@@ -212,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    return { error: null }
+    return { error: null, needsEmailConfirmation: !data.session }
   }
 
   const resendConfirmationEmail = async (email: string) => {

@@ -6,6 +6,7 @@ import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persistence/anon-session'
 import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
 import { sendServerCapiEvent } from '@/lib/marketing/metaCapiServer'
+import type { AttributionSnapshot } from '@/lib/marketing/attribution'
 
 const CREATE_USER_DB_TIMEOUT_MS = 15_000
 
@@ -23,6 +24,32 @@ function withDbTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
       clearTimeout(timeoutHandle)
     }
   })
+}
+
+function cleanString(value: unknown, maxLength = 500): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed.slice(0, maxLength) : null
+}
+
+function parseAttribution(input: unknown): AttributionSnapshot | null {
+  if (!input || typeof input !== 'object') return null
+  const source = input as Record<string, unknown>
+  const firstSeen = cleanString(source.first_seen_at)
+  const landingPath = cleanString(source.landing_path)
+  if (!firstSeen || !landingPath) return null
+
+  return {
+    utm_source: cleanString(source.utm_source),
+    utm_medium: cleanString(source.utm_medium),
+    utm_campaign: cleanString(source.utm_campaign),
+    utm_term: cleanString(source.utm_term),
+    utm_content: cleanString(source.utm_content),
+    fbclid: cleanString(source.fbclid),
+    landing_path: landingPath,
+    referrer: cleanString(source.referrer),
+    first_seen_at: firstSeen,
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -46,13 +73,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}))
     const { name } = body
+    const attribution = parseAttribution(body.attribution)
 
     try {
       const { profile, created } = await withDbTimeout(
         getOrCreateUserWithStatus(
           user.id,
           user.email!,
-          name || user.user_metadata?.full_name
+          name || user.user_metadata?.full_name,
+          attribution
         ),
         '/api/user/create getOrCreateUserWithStatus'
       )

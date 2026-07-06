@@ -46,14 +46,14 @@ export function AuthRequiredPrompt({
             onClick={() => setShowAuthModal(true)}
             className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
-            {t('signIn')}
+            {t('createAccountTitle')}
           </Button>
           <Button
             variant="outline"
             onClick={() => setShowAuthModal(true)}
             className="border-border text-foreground hover:bg-foreground/5"
           >
-            {t('createAccountTitle')}
+            {t('signIn')}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-4">
@@ -64,7 +64,7 @@ export function AuthRequiredPrompt({
       <AuthModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
-        defaultMode="signin"
+        defaultMode="signup"
       />
     </>
   )

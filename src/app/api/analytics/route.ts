@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic"
 
 const KNOWN_EVENTS = new Set<AnalyticsEvent["event"]>([
   "pricing_page_viewed",
+  "report_viewed",
   "plan_clicked",
   "checkout_started",
   "checkout_completed",

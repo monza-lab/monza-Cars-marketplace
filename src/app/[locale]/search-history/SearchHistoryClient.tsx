@@ -95,7 +95,11 @@ export default function SearchHistoryClient() {
           >
             {t("signIn")}
           </button>
-          <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+          <AuthModal
+            open={showAuthModal}
+            onOpenChange={setShowAuthModal}
+            defaultMode="signup"
+          />
         </div>
       </div>
     )

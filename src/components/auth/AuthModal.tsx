@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import {
   Dialog,
@@ -18,8 +18,9 @@ interface AuthModalProps {
 
 export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthModalProps) {
   const t = useTranslations('auth')
+  const idPrefix = useId()
   const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode)
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -43,11 +44,12 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
       setMagicSent(false)
       setSignupConfirmation(false)
       setError(null)
-      setShowPassword(false)
+      setShowPassword(defaultMode === 'signup')
       setLoading(null)
       setResendCooldown(0)
     } else {
       setMode(defaultMode)
+      setShowPassword(defaultMode === 'signup')
     }
   }, [open, defaultMode])
 
@@ -109,13 +111,16 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
         if (error) setError(error.message)
         else onOpenChange(false)
       } else {
-        const { error } = await signUp(email, password, name)
+        const { error, needsEmailConfirmation } = await signUp(email, password, name)
         if (error) {
           setError(error.message)
-        } else {
-          // No CompleteRegistration here: signup still requires email confirmation.
-          // The server fires it on confirmed session (see /api/user/create).
+        } else if (needsEmailConfirmation) {
+          // Email-confirmation deployments still need the recovery/resend screen.
           setSignupConfirmation(true)
+        } else {
+          // The server fires CompleteRegistration when /api/user/create runs
+          // after Supabase establishes the session.
+          onOpenChange(false)
         }
       }
     } catch {
@@ -290,10 +295,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                 <form onSubmit={handleMagic} className="space-y-3">
                   {isSignup && (
                     <div>
-                      <label className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                      <label htmlFor={`${idPrefix}-magic-name`} className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
                         {t('name')}
                       </label>
                       <input
+                        id={`${idPrefix}-magic-name`}
                         type="text"
                         placeholder={t('namePlaceholder')}
                         value={name}
@@ -304,10 +310,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                     </div>
                   )}
                   <div>
-                    <label className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                    <label htmlFor={`${idPrefix}-magic-email`} className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
                       {t('email')}
                     </label>
                     <input
+                      id={`${idPrefix}-magic-email`}
                       type="email"
                       placeholder={t('emailPlaceholder')}
                       value={email}
@@ -337,10 +344,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                 <form onSubmit={handlePassword} className="space-y-3">
                   {isSignup && (
                     <div>
-                      <label className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                      <label htmlFor={`${idPrefix}-password-name`} className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
                         {t('name')}
                       </label>
                       <input
+                        id={`${idPrefix}-password-name`}
                         type="text"
                         placeholder={t('namePlaceholder')}
                         value={name}
@@ -351,10 +359,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                     </div>
                   )}
                   <div>
-                    <label className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                    <label htmlFor={`${idPrefix}-password-email`} className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
                       {t('email')}
                     </label>
                     <input
+                      id={`${idPrefix}-password-email`}
                       type="email"
                       placeholder={t('emailPlaceholder')}
                       value={email}
@@ -366,10 +375,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
+                    <label htmlFor={`${idPrefix}-password`} className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground">
                       {t('password')}
                     </label>
                     <input
+                      id={`${idPrefix}-password`}
                       type="password"
                       placeholder={t('passwordPlaceholder')}
                       value={password}
@@ -426,6 +436,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
                   type="button"
                   onClick={() => {
                     setMode(isSignup ? 'signin' : 'signup')
+                    setShowPassword(!isSignup)
                     setError(null)
                   }}
                   className="text-primary font-medium hover:underline"

@@ -52,7 +52,9 @@ export function LandingPage() {
     >
       <LandingHeader />
       <HeroSection />
-      <ProblemSection />
+      <div id="landing-next-section">
+        <ProblemSection />
+      </div>
       <EcosystemSection />
       <SocialProofSection />
       <VisionSection />

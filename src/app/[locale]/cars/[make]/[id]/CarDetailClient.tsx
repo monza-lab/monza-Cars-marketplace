@@ -28,12 +28,6 @@ import {
   Users,
   Truck,
   CheckCircle2,
-  Mail,
-  User,
-  Lock,
-  Coins,
-  Download,
-  Send,
   BarChart3,
   DollarSign,
   ExternalLink,
@@ -52,12 +46,13 @@ import { AdvisorChat } from "@/components/advisor/AdvisorChat"
 import { useAdvisorChatHandoff } from "@/components/advisor/AdvisorHandoffContext"
 import { useChatContext } from "@/lib/advisor/ChatContextProvider"
 import { MobileCarCTA } from "@/components/mobile"
-import { useTokens } from "@/hooks/useTokens"
-import { REPORT_PISTON_COST } from "@/lib/reports/canAffordReport"
-import { useAuth } from "@/lib/auth/AuthProvider"
 import { HausReportTeaser } from "@/components/report/HausReportTeaser"
 import { ListingHook } from "@/components/detail/ListingHook"
 import { formatPoint } from "@/lib/landedCost/format"
+import { fireMetaEvent } from "@/lib/marketing/metaPixel"
+import { useConsent } from "@/components/legal/ConsentProvider"
+import { useAuth } from "@/lib/auth/AuthProvider"
+import { AuthModal } from "@/components/auth/AuthModal"
 
 // ─── MOCK DATA ───
 // ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
@@ -838,7 +833,16 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const router = useRouter()
   const isMobile = useIsMobile()
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-")
-  const handleOpenReport = () => router.push(`/cars/${makeSlug}/${car.id}/report`)
+  const reportPath = `/cars/${makeSlug}/${car.id}/report`
+  const { user } = useAuth()
+  const [showReportAuth, setShowReportAuth] = useState(false)
+  const handleOpenReport = () => {
+    if (!user) {
+      setShowReportAuth(true)
+      return
+    }
+    router.push(reportPath)
+  }
   const lockedRegion = car.canonicalMarket ?? car.region
   const previousRegionRef = useRef<string | null>(null)
   if (previousRegionRef.current === null) {
@@ -849,9 +853,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const [showAdvisorChat, setShowAdvisorChat] = useState(false)
   const { openChatConversationId } = useAdvisorChatHandoff()
   useEffect(() => {
+    if (!showReportAuth || !user) return
+    router.push(reportPath)
+  }, [reportPath, router, showReportAuth, user])
+
+  useEffect(() => {
     if (openChatConversationId) setShowAdvisorChat(true)
   }, [openChatConversationId])
   const { setContext } = useChatContext()
+  const { consent } = useConsent()
   // Publish surface context to AdvisorDrawer on mount and whenever the car changes.
   // Resets to "other" on unmount so stale car suggestions don't bleed into other pages.
   useEffect(() => {
@@ -860,74 +870,23 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       setContext({ surface: "other", car: null, activeSection: null, seriesId: null })
     }
   }, [setContext, locale, car])
-  const [gateName, setGateName] = useState("")
-  const [gateEmail, setGateEmail] = useState("")
-  const [gateErrors, setGateErrors] = useState<{ name?: boolean; email?: boolean }>({})
-  const [showWelcome, setShowWelcome] = useState(false)
-  const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [analysisSent, setAnalysisSent] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
 
-  // Token system
-  const {
-    user,
-    isRegistered,
-    isLoading: tokensLoading,
-    tokens,
-    analysesRemaining,
-    register,
-    consumeForAnalysis,
-    hasAnalyzed,
-  } = useTokens()
-
-  const { signInWithGoogle } = useAuth()
-
-  // Registration gate: only shown if user is not registered
-  const showRegistrationGate = !tokensLoading && !isRegistered
-
-  const handleGateSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newErrors: { name?: boolean; email?: boolean } = {}
-    if (!gateName.trim()) newErrors.name = true
-    if (!gateEmail.trim() || !gateEmail.includes("@")) newErrors.email = true
-    if (Object.keys(newErrors).length > 0) {
-      setGateErrors(newErrors)
-      return
-    }
-    register(gateName.trim(), gateEmail.trim())
-    setShowWelcome(true)
-  }
-
-  const handleGoogleSignIn = async () => {
-    const { error } = await signInWithGoogle()
-    if (error) {
-      console.error("Google sign-in failed:", error)
-    }
-  }
-
-  // "Generate Full Analysis" CTA handler
-  const handleGenerateAnalysis = () => {
-    if (hasAnalyzed(car.id)) {
-      setShowAnalysisPopup(true)
-      return
-    }
-    const success = consumeForAnalysis(car.id)
-    if (success) {
-      setShowAnalysisPopup(true)
-    } else {
-      setShowPaywall(true)
-    }
-  }
-
-  // Send analysis by email (frontend-only simulation)
-  const handleSendAnalysis = () => {
-    setAnalysisSent(true)
-    setTimeout(() => {
-      setAnalysisSent(false)
-      setShowAnalysisPopup(false)
-    }, 2500)
-  }
+  useEffect(() => {
+    fireMetaEvent("ViewContent", {
+      consent,
+      pixelParams: {
+        content_ids: [car.id],
+        content_type: "vehicle",
+        content_name: car.title,
+      },
+      customData: {
+        content_ids: [car.id],
+        content_type: "vehicle",
+        content_name: car.title,
+      },
+    })
+  }, [car.id, car.title, consent])
 
   const listingMode = getListingMode(car)
   const isLive = listingMode === "live_auction" || listingMode === "for_sale"
@@ -1001,16 +960,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  // Lock body scroll when registration gate is shown
-  useEffect(() => {
-    if (showRegistrationGate) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-    }
-    return () => { document.body.style.overflow = "" }
-  }, [showRegistrationGate])
 
   return (
     <MotionConfig reducedMotion={isMobile ? "always" : "user"}>
@@ -1922,371 +1871,6 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         </div>
       </div>
 
-      {/* ═══ REGISTRATION GATE ═══ */}
-      <AnimatePresence>
-        {showRegistrationGate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[70] flex items-end md:items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-md" />
-            <div className="absolute inset-x-0 top-0 h-[45vh] bg-gradient-to-b from-transparent via-transparent to-background/85" />
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.15 }}
-              className="relative w-full max-w-md mx-4 rounded-2xl bg-card/95 backdrop-blur-xl border border-border shadow-2xl overflow-hidden"
-            >
-              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
-
-              <div className="px-6 pt-8 pb-2 text-center">
-                <h3 className="text-xl font-bold text-foreground">
-                  {/* [HARDCODED] */}
-                  Sign up to continue
-                </h3>
-                <p className="text-[12px] text-muted-foreground mt-1">
-                  {/* [HARDCODED] */}
-                  Create a free account to explore this vehicle
-                </p>
-              </div>
-
-              <div className="px-6 pt-5 pb-4">
-                <button
-                  onClick={handleGoogleSignIn}
-                  type="button"
-                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
-                >
-                  <svg className="size-5" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  {/* [HARDCODED] */}
-                  Continue with Google
-                </button>
-              </div>
-
-              <div className="px-6 flex items-center gap-3 pb-4">
-                <div className="flex-1 h-px bg-foreground/10" />
-                <span className="text-[10px] text-muted-foreground">{/* [HARDCODED] */}or use email</span>
-                <div className="flex-1 h-px bg-foreground/10" />
-              </div>
-
-              <form onSubmit={handleGateSubmit} className="px-6 pb-6 space-y-3">
-                <div>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={gateName}
-                      onChange={(e) => { setGateName(e.target.value); setGateErrors(prev => ({ ...prev, name: false })) }}
-                      placeholder="Your name" // [HARDCODED]
-                      className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
-                        gateErrors.name ? "border-destructive/50" : "border-border focus:border-primary/50"
-                      }`}
-                    />
-                  </div>
-                  {/* [HARDCODED] */}
-                  {gateErrors.name && <p className="text-[10px] text-destructive mt-1 pl-1">Enter your name</p>}
-                </div>
-
-                <div>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      value={gateEmail}
-                      onChange={(e) => { setGateEmail(e.target.value); setGateErrors(prev => ({ ...prev, email: false })) }}
-                      placeholder="your@email.com" // [HARDCODED]
-                      className={`w-full bg-foreground/3 border rounded-xl pl-10 pr-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors ${
-                        gateErrors.email ? "border-destructive/50" : "border-border focus:border-primary/50"
-                      }`}
-                    />
-                  </div>
-                  {/* [HARDCODED] */}
-                  {gateErrors.email && <p className="text-[10px] text-destructive mt-1 pl-1">Enter a valid email</p>}
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl border border-border text-foreground font-medium text-[13px] hover:bg-white/[0.05] transition-all"
-                >
-                  {/* [HARDCODED] */}
-                  Sign up with email
-                </button>
-
-                {/* [HARDCODED] */}
-                <p className="text-[10px] text-muted-foreground text-center pt-1">
-                  Free account. No credit card needed.
-                </p>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ═══ WELCOME POPUP ═══ */}
-      <AnimatePresence>
-        {showWelcome && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => setShowWelcome(false)} />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
-            >
-              <div className="px-6 pt-7 pb-4 text-center">
-                <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Coins className="size-7 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground">
-                  {/* [HARDCODED] */}
-                  Welcome to Monza
-                </h3>
-                <p className="text-3xl tabular-nums font-black text-primary mt-2">
-                  {/* [HARDCODED] */}
-                  300 Pistons
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {/* [HARDCODED] */}
-                  have been added to your account
-                </p>
-              </div>
-
-              <div className="px-6 pb-5">
-                {/* [HARDCODED] */}
-                <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
-                  How it works
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-primary">1</span>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Browse all vehicles freely</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Explore every car, model, and brand at no cost</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-primary">2</span>
-                  </div>
-                  <div>
-                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Generate full analyses with Pistons</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Each report costs {REPORT_PISTON_COST.toLocaleString("en-US")} Pistons &mdash; you get 3,000 free each month</p>
-                  </div>
-                </div>
-                  <div className="flex items-start gap-3">
-                    <div className="size-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="text-[11px] font-bold text-primary">3</span>
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-foreground">{/* [HARDCODED] */}Download or receive by email</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Re-downloading a report you already generated is free</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-6 pb-6">
-                <button
-                  onClick={() => setShowWelcome(false)}
-                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
-                >
-                  {/* [HARDCODED] */}
-                  Got it
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ═══ ANALYSIS DELIVERY POPUP ═══ */}
-      <AnimatePresence>
-        {showAnalysisPopup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => { setShowAnalysisPopup(false); setAnalysisSent(false) }} />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
-            >
-              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
-
-              {analysisSent ? (
-                <div className="px-6 py-10 text-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 15 }}
-                    className="size-14 rounded-full bg-positive/10 flex items-center justify-center mx-auto mb-4"
-                  >
-                    <CheckCircle2 className="size-7 text-positive" />
-                  </motion.div>
-                  <h3 className="text-lg font-bold text-foreground">{/* [HARDCODED] */}Analysis sent!</h3>
-                  <p className="text-[12px] text-muted-foreground mt-1">
-                    {/* [HARDCODED] */}
-                    Check your inbox at {user?.email}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="px-6 pt-6 pb-4 text-center">
-                    <h3 className="text-lg font-bold text-foreground">
-                      {/* [HARDCODED] */}
-                      Your analysis is ready
-                    </h3>
-                    <p className="text-[12px] text-muted-foreground mt-1">
-                      {car.title}
-                    </p>
-                  </div>
-
-                  <div className="px-6 pb-6 space-y-3">
-                    <button
-                      onClick={handleSendAnalysis}
-                      className="w-full flex items-center gap-4 rounded-xl bg-primary px-5 py-4 text-left hover:bg-primary/80 transition-all group"
-                    >
-                      <div className="size-10 rounded-full bg-background/10 flex items-center justify-center shrink-0">
-                        <Send className="size-5 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold text-primary-foreground">{/* [HARDCODED] */}Send to my email</p>
-                        <p className="text-[11px] text-primary-foreground/60">{user?.email}</p>
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowAnalysisPopup(false)
-                      }}
-                      className="w-full flex items-center gap-4 rounded-xl border border-border px-5 py-4 text-left hover:bg-foreground/3 transition-all group"
-                    >
-                      <div className="size-10 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
-                        <Download className="size-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Download PDF</p>
-                        <p className="text-[11px] text-muted-foreground">{/* [HARDCODED] */}Full Haus Report</p>
-                      </div>
-                    </button>
-
-                    {!hasAnalyzed(car.id) && (
-                      <div className="flex items-center justify-center gap-2 pt-2">
-                        <Coins className="size-3.5 text-primary" />
-                        <span className="text-[11px] text-muted-foreground">
-                          {REPORT_PISTON_COST.toLocaleString("en-US")} Pistons used &middot; {tokens.toLocaleString()} remaining
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ═══ PAYWALL POPUP ═══ */}
-      <AnimatePresence>
-        {showPaywall && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm" onClick={() => setShowPaywall(false)} />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
-            >
-              <div className="h-0.5 bg-gradient-to-r from-primary via-primary/40 to-transparent" />
-
-              <div className="px-6 pt-7 pb-6 text-center">
-                <div className="size-14 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
-                  <Coins className="size-7 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground">
-                  {/* [HARDCODED] */}
-                  You&apos;ve used your free analyses
-                </h3>
-                <p className="text-[12px] text-muted-foreground mt-1">
-                  {/* [HARDCODED] */}
-                  Get unlimited access to all vehicle reports
-                </p>
-
-                {/* [HARDCODED] */}
-                <div className="mt-5 space-y-2 text-left">
-                  {[
-                    "Unlimited vehicle analyses", // [HARDCODED]
-                    "Real-time price alerts", // [HARDCODED]
-                    "Personal collector advisor", // [HARDCODED]
-                  ].map((benefit) => (
-                    <div key={benefit} className="flex items-center gap-2.5">
-                      <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                      <span className="text-[12px] text-muted-foreground">{benefit}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <a
-                  // [HARDCODED]
-                  href={`https://wa.me/573208492641?text=${encodeURIComponent(
-                    `Hi, I'd like to upgrade to Monza Premium for unlimited analyses.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 mt-6 rounded-xl bg-primary text-primary-foreground font-semibold text-[13px] hover:bg-primary/80 transition-all"
-                >
-                  <MessageCircle className="size-4" />
-                  {/* [HARDCODED] */}
-                  Contact us to upgrade
-                </a>
-
-                <button
-                  onClick={() => setShowPaywall(false)}
-                  className="w-full py-3 mt-2 text-[12px] text-muted-foreground hover:text-muted-foreground transition-colors"
-                >
-                  {/* [HARDCODED] */}
-                  Maybe later
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ═══ ADVISOR CHAT (Desktop) ═══ */}
       <AdvisorChat
         open={showAdvisorChat}
@@ -2300,6 +1884,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           dbAnalysis,
           dbSoldHistory,
         }}
+      />
+      <AuthModal
+        open={showReportAuth}
+        onOpenChange={setShowReportAuth}
+        defaultMode="signup"
       />
     </div>
     </MotionConfig>

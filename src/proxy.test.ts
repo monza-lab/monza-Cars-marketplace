@@ -21,13 +21,37 @@ describe("proxy locale normalization", () => {
     vi.clearAllMocks();
   });
 
-  it("redirects duplicate locale segments to the canonical locale path", async () => {
+  it("redirects duplicate hidden locale segments to the canonical locale-free path", async () => {
     const request = new NextRequest("http://localhost:3000/de/de/browse?series=991");
 
     const response = await proxy(request);
 
     expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe("http://localhost:3000/de/browse?series=991");
+    expect(response.headers.get("location")).toBe("http://localhost:3000/browse?series=991");
+    expect(handleI18nRouting).not.toHaveBeenCalled();
+    expect(updateSession).not.toHaveBeenCalled();
+  });
+
+  it("allows the internal default locale route to pass through", async () => {
+    const request = new NextRequest("http://localhost:3000/en/get-started?utm_campaign=audit");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(handleI18nRouting).not.toHaveBeenCalled();
+    expect(updateSession).not.toHaveBeenCalled();
+  });
+
+  it("rewrites locale-free pages into the internal English route without redirecting", async () => {
+    const request = new NextRequest("http://localhost:3000/get-started?utm_campaign=audit");
+
+    const response = await proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-rewrite")).toBe("http://localhost:3000/en/get-started?utm_campaign=audit");
     expect(handleI18nRouting).not.toHaveBeenCalled();
     expect(updateSession).not.toHaveBeenCalled();
   });

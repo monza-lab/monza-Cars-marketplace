@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
+import { usePathname } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -19,17 +20,41 @@ const BULLETS = [
   { key: "trends", Icon: TrendingUp },
 ] as const
 
+export function shouldMountWelcomeModal(pathname: string | null | undefined): boolean {
+  const cleanPath = (pathname || "/").replace(/\/+$/, "") || "/"
+  if (cleanPath === "/") return false
+
+  const parts = cleanPath.split("/").filter(Boolean)
+  const maybeLocale = parts[0]
+  const pathWithoutLocale = ["en", "es", "de", "ja"].includes(maybeLocale)
+    ? `/${parts.slice(1).join("/")}`
+    : cleanPath
+
+  if (pathWithoutLocale === "/" || pathWithoutLocale === "/get-started") return false
+
+  const appParts = pathWithoutLocale.split("/").filter(Boolean)
+  const isVehicleDetail = appParts[0] === "cars" && appParts.length >= 3
+  if (isVehicleDetail) return false
+
+  return true
+}
+
 export function WelcomeModal() {
   const t = useTranslations("onboarding.welcome")
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const shouldMount = shouldMountWelcomeModal(pathname)
 
   useEffect(() => {
+    if (!shouldMount) return
     if (typeof window === "undefined") return
     if (localStorage.getItem(STORAGE_KEY) === "true") return
 
     const timer = setTimeout(() => setOpen(true), 600)
     return () => clearTimeout(timer)
-  }, [])
+  }, [shouldMount])
+
+  if (!shouldMount) return null
 
   function handleDismiss() {
     setOpen(false)

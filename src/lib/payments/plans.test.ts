@@ -36,14 +36,14 @@ describe("PRICING_PLANS — wallet recharge model", () => {
     expect(PRICING_PLANS.weissach.visibleInPricing).toBe(false)
   })
 
-  it("rennsport key sells Genshpod as the only visible unlimited-credit subscription", () => {
+  it("rennsport key sells Genshpod as the only visible unlimited-report subscription", () => {
     const visibleSubs = getVisibleSubs()
     expect(visibleSubs).toHaveLength(1)
     expect(visibleSubs[0].id).toBe("rennsport")
     expect(visibleSubs[0].name).toBe("Genshpod")
     expect(visibleSubs[0].reports).toBe("unlimited")
     expect(visibleSubs[0].unlimitedReports).toBe(true)
-    expect(visibleSubs[0].features.join(" ")).toContain("Unlimited credits")
+    expect(visibleSubs[0].features.join(" ")).toContain("Unlimited reports")
     expect(visibleSubs[0].features.join(" ")).not.toContain("10,000 Pistons every month")
     expect(PRICING_PLANS.rennsport.visibleInPricing).toBe(true)
   })

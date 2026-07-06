@@ -17,7 +17,7 @@ import { PRICING_PLANS, type PlanId } from "@/lib/payments/plans"
 interface OutOfPistonsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** How many Pistons the action requires (e.g. 100 for a report). */
+  /** How many Pistons the action requires (e.g. 1,000 for a report). */
   neededPistons: number
   /** Current Pistons balance of the user. */
   currentBalance: number

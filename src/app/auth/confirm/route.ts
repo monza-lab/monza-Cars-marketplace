@@ -9,10 +9,13 @@ export async function HEAD() {
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const token_hash = searchParams.get('token_hash')
+  const rawTokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const rawNext = searchParams.get('next') ?? '/'
+  const recovered = recoverTokenHashFromNext(rawNext, rawTokenHash)
+  const token_hash = recovered.tokenHash
+  const next = recovered.next
   const redirectUrl = next.startsWith('http') ? next : new URL(next, origin).toString()
   const successResponse = NextResponse.redirect(redirectUrl)
 
@@ -44,4 +47,29 @@ export async function GET(request: NextRequest) {
   return NextResponse.redirect(
     `${origin}/?error=confirmation_failed`
   )
+}
+
+function recoverTokenHashFromNext(next: string, tokenHash: string | null): {
+  next: string
+  tokenHash: string | null
+} {
+  if (tokenHash || !next.includes('token_hash=')) {
+    return { next, tokenHash }
+  }
+
+  const tokenMatch = next.match(/[?&]token_hash=([^&]+)/)
+  const recoveredToken = tokenMatch?.[1] ? decodeURIComponent(tokenMatch[1]) : null
+  if (!recoveredToken) {
+    return { next, tokenHash }
+  }
+
+  const [beforeToken] = next.split(/[?&]token_hash=/)
+  const cleanNext = beforeToken.endsWith('?') || beforeToken.endsWith('&')
+    ? beforeToken.slice(0, -1)
+    : beforeToken
+
+  return {
+    next: cleanNext || '/',
+    tokenHash: recoveredToken,
+  }
 }

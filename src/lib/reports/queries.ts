@@ -18,6 +18,7 @@ import type {
 } from "@/lib/fairValue/types"
 import { toUsd } from "../exchangeRates"
 import { REPORT_PISTON_COST } from "./canAffordReport"
+import type { AttributionSnapshot } from "@/lib/marketing/attribution"
 
 export const DEFAULT_MONTHLY_PISTONS = 3000
 export { REPORT_PISTON_COST }
@@ -245,6 +246,7 @@ export async function getOrCreateUserWithStatus(
   supabaseUserId: string,
   email: string,
   displayName?: string,
+  attribution?: AttributionSnapshot | null,
 ): Promise<{ profile: UserCreditsRow; created: boolean }> {
   const supabase = getServiceClient()
 
@@ -276,6 +278,15 @@ export async function getOrCreateUserWithStatus(
       stripe_subscription_id: null,
       subscription_status: null,
       subscription_period_end: null,
+      utm_source: attribution?.utm_source ?? null,
+      utm_medium: attribution?.utm_medium ?? null,
+      utm_campaign: attribution?.utm_campaign ?? null,
+      utm_term: attribution?.utm_term ?? null,
+      utm_content: attribution?.utm_content ?? null,
+      fbclid: attribution?.fbclid ?? null,
+      landing_path: attribution?.landing_path ?? null,
+      referrer: attribution?.referrer ?? null,
+      first_seen_at: attribution?.first_seen_at ?? null,
     })
     .select("*")
     .single()

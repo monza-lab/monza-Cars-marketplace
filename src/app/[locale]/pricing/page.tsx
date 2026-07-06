@@ -16,7 +16,7 @@ import { track } from "@/lib/analytics/events"
 const FAQ_ITEMS = [
   {
     q: "Do Pistons expire?",
-    a: "Top-up Pistons never expire. Genshpod keeps credits unlimited while the subscription is active.",
+    a: "Top-up Pistons never expire. Genshpod keeps reports unlimited while the subscription is active.",
   },
   {
     q: "What can I do with Pistons?",
@@ -24,7 +24,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What's the difference between top-up and subscription?",
-    a: "Top-ups are one-time purchases that never expire; great if you research occasionally. Genshpod ($59/mo) gives unlimited credits plus pro features and is the most cost-effective if you use the platform regularly.",
+    a: "Top-ups are one-time purchases that never expire; great if you research occasionally. Genshpod ($59/mo) gives unlimited reports plus pro features and is the most cost-effective if you use the platform regularly.",
   },
   {
     q: "How does cancellation work?",

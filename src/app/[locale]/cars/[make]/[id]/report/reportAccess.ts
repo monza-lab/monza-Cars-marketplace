@@ -1,11 +1,9 @@
 export function resolveReportAccess({
   serverHasAccess,
-  localHasAnalyzed,
 }: {
   serverHasAccess: boolean
-  localHasAnalyzed: boolean
 }): boolean {
-  return serverHasAccess || localHasAnalyzed
+  return serverHasAccess
 }
 
 export function resolveVisibleV3Report<T>({

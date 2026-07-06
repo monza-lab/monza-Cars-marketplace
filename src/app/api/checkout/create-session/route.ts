@@ -96,7 +96,7 @@ export async function POST(request: Request) {
               name: `Monza Haus ${plan.name}`,
               description:
                 plan.billingMode === "subscription"
-                  ? (plan.unlimitedReports ? "Unlimited credits while subscribed" : `${plan.pistons.toLocaleString()} Pistons every month`)
+                  ? (plan.unlimitedReports ? "Unlimited reports while subscribed" : `${plan.pistons.toLocaleString()} Pistons every month`)
                   : `${plan.pistons.toLocaleString()} Pistons top-up`,
             },
             ...(plan.billingMode === "subscription"

@@ -65,7 +65,7 @@ export default function GetStartedPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Globe className="size-3 text-primary" />
               <span className="text-[11px] font-medium text-primary tracking-wide uppercase">
-                Free first report — no card required
+                3 free reports — no card required
               </span>
             </div>
 
@@ -83,7 +83,7 @@ export default function GetStartedPage() {
               onClick={handleCTA}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Generate your first Porsche report — free
+              Generate 3 Porsche reports — free
               <ChevronRight className="size-4" />
             </button>
           </div>
@@ -149,7 +149,7 @@ export default function GetStartedPage() {
               onClick={handleCTA}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Generate your first Porsche report — free
+              Generate 3 Porsche reports — free
               <ChevronRight className="size-4" />
             </button>
           </div>

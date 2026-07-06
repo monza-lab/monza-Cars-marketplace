@@ -3,7 +3,10 @@
 import Script from "next/script"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import { useConsent } from "./ConsentProvider"
+import { captureAttributionFromBrowser } from "@/lib/marketing/attribution"
 
 // Single mount point for every non-essential tracker:
 // - Loads NOTHING while consent is "pending"
@@ -18,6 +21,24 @@ const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
 export function ClientTrackers() {
   const { consent } = useConsent()
+  const pathname = usePathname()
+  const lastTrackedPathRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    captureAttributionFromBrowser()
+  }, [])
+
+  useEffect(() => {
+    if (consent !== "accepted") return
+    if (typeof window === "undefined" || !window.fbq) return
+    if (!lastTrackedPathRef.current) {
+      lastTrackedPathRef.current = pathname
+      return
+    }
+    if (lastTrackedPathRef.current === pathname) return
+    lastTrackedPathRef.current = pathname
+    window.fbq("track", "PageView")
+  }, [consent, pathname])
 
   if (consent !== "accepted") {
     return null

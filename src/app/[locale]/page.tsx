@@ -32,13 +32,16 @@ async function loadDashboardData(): Promise<DashboardData> {
 
 export default async function Home({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ error?: string }>;
 }) {
   const { locale } = await params;
+  const authError = (await searchParams)?.error ?? null;
   setRequestLocale(locale);
 
   const data = await loadDashboardData();
 
-  return <HomeGate data={data} />;
+  return <HomeGate data={data} authError={authError} />;
 }

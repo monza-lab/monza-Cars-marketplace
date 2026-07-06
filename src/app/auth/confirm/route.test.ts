@@ -45,4 +45,19 @@ describe('/auth/confirm', () => {
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe('http://localhost:3000/dashboard')
   })
+
+  it('recovers token_hash when a template accidentally embeds it inside next', async () => {
+    verifyOtp.mockResolvedValueOnce({ error: null })
+
+    const response = await GET(
+      new NextRequest('http://localhost:3000/auth/confirm?next=%2Fget-started%3Futm_campaign%3Daudit?token_hash=recovered-token&type=email')
+    )
+
+    expect(verifyOtp).toHaveBeenCalledWith({
+      type: 'email',
+      token_hash: 'recovered-token',
+    })
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe('http://localhost:3000/get-started?utm_campaign=audit')
+  })
 })

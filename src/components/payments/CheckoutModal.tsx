@@ -10,6 +10,7 @@ import { getPricingPlan, type PlanId } from "@/lib/payments/plans"
 import { Shield, Lock, Loader2, Check } from "lucide-react"
 import { track } from "@/lib/analytics/events"
 import { fireMetaEvent } from "@/lib/marketing/metaPixel"
+import { useConsent } from "@/components/legal/ConsentProvider"
 
 interface CheckoutModalProps {
   open: boolean
@@ -27,6 +28,7 @@ export function CheckoutModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const locale = useLocale()
+  const { consent } = useConsent()
 
   const plan = planId ? getPricingPlan(planId) : null
   const showPackUpsell = plan?.id === "fuel_cell"
@@ -50,6 +52,7 @@ export function CheckoutModal({
       payload: { planId: plan.id, amount: plan.price, sessionId: "" },
     })
     fireMetaEvent("InitiateCheckout", {
+      consent,
       pixelParams: {
         value: plan.price,
         currency: "USD",
@@ -120,7 +123,7 @@ export function CheckoutModal({
             </h2>
             <p className="mt-1 text-[13px] text-muted-foreground">
               {plan.reports === "unlimited"
-                ? /* [HARDCODED] */ "Unlimited credits · monthly subscription · export"
+                ? /* [HARDCODED] */ "Unlimited reports · monthly subscription · export"
                 : plan.reports === 1
                 ? /* [HARDCODED] */ "1 report · never expires"
                 : /* [HARDCODED] */ `${plan.reports} reports · never expire`}
@@ -135,7 +138,7 @@ export function CheckoutModal({
               </p>
               <p className="text-[12px] text-foreground leading-relaxed">
                 {/* [HARDCODED] */}For less than the heavy reload, <strong>Genshpod ($59/mo)</strong> gives you{" "}
-                <strong>unlimited credits</strong> while your subscription is active.
+                <strong>unlimited reports</strong> while your subscription is active.
               </p>
               <button
                 onClick={handleSwitchToMonthly}

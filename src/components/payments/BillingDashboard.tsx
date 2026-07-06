@@ -69,9 +69,9 @@ export function BillingDashboard() {
             <Coins className="size-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-[14px] font-semibold text-foreground">Credits Balance</h3>
+            <h3 className="text-[14px] font-semibold text-foreground">Pistons Balance</h3>
             <p className="text-[11px] text-muted-foreground">
-              {hasUnlimited ? "Unlimited credits while subscribed" : "Your available Pistons"}
+              {hasUnlimited ? "Unlimited reports while subscribed" : "Your available Pistons"}
             </p>
           </div>
         </div>

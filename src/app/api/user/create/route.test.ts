@@ -63,7 +63,20 @@ function request() {
       "content-type": "application/json",
       authorization: "Bearer token-1",
     },
-    body: JSON.stringify({ name: "Buyer" }),
+    body: JSON.stringify({
+      name: "Buyer",
+      attribution: {
+        utm_source: "meta",
+        utm_medium: "paid_social",
+        utm_campaign: "mh-fase05",
+        utm_term: null,
+        utm_content: "video-a",
+        fbclid: "fb.123",
+        landing_path: "/en/get-started?utm_campaign=mh-fase05",
+        referrer: "https://facebook.com/",
+        first_seen_at: "2026-07-06T12:00:00.000Z",
+      },
+    }),
   })
 }
 
@@ -100,5 +113,27 @@ describe("/api/user/create", () => {
         status: "completed",
       },
     })
+  })
+
+  it("persists first-touch attribution when creating the app profile", async () => {
+    const response = await POST(request())
+
+    expect(response.status).toBe(200)
+    expect(mocks.getOrCreateUserWithStatus).toHaveBeenCalledWith(
+      "user-1",
+      "buyer@example.com",
+      "Buyer",
+      {
+        utm_source: "meta",
+        utm_medium: "paid_social",
+        utm_campaign: "mh-fase05",
+        utm_term: null,
+        utm_content: "video-a",
+        fbclid: "fb.123",
+        landing_path: "/en/get-started?utm_campaign=mh-fase05",
+        referrer: "https://facebook.com/",
+        first_seen_at: "2026-07-06T12:00:00.000Z",
+      },
+    )
   })
 })

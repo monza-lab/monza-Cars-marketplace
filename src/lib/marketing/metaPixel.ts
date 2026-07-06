@@ -4,6 +4,7 @@ type MetaEventName =
   | "Lead"
   | "CompleteRegistration"
   | "InitiateCheckout"
+  | "ViewContent"
   | "Purchase"
 
 declare global {
@@ -57,13 +58,17 @@ export async function sendCapiEvent(input: {
 export function fireMetaEvent(
   eventName: MetaEventName,
   opts: {
+    consent?: "pending" | "accepted" | "rejected"
+    eventId?: string
     pixelParams?: Record<string, unknown>
     email?: string
     externalId?: string
     customData?: Record<string, unknown>
   } = {},
 ) {
-  const eventId = generateEventId()
+  if (opts.consent && opts.consent !== "accepted") return
+
+  const eventId = opts.eventId ?? generateEventId()
   trackPixelEvent(eventName, opts.pixelParams ?? opts.customData ?? {}, eventId)
   sendCapiEvent({
     eventName,
