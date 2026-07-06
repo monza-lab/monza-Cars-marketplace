@@ -6,8 +6,8 @@ Plantillas HTML de los correos de autenticación de Supabase.
 
 | Archivo | Plantilla en Supabase | Cuándo llega |
 |---------|-----------------------|--------------|
-| `magic-link.html` | **Magic Link** | Cuando un cliente se registra / inicia sesión con el enlace por email. **Este es el método por defecto del signup** (ver `AuthModal.tsx`: Google, o enlace por email; la contraseña está detrás de un toggle). |
-| _(pendiente)_ | **Confirm signup** | Solo si el cliente se registra con **contraseña**. Hoy usa la plantilla default de Supabase. Se puede clonar `magic-link.html` cambiando el título/copy a "confirma tu correo". |
+| `magic-link.html` | **Magic Link** | Cuando un cliente inicia sesión con enlace por email. |
+| `confirm-signup.html` | **Confirm signup** | Cuando un cliente se registra con contraseña. Usa `type=email` para el flujo `/auth/confirm`. |
 
 Variables de Supabase Auth: `{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .SiteURL }}`.
 
@@ -34,6 +34,8 @@ a PNG transparente con Playwright. Fuente desde `public/fonts/monzahaus/`.
    `https://www.monzahaus.com/email/monzahaus-wordmark.png` (verificar abriéndola en el navegador).
 2. Supabase → **Authentication → Emails → Templates → Magic Link** → pegar el contenido de
    `magic-link.html` → Save.
+3. Supabase → **Authentication → Emails → Templates → Confirm signup** → pegar el contenido de
+   `confirm-signup.html` → Save.
 
 > Mientras el deploy no esté, el correo muestra el texto "MONZAHAUS" (el respaldo), no se rompe.
 
