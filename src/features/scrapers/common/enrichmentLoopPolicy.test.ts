@@ -11,6 +11,7 @@ import {
   classifyScraplingBody,
   isUsableTargetFieldValue,
   isCriticalNoOutput,
+  shouldFailEnrichmentLoopRun,
 } from "./enrichmentLoopPolicy";
 
 describe("enrichment loop policy", () => {
@@ -95,5 +96,21 @@ describe("enrichment loop policy", () => {
         written: 392,
       }),
     ).toBe(false);
+  });
+
+  it("does not fail a scheduled loop only because quality gaps remain", () => {
+    expect(
+      shouldFailEnrichmentLoopRun({
+        qualityGapsRemaining: true,
+        failOnQualityGaps: false,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldFailEnrichmentLoopRun({
+        qualityGapsRemaining: true,
+        failOnQualityGaps: true,
+      }),
+    ).toBe(true);
   });
 });

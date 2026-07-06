@@ -10,6 +10,7 @@
  *   npx tsx scripts/run-scrapers.ts --discovery --dry-run
  *   npx tsx scripts/run-scrapers.ts --enrich-loop                # Loop until quality targets met (max 10 iterations)
  *   npx tsx scripts/run-scrapers.ts --enrich-loop --max-iterations=20 --pause=5
+ *   npx tsx scripts/run-scrapers.ts --enrich-loop --fail-on-gaps # Strict quality gate for manual checks
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
@@ -18,7 +19,10 @@ import path from "node:path";
 import prompts from "prompts";
 import { createClient } from "@supabase/supabase-js";
 import { checkQuality, printQualityReport, type QualityCheckResult } from "./enrich-loop-quality";
-import { isCriticalNoOutput } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import {
+  isCriticalNoOutput,
+  shouldFailEnrichmentLoopRun,
+} from "../src/features/scrapers/common/enrichmentLoopPolicy";
 
 // ── Env loading (same pattern as other scripts) ─────────────────────
 
@@ -446,6 +450,7 @@ interface CliFlags {
   enrichLoop: boolean;      // NEW
   maxIterations: number;    // NEW — default 10
   pauseMinutes: number;     // NEW — default 2
+  failOnGaps: boolean;
 }
 
 function parseFlags(): CliFlags {
@@ -467,6 +472,7 @@ function parseFlags(): CliFlags {
     enrichLoop: args.includes("--enrich-loop"),
     maxIterations,
     pauseMinutes,
+    failOnGaps: args.includes("--fail-on-gaps"),
   };
 }
 
@@ -1168,7 +1174,21 @@ async function main(): Promise<void> {
     console.log(`Total iterations: ${iteration}`);
     console.log(`Total duration: ${formatDuration(totalMs)}`);
 
-    process.exit(anyGaps ? 1 : 0);
+    if (anyGaps && !flags.failOnGaps) {
+      console.log(
+        "\nQuality gaps remain after this bounded enrichment pass; treating the scheduled loop as complete.",
+      );
+      console.log("Use --fail-on-gaps when this command should enforce the quality gate.");
+    }
+
+    process.exit(
+      shouldFailEnrichmentLoopRun({
+        qualityGapsRemaining: anyGaps,
+        failOnQualityGaps: flags.failOnGaps,
+      })
+        ? 1
+        : 0,
+    );
   }
 
   // ── Normal mode (unchanged) ────────────────────────────────────

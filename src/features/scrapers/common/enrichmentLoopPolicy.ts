@@ -96,3 +96,10 @@ export function isCriticalNoOutput(args: {
     args.written === 0
   );
 }
+
+export function shouldFailEnrichmentLoopRun(args: {
+  qualityGapsRemaining: boolean;
+  failOnQualityGaps: boolean;
+}): boolean {
+  return args.failOnQualityGaps && args.qualityGapsRemaining;
+}
