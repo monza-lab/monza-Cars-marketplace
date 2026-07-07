@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "./route";
+import { fetchActionableTargetRows, GET } from "./route";
 
 // Mock Supabase
 const mockUpdate = vi.fn().mockReturnValue({
@@ -8,6 +8,7 @@ const mockUpdate = vi.fn().mockReturnValue({
 const mockOr = vi.fn().mockReturnValue({
   order: vi.fn().mockReturnValue({
     limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    range: vi.fn().mockResolvedValue({ data: [], error: null }),
   }),
 });
 const mockSelect = vi.fn().mockReturnValue({
@@ -134,7 +135,7 @@ describe("GET /api/cron/enrich-details", () => {
           }),
           or: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
+              range: vi.fn().mockResolvedValue({
                 data: [{
                   id: "test-id",
                   source_url: "https://www.autoscout24.com/offers/test",
@@ -203,7 +204,7 @@ describe("GET /api/cron/enrich-details", () => {
         eq: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
             order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
+              range: vi.fn().mockResolvedValue({
                 data: [{
                   id: "test-id",
                   source_url: "https://www.autoscout24.com/offers/test",
@@ -258,5 +259,49 @@ describe("GET /api/cron/enrich-details", () => {
     });
     expect(data.targetFieldCandidates).toBe(1);
     expect(data.targetFieldUpdates).toBe(1);
+  });
+
+  it("continues paging when covered exceptions crowd out actionable target rows", async () => {
+    const coveredRow = {
+      id: "covered",
+      source_url: "https://www.autoscout24.com/offers/covered",
+      title: "Porsche 911",
+      trim: null,
+      transmission: "Manual",
+      body_style: null,
+      engine: null,
+      color_exterior: null,
+      color_interior: null,
+      vin: null,
+      description_text: null,
+      images: [],
+      enrichment_meta: {
+        autoscout24: {
+          targetFieldStatus: "covered_or_unavailable",
+        },
+      },
+    };
+    const actionableRow = {
+      ...coveredRow,
+      id: "actionable",
+      source_url: "https://www.autoscout24.com/offers/actionable",
+      enrichment_meta: null,
+    };
+    const range = vi
+      .fn()
+      .mockResolvedValueOnce({ data: [coveredRow, coveredRow], error: null })
+      .mockResolvedValueOnce({ data: [actionableRow], error: null });
+    const order = vi.fn().mockReturnValue({ range });
+    const or = vi.fn().mockReturnValue({ order });
+    const eqStatus = vi.fn().mockReturnValue({ or });
+    const eqSource = vi.fn().mockReturnValue({ eq: eqStatus });
+    const select = vi.fn().mockReturnValue({ eq: eqSource });
+    const client = {
+      from: vi.fn().mockReturnValue({ select }),
+    } as any;
+
+    await expect(fetchActionableTargetRows(client, 1, 2)).resolves.toEqual([actionableRow]);
+    expect(range).toHaveBeenNthCalledWith(1, 0, 1);
+    expect(range).toHaveBeenNthCalledWith(2, 2, 3);
   });
 });

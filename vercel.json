@@ -3,6 +3,7 @@
     { "path": "/api/cron/ferrari",      "schedule": "0 0 * * *" },
     { "path": "/api/cron/porsche",      "schedule": "0 1 * * *" },
     { "path": "/api/cron/beforward",    "schedule": "0 3 * * *" },
+    { "path": "/api/cron/beforward?mode=coverage", "schedule": "0 15 * * *" },
     { "path": "/api/cron/classic",      "schedule": "0 4 * * *" },
     { "path": "/api/cron/autoscout24",  "schedule": "0 5 * * *" },
     { "path": "/api/cron/validate",    "schedule": "30 5 * * *" },

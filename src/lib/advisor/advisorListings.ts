@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import type { PricedListingRow } from "@/lib/supabaseLiveListings"
-import { isJunkListing } from "@/lib/supabaseLiveListings"
+import { isJunkListing, sanitizeOrIlikeTerm } from "@/lib/supabaseLiveListings"
 import { normalizeSupportedMake } from "@/lib/makeProfiles"
 
 /**
@@ -72,16 +72,18 @@ export async function fetchAdvisorListings(options: {
 
     // Variant / body type — search model AND trim server-side
     if (options.variantId) {
-      const v = options.variantId.replace(/[%_]/g, "")
-      q = q.or(`model.ilike.%${v}%,trim.ilike.%${v}%`)
+      const v = sanitizeOrIlikeTerm(options.variantId)
+      if (v) q = q.or(`model.ilike.%${v}%,trim.ilike.%${v}%`)
     }
 
     // Free-text query — search model, trim, and title
     if (options.query) {
-      const escaped = options.query.replace(/[%_]/g, "")
-      q = q.or(
-        `model.ilike.%${escaped}%,trim.ilike.%${escaped}%,title.ilike.%${escaped}%`,
-      )
+      const escaped = sanitizeOrIlikeTerm(options.query)
+      if (escaped) {
+        q = q.or(
+          `model.ilike.%${escaped}%,trim.ilike.%${escaped}%,title.ilike.%${escaped}%`,
+        )
+      }
     }
 
     // Year range
@@ -184,15 +186,17 @@ export async function countAdvisorListings(options: {
     if (options.seriesId) q = q.eq("series", options.seriesId)
 
     if (options.variantId) {
-      const v = options.variantId.replace(/[%_]/g, "")
-      q = q.or(`model.ilike.%${v}%,trim.ilike.%${v}%`)
+      const v = sanitizeOrIlikeTerm(options.variantId)
+      if (v) q = q.or(`model.ilike.%${v}%,trim.ilike.%${v}%`)
     }
 
     if (options.query) {
-      const escaped = options.query.replace(/[%_]/g, "")
-      q = q.or(
-        `model.ilike.%${escaped}%,trim.ilike.%${escaped}%,title.ilike.%${escaped}%`,
-      )
+      const escaped = sanitizeOrIlikeTerm(options.query)
+      if (escaped) {
+        q = q.or(
+          `model.ilike.%${escaped}%,trim.ilike.%${escaped}%,title.ilike.%${escaped}%`,
+        )
+      }
     }
 
     if (options.status === "live") {

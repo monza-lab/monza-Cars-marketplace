@@ -26,6 +26,8 @@ vi.mock("@supabase/supabase-js", () => ({
 
 vi.mock("@/lib/supabaseLiveListings", () => ({
   isJunkListing: vi.fn(() => false),
+  sanitizeOrIlikeTerm: (term: string) =>
+    term.replace(/[%_,():*\\"]/g, " ").replace(/\s+/g, " ").trim(),
 }))
 
 vi.mock("@/lib/makeProfiles", () => ({
@@ -36,7 +38,7 @@ vi.mock("@/lib/makeProfiles", () => ({
 }))
 
 // Must import after mocking
-import { fetchAdvisorListings } from "../advisorListings"
+import { countAdvisorListings, fetchAdvisorListings } from "../advisorListings"
 
 describe("fetchAdvisorListings", () => {
   beforeEach(() => {
@@ -98,6 +100,26 @@ describe("fetchAdvisorListings", () => {
     )
   })
 
+  it("sanitizes free-text query before embedding it in PostgREST OR filters", async () => {
+    await fetchAdvisorListings({ make: "Porsche", query: "GT3,vin.ilike.*WP0*" })
+
+    const searchOr = mockBuilder.or.mock.calls
+      .map(([clause]) => clause)
+      .find((clause) => typeof clause === "string" && clause.includes("model.ilike"))
+
+    expect(searchOr).toBe("model.ilike.%GT3 vin.ilike. WP0%,trim.ilike.%GT3 vin.ilike. WP0%,title.ilike.%GT3 vin.ilike. WP0%")
+  })
+
+  it("sanitizes variant query before embedding it in PostgREST OR filters", async () => {
+    await fetchAdvisorListings({ make: "Porsche", variantId: "targa,vin.ilike.*WP0*" })
+
+    const variantOr = mockBuilder.or.mock.calls
+      .map(([clause]) => clause)
+      .find((clause) => typeof clause === "string" && clause.includes("model.ilike"))
+
+    expect(variantOr).toBe("model.ilike.%targa vin.ilike. WP0%,trim.ilike.%targa vin.ilike. WP0%")
+  })
+
   it("defaults to 200 row limit", async () => {
     await fetchAdvisorListings({ make: "Porsche" })
     expect(mockBuilder.limit).toHaveBeenCalledWith(200)
@@ -152,5 +174,15 @@ describe("fetchAdvisorListings", () => {
   it("orders by sale_date DESC when sortBy is 'date_desc'", async () => {
     await fetchAdvisorListings({ make: "Porsche", sortBy: "date_desc" })
     expect(mockBuilder.order).toHaveBeenCalledWith("sale_date", { ascending: false, nullsFirst: false })
+  })
+
+  it("sanitizes count query before embedding it in PostgREST OR filters", async () => {
+    await countAdvisorListings({ make: "Porsche", query: "GT3,vin.ilike.*WP0*" })
+
+    const searchOr = mockBuilder.or.mock.calls
+      .map(([clause]) => clause)
+      .find((clause) => typeof clause === "string" && clause.includes("model.ilike"))
+
+    expect(searchOr).toBe("model.ilike.%GT3 vin.ilike. WP0%,trim.ilike.%GT3 vin.ilike. WP0%,title.ilike.%GT3 vin.ilike. WP0%")
   })
 })

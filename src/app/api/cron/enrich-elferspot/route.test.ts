@@ -12,17 +12,21 @@ import {
 const mockUpdate = vi.fn().mockReturnValue({
   eq: vi.fn().mockResolvedValue({ error: null }),
 });
-const mockQueryResult = { data: [], error: null };
-type MockQueryBuilder = PromiseLike<typeof mockQueryResult> & {
+type MockQueryResult = { data: unknown[]; error: null };
+const mockQueryResult: MockQueryResult = { data: [], error: null };
+type MockQueryBuilder = PromiseLike<MockQueryResult> & {
   or: ReturnType<typeof vi.fn>;
   is: ReturnType<typeof vi.fn>;
 };
-const mockQueryBuilder = {
+let mockQueryBuilder: MockQueryBuilder;
+mockQueryBuilder = {
   or: vi.fn(() => mockQueryBuilder),
   is: vi.fn(() => mockQueryBuilder),
-  then: (resolve: (value: typeof mockQueryResult) => unknown, reject: (reason?: unknown) => unknown) =>
-    Promise.resolve(mockQueryResult).then(resolve, reject),
-} satisfies MockQueryBuilder;
+  then: <TResult1 = MockQueryResult, TResult2 = never>(
+    onfulfilled?: ((value: MockQueryResult) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ) => Promise.resolve(mockQueryResult).then(onfulfilled, onrejected),
+};
 const mockOr = mockQueryBuilder.or;
 const mockIs = mockQueryBuilder.is;
 const mockLimit = vi.fn().mockReturnValue(mockQueryBuilder);
@@ -180,7 +184,16 @@ describe("GET /api/cron/enrich-elferspot", () => {
 
     expect(mockOr).toHaveBeenNthCalledWith(
       1,
-      "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+      'color_exterior.is.null,color_exterior.eq.,color_exterior.in.("Not specified","Unknown","N/A","-"),engine.is.null,engine.eq.,engine.in.("Not specified","Unknown","N/A","-"),transmission.is.null,transmission.eq.,transmission.in.("Not specified","Unknown","N/A","-")',
+    );
+  });
+
+  it("treats placeholder target-field values as enrichment backlog", async () => {
+    await GET(makeRequest());
+
+    expect(mockOr).toHaveBeenNthCalledWith(
+      1,
+      'color_exterior.is.null,color_exterior.eq.,color_exterior.in.("Not specified","Unknown","N/A","-"),engine.is.null,engine.eq.,engine.in.("Not specified","Unknown","N/A","-"),transmission.is.null,transmission.eq.,transmission.in.("Not specified","Unknown","N/A","-")',
     );
   });
 

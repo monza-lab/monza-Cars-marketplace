@@ -105,6 +105,35 @@ function hasCoveredTargetException(row: EnrichmentRow): boolean {
   return typeof status === "string" && COVERED_EXCEPTION_STATUSES.has(status);
 }
 
+export async function fetchActionableTargetRows(
+  client: CronSupabaseClient,
+  limit: number,
+  pageSize: number = 1000,
+): Promise<EnrichmentRow[]> {
+  const actionableRows: EnrichmentRow[] = [];
+
+  for (let from = 0; actionableRows.length < limit; from += pageSize) {
+    const { data, error } = await client
+      .from("listings")
+      .select("id,source_url,title,trim,transmission,body_style,engine,color_exterior,color_interior,vin,description_text,images,enrichment_meta")
+      .eq("source", "AutoScout24")
+      .eq("status", "active")
+      .or(buildUnusableAs24TargetFieldFilter())
+      .order("updated_at", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Target row query failed: ${error.message}`);
+    }
+
+    const rows = (data ?? []) as EnrichmentRow[];
+    actionableRows.push(...rows.filter((row) => !hasCoveredTargetException(row)));
+    if (rows.length < pageSize) break;
+  }
+
+  return actionableRows.slice(0, limit);
+}
+
 async function countActionableTargetBacklog(client: CronSupabaseClient): Promise<number> {
   let count = 0;
   const pageSize = 1000;
@@ -168,22 +197,7 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const { data: rows, error: fetchErr } = await client
-      .from("listings")
-      .select("id,source_url,title,trim,transmission,body_style,engine,color_exterior,color_interior,vin,description_text,images,enrichment_meta")
-      .eq("source", "AutoScout24")
-      .eq("status", "active")
-      .or(buildUnusableAs24TargetFieldFilter())
-      .order("updated_at", { ascending: true })
-      .limit(2_000);
-
-    if (fetchErr || !rows) {
-      throw new Error(fetchErr?.message ?? "No rows returned");
-    }
-
-    const typedRows = (rows as EnrichmentRow[])
-      .filter((row) => !hasCoveredTargetException(row))
-      .slice(0, 100);
+    const typedRows = await fetchActionableTargetRows(client, 100);
     const discovered = typedRows.length;
     const targetFieldCandidates = typedRows.filter((row) =>
       AS24_TARGET_FIELDS.some((field) => !isUsableTargetFieldValue(row[field])),

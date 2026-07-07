@@ -32,12 +32,16 @@ export async function GET(request: Request) {
       timeBudgetMs: 240_000, // 4 min budget — leave 60s margin for cleanup/metrics
     })
 
+    // Derive success from real errors instead of hardcoding true.
+    // counts.errors are genuine per-listing failures / circuit-breaks.
+    const success = result.counts.errors === 0 && result.errors.length === 0
+
     await recordScraperRun({
       scraper_name: "elferspot",
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,
@@ -50,13 +54,13 @@ export async function GET(request: Request) {
     invalidateDashboardCache()
 
     return NextResponse.json({
-      success: true,
+      success,
       runId: result.runId,
       discovered: result.counts.discovered,
       written: result.counts.written,
       errors: result.errors,
       duration: `${Date.now() - startTime}ms`,
-    })
+    }, { status: success ? 200 : 500 })
   } catch (error) {
     console.error("[cron/elferspot] Error:", error)
     await recordScraperRun({

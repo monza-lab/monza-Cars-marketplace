@@ -237,6 +237,25 @@ describe("fetchPaginatedListings", () => {
     );
   });
 
+  it("case 7: free-text search strips PostgREST OR grammar before building clauses", async () => {
+    const { fetchPaginatedListings } = await import("./supabaseLiveListings");
+
+    await fetchPaginatedListings({
+      make: "Porsche",
+      query: "GT3,vin.ilike.*WP0*",
+      status: "active",
+    });
+
+    const clauses = spyOr.mock.calls
+      .map(([clause]) => clause)
+      .filter((clause): clause is string => typeof clause === "string");
+    const joined = clauses.join("|");
+
+    expect(joined).toContain("title.ilike.%GT3%");
+    expect(joined).not.toContain(",vin.ilike");
+    expect(joined).not.toContain("*");
+  });
+
   it("dedupes AutoScout24 URL variants by native listing UUID", async () => {
     const { buildListingDeduplicationKey, dedupeListingRows } = await import("./supabaseLiveListings");
 

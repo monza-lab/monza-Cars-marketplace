@@ -6,6 +6,8 @@ type FieldName = "color_exterior" | "engine" | "transmission";
 
 const FIELDS: FieldName[] = ["color_exterior", "engine", "transmission"];
 const EXCEPTION_STATUSES = ["covered_or_unavailable", "detail_unavailable", "blocked_unverified"];
+const PLACEHOLDER_TARGET_VALUES = ["Not specified", "Unknown", "N/A", "-"];
+const PLACEHOLDER_FILTER = `("${PLACEHOLDER_TARGET_VALUES.join('","')}")`;
 
 function loadEnvFromFile(filePath: string): void {
   if (!existsSync(filePath)) return;
@@ -55,10 +57,10 @@ async function countRows(query: PromiseLike<{ count: number | null; error: { mes
 
 async function countField(field: FieldName) {
   const total = await countRows(baseQuery());
-  const filled = await countRows(baseQuery().not(field, "is", null).neq(field, ""));
+  const filled = await countRows(baseQuery().not(field, "is", null).neq(field, "").not(field, "in", PLACEHOLDER_FILTER));
   const excepted = await countRows(
     baseQuery()
-      .or(`${field}.is.null,${field}.eq.`)
+      .or(`${field}.is.null,${field}.eq.,${field}.in.${PLACEHOLDER_FILTER}`)
       .in("enrichment_meta->elferspot->>targetFieldStatus", EXCEPTION_STATUSES),
   );
   const coveredOrExcepted = filled + excepted;
@@ -81,7 +83,17 @@ async function main() {
     engine: await countField("engine"),
     transmission: await countField("transmission"),
   };
-  const missingCondition = "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.";
+  const missingCondition = [
+    `color_exterior.is.null`,
+    `color_exterior.eq.`,
+    `color_exterior.in.${PLACEHOLDER_FILTER}`,
+    `engine.is.null`,
+    `engine.eq.`,
+    `engine.in.${PLACEHOLDER_FILTER}`,
+    `transmission.is.null`,
+    `transmission.eq.`,
+    `transmission.in.${PLACEHOLDER_FILTER}`,
+  ].join(",");
   const activeMissingAny = await countRows(baseQuery().or(missingCondition));
   const recentMissingAny = await countRows(baseQuery().gte("scrape_timestamp", recentSince).or(missingCondition));
   const { data: samples, error: samplesError } = await supabase

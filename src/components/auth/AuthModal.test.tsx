@@ -56,6 +56,13 @@ vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
     open ? <div>{children}</div> : null,
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode
+    className?: string
+  }) => <h2 className={className}>{children}</h2>,
 }))
 
 vi.mock("@/i18n/navigation", () => ({

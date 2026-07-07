@@ -137,10 +137,8 @@ export async function GET(request: Request) {
       duration_ms: Date.now() - startTime,
       discovered: recentListings.length,
       written: fixed,
-      errors_count: deleted,
-      error_messages: Object.keys(deletedReasons).length > 0
-        ? Object.entries(deletedReasons).map(([r, c]) => `${r}: ${c}`)
-        : undefined,
+      errors_count: 0,
+      error_messages: undefined,
     });
 
     await clearScraperRunActive("validate");

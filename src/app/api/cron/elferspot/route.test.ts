@@ -20,6 +20,7 @@ vi.mock("@/lib/dashboardCache", () => ({
 }))
 
 import { markScraperRunStarted, recordScraperRun, clearScraperRunActive } from "@/features/scrapers/common/monitoring"
+import { runElferspotCollector } from "@/features/scrapers/elferspot_collector/collector"
 
 function makeRequest(secret = "test-secret") {
   return new Request("http://localhost:3000/api/cron/elferspot", {
@@ -54,5 +55,21 @@ describe("GET /api/cron/elferspot", () => {
     expect(markScraperRunStarted).toHaveBeenCalledWith(expect.objectContaining({ scraperName: "elferspot" }))
     expect(recordScraperRun).toHaveBeenCalledWith(expect.objectContaining({ scraper_name: "elferspot", success: true }))
     expect(clearScraperRunActive).toHaveBeenCalledWith("elferspot")
+  })
+
+  it("returns 500 and success=false when the collector reports errors", async () => {
+    vi.mocked(runElferspotCollector).mockResolvedValueOnce({
+      runId: "test-run",
+      counts: { discovered: 10, written: 3, enriched: 0, errors: 4 },
+      errors: ["https://elferspot.com/x: HTTP 429", "Circuit-break: blocked by server"],
+    } as any)
+
+    const response = await GET(makeRequest())
+    expect(response.status).toBe(500)
+    const data = await response.json()
+    expect(data.success).toBe(false)
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({ scraper_name: "elferspot", success: false, errors_count: 4 }),
+    )
   })
 })

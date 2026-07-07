@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth/AuthProvider'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
@@ -188,9 +189,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
 
         {/* Header */}
         <div className="px-6 pt-4 sm:pt-7 pb-2">
-          <h2 className="font-display text-[26px] sm:text-[24px] leading-tight font-medium text-foreground">
+          <DialogTitle className="font-display text-[26px] sm:text-[24px] leading-tight font-medium text-foreground">
             {isSignup ? t('createAccountTitle') : t('welcomeBack')}
-          </h2>
+          </DialogTitle>
           <p className="mt-1.5 text-[13px] text-muted-foreground">
             {isSignup ? t('createAccountDesc') : t('signInDesc')}
           </p>

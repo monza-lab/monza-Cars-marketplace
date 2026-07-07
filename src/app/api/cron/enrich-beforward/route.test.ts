@@ -235,4 +235,82 @@ describe("GET /api/cron/enrich-beforward", () => {
     });
     expect(updatePayload).not.toHaveProperty("vin");
   });
+
+  it("records Vercel WAF challenge pages as skipped coverage instead of scraper errors", async () => {
+    const row = {
+      id: "bef-waf",
+      source_url: "https://www.beforward.jp/porsche/911/example/id/123/",
+      images: [],
+      enrichment_meta: null,
+    };
+
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [row], error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response(`<html><body>AWSWAF security service to protect against attacks</body></html>`, { status: 200 }),
+    );
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.wafSkipped).toBe(1);
+    expect(data.errors).toEqual([]);
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: "enrich-beforward",
+        success: true,
+        errors_count: 0,
+        error_messages: undefined,
+      }),
+    );
+  });
+
+  it("records dead BeForward detail URLs as delisted skips instead of scraper errors", async () => {
+    const row = {
+      id: "bef-dead",
+      source_url: "https://www.beforward.jp/porsche/911/dead/id/404/",
+      images: [],
+      enrichment_meta: null,
+    };
+
+    mockSelect.mockReturnValueOnce({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [row], error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+    vi.mocked(global.fetch).mockResolvedValueOnce(new Response("not found", { status: 404 }));
+
+    const response = await GET(makeRequest());
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.deadUrlSkipped).toBe(1);
+    expect(data.errors).toEqual([]);
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: "enrich-beforward",
+        success: true,
+        errors_count: 0,
+        error_messages: undefined,
+      }),
+    );
+  });
 });

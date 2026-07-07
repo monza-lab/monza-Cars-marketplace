@@ -229,4 +229,74 @@ describe("discoverAllListings", () => {
     expect(page.goto).not.toHaveBeenCalled();
     expect(mockFetchClassicPageHtmlWithScrapling).toHaveBeenCalledTimes(1);
   });
+
+  it("filters forced Scrapling discovery to the requested make", async () => {
+    mockShouldPreferScraplingFirst.mockReturnValueOnce(true);
+    mockFetchClassicPageHtmlWithScrapling.mockResolvedValueOnce(`
+      <html><body>
+        <a href="/veh/2024-porsche-911-gt3-WP0AC2A98RS263305-abc1234/">
+          <h3 class="title">2024 Porsche 911 GT3</h3>
+        </a>
+        <a href="/veh/2026-chevrolet-corvette-zr-1-3lz-xyz987/">
+          <h3 class="title">2026 Chevrolet Corvette ZR1 3LZ</h3>
+        </a>
+      </body></html>
+    `);
+
+    const page = {
+      on: vi.fn(),
+      removeListener: vi.fn(),
+      goto: vi.fn(),
+    } as unknown as Parameters<typeof discoverAllListings>[0]["page"];
+
+    const result = await discoverAllListings({
+      page,
+      make: "Porsche",
+      location: "US",
+      status: "forsale",
+      maxPages: 1,
+      maxListings: 5,
+      navigationDelayMs: 0,
+      pageTimeoutMs: 1000,
+      runId: "run-filter",
+    });
+
+    expect(result.listings).toHaveLength(1);
+    expect(result.listings[0].title).toBe("2024 Porsche 911 GT3");
+  });
+
+  it("filters live yearless Classic Porsche summaries before normalization", async () => {
+    mockShouldPreferScraplingFirst.mockReturnValueOnce(true);
+    mockFetchClassicPageHtmlWithScrapling.mockResolvedValueOnce(`
+      <html><body>
+        <a href="/veh/porsche-356-replica-speedster-s2139-nQR1xoW/">
+          <h3 class="title">porsche 356 replica speedster s2139 nQR1xoW</h3>
+        </a>
+        <a href="/veh/2024-porsche-911-gt3-WP0AC2A98RS263305-abc1234/">
+          <h3 class="title">2024 Porsche 911 GT3</h3>
+        </a>
+      </body></html>
+    `);
+
+    const page = {
+      on: vi.fn(),
+      removeListener: vi.fn(),
+      goto: vi.fn(),
+    } as unknown as Parameters<typeof discoverAllListings>[0]["page"];
+
+    const result = await discoverAllListings({
+      page,
+      make: "Porsche",
+      location: "US",
+      status: "forsale",
+      maxPages: 1,
+      maxListings: 5,
+      navigationDelayMs: 0,
+      pageTimeoutMs: 1000,
+      runId: "run-yearless-filter",
+    });
+
+    expect(result.listings).toHaveLength(1);
+    expect(result.listings[0].title).toBe("2024 Porsche 911 GT3");
+  });
 });

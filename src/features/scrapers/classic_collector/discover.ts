@@ -113,13 +113,7 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
       if (scraplingHtml) {
         const scraplingListings = parseSearchResultsFromDOM(scraplingHtml);
         if (scraplingListings.length > 0) {
-          const newListings: ListingSummary[] = [];
-          for (const listing of scraplingListings) {
-            if (!seenUrls.has(listing.sourceUrl)) {
-              seenUrls.add(listing.sourceUrl);
-              newListings.push(listing);
-            }
-          }
+          const newListings = filterAndDedupeListings(scraplingListings, opts.make, seenUrls);
 
           allListings.push(...newListings);
           logEvent({
@@ -233,14 +227,9 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
         }
       }
 
-      // Deduplicate
-      const newListings: ListingSummary[] = [];
-      for (const listing of pageListings) {
-        if (!seenUrls.has(listing.sourceUrl)) {
-          seenUrls.add(listing.sourceUrl);
-          newListings.push(listing);
-        }
-      }
+      // Filter to the requested make before dedupe so broad Classic.com search
+      // matches do not become downstream normalization errors.
+      const newListings = filterAndDedupeListings(pageListings, opts.make, seenUrls);
 
       allListings.push(...newListings);
 
@@ -266,13 +255,7 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
         if (scraplingHtml) {
           const scraplingListings = parseSearchResultsFromDOM(scraplingHtml);
           if (scraplingListings.length > 0) {
-            const newListings: ListingSummary[] = [];
-            for (const listing of scraplingListings) {
-              if (!seenUrls.has(listing.sourceUrl)) {
-                seenUrls.add(listing.sourceUrl);
-                newListings.push(listing);
-              }
-            }
+            const newListings = filterAndDedupeListings(scraplingListings, opts.make, seenUrls);
 
             allListings.push(...newListings);
             if (newListings.length > 0) {
@@ -322,6 +305,33 @@ export async function discoverAllListings(opts: DiscoverOptions): Promise<Discov
     listings: allListings.slice(0, opts.maxListings),
     hasNextPage,
   };
+}
+
+function filterAndDedupeListings(
+  listings: ListingSummary[],
+  requestedMake: string,
+  seenUrls: Set<string>,
+): ListingSummary[] {
+  const filtered: ListingSummary[] = [];
+  for (const listing of listings) {
+    if (!isRequestedMakeListing(listing, requestedMake)) continue;
+    if (seenUrls.has(listing.sourceUrl)) continue;
+    seenUrls.add(listing.sourceUrl);
+    filtered.push(listing);
+  }
+  return filtered;
+}
+
+function isRequestedMakeListing(listing: ListingSummary, requestedMake: string): boolean {
+  const target = requestedMake.trim().toLowerCase();
+  if (!target) return true;
+  if (!listing.year) return false;
+
+  const make = listing.make?.trim().toLowerCase() ?? "";
+  const title = listing.title.toLowerCase();
+  const url = listing.sourceUrl.toLowerCase();
+
+  return make === target || title.includes(target) || url.includes(`-${target}-`);
 }
 
 /* ------------------------------------------------------------------ */

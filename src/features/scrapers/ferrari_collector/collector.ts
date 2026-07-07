@@ -424,8 +424,16 @@ async function normalizeFromBaseAndUrl(input: {
   make: string;
 }): Promise<NormalizedListing | null> {
   const { source, limiter, meta } = input;
-  const url = canonicalizeUrl(input.url);
   const runId = meta.runId;
+
+  // Guard: scraper output is `any`-typed and can carry an undefined/empty url.
+  // Without this, canonicalizeUrl(undefined) returns undefined → sourceUrl null
+  // → "null value in column source_url violates not-null constraint" on upsert.
+  if (!input.url || typeof input.url !== "string" || input.url.trim().length === 0) {
+    logEvent({ level: "warn", event: "collector.skip_missing_url", runId, source });
+    return null;
+  }
+  const url = canonicalizeUrl(input.url);
 
   const auctionDataResult = await fetchAuctionDataWithRetry(url, limiter);
   const auctionData = auctionDataResult.data;

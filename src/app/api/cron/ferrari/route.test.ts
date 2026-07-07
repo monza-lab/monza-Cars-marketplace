@@ -150,6 +150,66 @@ describe("Ferrari Cron Route", () => {
     expect(clearScraperRunActive).toHaveBeenCalledWith("ferrari");
   });
 
+  it("returns 500 and success=false when a source has a hard error", async () => {
+    vi.mocked(refreshActiveListings).mockResolvedValue({ checked: 5, updated: 0, errors: [] });
+    vi.mocked(runCollector).mockResolvedValue({
+      runId: "test-run",
+      sourceCounts: { BaT: { discovered: 20, written: 0 } },
+      errors: ["BaT discover failed: HTTP 403 Forbidden"],
+    } as any);
+    vi.mocked(runLightBackfill).mockResolvedValue({
+      modelsSearched: [], newModelsFound: [], discovered: 0, written: 0,
+      skippedExisting: 0, errors: [], timedOut: false, durationMs: 10,
+    });
+    vi.mocked(markScraperRunStarted).mockResolvedValue(undefined);
+    vi.mocked(recordScraperRun).mockResolvedValue(undefined);
+    vi.mocked(clearScraperRunActive).mockResolvedValue(undefined);
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/cron/ferrari", {
+        method: "GET",
+        headers: { authorization: "Bearer test-secret" },
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data.success).toBe(false);
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({ scraper_name: "ferrari", success: false, errors_count: 1 }),
+    );
+  });
+
+  it("keeps success=true when errors are only soft skips / 404s", async () => {
+    vi.mocked(refreshActiveListings).mockResolvedValue({ checked: 5, updated: 0, errors: [] });
+    vi.mocked(runCollector).mockResolvedValue({
+      runId: "test-run",
+      sourceCounts: { BaT: { discovered: 20, written: 18 } },
+      errors: ["Skipped: yearless summary", "CollectingCars detail 404 Not Found"],
+    } as any);
+    vi.mocked(runLightBackfill).mockResolvedValue({
+      modelsSearched: [], newModelsFound: [], discovered: 0, written: 0,
+      skippedExisting: 0, errors: [], timedOut: false, durationMs: 10,
+    });
+    vi.mocked(markScraperRunStarted).mockResolvedValue(undefined);
+    vi.mocked(recordScraperRun).mockResolvedValue(undefined);
+    vi.mocked(clearScraperRunActive).mockResolvedValue(undefined);
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/cron/ferrari", {
+        method: "GET",
+        headers: { authorization: "Bearer test-secret" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({ scraper_name: "ferrari", success: true, errors_count: 0 }),
+    );
+  });
+
   it("records failure when collector throws", async () => {
     const testError = new Error("Collector failed");
 

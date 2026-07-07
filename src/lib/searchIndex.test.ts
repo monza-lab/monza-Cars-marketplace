@@ -76,6 +76,18 @@ describe("listing search clauses", () => {
     expect(buildListingSearchOrClauses("2011 GTS")[0]).toContain("year.eq.2011")
   })
 
+  it("removes PostgREST OR grammar and wildcard characters from query clauses", () => {
+    const clauses = buildListingSearchOrClauses('GT3,vin.ilike.*WP0* (turbo)%_:"bad"')
+    const joined = clauses.join("|")
+
+    expect(joined).toContain("title.ilike.%GT3%")
+    expect(joined).not.toContain(",vin.ilike")
+    expect(joined).not.toContain("*")
+    expect(joined).not.toContain("%_%")
+    expect(joined).not.toContain(":")
+    expect(joined).not.toContain('"')
+  })
+
   it("ranks exact model and title phrase matches before broad token matches", () => {
     const rows = [
       {

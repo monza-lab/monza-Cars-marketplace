@@ -444,6 +444,83 @@ describe('GET /api/cron/validate', () => {
     expect(json.deleted).toBe(75);
   });
 
+  it('records validation cleanup deletes as successful coverage instead of scraper errors', async () => {
+    const { validateListing } = await import('@/features/scrapers/common/listingValidator');
+    const { recordScraperRun } = await import('@/features/scrapers/common/monitoring');
+
+    (validateListing as any).mockImplementation(() => ({
+      valid: false,
+      reason: 'unresolvable-model:OTHER',
+    }));
+
+    const mockListings = [
+      {
+        id: 'invalid-1',
+        make: 'Porsche',
+        model: 'OTHER',
+        year: 2020,
+        title: '2020 Porsche OTHER',
+      },
+    ];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'listings') {
+        return {
+          select: vi.fn().mockReturnValue({
+            gte: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockListings,
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+          delete: vi.fn().mockReturnValue({
+            in: vi.fn((_field: string, ids: any[]) => ({
+              select: vi.fn().mockResolvedValue({
+                data: ids.map((id) => ({ id })),
+                error: null,
+              }),
+            })),
+          }),
+        };
+      }
+      if (table === 'price_history') {
+        return {
+          delete: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        };
+      }
+      return null;
+    });
+
+    const request = new Request('http://localhost:3000/api/cron/validate', {
+      headers: { authorization: 'Bearer test-secret' },
+    });
+    const response = await GET(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.success).toBe(true);
+    expect(json.deleted).toBe(1);
+    expect(json.deletedReasons).toEqual({ 'unresolvable-model:OTHER': 1 });
+    expect(recordScraperRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scraper_name: 'validate',
+        success: true,
+        discovered: 1,
+        written: 0,
+        errors_count: 0,
+        error_messages: undefined,
+      }),
+    );
+  });
+
 
   it('records error in monitoring on exception', async () => {
     const { recordScraperRun, clearScraperRunActive } = await import(

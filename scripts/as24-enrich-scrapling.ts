@@ -158,6 +158,61 @@ function hasCoveredTargetException(row: EnrichmentRow): boolean {
   return typeof status === "string" && COVERED_EXCEPTION_STATUSES.has(status);
 }
 
+async function fetchActionableTargetRows(
+  supabase: ReturnType<typeof createClient>,
+  limit: number,
+): Promise<EnrichmentRow[]> {
+  const rows: EnrichmentRow[] = [];
+  const pageSize = 1000;
+
+  for (let from = 0; rows.length < limit; from += pageSize) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images, enrichment_meta")
+      .eq("source", "AutoScout24")
+      .eq("status", "active")
+      .or(buildUnusableAs24TargetFieldFilter())
+      .order("updated_at", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Query error: ${error.message}`);
+    }
+
+    const pageRows = (data ?? []) as EnrichmentRow[];
+    rows.push(...pageRows.filter((listing) => !hasCoveredTargetException(listing)));
+    if (pageRows.length < pageSize) break;
+  }
+
+  return rows.slice(0, limit);
+}
+
+async function countActionableTargetBacklog(supabase: ReturnType<typeof createClient>): Promise<number> {
+  let count = 0;
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images, enrichment_meta")
+      .eq("source", "AutoScout24")
+      .eq("status", "active")
+      .or(buildUnusableAs24TargetFieldFilter())
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw new Error(`Backlog count query failed: ${error.message}`);
+    }
+
+    const pageRows = (data ?? []) as EnrichmentRow[];
+    count += pageRows.filter((listing) => !hasCoveredTargetException(listing)).length;
+    if (pageRows.length < pageSize) break;
+  }
+
+  return count;
+}
+
 async function main() {
   const opts = parseArgs();
   const startTime = Date.now();
@@ -190,23 +245,7 @@ async function main() {
   });
 
   // Query AS24 listings needing enrichment: drain target-field gaps before secondary detail gaps.
-  const { data: listings, error } = await supabase
-    .from("listings")
-    .select("id, source_url, title, trim, transmission, body_style, engine, color_exterior, color_interior, vin, description_text, images, enrichment_meta")
-    .eq("source", "AutoScout24")
-    .eq("status", "active")
-    .or(buildUnusableAs24TargetFieldFilter())
-    .order("updated_at", { ascending: true })
-    .limit(Math.max(opts.limit * 4, 10_000));
-
-  if (error) {
-    console.error("Query error:", error.message);
-    process.exit(1);
-  }
-
-  const typedListings = (listings as EnrichmentRow[])
-    .filter((listing) => !hasCoveredTargetException(listing))
-    .slice(0, opts.limit);
+  const typedListings = await fetchActionableTargetRows(supabase, opts.limit);
   const targetFieldCandidates = typedListings.filter((listing) =>
     AS24_TARGET_FIELDS.some((field) => !isUsableTargetFieldValue(listing[field])),
   ).length;
@@ -358,12 +397,7 @@ async function main() {
     await new Promise((r) => setTimeout(r, opts.delayMs));
   }
 
-  const { count: remainingTargetFieldBacklog } = await supabase
-    .from("listings")
-    .select("id", { count: "exact", head: true })
-    .eq("source", "AutoScout24")
-    .eq("status", "active")
-    .or(buildUnusableAs24TargetFieldFilter());
+  const remainingTargetFieldBacklog = await countActionableTargetBacklog(supabase);
 
   // Record run
   await recordScraperRun({
@@ -371,7 +405,7 @@ async function main() {
     run_id: runId,
     started_at: new Date(startTime).toISOString(),
     finished_at: new Date().toISOString(),
-    success: errors.length < listings.length / 2,
+    success: errors.length < typedListings.length / 2,
     runtime,
     duration_ms: Date.now() - startTime,
     discovered: typedListings.length,

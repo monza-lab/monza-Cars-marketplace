@@ -81,23 +81,33 @@ export async function GET(request: Request) {
       backfillError = `Skipped: only ${Math.round(remainingMs / 1000)}s remaining`;
     }
 
-    const allErrors = [
-      ...result.errors,
+    // Derive success from HARD errors only (mirror porsche route). Ferrari
+    // sources are BaT/Cars&Bids/CollectingCars (HTML) so error strings match
+    // the same taxonomy: ignore soft skips + 404/410, count 403/429/5xx/etc.
+    const sourceErrors = [...result.errors, ...refreshResult.errors];
+    const backfillErrors = [
       ...(backfillResult?.errors ?? []),
       ...(backfillError ? [backfillError] : []),
     ];
+    const hardErrors = sourceErrors.filter((message) => {
+      if (/^Skipped:/i.test(message)) return false;
+      if (/\b(404|410)\b/.test(message)) return false;
+      return /\b(403|429|5\d\d|timeout|failed|circuit-break)\b/i.test(message);
+    });
+    const allErrors = [...hardErrors, ...backfillErrors];
+    const success = hardErrors.length === 0;
 
     await recordScraperRun({
       scraper_name: 'ferrari',
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: 'vercel_cron',
       duration_ms: Date.now() - startTime,
       discovered: totalDiscovered,
       written: totalWritten,
-      errors_count: allErrors.length,
+      errors_count: hardErrors.length,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
       source_counts: result.sourceCounts,
@@ -117,8 +127,9 @@ export async function GET(request: Request) {
     invalidateDashboardCache();
 
     return NextResponse.json({
-      success: true,
+      success,
       runId: result.runId,
+      successReason: success ? "all_sources_clean" : "source_errors_present",
       refresh: {
         checked: refreshResult.checked,
         updated: refreshResult.updated,
@@ -141,7 +152,7 @@ export async function GET(request: Request) {
           }
         : { skipped: true, reason: backfillError },
       duration: `${Date.now() - startTime}ms`,
-    });
+    }, { status: success ? 200 : 500 });
   } catch (error) {
     console.error("[cron/ferrari] Error:", error);
 

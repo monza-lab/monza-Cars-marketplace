@@ -28,6 +28,7 @@ import {
 import { fetchReportSections } from "@/lib/reports/reportSections"
 import { assembleV3ReportFromSections } from "@/lib/reports/assembleV3Report"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
+import { checkReportAccess } from "@/lib/reports/access"
 
 // Run on Node (react-pdf requires Node APIs, not edge).
 export const runtime = "nodejs"
@@ -38,6 +39,13 @@ export async function GET(
 ): Promise<Response> {
   try {
   const { id } = await params
+
+  const access = await checkReportAccess(id)
+  if (!access.ok) {
+    return access.reason === "unauthenticated"
+      ? NextResponse.json({ error: "auth_required" }, { status: 401 })
+      : NextResponse.json({ error: "forbidden" }, { status: 403 })
+  }
 
   // 1. Resolve car (curated or live)
   let car = CURATED_CARS.find((c) => c.id === id) ?? null

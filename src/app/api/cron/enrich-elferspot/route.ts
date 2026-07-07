@@ -23,7 +23,18 @@ const PRICE_COVERED_STATUSES = [
 const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
 const DESCRIPTION_COVERED_STATUS_FILTER = `("missing","detail_unavailable","blocked_unverified")`;
 const TARGET_FIELD_COVERED_STATUS_FILTER = `("covered_or_unavailable","detail_unavailable","blocked_unverified")`;
-const TARGET_FIELD_FILTER = "color_exterior.is.null,color_exterior.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.";
+const TARGET_FIELD_PLACEHOLDER_FILTER = `("Not specified","Unknown","N/A","-")`;
+const TARGET_FIELD_FILTER = [
+  `color_exterior.is.null`,
+  `color_exterior.eq.`,
+  `color_exterior.in.${TARGET_FIELD_PLACEHOLDER_FILTER}`,
+  `engine.is.null`,
+  `engine.eq.`,
+  `engine.in.${TARGET_FIELD_PLACEHOLDER_FILTER}`,
+  `transmission.is.null`,
+  `transmission.eq.`,
+  `transmission.in.${TARGET_FIELD_PLACEHOLDER_FILTER}`,
+].join(",");
 
 type EnrichmentMeta = {
   elferspot?: {

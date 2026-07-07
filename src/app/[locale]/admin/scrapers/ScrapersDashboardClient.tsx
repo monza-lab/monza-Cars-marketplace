@@ -48,6 +48,8 @@ const ALL_SCRAPERS: ScraperName[] = [
   "cleanup",
   "liveness-check",
   "report-listing-analysis",
+  "refresh-valuation-factors",
+  "social-engine",
 ];
 
 const SCRAPER_LABELS: Record<ScraperName, string> = {
@@ -74,6 +76,8 @@ const SCRAPER_LABELS: Record<ScraperName, string> = {
   cleanup: "Cleanup",
   "liveness-check": "Liveness Checker",
   "report-listing-analysis": "Report Listing Analysis",
+  "refresh-valuation-factors": "Valuation Factor Refresh",
+  "social-engine": "Social Engine Worker",
 };
 
 const SCRAPER_RUNTIME: Record<ScraperName, string> = {
@@ -100,6 +104,8 @@ const SCRAPER_RUNTIME: Record<ScraperName, string> = {
   cleanup: "Vercel Cron",
   "liveness-check": "GitHub Actions",
   "report-listing-analysis": "Server Request",
+  "refresh-valuation-factors": "Vercel Cron",
+  "social-engine": "Vercel Cron",
 };
 
 const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
@@ -126,6 +132,8 @@ const SCRAPER_CADENCE_MS: Record<ScraperName, number> = {
   cleanup: 24 * 60 * 60 * 1000,
   "liveness-check": 24 * 60 * 60 * 1000,
   "report-listing-analysis": 24 * 60 * 60 * 1000,
+  "refresh-valuation-factors": 24 * 60 * 60 * 1000,
+  "social-engine": 24 * 60 * 60 * 1000,
 };
 
 const POLL_INTERVAL_MS = 20_000;

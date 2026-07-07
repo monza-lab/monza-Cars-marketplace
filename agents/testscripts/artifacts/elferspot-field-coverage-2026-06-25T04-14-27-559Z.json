@@ -1,0 +1,473 @@
+{
+  "generatedAt": "2026-06-25T04:14:27.559Z",
+  "recentSince": "2026-06-22T04:14:27.560Z",
+  "totalActive": 4623,
+  "recentActive": 1073,
+  "fields": {
+    "color_exterior": {
+      "filled": 4575,
+      "excepted": 48,
+      "coveredOrExcepted": 4623,
+      "missing": 0,
+      "pct": 100
+    },
+    "engine": {
+      "filled": 4520,
+      "excepted": 103,
+      "coveredOrExcepted": 4623,
+      "missing": 0,
+      "pct": 100
+    },
+    "transmission": {
+      "filled": 4575,
+      "excepted": 48,
+      "coveredOrExcepted": 4623,
+      "missing": 0,
+      "pct": 100
+    }
+  },
+  "activeMissingAny": 103,
+  "recentMissingAny": 53,
+  "samples": [
+    {
+      "id": "2612fc40-3cdd-4ff9-a912-070e6d746727",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1971-4963416/",
+      "color_exterior": "Orange",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:40.591Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T02:58:29.82",
+      "updated_at": "2026-06-11T17:01:40.591"
+    },
+    {
+      "id": "2d876f49-f757-412c-b87a-3ea30fbf6823",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-backdate-2023-4366246/",
+      "color_exterior": "Green",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:43.340Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T03:40:34.188",
+      "updated_at": "2026-06-11T17:01:43.34"
+    },
+    {
+      "id": "613e5ca5-07c9-40e2-969e-c0b0074610c3",
+      "source_url": "https://www.elferspot.com/en/car/recreation-replica-2002-4147988/",
+      "color_exterior": "Blue",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:44.792Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T03:51:58.653",
+      "updated_at": "2026-06-11T17:01:44.792"
+    },
+    {
+      "id": "5d0d6e1f-8c84-45ab-9b34-de1c8d100b99",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-2002-4056295/",
+      "color_exterior": "Green",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:46.339Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T03:55:51.529",
+      "updated_at": "2026-06-11T17:01:46.339"
+    },
+    {
+      "id": "6a64f79b-c6fb-4206-9ab0-2e20b49f2fba",
+      "source_url": "https://www.elferspot.com/en/car/porsche-912-1965-5903401/",
+      "color_exterior": "Blue",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:51.097Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-05T09:18:46.721",
+      "updated_at": "2026-06-11T17:01:51.097"
+    },
+    {
+      "id": "30cf5cfe-edd0-4644-b284-52e8e2f7fbe2",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1973-5908328/",
+      "color_exterior": "Orange",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:52.621Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-09T09:19:35.982",
+      "updated_at": "2026-06-11T17:01:52.621"
+    },
+    {
+      "id": "4f53a17d-7846-4583-971b-d7f03ba96e6c",
+      "source_url": "https://www.elferspot.com/en/car/porsche-928-s4-1990-4860652/",
+      "color_exterior": "Silver",
+      "engine": "Not specified",
+      "transmission": "Automatic",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:54.332Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T03:08:16.088",
+      "updated_at": "2026-06-11T17:01:54.332"
+    },
+    {
+      "id": "0344aea8-2315-46a1-8e81-6c617a004d2f",
+      "source_url": "https://www.elferspot.com/en/car/porsche-987-boxster-2009-5976214/",
+      "color_exterior": "Grey",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:01:57.331Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-17T09:16:40.545",
+      "updated_at": "2026-06-11T17:01:57.331"
+    },
+    {
+      "id": "5c503489-0f31-46d7-9524-757d13b6e8a7",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-2022-5893557/",
+      "color_exterior": "Blue",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:02:23.759Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-05T09:19:34.846",
+      "updated_at": "2026-06-11T17:02:23.759"
+    },
+    {
+      "id": "92756989-4687-40dd-9369-74403dd980fd",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-1967-3577748/",
+      "color_exterior": "Yellow/Gold",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:02:25.174Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-05T09:19:11.093",
+      "updated_at": "2026-06-11T17:02:25.174"
+    },
+    {
+      "id": "7464de3d-1f99-4100-a65c-c74bb7590962",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-backdate-1986-3127849/",
+      "color_exterior": "Red",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:02:27.126Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-05-27T09:19:11.013",
+      "updated_at": "2026-06-11T17:02:27.126"
+    },
+    {
+      "id": "80f9937a-5190-44bd-9188-47944aefed85",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1985-5991496/",
+      "color_exterior": "Blue",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-11T17:02:28.526Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-04T09:19:20.608",
+      "updated_at": "2026-06-11T17:02:28.526"
+    },
+    {
+      "id": "6b222e34-c3f1-4be2-a216-0342e8e14776",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-backdate-1982-4864830/",
+      "color_exterior": "Silver",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-14T15:07:15.478Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T02:51:12.014",
+      "updated_at": "2026-06-14T15:07:15.478"
+    },
+    {
+      "id": "aecad36e-1d91-4fdc-a0d0-d851c384e5de",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1977-4877570/",
+      "color_exterior": "Yellow/Gold",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-14T15:07:18.789Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T03:06:56.011",
+      "updated_at": "2026-06-14T15:07:18.789"
+    },
+    {
+      "id": "993848e8-1fa1-47a9-9c63-7d0dc1525362",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1986-2497659/",
+      "color_exterior": "White",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-15T18:08:30.779Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T04:35:27.267",
+      "updated_at": "2026-06-15T18:08:30.779"
+    },
+    {
+      "id": "b75cff50-0192-4157-a007-9a238f3643c8",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-turbo-flachbau-1982-3597542/",
+      "color_exterior": "White",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-15T22:23:35.779Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-14T09:19:51.285",
+      "updated_at": "2026-06-15T22:23:35.778"
+    },
+    {
+      "id": "8391ab38-74fc-4523-821e-13d7bbb20a4e",
+      "source_url": "https://www.elferspot.com/en/car/porsche-991-carrera-4s-2014-5871890/",
+      "color_exterior": "White",
+      "engine": "Not specified",
+      "transmission": "PDK",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-15T22:23:40.828Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-03T09:19:21.984",
+      "updated_at": "2026-06-15T22:23:40.828"
+    },
+    {
+      "id": "dd3c1729-d3e1-469e-9837-1f45849795ee",
+      "source_url": "https://www.elferspot.com/en/car/porsche-356-c-1964-3898671/",
+      "color_exterior": "Yellow/Gold",
+      "engine": null,
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-22T17:56:13.014Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-16T09:18:59.748",
+      "updated_at": "2026-06-22T17:56:13.014"
+    },
+    {
+      "id": "b7b462da-9127-403e-b770-c860b61ab31a",
+      "source_url": "https://www.elferspot.com/en/car/porsche-911-modified-1976-2926219/",
+      "color_exterior": "Beige/Brown",
+      "engine": "Not specified",
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-24T15:46:02.478Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-04-20T02:47:05.748",
+      "updated_at": "2026-06-24T15:46:02.478"
+    },
+    {
+      "id": "b90d4460-9f0e-47b3-9989-c7aa0c6eb1d0",
+      "source_url": "https://www.elferspot.com/en/car/porsche-356-pre-a-1500-super-1955-5397195/",
+      "color_exterior": "Silver",
+      "engine": null,
+      "transmission": "Manual",
+      "enrichment_meta": {
+        "elferspot": {
+          "checkedAt": "2026-06-24T15:46:43.551Z",
+          "priceStatus": "not_listed",
+          "descriptionStatus": "missing",
+          "targetFieldStatus": "covered_or_unavailable",
+          "missingTargetFields": [
+            "color_exterior",
+            "engine",
+            "transmission"
+          ]
+        }
+      },
+      "scrape_timestamp": "2026-06-24T09:15:46.896",
+      "updated_at": "2026-06-24T15:46:43.551"
+    }
+  ]
+}

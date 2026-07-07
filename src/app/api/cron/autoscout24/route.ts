@@ -79,47 +79,78 @@ export async function GET(request: Request) {
       skipMonitoring: true, // cron route handles monitoring
     });
 
-    // Step 2: Mark stale listings as delisted (runs AFTER discover)
-    const refreshResult = await refreshStaleListings({ staleDays: 14, maxUpdates: 200 });
+    // Step 2: Mark stale listings as delisted (runs AFTER discover) —
+    // but ONLY when this run covered enough shards. Delisting after a partial
+    // run (e.g. 10/41 shards) would false-delist live cars never seen this run.
+    const coverageRatio =
+      result.shardsTotal > 0 ? result.shardsCompleted / result.shardsTotal : 1;
+    const REFRESH_MIN_COVERAGE = 0.5;
+    let refreshResult: { checked: number; updated: number; errors: string[] } = {
+      checked: 0,
+      updated: 0,
+      errors: [],
+    };
+    let refreshSkippedReason: string | null = null;
+    if (coverageRatio >= REFRESH_MIN_COVERAGE) {
+      refreshResult = await refreshStaleListings({ staleDays: 14, maxUpdates: 200 });
+    } else {
+      refreshSkippedReason = `stale-delist skipped: shard coverage ${result.shardsCompleted}/${result.shardsTotal} (${Math.round(coverageRatio * 100)}%) below ${REFRESH_MIN_COVERAGE * 100}% threshold`;
+      console.warn(`[cron/autoscout24] ${refreshSkippedReason}`);
+    }
+
+    // Derive success from real errors instead of hardcoding true.
+    // AS24 counts.errors are genuine write/normalize failures (e.g. null
+    // source_url upserts); skips are counted separately (skippedDuplicate).
+    const errorsCount = result.counts.errors + refreshResult.errors.length;
+    const success =
+      result.counts.errors === 0 &&
+      result.errors.length === 0 &&
+      refreshResult.errors.length === 0;
+    const errorMessages = [...result.errors, ...refreshResult.errors];
 
     await recordScraperRun({
       scraper_name: "autoscout24",
       run_id: result.runId,
       started_at: startedAtIso,
       finished_at: new Date().toISOString(),
-      success: true,
+      success,
       runtime: "vercel_cron",
       duration_ms: Date.now() - startTime,
       discovered: result.counts.discovered,
       written: result.counts.written,
-      errors_count: result.counts.errors,
+      errors_count: errorsCount,
       details_fetched: result.counts.detailsFetched,
       normalized: result.counts.normalized,
       skipped_duplicate: result.counts.skippedDuplicate,
       bot_blocked: result.counts.akamaiBlocked,
       refresh_checked: refreshResult.checked,
       refresh_updated: refreshResult.updated,
-      error_messages: result.errors.length > 0 ? result.errors : undefined,
+      error_messages: errorMessages.length > 0 ? errorMessages : undefined,
     });
 
     await clearScraperRunActive("autoscout24");
     invalidateDashboardCache();
 
-    return NextResponse.json({
-      success: true,
-      runId: result.runId,
-      refresh: {
-        checked: refreshResult.checked,
-        updated: refreshResult.updated,
-        errors: refreshResult.errors,
+    return NextResponse.json(
+      {
+        success,
+        runId: result.runId,
+        refresh: {
+          checked: refreshResult.checked,
+          updated: refreshResult.updated,
+          skipped: refreshSkippedReason !== null,
+          reason: refreshSkippedReason,
+          errors: refreshResult.errors,
+        },
+        countries,
+        shardsCompleted: result.shardsCompleted,
+        shardsTotal: result.shardsTotal,
+        counts: result.counts,
+        errors: result.errors,
+        duration: `${Date.now() - startTime}ms`,
       },
-      countries,
-      shardsCompleted: result.shardsCompleted,
-      shardsTotal: result.shardsTotal,
-      counts: result.counts,
-      errors: result.errors,
-      duration: `${Date.now() - startTime}ms`,
-    });
+      { status: success ? 200 : 500 },
+    );
   } catch (error) {
     console.error("[cron/autoscout24] Error:", error);
 

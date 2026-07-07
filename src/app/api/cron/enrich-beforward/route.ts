@@ -96,6 +96,8 @@ export async function GET(request: Request) {
 
     const discovered = rows.length;
     let enriched = 0;
+    let wafSkipped = 0;
+    let deadUrlSkipped = 0;
     const errors: string[] = [];
     const DELAY_MS = 4_000;
     const TIME_BUDGET_MS = 270_000;
@@ -125,7 +127,7 @@ export async function GET(request: Request) {
               .from("listings")
               .update({ status: "delisted", updated_at: new Date().toISOString() })
               .eq("id", row.id);
-            errors.push(`Dead URL (${row.id}): HTTP ${response.status}`);
+            deadUrlSkipped++;
             continue;
           }
           throw new Error(`HTTP ${response.status} for ${row.source_url}`);
@@ -143,7 +145,7 @@ export async function GET(request: Request) {
           (!/table\.specification|class=["']specification/.test(html) &&
             /awswaf|_challenge|captcha|security service to protect/i.test(html));
         if (blockedByWaf) {
-          errors.push(`WAF challenge (${row.id}): blocked, needs Scrapling (GitHub Actions)`);
+          wafSkipped++;
           continue;
         }
 
@@ -222,7 +224,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const success = errors.length === 0 || enriched > 0 || timeBudgetReached;
+    const success = errors.length === 0 || enriched > 0 || timeBudgetReached || wafSkipped > 0 || deadUrlSkipped > 0;
 
     await recordScraperRun({
       scraper_name: "enrich-beforward",
@@ -245,12 +247,18 @@ export async function GET(request: Request) {
       runId,
       discovered,
       enriched,
+      wafSkipped,
+      deadUrlSkipped,
       errors,
       timeBudgetReached,
       successReason: timeBudgetReached
         ? "time_budget_reached"
         : errors.length === 0
-          ? "all_rows_enriched"
+          ? wafSkipped > 0 && enriched === 0
+            ? "waf_skipped_use_github_actions"
+            : deadUrlSkipped > 0 && enriched === 0
+              ? "dead_urls_delisted"
+            : "all_rows_enriched"
           : enriched > 0
             ? "partial_with_errors"
             : "errors_present",

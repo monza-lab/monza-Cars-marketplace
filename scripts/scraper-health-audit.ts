@@ -53,6 +53,9 @@ const JOB_SPECS: ScraperJobSpec[] = [
   { scraperName: "enrich-beforward", label: "BeForward Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-beforward" },
   { scraperName: "enrich-elferspot", label: "Elferspot Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-elferspot" },
   { scraperName: "enrich-details-bulk", label: "AS24 Bulk Detail Enrichment", cadence: "external" },
+  { scraperName: "backfill-photos-elferspot", label: "Elferspot Photo Backfill", cadence: "daily", cronPath: "/api/cron/backfill-photos-elferspot" },
+  { scraperName: "refresh-valuation-factors", label: "Valuation Factor Refresh", cadence: "daily", cronPath: "/api/cron/refresh-valuation-factors" },
+  { scraperName: "social-engine", label: "Social Engine Worker", cadence: "external", cronPath: "/api/cron/social-engine" },
   { scraperName: "liveness-check", label: "Liveness Check", cadence: "external" },
 ];
 

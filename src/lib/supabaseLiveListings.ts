@@ -267,6 +267,10 @@ export function normalizeListingImageUrl(value: unknown): string | null {
   return parsed.toString();
 }
 
+export function sanitizeOrIlikeTerm(term: string): string {
+  return term.replace(/[%_,():*\\"]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 export const LISTING_IMAGE_PLACEHOLDER = "/cars/placeholder.svg";
 
 export function resolveListingImages(images: readonly unknown[] | null | undefined): string[] {

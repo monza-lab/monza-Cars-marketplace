@@ -64,6 +64,27 @@ describe("VehicleJsonLd", () => {
     expect((schema.brand as { name: string }).name).toBe("Porsche");
     expect((schema.offers as { price: string }).price).toBe("85000");
   });
+
+  it("escapes script-breaking characters inside inline JSON-LD", () => {
+    const hostileName = '1989 Porsche 911</script><img src=x onerror="alert(1)"> & Carrera';
+    const html = renderToString(
+      <VehicleJsonLd
+        name={hostileName}
+        description="Collector car listing"
+        url="https://monzalab.com/en/cars/porsche/hostile"
+        brand="Porsche"
+        model="911"
+        year={1989}
+      />
+    );
+
+    expect(html).not.toContain("</script><img");
+    expect(html).toContain("\\u003c/script\\u003e");
+    expect(html).toContain("\\u0026");
+
+    const [schema] = extract(html);
+    expect(schema.name).toBe(hostileName);
+  });
 });
 
 describe("ArticleJsonLd", () => {

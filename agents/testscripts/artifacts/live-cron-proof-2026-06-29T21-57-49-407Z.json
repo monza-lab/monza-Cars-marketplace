@@ -1,0 +1,663 @@
+{
+  "generated_at": "2026-06-29T21:57:49.407Z",
+  "results": [
+    {
+      "name": "autoscout24-cron",
+      "path": "/api/cron/autoscout24",
+      "status": 200,
+      "ok": true,
+      "durationMs": 257568,
+      "response": {
+        "success": true,
+        "runId": "ed2847fe-2c77-41bc-9c3f-cd8bca808583",
+        "refresh": {
+          "checked": 3,
+          "updated": 3,
+          "errors": []
+        },
+        "countries": [
+          "A",
+          "L"
+        ],
+        "shardsCompleted": 10,
+        "shardsTotal": 41,
+        "counts": {
+          "discovered": 287,
+          "detailsFetched": 0,
+          "normalized": 263,
+          "written": 257,
+          "errors": 6,
+          "skippedDuplicate": 13,
+          "akamaiBlocked": 0
+        },
+        "errors": [
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint",
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint",
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint",
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint",
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint",
+          "Write error: Supabase listings upsert failed: null value in column \"source_url\" of relation \"listings\" violates not-null constraint"
+        ],
+        "duration": "256308ms"
+      }
+    },
+    {
+      "name": "beforward-cron-fresh",
+      "path": "/api/cron/beforward?mode=fresh",
+      "status": 200,
+      "ok": true,
+      "durationMs": 164460,
+      "response": {
+        "success": true,
+        "mode": "fresh",
+        "runId": "1bcf6515-751c-4f36-8fbe-8e4d62d64d9c",
+        "refresh": {
+          "checked": 30,
+          "updated": 30,
+          "terminalized": 6,
+          "errors": []
+        },
+        "backfill": {
+          "discovered": 8,
+          "backfilled": 8,
+          "errors": []
+        },
+        "totalResults": 3761,
+        "pageCount": 8,
+        "sourceTotalPages": 151,
+        "plannedStartPage": 1,
+        "plannedEndPage": 8,
+        "coveragePercent": 5.3,
+        "coverageLimited": true,
+        "processedPages": 8,
+        "counts": {
+          "discovered": 200,
+          "detailsFetched": 0,
+          "normalized": 200,
+          "writeAttempts": 200,
+          "written": 200,
+          "skippedInvalid": 0,
+          "dryRunSkipped": 0,
+          "reactivated": 0,
+          "terminalized": 6,
+          "errors": 0
+        },
+        "errors": [],
+        "duration": "164149ms"
+      }
+    },
+    {
+      "name": "enrich-beforward-cron",
+      "path": "/api/cron/enrich-beforward",
+      "status": 200,
+      "ok": true,
+      "durationMs": 272742,
+      "response": {
+        "success": true,
+        "runId": "f446402e-8bf5-4999-a0b8-2eddd90db312",
+        "discovered": 50,
+        "enriched": 36,
+        "wafSkipped": 0,
+        "deadUrlSkipped": 0,
+        "errors": [],
+        "timeBudgetReached": true,
+        "successReason": "time_budget_reached",
+        "duration": "272722ms"
+      }
+    },
+    {
+      "name": "cleanup-cron",
+      "path": "/api/cron/cleanup",
+      "status": 200,
+      "ok": true,
+      "durationMs": 54832,
+      "response": {
+        "success": true,
+        "scanned": 62576,
+        "deleted": 972,
+        "staleFixed": 0,
+        "staleSold": 0,
+        "staleUnsold": 0,
+        "staleDealerFixed": 0,
+        "reclassified": 219,
+        "byReason": {
+          "excluded-non-collector:Taycan": 104,
+          "excluded-non-collector:MACAN": 211,
+          "excluded-non-collector:PANAMERA": 183,
+          "excluded-non-collector:CAYENNE": 366,
+          "excluded-non-collector:Cayenne": 188,
+          "excluded-non-collector:Panamera": 110,
+          "excluded-non-collector:Macan": 188,
+          "excluded-non-collector:TAYCAN": 3
+        },
+        "items": [
+          {
+            "id": "0aee02b4-1086-4008-95e1-6454e52ce4bd",
+            "reason": "excluded-non-collector:Taycan",
+            "model": "Taycan"
+          },
+          {
+            "id": "0c4c6744-ee49-4e81-99eb-ada89aeb4062",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "291edc98-612f-4a70-8a76-80790603b9cc",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "0a6a2e35-fb35-4430-95a8-bfa35d03b707",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "870e5710-d332-4ae9-a93b-cf7efc5e01b3",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "5227cf71-04fa-4e73-a961-4f5079cf74fc",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "712eb706-ca11-42f2-b913-f5fbc52b4112",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "b4058d07-b062-4703-817c-3719710a99bb",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "df312c87-f497-4e9c-811c-dda592ebb4cf",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "5478015d-b558-4552-9386-4e5140e9acba",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "dbb3281e-ec41-4521-9778-3e8917c88947",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "e456af15-e349-4645-bf06-fed8d67d07cf",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "2e4c85e9-8b47-4912-ac1e-087831b1434e",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "4047b0fe-2568-48a5-8377-63f806fc8912",
+            "reason": "excluded-non-collector:Cayenne",
+            "model": "Cayenne"
+          },
+          {
+            "id": "842320f8-1635-4d44-9ec5-1d31fdb9348c",
+            "reason": "excluded-non-collector:Taycan",
+            "model": "Taycan"
+          },
+          {
+            "id": "52affd2b-1fee-41de-8076-315a0af70d00",
+            "reason": "excluded-non-collector:Panamera",
+            "model": "Panamera"
+          },
+          {
+            "id": "c2829006-a1d4-4850-91e3-d31b0ebaba3c",
+            "reason": "excluded-non-collector:Cayenne",
+            "model": "Cayenne"
+          },
+          {
+            "id": "f989732b-7541-464f-b05d-30f75be59a6e",
+            "reason": "excluded-non-collector:Macan",
+            "model": "Macan"
+          },
+          {
+            "id": "f7b5cb1c-fc2c-4e39-af1a-61d6356f7ee8",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "9c4a6bf5-3a30-47c9-8fe8-865c7882eeea",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "e3cb6089-7f96-4127-a4c3-74330723180b",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "59c5821c-9239-47e2-b6e9-4c79860299b0",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "705b4285-7642-4aa6-9271-fbe5e5591da4",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "0c65be68-2169-4ab8-82e0-1124fefd5114",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "3c6c773a-d295-4e0c-bf0b-434d1775f58a",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "ed108a38-ee9d-4b37-b1e7-ea1abe6f2f8a",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "9c248b35-ea2f-4772-bfc8-79b86aabfb82",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "34491916-64eb-4b55-a2c9-52348e0fa16b",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "43eb54c4-8af2-47fa-b589-c42292de6425",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "e8072278-a611-4850-9fae-d5ccf5f05b75",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "4e636728-70d7-42d6-a72c-2526af7181a9",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "b5111d06-0433-49df-b6b2-a55bb39572de",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "1d66058f-4c04-41da-a7ac-b1ccfa8eae83",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "d7de4bd6-efe8-45c6-972a-3f036937c57e",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "0471125e-db75-4ab7-9fc6-2535a41f19a0",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "5c85714f-6858-40b4-b996-4d7df2b1605a",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "3a095fc3-bec1-4fd8-be93-553a02162223",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "a5400f66-a1d6-46cd-9551-4084a2357b43",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "9e1e9d7b-1e27-4aa8-8378-403cc3e43d66",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "2cc99848-035e-4c8d-be45-e22abfdeec72",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "cf3a9202-dd1b-445a-8dd0-bdd1a977a530",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "3a9a3134-5029-439a-87f7-cab15e475ed1",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "8b595bfa-21e1-4329-802b-9a4c18bf4a9e",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "4457e121-5c86-4458-9fb3-0e305b0257ac",
+            "reason": "excluded-non-collector:Taycan",
+            "model": "Taycan"
+          },
+          {
+            "id": "5e3b38ce-4c93-45d7-a6d0-f5489b889121",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "3361e8bb-c834-47d9-8df0-ce19d4c17ee6",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "f2a75531-8dd7-42fe-8e6d-60fabed7a935",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "c1688dd5-550d-4e91-9d37-7e69207ec955",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "61c7d1fa-dc5d-4371-b159-90b9d5d95f7d",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "17a0d5ff-9578-4616-82bc-706e2867dff9",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "9c5f873f-124c-47a2-9a8d-7fce56ae1558",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "fe8fa0d4-3201-45b5-ab03-f007b6246dfa",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "01fa4bb6-8090-4e5c-9862-f94fbcb410b1",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "233bb304-ffc2-45c2-a5cc-0140dc599618",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "b022d9cc-db31-4b42-bf5e-e16c0b574b79",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "4bbd9ba9-65ce-41f0-8844-2b7541def806",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "f3d96738-fbbd-4b71-a256-0e27e4811d55",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "f2544a2b-70bb-4d45-92da-8e200f1d7abb",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "cc1c1fb3-5f19-49a1-8924-ff31fb0266f7",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "29fc66b5-ba08-4e3b-9005-56d6dd8072fc",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "7463bdc2-1663-4124-b62e-a0fa751aa7c2",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "91979f41-21e0-4c77-bcd5-c26afd9bf20d",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "7e1bd91e-fcd3-4e1e-886a-95030ee85101",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "8fdb062f-e106-41a0-ac20-460a1588c4cc",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "3057c774-aff1-4f10-a490-6592b15ef7d3",
+            "reason": "excluded-non-collector:Panamera",
+            "model": "Panamera"
+          },
+          {
+            "id": "03f66e70-331e-41ed-87ce-350433b76fdf",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "9a8f53ea-0966-4218-9908-532e66ecb804",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "d4db1cc9-3b08-4229-a9c0-bc25907c145f",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "e32f0e3b-c0e5-4ac8-a013-891f2af5f21a",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "bbc49766-9adc-46eb-bc80-4c33d7f0ed5d",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "36d37fb2-1dcc-473e-8efc-84f92992f9de",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "0c161f70-4dbb-4026-99ec-691c27bdf5dc",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "596c43db-672b-4397-b7b1-6f1ceacaa306",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "e9d76df0-c028-4261-aba3-89a832702cad",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "7c5a2925-8ff4-488a-8deb-ac25e8d64744",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "d986caee-2a33-4d17-acb5-3ff3bb754602",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "88eda824-316c-42f9-90ea-df6ceaac8f29",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "25488e08-ff6e-475d-b98d-ec64dfd23ecf",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "d66549e2-294b-4f2a-a923-7822a7b21e1b",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "74369907-ffe9-43e1-b05d-5f8116b74884",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "e9788460-7c80-4d7d-8c55-c355bd1e036a",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "f06f8fb6-1e53-413b-baa2-39bf3c2a09bf",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "5c7cae6f-10ac-4f05-808d-0948107bee71",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "a30137f8-0825-4b6b-9f8c-71562e9de267",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "bf41fd83-f8b2-4ee0-9fcd-e61903778ece",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "54cfe8b6-d2b5-47d3-8e81-a75d83c03166",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "3318916c-6e47-492b-a631-454d4d24cb3c",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "a60e5b95-605a-45d4-a9b8-4874df887de9",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "e7ee9ca7-50bd-4c53-a2ad-5c2d045fcbda",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "a4597dba-a72c-493f-9785-31cbc332a6dc",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "f3ba03bd-9984-4435-b45c-9583355bdb86",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "4dfe33b0-d314-4d6b-bfa5-e9cc1ce71bf7",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "4e6a8aff-bfd6-4b63-89f9-ccd868ce7739",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "4f34c414-4ac9-4b84-8c9b-8f9457722a4d",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "abaac63b-8cc3-4277-9e73-65317ea1da84",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "f54bce46-51b7-437c-8109-a8619d77fa04",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "d7fd784f-5543-4f30-a18e-e320b136d6a2",
+            "reason": "excluded-non-collector:PANAMERA",
+            "model": "PANAMERA"
+          },
+          {
+            "id": "4a57c6df-b9d6-4fc1-ab4c-f8cc2cfea424",
+            "reason": "excluded-non-collector:MACAN",
+            "model": "MACAN"
+          },
+          {
+            "id": "9d911649-c7d8-4f12-ac0b-98d642702fb2",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          },
+          {
+            "id": "2f0150e9-32b7-496c-9290-b1be9723197a",
+            "reason": "excluded-non-collector:CAYENNE",
+            "model": "CAYENNE"
+          }
+        ],
+        "duration": "54707ms"
+      }
+    },
+    {
+      "name": "validate-cron",
+      "path": "/api/cron/validate",
+      "status": 200,
+      "ok": true,
+      "durationMs": 11231,
+      "response": {
+        "success": true,
+        "scanned": 13582,
+        "fixed": 1,
+        "fixedItems": [
+          {
+            "id": "f6ecdb7f-a771-423c-a6c0-298f45182c04",
+            "oldModel": "OTHERS",
+            "newModel": "OTHERS"
+          }
+        ],
+        "deleted": 8,
+        "deletedReasons": {
+          "unresolvable-model:OTHER": 8
+        },
+        "duration": "11121ms"
+      }
+    }
+  ]
+}
