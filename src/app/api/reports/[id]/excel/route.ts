@@ -35,6 +35,10 @@ export async function GET(
 ): Promise<Response> {
   const { id } = await params
 
+  // Authorization — paid report content. Only an authenticated user who has
+  // already generated/paid for this listing's report (or holds unlimited
+  // access) may download it. The report is loaded below via the RLS-bypassing
+  // service-role client, so this is the sole access boundary.
   const access = await checkReportAccess(id)
   if (!access.ok) {
     return access.reason === "unauthenticated"

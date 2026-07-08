@@ -26,6 +26,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 vi.mock("@/lib/supabaseLiveListings", () => ({
   isJunkListing: vi.fn(() => false),
+  // Mirror the real sanitizer so the .or() clause assertions stay meaningful.
   sanitizeOrIlikeTerm: (term: string) =>
     term.replace(/[%_,():*\\"]/g, " ").replace(/\s+/g, " ").trim(),
 }))

@@ -9,6 +9,19 @@ export type ReportAccessResult =
   | { ok: true; userId: string }
   | { ok: false; reason: "unauthenticated" | "forbidden" }
 
+/**
+ * Authorization gate for paid Haus Report content (PDF/Excel exports).
+ *
+ * Mirrors the entitlement check enforced by the HTML report page
+ * (`src/app/[locale]/cars/[make]/[id]/report/page.tsx`): a user may access a
+ * report only if they are authenticated AND either (a) already generated/paid
+ * for this listing's report, or (b) hold explicit unlimited report access.
+ *
+ * The export routes load reports through the service-role client (which
+ * bypasses RLS), so this check is the sole access boundary — without it any
+ * unauthenticated visitor could download paid reports by guessing public
+ * listing ids.
+ */
 export async function checkReportAccess(
   listingId: string,
 ): Promise<ReportAccessResult> {
@@ -25,6 +38,9 @@ export async function checkReportAccess(
 
   if (!authUserId) return { ok: false, reason: "unauthenticated" }
 
+  // getUserCredits looks up by supabase_user_id (Auth UUID). hasAlreadyGenerated
+  // must use the internal DB user id (user_credits.id), because deductCredit
+  // writes user_reports.user_id with the internal id — not the Auth UUID.
   const credits = await getUserCredits(authUserId)
   const internalUserId = credits?.id
   const alreadyPaid = internalUserId

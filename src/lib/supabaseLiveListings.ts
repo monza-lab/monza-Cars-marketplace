@@ -267,6 +267,29 @@ export function normalizeListingImageUrl(value: unknown): string | null {
   return parsed.toString();
 }
 
+/**
+ * Sanitize a free-text search term for safe use inside a PostgREST `.or()`
+ * filter string (e.g. `title.ilike.%TERM%`).
+ *
+ * PostgREST's `.or()` appends the filter string verbatim — it does NOT quote or
+ * escape values. Within a single predicate (`column.operator.value`) the column
+ * and operator are bound by the first two dots and everything after is the
+ * literal value, so a `.` inside the term is harmless. The characters that can
+ * actually break OUT of the predicate are the logic-list delimiters: a `,`
+ * starts a new predicate and `(` / `)` open or close a logic group. Left
+ * unsanitized, a term like `x,vin.ilike.*WP0*` injects an extra predicate,
+ * bypassing the intended text filter and enabling blind boolean exfiltration of
+ * columns that are never returned in the response.
+ *
+ * We therefore strip only:
+ *   - the grammar delimiters `,` `(` `)` (predicate / group breakout),
+ *   - the LIKE wildcards `%` `_` `*` (so a user can't inject wildcard patterns),
+ *   - the colon and quote/backslash (defensive; not needed in a search box).
+ *
+ * Everything else — crucially `.` and `-` — is preserved, so searches like
+ * "2.7", "3.0 RS" or "964 C2" still match. The result is only ever interpolated
+ * as the value half of an `ilike` predicate.
+ */
 export function sanitizeOrIlikeTerm(term: string): string {
   return term.replace(/[%_,():*\\"]/g, " ").replace(/\s+/g, " ").trim();
 }

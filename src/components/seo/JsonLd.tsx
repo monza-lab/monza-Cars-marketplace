@@ -5,6 +5,17 @@
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://monzalab.com";
 
+/**
+ * Serialize a JSON-LD schema for safe inline injection inside a
+ * `<script type="application/ld+json">` element.
+ *
+ * `JSON.stringify` escapes quotes/backslashes but NOT `<`, `>`, or `&`. Some
+ * schema fields (e.g. a car's `name`/`model`) originate from scraped
+ * third-party listing text, so a value like `</script><img src=x onerror=...>`
+ * would otherwise break out of the script element and execute as HTML (stored
+ * XSS). Escaping these HTML-significant characters to their `\uXXXX` form keeps
+ * the payload inert while remaining valid JSON that crawlers parse identically.
+ */
 function safeJsonLd(schema: unknown): string {
   return JSON.stringify(schema)
     .replace(/</g, "\\u003c")
