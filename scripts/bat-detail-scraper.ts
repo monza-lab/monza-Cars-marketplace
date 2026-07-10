@@ -9,10 +9,11 @@
  *   npx tsx scripts/bat-detail-scraper.ts --timeBudgetMs=1800000
  */
 import { readFileSync, existsSync } from "fs";
+import { fileURLToPath } from "node:url";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
-const envPath = resolve(__dirname, "../.env.local");
+const envPath = resolve(process.cwd(), ".env.local");
 if (existsSync(envPath)) {
   const envContent = readFileSync(envPath, "utf-8");
   for (const line of envContent.split("\n")) {
@@ -89,6 +90,92 @@ function buildStub(listing: any): BaTAuction {
     reserveStatus: null,
     bodyStyle: null,
   };
+}
+
+type BatListingUpdateBase = {
+  images: string[] | null;
+  engine: string | null;
+  mileage: number | null;
+  vin: string | null;
+  transmission: string | null;
+  color_exterior: string | null;
+  color_interior: string | null;
+  body_style: string | null;
+  description_text: string | null;
+  seller_notes: string | null;
+  current_bid: number | null;
+  hammer_price: number | null;
+  original_currency: string | null;
+};
+
+type BatDetailForUpdate = {
+  images: string[];
+  engine: string | null;
+  mileage: number | null;
+  mileageUnit: string | null;
+  vin: string | null;
+  transmission: string | null;
+  exteriorColor: string | null;
+  interiorColor: string | null;
+  bodyStyle: string | null;
+  description: string | null;
+  sellerNotes: string | null;
+  currentBid: number | null;
+};
+
+const LISTINGS_VARCHAR_LIMITS = {
+  vin: 17,
+  color_exterior: 100,
+  color_interior: 100,
+  body_style: 50,
+} as const;
+
+export function truncateDbVarchar(value: string | null | undefined, max: number): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
+}
+
+export function buildBatDetailUpdates(
+  listing: BatListingUpdateBase,
+  detail: BatDetailForUpdate,
+): Record<string, any> {
+  const updates: Record<string, any> = {};
+  if (detail.images.length > 0 && (!listing.images || listing.images.length === 0 || (listing.images.length === 1 && listing.images[0] === ""))) {
+    updates.images = detail.images;
+    updates.photos_count = detail.images.length;
+  }
+  if (!listing.engine && detail.engine) updates.engine = detail.engine.trim();
+  if (!listing.mileage && detail.mileage != null) {
+    updates.mileage = detail.mileage;
+    updates.mileage_unit = detail.mileageUnit || "miles";
+  }
+  if (!listing.vin && detail.vin) updates.vin = truncateDbVarchar(detail.vin, LISTINGS_VARCHAR_LIMITS.vin);
+  if (!listing.transmission && detail.transmission) updates.transmission = detail.transmission.trim();
+  if (detail.exteriorColor && !listing.color_exterior) {
+    updates.color_exterior = truncateDbVarchar(detail.exteriorColor, LISTINGS_VARCHAR_LIMITS.color_exterior);
+  }
+  if (detail.interiorColor && !listing.color_interior) {
+    updates.color_interior = truncateDbVarchar(detail.interiorColor, LISTINGS_VARCHAR_LIMITS.color_interior);
+  }
+  if (!listing.body_style && detail.bodyStyle) {
+    updates.body_style = truncateDbVarchar(detail.bodyStyle, LISTINGS_VARCHAR_LIMITS.body_style);
+  }
+  if (!listing.description_text && detail.description) updates.description_text = detail.description;
+  if (!listing.seller_notes && detail.sellerNotes) updates.seller_notes = detail.sellerNotes;
+
+  if (detail.currentBid != null && !listing.current_bid) {
+    updates.current_bid = detail.currentBid;
+  }
+  if (detail.currentBid != null && !listing.hammer_price) {
+    updates.hammer_price = detail.currentBid;
+  }
+  if (!listing.original_currency && detail.currentBid != null) {
+    updates.original_currency = "USD";
+  }
+
+  return updates;
 }
 
 async function main() {
@@ -222,11 +309,11 @@ async function main() {
         updates.mileage = detail.mileage;
         updates.mileage_unit = detail.mileageUnit || "miles";
       }
-      if (!listing.vin && detail.vin) updates.vin = detail.vin;
+      if (!listing.vin && detail.vin) updates.vin = truncateDbVarchar(detail.vin, LISTINGS_VARCHAR_LIMITS.vin);
       if (!listing.transmission && detail.transmission) updates.transmission = detail.transmission;
-      if (detail.exteriorColor && !listing.color_exterior) updates.color_exterior = detail.exteriorColor;
-      if (detail.interiorColor && !listing.color_interior) updates.color_interior = detail.interiorColor;
-      if (!listing.body_style && detail.bodyStyle) updates.body_style = detail.bodyStyle;
+      if (detail.exteriorColor && !listing.color_exterior) updates.color_exterior = truncateDbVarchar(detail.exteriorColor, LISTINGS_VARCHAR_LIMITS.color_exterior);
+      if (detail.interiorColor && !listing.color_interior) updates.color_interior = truncateDbVarchar(detail.interiorColor, LISTINGS_VARCHAR_LIMITS.color_interior);
+      if (!listing.body_style && detail.bodyStyle) updates.body_style = truncateDbVarchar(detail.bodyStyle, LISTINGS_VARCHAR_LIMITS.body_style);
       if (!listing.description_text && detail.description) updates.description_text = detail.description;
       if (!listing.seller_notes && detail.sellerNotes) updates.seller_notes = detail.sellerNotes;
 
@@ -295,7 +382,13 @@ async function main() {
   console.log(`\nDone!`);
 }
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]
+  ? fileURLToPath(import.meta.url) === resolve(process.argv[1])
+  : false;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("Fatal error:", err);
+    process.exit(1);
+  });
+}

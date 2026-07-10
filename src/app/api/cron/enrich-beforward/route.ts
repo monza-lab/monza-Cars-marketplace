@@ -242,12 +242,16 @@ export async function GET(request: Request) {
 
     await clearScraperRunActive("enrich-beforward");
 
+    const degraded = wafSkipped > 0 && enriched === 0;
+
     return NextResponse.json({
       success,
+      degraded,
       runId,
       discovered,
       enriched,
       wafSkipped,
+      queuedForScrapling: wafSkipped,
       deadUrlSkipped,
       errors,
       timeBudgetReached,

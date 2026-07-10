@@ -180,14 +180,15 @@ const SCRAPERS: ScraperDef[] = [
   {
     id: "autotrader",
     name: "AutoTrader Collector",
-    description: "GraphQL gateway, 20 pages",
+    description: "GraphQL gateway, complete price-sharded UK inventory",
     phase: "discovery",
     type: "cli",
     command: "npx",
     args: [
       "tsx",
       "src/features/scrapers/autotrader_collector/cli.ts",
-      "--maxPages=20",
+      "--fullCoverage",
+      "--noDetails",
       "--fresh",
     ],
     dryRunFlag: "--dryRun",

@@ -6,11 +6,13 @@ describe("sourceToCanonicalMarket", () => {
     expect(sourceToCanonicalMarket("BaT")).toBe("US");
     expect(sourceToCanonicalMarket("Bring a Trailer")).toBe("US");
     expect(sourceToCanonicalMarket("ClassicCom")).toBe("US");
+    expect(sourceToCanonicalMarket("CarsAndBids")).toBe("US");
   });
 
   it("AutoScout24 and Elferspot are EU", () => {
     expect(sourceToCanonicalMarket("AutoScout24")).toBe("EU");
     expect(sourceToCanonicalMarket("Elferspot")).toBe("EU");
+    expect(sourceToCanonicalMarket("CollectingCars")).toBe("EU");
   });
 
   it("AutoTrader is UK", () => {

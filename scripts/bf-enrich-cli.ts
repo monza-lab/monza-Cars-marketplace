@@ -312,8 +312,6 @@ async function main() {
             else empty++;
           } else if (res.error === "waf_blocked") {
             wafBlocked++;
-            failed++;
-            errors.push(`waf-blocked ${row.id}`);
           } else {
             failed++;
             errors.push(`fetch ${row.id}: ${res.error ?? "unknown"}`);
@@ -334,8 +332,8 @@ async function main() {
   }
 
   const durationMs = Date.now() - startTime;
-  // Success unless we got rows but wrote nothing (e.g. fully WAF-blocked).
-  const success = enriched > 0 || failed === 0;
+  // WAF blocks are queueable coverage skips: noisy, but not hard scraper failures.
+  const success = enriched > 0 || failed === 0 || wafBlocked > 0;
 
   if (!DRY_RUN) {
     await recordScraperRun({
@@ -349,7 +347,11 @@ async function main() {
       discovered: queue.length,
       written: enriched,
       errors_count: errors.length,
-      error_messages: errors.length > 0 ? errors.slice(0, 50) : undefined,
+      error_messages: errors.length > 0
+        ? errors.slice(0, 50)
+        : wafBlocked > 0
+          ? [`queued_scrapling_waf_blocked: ${wafBlocked}`]
+          : undefined,
     });
     await clearScraperRunActive("enrich-beforward");
   }

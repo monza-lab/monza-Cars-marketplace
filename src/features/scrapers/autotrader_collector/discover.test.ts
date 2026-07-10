@@ -1,16 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import {
+  AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS,
   buildGatewayFilters,
   buildSearchUrl,
   extractLinks,
   extractSearchResultLinks,
+  getGatewayPageCount,
   parseGatewayListings,
   hasNextPage,
   getTotalPages,
   detectAppVersion,
   resetCachedAppVersion,
 } from "./discover";
+
+describe("AutoTrader full-coverage shards", () => {
+  it("covers every non-negative price exactly once", () => {
+    expect(AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS).toEqual([
+      { label: "0-19999", priceFrom: 0, priceTo: 19_999 },
+      { label: "20000-39999", priceFrom: 20_000, priceTo: 39_999 },
+      { label: "40000-59999", priceFrom: 40_000, priceTo: 59_999 },
+      { label: "60000-79999", priceFrom: 60_000, priceTo: 79_999 },
+      { label: "80000-99999", priceFrom: 80_000, priceTo: 99_999 },
+      { label: "100000-149999", priceFrom: 100_000, priceTo: 149_999 },
+      { label: "150000-249999", priceFrom: 150_000, priceTo: 249_999 },
+      { label: "250000-499999", priceFrom: 250_000, priceTo: 499_999 },
+      { label: "500000+", priceFrom: 500_000 },
+    ]);
+
+    for (let index = 1; index < AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS.length; index++) {
+      const previous = AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS[index - 1];
+      const current = AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS[index];
+      expect(previous.priceTo! + 1).toBe(current.priceFrom);
+    }
+  });
+
+  it("refuses to silently truncate a saturated gateway shard", () => {
+    expect(getGatewayPageCount(2_000, 100)).toBe(100);
+    expect(() => getGatewayPageCount(2_001, 100)).toThrow(
+      "AutoTrader shard has 2001 results, above the 2000-result gateway limit",
+    );
+  });
+});
 
 describe("buildGatewayFilters", () => {
   it("always includes required filters", () => {

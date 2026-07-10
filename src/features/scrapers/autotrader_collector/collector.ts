@@ -3,7 +3,14 @@ import crypto from "node:crypto";
 import * as cheerio from "cheerio";
 
 import { loadCheckpoint, saveCheckpoint, updateSourceCheckpoint } from "./checkpoint";
-import { discoverListingUrls, fetchAutoTraderGatewayPage, buildSearchUrl } from "./discover";
+import {
+  AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS,
+  buildSearchUrl,
+  discoverListingUrls,
+  fetchAutoTraderGatewayPage,
+  getGatewayPageCount,
+  type AutoTraderGatewayListing,
+} from "./discover";
 import { fetchAutoTraderDetail } from "./detail";
 import { canonicalizeUrl, deriveSourceId } from "./id";
 import { logEvent } from "./logging";
@@ -75,6 +82,7 @@ export async function runAutoTraderCollector(config: CollectorRunConfig): Promis
       dateTo: config.dateTo,
       maxActivePagesPerSource: config.maxActivePagesPerSource,
       maxEndedPagesPerSource: config.maxEndedPagesPerSource,
+      fullCoverage: config.fullCoverage,
       scrapeDetails: config.scrapeDetails,
       dryRun: config.dryRun,
       checkpointPath: config.checkpointPath,
@@ -141,6 +149,7 @@ export async function runCollector(
     dateTo: overrides.dateTo,
     maxActivePagesPerSource: overrides.maxActivePagesPerSource ?? 20,
     maxEndedPagesPerSource: overrides.maxEndedPagesPerSource ?? 5,
+    fullCoverage: overrides.fullCoverage ?? false,
     scrapeDetails: overrides.scrapeDetails ?? true,
     checkpointPath: overrides.checkpointPath ?? "/tmp/autotrader_collector/checkpoint.json",
     dryRun: overrides.dryRun ?? false,
@@ -151,6 +160,28 @@ export async function runCollector(
 
 export function selectBackfillUrls(urls: string[]): string[] {
   return urls;
+}
+
+export async function forEachWithConcurrency<T>(
+  items: readonly T[],
+  concurrency: number,
+  task: (item: T) => Promise<void>,
+): Promise<void> {
+  if (!Number.isInteger(concurrency) || concurrency < 1) {
+    throw new Error("concurrency must be a positive integer");
+  }
+
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const item = items[nextIndex++];
+        await task(item);
+      }
+    },
+  );
+  await Promise.all(workers);
 }
 
 async function runSource(input: {
@@ -178,7 +209,14 @@ async function runSource(input: {
 
   // 1) Active listings (daily mode) - scrape search results for active listings
   if (config.mode === "daily") {
-    const active = await scrapeActiveListings(source, config.maxActivePagesPerSource, config.make, config.model, config.postcode);
+    const active = await scrapeActiveListings(
+      source,
+      config.maxActivePagesPerSource,
+      config.make,
+      config.model,
+      config.postcode,
+      config.fullCoverage,
+    );
     counts.discovered += active.length;
     const normalizedActive: Array<{ normalized: NormalizedListing; url: string }> = [];
 
@@ -221,7 +259,7 @@ async function runSource(input: {
     // search results it is definitively active right now.  Skip the
     // terminal-status gate so that previously-delisted / unsold listings
     // get re-activated and their updated_at is refreshed.
-    for (const { normalized, url } of normalizedActive) {
+    await forEachWithConcurrency(normalizedActive, 8, async ({ normalized, url }) => {
       try {
         await writer.upsertAll(normalized, meta, config.dryRun);
         counts.written++;
@@ -236,7 +274,7 @@ async function runSource(input: {
           message: err instanceof Error ? err.message : String(err),
         });
       }
-    }
+    });
   }
 
   // 2) Backfill mode - discover and process historical listings
@@ -321,7 +359,12 @@ async function scrapeActiveListings(
   make: string,
   model: string | undefined,
   postcode: string | undefined,
+  fullCoverage: boolean,
 ): Promise<ActiveListingBase[]> {
+  if (fullCoverage) {
+    return scrapeActiveListingsViaGatewayFullCoverage(source, make, model, postcode);
+  }
+
   // 1) Try gateway first — returns structured data (year, model, images)
   const gatewayListings = await scrapeActiveListingsViaGateway(source, maxPages, make, model, postcode);
   if (gatewayListings.length > 0) return gatewayListings;
@@ -335,6 +378,96 @@ async function scrapeActiveListings(
   }
 
   return [];
+}
+
+function toActiveListingBase(
+  source: SourceKey,
+  row: AutoTraderGatewayListing,
+): ActiveListingBase {
+  return {
+    source,
+    url: canonicalizeUrl(`https://www.autotrader.co.uk/car-details/${row.advertId}`),
+    externalId: row.advertId,
+    title: row.title,
+    make: row.make,
+    model: row.model,
+    year: row.year,
+    mileage: null,
+    mileageUnit: null,
+    price: parsePrice(row.priceText ?? ""),
+    priceText: row.priceText,
+    status: "active",
+    location: row.vehicleLocation,
+    images: row.images,
+    priceIndicator: row.priceIndicator,
+  };
+}
+
+async function scrapeActiveListingsViaGatewayFullCoverage(
+  source: SourceKey,
+  make: string,
+  model: string | undefined,
+  postcode: string | undefined,
+): Promise<ActiveListingBase[]> {
+  const maxPages = 100;
+  const filters = { make, model, postcode: postcode ?? "SW1A 1AA" };
+  const expected = await fetchAutoTraderGatewayPage({
+    page: 1,
+    timeoutMs: 15_000,
+    sortBy: "most_recent",
+    filters,
+  });
+  const byAdvertId = new Map<string, ActiveListingBase>();
+  let shardedTotal = 0;
+
+  for (const shard of AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS) {
+    const firstPage = await fetchAutoTraderGatewayPage({
+      page: 1,
+      timeoutMs: 15_000,
+      sortBy: "most_recent",
+      filters: { ...filters, priceFrom: shard.priceFrom, priceTo: shard.priceTo },
+    });
+    const pageCount = getGatewayPageCount(firstPage.totalResults, maxPages);
+    shardedTotal += firstPage.totalResults;
+
+    for (const row of firstPage.listings) {
+      byAdvertId.set(row.advertId, toActiveListingBase(source, row));
+    }
+    for (let page = 2; page <= pageCount; page++) {
+      const result = await fetchAutoTraderGatewayPage({
+        page,
+        timeoutMs: 15_000,
+        sortBy: "most_recent",
+        filters: { ...filters, priceFrom: shard.priceFrom, priceTo: shard.priceTo },
+      });
+      for (const row of result.listings) {
+        byAdvertId.set(row.advertId, toActiveListingBase(source, row));
+      }
+    }
+
+    logEvent({
+      level: "info",
+      event: "collector.gateway_coverage_shard",
+      runId: "",
+      source,
+      shard: shard.label,
+      totalResults: firstPage.totalResults,
+      pages: pageCount,
+    });
+  }
+
+  if (shardedTotal !== expected.totalResults) {
+    throw new Error(
+      `AutoTrader coverage mismatch: unfiltered=${expected.totalResults}, priceShards=${shardedTotal}`,
+    );
+  }
+  if (byAdvertId.size !== expected.totalResults) {
+    throw new Error(
+      `AutoTrader coverage incomplete: expected=${expected.totalResults}, unique=${byAdvertId.size}`,
+    );
+  }
+
+  return [...byAdvertId.values()];
 }
 
 async function scrapeActiveListingsViaScrapling(
@@ -439,25 +572,7 @@ async function scrapeActiveListingsViaGateway(
 
       consecutiveErrors = 0; // reset on success
 
-      for (const row of gateway.listings) {
-        listings.push({
-          source,
-          url: canonicalizeUrl(`https://www.autotrader.co.uk/car-details/${row.advertId}`),
-          externalId: row.advertId,
-          title: row.title,
-          make: row.make,
-          model: row.model,
-          year: row.year,
-          mileage: null,
-          mileageUnit: null,
-          price: parsePrice(row.priceText ?? ""),
-          priceText: row.priceText,
-          status: "active",
-          location: row.vehicleLocation,
-          images: row.images,
-          priceIndicator: row.priceIndicator,
-        });
-      }
+      for (const row of gateway.listings) listings.push(toActiveListingBase(source, row));
 
       if (gateway.listings.length === 0) break;
     } catch (err) {

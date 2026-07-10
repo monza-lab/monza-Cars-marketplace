@@ -1,11 +1,27 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
-import { runCollector } from "./collector";
-import { selectBackfillUrls } from "./collector";
+import { forEachWithConcurrency, runCollector, selectBackfillUrls } from "./collector";
 import { extractAutoTraderImages } from "./imageUrls";
 
 describe("collector", () => {
+  it("bounds concurrent listing writes", async () => {
+    let active = 0;
+    let maxActive = 0;
+    const completed: number[] = [];
+
+    await forEachWithConcurrency([1, 2, 3, 4, 5, 6], 2, async (value) => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      completed.push(value);
+      active--;
+    });
+
+    expect(maxActive).toBe(2);
+    expect(completed.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
   describe("runCollector", () => {
     it("should be importable as a function", () => {
       expect(typeof runCollector).toBe("function");

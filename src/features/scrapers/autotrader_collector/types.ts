@@ -18,6 +18,7 @@ export interface CollectorRunConfig {
   dateTo?: string; // YYYY-MM-DD (UTC)
   maxActivePagesPerSource: number;
   maxEndedPagesPerSource: number;
+  fullCoverage: boolean;
   scrapeDetails: boolean;
   checkpointPath: string;
   dryRun: boolean;

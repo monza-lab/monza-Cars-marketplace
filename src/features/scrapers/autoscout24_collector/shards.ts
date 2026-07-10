@@ -30,9 +30,12 @@ const HIGH_VOLUME_YEAR_SPLITS: Record<string, [number, number][]> = {
   "911": [
     [1963, 1989], // F-model + G-model + 930
     [1989, 1998], // 964 + 993
-    [1998, 2012], // 996 + 997
-    [2012, 2019], // 991
-    [2019, 2026], // 992
+    [1998, 2005], // 996
+    [2005, 2012], // 997
+    [2012, 2016], // early 991
+    [2016, 2019], // late 991
+    [2019, 2022], // early 992
+    [2023, 2026], // current 992
   ],
 };
 
@@ -41,6 +44,16 @@ const HIGH_VOLUME_YEAR_SPLITS: Record<string, [number, number][]> = {
  * Split into price-range sub-shards to capture full inventory.
  */
 const PRICE_RANGE_SPLITS: Record<string, { from?: number; to?: number }[]> = {
+  "718": [
+    { to: 50000 },
+    { from: 50001, to: 90000 },
+    { from: 90001 },
+  ],
+  cayenne: [
+    { to: 40000 },
+    { from: 40001, to: 90000 },
+    { from: 90001 },
+  ],
   macan: [
     { to: 50000 },
     { from: 50001, to: 90000 },
@@ -69,6 +82,20 @@ const PRICE_RANGE_SPLITS: Record<string, { from?: number; to?: number }[]> = {
 };
 
 const SECOND_LEVEL_YEAR_SPLITS: Record<string, [number, number][]> = {
+  "718": [
+    [2016, 2019],
+    [2020, 2026],
+  ],
+  cayenne: [
+    [2002, 2010],
+    [2011, 2018],
+    [2019, 2026],
+  ],
+  macan: [
+    [2014, 2018],
+    [2019, 2021],
+    [2022, 2026],
+  ],
   panamera: [
     [2009, 2016],
     [2017, 2020],

@@ -3,9 +3,6 @@ name: AutoTrader Collector (Daily)
 on:
   workflow_dispatch:
     inputs:
-      max_pages:
-        description: 'Max search pages per source'
-        default: '20'
       dry_run:
         description: 'Skip DB writes'
         default: 'false'
@@ -50,7 +47,7 @@ jobs:
           AT_PROXY_URL: ${{ secrets.AT_PROXY_URL }}
         run: |
           npx tsx src/features/scrapers/autotrader_collector/cli.ts \
-            --maxPages=${{ github.event.inputs.max_pages || '20' }} \
+            --fullCoverage \
             ${{ github.event.inputs.no_details == 'true' && '--noDetails' || '' }} \
             ${{ github.event.inputs.dry_run == 'true' && '--dryRun' || '' }}
 

@@ -126,6 +126,7 @@ async function main(): Promise<void> {
       model: readString(args, "model"),
       postcode: readString(args, "postcode") ?? "SW1A 1AA",
       maxActivePagesPerSource: readNumber(args, "maxPages", 5),
+      fullCoverage: hasFlag(args, "fullCoverage"),
       scrapeDetails: !hasFlag(args, "noDetails"),
       checkpointPath,
       dryRun: hasFlag(args, "dryRun"),

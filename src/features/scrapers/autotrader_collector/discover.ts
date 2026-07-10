@@ -39,6 +39,36 @@ export interface SearchFilters {
   sort?: string;
 }
 
+export interface AutoTraderPriceShard {
+  label: string;
+  priceFrom: number;
+  priceTo?: number;
+}
+
+export const AUTO_TRADER_FULL_COVERAGE_PRICE_SHARDS: AutoTraderPriceShard[] = [
+  { label: "0-19999", priceFrom: 0, priceTo: 19_999 },
+  { label: "20000-39999", priceFrom: 20_000, priceTo: 39_999 },
+  { label: "40000-59999", priceFrom: 40_000, priceTo: 59_999 },
+  { label: "60000-79999", priceFrom: 60_000, priceTo: 79_999 },
+  { label: "80000-99999", priceFrom: 80_000, priceTo: 99_999 },
+  { label: "100000-149999", priceFrom: 100_000, priceTo: 149_999 },
+  { label: "150000-249999", priceFrom: 150_000, priceTo: 249_999 },
+  { label: "250000-499999", priceFrom: 250_000, priceTo: 499_999 },
+  { label: "500000+", priceFrom: 500_000 },
+];
+
+const AUTO_TRADER_GATEWAY_PAGE_SIZE = 20;
+
+export function getGatewayPageCount(totalResults: number, maxPages: number): number {
+  const capacity = AUTO_TRADER_GATEWAY_PAGE_SIZE * maxPages;
+  if (totalResults > capacity) {
+    throw new Error(
+      `AutoTrader shard has ${totalResults} results, above the ${capacity}-result gateway limit`,
+    );
+  }
+  return Math.ceil(totalResults / AUTO_TRADER_GATEWAY_PAGE_SIZE);
+}
+
 interface GatewayListing {
   advertId?: string;
   title?: string;

@@ -34,6 +34,14 @@ export function buildMissingDetailOrCriticalSpecFilter(markerFields: string[]): 
   ]);
 }
 
+export function buildClassicMissingDetailSpecOrPriceFilter(markerFields: string[]): string {
+  return [
+    buildMissingDetailOrCriticalSpecFilter(markerFields),
+    "current_bid.is.null",
+    "current_bid.lte.0",
+  ].join(",");
+}
+
 export function buildMissingAs24TargetFieldFilter(): string {
   return buildMissingAnyFilter(
     AS24_TARGET_FIELDS.map((field) => ({ field, type: "text" as const })),

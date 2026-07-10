@@ -5,8 +5,10 @@ const MAP: Record<string, CanonicalMarket> = {
   "Bring a Trailer": "US",
   "ClassicCom": "US",
   "Classic.com": "US",
+  "CarsAndBids": "US",
   "AutoScout24": "EU",
   "Elferspot": "EU",
+  "CollectingCars": "EU",
   "AutoTrader": "UK",
   "BeForward": "JP",
 };
@@ -16,7 +18,7 @@ export function sourceToCanonicalMarket(source: string | null | undefined): Cano
   return MAP[source] ?? null;
 }
 
-export const AUCTION_SOURCES: readonly string[] = ["BaT", "Bring a Trailer", "ClassicCom", "Classic.com"] as const;
+export const AUCTION_SOURCES: readonly string[] = ["BaT", "Bring a Trailer", "ClassicCom", "Classic.com", "CarsAndBids"] as const;
 
 export function isAuctionSource(source: string | null | undefined): boolean {
   if (!source) return false;

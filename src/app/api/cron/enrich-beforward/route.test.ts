@@ -264,7 +264,9 @@ describe("GET /api/cron/enrich-beforward", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
+    expect(data.degraded).toBe(true);
     expect(data.wafSkipped).toBe(1);
+    expect(data.queuedForScrapling).toBe(1);
     expect(data.errors).toEqual([]);
     expect(recordScraperRun).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -60,6 +60,13 @@ function buildDetailParsed(content: ClassicDetailContent, url: string): DetailPa
     }
   }
 
+  if (price === null) {
+    const forSalePriceMatch = bodyText.match(/\bFOR SALE\b\s*(?:by\s+[^\n]+\s*)?\n?\s*\$([\d,]+)/i);
+    if (forSalePriceMatch) {
+      price = parseInt(forSalePriceMatch[1].replace(/,/g, ""), 10);
+    }
+  }
+
   const soldPriceMatch = bodyText.match(/Sold at\s+[\s\S]*?for \$([\d,]+)/i);
   let hammerPrice: number | null = null;
   if (soldPriceMatch) {

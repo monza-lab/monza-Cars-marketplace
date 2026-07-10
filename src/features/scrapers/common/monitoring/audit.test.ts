@@ -3,6 +3,8 @@ import type { ActiveScraperRun, ScraperRun } from "./types";
 import { summarizeScraperHealth } from "./audit";
 import {
   applyAutoscout24HealthGates,
+  applyVinEnrichmentHealthGates,
+  buildCoverageHealthIssues,
   hasAutoscout24ShardSaturationWarning,
 } from "../../../../../scripts/scraper-health-audit";
 
@@ -174,7 +176,7 @@ describe("summarizeScraperHealth", () => {
     expect(gated.notes.join("; ")).toContain("AutoScout24 target-field coverage below 100%");
   });
 
-  it("keeps AutoScout24 working when shard saturation warnings do not leave target-field gaps", () => {
+  it("marks AutoScout24 degraded when shard saturation warnings are present", () => {
     const runs = [
       makeRun({
         scraper_name: "autoscout24",
@@ -217,7 +219,103 @@ describe("summarizeScraperHealth", () => {
 
     const gated = applyAutoscout24HealthGates(summary, runs);
 
+    expect(gated.status).toBe("degraded");
+    expect(gated.notes.join("; ")).toContain("AutoScout24 shard saturation warning present");
+  });
+
+  it("keeps VIN enrichment working when recent zero-write runs found no eligible VIN queue", () => {
+    const runs = [
+      makeRun({ scraper_name: "enrich-vin", discovered: 0, written: 0, errors_count: 0 }),
+      makeRun({ scraper_name: "enrich-vin", discovered: 0, written: 0, errors_count: 0 }),
+    ];
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "enrich-vin",
+        label: "VIN Enrichment",
+        cadence: "daily",
+        cronPath: "/api/cron/enrich-vin",
+      },
+      runs,
+      undefined,
+    );
+
+    expect(summary.status).toBe("zero-write");
+
+    const gated = applyVinEnrichmentHealthGates(summary, runs);
+
     expect(gated.status).toBe("working");
-    expect(gated.notes.join("; ")).not.toContain("AutoScout24 shard saturation warning present");
+    expect(gated.notes.join("; ")).toContain("VIN enrichment queue exhausted");
+  });
+
+  it("marks VIN enrichment degraded when the latest run records a classified decoder zero-write", () => {
+    const now = Date.now();
+    const runs = [
+      makeRun({
+        scraper_name: "enrich-vin",
+        finished_at: new Date(now).toISOString(),
+        discovered: 500,
+        written: 0,
+        errors_count: 0,
+        error_messages: ["vin_zero_write:decode_failed"],
+      }),
+      makeRun({
+        scraper_name: "enrich-vin",
+        finished_at: new Date(now - 60_000).toISOString(),
+        discovered: 500,
+        written: 1,
+        errors_count: 0,
+      }),
+    ];
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "enrich-vin",
+        label: "VIN Enrichment",
+        cadence: "daily",
+        cronPath: "/api/cron/enrich-vin",
+      },
+      runs,
+      undefined,
+      now,
+    );
+
+    expect(summary.status).toBe("working");
+
+    const gated = applyVinEnrichmentHealthGates(summary, runs);
+
+    expect(gated.status).toBe("degraded");
+    expect(gated.notes.join("; ")).toContain("VIN enrichment latest run decode_failed");
+  });
+
+  it("maps DB coverage alerts into health issues", () => {
+    const issues = buildCoverageHealthIssues({
+      generatedAt: "2026-07-09T00:00:00.000Z",
+      rows: [],
+      markets: [],
+      marketAlerts: [{
+        market: "UK",
+        severity: "critical",
+        message: "UK has historical rows but zero active coverage",
+      }],
+      sourceAlerts: [{
+        source: "ClassicCom",
+        severity: "degraded",
+        message: "ClassicCom price coverage is below 50% (37.6%)",
+      }],
+    });
+
+    expect(issues).toEqual([
+      {
+        scope: "market",
+        key: "UK",
+        severity: "critical",
+        message: "UK has historical rows but zero active coverage",
+      },
+      {
+        scope: "source",
+        key: "ClassicCom",
+        severity: "degraded",
+        message: "ClassicCom price coverage is below 50% (37.6%)",
+      },
+    ]);
   });
 });

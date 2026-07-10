@@ -98,14 +98,36 @@ describe("AutoScout24 saturation shard policy", () => {
 
     const ids = shards.map((shard) => shard.id);
 
-    expect(ids).toContain("macan-low");
-    expect(ids).toContain("macan-mid");
-    expect(ids).toContain("macan-high");
+    expect(ids).toContain("macan-low-2014-2018");
+    expect(ids).toContain("macan-mid-2019-2021");
+    expect(ids).toContain("macan-high-2022-2026");
     expect(ids).toContain("panamera-low-2009-2016");
     expect(ids).toContain("panamera-mid-2017-2020");
     expect(ids).toContain("panamera-high-2021-2026");
     expect(ids).toContain("taycan-mid-2019-2022");
     expect(ids).toContain("taycan-high-2023-2026");
+  });
+
+  it("splits latest saturated 718, Cayenne, Macan, and 911 Italy shards", () => {
+    const shards = generateShards({
+      countries,
+      models: ["911", "718", "cayenne", "macan"],
+      maxPagesPerShard: 20,
+    });
+
+    const ids = shards.map((shard) => shard.id);
+
+    expect(ids).not.toContain("718-all");
+    expect(ids).not.toContain("cayenne-all");
+    expect(ids).not.toContain("macan-low");
+    expect(ids).not.toContain("macan-mid");
+    expect(ids).not.toContain("911-I-1998-2012");
+    expect(ids).not.toContain("911-I-2019-2026");
+    expect(ids).toContain("718-low-2016-2019");
+    expect(ids).toContain("cayenne-mid-2011-2018");
+    expect(ids).toContain("macan-low-2014-2018");
+    expect(ids).toContain("911-I-1998-2005");
+    expect(ids).toContain("911-I-2023-2026");
   });
 
   it("preserves saturated shard lineage when splitting an observed saturated shard", () => {

@@ -6,6 +6,7 @@ import {
   buildUnusableAs24TargetFieldFilter,
   buildMissingAs24TargetOrDetailFilter,
   buildMissingCriticalSpecFilter,
+  buildClassicMissingDetailSpecOrPriceFilter,
   buildMissingDetailOrCriticalSpecFilter,
   buildMissingAnyFilter,
   classifyScraplingBody,
@@ -30,6 +31,9 @@ describe("enrichment loop policy", () => {
     );
     expect(buildMissingDetailOrCriticalSpecFilter(["trim"])).toBe(
       "trim.is.null,trim.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.",
+    );
+    expect(buildClassicMissingDetailSpecOrPriceFilter(["description_text"])).toBe(
+      "description_text.is.null,description_text.eq.,engine.is.null,engine.eq.,transmission.is.null,transmission.eq.,current_bid.is.null,current_bid.lte.0",
     );
   });
 

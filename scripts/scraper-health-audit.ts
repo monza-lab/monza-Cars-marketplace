@@ -10,8 +10,21 @@ import {
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
+import {
+  fetchCoverageRows,
+  summarizeCoverageRows,
+  type CoverageAlert,
+  type CoverageSummary,
+} from "./coverage-snapshot";
 
 type AuditSupabaseClient = SupabaseClient<any, any, any, any, any>;
+
+export type CoverageHealthIssue = {
+  scope: "market" | "source";
+  key: string;
+  severity: CoverageAlert["severity"];
+  message: string;
+};
 
 function loadEnvFromFile(filePath: string): void {
   if (!existsSync(filePath)) return;
@@ -218,7 +231,7 @@ export function applyAutoscout24HealthGates(
     notes.push("AutoScout24 target-field coverage below 100%");
   }
 
-  if (targetCoverageBelow100 && hasAutoscout24ShardSaturationWarning(runs)) {
+  if (hasAutoscout24ShardSaturationWarning(runs)) {
     status = "degraded";
     notes.push("AutoScout24 shard saturation warning present");
   }
@@ -226,6 +239,74 @@ export function applyAutoscout24HealthGates(
   return status === summary.status && notes.length === summary.notes.length
     ? summary
     : { ...summary, status, notes };
+}
+
+export function applyVinEnrichmentHealthGates(
+  summary: ScraperHealthSummary,
+  runs: ScraperRun[],
+): ScraperHealthSummary {
+  if (summary.scraperName !== "enrich-vin") {
+    return summary;
+  }
+
+  const latestRun = [...runs].sort(
+    (left, right) => Date.parse(right.finished_at) - Date.parse(left.finished_at),
+  )[0];
+  const latestZeroWriteReason = latestRun?.error_messages?.find((message) =>
+    /^vin_zero_write:(decode_failed|no_new_fields)$/.test(message),
+  )?.replace("vin_zero_write:", "");
+
+  if (latestZeroWriteReason && summary.status !== "failed" && summary.status !== "stuck") {
+    return {
+      ...summary,
+      status: "degraded",
+      notes: [
+        ...summary.notes,
+        `VIN enrichment latest run ${latestZeroWriteReason}`,
+      ],
+    };
+  }
+
+  if (summary.status !== "zero-write") {
+    return summary;
+  }
+
+  const hasOnlyEmptyQueueRuns = runs.length > 0 && runs.every((run) =>
+    run.success
+    && (run.discovered ?? 0) === 0
+    && (run.written ?? 0) === 0
+    && (run.errors_count ?? 0) === 0
+  );
+
+  if (!hasOnlyEmptyQueueRuns) {
+    return summary;
+  }
+
+  return {
+    ...summary,
+    status: "working",
+    notes: [
+      ...summary.notes.filter((note) => note !== "Recent runs wrote nothing"),
+      "VIN enrichment queue exhausted",
+    ],
+  };
+}
+
+export function buildCoverageHealthIssues(summary: CoverageSummary): CoverageHealthIssue[] {
+  return [
+    ...summary.marketAlerts.map((alert) => ({
+      scope: "market" as const,
+      key: String(alert.market ?? "UNKNOWN"),
+      severity: alert.severity,
+      message: alert.message,
+    })),
+    ...summary.sourceAlerts.map((alert) => ({
+      scope: "source" as const,
+      key: String(alert.source ?? "UNKNOWN"),
+      severity: alert.severity,
+      message: alert.message,
+    })),
+  ];
 }
 
 async function main(): Promise<void> {
@@ -270,29 +351,35 @@ async function main(): Promise<void> {
     activeByName.set(active.scraper_name, active);
   }
 
-  const [elferspotTargetCoverage, autoscout24TargetCoverage] = await Promise.all([
+  const [elferspotTargetCoverage, autoscout24TargetCoverage, coverageRows] = await Promise.all([
     fetchElferspotTargetCoverage(supabase),
     fetchAutoscout24TargetCoverage(supabase),
+    fetchCoverageRows(),
   ]);
+  const coverage = summarizeCoverageRows(coverageRows);
+  const coverageIssues = buildCoverageHealthIssues(coverage);
 
-  const summaries = JOB_SPECS.map((spec) =>
-    applyAutoscout24HealthGates(
-      summarizeScraperHealth(
-        spec,
-        groupedRuns.get(spec.scraperName) ?? [],
-        activeByName.get(spec.scraperName),
-        Date.now(),
-        spec.scraperName === "elferspot"
-          ? elferspotTargetCoverage
-          : spec.scraperName === "autoscout24"
-            ? autoscout24TargetCoverage
-            : undefined,
-      ),
-      groupedRuns.get(spec.scraperName) ?? [],
-    ),
-  );
+  const summaries = JOB_SPECS.map((spec) => {
+    const specRuns = groupedRuns.get(spec.scraperName) ?? [];
+    const summary = summarizeScraperHealth(
+      spec,
+      specRuns,
+      activeByName.get(spec.scraperName),
+      Date.now(),
+      spec.scraperName === "elferspot"
+        ? elferspotTargetCoverage
+        : spec.scraperName === "autoscout24"
+          ? autoscout24TargetCoverage
+          : undefined,
+    );
 
-  const issues = summaries.filter((summary) => statusRank(summary.status) > 0);
+    return applyVinEnrichmentHealthGates(
+      applyAutoscout24HealthGates(summary, specRuns),
+      specRuns,
+    );
+  });
+
+  const jobIssues = summaries.filter((summary) => statusRank(summary.status) > 0);
   const artifactDir = path.resolve(process.cwd(), "agents/testscripts/artifacts");
   mkdirSync(artifactDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -301,8 +388,12 @@ async function main(): Promise<void> {
     generated_at: new Date().toISOString(),
     window_days: daysBack,
     since,
-    issue_count: issues.length,
+    issue_count: jobIssues.length + coverageIssues.length,
+    job_issue_count: jobIssues.length,
+    coverage_issue_count: coverageIssues.length,
     summaries,
+    coverage,
+    coverage_issues: coverageIssues,
   };
   writeFileSync(artifactPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 
@@ -326,10 +417,14 @@ async function main(): Promise<void> {
       );
     }
     console.log("");
-    console.log(`Jobs with issues: ${issues.length}`);
+    console.log(`Jobs with issues: ${jobIssues.length}`);
+    console.log(`Coverage issues: ${coverageIssues.length}`);
+    for (const issue of coverageIssues) {
+      console.log(`${issue.severity.toUpperCase()}: ${issue.scope}:${issue.key} | ${issue.message}`);
+    }
   }
 
-  if (strict && issues.length > 0) {
+  if (strict && (jobIssues.length > 0 || coverageIssues.length > 0)) {
     process.exitCode = 1;
   }
 }

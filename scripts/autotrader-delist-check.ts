@@ -12,11 +12,13 @@
  *   npx tsx scripts/autotrader-delist-check.ts --dryRun
  */
 import { readFileSync, existsSync } from "fs";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
 // Load .env.local
-const envPath = resolve(__dirname, "../.env.local");
+const envPath = resolve(process.cwd(), ".env.local");
 if (existsSync(envPath)) {
   for (const line of readFileSync(envPath, "utf-8").split("\n")) {
     const t = line.trim();
@@ -56,6 +58,51 @@ function parseArgs() {
 function extractAdvertId(url: string): string | null {
   const match = url.match(/\/car-details\/(\d+)(?:[/?#]|$)/i);
   return match?.[1] ?? null;
+}
+
+export type AutoTraderListingResponse = "live" | "delisted" | "rate-limited" | "error";
+
+export function classifyAutoTraderListingResponse(
+  status: number,
+  location: string | null,
+): AutoTraderListingResponse {
+  if (status === 200) return "live";
+  if (status === 403 || status === 429) return "rate-limited";
+  if (
+    status >= 300 &&
+    status < 400 &&
+    location !== null &&
+    /(?:[?&])expired-ad=true(?:&|$)/i.test(location)
+  ) {
+    return "delisted";
+  }
+  return "error";
+}
+
+export type DelistBatchDecisionInput = {
+  checked: number;
+  live: number;
+  delisted: number;
+  errors: number;
+  sourceActiveBefore: number;
+};
+
+export type DelistBatchDecision =
+  | { apply: true; reason: "normal" }
+  | { apply: false; reason: "mass-delist-guard" };
+
+export function shouldApplyDelistBatch(input: DelistBatchDecisionInput): DelistBatchDecision {
+  const delistedRatio = input.checked > 0 ? input.delisted / input.checked : 0;
+  if (
+    input.sourceActiveBefore > 0 &&
+    input.checked >= 50 &&
+    input.live === 0 &&
+    input.delisted > 0 &&
+    delistedRatio >= 0.9
+  ) {
+    return { apply: false, reason: "mass-delist-guard" };
+  }
+  return { apply: true, reason: "normal" };
 }
 
 // Main
@@ -106,10 +153,12 @@ async function main() {
   }
 
   let live = 0;
-  let delisted = 0;
+  let delistedCandidates = 0;
+  let delistedApplied = 0;
   let errors = 0;
   let consecutiveErrors = 0;
   const MAX_CONSECUTIVE_ERRORS = 15;
+  const delistIds: string[] = [];
 
   for (let i = 0; i < listings.length; i++) {
     if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
@@ -125,36 +174,30 @@ async function main() {
     }
 
     try {
-      const apiUrl = `https://www.autotrader.co.uk/product-page/v1/advert/${advertId}?channel=cars&postcode=SW1A%201AA`;
-      const resp = await fetch(apiUrl, {
+      const resp = await fetch(listing.source_url, {
+        redirect: "manual",
         headers: {
           "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          Accept: "application/json",
-          Referer: listing.source_url,
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
         signal: AbortSignal.timeout(10_000),
       });
 
-      if (resp.status === 200) {
+      const classification = classifyAutoTraderListingResponse(
+        resp.status,
+        resp.headers.get("location"),
+      );
+      if (classification === "live") {
         live++;
         consecutiveErrors = 0;
-      } else if (resp.status === 404) {
+      } else if (classification === "delisted") {
         consecutiveErrors = 0;
-        if (!opts.dryRun) {
-          const { error: delistErr } = await supabase
-            .from("listings")
-            .update({ status: "delisted", updated_at: new Date().toISOString() })
-            .eq("id", listing.id);
-          if (!delistErr) {
-            delisted++;
-          } else {
-            errors++;
-          }
-        } else {
+        delistedCandidates++;
+        delistIds.push(listing.id);
+        if (opts.dryRun) {
           console.log(`  [DRY] DELIST: ${listing.title?.slice(0, 50)} - ${listing.source_url}`);
-          delisted++;
         }
-      } else if (resp.status === 403 || resp.status === 429) {
+      } else if (classification === "rate-limited") {
         console.log(`\nRate-limited (${resp.status}). Stopping.`);
         break;
       } else {
@@ -173,7 +216,7 @@ async function main() {
 
     if ((i + 1) % 50 === 0) {
       const elapsed = Math.round((Date.now() - startTime) / 1000);
-      console.log(`  Progress: ${i + 1}/${listings.length} - live=${live}, delisted=${delisted}, errors=${errors} (${elapsed}s)`);
+      console.log(`  Progress: ${i + 1}/${listings.length} - live=${live}, delistCandidates=${delistedCandidates}, errors=${errors} (${elapsed}s)`);
     }
 
     if (i < listings.length - 1) {
@@ -181,12 +224,60 @@ async function main() {
     }
   }
 
+  const checked = live + delistedCandidates + errors;
+  const decision = shouldApplyDelistBatch({
+    checked,
+    live,
+    delisted: delistedCandidates,
+    errors,
+    sourceActiveBefore: allListings.length,
+  });
+
+  if (!opts.dryRun && decision.apply) {
+    for (const id of delistIds) {
+      const { error: delistErr } = await supabase
+        .from("listings")
+        .update({ status: "delisted", updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (!delistErr) {
+        delistedApplied++;
+      } else {
+        errors++;
+      }
+    }
+  } else if (!opts.dryRun && !decision.apply) {
+    await supabase.from("scraper_runs").insert({
+      scraper_name: "autotrader-delist-check",
+      run_id: randomUUID(),
+      started_at: new Date(startTime).toISOString(),
+      finished_at: new Date().toISOString(),
+      success: false,
+      runtime: "cli",
+      duration_ms: Date.now() - startTime,
+      discovered: checked,
+      written: 0,
+      errors_count: 1,
+      error_messages: [
+        `mass-delist-guard: checked=${checked} live=${live} delistCandidates=${delistedCandidates} activeBefore=${allListings.length}`,
+      ],
+    });
+    console.log(`\nMass-delist guard blocked ${delistedCandidates} AutoTrader status updates.`);
+  } else {
+    delistedApplied = delistedCandidates;
+  }
+
   const elapsed = Math.round((Date.now() - startTime) / 1000);
   console.log(`\n=== Summary ===`);
-  console.log(`Checked: ${live + delisted + errors}, Live: ${live}, Delisted: ${delisted}, Errors: ${errors}, Duration: ${elapsed}s`);
+  console.log(`Checked: ${checked}, Live: ${live}, Delist candidates: ${delistedCandidates}, Delisted: ${delistedApplied}, Errors: ${errors}, Decision: ${decision.reason}, Duration: ${elapsed}s`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exitCode = 1;
-});
+const isDirectRun = process.argv[1]
+  ? fileURLToPath(import.meta.url) === resolve(process.argv[1])
+  : false;
+
+if (isDirectRun) {
+  main().catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  });
+}
