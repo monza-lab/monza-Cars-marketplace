@@ -44,6 +44,10 @@ export function extractListingUrlsFromHtml(html: string): string[] {
   return Array.from(out);
 }
 
+export function parseListingRowsFromHtml(html: string, page: number): ListingSummary[] {
+  return parseListingRows(cheerio.load(html), page);
+}
+
 export async function discoverPage(input: {
   page: number;
   limiter: PerDomainRateLimiter;
@@ -148,6 +152,10 @@ function parseListingRows($: cheerio.CheerioAPI, page: number): ListingSummary[]
     const mileageText = row.find("td.mileage p.val").text();
     const yearText = row.find("td.year p.val").text();
     const locationText = row.find("td.location p.val").text();
+    const image = row.find("img").first();
+    const thumbnailUrl = ["src", "data-src", "data-original"]
+      .map((attribute) => normalizeBeForwardThumbnail(image.attr(attribute) ?? null))
+      .find((url): url is string => url !== null) ?? null;
 
     const priceText = row.find("p.vehicle-price").first().text();
     const totalPriceText = row.find("p.total-price").first().text();
@@ -162,6 +170,7 @@ function parseListingRows($: cheerio.CheerioAPI, page: number): ListingSummary[]
       mileageKm: parseKm(mileageText),
       year: parseYear(yearText || title),
       location: cleanText(locationText) || null,
+      thumbnailUrl,
     });
   });
 
@@ -173,6 +182,20 @@ function parseListingRows($: cheerio.CheerioAPI, page: number): ListingSummary[]
   }
 
   return out;
+}
+
+function normalizeBeForwardThumbnail(input: string | null): string | null {
+  const value = input?.trim();
+  if (!value) return null;
+
+  try {
+    const url = new URL(value.startsWith("//") ? `https:${value}` : value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    if (url.hostname.toLowerCase() !== "image-cdn.beforward.jp") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 function parseRefNo(input: string): string | null {

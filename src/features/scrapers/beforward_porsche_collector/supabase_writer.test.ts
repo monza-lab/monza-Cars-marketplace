@@ -130,7 +130,7 @@ function makeRefreshClient(statusHtml: string | Error, updates: unknown[] = []) 
   return { update, updateEq, updates };
 }
 
-function makeWriterClient(previousStatus: string | null = null) {
+function makeWriterClient(previousStatus: string | null = null, previousPhotosCount: number | null = null) {
   const upsert = vi.fn(() => ({
     select: vi.fn(() => ({
       limit: vi.fn().mockResolvedValue({ data: [{ id: "listing-1" }], error: null }),
@@ -142,12 +142,14 @@ function makeWriterClient(previousStatus: string | null = null) {
     if (table === "listings") {
       return {
         select: vi.fn((columns: string) => {
-          if (columns === "status") {
+          if (columns === "status" || columns === "status,photos_count") {
             return {
               eq: vi.fn(() => ({
                 eq: vi.fn(() => ({
                   limit: vi.fn().mockResolvedValue({
-                    data: previousStatus ? [{ status: previousStatus }] : [],
+                    data: previousStatus
+                      ? [{ status: previousStatus, photos_count: previousPhotosCount }]
+                      : [],
                     error: null,
                   }),
                 })),
@@ -270,6 +272,24 @@ describe("beforward_porsche_collector supabase mapping", () => {
     expect(result).toMatchObject({ listingId: "listing-1", wrote: true, currentStatus: "active" });
   });
 
+  it("preserves an existing gallery when a summary-only run carries one thumbnail", async () => {
+    const { upsert } = makeWriterClient("active", 20);
+    const writer = createSupabaseWriter();
+
+    await writer.upsertAll(makeListing({
+      photos: ["https://image-cdn.beforward.jp/medium/202607/15864663/CD906651_1ffb785f.JPG?w=200"],
+      photosCount: 1,
+    }), {
+      runId: "run-summary",
+      scrapeTimestamp: "2026-07-12T00:00:00.000Z",
+      summaryOnly: true,
+    }, false);
+
+    const payload = upsert.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("images");
+    expect(payload).not.toHaveProperty("photos_count");
+  });
+
   it("does not fail the listing write when a concurrent run already inserted the hourly price snapshot", async () => {
     const duplicatePriceHistoryInsert = new Error(
       'duplicate key value violates unique constraint "price_history_pkey"',
@@ -285,7 +305,7 @@ describe("beforward_porsche_collector supabase mapping", () => {
       if (table === "listings") {
         return {
           select: vi.fn((columns: string) => {
-            if (columns === "status") {
+            if (columns === "status,photos_count") {
               return {
                 eq: vi.fn(() => ({
                   eq: vi.fn(() => ({

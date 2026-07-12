@@ -102,16 +102,21 @@ async function upsertListing(
   listing: NormalizedListing,
   meta: ScrapeMeta,
 ): Promise<{ listingId: string; previousStatus: string | null; currentStatus: string }> {
-  const row = mapNormalizedListingToListingsRow(listing, meta);
   return retryOnTimeout(async () => {
+    const row = mapNormalizedListingToListingsRow(listing, meta);
     const previous = await client
       .from("listings")
-      .select("status")
+      .select("status,photos_count")
       .eq("source", listing.source)
       .eq("source_id", listing.sourceId)
       .limit(1);
     if (previous.error) throw new Error(`Supabase listings previous status select failed: ${previous.error.message}`);
-    const previousStatus = ((previous.data as Array<{ status: string | null }> | null)?.[0]?.status) ?? null;
+    const previousRow = (previous.data as Array<{ status: string | null; photos_count: number | null }> | null)?.[0];
+    const previousStatus = previousRow?.status ?? null;
+    if (meta.summaryOnly && (previousRow?.photos_count ?? 0) > 0) {
+      delete row.images;
+      delete row.photos_count;
+    }
 
     const { data, error } = await client
       .from("listings")

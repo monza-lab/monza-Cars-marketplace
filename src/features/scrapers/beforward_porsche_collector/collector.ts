@@ -17,7 +17,7 @@ const TERMINAL_STATUSES = new Set(["delisted", "sold", "unsold"]);
 export async function runBeForwardPorscheCollector(config: CollectorRunConfig): Promise<CollectorResult> {
   const runId = crypto.randomUUID();
   const scrapeTimestamp = new Date().toISOString();
-  const meta: ScrapeMeta = { runId, scrapeTimestamp };
+  const meta: ScrapeMeta = { runId, scrapeTimestamp, summaryOnly: config.summaryOnly };
   const limiter = new PerDomainRateLimiter(Math.max(200, config.rateLimitMs));
 
   logEvent({

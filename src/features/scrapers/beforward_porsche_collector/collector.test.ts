@@ -35,6 +35,7 @@ describe("runBeForwardPorscheCollector counters", () => {
           mileageKm: 10000,
           year: 2016,
           location: "Yokohama",
+          thumbnailUrl: null,
         },
         {
           page: 1,
@@ -46,6 +47,7 @@ describe("runBeForwardPorscheCollector counters", () => {
           mileageKm: 20000,
           year: 2016,
           location: "Osaka",
+          thumbnailUrl: null,
         },
       ],
     });

@@ -27,6 +27,7 @@ describe("beforward_porsche_collector normalize", () => {
       mileageKm: 51793,
       year: 2016,
       location: "Osaka",
+      thumbnailUrl: null,
     };
 
     const detail: DetailParsed = {
@@ -88,6 +89,7 @@ describe("beforward_porsche_collector normalize", () => {
       mileageKm: 51793,
       year: 1973,
       location: "Osaka",
+      thumbnailUrl: null,
     };
     const detail: DetailParsed = {
       title: "1973 PORSCHE 911 CC227877",
@@ -144,6 +146,7 @@ describe("beforward_porsche_collector normalize", () => {
       mileageKm: 116586,
       year: 2015,
       location: "Yokohama",
+      thumbnailUrl: "https://image-cdn.beforward.jp/medium/202607/15864663/CD906651_1ffb785f.JPG?w=200",
     };
 
     const out = normalizeListingFromSummary({
@@ -154,6 +157,11 @@ describe("beforward_porsche_collector normalize", () => {
     expect(out).not.toBeNull();
     expect(out?.model).toBe("CAYENNE");
     expect(out?.pricing.currentBid).toBe(8630);
+    expect(out?.photos).toEqual([
+      "https://image-cdn.beforward.jp/medium/202607/15864663/CD906651_1ffb785f.JPG?w=200",
+    ]);
+    expect(out?.photosCount).toBe(1);
+    expect(out?.dataQualityScore).toBe(100);
   });
 
   it.each([
@@ -177,6 +185,7 @@ describe("beforward_porsche_collector normalize", () => {
         mileageKm: 50000,
         year: 2016,
         location: "Yokohama",
+        thumbnailUrl: null,
       },
       meta: { runId: "r", scrapeTimestamp: "2026-06-07T00:00:00.000Z" },
     });

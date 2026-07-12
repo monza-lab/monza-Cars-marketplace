@@ -100,6 +100,8 @@ export function normalizeListingFromSummary(input: {
   const location = parseLocation(input.summary.location);
   const listDate = toUtcDateOnly(new Date(input.meta.scrapeTimestamp));
   const currentBid = input.summary.priceUsd;
+  const photos = input.summary.thumbnailUrl ? [input.summary.thumbnailUrl] : [];
+  const photosCount = photos.length;
 
   return {
     source: "BeForward",
@@ -133,8 +135,8 @@ export function normalizeListingFromSummary(input: {
     auctionDate: listDate,
     auctionHouse: "BeForward",
     descriptionText: null,
-    photos: [],
-    photosCount: 0,
+    photos,
+    photosCount,
     location,
     pricing: {
       hammerPrice: null,
@@ -148,7 +150,7 @@ export function normalizeListingFromSummary(input: {
       model,
       saleDate: listDate,
       country: location.country,
-      photosCount: 0,
+      photosCount,
       hasPrice: currentBid !== null,
     }),
   };

@@ -22,6 +22,7 @@ export interface CollectorRunConfig {
 export interface ScrapeMeta {
   scrapeTimestamp: string;
   runId: string;
+  summaryOnly?: boolean;
 }
 
 export interface ListingSummary {
@@ -34,6 +35,7 @@ export interface ListingSummary {
   mileageKm: number | null;
   year: number | null;
   location: string | null;
+  thumbnailUrl: string | null;
 }
 
 export interface DiscoverPageResult {
