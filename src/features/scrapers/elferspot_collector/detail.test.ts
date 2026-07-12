@@ -101,6 +101,34 @@ describe("parseDetailPage", () => {
     expect(detail.priceStatus).toBe("price_on_request")
   })
 
+  it("classifies Elferspot's on-application label as price on request", () => {
+    const html = `<html><body>
+      <div class="sidebar-section-heading">
+        <label>Price:</label>
+        <div class="price"><span>on application</span></div>
+      </div>
+    </body></html>`
+
+    const detail = parseDetailPage(html)
+
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("price_on_request")
+  })
+
+  it("classifies no-reserve auction listings as not having an asking price", () => {
+    const html = `<html><body>
+      <div class="sidebar-section-heading">
+        <label>Price:</label>
+        <div class="price"><span>Offered without reserve</span></div>
+      </div>
+    </body></html>`
+
+    const detail = parseDetailPage(html)
+
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("not_listed")
+  })
+
   it("extracts price from sidebar when JSON-LD has no price", () => {
     const html = `<html><head><script type="application/ld+json">{
       "@type": "Vehicle", "model": "993 Turbo"

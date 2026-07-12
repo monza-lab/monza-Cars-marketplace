@@ -105,8 +105,13 @@ function classifyElferspotPrice(priceText: string, price: number | null) {
   const text = priceText.toLowerCase()
   if (price && price > 0) return "numeric" as const
   if (text.includes("sold")) return "sold" as const
-  if (text.includes("price on request") || text.includes("poa")) return "price_on_request" as const
+  if (
+    text.includes("price on request")
+    || text.includes("on application")
+    || text.includes("poa")
+  ) return "price_on_request" as const
   if (text.includes("reserved")) return "hidden" as const
+  if (text.includes("offered without reserve")) return "not_listed" as const
   if (!priceText.trim()) return "not_listed" as const
   return "unknown" as const
 }
