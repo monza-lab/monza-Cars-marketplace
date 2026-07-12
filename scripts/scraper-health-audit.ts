@@ -10,6 +10,7 @@ import {
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
+import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "../src/features/scrapers/elferspot_collector/coverage";
 import {
   fetchCoverageRows,
   summarizeCoverageRows,
@@ -191,8 +192,46 @@ async function fetchTargetCoverage(
   return { source: spec.source, activeTotal, targetFields };
 }
 
-function fetchElferspotTargetCoverage(supabase: AuditSupabaseClient): Promise<ScraperTargetFieldCoverage> {
-  return fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.elferspot);
+export function buildElferspotPriceCoverage(
+  activeTotal: number,
+  numeric: number,
+  resolvedNonNumeric: number,
+): NonNullable<ScraperTargetFieldCoverage["priceCoverage"]> {
+  const resolved = Math.min(activeTotal, numeric + resolvedNonNumeric);
+  const pct = (value: number) => activeTotal === 0 ? 100 : Math.round((value / activeTotal) * 1000) / 10;
+  return {
+    numeric,
+    resolved,
+    unresolved: Math.max(0, activeTotal - resolved),
+    numericPct: pct(numeric),
+    resolvedPct: pct(resolved),
+  };
+}
+
+async function fetchElferspotTargetCoverage(supabase: AuditSupabaseClient): Promise<ScraperTargetFieldCoverage> {
+  const coverage = await fetchTargetCoverage(supabase, TARGET_COVERAGE_SPECS.elferspot);
+  const base = () => supabase
+    .from("listings")
+    .select("id", { count: "exact", head: true })
+    .eq("source", "Elferspot")
+    .eq("status", "active");
+  const [numeric, resolvedNonNumeric] = await Promise.all([
+    countRows(base().not("hammer_price", "is", null)),
+    countRows(
+      base()
+        .is("hammer_price", null)
+        .in(
+          "enrichment_meta->elferspot->>priceStatus",
+          [...ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES],
+        ),
+    ),
+  ]);
+  coverage.priceCoverage = buildElferspotPriceCoverage(
+    coverage.activeTotal,
+    numeric,
+    resolvedNonNumeric,
+  );
+  return coverage;
 }
 
 function fetchAutoscout24TargetCoverage(supabase: AuditSupabaseClient): Promise<ScraperTargetFieldCoverage> {

@@ -4,6 +4,7 @@ import { summarizeScraperHealth } from "./audit";
 import {
   applyAutoscout24HealthGates,
   applyVinEnrichmentHealthGates,
+  buildElferspotPriceCoverage,
   buildCoverageHealthIssues,
   hasAutoscout24ShardSaturationWarning,
 } from "../../../../../scripts/scraper-health-audit";
@@ -36,6 +37,16 @@ function makeRun(overrides: Partial<ScraperRun> = {}): ScraperRun {
 }
 
 describe("summarizeScraperHealth", () => {
+  it("keeps numeric availability separate from source-resolved price coverage", () => {
+    expect(buildElferspotPriceCoverage(100, 39, 19)).toEqual({
+      numeric: 39,
+      resolved: 58,
+      unresolved: 42,
+      numericPct: 39,
+      resolvedPct: 58,
+    });
+  });
+
   it("marks successful zero-output runs with no errors as zero-write", () => {
     const summary = summarizeScraperHealth(
       {
@@ -147,6 +158,40 @@ describe("summarizeScraperHealth", () => {
 
     expect(summary.status).toBe("degraded");
     expect(summary.notes.join("; ")).toContain("Elferspot target-field coverage below 100%");
+  });
+
+  it("marks Elferspot degraded until source-resolved price coverage reaches 100%", () => {
+    const summary = summarizeScraperHealth(
+      {
+        scraperName: "elferspot",
+        label: "Elferspot",
+        cadence: "daily",
+        cronPath: "/api/cron/elferspot",
+      },
+      [makeRun({ scraper_name: "elferspot", written: 10, errors_count: 0 })],
+      undefined,
+      Date.now(),
+      {
+        source: "Elferspot",
+        activeTotal: 100,
+        targetFields: {
+          color_exterior: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+          engine: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+          transmission: { filled: 100, coveredOrExcepted: 100, missing: 0, pct: 100 },
+        },
+        priceCoverage: {
+          numeric: 39,
+          resolved: 58,
+          unresolved: 42,
+          numericPct: 39,
+          resolvedPct: 58,
+        },
+      },
+    );
+
+    expect(summary.status).toBe("degraded");
+    expect(summary.notes.join("; ")).toContain("Elferspot resolved price coverage 58% (42 unresolved)");
+    expect(summary.notes.join("; ")).toContain("numeric price availability 39%");
   });
 
   it("marks AutoScout24 degraded when target-field coverage is below 100%", () => {

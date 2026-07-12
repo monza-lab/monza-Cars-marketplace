@@ -39,6 +39,13 @@ export interface ScraperTargetFieldCoverage {
     missing: number;
     pct: number;
   }>;
+  priceCoverage?: {
+    numeric: number;
+    resolved: number;
+    unresolved: number;
+    numericPct: number;
+    resolvedPct: number;
+  };
 }
 
 export function summarizeScraperHealth(
@@ -103,6 +110,17 @@ export function summarizeScraperHealth(
   ) {
     status = "degraded";
     notes.push("Elferspot target-field coverage below 100%");
+  }
+
+  if (spec.scraperName === "elferspot" && targetFieldCoverage?.priceCoverage) {
+    const priceCoverage = targetFieldCoverage.priceCoverage;
+    notes.push(`Elferspot numeric price availability ${priceCoverage.numericPct}%`);
+    if (priceCoverage.resolvedPct < 100 && status !== "failed" && status !== "stuck") {
+      status = "degraded";
+      notes.push(
+        `Elferspot resolved price coverage ${priceCoverage.resolvedPct}% (${priceCoverage.unresolved} unresolved)`,
+      );
+    }
   }
 
   return {

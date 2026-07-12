@@ -7,15 +7,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 import { getAllSources } from "../src/features/scrapers/common/sourceRegistry";
-
-const ELFERSPOT_PRICE_COVERED_STATUSES = [
-  "sold",
-  "price_on_request",
-  "hidden",
-  "not_listed",
-  "detail_unavailable",
-  "blocked_unverified",
-];
+import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "../src/features/scrapers/elferspot_collector/coverage";
 
 const ELFERSPOT_DESCRIPTION_COVERED_STATUSES = [
   "missing",
@@ -98,7 +90,10 @@ async function countFillRate(
     const numeric = await baseQueryFor(source).not("hammer_price", "is", null);
     const audited = await baseQueryFor(source)
       .is("hammer_price", null)
-      .in("enrichment_meta->elferspot->>priceStatus", ELFERSPOT_PRICE_COVERED_STATUSES);
+      .in(
+        "enrichment_meta->elferspot->>priceStatus",
+        [...ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES],
+      );
 
     return { total: total ?? 0, filled: (numeric.count ?? 0) + (audited.count ?? 0) };
   }

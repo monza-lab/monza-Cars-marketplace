@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { classifyVehicleIdentifier, type VehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { fetchDetailPage } from "@/features/scrapers/elferspot_collector/detail";
+import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "@/features/scrapers/elferspot_collector/coverage";
 import {
   clearScraperRunActive,
   markScraperRunStarted,
@@ -11,16 +12,7 @@ import {
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const PRICE_COVERED_STATUSES = [
-  "sold",
-  "price_on_request",
-  "hidden",
-  "not_listed",
-  "detail_unavailable",
-  "blocked_unverified",
-];
-
-const PRICE_COVERED_STATUS_FILTER = `(${PRICE_COVERED_STATUSES.map((status) => `"${status}"`).join(",")})`;
+const PRICE_COVERED_STATUS_FILTER = `(${ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES.map((status) => `"${status}"`).join(",")})`;
 const DESCRIPTION_COVERED_STATUS_FILTER = `("missing","detail_unavailable","blocked_unverified")`;
 const TARGET_FIELD_COVERED_STATUS_FILTER = `("covered_or_unavailable","detail_unavailable","blocked_unverified")`;
 const TARGET_FIELD_PLACEHOLDER_FILTER = `("Not specified","Unknown","N/A","-")`;
@@ -35,12 +27,14 @@ const TARGET_FIELD_FILTER = [
   `transmission.eq.`,
   `transmission.in.${TARGET_FIELD_PLACEHOLDER_FILTER}`,
 ].join(",");
+const VIN_COVERED_STATUS_FILTER = `("present","chassis_or_serial","not_listed")`;
 
 type EnrichmentMeta = {
   elferspot?: {
     priceStatus?: string;
     descriptionStatus?: string;
     targetFieldStatus?: string;
+    vinStatus?: "present" | "chassis_or_serial" | "not_listed";
     missingTargetFields?: string[];
     vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
@@ -63,6 +57,7 @@ export function buildElferspotMeta(
     priceStatus?: string;
     descriptionStatus?: string;
     targetFieldStatus?: string;
+    vinStatus?: "present" | "chassis_or_serial" | "not_listed";
     missingTargetFields?: string[];
     vehicleIdentifier?: VehicleIdentifier;
     checkedAt?: string;
@@ -102,25 +97,34 @@ export function mergeRowsForEnrichment(
   const rows: EnrichmentRow[] = [];
   const seen = new Set<string>();
 
-  for (const row of targetRows) {
-    if (seen.has(row.id)) continue;
-    rows.push(row);
-    seen.add(row.id);
-    if (rows.length >= limit) return rows;
-  }
-
-  const maxLength = Math.max(descriptionRows.length, vinRows.length, priceRows.length);
-  for (let i = 0; i < maxLength && rows.length < limit; i++) {
-    for (const bucket of [descriptionRows, vinRows, priceRows]) {
-      const row = bucket[i];
-      if (!row || seen.has(row.id)) continue;
+  for (const bucket of [priceRows, targetRows, descriptionRows, vinRows]) {
+    for (const row of bucket) {
+      if (seen.has(row.id)) continue;
       rows.push(row);
       seen.add(row.id);
-      if (rows.length >= limit) break;
+      if (rows.length >= limit) return rows;
     }
   }
 
   return rows;
+}
+
+export function resolveElferspotVin(raw: string | null | undefined): {
+  vin?: string;
+  vehicleIdentifier?: VehicleIdentifier;
+  vinStatus: "present" | "chassis_or_serial" | "not_listed";
+} {
+  if (!raw?.trim()) return { vinStatus: "not_listed" };
+
+  const vin = classifyVehicleIdentifier(raw, "VIN");
+  if (vin?.kind === "vin_17") {
+    return { vin: vin.normalized, vinStatus: "present" };
+  }
+  const identifier = classifyVehicleIdentifier(raw, "Chassis");
+  if (identifier) {
+    return { vehicleIdentifier: identifier, vinStatus: "chassis_or_serial" };
+  }
+  return { vinStatus: "not_listed" };
 }
 
 async function fetchRows(client: SupabaseClientLike, filter: "target" | "description" | "vin" | "price", limit: number) {
@@ -147,7 +151,11 @@ async function fetchRows(client: SupabaseClientLike, filter: "target" | "descrip
   }
 
   if (filter === "vin") {
-    return q.or("vin.is.null,vin.eq.");
+    return q
+      .or("vin.is.null,vin.eq.")
+      .or(
+        `enrichment_meta->elferspot->>vinStatus.is.null,enrichment_meta->elferspot->>vinStatus.not.in.${VIN_COVERED_STATUS_FILTER}`,
+      );
   }
 
   return q
@@ -204,33 +212,21 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const targetRows = await fetchRows(client, "target", batchLimit);
+    const [targetRows, descriptionRows, vinRows, priceRows] = await Promise.all([
+      fetchRows(client, "target", batchLimit),
+      fetchRows(client, "description", batchLimit),
+      fetchRows(client, "vin", batchLimit),
+      fetchRows(client, "price", batchLimit),
+    ]);
     if (targetRows.error || !targetRows.data) {
       throw new Error(targetRows.error?.message ?? "No target-field rows returned");
     }
-
-    const remainingAfterTargets = Math.max(0, batchLimit - targetRows.data.length);
-    const descriptionRows = remainingAfterTargets > 0
-      ? await fetchRows(client, "description", remainingAfterTargets)
-      : { data: [] as EnrichmentRow[], error: null };
     if (descriptionRows.error || !descriptionRows.data) {
       throw new Error(descriptionRows.error?.message ?? "No description rows returned");
     }
-
-    const remainingAfterDescriptions = Math.max(0, batchLimit - targetRows.data.length - descriptionRows.data.length);
-    const vinRows = remainingAfterDescriptions > 0
-      ? await fetchRows(client, "vin", remainingAfterDescriptions)
-      : { data: [] as EnrichmentRow[], error: null };
-
     if (vinRows.error || !vinRows.data) {
       throw new Error(vinRows.error?.message ?? "No VIN rows returned");
     }
-
-    const remaining = Math.max(0, batchLimit - targetRows.data.length - descriptionRows.data.length - vinRows.data.length);
-    const priceRows = remaining > 0
-      ? await fetchRows(client, "price", remaining)
-      : { data: [] as EnrichmentRow[], error: null };
-
     if (priceRows.error || !priceRows.data) {
       throw new Error(priceRows.error?.message ?? "No price rows returned");
     }
@@ -244,9 +240,13 @@ export async function GET(request: Request) {
     );
     const discovered = rows.length;
     const targetFieldCandidates = (targetRows.data as EnrichmentRow[]).length;
+    const priceCandidates = (priceRows.data as EnrichmentRow[]).length;
+    const vinCandidates = (vinRows.data as EnrichmentRow[]).length;
     let targetFieldUpdates = 0;
     let targetFieldProcessed = 0;
+    let priceProcessed = 0;
     const targetRowIds = new Set((targetRows.data as EnrichmentRow[]).map((row) => row.id));
+    const priceRowIds = new Set((priceRows.data as EnrichmentRow[]).map((row) => row.id));
     let enriched = 0;
     const errors: string[] = [];
     const TIME_BUDGET_MS = 270_000;
@@ -295,16 +295,12 @@ export async function GET(request: Request) {
         if (detail.engine) update.engine = detail.engine;
         if (detail.colorExterior) update.color_exterior = detail.colorExterior;
         if (detail.colorInterior) update.color_interior = detail.colorInterior;
-        if (detail.vin) {
-          const identifier = classifyVehicleIdentifier(detail.vin, "VIN");
-          if (identifier?.kind === "vin_17") {
-            update.vin = identifier.normalized;
-          } else if (identifier) {
-            update.enrichment_meta = buildElferspotMeta(existingMeta, {
-              vehicleIdentifier: identifier,
-            });
-          }
-        }
+        const vinAudit = resolveElferspotVin(detail.vin);
+        if (vinAudit.vin) update.vin = vinAudit.vin;
+        update.enrichment_meta = buildElferspotMeta(existingMeta, {
+          vinStatus: vinAudit.vinStatus,
+          ...(vinAudit.vehicleIdentifier ? { vehicleIdentifier: vinAudit.vehicleIdentifier } : {}),
+        });
         if (detail.descriptionText) update.description_text = detail.descriptionText;
         if (detail.images && detail.images.length > 0) {
           update.images = detail.images;
@@ -345,6 +341,7 @@ export async function GET(request: Request) {
             enriched++;
             if (detail.colorExterior || detail.engine || detail.transmission) targetFieldUpdates++;
             if (targetRowIds.has(row.id)) targetFieldProcessed++;
+            if (priceRowIds.has(row.id)) priceProcessed++;
           }
         } else {
           await client
@@ -421,6 +418,9 @@ export async function GET(request: Request) {
       targetFieldCandidates,
       targetFieldUpdates,
       targetFieldProcessed,
+      priceCandidates,
+      priceProcessed,
+      vinCandidates,
       remainingTargetFieldBacklog: Math.max(0, targetFieldCandidates - targetFieldProcessed),
       errors,
       timeBudgetReached,

@@ -3,6 +3,7 @@ import {
   buildElferspotMeta,
   GET,
   mergeRowsForEnrichment,
+  resolveElferspotVin,
   resolveBatchLimit,
   resolveDelayMs,
   type EnrichmentRow,
@@ -63,8 +64,8 @@ import {
   clearScraperRunActive,
 } from "@/features/scrapers/common/monitoring";
 
-function makeRequest(secret = "test-secret") {
-  return new Request("http://localhost:3000/api/cron/enrich-elferspot", {
+function makeRequest(secret = "test-secret", query = "") {
+  return new Request(`http://localhost:3000/api/cron/enrich-elferspot${query}`, {
     method: "GET",
     headers: { authorization: `Bearer ${secret}` },
   });
@@ -73,6 +74,7 @@ function makeRequest(secret = "test-secret") {
 describe("GET /api/cron/enrich-elferspot", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQueryResult.data = [];
     process.env.CRON_SECRET = "test-secret";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
@@ -90,13 +92,19 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(data.success).toBe(true);
     expect(data.discovered).toBe(0);
     expect(data.enriched).toBe(0);
+    expect(data.priceCandidates).toBe(0);
+    expect(data.priceProcessed).toBe(0);
+    expect(data.vinCandidates).toBe(0);
     expect(mockOr).toHaveBeenCalledWith(
       'description_text.is.null,description_text.eq.,enrichment_meta->elferspot->>descriptionStatus.is.null,enrichment_meta->elferspot->>descriptionStatus.not.in.("missing","detail_unavailable","blocked_unverified")'
     );
     expect(mockOr).toHaveBeenCalledWith("vin.is.null,vin.eq.");
+    expect(mockOr).toHaveBeenCalledWith(
+      'enrichment_meta->elferspot->>vinStatus.is.null,enrichment_meta->elferspot->>vinStatus.not.in.("present","chassis_or_serial","not_listed")',
+    );
     expect(mockIs).toHaveBeenCalledWith("hammer_price", null);
     expect(mockOr).toHaveBeenCalledWith(
-      'enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.("sold","price_on_request","hidden","not_listed","detail_unavailable","blocked_unverified")'
+      'enrichment_meta->elferspot->>priceStatus.is.null,enrichment_meta->elferspot->>priceStatus.not.in.("sold","price_on_request","hidden","not_listed")'
     );
   });
 
@@ -146,7 +154,7 @@ describe("GET /api/cron/enrich-elferspot", () => {
     expect(resolveDelayMs(new Request("http://localhost/api/cron/enrich-elferspot?delayMs=bad"))).toBe(1000);
   });
 
-  it("prioritizes target rows, then alternates description, VIN, and price rows while deduping overlaps", () => {
+  it("prioritizes unresolved prices, then fills other queues while deduping overlaps", () => {
     const row = (id: string): EnrichmentRow => ({
       id,
       source_url: `https://www.elferspot.com/en/car/${id}/`,
@@ -161,7 +169,38 @@ describe("GET /api/cron/enrich-elferspot", () => {
         [row("price-1"), row("overlap"), row("price-2")],
         5,
       ).map((item) => item.id),
-    ).toEqual(["target-1", "description-1", "vin-1", "price-1", "overlap"]);
+    ).toEqual(["price-1", "overlap", "price-2", "target-1", "description-1"]);
+  });
+
+  it("does not let a full VIN backlog starve unresolved price rows", () => {
+    const row = (id: string): EnrichmentRow => ({
+      id,
+      source_url: `https://www.elferspot.com/en/car/${id}/`,
+      enrichment_meta: null,
+    });
+
+    expect(
+      mergeRowsForEnrichment(
+        [],
+        [],
+        [row("vin-1"), row("vin-2"), row("vin-3")],
+        [row("price-1"), row("price-2"), row("price-3")],
+        3,
+      ).map((item) => item.id),
+    ).toEqual(["price-1", "price-2", "price-3"]);
+  });
+
+  it("fetches price candidates independently when another queue fills the batch limit", async () => {
+    mockQueryResult.data = Array.from({ length: 3 }, (_, index) => ({
+      id: `candidate-${index}`,
+      source_url: `https://www.elferspot.com/en/car/candidate-${index}/`,
+      enrichment_meta: null,
+    }));
+
+    await GET(makeRequest("test-secret", "?limit=3&delayMs=0"));
+
+    expect(mockLimit).toHaveBeenCalledTimes(4);
+    expect(mockIs).toHaveBeenCalledWith("hammer_price", null);
   });
 
   it("preserves existing Elferspot meta while writing current audit statuses", () => {
@@ -219,5 +258,28 @@ describe("GET /api/cron/enrich-elferspot", () => {
         checkedAt: "new",
       },
     });
+  });
+
+  it("classifies a valid 17-character VIN as present", () => {
+    expect(resolveElferspotVin("WP0ZZZ99ZTS392124")).toEqual({
+      vin: "WP0ZZZ99ZTS392124",
+      vinStatus: "present",
+    });
+  });
+
+  it("preserves a source-native chassis number as a terminal identifier", () => {
+    expect(resolveElferspotVin("9113601234")).toEqual({
+      vehicleIdentifier: {
+        raw: "9113601234",
+        normalized: "9113601234",
+        kind: "chassis_or_serial",
+        sourceLabel: "Chassis",
+      },
+      vinStatus: "chassis_or_serial",
+    });
+  });
+
+  it("marks a missing source identifier so it is not requeued forever", () => {
+    expect(resolveElferspotVin(null)).toEqual({ vinStatus: "not_listed" });
   });
 });
