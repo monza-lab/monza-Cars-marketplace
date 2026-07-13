@@ -29,4 +29,25 @@ describe("summarizeCoverageRows", () => {
       message: "UK has historical rows but zero active coverage",
     });
   });
+
+  it("includes every assurance source and alerts on unregistered database sources", () => {
+    const result = summarizeCoverageRows([
+      {
+        source: "UnregisteredMarket",
+        market: "UNKNOWN",
+        active: 3,
+        total: 3,
+        pricedPct: 100,
+        imagePct: 100,
+      },
+    ]);
+
+    expect(result.rows.filter((row) => row.source !== "UnregisteredMarket")).toHaveLength(8);
+    expect(result.rows).toContainEqual(expect.objectContaining({ source: "BaT", active: 0, total: 0 }));
+    expect(result.sourceAlerts).toContainEqual({
+      source: "UnregisteredMarket",
+      severity: "critical",
+      message: "UnregisteredMarket is present in listings but absent from the assurance manifest",
+    });
+  });
 });

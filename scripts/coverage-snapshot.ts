@@ -2,8 +2,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import pg from "pg";
+import { Client } from "pg";
 
+import { ASSURANCE_SOURCES } from "../src/features/scrapers/common/assurance/manifest";
 import { sourceToCanonicalMarket } from "../src/lib/pricing/canonicalMarket";
 import type { CanonicalMarket } from "../src/lib/pricing/types";
 
@@ -111,7 +112,15 @@ function buildMarketAlerts(markets: CoverageSummary["markets"]): CoverageAlert[]
 
 function buildSourceAlerts(rows: CoverageRow[]): CoverageAlert[] {
   const alerts: CoverageAlert[] = [];
+  const declaredSources = new Set<string>(ASSURANCE_SOURCES.map((source) => source.id));
   for (const row of rows) {
+    if (!declaredSources.has(row.source)) {
+      alerts.push({
+        source: row.source,
+        severity: "critical",
+        message: `${row.source} is present in listings but absent from the assurance manifest`,
+      });
+    }
     if (row.total > 0 && row.active === 0) {
       alerts.push({
         source: row.source,
@@ -131,7 +140,19 @@ function buildSourceAlerts(rows: CoverageRow[]): CoverageAlert[] {
 }
 
 export function summarizeCoverageRows(rows: CoverageRow[]): CoverageSummary {
-  const sortedRows = [...rows].sort((a, b) => b.active - a.active || a.source.localeCompare(b.source));
+  const observedSources = new Set(rows.map((row) => row.source));
+  const zeroRows: CoverageRow[] = ASSURANCE_SOURCES
+    .filter((source) => !observedSources.has(source.id))
+    .map((source) => ({
+      source: source.id,
+      market: sourceToCanonicalMarket(source.id) ?? "UNKNOWN",
+      active: 0,
+      total: 0,
+      pricedPct: null,
+      imagePct: null,
+    }));
+  const sortedRows = [...rows, ...zeroRows]
+    .sort((a, b) => b.active - a.active || a.source.localeCompare(b.source));
   const markets = buildMarketRows(sortedRows);
   return {
     generatedAt: new Date().toISOString(),
@@ -194,13 +215,13 @@ export async function fetchCoverageRows(): Promise<CoverageRow[]> {
     throw new Error("DATABASE_URL is required");
   }
 
-  const client = new pg.Client({
+  const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: /sslmode=disable/i.test(process.env.DATABASE_URL) ? undefined : { rejectUnauthorized: false },
   });
   await client.connect();
   try {
-    const { rows } = await client.query<DbCoverageRow>(`
+    const { rows } = await client.query(`
       SELECT
         source,
         COUNT(*) FILTER (WHERE status::text = 'active') AS active,
@@ -224,7 +245,7 @@ export async function fetchCoverageRows(): Promise<CoverageRow[]> {
       WHERE source IS NOT NULL
       GROUP BY source
       ORDER BY active DESC, source ASC
-    `);
+    `) as { rows: DbCoverageRow[] };
     return rows.map(mapDbRow);
   } finally {
     await client.end();
