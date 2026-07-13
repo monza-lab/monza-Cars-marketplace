@@ -8,7 +8,67 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v6");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v7");
+  });
+
+  it("treats Speedster lineage as intrinsically important without flattening special examples", () => {
+    const ordinary = scoreListingRarity({
+      year: 1989,
+      model: "911",
+      title: "1989 Porsche 911 Speedster",
+      mileage: 12000,
+      mileageUnit: "mi",
+    });
+    const narrowBody = scoreListingRarity({
+      year: 1989,
+      model: "911",
+      title: "1989 Porsche 911 Narrow-Body Speedster",
+      mileage: 12000,
+      mileageUnit: "mi",
+    });
+    const modern = scoreListingRarity({
+      year: 2019,
+      model: "911",
+      title: "2019 Porsche 911 Speedster",
+      mileage: 2200,
+      mileageUnit: "mi",
+    });
+
+    expect(ordinary.score).toBeGreaterThanOrEqual(88);
+    expect(ordinary.score).toBeLessThan(100);
+    expect(narrowBody.score).toBeGreaterThan(ordinary.score);
+    expect(narrowBody.signals).toContain("narrow_body_speedster");
+    expect(modern.score).toBeGreaterThanOrEqual(88);
+    expect(modern.tier).toBe("unique");
+  });
+
+  it("recognizes factory power, body, slick-top, and personalization specifications", () => {
+    const rarity = scoreListingRarity({
+      year: 1996,
+      model: "993 Turbo",
+      title: "1996 Porsche 911 Turbo WLS Porsche Exclusive",
+      descriptionText:
+        "Documented Werksleistungssteigerung, factory WTL Turbo Look, sunroof delete and Sonderwunsch interior.",
+    });
+
+    expect(rarity.signals).toEqual(expect.arrayContaining([
+      "wls",
+      "wtl",
+      "sunroof_delete",
+      "exclusive_manufaktur",
+      "sonderwunsch",
+    ]));
+  });
+
+  it("does not reward an ordinary sunroof as a rarity signal", () => {
+    const ordinarySunroof = scoreListingRarity({
+      year: 1996,
+      model: "993 Carrera",
+      title: "1996 Porsche 911 Carrera with Sunroof",
+    });
+
+    expect(ordinarySunroof.signals).not.toContain("sunroof");
+    expect(ordinarySunroof.signals).not.toContain("sunroof_delete");
   });
 
   it("scores explicit rare factory build signals deterministically", () => {
@@ -177,7 +237,7 @@ describe("listing rarity scoring", () => {
     expect(airCooledPts.score).toBeGreaterThan(genericModernGt4Rs.score);
   });
 
-  it("keeps generic Speedster listings behind more curated special cars", () => {
+  it("lets additional documented factory specification distinguish Speedsters", () => {
     const speedster = scoreListingRarity({
       year: 1989,
       model: "911",
@@ -194,8 +254,16 @@ describe("listing rarity scoring", () => {
       mileageUnit: "mi",
     });
 
-    expect(speedster.score).toBeLessThan(curatedPts.score);
-    expect(speedster.score).toBeLessThan(95);
+    const narrowBodySpeedster = scoreListingRarity({
+      year: 1989,
+      model: "911",
+      title: "1989 Porsche 911 Narrow-Body Speedster",
+      mileage: 12000,
+      mileageUnit: "mi",
+    });
+
+    expect(curatedPts.score).toBeGreaterThan(speedster.score);
+    expect(narrowBodySpeedster.score).toBeGreaterThan(speedster.score);
   });
 
   it("does not treat RSR-style tribute wording as an actual RSR homologation car", () => {

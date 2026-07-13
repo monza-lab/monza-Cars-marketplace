@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
+import { computeRankingVariant } from "@/features/scrapers/common/rankingEnrichment";
 import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
 
 export interface SupabaseWriter {
@@ -176,6 +177,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     final_price: listing.finalPrice,
     location: listing.locationString,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
+    ranking_variant: computeRankingVariant({ make: listing.make, model: listing.model, trim: listing.trim, year: listing.year, title: listing.title }),
   };
 }
 

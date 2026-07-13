@@ -2016,3 +2016,64 @@ export async function fetchSeriesCountsByRegion(
     return emptySeriesCountsByRegion();
   }
 }
+
+export type VariantCountsByRegion = SeriesCountsByRegion;
+
+export async function fetchVariantCountsByRegion(
+  make: string,
+  options?: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<VariantCountsByRegion> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return emptySeriesCountsByRegion();
+
+  const targetMake = resolveRequestedMake(make).toLowerCase();
+
+  try {
+    const supabase = createSupabaseClient(url, key, {
+      timeoutMs: options?.timeoutMs,
+      signal: options?.signal,
+    });
+    const { data, error } = await supabase
+      .from("listings_active_variant_counts")
+      .select("ranking_variant,region_by_country,live_count")
+      .eq("make", targetMake);
+
+    if (error) {
+      if (/(relation.*listings_active_variant_counts.*does not exist)|(could not find the table)/i.test(error.message)) {
+        console.warn(
+          "[supabaseLiveListings] listings_active_variant_counts MV missing — " +
+          "apply supabase/migrations/20260713_add_listing_ranking_variant.sql and backfill ranking_variant.",
+        );
+        return emptySeriesCountsByRegion();
+      }
+      console.error("[supabaseLiveListings] fetchVariantCountsByRegion MV query failed:", error.message);
+      return emptySeriesCountsByRegion();
+    }
+
+    const counts = emptySeriesCountsByRegion();
+    for (const row of (data ?? []) as {
+      ranking_variant: string;
+      region_by_country: string;
+      live_count: number;
+    }[]) {
+      if (!row.ranking_variant) continue;
+      const liveCount = Number(row.live_count);
+      if (!Number.isFinite(liveCount) || liveCount <= 0) continue;
+
+      incrementSeriesCount(counts.all, row.ranking_variant, liveCount);
+      if (
+        row.region_by_country === "US" ||
+        row.region_by_country === "UK" ||
+        row.region_by_country === "EU" ||
+        row.region_by_country === "JP"
+      ) {
+        incrementSeriesCount(counts[row.region_by_country], row.ranking_variant, liveCount);
+      }
+    }
+    return counts;
+  } catch (err) {
+    console.error("[supabaseLiveListings] fetchVariantCountsByRegion threw:", err);
+    return emptySeriesCountsByRegion();
+  }
+}

@@ -42,6 +42,7 @@ describe("backfill-listing-rarity", () => {
             rarity_tier: null,
             rarity_signals_json: null,
             rarity_score_version: null,
+            ranking_variant: null,
           },
           {
             id: "00000000-0000-0000-0000-000000000002",
@@ -56,10 +57,12 @@ describe("backfill-listing-rarity", () => {
             rarity_score: 5,
             rarity_tier: "common",
             rarity_signals_json: ["manual_transmission"],
-            rarity_score_version: "listing-rarity-v6",
+            rarity_score_version: "listing-rarity-v7",
+            ranking_variant: null,
           },
         ],
       })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] });
 
@@ -74,15 +77,18 @@ describe("backfill-listing-rarity", () => {
       },
     );
 
-    expect(stats).toEqual({ scanned: 2, updated: 1, skipped: 1, batches: 1 });
+    expect(stats).toEqual({ scanned: 2, updated: 2, skipped: 0, batches: 1 });
     expect(query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining("status::text = $3"),
-      [null, "listing-rarity-v6", "active", 10],
+      [null, "listing-rarity-v7", "active", 10],
     );
     expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining("update public.listings as l"), [
       expect.any(String),
     ]);
+    expect(query).toHaveBeenLastCalledWith(
+      expect.stringContaining("refresh_listings_active_counts"),
+    );
 
     const updatePayload = JSON.parse(query.mock.calls[1][1][0]);
     expect(updatePayload).toEqual([
@@ -90,7 +96,12 @@ describe("backfill-listing-rarity", () => {
         id: "00000000-0000-0000-0000-000000000001",
         rarity_score: expect.any(Number),
         rarity_tier: "unique",
-        rarity_score_version: "listing-rarity-v6",
+        rarity_score_version: "listing-rarity-v7",
+        ranking_variant: "959:959",
+      }),
+      expect.objectContaining({
+        id: "00000000-0000-0000-0000-000000000002",
+        ranking_variant: "cayman:cayman-s",
       }),
     ]);
   });

@@ -50,7 +50,7 @@ import { MarketDeltaPill } from "@/components/report/MarketDeltaPill"
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
-import { byPhotoFirst } from "@/lib/photoSort"
+import { compareHomepageOrdering } from "@/lib/homepageRanking"
 import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
 // FilterSidebar removed — filters now live only on brand detail pages
 
@@ -63,18 +63,6 @@ function upgradeImageUrl(url: string): string {
     return url.replace(/\/\d+x\d+\.webp$/, "/1280x960.webp")
   }
   return url
-}
-
-// ─── SORT PRIORITY: dealer/classified platforms first (Elferspot highest) ───
-const PLATFORM_SORT_PRIORITY: Record<string, number> = {
-  ELFERSPOT: 0,
-  AUTO_SCOUT_24: 1,
-  AUTO_TRADER: 2,
-  CLASSIC_COM: 3,
-  BE_FORWARD: 4,
-}
-function getPlatformSortPriority(platform: string): number {
-  return PLATFORM_SORT_PRIORITY[platform] ?? 10
 }
 
 // ─── BRAND TYPE ───
@@ -145,6 +133,10 @@ type Auction = {
   soldPriceUsd?: number | null
   askingPriceUsd?: number | null
   valuationBasis?: "sold" | "asking" | "unknown"
+  rarityScore?: number | null
+  homepageScore?: number | null
+  marketScarcityScore?: number | null
+  marketSupplyCount?: number | null
 }
 
 /**
@@ -984,14 +976,7 @@ function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[];
   const liveAuctions = useMemo(() => {
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort(
-        byPhotoFirst<Auction>((a, b) => {
-          const pa = getPlatformSortPriority(a.platform)
-          const pb = getPlatformSortPriority(b.platform)
-          if (pa !== pb) return pa - pb
-          return new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
-        }),
-      )
+      .sort(compareHomepageOrdering)
       .slice(0, 16)
   }, [auctions, now])
 

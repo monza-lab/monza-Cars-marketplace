@@ -5,6 +5,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { Client } from "pg";
 
 import { RARITY_SCORE_VERSION, scoreListingRarity, type ListingRaritySignal } from "../src/lib/listingRarity";
+import { computeRankingVariant } from "../src/features/scrapers/common/rankingEnrichment";
 
 type BackfillStatus = "active" | "all";
 
@@ -22,6 +23,7 @@ type ListingRow = {
   rarity_tier: string | null;
   rarity_signals_json: ListingRaritySignal[] | null;
   rarity_score_version: string | null;
+  ranking_variant: string | null;
 };
 
 type UpdatePayload = {
@@ -30,6 +32,7 @@ type UpdatePayload = {
   rarity_tier: string;
   rarity_signals_json: ListingRaritySignal[];
   rarity_score_version: string;
+  ranking_variant: string | null;
 };
 
 type QueryClient = {
@@ -100,11 +103,15 @@ export function parseBackfillArgs(argv: string[]): BackfillOptions {
   return options;
 }
 
-function sameRarityPayload(row: ListingRow, next: ReturnType<typeof scoreListingRarity>): boolean {
+function sameRarityPayload(
+  row: ListingRow,
+  next: ReturnType<typeof scoreListingRarity>,
+  rankingVariant: string | null,
+): boolean {
   if (row.rarity_score !== next.score) return false;
   if (row.rarity_tier !== next.tier) return false;
   if (JSON.stringify(row.rarity_signals_json ?? []) !== JSON.stringify(next.signals)) return false;
-  return row.rarity_score_version === RARITY_SCORE_VERSION;
+  return row.rarity_score_version === RARITY_SCORE_VERSION && row.ranking_variant === rankingVariant;
 }
 
 async function writeBatch(client: QueryClient, updates: UpdatePayload[]): Promise<void> {
@@ -117,13 +124,15 @@ async function writeBatch(client: QueryClient, updates: UpdatePayload[]): Promis
           rarity_tier = payload.rarity_tier,
           rarity_signals_json = payload.rarity_signals_json,
           rarity_scored_at = now(),
-          rarity_score_version = payload.rarity_score_version
+          rarity_score_version = payload.rarity_score_version,
+          ranking_variant = payload.ranking_variant
       from jsonb_to_recordset($1::jsonb) as payload(
         id uuid,
         rarity_score integer,
         rarity_tier text,
         rarity_signals_json jsonb,
-        rarity_score_version text
+        rarity_score_version text,
+        ranking_variant text
       )
       where l.id = payload.id
     `,
@@ -147,11 +156,11 @@ export async function backfillListingRarity(client: QueryClient, options: Backfi
     const { rows } = await client.query<ListingRow>(
       `
         select id, year, model, trim, title, description_text, seller_notes, mileage, mileage_unit,
-               rarity_score, rarity_tier, rarity_signals_json, rarity_score_version
+               rarity_score, rarity_tier, rarity_signals_json, rarity_score_version, ranking_variant
         from public.listings
         where make = 'Porsche'
           and ($1::uuid is null or id > $1::uuid)
-          and (rarity_score is null or rarity_score_version is distinct from $2)
+          and (rarity_score is null or rarity_score_version is distinct from $2 or ranking_variant is null)
           and ($3::text = 'all' or status::text = $3)
         order by id asc
         limit $4
@@ -177,9 +186,18 @@ export async function backfillListingRarity(client: QueryClient, options: Backfi
         mileage: row.mileage,
         mileageUnit: row.mileage_unit,
       });
+      const rankingVariant = row.year !== null && row.model
+        ? computeRankingVariant({
+            year: row.year,
+            make: "Porsche",
+            model: row.model,
+            trim: row.trim,
+            title: row.title,
+          })
+        : null;
 
       scanned += 1;
-      if (sameRarityPayload(row, rarity)) {
+      if (sameRarityPayload(row, rarity, rankingVariant)) {
         skipped += 1;
         continue;
       }
@@ -192,6 +210,7 @@ export async function backfillListingRarity(client: QueryClient, options: Backfi
           rarity_tier: rarity.tier,
           rarity_signals_json: rarity.signals,
           rarity_score_version: RARITY_SCORE_VERSION,
+          ranking_variant: rankingVariant,
         });
       }
     }
@@ -204,6 +223,10 @@ export async function backfillListingRarity(client: QueryClient, options: Backfi
     if (options.pauseMs > 0) {
       await sleep(options.pauseMs);
     }
+  }
+
+  if (!options.dryRun && updated > 0) {
+    await client.query("select public.refresh_listings_active_counts()");
   }
 
   return { scanned, updated, skipped, batches };

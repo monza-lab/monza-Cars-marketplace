@@ -1,11 +1,15 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v6";
+export const RARITY_SCORE_VERSION = "listing-rarity-v7";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
   | "pccb"
   | "bucket_seats"
-  | "sunroof"
+  | "sunroof_delete"
   | "exclusive_manufaktur"
+  | "sonderwunsch"
+  | "wls"
+  | "wtl"
+  | "narrow_body_speedster"
   | "painted_wheels"
   | "club_sport"
   | "racing_history"
@@ -70,12 +74,39 @@ const TEXT_SIGNAL_RULES: SignalRule[] = [
     ],
   },
   {
-    signal: "sunroof",
-    patterns: [/\bsunroof\b/i],
+    signal: "sunroof_delete",
+    patterns: [
+      /\bsunroof[\s-]?delete\b/i,
+      /\bno[\s-]?sunroof\b/i,
+      /\bnon[\s-]?sunroof\b/i,
+      /\bwithout (?:a )?sunroof\b/i,
+      /\bslick[\s-]?top\b/i,
+    ],
   },
   {
     signal: "exclusive_manufaktur",
-    patterns: [/\bexclusive manufaktur\b/i, /\bporsche exclusive manufaktur\b/i],
+    patterns: [
+      /\bexclusive manufaktur\b/i,
+      /\bporsche exclusive\b/i,
+      /\bporsche manufaktur\b/i,
+      /\bporsche manufactura\b/i,
+    ],
+  },
+  {
+    signal: "sonderwunsch",
+    patterns: [/\bsonderwunsch\b/i, /\bspecial wishes?\b/i],
+  },
+  {
+    signal: "wls",
+    patterns: [/\bwls(?:\s*[12])?\b/i, /\bwerksleistungssteigerung\b/i],
+  },
+  {
+    signal: "wtl",
+    patterns: [
+      /\bwtl\b/i,
+      /\bwerks[\s-]?turbo[\s-]?(?:look|optik)\b/i,
+      /\bfactory[\s-]?turbo[\s-]?look\b/i,
+    ],
   },
   {
     signal: "painted_wheels",
@@ -215,14 +246,25 @@ const MODEL_SIGNAL_RULES: SignalRule[] = [
     signal: "manual_transmission",
     patterns: [/\b[4567][\s-]?speed\b/i, /\bmanual\b/i, /\bg50\b/i],
   },
+  {
+    signal: "narrow_body_speedster",
+    patterns: [
+      /\b(?:narrow|slim|lean)[\s-]?body speedster\b/i,
+      /\bspeedster\b.*\b(?:narrow|slim|lean)[\s-]?body\b/i,
+    ],
+  },
 ];
 
 const SIGNAL_SCORES: Record<ListingRaritySignal, number> = {
   paint_to_sample: 28,
   pccb: 12,
   bucket_seats: 10,
-  sunroof: 6,
-  exclusive_manufaktur: 12,
+  sunroof_delete: 8,
+  exclusive_manufaktur: 6,
+  sonderwunsch: 14,
+  wls: 16,
+  wtl: 14,
+  narrow_body_speedster: 10,
   painted_wheels: 5,
   club_sport: 14,
   racing_history: 14,
@@ -411,9 +453,10 @@ export function scoreListingRarity(input: ListingRarityInput): {
   }
 
   const airCooledClassic = isAirCooledYear(input.year) && signals.includes("classic_significance");
+  const isSpeedster = /\bspeedster\b/i.test(headline) && !signals.includes("hypercar");
   if (airCooledClassic) {
     score += 20;
-    if (signals.includes("homologation_special")) score += 14;
+    if (signals.includes("homologation_special") && !isSpeedster) score += 14;
     if (signals.includes("turbo_heritage")) score += 8;
     if (signals.includes("paint_to_sample")) score += 16;
   }
@@ -437,8 +480,8 @@ export function scoreListingRarity(input: ListingRarityInput): {
     }
   }
 
-  if (/\bspeedster\b/i.test(headline) && !signals.includes("hypercar")) {
-    score = Math.min(score, 94);
+  if (isSpeedster) {
+    score = Math.max(score, 88);
   }
 
   const boundedScore = Math.max(0, Math.min(score, 100));

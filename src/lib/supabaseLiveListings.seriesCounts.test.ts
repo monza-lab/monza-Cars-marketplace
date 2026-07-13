@@ -115,4 +115,27 @@ describe("fetchSeriesCounts", () => {
       JP: {},
     });
   });
+
+  it("returns deduplicated active supply by canonical ranking variant", async () => {
+    eq.mockResolvedValueOnce({
+      data: [
+        { ranking_variant: "991:speedster", region_by_country: "US", live_count: 2 },
+        { ranking_variant: "991:speedster", region_by_country: "EU", live_count: 1 },
+        { ranking_variant: "992:carrera", region_by_country: "EU", live_count: 20 },
+        { ranking_variant: "992:carrera", region_by_country: "__null", live_count: 4 },
+      ],
+      error: null,
+    });
+
+    const { fetchVariantCountsByRegion } = await import("./supabaseLiveListings");
+    const result = await fetchVariantCountsByRegion("porsche");
+
+    expect(result).toEqual({
+      all: { "991:speedster": 3, "992:carrera": 24 },
+      US: { "991:speedster": 2 },
+      UK: {},
+      EU: { "991:speedster": 1, "992:carrera": 20 },
+      JP: {},
+    });
+  });
 });

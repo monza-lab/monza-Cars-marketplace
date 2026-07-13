@@ -6,6 +6,7 @@ import {
   fetchValuationListingsForMake,
   fetchSeriesCounts,
   fetchSeriesCountsByRegion,
+  fetchVariantCountsByRegion,
   type SeriesCountsByRegion,
 } from "./supabaseLiveListings";
 import { resolveRequestedMake } from "./makeProfiles";
@@ -16,6 +17,10 @@ import {
   fetchDashboardRegionalValuationByFamily,
   type RegionalValByFamily,
 } from "./dashboardValuationCache";
+import {
+  buildHomepageRankingContextFromSupply,
+  rankHomepageListings,
+} from "./homepageRanking";
 
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
@@ -24,7 +29,8 @@ const DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS = 8_000;
 const DASHBOARD_FAMILY_REP_TIMEOUT_MS = 8_000;
 const DASHBOARD_VALUATION_IMAGE_POOL_LIMIT = 200;
 const DASHBOARD_LIVE_QUERY_TIMEOUT_MS = 8_000;
-const DASHBOARD_REGION_SAMPLE_SIZE = 15;
+const DASHBOARD_REGION_SAMPLE_SIZE = 50;
+const DASHBOARD_CANDIDATE_LIMIT = 200;
 const DASHBOARD_FALLBACK_PLATFORMS = ["CollectingCars", "CarsAndBids", "Elferspot"] as const;
 const DASHBOARD_REGION_ORDER: readonly ("US" | "EU" | "UK" | "JP")[] = ["US", "EU", "UK", "JP"] as const;
 export type { RegionalValByFamily };
@@ -83,6 +89,9 @@ export type DashboardAuction = {
   raritySignals?: string[] | null;
   rarityScoredAt?: string | null;
   rarityScoreVersion?: string | null;
+  homepageScore?: number | null;
+  marketScarcityScore?: number | null;
+  marketSupplyCount?: number | null;
 };
 
 export type DashboardRegionTotals = {
@@ -197,6 +206,9 @@ export function transformCar(car: CollectorCar): DashboardAuction {
     raritySignals: car.raritySignals ?? null,
     rarityScoredAt: car.rarityScoredAt ?? null,
     rarityScoreVersion: car.rarityScoreVersion ?? null,
+    homepageScore: car.homepageScore ?? null,
+    marketScarcityScore: car.marketScarcityScore ?? null,
+    marketSupplyCount: car.marketSupplyCount ?? null,
   };
 }
 
@@ -213,6 +225,20 @@ function sortDashboardCars(a: CollectorCar, b: CollectorCar): number {
   const bTime = b.endTime instanceof Date ? b.endTime.getTime() : Number.MAX_SAFE_INTEGER;
   if (aTime !== bTime) return aTime - bTime;
   return b.id.localeCompare(a.id);
+}
+
+export function rankDashboardCandidates(
+  cars: readonly CollectorCar[],
+  supplyByVariant: Readonly<Record<string, number>>,
+  limit = DASHBOARD_DISPLAY_LIMIT,
+): CollectorCar[] {
+  const context = buildHomepageRankingContextFromSupply(supplyByVariant);
+  return rankHomepageListings(cars, context, { limit }).map((row) => ({
+    ...row.listing,
+    homepageScore: row.homepageScore,
+    marketScarcityScore: row.marketScarcityScore,
+    marketSupplyCount: row.marketSupplyCount,
+  }));
 }
 
 function interleaveBuckets<T>(buckets: T[][], limit: number): T[] {
@@ -245,7 +271,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
   );
 
   const regionalBuckets = regionalResults.map((result) => result.cars.sort(sortDashboardCars));
-  const regionalRows = interleaveBuckets(regionalBuckets, DASHBOARD_DISPLAY_LIMIT);
+  const regionalRows = interleaveBuckets(regionalBuckets, DASHBOARD_CANDIDATE_LIMIT);
   const regionalDeduped = new Map<string, CollectorCar>();
 
   for (const car of regionalRows) {
@@ -256,15 +282,15 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
 
   const balancedRows = Array.from(regionalDeduped.values())
     .sort(sortDashboardCars)
-    .slice(0, DASHBOARD_DISPLAY_LIMIT);
+    .slice(0, DASHBOARD_CANDIDATE_LIMIT);
   if (balancedRows.length > 0) {
-    if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) {
+    if (balancedRows.length >= DASHBOARD_CANDIDATE_LIMIT) {
       return balancedRows;
     }
 
     const fill = await fetchPaginatedListings({
       make,
-      pageSize: DASHBOARD_DISPLAY_LIMIT,
+      pageSize: DASHBOARD_CANDIDATE_LIMIT,
       status: "active",
       includeCount: false,
       timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
@@ -281,17 +307,17 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
       if (seen.has(car.id)) continue;
       balancedRows.push(car);
       seen.add(car.id);
-      if (balancedRows.length >= DASHBOARD_DISPLAY_LIMIT) break;
+      if (balancedRows.length >= DASHBOARD_CANDIDATE_LIMIT) break;
     }
 
     return balancedRows
       .sort(sortDashboardCars)
-      .slice(0, DASHBOARD_DISPLAY_LIMIT);
+      .slice(0, DASHBOARD_CANDIDATE_LIMIT);
   }
 
   const primary = await fetchPaginatedListings({
     make,
-    pageSize: DASHBOARD_DISPLAY_LIMIT,
+    pageSize: DASHBOARD_CANDIDATE_LIMIT,
     status: "active",
     includeCount: false,
     timeoutMs: DASHBOARD_LIVE_QUERY_TIMEOUT_MS,
@@ -335,7 +361,7 @@ async function fetchDashboardLiveListings(make: string): Promise<CollectorCar[]>
     }
   }
 
-  return Array.from(deduped.values()).slice(0, DASHBOARD_DISPLAY_LIMIT);
+  return Array.from(deduped.values()).slice(0, DASHBOARD_CANDIDATE_LIMIT);
 }
 
 async function fetchMissingFamilyRepresentatives(
@@ -388,7 +414,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
     console.error("[dashboardCache] live listings query failed:", error);
   }
 
-  const [cachedRegionalValByFamily, aggregates, seriesCounts, seriesCountsByRegion] = await Promise.all([
+  const [cachedRegionalValByFamily, aggregates, seriesCounts, seriesCountsByRegion, variantCountsByRegion] = await Promise.all([
     withSoftTimeout(
       (signal) =>
         fetchDashboardRegionalValuationByFamily(requestedMake ?? "Porsche", {
@@ -430,6 +456,16 @@ async function dashboardDataImpl(): Promise<DashboardData> {
       "series counts by region query",
       buildSeriesCountsByRegionFallback(),
     ),
+    withSoftTimeout(
+      (signal) =>
+        fetchVariantCountsByRegion(requestedMake ?? "Porsche", {
+          timeoutMs: DASHBOARD_AUX_QUERY_TIMEOUT_MS + 1_000,
+          signal,
+        }),
+      DASHBOARD_AUX_QUERY_TIMEOUT_MS,
+      "variant counts by region query",
+      buildSeriesCountsByRegionFallback(),
+    ),
   ]);
 
   const valuationListings = await withSoftTimeout(
@@ -441,9 +477,11 @@ async function dashboardDataImpl(): Promise<DashboardData> {
   );
 
   // Only active listings for dashboard
-  const active = live.filter(
-    (car) => car.status === "ACTIVE" || car.status === "ENDING_SOON",
-  ).slice(0, DASHBOARD_DISPLAY_LIMIT);
+  const active = rankDashboardCandidates(
+    live.filter((car) => car.status === "ACTIVE" || car.status === "ENDING_SOON"),
+    variantCountsByRegion.all,
+    DASHBOARD_DISPLAY_LIMIT,
+  );
 
   const familyRepresentatives = await withSoftTimeout(
     () => fetchMissingFamilyRepresentatives(requestedMake ?? "Porsche", active, seriesCounts),

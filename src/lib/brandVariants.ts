@@ -119,7 +119,7 @@ export const PORSCHE_993_VARIANTS: VariantConfig[] = [
   { id: "turbo-s", label: "Turbo S", keywords: ["turbo s"] },
   { id: "turbo-cabrio", label: "Turbo Cabrio", keywords: ["turbo cabrio", "turbo cabriolet"] },
   { id: "turbo-wls-1", label: "Turbo WLS 1", keywords: ["turbo wls 1", "wls 1"] },
-  { id: "turbo-wls-2", label: "Turbo WLS 2", keywords: ["turbo wls 2", "wls 2"] },
+  { id: "turbo-wls-2", label: "Turbo WLS 2", keywords: ["turbo wls 2", "wls 2", "wls ii"] },
   { id: "gt2", label: "GT2", keywords: ["gt2"] },
   { id: "gt2-evo", label: "GT2 Evo", keywords: ["gt2 evo"] },
   { id: "cup-3.8", label: "3.8 Cup", keywords: ["3.8 cup", "cup 3.8"] },
@@ -175,7 +175,7 @@ export const PORSCHE_GMODEL_VARIANTS: VariantConfig[] = [
   { id: "carrera-3.2-clubsport", label: "Carrera 3.2 Clubsport", keywords: ["3.2 clubsport", "3.2 club sport"] },
   { id: "carrera-3.2-speedster", label: "Carrera 3.2 Speedster", keywords: ["3.2 speedster"] },
   { id: "carrera-3.2-supersport", label: "Carrera 3.2 Supersport", keywords: ["3.2 supersport"] },
-  { id: "carrera-3.2-wtl", label: "Carrera 3.2 WTL", keywords: ["3.2 wtl"] },
+  { id: "carrera-3.2-wtl", label: "Carrera 3.2 WTL", keywords: ["carrera 3.2 wtl", "3.2 wtl"] },
   { id: "speedster", label: "Speedster", keywords: ["speedster"] },
 ]
 

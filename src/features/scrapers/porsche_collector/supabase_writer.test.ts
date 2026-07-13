@@ -138,6 +138,7 @@ describe("porsche_collector supabase mapping", () => {
       "gt_model",
     ]);
     expect(row.rarity_scored_at).toBe(meta.scrapeTimestamp);
-    expect(row.rarity_score_version).toBe("listing-rarity-v6");
+    expect(row.rarity_score_version).toBe("listing-rarity-v7");
+    expect(row.ranking_variant).toBe("992:gt3-touring");
   });
 });

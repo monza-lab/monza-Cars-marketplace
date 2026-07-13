@@ -4,6 +4,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import type { NormalizedListing, ScrapeMeta } from "./types";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment";
+import { computeRankingVariant } from "@/features/scrapers/common/rankingEnrichment";
 import { classifyVehicleIdentifier } from "@/features/scrapers/common/vehicleIdentifier";
 import { fetchHtml } from "./net";
 import { parseDetailHtml } from "./detail";
@@ -243,6 +244,7 @@ export function mapNormalizedListingToListingsRow(listing: NormalizedListing, me
     final_price: listing.finalPrice,
     location: listing.locationString,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
+    ranking_variant: computeRankingVariant({ make: listing.make, model: listing.model, trim: listing.trim, year: listing.year, title: listing.title }),
   };
 
   // Only include images/photos_count when we actually have photos.

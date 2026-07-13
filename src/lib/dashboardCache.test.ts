@@ -152,6 +152,13 @@ const fetchSeriesCountsByRegion = vi.fn(async () => ({
   EU: {},
   JP: {},
 }))
+const fetchVariantCountsByRegion = vi.fn(async () => ({
+  all: { "991:speedster": 12, "991:carrera-t": 1 },
+  US: { "991:speedster": 4, "991:carrera-t": 1 },
+  UK: { "991:speedster": 2 },
+  EU: { "991:speedster": 5 },
+  JP: { "991:speedster": 1 },
+}))
 
 vi.mock("./supabaseLiveListings", () => ({
   fetchPaginatedListings,
@@ -160,6 +167,7 @@ vi.mock("./supabaseLiveListings", () => ({
   fetchLiveListingAggregateCounts,
   fetchSeriesCounts,
   fetchSeriesCountsByRegion,
+  fetchVariantCountsByRegion,
 }))
 
 vi.mock("./dashboardValuationCache", () => ({
@@ -187,9 +195,48 @@ describe("dashboard cache", () => {
     fetchLiveListingAggregateCounts.mockClear()
     fetchSeriesCounts.mockClear()
     fetchSeriesCountsByRegion.mockClear()
+    fetchVariantCountsByRegion.mockClear()
     unstableCache.mockClear()
     revalidateTag.mockClear()
     vi.useRealTimers()
+  })
+
+  it("keeps collector significance dominant while attaching bounded live-market scarcity", async () => {
+    const { rankDashboardCandidates } = await import("./dashboardCache")
+    const ranked = rankDashboardCandidates(
+      [
+        {
+          ...activeCar,
+          id: "speedster",
+          title: "2019 Porsche 911 Speedster",
+          year: 2019,
+          model: "991 Speedster",
+          rarityScore: 96,
+          raritySignals: ["speedster", "narrow_body_speedster"],
+        },
+        {
+          ...activeCar,
+          id: "carrera-t",
+          title: "2018 Porsche 911 Carrera T",
+          year: 2018,
+          model: "991 Carrera T",
+          rarityScore: 70,
+          raritySignals: ["manual_transmission"],
+        },
+      ],
+      { "991:speedster": 12, "991:carrera-t": 1 },
+      2,
+    )
+
+    expect(ranked.map((car) => car.id)).toEqual(["speedster", "carrera-t"])
+    expect(ranked[0]).toMatchObject({
+      homepageScore: expect.any(Number),
+      marketSupplyCount: 12,
+    })
+    expect(ranked[1]).toMatchObject({
+      marketScarcityScore: 15,
+      marketSupplyCount: 1,
+    })
   })
 
   // TODO(dashboard-cache): stale test — mock expectations drifted from current implementation.

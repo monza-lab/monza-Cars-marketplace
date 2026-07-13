@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { extractSeries, getBrandConfig } from "@/lib/brandConfig"
-import { byPhotoFirst } from "@/lib/photoSort"
+import { compareHomepageOrdering } from "@/lib/homepageRanking"
 
 export type LiveSidebarAuction = {
   id: string
@@ -28,6 +28,8 @@ export type LiveSidebarAuction = {
   region?: string | null
   description: string | null
   images: string[]
+  rarityScore?: number | null
+  homepageScore?: number | null
 }
 
 type UseLiveSidebarListingsOptions<T extends LiveSidebarAuction> = {
@@ -55,14 +57,7 @@ function isLiveStatus(status: string): boolean {
 }
 
 function sortLiveAuctions<T extends LiveSidebarAuction>(auctions: T[]): T[] {
-  return [...auctions].sort(
-    byPhotoFirst<T>((a, b) => {
-      const aTime = new Date(a.endTime).getTime()
-      const bTime = new Date(b.endTime).getTime()
-      if (aTime !== bTime) return aTime - bTime
-      return a.id.localeCompare(b.id)
-    }),
-  )
+  return [...auctions].sort(compareHomepageOrdering)
 }
 
 function matchesFamily<T extends LiveSidebarAuction>(auction: T, activeFamilyName?: string): boolean {
@@ -199,7 +194,9 @@ export function useLiveSidebarListings<T extends LiveSidebarAuction>({
 
       const incoming = (data.auctions ?? []).filter((auction) => isLiveStatus(auction.status))
 
-      setRows((prev) => dedupeById(sortLiveAuctions([...prev, ...incoming])))
+      // Seed rows already carry the server-computed homepage order. Append each
+      // keyset page without re-sorting raw pagination rows over that order.
+      setRows((prev) => dedupeById([...prev, ...incoming]))
       setCursor(data.nextCursor ?? null)
       setHasMore(Boolean(data.hasMore))
       setLiveCount(

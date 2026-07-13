@@ -4,6 +4,7 @@ import type { CanonicalListing } from "../contracts/listing";
 import { validateListing } from "@/features/scrapers/common/listingValidator";
 import { buildListingFingerprint } from "../services/dedupe";
 import { RARITY_SCORE_VERSION, scoreListingRarity } from "@/lib/listingRarity";
+import { computeRankingVariant } from "@/features/scrapers/common/rankingEnrichment";
 
 export type WriteResult = { inserted: number; updated: number; warnings: string[] };
 type WriteOptions = { strictSaleDate?: boolean; listingsOnly?: boolean };
@@ -85,6 +86,13 @@ async function listingIdAfterUpsert(
     photos_count: listing.images.length,
     updated_at: new Date().toISOString(),
     scrape_timestamp: new Date().toISOString(),
+    ranking_variant: computeRankingVariant({
+      make: listing.make,
+      model: listing.model,
+      trim: null,
+      year: listing.year,
+      title: listing.title,
+    }),
     ...buildRarityFields(listing),
   };
 

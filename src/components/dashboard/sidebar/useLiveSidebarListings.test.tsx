@@ -27,6 +27,8 @@ type LiveAuction = {
   region?: string | null
   description: string | null
   images: string[]
+  rarityScore?: number | null
+  homepageScore?: number | null
 }
 
 function makeAuction(
@@ -114,7 +116,7 @@ function TestSidebar({
       <div>
         <div data-testid="live-count">{liveCount}</div>
         {liveAuctions.map((auction) => (
-          <div key={auction.id}>{auction.title}</div>
+          <div key={auction.id} data-testid="auction-row">{auction.title}</div>
         ))}
         <div ref={sentinelRef} data-testid="sentinel" />
       </div>
@@ -205,6 +207,29 @@ describe("useLiveSidebarListings", () => {
     expect(String((fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[1][0])).toContain(
       "cursor=cursor-1",
     )
+  })
+
+  it("keeps server-ranked seed rows ahead of appended pagination rows", async () => {
+    const rankedSeed = { ...seed, homepageScore: 90 }
+    const rawPage = { ...firstPage, rarityScore: 100, endTime: "2026-04-20T10:30:00.000Z" }
+    vi.mocked(fetch).mockReset().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        auctions: [rawPage],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 2,
+        totalLiveCount: 2,
+      }),
+    } as Response)
+
+    render(<TestSidebar seedAuctions={[rankedSeed]} seedKey="region:all|family:none" />)
+
+    await waitFor(() => expect(screen.getByText(rawPage.title)).toBeInTheDocument())
+    expect(screen.getAllByTestId("auction-row").map((row) => row.textContent)).toEqual([
+      rankedSeed.title,
+      rawPage.title,
+    ])
   })
 
   it("normalizes display labels like 718 Cayman to the canonical family key for paging", async () => {

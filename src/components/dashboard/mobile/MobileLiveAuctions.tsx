@@ -8,7 +8,7 @@ import { Clock, Car } from "lucide-react"
 import { SafeImage } from "../cards/SafeImage"
 import { timeLeft } from "../utils/timeLeft"
 import type { Auction } from "../types"
-import { byPhotoFirst } from "@/lib/photoSort"
+import { compareHomepageOrdering } from "@/lib/homepageRanking"
 
 export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auction[]; totalLiveCount: number }) {
   const t = useTranslations("dashboard")
@@ -26,7 +26,7 @@ export function MobileLiveAuctions({ auctions, totalLiveCount }: { auctions: Auc
     const now = Date.now()
     return auctions
       .filter(a => ["ACTIVE", "ENDING_SOON", "LIVE"].includes(a.status) && new Date(a.endTime).getTime() > now)
-      .sort(byPhotoFirst<Auction>((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()))
+      .sort(compareHomepageOrdering)
       .slice(0, 8)
   }, [auctions])
 

@@ -71,6 +71,14 @@ export type Auction = {
   canonicalMarket?: "US" | "EU" | "UK" | "JP" | null;
   /** Series id (e.g. "992"). */
   family?: string | null;
+  rarityScore?: number | null;
+  rarityTier?: "unique" | "very_rare" | "rare" | "uncommon" | "common" | null;
+  raritySignals?: string[] | null;
+  rarityScoredAt?: string | null;
+  rarityScoreVersion?: string | null;
+  homepageScore?: number | null;
+  marketScarcityScore?: number | null;
+  marketSupplyCount?: number | null;
 }
 
 // ─── PORSCHE FAMILY TYPE (for family-based landing scroll) ───

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import type { NormalizedElferspot } from "./normalize"
 import { computeSeries } from "@/features/scrapers/common/seriesEnrichment"
+import { computeRankingVariant } from "@/features/scrapers/common/rankingEnrichment"
 
 type ElferspotUpsertRow = Record<string, unknown>
 
@@ -31,6 +32,7 @@ export function mapElferspotUpsertRow(listing: NormalizedElferspot): ElferspotUp
     last_verified_at: new Date().toISOString(),
     enrichment_meta: listing.enrichment_meta,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
+    ranking_variant: computeRankingVariant({ make: listing.make, model: listing.model, trim: listing.trim, year: listing.year, title: listing.title }),
   }
 
   if (hasText(listing.transmission)) row.transmission = listing.transmission
