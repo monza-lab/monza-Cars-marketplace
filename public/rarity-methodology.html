@@ -6,7 +6,7 @@
     <title>MonzaHaus Rarity Methodology</title>
     <meta
       name="description"
-      content="A simple Monza-style explainer for how Porsche cards are ranked by rarity and curation."
+      content="How MonzaHaus ranks Porsche listings with historic classic icons first, modern special editions protected, and bounded landing-page scarcity context."
     />
     <style>
       :root {
@@ -387,6 +387,10 @@
         color: var(--amber);
       }
 
+      .opening-spread {
+        display: contents;
+      }
+
       @media (max-width: 900px) {
         .hero,
         .content,
@@ -435,11 +439,206 @@
           }
         }
       }
+
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+
+      @media print {
+        html,
+        body {
+          background: #0e0e0d !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .page {
+          max-width: none;
+          padding: 0;
+        }
+
+        .opening-spread {
+          display: block;
+          break-after: page;
+          break-inside: avoid;
+        }
+
+        .topbar {
+          flex-direction: row;
+          align-items: center;
+          padding: 12px 16px;
+        }
+
+        .brand-title {
+          font-size: 2.4rem;
+        }
+
+        .badge {
+          padding: 8px 11px;
+          font-size: 0.68rem;
+        }
+
+        .hero {
+          grid-template-columns: 1.25fr 0.75fr;
+          gap: 14px;
+          padding: 16px;
+        }
+
+        .content {
+          grid-template-columns: 1.1fr 0.9fr;
+          gap: 14px;
+          padding: 14px 16px !important;
+          break-before: auto;
+        }
+
+        .content:first-of-type {
+          break-after: page;
+        }
+
+        .grid-2,
+        .factor-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .headline {
+          font-size: 3rem;
+        }
+
+        .lede {
+          font-size: 0.88rem;
+          line-height: 1.5;
+        }
+
+        .summary {
+          gap: 9px;
+          padding: 13px;
+        }
+
+        .summary h2,
+        .section h2 {
+          font-size: 1.55rem;
+        }
+
+        .summary p,
+        .section p,
+        .metric span,
+        td {
+          font-size: 0.78rem;
+          line-height: 1.4;
+        }
+
+        .metric {
+          gap: 3px;
+          padding-top: 7px;
+        }
+
+        .metric strong {
+          font-size: 0.84rem;
+        }
+
+        .section {
+          padding: 12px;
+        }
+
+        .factor-list {
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .factor {
+          padding: 6px 8px;
+          gap: 7px;
+          font-size: 0.78rem;
+        }
+
+        .factor .score {
+          min-width: 2.5rem;
+        }
+
+        .factor .note {
+          font-size: 0.7rem;
+          line-height: 1.25;
+        }
+
+        .flow {
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .flow-row {
+          grid-template-columns: 46px 1fr;
+          gap: 10px;
+        }
+
+        .flow-row .step {
+          width: 46px;
+          height: 46px;
+          font-size: 1.5rem;
+        }
+
+        .flow-row .copy {
+          padding: 7px 9px;
+          font-size: 0.77rem;
+        }
+
+        .chip {
+          padding: 10px;
+          gap: 5px;
+        }
+
+        .chip h3,
+        th {
+          font-size: 0.66rem;
+        }
+
+        th,
+        td {
+          padding: 8px 9px;
+        }
+
+        .example-callout {
+          margin-top: 10px;
+          font-size: 0.78rem;
+          line-height: 1.45;
+        }
+
+        .footer-note {
+          padding: 0 16px 12px;
+          font-size: 0.72rem;
+        }
+
+        .frame {
+          border: 0;
+          box-shadow: none;
+          overflow: visible;
+        }
+
+        .opening-spread,
+        .topbar,
+        .summary,
+        .section,
+        .factor,
+        .chip,
+        .flow-row,
+        .table-wrap,
+        tr {
+          break-inside: avoid;
+        }
+
+        .frame,
+        .summary,
+        .section,
+        .topbar {
+          animation: none !important;
+        }
+      }
     </style>
   </head>
   <body>
     <main class="page">
       <article class="frame">
+        <div class="opening-spread">
         <header class="topbar">
           <div class="brand">
             <div class="brand-kicker">MonzaHaus / Rarity Ranking</div>
@@ -453,48 +652,57 @@
             <div class="eyebrow">How the first page gets shaped</div>
             <h2 class="headline">Rarity is not just age. It is significance, provenance, and restraint.</h2>
             <p class="lede">
-              This page shows the same logic we use in the marketplace, in a simple visual form.
-              The goal is not to surface every old Porsche first. The goal is to put the most
-              interesting cars at the top: rare factory builds, special models, air-cooled icons,
-              and unusual PTS cars that feel genuinely special.
+              This page defines the approved first-page logic in a simple visual form.
+              The goal is to keep historically significant classics prominent without overlooking
+              genuine modern special editions. Intrinsic collector importance comes first; rare
+              specifications and live-market context refine the order rather than replacing it.
             </p>
           </div>
 
           <aside class="summary">
             <h2>What rises to the top</h2>
             <p>
-              Cars earn points from rarity signals, then we apply guardrails so the list stays
-              curated instead of repetitive.
+              Cars earn an intrinsic rarity score from model significance and factory specification.
+              A portfolio selector then keeps the first page balanced, intentional, and varied.
             </p>
             <div class="metric">
               <strong>Top priority</strong>
-              <span>Rare factory specification, halo models, classic air-cooled significance.</span>
+              <span>Foundational classic icons first, followed by halo models, homologation cars, and rare factory specification.</span>
             </div>
             <div class="metric">
               <strong>Secondary lift</strong>
-              <span>PTS, low mileage, matching numbers, special packages, and provenance clues.</span>
+              <span>PTS, WLS, WTL, Sonderwunsch, Exclusive Manufaktur, low mileage, matching numbers, and provenance.</span>
             </div>
             <div class="metric">
-              <strong>Guardrails</strong>
-              <span>Modern cars are capped, and overrepresented shapes like Speedsters are restrained.</span>
+              <strong>Portfolio guardrails</strong>
+              <span>Top 10: 5 classics, 3 modern specials, 2 open. Every variant shares the same repetition limit.</span>
             </div>
           </aside>
         </section>
+        </div>
 
         <section class="content">
           <div class="section">
             <h2>Score logic</h2>
             <p>
-              We start with the strongest rarity signals first. Then we add supporting details.
-              If two cars are close, the one with deeper significance should stay ahead.
+              We start with the strongest collector signals, then add supporting factory and
+              provenance details. Scarcity is a tie-breaker only: a lower-significance modern car
+              cannot jump ahead of a stronger classic merely because fewer examples are listed.
             </p>
 
             <ul class="factor-list">
               <li class="factor">
+                <div class="score">+76</div>
+                <div class="factor-copy">
+                  <div class="label">Historic classic icon</div>
+                  <div class="note">A narrow list of foundational archetypes: 356 Speedster, Carrera RS, early 911 S, 930 3.0, rare factory Speedsters, and equivalent air-cooled icons.</div>
+                </div>
+              </li>
+              <li class="factor">
                 <div class="score">+70</div>
                 <div class="factor-copy">
                   <div class="label">Hypercar / halo model</div>
-                  <div class="note">Carries the strongest rarity weight. These are the headline cars.</div>
+                  <div class="note">959, Carrera GT, and 918 remain headline cars, immediately below foundational classic icons.</div>
                 </div>
               </li>
               <li class="factor">
@@ -508,14 +716,14 @@
                 <div class="score">+32</div>
                 <div class="factor-copy">
                   <div class="label">Classic significance</div>
-                  <div class="note">Air-cooled icons and historically important cars get a major boost.</div>
+                  <div class="note">A lineage signal for important classic generations. Age alone never creates historic-icon status.</div>
                 </div>
               </li>
               <li class="factor">
                 <div class="score">+28</div>
                 <div class="factor-copy">
                   <div class="label">Paint to sample</div>
-                  <div class="note">PTS matters more on old models when the car already has character.</div>
+                  <div class="note">A documented factory color materially strengthens an already significant specification.</div>
                 </div>
               </li>
               <li class="factor">
@@ -526,17 +734,31 @@
                 </div>
               </li>
               <li class="factor">
+                <div class="score">+16</div>
+                <div class="factor-copy">
+                  <div class="label">WLS factory power upgrade</div>
+                  <div class="note">Recognizes documented Werksleistungssteigerung cars as distinct factory specifications.</div>
+                </div>
+              </li>
+              <li class="factor">
                 <div class="score">+14</div>
                 <div class="factor-copy">
-                  <div class="label">Limited editions, racing history, club sport</div>
-                  <div class="note">Adds weight for factory rarity, motorsport links, and enthusiast-built edge.</div>
+                  <div class="label">WTL, Sonderwunsch, limited editions, racing history</div>
+                  <div class="note">Adds weight for factory Turbo-look bodies, special wishes, motorsport links, and limited production.</div>
                 </div>
               </li>
               <li class="factor">
                 <div class="score">+10</div>
                 <div class="factor-copy">
-                  <div class="label">Matching numbers / bucket seats / low miles</div>
-                  <div class="note">Supporting signs of desirability, but not enough on their own.</div>
+                  <div class="label">Narrow-body Speedster / matching numbers / bucket seats</div>
+                  <div class="note">Important supporting specification and provenance signals, but not enough on their own.</div>
+                </div>
+              </li>
+              <li class="factor">
+                <div class="score">+8/+6</div>
+                <div class="factor-copy">
+                  <div class="label">Sunroof delete / Exclusive Manufaktur</div>
+                  <div class="note">Only an explicit sunroof-delete claim scores; simply mentioning a sunroof does not.</div>
                 </div>
               </li>
             </ul>
@@ -560,22 +782,22 @@
               <div class="flow-row">
                 <div class="step">2</div>
                 <div class="copy">
-                  <strong>Add the good details</strong>
-                  <span>PTS, matching numbers, original paint, low owner count, and rare options increase the score.</span>
+                  <strong>Compare collector evidence</strong>
+                  <span>Variant certainty, provenance signals, and usable photography are compared before live-market scarcity.</span>
                 </div>
               </div>
               <div class="flow-row">
                 <div class="step">3</div>
                 <div class="copy">
-                  <strong>Keep modern cars under control</strong>
-                  <span>Late-model cars can still rank well, but they should not crowd out older icons just because they are newer and shinier.</span>
+                  <strong>Build a collector portfolio</strong>
+                  <span>The Top 10 guarantees five classics and three genuine modern specials, with two open positions for the strongest remaining cars.</span>
                 </div>
               </div>
               <div class="flow-row">
                 <div class="step">4</div>
                 <div class="copy">
-                  <strong>Prevent one shape from dominating</strong>
-                  <span>Speedsters are capped so they do not appear on every first page and drown out the rest of the selection.</span>
+                  <strong>Apply equal diversity rules</strong>
+                  <span>No canonical variant gets more than two places in the Top 10 or five in the Top 50. Speedsters compete under the same rule as every other variant.</span>
                 </div>
               </div>
             </div>
@@ -595,16 +817,16 @@
                 <p>Classic significance gets a bonus. If they also have PTS, homologation, or Turbo heritage, the score compounds.</p>
               </div>
               <div class="chip">
-                <h3>PTS on old models</h3>
-                <p>Old Porsches with special colors feel more curated and exclusive than a generic modern build.</p>
+                <h3>WLS and WTL</h3>
+                <p>Factory power upgrades and Turbo-look bodies are identified as distinct collector specifications, including transition-year cars.</p>
               </div>
               <div class="chip">
-                <h3>Special factory builds</h3>
-                <p>RS, RS America, Turbo S, 911R, 959, Singer-grade oddities, and similar cars deserve early placement.</p>
+                <h3>Modern special editions</h3>
+                <p>918 Spyder, GT/RS, modern Speedster, Sport Classic, Sonderwunsch, and other explicit factory specials retain guaranteed visibility.</p>
               </div>
               <div class="chip">
-                <h3>Condition signals</h3>
-                <p>Low miles, original paint, matching numbers, and careful ownership help separate serious cars from ordinary ones.</p>
+                <h3>Landing-page scarcity: 0-15</h3>
+                <p>Recognized modern variants only. One active car earns 15; the most supplied variant earns 0. Between them: round[15 * (1 - ln(supply) / ln(max modern supply))]. Duplicate VINs count once.</p>
               </div>
             </div>
           </div>
@@ -612,8 +834,9 @@
           <div class="section">
             <h2>Examples</h2>
             <p>
-              A 930 Turbo or 964 Carrera RS can beat a newer ordinary 911 because the older car has
-              more depth. A Speedster can still be high, but it should not occupy every opening slot.
+              A 356 Speedster or Carrera RS can stay ahead of a 918 because foundational historical
+              importance is the first comparison. A 918 Spyder or GT3 RS remains prominent because
+              it qualifies as a genuine modern special, not simply because it is newer or scarce.
             </p>
 
             <div class="table-wrap" role="region" aria-label="Ranking examples">
@@ -626,32 +849,32 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>964 Carrera RS, 930 Turbo, 959, 911R</td>
+                    <td>356 Speedster, Carrera RS, early 911 S, 930 3.0</td>
                     <td>Ordinary modern 911s with no special specification</td>
                   </tr>
                   <tr>
-                    <td>Air-cooled PTS cars with honest provenance</td>
+                    <td>Air-cooled WLS, WTL, Speedster, or PTS cars with honest provenance</td>
                     <td>Late-model cars with only generic low-mileage appeal</td>
                   </tr>
                   <tr>
-                    <td>Factory rare cars with original paint and matching numbers</td>
-                    <td>Common trims with nice photos but no rarity story</td>
+                    <td>959, Carrera GT, 918 Spyder, GT/RS, modern Speedster, or documented Sonderwunsch builds</td>
+                    <td>Common modern trims made scarce only by current listing supply</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <p class="example-callout">
-              The point is not to make the page old-car-only. The point is to make it
-              <span class="emerald">special-car-first</span>, with enough restraint that one body
-              style does not take over the front page.
+              The page is deliberately <span class="emerald">classic-prominent and special-car-first</span>:
+              five classic positions, three modern-special positions, and two open positions in the
+              Top 10. Across the Top 50, at least twenty are classics and ten are modern specials.
             </p>
           </div>
         </section>
 
         <div class="footer-note">
-          Built in the Monza style: dark, editorial, opinionated, and quiet. If you want, I can
-          also make a light version or wire this into the app as a real page.
+          MonzaHaus rarity methodology v8 - historic classic icons first, special editions protected,
+          scarcity scored from 0-15 as a tie-breaker, and a paced classic-modern landing portfolio.
         </div>
       </article>
     </main>

@@ -230,10 +230,12 @@ describe("dashboard cache", () => {
 
     expect(ranked.map((car) => car.id)).toEqual(["speedster", "carrera-t"])
     expect(ranked[0]).toMatchObject({
+      homepageRank: 1,
       homepageScore: expect.any(Number),
       marketSupplyCount: 12,
     })
     expect(ranked[1]).toMatchObject({
+      homepageRank: 2,
       marketScarcityScore: 15,
       marketSupplyCount: 1,
     })

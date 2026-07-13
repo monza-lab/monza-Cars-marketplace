@@ -210,7 +210,7 @@ describe("useLiveSidebarListings", () => {
   })
 
   it("keeps server-ranked seed rows ahead of appended pagination rows", async () => {
-    const rankedSeed = { ...seed, homepageScore: 90 }
+    const rankedSeed = { ...seed, homepageRank: 1, homepageScore: 90 }
     const rawPage = { ...firstPage, rarityScore: 100, endTime: "2026-04-20T10:30:00.000Z" }
     vi.mocked(fetch).mockReset().mockResolvedValueOnce({
       ok: true,

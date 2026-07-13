@@ -88,23 +88,56 @@ describe("homepage ranking", () => {
   });
 
   it("keeps intrinsic collector significance ahead of market scarcity", () => {
-    const significant = listing("significant", {
-      rarityScore: 95,
+    const significant = listing("z-significant-classic", {
+      year: 1992,
+      rarityScore: 100,
+      model: "964 Carrera RS",
+      trim: "Carrera RS",
+      title: "1992 Porsche 964 Carrera RS",
+      raritySignals: ["historic_classic_icon", "homologation_special", "classic_significance"],
+    });
+    const scarceModern = listing("a-scarce-modern", {
+      rarityScore: 96,
       model: "911 GT3 RS",
       trim: "GT3 RS",
       title: "2019 Porsche 911 GT3 RS",
+      raritySignals: ["gt_model", "homologation_special"],
     });
-    const scarceOrdinary = listing("scarce-ordinary", {
-      rarityScore: 65,
-      model: "911 Carrera T",
-      trim: "Carrera T",
-      title: "2019 Porsche 911 Carrera T",
+    const commonModern = Array.from({ length: 20 }, (_, index) => listing(`common-${index}`, {
+      rarityScore: 10,
+      model: "911 Carrera",
+      trim: "Carrera",
+      title: `2019 Porsche 911 Carrera ${index}`,
+      raritySignals: [],
+    }));
+    const rows = [significant, scarceModern, ...commonModern];
+
+    const ranked = rankHomepageListings(rows, buildHomepageRankingContext(rows), { limit: rows.length });
+
+    expect(ranked[0].listing.id).toBe("z-significant-classic");
+  });
+
+  it("orders a foundational classic icon ahead of a tied hypercar", () => {
+    const hypercar = listing("a-hypercar", {
+      year: 2015,
+      model: "918 Spyder",
+      trim: "918 Spyder",
+      title: "2015 Porsche 918 Spyder",
+      rarityScore: 100,
+      raritySignals: ["hypercar"],
     });
-    const rows = [significant, scarceOrdinary];
+    const classicIcon = listing("z-classic-icon", {
+      year: 1957,
+      model: "356 Speedster",
+      trim: "Speedster",
+      title: "1957 Porsche 356 A Speedster",
+      rarityScore: 100,
+      raritySignals: ["historic_classic_icon", "classic_significance"],
+    });
 
-    const ranked = rankHomepageListings(rows, buildHomepageRankingContext(rows), { limit: 2 });
+    const ranked = rankHomepageListings([hypercar, classicIcon], undefined, { limit: 2 });
 
-    expect(ranked[0].listing.id).toBe("significant");
+    expect(ranked.map((row) => row.listing.id)).toEqual(["z-classic-icon", "a-hypercar"]);
   });
 
   it("penalizes missing photography and produces deterministic ties", () => {
@@ -147,15 +180,124 @@ describe("homepage ranking", () => {
     expect(speedsterCount).toBeLessThanOrEqual(2);
   });
 
-  it("preserves the server homepage score when a client filters the ranked rows", () => {
+  it("preserves the explicit server homepage rank when a client filters the ranked rows", () => {
     const rows = [
-      { id: "ending-first", endTime: "2026-07-20T00:00:00.000Z", rarityScore: 99 },
-      { id: "ranked-first", endTime: "2026-08-20T00:00:00.000Z", rarityScore: 80, homepageScore: 110 },
+      { id: "score-first", endTime: "2026-07-20T00:00:00.000Z", rarityScore: 100, homepageScore: 120, homepageRank: 2 },
+      { id: "ranked-first", endTime: "2026-08-20T00:00:00.000Z", rarityScore: 80, homepageScore: 90, homepageRank: 1 },
     ];
 
     expect(rows.sort(compareHomepageOrdering).map((row) => row.id)).toEqual([
       "ranked-first",
-      "ending-first",
+      "score-first",
     ]);
+  });
+
+  it("paces at least five classics and three modern specials through the first ten", () => {
+    const classicConfigs = [
+      [1957, "356 Speedster", "Speedster"],
+      [1973, "911 Carrera RS", "Carrera RS"],
+      [1987, "911 Turbo 3.3", "Turbo"],
+      [1992, "964 Carrera RS", "Carrera RS"],
+      [1995, "993 Carrera RS", "Carrera RS"],
+      [1989, "911 Speedster", "Speedster"],
+    ] as const;
+    const classics = classicConfigs.map(([year, model, trim], index) => listing(`classic-${index}`, {
+      year,
+      model,
+      trim,
+      title: `${year} Porsche ${model}`,
+      rarityScore: 90 - index,
+      raritySignals: index < 2 ? ["historic_classic_icon", "classic_significance"] : ["classic_significance"],
+    }));
+    const modernSpecialConfigs = [
+      [2015, "918 Spyder", "918 Spyder", "hypercar"],
+      [2019, "911 Speedster", "Speedster", "homologation_special"],
+      [2024, "911 GT3 RS", "GT3 RS", "gt_model"],
+      [2024, "718 Spyder RS", "Spyder RS", "homologation_special"],
+    ] as const;
+    const modernSpecials = modernSpecialConfigs.map(([year, model, trim, signal], index) => listing(`modern-special-${index}`, {
+      year,
+      model,
+      trim,
+      title: `${year} Porsche ${model}`,
+      rarityScore: 100 - index,
+      raritySignals: [signal],
+    }));
+    const ordinary = Array.from({ length: 8 }, (_, index) => listing(`ordinary-${index}`, {
+      model: index % 2 === 0 ? "911 Carrera" : "718 Cayman",
+      trim: index % 2 === 0 ? "Carrera" : "Cayman",
+      title: `2019 Porsche ordinary ${index}`,
+      rarityScore: 99 - index,
+      raritySignals: [],
+    }));
+
+    const ranked = rankHomepageListings([...ordinary, ...modernSpecials, ...classics], undefined, { limit: 10 });
+    const ids = ranked.map((row) => row.listing.id);
+
+    expect(ids.filter((id) => id.startsWith("classic-")).length).toBeGreaterThanOrEqual(5);
+    expect(ids.filter((id) => id.startsWith("modern-special-")).length).toBeGreaterThanOrEqual(3);
+    expect(ranked.map((row) => row.homepageRank)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it("guarantees twenty classics and ten modern specials across the first fifty", () => {
+    const classicVariants = [
+      [1957, "356 Speedster", "Speedster"],
+      [1973, "911 Carrera RS", "Carrera RS"],
+      [1987, "911 Turbo 3.3", "Turbo"],
+      [1992, "964 Carrera RS", "Carrera RS"],
+      [1995, "993 Carrera RS", "Carrera RS"],
+    ] as const;
+    const classics = classicVariants.flatMap(([year, model, trim], variantIndex) =>
+      Array.from({ length: 5 }, (_, index) => listing(`classic-${variantIndex}-${index}`, {
+        year,
+        model,
+        trim,
+        title: `${year} Porsche ${model} example ${index}`,
+        rarityScore: 82 - index,
+        raritySignals: variantIndex < 2 ? ["historic_classic_icon", "classic_significance"] : ["classic_significance"],
+      })),
+    );
+    const modernVariants = [
+      [2015, "918 Spyder", "918 Spyder", "hypercar"],
+      [2019, "911 Speedster", "Speedster", "homologation_special"],
+      [2024, "911 GT3 RS", "GT3 RS", "gt_model"],
+    ] as const;
+    const modernSpecials = modernVariants.flatMap(([year, model, trim, signal], variantIndex) =>
+      Array.from({ length: 5 }, (_, index) => listing(`modern-special-${variantIndex}-${index}`, {
+        year,
+        model,
+        trim,
+        title: `${year} Porsche ${model} example ${index}`,
+        rarityScore: 95 - index,
+        raritySignals: [signal],
+      })),
+    );
+    const ordinaryConfigs = [
+      [2019, "911 Carrera", "Carrera"],
+      [2019, "718 Cayman", "Cayman"],
+      [2019, "718 Boxster", "Boxster"],
+      [2019, "911 Targa", "Targa"],
+    ] as const;
+    const ordinary = ordinaryConfigs.flatMap(([year, model, trim], variantIndex) =>
+      Array.from({ length: 10 }, (_, index) => listing(`ordinary-${variantIndex}-${index}`, {
+        year,
+        model,
+        trim,
+        title: `${year} Porsche ${model} example ${index}`,
+        rarityScore: 99,
+        raritySignals: [],
+      })),
+    );
+
+    const ranked = rankHomepageListings([...ordinary, ...modernSpecials, ...classics], undefined, { limit: 50 });
+    const ids = ranked.map((row) => row.listing.id);
+    const variantCounts = new Map<string, number>();
+    for (const row of ranked) {
+      variantCounts.set(row.variantKey, (variantCounts.get(row.variantKey) ?? 0) + 1);
+    }
+
+    expect(ids.filter((id) => id.startsWith("classic-")).length).toBeGreaterThanOrEqual(20);
+    expect(ids.filter((id) => id.startsWith("modern-special-")).length).toBeGreaterThanOrEqual(10);
+    expect(Math.max(...variantCounts.values())).toBeLessThanOrEqual(5);
   });
 });

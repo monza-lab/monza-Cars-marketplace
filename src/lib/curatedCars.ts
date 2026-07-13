@@ -72,7 +72,9 @@ export interface CollectorCar {
   raritySignals?: string[] | null;
   rarityScoredAt?: string | null;
   rarityScoreVersion?: string | null;
-  /** Final homepage ordering score: intrinsic rarity + bounded market context. */
+  /** Explicit server-selected order. Clients preserve this before any score fallback. */
+  homepageRank?: number | null;
+  /** Diagnostic score only: intrinsic rarity plus bounded market context. */
   homepageScore?: number | null;
   marketScarcityScore?: number | null;
   marketSupplyCount?: number | null;

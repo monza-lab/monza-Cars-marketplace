@@ -134,6 +134,7 @@ type Auction = {
   askingPriceUsd?: number | null
   valuationBasis?: "sold" | "asking" | "unknown"
   rarityScore?: number | null
+  homepageRank?: number | null
   homepageScore?: number | null
   marketScarcityScore?: number | null
   marketSupplyCount?: number | null

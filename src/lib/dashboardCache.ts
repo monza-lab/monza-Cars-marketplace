@@ -89,6 +89,7 @@ export type DashboardAuction = {
   raritySignals?: string[] | null;
   rarityScoredAt?: string | null;
   rarityScoreVersion?: string | null;
+  homepageRank?: number | null;
   homepageScore?: number | null;
   marketScarcityScore?: number | null;
   marketSupplyCount?: number | null;
@@ -206,6 +207,7 @@ export function transformCar(car: CollectorCar): DashboardAuction {
     raritySignals: car.raritySignals ?? null,
     rarityScoredAt: car.rarityScoredAt ?? null,
     rarityScoreVersion: car.rarityScoreVersion ?? null,
+    homepageRank: car.homepageRank ?? null,
     homepageScore: car.homepageScore ?? null,
     marketScarcityScore: car.marketScarcityScore ?? null,
     marketSupplyCount: car.marketSupplyCount ?? null,
@@ -235,6 +237,7 @@ export function rankDashboardCandidates(
   const context = buildHomepageRankingContextFromSupply(supplyByVariant);
   return rankHomepageListings(cars, context, { limit }).map((row) => ({
     ...row.listing,
+    homepageRank: row.homepageRank,
     homepageScore: row.homepageScore,
     marketScarcityScore: row.marketScarcityScore,
     marketSupplyCount: row.marketSupplyCount,

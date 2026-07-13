@@ -127,7 +127,7 @@ export function buildComparisonReport(rows: readonly DatabaseListing[]): string 
     "",
     `Comparison cutoff: \`${COMPARISON_CUTOFF}\`. Active Porsche listings with no end time or an end time after the cutoff: **${listings.length.toLocaleString("en-US")}**.`,
     "",
-    "The **before** table reproduces the legacy persisted rarity-score order (v6 score, ending time, id). The **after** table recomputes intrinsic collector significance with v7, adds a bounded 0–15 point live-market scarcity signal for recognized modern variants, adds up to 5 evidence points, subtracts 10 for unusable photography, deduplicates supply by VIN/fingerprint, and applies variant diversity caps.",
+    "The **before** table reproduces the legacy persisted rarity-score order (v6 score, ending time, id). The **after** table recomputes v8 collector significance, gives foundational classic icons priority over hypercars, applies the paced 5/3/2 landing-page portfolio, compares evidence and photography, then uses bounded 0-15 scarcity only as a tie-breaker for recognized modern variants. Supply is deduplicated by VIN/fingerprint and every variant shares the same diversity caps.",
     "",
     `Top-50 overlap: **${overlap}/50**. New entrants: **${entrants.length}**. Exits: **${exits.length}**. The legacy score is saturated at 100 for **${legacyMaxScoreCount} listings**, so much of the old top order was decided by ending time and id rather than collector distinctions.`,
     "",
@@ -147,13 +147,13 @@ export function buildComparisonReport(rows: readonly DatabaseListing[]): string 
     "",
     "## After — collector-first homepage order",
     "",
-    "| Rank | Car | Homepage | Intrinsic v7 | Scarcity | Live supply | Variant | Legacy rank | Signals |",
-    "|---:|---|---:|---:|---:|---:|---|---:|---|",
+    "| Rank | Car | Priority | Diagnostic | Intrinsic v8 | Scarcity | Live supply | Variant | Legacy rank | Signals |",
+    "|---:|---|---:|---:|---:|---:|---:|---|---:|---|",
   );
 
   newRanked.forEach((row, index) => {
     lines.push(
-      `| ${index + 1} | ${carLabel(row.listing)} | ${row.homepageScore} | ${row.intrinsicScore} | ${row.marketScarcityScore} | ${row.marketSupplyCount ?? "—"} | ${escapeCell(row.variantKey)} | ${legacyRankById.get(row.listing.id) ?? "—"} | ${escapeCell(row.listing.newSignals.join(", ") || "—")} |`,
+      `| ${index + 1} | ${carLabel(row.listing)} | ${row.collectorPriority} | ${row.homepageScore} | ${row.intrinsicScore} | ${row.marketScarcityScore} | ${row.marketSupplyCount ?? "—"} | ${escapeCell(row.variantKey)} | ${legacyRankById.get(row.listing.id) ?? "—"} | ${escapeCell(row.listing.newSignals.join(", ") || "—")} |`,
     );
   });
 
@@ -167,7 +167,7 @@ export function buildComparisonReport(rows: readonly DatabaseListing[]): string 
 
   entrants.forEach((row) => {
     lines.push(
-      `| ${newRankById.get(row.listing.id)} | ${carLabel(row.listing)} | ${legacyRankById.get(row.listing.id)} | intrinsic ${row.intrinsicScore}; scarcity +${row.marketScarcityScore}; ${escapeCell(row.listing.newSignals.join(", ") || "recognized variant/evidence")} |`,
+      `| ${newRankById.get(row.listing.id)} | ${carLabel(row.listing)} | ${legacyRankById.get(row.listing.id)} | priority ${row.collectorPriority}; intrinsic ${row.intrinsicScore}; scarcity +${row.marketScarcityScore}; ${escapeCell(row.listing.newSignals.join(", ") || "recognized variant/evidence")} |`,
     );
   });
 

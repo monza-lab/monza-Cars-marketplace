@@ -1,4 +1,5 @@
 import { extractSeries, getSeriesForBrand, matchVariant } from "./brandConfig";
+import { isHistoricClassicIcon } from "./listingRarity";
 
 export type HomepageRankingListing = {
   id: string;
@@ -23,22 +24,53 @@ export type HomepageRankingContext = {
 
 export type RankedHomepageListing<T extends HomepageRankingListing = HomepageRankingListing> = {
   listing: T;
+  homepageRank: number;
   homepageScore: number;
   intrinsicScore: number;
   marketScarcityScore: number;
   marketSupplyCount: number | null;
   evidenceScore: number;
   variantKey: string;
+  collectorPriority: number;
+  isClassic: boolean;
+  isModernSpecial: boolean;
+  hasUsablePhotography: boolean;
 };
 
 export type HomepageOrderedListing = {
   id: string;
   endTime?: string | Date | null;
+  homepageRank?: number | null;
   homepageScore?: number | null;
   rarityScore?: number | null;
 };
 
 const CLASSIC_SERIES = new Set(["356", "f-model", "g-model", "930", "964", "993"]);
+const MODERN_SPECIAL_SIGNALS = new Set([
+  "hypercar",
+  "homologation_special",
+  "gt_model",
+  "limited_edition",
+  "sonderwunsch",
+]);
+const TOP_TEN_LANES = [
+  "classic",
+  "modern",
+  "classic",
+  "open",
+  "classic",
+  "modern",
+  "classic",
+  "open",
+  "modern",
+  "classic",
+] as const;
+
+type HomepageLane = "classic" | "modern" | "open";
+type RankedCandidate<T extends HomepageRankingListing> = Omit<RankedHomepageListing<T>, "homepageRank"> & {
+  homepageRank: number;
+  vehicleKey: string;
+};
 
 function normalize(value: string | null | undefined): string {
   return String(value ?? "")
@@ -208,17 +240,16 @@ function listingEvidenceScore(listing: HomepageRankingListing, recognizedVariant
   return score;
 }
 
-function visualPenalty(listing: HomepageRankingListing): number {
-  const usable = (listing.images ?? []).some(
+function hasUsablePhotography(listing: HomepageRankingListing): boolean {
+  return (listing.images ?? []).some(
     (image) => typeof image === "string" && image.length > 0 && !/placeholder/i.test(image),
   );
-  return usable ? 0 : -10;
 }
 
 function rankOne<T extends HomepageRankingListing>(
   listing: T,
   context: HomepageRankingContext,
-): RankedHomepageListing<T> {
+): RankedCandidate<T> {
   const variant = resolveHomepageVariant(listing);
   const supply = variant.recognized ? context.supplyByVariant.get(variant.key) ?? null : null;
   const marketScarcityScore = variant.recognized && variant.modern && supply !== null
@@ -226,24 +257,44 @@ function rankOne<T extends HomepageRankingListing>(
     : 0;
   const intrinsicScore = Math.max(0, Math.min(100, listing.rarityScore ?? 0));
   const evidenceScore = listingEvidenceScore(listing, variant.recognized);
+  const signals = new Set(listing.raritySignals ?? []);
+  const isClassic = variant.recognized && CLASSIC_SERIES.has(variant.series.toLowerCase());
+  const isModernSpecial = variant.modern && [...signals].some((signal) => MODERN_SPECIAL_SIGNALS.has(signal));
+  const historicClassicIcon = isClassic && (
+    signals.has("historic_classic_icon") || isHistoricClassicIcon(listing)
+  );
+  const collectorPriority = historicClassicIcon ? 3 : signals.has("hypercar") ? 2 : 1;
+  const usablePhotography = hasUsablePhotography(listing);
 
   return {
     listing,
-    homepageScore: intrinsicScore + marketScarcityScore + evidenceScore + visualPenalty(listing),
+    homepageRank: 0,
+    // Diagnostic only. Explicit homepageRank is the ordering contract.
+    homepageScore: intrinsicScore + marketScarcityScore + evidenceScore + (usablePhotography ? 0 : -10),
     intrinsicScore,
     marketScarcityScore,
     marketSupplyCount: supply,
     evidenceScore,
     variantKey: variant.key,
+    collectorPriority,
+    isClassic,
+    isModernSpecial,
+    hasUsablePhotography: usablePhotography,
+    vehicleKey: vehicleKey(listing),
   };
 }
 
 function compareRanked<T extends HomepageRankingListing>(
-  a: RankedHomepageListing<T>,
-  b: RankedHomepageListing<T>,
+  a: RankedCandidate<T>,
+  b: RankedCandidate<T>,
 ): number {
-  if (a.homepageScore !== b.homepageScore) return b.homepageScore - a.homepageScore;
+  if (a.collectorPriority !== b.collectorPriority) return b.collectorPriority - a.collectorPriority;
   if (a.intrinsicScore !== b.intrinsicScore) return b.intrinsicScore - a.intrinsicScore;
+  if (a.evidenceScore !== b.evidenceScore) return b.evidenceScore - a.evidenceScore;
+  if (a.hasUsablePhotography !== b.hasUsablePhotography) return a.hasUsablePhotography ? -1 : 1;
+  if (a.marketScarcityScore !== b.marketScarcityScore) {
+    return b.marketScarcityScore - a.marketScarcityScore;
+  }
   const aTime = a.listing.endTime ? new Date(a.listing.endTime).getTime() : Number.MAX_SAFE_INTEGER;
   const bTime = b.listing.endTime ? new Date(b.listing.endTime).getTime() : Number.MAX_SAFE_INTEGER;
   if (aTime !== bTime) return aTime - bTime;
@@ -252,6 +303,18 @@ function compareRanked<T extends HomepageRankingListing>(
 
 /** Preserve the server-computed homepage order after client-side filtering. */
 export function compareHomepageOrdering<T extends HomepageOrderedListing>(a: T, b: T): number {
+  const aRank = typeof a.homepageRank === "number" && Number.isFinite(a.homepageRank)
+    ? a.homepageRank
+    : null;
+  const bRank = typeof b.homepageRank === "number" && Number.isFinite(b.homepageRank)
+    ? b.homepageRank
+    : null;
+  if (aRank !== null || bRank !== null) {
+    if (aRank === null) return 1;
+    if (bRank === null) return -1;
+    if (aRank !== bRank) return aRank - bRank;
+  }
+
   const aScore = a.homepageScore ?? a.rarityScore ?? Number.NEGATIVE_INFINITY;
   const bScore = b.homepageScore ?? b.rarityScore ?? Number.NEGATIVE_INFINITY;
   if (aScore !== bScore) return bScore - aScore;
@@ -262,6 +325,67 @@ export function compareHomepageOrdering<T extends HomepageOrderedListing>(a: T, 
   return a.id.localeCompare(b.id);
 }
 
+function buildPacedTail(): HomepageLane[] {
+  const total = 40;
+  const quota: Record<HomepageLane, number> = { classic: 15, modern: 7, open: 18 };
+  const used: Record<HomepageLane, number> = { classic: 0, modern: 0, open: 0 };
+  const tieOrder: HomepageLane[] = ["classic", "modern", "open"];
+  const result: HomepageLane[] = [];
+
+  for (let index = 0; index < total; index += 1) {
+    const lane = tieOrder
+      .filter((candidate) => used[candidate] < quota[candidate])
+      .sort((a, b) => {
+        const deficitA = ((index + 1) * quota[a]) / total - used[a];
+        const deficitB = ((index + 1) * quota[b]) / total - used[b];
+        return deficitB - deficitA || tieOrder.indexOf(a) - tieOrder.indexOf(b);
+      })[0];
+    result.push(lane);
+    used[lane] += 1;
+  }
+
+  return result;
+}
+
+const TOP_FIFTY_TAIL_LANES = buildPacedTail();
+
+function buildLaneSchedule(limit: number): HomepageLane[] {
+  const schedule: HomepageLane[] = TOP_TEN_LANES.slice(0, Math.min(limit, 10));
+  if (limit > 10) {
+    schedule.push(...TOP_FIFTY_TAIL_LANES.slice(0, Math.min(limit - 10, 40)));
+  }
+  while (schedule.length < limit) schedule.push("open");
+  return schedule;
+}
+
+function matchesLane<T extends HomepageRankingListing>(
+  row: RankedCandidate<T>,
+  lane: HomepageLane,
+): boolean {
+  if (lane === "classic") return row.isClassic;
+  if (lane === "modern") return row.isModernSpecial;
+  return true;
+}
+
+function findCandidate<T extends HomepageRankingListing>(
+  sorted: readonly RankedCandidate<T>[],
+  lane: HomepageLane,
+  selectedIds: ReadonlySet<string>,
+  selectedVehicles: ReadonlySet<string>,
+  variantCounts: ReadonlyMap<string, number>,
+  position: number,
+): RankedCandidate<T> | undefined {
+  const cap = position < 10 ? 2 : 5;
+  const eligible = (row: RankedCandidate<T>) =>
+    !selectedIds.has(row.listing.id) &&
+    !selectedVehicles.has(row.vehicleKey) &&
+    matchesLane(row, lane) &&
+    (variantCounts.get(row.variantKey) ?? 0) < cap;
+
+  return sorted.find((row) => eligible(row) && row.hasUsablePhotography)
+    ?? sorted.find(eligible);
+}
+
 export function rankHomepageListings<T extends HomepageRankingListing>(
   listings: readonly T[],
   context: HomepageRankingContext = buildHomepageRankingContext(listings),
@@ -269,26 +393,57 @@ export function rankHomepageListings<T extends HomepageRankingListing>(
 ): RankedHomepageListing<T>[] {
   const limit = Math.max(0, options.limit ?? listings.length);
   const sorted = listings.map((listing) => rankOne(listing, context)).sort(compareRanked);
-  const selected: RankedHomepageListing<T>[] = [];
-  const deferred: RankedHomepageListing<T>[] = [];
-  const counts = new Map<string, number>();
+  const target = Math.min(limit, sorted.length);
+  const selected: RankedCandidate<T>[] = [];
+  const selectedIds = new Set<string>();
+  const selectedVehicles = new Set<string>();
+  const variantCounts = new Map<string, number>();
 
+  const add = (row: RankedCandidate<T>) => {
+    selected.push(row);
+    selectedIds.add(row.listing.id);
+    selectedVehicles.add(row.vehicleKey);
+    variantCounts.set(row.variantKey, (variantCounts.get(row.variantKey) ?? 0) + 1);
+  };
+
+  for (const lane of buildLaneSchedule(target)) {
+    const row = findCandidate(
+      sorted,
+      lane,
+      selectedIds,
+      selectedVehicles,
+      variantCounts,
+      selected.length,
+    ) ?? findCandidate(
+      sorted,
+      "open",
+      selectedIds,
+      selectedVehicles,
+      variantCounts,
+      selected.length,
+    );
+    if (row) add(row);
+  }
+
+  // Preserve result length if inventory cannot satisfy diversity or dedupe constraints.
   for (const row of sorted) {
-    const variantCount = counts.get(row.variantKey) ?? 0;
-    const cap = selected.length < 10 ? 2 : 5;
-    if (variantCount >= cap) {
-      deferred.push(row);
-      continue;
-    }
-    selected.push(row);
-    counts.set(row.variantKey, variantCount + 1);
-    if (selected.length >= limit) return selected;
+    if (selected.length >= target) break;
+    if (selectedIds.has(row.listing.id)) continue;
+    add(row);
   }
 
-  for (const row of deferred) {
-    if (selected.length >= limit) break;
-    selected.push(row);
-  }
-
-  return selected;
+  return selected.map((row, index) => ({
+    listing: row.listing,
+    homepageRank: index + 1,
+    homepageScore: row.homepageScore,
+    intrinsicScore: row.intrinsicScore,
+    marketScarcityScore: row.marketScarcityScore,
+    marketSupplyCount: row.marketSupplyCount,
+    evidenceScore: row.evidenceScore,
+    variantKey: row.variantKey,
+    collectorPriority: row.collectorPriority,
+    isClassic: row.isClassic,
+    isModernSpecial: row.isModernSpecial,
+    hasUsablePhotography: row.hasUsablePhotography,
+  }));
 }

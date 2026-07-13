@@ -76,6 +76,7 @@ export type Auction = {
   raritySignals?: string[] | null;
   rarityScoredAt?: string | null;
   rarityScoreVersion?: string | null;
+  homepageRank?: number | null;
   homepageScore?: number | null;
   marketScarcityScore?: number | null;
   marketSupplyCount?: number | null;

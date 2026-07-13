@@ -8,7 +8,51 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v7");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v8");
+  });
+
+  it("puts historically foundational classic icons above hypercars without promoting ordinary classics", () => {
+    const historicSpeedster = scoreListingRarity({
+      year: 1957,
+      model: "356 A",
+      title: "1957 Porsche 356 A 1600 S Speedster",
+    });
+    const hypercar = scoreListingRarity({
+      year: 2015,
+      model: "918 Spyder",
+      title: "2015 Porsche 918 Spyder",
+    });
+    const ordinaryClassic = scoreListingRarity({
+      year: 1987,
+      model: "911 Carrera",
+      title: "1987 Porsche 911 Carrera Coupe",
+    });
+
+    expect(historicSpeedster.signals).toContain("historic_classic_icon");
+    expect(historicSpeedster.score).toBeGreaterThan(hypercar.score);
+    expect(ordinaryClassic.signals).not.toContain("historic_classic_icon");
+  });
+
+  it("does not grant historic-icon priority to replicas, tributes, or ordinary 911 SC wording", () => {
+    const replica = scoreListingRarity({
+      year: 1957,
+      model: "356 Replica Speedster",
+      title: "1957 Porsche 356 Replica Speedster",
+    });
+    const tribute = scoreListingRarity({
+      year: 1996,
+      model: "993 GT2 Tribute",
+      title: "1996 Porsche 993 GT2 Tribute",
+    });
+    const ordinarySc = scoreListingRarity({
+      year: 1980,
+      model: "911 3.0 SC 930 Kg Homologue Route",
+      title: "Porsche 911 3.0 SC 930 Kg Homologue Route",
+    });
+
+    expect(replica.signals).not.toContain("historic_classic_icon");
+    expect(tribute.signals).not.toContain("historic_classic_icon");
+    expect(ordinarySc.signals).not.toContain("historic_classic_icon");
   });
 
   it("treats Speedster lineage as intrinsically important without flattening special examples", () => {

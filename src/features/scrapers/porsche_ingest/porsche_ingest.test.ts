@@ -166,7 +166,7 @@ describe("porsche_ingest normalize + dedupe", () => {
         "gt_model",
       ],
       rarity_scored_at: expect.any(String),
-      rarity_score_version: "listing-rarity-v7",
+      rarity_score_version: "listing-rarity-v8",
     });
   });
 });

@@ -14,13 +14,27 @@ Preserve the classic-Porsche prominence of the original homepage ranking while r
 
 Candidate comparison is lexicographic rather than additive:
 
-1. intrinsic v7 rarity score, descending;
-2. evidence quality, descending;
-3. usable photography;
-4. live-market scarcity, descending;
-5. ending time and stable id tie-breaks.
+1. collector priority: historic classic icon, then hypercar, then the remaining inventory;
+2. intrinsic v8 rarity score, descending;
+3. evidence quality, descending;
+4. usable photography;
+5. live-market scarcity, descending;
+6. ending time and stable id tie-breaks.
 
-Scarcity therefore acts only after intrinsic significance. A 96-point modern car cannot outrank a 100-point classic because it happens to have fewer live listings. The existing 0–15 scarcity calculation remains available as context and as a close tie-breaker.
+`historic_classic_icon` is deliberately narrow and carries 76 intrinsic points, above the
+70-point `hypercar` signal. It identifies foundational archetypes such as the 356 Speedster,
+air-cooled Carrera RS lineage, early 911 S, 930 3.0, narrow-body Speedster, and equivalent
+factory icons. Ordinary classic age remains a separate, lower-weight lineage signal.
+
+Scarcity therefore acts only after intrinsic significance. A 96-point modern car cannot outrank a 100-point classic because it happens to have fewer live listings. The existing 0-15 scarcity calculation remains available as context and as a close tie-breaker.
+
+For a recognized modern variant, landing-page scarcity is:
+
+`round(15 x (1 - ln(active variant supply) / ln(max modern variant supply)))`
+
+The value is clamped to `0-15`; one active example receives 15 and the most-supplied
+recognized modern variant receives 0. Duplicate VINs count once. Classics, ambiguous variants,
+and missing supply data receive zero scarcity points.
 
 ## Homepage portfolio
 
@@ -38,7 +52,7 @@ The existing canonical-variant diversity rule remains active: no more than two e
 
 ## Data flow
 
-1. Recompute intrinsic v7 signals and canonical variant identity.
+1. Recompute intrinsic v8 signals and canonical variant identity.
 2. Attach evidence, photography, and deduplicated live-supply context.
 3. Classify every candidate as classic, modern special, and/or open.
 4. Sort each candidate lane with the collector-first comparator.

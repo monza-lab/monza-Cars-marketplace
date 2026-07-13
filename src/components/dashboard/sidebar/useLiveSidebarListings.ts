@@ -29,6 +29,7 @@ export type LiveSidebarAuction = {
   description: string | null
   images: string[]
   rarityScore?: number | null
+  homepageRank?: number | null
   homepageScore?: number | null
 }
 

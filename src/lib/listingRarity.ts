@@ -1,4 +1,4 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v7";
+export const RARITY_SCORE_VERSION = "listing-rarity-v8";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
@@ -20,6 +20,7 @@ export type ListingRaritySignal =
   | "low_mileage"
   | "matching_numbers"
   | "hypercar"
+  | "historic_classic_icon"
   | "homologation_special"
   | "gt_model"
   | "turbo_heritage"
@@ -275,6 +276,7 @@ const SIGNAL_SCORES: Record<ListingRaritySignal, number> = {
   low_mileage: 0,
   matching_numbers: 10,
   hypercar: 70,
+  historic_classic_icon: 76,
   homologation_special: 36,
   gt_model: 18,
   turbo_heritage: 18,
@@ -308,6 +310,35 @@ function buildHeadlineText(input: ListingRarityInput): string {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+/**
+ * Foundational Porsche archetypes whose historical and cultural importance is
+ * stronger than halo status alone. The rule is intentionally narrow: age by
+ * itself never qualifies a listing.
+ */
+export function isHistoricClassicIcon(
+  input: Pick<ListingRarityInput, "year" | "title" | "model" | "trim">,
+): boolean {
+  if (typeof input.year !== "number" || input.year < 1948 || input.year > 1998) return false;
+
+  const fields = [input.title, input.model, input.trim]
+    .map((value) => normalizeText(value))
+    .filter(Boolean);
+  const disqualifier = /\b(replica|tribute|recreation|re-creation|evocation|conversion|backdate|inspiration|inspired|apal)\b|\b(?:rsr|gt2|speedster)[\s-]?look\b/i;
+  if (fields.some((field) => disqualifier.test(field))) return false;
+
+  const rules = [
+    /\b356\b.*\bspeedster\b|\bspeedster\b.*\b356\b/i,
+    /\b(?:911\s*)?carrera\s+rs\b/i,
+    /\b(?:964|993)\b.*\b(?:carrera\s+rs|rs\s*3[.,]8|gt2|cup\s*3[.,]8\s*rsr)\b/i,
+    /\b964\b.*\bturbo\s+s\s+leichtbau\b/i,
+    /\b(?:930|911)\b.{0,30}\bturbo\b.{0,20}\b3[.,]0\b|\bturbo\s+3[.,]0\b/i,
+    /\bnarrow[\s-]?body\s+speedster\b/i,
+  ];
+
+  if (fields.some((field) => rules.some((pattern) => pattern.test(field)))) return true;
+  return input.year <= 1973 && fields.some((field) => /\b911\s*s\b/i.test(field));
 }
 
 function addSignalOnce(signals: ListingRaritySignal[], signal: ListingRaritySignal): void {
@@ -423,6 +454,10 @@ export function parseListingRaritySignals(input: ListingRarityInput): ListingRar
     if (rule.patterns.some((pattern) => pattern.test(headline))) {
       addSignalOnce(signals, rule.signal);
     }
+  }
+
+  if (isHistoricClassicIcon(input)) {
+    addSignalOnce(signals, "historic_classic_icon");
   }
 
   addAirCooledClassicSignals(signals, input, headline);
