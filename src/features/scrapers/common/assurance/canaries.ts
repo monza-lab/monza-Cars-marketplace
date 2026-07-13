@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 import type { CanaryResult } from "./database";
-import type { AssuranceSource } from "./manifest";
+import type { AssuranceCanary, AssuranceSource } from "./manifest";
 
 export type CanaryStatus = "healthy" | "failed" | "blocked" | "empty";
 
@@ -128,15 +128,17 @@ function blockSignaturePresent(output: string): boolean {
 
 export async function runSourceCanary(
   source: AssuranceSource,
+  canary: AssuranceCanary = source.canaries[0],
   execute: CommandExecutor = executeCanaryCommand,
 ): Promise<SourceCanaryResult> {
-  if (!source.canary.args.some((argument) => /dry.?run/i.test(argument))) {
-    throw new Error(`${source.id} canary command is missing dry-run protection`);
+  if (!canary) throw new Error(`${source.id} has no canary command`);
+  if (!canary.args.some((argument) => /dry.?run/i.test(argument))) {
+    throw new Error(`${source.id}/${canary.jobId} canary command is missing dry-run protection`);
   }
   const execution = await execute({
-    command: source.canary.command,
-    args: source.canary.args,
-    timeoutMs: source.canary.timeoutMs,
+    command: canary.command,
+    args: canary.args,
+    timeoutMs: canary.timeoutMs,
     env: { ...process.env, SCRAPER_ASSURANCE_CANARY: "1" },
     shell: false,
   });
@@ -152,7 +154,7 @@ export async function runSourceCanary(
   else status = "healthy";
 
   return {
-    id: `canary:${source.id}`,
+    id: `canary:${source.id}:${canary.jobId}`,
     source: source.id,
     ok: status === "healthy",
     status,
@@ -160,7 +162,7 @@ export async function runSourceCanary(
     exitCode: execution.exitCode,
     timedOut: execution.timedOut,
     durationMs: execution.durationMs,
-    summary: `${source.id} canary ${status}${discovered === null ? "" : ` (discovered=${discovered})`}`,
+    summary: `${source.id}/${canary.jobId} canary ${status}${discovered === null ? "" : ` (discovered=${discovered})`}`,
     stdout,
     stderr,
   };

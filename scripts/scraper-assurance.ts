@@ -151,7 +151,11 @@ export async function runBoundedEnrichment(
       "--pause=1",
     ],
     timeoutMs: Math.max(30 * 60_000, maxIterations * 4 * 60 * 60_000),
-    env: { ...process.env },
+    env: {
+      ...process.env,
+      SCRAPER_RUNNER_BASE_URL:
+        process.env.SCRAPER_RUNNER_BASE_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+    },
     shell: false,
   });
   return {
@@ -164,11 +168,33 @@ export async function runBoundedEnrichment(
   };
 }
 
+export async function runRegisteredJobHealthAudit(
+  execute: CommandExecutor = executeCanaryCommand,
+): Promise<CommandResult> {
+  const result = await execute({
+    command: "npx",
+    args: ["tsx", "scripts/scraper-health-audit.ts", "--json", "--strict"],
+    timeoutMs: 5 * 60_000,
+    env: { ...process.env, SCRAPER_ASSURANCE_CANARY: "1" },
+    shell: false,
+  });
+  return {
+    id: "registered-job-health-audit",
+    ok: result.exitCode === 0 && !result.timedOut,
+    durationMs: result.durationMs,
+    summary: result.exitCode === 0 && !result.timedOut
+      ? "Every registered operational job passed the strict health audit"
+      : `Registered job health audit failed (exit=${result.exitCode}, timeout=${result.timedOut})`,
+  };
+}
+
 async function runAllSourceCanaries() {
   const results = [];
   for (const source of ASSURANCE_SOURCES) {
-    console.log(`[assurance] Canary: ${source.label}`);
-    results.push(await runSourceCanary(source));
+    for (const canary of source.canaries) {
+      console.log(`[assurance] Canary: ${source.label} / ${canary.jobId}`);
+      results.push(await runSourceCanary(source, canary));
+    }
   }
   return results;
 }
@@ -184,11 +210,27 @@ function attachPreviousComparison(report: ScraperAssuranceReport, artifactDir: s
 }
 
 export function determineAssuranceExitCode(report: ScraperAssuranceReport): 0 | 1 | 2 | 3 | 4 {
-  if (report.inventory.manifestErrors.length > 0 || report.inventory.unknownDatabaseSources.length > 0) return 4;
+  if (
+    report.inventory.manifestErrors.length > 0
+    || report.inventory.unknownDatabaseSources.length > 0
+    || report.inventory.missingDatabaseSources.length > 0
+    || report.inventory.unassessedActiveListings > 0
+  ) return 4;
   if (report.canaries.some((canary) => canary.status === "blocked")) return 3;
   if (report.totals.unresolvedFields > 0 || report.totals.contractResolutionPct < 100) return 2;
   if (report.tests.some((test) => !test.ok) || report.canaries.some((canary) => !canary.ok)) return 1;
   return 0;
+}
+
+export function canRepairAssurance(report: ScraperAssuranceReport): boolean {
+  return report.totals.unresolvedFields > 0
+    && report.inventory.unknownDatabaseSources.length === 0
+    && report.inventory.missingDatabaseSources.length === 0
+    && report.inventory.unassessedActiveListings === 0
+    && report.inventory.manifestErrors.length === 0
+    && report.canaries.length > 0
+    && report.canaries.every((canary) => canary.ok && canary.status === "healthy")
+    && report.tests.find((test) => test.id === "focused-assurance-tests")?.ok === true;
 }
 
 async function runAssurance(args: AssuranceArgs): Promise<ScraperAssuranceReport> {
@@ -211,17 +253,14 @@ async function runAssurance(args: AssuranceArgs): Promise<ScraperAssuranceReport
 
   const initial = buildAssuranceReport(rows, canaries, new Date(), tests);
   applyInventoryErrors(initial, manifestErrors);
-  const safeToRepair = args.repair
-    && initial.totals.unresolvedFields > 0
-    && initial.inventory.unknownDatabaseSources.length === 0
-    && manifestErrors.length === 0
-    && tests.every((test) => test.ok);
+  const safeToRepair = args.repair && canRepairAssurance(initial);
   if (safeToRepair) {
     const repairResult = await runBoundedEnrichment(args.maxRepairIterations);
     tests.push(repairResult);
     repaired = repairResult.ok;
     rows = await fetchActiveListings();
   }
+  if (args.mode === "full") tests.push(await runRegisteredJobHealthAudit());
 
   const report = buildAssuranceReport(rows, canaries, new Date(), tests, repaired);
   applyInventoryErrors(report, manifestErrors);

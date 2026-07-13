@@ -74,19 +74,28 @@ async function discoverCarsAndBids(opts: DiscoverOptions): Promise<string[]> {
 }
 
 async function discoverCollectingCars(opts: DiscoverOptions): Promise<string[]> {
-  const q = encodeURIComponent(opts.query);
-  const candidates = [
-    `https://collectingcars.com/search?q=${q}`,
-    `https://collectingcars.com/search?query=${q}`,
-    `https://collectingcars.com/search?search=${q}`,
-  ];
+  const { candidates, pathPrefixes } = collectingCarsDiscoveryConfig(opts.query);
   return await discoverByPaging({
     ...opts,
     baseUrls: candidates,
     pageParam: "page",
-    linkExtractor: (html) => extractLinks(html, "https://collectingcars.com", ["/cars/", "/lots/"]),
+    linkExtractor: (html) => extractLinks(html, "https://collectingcars.com", pathPrefixes),
     source: "CollectingCars",
   });
+}
+
+export function collectingCarsDiscoveryConfig(query: string): {
+  candidates: string[];
+  pathPrefixes: string[];
+} {
+  const q = encodeURIComponent(query);
+  return {
+    candidates: [
+      `https://collectingcars.com/buy?query=${q}&stage=sold`,
+      `https://collectingcars.com/buy?query=${q}&refinementList%5BlistingStage%5D=sold`,
+    ],
+    pathPrefixes: ["/for-sale/", "/cars/", "/lots/"],
+  };
 }
 
 async function discoverByPaging(input: {

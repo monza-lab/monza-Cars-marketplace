@@ -14,11 +14,12 @@ function fakeSource(id: AssuranceSource["id"]): AssuranceSource {
     requiredFields: [],
     unavailableFields: [],
     repairJobIds: [],
-    canary: {
+    canaries: [{
+      jobId: "test-collector",
       command: "npx",
       args: ["tsx", "collector.ts", "--dryRun"],
       timeoutMs: 1_000,
-    },
+    }],
   };
 }
 
@@ -42,7 +43,8 @@ describe("runSourceCanary", () => {
       durationMs: 100,
       timedOut: false,
     }));
-    const result = await runSourceCanary(fakeSource("AutoTrader"), execute);
+    const source = fakeSource("AutoTrader");
+    const result = await runSourceCanary(source, source.canaries[0], execute);
 
     expect(execute).toHaveBeenCalledWith(expect.objectContaining({
       args: expect.arrayContaining(["--dryRun"]),
@@ -62,7 +64,8 @@ describe("runSourceCanary", () => {
       durationMs: 100,
       timedOut: false,
     }));
-    const result = await runSourceCanary(fakeSource("AutoTrader"), execute);
+    const source = fakeSource("AutoTrader");
+    const result = await runSourceCanary(source, source.canaries[0], execute);
 
     expect(result.status).toBe("blocked");
     expect(result.ok).toBe(false);
@@ -76,7 +79,8 @@ describe("runSourceCanary", () => {
       durationMs: 100,
       timedOut: false,
     }));
-    const result = await runSourceCanary(fakeSource("BaT"), execute);
+    const source = fakeSource("BaT");
+    const result = await runSourceCanary(source, source.canaries[0], execute);
     expect(result.status).toBe("empty");
   });
 
@@ -88,7 +92,8 @@ describe("runSourceCanary", () => {
       durationMs: 100,
       timedOut: false,
     }));
-    const result = await runSourceCanary(fakeSource("ClassicCom"), execute);
+    const source = fakeSource("ClassicCom");
+    const result = await runSourceCanary(source, source.canaries[0], execute);
     expect(result.status).toBe("healthy");
   });
 

@@ -56,15 +56,29 @@ describe("buildAssuranceReport", () => {
     expect(report.outcome).toBe("blocked");
   });
 
-  it("includes all manifest sources even when they have no active rows", () => {
+  it("blocks and counts active rows whose source is missing instead of reporting 100%", () => {
+    const report = buildAssuranceReport([
+      completeListing({ id: "missing-source", source: "   " }),
+    ], [], new Date("2026-07-13T12:00:00Z"));
+
+    expect(report.inventory.unknownDatabaseSources).toContain("<missing>");
+    expect(report.inventory.unassessedActiveListings).toBe(1);
+    expect(report.totals.activeListings).toBe(1);
+    expect(report.totals.contractResolutionPct).toBeLessThan(100);
+    expect(report.outcome).toBe("blocked");
+  });
+
+  it("blocks manifest sources with no active rows instead of assigning vacuous 100%", () => {
     const report = buildAssuranceReport([
       completeListing({ source: "AutoScout24" }),
     ], [], new Date("2026-07-13T12:00:00Z"));
 
     expect(report.sources).toHaveLength(8);
     expect(report.sources.find((source) => source.source === "BaT")).toEqual(
-      expect.objectContaining({ activeListings: 0, contractResolutionPct: 100 }),
+      expect.objectContaining({ activeListings: 0, contractResolutionPct: 0 }),
     );
+    expect(report.inventory.missingDatabaseSources).toContain("BaT");
+    expect(report.outcome).toBe("blocked");
   });
 
   it("counts fresh unavailable evidence as resolved but not populated", () => {

@@ -53,6 +53,10 @@ export interface AssuranceCommand {
   timeoutMs: number;
 }
 
+export interface AssuranceCanary extends AssuranceCommand {
+  jobId: string;
+}
+
 export interface AssuranceJob {
   id: string;
   scraperName: ScraperName | "health-audit";
@@ -76,7 +80,7 @@ export interface AssuranceSource {
   requiredFields: readonly AssuranceField[];
   unavailableFields: readonly AssuranceField[];
   repairJobIds: readonly string[];
-  canary: AssuranceCommand;
+  canaries: readonly AssuranceCanary[];
 }
 
 const AUCTION_SOURCE_IDS = ["BaT", "CarsAndBids", "CollectingCars"] as const;
@@ -101,6 +105,10 @@ function command(args: readonly string[], timeoutMs = 120_000): AssuranceCommand
   return { command: "npx", args, timeoutMs };
 }
 
+function canary(jobId: string, args: readonly string[], timeoutMs = 120_000): AssuranceCanary {
+  return { jobId, ...command(args, timeoutMs) };
+}
+
 function auctionSource(
   id: (typeof AUCTION_SOURCE_IDS)[number],
   label: string,
@@ -116,17 +124,18 @@ function auctionSource(
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: [...enrichmentJobIds, "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: ["porsche", "ferrari"].map((project) => canary(project, [
       "tsx",
-      "src/features/scrapers/porsche_collector/cli.ts",
+      `src/features/scrapers/${project}_collector/cli.ts`,
       "--mode=daily",
+      ...(project === "ferrari" ? ["--make=Ferrari"] : []),
       `--sources=${id}`,
       "--maxActivePages=1",
       "--maxEndedPages=0",
       "--noDetails",
-      "--timeBudgetMs=120000",
+      "--timeBudgetMs=170000",
       "--dryRun",
-    ]),
+    ], 180_000)),
   };
 }
 
@@ -144,14 +153,14 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: ["as24-enrich", "enrich-details", "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: [canary("autoscout24", [
       "tsx",
       "src/features/scrapers/autoscout24_collector/cli.ts",
       "--maxPagesPerShard=1",
       "--maxListings=20",
       "--timeBudgetMs=120000",
       "--dryRun",
-    ]),
+    ])],
   },
   {
     id: "AutoTrader",
@@ -163,13 +172,13 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: ["enrich-autotrader", "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: [canary("autotrader", [
       "tsx",
       "src/features/scrapers/autotrader_collector/cli.ts",
       "--maxPages=1",
       "--noDetails",
       "--dryRun",
-    ]),
+    ])],
   },
   {
     id: "BeForward",
@@ -181,14 +190,14 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: ["enrich-beforward", "backfill-images", "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: [canary("beforward", [
       "tsx",
       "scripts/bf-collector-cli.ts",
       "--maxPages=1",
       "--summaryOnly",
       "--dryRun",
       "--rateLimitMs=3000",
-    ]),
+    ])],
   },
   {
     id: "ClassicCom",
@@ -200,13 +209,13 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: ["classic-enrich", "backfill-images", "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: [canary("classic", [
       "tsx",
       "src/features/scrapers/classic_collector/cli.ts",
       "--maxPages=1",
       "--maxListings=20",
       "--dryRun",
-    ]),
+    ])],
   },
   {
     id: "Elferspot",
@@ -218,14 +227,14 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     requiredFields: REQUIRED_FIELDS,
     unavailableFields: UNAVAILABLE_FIELDS,
     repairJobIds: ["enrich-elferspot", "backfill-photos-elferspot", "enrich-vin", "enrich-titles"],
-    canary: command([
+    canaries: [canary("elferspot", [
       "tsx",
       "src/features/scrapers/elferspot_collector/cli.ts",
       "--maxPages=1",
       "--maxListings=20",
       "--dryRun",
       "--fresh",
-    ]),
+    ])],
   },
 ] as const;
 
@@ -391,6 +400,15 @@ export function validateAssuranceManifest(rootDir: string): string[] {
   for (const source of ASSURANCE_SOURCES) {
     for (const jobId of [...source.collectorJobIds, ...source.enrichmentJobIds]) {
       if (!knownJobIds.has(jobId)) errors.push(`${source.id} references unknown job ${jobId}`);
+    }
+    const canaryJobIds = new Set(source.canaries.map((candidate) => candidate.jobId));
+    for (const jobId of source.collectorJobIds) {
+      if (!canaryJobIds.has(jobId)) errors.push(`${source.id} collector ${jobId} has no live canary`);
+    }
+    for (const candidate of source.canaries) {
+      if (!candidate.args.some((argument) => /dry.?run/i.test(argument))) {
+        errors.push(`${source.id} canary ${candidate.jobId} lacks dry-run protection`);
+      }
     }
   }
 

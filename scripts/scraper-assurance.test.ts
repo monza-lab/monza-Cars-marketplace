@@ -5,6 +5,7 @@ import {
   determineAssuranceExitCode,
   parseAssuranceArgs,
   runBoundedEnrichment,
+  runRegisteredJobHealthAudit,
 } from "./scraper-assurance";
 
 function report(overrides: Partial<ScraperAssuranceReport> = {}): ScraperAssuranceReport {
@@ -15,6 +16,8 @@ function report(overrides: Partial<ScraperAssuranceReport> = {}): ScraperAssuran
       declaredSources: [],
       observedDatabaseSources: [],
       unknownDatabaseSources: [],
+      missingDatabaseSources: [],
+      unassessedActiveListings: 0,
       manifestErrors: [],
     },
     totals: {
@@ -82,10 +85,43 @@ describe("runBoundedEnrichment", () => {
   });
 });
 
+describe("registered job health audit", () => {
+  it("strictly audits every manifest-backed operational job without writes", async () => {
+    const execute = vi.fn(async () => ({
+      exitCode: 0,
+      stdout: "{}",
+      stderr: "",
+      durationMs: 1_000,
+      timedOut: false,
+    }));
+
+    await runRegisteredJobHealthAudit(execute);
+
+    expect(execute).toHaveBeenCalledWith(expect.objectContaining({
+      args: ["tsx", "scripts/scraper-health-audit.ts", "--json", "--strict"],
+      shell: false,
+    }));
+  });
+});
+
+describe("repair gate", () => {
+  it("requires every live canary to be healthy before permitting writes", async () => {
+    const { canRepairAssurance } = await import("./scraper-assurance");
+    const withGap = report({
+      totals: { ...report().totals, unresolvedFields: 1, contractResolutionPct: 99 },
+      canaries: [{ id: "canary:BaT", source: "BaT", ok: false, status: "blocked", discovered: 0, exitCode: 0, timedOut: false, durationMs: 1, summary: "blocked" }],
+      tests: [{ id: "focused-assurance-tests", ok: true, durationMs: 1, summary: "passed" }],
+    });
+
+    expect(canRepairAssurance(withGap)).toBe(false);
+    expect(canRepairAssurance({ ...withGap, canaries: withGap.canaries.map((canary) => ({ ...canary, ok: true, status: "healthy", discovered: 1 })) })).toBe(true);
+  });
+});
+
 describe("determineAssuranceExitCode", () => {
   it("prioritizes inventory drift, external blocks, unresolved fields, then local failures", () => {
     expect(determineAssuranceExitCode(report({
-      inventory: { declaredSources: [], observedDatabaseSources: ["Other"], unknownDatabaseSources: ["Other"], manifestErrors: [] },
+      inventory: { declaredSources: [], observedDatabaseSources: ["Other"], unknownDatabaseSources: ["Other"], missingDatabaseSources: [], unassessedActiveListings: 1, manifestErrors: [] },
     }))).toBe(4);
     expect(determineAssuranceExitCode(report({
       canaries: [{ id: "canary:BaT", source: "BaT", ok: false, status: "blocked", discovered: 0, exitCode: 0, timedOut: false, durationMs: 1, summary: "blocked" }],

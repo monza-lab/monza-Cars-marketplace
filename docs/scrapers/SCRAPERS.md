@@ -1408,17 +1408,17 @@ npm run test:scraper-assurance
 # Read-only full-database contract scan
 npm run scrapers:assurance:scan
 
-# Eight bounded live source canaries; database writes and monitoring writes are disabled
+# Eleven bounded live source/project canaries; database writes and monitoring writes are disabled
 npm run scrapers:assurance:canary
 
-# Tests + inventory + read-only scan + canaries
+# Tests + inventory + read-only scan + canaries + strict registered-job health audit
 npm run scrapers:assurance
 
 # Full workflow plus at most three non-destructive enrichment iterations
 npm run scrapers:assurance:repair
 ```
 
-`DATABASE_URL` is required for a full listing scan. Canaries require the Supabase variables used by the existing collector CLIs, even though `SCRAPER_ASSURANCE_CANARY=1` and each command's dry-run flag prevent writes. Repair additionally requires `CRON_SECRET` for eligible local cron enrichment routes.
+`DATABASE_URL` is required for a full listing scan. Canaries require the Supabase variables used by the existing collector CLIs, even though `SCRAPER_ASSURANCE_CANARY=1` and each command's dry-run flag prevent writes. Shared auction sources are checked through both the Porsche and Ferrari collectors. Repair additionally requires `CRON_SECRET` for eligible enrichment routes. `SCRAPER_RUNNER_BASE_URL` may select an HTTPS deployment; otherwise the runner uses `NEXT_PUBLIC_APP_URL` or local `http://localhost:3000`.
 
 Two percentages are intentionally reported:
 
@@ -1431,7 +1431,7 @@ Outcomes:
 
 - `healthy`: contract resolution is 100%, every test passes, every source canary is healthy, and no repair was needed.
 - `repaired`: the same gates pass after bounded enrichment.
-- `blocked`: inventory drift, an unknown source, an unhealthy canary, or unresolved listing fields remain.
+- `blocked`: inventory drift, an unknown or blank source, a declared source with zero active rows, an unhealthy canary, a failing registered job, or unresolved listing fields remain.
 
 Exit codes are stable for automation:
 
@@ -1441,11 +1441,11 @@ Exit codes are stable for automation:
 | `1` | Local preflight, test, malformed canary, empty canary, or execution failure |
 | `2` | Listing contract gaps remain after the selected scan/repair mode |
 | `3` | A marketplace is externally blocked by CAPTCHA, WAF, access denial, robots denial, or a challenge page |
-| `4` | Scraper inventory drift or an unknown database source was detected |
+| `4` | Scraper inventory drift, an unknown/blank database source, or a declared source with zero active rows was detected |
 
 Timestamped machine-readable reports are written to `agents/testscripts/artifacts/scraper-assurance-*.json` and are ignored by Git. Console output shows at most 100 gap examples; the artifact retains the full listing-and-field repair queue.
 
-The repair boundary is deliberately narrow. The weekly workflow may add or correct listing enrichment fields and may record verified field evidence. It never selects cleanup, delist, bulk lifecycle-status, deletion, migration, secret-change, merge, or deployment operations. The evidence CLI updates only `enrichment_meta` in a locked transaction after confirming the active listing, exact source URL, registered source, and allowed field contract.
+The repair boundary is deliberately narrow. Repair starts only after focused tests, inventory checks, and every live canary pass. The weekly workflow may add or correct listing enrichment fields and may record verified field evidence. It never selects cleanup, delist, bulk lifecycle-status, deletion, migration, secret-change, merge, or deployment operations. The evidence CLI updates only `enrichment_meta` in a locked transaction after confirming the active listing, exact source URL, registered source, and allowed field contract.
 
 ---
 

@@ -1,5 +1,7 @@
 export type CollectorMode = "daily" | "backfill";
 
+export const DEFAULT_FERRARI_MAKE = "Ferrari";
+
 export type SourceKey = "BaT" | "CarsAndBids" | "CollectingCars";
 
 export type PlatformEnum = "BRING_A_TRAILER" | "CARS_AND_BIDS" | "COLLECTING_CARS";
@@ -21,6 +23,7 @@ export interface CollectorRunConfig {
   scrapeDetails: boolean;
   checkpointPath: string;
   dryRun: boolean;
+  sources?: SourceKey[];
   timeBudgetMs?: number; // stop processing URLs when time runs out
 }
 

@@ -9,6 +9,7 @@ import {
   type UnresolvedReason,
 } from "./completeness";
 import {
+  ASSURANCE_FIELDS,
   ASSURANCE_SOURCES,
   getAssuranceSource,
   type AssuranceField,
@@ -72,6 +73,8 @@ export interface ScraperAssuranceReport {
     declaredSources: string[];
     observedDatabaseSources: string[];
     unknownDatabaseSources: string[];
+    missingDatabaseSources: AssuranceSourceId[];
+    unassessedActiveListings: number;
     manifestErrors: string[];
   };
   totals: {
@@ -126,8 +129,8 @@ function emptySourceSummary(source: AssuranceSourceId): SourceAssuranceSummary {
     resolvedFields: 0,
     unresolvedFields: 0,
     unavailableFields: 0,
-    rawCompletenessPct: 100,
-    contractResolutionPct: 100,
+    rawCompletenessPct: 0,
+    contractResolutionPct: 0,
   };
 }
 
@@ -139,8 +142,9 @@ export function buildAssuranceReport(
   repaired = false,
 ): ScraperAssuranceReport {
   const declaredSources = ASSURANCE_SOURCES.map((source) => source.id).sort();
+  const normalizedRowSources = rows.map((row) => row.source?.trim() || "<missing>");
   const observedDatabaseSources = Array.from(new Set(
-    rows.map((row) => row.source?.trim()).filter((source): source is string => Boolean(source)),
+    normalizedRowSources,
   )).sort();
   const unknownDatabaseSources = observedDatabaseSources.filter((source) => !getAssuranceSource(source));
   const sourcesById = new Map(
@@ -149,7 +153,7 @@ export function buildAssuranceReport(
   const repairQueue: RepairQueueItem[] = [];
 
   for (const row of rows) {
-    const source = row.source ? getAssuranceSource(row.source) : undefined;
+    const source = getAssuranceSource(row.source?.trim() || "<missing>");
     if (!source) continue;
     const evaluation = evaluateListing(row, source, now);
     const summary = sourcesById.get(source.id)!;
@@ -174,8 +178,12 @@ export function buildAssuranceReport(
   const sources = Array.from(sourcesById.values())
     .map((source) => ({
       ...source,
-      rawCompletenessPct: percentage(source.populatedFields, source.requiredFields),
-      contractResolutionPct: percentage(source.resolvedFields, source.requiredFields),
+      rawCompletenessPct: source.activeListings === 0
+        ? 0
+        : percentage(source.populatedFields, source.requiredFields),
+      contractResolutionPct: source.activeListings === 0
+        ? 0
+        : percentage(source.resolvedFields, source.requiredFields),
     }))
     .sort((a, b) => a.source.localeCompare(b.source));
   repairQueue.sort((a, b) => (
@@ -197,7 +205,16 @@ export function buildAssuranceReport(
     resolvedFields: 0,
     unresolvedFields: 0,
   });
+  const missingDatabaseSources = sources
+    .filter((source) => source.activeListings === 0)
+    .map((source) => source.source);
+  const unassessedActiveListings = normalizedRowSources.filter(
+    (source) => !getAssuranceSource(source),
+  ).length;
+  const conservativeRequiredFields = totals.requiredFields
+    + unassessedActiveListings * ASSURANCE_FIELDS.length;
   const blocked = unknownDatabaseSources.length > 0
+    || missingDatabaseSources.length > 0
     || totals.unresolvedFields > 0
     || canaries.some((canary) => !canary.ok)
     || tests.some((test) => !test.ok);
@@ -205,12 +222,22 @@ export function buildAssuranceReport(
   return {
     generatedAt: now.toISOString(),
     outcome: blocked ? "blocked" : repaired ? "repaired" : "healthy",
-    inventory: { declaredSources, observedDatabaseSources, unknownDatabaseSources, manifestErrors: [] },
+    inventory: {
+      declaredSources,
+      observedDatabaseSources,
+      unknownDatabaseSources,
+      missingDatabaseSources,
+      unassessedActiveListings,
+      manifestErrors: [],
+    },
     totals: {
       ...totals,
       activeListings: rows.length,
-      rawCompletenessPct: percentage(totals.populatedFields, totals.requiredFields),
-      contractResolutionPct: percentage(totals.resolvedFields, totals.requiredFields),
+      requiredFields: conservativeRequiredFields,
+      unresolvedFields: totals.unresolvedFields
+        + unassessedActiveListings * ASSURANCE_FIELDS.length,
+      rawCompletenessPct: percentage(totals.populatedFields, conservativeRequiredFields),
+      contractResolutionPct: percentage(totals.resolvedFields, conservativeRequiredFields),
     },
     sources,
     repairQueue,

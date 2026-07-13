@@ -16,6 +16,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import prompts from "prompts";
 import { createClient } from "@supabase/supabase-js";
 import { checkQuality, printQualityReport, type QualityCheckResult } from "./enrich-loop-quality";
@@ -489,7 +490,17 @@ function parseFlags(): CliFlags {
 // ── Dev server detection ────────────────────────────────────────────
 
 // Use 127.0.0.1 for cron route calls — avoids IPv6 mismatch on Windows.
-const DEV_SERVER = "http://127.0.0.1:3000";
+export function resolveRunnerBaseUrl(value = process.env.SCRAPER_RUNNER_BASE_URL): string {
+  const candidate = value?.trim() || "http://127.0.0.1:3000";
+  const parsed = new URL(candidate);
+  const local = ["127.0.0.1", "localhost", "::1"].includes(parsed.hostname);
+  if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && local)) {
+    throw new Error("SCRAPER_RUNNER_BASE_URL must use HTTPS unless it targets localhost");
+  }
+  return parsed.toString().replace(/\/$/, "");
+}
+
+const DEV_SERVER = resolveRunnerBaseUrl();
 
 async function isDevServerUp(): Promise<boolean> {
   // Race 127.0.0.1 and localhost in parallel:
@@ -512,10 +523,8 @@ async function isDevServerUp(): Promise<boolean> {
       });
   };
 
-  const results = await Promise.all([
-    probe("http://127.0.0.1:3000"),
-    probe("http://localhost:3000"),
-  ]);
+  if (DEV_SERVER !== "http://127.0.0.1:3000") return probe(DEV_SERVER);
+  const results = await Promise.all([probe(DEV_SERVER), probe("http://localhost:3000")]);
   return results.some(Boolean);
 }
 
@@ -980,7 +989,7 @@ async function main(): Promise<void> {
   const startedAt = new Date().toISOString();
   const runId = crypto.randomUUID();
 
-  console.log("Checking dev server on localhost:3000...");
+  console.log(`Checking scraper HTTP target at ${DEV_SERVER}...`);
   const devServerUp = await isDevServerUp();
 
   if (devServerUp) {
@@ -1260,7 +1269,13 @@ async function main(): Promise<void> {
   process.exit(anyFailed ? 1 : 0);
 }
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]
+  ? fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
+  : false;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("Fatal error:", err);
+    process.exit(1);
+  });
+}
