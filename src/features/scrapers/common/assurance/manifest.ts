@@ -55,7 +55,7 @@ export interface AssuranceCommand {
 
 export interface AssuranceJob {
   id: string;
-  scraperName: ScraperName;
+  scraperName: ScraperName | "health-audit";
   label: string;
   phase: AssurancePhase;
   cadence: ScraperJobSpec["cadence"];
@@ -231,7 +231,7 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
 
 function job(
   id: string,
-  scraperName: ScraperName,
+  scraperName: AssuranceJob["scraperName"],
   label: string,
   phase: AssurancePhase,
   sourceIds: readonly AssuranceSourceId[],
@@ -290,7 +290,7 @@ export const SCRAPER_JOBS: readonly AssuranceJob[] = [
 export const ASSURANCE_AUDIT_JOB_SPECS: ScraperJobSpec[] = SCRAPER_JOBS
   .filter((candidate) => !["enrichment-loop", "health-audit"].includes(candidate.id))
   .map((candidate) => ({
-    scraperName: candidate.scraperName,
+    scraperName: candidate.scraperName as ScraperName,
     label: candidate.label,
     cadence: candidate.cadence,
     cronPath: candidate.cronPath,
@@ -378,7 +378,7 @@ export function getScraperNamesForSource(sourceId: AssuranceSourceId): ScraperNa
   return Array.from(new Set(
     SCRAPER_JOBS
       .filter((candidate) => jobIds.has(candidate.id))
-      .map((candidate) => candidate.scraperName),
+      .map((candidate) => candidate.scraperName as ScraperName),
   ));
 }
 

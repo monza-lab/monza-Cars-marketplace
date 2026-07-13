@@ -47,7 +47,7 @@ export interface CCarsAuction {
 // ---------------------------------------------------------------------------
 
 const BASE_URL = 'https://collectingcars.com';
-const AUCTIONS_URL = `${BASE_URL}/search`;
+const AUCTIONS_URL = `${BASE_URL}/buy?refinementList%5BlistingStage%5D%5B0%5D=live`;
 
 const DEFAULT_HEADERS: Record<string, string> = {
   'User-Agent':
@@ -249,8 +249,8 @@ export function parseTitleComponents(title: string): {
 }
 
 export function extractExternalId(url: string): string {
-  // CC URLs: /cars/1992-porsche-964-carrera-rs or /lots/...
-  const match = url.match(/\/(cars|lots)\/([^/?#]+)/);
+  // Current CC URLs use /for-sale/; retain legacy /cars/ and /lots/ support.
+  const match = url.match(/\/(cars|lots|for-sale)\/([^/?#]+)/);
   if (match) return `cc-${match[2]}`;
 
   let hash = 0;
@@ -274,7 +274,7 @@ export async function scrapeListings(
 
   for (let page = 1; page <= maxPages; page++) {
     try {
-      const url = page === 1 ? AUCTIONS_URL : `${AUCTIONS_URL}?page=${page}`;
+      const url = page === 1 ? AUCTIONS_URL : `${AUCTIONS_URL}&page=${page}`;
       console.log(`[CC] Scraping listings page ${page}: ${url}`);
 
       const html = await fetchPage(url);
@@ -283,7 +283,11 @@ export async function scrapeListings(
       // Detect Next.js SPA shell (no auction data in HTML — data loads via JS/RSC).
       // CollectingCars migrated to a client-rendered SPA; plain fetch + cheerio
       // only gets the navigation shell, not the auction listings.
-      const isNextSpa = html.includes('/_next/static') && !html.includes('/cars/') && !html.includes('/lots/');
+      const isNextSpa =
+        html.includes('/_next/static') &&
+        !html.includes('/cars/') &&
+        !html.includes('/lots/') &&
+        !html.includes('/for-sale/');
       if (isNextSpa && page === 1) {
         errors.push(
           `[CC] Site is a Next.js SPA — auction data is not in HTML. Scrapling or Playwright required.`,
@@ -291,17 +295,19 @@ export async function scrapeListings(
         break;
       }
 
-      // Collecting Cars uses card-based layout
-      const auctionCards = $(
-        '.lot-card, .search-result, .auction-card, [class*="lot-card"], [class*="search-result"]',
-      );
+      // Current Algolia results nest a listing tile inside each hit. Parse only
+      // the outer hit so one listing cannot be emitted twice.
+      const currentAuctionCards = $('.ais-InfiniteHits-item');
+      const auctionCards = currentAuctionCards.length > 0
+        ? currentAuctionCards
+        : $('.lot-card, .search-result, .auction-card, [id^="auction-"], [class*="listing-tile"], [class*="lot-card"], [class*="search-result"]');
 
       if (auctionCards.length === 0) {
         // Fallback: find links to car/lot detail pages
-        const altCards = $('a[href*="/cars/"], a[href*="/lots/"]')
+        const altCards = $('a[href*="/cars/"], a[href*="/lots/"], a[href*="/for-sale/"]')
           .filter((_i, el) => {
             const href = $(el).attr('href') || '';
-            return /\/(cars|lots)\/[a-z0-9-]+/.test(href);
+            return /\/(cars|lots|for-sale)\/[a-z0-9-]+/.test(href);
           })
           .closest('li, article, div[class*="card"], div[class*="lot"]');
 
@@ -354,13 +360,15 @@ export function parseAuctionCard(
 ): CCarsAuction | null {
   const $el = $(el);
 
-  const linkEl = $el.find('a[href*="/cars/"], a[href*="/lots/"]').first();
+  const linkEl = $el
+    .find('a[href*="/cars/"], a[href*="/lots/"], a[href*="/for-sale/"]')
+    .first();
   const relativeUrl = linkEl.attr('href') || $el.find('a').first().attr('href');
   if (!relativeUrl) return null;
 
   const url = relativeUrl.startsWith('http') ? relativeUrl : `${BASE_URL}${relativeUrl}`;
 
-  if (!/\/(cars|lots)\/[a-z0-9]/.test(url)) return null;
+  if (!/\/(cars|lots|for-sale)\/[a-z0-9]/.test(url)) return null;
 
   const externalId = extractExternalId(url);
 

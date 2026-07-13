@@ -35,6 +35,25 @@ export interface SourceCanaryResult extends CanaryResult {
 const OUTPUT_LIMIT = 1_000_000;
 const BLOCK_SIGNATURE = /captcha|cloudflare|\bwaf\b|access denied|robots(?:\.txt)? (?:denial|denied|blocked)|challenge[- ]page|verify (?:that )?you are human/i;
 
+export function resolveCanaryInvocation(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform = process.platform,
+  nodeExecutable = process.execPath,
+): { command: string; args: string[] } {
+  if (platform === "win32" && command.toLowerCase() === "npx") {
+    const [tool, ...toolArgs] = args;
+    const entrypoint = tool === "tsx"
+      ? "node_modules/tsx/dist/cli.mjs"
+      : tool === "vitest"
+        ? "node_modules/vitest/vitest.mjs"
+        : undefined;
+    if (!entrypoint) throw new Error(`Unsupported shell-free npx tool on Windows: ${tool ?? "missing"}`);
+    return { command: nodeExecutable, args: [entrypoint, ...toolArgs] };
+  }
+  return { command, args: [...args] };
+}
+
 function appendBounded(current: string, chunk: string): string {
   if (current.length >= OUTPUT_LIMIT) return current;
   const remaining = OUTPUT_LIMIT - current.length;
@@ -64,7 +83,8 @@ export const executeCanaryCommand: CommandExecutor = async (request) => new Prom
   let stderr = "";
   let timedOut = false;
   let settled = false;
-  const child = spawn(request.command, [...request.args], {
+  const invocation = resolveCanaryInvocation(request.command, request.args);
+  const child = spawn(invocation.command, invocation.args, {
     env: request.env,
     shell: request.shell,
     windowsHide: true,
@@ -98,6 +118,14 @@ function discoveredCount(output: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
+function blockSignaturePresent(output: string): boolean {
+  const withoutZeroCounters = output.replace(
+    /\b(?:cloudflare|cf|waf)[_\s-]*blocked["']?\s*[:=]\s*0\b/gi,
+    "",
+  );
+  return BLOCK_SIGNATURE.test(withoutZeroCounters);
+}
+
 export async function runSourceCanary(
   source: AssuranceSource,
   execute: CommandExecutor = executeCanaryCommand,
@@ -118,7 +146,7 @@ export async function runSourceCanary(
   const discovered = discoveredCount(output);
 
   let status: CanaryStatus;
-  if (BLOCK_SIGNATURE.test(output)) status = "blocked";
+  if (blockSignaturePresent(output)) status = "blocked";
   else if (execution.timedOut || execution.exitCode !== 0 || discovered === null) status = "failed";
   else if (discovered === 0) status = "empty";
   else status = "healthy";

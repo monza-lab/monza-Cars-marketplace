@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { AssuranceSource } from "./manifest";
-import { redactCanaryOutput, runSourceCanary } from "./canaries";
+import { redactCanaryOutput, resolveCanaryInvocation, runSourceCanary } from "./canaries";
 
 function fakeSource(id: AssuranceSource["id"]): AssuranceSource {
   return {
@@ -23,6 +23,17 @@ function fakeSource(id: AssuranceSource["id"]): AssuranceSource {
 }
 
 describe("runSourceCanary", () => {
+  it("runs local package binaries through Node without enabling a Windows shell", () => {
+    expect(resolveCanaryInvocation("npx", ["tsx", "collector.ts"], "win32", "node.exe")).toEqual({
+      command: "node.exe",
+      args: ["node_modules/tsx/dist/cli.mjs", "collector.ts"],
+    });
+    expect(resolveCanaryInvocation("npx", ["vitest", "run"], "win32", "node.exe")).toEqual({
+      command: "node.exe",
+      args: ["node_modules/vitest/vitest.mjs", "run"],
+    });
+  });
+
   it("sets canary mode, preserves dry-run, and classifies nonzero discovery", async () => {
     const execute = vi.fn(async () => ({
       exitCode: 0,
@@ -67,6 +78,18 @@ describe("runSourceCanary", () => {
     }));
     const result = await runSourceCanary(fakeSource("BaT"), execute);
     expect(result.status).toBe("empty");
+  });
+
+  it("does not treat a zero-valued Cloudflare counter as an external block", async () => {
+    const execute = vi.fn(async () => ({
+      exitCode: 0,
+      stdout: '{"discovered":20,"cloudflareBlocked":0}',
+      stderr: "CF Blocked: 0",
+      durationMs: 100,
+      timedOut: false,
+    }));
+    const result = await runSourceCanary(fakeSource("ClassicCom"), execute);
+    expect(result.status).toBe("healthy");
   });
 
   it("redacts credentials, authorization headers, cookies, and configured proxies", () => {
