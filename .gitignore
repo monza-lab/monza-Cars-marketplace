@@ -76,3 +76,6 @@ videos/**/work-*/
 .venv/
 venv/
 .env.local.bak*
+
+# local git worktrees
+.worktrees/
