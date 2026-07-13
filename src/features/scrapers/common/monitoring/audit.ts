@@ -28,6 +28,17 @@ export interface ScraperHealthSummary {
   status: AuditStatus;
   notes: string[];
   targetFieldCoverage?: ScraperTargetFieldCoverage;
+  contractCoverage?: ScraperContractCoverage;
+}
+
+export interface ScraperContractCoverage {
+  activeListings: number;
+  historicalListings: number;
+  rawCompletenessPct: number;
+  contractResolutionPct: number;
+  unresolvedFields: number;
+  unavailableFields: number;
+  verifiedExternalEmpty?: boolean;
 }
 
 export interface ScraperTargetFieldCoverage {
@@ -46,6 +57,30 @@ export interface ScraperTargetFieldCoverage {
     numericPct: number;
     resolvedPct: number;
   };
+}
+
+export function applyContractCoverageGate(
+  summary: ScraperHealthSummary,
+  coverage: ScraperContractCoverage,
+): ScraperHealthSummary {
+  const notes = [...summary.notes];
+  let status = summary.status;
+
+  if (coverage.historicalListings > 0 && coverage.activeListings === 0 && !coverage.verifiedExternalEmpty) {
+    status = "failed";
+    notes.push("Source has historical rows but zero active listings without verified external-empty evidence");
+  } else if (
+    coverage.unresolvedFields > 0
+    && status !== "failed"
+    && status !== "stuck"
+  ) {
+    status = "degraded";
+    notes.push(
+      `Contract resolution ${coverage.contractResolutionPct}% (${coverage.unresolvedFields} unresolved fields; raw ${coverage.rawCompletenessPct}%)`,
+    );
+  }
+
+  return { ...summary, status, notes, contractCoverage: coverage };
 }
 
 export function summarizeScraperHealth(

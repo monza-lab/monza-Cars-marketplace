@@ -4,12 +4,22 @@ import path from "node:path";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  applyContractCoverageGate,
   summarizeScraperHealth,
+  type ScraperContractCoverage,
   type ScraperHealthSummary,
   type ScraperJobSpec,
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
-import { ASSURANCE_AUDIT_JOB_SPECS } from "../src/features/scrapers/common/assurance/manifest";
+import {
+  ASSURANCE_AUDIT_JOB_SPECS,
+  getSourceIdsForScraper,
+} from "../src/features/scrapers/common/assurance/manifest";
+import {
+  buildAssuranceReport,
+  fetchActiveListings,
+  type ScraperAssuranceReport,
+} from "../src/features/scrapers/common/assurance/database";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
 import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "../src/features/scrapers/elferspot_collector/coverage";
 import {
@@ -326,6 +336,30 @@ export function buildCoverageHealthIssues(summary: CoverageSummary): CoverageHea
   ];
 }
 
+function combineContractCoverage(
+  sourceIds: readonly string[],
+  assurance: ScraperAssuranceReport,
+  coverage: CoverageSummary,
+): ScraperContractCoverage {
+  const sources = assurance.sources.filter((source) => sourceIds.includes(source.source));
+  const requiredFields = sources.reduce((sum, source) => sum + source.requiredFields, 0);
+  const populatedFields = sources.reduce((sum, source) => sum + source.populatedFields, 0);
+  const resolvedFields = sources.reduce((sum, source) => sum + source.resolvedFields, 0);
+  const pct = (value: number) => requiredFields === 0
+    ? 100
+    : Math.round((value / requiredFields) * 1000) / 10;
+  return {
+    activeListings: sources.reduce((sum, source) => sum + source.activeListings, 0),
+    historicalListings: coverage.rows
+      .filter((row) => sourceIds.includes(row.source))
+      .reduce((sum, row) => sum + row.total, 0),
+    rawCompletenessPct: pct(populatedFields),
+    contractResolutionPct: pct(resolvedFields),
+    unresolvedFields: sources.reduce((sum, source) => sum + source.unresolvedFields, 0),
+    unavailableFields: sources.reduce((sum, source) => sum + source.unavailableFields, 0),
+  };
+}
+
 async function main(): Promise<void> {
   const daysBack = Number(getArg("days") ?? "3");
   const strict = getFlag("strict");
@@ -368,12 +402,14 @@ async function main(): Promise<void> {
     activeByName.set(active.scraper_name, active);
   }
 
-  const [elferspotTargetCoverage, autoscout24TargetCoverage, coverageRows] = await Promise.all([
+  const [elferspotTargetCoverage, autoscout24TargetCoverage, coverageRows, activeListings] = await Promise.all([
     fetchElferspotTargetCoverage(supabase),
     fetchAutoscout24TargetCoverage(supabase),
     fetchCoverageRows(),
+    fetchActiveListings(),
   ]);
   const coverage = summarizeCoverageRows(coverageRows);
+  const assurance = buildAssuranceReport(activeListings);
   const coverageIssues = buildCoverageHealthIssues(coverage);
 
   const summaries = JOB_SPECS.map((spec) => {
@@ -390,9 +426,13 @@ async function main(): Promise<void> {
           : undefined,
     );
 
-    return applyVinEnrichmentHealthGates(
+    const operationalSummary = applyVinEnrichmentHealthGates(
       applyAutoscout24HealthGates(summary, specRuns),
       specRuns,
+    );
+    return applyContractCoverageGate(
+      operationalSummary,
+      combineContractCoverage(getSourceIdsForScraper(spec.scraperName), assurance, coverage),
     );
   });
 
@@ -408,7 +448,16 @@ async function main(): Promise<void> {
     issue_count: jobIssues.length + coverageIssues.length,
     job_issue_count: jobIssues.length,
     coverage_issue_count: coverageIssues.length,
-    summaries,
+    summaries: summaries.map((summary) => ({
+      ...summary,
+      contract_coverage: summary.contractCoverage ? {
+        active_listings: summary.contractCoverage.activeListings,
+        raw_completeness_pct: summary.contractCoverage.rawCompletenessPct,
+        contract_resolution_pct: summary.contractCoverage.contractResolutionPct,
+        unresolved_fields: summary.contractCoverage.unresolvedFields,
+        unavailable_fields: summary.contractCoverage.unavailableFields,
+      } : undefined,
+    })),
     coverage,
     coverage_issues: coverageIssues,
   };

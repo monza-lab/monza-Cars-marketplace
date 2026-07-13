@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ActiveScraperRun, ScraperRun } from "./types";
-import { summarizeScraperHealth } from "./audit";
+import { applyContractCoverageGate, summarizeScraperHealth } from "./audit";
 import {
   applyAutoscout24HealthGates,
   applyVinEnrichmentHealthGates,
@@ -61,6 +61,46 @@ describe("summarizeScraperHealth", () => {
 
     expect(summary.status).toBe("zero-write");
     expect(summary.notes).toContain("Recent runs wrote nothing");
+  });
+
+  it("cannot report working while source contract fields remain unresolved", () => {
+    const working = summarizeScraperHealth(
+      { scraperName: "autotrader", label: "AutoTrader", cadence: "daily" },
+      [makeRun({ written: 10 })],
+      undefined,
+    );
+    const gated = applyContractCoverageGate(working, {
+      activeListings: 100,
+      historicalListings: 100,
+      rawCompletenessPct: 92,
+      contractResolutionPct: 99.9,
+      unresolvedFields: 1,
+      unavailableFields: 8,
+    });
+
+    expect(gated).toMatchObject({ status: "degraded" });
+    expect(gated.contractCoverage).toMatchObject({
+      rawCompletenessPct: 92,
+      contractResolutionPct: 99.9,
+    });
+  });
+
+  it("fails a historically populated source that has no active rows", () => {
+    const working = summarizeScraperHealth(
+      { scraperName: "autotrader", label: "AutoTrader", cadence: "daily" },
+      [makeRun({ written: 10 })],
+      undefined,
+    );
+    const gated = applyContractCoverageGate(working, {
+      activeListings: 0,
+      historicalListings: 200,
+      rawCompletenessPct: 100,
+      contractResolutionPct: 100,
+      unresolvedFields: 0,
+      unavailableFields: 0,
+    });
+
+    expect(gated.status).toBe("failed");
   });
 
   it("marks successful runs with errors as degraded", () => {
