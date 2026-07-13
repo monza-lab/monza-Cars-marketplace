@@ -1,5 +1,6 @@
 import { dbQuery } from './sql'
 import { buildReportPeerIdentity } from '@/lib/reportPeerIdentity'
+import { createClient } from '@supabase/supabase-js'
 
 type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS'
 type AuctionStatus = 'ACTIVE' | 'ENDING_SOON' | 'ENDED' | 'SOLD' | 'NO_SALE'
@@ -479,13 +480,45 @@ export interface DbSoldRecord {
   title: string
 }
 
+type DbComparableHttpRow = DbComparableRow & {
+  Auction?: unknown
+}
+
+function getSupabaseReadClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    throw new Error('Supabase HTTP read environment is required')
+  }
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}
+
+function mapHttpComparables(rows: DbComparableHttpRow[]): DbComparableRow[] {
+  return rows.map((row) => ({
+    title: row.title,
+    platform: row.platform,
+    soldDate: row.soldDate ? new Date(row.soldDate).toISOString() : null,
+    soldPrice: row.soldPrice,
+    mileage: row.mileage,
+    condition: row.condition,
+  }))
+}
+
 export async function getMarketDataForMake(make: string): Promise<DbMarketDataRow[]> {
   try {
-    const rows = await withDbTimeout(
-      () => dbQuery<DbMarketDataRow>('SELECT make, model, "avgPrice", "medianPrice", "lowPrice", "highPrice", "totalSales", trend FROM "MarketData" WHERE make ILIKE $1 ORDER BY "lastUpdated" DESC', [make]),
-      'getMarketDataForMake',
-    )
-    return rows.rows.map((r) => ({ ...r }))
+    const { data, error } = await getSupabaseReadClient()
+      .from('MarketData')
+      .select('make,model,avgPrice,medianPrice,lowPrice,highPrice,totalSales,trend')
+      .ilike('make', make)
+      .order('lastUpdated', { ascending: false })
+      .abortSignal(AbortSignal.timeout(DB_QUERY_TIMEOUT_MS))
+
+    if (error) throw error
+    return (data ?? []) as DbMarketDataRow[]
   } catch (e) {
     logDbQueryError('getMarketDataForMake', e)
     return []
@@ -494,11 +527,18 @@ export async function getMarketDataForMake(make: string): Promise<DbMarketDataRo
 
 export async function getMarketDataForModel(make: string, model: string): Promise<DbMarketDataRow | null> {
   try {
-    const rows = await withDbTimeout(
-      () => dbQuery<DbMarketDataRow>('SELECT make, model, "avgPrice", "medianPrice", "lowPrice", "highPrice", "totalSales", trend FROM "MarketData" WHERE make ILIKE $1 AND model ILIKE $2 ORDER BY "lastUpdated" DESC LIMIT 1', [make, model]),
-      'getMarketDataForModel',
-    )
-    return rows.rows[0] ?? null
+    const { data, error } = await getSupabaseReadClient()
+      .from('MarketData')
+      .select('make,model,avgPrice,medianPrice,lowPrice,highPrice,totalSales,trend')
+      .ilike('make', make)
+      .ilike('model', model)
+      .order('lastUpdated', { ascending: false })
+      .limit(1)
+      .abortSignal(AbortSignal.timeout(DB_QUERY_TIMEOUT_MS))
+      .maybeSingle()
+
+    if (error) throw error
+    return data as DbMarketDataRow | null
   } catch (e) {
     logDbQueryError('getMarketDataForModel', e)
     return null
@@ -507,21 +547,16 @@ export async function getMarketDataForModel(make: string, model: string): Promis
 
 export async function getComparablesForMake(make: string, limit = 20): Promise<DbComparableRow[]> {
   try {
-    const rows = await withDbTimeout(
-      () => dbQuery<DbComparableRow>(
-        `
-          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
-          FROM "Comparable" c
-          JOIN "Auction" a ON a.id = c."auctionId"
-          WHERE a.make ILIKE $1
-          ORDER BY c."soldDate" DESC NULLS LAST
-          LIMIT $2
-        `,
-        [make, limit],
-      ),
-      'getComparablesForMake',
-    )
-    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
+    const { data, error } = await getSupabaseReadClient()
+      .from('Comparable')
+      .select('title,platform,soldDate,soldPrice,mileage,condition,Auction!inner(make,model)')
+      .ilike('Auction.make', make)
+      .order('soldDate', { ascending: false, nullsFirst: false })
+      .limit(limit)
+      .abortSignal(AbortSignal.timeout(DB_QUERY_TIMEOUT_MS))
+
+    if (error) throw error
+    return mapHttpComparables((data ?? []) as DbComparableHttpRow[])
   } catch (e) {
     logDbQueryError('getComparablesForMake', e)
     return []
@@ -530,21 +565,17 @@ export async function getComparablesForMake(make: string, limit = 20): Promise<D
 
 export async function getComparablesForModel(make: string, model: string, limit = 10): Promise<DbComparableRow[]> {
   try {
-    const rows = await withDbTimeout(
-      () => dbQuery<DbComparableRow>(
-        `
-          SELECT c.title, c.platform::text AS platform, c."soldDate", c."soldPrice", c.mileage, c.condition
-          FROM "Comparable" c
-          JOIN "Auction" a ON a.id = c."auctionId"
-          WHERE a.make ILIKE $1 AND a.model ILIKE $2
-          ORDER BY c."soldDate" DESC NULLS LAST
-          LIMIT $3
-        `,
-        [make, `%${model}%`, limit],
-      ),
-      'getComparablesForModel',
-    )
-    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
+    const { data, error } = await getSupabaseReadClient()
+      .from('Comparable')
+      .select('title,platform,soldDate,soldPrice,mileage,condition,Auction!inner(make,model)')
+      .ilike('Auction.make', make)
+      .ilike('Auction.model', `%${model}%`)
+      .order('soldDate', { ascending: false, nullsFirst: false })
+      .limit(limit)
+      .abortSignal(AbortSignal.timeout(DB_QUERY_TIMEOUT_MS))
+
+    if (error) throw error
+    return mapHttpComparables((data ?? []) as DbComparableHttpRow[])
   } catch (e) {
     logDbQueryError('getComparablesForModel', e)
     return []
