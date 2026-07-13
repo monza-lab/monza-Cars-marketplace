@@ -5,6 +5,13 @@
 // Also lists non-source-specific maintenance scrapers separately so the
 // admin dashboard can render them without inventing a fake "source".
 
+import {
+  ASSURANCE_SOURCES,
+  getScraperNamesForSource,
+  getSourceIdsForScraper,
+  type AssuranceSourceId,
+} from './assurance/manifest';
+
 export interface SourceDefinition {
   /** Canonical value stored in listings.source */
   id: CanonicalSource;
@@ -27,58 +34,15 @@ export interface MaintenanceScraperDefinition {
   purpose: string;
 }
 
-export type CanonicalSource =
-  | 'AutoScout24'
-  | 'AutoTrader'
-  | 'BaT'
-  | 'BeForward'
-  | 'ClassicCom'
-  | 'Elferspot';
+export type CanonicalSource = AssuranceSourceId;
 
-export const SOURCES: readonly SourceDefinition[] = [
-  {
-    id: 'AutoScout24',
-    label: 'AutoScout24',
-    scraperNames: ['autoscout24'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 60,
-  },
-  {
-    id: 'AutoTrader',
-    label: 'AutoTrader UK',
-    scraperNames: ['autotrader', 'enrich-autotrader'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 30,
-  },
-  {
-    id: 'BaT',
-    label: 'Bring a Trailer',
-    scraperNames: ['porsche', 'ferrari', 'bat-detail'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 45,
-  },
-  {
-    id: 'BeForward',
-    label: 'BeForward',
-    scraperNames: ['beforward', 'enrich-beforward'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 30,
-  },
-  {
-    id: 'ClassicCom',
-    label: 'Classic.com',
-    scraperNames: ['classic'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 30,
-  },
-  {
-    id: 'Elferspot',
-    label: 'Elferspot',
-    scraperNames: ['elferspot', 'enrich-elferspot', 'backfill-photos-elferspot'],
-    expectedCadenceHours: 24,
-    maxRunMinutes: 30,
-  },
-] as const;
+export const SOURCES: readonly SourceDefinition[] = ASSURANCE_SOURCES.map((source) => ({
+  id: source.id,
+  label: source.label,
+  scraperNames: getScraperNamesForSource(source.id),
+  expectedCadenceHours: source.expectedCadenceHours,
+  maxRunMinutes: source.maxRunMinutes,
+}));
 
 export const MAINTENANCE_SCRAPERS: readonly MaintenanceScraperDefinition[] = [
   {
@@ -139,9 +103,15 @@ export const MAINTENANCE_SCRAPERS: readonly MaintenanceScraperDefinition[] = [
   },
 ] as const;
 
-const SOURCE_BY_SCRAPER = new Map<string, CanonicalSource>(
-  SOURCES.flatMap((s) => s.scraperNames.map((n) => [n, s.id] as const)),
-);
+const SOURCE_BY_SCRAPER = new Map<string, readonly CanonicalSource[]>();
+for (const source of SOURCES) {
+  for (const scraperName of source.scraperNames) {
+    SOURCE_BY_SCRAPER.set(
+      scraperName,
+      Array.from(new Set([...(SOURCE_BY_SCRAPER.get(scraperName) ?? []), source.id])),
+    );
+  }
+}
 
 const MAINTENANCE_BY_SCRAPER = new Map<string, MaintenanceScraperDefinition>(
   MAINTENANCE_SCRAPERS.map((m) => [m.scraperName, m] as const),
@@ -152,7 +122,11 @@ const SOURCE_BY_ID = new Map<CanonicalSource, SourceDefinition>(
 );
 
 export function getSourceForScraper(scraperName: string): CanonicalSource | undefined {
-  return SOURCE_BY_SCRAPER.get(scraperName);
+  return getSourcesForScraper(scraperName)[0];
+}
+
+export function getSourcesForScraper(scraperName: string): readonly CanonicalSource[] {
+  return SOURCE_BY_SCRAPER.get(scraperName) ?? getSourceIdsForScraper(scraperName);
 }
 
 export function getScrapersForSource(sourceId: CanonicalSource): readonly string[] {
@@ -223,7 +197,7 @@ export function classifyActiveRun(
   const ageMs = now.getTime() - startedAtMs;
   const ageMinutes = Math.max(0, Math.round(ageMs / 60_000));
 
-  const source = SOURCE_BY_SCRAPER.get(args.scraperName);
+  const source = getSourceForScraper(args.scraperName);
   const def = source
     ? SOURCE_BY_ID.get(source)
     : MAINTENANCE_BY_SCRAPER.get(args.scraperName);

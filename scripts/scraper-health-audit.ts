@@ -9,6 +9,7 @@ import {
   type ScraperJobSpec,
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
+import { ASSURANCE_AUDIT_JOB_SPECS } from "../src/features/scrapers/common/assurance/manifest";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
 import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "../src/features/scrapers/elferspot_collector/coverage";
 import {
@@ -48,30 +49,7 @@ function loadEnvFromFile(filePath: string): void {
 loadEnvFromFile(path.resolve(process.cwd(), ".env.local"));
 loadEnvFromFile(path.resolve(process.cwd(), ".env"));
 
-const JOB_SPECS: ScraperJobSpec[] = [
-  { scraperName: "ferrari", label: "Ferrari Collector", cadence: "daily", cronPath: "/api/cron/ferrari" },
-  { scraperName: "porsche", label: "Porsche Collector", cadence: "daily", cronPath: "/api/cron/porsche" },
-  { scraperName: "autotrader", label: "AutoTrader Collector", cadence: "external" },
-  { scraperName: "beforward", label: "BeForward Collector", cadence: "daily", cronPath: "/api/cron/beforward" },
-  { scraperName: "classic", label: "Classic.com Collector", cadence: "external" },
-  { scraperName: "autoscout24", label: "AutoScout24 Collector", cadence: "external" },
-  { scraperName: "elferspot", label: "Elferspot Collector", cadence: "daily", cronPath: "/api/cron/elferspot" },
-  { scraperName: "backfill-images", label: "Image Backfill", cadence: "daily", cronPath: "/api/cron/backfill-images" },
-  { scraperName: "bat-detail", label: "BaT Detail Scraper", cadence: "external" },
-  { scraperName: "validate", label: "Listing Validator", cadence: "daily", cronPath: "/api/cron/validate" },
-  { scraperName: "cleanup", label: "Cleanup", cadence: "daily", cronPath: "/api/cron/cleanup" },
-  { scraperName: "enrich-vin", label: "VIN Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-vin" },
-  { scraperName: "enrich-titles", label: "Title Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-titles" },
-  { scraperName: "enrich-details", label: "AS24 Detail Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-details" },
-  { scraperName: "enrich-autotrader", label: "AutoTrader Enrichment", cadence: "external" },
-  { scraperName: "enrich-beforward", label: "BeForward Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-beforward" },
-  { scraperName: "enrich-elferspot", label: "Elferspot Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-elferspot" },
-  { scraperName: "enrich-details-bulk", label: "AS24 Bulk Detail Enrichment", cadence: "external" },
-  { scraperName: "backfill-photos-elferspot", label: "Elferspot Photo Backfill", cadence: "daily", cronPath: "/api/cron/backfill-photos-elferspot" },
-  { scraperName: "refresh-valuation-factors", label: "Valuation Factor Refresh", cadence: "daily", cronPath: "/api/cron/refresh-valuation-factors" },
-  { scraperName: "social-engine", label: "Social Engine Worker", cadence: "external", cronPath: "/api/cron/social-engine" },
-  { scraperName: "liveness-check", label: "Liveness Check", cadence: "external" },
-];
+const JOB_SPECS: ScraperJobSpec[] = ASSURANCE_AUDIT_JOB_SPECS;
 
 function getArg(name: string): string | undefined {
   const prefix = `--${name}=`;
