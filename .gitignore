@@ -1,5 +1,6 @@
 # worktrees
 .worktrees/
+agents/testscripts/artifacts/scraper-assurance-*.json
 
 # claude code
 .claude/

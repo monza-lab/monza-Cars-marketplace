@@ -23,6 +23,10 @@ import {
   isCriticalNoOutput,
   shouldFailEnrichmentLoopRun,
 } from "../src/features/scrapers/common/enrichmentLoopPolicy";
+import {
+  isDestructiveRunnerJob,
+  validateRunnerInventory,
+} from "../src/features/scrapers/common/assurance/manifest";
 
 // ── Env loading (same pattern as other scripts) ─────────────────────
 
@@ -440,6 +444,11 @@ const SCRAPERS: ScraperDef[] = [
     timeoutMs: 1 * 60_000,
   },
 ];
+
+const runnerInventoryErrors = validateRunnerInventory(SCRAPERS.map((scraper) => scraper.id));
+if (runnerInventoryErrors.length > 0) {
+  throw new Error(`Scraper runner inventory drift:\n${runnerInventoryErrors.join("\n")}`);
+}
 
 // ── CLI flag parsing ────────────────────────────────────────────────
 
@@ -1062,6 +1071,10 @@ async function main(): Promise<void> {
       "cron-enrich-details", "cron-backfill-photos-elferspot", // Cron enrichment (detail/photo)
       "cron-vin", "cron-titles", "cron-images",                // Cron maintenance (data-filling only)
     ]);
+    const destructiveEnrichmentIds = Array.from(ENRICH_IDS).filter(isDestructiveRunnerJob);
+    if (destructiveEnrichmentIds.length > 0) {
+      throw new Error(`Destructive jobs are prohibited in enrichment loop: ${destructiveEnrichmentIds.join(", ")}`);
+    }
     const enrichScrapers = SCRAPERS.filter(
       (s) => ENRICH_IDS.has(s.id) && (s.type === "cli" || devServerUp)
     );

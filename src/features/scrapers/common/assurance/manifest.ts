@@ -280,19 +280,69 @@ export const SCRAPER_JOBS: readonly AssuranceJob[] = [
   job("validate", "validate", "Listing Validator", "maintenance", ASSURANCE_SOURCES.map((source) => source.id), ["src/app/api/cron/validate"], { cronPath: "/api/cron/validate" }),
   job("cleanup", "cleanup", "Cleanup", "maintenance", ASSURANCE_SOURCES.map((source) => source.id), ["src/app/api/cron/cleanup"], { cronPath: "/api/cron/cleanup", destructive: true }),
   job("liveness-check", "liveness-check", "Liveness Check", "post-run", ["AutoScout24", "AutoTrader", "BeForward", "ClassicCom", "Elferspot"], ["src/features/scrapers/liveness_checker"], { cadence: "external", workflows: ["liveness-checker.yml"], destructive: true }),
+  job("autotrader-delist-check", "autotrader-delist-check", "AutoTrader Delist Check", "post-run", ["AutoTrader"], ["scripts/autotrader-delist-check.ts"], { cadence: "external", destructive: true }),
+  job("health-audit", "health-audit", "Scraper Health Audit", "post-run", ASSURANCE_SOURCES.map((source) => source.id), ["scripts/scraper-health-audit.ts"], { cadence: "external" }),
   job("enrichment-loop", "enrich-details-bulk", "Enrichment Loop", "enrichment", ASSURANCE_SOURCES.map((source) => source.id), ["scripts/run-scrapers.ts"], { cadence: "external", workflows: ["enrichment-loop.yml"] }),
   job("refresh-valuation-factors", "refresh-valuation-factors", "Valuation Factor Refresh", "maintenance", ASSURANCE_SOURCES.map((source) => source.id), ["src/app/api/cron/refresh-valuation-factors"], { cronPath: "/api/cron/refresh-valuation-factors" }),
   job("social-engine", "social-engine", "Social Engine Worker", "post-run", ASSURANCE_SOURCES.map((source) => source.id), ["src/features/social-engine"], { cadence: "external" }),
 ] as const;
 
 export const ASSURANCE_AUDIT_JOB_SPECS: ScraperJobSpec[] = SCRAPER_JOBS
-  .filter((candidate) => candidate.id !== "enrichment-loop")
+  .filter((candidate) => !["enrichment-loop", "health-audit"].includes(candidate.id))
   .map((candidate) => ({
     scraperName: candidate.scraperName,
     label: candidate.label,
     cadence: candidate.cadence,
     cronPath: candidate.cronPath,
   }));
+
+export const ASSURANCE_RUNNER_JOB_MAP: Readonly<Record<string, string>> = {
+  porsche: "porsche",
+  ferrari: "ferrari",
+  beforward: "beforward",
+  classic: "classic",
+  as24: "autoscout24",
+  elferspot: "elferspot",
+  autotrader: "autotrader",
+  "bat-detail": "bat-detail",
+  "classic-enrich": "classic-enrich",
+  "as24-enrich": "as24-enrich",
+  "at-enrich": "enrich-autotrader",
+  "classic-images": "backfill-images",
+  "bf-images": "backfill-images",
+  "cron-beforward-enrich": "enrich-beforward",
+  "cron-elferspot-enrich": "enrich-elferspot",
+  "cron-enrich-details": "enrich-details",
+  "cron-backfill-photos-elferspot": "backfill-photos-elferspot",
+  "cron-validate": "validate",
+  "cron-cleanup": "cleanup",
+  "cron-vin": "enrich-vin",
+  "cron-titles": "enrich-titles",
+  "cron-images": "backfill-images",
+  "cron-refresh-valuation": "refresh-valuation-factors",
+  "at-delist-check": "autotrader-delist-check",
+  liveness: "liveness-check",
+  "health-audit": "health-audit",
+};
+
+export function validateRunnerInventory(runnerIds: readonly string[]): string[] {
+  const manifestJobIds = new Set(SCRAPER_JOBS.map((candidate) => candidate.id));
+  const errors: string[] = [];
+  for (const runnerId of runnerIds) {
+    const jobId = ASSURANCE_RUNNER_JOB_MAP[runnerId];
+    if (!jobId) errors.push(`Runner job is absent from assurance manifest: ${runnerId}`);
+    else if (!manifestJobIds.has(jobId)) errors.push(`Runner job ${runnerId} maps to unknown assurance job: ${jobId}`);
+  }
+  for (const runnerId of Object.keys(ASSURANCE_RUNNER_JOB_MAP)) {
+    if (!runnerIds.includes(runnerId)) errors.push(`Assurance runner mapping is stale: ${runnerId}`);
+  }
+  return errors.sort();
+}
+
+export function isDestructiveRunnerJob(runnerId: string): boolean {
+  const jobId = ASSURANCE_RUNNER_JOB_MAP[runnerId];
+  return SCRAPER_JOBS.find((candidate) => candidate.id === jobId)?.destructive ?? true;
+}
 
 const FEATURE_DIRECTORIES = [
   "auctions",

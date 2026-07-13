@@ -24,6 +24,10 @@ export interface CommandResult {
 
 export interface CanaryResult extends CommandResult {
   source: AssuranceSourceId;
+  status: "healthy" | "failed" | "blocked" | "empty";
+  discovered: number | null;
+  exitCode: number | null;
+  timedOut: boolean;
 }
 
 export interface RepairQueueItem {
@@ -68,6 +72,7 @@ export interface ScraperAssuranceReport {
     declaredSources: string[];
     observedDatabaseSources: string[];
     unknownDatabaseSources: string[];
+    manifestErrors: string[];
   };
   totals: {
     activeListings: number;
@@ -200,7 +205,7 @@ export function buildAssuranceReport(
   return {
     generatedAt: now.toISOString(),
     outcome: blocked ? "blocked" : repaired ? "repaired" : "healthy",
-    inventory: { declaredSources, observedDatabaseSources, unknownDatabaseSources },
+    inventory: { declaredSources, observedDatabaseSources, unknownDatabaseSources, manifestErrors: [] },
     totals: {
       ...totals,
       activeListings: rows.length,
