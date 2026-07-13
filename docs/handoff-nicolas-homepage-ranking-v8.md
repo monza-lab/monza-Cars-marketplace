@@ -29,8 +29,10 @@ additive `homepageScore` remains diagnostic and must not be used to reconstruct 
 - If a lane lacks eligible photographed inventory, selection falls back deterministically to the
   strongest open candidate without shortening the page.
 
-Classics are canonical `356`, `f-model`, `g-model`, `930`, `964`, and `993` listings. A modern
-special is a non-classic carrying `hypercar`, `homologation_special`, `gt_model`,
+Classics are canonical `356`, `f-model`, `g-model`, `930`, `964`, and `993` listings with no
+replica, tribute, recreation, conversion, backdate, homage, or equivalent disqualifying language.
+Those cars remain eligible only for open positions and never consume the guaranteed classic quota.
+A modern special is a non-classic carrying `hypercar`, `homologation_special`, `gt_model`,
 `limited_edition`, or `sonderwunsch`.
 
 ## Collector signals

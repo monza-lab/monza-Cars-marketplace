@@ -8,7 +8,7 @@ import {
 
 describe("listing rarity scoring", () => {
   it("uses a version marker so backfills can refresh stale scores", () => {
-    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v8");
+    expect(RARITY_SCORE_VERSION).toBe("listing-rarity-v8.1");
   });
 
   it("puts historically foundational classic icons above hypercars without promoting ordinary classics", () => {
@@ -36,8 +36,8 @@ describe("listing rarity scoring", () => {
   it("does not grant historic-icon priority to replicas, tributes, or ordinary 911 SC wording", () => {
     const replica = scoreListingRarity({
       year: 1957,
-      model: "356 Replica Speedster",
-      title: "1957 Porsche 356 Replica Speedster",
+      model: "356 Speedster Replika",
+      title: "1957 Porsche 356 Speedster Replika",
     });
     const tribute = scoreListingRarity({
       year: 1996,

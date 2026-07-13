@@ -1,4 +1,4 @@
-export const RARITY_SCORE_VERSION = "listing-rarity-v8";
+export const RARITY_SCORE_VERSION = "listing-rarity-v8.1";
 
 export type ListingRaritySignal =
   | "paint_to_sample"
@@ -312,6 +312,17 @@ function buildHeadlineText(input: ListingRarityInput): string {
     .join(" ");
 }
 
+/** Language that identifies a car as an homage or conversion rather than the factory model claimed. */
+export function hasReplicaOrTributeLanguage(
+  input: Pick<ListingRarityInput, "title" | "model" | "trim">,
+): boolean {
+  const fields = [input.title, input.model, input.trim]
+    .map((value) => normalizeText(value))
+    .filter(Boolean);
+  const disqualifier = /\b(replica|replika|tribute|recreation|re-creation|evocation|conversion|backdate|inspiration|inspired|homage|nachbau|umbau|apal)\b|\b(?:rsr|gt2|speedster)[\s-]?look\b/i;
+  return fields.some((field) => disqualifier.test(field));
+}
+
 /**
  * Foundational Porsche archetypes whose historical and cultural importance is
  * stronger than halo status alone. The rule is intentionally narrow: age by
@@ -325,8 +336,7 @@ export function isHistoricClassicIcon(
   const fields = [input.title, input.model, input.trim]
     .map((value) => normalizeText(value))
     .filter(Boolean);
-  const disqualifier = /\b(replica|tribute|recreation|re-creation|evocation|conversion|backdate|inspiration|inspired|apal)\b|\b(?:rsr|gt2|speedster)[\s-]?look\b/i;
-  if (fields.some((field) => disqualifier.test(field))) return false;
+  if (hasReplicaOrTributeLanguage(input)) return false;
 
   const rules = [
     /\b356\b.*\bspeedster\b|\bspeedster\b.*\b356\b/i,

@@ -1,5 +1,5 @@
 import { extractSeries, getSeriesForBrand, matchVariant } from "./brandConfig";
-import { isHistoricClassicIcon } from "./listingRarity";
+import { hasReplicaOrTributeLanguage, isHistoricClassicIcon } from "./listingRarity";
 
 export type HomepageRankingListing = {
   id: string;
@@ -258,8 +258,13 @@ function rankOne<T extends HomepageRankingListing>(
   const intrinsicScore = Math.max(0, Math.min(100, listing.rarityScore ?? 0));
   const evidenceScore = listingEvidenceScore(listing, variant.recognized);
   const signals = new Set(listing.raritySignals ?? []);
-  const isClassic = variant.recognized && CLASSIC_SERIES.has(variant.series.toLowerCase());
-  const isModernSpecial = variant.modern && [...signals].some((signal) => MODERN_SPECIAL_SIGNALS.has(signal));
+  const replicaOrTribute = hasReplicaOrTributeLanguage(listing);
+  const isClassic = variant.recognized
+    && CLASSIC_SERIES.has(variant.series.toLowerCase())
+    && !replicaOrTribute;
+  const isModernSpecial = variant.modern
+    && !replicaOrTribute
+    && [...signals].some((signal) => MODERN_SPECIAL_SIGNALS.has(signal));
   const historicClassicIcon = isClassic && (
     signals.has("historic_classic_icon") || isHistoricClassicIcon(listing)
   );

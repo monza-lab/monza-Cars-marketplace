@@ -6,7 +6,7 @@ Preserve the classic-Porsche prominence of the original homepage ranking while r
 
 ## Definitions
 
-- **Classic:** a listing whose canonical Porsche series is `356`, `f-model`, `g-model`, `930`, `964`, or `993`.
+- **Classic:** a listing whose canonical Porsche series is `356`, `f-model`, `g-model`, `930`, `964`, or `993`, excluding replicas, tributes, recreations, conversions, backdates, homages, and equivalent lookalike wording.
 - **Modern special:** a non-classic listing carrying at least one qualifying collector signal: `hypercar`, `homologation_special`, `gt_model`, `limited_edition`, or `sonderwunsch`. This includes cars such as the 918 Spyder, GT/RS models, modern Speedsters, Sport Classics, and similarly explicit factory specials. Scarcity alone never makes a car a modern special.
 - **Open:** the strongest remaining listing of either era.
 
@@ -64,6 +64,7 @@ The existing canonical-variant diversity rule remains active: no more than two e
 
 - Missing variant-count data produces zero scarcity and does not block ranking.
 - Unknown or ambiguous variants remain eligible for open positions but do not satisfy classic or modern-special guarantees.
+- Replicas, tributes, recreations, conversions, and homages remain eligible for open positions but never satisfy a classic or modern-special guarantee.
 - Missing photography defers a listing behind equally significant photographed cars and prevents it from satisfying a required lane while a photographed eligible alternative exists.
 - Insufficient lane supply falls back deterministically to open candidates without returning fewer homepage cars.
 

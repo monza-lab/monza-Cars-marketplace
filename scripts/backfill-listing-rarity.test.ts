@@ -81,7 +81,7 @@ describe("backfill-listing-rarity", () => {
     expect(query).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining("status::text = $3"),
-      [null, "listing-rarity-v8", "active", 10],
+      [null, "listing-rarity-v8.1", "active", 10],
     );
     expect(query).toHaveBeenNthCalledWith(2, expect.stringContaining("update public.listings as l"), [
       expect.any(String),
@@ -96,7 +96,7 @@ describe("backfill-listing-rarity", () => {
         id: "00000000-0000-0000-0000-000000000001",
         rarity_score: expect.any(Number),
         rarity_tier: "unique",
-        rarity_score_version: "listing-rarity-v8",
+        rarity_score_version: "listing-rarity-v8.1",
         ranking_variant: "959:959",
       }),
       expect.objectContaining({

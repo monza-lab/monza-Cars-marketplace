@@ -140,6 +140,29 @@ describe("homepage ranking", () => {
     expect(ranked.map((row) => row.listing.id)).toEqual(["z-classic-icon", "a-hypercar"]);
   });
 
+  it("does not count replicas or tributes toward the guaranteed classic portfolio", () => {
+    const replica = listing("replica", {
+      year: 1957,
+      model: "356 Speedster Replika",
+      trim: "Speedster",
+      title: "1957 Porsche 356 Speedster Replika",
+      rarityScore: 100,
+      raritySignals: ["classic_significance"],
+    });
+    const tribute = listing("tribute", {
+      year: 1996,
+      model: "993 GT2 Tribute",
+      trim: "GT2 Tribute",
+      title: "1996 Porsche 993 GT2 Tribute",
+      rarityScore: 100,
+      raritySignals: ["classic_significance"],
+    });
+
+    const ranked = rankHomepageListings([replica, tribute], undefined, { limit: 2 });
+
+    expect(ranked.map((row) => row.isClassic)).toEqual([false, false]);
+  });
+
   it("penalizes missing photography and produces deterministic ties", () => {
     const complete = listing("a-complete", { images: ["https://example.com/a.jpg"] });
     const noPhoto = listing("z-no-photo", { images: [] });
