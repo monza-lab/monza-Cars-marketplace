@@ -20,6 +20,33 @@ export type AssurancePhase =
   | "maintenance"
   | "post-run";
 
+export const ASSURANCE_FIELDS = [
+  "source",
+  "source_id",
+  "source_url",
+  "title",
+  "make",
+  "model",
+  "year",
+  "status",
+  "price",
+  "original_currency",
+  "images",
+  "location",
+  "vin",
+  "trim",
+  "engine",
+  "transmission",
+  "mileage",
+  "mileage_unit",
+  "color_exterior",
+  "color_interior",
+  "body_style",
+  "description_text",
+] as const;
+
+export type AssuranceField = (typeof ASSURANCE_FIELDS)[number];
+
 export interface AssuranceCommand {
   command: string;
   args: readonly string[];
@@ -46,23 +73,49 @@ export interface AssuranceSource {
   enrichmentJobIds: readonly string[];
   expectedCadenceHours: number;
   maxRunMinutes: number;
+  requiredFields: readonly AssuranceField[];
+  unavailableFields: readonly AssuranceField[];
+  repairJobIds: readonly string[];
   canary: AssuranceCommand;
 }
 
 const AUCTION_SOURCE_IDS = ["BaT", "CarsAndBids", "CollectingCars"] as const;
+const REQUIRED_FIELDS: readonly AssuranceField[] = ASSURANCE_FIELDS;
+const UNAVAILABLE_FIELDS: readonly AssuranceField[] = [
+  "price",
+  "original_currency",
+  "location",
+  "vin",
+  "trim",
+  "engine",
+  "transmission",
+  "mileage",
+  "mileage_unit",
+  "color_exterior",
+  "color_interior",
+  "body_style",
+  "description_text",
+];
 
 function command(args: readonly string[], timeoutMs = 120_000): AssuranceCommand {
   return { command: "npx", args, timeoutMs };
 }
 
-function auctionSource(id: (typeof AUCTION_SOURCE_IDS)[number], label: string): AssuranceSource {
+function auctionSource(
+  id: (typeof AUCTION_SOURCE_IDS)[number],
+  label: string,
+  enrichmentJobIds: readonly string[] = [],
+): AssuranceSource {
   return {
     id,
     label,
     collectorJobIds: ["porsche", "ferrari"],
-    enrichmentJobIds: ["bat-detail"],
+    enrichmentJobIds,
     expectedCadenceHours: 24,
     maxRunMinutes: 45,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: [...enrichmentJobIds, "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "src/features/scrapers/porsche_collector/cli.ts",
@@ -78,7 +131,7 @@ function auctionSource(id: (typeof AUCTION_SOURCE_IDS)[number], label: string): 
 }
 
 export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
-  auctionSource("BaT", "Bring a Trailer"),
+  auctionSource("BaT", "Bring a Trailer", ["bat-detail"]),
   auctionSource("CarsAndBids", "Cars & Bids"),
   auctionSource("CollectingCars", "Collecting Cars"),
   {
@@ -88,6 +141,9 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     enrichmentJobIds: ["as24-enrich", "enrich-details", "enrich-details-bulk"],
     expectedCadenceHours: 24,
     maxRunMinutes: 60,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: ["as24-enrich", "enrich-details", "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "src/features/scrapers/autoscout24_collector/cli.ts",
@@ -104,6 +160,9 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     enrichmentJobIds: ["enrich-autotrader"],
     expectedCadenceHours: 24,
     maxRunMinutes: 30,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: ["enrich-autotrader", "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "src/features/scrapers/autotrader_collector/cli.ts",
@@ -119,6 +178,9 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     enrichmentJobIds: ["enrich-beforward", "backfill-images"],
     expectedCadenceHours: 24,
     maxRunMinutes: 30,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: ["enrich-beforward", "backfill-images", "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "scripts/bf-collector-cli.ts",
@@ -135,6 +197,9 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     enrichmentJobIds: ["classic-enrich", "backfill-images"],
     expectedCadenceHours: 24,
     maxRunMinutes: 30,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: ["classic-enrich", "backfill-images", "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "src/features/scrapers/classic_collector/cli.ts",
@@ -150,6 +215,9 @@ export const ASSURANCE_SOURCES: readonly AssuranceSource[] = [
     enrichmentJobIds: ["enrich-elferspot", "backfill-photos-elferspot"],
     expectedCadenceHours: 24,
     maxRunMinutes: 30,
+    requiredFields: REQUIRED_FIELDS,
+    unavailableFields: UNAVAILABLE_FIELDS,
+    repairJobIds: ["enrich-elferspot", "backfill-photos-elferspot", "enrich-vin", "enrich-titles"],
     canary: command([
       "tsx",
       "src/features/scrapers/elferspot_collector/cli.ts",
