@@ -1,6 +1,17 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { resolveRunnerBaseUrl } from "./run-scrapers";
+
+describe("scraper runner HTTP target", () => {
+  it("uses an explicit HTTPS deployment for cron repair jobs", () => {
+    expect(resolveRunnerBaseUrl("https://monza.example/"))
+      .toBe("https://monza.example");
+    expect(() => resolveRunnerBaseUrl("http://remote.example"))
+      .toThrow("HTTPS");
+  });
+});
+
 describe("scraper runner Porsche manual profile", () => {
   it("runs the same partial Porsche collection shape as the healthy cron path", () => {
     const source = readFileSync("scripts/run-scrapers.ts", "utf8");

@@ -14,6 +14,7 @@
     "test:schema": "vitest run tests/schema",
     "test:quality": "vitest run tests/quality",
     "test:integration": "vitest run tests/integration",
+    "test:scraper-assurance": "vitest run src/features/scrapers/common/assurance src/features/scrapers/common/monitoring/record.test.ts tests/integration/coverage-snapshot.test.ts scripts/scraper-assurance.test.ts scripts/run-scrapers.test.ts",
     "ingest:porsche": "tsx scripts/ingest-porsche.ts",
     "backfill:listing-rarity": "tsx scripts/backfill-listing-rarity.ts",
     "ingest:bat:sold-history": "tsx scripts/ingest-bat-sold-history.ts",
@@ -28,6 +29,10 @@
     "generate:factors": "tsx scripts/generate-family-factors.ts",
     "scrapers": "tsx scripts/run-scrapers.ts",
     "scrapers:enrich-loop": "tsx scripts/run-scrapers.ts --enrich-loop",
+    "scrapers:assurance:scan": "tsx scripts/scraper-assurance.ts --mode=scan",
+    "scrapers:assurance:canary": "tsx scripts/scraper-assurance.ts --mode=canary",
+    "scrapers:assurance": "tsx scripts/scraper-assurance.ts --mode=full",
+    "scrapers:assurance:repair": "tsx scripts/scraper-assurance.ts --mode=full --repair --max-repair-iterations=3",
     "scrapers:bat-live-refresh": "tsx scripts/bat-live-refresh.ts",
     "postinstall": "node -e \"process.exit(0)\""
   },

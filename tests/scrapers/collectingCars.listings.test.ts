@@ -42,6 +42,18 @@ function makeCCFallbackCard(slug: string, title: string, urlType: 'cars' | 'lots
     </li>`;
 }
 
+function makeCurrentCCCard(slug: string, title: string): string {
+  return `
+    <li class="ais-InfiniteHits-item" role="button">
+      <div class="listing-tile" id="auction-89930">
+        <a href="/for-sale/${slug}"><img src="https://cdn.collectingcars.com/${slug}.jpg" /></a>
+        <h3 class="listing-title">${title}</h3>
+        <span class="price">€65,000</span>
+        <span class="location">Singen</span>
+      </div>
+    </li>`;
+}
+
 // ---------------------------------------------------------------------------
 // scrapeListings
 // ---------------------------------------------------------------------------
@@ -76,6 +88,30 @@ describe('CC: scrapeListings', () => {
     expect(auctions[1].title).toBe('1973 Ferrari Dino 246 GTS');
   });
 
+  it('scrapes the current /buy InfiniteHits cards and /for-sale URLs', async () => {
+    const page = makeCCListingPage([
+      makeCurrentCCCard(
+        '1963-porsche-356-b-1600-super-90-cabriolet',
+        '1963 Porsche 356 B 1600 Super 90 Cabriolet',
+      ),
+    ]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(page),
+    }));
+
+    const promise = scrapeListings(1);
+    await vi.runAllTimersAsync();
+    const { auctions, errors } = await promise;
+
+    expect(errors).toEqual([]);
+    expect(auctions).toHaveLength(1);
+    expect(auctions[0]).toMatchObject({
+      title: '1963 Porsche 356 B 1600 Super 90 Cabriolet',
+      currentBid: 65000,
+      url: 'https://collectingcars.com/for-sale/1963-porsche-356-b-1600-super-90-cabriolet',
+    });
+  });
+
   it('uses correct pagination URL for page 2+', async () => {
     const page = makeCCListingPage([
       makeCCCard('car-a', '2000 Porsche Boxster S', '£25,000', 8),
@@ -91,11 +127,11 @@ describe('CC: scrapeListings', () => {
     await promise;
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://collectingcars.com/search',
+      'https://collectingcars.com/buy?refinementList%5BlistingStage%5D%5B0%5D=live',
       expect.anything(),
     );
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://collectingcars.com/search?page=2',
+      'https://collectingcars.com/buy?refinementList%5BlistingStage%5D%5B0%5D=live&page=2',
       expect.anything(),
     );
   });

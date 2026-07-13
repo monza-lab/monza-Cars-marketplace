@@ -4,11 +4,22 @@ import path from "node:path";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  applyContractCoverageGate,
   summarizeScraperHealth,
+  type ScraperContractCoverage,
   type ScraperHealthSummary,
   type ScraperJobSpec,
   type ScraperTargetFieldCoverage,
 } from "../src/features/scrapers/common/monitoring/audit";
+import {
+  ASSURANCE_AUDIT_JOB_SPECS,
+  getSourceIdsForScraper,
+} from "../src/features/scrapers/common/assurance/manifest";
+import {
+  buildAssuranceReport,
+  fetchActiveListings,
+  type ScraperAssuranceReport,
+} from "../src/features/scrapers/common/assurance/database";
 import type { ActiveScraperRun, ScraperRun } from "../src/features/scrapers/common/monitoring/types";
 import { ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES } from "../src/features/scrapers/elferspot_collector/coverage";
 import {
@@ -48,30 +59,7 @@ function loadEnvFromFile(filePath: string): void {
 loadEnvFromFile(path.resolve(process.cwd(), ".env.local"));
 loadEnvFromFile(path.resolve(process.cwd(), ".env"));
 
-const JOB_SPECS: ScraperJobSpec[] = [
-  { scraperName: "ferrari", label: "Ferrari Collector", cadence: "daily", cronPath: "/api/cron/ferrari" },
-  { scraperName: "porsche", label: "Porsche Collector", cadence: "daily", cronPath: "/api/cron/porsche" },
-  { scraperName: "autotrader", label: "AutoTrader Collector", cadence: "external" },
-  { scraperName: "beforward", label: "BeForward Collector", cadence: "daily", cronPath: "/api/cron/beforward" },
-  { scraperName: "classic", label: "Classic.com Collector", cadence: "external" },
-  { scraperName: "autoscout24", label: "AutoScout24 Collector", cadence: "external" },
-  { scraperName: "elferspot", label: "Elferspot Collector", cadence: "daily", cronPath: "/api/cron/elferspot" },
-  { scraperName: "backfill-images", label: "Image Backfill", cadence: "daily", cronPath: "/api/cron/backfill-images" },
-  { scraperName: "bat-detail", label: "BaT Detail Scraper", cadence: "external" },
-  { scraperName: "validate", label: "Listing Validator", cadence: "daily", cronPath: "/api/cron/validate" },
-  { scraperName: "cleanup", label: "Cleanup", cadence: "daily", cronPath: "/api/cron/cleanup" },
-  { scraperName: "enrich-vin", label: "VIN Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-vin" },
-  { scraperName: "enrich-titles", label: "Title Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-titles" },
-  { scraperName: "enrich-details", label: "AS24 Detail Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-details" },
-  { scraperName: "enrich-autotrader", label: "AutoTrader Enrichment", cadence: "external" },
-  { scraperName: "enrich-beforward", label: "BeForward Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-beforward" },
-  { scraperName: "enrich-elferspot", label: "Elferspot Enrichment", cadence: "daily", cronPath: "/api/cron/enrich-elferspot" },
-  { scraperName: "enrich-details-bulk", label: "AS24 Bulk Detail Enrichment", cadence: "external" },
-  { scraperName: "backfill-photos-elferspot", label: "Elferspot Photo Backfill", cadence: "daily", cronPath: "/api/cron/backfill-photos-elferspot" },
-  { scraperName: "refresh-valuation-factors", label: "Valuation Factor Refresh", cadence: "daily", cronPath: "/api/cron/refresh-valuation-factors" },
-  { scraperName: "social-engine", label: "Social Engine Worker", cadence: "external", cronPath: "/api/cron/social-engine" },
-  { scraperName: "liveness-check", label: "Liveness Check", cadence: "external" },
-];
+const JOB_SPECS: ScraperJobSpec[] = ASSURANCE_AUDIT_JOB_SPECS;
 
 function getArg(name: string): string | undefined {
   const prefix = `--${name}=`;
@@ -348,6 +336,30 @@ export function buildCoverageHealthIssues(summary: CoverageSummary): CoverageHea
   ];
 }
 
+function combineContractCoverage(
+  sourceIds: readonly string[],
+  assurance: ScraperAssuranceReport,
+  coverage: CoverageSummary,
+): ScraperContractCoverage {
+  const sources = assurance.sources.filter((source) => sourceIds.includes(source.source));
+  const requiredFields = sources.reduce((sum, source) => sum + source.requiredFields, 0);
+  const populatedFields = sources.reduce((sum, source) => sum + source.populatedFields, 0);
+  const resolvedFields = sources.reduce((sum, source) => sum + source.resolvedFields, 0);
+  const pct = (value: number) => requiredFields === 0
+    ? 100
+    : Math.round((value / requiredFields) * 1000) / 10;
+  return {
+    activeListings: sources.reduce((sum, source) => sum + source.activeListings, 0),
+    historicalListings: coverage.rows
+      .filter((row) => sourceIds.includes(row.source))
+      .reduce((sum, row) => sum + row.total, 0),
+    rawCompletenessPct: pct(populatedFields),
+    contractResolutionPct: pct(resolvedFields),
+    unresolvedFields: sources.reduce((sum, source) => sum + source.unresolvedFields, 0),
+    unavailableFields: sources.reduce((sum, source) => sum + source.unavailableFields, 0),
+  };
+}
+
 async function main(): Promise<void> {
   const daysBack = Number(getArg("days") ?? "3");
   const strict = getFlag("strict");
@@ -390,12 +402,14 @@ async function main(): Promise<void> {
     activeByName.set(active.scraper_name, active);
   }
 
-  const [elferspotTargetCoverage, autoscout24TargetCoverage, coverageRows] = await Promise.all([
+  const [elferspotTargetCoverage, autoscout24TargetCoverage, coverageRows, activeListings] = await Promise.all([
     fetchElferspotTargetCoverage(supabase),
     fetchAutoscout24TargetCoverage(supabase),
     fetchCoverageRows(),
+    fetchActiveListings(),
   ]);
   const coverage = summarizeCoverageRows(coverageRows);
+  const assurance = buildAssuranceReport(activeListings);
   const coverageIssues = buildCoverageHealthIssues(coverage);
 
   const summaries = JOB_SPECS.map((spec) => {
@@ -412,9 +426,13 @@ async function main(): Promise<void> {
           : undefined,
     );
 
-    return applyVinEnrichmentHealthGates(
+    const operationalSummary = applyVinEnrichmentHealthGates(
       applyAutoscout24HealthGates(summary, specRuns),
       specRuns,
+    );
+    return applyContractCoverageGate(
+      operationalSummary,
+      combineContractCoverage(getSourceIdsForScraper(spec.scraperName), assurance, coverage),
     );
   });
 
@@ -430,7 +448,16 @@ async function main(): Promise<void> {
     issue_count: jobIssues.length + coverageIssues.length,
     job_issue_count: jobIssues.length,
     coverage_issue_count: coverageIssues.length,
-    summaries,
+    summaries: summaries.map((summary) => ({
+      ...summary,
+      contract_coverage: summary.contractCoverage ? {
+        active_listings: summary.contractCoverage.activeListings,
+        raw_completeness_pct: summary.contractCoverage.rawCompletenessPct,
+        contract_resolution_pct: summary.contractCoverage.contractResolutionPct,
+        unresolved_fields: summary.contractCoverage.unresolvedFields,
+        unavailable_fields: summary.contractCoverage.unavailableFields,
+      } : undefined,
+    })),
     coverage,
     coverage_issues: coverageIssues,
   };

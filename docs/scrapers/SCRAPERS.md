@@ -1397,6 +1397,58 @@ SELECT * FROM source_data_quality(7);
 
 ---
 
+## Weekly Scraper Assurance
+
+The weekly assurance workflow checks the declared scraper inventory, runs bounded no-write source canaries, evaluates every active listing against its source contract, and optionally performs bounded additive/corrective enrichment. The source manifest is the authority for the eight marketplaces, their jobs, canaries, required fields, allowed source-unavailable fields, and repair paths.
+
+```bash
+# Deterministic unit and integration checks
+npm run test:scraper-assurance
+
+# Read-only full-database contract scan
+npm run scrapers:assurance:scan
+
+# Eleven bounded live source/project canaries; database writes and monitoring writes are disabled
+npm run scrapers:assurance:canary
+
+# Tests + inventory + read-only scan + canaries + strict registered-job health audit
+npm run scrapers:assurance
+
+# Full workflow plus at most three non-destructive enrichment iterations
+npm run scrapers:assurance:repair
+```
+
+`DATABASE_URL` is required for a full listing scan. Canaries require the Supabase variables used by the existing collector CLIs, even though `SCRAPER_ASSURANCE_CANARY=1` and each command's dry-run flag prevent writes. Shared auction sources are checked through both the Porsche and Ferrari collectors. Repair additionally requires `CRON_SECRET` for eligible enrichment routes. `SCRAPER_RUNNER_BASE_URL` may select an HTTPS deployment; otherwise the runner uses `NEXT_PUBLIC_APP_URL` or local `http://localhost:3000`.
+
+Two percentages are intentionally reported:
+
+- `rawCompletenessPct` counts fields with usable values from the source or an authoritative enrichment.
+- `contractResolutionPct` additionally counts a field as resolved when fresh evidence proves it is unavailable at the current source URL and that source contract permits the exception.
+
+Unavailable evidence is stored under `enrichment_meta.assurance.fields`, is bound to the current source URL, and expires after 30 days. `temporarily_blocked` and `invalid_source_value` remain unresolved. Identity fields and images can never be resolved through an unavailable exception.
+
+Outcomes:
+
+- `healthy`: contract resolution is 100%, every test passes, every source canary is healthy, and no repair was needed.
+- `repaired`: the same gates pass after bounded enrichment.
+- `blocked`: inventory drift, an unknown or blank source, a declared source with zero active rows, an unhealthy canary, a failing registered job, or unresolved listing fields remain.
+
+Exit codes are stable for automation:
+
+| Code | Meaning |
+|------|---------|
+| `0` | Healthy or repaired; all deterministic gates pass at 100% contract resolution |
+| `1` | Local preflight, test, malformed canary, empty canary, or execution failure |
+| `2` | Listing contract gaps remain after the selected scan/repair mode |
+| `3` | A marketplace is externally blocked by CAPTCHA, WAF, access denial, robots denial, or a challenge page |
+| `4` | Scraper inventory drift, an unknown/blank database source, or a declared source with zero active rows was detected |
+
+Timestamped machine-readable reports are written to `agents/testscripts/artifacts/scraper-assurance-*.json` and are ignored by Git. Console output shows at most 100 gap examples; the artifact retains the full listing-and-field repair queue.
+
+The repair boundary is deliberately narrow. Repair starts only after focused tests, inventory checks, and every live canary pass. The weekly workflow may add or correct listing enrichment fields and may record verified field evidence. It never selects cleanup, delist, bulk lifecycle-status, deletion, migration, secret-change, merge, or deployment operations. The evidence CLI updates only `enrichment_meta` in a locked transaction after confirming the active listing, exact source URL, registered source, and allowed field contract.
+
+---
+
 ## Troubleshooting
 
 ### Missing Supabase env vars

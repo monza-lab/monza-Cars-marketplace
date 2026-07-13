@@ -1,5 +1,6 @@
 # worktrees
 .worktrees/
+agents/testscripts/artifacts/scraper-assurance-*.json
 
 # claude code
 .claude/
@@ -76,3 +77,6 @@ videos/**/work-*/
 .venv/
 venv/
 .env.local.bak*
+
+# local git worktrees
+.worktrees/

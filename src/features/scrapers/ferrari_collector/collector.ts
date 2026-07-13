@@ -32,6 +32,7 @@ import {
 } from "./normalize";
 import { createSupabaseWriter } from "./supabase_writer";
 import { createDryRunWriter } from "./supabase_writer";
+import { DEFAULT_FERRARI_MAKE } from "./types";
 import type {
   CollectorRunConfig,
   NormalizedListing,
@@ -86,7 +87,7 @@ export async function runFerrariCollector(config: CollectorRunConfig): Promise<C
   const checkpointRef: { value: typeof checkpoint } = { value: checkpoint };
   const writer = config.dryRun ? createDryRunWriter() : createSupabaseWriter();
 
-  const sources: SourceKey[] = ["BaT", "CarsAndBids", "CollectingCars"];
+  const sources = selectCollectorSources(config);
   let updatedCheckpoint = checkpointRef.value;
   const sourceCounts: Record<string, SourceScrapeCounts> = {};
   const errors: string[] = [];
@@ -130,6 +131,12 @@ export async function runFerrariCollector(config: CollectorRunConfig): Promise<C
   return { runId, sourceCounts, errors };
 }
 
+export function selectCollectorSources(
+  config: Pick<CollectorRunConfig, "sources">,
+): SourceKey[] {
+  return config.sources ?? ["BaT", "CarsAndBids", "CollectingCars"];
+}
+
 /**
  * Convenience wrapper for calling the collector from a cron endpoint or programmatic context.
  * Accepts partial overrides; fills in sensible defaults.
@@ -139,7 +146,7 @@ export async function runCollector(
 ): Promise<CollectorResult> {
   const config: CollectorRunConfig = {
     mode: overrides.mode ?? "daily",
-    make: overrides.make ?? "Porsche",
+    make: overrides.make ?? DEFAULT_FERRARI_MAKE,
     endedWindowDays: overrides.endedWindowDays ?? 90,
     dateFrom: overrides.dateFrom,
     dateTo: overrides.dateTo,
@@ -148,6 +155,7 @@ export async function runCollector(
     scrapeDetails: overrides.scrapeDetails ?? true,
     checkpointPath: overrides.checkpointPath ?? "/tmp/ferrari_collector/checkpoint.json",
     dryRun: overrides.dryRun ?? false,
+    sources: overrides.sources,
     timeBudgetMs: overrides.timeBudgetMs,
   };
 

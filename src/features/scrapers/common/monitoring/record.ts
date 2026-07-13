@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { ScraperRunRecord, ScraperName, RuntimeEnv } from './types';
 
+function assuranceCanaryActive(): boolean {
+  return process.env.SCRAPER_ASSURANCE_CANARY === '1';
+}
+
 function getMonitoringClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -22,6 +26,7 @@ export async function markScraperRunStarted(params: {
   startedAt: string;
   runtime: RuntimeEnv;
 }): Promise<void> {
+  if (assuranceCanaryActive()) return;
   try {
     const supabase = getMonitoringClient();
     if (!supabase) return;
@@ -51,6 +56,7 @@ export async function markScraperRunStarted(params: {
  * Call this BEFORE markScraperRunStarted so the new run isn't blocked by a ghost.
  */
 export async function clearStaleActiveRun(scraperName: ScraperName, ttlMinutes = 10): Promise<void> {
+  if (assuranceCanaryActive()) return;
   try {
     const supabase = getMonitoringClient();
     if (!supabase) return;
@@ -75,6 +81,7 @@ export async function clearStaleActiveRun(scraperName: ScraperName, ttlMinutes =
  * Clear active run marker once run is finished.
  */
 export async function clearScraperRunActive(scraperName: ScraperName): Promise<void> {
+  if (assuranceCanaryActive()) return;
   try {
     const supabase = getMonitoringClient();
     if (!supabase) return;
@@ -99,6 +106,7 @@ export async function clearScraperRunActive(scraperName: ScraperName): Promise<v
  * must never break collector runs.
  */
 export async function recordScraperRun(record: ScraperRunRecord): Promise<void> {
+  if (assuranceCanaryActive()) return;
   try {
     const supabase = getMonitoringClient();
     if (!supabase) return;

@@ -1,8 +1,9 @@
 import { runFerrariCollector } from "./collector";
-import type { CollectorRunConfig, CollectorMode } from "./types";
+import { DEFAULT_FERRARI_MAKE, type CollectorRunConfig, type CollectorMode, type SourceKey } from "./types";
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
+import { fileURLToPath } from "node:url";
 
 function loadEnvFromFile(relPath: string): void {
   const abs = resolvePath(process.cwd(), relPath);
@@ -66,9 +67,33 @@ function hasFlag(args: Record<string, string | boolean>, key: string): boolean {
   return args[key] === true;
 }
 
+export function readNonNegativeNumber(
+  args: Record<string, string | boolean>,
+  key: string,
+  fallback: number,
+): number {
+  const s = readString(args, key);
+  if (!s) return fallback;
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function readSources(args: Record<string, string | boolean>): SourceKey[] | undefined {
+  const raw = readString(args, "sources");
+  if (!raw) return undefined;
+  const allowed = new Set<SourceKey>(["BaT", "CarsAndBids", "CollectingCars"]);
+  const sources = raw.split(",").map((value) => value.trim()).filter(Boolean);
+  for (const source of sources) {
+    if (!allowed.has(source as SourceKey)) {
+      throw new Error(`Invalid --sources value: ${source}`);
+    }
+  }
+  return sources as SourceKey[];
+}
+
 function usage(): string {
   return [
-    "Luxury Collector CLI (Porsche-first)",
+    "Ferrari Collector CLI",
     "",
     "Run (daily):",
     "  npx tsx src/features/ferrari_collector/cli.ts --mode=daily",
@@ -81,6 +106,7 @@ function usage(): string {
     "  --endedWindowDays=90",
     "  --maxActivePages=10",
     "  --maxEndedPages=10",
+    "  --sources=BaT,CarsAndBids,CollectingCars",
     "  --checkpointPath=var/ferrari_collector/checkpoint.json",
     "  --timeBudgetMs=1500000",
     "  --dryRun",
@@ -103,22 +129,29 @@ async function main(): Promise<void> {
 
   const config: CollectorRunConfig = {
     mode,
-    make: readString(args, "make") ?? "Porsche",
+    make: readString(args, "make") ?? DEFAULT_FERRARI_MAKE,
     endedWindowDays: readNumber(args, "endedWindowDays", 90),
     dateFrom: readString(args, "dateFrom"),
     dateTo: readString(args, "dateTo"),
     maxActivePagesPerSource: readNumber(args, "maxActivePages", 10),
-    maxEndedPagesPerSource: readNumber(args, "maxEndedPages", 10),
+    maxEndedPagesPerSource: readNonNegativeNumber(args, "maxEndedPages", 10),
     scrapeDetails: !hasFlag(args, "noDetails"),
     checkpointPath: readString(args, "checkpointPath") ?? "var/ferrari_collector/checkpoint.json",
     dryRun: hasFlag(args, "dryRun"),
+    sources: readSources(args),
     timeBudgetMs: readNumber(args, "timeBudgetMs", 25 * 60 * 1000), // 25 min default
   };
 
   await runFerrariCollector(config);
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.stack ?? err.message : err);
-  process.exitCode = 1;
-});
+const isDirectRun = process.argv[1]
+  ? fileURLToPath(import.meta.url) === resolvePath(process.argv[1])
+  : false;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.stack ?? err.message : err);
+    process.exitCode = 1;
+  });
+}
