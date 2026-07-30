@@ -2,21 +2,18 @@
 
 import { motion } from "framer-motion"
 import { FileText, ExternalLink } from "lucide-react"
-import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { platformLabels } from "@/lib/makePageConstants"
 
 interface MobileCarCTAProps {
-  carId: string
-  make: string
   sourceUrl?: string | null
   platform?: string | null
   onOpenAdvisor: () => void
+  onOpenReport: () => void
 }
 
-export function MobileCarCTA({ carId, make, sourceUrl, platform, onOpenAdvisor }: MobileCarCTAProps) {
+export function MobileCarCTA({ sourceUrl, platform, onOpenAdvisor, onOpenReport }: MobileCarCTAProps) {
   const t = useTranslations()
-  const reportUrl = `/cars/${make.toLowerCase().replace(/\s+/g, "-")}/${carId}/report`
   const platformName = platform ? (platformLabels[platform]?.short || platform.replace(/_/g, " ")) : null
 
   return (
@@ -28,13 +25,14 @@ export function MobileCarCTA({ carId, make, sourceUrl, platform, onOpenAdvisor }
       >
         <div className="flex items-center gap-2.5">
           {/* Primary CTA — View Report */}
-          <Link
-            href={reportUrl}
+          <button
+            type="button"
+            onClick={onOpenReport}
             className="flex-[3] flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-[14px] shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
           >
             <FileText className="size-5" />
             {t("carDetail.viewReport")}
-          </Link>
+          </button>
 
           {/* Secondary CTA — View on Platform (or fallback to advisor) */}
           {sourceUrl ? (

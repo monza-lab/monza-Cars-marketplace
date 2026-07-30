@@ -356,6 +356,14 @@ describe("beforward_porsche_collector coverage state", () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role";
   });
 
+  it("fails closed when only the anonymous key is configured", () => {
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anonymous";
+
+    expect(() => createSupabaseWriter()).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
+    expect(supabase.createClient).not.toHaveBeenCalled();
+  });
+
   it("returns page 1 when coverage state is missing", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
     supabase.createClient.mockReturnValue({

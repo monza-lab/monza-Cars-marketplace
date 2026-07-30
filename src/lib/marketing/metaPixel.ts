@@ -5,6 +5,7 @@ type MetaEventName =
   | "CompleteRegistration"
   | "InitiateCheckout"
   | "ViewContent"
+  | "ReportViewed"
   | "Purchase"
 
 declare global {
@@ -30,7 +31,7 @@ export function trackPixelEvent(
   eventId: string,
 ) {
   if (typeof window === "undefined" || !window.fbq) return
-  window.fbq("track", eventName, params, { eventID: eventId })
+  window.fbq(eventName === "ReportViewed" ? "trackCustom" : "track", eventName, params, { eventID: eventId })
 }
 
 export async function sendCapiEvent(input: {

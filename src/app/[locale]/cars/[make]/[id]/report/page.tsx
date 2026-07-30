@@ -27,12 +27,13 @@ import { findStrictReportPeers } from "@/lib/similarCars"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getStrictComparablesForModel } from "@/lib/db/queries"
+import { resolveReportToken } from "@/lib/reportAccess/repository"
 
 export const dynamic = "force-dynamic"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
-  searchParams?: Promise<{ mock?: string }>
+  searchParams?: Promise<{ mock?: string; access?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -62,6 +63,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   const { locale, id } = await params
   const resolvedSearch = (await searchParams) ?? {}
   const mockName = resolvedSearch.mock
+  const rawAccessToken = resolvedSearch.access
   setRequestLocale(locale)
 
   const isLiveId = id.startsWith("live-")
@@ -118,7 +120,11 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     }
   }
 
-  if (!mockName && !authUserId) {
+  const tokenAccess = !mockName && rawAccessToken
+    ? await resolveReportToken(rawAccessToken, id)
+    : null
+
+  if (!mockName && !authUserId && !tokenAccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
@@ -213,7 +219,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   // or (b) they have explicit unlimited report access.
   // Unauthenticated users never have access.
   // Mock previews (?mock=*) unlock automatically for design QA.
-  let userHasAccess = Boolean(mockName)
+  let userHasAccess = Boolean(mockName || tokenAccess)
   if (!userHasAccess) {
     try {
       if (authUserId) {

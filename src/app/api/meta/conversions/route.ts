@@ -8,7 +8,7 @@ const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN
 const TEST_CODE = process.env.META_CAPI_TEST_EVENT_CODE
 
 interface CapiEventInput {
-  eventName: "Lead" | "CompleteRegistration" | "InitiateCheckout" | "Purchase"
+  eventName: "Lead" | "CompleteRegistration" | "InitiateCheckout" | "Purchase" | "ReportViewed"
   eventId: string
   eventTime?: number
   email?: string

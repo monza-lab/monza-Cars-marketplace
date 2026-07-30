@@ -7,12 +7,12 @@ const BADGE_CONFIG: Record<DataTrustLevel, { label: string; color: string; bg: s
     bg: "bg-green-100 dark:bg-green-900/30",
   },
   ai_analysis: {
-    label: "AI Analysis",
+    label: "Market Analysis",
     color: "text-blue-700 dark:text-blue-400",
     bg: "bg-blue-100 dark:bg-blue-900/30",
   },
   ai_estimated: {
-    label: "AI Estimated",
+    label: "Model Estimated",
     color: "text-amber-700 dark:text-amber-400",
     bg: "bg-amber-100 dark:bg-amber-900/30",
   },

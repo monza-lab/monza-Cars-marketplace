@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "MonzaHaus — Investment-Grade Automotive Assets",
     short_name: "MonzaHaus",
     description:
-      "AI-powered collector car intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
+      "Collector car market intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
     start_url: "/",
     display: "standalone",
     background_color: "#0E0E0D",

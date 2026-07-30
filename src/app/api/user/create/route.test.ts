@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getOrCreateUser: vi.fn(),
   getOrCreateUserWithStatus: vi.fn(),
   sendServerCapiEvent: vi.fn(),
+  claimReportLead: vi.fn(),
 }))
 
 vi.mock("next/headers", () => ({
@@ -18,6 +19,9 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mocks.getUser },
+  })),
+  createAdminClient: vi.fn(() => ({
+    from: vi.fn(() => ({ insert: vi.fn(() => Promise.resolve({ error: null })) })),
   })),
 }))
 
@@ -38,6 +42,10 @@ vi.mock("@/lib/advisor/persistence/conversations", () => ({
 
 vi.mock("@/lib/marketing/metaCapiServer", () => ({
   sendServerCapiEvent: mocks.sendServerCapiEvent,
+}))
+
+vi.mock("@/lib/reportAccess/repository", () => ({
+  claimReportLead: mocks.claimReportLead,
 }))
 
 const profile = {
@@ -72,6 +80,7 @@ function request() {
         utm_term: null,
         utm_content: "video-a",
         fbclid: "fb.123",
+        gclid: null,
         landing_path: "/en/get-started?utm_campaign=mh-fase05",
         referrer: "https://facebook.com/",
         first_seen_at: "2026-07-06T12:00:00.000Z",
@@ -96,6 +105,7 @@ describe("/api/user/create", () => {
     mocks.getOrCreateUser.mockResolvedValue(profile)
     mocks.getOrCreateUserWithStatus.mockResolvedValue({ profile, created: true })
     mocks.sendServerCapiEvent.mockResolvedValue(undefined)
+    mocks.claimReportLead.mockResolvedValue({ claimed: true, leadId: "lead-1", transferredReports: 1 })
   })
 
   it("sends CompleteRegistration to Meta CAPI after creating a profile", async () => {
@@ -109,7 +119,7 @@ describe("/api/user/create", () => {
       email: "buyer@example.com",
       externalId: "user-1",
       customData: {
-        content_name: "free_signup",
+        content_name: "account_claim",
         status: "completed",
       },
     })
@@ -130,6 +140,7 @@ describe("/api/user/create", () => {
         utm_term: null,
         utm_content: "video-a",
         fbclid: "fb.123",
+        gclid: null,
         landing_path: "/en/get-started?utm_campaign=mh-fase05",
         referrer: "https://facebook.com/",
         first_seen_at: "2026-07-06T12:00:00.000Z",

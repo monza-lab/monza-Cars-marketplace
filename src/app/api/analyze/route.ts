@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server"
 import { randomUUID } from "crypto"
+import { resolveReportToken, completeLeadReportAccess } from "@/lib/reportAccess/repository"
+import { buildReportReadyEmail } from "@/lib/email/reportEmails"
+import { sendTransactionalEmail } from "@/lib/email/resend"
+import { createListingFingerprint } from "@/lib/reportAccess/fingerprint"
+import { isReportFresh } from "@/lib/reportAccess/policy"
 import { createClient } from "@/lib/supabase/server"
 import { fetchPricedListingsForModel, fetchLiveListingById } from "@/lib/supabaseLiveListings"
 import { computeMarketStatsForCar } from "@/lib/marketStats"
@@ -19,6 +24,7 @@ import {
   REPORT_PISTON_COST,
 } from "@/lib/reports/queries"
 import { computeReportHash } from "@/lib/reports/hash"
+import { resolveValuationEvidence } from "@/lib/reports/valuationEvidence"
 import { extractStructuredSignals } from "@/lib/fairValue/extractors/structured"
 import { extractSellerSignal } from "@/lib/fairValue/extractors/seller"
 import { extractTextSignals } from "@/lib/fairValue/extractors/text"
@@ -114,32 +120,13 @@ function extractDomainFromUrl(url: string | null | undefined): string | null {
   }
 }
 
-// Given the market stats struct, returns the baseline USD price (primary
-// region median, converted to USD) plus the comparable-layer label.
-function deriveBaseline(marketStats: NonNullable<ReturnType<typeof computeMarketStatsForCar>["marketStats"]>): {
-  baselineUsd: number
-  layer: ComparableLayer
-} {
-  const primary = marketStats.regions.find(
-    (r) => r.region === marketStats.primaryRegion && r.tier === marketStats.primaryTier,
-  )
-  const baselineUsd = primary ? Math.round(primary.medianPriceUsd) : 0
-
-  // computeMarketStatsForCar returns stats_scope as "model" | "series" | "family".
-  // HausReport.comparable_layer_used uses "strict" | "series" | "family".
-  // Map "model" → "strict" (= match on exact series), "series" → "series", "family" → "family".
-  const layer: ComparableLayer =
-    marketStats.scope === "family"
-      ? "family"
-      : marketStats.scope === "series"
-        ? "strict"
-        : "strict" // TODO: refine once computeMarketStats exposes a real comparable-layer enum
-
-  return { baselineUsd, layer }
-}
-
 export async function POST(request: Request) {
   try {
+    const body: AnalyzeRequestBody = await request.json()
+    if (!body.listingId) {
+      return NextResponse.json({ success: false, error: "listingId is required" }, { status: 400 })
+    }
+
     // 1. Auth
     const supabase = await createClient()
     const {
@@ -147,34 +134,38 @@ export async function POST(request: Request) {
       error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !authUser) {
+    const rawLeadToken = request.headers.get("x-report-access-token")
+    const leadAccess = rawLeadToken
+      ? await resolveReportToken(rawLeadToken, body.listingId, true)
+      : null
+
+    if ((authError || !authUser) && !leadAccess) {
       return NextResponse.json(
         { success: false, error: "AUTH_REQUIRED", message: "Please sign in to generate reports" },
         { status: 401 },
       )
     }
 
-    const body: AnalyzeRequestBody = await request.json()
-    if (!body.listingId) {
-      return NextResponse.json({ success: false, error: "listingId is required" }, { status: 400 })
-    }
-
     const pipelineStart = Date.now()
     const log: Partial<ReportGenerationLog> = {
       listingId: body.listingId,
-      userId: authUser.id,
+      userId: authUser?.id ?? `lead:${leadAccess?.lead_id}`,
       startedAt: new Date().toISOString(),
       cached: false,
       steps: {},
     }
 
     // 2. Get/create user + reset credits if needed
-    const dbUser = await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
-    const user = await checkAndResetFreeCredits(dbUser.id)
-    const totalBalance = (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
+    const dbUser = authUser
+      ? await getOrCreateUser(authUser.id, authUser.email!, authUser.user_metadata?.full_name)
+      : null
+    const user = dbUser ? await checkAndResetFreeCredits(dbUser.id) : null
+    const totalBalance = user
+      ? (user.credits_balance ?? 0) + (user.pack_credits_balance ?? 0)
+      : REPORT_PISTON_COST * 3
 
     // 3. Check if user already generated this report (free re-access)
-    const alreadyGenerated = await hasAlreadyGenerated(user.id, body.listingId)
+    const alreadyGenerated = user ? await hasAlreadyGenerated(user.id, body.listingId) : false
 
     // 4. Cache hit? A previously-generated Haus Report has signals_extracted_at set.
     //    (Legacy rows with only fair_value_low/high but no signal extraction are not
@@ -190,10 +181,25 @@ export async function POST(request: Request) {
       modifiers_applied_json?: unknown
       modifiers_total_percent?: number | null
       extraction_version?: string | null
+      source_fingerprint?: string | null
+      updated_at?: string | null
     }) | null
-    if (cachedHausRow && cachedHausRow.signals_extracted_at) {
+    let car = null as Awaited<ReturnType<typeof fetchLiveListingById>>
+    let sourceFingerprint: string | null = null
+    if (cachedHausRow?.signals_extracted_at) {
+      car = await fetchLiveListingById(body.listingId)
+      if (!car) {
+        return NextResponse.json({ success: false, error: "Listing not found" }, { status: 404 })
+      }
+      sourceFingerprint = createListingFingerprint(car as unknown as Record<string, unknown>)
+    }
+    if (cachedHausRow && sourceFingerprint && isReportFresh({
+      updatedAt: cachedHausRow.updated_at,
+      storedFingerprint: cachedHausRow.source_fingerprint,
+      currentFingerprint: sourceFingerprint,
+    })) {
       let creditUsed = 0
-      if (!alreadyGenerated) {
+      if (user && !alreadyGenerated) {
         const creditResult = await deductCredit(user.id, body.listingId, body.listingId)
         if (!creditResult.success) {
           return NextResponse.json(
@@ -217,12 +223,27 @@ export async function POST(request: Request) {
       const v2Meta = await getReportMetadataV2(body.listingId)
       console.info("[analyze] Cache hit:", JSON.stringify({
         listingId: body.listingId,
-        userId: authUser.id,
+        userId: authUser?.id ?? `lead:${leadAccess?.lead_id}`,
         cached: true,
         hasSignals: !!cachedHausRow.signals_extracted_at,
         tier: v2Meta.tier ?? "tier_1",
         version: v2Meta.version ?? 1,
       }))
+      if (leadAccess && rawLeadToken) {
+        const { email } = await completeLeadReportAccess({
+          accessId: leadAccess.id,
+          leadId: leadAccess.lead_id,
+          listingId: body.listingId,
+        })
+        const message = buildReportReadyEmail({
+          siteUrl: process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin,
+          listingId: body.listingId,
+          token: rawLeadToken,
+        })
+        await sendTransactionalEmail({ to: email, ...message }).catch((error) => {
+          console.error("[report-email] delivery failed", error)
+        })
+      }
       return NextResponse.json({
         success: true,
         ok: true,
@@ -230,7 +251,7 @@ export async function POST(request: Request) {
         report: cachedHausRow,
         cached: true,
         creditUsed,
-        creditsRemaining: totalBalance - creditUsed,
+        creditsRemaining: leadAccess ? REPORT_PISTON_COST * 2 : totalBalance - creditUsed,
         // v2 additions (null when BE migration pending)
         report_hash: v2Meta.report_hash,
         tier: v2Meta.tier ?? "tier_1",
@@ -239,7 +260,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Credits check (if not already generated and no cached report)
-    if (!alreadyGenerated && !hasUnlimitedReportAccess(user) && totalBalance < REPORT_PISTON_COST) {
+    if (user && !alreadyGenerated && !hasUnlimitedReportAccess(user) && totalBalance < REPORT_PISTON_COST) {
       return NextResponse.json(
         {
           success: false,
@@ -252,27 +273,21 @@ export async function POST(request: Request) {
     }
 
     // 6. Fetch the car
-    const car = await fetchLiveListingById(body.listingId)
+    car ??= await fetchLiveListingById(body.listingId)
     if (!car) {
       return NextResponse.json({ success: false, error: "Listing not found" }, { status: 404 })
     }
+    sourceFingerprint ??= createListingFingerprint(car as unknown as Record<string, unknown>)
 
     // 7. Fetch priced listings and compute market stats (shared helper)
     const allPriced = await fetchPricedListingsForModel(car.make)
     const rates = await getExchangeRates()
     const { marketStats } = computeMarketStatsForCar(car, allPriced, rates)
-
-    if (!marketStats) {
-      return NextResponse.json(
-        { success: false, error: "INSUFFICIENT_MARKET_DATA", message: "Not enough comparables to build a fair-value baseline." },
-        { status: 422 },
-      )
-    }
-
-    const { baselineUsd, layer } = deriveBaseline(marketStats)
-    const fairValueLowUsd = marketStats.primaryFairValueLow
-    const fairValueHighUsd = marketStats.primaryFairValueHigh
-    const comparablesCount = marketStats.totalDataPoints
+    const valuationEvidence = resolveValuationEvidence(marketStats)
+    const baselineUsd = valuationEvidence.baseline
+    const fairValueLowUsd = valuationEvidence.fairValueLow
+    const fairValueHighUsd = valuationEvidence.fairValueHigh
+    const comparablesCount = valuationEvidence.comparablesCount
 
     // 8. Extractors — structured + seller (sync) + text (Gemini, async)
     const structuredSignals = extractStructuredSignals({
@@ -349,8 +364,19 @@ export async function POST(request: Request) {
     }
 
     // 9. Modifiers + specific-car fair value
-    const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
-    const specific = computeSpecificCarFairValue({ baselineUsd, totalPercent })
+    let appliedModifiers: HausReport["modifiers_applied"] = []
+    let totalPercent = 0
+    let specific: { low: number | null; mid: number | null; high: number | null } = {
+      low: null,
+      mid: null,
+      high: null,
+    }
+    if (valuationEvidence.mode === "valued") {
+      const modifierResult = applyModifiers({ baselineUsd, signals: detected })
+      appliedModifiers = modifierResult.appliedModifiers
+      totalPercent = modifierResult.totalPercent
+      specific = computeSpecificCarFairValue({ baselineUsd, totalPercent })
+    }
 
     // 9b. Landed cost — destination from URL locale (via Referer), origin from
     //     the listing source. Returns null for domestic trades, unsupported
@@ -407,7 +433,7 @@ export async function POST(request: Request) {
       specific_car_fair_value_low: specific.low,
       specific_car_fair_value_mid: specific.mid,
       specific_car_fair_value_high: specific.high,
-      comparable_layer_used: layer,
+      comparable_layer_used: valuationEvidence.comparableLayer,
       comparables_count: comparablesCount,
       signals_detected: detected,
       signals_missing: deriveMissing(detected),
@@ -444,8 +470,10 @@ export async function POST(request: Request) {
     //     — saveHausReport overlays the Haus-specific columns (specific-car
     //       fair values, comparable layer, modifiers_applied_json, etc.).
     //     — saveSignals writes one row per DetectedSignal to listing_signals.
-    await saveReport(body.listingId, marketStats, null)
-    await saveHausReport(body.listingId, report)
+    if (marketStats) {
+      await saveReport(body.listingId, marketStats, null)
+    }
+    await saveHausReport(body.listingId, report, sourceFingerprint)
     if (detected.length > 0) {
       await saveSignals(body.listingId, runId, MODIFIER_LIBRARY_VERSION, detected)
     }
@@ -469,7 +497,7 @@ export async function POST(request: Request) {
 
     // 12. Deduct credit
     let creditUsed = 0
-    if (!alreadyGenerated) {
+    if (user && !alreadyGenerated) {
       // Use the listing id as a stable "report_id" surrogate since saveHausReport
       // is upsert-on-listing_id (no separate id returned). The deduct path only
       // uses report_id for the user_reports audit row.
@@ -492,6 +520,22 @@ export async function POST(request: Request) {
       }
     }
 
+    if (leadAccess && rawLeadToken) {
+      const { email } = await completeLeadReportAccess({
+        accessId: leadAccess.id,
+        leadId: leadAccess.lead_id,
+        listingId: body.listingId,
+      })
+      const message = buildReportReadyEmail({
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin,
+        listingId: body.listingId,
+        token: rawLeadToken,
+      })
+      await sendTransactionalEmail({ to: email, ...message }).catch((error) => {
+        console.error("[report-email] delivery failed", error)
+      })
+    }
+
     const totalDuration = Date.now() - pipelineStart
     console.info("[analyze] Report generated:", JSON.stringify({
       ...log,
@@ -508,7 +552,7 @@ export async function POST(request: Request) {
       report,
       cached: false,
       creditUsed,
-      creditsRemaining: totalBalance - creditUsed,
+      creditsRemaining: leadAccess ? REPORT_PISTON_COST * 2 : totalBalance - creditUsed,
       geminiUsed: textResult.ok,
       // v2 additions
       report_hash: reportHash,

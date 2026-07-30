@@ -25,4 +25,28 @@ describe("buildNarrativePrompt", () => {
     expect(prompt).toContain("Manual")
     expect(prompt).toContain("78")
   })
+
+  it("prohibits invented valuation when comparable evidence is insufficient", () => {
+    const prompt = buildNarrativePrompt({
+      title: "2005 Porsche Carrera GT",
+      year: 2005,
+      make: "Porsche",
+      model: "Carrera GT",
+      seriesId: "980",
+      mileage: 8000,
+      transmission: "Manual",
+      exteriorColor: "Silver",
+      interiorColor: "Black",
+      price: 1_500_000,
+      fairValueMid: null,
+      signals: [],
+      redFlags: [],
+      colorRarity: "common",
+      colorPremium: 0,
+    })
+
+    expect(prompt).toContain("Fair Value: unavailable")
+    expect(prompt).toContain("Do not use the asking price as fair value")
+    expect(prompt).not.toContain("Fair Value (specific-car): $1,500,000")
+  })
 })

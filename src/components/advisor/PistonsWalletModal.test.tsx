@@ -29,7 +29,7 @@ describe("PistonsWalletModal", () => {
       />
     )
     expect(screen.getByText("Unlimited")).toBeInTheDocument()
-    expect(screen.getByText("Genshpod")).toBeInTheDocument()
+    expect(screen.getByText("Monthly")).toBeInTheDocument()
     expect(screen.getByText(/Unlimited reports while your subscription is active/i)).toBeInTheDocument()
   })
 

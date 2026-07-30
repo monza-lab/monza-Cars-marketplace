@@ -38,7 +38,7 @@ export async function generateMetadata({
       auction.currentBid
         ? `Current bid $${Number(auction.currentBid).toLocaleString()}`
         : "No bids yet"
-    }. ${auction.mileage ? `${Number(auction.mileage).toLocaleString()} miles.` : ""} Track, analyze, and get AI insights.`
+    }. ${auction.mileage ? `${Number(auction.mileage).toLocaleString()} miles.` : ""} Track, analyze, and get market insights.`
 
     return {
       title,
@@ -58,7 +58,7 @@ export async function generateMetadata({
   } catch {
     return {
       title: "Auction | MonzaHaus",
-      description: "View auction details and get AI-powered analysis.",
+      description: "View auction details and get evidence-led market analysis.",
     }
   }
 }

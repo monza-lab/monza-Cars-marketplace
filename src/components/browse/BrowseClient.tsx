@@ -11,6 +11,7 @@ import { applyFilters } from "./filters/applyFilters";
 import { countActiveFilters } from "./filters/types";
 import { partitionByPhoto } from "@/lib/photoSort";
 import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
+import { CampaignContextStrip } from "./CampaignContextStrip";
 
 const REMOTE_PAGE_SIZE = 30;
 
@@ -361,6 +362,7 @@ export function BrowseClient({
 
   return (
     <div className="min-h-screen bg-background pt-14 md:pt-20">
+      <CampaignContextStrip />
       <FilterBar
         filters={filters}
         matchCount={filtered.length}

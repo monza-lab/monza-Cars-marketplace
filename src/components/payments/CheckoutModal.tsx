@@ -137,14 +137,14 @@ export function CheckoutModal({
                 {/* [HARDCODED] */}Better value
               </p>
               <p className="text-[12px] text-foreground leading-relaxed">
-                {/* [HARDCODED] */}For less than the heavy reload, <strong>Genshpod ($59/mo)</strong> gives you{" "}
+                {/* [HARDCODED] */}For less than the heavy reload, <strong>Monthly ($59/mo)</strong> gives you{" "}
                 <strong>unlimited reports</strong> while your subscription is active.
               </p>
               <button
                 onClick={handleSwitchToMonthly}
                 className="mt-3 text-[12px] font-semibold text-primary hover:underline"
               >
-                {/* [HARDCODED] */}Switch to Genshpod →
+                {/* [HARDCODED] */}Switch to Monthly →
               </button>
             </div>
           )}

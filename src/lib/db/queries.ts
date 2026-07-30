@@ -1,5 +1,5 @@
 import { dbQuery } from './sql'
-import { buildReportPeerIdentity } from '@/lib/reportPeerIdentity'
+import { buildReportPeerIdentity, normalizeReportPeerText } from '@/lib/reportPeerIdentity'
 import { createClient } from '@supabase/supabase-js'
 
 type Platform = 'BRING_A_TRAILER' | 'CARS_AND_BIDS' | 'COLLECTING_CARS'
@@ -484,6 +484,27 @@ type DbComparableHttpRow = DbComparableRow & {
   Auction?: unknown
 }
 
+type StrictComparableHttpRow = {
+  title: string | null
+  platform: string | null
+  source: string | null
+  make: string
+  model: string
+  sale_date: string | null
+  end_time: string | null
+  updated_at: string | null
+  scrape_timestamp: string | null
+  created_at: string | null
+  sold_price: number | string | null
+  final_price: number | string | null
+  current_bid: number | string | null
+  price_usd: number | string | null
+  listing_price: number | string | null
+  mileage: number | null
+  condition_description: string | null
+  status: string
+}
+
 function getSupabaseReadClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -506,6 +527,103 @@ function mapHttpComparables(rows: DbComparableHttpRow[]): DbComparableRow[] {
     mileage: row.mileage,
     condition: row.condition,
   }))
+}
+
+function comparablePrice(row: StrictComparableHttpRow): number {
+  const rawPrice = row.sold_price
+    ?? row.final_price
+    ?? row.current_bid
+    ?? row.price_usd
+    ?? row.listing_price
+  const price = Number(rawPrice)
+  return Number.isFinite(price) ? price : 0
+}
+
+function comparableDate(row: StrictComparableHttpRow): Date | null {
+  const rawDate = row.sale_date
+    ?? row.end_time
+    ?? row.updated_at
+    ?? row.scrape_timestamp
+    ?? row.created_at
+  if (!rawDate) return null
+
+  const date = new Date(rawDate)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const MODEL_VARIANT_TOKENS = ['gt2', 'gt3', 'gt4', 'gts', 'rs', 'turbo'] as const
+const PORSCHE_LINEAGE_TOKENS = [
+  '911', '924', '944', '968', '986', '987', '996', '997', '981', '982', '991', '992',
+] as const
+
+function titleContradictsModel(
+  title: string | null,
+  make: string,
+  modelIdentity: string,
+): boolean {
+  const normalizedTitle = normalizeReportPeerText(title)
+  const hasUnexpectedVariant = MODEL_VARIANT_TOKENS.some(
+    (token) =>
+      new RegExp(`\\b${token}\\b`).test(normalizedTitle)
+      && !new RegExp(`\\b${token}\\b`).test(modelIdentity),
+  )
+  const hasUnexpectedPorscheLineage = make === 'porsche' && PORSCHE_LINEAGE_TOKENS.some(
+    (token) =>
+      new RegExp(`\\b${token}\\b`).test(normalizedTitle)
+      && !new RegExp(`\\b${token}\\b`).test(modelIdentity),
+  )
+  return hasUnexpectedVariant || hasUnexpectedPorscheLineage
+}
+
+async function getStrictComparablesViaHttp(
+  make: string,
+  model: string,
+  modelIdentity: string,
+  limit: number,
+): Promise<DbComparableRow[]> {
+  const { data, error } = await getSupabaseReadClient()
+    .from('listings')
+    .select(
+      'title,platform,source,make,model,sale_date,end_time,updated_at,scrape_timestamp,created_at,sold_price,final_price,current_bid,price_usd,listing_price,mileage,condition_description,status',
+    )
+    .ilike('make', make)
+    .ilike('model', model.trim())
+    .limit(Math.max(limit * 25, 100))
+    .abortSignal(AbortSignal.timeout(DB_QUERY_TIMEOUT_MS))
+
+  if (error) throw error
+
+  const historicalCutoff = Date.now() - 30 * 24 * 60 * 60 * 1000
+  return ((data ?? []) as StrictComparableHttpRow[])
+    .flatMap((row) => {
+      const candidateIdentity = buildReportPeerIdentity({ make: row.make, model: row.model })
+      const soldDate = comparableDate(row)
+      const soldPrice = comparablePrice(row)
+      const isHistorical = row.status.toLowerCase() === 'sold'
+        || (soldDate?.getTime() ?? Number.POSITIVE_INFINITY) < historicalCutoff
+
+      if (
+        candidateIdentity?.make !== make
+        || candidateIdentity.modelIdentity !== modelIdentity
+        || titleContradictsModel(row.title, make, modelIdentity)
+        || !soldDate
+        || soldPrice <= 0
+        || !isHistorical
+      ) {
+        return []
+      }
+
+      return [{
+        title: row.title ?? row.model,
+        platform: row.platform ?? row.source ?? 'unknown',
+        soldDate: soldDate.toISOString(),
+        soldPrice,
+        mileage: row.mileage,
+        condition: row.condition_description,
+      }]
+    })
+    .sort((a, b) => Date.parse(b.soldDate ?? '') - Date.parse(a.soldDate ?? ''))
+    .slice(0, limit)
 }
 
 export async function getMarketDataForMake(make: string): Promise<DbMarketDataRow[]> {
@@ -628,10 +746,26 @@ export async function getStrictComparablesForModel(
       ),
       'getStrictComparablesForModel',
     )
-    return rows.rows.map((c) => ({ ...c, soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null }))
+    return rows.rows
+      .filter((c) => !titleContradictsModel(c.title, identity.make, identity.modelIdentity))
+      .map((c) => ({
+        ...c,
+        platform: c.platform ?? 'unknown',
+        soldDate: c.soldDate ? new Date(c.soldDate).toISOString() : null,
+      }))
   } catch (e) {
     logDbQueryError('getStrictComparablesForModel', e)
-    return []
+    try {
+      return await getStrictComparablesViaHttp(
+        identity.make,
+        model,
+        identity.modelIdentity,
+        limit,
+      )
+    } catch (httpError) {
+      logDbQueryError('getStrictComparablesForModel.httpFallback', httpError)
+      return []
+    }
   }
 }
 

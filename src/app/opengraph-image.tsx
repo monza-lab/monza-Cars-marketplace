@@ -105,7 +105,7 @@ export default function OGImage() {
                 textTransform: "uppercase",
               }}
             >
-              AI-Powered
+              Market Intelligence
             </span>
           </div>
         </div>

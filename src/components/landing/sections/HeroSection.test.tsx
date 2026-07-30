@@ -40,12 +40,12 @@ vi.mock("next/image", () => ({
 }))
 
 describe("HeroSection", () => {
-  it("makes the free reports signup path the primary hero CTA", () => {
+  it("makes browse the primary hero CTA", () => {
     render(<HeroSection />)
 
     const links = screen.getAllByRole("link")
     expect(links[0]).toHaveAccessibleName("Start with 3 Free Reports")
-    expect(links[0]).toHaveAttribute("href", "/get-started")
+    expect(links[0]).toHaveAttribute("href", "/browse")
     expect(links[1]).toHaveAccessibleName("Explore the Market")
     expect(links[1]).toHaveAttribute("href", "/browse")
   })

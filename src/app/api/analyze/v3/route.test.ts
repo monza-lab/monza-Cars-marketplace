@@ -14,6 +14,10 @@ const mockDeductCredit = vi.fn()
 const mockHasUnlimitedReportAccess = vi.fn()
 const mockSaveHausReport = vi.fn()
 const mockSaveSignals = vi.fn()
+const mockResolveReportToken = vi.fn()
+const mockCompleteLeadReportAccess = vi.fn()
+const mockBuildReportReadyEmail = vi.fn()
+const mockSendTransactionalEmail = vi.fn()
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: mockCreateClient,
@@ -46,6 +50,19 @@ vi.mock("@/lib/reports/queries", () => ({
   hasUnlimitedReportAccess: mockHasUnlimitedReportAccess,
   saveHausReport: mockSaveHausReport,
   saveSignals: mockSaveSignals,
+}))
+
+vi.mock("@/lib/reportAccess/repository", () => ({
+  resolveReportToken: mockResolveReportToken,
+  completeLeadReportAccess: mockCompleteLeadReportAccess,
+}))
+
+vi.mock("@/lib/email/reportEmails", () => ({
+  buildReportReadyEmail: mockBuildReportReadyEmail,
+}))
+
+vi.mock("@/lib/email/resend", () => ({
+  sendTransactionalEmail: mockSendTransactionalEmail,
 }))
 
 describe("api/analyze/v3 route", () => {
@@ -84,6 +101,13 @@ describe("api/analyze/v3 route", () => {
     mockSaveHausReport.mockResolvedValue(undefined)
     mockSaveSignals.mockResolvedValue(undefined)
     mockDeductCredit.mockResolvedValue({ success: true, creditUsed: 0 })
+    mockResolveReportToken.mockResolvedValue(null)
+    mockCompleteLeadReportAccess.mockResolvedValue({ email: "buyer@example.com" })
+    mockBuildReportReadyEmail.mockReturnValue({
+      subject: "Your Haus Report is ready",
+      html: "<p>ready</p>",
+    })
+    mockSendTransactionalEmail.mockResolvedValue({ id: "email-1" })
   })
 
   it("uses a UUID extraction run id when persisting V2 compatibility signals", async () => {
@@ -184,8 +208,70 @@ describe("api/analyze/v3 route", () => {
     const body = await res.text()
 
     expect(body).toContain("event: error")
-    expect(body).toContain("V3 report incomplete")
+    expect(body).toContain("Report incomplete")
     expect(body).not.toContain("event: complete")
     expect(mockDeductCredit).not.toHaveBeenCalled()
+  })
+
+  it("runs and delivers the complete V3 pipeline for a report-scoped lead token", async () => {
+    mockCreateClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: new Error("No session"),
+        }),
+      },
+    })
+    mockResolveReportToken.mockResolvedValue({
+      id: "access-1",
+      lead_id: "lead-1",
+      listing_id: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+      status: "pending",
+    })
+    mockRunV3Pipeline.mockResolvedValue({
+      report: {
+        listingId: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+        reportVersion: 3,
+        stepsCompleted: 10,
+        stepsFailed: 0,
+        totalDurationMs: 100,
+        finalSynthesis: {
+          executiveSummary: {
+            headline: "Deep Carrera GT analysis",
+            keyMetrics: {},
+            investmentThesis: "Vehicle-specific synthesis",
+          },
+        },
+      },
+      results: [],
+    })
+
+    const { POST } = await import("./route")
+    const res = await POST(
+      new Request("https://example.test/api/analyze/v3", {
+        method: "POST",
+        headers: { "x-report-access-token": "lead-token" },
+        body: JSON.stringify({
+          listingId: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+        }),
+      }) as never,
+    )
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(body).toContain("event: complete")
+    expect(mockRunV3Pipeline).toHaveBeenCalledTimes(1)
+    expect(mockGetOrCreateUser).not.toHaveBeenCalled()
+    expect(mockDeductCredit).not.toHaveBeenCalled()
+    expect(mockCompleteLeadReportAccess).toHaveBeenCalledWith({
+      accessId: "access-1",
+      leadId: "lead-1",
+      listingId: "live-5fb98398-2dd1-46e2-84dd-a92c40017ee4",
+    })
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
+      to: "buyer@example.com",
+      subject: "Your Haus Report is ready",
+      html: "<p>ready</p>",
+    })
   })
 })

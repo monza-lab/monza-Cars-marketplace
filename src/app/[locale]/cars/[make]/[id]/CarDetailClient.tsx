@@ -53,6 +53,8 @@ import { fireMetaEvent } from "@/lib/marketing/metaPixel"
 import { useConsent } from "@/components/legal/ConsentProvider"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
+import { ReportEmailSheet } from "@/components/report/ReportEmailSheet"
+import { track } from "@/lib/analytics/events"
 
 // ─── MOCK DATA ───
 // ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
@@ -513,12 +515,14 @@ function CarNavSidebar({
 function CarContextPanel({
   car,
   onOpenAdvisor,
+  onOpenReport,
   dbAnalysis,
   dbSoldHistory = [],
   activeRegion,
 }: {
   car: CollectorCar
   onOpenAdvisor: () => void
+  onOpenReport: () => void
   dbAnalysis?: DbAnalysisRow | null
   dbSoldHistory?: DbSoldRecord[]
   activeRegion: string
@@ -774,21 +778,22 @@ function CarContextPanel({
 
       {/* Report CTA */}
       <div className="shrink-0 px-4 pt-3">
-        <Link
-          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-          className="block rounded-xl border border-primary/20 bg-primary/6 p-4 hover:bg-primary/10 transition-colors group"
+        <button
+          type="button"
+          onClick={onOpenReport}
+          className="block w-full rounded-xl border border-primary/20 bg-primary/6 p-4 text-left hover:bg-primary/10 transition-colors group"
         >
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
               <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
+              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Generate Haus Report - free</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; costs</p>
             </div>
             <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
           </div>
-        </Link>
+        </button>
       </div>
 
       {/* CTA pinned bottom */}
@@ -836,9 +841,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const reportPath = `/cars/${makeSlug}/${car.id}/report`
   const { user } = useAuth()
   const [showReportAuth, setShowReportAuth] = useState(false)
+  const [showReportEmail, setShowReportEmail] = useState(false)
+  const [reportEmail, setReportEmail] = useState("")
   const handleOpenReport = () => {
+    if (consent === "accepted") {
+      void track({ event: "report_cta_clicked", payload: { listingId: car.id } })
+    }
     if (!user) {
-      setShowReportAuth(true)
+      setShowReportEmail(true)
       return
     }
     router.push(reportPath)
@@ -873,6 +883,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const heroRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (consent === "accepted") {
+      void track({ event: "browse_car_viewed", payload: { listingId: car.id } })
+    }
     fireMetaEvent("ViewContent", {
       consent,
       pixelParams: {
@@ -997,14 +1010,15 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     </div>
                   </div>
                 </div>
-                <Link
-                  href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+                <button
+                  type="button"
+                  onClick={handleOpenReport}
                   className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] font-semibold uppercase text-primary-foreground active:bg-primary/80 transition-colors"
                 >
                   <FileText className="size-3.5" />
                   {/* [HARDCODED] */}
                   Report
-                </Link>
+                </button>
               </div>
             </motion.div>
           )}
@@ -1223,8 +1237,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         </div>
 
         {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
-        <Link
-          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
+        <button
+          type="button"
+          onClick={handleOpenReport}
           className="mx-4 mt-4 flex items-center gap-4 rounded-2xl border border-primary/25 bg-primary/8 p-4 active:bg-primary/15 transition-colors"
         >
           <div className="size-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
@@ -1238,7 +1253,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             {/* [HARDCODED] */}View
             <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
           </span>
-        </Link>
+        </button>
 
         {/* ═══ EXTERNAL LISTING CTA — "Where is the car?" ═══ */}
         {car.sourceUrl && (
@@ -1610,11 +1625,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
         {/* ═══ MOBILE CTA ═══ */}
         <MobileCarCTA
-          carId={car.id}
-          make={car.make}
           sourceUrl={car.sourceUrl}
           platform={car.platform}
           onOpenAdvisor={() => setShowAdvisorChat(true)}
+          onOpenReport={handleOpenReport}
         />
       </div>
 
@@ -1830,9 +1844,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
 
               {/* FULL REPORT CTA */}
-              <Link
-                href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}/report`}
-                className="block rounded-xl border border-primary/15 bg-primary/4 p-5 hover:bg-primary/6 transition-colors"
+              <button
+                type="button"
+                onClick={handleOpenReport}
+                className="block w-full rounded-xl border border-primary/15 bg-primary/4 p-5 text-left hover:bg-primary/6 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -1844,11 +1859,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                   <span className="flex items-center gap-2 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-[12px] font-semibold text-primary-foreground">
                     {/* [HARDCODED] */}
-                    View Report
+                    Generate free
                     <ChevronRight className="size-4" />
                   </span>
                 </div>
-              </Link>
+              </button>
 
               {/* Contextual Advisor band — desktop column B */}
               <div className="mt-6">
@@ -1866,7 +1881,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* COLUMN C: RIGHT PANEL */}
           <div className="overflow-hidden">
-            <CarContextPanel car={car} onOpenAdvisor={() => setShowAdvisorChat(true)} dbAnalysis={dbAnalysis} dbSoldHistory={dbSoldHistory} activeRegion={lockedRegion} />
+            <CarContextPanel car={car} onOpenAdvisor={() => setShowAdvisorChat(true)} onOpenReport={handleOpenReport} dbAnalysis={dbAnalysis} dbSoldHistory={dbSoldHistory} activeRegion={lockedRegion} />
           </div>
         </div>
       </div>
@@ -1889,6 +1904,23 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         open={showReportAuth}
         onOpenChange={setShowReportAuth}
         defaultMode="signup"
+        initialEmail={reportEmail}
+      />
+      <ReportEmailSheet
+        open={showReportEmail}
+        listingId={car.id}
+        onOpenChange={setShowReportEmail}
+        onGenerated={(token) => router.push(`${reportPath}?access=${encodeURIComponent(token)}`)}
+        onAuthRequired={(email) => {
+          setReportEmail(email)
+          setShowReportEmail(false)
+          setShowReportAuth(true)
+        }}
+        onClaimRequired={(email) => {
+          setReportEmail(email)
+          setShowReportEmail(false)
+          setShowReportAuth(true)
+        }}
       />
     </div>
     </MotionConfig>

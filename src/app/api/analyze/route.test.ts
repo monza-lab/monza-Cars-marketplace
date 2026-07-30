@@ -16,8 +16,17 @@ const mockCheckAndResetFreeCredits = vi.fn()
 const mockSaveReportMetadataV2 = vi.fn()
 const mockGetReportMetadataV2 = vi.fn()
 const mockHasUnlimitedReportAccess = vi.fn()
+const mockResolveReportToken = vi.fn()
+const mockCompleteLeadReportAccess = vi.fn()
+const mockSendTransactionalEmail = vi.fn()
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: mockCreateClient }))
+vi.mock("@/lib/reportAccess/repository", () => ({
+  resolveReportToken: mockResolveReportToken,
+  completeLeadReportAccess: mockCompleteLeadReportAccess,
+}))
+vi.mock("@/lib/email/reportEmails", () => ({ buildReportReadyEmail: vi.fn() }))
+vi.mock("@/lib/email/resend", () => ({ sendTransactionalEmail: mockSendTransactionalEmail }))
 vi.mock("@/lib/supabaseLiveListings", () => ({
   fetchLiveListingById: mockFetchLiveListingById,
   fetchPricedListingsForModel: mockFetchPricedListingsForModel,
@@ -129,6 +138,57 @@ describe("api/analyze route", () => {
     mockSaveSignals.mockResolvedValue(undefined)
     mockSaveReportMetadataV2.mockResolvedValue(true)
     mockGetReportMetadataV2.mockResolvedValue({ report_hash: null, tier: null, version: 0 })
+    mockResolveReportToken.mockResolvedValue(null)
+    mockCompleteLeadReportAccess.mockResolvedValue({ email: "driver@example.com" })
+    mockSendTransactionalEmail.mockResolvedValue(undefined)
+  })
+
+  it("completes and delivers a sparse report for a lead token", async () => {
+    mockCreateClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: null }, error: new Error("No session") })),
+      },
+    })
+    mockResolveReportToken.mockResolvedValue({
+      id: "access-1",
+      lead_id: "lead-1",
+      listing_id: "listing-1",
+    })
+    mockComputeMarketStatsForCar.mockReturnValue({ marketStats: null, pricedRecords: [] })
+
+    const { POST } = await import("./route")
+    const res = await POST(new Request("https://example.test/api/analyze", {
+      method: "POST",
+      headers: { "x-report-access-token": "lead-token" },
+      body: JSON.stringify({ listingId: "listing-1" }),
+    }))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.report).toMatchObject({
+      fair_value_low: null,
+      fair_value_high: null,
+      median_price: 0,
+      specific_car_fair_value_low: null,
+      specific_car_fair_value_mid: null,
+      specific_car_fair_value_high: null,
+      comparable_layer_used: null,
+      comparables_count: 0,
+      modifiers_applied: [],
+      modifiers_total_percent: 0,
+    })
+    expect(mockSaveReport).not.toHaveBeenCalled()
+    expect(mockSaveHausReport).toHaveBeenCalledWith(
+      "listing-1",
+      expect.objectContaining({ comparable_layer_used: null }),
+      expect.any(String),
+    )
+    expect(mockCompleteLeadReportAccess).toHaveBeenCalledWith({
+      accessId: "access-1",
+      leadId: "lead-1",
+      listingId: "listing-1",
+    })
+    expect(mockSendTransactionalEmail).toHaveBeenCalled()
   })
 
   it("fails report generation when the mandatory debit fails after persistence", async () => {

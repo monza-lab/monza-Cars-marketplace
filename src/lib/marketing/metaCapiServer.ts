@@ -17,7 +17,7 @@ function sha256(input?: string): string | undefined {
  * (e.g. Stripe webhooks where there is no browser client).
  */
 export async function sendServerCapiEvent(input: {
-  eventName: "Lead" | "CompleteRegistration" | "InitiateCheckout" | "Purchase"
+  eventName: "Lead" | "CompleteRegistration" | "InitiateCheckout" | "Purchase" | "ReportViewed"
   eventId: string
   eventSourceUrl?: string
   email?: string

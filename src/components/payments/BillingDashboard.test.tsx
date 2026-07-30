@@ -24,11 +24,11 @@ vi.mock("./TransactionHistory", () => ({
 }))
 
 describe("BillingDashboard", () => {
-  it("shows PRO subscriptions as Genshpod unlimited reports", () => {
+  it("shows PRO subscriptions as Monthly unlimited reports", () => {
     render(<BillingDashboard />)
 
     expect(screen.getByText("Unlimited")).toBeInTheDocument()
-    expect(screen.getByText("Genshpod")).toBeInTheDocument()
+    expect(screen.getByText("Monthly")).toBeInTheDocument()
     expect(screen.getByText(/Unlimited reports/i)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Cancel Subscription/i })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Upgrade/i })).not.toBeInTheDocument()

@@ -7,6 +7,8 @@ import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { useConsent } from "./ConsentProvider"
 import { captureAttributionFromBrowser } from "@/lib/marketing/attribution"
+import { readStoredAttribution } from "@/lib/marketing/attribution"
+import { track } from "@/lib/analytics/events"
 
 // Single mount point for every non-essential tracker:
 // - Loads NOTHING while consent is "pending"
@@ -23,10 +25,26 @@ export function ClientTrackers() {
   const { consent } = useConsent()
   const pathname = usePathname()
   const lastTrackedPathRef = useRef<string | null>(null)
+  const funnelVisitTrackedRef = useRef(false)
 
   useEffect(() => {
-    captureAttributionFromBrowser()
-  }, [])
+    if (consent === "accepted") captureAttributionFromBrowser()
+  }, [consent])
+
+  useEffect(() => {
+    if (consent !== "accepted" || pathname !== "/browse" || funnelVisitTrackedRef.current) return
+    funnelVisitTrackedRef.current = true
+    const attribution = readStoredAttribution()
+    let anonymousSessionId = window.localStorage.getItem("monzahaus_funnel_session")
+    if (!anonymousSessionId) {
+      anonymousSessionId = crypto.randomUUID()
+      window.localStorage.setItem("monzahaus_funnel_session", anonymousSessionId)
+    }
+    void track({
+      event: "visit_landed",
+      payload: { source: attribution?.utm_source || "direct", anonymousSessionId },
+    })
+  }, [consent, pathname])
 
   useEffect(() => {
     if (consent !== "accepted") return

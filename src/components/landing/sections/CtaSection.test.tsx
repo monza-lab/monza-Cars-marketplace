@@ -40,12 +40,12 @@ vi.mock("@/hooks/useScrollReveal", () => ({
 }))
 
 describe("CtaSection", () => {
-  it("makes the free reports signup path the primary final CTA", () => {
+  it("makes browse the primary final CTA", () => {
     render(<CtaSection />)
 
     const links = screen.getAllByRole("link")
     expect(links[0]).toHaveAccessibleName("Start with 3 Free Reports")
-    expect(links[0]).toHaveAttribute("href", "/get-started")
+    expect(links[0]).toHaveAttribute("href", "/browse")
     expect(links[1]).toHaveAccessibleName("Explore the Market")
     expect(links[1]).toHaveAttribute("href", "/browse")
   })

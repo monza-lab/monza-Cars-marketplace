@@ -284,6 +284,7 @@ export async function getOrCreateUserWithStatus(
       utm_term: attribution?.utm_term ?? null,
       utm_content: attribution?.utm_content ?? null,
       fbclid: attribution?.fbclid ?? null,
+      gclid: attribution?.gclid ?? null,
       landing_path: attribution?.landing_path ?? null,
       referrer: attribution?.referrer ?? null,
       first_seen_at: attribution?.first_seen_at ?? null,
@@ -872,6 +873,7 @@ export async function getTransactionHistory(
 export async function saveHausReport(
   listingId: string,
   report: Omit<HausReport, "listing_id">,
+  sourceFingerprint?: string,
 ): Promise<void> {
   const supabase = getServiceClient()
   const reportListingId = normalizeUserReportListingId(listingId)
@@ -890,6 +892,7 @@ export async function saveHausReport(
     modifiers_total_percent: report.modifiers_total_percent,
     signals_extracted_at: report.signals_extracted_at,
     extraction_version: report.extraction_version,
+    ...(sourceFingerprint ? { source_fingerprint: sourceFingerprint } : {}),
     landed_cost_json: report.landed_cost,
     updated_at: new Date().toISOString(),
   }

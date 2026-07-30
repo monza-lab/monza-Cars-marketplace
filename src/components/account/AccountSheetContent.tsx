@@ -37,7 +37,7 @@ export function AccountSheetContent({
     tier === "FREE"
       ? "Free"
       : isSubscribed
-        ? "Genshpod"
+        ? "Monthly"
         : "Pack"
 
   const handleSignOut = async () => {

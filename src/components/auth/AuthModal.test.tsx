@@ -84,6 +84,12 @@ describe("AuthModal", () => {
     expect(screen.queryByText("We will email you a one-tap sign-in link.")).not.toBeInTheDocument()
   })
 
+  it("prefills the report lead email when claiming an account", () => {
+    render(<AuthModal open onOpenChange={vi.fn()} defaultMode="signup" initialEmail="buyer@example.com" />)
+
+    expect(screen.getByLabelText("Email")).toHaveValue("buyer@example.com")
+  })
+
   it("closes after password signup when Supabase creates an immediate session", async () => {
     authMocks.signUp.mockResolvedValue({ error: null, needsEmailConfirmation: false })
     const onOpenChange = vi.fn()

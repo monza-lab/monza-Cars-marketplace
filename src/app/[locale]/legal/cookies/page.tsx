@@ -30,13 +30,16 @@ const COOKIES: CookieRow[] = [
   { name: "sb-access-token, sb-refresh-token", vendor: "Supabase Auth", purpose: "Authenticate your session and keep you signed in.", duration: "Session / 1 year", category: "essential" },
   { name: "monzahaus_cookie_consent", vendor: "MonzaHaus", purpose: "Remembers your cookie preferences so we don't ask again.", duration: "12 months", category: "essential" },
   { name: "monzahaus_user, monzahaus_plan", vendor: "MonzaHaus", purpose: "Stores local preferences (currency, view mode, recent searches).", duration: "Persistent (localStorage)", category: "essential" },
+  { name: "monzahaus_report_device, monzahaus_campaign_context_dismissed", vendor: "MonzaHaus", purpose: "Protects the free-report allowance from abuse and remembers whether you dismissed campaign context.", duration: "Persistent (localStorage)", category: "essential" },
   // Analytics — only when user accepts
   { name: "_vercel_analytics", vendor: "Vercel Analytics", purpose: "Counts page views and route visits in aggregate; no user-level tracking.", duration: "Session", category: "analytics" },
   { name: "vitals", vendor: "Vercel Speed Insights", purpose: "Measures Core Web Vitals (page-load metrics).", duration: "Session", category: "analytics" },
+  { name: "monzahaus_funnel_session", vendor: "MonzaHaus", purpose: "Connects consented anonymous funnel events within this browser.", duration: "Persistent (localStorage)", category: "analytics" },
   { name: "_ga, _ga_*, _gid", vendor: "Google Analytics 4", purpose: "Aggregate audience analytics with IP anonymization enabled.", duration: "Up to 2 years", category: "analytics" },
   // Advertising — only when user accepts
   { name: "_fbp", vendor: "Meta (Facebook) Pixel", purpose: "Identifies a browser for ad attribution and conversion measurement.", duration: "3 months", category: "advertising" },
   { name: "_fbc", vendor: "Meta (Facebook) Pixel", purpose: "Stores the click-id when you arrive from a Meta ad, for attribution.", duration: "7 days", category: "advertising" },
+  { name: "monzahaus_first_touch_attribution", vendor: "MonzaHaus", purpose: "Stores consented campaign parameters for first-touch conversion attribution.", duration: "90 days (localStorage)", category: "advertising" },
 ]
 
 const CATEGORY_LABELS: Record<CookieRow["category"], { label: string; color: string }> = {

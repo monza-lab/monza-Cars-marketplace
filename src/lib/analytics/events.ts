@@ -1,4 +1,9 @@
 export type AnalyticsEvent =
+  | { event: "visit_landed"; payload: { source: string; anonymousSessionId?: string } }
+  | { event: "browse_car_viewed"; payload: { listingId: string; anonymousSessionId?: string } }
+  | { event: "report_cta_clicked"; payload: { listingId: string; anonymousSessionId?: string } }
+  | { event: "email_submitted"; payload: { listingId: string; leadId?: string } }
+  | { event: "account_claimed"; payload: { userId: string; leadId?: string } }
   | { event: "pricing_page_viewed"; payload: { source: string } }
   | { event: "report_viewed"; payload: { listingId: string; source: "report_page" | "car_detail" } }
   | { event: "plan_clicked"; payload: { planId: string; billingCycle?: string } }

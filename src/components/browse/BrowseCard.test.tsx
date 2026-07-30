@@ -55,6 +55,11 @@ function makeCar(overrides: Partial<DashboardAuction> = {}): DashboardAuction {
 }
 
 describe("BrowseCard — honest-by-data signals", () => {
+  it("opens the car detail before the report funnel", () => {
+    const { container } = render(<BrowseCard car={makeCar()} index={0} />);
+    expect(container.querySelector("a")).toHaveAttribute("href", "/cars/porsche/test-1");
+  });
+
   it("does NOT render the LIVE badge regardless of status", () => {
     const car = makeCar({ status: "ACTIVE" });
     const { container } = render(<BrowseCard car={car} index={0} />);

@@ -15,6 +15,9 @@ import {
   hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { saveHausReport, saveSignals } from "@/lib/reports/queries"
+import { completeLeadReportAccess, resolveReportToken } from "@/lib/reportAccess/repository"
+import { buildReportReadyEmail } from "@/lib/email/reportEmails"
+import { sendTransactionalEmail } from "@/lib/email/resend"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
@@ -40,22 +43,46 @@ export async function POST(req: NextRequest) {
   // Auth check
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  const rawLeadToken = req.headers.get("x-report-access-token")
+  const leadAccess = rawLeadToken
+    ? await resolveReportToken(rawLeadToken, listingId, true)
+    : null
+  if (!user && !leadAccess) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     })
   }
 
-  // User + credit initialization
-  const dbUser = await getOrCreateUser(user.id, user.email ?? "", user.user_metadata?.full_name)
-  const credits = await checkAndResetFreeCredits(dbUser.id)
-  const alreadyGenerated = await hasAlreadyGenerated(dbUser.id, listingId)
-  const hasUnlimited = hasUnlimitedReportAccess(credits)
+  // Authenticated users keep the Pistons economy. Report-scoped lead tokens
+  // authorize this listing only and are finalized after a complete V3 report.
+  const dbUser = user
+    ? await getOrCreateUser(user.id, user.email ?? "", user.user_metadata?.full_name)
+    : null
+  const credits = dbUser ? await checkAndResetFreeCredits(dbUser.id) : null
+  const alreadyGenerated = dbUser ? await hasAlreadyGenerated(dbUser.id, listingId) : false
+  const hasUnlimited = credits ? hasUnlimitedReportAccess(credits) : false
+
+  const finalizeLeadDelivery = async () => {
+    if (!leadAccess || !rawLeadToken) return
+    const { email } = await completeLeadReportAccess({
+      accessId: leadAccess.id,
+      leadId: leadAccess.lead_id,
+      listingId,
+    })
+    const message = buildReportReadyEmail({
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin,
+      listingId,
+      token: rawLeadToken,
+    })
+    await sendTransactionalEmail({ to: email, ...message }).catch((error) => {
+      console.error("[report-email] V3 delivery failed", error)
+    })
+  }
 
   // Cache check
   if (!force && await hasV3Report(listingId)) {
-    if (!alreadyGenerated) {
+    if (dbUser && !alreadyGenerated) {
       const creditResult = await deductCredit(dbUser.id, listingId, listingId)
       if (!creditResult.success) {
         const status = creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500
@@ -65,6 +92,7 @@ export async function POST(req: NextRequest) {
         })
       }
     }
+    await finalizeLeadDelivery()
 
     const sections = await fetchReportSections(listingId, 1)
     return new Response(JSON.stringify({
@@ -78,7 +106,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Credit check
-  if (!alreadyGenerated && !hasUnlimited) {
+  if (dbUser && credits && !alreadyGenerated && !hasUnlimited) {
     const balance = (credits.credits_balance ?? 0) + (credits.pack_credits_balance ?? 0)
     if (balance < REPORT_PISTON_COST) {
       return new Response(JSON.stringify({ error: "Insufficient credits", balance }), {
@@ -128,7 +156,7 @@ export async function POST(req: NextRequest) {
 
         if (!isCompleteV3Report(report)) {
           send("error", {
-            message: "V3 report incomplete: one or more scrape, database, or AI sections failed.",
+            message: "Report incomplete: one or more data or analysis sections failed.",
             stepsCompleted: report.stepsCompleted,
             stepsFailed: report.stepsFailed,
           })
@@ -155,7 +183,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Deduct credit
-        if (!alreadyGenerated) {
+        if (dbUser && !alreadyGenerated) {
           const creditResult = await deductCredit(dbUser.id, listingId, listingId)
           if (!creditResult.success) {
             send("error", {
@@ -167,6 +195,8 @@ export async function POST(req: NextRequest) {
             return
           }
         }
+
+        await finalizeLeadDelivery()
 
         send("complete", {
           report,

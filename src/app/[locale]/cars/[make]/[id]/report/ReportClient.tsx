@@ -66,6 +66,7 @@ import { useConsent } from "@/components/legal/ConsentProvider"
 import {
   resolveReportAccess,
   resolveReportPrimaryAction,
+  resolveReportSummaryVerdict,
   resolveVisibleV3Report,
   shouldAllowReportUnlockAttempt,
   shouldPromptAuthBeforeReportUnlock,
@@ -452,11 +453,13 @@ export function ReportClient({
   }, [userHasAccess])
 
   useEffect(() => {
-    void track({
-      event: "report_viewed",
-      payload: { listingId: car.id, source: "report_page" },
-    })
-  }, [car.id])
+    if (consent === "accepted") {
+      void track({
+        event: "report_viewed",
+        payload: { listingId: car.id, source: "report_page" },
+      })
+    }
+  }, [car.id, consent])
 
   useEffect(() => {
     fireMetaEvent("ViewContent", {
@@ -473,6 +476,14 @@ export function ReportClient({
       },
     })
   }, [car.id, car.title, consent])
+
+  useEffect(() => {
+    fireMetaEvent("ReportViewed", {
+      consent,
+      pixelParams: { listing_id: car.id },
+      customData: { listing_id: car.id },
+    })
+  }, [car.id, consent])
 
   const spendableBalance =
     authProfile?.pistonsBalance ??
@@ -558,6 +569,13 @@ export function ReportClient({
   // Fair value: from report or market stats (real data only)
   const fairLow = report?.fair_value_low ?? marketStats?.primaryFairValueLow ?? 0
   const fairHigh = report?.fair_value_high ?? marketStats?.primaryFairValueHigh ?? 0
+  const insufficientMarketEvidence = Boolean(
+    report &&
+    report.comparables_count === 0 &&
+    report.specific_car_fair_value_low == null &&
+    report.specific_car_fair_value_mid == null &&
+    report.specific_car_fair_value_high == null,
+  )
   const regionRange = car.fairValueByRegion[effectiveRegion as keyof typeof car.fairValueByRegion] || car.fairValueByRegion.US
   const currentPriceUsd = resolveCurrentPriceUsd(car)
   const mileageLabel = car.mileage > 0
@@ -2234,12 +2252,25 @@ export function ReportClient({
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
                         {tFairValue("specificCarTitle")}
                       </p>
-                      <p className="text-2xl font-bold text-foreground tabular-nums">
-                        {formatUsd(report.specific_car_fair_value_low ?? 0)} - {formatUsd(report.specific_car_fair_value_high ?? 0)}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {tFairValue("baselineSubtitle", { count: report.comparables_count })}
-                      </p>
+                      {insufficientMarketEvidence ? (
+                        <>
+                          <p className="text-lg font-semibold text-foreground">
+                            Insufficient market evidence
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            No numeric fair value is shown because there are not enough usable comparables for this car.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold text-foreground tabular-nums">
+                            {formatUsd(report.specific_car_fair_value_low ?? 0)} - {formatUsd(report.specific_car_fair_value_high ?? 0)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {tFairValue("baselineSubtitle", { count: report.comparables_count })}
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -2276,7 +2307,7 @@ export function ReportClient({
                         </p>
                       ) : (
                         <p className="text-[12px] text-muted-foreground italic mt-2 leading-snug">
-                          Insufficient comparable data
+                          {insufficientMarketEvidence ? "Insufficient market evidence" : "Insufficient comparable data"}
                         </p>
                       )}
                     </div>
@@ -3301,11 +3332,11 @@ export function ReportClient({
       {/* --- SUMMARY RAIL - sticky right column on xl+, sticky bottom on mobile --- */}
       <ReportSummaryRail
         car={car}
-        verdict={(
-          visibleV3Report?.finalSynthesis?.finalRecommendation?.verdict
-            ? (visibleV3Report.finalSynthesis.finalRecommendation.verdict.toLowerCase() as "buy" | "watch" | "walk" | "hold")
-            : verdict
-        )}
+        verdict={resolveReportSummaryVerdict({
+          executiveVerdict:
+            visibleV3Report?.finalSynthesis?.executiveSummary?.keyMetrics?.verdict,
+          fallbackVerdict: verdict,
+        })}
         fairValueLow={report?.specific_car_fair_value_low ?? null}
         fairValueHigh={report?.specific_car_fair_value_high ?? null}
         fairValueMid={report?.specific_car_fair_value_mid ?? null}
@@ -3313,6 +3344,7 @@ export function ReportClient({
         formatPrice={formatPrice}
         similarCars={similarCars}
         makeSlug={car.make.toLowerCase().replace(/\s+/g, "-")}
+        insufficientMarketEvidence={insufficientMarketEvidence}
       />
     </div>
     </MotionConfig>

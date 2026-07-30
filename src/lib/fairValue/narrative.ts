@@ -16,7 +16,7 @@ export interface NarrativeInput {
   exteriorColor: string | null
   interiorColor: string | null
   price: number
-  fairValueMid: number
+  fairValueMid: number | null
   signals: string[]
   redFlags: string[]
   colorRarity: string | null

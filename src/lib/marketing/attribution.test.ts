@@ -19,7 +19,7 @@ describe("first-party attribution capture", () => {
 
   it("stores first landing UTMs, fbclid, landing path, referrer, and timestamp", () => {
     captureAttributionFromLocation(
-      new URL("https://www.monzahaus.com/en/get-started?utm_source=meta&utm_medium=paid_social&utm_campaign=mh-fase05&utm_content=video-a&fbclid=fb.123"),
+      new URL("https://www.monzahaus.com/en/get-started?utm_source=meta&utm_medium=paid_social&utm_campaign=mh-fase05&utm_content=video-a&fbclid=fb.123&gclid=google.123"),
       "https://facebook.com/",
     )
 
@@ -30,7 +30,8 @@ describe("first-party attribution capture", () => {
       utm_term: null,
       utm_content: "video-a",
       fbclid: "fb.123",
-      landing_path: "/en/get-started?utm_source=meta&utm_medium=paid_social&utm_campaign=mh-fase05&utm_content=video-a&fbclid=fb.123",
+      gclid: "google.123",
+      landing_path: "/en/get-started?utm_source=meta&utm_medium=paid_social&utm_campaign=mh-fase05&utm_content=video-a&fbclid=fb.123&gclid=google.123",
       referrer: "https://facebook.com/",
       first_seen_at: "2026-07-06T12:00:00.000Z",
     })

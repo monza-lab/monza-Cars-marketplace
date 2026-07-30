@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   resolveReportAccess,
   resolveReportPrimaryAction,
+  resolveReportSummaryVerdict,
   shouldAllowReportUnlockAttempt,
   resolveVisibleV3Report,
   shouldPromptAuthBeforeReportUnlock,
@@ -17,6 +18,10 @@ describe("resolveReportAccess", () => {
 
   it("keeps the report locked until the server confirms access", () => {
     expect(resolveReportAccess({ serverHasAccess: false })).toBe(false)
+  })
+
+  it("accepts a server-validated report-scoped token", () => {
+    expect(resolveReportAccess({ serverHasAccess: false, tokenHasAccess: true })).toBe(true)
   })
 })
 
@@ -38,6 +43,22 @@ describe("resolveVisibleV3Report", () => {
       serverReport,
       streamedReport,
     })).toBe(serverReport)
+  })
+})
+
+describe("resolveReportSummaryVerdict", () => {
+  it("uses the V3 executive verdict displayed in the report", () => {
+    expect(resolveReportSummaryVerdict({
+      executiveVerdict: "WATCH",
+      fallbackVerdict: null,
+    })).toBe("watch")
+  })
+
+  it("does not treat the narrative final recommendation as a verdict enum", () => {
+    expect(resolveReportSummaryVerdict({
+      executiveVerdict: "Monitor pricing and negotiate before buying.",
+      fallbackVerdict: "walk",
+    })).toBe("walk")
   })
 })
 

@@ -7,6 +7,7 @@ import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persist
 import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
 import { sendServerCapiEvent } from '@/lib/marketing/metaCapiServer'
 import type { AttributionSnapshot } from '@/lib/marketing/attribution'
+import { claimReportLead } from '@/lib/reportAccess/repository'
 
 const CREATE_USER_DB_TIMEOUT_MS = 15_000
 
@@ -46,6 +47,7 @@ function parseAttribution(input: unknown): AttributionSnapshot | null {
     utm_term: cleanString(source.utm_term),
     utm_content: cleanString(source.utm_content),
     fbclid: cleanString(source.fbclid),
+    gclid: cleanString(source.gclid),
     landing_path: landingPath,
     referrer: cleanString(source.referrer),
     first_seen_at: firstSeen,
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
     const attribution = parseAttribution(body.attribution)
 
     try {
-      const { profile, created } = await withDbTimeout(
+      const { profile } = await withDbTimeout(
         getOrCreateUserWithStatus(
           user.id,
           user.email!,
@@ -86,7 +88,8 @@ export async function POST(request: NextRequest) {
         '/api/user/create getOrCreateUserWithStatus'
       )
 
-      if (created) {
+      const claimedLead = await claimReportLead(user.email!, profile.id)
+      if (claimedLead.claimed) {
         await sendServerCapiEvent({
           eventName: 'CompleteRegistration',
           eventId: `complete_registration_${user.id}`,
@@ -94,10 +97,18 @@ export async function POST(request: NextRequest) {
           email: user.email ?? undefined,
           externalId: user.id,
           customData: {
-            content_name: 'free_signup',
+            content_name: 'account_claim',
             status: 'completed',
           },
         }).catch((err) => console.error('[meta-capi-registration] failed', err))
+        const { createAdminClient } = await import('@/lib/supabase/server')
+        const { error: analyticsError } = await createAdminClient().from('analytics_events').insert({
+          event_name: 'account_claimed',
+          lead_id: claimedLead.leadId,
+          user_credits_id: profile.id,
+          payload: { transferredReports: claimedLead.transferredReports },
+        })
+        if (analyticsError) console.error('[analytics-account-claim] failed', analyticsError)
       }
 
       // Advisor: merge any anonymous conversations + grace + ledger rows into this new user.

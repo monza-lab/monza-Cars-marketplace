@@ -20,6 +20,7 @@ interface ReportSummaryRailProps {
   formatPrice: (n: number) => string
   similarCars: SimilarCarResult[]
   makeSlug: string
+  insufficientMarketEvidence?: boolean
 }
 
 const VERDICT_STYLE: Record<NonNullable<Verdict>, { label: string; classes: string; dot: string }> = {
@@ -62,6 +63,7 @@ export function ReportSummaryRail({
   formatPrice,
   similarCars,
   makeSlug,
+  insufficientMarketEvidence = false,
 }: ReportSummaryRailProps) {
   const [mobileExpanded, setMobileExpanded] = useState(false)
 
@@ -126,7 +128,7 @@ export function ReportSummaryRail({
               </p>
             ) : (
               <p className="text-[11px] text-muted-foreground mt-1">
-                Awaiting analysis
+                {insufficientMarketEvidence ? "Insufficient market evidence" : "Awaiting analysis"}
               </p>
             )}
           </div>

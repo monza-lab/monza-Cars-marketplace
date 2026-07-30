@@ -43,7 +43,7 @@ export function PistonsWalletModal(props: PistonsWalletModalProps) {
   if (!props.open) return null
   const isFree = props.tier === "FREE"
   const hasUnlimitedCredits = props.tier === "PRO"
-  const planLabel = (hasUnlimitedCredits ? "Genshpod" : (props.planName ?? props.tier))
+  const planLabel = (hasUnlimitedCredits ? "Monthly" : (props.planName ?? props.tier))
     .replaceAll("_", " ")
     .replace(/\b\w/g, (m) => m.toUpperCase())
 

@@ -1,9 +1,11 @@
 export function resolveReportAccess({
   serverHasAccess,
+  tokenHasAccess = false,
 }: {
   serverHasAccess: boolean
+  tokenHasAccess?: boolean
 }): boolean {
-  return serverHasAccess
+  return serverHasAccess || tokenHasAccess
 }
 
 export function resolveVisibleV3Report<T>({
@@ -14,6 +16,26 @@ export function resolveVisibleV3Report<T>({
   streamedReport: T | null
 }): T | null {
   return serverReport ?? streamedReport
+}
+
+export type ReportSummaryVerdict = "buy" | "watch" | "walk" | "hold" | null
+
+export function resolveReportSummaryVerdict({
+  executiveVerdict,
+  fallbackVerdict,
+}: {
+  executiveVerdict: unknown
+  fallbackVerdict: ReportSummaryVerdict
+}): ReportSummaryVerdict {
+  if (typeof executiveVerdict !== "string") return fallbackVerdict
+
+  const normalized = executiveVerdict.toLowerCase()
+  return normalized === "buy"
+    || normalized === "watch"
+    || normalized === "walk"
+    || normalized === "hold"
+    ? normalized
+    : fallbackVerdict
 }
 
 export function shouldRefreshProfileAfterGenerationAttempt({

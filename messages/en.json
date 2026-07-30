@@ -57,7 +57,7 @@
     ]
   },
   "mobile": {
-    "aiOracle": "AI Oracle",
+    "aiOracle": "Market Oracle",
     "explore": "Explore",
     "account": "Account",
     "askAnything": "Ask anything about any car...",
@@ -226,13 +226,13 @@
     "headline1": "Building",
     "headline2": "Investment-Grade",
     "headline3": "Assets",
-    "subheadline": "AI-powered market analysis for collector vehicles. Make smarter decisions with data-driven insights from top platforms.",
+    "subheadline": "Collector-vehicle market analysis grounded in real listings and sales. Make smarter decisions with data-driven insights from top platforms.",
     "searchPlaceholder": "Search by make, model, or year...",
     "search": "Search",
     "popular": "Popular:",
     "stats": {
       "listingsTracked": "Listings Tracked",
-      "aiAnalyses": "AI Analyses",
+      "aiAnalyses": "Market Analyses",
       "platformsActive": "Platforms Active"
     }
   },
@@ -247,8 +247,8 @@
         "description": "Monitor live listings across top platforms in real-time. Every vehicle, every price, every detail — captured and organized for you."
       },
       "analyzes": {
-        "title": "AI Analyzes",
-        "description": "Get detailed analysis, red flags, and fair price ranges powered by advanced AI. Know exactly what a vehicle is worth before you bid."
+        "title": "Market Analysis",
+        "description": "Get detailed analysis, red flags, and defensible price ranges grounded in real market data. Know what a vehicle is worth before you bid."
       },
       "bidSmart": {
         "title": "You Bid Smart",
@@ -605,7 +605,7 @@
     "topupHint": "${price} · never expires",
     "topupCta": "Buy",
     "tipPrefix": "Tip:",
-    "tipBody": "Genshpod gives you unlimited reports for $59/mo.",
+    "tipBody": "Monthly gives you unlimited reports for $59/mo.",
     "seePlans": "See plans"
   },
   "auctionDetail": {
@@ -909,8 +909,8 @@
     }
   },
   "oracle": {
-    "aiAnalysis": "AI Analysis",
-    "aiAdvisor": "AI Advisor",
+    "aiAnalysis": "Market Analysis",
+    "aiAdvisor": "Haus Advisor",
     "youAsked": "You asked:",
     "analyzing": "Analyzing...",
     "analyzingMarket": "Analyzing market data...",
@@ -953,7 +953,7 @@
       "loading": "Loading listings...",
       "meta": {
         "title": "Live Listings | Monza Lab",
-        "description": "Browse and analyze collector car listings across Bring a Trailer, Cars & Bids, AutoScout24, and more. Get AI-powered insights before you buy.",
+        "description": "Browse and analyze collector car listings across Bring a Trailer, Cars & Bids, AutoScout24, and more. Get market intelligence before you buy.",
         "ogTitle": "Live Listings | Monza Lab",
         "ogDescription": "Browse and analyze collector car listings across all major platforms."
       }
@@ -1169,7 +1169,7 @@
       "clearFilters": "Clear Filters"
     },
     "badges": {
-      "aiAnalyzed": "AI Analyzed"
+      "aiAnalyzed": "Market Analyzed"
     },
     "units": {
       "milesLong": "miles",
@@ -1419,7 +1419,7 @@
   },
   "metadata": {
     "title": "Monza Lab | Investment-Grade Automotive Assets",
-    "description": "The intelligent terminal for collector vehicle acquisition and analysis. AI-powered insights for smarter acquisitions."
+    "description": "The market-intelligence terminal for collector vehicle acquisition and analysis. Evidence-led insights for smarter acquisitions."
   },
   "searchHistory": {
     "title": "Search History",
@@ -1445,7 +1445,7 @@
   "seo": {
     "make": {
       "title": "{make} Collection — Collector-Grade Vehicles | MonzaHaus",
-      "description": "Explore collector-grade {make} vehicles with live and historical collector-market insights, auction data, and AI-powered market analysis."
+      "description": "Explore collector-grade {make} vehicles with live and historical collector-market insights, auction data, and evidence-led market analysis."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Auction Results, Market Values & Collector Analysis | MonzaHaus",
@@ -1460,8 +1460,8 @@
     "hausReport": {
       "title": "Haus Report",
       "available": "Haus Report available",
-      "teaserBody": "Specific-car fair value, service history analysis, and the questions to ask before you buy. Unlock for 1,000 Pistons.",
-      "ctaGenerate": "Generate Haus Report",
+      "teaserBody": "Specific-car fair value, service history analysis, and the questions to ask before you buy.",
+      "ctaGenerate": "Generate Haus Report - free",
       "ctaView": "View Haus Report",
       "cached": "Already generated — cached"
     },

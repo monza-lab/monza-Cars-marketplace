@@ -88,7 +88,7 @@ export function BrowseCard({
   // eslint-disable-next-line react-hooks/purity -- Date.now() is the only honest signal; React Compiler is not enabled.
   const showCountdown = car.bidCount > 0 && endMs !== null && endMs > Date.now();
 
-  const reportHref = `/cars/${makeSlug}/${car.id}/report`;
+  const detailHref = `/cars/${makeSlug}/${car.id}`;
 
   return (
     <motion.div
@@ -101,8 +101,8 @@ export function BrowseCard({
           "View on {platform}" external link below is a <button> (not <a>)
           so we don't nest <a> inside <a>. */}
       <Link
-        href={reportHref}
-        aria-label={`View MonzaHaus report — ${car.title}`}
+        href={detailHref}
+        aria-label={`View ${car.title}`}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-muted">

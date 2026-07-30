@@ -88,12 +88,14 @@ export function createSupabaseWriter(): SupabaseWriter {
 function createServiceClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const key = serviceRoleKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error("Missing Supabase env vars.");
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL.");
+  }
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY; scraper writes require service-role access.");
   }
 
-  return createClient(url, key, {
+  return createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

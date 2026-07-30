@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { AuthModal } from "@/components/auth/AuthModal"
-import { useAuth } from "@/lib/auth/AuthProvider"
 import { useRouter, useParams } from "next/navigation"
 import {
   BarChart3,
@@ -19,7 +18,7 @@ const STEPS = [
   },
   {
     icon: BarChart3,
-    title: "Get your AI report",
+    title: "Get your Haus Report",
     description:
       "Collector grade, regional fair value, comparable sales, bid targets — all in one dossier.",
   },
@@ -40,20 +39,17 @@ const DATA_SOURCES = [
 ]
 
 export default function GetStartedPage() {
-  const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
   const locale = (params.locale as string) ?? "en"
-  const [authOpen, setAuthOpen] = useState(false)
-
+  const claimEmail = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get("claim") ?? "",
+    () => "",
+  )
+  const [claimDismissed, setClaimDismissed] = useState(false)
   const handleCTA = () => {
-    if (user) {
-      // Post-signup, drop the user into the market where the report loop
-      // lives (pick a Porsche → generate report), not the advisor chat.
-      router.push(`/${locale}/cars/porsche`)
-    } else {
-      setAuthOpen(true)
-    }
+    router.push(`/${locale}/browse`)
   }
 
   return (
@@ -83,7 +79,7 @@ export default function GetStartedPage() {
               onClick={handleCTA}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Generate 3 Porsche reports — free
+              Browse Porsche listings
               <ChevronRight className="size-4" />
             </button>
           </div>
@@ -149,7 +145,7 @@ export default function GetStartedPage() {
               onClick={handleCTA}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground text-[15px] font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Generate 3 Porsche reports — free
+              Browse Porsche listings
               <ChevronRight className="size-4" />
             </button>
           </div>
@@ -157,10 +153,12 @@ export default function GetStartedPage() {
       </div>
 
       <AuthModal
-        open={authOpen}
-        onOpenChange={setAuthOpen}
+        open={Boolean(claimEmail) && !claimDismissed}
+        onOpenChange={(open) => { if (!open) setClaimDismissed(true) }}
         defaultMode="signup"
+        initialEmail={claimEmail}
       />
+
     </>
   )
 }

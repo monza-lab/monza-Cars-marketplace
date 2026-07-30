@@ -72,7 +72,7 @@ export function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link
-            href="/get-started"
+            href="/browse"
             onClick={markExplored}
             className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-[#D6BEDC] text-[#3F2A47] font-sans font-semibold text-sm md:text-[0.9375rem] px-8 py-3.5 transition-all duration-250 hover:bg-[#E1CCE5] hover:scale-[1.02] active:scale-[0.98]"
           >

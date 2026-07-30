@@ -4,11 +4,11 @@ const BASE_URL = getSiteUrl();
 
 const CONTENT = `# MonzaHaus
 
-> AI-powered collector car intelligence platform. Track Porsche 911, 992, 997 auction results from Bring a Trailer, Cars & Bids, AutoScout24, Classic.com and Elferspot. Analyze market trends, compare specs, and discover investment-grade collector vehicles in English, Spanish, German, and Japanese.
+> Collector car market intelligence platform. Track Porsche 911, 992, 997 auction results from Bring a Trailer, Cars & Bids, AutoScout24, Classic.com and Elferspot. Analyze market trends, compare specs, and discover investment-grade collector vehicles.
 
 ## About
 
-MonzaHaus is a market intelligence platform for collector car investors and enthusiasts. It aggregates live and historical auction data, provides AI-assisted market analysis, and publishes the MonzaHaus Index — a proprietary valuation benchmark for investment-grade vehicles.
+MonzaHaus is a market intelligence platform for collector car investors and enthusiasts. It aggregates live and historical auction data, provides evidence-led market analysis, and publishes the MonzaHaus Index — a proprietary valuation benchmark for investment-grade vehicles.
 
 Focus: Porsche (all series), with expansion to Ferrari, Mercedes-Benz, BMW, Lamborghini, and Aston Martin.
 

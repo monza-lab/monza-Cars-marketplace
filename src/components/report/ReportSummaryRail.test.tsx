@@ -82,4 +82,25 @@ describe("ReportSummaryRail", () => {
     expect(viewAllLink?.getAttribute("href")).not.toContain("priceMin=")
     expect(viewAllLink?.getAttribute("href")).not.toContain("priceMax=")
   })
+
+  it("labels a completed sparse report as insufficient rather than pending", () => {
+    render(
+      <ReportSummaryRail
+        car={car}
+        verdict={null}
+        fairValueLow={null}
+        fairValueHigh={null}
+        fairValueMid={null}
+        askingPrice={200000}
+        formatPrice={(n) => `$${n.toLocaleString()}`}
+        similarCars={[]}
+        makeSlug="porsche"
+        insufficientMarketEvidence
+      />,
+    )
+
+    expect(screen.getAllByText("Insufficient market evidence").length).toBeGreaterThan(0)
+    expect(screen.queryByText("Awaiting analysis")).toBeNull()
+    expect(screen.queryByText("$0 - $0")).toBeNull()
+  })
 })

@@ -15,14 +15,15 @@ interface AuthModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   defaultMode?: 'signin' | 'signup'
+  initialEmail?: string
 }
 
-export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthModalProps) {
+export function AuthModal({ open, onOpenChange, defaultMode = 'signin', initialEmail = '' }: AuthModalProps) {
   const t = useTranslations('auth')
   const idPrefix = useId()
   const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode)
   const [showPassword, setShowPassword] = useState(defaultMode === 'signup')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState<null | 'google' | 'magic' | 'password'>(null)
@@ -51,8 +52,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = 'signin' }: AuthMo
     } else {
       setMode(defaultMode)
       setShowPassword(defaultMode === 'signup')
+      if (initialEmail) setEmail(initialEmail)
     }
-  }, [open, defaultMode])
+  }, [open, defaultMode, initialEmail])
 
   // Countdown for resend cooldown
   useEffect(() => {

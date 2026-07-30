@@ -8,6 +8,36 @@ import { generateInvestmentNarrative } from "@/lib/fairValue/narrative"
 import { extractSeries } from "@/lib/brandConfig"
 import type { HausReport } from "@/lib/fairValue/types"
 import type { PipelineContext } from "../pipeline"
+import type { MarketDataBundle } from "../types-v3"
+
+export function resolveReportValuationBaseline(
+  marketData: MarketDataBundle | null,
+): number {
+  const prices = (marketData?.dbComparables ?? [])
+    .map((comparable) => Number(comparable.soldPrice))
+    .filter((price) => Number.isFinite(price) && price > 0)
+    .sort((a, b) => a - b)
+  const strictMedian = prices.length === 0
+    ? 0
+    : prices.length % 2 === 0
+      ? Math.round((prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2)
+      : Math.round(prices[Math.floor(prices.length / 2)])
+
+  if (prices.length >= 3) return strictMedian
+
+  const marketLow = marketData?.marketStats?.primaryFairValueLow
+  const marketHigh = marketData?.marketStats?.primaryFairValueHigh
+  if (
+    Number.isFinite(marketLow)
+    && Number.isFinite(marketHigh)
+    && (marketLow ?? 0) > 0
+    && (marketHigh ?? 0) > 0
+  ) {
+    return Math.round(((marketLow ?? 0) + (marketHigh ?? 0)) / 2)
+  }
+
+  return strictMedian
+}
 
 export async function executeFairValueEngine(
   ctx: PipelineContext
@@ -57,9 +87,7 @@ export async function executeFairValueEngine(
     ...(textResult?.signals ?? []),
   ]
 
-  const baselineUsd = marketData?.marketStats?.primaryFairValueLow
-    ? Math.round((marketData.marketStats.primaryFairValueLow + marketData.marketStats.primaryFairValueHigh) / 2)
-    : 0
+  const baselineUsd = resolveReportValuationBaseline(marketData)
 
   const { appliedModifiers, totalPercent } = applyModifiers({ baselineUsd, signals: detected })
   const specificFV = computeSpecificCarFairValue({ baselineUsd, totalPercent })

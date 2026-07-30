@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     template: "%s | MonzaHaus",
   },
   description:
-    "AI-powered collector car intelligence platform. Track Porsche 911, 992, 997 auction results from Bring a Trailer, Cars & Bids, and AutoScout24. Analyze market trends and discover investment-grade collector vehicles.",
+    "Collector car market intelligence platform. Track Porsche 911, 992, 997 auction results from Bring a Trailer, Cars & Bids, and AutoScout24. Analyze market trends and discover investment-grade collector vehicles.",
   keywords: [
     "collector car market intelligence",
     "Porsche 911 auction results",
@@ -91,7 +91,7 @@ export const metadata: Metadata = {
     siteName: "MonzaHaus",
     title: "MonzaHaus | Collector Car Market Intelligence & Porsche Market Analysis",
     description:
-      "Track Porsche 911, 992, 997 auction results. AI-powered market intelligence from Bring a Trailer, Cars & Bids, and AutoScout24. Discover investment-grade collector vehicles.",
+      "Track Porsche 911, 992, 997 auction results. Market intelligence from Bring a Trailer, Cars & Bids, and AutoScout24. Discover investment-grade collector vehicles.",
     locale: "en_US",
     alternateLocale: ["es_ES", "de_DE", "ja_JP"],
     images: [
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 2400,
         height: 1260,
-        alt: "MonzaHaus — AI-powered collector car market intelligence platform",
+        alt: "MonzaHaus collector car market intelligence platform",
       },
     ],
   },
@@ -107,7 +107,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MonzaHaus | Collector Car Market Intelligence",
     description:
-      "Track Porsche 911 auction results, analyze collector car market trends, and discover investment-grade vehicles. AI-powered intelligence from BaT, C&B, and AutoScout24.",
+      "Track Porsche 911 auction results, analyze collector car market trends, and discover investment-grade vehicles. Market intelligence from BaT, C&B, and AutoScout24.",
     images: ["/og-image.png"],
   },
   robots: {

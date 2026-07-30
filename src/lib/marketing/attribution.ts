@@ -9,6 +9,7 @@ export interface AttributionSnapshot {
   utm_term: string | null
   utm_content: string | null
   fbclid: string | null
+  gclid: string | null
   landing_path: string
   referrer: string | null
   first_seen_at: string
@@ -31,6 +32,7 @@ function parseStored(value: string | null): AttributionSnapshot | null {
       utm_term: normalizeString(parsed.utm_term ?? null),
       utm_content: normalizeString(parsed.utm_content ?? null),
       fbclid: normalizeString(parsed.fbclid ?? null),
+      gclid: normalizeString(parsed.gclid ?? null),
       landing_path: normalizeString(parsed.landing_path) ?? "/",
       referrer: normalizeString(parsed.referrer ?? null),
       first_seen_at: parsed.first_seen_at,
@@ -47,7 +49,7 @@ function isFresh(snapshot: AttributionSnapshot, now = Date.now()): boolean {
 
 function hasAttributionSignal(url: URL, referrer: string | null): boolean {
   return (
-    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid"]
+    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid"]
       .some((key) => url.searchParams.has(key)) ||
     Boolean(referrer)
   )
@@ -65,6 +67,7 @@ export function buildAttributionSnapshot(
     utm_term: normalizeString(url.searchParams.get("utm_term")),
     utm_content: normalizeString(url.searchParams.get("utm_content")),
     fbclid: normalizeString(url.searchParams.get("fbclid")),
+    gclid: normalizeString(url.searchParams.get("gclid")),
     landing_path: `${url.pathname}${url.search}`,
     referrer: normalizeString(referrer),
     first_seen_at: now.toISOString(),

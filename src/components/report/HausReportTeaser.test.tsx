@@ -18,9 +18,9 @@ describe("HausReportTeaser", () => {
     expect(onClick).toHaveBeenCalledOnce()
   })
 
-  it("shows 'View' CTA when report exists (user has not paid)", () => {
+  it("shows the free generation CTA when a cached report exists but the user has not unlocked it", () => {
     renderWithIntl(<HausReportTeaser reportExists={true} userAlreadyPaid={false} onClick={() => {}} />)
-    expect(screen.getByRole("button", { name: /view haus report/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /generate haus report/i })).toBeInTheDocument()
     expect(screen.getByText(/already generated/i)).toBeInTheDocument()
   })
 

@@ -32,7 +32,7 @@ export function OrganizationJsonLd() {
     url: BASE_URL,
     logo: `${BASE_URL}/favicon-512.png`,
     description:
-      "AI-powered collector car intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
+      "Collector car market intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
     foundingDate: "2024",
     sameAs: [
       // Add social profiles when available
@@ -53,7 +53,7 @@ export function OrganizationJsonLd() {
     name: "MonzaHaus",
     url: BASE_URL,
     description:
-      "Collector car market intelligence platform with AI-powered auction analysis for Porsche 911, 992, 997, and other investment-grade vehicles.",
+      "Collector car market intelligence platform with evidence-led auction analysis for Porsche 911, 992, 997, and other investment-grade vehicles.",
     potentialAction: {
       "@type": "SearchAction",
       target: {
@@ -73,7 +73,7 @@ export function OrganizationJsonLd() {
     operatingSystem: "Web",
     url: BASE_URL,
     description:
-      "Investment-grade automotive asset intelligence. AI-powered analysis of collector car auctions, market trends, and vehicle provenance.",
+      "Investment-grade automotive asset intelligence. Data-led analysis of collector car auctions, market trends, and vehicle provenance.",
     offers: {
       "@type": "Offer",
       price: "0",

@@ -53,6 +53,10 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }))
 
+vi.mock("@/lib/reportAccess/repository", () => ({
+  resolveReportToken: vi.fn().mockResolvedValue(null),
+}))
+
 // Los client components son irrelevantes — sólo nos importa que la
 // función ReportPage resuelva sin tirar 500.
 vi.mock("./ReportClient", () => ({

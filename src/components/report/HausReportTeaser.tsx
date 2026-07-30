@@ -10,7 +10,7 @@ interface Props {
 
 export function HausReportTeaser({ reportExists, userAlreadyPaid, onClick }: Props) {
   const t = useTranslations("report.hausReport")
-  const cta = reportExists ? t("ctaView") : t("ctaGenerate")
+  const cta = userAlreadyPaid ? t("ctaView") : t("ctaGenerate")
 
   return (
     <div className="rounded-2xl border border-border bg-card/60 p-5 flex items-start gap-4">

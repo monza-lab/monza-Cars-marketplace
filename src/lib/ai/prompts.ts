@@ -448,15 +448,22 @@ export function buildNarrativePrompt(vehicle: {
   exteriorColor: string | null
   interiorColor: string | null
   price: number
-  fairValueMid: number
+  fairValueMid: number | null
   signals: string[]
   redFlags: string[]
   colorRarity: string | null
   colorPremium: number
 }): string {
-  const deltaPercent = vehicle.fairValueMid > 0
+  const deltaPercent = vehicle.fairValueMid && vehicle.fairValueMid > 0
     ? (((vehicle.price - vehicle.fairValueMid) / vehicle.fairValueMid) * 100).toFixed(1)
     : "N/A"
+  const valuationLines = vehicle.fairValueMid === null
+    ? `- Fair Value: unavailable (insufficient comparable market evidence)
+- Delta: N/A
+
+VALUATION CONSTRAINT: Do not use the asking price as fair value and do not invent a numeric valuation. State clearly that comparable evidence is insufficient.`
+    : `- Fair Value (specific-car): $${vehicle.fairValueMid.toLocaleString()}
+- Delta: ${deltaPercent}%`
 
   return `Write an investment narrative for this specific ${vehicle.make}.
 
@@ -468,8 +475,7 @@ VEHICLE:
 - Exterior: ${vehicle.exteriorColor ?? "unknown"}${vehicle.colorRarity ? ` (${vehicle.colorRarity}${vehicle.colorPremium > 0 ? `, +${vehicle.colorPremium}% color premium` : ""})` : ""}
 - Interior: ${vehicle.interiorColor ?? "unknown"}
 - Asking: $${vehicle.price.toLocaleString()}
-- Fair Value (specific-car): $${vehicle.fairValueMid.toLocaleString()}
-- Delta: ${deltaPercent}%
+${valuationLines}
 
 DETECTED SIGNALS (positive attributes): ${vehicle.signals.length > 0 ? vehicle.signals.join(", ") : "none"}
 RED FLAGS: ${vehicle.redFlags.length > 0 ? vehicle.redFlags.join(", ") : "none identified"}

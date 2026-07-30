@@ -125,7 +125,7 @@ describe("runAdvisorTurn (happy path, no tools)", () => {
     expect(doneEvents.at(-1)?.pistonsDebited).toBe(1)
   })
 
-  it("does not debit PRO subscription users because Genshpod has unlimited credits", async () => {
+  it("does not debit PRO subscription users because Monthly has unlimited credits", async () => {
     const doneEvents: Array<{ pistonsDebited?: number }> = []
     for await (const ev of runAdvisorTurn({
       userText: "what is a 997.2 GT3",

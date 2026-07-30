@@ -138,7 +138,10 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
               </div>
 
               <div className="flex justify-between text-[8px] font-mono text-muted-foreground">
-                <span>{/* [HARDCODED] */}Sold: {soldFormatted} (n={soldN})</span>
+                <span>
+                  {/* [HARDCODED] */}
+                  {soldN > 0 ? `Sold: ${soldFormatted} (n=${soldN})` : `Asking-led estimate (${askN} listings)`}
+                </span>
                 <span>{/* [HARDCODED] */}Ask: {askFormatted} (n={askN})</span>
               </div>
             </div>

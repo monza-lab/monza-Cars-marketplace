@@ -22,7 +22,7 @@ export function BillingDashboard() {
     tier === "PRO" ||
     Boolean(profile?.unlimitedReports)
   const hasUnlimited = isSubscribed
-  const planLabel = isSubscribed ? "Genshpod" : tier
+  const planLabel = isSubscribed ? "Monthly" : tier
   const periodEnd = profile?.subscriptionPeriodEnd
     ? new Date(profile.subscriptionPeriodEnd).toLocaleDateString("en-US", {
         month: "long",

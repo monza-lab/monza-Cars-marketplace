@@ -12,15 +12,12 @@ import { AppFooter } from "@/components/layout/AppFooter";
 import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { getSiteUrl } from "@/lib/seo/siteUrl";
 import { AdvisorHandoffProvider } from "@/components/advisor/AdvisorHandoffContext";
-import { AdvisorFab } from "@/components/advisor/AdvisorFab";
-import { AdvisorDrawer } from "@/components/advisor/AdvisorDrawer";
+import { AuthenticatedAdvisorChrome } from "@/components/advisor/AuthenticatedAdvisorChrome";
 import { ChatContextProvider } from "@/lib/advisor/ChatContextProvider";
 import { ConsentProvider } from "@/components/legal/ConsentProvider";
 import { ClientTrackers } from "@/components/legal/ClientTrackers";
 import { CookieBanner } from "@/components/legal/CookieBanner";
 import { MobileMotionProvider } from "@/components/MobileMotionProvider";
-import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
-import { OnboardingTooltips } from "@/components/onboarding/OnboardingTooltips";
 
 // Generate static params for all locales
 export function generateStaticParams() {
@@ -45,7 +42,7 @@ export async function generateMetadata({
   };
 
   const descriptions: Record<string, string> = {
-    en: "AI-powered collector car intelligence platform. Track Porsche 911, 992, 997 auction results, analyze market trends, and discover investment-grade vehicles from Bring a Trailer, Cars & Bids, and AutoScout24.",
+    en: "Collector car market intelligence platform. Track Porsche 911, 992, 997 auction results, analyze market trends, and discover investment-grade vehicles from Bring a Trailer, Cars & Bids, and AutoScout24.",
     es: "Plataforma de inteligencia de autos de colección impulsada por IA. Seguimiento de subastas Porsche 911, 992, 997, análisis de tendencias de mercado y descubrimiento de vehículos de inversión.",
     de: "KI-gestützte Sammlerfahrzeug-Plattform. Porsche 911, 992, 997 Auktionsergebnisse verfolgen, Markttrends analysieren und investitionsgeeignete Fahrzeuge entdecken.",
     ja: "AIを活用したコレクターカーインテリジェンス。ポルシェ911、992、997のオークション結果追跡、市場トレンド分析、投資グレード車両の発見。",
@@ -100,14 +97,11 @@ export default async function LocaleLayout({
                       <OrganizationJsonLd />
                       <ClientHeader />
                       <main>{children}</main>
-                      <AdvisorFab />
-                      <AdvisorDrawer />
+                      <AuthenticatedAdvisorChrome />
                       <MobileBottomNav />
                       <AppFooter />
                       <ClientTrackers />
                       <CookieBanner />
-                      <WelcomeModal />
-                      <OnboardingTooltips />
                     </MobileMotionProvider>
                   </ChatContextProvider>
                 </AdvisorHandoffProvider>

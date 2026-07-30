@@ -386,7 +386,7 @@ export function AnalysisReport({ analysis, className }: AnalysisReportProps) {
             className="border-border text-muted-foreground/80 text-[10px] gap-1.5 font-normal"
           >
             <Scale className="size-3 text-destructive" />
-            Powered by Claude AI
+            Generated from market evidence
           </Badge>
         </div>
       </CardContent>
