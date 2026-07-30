@@ -298,9 +298,14 @@ export async function scrapeListings(
       // Current Algolia results nest a listing tile inside each hit. Parse only
       // the outer hit so one listing cannot be emitted twice.
       const currentAuctionCards = $('.ais-InfiniteHits-item');
+      const legacyAuctionCards = $(
+        '.lot-card, .search-result, .auction-card, [id^="auction-"], [class*="listing-tile"], [class*="lot-card"], [class*="search-result"]',
+      ).filter((_i, el) =>
+        $(el).find('a[href*="/cars/"], a[href*="/lots/"], a[href*="/for-sale/"]').length > 0
+      );
       const auctionCards = currentAuctionCards.length > 0
         ? currentAuctionCards
-        : $('.lot-card, .search-result, .auction-card, [id^="auction-"], [class*="listing-tile"], [class*="lot-card"], [class*="search-result"]');
+        : legacyAuctionCards;
 
       if (auctionCards.length === 0) {
         // Fallback: find links to car/lot detail pages

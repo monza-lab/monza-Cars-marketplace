@@ -112,6 +112,41 @@ describe('CC: scrapeListings', () => {
     });
   });
 
+  it('ignores nested listing-tile watch icons and parses the surrounding live listing', async () => {
+    const page = makeCCListingPage([
+      `
+        <li>
+          <div class="flex flex-col rounded-md">
+            <a class="listing-tile-module__icons watching-icon-module__watchIcon"></a>
+            <a href="/for-sale/1989-porsche-911-930-turbo-7">
+              <h3>1989 Porsche 911 (930) Turbo</h3>
+              <span class="price">€100,500</span>
+              <span class="location">Strasbourg</span>
+              <span class="bids">40 Bids</span>
+            </a>
+          </div>
+        </li>
+      `,
+    ]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(page),
+    }));
+
+    const promise = scrapeListings(1);
+    await vi.runAllTimersAsync();
+    const { auctions, errors } = await promise;
+
+    expect(errors).toEqual([]);
+    expect(auctions).toHaveLength(1);
+    expect(auctions[0]).toMatchObject({
+      title: '1989 Porsche 911 (930) Turbo',
+      currentBid: 100500,
+      bidCount: 40,
+      location: 'Strasbourg',
+      url: 'https://collectingcars.com/for-sale/1989-porsche-911-930-turbo-7',
+    });
+  });
+
   it('uses correct pagination URL for page 2+', async () => {
     const page = makeCCListingPage([
       makeCCCard('car-a', '2000 Porsche Boxster S', '£25,000', 8),
