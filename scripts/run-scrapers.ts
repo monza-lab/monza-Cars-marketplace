@@ -462,6 +462,7 @@ interface CliFlags {
   maxIterations: number;    // NEW — default 10
   pauseMinutes: number;     // NEW — default 2
   failOnGaps: boolean;
+  noLifecycleMutations: boolean;
 }
 
 function parseFlags(): CliFlags {
@@ -484,6 +485,7 @@ function parseFlags(): CliFlags {
     maxIterations,
     pauseMinutes,
     failOnGaps: args.includes("--fail-on-gaps"),
+    noLifecycleMutations: args.includes("--no-lifecycle-mutations"),
   };
 }
 
@@ -682,13 +684,17 @@ function formatDuration(ms: number): string {
 
 function runCliScraper(
   scraper: ScraperDef,
-  dryRun: boolean
+  dryRun: boolean,
+  noLifecycleMutations = false,
 ): Promise<RunResult> {
   return new Promise((resolve) => {
     const start = Date.now();
     const args = [...(scraper.args || [])];
     if (dryRun && scraper.dryRunFlag) {
       args.push(scraper.dryRunFlag);
+    }
+    if (noLifecycleMutations && scraper.id === "at-enrich") {
+      args.push("--noDelist");
     }
 
     const stdoutChunks: string[] = [];
@@ -1115,7 +1121,7 @@ async function main(): Promise<void> {
         console.log(`\n=== Running: ${scraper.name} ===\n`);
         const result = classifyLoopResult(
           scraper.type === "cli"
-            ? await runCliScraper(scraper, flags.dryRun)
+            ? await runCliScraper(scraper, flags.dryRun, flags.noLifecycleMutations)
             : await runCronScraper(scraper, flags.dryRun),
         );
         iterResults.push(result);
@@ -1228,7 +1234,7 @@ async function main(): Promise<void> {
 
     const result = classifyLoopResult(
       scraper.type === "cli"
-        ? await runCliScraper(scraper, flags.dryRun)
+        ? await runCliScraper(scraper, flags.dryRun, flags.noLifecycleMutations)
         : await runCronScraper(scraper, flags.dryRun),
     );
 

@@ -52,6 +52,16 @@ describe("scraper runner cron maintenance profile", () => {
 });
 
 describe("scraper runner enrichment profile", () => {
+  it("keeps assurance enrichment free of lifecycle mutations", () => {
+    const assuranceSource = readFileSync("scripts/scraper-assurance.ts", "utf8");
+    const runnerSource = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const autoTraderSource = readFileSync("scripts/autotrader-enrich.ts", "utf8");
+
+    expect(assuranceSource).toContain('"--no-lifecycle-mutations"');
+    expect(runnerSource).toContain('args.push("--noDelist")');
+    expect(autoTraderSource).toMatch(/if \(!opts\.noDelist && apiResp\.status === 404\)/);
+  });
+
   it("gives AS24 a larger batch with a shorter delay without changing the script budget", () => {
     const source = readFileSync("scripts/run-scrapers.ts", "utf8");
     const as24Block = source.match(/id: "as24-enrich",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";
