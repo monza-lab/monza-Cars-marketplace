@@ -16,6 +16,13 @@ declare global {
       params?: Record<string, unknown>,
       opts?: { eventID: string },
     ) => void
+    // GA4, loaded alongside the pixel in ClientTrackers once consent is given.
+    gtag?: (
+      command: "event" | "config" | "js" | "consent",
+      target: string,
+      params?: Record<string, unknown>,
+    ) => void
+    dataLayer?: unknown[]
   }
 }
 

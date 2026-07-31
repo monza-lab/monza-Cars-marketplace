@@ -12,14 +12,16 @@ import { track } from "@/lib/analytics/events"
 
 // Single mount point for every non-essential tracker:
 // - Loads NOTHING while consent is "pending"
-// - On "accepted": Vercel Analytics + Speed Insights + Meta Pixel
+// - On "accepted": Vercel Analytics + Speed Insights + Meta Pixel + GA4
 // - On "rejected": still nothing (and stays that way until the user
 //   resets consent via /legal/cookies preferences)
 //
-// Adding Google Analytics later: add it here, gated by the same `accepted`
-// branch, and add its row to COOKIES in /legal/cookies/page.tsx.
+// GA4 was added 2026-07-30, following the note this file used to carry. Its
+// row was already declared in COOKIES in /legal/cookies/page.tsx, so the
+// policy now matches what actually runs.
 
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 export function ClientTrackers() {
   const { consent } = useConsent()
@@ -46,16 +48,25 @@ export function ClientTrackers() {
     })
   }, [consent, pathname])
 
+  // Route-change page views. Both snippets fire their own view on first load,
+  // so the first pathname is recorded and skipped — otherwise every session
+  // would open with a duplicate.
   useEffect(() => {
     if (consent !== "accepted") return
-    if (typeof window === "undefined" || !window.fbq) return
+    if (typeof window === "undefined") return
     if (!lastTrackedPathRef.current) {
       lastTrackedPathRef.current = pathname
       return
     }
     if (lastTrackedPathRef.current === pathname) return
     lastTrackedPathRef.current = pathname
-    window.fbq("track", "PageView")
+
+    window.fbq?.("track", "PageView")
+    window.gtag?.("event", "page_view", {
+      page_path: pathname,
+      page_location: window.location.href,
+      page_title: document.title,
+    })
   }, [consent, pathname])
 
   if (consent !== "accepted") {
@@ -66,6 +77,22 @@ export function ClientTrackers() {
     <>
       <Analytics />
       <SpeedInsights />
+      {GA_MEASUREMENT_ID && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga4" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}');
+            `}
+          </Script>
+        </>
+      )}
       {META_PIXEL_ID && (
         <>
           <Script id="meta-pixel" strategy="afterInteractive">
