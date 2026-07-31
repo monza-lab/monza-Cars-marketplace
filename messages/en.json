@@ -1557,7 +1557,7 @@
       "listings": { "label": "Listings tracked", "suffix": "+" },
       "regions": { "label": "Markets covered", "suffix": "" },
       "sources": { "label": "Data sources", "suffix": "" },
-      "reports": { "label": "Reports generated", "suffix": "+" }
+      "seriesTracked": { "label": "Porsche series tracked", "suffix": "" }
     },
     "vision": {
       "headline": "More than a platform.",

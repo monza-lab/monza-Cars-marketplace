@@ -16,6 +16,7 @@ const mockSaveHausReport = vi.fn()
 const mockSaveSignals = vi.fn()
 const mockResolveReportToken = vi.fn()
 const mockCompleteLeadReportAccess = vi.fn()
+const mockRevokePendingReportAccess = vi.fn()
 const mockBuildReportReadyEmail = vi.fn()
 const mockSendTransactionalEmail = vi.fn()
 
@@ -55,6 +56,7 @@ vi.mock("@/lib/reports/queries", () => ({
 vi.mock("@/lib/reportAccess/repository", () => ({
   resolveReportToken: mockResolveReportToken,
   completeLeadReportAccess: mockCompleteLeadReportAccess,
+  revokePendingReportAccess: mockRevokePendingReportAccess,
 }))
 
 vi.mock("@/lib/email/reportEmails", () => ({
@@ -103,6 +105,7 @@ describe("api/analyze/v3 route", () => {
     mockDeductCredit.mockResolvedValue({ success: true, creditUsed: 0 })
     mockResolveReportToken.mockResolvedValue(null)
     mockCompleteLeadReportAccess.mockResolvedValue({ email: "buyer@example.com" })
+    mockRevokePendingReportAccess.mockResolvedValue(undefined)
     mockBuildReportReadyEmail.mockReturnValue({
       subject: "Your Haus Report is ready",
       html: "<p>ready</p>",
@@ -273,5 +276,54 @@ describe("api/analyze/v3 route", () => {
       subject: "Your Haus Report is ready",
       html: "<p>ready</p>",
     })
+  })
+
+  it("releases a pending lead reservation when generation is incomplete", async () => {
+    mockCreateClient.mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } })
+    mockResolveReportToken.mockResolvedValue({ id: "access-failed", lead_id: "lead-1", status: "pending" })
+    mockRunV3Pipeline.mockResolvedValue({
+      report: { stepsCompleted: 9, stepsFailed: 1, finalSynthesis: null },
+      results: [],
+    })
+    const { POST } = await import("./route")
+    const response = await POST(new Request("https://example.test/api/analyze/v3", {
+      method: "POST",
+      headers: { "x-report-access-token": "lead-token" },
+      body: JSON.stringify({ listingId: "live-1" }),
+    }) as never)
+    await response.text()
+    expect(mockRevokePendingReportAccess).toHaveBeenCalledWith("access-failed")
+    expect(mockCompleteLeadReportAccess).not.toHaveBeenCalled()
+  })
+
+  it.each([null, new Error("listing source down")])(
+    "releases pending access when listing lookup fails before streaming (%s)",
+    async (listingResult) => {
+      mockCreateClient.mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } })
+      mockResolveReportToken.mockResolvedValue({ id: "access-lookup", lead_id: "lead-1", status: "pending" })
+      if (listingResult instanceof Error) mockFetchLiveListingById.mockRejectedValue(listingResult)
+      else mockFetchLiveListingById.mockResolvedValue(listingResult)
+      const { POST } = await import("./route")
+      const response = await POST(new Request("https://example.test/api/analyze/v3", {
+        method: "POST", headers: { "x-report-access-token": "lead-token" },
+        body: JSON.stringify({ listingId: "live-missing" }),
+      }) as never)
+      expect(response.status).toBe(listingResult instanceof Error ? 500 : 404)
+      expect(mockRevokePendingReportAccess).toHaveBeenCalledWith("access-lookup")
+    },
+  )
+
+  it("releases pending access on a handled cached-report credit failure", async () => {
+    mockResolveReportToken.mockResolvedValue({ id: "access-credit", lead_id: "lead-1", status: "pending" })
+    mockHasV3Report.mockResolvedValue(true)
+    mockHasAlreadyGenerated.mockResolvedValue(false)
+    mockDeductCredit.mockResolvedValue({ success: false, error: "INSUFFICIENT_CREDITS" })
+    const { POST } = await import("./route")
+    const response = await POST(new Request("https://example.test/api/analyze/v3", {
+      method: "POST", headers: { "x-report-access-token": "lead-token" },
+      body: JSON.stringify({ listingId: "live-1" }),
+    }) as never)
+    expect(response.status).toBe(402)
+    expect(mockRevokePendingReportAccess).toHaveBeenCalledWith("access-credit")
   })
 })

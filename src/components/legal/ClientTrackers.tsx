@@ -30,11 +30,12 @@ export function ClientTrackers() {
   const funnelVisitTrackedRef = useRef(false)
 
   useEffect(() => {
-    if (consent === "accepted") captureAttributionFromBrowser()
-  }, [consent])
+    captureAttributionFromBrowser()
+  }, [pathname])
 
   useEffect(() => {
-    if (consent !== "accepted" || pathname !== "/browse" || funnelVisitTrackedRef.current) return
+    const isBrowseEntry = /^\/browse\/?$/.test(pathname) || /^\/[^/]+\/browse\/?$/.test(pathname)
+    if (consent !== "accepted" || !isBrowseEntry || funnelVisitTrackedRef.current) return
     funnelVisitTrackedRef.current = true
     const attribution = readStoredAttribution()
     let anonymousSessionId = window.localStorage.getItem("monzahaus_funnel_session")

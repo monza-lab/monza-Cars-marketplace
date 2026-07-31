@@ -211,6 +211,7 @@ export function ReportClient({
   dbComparables = [],
   v3Report = null,
   userHasAccess = false,
+  reportAccessToken,
 }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
@@ -219,6 +220,7 @@ export function ReportClient({
   dbComparables?: DbComparableRow[]
   v3Report?: HausReportV3 | null
   userHasAccess?: boolean
+  reportAccessToken?: string
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
@@ -482,8 +484,9 @@ export function ReportClient({
       consent,
       pixelParams: { listing_id: car.id },
       customData: { listing_id: car.id },
+      reportAccessToken,
     })
-  }, [car.id, consent])
+  }, [car.id, consent, reportAccessToken])
 
   const spendableBalance =
     authProfile?.pistonsBalance ??

@@ -30,11 +30,17 @@ export function HomeGate({ data, authError }: HomeGateProps) {
 
   const showLanding = !user && hasExplored !== true
   const showConfirmationRecovery = authError === "confirmation_failed"
+  const landingStats = {
+    listings: data.regionTotals.all || data.auctions.length,
+    regions: (["US", "UK", "EU", "JP"] as const).filter((region) => data.regionTotals[region] > 0).length,
+    sources: new Set([...data.auctions, ...data.valuationListings].map((listing) => listing.platform).filter(Boolean)).size,
+    seriesTracked: Object.values(data.seriesCounts).filter((count) => count > 0).length,
+  }
 
   if (showLanding) {
     return (
       <>
-        <LandingPage />
+        <LandingPage stats={landingStats} />
         {showConfirmationRecovery && (
           <div className="fixed left-1/2 top-24 z-[120] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-destructive/30 bg-card/95 p-4 text-center shadow-2xl backdrop-blur-xl">
             <p className="text-sm font-semibold text-foreground">

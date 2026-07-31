@@ -83,7 +83,9 @@ export function RegionalValuationSection({ regionalVal }: RegionalValuationProps
           const askN = stats?.askMedian.askingN ?? 0
 
           const title = stats
-            ? `Sold n=${soldN} (${stats.marketValue.tier}) • Asking n=${askN} (${stats.askMedian.tier})${
+            ? `${soldN > 0
+                ? `Sold n=${soldN} (${stats.marketValue.tier}) • Asking n=${askN} (${stats.askMedian.tier})`
+                : `Asking-led n=${askN} (${stats.askMedian.tier})`}${
                 stats.askMedian.factorApplied != null
                   ? ` • factor=${stats.askMedian.factorApplied.toFixed(2)} (${stats.askMedian.factorSource})`
                   : ""

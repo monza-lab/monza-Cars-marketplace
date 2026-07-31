@@ -3,6 +3,7 @@ import crypto from "node:crypto"
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN
 const TEST_CODE = process.env.META_CAPI_TEST_EVENT_CODE
+const ENABLED = process.env.META_CAPI_ENABLED === "true"
 
 function sha256(input?: string): string | undefined {
   if (!input) return undefined
@@ -30,7 +31,7 @@ export async function sendServerCapiEvent(input: {
   clientUserAgent?: string
   customData?: Record<string, unknown>
 }) {
-  if (!PIXEL_ID || !ACCESS_TOKEN) {
+  if (!ENABLED || !PIXEL_ID || !ACCESS_TOKEN) {
     console.warn("[meta-capi-server] not configured, skipping")
     return
   }

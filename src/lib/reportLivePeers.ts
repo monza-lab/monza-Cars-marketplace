@@ -1,4 +1,5 @@
 import type { CollectorCar } from "./curatedCars"
+import { createClient } from "@supabase/supabase-js"
 import { dbQuery } from "./db/sql"
 import { getExchangeRates } from "./exchangeRates"
 import { buildReportPeerIdentity } from "./reportPeerIdentity"
@@ -46,11 +47,60 @@ type ReportLivePeerRow = {
   end_time: string | null
   start_time: string | null
   final_price: number | null
+  price_usd: number | null
+  listing_price: number | null
   location: string | null
 }
 
 function stripLivePrefix(id: string): string {
   return id.startsWith("live-") ? id.slice("live-".length) : id
+}
+
+function peerPrice(row: ReportLivePeerRow): number {
+  const value = row.current_bid
+    ?? row.final_price
+    ?? row.hammer_price
+    ?? row.price_usd
+    ?? row.listing_price
+  const price = Number(value)
+  return Number.isFinite(price) ? price : 0
+}
+
+async function fetchStrictLivePeersViaHttp(
+  identity: NonNullable<ReturnType<typeof buildReportPeerIdentity>>,
+  target: ReportLivePeerTarget,
+  targetPrice: number,
+  safeLimit: number,
+): Promise<ReportLivePeerRow[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) throw new Error("Supabase HTTP read environment is required")
+
+  const supabase = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const { data, error } = await supabase
+    .from("listings")
+    .select("id,year,make,model,trim,source,source_url,status,sale_date,country,region,city,hammer_price,original_currency,mileage,mileage_unit,vin,color_exterior,color_interior,description_text,body_style,title,platform,current_bid,bid_count,rarity_score,rarity_tier,rarity_signals_json,rarity_scored_at,rarity_score_version,reserve_status,seller_notes,images,engine,transmission,end_time,start_time,final_price,price_usd,listing_price,location")
+    .eq("status", "active")
+    .ilike("make", target.make.trim())
+    .limit(Math.max(safeLimit * 5, 100))
+    .abortSignal(AbortSignal.timeout(5_000))
+
+  if (error) throw error
+
+  const targetId = stripLivePrefix(target.id)
+  return ((data ?? []) as ReportLivePeerRow[])
+    .filter((row) => {
+      const candidate = buildReportPeerIdentity({ make: row.make, model: row.model })
+      return row.id !== targetId
+        && row.status === "active"
+        && candidate?.make === identity.make
+        && candidate.modelIdentity === identity.modelIdentity
+        && peerPrice(row) > 0
+    })
+    .sort((a, b) => Math.abs(peerPrice(a) - targetPrice) - Math.abs(peerPrice(b) - targetPrice))
+    .slice(0, safeLimit)
 }
 
 export async function fetchStrictLiveReportPeerCandidates(
@@ -64,7 +114,9 @@ export async function fetchStrictLiveReportPeerCandidates(
   const safeLimit = Math.max(1, Math.min(limit, 200))
 
   try {
-    const rows = await dbQuery<ReportLivePeerRow>(
+    const rows = process.env.VERCEL === "1"
+      ? { rows: await fetchStrictLivePeersViaHttp(identity, target, targetPrice, safeLimit) }
+      : await dbQuery<ReportLivePeerRow>(
       `
         WITH strict_live_peers AS (
           SELECT
@@ -134,7 +186,7 @@ export async function fetchStrictLiveReportPeerCandidates(
         LIMIT $5
       `,
       [identity.make, identity.modelIdentity, stripLivePrefix(target.id), targetPrice, safeLimit],
-    )
+      )
 
     const rates = await getExchangeRates().catch(() => ({} as Record<string, number>))
     return rows.rows

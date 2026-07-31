@@ -58,7 +58,7 @@
     ]
   },
   "mobile": {
-    "aiOracle": "AI Oracle",
+    "aiOracle": "Oráculo de mercado",
     "explore": "Explorar",
     "account": "Cuenta",
     "askAnything": "Pregunta sobre cualquier carro...",
@@ -225,13 +225,13 @@
     "headline1": "Construyendo",
     "headline2": "Activos",
     "headline3": "de Inversión",
-    "subheadline": "Análisis de subastas impulsado por IA para vehículos clásicos. Haz ofertas más inteligentes con insights basados en datos de las principales plataformas.",
+    "subheadline": "Análisis de subastas basado en datos para vehículos clásicos. Haz ofertas más inteligentes con información de las principales plataformas.",
     "searchPlaceholder": "Buscar por marca, modelo o año...",
     "search": "Buscar",
     "popular": "Popular:",
     "stats": {
       "auctionsTracked": "Subastas monitoreadas",
-      "aiAnalyses": "Análisis con IA",
+      "aiAnalyses": "Análisis de mercado",
       "platformsActive": "Plataformas activas"
     }
   },
@@ -246,8 +246,8 @@
         "description": "Monitoreamos subastas en vivo en las principales plataformas en tiempo real. Cada anuncio, cada oferta, cada detalle -- capturado y organizado para ti."
       },
       "analyzes": {
-        "title": "La IA analiza",
-        "description": "Obtén análisis detallados, señales de alerta y rangos de precio justos impulsados por IA avanzada. Sabe exactamente cuánto vale un vehículo antes de ofertar."
+        "title": "Analiza el mercado",
+        "description": "Obtén análisis detallados, señales de alerta y rangos de precio justos. Conoce cuánto vale un vehículo antes de ofertar."
       },
       "bidSmart": {
         "title": "Ofertas mejor",
@@ -908,8 +908,8 @@
     }
   },
   "oracle": {
-    "aiAnalysis": "Análisis IA",
-    "aiAdvisor": "Asesor IA",
+    "aiAnalysis": "Análisis de mercado",
+    "aiAdvisor": "Asesor de mercado",
     "youAsked": "Preguntaste:",
     "analyzing": "Analizando...",
     "analyzingMarket": "Analizando datos del mercado...",
@@ -953,7 +953,7 @@
       "loading": "Cargando subastas...",
       "meta": {
         "title": "Subastas en Vivo | Monza Lab",
-        "description": "Explora y analiza subastas de autos de colección en Bring a Trailer, Cars & Bids, RM Sotheby's y más. Insights con IA antes de ofertar.",
+        "description": "Explora y analiza subastas de autos de colección en Bring a Trailer, Cars & Bids, RM Sotheby's y más. Obtén información de mercado antes de ofertar.",
         "ogTitle": "Subastas en Vivo | Monza Lab",
         "ogDescription": "Explora y analiza subastas de autos de colección en las principales plataformas."
       }
@@ -1168,7 +1168,7 @@
       "clearFilters": "Borrar filtros"
     },
     "badges": {
-      "aiAnalyzed": "Analizado por IA"
+      "aiAnalyzed": "Análisis de mercado"
     },
     "units": {
       "milesLong": "millas",
@@ -1418,7 +1418,7 @@
   },
   "metadata": {
     "title": "Monza Lab | Activos Automotrices de Inversión",
-    "description": "La terminal inteligente para la adquisición y análisis de vehículos de colección. Insights impulsados por IA para adquisiciones más inteligentes."
+    "description": "La terminal inteligente para la adquisición y análisis de vehículos de colección. Información basada en datos para decisiones más acertadas."
   },
   "searchHistory": {
     "title": "Historial de búsquedas",
@@ -1444,7 +1444,7 @@
   "seo": {
     "make": {
       "title": "Colección {make} — Autos de Colección Grado Inversión | MonzaHaus",
-      "description": "Explora vehículos {make} de colección con inteligencia de mercado en vivo, datos de subastas y análisis con IA."
+      "description": "Explora vehículos {make} de colección con inteligencia de mercado en vivo, datos de subastas y análisis de mercado."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Resultados de Subastas, Valores de Mercado y Análisis de Colección | MonzaHaus",
@@ -1537,7 +1537,7 @@
       },
       "reports": {
         "title": "Haus Reports",
-        "desc": "Dossiers generados con AI: analisis de valor justo, ventas comparables, scoring de riesgo y objetivos de oferta."
+        "desc": "Dossiers de inversión: análisis de valor justo, ventas comparables, evaluación de riesgo y objetivos de oferta."
       },
       "knowledge": {
         "title": "Base de Conocimiento",
@@ -1548,7 +1548,7 @@
         "desc": "Sigue tendencias de precios en segmentos air-cooled, water-cooled, GT y Turbo. Sabe hacia donde va el mercado."
       },
       "advisor": {
-        "title": "Asesor AI",
+        "title": "Asesor de mercado",
         "desc": "Pregunta lo que quieras sobre cualquier Porsche. Respuestas basadas en datos reales, no opiniones."
       }
     },
@@ -1556,7 +1556,7 @@
       "listings": { "label": "Listados rastreados", "suffix": "+" },
       "regions": { "label": "Mercados cubiertos", "suffix": "" },
       "sources": { "label": "Fuentes de datos", "suffix": "" },
-      "reports": { "label": "Reportes generados", "suffix": "+" }
+      "seriesTracked": { "label": "Series Porsche rastreadas", "suffix": "" }
     },
     "vision": {
       "headline": "Mas que una plataforma.",
@@ -1574,14 +1574,14 @@
     "welcome": {
       "title": "Bienvenido a MonzaHaus",
       "browse": "Explora miles de Porsches de coleccion en 4 regiones",
-      "reports": "Obtiene reportes de inversion con AI en cualquier listado",
+      "reports": "Obtén reportes de inversión para cualquier listado",
       "trends": "Sigue tendencias de mercado con indices en tiempo real",
       "cta": "Comenzar a Explorar"
     },
     "tips": {
       "regions": "Filtra listados por region — EE.UU., UK, EU o Japon",
       "search": "Busca cualquier Porsche por modelo, ano o pega una URL de subasta",
-      "advisor": "Pregunta a nuestro asesor AI lo que quieras sobre el mercado"
+      "advisor": "Pregunta a nuestro asesor de mercado lo que quieras"
     }
   }
 }

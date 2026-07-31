@@ -256,6 +256,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         dbComparables={dbComparables}
         v3Report={v3Report}
         userHasAccess={userHasAccess}
+        reportAccessToken={tokenAccess ? rawAccessToken : undefined}
       />
     </Suspense>
   )

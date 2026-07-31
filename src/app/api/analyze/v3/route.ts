@@ -15,7 +15,7 @@ import {
   hasUnlimitedReportAccess,
 } from "@/lib/reports/queries"
 import { saveHausReport, saveSignals } from "@/lib/reports/queries"
-import { completeLeadReportAccess, resolveReportToken } from "@/lib/reportAccess/repository"
+import { completeLeadReportAccess, resolveReportToken, revokePendingReportAccess } from "@/lib/reportAccess/repository"
 import { buildReportReadyEmail } from "@/lib/email/reportEmails"
 import { sendTransactionalEmail } from "@/lib/email/resend"
 import type { PipelineProgress } from "@/lib/reports/types-v3"
@@ -54,6 +54,14 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  const releasePendingLeadAccess = async () => {
+    if (leadAccess?.status !== "pending") return
+    await revokePendingReportAccess(leadAccess.id).catch((error) => {
+      console.error("[v3/route] Failed to release pending access:", error)
+    })
+  }
+
+  try {
   // Authenticated users keep the Pistons economy. Report-scoped lead tokens
   // authorize this listing only and are finalized after a complete V3 report.
   const dbUser = user
@@ -86,6 +94,7 @@ export async function POST(req: NextRequest) {
       const creditResult = await deductCredit(dbUser.id, listingId, listingId)
       if (!creditResult.success) {
         const status = creditResult.error === "INSUFFICIENT_CREDITS" ? 402 : 500
+        await releasePendingLeadAccess()
         return new Response(JSON.stringify({ error: creditResult.error }), {
           status,
           headers: { "Content-Type": "application/json" },
@@ -109,6 +118,7 @@ export async function POST(req: NextRequest) {
   if (dbUser && credits && !alreadyGenerated && !hasUnlimited) {
     const balance = (credits.credits_balance ?? 0) + (credits.pack_credits_balance ?? 0)
     if (balance < REPORT_PISTON_COST) {
+      await releasePendingLeadAccess()
       return new Response(JSON.stringify({ error: "Insufficient credits", balance }), {
         status: 402,
         headers: { "Content-Type": "application/json" },
@@ -117,8 +127,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch listing
-  const car = await fetchLiveListingById(listingId)
+  let car: Awaited<ReturnType<typeof fetchLiveListingById>>
+  try {
+    car = await fetchLiveListingById(listingId)
+  } catch (error) {
+    await releasePendingLeadAccess()
+    console.error("[v3/route] Listing lookup failed:", error)
+    return new Response(JSON.stringify({ error: "Listing lookup failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
   if (!car) {
+    await releasePendingLeadAccess()
     return new Response(JSON.stringify({ error: "Listing not found" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
@@ -155,6 +176,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (!isCompleteV3Report(report)) {
+          await releasePendingLeadAccess()
           send("error", {
             message: "Report incomplete: one or more data or analysis sections failed.",
             stepsCompleted: report.stepsCompleted,
@@ -186,6 +208,7 @@ export async function POST(req: NextRequest) {
         if (dbUser && !alreadyGenerated) {
           const creditResult = await deductCredit(dbUser.id, listingId, listingId)
           if (!creditResult.success) {
+            await releasePendingLeadAccess()
             send("error", {
               message:
                 creditResult.error === "INSUFFICIENT_CREDITS"
@@ -205,6 +228,7 @@ export async function POST(req: NextRequest) {
           totalDurationMs: report.totalDurationMs,
         })
       } catch (err) {
+        await releasePendingLeadAccess()
         console.error("[v3/route] Pipeline error:", err)
         send("error", {
           message: err instanceof Error ? err.message : "Pipeline failed",
@@ -223,4 +247,12 @@ export async function POST(req: NextRequest) {
       "X-Accel-Buffering": "no",
     },
   })
+  } catch (error) {
+    await releasePendingLeadAccess()
+    console.error("[v3/route] Pre-stream generation failure:", error)
+    return new Response(JSON.stringify({ error: "Report generation failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
 }

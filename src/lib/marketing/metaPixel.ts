@@ -47,15 +47,16 @@ export async function sendCapiEvent(input: {
   email?: string
   externalId?: string
   customData?: Record<string, unknown>
+  reportAccessToken: string
 }) {
   if (typeof window === "undefined") return
+  const { reportAccessToken, ...eventInput } = input
   await fetch("/api/meta/conversions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-report-access-token": reportAccessToken },
     body: JSON.stringify({
-      ...input,
+      ...eventInput,
       clientUserAgent: navigator.userAgent,
-      eventSourceUrl: window.location.href,
       fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1],
       fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1],
     }),
@@ -72,17 +73,21 @@ export function fireMetaEvent(
     email?: string
     externalId?: string
     customData?: Record<string, unknown>
+    reportAccessToken?: string
   } = {},
 ) {
   if (opts.consent && opts.consent !== "accepted") return
 
   const eventId = opts.eventId ?? generateEventId()
   trackPixelEvent(eventName, opts.pixelParams ?? opts.customData ?? {}, eventId)
-  sendCapiEvent({
-    eventName,
-    eventId,
-    email: opts.email,
-    externalId: opts.externalId,
-    customData: opts.customData,
-  })
+  if (eventName === "ReportViewed" && opts.reportAccessToken && typeof opts.customData?.listing_id === "string") {
+    sendCapiEvent({
+      eventName,
+      eventId,
+      email: opts.email,
+      externalId: opts.externalId,
+      customData: opts.customData,
+      reportAccessToken: opts.reportAccessToken,
+    })
+  }
 }

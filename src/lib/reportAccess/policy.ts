@@ -20,6 +20,8 @@ export function isDisposableEmail(email: string): boolean {
 }
 
 export function evaluateLeadRequest({
+  claimedUserExists,
+  completedReports,
   attemptsInLastHour,
 }: {
   claimedUserExists: boolean
@@ -27,7 +29,16 @@ export function evaluateLeadRequest({
   attemptsInLastHour: number
 }): { ok: true } | { ok: false; code: LeadPolicyCode } {
   if (attemptsInLastHour >= 3) return { ok: false, code: "RATE_LIMITED" }
+  if (claimedUserExists) return { ok: false, code: "AUTH_REQUIRED" }
+  if (completedReports >= 1) return { ok: false, code: "CLAIM_REQUIRED" }
   return { ok: true }
+}
+
+export function preserveFirstTouchAttribution<T extends Record<string, unknown>>(
+  existing: T | null | undefined,
+  incoming: T,
+): T {
+  return existing ? { ...incoming, ...existing } : incoming
 }
 
 export function isReportFresh({

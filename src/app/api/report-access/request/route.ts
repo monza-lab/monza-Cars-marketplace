@@ -19,6 +19,9 @@ const statusByCode: Record<string, number> = {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.REPORT_LEAD_FUNNEL_ENABLED === "false") {
+    return NextResponse.json({ ok: false, code: "FUNNEL_DISABLED" }, { status: 503 })
+  }
   const parsed = schema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
     return NextResponse.json({ ok: false, code: "INVALID_REQUEST" }, { status: 400 })
@@ -27,7 +30,13 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
     || "unknown"
-  const result = await requestLeadAccess({ ...parsed.data, ip })
+  let result: Awaited<ReturnType<typeof requestLeadAccess>>
+  try {
+    result = await requestLeadAccess({ ...parsed.data, ip })
+  } catch (cause) {
+    console.error("[report-access] reservation failed", cause)
+    return NextResponse.json({ ok: false, code: "REPORT_ACCESS_UNAVAILABLE" }, { status: 500 })
+  }
   if (!result.ok) {
     return NextResponse.json(result, { status: statusByCode[result.code] ?? 500 })
   }

@@ -1,44 +1,55 @@
 import { NextRequest, NextResponse } from "next/server"
-import crypto from "node:crypto"
+import { z } from "zod"
+import { resolveReportToken } from "@/lib/reportAccess/repository"
 
 export const runtime = "nodejs"
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN
 const TEST_CODE = process.env.META_CAPI_TEST_EVENT_CODE
+const ENABLED = process.env.META_CAPI_ENABLED === "true"
 
-interface CapiEventInput {
-  eventName: "Lead" | "CompleteRegistration" | "InitiateCheckout" | "Purchase" | "ReportViewed"
-  eventId: string
-  eventTime?: number
-  email?: string
-  phone?: string
-  externalId?: string
-  clientUserAgent?: string
-  clientIpAddress?: string
-  fbp?: string
-  fbc?: string
-  eventSourceUrl?: string
-  customData?: Record<string, unknown>
-}
-
-function sha256Lower(input?: string): string | undefined {
-  if (!input) return undefined
-  return crypto
-    .createHash("sha256")
-    .update(input.trim().toLowerCase())
-    .digest("hex")
-}
+const inputSchema = z.object({
+  eventName: z.literal("ReportViewed"),
+  eventId: z.string().trim().min(1).max(200),
+  eventTime: z.number().int().positive().optional(),
+  fbp: z.string().trim().max(500).optional(),
+  fbc: z.string().trim().max(500).optional(),
+  customData: z.object({ listing_id: z.string().trim().min(1).max(200) }),
+})
 
 export async function POST(req: NextRequest) {
-  if (!PIXEL_ID || !ACCESS_TOKEN) {
+  if (!ENABLED || !PIXEL_ID || !ACCESS_TOKEN) {
     return NextResponse.json(
       { ok: false, reason: "capi_not_configured" },
       { status: 200 },
     )
   }
 
-  const body = (await req.json()) as CapiEventInput
+  const origin = req.headers.get("origin")
+  if (!origin || origin !== req.nextUrl.origin) {
+    return NextResponse.json({ ok: false, reason: "forbidden_origin" }, { status: 403 })
+  }
+
+  const parsed = inputSchema.safeParse(await req.json().catch(() => null))
+  if (!parsed.success) {
+    return NextResponse.json({ ok: false, reason: "invalid_event" }, { status: 400 })
+  }
+  const body = parsed.data
+  const accessToken = req.headers.get("x-report-access-token")
+  if (!accessToken || !await resolveReportToken(accessToken, body.customData.listing_id)) {
+    return NextResponse.json({ ok: false, reason: "invalid_report_access" }, { status: 401 })
+  }
+  const referer = req.headers.get("referer")
+  let canonicalSourceUrl = `${req.nextUrl.origin}/reports/${encodeURIComponent(body.customData.listing_id)}`
+  if (referer) {
+    try {
+      const parsedReferer = new URL(referer)
+      if (parsedReferer.origin === req.nextUrl.origin) {
+        canonicalSourceUrl = `${req.nextUrl.origin}${parsedReferer.pathname}`
+      }
+    } catch { /* keep the server-built fallback */ }
+  }
   const now = Math.floor(Date.now() / 1000)
 
   const event = {
@@ -46,18 +57,10 @@ export async function POST(req: NextRequest) {
     event_id: body.eventId,
     event_time: body.eventTime ?? now,
     action_source: "website" as const,
-    event_source_url: body.eventSourceUrl,
+    event_source_url: canonicalSourceUrl,
     user_data: {
-      em: body.email ? [sha256Lower(body.email)] : undefined,
-      ph: body.phone ? [sha256Lower(body.phone)] : undefined,
-      external_id: body.externalId
-        ? [sha256Lower(body.externalId)]
-        : undefined,
-      client_user_agent:
-        body.clientUserAgent ?? req.headers.get("user-agent") ?? undefined,
-      client_ip_address:
-        body.clientIpAddress ??
-        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+      client_user_agent: req.headers.get("user-agent") ?? undefined,
+      client_ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
       fbp: body.fbp,
       fbc: body.fbc,
     },

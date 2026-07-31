@@ -2,40 +2,14 @@
 
 import { useTranslations } from "next-intl"
 import { useScrollReveal } from "@/hooks/useScrollReveal"
-import { useEffect, useState } from "react"
-
-const STATS = [
-  { key: "listings", value: 12000 },
-  { key: "regions", value: 4 },
-  { key: "sources", value: 8 },
-  { key: "reports", value: 2500 },
-] as const
-
-function AnimatedNumber({ target, active }: { target: number; active: boolean }) {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    if (!active) return
-    const duration = 1600
-    const steps = 40
-    const increment = target / steps
-    let step = 0
-    const timer = setInterval(() => {
-      step++
-      if (step >= steps) {
-        setCurrent(target)
-        clearInterval(timer)
-      } else {
-        setCurrent(Math.floor(increment * step))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [active, target])
-
-  return <>{active ? current.toLocaleString() : "0"}</>
+export type LandingStats = {
+  listings: number
+  regions: number
+  sources: number
+  seriesTracked: number
 }
 
-export function SocialProofSection() {
+export function SocialProofSection({ stats }: { stats: LandingStats }) {
   const t = useTranslations("landing.proof")
   const { ref, isVisible } = useScrollReveal()
 
@@ -54,7 +28,7 @@ export function SocialProofSection() {
         ref={ref}
         className="relative z-[1] max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12"
       >
-        {STATS.map(({ key, value }, i) => (
+        {(Object.entries(stats) as [keyof LandingStats, number][]).map(([key, value], i) => (
           <div
             key={key}
             className={`text-center transition-all duration-700 ${
@@ -63,7 +37,7 @@ export function SocialProofSection() {
             style={{ transitionDelay: isVisible ? `${i * 120}ms` : "0ms" }}
           >
             <span className="font-serif font-medium text-[2rem] md:text-[2.75rem] text-[#E1CCE5] leading-none block mb-2">
-              <AnimatedNumber target={value} active={isVisible} />
+              {value.toLocaleString("en-US")}
               {t(`${key}.suffix`)}
             </span>
             <span className="font-sans text-xs md:text-sm text-[#6B6365] tracking-wide">

@@ -58,7 +58,7 @@
     ]
   },
   "mobile": {
-    "aiOracle": "KI-Orakel",
+    "aiOracle": "Markt-Orakel",
     "explore": "Entdecken",
     "account": "Konto",
     "askAnything": "Fragen Sie alles über Autos...",
@@ -225,13 +225,13 @@
     "headline1": "Aufbau",
     "headline2": "Investmenttauglicher",
     "headline3": "Vermögenswerte",
-    "subheadline": "KI-gestützte Auktionsanalyse für klassische Fahrzeuge. Bieten Sie smarter mit datengestützten Insights von Top-Plattformen.",
+    "subheadline": "Datengestützte Auktionsanalyse für klassische Fahrzeuge. Bieten Sie smarter mit Marktdaten führender Plattformen.",
     "searchPlaceholder": "Nach Marke, Modell oder Jahr suchen...",
     "search": "Suchen",
     "popular": "Beliebt:",
     "stats": {
       "auctionsTracked": "Verfolgte Auktionen",
-      "aiAnalyses": "KI-Analysen",
+      "aiAnalyses": "Marktanalysen",
       "platformsActive": "Aktive Plattformen"
     }
   },
@@ -246,8 +246,8 @@
         "description": "Überwachen Sie Live-Auktionen auf Top-Plattformen in Echtzeit. Jedes Angebot, jedes Gebot, jedes Detail -- erfasst und für Sie organisiert."
       },
       "analyzes": {
-        "title": "KI analysiert",
-        "description": "Erhalten Sie detaillierte Analysen, Warnsignale und faire Preisbereiche durch fortschrittliche KI. Wissen Sie, was ein Fahrzeug wert ist, bevor Sie bieten."
+        "title": "Markt analysieren",
+        "description": "Erhalten Sie detaillierte Analysen, Warnsignale und faire Preisbereiche. Wissen Sie, was ein Fahrzeug wert ist, bevor Sie bieten."
       },
       "bidSmart": {
         "title": "Sie bieten smarter",
@@ -908,8 +908,8 @@
     }
   },
   "oracle": {
-    "aiAnalysis": "KI-Analyse",
-    "aiAdvisor": "KI-Berater",
+    "aiAnalysis": "Marktanalyse",
+    "aiAdvisor": "Marktberater",
     "youAsked": "Sie fragten:",
     "analyzing": "Analysiere...",
     "analyzingMarket": "Marktdaten werden analysiert...",
@@ -953,7 +953,7 @@
       "loading": "Auktionen werden geladen...",
       "meta": {
         "title": "Live-Auktionen | Monza Lab",
-        "description": "Durchsuchen und analysieren Sie Sammlerauto-Auktionen auf Bring a Trailer, Cars & Bids, RM Sotheby's und mehr. KI-gestützte Insights vor dem Bieten.",
+        "description": "Durchsuchen und analysieren Sie Sammlerauto-Auktionen auf Bring a Trailer, Cars & Bids, RM Sotheby's und mehr. Marktdaten vor dem Bieten.",
         "ogTitle": "Live-Auktionen | Monza Lab",
         "ogDescription": "Durchsuchen und analysieren Sie Sammlerauto-Auktionen auf allen wichtigen Plattformen."
       }
@@ -1168,7 +1168,7 @@
       "clearFilters": "Filter löschen"
     },
     "badges": {
-      "aiAnalyzed": "KI-analysiert"
+      "aiAnalyzed": "Marktanalysiert"
     },
     "units": {
       "milesLong": "Meilen",
@@ -1418,7 +1418,7 @@
   },
   "metadata": {
     "title": "Monza Lab | Investitionsfähige Automobilwerte",
-    "description": "Das intelligente Terminal für die Akquisition und Analyse von Sammlerfahrzeugen. KI-gestützte Erkenntnisse für klügere Akquisitionen."
+    "description": "Das intelligente Terminal für die Akquisition und Analyse von Sammlerfahrzeugen. Datengestützte Erkenntnisse für klügere Akquisitionen."
   },
   "searchHistory": {
     "title": "Suchverlauf",
@@ -1444,7 +1444,7 @@
   "seo": {
     "make": {
       "title": "{make} Kollektion — Sammler-Fahrzeuge | MonzaHaus",
-      "description": "Entdecken Sie {make}-Sammler-Fahrzeuge mit Live-Marktdaten, Auktionsergebnissen und KI-gestützter Marktanalyse."
+      "description": "Entdecken Sie {make}-Sammler-Fahrzeuge mit Live-Marktdaten, Auktionsergebnissen und fundierter Marktanalyse."
     },
     "makeWithSeries": {
       "title": "{make} {series} — Auktionsergebnisse, Marktwerte und Investmentanalyse | MonzaHaus",
@@ -1537,7 +1537,7 @@
       },
       "reports": {
         "title": "Haus Reports",
-        "desc": "KI-generierte Dossiers mit Marktwertanalyse, vergleichbaren Verkaeufen, Risikobewertung und Gebotszielen."
+        "desc": "Investment-Dossiers mit Marktwertanalyse, vergleichbaren Verkaeufen, Risikobewertung und Gebotszielen."
       },
       "knowledge": {
         "title": "Wissensdatenbank",
@@ -1548,7 +1548,7 @@
         "desc": "Verfolgen Sie Preistrends bei Air-Cooled, Water-Cooled, GT und Turbo. Wissen Sie, wohin der Markt geht."
       },
       "advisor": {
-        "title": "KI-Berater",
+        "title": "Marktberater",
         "desc": "Fragen Sie alles ueber jeden Porsche. Antworten basierend auf echten Marktdaten."
       }
     },
@@ -1556,7 +1556,7 @@
       "listings": { "label": "Angebote erfasst", "suffix": "+" },
       "regions": { "label": "Maerkte abgedeckt", "suffix": "" },
       "sources": { "label": "Datenquellen", "suffix": "" },
-      "reports": { "label": "Reports erstellt", "suffix": "+" }
+      "seriesTracked": { "label": "Erfasste Porsche-Baureihen", "suffix": "" }
     },
     "vision": {
       "headline": "Mehr als eine Plattform.",
@@ -1574,14 +1574,14 @@
     "welcome": {
       "title": "Willkommen bei MonzaHaus",
       "browse": "Durchsuchen Sie Tausende von Sammler-Porsches in 4 Regionen",
-      "reports": "Erhalten Sie KI-gestuetzte Investment-Reports zu jedem Angebot",
+      "reports": "Erhalten Sie Investment-Reports zu jedem Angebot",
       "trends": "Verfolgen Sie Markttrends mit Echtzeit-Indizes",
       "cta": "Erkunden starten"
     },
     "tips": {
       "regions": "Angebote nach Region filtern — USA, UK, EU oder Japan",
       "search": "Suchen Sie jeden Porsche nach Modell, Jahr oder Auktions-URL",
-      "advisor": "Fragen Sie unseren KI-Berater alles ueber den Sammlermarkt"
+      "advisor": "Fragen Sie unseren Marktberater alles ueber den Sammlermarkt"
     }
   }
 }

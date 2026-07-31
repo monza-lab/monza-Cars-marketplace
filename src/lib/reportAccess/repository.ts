@@ -1,6 +1,6 @@
 import "server-only"
 import { createAdminClient } from "@/lib/supabase/server"
-import { evaluateLeadRequest, isDisposableEmail, normalizeEmail } from "./policy"
+import { isDisposableEmail, normalizeEmail } from "./policy"
 import { createAccessToken, hashAccessToken, hashIdentifier } from "./tokens"
 import { sendServerCapiEvent } from "@/lib/marketing/metaCapiServer"
 
@@ -38,98 +38,80 @@ export async function requestLeadAccess({
   const ipHash = hashIdentifier(ip, secret)
   const deviceHash = hashIdentifier(deviceId, secret)
   const emailHash = hashIdentifier(normalized, secret)
-  const db = createAdminClient()
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-
-  const [{ data: claimed }, { data: existingLead }, attemptsResult] = await Promise.all([
-    db.from("user_credits").select("id").ilike("email", normalized).maybeSingle(),
-    db.from("report_leads").select("id").eq("email_normalized", normalized).maybeSingle(),
-    db.from("report_request_attempts")
-      .select("id", { count: "exact", head: true })
-      .or(`ip_hash.eq.${ipHash},device_hash.eq.${deviceHash}`)
-      .gte("created_at", hourAgo),
-  ])
-
-  let completedReports = 0
-  if (existingLead?.id) {
-    const { count } = await db.from("report_lead_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("lead_id", existingLead.id)
-    completedReports = count ?? 0
-  }
-  const policy = evaluateLeadRequest({
-    claimedUserExists: Boolean(claimed),
-    completedReports,
-    attemptsInLastHour: attemptsResult.count ?? 0,
-  })
-  if (!policy.ok) return policy
-
   const now = new Date().toISOString()
-  const row = {
-    email: email.trim(),
-    email_normalized: normalized,
-    utm_source: clean(attribution?.utm_source),
-    utm_medium: clean(attribution?.utm_medium),
-    utm_campaign: clean(attribution?.utm_campaign),
-    utm_term: clean(attribution?.utm_term),
-    utm_content: clean(attribution?.utm_content),
-    fbclid: clean(attribution?.fbclid),
-    gclid: clean(attribution?.gclid),
-    landing_path: clean(attribution?.landing_path),
-    referrer: clean(attribution?.referrer),
-    first_seen_at: clean(attribution?.first_seen_at) ?? now,
-    updated_at: now,
-  }
-  const { data: lead, error: leadError } = await db.from("report_leads")
-    .upsert(row, { onConflict: "email_normalized", ignoreDuplicates: false })
-    .select("id")
-    .single()
-  if (leadError || !lead) throw new Error(`Could not create report lead: ${leadError?.message ?? "unknown"}`)
-
   const token = createAccessToken()
-  const { error: tokenError } = await db.from("report_access_tokens").insert({
-    lead_id: lead.id,
-    listing_id: listingId,
-    token_hash: hashAccessToken(token),
+  const db = createAdminClient()
+  const { data, error } = await db.rpc("reserve_report_lead_access", {
+    p_email: email.trim(),
+    p_email_normalized: normalized,
+    p_listing_id: listingId,
+    p_ip_hash: ipHash,
+    p_device_hash: deviceHash,
+    p_email_hash: emailHash,
+    p_token_hash: hashAccessToken(token),
+    p_utm_source: clean(attribution?.utm_source),
+    p_utm_medium: clean(attribution?.utm_medium),
+    p_utm_campaign: clean(attribution?.utm_campaign),
+    p_utm_term: clean(attribution?.utm_term),
+    p_utm_content: clean(attribution?.utm_content),
+    p_fbclid: clean(attribution?.fbclid),
+    p_gclid: clean(attribution?.gclid),
+    p_landing_path: clean(attribution?.landing_path),
+    p_referrer: clean(attribution?.referrer),
+    p_first_seen_at: clean(attribution?.first_seen_at) ?? now,
   })
-  if (tokenError) throw new Error(`Could not create report access: ${tokenError.message}`)
-
-  await db.from("report_request_attempts").insert({
-    ip_hash: ipHash,
-    device_hash: deviceHash,
-    email_hash: emailHash,
-    listing_id: listingId,
-    outcome: "allowed",
-  })
+  if (error) throw new Error(`Could not reserve report access: ${error.message}`)
+  const reservation = data as { code?: string; lead_id?: string } | null
+  if (reservation?.code !== "OK" || !reservation.lead_id) {
+    const code = reservation?.code
+    if (code === "AUTH_REQUIRED" || code === "CLAIM_REQUIRED" || code === "RATE_LIMITED") {
+      return { ok: false, code }
+    }
+    throw new Error("Could not reserve report access: invalid response")
+  }
+  const leadId = reservation.lead_id
   await Promise.allSettled([
     db.from("analytics_events").insert({
       event_name: "email_submitted",
-      lead_id: lead.id,
+      lead_id: leadId,
       listing_id: listingId,
       source: clean(attribution?.utm_source),
       payload: { listingId },
     }),
     sendServerCapiEvent({
       eventName: "Lead",
-      eventId: `lead_${lead.id}_${listingId}`,
+      eventId: `lead_${leadId}_${listingId}`,
       eventSourceUrl: clean(attribution?.landing_path) || "/browse",
       email: normalized,
-      externalId: lead.id,
+      externalId: leadId,
       customData: { content_name: "haus_report", listing_id: listingId },
     }),
   ])
-  return { ok: true, token, leadId: lead.id }
+  return { ok: true, token, leadId }
 }
 
 export async function resolveReportToken(token: string, listingId: string, allowPending = false) {
   const db = createAdminClient()
   const { data } = await db.from("report_access_tokens")
-    .select("id, lead_id, listing_id, status, revoked_at")
+    .select("id, lead_id, listing_id, status, revoked_at, pending_expires_at")
     .eq("token_hash", hashAccessToken(token))
     .eq("listing_id", listingId)
     .maybeSingle()
   if (!data || data.revoked_at || (!allowPending && data.status !== "ready")) return null
-  return data as { id: string; lead_id: string; listing_id: string; status: "pending" | "ready" }
+  if (data.status === "pending") {
+    const expiresAt = Date.parse(data.pending_expires_at ?? "")
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return null
+  }
+  return data as { id: string; lead_id: string; listing_id: string; status: "pending" | "ready"; pending_expires_at?: string | null }
+}
+
+export async function revokePendingReportAccess(accessId: string): Promise<void> {
+  const db = createAdminClient()
+  const { error } = await db.from("report_access_tokens")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", accessId)
+    .eq("status", "pending")
+  if (error) throw new Error(`Could not release pending report access: ${error.message}`)
 }
 
 export async function completeLeadReportAccess({

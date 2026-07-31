@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 
 const path = join(process.cwd(), "supabase/migrations/20260716_embudo_v3_report_leads.sql")
 const scraperStatePath = join(process.cwd(), "supabase/migrations/20260722_secure_scraper_state.sql")
+const atomicReservationPath = join(process.cwd(), "supabase/migrations/20260731_atomic_report_access_reservation.sql")
 
 describe("embudo v3 schema", () => {
   it("defines the lead, report access, abuse, and analytics contracts", () => {
@@ -34,5 +35,24 @@ describe("embudo v3 schema", () => {
     expect(sql).toMatch(/REVOKE ALL ON TABLE public\.scraper_state FROM anon, authenticated/i)
     expect(sql).toMatch(/TO service_role/i)
     expect(sql).toMatch(/auth\.role\(\) = 'service_role'/i)
+  })
+
+  it("atomically reserves anonymous report access by email, IP, and device", () => {
+    const sql = readFileSync(atomicReservationPath, "utf8")
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS ip_hash text/i)
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS device_hash text/i)
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS pending_expires_at timestamptz/i)
+    expect(sql).toMatch(/pending_expires_at_idx/i)
+    expect(sql).toMatch(/CREATE OR REPLACE FUNCTION public\.reserve_report_lead_access/i)
+    expect(sql).toMatch(/pg_advisory_xact_lock/i)
+    expect(sql).toMatch(/report_request_attempts/i)
+    expect(sql).toMatch(/report_access_tokens/i)
+    expect(sql).toMatch(/'RATE_LIMITED'/)
+    expect(sql).toMatch(/'AUTH_REQUIRED'/)
+    expect(sql).toMatch(/'CLAIM_REQUIRED'/)
+    expect(sql).toMatch(/AND device_hash = p_device_hash/)
+    expect(sql).toMatch(/pending_expires_at > now\(\)/i)
+    expect(sql.match(/ip_hash = p_ip_hash OR device_hash = p_device_hash/g)).toHaveLength(1)
+    expect(sql).toMatch(/GRANT EXECUTE[\s\S]*TO service_role/i)
   })
 })

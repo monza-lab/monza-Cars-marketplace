@@ -43,9 +43,9 @@ export async function generateMetadata({
 
   const descriptions: Record<string, string> = {
     en: "Collector car market intelligence platform. Track Porsche 911, 992, 997 auction results, analyze market trends, and discover investment-grade vehicles from Bring a Trailer, Cars & Bids, and AutoScout24.",
-    es: "Plataforma de inteligencia de autos de colección impulsada por IA. Seguimiento de subastas Porsche 911, 992, 997, análisis de tendencias de mercado y descubrimiento de vehículos de inversión.",
-    de: "KI-gestützte Sammlerfahrzeug-Plattform. Porsche 911, 992, 997 Auktionsergebnisse verfolgen, Markttrends analysieren und investitionsgeeignete Fahrzeuge entdecken.",
-    ja: "AIを活用したコレクターカーインテリジェンス。ポルシェ911、992、997のオークション結果追跡、市場トレンド分析、投資グレード車両の発見。",
+    es: "Plataforma de inteligencia de mercado para autos de colección. Seguimiento de subastas Porsche 911, 992, 997, análisis de tendencias y descubrimiento de vehículos de inversión.",
+    de: "Datengestützte Plattform für Sammlerfahrzeuge. Porsche 911, 992, 997 Auktionsergebnisse verfolgen, Markttrends analysieren und investitionsgeeignete Fahrzeuge entdecken.",
+    ja: "データに基づくコレクターカーインテリジェンス。ポルシェ911、992、997のオークション結果追跡、市場トレンド分析、投資グレード車両の発見。",
   };
 
   // Build hreflang alternates for all locales

@@ -10,6 +10,7 @@ import { CtaSection } from "./sections/CtaSection"
 import { MonzaHausWordmark } from "@/components/brand/MonzaHausWordmark"
 import { MonzaHausHelmet } from "@/components/brand/MonzaHausHelmet"
 import { Link } from "@/i18n/navigation"
+import type { LandingStats } from "./sections/SocialProofSection"
 
 function LandingFooter() {
   return (
@@ -44,7 +45,7 @@ function LandingFooter() {
   )
 }
 
-export function LandingPage() {
+export function LandingPage({ stats }: { stats: LandingStats }) {
   return (
     <div
       id="landing-scroll"
@@ -56,7 +57,7 @@ export function LandingPage() {
         <ProblemSection />
       </div>
       <EcosystemSection />
-      <SocialProofSection />
+      <SocialProofSection stats={stats} />
       <VisionSection />
       <CtaSection />
       <LandingFooter />

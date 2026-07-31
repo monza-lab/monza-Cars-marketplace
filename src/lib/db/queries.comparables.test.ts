@@ -16,6 +16,7 @@ describe("strict comparable queries", () => {
     vi.resetModules()
     dbQueryMock.mockReset()
     createClientMock.mockReset()
+    vi.stubEnv("VERCEL", "")
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co")
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
   })
@@ -138,5 +139,17 @@ describe("strict comparable queries", () => {
         soldDate: "2026-01-01T00:00:00.000Z",
       }),
     ])
+    expect(dbQueryMock).toHaveBeenCalledTimes(1)
+
+    vi.resetModules()
+    vi.stubEnv("VERCEL", "1")
+    dbQueryMock.mockReset()
+    const vercelQueries = await import("./queries")
+    const vercelRows = await vercelQueries.getStrictComparablesForModel("Porsche", "Carrera GT", 6)
+
+    expect(vercelRows).toEqual([
+      expect.objectContaining({ title: "2005 Porsche Carrera GT", soldPrice: 1_500_000 }),
+    ])
+    expect(dbQueryMock).not.toHaveBeenCalled()
   })
 })

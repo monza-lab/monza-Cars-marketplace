@@ -708,6 +708,23 @@ export async function getStrictComparablesForModel(
   const identity = buildReportPeerIdentity({ make, model })
   if (!identity) return []
 
+  // Vercel's runtime is IPv4-only for this project, while the linked Supabase
+  // database does not expose a working shared-pooler tenant. Use PostgREST
+  // directly instead of paying for a guaranteed DNS/connection failure first.
+  if (process.env.VERCEL === '1') {
+    try {
+      return await getStrictComparablesViaHttp(
+        identity.make,
+        model,
+        identity.modelIdentity,
+        limit,
+      )
+    } catch (httpError) {
+      logDbQueryError('getStrictComparablesForModel.http', httpError)
+      return []
+    }
+  }
+
   try {
     const rows = await withDbTimeout(
       () => dbQuery<DbComparableRow>(

@@ -58,7 +58,7 @@
     ]
   },
   "mobile": {
-    "aiOracle": "AIオラクル",
+    "aiOracle": "マーケットオラクル",
     "explore": "探索",
     "account": "アカウント",
     "askAnything": "車について何でも聞いてください...",
@@ -225,13 +225,13 @@
     "headline1": "投資級",
     "headline2": "自動車資産を",
     "headline3": "構築",
-    "subheadline": "クラシック車向けのAI駆動オークション分析。主要プラットフォームのデータインサイトで、よりスマートに入札。",
+    "subheadline": "クラシック車向けのデータ駆動型オークション分析。主要プラットフォームの市場インサイトで、よりスマートに入札。",
     "searchPlaceholder": "メーカー、モデル、年式で検索...",
     "search": "検索",
     "popular": "人気:",
     "stats": {
       "auctionsTracked": "追跡中のオークション",
-      "aiAnalyses": "AI分析",
+      "aiAnalyses": "市場分析",
       "platformsActive": "稼働中プラットフォーム"
     }
   },
@@ -246,8 +246,8 @@
         "description": "主要プラットフォームのライブオークションをリアルタイムで監視。すべての出品、入札、詳細を収集・整理します。"
       },
       "analyzes": {
-        "title": "AI解析",
-        "description": "AIによる詳細分析、注意点、適正価格レンジを提供。入札前に価値を把握できます。"
+        "title": "市場解析",
+        "description": "詳細分析、注意点、適正価格レンジを提供。入札前に価値を把握できます。"
       },
       "bidSmart": {
         "title": "賢く入札",
@@ -1113,8 +1113,8 @@
     }
   },
   "oracle": {
-    "aiAnalysis": "AI分析",
-    "aiAdvisor": "AIアドバイザー",
+    "aiAnalysis": "市場分析",
+    "aiAdvisor": "マーケットアドバイザー",
     "youAsked": "質問:",
     "analyzing": "分析中...",
     "analyzingMarket": "市場データを分析中...",
@@ -1158,7 +1158,7 @@
       "loading": "オークションを読み込み中...",
       "meta": {
         "title": "ライブオークション | Monza Lab",
-        "description": "Bring a Trailer、Cars & Bids、RM Sotheby'sなどのコレクター車オークションを閲覧・分析。入札前にAIインサイトを取得。",
+        "description": "Bring a Trailer、Cars & Bids、RM Sotheby'sなどのコレクター車オークションを閲覧・分析。入札前に市場インサイトを取得。",
         "ogTitle": "ライブオークション | Monza Lab",
         "ogDescription": "主要プラットフォームのコレクター車オークションを閲覧・分析。"
       }
@@ -1373,7 +1373,7 @@
       "clearFilters": "フィルターをクリア"
     },
     "badges": {
-      "aiAnalyzed": "AI解析済み"
+      "aiAnalyzed": "市場解析済み"
     },
     "units": {
       "milesLong": "マイル",
@@ -1623,7 +1623,7 @@
   },
   "metadata": {
     "title": "Monza Lab | 投資級自動車資産",
-    "description": "コレクター車両の取得と分析のためのインテリジェントターミナル。よりスマートな取得のためのAI駆動インサイト。"
+    "description": "コレクター車両の取得と分析のためのインテリジェントターミナル。よりスマートな取得のためのデータ駆動型インサイト。"
   },
   "searchHistory": {
     "title": "検索履歴",
@@ -1649,7 +1649,7 @@
   "seo": {
     "make": {
       "title": "{make} コレクション — コレクター向けコレクターカー | MonzaHaus",
-      "description": "コレクター向けの{make}車両を、ライブ市場データ、オークション結果、AIによる市場分析とともに紹介。"
+      "description": "コレクター向けの{make}車両を、ライブ市場データ、オークション結果、市場分析とともに紹介。"
     },
     "makeWithSeries": {
       "title": "{make} {series} — オークション結果・市場相場・コレクター分析 | MonzaHaus",
@@ -1778,7 +1778,7 @@
       },
       "reports": {
         "title": "Haus レポート",
-        "desc": "AI生成の分析書：適正価格分析、比較販売、リスクスコアリング、入札目標。"
+        "desc": "投資分析書：適正価格分析、比較販売、リスクスコアリング、入札目標。"
       },
       "knowledge": {
         "title": "ナレッジベース",
@@ -1789,7 +1789,7 @@
         "desc": "空冷、水冷、GT、ターボセグメントの価格トレンドを追跡。市場の方向性を把握。"
       },
       "advisor": {
-        "title": "AIアドバイザー",
+        "title": "マーケットアドバイザー",
         "desc": "どのポルシェについても何でも質問。実際の市場データに基づく回答。"
       }
     },
@@ -1806,9 +1806,9 @@
         "label": "データソース",
         "suffix": ""
       },
-      "reports": {
-        "label": "生成レポート",
-        "suffix": "+"
+      "seriesTracked": {
+        "label": "追跡中のポルシェシリーズ",
+        "suffix": ""
       }
     },
     "vision": {
@@ -1827,14 +1827,14 @@
     "welcome": {
       "title": "MonzaHausへようこそ",
       "browse": "4地域にわたる数千台のコレクターポルシェを閲覧",
-      "reports": "どのリスティングでもAI投資レポートを取得",
+      "reports": "どのリスティングでも投資レポートを取得",
       "trends": "リアルタイム指数で市場トレンドを追跡",
       "cta": "探索を始める"
     },
     "tips": {
       "regions": "地域でリスティングをフィルター — 米国、英国、EU、日本",
       "search": "モデル、年式で検索、またはオークションURLを貼り付け",
-      "advisor": "AIアドバイザーにコレクター市場について何でも質問"
+      "advisor": "マーケットアドバイザーにコレクター市場について何でも質問"
     }
   }
 }

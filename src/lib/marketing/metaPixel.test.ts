@@ -23,7 +23,7 @@ describe("fireMetaEvent", () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it("uses a caller-provided event ID for browser/server deduplication", async () => {
+  it("keeps unverified browser events Pixel-only", async () => {
     fireMetaEvent("Purchase", {
       consent: "accepted",
       eventId: "purchase_cs_test_123",
@@ -39,12 +39,26 @@ describe("fireMetaEvent", () => {
       { value: 59, currency: "USD" },
       { eventID: "purchase_cs_test_123" },
     )
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("sends ReportViewed to CAPI with its report-scoped access token", async () => {
+    window.history.replaceState({}, "", "/en/cars/porsche/live-1/report?access=access-token")
+    fireMetaEvent("ReportViewed", {
+      consent: "accepted",
+      eventId: "report-1",
+      reportAccessToken: "access-token",
+      customData: { listing_id: "live-1" },
+    })
+    await Promise.resolve()
     expect(fetch).toHaveBeenCalledWith(
       "/api/meta/conversions",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining('"eventId":"purchase_cs_test_123"'),
+        headers: expect.objectContaining({ "x-report-access-token": "access-token" }),
+        body: expect.stringContaining('"listing_id":"live-1"'),
       }),
     )
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.body).not.toContain("access-token")
   })
 })

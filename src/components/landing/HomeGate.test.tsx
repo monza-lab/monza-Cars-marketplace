@@ -4,14 +4,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { HomeGate } from "./HomeGate"
 
-const AuthModalMock = vi.fn((_props: Record<string, unknown>) => null)
+const AuthModalMock = vi.fn(() => null)
+const LandingPageMock = vi.fn(() => <div data-testid="landing-page" />)
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({ user: null, loading: false }),
 }))
 
 vi.mock("./LandingPage", () => ({
-  LandingPage: () => <div data-testid="landing-page" />,
+  LandingPage: (props: Record<string, unknown>) => LandingPageMock(props),
 }))
 
 vi.mock("@/components/dashboard/DashboardClient", () => ({
@@ -44,6 +45,26 @@ describe("HomeGate", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
+  })
+
+  it("derives landing counters from the server-fetched dashboard payload", () => {
+    const data = {
+      ...emptyData,
+      auctions: [
+        { id: "1", platform: "Bring a Trailer" },
+        { id: "2", platform: "CollectingCars" },
+        { id: "3", platform: "Bring a Trailer" },
+      ],
+      valuationListings: [{ id: "v1" }, { id: "v2" }],
+      regionTotals: { all: 137, US: 70, UK: 0, EU: 60, JP: 7 },
+      seriesCounts: { "911": 80, "964": 30, "997": 27, empty: 0 },
+    }
+
+    render(<HomeGate data={data as typeof emptyData} />)
+
+    expect(LandingPageMock).toHaveBeenCalledWith({
+      stats: { listings: 137, regions: 3, sources: 2, seriesTracked: 3 },
+    })
   })
 
   it("shows a visible recovery path for failed email confirmation", () => {

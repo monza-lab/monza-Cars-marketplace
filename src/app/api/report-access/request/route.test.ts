@@ -41,4 +41,20 @@ describe("POST /api/report-access/request", () => {
     expect(response.status).toBe(400)
     expect(mocks.requestLeadAccess).not.toHaveBeenCalled()
   })
+
+  it("returns stable JSON when report access storage is unavailable", async () => {
+    mocks.requestLeadAccess.mockRejectedValue(new Error("database schema cache failure"))
+    const response = await POST(request({ email: "buyer@example.com", listingId: "live-1", deviceId: "device-1" }))
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toEqual({ ok: false, code: "REPORT_ACCESS_UNAVAILABLE" })
+  })
+
+  it("stops anonymous report issuance when the funnel kill switch is off", async () => {
+    vi.stubEnv("REPORT_LEAD_FUNNEL_ENABLED", "false")
+    const response = await POST(request({ email: "buyer@example.com", listingId: "live-1", deviceId: "device-1" }))
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({ ok: false, code: "FUNNEL_DISABLED" })
+    expect(mocks.requestLeadAccess).not.toHaveBeenCalled()
+    vi.unstubAllEnvs()
+  })
 })
