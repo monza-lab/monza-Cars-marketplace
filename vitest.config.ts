@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
+// Date-only report fixtures represent UTC calendar dates. Pin the test
+// process so local machine timezones cannot shift them to the previous day.
+process.env.TZ = 'UTC';
+
 export default defineConfig({
   test: {
     globals: true,

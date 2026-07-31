@@ -17,7 +17,7 @@ vi.mock("next-intl", () => ({
     const copy: Record<string, string> = {
       createAccountTitle: "Create Account",
       welcomeBack: "Welcome back",
-      createAccountDesc: "Get 3 free reports every month",
+      createAccountDesc: "Unlock 3 free reports — your first by email, two more with an account",
       signInDesc: "Sign in to access your reports",
       continueWithGoogle: "Continue with Google",
       or: "or",
@@ -79,6 +79,7 @@ describe("AuthModal", () => {
   it("opens signup in password mode before offering the email-link fallback", () => {
     render(<AuthModal open onOpenChange={vi.fn()} defaultMode="signup" />)
 
+    expect(screen.getByText("Unlock 3 free reports — your first by email, two more with an account")).toBeInTheDocument()
     expect(screen.getByLabelText("Password")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /use email link instead/i })).toBeInTheDocument()
     expect(screen.queryByText("We will email you a one-tap sign-in link.")).not.toBeInTheDocument()
