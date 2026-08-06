@@ -85,7 +85,7 @@ export function classifyScraplingBody(args: {
 
 const CRITICAL_NO_OUTPUT_IDS = new Set([
   "bf-images",
-  "cron-beforward-enrich",
+  "bf-enrich",
   "cron-elferspot-enrich",
   "cron-enrich-details",
   "cron-images",
