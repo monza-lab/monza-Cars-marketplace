@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { resolveRunnerBaseUrl } from "./run-scrapers";
+import {
+  classifyLoopResult,
+  resolveRunnerBaseUrl,
+  selectEnrichmentLoopScrapers,
+} from "./run-scrapers";
 
 describe("scraper runner HTTP target", () => {
   it("uses an explicit HTTPS deployment for cron repair jobs", () => {
@@ -52,6 +56,45 @@ describe("scraper runner cron maintenance profile", () => {
 });
 
 describe("scraper runner enrichment profile", () => {
+  it("keeps assurance enrichment free of lifecycle mutations", () => {
+    const assuranceSource = readFileSync("scripts/scraper-assurance.ts", "utf8");
+    const runnerSource = readFileSync("scripts/run-scrapers.ts", "utf8");
+    const autoTraderSource = readFileSync("scripts/autotrader-enrich.ts", "utf8");
+
+    expect(assuranceSource).toContain('"--no-lifecycle-mutations"');
+    expect(runnerSource).toContain('args.push("--noDelist")');
+    expect(autoTraderSource).toMatch(/if \(!opts\.noDelist && apiResp\.status === 404\)/);
+  });
+
+  it("runs the working BeForward field enrichment CLI without an app server", () => {
+    const jobs = selectEnrichmentLoopScrapers(false);
+    const beforward = jobs.find((job) => job.id === "bf-enrich");
+
+    expect(beforward).toMatchObject({
+      type: "cli",
+      command: "npx",
+      args: ["tsx", "scripts/bf-enrich-cli.ts", "--limit=100"],
+    });
+    expect(jobs.some((job) => job.id === "cron-beforward-enrich")).toBe(false);
+  });
+
+  it("fails BeForward enrichment when queued rows produce zero enriched rows", () => {
+    const result = classifyLoopResult({
+      id: "bf-enrich",
+      name: "BeForward Enrichment",
+      phase: "enrichment",
+      type: "cli",
+      status: "ok",
+      durationMs: 1,
+      exitCode: 0,
+      stdout: "rows needing target fields: 100\n  enriched:    0\n",
+      stderr: "",
+    });
+
+    expect(result.status).toBe("failed");
+    expect(result.stderr).toContain("discovered=100, written=0");
+  });
+
   it("gives AS24 a larger batch with a shorter delay without changing the script budget", () => {
     const source = readFileSync("scripts/run-scrapers.ts", "utf8");
     const as24Block = source.match(/id: "as24-enrich",[\s\S]*?timeoutMs: [^\n]+,\r?\n\s+\}/)?.[0] ?? "";

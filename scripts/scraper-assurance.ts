@@ -149,6 +149,7 @@ export async function runBoundedEnrichment(
       "--enrich-loop",
       `--max-iterations=${maxIterations}`,
       "--pause=1",
+      "--no-lifecycle-mutations",
     ],
     timeoutMs: Math.max(30 * 60_000, maxIterations * 4 * 60 * 60_000),
     env: {

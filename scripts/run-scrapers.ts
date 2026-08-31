@@ -300,17 +300,21 @@ const SCRAPERS: ScraperDef[] = [
     timeoutMs: 90 * 60_000,
   },
 
-  // Cron: Enrichment (HTTP)
+  // CLI: Enrichment
   {
-    id: "cron-beforward-enrich",
+    id: "bf-enrich",
     name: "BeForward Enrichment",
-    description: "cron route",
-    phase: "cron-enrichment",
-    type: "cron",
-    cronRoute: "/api/cron/enrich-beforward",
-    defaultSelected: false,
-    timeoutMs: 5 * 60_000,
+    description: "persistent Scrapling session, 100 listings",
+    phase: "enrichment",
+    type: "cli",
+    command: "npx",
+    args: ["tsx", "scripts/bf-enrich-cli.ts", "--limit=100"],
+    dryRunFlag: "--dry-run",
+    defaultSelected: true,
+    timeoutMs: 120 * 60_000,
   },
+
+  // Cron: Enrichment (HTTP)
   {
     id: "cron-elferspot-enrich",
     name: "Elferspot Enrichment",
@@ -462,6 +466,7 @@ interface CliFlags {
   maxIterations: number;    // NEW — default 10
   pauseMinutes: number;     // NEW — default 2
   failOnGaps: boolean;
+  noLifecycleMutations: boolean;
 }
 
 function parseFlags(): CliFlags {
@@ -484,6 +489,7 @@ function parseFlags(): CliFlags {
     maxIterations,
     pauseMinutes,
     failOnGaps: args.includes("--fail-on-gaps"),
+    noLifecycleMutations: args.includes("--no-lifecycle-mutations"),
   };
 }
 
@@ -608,7 +614,7 @@ async function selectScrapers(
 
 // ── Execution ───────────────────────────────────────────────────────
 
-interface RunResult {
+export interface RunResult {
   id: string;
   name: string;
   phase: Phase;
@@ -632,6 +638,15 @@ function readNumericField(value: unknown, keys: string[]): number {
 }
 
 function parseCliProgress(result: RunResult): { discovered: number; written: number } {
+  if (result.id === "bf-enrich") {
+    const queueMatch = result.stdout.match(/rows needing target fields:\s+(\d+)/i);
+    const enrichedMatch = result.stdout.match(/enriched:\s+(\d+)/i);
+    return {
+      discovered: queueMatch ? Number(queueMatch[1]) : 0,
+      written: enrichedMatch ? Number(enrichedMatch[1]) : 0,
+    };
+  }
+
   if (result.id !== "bf-images") return { discovered: 0, written: 0 };
 
   const activeMatch = result.stdout.match(/active \(fetch\):\s+(\d+)/i);
@@ -642,7 +657,7 @@ function parseCliProgress(result: RunResult): { discovered: number; written: num
   };
 }
 
-function classifyLoopResult(result: RunResult): RunResult {
+export function classifyLoopResult(result: RunResult): RunResult {
   const cronDiscovered = readNumericField(result.cronResponse, [
     "discovered",
     "totalDiscovered",
@@ -682,13 +697,17 @@ function formatDuration(ms: number): string {
 
 function runCliScraper(
   scraper: ScraperDef,
-  dryRun: boolean
+  dryRun: boolean,
+  noLifecycleMutations = false,
 ): Promise<RunResult> {
   return new Promise((resolve) => {
     const start = Date.now();
     const args = [...(scraper.args || [])];
     if (dryRun && scraper.dryRunFlag) {
       args.push(scraper.dryRunFlag);
+    }
+    if (noLifecycleMutations && scraper.id === "at-enrich") {
+      args.push("--noDelist");
     }
 
     const stdoutChunks: string[] = [];
@@ -982,6 +1001,23 @@ function saveRunLog(log: RunLog): string {
   return filePath;
 }
 
+const ENRICHMENT_LOOP_JOB_IDS = new Set([
+  "bat-detail", "classic-enrich", "as24-enrich", "at-enrich",
+  "classic-images", "bf-images", "bf-enrich",
+  "cron-elferspot-enrich", "cron-enrich-details", "cron-backfill-photos-elferspot",
+  "cron-vin", "cron-titles", "cron-images",
+]);
+
+export function selectEnrichmentLoopScrapers(devServerUp: boolean): ScraperDef[] {
+  const destructiveEnrichmentIds = Array.from(ENRICHMENT_LOOP_JOB_IDS).filter(isDestructiveRunnerJob);
+  if (destructiveEnrichmentIds.length > 0) {
+    throw new Error(`Destructive jobs are prohibited in enrichment loop: ${destructiveEnrichmentIds.join(", ")}`);
+  }
+  return SCRAPERS.filter(
+    (scraper) => ENRICHMENT_LOOP_JOB_IDS.has(scraper.id) && (scraper.type === "cli" || devServerUp),
+  );
+}
+
 // ── Main ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -1071,22 +1107,9 @@ async function main(): Promise<void> {
       process.exit(0);
     }
 
-    // Select only enrichment scrapers by explicit ID.
-    // Excludes: cron-validate / cron-cleanup (could change listing status mid-loop).
-    const ENRICH_IDS = new Set([
-      "bat-detail", "classic-enrich", "as24-enrich", "at-enrich", // CLI enrichment
-      "classic-images", "bf-images",                              // CLI: image backfill
-      "cron-beforward-enrich", "cron-elferspot-enrich",          // Cron enrichment
-      "cron-enrich-details", "cron-backfill-photos-elferspot", // Cron enrichment (detail/photo)
-      "cron-vin", "cron-titles", "cron-images",                // Cron maintenance (data-filling only)
-    ]);
-    const destructiveEnrichmentIds = Array.from(ENRICH_IDS).filter(isDestructiveRunnerJob);
-    if (destructiveEnrichmentIds.length > 0) {
-      throw new Error(`Destructive jobs are prohibited in enrichment loop: ${destructiveEnrichmentIds.join(", ")}`);
-    }
-    const enrichScrapers = SCRAPERS.filter(
-      (s) => ENRICH_IDS.has(s.id) && (s.type === "cli" || devServerUp)
-    );
+    // Select only additive enrichment jobs. The BeForward field job is a CLI
+    // because its legacy Vercel cron cannot pass the source AWS WAF.
+    const enrichScrapers = selectEnrichmentLoopScrapers(devServerUp);
 
     if (enrichScrapers.length === 0) {
       console.error("No enrichment scrapers available. Start dev server for cron routes.");
@@ -1115,7 +1138,7 @@ async function main(): Promise<void> {
         console.log(`\n=== Running: ${scraper.name} ===\n`);
         const result = classifyLoopResult(
           scraper.type === "cli"
-            ? await runCliScraper(scraper, flags.dryRun)
+            ? await runCliScraper(scraper, flags.dryRun, flags.noLifecycleMutations)
             : await runCronScraper(scraper, flags.dryRun),
         );
         iterResults.push(result);
@@ -1228,7 +1251,7 @@ async function main(): Promise<void> {
 
     const result = classifyLoopResult(
       scraper.type === "cli"
-        ? await runCliScraper(scraper, flags.dryRun)
+        ? await runCliScraper(scraper, flags.dryRun, flags.noLifecycleMutations)
         : await runCronScraper(scraper, flags.dryRun),
     );
 
