@@ -182,6 +182,18 @@ describe("applyFilters — ranges", () => {
     const ids = applyFilters(cars, f({ mileageMax: 10000 })).map((x) => x.id);
     expect(ids).toEqual(["c"]);
   });
+
+  it("compares mixed source units using canonical miles", () => {
+    const miles = makeCar({ id: "miles", mileage: 10_000, mileageUnit: "mi" });
+    const kilometres = makeCar({ id: "kilometres", mileage: 16_093, mileageUnit: "km" });
+    const tooFar = makeCar({ id: "too-far", mileage: 20_000, mileageUnit: "km" });
+    const unknown = makeCar({ id: "unknown", mileage: 5_000, mileageUnit: null });
+
+    expect(applyFilters([miles, kilometres, tooFar, unknown], f({ mileageMax: 10_000 })).map((x) => x.id).sort()).toEqual([
+      "kilometres",
+      "miles",
+    ]);
+  });
 });
 
 describe("applyFilters — transmission", () => {
@@ -319,6 +331,28 @@ describe("applyFilters — sorting", () => {
   it("year newest first", () => {
     const ids = applyFilters(cars, f({ sort: "yearDesc" })).map((c) => c.id);
     expect(ids).toEqual(["expensive", "mid", "cheap"]);
+  });
+
+  it("sorts mixed mileage units by canonical miles and keeps unknown units last", () => {
+    const tenThousandMiles = makeCar({ id: "10k-mi", mileage: 10_000, mileageUnit: "mi" });
+    const nineThousandMilesInKm = makeCar({ id: "9k-mi-in-km", mileage: 14_484, mileageUnit: "km" });
+    const unknown = makeCar({ id: "unknown", mileage: 1, mileageUnit: null });
+
+    expect(applyFilters([tenThousandMiles, unknown, nineThousandMilesInKm], f({ sort: "mileageAsc" })).map((x) => x.id)).toEqual([
+      "9k-mi-in-km",
+      "10k-mi",
+      "unknown",
+    ]);
+  });
+});
+
+describe("applyFilters — region and query composition", () => {
+  it("keeps Europe isolated when a GT2 RS query is added", () => {
+    const euGt2 = makeCar({ id: "eu-gt2", title: "Porsche 911 GT2 RS", trim: "GT2 RS", canonicalMarket: "EU" });
+    const usGt2 = makeCar({ id: "us-gt2", title: "Porsche 911 GT2 RS", trim: "GT2 RS", canonicalMarket: "US", platform: "BRING_A_TRAILER" });
+    const euCarrera = makeCar({ id: "eu-carrera", title: "Porsche 911 Carrera", trim: "Carrera", canonicalMarket: "EU" });
+
+    expect(applyFilters([euGt2, usGt2, euCarrera], f({ region: ["EU"], q: "GT2 RS" })).map((x) => x.id)).toEqual(["eu-gt2"]);
   });
 });
 

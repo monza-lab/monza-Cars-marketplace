@@ -40,6 +40,7 @@ export function HomeGate({ data, authError }: HomeGateProps) {
   if (showLanding) {
     return (
       <>
+        <ViewPreferenceRedirect current="monza" />
         <LandingPage stats={landingStats} />
         {showConfirmationRecovery && (
           <div className="fixed left-1/2 top-24 z-[120] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-destructive/30 bg-card/95 p-4 text-center shadow-2xl backdrop-blur-xl">

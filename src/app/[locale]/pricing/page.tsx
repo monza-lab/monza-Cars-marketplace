@@ -119,6 +119,14 @@ export default function PricingPage() {
       {/* Subscription recommendation */}
       <section className="px-4 max-w-3xl mx-auto mb-12 md:mb-16">
         <SubRecommendationCard onSubscribe={handleSubscribe} />
+        <p className="mt-3 text-center text-xs text-muted-foreground">30-day money-back guarantee on your first purchase.</p>
+      </section>
+
+      <section className="mx-auto mb-12 max-w-2xl px-4 text-center md:mb-16">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Independent by design</p>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          MonzaHaus is built by Monza Lab LLC (Miami). We don&apos;t sell cars, take listing fees, or accept placement from marketplaces — we sell the analysis. Not affiliated with Porsche AG.
+        </p>
       </section>
 
       {/* Anchor narrative — italic, small, muted */}

@@ -4,12 +4,25 @@ import { computeSeries } from "@/features/scrapers/common/seriesEnrichment"
 import { computeRankingVariant } from "@/features/scrapers/common/rankingEnrichment"
 
 type ElferspotUpsertRow = Record<string, unknown>
+const TERMINAL_STATUSES = new Set(["sold", "unsold", "delisted"])
 
 function hasText(value: string | null): value is string {
   return typeof value === "string" && value.trim().length > 0
 }
 
-export function mapElferspotUpsertRow(listing: NormalizedElferspot): ElferspotUpsertRow {
+export function resolveElferspotStatus(incomingStatus: string, existingStatus: string | null): string {
+  if (incomingStatus === "sold") return "sold"
+  if (existingStatus && TERMINAL_STATUSES.has(existingStatus)) return existingStatus
+  return incomingStatus
+}
+
+export function mapElferspotUpsertRow(
+  listing: NormalizedElferspot,
+  existingStatus: string | null = null,
+): ElferspotUpsertRow {
+  const status = resolveElferspotStatus(listing.status, existingStatus)
+  const isSold = status === "sold"
+  const preservesExistingTerminal = listing.status === "active" && existingStatus !== null && TERMINAL_STATUSES.has(existingStatus)
   const row: ElferspotUpsertRow = {
     source: listing.source,
     source_id: listing.source_id,
@@ -19,20 +32,24 @@ export function mapElferspotUpsertRow(listing: NormalizedElferspot): ElferspotUp
     model: listing.model,
     trim: listing.trim,
     year: listing.year,
-    hammer_price: listing.price,
-    current_bid: listing.price,
     original_currency: listing.original_currency,
     mileage: listing.mileage_km,
     mileage_unit: "km",
     country: listing.country,
     location: listing.location,
-    status: listing.status,
+    status,
     scrape_timestamp: listing.scrape_timestamp,
     updated_at: new Date().toISOString(),
     last_verified_at: new Date().toISOString(),
     enrichment_meta: listing.enrichment_meta,
     series: computeSeries({ make: listing.make, model: listing.model, year: listing.year, title: listing.title }),
     ranking_variant: computeRankingVariant({ make: listing.make, model: listing.model, trim: listing.trim, year: listing.year, title: listing.title }),
+  }
+
+  if (!preservesExistingTerminal) {
+    row.hammer_price = listing.price
+    row.current_bid = isSold ? null : listing.price
+    row.final_price = isSold ? listing.price : null
   }
 
   if (hasText(listing.transmission)) row.transmission = listing.transmission
@@ -61,7 +78,19 @@ export async function upsertListing(listing: NormalizedElferspot, dryRun: boolea
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const row = mapElferspotUpsertRow(listing)
+  const { data: existing, error: existingError } = await client
+    .from("listings")
+    .select("status")
+    .eq("source", listing.source)
+    .eq("source_id", listing.source_id)
+    .maybeSingle()
+
+  if (existingError) throw new Error(`Existing status lookup failed: ${existingError.message}`)
+
+  const row = mapElferspotUpsertRow(
+    listing,
+    (existing as { status?: string } | null)?.status ?? null,
+  )
 
   const { error } = await client
     .from("listings")

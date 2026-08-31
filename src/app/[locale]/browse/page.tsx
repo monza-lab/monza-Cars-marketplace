@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { BrowseClient } from "@/components/browse/BrowseClient";
+import { ReportHeroCard } from "@/components/browse/ReportHeroCard";
 import {
   fetchDashboardDataUncached,
   getCachedDashboardData,
@@ -52,12 +53,14 @@ export default async function BrowsePage({
   setRequestLocale(locale);
 
   const data = await loadData();
+  const sampleReportUrl = process.env.NEXT_PUBLIC_HAUS_REPORT_SAMPLE_URL?.trim() || null;
 
   return (
     <BrowseClient
       auctions={data.auctions}
       seriesCounts={data.seriesCounts}
       totalTracked={data.regionTotals.all}
+      reportHero={<ReportHeroCard totalTracked={data.regionTotals.all} sampleReportUrl={sampleReportUrl} />}
     />
   );
 }

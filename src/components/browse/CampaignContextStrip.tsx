@@ -20,7 +20,13 @@ export function CampaignContextStrip() {
   return (
     <div className="border-b border-border bg-primary/8 px-4 py-2 text-foreground">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3">
-        <p className="text-xs leading-5 sm:text-sm">Porsche market intelligence - real pricing across US, EU, UK and Japan. Browse freely. 3 reports free.</p>
+        <button
+          type="button"
+          onClick={() => document.getElementById("haus-report-hero")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          className="text-left text-xs font-medium leading-5 hover:text-primary sm:text-sm"
+        >
+          Porsche market intelligence — your first Haus Report is free →
+        </button>
         <button type="button" aria-label="Dismiss" onClick={() => { window.localStorage.setItem(DISMISSED_KEY, "true"); setDismissedHere(true) }} className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <X className="size-4" />
         </button>

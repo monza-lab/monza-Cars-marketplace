@@ -55,4 +55,12 @@ describe("normalizeListing", () => {
     expect(result!.price).toBeNull()
     expect(result!.enrichment_meta.elferspot.priceStatus).toBe("price_on_request")
   })
+
+  it("normalizes a source-side Sold label to terminal inventory", () => {
+    const result = normalizeListing(summary, { ...detail, price: null, priceStatus: "sold" })
+
+    expect(result!.status).toBe("sold")
+    expect(result!.price).toBeNull()
+    expect(result!.enrichment_meta.elferspot.priceStatus).toBe("sold")
+  })
 })

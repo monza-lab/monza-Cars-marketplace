@@ -4,9 +4,11 @@ import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { ChevronDown } from "lucide-react"
 import Image from "next/image"
+import { setPreferredView } from "@/lib/viewPreference"
 
 function markExplored() {
   localStorage.setItem("monzahaus-explored", "true")
+  setPreferredView("classic")
 }
 
 function scrollToNextSection() {

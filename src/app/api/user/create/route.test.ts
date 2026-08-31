@@ -26,7 +26,8 @@ vi.mock("@/lib/supabase/server", () => ({
 }))
 
 vi.mock("@/lib/reports/queries", () => ({
-  DEFAULT_MONTHLY_PISTONS: 3000,
+  FREE_INTRODUCTORY_PISTONS: 3000,
+  FREE_MONTHLY_ALLOWANCE_PISTONS: 0,
   getOrCreateUser: mocks.getOrCreateUser,
   getOrCreateUserWithStatus: mocks.getOrCreateUserWithStatus,
 }))

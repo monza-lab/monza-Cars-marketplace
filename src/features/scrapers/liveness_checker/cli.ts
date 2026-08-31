@@ -94,9 +94,9 @@ async function main() {
     // Print summary
     console.log(`\n[liveness] ── Run complete ──`);
     console.log(`[liveness] Duration: ${(result.durationMs / 1000).toFixed(1)}s`);
-    console.log(`[liveness] Checked: ${result.totalChecked} | Alive: ${result.totalAlive} | Dead: ${result.totalDead}`);
+    console.log(`[liveness] Checked: ${result.totalChecked} | Alive: ${result.totalAlive} | Sold: ${result.totalSold} | Dead: ${result.totalDead}`);
     for (const r of result.results) {
-      console.log(`[liveness]   ${r.source}: checked=${r.checked} alive=${r.alive} dead=${r.dead}${r.circuitBroken ? " CIRCUIT-BROKEN" : ""}`);
+      console.log(`[liveness]   ${r.source}: checked=${r.checked} alive=${r.alive} sold=${r.sold} dead=${r.dead}${r.circuitBroken ? " CIRCUIT-BROKEN" : ""}`);
       if (r.errors.length > 0) {
         console.log(`[liveness]     errors: ${r.errors.slice(0, 5).join("; ")}${r.errors.length > 5 ? ` (+${r.errors.length - 5} more)` : ""}`);
       }
@@ -105,7 +105,7 @@ async function main() {
     // Build source_counts for monitoring
     const sourceCounts: Record<string, { discovered: number; written: number }> = {};
     for (const r of result.results) {
-      sourceCounts[r.source] = { discovered: r.checked, written: r.dead };
+      sourceCounts[r.source] = { discovered: r.checked, written: r.dead + r.sold };
     }
 
     const allErrors = result.results.flatMap((r) => r.errors);
@@ -119,7 +119,7 @@ async function main() {
       runtime: "cli",
       duration_ms: Date.now() - startTime,
       discovered: result.totalChecked,
-      written: result.totalDead,
+      written: result.totalDead + result.totalSold,
       errors_count: allErrors.length,
       refresh_checked: result.totalAlive,
       source_counts: sourceCounts,

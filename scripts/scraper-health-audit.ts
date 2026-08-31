@@ -184,6 +184,8 @@ export function buildElferspotPriceCoverage(
   activeTotal: number,
   numeric: number,
   resolvedNonNumeric: number,
+  soldWithoutPrice: number = 0,
+  activePriceOnRequest: number = 0,
 ): NonNullable<ScraperTargetFieldCoverage["priceCoverage"]> {
   const resolved = Math.min(activeTotal, numeric + resolvedNonNumeric);
   const pct = (value: number) => activeTotal === 0 ? 100 : Math.round((value / activeTotal) * 1000) / 10;
@@ -193,6 +195,8 @@ export function buildElferspotPriceCoverage(
     unresolved: Math.max(0, activeTotal - resolved),
     numericPct: pct(numeric),
     resolvedPct: pct(resolved),
+    soldWithoutPrice,
+    activePriceOnRequest,
   };
 }
 
@@ -203,7 +207,7 @@ async function fetchElferspotTargetCoverage(supabase: AuditSupabaseClient): Prom
     .select("id", { count: "exact", head: true })
     .eq("source", "Elferspot")
     .eq("status", "active");
-  const [numeric, resolvedNonNumeric] = await Promise.all([
+  const [numeric, resolvedNonNumeric, soldWithoutPrice, activePriceOnRequest] = await Promise.all([
     countRows(base().not("hammer_price", "is", null)),
     countRows(
       base()
@@ -213,11 +217,28 @@ async function fetchElferspotTargetCoverage(supabase: AuditSupabaseClient): Prom
           [...ELFERSPOT_RESOLVED_NON_NUMERIC_PRICE_STATUSES],
         ),
     ),
+    countRows(
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "Elferspot")
+        .eq("status", "sold")
+        .is("sold_price", null)
+        .is("final_price", null)
+        .is("hammer_price", null),
+    ),
+    countRows(
+      base()
+        .is("hammer_price", null)
+        .eq("enrichment_meta->elferspot->>priceStatus", "price_on_request"),
+    ),
   ]);
   coverage.priceCoverage = buildElferspotPriceCoverage(
     coverage.activeTotal,
     numeric,
     resolvedNonNumeric,
+    soldWithoutPrice,
+    activePriceOnRequest,
   );
   return coverage;
 }

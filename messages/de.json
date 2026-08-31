@@ -104,7 +104,7 @@
     "pistons": "Pistons",
     "buy": "Kaufen →",
     "available": "verfügbar",
-    "creditsResetHint": "Kostenlose Credits werden am 1. jedes Monats zurückgesetzt",
+    "creditsResetHint": "Einmaliges Startguthaben — kein monatlicher Reset",
     "watchlist": "Watchlist",
     "watchlistEmpty": "Noch keine gespeicherten Porsches. Tippen Sie auf das Lesezeichen, um es hier zu verfolgen.",
     "recentReports": "Aktuelle Berichte",
@@ -112,7 +112,7 @@
     "browsePorsches": "Porsches durchsuchen →",
     "currentPlan": "Aktueller Tarif",
     "unlimitedReportsActive": "Unbegrenzte Berichte während aktiv",
-    "freeReportsHint": "3 kostenlose Berichte / Monat",
+    "freeReportsHint": "3 Einführungsberichte insgesamt",
     "manage": "Verwalten",
     "upgrade": "Upgrade",
     "searchHistory": "Suchverlauf",
@@ -161,8 +161,8 @@
     "credits": "Pistons",
     "buy": "Kaufen",
     "buyCredits": "Guthaben Kaufen",
-    "freeCredits": "Melden Sie sich an für 3 kostenlose Analyse-Credits",
-    "creditsReset": "Kostenlose Credits werden am 1. jedes Monats zurückgesetzt",
+    "freeCredits": "Ihre ersten drei Reports sind kostenlos — der erste per E-Mail, zwei weitere mit Konto",
+    "creditsReset": "Das Startguthaben wird nicht monatlich zurückgesetzt",
     "noCredits": "Keine Credits Mehr",
     "noCreditsDesc": "Sie haben alle Ihre Analyse-Credits verbraucht. Kaufen Sie mehr, um weiter Fahrzeuge zu analysieren.",
     "email": "E-Mail",
@@ -191,7 +191,7 @@
     "signupLegalPrivacy": "Datenschutzerklärung",
     "analysisRequiresSignInTitle": "Analyse erfordert Anmeldung",
     "analysisRequiresSignInDesc": "Melden Sie sich an, um dieses Fahrzeug zu analysieren",
-    "newAccountsCredits": "Neue Konten erhalten 3 kostenlose Analyse-Credits",
+    "newAccountsCredits": "Ihre ersten drei Reports sind kostenlos — der erste per E-Mail, zwei weitere mit Konto",
     "signInMethod": "Anmeldemethode",
     "magicLink": "Magic Link",
     "magicLinkDesc": "Wir senden Ihnen einen Anmeldelink per E-Mail — ganz ohne Passwort.",
@@ -274,7 +274,7 @@
   },
   "carDetail": {
     "askAnything": "Fragen Sie Alles Über Dieses Auto",
-    "viewReport": "Bericht Ansehen",
+    "viewReport": "Haus Report kostenlos erhalten",
     "askAdvisor": "Berater Fragen",
     "isGoodInvestment": "Ist das eine gute Investition?",
     "fairPrice": "Fairer Preis",
@@ -522,7 +522,7 @@
   "pricing": {
     "title": "Wählen Sie Ihren Plan",
     "subtitle": "Umfassende Investitionsanalyse für klügere Kaufentscheidungen",
-    "heroEyebrow": "3.000 kostenlose Pistons jeden Monat — keine Karte erforderlich",
+    "heroEyebrow": "Ihre ersten drei Reports sind kostenlos — keine Karte erforderlich",
     "heroTitle": "Lade dein Wallet auf",
     "heroSubtitle": "Pistons sind deine Währung. Einmal aufladen oder abonnieren. Dein Research-Wallet.",
     "heroDescription": "Ein Bericht kostet 1.000 Pistons. Höhere Tarife schalten mehr monatliche Pistons frei. Aufladungen verfallen nie.",
@@ -1439,7 +1439,9 @@
     "copyright": "© 2026 Monza Lab LLC",
     "privacy": "Datenschutz",
     "terms": "Nutzungsbedingungen",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "methodology": "Methodik",
+    "instagram": "Instagram"
   },
   "seo": {
     "make": {
@@ -1459,10 +1461,10 @@
     "hausReport": {
       "title": "Haus Report",
       "available": "Haus Report verfügbar",
-      "teaserBody": "Fahrzeugspezifischer fairer Wert, Analyse der Servicehistorie und die Fragen, die Sie vor dem Kauf stellen sollten. Für 1 Credit freischalten.",
-      "ctaGenerate": "Haus Report erstellen",
+      "teaserBody": "Fair Value für dieses Fahrzeug, geprüfte Vergleichswerte, marktübergreifende Preise und Importkosten — plus die Fragen vor der Überweisung. In etwa 90 Sekunden erstellt.",
+      "ctaGenerate": "Haus Report kostenlos erhalten",
       "ctaView": "Haus Report ansehen",
-      "cached": "Bereits erstellt — im Cache"
+      "cached": "Jetzt bereit — der Report für dieses Fahrzeug ist vorbereitet."
     },
     "fairValue": {
       "specificCarTitle": "Fahrzeugspezifischer Fair Value",

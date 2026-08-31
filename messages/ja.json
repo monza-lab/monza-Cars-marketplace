@@ -104,7 +104,7 @@
     "pistons": "Pistons",
     "buy": "購入 →",
     "available": "利用可能",
-    "creditsResetHint": "無料クレジットは毎月1日にリセット",
+    "creditsResetHint": "初回限定枠 — 毎月のリセットなし",
     "watchlist": "ウォッチリスト",
     "watchlistEmpty": "保存されたPorscheはまだありません。リスト上のブックマークをタップしてここで追跡できます。",
     "recentReports": "最近のレポート",
@@ -112,7 +112,7 @@
     "browsePorsches": "Porscheを見る →",
     "currentPlan": "現在のプラン",
     "unlimitedReportsActive": "アクティブな間、レポートは無制限",
-    "freeReportsHint": "月3件の無料レポート",
+    "freeReportsHint": "初回限定レポートは合計3件",
     "manage": "管理",
     "upgrade": "アップグレード",
     "searchHistory": "検索履歴",
@@ -161,8 +161,8 @@
     "credits": "Pistons",
     "buy": "購入",
     "buyCredits": "クレジット購入",
-    "freeCredits": "ログインして3つの無料分析クレジットを取得",
-    "creditsReset": "無料クレジットは毎月1日にリセットされます",
+    "freeCredits": "最初の3件は無料 — 1件目はメール、残り2件はアカウント作成後に利用できます",
+    "creditsReset": "初回限定枠は毎月リセットされません",
     "noCredits": "クレジット残高なし",
     "noCreditsDesc": "分析クレジットをすべて使用しました。車両の分析を続けるには、クレジットを購入してください。",
     "email": "メールアドレス",
@@ -191,7 +191,7 @@
     "signupLegalPrivacy": "プライバシーポリシー",
     "analysisRequiresSignInTitle": "分析にはログインが必要です",
     "analysisRequiresSignInDesc": "この車両を分析するにはログインしてください",
-    "newAccountsCredits": "新規アカウントは分析クレジットを3つ無料で受け取れます",
+    "newAccountsCredits": "最初の3件は無料 — 1件目はメール、残り2件はアカウント作成後に利用できます",
     "signInMethod": "サインイン方法",
     "magicLink": "マジックリンク",
     "magicLinkDesc": "ログイン用のリンクをメールで送ります。パスワードは不要です。",
@@ -273,7 +273,7 @@
   },
   "carDetail": {
     "askAnything": "この車について何でも聞いてください",
-    "viewReport": "レポートを見る",
+    "viewReport": "Haus Reportを無料で取得",
     "askAdvisor": "アドバイザー",
     "isGoodInvestment": "良い投資ですか？",
     "fairPrice": "適正価格",
@@ -521,7 +521,7 @@
   "pricing": {
     "title": "プランを選択",
     "subtitle": "より賢い購入判断のための包括的な投資分析をアンロック",
-    "heroEyebrow": "毎月3,000の無料Pistons — カード不要",
+    "heroEyebrow": "最初の3件のレポートは無料 — カード不要",
     "heroTitle": "ウォレットをチャージ",
     "heroSubtitle": "Pistonsはあなたの通貨です。一度チャージするか、サブスクリプションへ。あなたのリサーチウォレット。",
     "heroDescription": "1レポートにつき1,000 Pistons。上位プランで月間Pistonsが増加。チャージは無期限。",
@@ -1644,7 +1644,9 @@
     "copyright": "© 2026 Monza Lab LLC",
     "privacy": "プライバシー",
     "terms": "利用規約",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "methodology": "算定方法",
+    "instagram": "Instagram"
   },
   "seo": {
     "make": {
@@ -1664,10 +1666,10 @@
     "hausReport": {
       "title": "Haus Report",
       "available": "Haus Report 利用可能",
-      "teaserBody": "この車両固有の適正価格、サービス履歴の分析、購入前に確認すべき質問。1クレジットでアンロック。",
-      "ctaGenerate": "Haus Report を生成",
+      "teaserBody": "この車両の適正価格、検証済み比較事例、市場横断価格、輸送後コストに加え、送金前に確認すべき質問を約90秒でまとめます。",
+      "ctaGenerate": "Haus Reportを無料で取得",
       "ctaView": "Haus Report を見る",
-      "cached": "既に生成済み — キャッシュから"
+      "cached": "準備済み — この車両のレポートはすぐに閲覧できます。"
     },
     "fairValue": {
       "specificCarTitle": "車両固有の適正価格",

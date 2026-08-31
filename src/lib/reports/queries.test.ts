@@ -84,9 +84,19 @@ describe("reports/queries exports", () => {
     expect(REPORT_PISTON_COST).toBe(1000)
   })
 
-  it("grants free users enough monthly Pistons for three Haus Reports", async () => {
-    const { DEFAULT_MONTHLY_PISTONS, REPORT_PISTON_COST } = await import("./queries")
-    expect(DEFAULT_MONTHLY_PISTONS).toBe(REPORT_PISTON_COST * 3)
+  it("grants three introductory reports once without a free-tier monthly allowance", async () => {
+    const {
+      FREE_INTRODUCTORY_PISTONS,
+      FREE_MONTHLY_ALLOWANCE_PISTONS,
+      REPORT_PISTON_COST,
+      shouldReplenishReportCredits,
+    } = await import("./queries")
+
+    expect(FREE_INTRODUCTORY_PISTONS).toBe(REPORT_PISTON_COST * 3)
+    expect(FREE_MONTHLY_ALLOWANCE_PISTONS).toBe(0)
+    expect(shouldReplenishReportCredits({ tier: "FREE", monthly_allowance_pistons: 3000 })).toBe(false)
+    expect(shouldReplenishReportCredits({ tier: "PACK_OWNER", monthly_allowance_pistons: 0 })).toBe(false)
+    expect(shouldReplenishReportCredits({ tier: "MONTHLY", monthly_allowance_pistons: 10_000 })).toBe(true)
   })
 })
 

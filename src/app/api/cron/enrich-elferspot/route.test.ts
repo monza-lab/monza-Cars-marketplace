@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   buildElferspotMeta,
+  applyElferspotPriceUpdate,
   GET,
   mergeRowsForEnrichment,
   resolveElferspotVin,
@@ -257,6 +258,24 @@ describe("GET /api/cron/enrich-elferspot", () => {
         },
         checkedAt: "new",
       },
+    });
+  });
+
+  it("transitions an active enrichment row to sold without inventing a current bid", () => {
+    const update: Record<string, unknown> = {};
+
+    applyElferspotPriceUpdate(update, {
+      price: null,
+      priceStatus: "sold",
+      currency: "EUR",
+    });
+
+    expect(update).toMatchObject({
+      status: "sold",
+      current_bid: null,
+      hammer_price: null,
+      final_price: null,
+      sold_price: null,
     });
   });
 

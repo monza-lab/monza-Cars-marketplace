@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { mapElferspotUpsertRow } from "./supabase_writer"
+import { mapElferspotUpsertRow, resolveElferspotStatus } from "./supabase_writer"
 import type { NormalizedElferspot } from "./normalize"
 
 function listing(overrides: Partial<NormalizedElferspot> = {}): NormalizedElferspot {
@@ -71,5 +71,27 @@ describe("mapElferspotUpsertRow", () => {
     expect(row.color_exterior).toBe("Guards Red")
     expect(row.images).toEqual(["https://cdn.elferspot.com/car.jpg"])
     expect(row.photos_count).toBe(1)
+  })
+
+  it("stores a sold price as historical evidence, never as a current bid", () => {
+    const row = mapElferspotUpsertRow(listing({ status: "sold", price: 187_500 }))
+
+    expect(row.status).toBe("sold")
+    expect(row.current_bid).toBeNull()
+    expect(row.final_price).toBe(187_500)
+    expect(row).not.toHaveProperty("sold_price")
+  })
+
+  it("does not reactivate terminal inventory after a partial active scrape", () => {
+    expect(resolveElferspotStatus("active", "sold")).toBe("sold")
+    expect(resolveElferspotStatus("active", "delisted")).toBe("delisted")
+    expect(resolveElferspotStatus("sold", "active")).toBe("sold")
+
+    const row = mapElferspotUpsertRow(listing({ status: "active", price: null }), "sold")
+    expect(row.status).toBe("sold")
+    expect(row).not.toHaveProperty("hammer_price")
+    expect(row).not.toHaveProperty("current_bid")
+    expect(row).not.toHaveProperty("final_price")
+    expect(row).not.toHaveProperty("sold_price")
   })
 })

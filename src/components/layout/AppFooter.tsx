@@ -7,7 +7,7 @@ export function AppFooter() {
   const t = useTranslations("footer")
 
   return (
-    <footer className="hidden md:flex items-center justify-center gap-3 py-3 border-t border-border">
+    <footer className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border px-3 pt-3 pb-24 md:pb-3">
       <span className="text-[10px] text-muted-foreground tracking-wide">{t("copyright")}</span>
       <span className="text-border">·</span>
       <Link
@@ -31,11 +31,27 @@ export function AppFooter() {
         {t("cookies")}
       </Link>
       <span className="text-border">·</span>
+      <Link
+        href="/methodology"
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+      >
+        {t("methodology")}
+      </Link>
+      <span className="text-border">·</span>
+      <a
+        href="https://www.instagram.com/monzahaus"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+      >
+        {t("instagram")}
+      </a>
+      <span className="hidden text-border sm:inline">·</span>
       <a
         href="https://monzalab.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide"
+        className="hidden items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors tracking-wide sm:inline-flex"
       >
         Powered by
         <svg viewBox="0 0 120 121" className="h-[10px] w-[10px]" aria-hidden="true">

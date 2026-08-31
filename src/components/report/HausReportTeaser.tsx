@@ -5,12 +5,37 @@ import { FileText } from "lucide-react"
 interface Props {
   reportExists: boolean
   userAlreadyPaid: boolean
+  fairValueLowUsd?: number | null
+  fairValueHighUsd?: number | null
+  comparablesCount?: number | null
   onClick: () => void
 }
 
-export function HausReportTeaser({ reportExists, userAlreadyPaid, onClick }: Props) {
+function formatUsd(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+export function HausReportTeaser({
+  reportExists,
+  userAlreadyPaid,
+  fairValueLowUsd,
+  fairValueHighUsd,
+  comparablesCount,
+  onClick,
+}: Props) {
   const t = useTranslations("report.hausReport")
   const cta = userAlreadyPaid ? t("ctaView") : t("ctaGenerate")
+  const hasFairValue = Boolean(
+    reportExists
+      && fairValueLowUsd
+      && fairValueHighUsd
+      && fairValueLowUsd > 0
+      && fairValueHighUsd >= fairValueLowUsd,
+  )
 
   return (
     <div className="rounded-2xl border border-border bg-card/60 p-5 flex items-start gap-4">
@@ -22,6 +47,22 @@ export function HausReportTeaser({ reportExists, userAlreadyPaid, onClick }: Pro
         <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{t("teaserBody")}</p>
         {reportExists && !userAlreadyPaid && (
           <p className="mt-2 text-[10px] text-muted-foreground uppercase tracking-wider">{t("cached")}</p>
+        )}
+        {hasFairValue && (
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-primary/20 bg-primary/[0.06] p-3">
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Fair value</p>
+              <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+                {formatUsd(fairValueLowUsd!)}–{formatUsd(fairValueHighUsd!)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Evidence</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">
+                {(comparablesCount ?? 0).toLocaleString("en-US")} verified comparables
+              </p>
+            </div>
+          </div>
         )}
         <button
           onClick={onClick}

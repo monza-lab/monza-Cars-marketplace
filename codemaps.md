@@ -164,7 +164,7 @@ MarketData (standalone aggregation table)
 
 | File | Exports | Purpose |
 |------|---------|---------|
-| `index.ts` | `getOrCreateUser()`, `checkAndResetFreeCredits()`, `getUserCredits()`, `hasAlreadyAnalyzed()`, `deductCredit()`, `addPurchasedCredits()`, `getTransactionHistory()` | **Credit system** — Free tier (3/month), monthly reset, deduction on analysis, purchase support |
+| `index.ts` | `getOrCreateUser()`, `getUserCredits()`, `hasAlreadyAnalyzed()`, `deductCredit()`, `addPurchasedCredits()`, `getTransactionHistory()` | **Credit system** — one-time three-report introductory allowance, paid-plan renewals, deduction on analysis, purchase support |
 
 ### `src/lib/utils/`
 

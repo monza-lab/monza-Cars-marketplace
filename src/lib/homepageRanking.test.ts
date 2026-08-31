@@ -5,6 +5,7 @@ import {
   buildHomepageRankingContextFromSupply,
   compareHomepageOrdering,
   rankHomepageListings,
+  canonicalizeHomepageTitle,
   type HomepageRankingListing,
 } from "./homepageRanking";
 
@@ -25,12 +26,148 @@ function listing(
     rarityScore: 88,
     raritySignals: ["homologation_special"],
     images: ["https://example.com/car.jpg"],
+    currentBid: 95_000,
     endTime: "2026-08-01T00:00:00.000Z",
     ...overrides,
   };
 }
 
 describe("homepage ranking", () => {
+  it("normalizes AutoScout24 titles into the canonical Porsche format", () => {
+    const autoScout = listing("autoscout", {
+      year: 2020,
+      model: "911 Carrera S",
+      trim: "Carrera S",
+      title: "Porsche 911 Carrera S | PDK | Chrono | MwSt.",
+      platform: "AUTO_SCOUT_24",
+    });
+
+    expect(canonicalizeHomepageTitle(autoScout)).toBe("2020 Porsche 911 Carrera S (992)");
+    expect(canonicalizeHomepageTitle({ ...autoScout, platform: "bringatrailer" })).toBe(
+      autoScout.title,
+    );
+  });
+
+  it("keeps garbage titles and implausibly cheap halo cars out of featured results", () => {
+    const garbage = listing("garbage", {
+      title: "Just a moment...",
+      model: "Unknown",
+      currentBid: 90_000,
+      rarityScore: 100,
+    });
+    const brokenCarreraGt = listing("broken-cgt", {
+      title: "2005 Porsche Carrera GT",
+      model: "Carrera GT",
+      trim: "Carrera GT",
+      currentBid: 115_000,
+      rarityScore: 100,
+    });
+    const valid = listing("valid", { currentBid: 95_000, rarityScore: 10 });
+
+    const ranked = rankHomepageListings([garbage, brokenCarreraGt, valid], undefined, { limit: 10 });
+
+    expect(ranked.map((row) => row.listing.id)).toEqual(["valid"]);
+  });
+
+  it("uses priced cars for the first ten whenever priced supply is sufficient", () => {
+    const poa = Array.from({ length: 3 }, (_, index) => listing(`poa-${index}`, {
+      currentBid: 0,
+      rarityScore: 100 - index,
+    }));
+    const priced = Array.from({ length: 11 }, (_, index) => listing(`priced-${index}`, {
+      model: index % 2 === 0 ? "911 Carrera" : "718 Cayman",
+      trim: `${index}`,
+      title: `2020 Porsche ${index % 2 === 0 ? "911 Carrera" : "718 Cayman"} ${index}`,
+      currentBid: 40_000 + index * 7_000,
+      rarityScore: 10,
+    }));
+
+    const ranked = rankHomepageListings([...poa, ...priced], undefined, { limit: 14 });
+
+    expect(ranked.slice(0, 10).every((row) => Number(row.listing.currentBid) > 0)).toBe(true);
+  });
+
+  it("prioritizes verified fair-value bands inside the conversion window", () => {
+    const withoutBand = listing("without-band", { rarityScore: 100, currentBid: 90_000 });
+    const withBand = listing("with-band", {
+      rarityScore: 10,
+      currentBid: 90_000,
+      fairValueByRegion: { US: { low: 85_000, high: 105_000 } },
+    });
+
+    const ranked = rankHomepageListings([withoutBand, withBand], undefined, { limit: 2 });
+
+    expect(ranked[0].listing.id).toBe("with-band");
+  });
+
+  it("keeps the top ten relatable while retaining one or two credible halo cars", () => {
+    const relatable = Array.from({ length: 20 }, (_, index) => listing(`relatable-${index}`, {
+      model: index % 2 === 0 ? "911 Carrera" : "718 Cayman",
+      trim: index % 2 === 0 ? "Carrera" : "Cayman",
+      title: `2020 Porsche ${index % 2 === 0 ? "911 Carrera" : "718 Cayman"} ${index}`,
+      currentBid: 45_000 + (index % 10) * 10_000,
+      rarityScore: 80 - index,
+      raritySignals: [],
+    }));
+    const halos = [
+      listing("halo-918", {
+        year: 2015,
+        model: "918 Spyder",
+        trim: "918 Spyder",
+        title: "2015 Porsche 918 Spyder",
+        currentBid: 1_500_000,
+        raritySignals: ["hypercar"],
+      }),
+      listing("halo-cgt", {
+        year: 2005,
+        model: "Carrera GT",
+        trim: "Carrera GT",
+        title: "2005 Porsche Carrera GT",
+        currentBid: 1_250_000,
+        raritySignals: ["hypercar"],
+      }),
+    ];
+
+    const topTen = rankHomepageListings([...relatable, ...halos], undefined, { limit: 10 });
+    const haloCount = topTen.filter((row) => row.isHalo).length;
+    const relatableCount = topTen.filter((row) => (
+      row.priceUsd !== null && row.priceUsd >= 40_000 && row.priceUsd <= 150_000
+    )).length;
+
+    expect(haloCount).toBeGreaterThanOrEqual(1);
+    expect(haloCount).toBeLessThanOrEqual(2);
+    expect(relatableCount).toBeGreaterThanOrEqual(8);
+  });
+
+  it("avoids placing the same variant in adjacent featured positions", () => {
+    const repeated = Array.from({ length: 3 }, (_, index) => listing(`carrera-${index}`, {
+      model: "911 Carrera",
+      trim: "Carrera",
+      title: `2020 Porsche 911 Carrera ${index}`,
+      currentBid: 80_000 + index * 1000,
+      rarityScore: 100 - index,
+    }));
+    const alternative = listing("cayman", {
+      model: "718 Cayman",
+      trim: "Cayman",
+      title: "2020 Porsche 718 Cayman",
+      currentBid: 75_000,
+      rarityScore: 1,
+    });
+    const secondAlternative = listing("boxster", {
+      model: "718 Boxster",
+      trim: "Boxster",
+      title: "2020 Porsche 718 Boxster",
+      currentBid: 70_000,
+      rarityScore: 1,
+    });
+
+    const ranked = rankHomepageListings([...repeated, alternative, secondAlternative], undefined, { limit: 5 });
+    const firstFour = ranked.slice(0, 4).map((row) => row.variantKey);
+
+    expect(firstFour.some((variant, index) => index > 0 && variant === firstFour[index - 1])).toBe(false);
+  });
+
   it("builds a ranking context from database variant counts", () => {
     const context = buildHomepageRankingContextFromSupply({
       "991:speedster": 2,
@@ -125,6 +262,7 @@ describe("homepage ranking", () => {
       title: "2015 Porsche 918 Spyder",
       rarityScore: 100,
       raritySignals: ["hypercar"],
+      currentBid: 1_500_000,
     });
     const classicIcon = listing("z-classic-icon", {
       year: 1957,

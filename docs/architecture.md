@@ -13,7 +13,7 @@
 ### Core Value Proposition
 - **Multi-platform aggregation** of live auctions
 - **AI-powered vehicle analysis** (valuation, red flags, investment grade)
-- **Credit-based monetization** (3 free analyses/month, purchasable credits)
+- **Credit-based monetization** (three introductory reports once, purchasable credits, unlimited paid subscription)
 - **Multi-language support** (EN, ES, DE, JA)
 
 ---
@@ -300,7 +300,7 @@ New User Registration
        └── Creates user with 3 FREE credits
             └── Records FREE_MONTHLY transaction
 
-Monthly Reset (checked on profile access)
+Paid subscription renewal (free introductory Pistons never reset)
   └── checkAndResetFreeCredits()
        └── If 1+ months since reset:
             ├── Add 3 credits

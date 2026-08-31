@@ -214,6 +214,42 @@ export function transformCar(car: CollectorCar): DashboardAuction {
   };
 }
 
+const FAIR_VALUE_CURRENCY = {
+  US: "$",
+  EU: "€",
+  UK: "£",
+  JP: "¥",
+} as const;
+
+/**
+ * The dashboard valuation cache is the server-side source of truth for browse
+ * bands. Keep the listing payload self-contained so BrowseCard can render the
+ * same verified family/market evidence without recomputing it in the browser.
+ */
+export function attachRegionalFairValues(
+  cars: readonly CollectorCar[],
+  regionalValByFamily: RegionalValByFamily,
+): CollectorCar[] {
+  return cars.map((car) => {
+    const familyValuation = car.family ? regionalValByFamily[car.family] : undefined;
+    if (!familyValuation) return car;
+
+    const fairValueByRegion = {} as NonNullable<CollectorCar["fairValueByRegion"]>;
+    for (const market of DASHBOARD_REGION_ORDER) {
+      const stats = familyValuation[market];
+      const low = stats.marketValue.p25Usd ?? stats.askMedian.p25Usd ?? 0;
+      const high = stats.marketValue.p75Usd ?? stats.askMedian.p75Usd ?? 0;
+      fairValueByRegion[market] = {
+        currency: FAIR_VALUE_CURRENCY[market],
+        low: Math.round(low),
+        high: Math.round(high),
+      };
+    }
+
+    return { ...car, fairValueByRegion };
+  });
+}
+
 export function serializeEndTime(endTime: Date | null | undefined): string {
   return endTime instanceof Date ? endTime.toISOString() : "";
 }
@@ -472,16 +508,24 @@ async function dashboardDataImpl(): Promise<DashboardData> {
   ]);
 
   const valuationListings = await withSoftTimeout(
-    (signal) =>
+    () =>
       fetchValuationListingsForMake(requestedMake ?? "Porsche", DASHBOARD_VALUATION_IMAGE_POOL_LIMIT),
     DASHBOARD_VALUATION_IMAGE_POOL_TIMEOUT_MS,
     "valuation listings query",
     [],
   );
 
+  // Apply cached valuation evidence before ranking so cars with verified bands
+  // can receive the intended evidence priority. If the cache is unavailable,
+  // the later raw-corpus fallback is still attached before serialization.
+  const liveWithCachedValuations = attachRegionalFairValues(
+    live,
+    cachedRegionalValByFamily ?? {},
+  );
+
   // Only active listings for dashboard
   const active = rankDashboardCandidates(
-    live.filter((car) => car.status === "ACTIVE" || car.status === "ENDING_SOON"),
+    liveWithCachedValuations.filter((car) => car.status === "ACTIVE" || car.status === "ENDING_SOON"),
     variantCountsByRegion.all,
     DASHBOARD_DISPLAY_LIMIT,
   );
@@ -529,7 +573,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
   }
 
   const result: DashboardData = {
-    auctions: active.map(transformCar),
+    auctions: attachRegionalFairValues(active, regionalValByFamily).map(transformCar),
     valuationListings: representativeListings.map(transformCar),
     regionalValByFamily,
     liveNow: aggregates.liveNow,
@@ -588,7 +632,7 @@ async function dashboardDataImpl(): Promise<DashboardData> {
  */
 const _cachedDashboardData = unstable_cache(
   dashboardDataImpl,
-  ["dashboard-data-v2"],
+  ["dashboard-data-v3-conversion"],
   {
     revalidate: 300, // 5-minute background revalidation
     tags: ["listings"], // enables revalidateTag("listings") from cron routes

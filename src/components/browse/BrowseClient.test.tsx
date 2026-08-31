@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { DashboardAuction } from "@/lib/dashboardCache";
-import { selectClassicBrowsePool } from "./BrowseClient";
+import { BrowseResultsGrid, describeMarketContext, selectClassicBrowsePool, shouldShowBrowseRescue } from "./BrowseClient";
 
 vi.mock("@/i18n/navigation", () => ({
   usePathname: () => "/en/browse",
@@ -56,5 +58,41 @@ describe("selectClassicBrowsePool", () => {
     });
 
     expect(pool).toEqual([]);
+  });
+});
+
+describe("BrowseResultsGrid", () => {
+  it("keeps the report hero and listing cards in one ordered grid", () => {
+    render(
+      <BrowseResultsGrid reportHero={<section data-testid="hero">Hero</section>}>
+        <article data-testid="listing">Listing</article>
+      </BrowseResultsGrid>,
+    );
+
+    const grid = screen.getByTestId("browse-results-grid");
+    expect(grid.children).toHaveLength(2);
+    expect(grid.children[0]).toBe(screen.getByTestId("hero"));
+    expect(grid.children[1]).toBe(screen.getByTestId("listing"));
+  });
+});
+
+describe("describeMarketContext", () => {
+  it("makes a single selected market and mileage convention explicit", () => {
+    expect(describeMarketContext(["EU"])).toBe("Europe market · mileage shown in kilometres");
+    expect(describeMarketContext(["US"])).toBe("United States market · mileage shown in miles");
+  });
+
+  it("documents mixed-market mileage as card-specific", () => {
+    expect(describeMarketContext([])).toBe("All markets · mileage follows each card's market");
+    expect(describeMarketContext(["EU", "US"])).toBe("2 markets selected · mileage follows each card's market");
+  });
+});
+
+describe("shouldShowBrowseRescue", () => {
+  it("appears only after two viewports and never over consent or after a report click", () => {
+    expect(shouldShowBrowseRescue({ scrollY: 1601, viewportHeight: 800, consentVisible: false, reportClicked: false })).toBe(true);
+    expect(shouldShowBrowseRescue({ scrollY: 1600, viewportHeight: 800, consentVisible: false, reportClicked: false })).toBe(false);
+    expect(shouldShowBrowseRescue({ scrollY: 2000, viewportHeight: 800, consentVisible: true, reportClicked: false })).toBe(false);
+    expect(shouldShowBrowseRescue({ scrollY: 2000, viewportHeight: 800, consentVisible: false, reportClicked: true })).toBe(false);
   });
 });

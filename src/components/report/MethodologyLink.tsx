@@ -7,14 +7,14 @@ interface MethodologyLinkProps {
 
 export function MethodologyLink({ href = "/methodology" }: MethodologyLinkProps) {
   return (
-    <section className="px-4 py-4">
+    <section className="py-3">
       <Link
         href={href}
         className="group inline-flex items-center gap-2 text-[12px] text-muted-foreground hover:text-foreground"
       >
         <BookOpen className="size-4" />
         <span>
-          {/* [HARDCODED] */}How we compute Fair Value, Modifiers, Market Intel, and Sources
+          How Fair Value is calculated
         </span>
         <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
       </Link>

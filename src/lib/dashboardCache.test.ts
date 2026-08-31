@@ -549,11 +549,23 @@ describe("dashboard cache", () => {
     expect(unstableCache).toHaveBeenCalledTimes(1)
     expect(unstableCache).toHaveBeenCalledWith(
       expect.any(Function),
-      ["dashboard-data-v2"],
+      ["dashboard-data-v3-conversion"],
       expect.objectContaining({
         tags: ["listings"],
       }),
     )
+  })
+
+  it("attaches verified family valuation bands to browse cards", async () => {
+    const { fetchDashboardDataUncached } = await import("./dashboardCache")
+    const data = await fetchDashboardDataUncached()
+
+    expect(data.auctions[0].fairValueByRegion).toEqual({
+      US: { currency: "$", low: 290000, high: 315000 },
+      EU: { currency: "€", low: 270000, high: 290000 },
+      UK: { currency: "£", low: 288000, high: 304000 },
+      JP: { currency: "¥", low: 310000, high: 325000 },
+    })
   })
 
   it("keeps listings when ancillary dashboard queries fail", async () => {

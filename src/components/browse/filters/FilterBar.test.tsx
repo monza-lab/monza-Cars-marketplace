@@ -51,4 +51,47 @@ describe("FilterBar search input", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith({ q: "997" });
   });
+
+  it("retains the complete query and focus after URL-backed state commits", async () => {
+    const onChange = vi.fn();
+    const onReset = vi.fn();
+    const props = {
+      matchCount: 120,
+      totalTracked: 500,
+      seriesCounts: {},
+      onChange,
+      onReset,
+    };
+    const { rerender } = render(<FilterBar {...props} filters={EMPTY_FILTERS} />);
+    const input = screen.getByPlaceholderText(/Search/i) as HTMLInputElement;
+    input.focus();
+
+    fireEvent.change(input, { target: { value: "GT2 RS" } });
+    await vi.runOnlyPendingTimersAsync();
+    rerender(<FilterBar {...props} filters={{ ...EMPTY_FILTERS, q: "GT2 RS" }} />);
+
+    expect(screen.getByPlaceholderText(/Search/i)).toBe(input);
+    expect(input.value).toBe("GT2 RS");
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("commits immediately on Enter without dropping focus", () => {
+    const { onChange } = renderFilterBar();
+    const input = screen.getByPlaceholderText(/Search/i) as HTMLInputElement;
+    input.focus();
+
+    fireEvent.change(input, { target: { value: "GT2 RS" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({ q: "GT2 RS" });
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("labels the inventory count as cars tracked on desktop and mobile", () => {
+    renderFilterBar();
+    expect(screen.getAllByText(/cars tracked/)).toHaveLength(2);
+    expect(screen.getAllByText("500")).toHaveLength(2);
+    expect(screen.queryByText(/500 reports/i)).not.toBeInTheDocument();
+  });
 });

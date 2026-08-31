@@ -13,6 +13,7 @@ interface GenerationStepperProps {
   currentStep: number
   totalDataPoints?: number
   onComplete?: () => void
+  variant?: "fullscreen" | "inline"
 }
 
 const ROTATING_MESSAGES: Record<string, string[]> = {
@@ -103,11 +104,10 @@ export function GenerationStepper({
   carImages,
   carTitle,
   series,
-  listingType,
   steps,
-  currentStep,
   totalDataPoints,
   onComplete,
+  variant = "fullscreen",
 }: GenerationStepperProps) {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [rotatingMsgIndex, setRotatingMsgIndex] = useState(0)
@@ -166,9 +166,12 @@ export function GenerationStepper({
   const completedCount = steps.filter((s) => s.status === "completed").length
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col lg:flex-row bg-black">
+    <div className={variant === "fullscreen"
+      ? "fixed inset-0 z-50 flex flex-col bg-black lg:flex-row"
+      : "flex max-h-[48vh] flex-col overflow-y-auto rounded-xl bg-black p-4"}
+    >
       {/* Photo section */}
-      <div className="relative h-[50vh] lg:h-full lg:w-[60%] overflow-hidden">
+      {variant === "fullscreen" && <div className="relative h-[50vh] lg:h-full lg:w-[60%] overflow-hidden">
         <AnimatePresence mode="wait">
           {photos.length > 0 ? (
             <motion.img
@@ -229,10 +232,13 @@ export function GenerationStepper({
             </motion.button>
           </motion.div>
         )}
-      </div>
+      </div>}
 
       {/* Stepper section */}
-      <div className="flex-1 lg:w-[40%] p-6 lg:p-10 overflow-y-auto flex flex-col justify-center">
+      <div className={variant === "fullscreen"
+        ? "flex flex-1 flex-col justify-center overflow-y-auto p-6 lg:w-[40%] lg:p-10"
+        : "flex flex-col justify-center"}
+      >
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-1">
             {activeStep?.label ?? (allDone ? "Complete" : "Preparing...")}
@@ -249,7 +255,7 @@ export function GenerationStepper({
             />
           </div>
           <p className="text-xs text-white/40 mt-1">
-            Step {Math.min(completedCount + 1, steps.length)} of {steps.length}
+            Step {Math.min(completedCount + 1, Math.max(steps.length, 1))} of {Math.max(steps.length, 1)}
           </p>
         </div>
 

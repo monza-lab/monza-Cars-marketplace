@@ -28,12 +28,13 @@ import type { HausReport } from "@/lib/fairValue/types"
 import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getStrictComparablesForModel } from "@/lib/db/queries"
 import { resolveReportToken } from "@/lib/reportAccess/repository"
+import { isPublicSampleReport } from "@/lib/sampleReport"
 
 export const dynamic = "force-dynamic"
 
 interface ReportPageProps {
   params: Promise<{ locale: string; make: string; id: string }>
-  searchParams?: Promise<{ mock?: string; access?: string }>
+  searchParams?: Promise<{ mock?: string; access?: string; sample?: string }>
 }
 
 export async function generateMetadata({ params }: ReportPageProps) {
@@ -64,6 +65,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   const resolvedSearch = (await searchParams) ?? {}
   const mockName = resolvedSearch.mock
   const rawAccessToken = resolvedSearch.access
+  const publicSample = isPublicSampleReport(id, resolvedSearch.sample)
   setRequestLocale(locale)
 
   const isLiveId = id.startsWith("live-")
@@ -124,12 +126,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     ? await resolveReportToken(rawAccessToken, id)
     : null
 
-  if (!mockName && !authUserId && !tokenAccess) {
+  if (!mockName && !authUserId && !tokenAccess && !publicSample) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <AuthRequiredPrompt
-            message="Sign in or create an account to use your 3 free Haus Reports."
+            message="Your first three Haus Reports are free — the first by email, two more with an account."
           />
         </div>
       </div>
@@ -219,7 +221,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
   // or (b) they have explicit unlimited report access.
   // Unauthenticated users never have access.
   // Mock previews (?mock=*) unlock automatically for design QA.
-  let userHasAccess = Boolean(mockName || tokenAccess)
+  let userHasAccess = Boolean(mockName || tokenAccess || publicSample)
   if (!userHasAccess) {
     try {
       if (authUserId) {

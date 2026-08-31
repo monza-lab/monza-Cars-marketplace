@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { SlidersHorizontal, MessageSquare } from "lucide-react";
 import type { DashboardAuction } from "@/lib/dashboardCache";
 import { BrowseCard } from "./BrowseCard";
@@ -12,8 +12,98 @@ import { countActiveFilters } from "./filters/types";
 import { partitionByPhoto } from "@/lib/photoSort";
 import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
 import { CampaignContextStrip } from "./CampaignContextStrip";
+import { COOKIE_BANNER_VISIBILITY_EVENT, REPORT_CTA_EVENT } from "@/lib/reportFunnel";
 
 const REMOTE_PAGE_SIZE = 30;
+
+export function shouldShowBrowseRescue({
+  scrollY,
+  viewportHeight,
+  consentVisible,
+  reportClicked,
+}: {
+  scrollY: number;
+  viewportHeight: number;
+  consentVisible: boolean;
+  reportClicked: boolean;
+}) {
+  return scrollY > viewportHeight * 2 && !consentVisible && !reportClicked;
+}
+
+export function BrowseResultsGrid({
+  reportHero,
+  children,
+}: {
+  reportHero: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id="browse-results"
+      data-testid="browse-results-grid"
+      className="grid scroll-mt-28 grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
+      {reportHero}
+      {children}
+    </div>
+  );
+}
+
+function BrowseRescueCta() {
+  const [visible, setVisible] = useState(false);
+  const reportClickedRef = useRef(false);
+
+  useEffect(() => {
+    reportClickedRef.current = window.sessionStorage.getItem(REPORT_CTA_EVENT) === "true";
+    const update = () => setVisible(shouldShowBrowseRescue({
+      scrollY: window.scrollY,
+      viewportHeight: window.innerHeight,
+      consentVisible: Boolean(document.querySelector('[aria-label="Cookie consent"]')),
+      reportClicked: reportClickedRef.current,
+    }));
+    const dismiss = () => {
+      reportClickedRef.current = true;
+      setVisible(false);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    window.addEventListener(COOKIE_BANNER_VISIBILITY_EVENT, update);
+    window.addEventListener(REPORT_CTA_EVENT, dismiss);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener(COOKIE_BANNER_VISIBILITY_EVENT, update);
+      window.removeEventListener(REPORT_CTA_EVENT, dismiss);
+    };
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => document.getElementById("browse-results")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+      className="fixed bottom-3 left-1/2 z-[70] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-xl md:bottom-5"
+    >
+      Your first Haus Report is free — tap any car
+    </button>
+  );
+}
+
+export function describeMarketContext(markets: string[]): string {
+  if (markets.length === 0) return "All markets · mileage follows each card's market";
+  if (markets.length > 1) return `${markets.length} markets selected · mileage follows each card's market`;
+
+  const names: Record<string, string> = {
+    US: "United States",
+    UK: "United Kingdom",
+    EU: "Europe",
+    JP: "Japan",
+  };
+  const market = markets[0];
+  const unit = market === "US" || market === "UK" ? "miles" : "kilometres";
+  return `${names[market] ?? market} market · mileage shown in ${unit}`;
+}
 
 export function selectClassicBrowsePool({
   auctions,
@@ -118,10 +208,12 @@ export function BrowseClient({
   auctions,
   seriesCounts,
   totalTracked,
+  reportHero,
 }: {
   auctions: DashboardAuction[];
   seriesCounts: Record<string, number>;
   totalTracked: number;
+  reportHero: ReactNode;
 }) {
   const { filters, setFilters, resetFilters } = useClassicFilters();
 
@@ -372,19 +464,28 @@ export function BrowseClient({
         onReset={resetFilters}
       />
       <NoMarketplaceBanner />
+      <BrowseRescueCta />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
-        {filtered.length === 0 && (remoteLoading || isFilterPending) ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mb-3 text-[11px] font-medium tracking-wide text-muted-foreground"
+        >
+          {describeMarketContext(filters.region)}
+        </p>
+        <BrowseResultsGrid reportHero={reportHero}>
+          {filtered.length === 0 && (remoteLoading || isFilterPending) ? (
           /* Region/filter change in progress — show a spinner instead of the
              empty state, which used to flash for ~1s and look like an error
              while the new query was still in flight. isFilterPending covers
              the 300ms debounce window before the fetch actually begins. */
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
             <div className="size-10 rounded-full border-2 border-border border-t-primary animate-spin mb-4" />
             <p className="text-[13px] text-muted-foreground">Loading cars…</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
             <div className="size-14 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
               <SlidersHorizontal className="size-5 text-muted-foreground" />
             </div>
@@ -420,40 +521,36 @@ export function BrowseClient({
               </>
             )}
           </div>
-        ) : (
-          <>
-            <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {visible.map((car, i) => (
-                <div
-                  key={car.id}
-                  style={{ contentVisibility: "auto", containIntrinsicSize: "auto 420px" }}
-                >
-                  <BrowseCard
-                    car={car}
-                    index={i}
-                    sourceUrl={sourceUrlById.get(car.id) ?? null}
-                  />
-                </div>
-              ))}
-            </div>
+        ) : visible.map((car, i) => (
+          <div
+            key={car.id}
+            style={{ contentVisibility: "auto", containIntrinsicSize: "auto 420px" }}
+          >
+            <BrowseCard
+              car={car}
+              index={i}
+              sourceUrl={sourceUrlById.get(car.id) ?? null}
+            />
+          </div>
+        ))}
+        </BrowseResultsGrid>
 
-            {/* Loading indicator */}
-            {remoteHasMore && (
-              <div className="mt-8 md:mt-10 flex justify-center items-center min-h-[4rem]">
-                {remoteLoading && (
-                  <div className="size-6 rounded-full border-2 border-border border-t-primary animate-spin" />
-                )}
-              </div>
+        {/* Loading indicator */}
+        {filtered.length > 0 && remoteHasMore && (
+          <div className="mt-8 md:mt-10 flex justify-center items-center min-h-[4rem]">
+            {remoteLoading && (
+              <div className="size-6 rounded-full border-2 border-border border-t-primary animate-spin" />
             )}
+          </div>
+        )}
 
-            {!remoteHasMore && visible.length > 0 && (
-              <div className="mt-10 text-center">
-                <p className="text-[11px] text-muted-foreground tracking-wider">
-                  You&apos;ve reached the end · {visible.length.toLocaleString()} reports shown
-                </p>
-              </div>
-            )}
-
+        {filtered.length > 0 && !remoteHasMore && visible.length > 0 && (
+          <div className="mt-10 text-center">
+            <p className="text-[11px] text-muted-foreground tracking-wider">
+              You&apos;ve reached the end · {visible.length.toLocaleString()} cars shown
+            </p>
+          </div>
+        )}
             {activeCount >= 2 && filtered.length > 0 && filtered.length < 20 && (
               <div className="mt-12 rounded-xl border border-border bg-foreground/[0.02] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
@@ -476,8 +573,6 @@ export function BrowseClient({
                 </div>
               </div>
             )}
-          </>
-        )}
       </div>
     </div>
   );

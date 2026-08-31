@@ -1,6 +1,6 @@
 import { dbQuery, withTransaction } from '../db/sql'
 
-const FREE_CREDITS_PER_MONTH = 3
+const FREE_INTRODUCTORY_CREDITS = 3
 
 type UserRow = {
   id: string
@@ -50,7 +50,7 @@ export async function getOrCreateUser(supabaseId: string, email: string, name?: 
         VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 0, NOW(), 'FREE', NOW(), NOW())
         RETURNING *
       `,
-      [supabaseId, email, name ?? null, FREE_CREDITS_PER_MONTH],
+      [supabaseId, email, name ?? null, FREE_INTRODUCTORY_CREDITS],
     )
     user = inserted.rows[0]
 
@@ -59,7 +59,7 @@ export async function getOrCreateUser(supabaseId: string, email: string, name?: 
         INSERT INTO "CreditTransaction" ("userId", amount, type, description)
         VALUES ($1, $2, 'FREE_MONTHLY', 'Welcome credits')
       `,
-      [user.id, FREE_CREDITS_PER_MONTH],
+      [user.id, FREE_INTRODUCTORY_CREDITS],
     )
   } catch (e) {
     const code = typeof e === 'object' && e && 'code' in e ? String((e as { code?: unknown }).code) : ''
@@ -77,40 +77,8 @@ export async function checkAndResetFreeCredits(userId: string) {
   const user = currentResult.rows[0]
   if (!user) return null
 
-  const now = new Date()
-  const resetDate = new Date(user.creditResetDate)
-  const monthsSinceReset =
-    (now.getFullYear() - resetDate.getFullYear()) * 12 +
-    (now.getMonth() - resetDate.getMonth())
-
-  if (monthsSinceReset < 1) return user
-
-  const updatedResult = await dbQuery<UserRow>(
-    `
-      UPDATE "User"
-      SET "creditsBalance" = "creditsBalance" + $2,
-          "freeCreditsUsed" = 0,
-          "creditResetDate" = $3,
-          "updatedAt" = NOW()
-      WHERE id = $1
-      RETURNING *
-    `,
-    [userId, FREE_CREDITS_PER_MONTH, now],
-  )
-
-  await dbQuery(
-    `
-      INSERT INTO "CreditTransaction" ("userId", amount, type, description)
-      VALUES ($1, $2, 'FREE_MONTHLY', $3)
-    `,
-    [
-      userId,
-      FREE_CREDITS_PER_MONTH,
-      `Monthly free credits - ${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-    ],
-  )
-
-  return updatedResult.rows[0] ?? user
+  // Kept for API compatibility. Introductory free credits never replenish.
+  return user
 }
 
 export async function getUserCredits(supabaseId: string) {

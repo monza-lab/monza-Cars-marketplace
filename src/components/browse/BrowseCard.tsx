@@ -10,6 +10,8 @@ import type { DashboardAuction } from "@/lib/dashboardCache";
 import { MarketDeltaPill } from "@/components/report/MarketDeltaPill";
 import { SafeImage } from "@/components/dashboard/cards/SafeImage";
 import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill";
+import { formatMileageForMarket, marketMileageLabel } from "@/lib/mileage";
+import { markReportCtaClicked } from "@/lib/reportFunnel";
 
 const PLATFORM_SHORT: Record<string, string> = {
   BRING_A_TRAILER: "BaT",
@@ -19,7 +21,7 @@ const PLATFORM_SHORT: Record<string, string> = {
   AUTO_TRADER: "AT",
   BE_FORWARD: "BF",
   CLASSIC_COM: "Cls",
-  ELFERSPOT: "ES",
+  ELFERSPOT: "Elferspot",
   RM_SOTHEBYS: "RM",
   BONHAMS: "BON",
   GOODING: "G&C",
@@ -81,6 +83,9 @@ export function BrowseCard({
   const trans = formatTransmission(car.transmission);
   const region = regionCode(car);
   const fairUs = car.fairValueByRegion?.US;
+  const fairUsMedian = fairUs && fairUs.low > 0 && fairUs.high > 0
+    ? (fairUs.low + fairUs.high) / 2
+    : null;
   // Honest-by-data: countdown only renders for active auctions (future
   // endTime + at least one bid). 4 of 5 marketplace scrapers hardcode
   // bidCount=0, so this combo only fires for real auctions.
@@ -92,7 +97,9 @@ export function BrowseCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      data-testid="browse-card"
+      data-initial-visibility="visible"
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.015, 0.2) }}
       layout
@@ -102,6 +109,7 @@ export function BrowseCard({
           so we don't nest <a> inside <a>. */}
       <Link
         href={detailHref}
+        onClick={markReportCtaClicked}
         aria-label={`View ${car.title}`}
         className="group block rounded-xl bg-card border border-border overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
@@ -122,7 +130,7 @@ export function BrowseCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
-            <MarketDeltaPill priceUsd={car.currentBid} medianUsd={null} />
+            <MarketDeltaPill priceUsd={car.currentBid} medianUsd={fairUsMedian} />
             <span className="rounded-full px-2 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/80 border border-border backdrop-blur-md">
               {platformLabel}
             </span>
@@ -139,7 +147,7 @@ export function BrowseCard({
             aria-hidden="true"
             className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-primary/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-md transition-all duration-200 group-hover:bg-primary group-hover:-translate-y-0.5"
           >
-            Report
+            Free report
             <ChevronRight className="size-2.5" />
           </span>
         </div>
@@ -164,7 +172,7 @@ export function BrowseCard({
                   Mileage
                 </p>
                 <p className="text-[12px] font-medium text-muted-foreground tabular-nums leading-tight">
-                  {car.mileage.toLocaleString(locale)} {car.mileageUnit || "mi"}
+                  {formatMileageForMarket(car.mileage, car.mileageUnit, region, locale)}
                 </p>
               </div>
             )}
@@ -200,8 +208,15 @@ export function BrowseCard({
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <span className="inline-flex min-h-6 items-center rounded-full bg-primary/10 px-2.5 text-[11px] font-semibold text-primary">
+                Free report
+              </span>
               {region && (
-                <span className="font-medium text-muted-foreground tracking-wider">
+                <span
+                  aria-label={marketMileageLabel(region)}
+                  title={marketMileageLabel(region)}
+                  className="font-medium text-muted-foreground tracking-wider"
+                >
                   {region}
                 </span>
               )}

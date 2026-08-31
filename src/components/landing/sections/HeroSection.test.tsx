@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { HeroSection } from "./HeroSection"
+
+const { setPreferredView } = vi.hoisted(() => ({ setPreferredView: vi.fn() }))
+
+vi.mock("@/lib/viewPreference", () => ({ setPreferredView }))
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => {
@@ -48,6 +52,14 @@ describe("HeroSection", () => {
     expect(links[0]).toHaveAttribute("href", "/browse")
     expect(links[1]).toHaveAccessibleName("Explore the Market")
     expect(links[1]).toHaveAttribute("href", "/browse")
+  })
+
+  it("persists Classic when a Monza visitor follows the browse CTA", () => {
+    render(<HeroSection />)
+
+    fireEvent.click(screen.getByRole("link", { name: "Explore the Market" }))
+
+    expect(setPreferredView).toHaveBeenCalledWith("classic")
   })
 
   it("scrolls to the next landing section from the chevron control", () => {

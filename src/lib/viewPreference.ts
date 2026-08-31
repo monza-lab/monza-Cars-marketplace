@@ -2,6 +2,12 @@ export type MarketplaceView = "monza" | "classic";
 
 const STORAGE_KEY = "monza-preferred-view";
 
+export function resolvePreferredView(
+  preferred: MarketplaceView | null,
+): MarketplaceView {
+  return preferred ?? "classic";
+}
+
 export function getPreferredView(): MarketplaceView | null {
   if (typeof window === "undefined") return null;
   try {

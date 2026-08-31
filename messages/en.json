@@ -103,7 +103,7 @@
     "pistons": "Pistons",
     "buy": "Buy →",
     "available": "available",
-    "creditsResetHint": "Free reports reset on the 1st of each month",
+    "creditsResetHint": "One-time introductory allowance — no monthly reset",
     "watchlist": "Watchlist",
     "watchlistEmpty": "No saved Porsches yet. Tap the bookmark on any listing to track it here.",
     "recentReports": "Recent reports",
@@ -111,7 +111,7 @@
     "browsePorsches": "Browse Porsches →",
     "currentPlan": "Current plan",
     "unlimitedReportsActive": "Unlimited reports while active",
-    "freeReportsHint": "3 free reports / month",
+    "freeReportsHint": "3 introductory reports total",
     "manage": "Manage",
     "upgrade": "Upgrade",
     "searchHistory": "Search history",
@@ -160,8 +160,8 @@
     "credits": "Pistons",
     "buy": "Buy",
     "buyCredits": "Buy Credits",
-    "freeCredits": "Sign in to get 3 free reports",
-    "creditsReset": "Free reports reset on the 1st of each month",
+    "freeCredits": "Your first three reports are free — first by email, two more with an account",
+    "creditsReset": "The introductory allowance does not reset monthly",
     "noCredits": "No Reports Remaining",
     "noCreditsDesc": "You've used your free reports. Top up Pistons to continue generating vehicle reports.",
     "email": "Email",
@@ -192,7 +192,7 @@
     "signupLegalPrivacy": "Privacy Policy",
     "analysisRequiresSignInTitle": "Analysis Requires Sign In",
     "analysisRequiresSignInDesc": "Sign in to analyze this vehicle",
-    "newAccountsCredits": "New accounts receive 3 free reports",
+    "newAccountsCredits": "Your first three reports are free — first by email, two more with an account",
     "signInMethod": "Sign-In Method",
     "magicLink": "Magic Link",
     "magicLinkDesc": "We will email you a one-tap sign-in link. No password needed.",
@@ -275,7 +275,7 @@
   },
   "carDetail": {
     "askAnything": "Ask Anything About This Car",
-    "viewReport": "View Report",
+    "viewReport": "Get Haus Report — free",
     "askAdvisor": "Ask Advisor",
     "isGoodInvestment": "Is this a strong acquisition?",
     "fairPrice": "Fair price",
@@ -523,7 +523,7 @@
   "pricing": {
     "title": "Choose Your Plan",
     "subtitle": "Unlock comprehensive investment analysis for smarter buying decisions",
-    "heroEyebrow": "3,000 free Pistons each month — no card required",
+    "heroEyebrow": "Your first three reports are free — no card required",
     "heroTitle": "Recharge your wallet",
     "heroSubtitle": "Pistons are your currency. Top up once or subscribe. Your research wallet.",
     "heroDescription": "One report costs 1,000 Pistons. Higher plans unlock more monthly Pistons. Top-ups never expire.",
@@ -1440,7 +1440,9 @@
     "copyright": "© 2026 Monza Lab LLC",
     "privacy": "Privacy",
     "terms": "Terms",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "methodology": "Methodology",
+    "instagram": "Instagram"
   },
   "seo": {
     "make": {
@@ -1460,10 +1462,10 @@
     "hausReport": {
       "title": "Haus Report",
       "available": "Haus Report available",
-      "teaserBody": "Specific-car fair value, service history analysis, and the questions to ask before you buy.",
-      "ctaGenerate": "Generate Haus Report - free",
+      "teaserBody": "Fair value for this exact car, verified comparables, cross-market pricing and landed cost — plus the questions to ask before you wire money. Prepared in about 90 seconds.",
+      "ctaGenerate": "Get the Haus Report — free",
       "ctaView": "View Haus Report",
-      "cached": "Already generated — cached"
+      "cached": "Ready now — this car's report is already prepared."
     },
     "fairValue": {
       "specificCarTitle": "Specific-Car Fair Value",

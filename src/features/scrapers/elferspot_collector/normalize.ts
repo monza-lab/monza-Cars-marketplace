@@ -44,7 +44,7 @@ export interface NormalizedElferspot {
   location: string | null
   seller_type: string | null
   seller_name: string | null
-  status: "active"
+  status: "active" | "sold"
   fuel: string | null
   scrape_timestamp: string
   enrichment_meta: {
@@ -97,7 +97,7 @@ export function normalizeListing(
     location: detail?.location ?? null,
     seller_type: detail?.sellerType ?? null,
     seller_name: detail?.sellerName ?? null,
-    status: "active",
+    status: detail?.priceStatus === "sold" ? "sold" : "active",
     fuel: detail?.fuel ?? null,
     scrape_timestamp: checkedAt,
     enrichment_meta: {

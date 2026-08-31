@@ -265,7 +265,7 @@ The browser hook `useAdvisorStream` (`src/components/advisor/useAdvisorStream.ts
 ### Balance model
 
 - Stored in `user_credits.credits_balance` (integer). Never go below 0.
-- FREE tier grant: 100/month monthly reset at `credit_reset_date`.
+- FREE tier grant: one-time introductory allowance; no monthly reset. Paid plans renew according to their billing contract.
 - PRO tier grant: 2000/month.
 - Pack purchases add to `pack_credits_balance`; monthly balance is the source of truth for rate limits.
 

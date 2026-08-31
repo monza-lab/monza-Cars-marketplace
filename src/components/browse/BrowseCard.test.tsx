@@ -55,9 +55,45 @@ function makeCar(overrides: Partial<DashboardAuction> = {}): DashboardAuction {
 }
 
 describe("BrowseCard — honest-by-data signals", () => {
+  it("is visible on the server response instead of waiting for hydration", () => {
+    const { getByTestId } = render(<BrowseCard car={makeCar()} index={0} />);
+    expect(getByTestId("browse-card")).toHaveAttribute("data-initial-visibility", "visible");
+  });
+
+  it("keeps the free report action above the marketplace exit", () => {
+    const { getAllByText, getByRole } = render(<BrowseCard car={makeCar({ platform: "ELFERSPOT" })} index={0} sourceUrl="https://example.com/listing" />);
+    const reportAction = getAllByText("Free report", { selector: "span" }).at(-1)!;
+    const marketplaceAction = getByRole("button", { name: /View on Elferspot/i });
+
+    expect(reportAction.compareDocumentPosition(marketplaceAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("converts source mileage to the card's canonical market unit", () => {
+    const { container } = render(<BrowseCard car={makeCar()} index={0} />);
+    expect(container.textContent ?? "").toContain("1,609 km");
+  });
+
+  it("announces the market and its mileage convention", () => {
+    const { getByLabelText } = render(<BrowseCard car={makeCar()} index={0} />);
+    expect(getByLabelText("Europe market · mileage shown in kilometres")).toHaveTextContent("EU");
+  });
+
   it("opens the car detail before the report funnel", () => {
     const { container } = render(<BrowseCard car={makeCar()} index={0} />);
     expect(container.querySelector("a")).toHaveAttribute("href", "/cars/porsche/test-1");
+  });
+
+  it("shows the literal fair-value band when real regional evidence exists", () => {
+    const car = makeCar({
+      fairValueByRegion: {
+        US: { currency: "$", low: 244_079, high: 280_822 },
+        EU: { currency: "€", low: 0, high: 0 },
+        UK: { currency: "£", low: 0, high: 0 },
+        JP: { currency: "¥", low: 0, high: 0 },
+      },
+    });
+    const { container } = render(<BrowseCard car={car} index={0} />);
+    expect(container.textContent ?? "").toMatch(/Fair value \$244[.,]079–\$280[.,]822/);
   });
 
   it("does NOT render the LIVE badge regardless of status", () => {

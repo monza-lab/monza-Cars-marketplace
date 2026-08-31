@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { getPreferredView, type MarketplaceView } from "@/lib/viewPreference";
+import {
+  getPreferredView,
+  resolvePreferredView,
+  type MarketplaceView,
+} from "@/lib/viewPreference";
 
 export function ViewPreferenceRedirect({ current }: { current: MarketplaceView }) {
   const router = useRouter();
@@ -10,8 +14,8 @@ export function ViewPreferenceRedirect({ current }: { current: MarketplaceView }
   const classicHref = "/browse";
 
   useEffect(() => {
-    const preferred = getPreferredView();
-    if (!preferred || preferred === current) return;
+    const preferred = resolvePreferredView(getPreferredView());
+    if (preferred === current) return;
     router.replace(preferred === "classic" ? classicHref : homeHref);
   }, [classicHref, current, homeHref, router]);
 

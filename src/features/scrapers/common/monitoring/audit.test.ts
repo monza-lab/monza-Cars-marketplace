@@ -38,12 +38,14 @@ function makeRun(overrides: Partial<ScraperRun> = {}): ScraperRun {
 
 describe("summarizeScraperHealth", () => {
   it("keeps numeric availability separate from source-resolved price coverage", () => {
-    expect(buildElferspotPriceCoverage(100, 39, 19)).toEqual({
+    expect(buildElferspotPriceCoverage(100, 39, 19, 7, 11)).toEqual({
       numeric: 39,
       resolved: 58,
       unresolved: 42,
       numericPct: 39,
       resolvedPct: 58,
+      soldWithoutPrice: 7,
+      activePriceOnRequest: 11,
     });
   });
 
@@ -225,6 +227,8 @@ describe("summarizeScraperHealth", () => {
           unresolved: 42,
           numericPct: 39,
           resolvedPct: 58,
+          soldWithoutPrice: 7,
+          activePriceOnRequest: 11,
         },
       },
     );
@@ -232,6 +236,7 @@ describe("summarizeScraperHealth", () => {
     expect(summary.status).toBe("degraded");
     expect(summary.notes.join("; ")).toContain("Elferspot resolved price coverage 58% (42 unresolved)");
     expect(summary.notes.join("; ")).toContain("numeric price availability 39%");
+    expect(summary.notes.join("; ")).toContain("sold without price 7; active price on request 11");
   });
 
   it("marks AutoScout24 degraded when target-field coverage is below 100%", () => {

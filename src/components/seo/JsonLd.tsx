@@ -35,10 +35,7 @@ export function OrganizationJsonLd() {
       "Collector car market intelligence platform. Track Porsche auction results, analyze market trends, and discover investment-grade vehicles.",
     foundingDate: "2024",
     sameAs: [
-      // Add social profiles when available
-      // "https://www.instagram.com/monzahaus",
-      // "https://www.linkedin.com/company/monzahaus",
-      // "https://x.com/monzahaus",
+      "https://www.instagram.com/monzahaus",
     ],
     contactPoint: {
       "@type": "ContactPoint",

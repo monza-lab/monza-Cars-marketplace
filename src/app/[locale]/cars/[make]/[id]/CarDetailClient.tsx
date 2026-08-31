@@ -55,6 +55,15 @@ import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { ReportEmailSheet } from "@/components/report/ReportEmailSheet"
 import { track } from "@/lib/analytics/events"
+import { MethodologyLink } from "@/components/report/MethodologyLink"
+import {
+  findBestPricedRegion,
+  formatDetailMileage,
+  hasMeaningfulTrend,
+  hasRegionalPricing,
+  navigateBackOrBrowse,
+} from "@/lib/carDetailPresentation"
+import { markReportCtaClicked } from "@/lib/reportFunnel"
 
 // ─── MOCK DATA ───
 // ─── HARDCODED RED FLAGS / SELLER QUESTIONS REMOVED ───
@@ -80,12 +89,13 @@ const platformLabels: Record<string, { short: string; color: string }> = {
   BONHAMS: { short: "Bonhams", color: "bg-cyan-500/20 text-cyan-400" },
 }
 
-// ─── REGION FLAG LABELS ───
-const regionLabels: Record<string, { flag: string; short: string }> = {
-  US: { flag: "🇺🇸", short: "US" },
-  EU: { flag: "🇪🇺", short: "EU" },
-  UK: { flag: "🇬🇧", short: "UK" },
-  JP: { flag: "🇯🇵", short: "JP" },
+function VerifiedSampleReportLink() {
+  const href = process.env.NEXT_PUBLIC_HAUS_REPORT_SAMPLE_URL?.trim() || "/sample-report"
+  return (
+    <Link href={href} className="inline-flex text-xs font-medium text-primary underline-offset-4 hover:underline">
+      See a sample report →
+    </Link>
+  )
 }
 
 // ─── HELPERS ───
@@ -97,18 +107,6 @@ function timeLeft(endTime: Date): string {
   if (days > 0) return `${days}d ${hrs}h`
   const mins = Math.floor((diff % 3600000) / 60000)
   return `${hrs}h ${mins}m`
-}
-
-function findBestRegion(pricing: CollectorCar["fairValueByRegion"]): string {
-  const regions = ["US", "EU", "UK", "JP"] as const
-  let best: string = "US"
-  let bestAvg = Infinity
-  for (const r of regions) {
-    const p = pricing[r]
-    const avg = (p.low + p.high) / 2
-    if (avg < bestAvg) { bestAvg = avg; best = r }
-  }
-  return best
 }
 
 // ─── COLLAPSIBLE SECTION (mobile) ───
@@ -272,11 +270,13 @@ function CarNavSidebar({
   similarCars,
   dbAnalysis,
   activeRegion,
+  onBack,
 }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
   dbAnalysis?: DbAnalysisRow | null
   activeRegion: string
+  onBack: () => void
 }) {
   const locale = useLocale()
   const { formatPrice, convertFromUsd } = useCurrency()
@@ -321,27 +321,28 @@ function CarNavSidebar({
     <div className="h-full flex flex-col overflow-hidden border-r border-border">
       {/* ── Back nav ── */}
       <div className="px-4 pt-3 pb-1 shrink-0">
-        <Link
-          href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
+        <button
+          type="button"
+          onClick={onBack}
           className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="size-3" />
           <span>{car.make.toUpperCase()}</span>
           <ChevronRight className="size-2.5 text-muted-foreground" />
           <span className="text-muted-foreground">{car.model}</span>
-        </Link>
+        </button>
       </div>
 
       {/* ── Identity: title + trend ── */}
       <div className="px-4 pb-3 shrink-0 border-b border-border">
         <h2 className="text-[12px] font-semibold text-foreground leading-tight">{car.title}</h2>
-        <div className="flex items-center gap-2 mt-2">
+        {hasMeaningfulTrend(car.trend, car.trendValue) && <div className="flex items-center gap-2 mt-2">
           <span className={`text-[11px] tabular-nums font-semibold ${
             car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"
           }`}>
             {car.trendValue > 0 ? "+" : ""}{car.trendValue}% {car.trendValue > 0 ? "↑" : car.trendValue < 0 ? "↓" : "→"}
           </span>
-        </div>
+        </div>}
       </div>
 
       {/* ── Price ── */}
@@ -395,7 +396,7 @@ function CarNavSidebar({
           {/* [HARDCODED] */}Market Position
         </span>
         <p className="text-[11px] text-muted-foreground italic leading-relaxed">
-          {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+          Fair value for this exact car is calculated in its Haus Report — with the comparables it&apos;s built on.
         </p>
       </div>
       )}
@@ -456,7 +457,7 @@ function CarNavSidebar({
         <span className="text-[8px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-2 block">Vehicle</span>
         <div className="space-y-1.5">
           {[
-            { icon: <Gauge className="size-3.5" />, value: `${car.mileage.toLocaleString(locale)} ${car.mileageUnit}` },
+            { icon: <Gauge className="size-3.5" />, value: formatDetailMileage(car.mileage, car.mileageUnit, locale) },
             { icon: <Cog className="size-3.5" />, value: car.engine },
             { icon: <Cog className="size-3.5" />, value: car.transmission },
             { icon: <MapPin className="size-3.5" />, value: car.location },
@@ -534,8 +535,10 @@ function CarContextPanel({
 
   // Regional pricing — use real per-region fair values from DB
   const pricing = car.fairValueByRegion
-  const bestRegion = findBestRegion(pricing)
+  const hasPricing = hasRegionalPricing(pricing)
+  const bestRegion = findBestPricedRegion(pricing)
   const maxRegionalUsd = Math.max(
+    1,
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
       (pricing[r].low + pricing[r].high) / 2
     ))
@@ -567,7 +570,7 @@ function CarContextPanel({
           <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
             <span>{car.transmission}</span>
             <span>·</span>
-            <span>{car.mileage.toLocaleString()} {car.mileageUnit}</span>
+            <span>{formatDetailMileage(car.mileage, car.mileageUnit, "en-US")}</span>
             {car.vin && (
               <>
                 <span>·</span>
@@ -589,11 +592,11 @@ function CarContextPanel({
             <div>
               {/* [HARDCODED] */}
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
-              {car.trend ? (
+              {hasMeaningfulTrend(car.trend, car.trendValue) ? (
                 <p className={`text-[13px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>{car.trend}</p>
               ) : (
                 <p className="text-[12px] text-muted-foreground italic">
-                  {/* [HARDCODED] */}Awaiting history
+                  Included in the Haus Report
                 </p>
               )}
             </div>
@@ -601,7 +604,7 @@ function CarContextPanel({
         </div>
 
         {/* 2. VALUATION BY MARKET */}
-        <div className="px-5 py-4 border-b border-border">
+        <div className={hasPricing ? "px-5 py-4 border-b border-border" : "hidden"}>
           <div className="mb-4">
             <div className="flex items-center gap-2">
               <Globe className="size-4 text-primary" />
@@ -624,13 +627,9 @@ function CarContextPanel({
                 <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[12px]">{regionLabels[region].flag}</span>
                       <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                       {isBest && (
                         <span className="text-[8px] font-bold text-positive tracking-wide">{/* [HARDCODED] */}BEST</span>
-                      )}
-                      {isSelected && (
-                        <span className="text-[8px] font-bold text-primary tracking-wide">{/* [HARDCODED] */}YOUR MARKET</span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-1.5">
@@ -661,6 +660,13 @@ function CarContextPanel({
             })}
           </div>
         </div>
+
+        {!hasPricing && (
+          <button type="button" onClick={onOpenReport} className="w-full border-b border-border px-5 py-4 text-left hover:bg-primary/5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Regional pricing</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Regional pricing for this car is part of its Haus Report — free.</p>
+          </button>
+        )}
 
         {/* 3. MARKET POSITION (only when we have a real fair-value band) */}
         <div className="px-5 py-4 border-b border-border bg-primary/3">
@@ -709,7 +715,7 @@ function CarContextPanel({
             </>
           ) : (
             <p className="text-[11px] text-muted-foreground italic leading-relaxed">
-              {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+              Fair value for this exact car is calculated in its Haus Report — with the comparables it&apos;s built on.
             </p>
           )}
         </div>
@@ -737,7 +743,7 @@ function CarContextPanel({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+            <p className="text-[11px] text-muted-foreground italic">Included in the Haus Report</p>
           )}
         </div>
 
@@ -771,7 +777,7 @@ function CarContextPanel({
               ))}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+            <p className="text-[11px] text-muted-foreground italic">Included in the Haus Report</p>
           )}
         </div>
       </div>
@@ -788,8 +794,8 @@ function CarContextPanel({
               <FileText className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Generate Haus Report - free</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; costs</p>
+              <p className="text-[12px] font-semibold text-foreground">Get the Haus Report — free</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Fair value · Comparables · Risks · Landed cost — in about 90 seconds</p>
             </div>
             <ChevronRight className="size-4 text-primary group-hover:translate-x-0.5 transition-transform" />
           </div>
@@ -844,6 +850,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const [showReportEmail, setShowReportEmail] = useState(false)
   const [reportEmail, setReportEmail] = useState("")
   const handleOpenReport = () => {
+    markReportCtaClicked()
     if (consent === "accepted") {
       void track({ event: "report_cta_clicked", payload: { listingId: car.id } })
     }
@@ -853,6 +860,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     }
     router.push(reportPath)
   }
+  const handleBack = () => navigateBackOrBrowse(router, window.history.length)
   const lockedRegion = car.canonicalMarket ?? car.region
   const previousRegionRef = useRef<string | null>(null)
   if (previousRegionRef.current === null) {
@@ -941,8 +949,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
   const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
 
   const pricing = mobilePricing
-  const bestRegion = findBestRegion(pricing)
+  const hasPricing = hasRegionalPricing(pricing)
+  const bestRegion = findBestPricedRegion(pricing)
   const maxRegionalUsd = Math.max(
+    1,
     ...((["US", "EU", "UK", "JP"] as const).map(r =>
       (pricing[r].low + pricing[r].high) / 2
     ))
@@ -992,12 +1002,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             >
               <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Link
-                    href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
+                  <button
+                    type="button"
+                    onClick={handleBack}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     <ArrowLeft className="size-5" />
-                  </Link>
+                  </button>
                   <div>
                     <h1 className="text-[14px] font-semibold text-foreground">{car.title}</h1>
                     <div className="flex items-center gap-3 mt-0.5">
@@ -1075,13 +1086,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* Fixed back button — always visible, large touch target */}
           <div className="absolute top-0 left-0 right-0 pt-safe px-4 pb-2 flex items-center justify-between z-10">
-            <Link
-              href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}`}
+            <button
+              type="button"
+              onClick={handleBack}
               className="flex items-center gap-2 px-3 py-2.5 rounded-full bg-black/40 backdrop-blur-md text-white/80 active:bg-black/60 transition-colors"
             >
               <ArrowLeft className="size-5" />
               <span className="text-[12px] font-medium">{t("backTo", { make: car.make })}</span>
-            </Link>
+            </button>
           </div>
 
           {/* Badges */}
@@ -1112,7 +1124,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <p className="text-2xl font-display font-medium text-primary">
                     {formatPrice(car.currentBid)}
                   </p>
-                  {car.trend && (
+                  {hasMeaningfulTrend(car.trend, car.trendValue) && (
                     <span className={`text-[12px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>
                       {car.trend}
                     </span>
@@ -1170,13 +1182,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-1">
                   Trend
                 </span>
-                {car.trend && car.trendValue !== 0 ? (
+                {hasMeaningfulTrend(car.trend, car.trendValue) ? (
                   <span className={`text-[28px] font-bold tabular-nums ${
                     car.trendValue > 0 ? "text-positive" : "text-destructive"
                   }`}>{car.trend}</span>
                 ) : (
                   <span className="text-[14px] text-muted-foreground italic block mt-1">
-                    {/* [HARDCODED] */}Awaiting price history
+                    Included in the Haus Report
                   </span>
                 )}
               </div>
@@ -1201,7 +1213,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </>
                 ) : (
                   <span className="text-[11px] text-muted-foreground italic block mt-2">
-                    {/* [HARDCODED] */}Pending comps
+                    Included in the Haus Report
                   </span>
                 )}
               </div>
@@ -1218,7 +1230,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </span>
                 ) : (
                   <span className="text-[14px] text-muted-foreground italic">
-                    {/* [HARDCODED] */}Awaiting comparable sales
+                    Fair value for this exact car is calculated in its Haus Report — with the comparables it&apos;s built on.
                   </span>
                 )}
               </div>
@@ -1232,8 +1244,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <HausReportTeaser
             reportExists={!!existingReport}
             userAlreadyPaid={userAlreadyPaid}
+            fairValueLowUsd={existingReport?.specific_car_fair_value_low}
+            fairValueHighUsd={existingReport?.specific_car_fair_value_high}
+            comparablesCount={existingReport?.comparables_count}
             onClick={handleOpenReport}
           />
+          <MethodologyLink />
+          <VerifiedSampleReportLink />
         </div>
 
         {/* ═══ REPORT CTA — VISIBLE TO ALL ═══ */}
@@ -1246,11 +1263,11 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             <FileText className="size-6 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[14px] font-semibold text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation · Risks · Comps · Costs</p>
+            <p className="text-[14px] font-semibold text-foreground">Get the Haus Report — free</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Fair value · Comparables · Risks · Landed cost — in about 90 seconds</p>
           </div>
           <span className="shrink-0 rounded-xl bg-primary px-4 py-2 text-[12px] font-bold text-primary-foreground">
-            {/* [HARDCODED] */}View
+            Get
             <ChevronRight className="inline size-3.5 ml-0.5 -mr-0.5" />
           </span>
         </button>
@@ -1314,7 +1331,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
 
           {/* 2. Vehicle Specs */}
           <div className="grid grid-cols-2 gap-3">
-            <StatCard label={tAuction("specs.mileage")} value={`${car.mileage.toLocaleString(locale)} ${car.mileageUnit}`} icon={<Gauge className="size-4" />} />
+            <StatCard label={tAuction("specs.mileage")} value={formatDetailMileage(car.mileage, car.mileageUnit, locale)} icon={<Gauge className="size-4" />} />
             <StatCard label={tAuction("specs.engine")} value={car.engine} icon={<Cog className="size-4" />} />
             <StatCard label={tAuction("specs.transmission")} value={car.transmission} icon={<Cog className="size-4" />} />
             <StatCard label={tAuction("specs.location")} value={car.location} icon={<MapPin className="size-4" />} />
@@ -1329,7 +1346,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           </CollapsibleSection>
 
           {/* 4. Regional Valuation */}
-          <div className="rounded-xl bg-card border border-border p-4">
+          <div className={hasPricing ? "rounded-xl bg-card border border-border p-4" : "hidden"}>
             <div className="flex items-center gap-2 mb-4">
               <Globe className="size-4 text-primary" />
               <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground">
@@ -1347,10 +1364,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <div key={region} className={isSelected ? "rounded-lg bg-primary/4 -mx-2 px-2 py-1.5" : ""}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[12px]">{regionLabels[region].flag}</span>
                         <span className={`text-[11px] font-medium ${isSelected ? "text-primary" : "text-muted-foreground"}`}>{region}</span>
                         {isBest && <span className="text-[8px] font-bold text-positive tracking-wide">{/* [HARDCODED] */}BEST</span>}
-                        {isSelected && <span className="text-[8px] font-bold text-primary tracking-wide">{/* [HARDCODED] */}YOUR MARKET</span>}
                       </div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[11px] tabular-nums font-semibold text-foreground">
@@ -1373,6 +1388,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               })}
             </div>
           </div>
+
+          {!hasPricing && (
+            <button type="button" onClick={handleOpenReport} className="w-full rounded-xl border border-border bg-card p-4 text-left active:bg-primary/5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Regional pricing</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">Regional pricing for this car is part of its Haus Report — free.</p>
+            </button>
+          )}
 
           {/* 5. Market Position */}
           <div className="rounded-xl bg-primary/3 border border-border p-4">
@@ -1419,7 +1441,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </>
             ) : (
               <p className="text-[12px] text-muted-foreground italic leading-relaxed">
-                {/* [HARDCODED] */}Fair value pending more comparable sales for this segment.
+                Fair value for this exact car is calculated in its Haus Report — with the comparables it&apos;s built on.
                 The Advisor can pull deeper context on a specific listing.
               </p>
             )}
@@ -1462,7 +1484,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
             title={t("keyInspectionPoints")}
             icon={<AlertTriangle className="size-5" />}
             defaultOpen
-            badge={<span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{/* [HARDCODED] */}{flags.length} items</span>}
+            badge={flags.length > 0 ? <span className="text-[10px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length} items</span> : undefined}
           >
             {flags.length > 0 ? (
               <div className="space-y-2">
@@ -1474,7 +1496,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
+              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
             )}
           </CollapsibleSection>
 
@@ -1482,7 +1504,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           <CollapsibleSection
             title={t("questionsToAsk")}
             icon={<HelpCircle className="size-5" />}
-            badge={<span className="text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded-full">{questions.length}</span>}
+            badge={questions.length > 0 ? <span className="text-[10px] text-muted-foreground bg-foreground/5 px-2 py-0.5 rounded-full">{questions.length}</span> : undefined}
           >
             {questions.length > 0 ? (
               <div className="space-y-2">
@@ -1496,7 +1518,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
+              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
             )}
           </CollapsibleSection>
 
@@ -1544,7 +1566,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">Verified comparables are included in the Haus Report.</p>
             )}
           </CollapsibleSection>
 
@@ -1567,7 +1589,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
             )}
           </CollapsibleSection>
 
@@ -1599,7 +1621,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
             )}
           </CollapsibleSection>
 
@@ -1639,7 +1661,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
         <div className="flex-1 min-h-0 grid grid-cols-[22%_1fr_28%] grid-rows-[1fr] overflow-hidden">
 
           {/* COLUMN A: LEFT SIDEBAR */}
-          <CarNavSidebar car={car} similarCars={similarCars} dbAnalysis={dbAnalysis} activeRegion={lockedRegion} />
+          <CarNavSidebar car={car} similarCars={similarCars} dbAnalysis={dbAnalysis} activeRegion={lockedRegion} onBack={handleBack} />
 
           {/* COLUMN B: CENTER SCROLL (continuous, no tabs) */}
           <div className="h-full overflow-y-auto no-scrollbar">
@@ -1701,8 +1723,13 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               <HausReportTeaser
                 reportExists={!!existingReport}
                 userAlreadyPaid={userAlreadyPaid}
+                fairValueLowUsd={existingReport?.specific_car_fair_value_low}
+                fairValueHighUsd={existingReport?.specific_car_fair_value_high}
+                comparablesCount={existingReport?.comparables_count}
                 onClick={handleOpenReport}
               />
+              <MethodologyLink />
+              <VerifiedSampleReportLink />
 
               {/* EXTERNAL LISTING CTA — desktop */}
               {car.sourceUrl && (
@@ -1751,7 +1778,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="size-4 text-primary" />
                   <h2 className="text-[12px] font-semibold text-foreground">{/* [HARDCODED] */}Key Inspection Points</h2>
-                  <span className="text-[9px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length}</span>
+                  {flags.length > 0 && (
+                    <span className="text-[9px] text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">{flags.length}</span>
+                  )}
                 </div>
                 {flags.length > 0 ? (
                   <div className="space-y-2">
@@ -1763,7 +1792,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
+                  <p className="text-[12px] text-muted-foreground italic">Included in the Haus Report</p>
                 )}
               </div>
 
@@ -1785,7 +1814,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend analysis</p>
+                  <p className="text-[12px] text-muted-foreground italic">Included in the Haus Report</p>
                 )}
               </div>
 
@@ -1839,7 +1868,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[12px] text-muted-foreground italic">{/* [HARDCODED] */}Awaiting backend data</p>
+                  <p className="text-[12px] text-muted-foreground italic">Verified comparables are included in the Haus Report.</p>
                 )}
               </div>
 
@@ -1854,12 +1883,12 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                     <FileText className="size-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-foreground">{/* [HARDCODED] */}Full Haus Report</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{/* [HARDCODED] */}Valuation, risks, comps &amp; ownership costs</p>
+                    <p className="text-[13px] font-medium text-foreground">Get the Haus Report — free</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Fair value · Comparables · Risks · Landed cost — in about 90 seconds</p>
                   </div>
                   <span className="flex items-center gap-2 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-[12px] font-semibold text-primary-foreground">
                     {/* [HARDCODED] */}
-                    Generate free
+                    Get report
                     <ChevronRight className="size-4" />
                   </span>
                 </div>
@@ -1909,6 +1938,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
       <ReportEmailSheet
         open={showReportEmail}
         listingId={car.id}
+        carImages={car.images ?? []}
+        carTitle={car.title}
+        series={car.model}
+        listingType={isAuctionPlatform(car.platform) ? "auction" : "classified"}
         onOpenChange={setShowReportEmail}
         onGenerated={(token) => router.push(`${reportPath}?access=${encodeURIComponent(token)}`)}
         onAuthRequired={(email) => {

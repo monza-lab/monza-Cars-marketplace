@@ -27,7 +27,12 @@ import {
 } from "@/lib/landedCost"
 import type { Country, Currency } from "@/lib/landedCost"
 import { createClient } from "@/lib/supabase/server"
-import { hasAlreadyGenerated } from "@/lib/reports/queries"
+import {
+  assembleHausReportFromDB,
+  fetchSignalsForListing,
+  getReportForListing,
+  hasAlreadyGenerated,
+} from "@/lib/reports/queries"
 
 const BASE_URL = getSiteUrl()
 
@@ -143,12 +148,16 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   let userAlreadyPaid = false
 
   try {
-    const { getReportForListing } = await import("@/lib/reports/queries")
-    if (typeof getReportForListing === "function") {
-      existingReport = (await getReportForListing(id)) as unknown as HausReport | null
+    const reportRow = await getReportForListing(id)
+    if (reportRow) {
+      const signalRows = await fetchSignalsForListing(id).catch(() => [])
+      existingReport = assembleHausReportFromDB(
+        reportRow as unknown as Record<string, unknown>,
+        signalRows,
+      )
     }
   } catch {
-    // helper not present yet — leave null
+    // Report evidence is optional on the detail page; keep the CTA available.
   }
 
   // Check if the current user has already paid for this report

@@ -163,6 +163,21 @@ describe("parseDetailPage", () => {
     expect(detail.priceStatus).toBe("numeric")
   })
 
+  it("treats Sold as a terminal status even when a numeric price is present", () => {
+    const html = `<html><body><div class="price"><span>Sold · EUR 187,500</span></div></body></html>`
+    const detail = parseDetailPage(html)
+
+    expect(detail.price).toBe(187500)
+    expect(detail.priceStatus).toBe("sold")
+  })
+
+  it("recognizes the localized German Sold label", () => {
+    const detail = parseDetailPage(`<html><body><div class="price"><span>Verkauft</span></div></body></html>`)
+
+    expect(detail.price).toBeNull()
+    expect(detail.priceStatus).toBe("sold")
+  })
+
   it("uses vehicleIdentificationNumber from Vehicle JSON-LD", () => {
     const html = `<html><head><script type="application/ld+json">{
       "@type": "Vehicle",

@@ -21,7 +21,7 @@ export async function generateMetadata() {
   return { title: titles[locale] || titles.en }
 }
 
-const EFFECTIVE_DATE = "May 10, 2026"
+const EFFECTIVE_DATE = "August 31, 2026"
 
 function EnContent() {
   return (
@@ -59,9 +59,10 @@ function EnContent() {
 
       <h2>4. Free Tier and Pistons</h2>
       <p>
-        The Service offers a free tier with a monthly allowance of in-product credits called &ldquo;Pistons.&rdquo; Pistons are not money, are
-        non-redeemable for cash, are non-transferable, and have no value outside the Service. Free Pistons reset on the 1st of each calendar month
-        and do not roll over. We may change the free allowance with reasonable notice.
+        The Service offers a one-time introductory allowance of in-product credits called &ldquo;Pistons,&rdquo; currently enough for three Haus
+        Reports in total. The first report may be requested by email; the remaining introductory reports require an account. This one-time introductory allowance
+        does not renew or reset monthly. Pistons are not money, are non-redeemable for cash, are non-transferable, and have no value outside the
+        Service. We may change the introductory allowance with reasonable notice.
       </p>
 
       <h2>5. Paid Plans &amp; Top-ups</h2>
@@ -223,9 +224,10 @@ function EsContent() {
 
       <h2>4. Tier Gratuito y Pistons</h2>
       <p>
-        El Servicio ofrece un tier gratuito con una asignación mensual de créditos in-product llamados &ldquo;Pistons.&rdquo; Los Pistons no son
-        dinero, no son canjeables por dinero, no son transferibles, y no tienen valor fuera del Servicio. Los Pistons gratis se reinician el 1.º de
-        cada mes y no acumulan.
+        El Servicio ofrece una asignación introductoria única de créditos in-product llamados &ldquo;Pistons,&rdquo; actualmente suficiente para tres
+        Haus Reports en total. El primer reporte puede solicitarse por email; los reportes introductorios restantes requieren una cuenta. Esta
+        asignación no se renueva ni se reinicia cada mes. Los Pistons no son dinero, no son canjeables, no son transferibles y no tienen valor fuera
+        del Servicio.
       </p>
 
       <h2>5. Planes Pagos y Top-ups</h2>
@@ -373,8 +375,9 @@ function DeContent() {
 
       <h2>4. Free-Tier &amp; Pistons</h2>
       <p>
-        &bdquo;Pistons&ldquo; sind In-Product-Credits, kein Geld, nicht in Bargeld einlösbar, nicht übertragbar und außerhalb des Dienstes wertlos.
-        Kostenlose Pistons werden am 1. jedes Monats zurückgesetzt.
+        Der Dienst gewährt einmalig ein Startguthaben an &bdquo;Pistons&ldquo;, das derzeit insgesamt für drei Haus Reports reicht. Der erste Report
+        kann per E-Mail angefordert werden; für die übrigen Einführungsreports ist ein Konto erforderlich. Dieses Guthaben wird nicht monatlich
+        erneuert oder zurückgesetzt. Pistons sind kein Geld, nicht in Bargeld einlösbar, nicht übertragbar und außerhalb des Dienstes wertlos.
       </p>
 
       <h2>5. Bezahlpläne &amp; Top-ups</h2>
@@ -474,7 +477,7 @@ function JaContent() {
 
       <h2>4. 無料プランとPistons</h2>
       <p>
-        「Pistons」はサービス内クレジットであり、現金ではなく、現金との交換不可、譲渡不可、サービス外での価値はありません。無料Pistonsは毎月1日にリセットされ繰り越しされません。
+        本サービスは、現在合計3件のHaus Reportに利用できる初回限定の「Pistons」を一度だけ付与します。1件目はメールで請求でき、残りの初回限定レポートにはアカウントが必要です。この枠は毎月更新またはリセットされません。Pistonsは現金ではなく、換金不可、譲渡不可で、サービス外での価値はありません。
       </p>
 
       <h2>5. 有料プラン・トップアップ</h2>

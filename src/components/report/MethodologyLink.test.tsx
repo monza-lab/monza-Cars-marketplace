@@ -17,7 +17,7 @@ describe("MethodologyLink", () => {
     render(<MethodologyLink />)
     const link = screen.getByRole("link")
     expect(link.getAttribute("href")).toBe("/methodology")
-    expect(screen.getByText(/How we compute/)).toBeInTheDocument()
+    expect(screen.getByText(/How Fair Value is calculated/)).toBeInTheDocument()
   })
 
   it("supports custom href", () => {

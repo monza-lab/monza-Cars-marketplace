@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { proxyFetch } from "@/features/scrapers/common/proxy-fetch";
+import { parseDetailPage } from "@/features/scrapers/elferspot_collector/detail";
 import {
   CHROME_UA,
   SOURCE_CONFIGS,
@@ -12,6 +13,7 @@ export interface LivenessResult {
   source: string;
   checked: number;
   alive: number;
+  sold: number;
   dead: number;
   errors: string[];
   circuitBroken: boolean;
@@ -22,6 +24,7 @@ export interface LivenessRunResult {
   totalChecked: number;
   totalDead: number;
   totalAlive: number;
+  totalSold: number;
   durationMs: number;
 }
 
@@ -61,6 +64,7 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
     source: opts.source,
     checked: 0,
     alive: 0,
+    sold: 0,
     dead: 0,
     errors: [],
     circuitBroken: false,
@@ -68,7 +72,7 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
 
   const { data: listings, error: queryErr } = await client
     .from("listings")
-    .select("id, source, source_url")
+    .select("id, source, source_url, hammer_price, final_price, sold_price, current_bid, original_currency, enrichment_meta")
     .eq("source", opts.source)
     .eq("status", "active")
     .not("source_url", "is", null)
@@ -138,15 +142,81 @@ export async function checkSource(opts: CheckSourceOpts): Promise<LivenessResult
           break;
         }
       } else if (response.ok) {
-        result.alive++;
         consecutiveBlocks = 0;
-        if (!opts.dryRun) {
-          const { error: updateErr } = await client
-            .from("listings")
-            .update({ last_verified_at: new Date().toISOString() })
-            .eq("id", listing.id);
-          if (updateErr) {
-            result.errors.push(`Update failed for ${listing.id}: ${updateErr.message}`);
+
+        const checkedAt = new Date().toISOString();
+        const elferspotDetail = opts.source === "Elferspot"
+          ? parseDetailPage(await response.text())
+          : null;
+
+        if (elferspotDetail?.priceStatus === "sold") {
+          result.sold++;
+          if (!opts.dryRun) {
+            const existingMeta = listing.enrichment_meta && typeof listing.enrichment_meta === "object"
+              ? listing.enrichment_meta as Record<string, unknown>
+              : {};
+            const existingElferspotMeta = existingMeta.elferspot && typeof existingMeta.elferspot === "object"
+              ? existingMeta.elferspot as Record<string, unknown>
+              : {};
+            const hasExistingFinalPrice = typeof listing.final_price === "number" && listing.final_price > 0;
+            const soldUpdate: Record<string, unknown> = {
+              status: "sold",
+              current_bid: null,
+              last_verified_at: checkedAt,
+              updated_at: checkedAt,
+              enrichment_meta: {
+                ...existingMeta,
+                elferspot: {
+                  ...existingElferspotMeta,
+                  priceStatus: "sold",
+                  soldPriceStatus: elferspotDetail.price != null
+                    ? "numeric"
+                    : hasExistingFinalPrice ? "preserved_numeric" : "unknown",
+                  livenessCheckedAt: checkedAt,
+                  ...(elferspotDetail.price == null ? {
+                    priorPriceEvidence: {
+                      hammerPrice: listing.hammer_price ?? null,
+                      finalPrice: listing.final_price ?? null,
+                      currentBid: listing.current_bid ?? null,
+                      currency: listing.original_currency ?? null,
+                    },
+                  } : {}),
+                },
+              },
+            };
+
+            if (elferspotDetail.price != null) {
+              soldUpdate.hammer_price = elferspotDetail.price;
+              soldUpdate.final_price = elferspotDetail.price;
+              soldUpdate.original_currency = elferspotDetail.currency;
+            } else {
+              // sold_price is generated from the raw price columns. Remove an
+              // old asking price so it cannot become a fabricated sale price;
+              // the evidence remains in enrichment_meta above. Preserve a
+              // previously known final price when one already exists.
+              soldUpdate.hammer_price = null;
+              if (!hasExistingFinalPrice) soldUpdate.final_price = null;
+            }
+
+            const { error: updateErr } = await client
+              .from("listings")
+              .update(soldUpdate)
+              .eq("id", listing.id);
+            if (updateErr) {
+              result.errors.push(`Update failed for ${listing.id}: ${updateErr.message}`);
+            }
+          }
+          console.log(`[liveness] ${opts.source}: SOLD ${listing.source_url}`);
+        } else {
+          result.alive++;
+          if (!opts.dryRun) {
+            const { error: updateErr } = await client
+              .from("listings")
+              .update({ last_verified_at: checkedAt })
+              .eq("id", listing.id);
+            if (updateErr) {
+              result.errors.push(`Update failed for ${listing.id}: ${updateErr.message}`);
+            }
           }
         }
       } else {
@@ -214,6 +284,7 @@ export async function runLivenessCheck(opts: {
         source: configs[i].source,
         checked: 0,
         alive: 0,
+        sold: 0,
         dead: 0,
         errors: [s.reason?.message ?? String(s.reason)],
         circuitBroken: false,
@@ -226,6 +297,7 @@ export async function runLivenessCheck(opts: {
     totalChecked: results.reduce((s, r) => s + r.checked, 0),
     totalDead: results.reduce((s, r) => s + r.dead, 0),
     totalAlive: results.reduce((s, r) => s + r.alive, 0),
+    totalSold: results.reduce((s, r) => s + r.sold, 0),
     durationMs: Date.now() - startTime,
   };
 }

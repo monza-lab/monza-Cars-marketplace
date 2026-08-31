@@ -109,6 +109,27 @@ export function mergeRowsForEnrichment(
   return rows;
 }
 
+export function applyElferspotPriceUpdate(
+  update: Record<string, unknown>,
+  detail: { price: number | null; priceStatus: string; currency: string },
+): void {
+  if (detail.priceStatus === "sold") {
+    update.status = "sold";
+    update.current_bid = null;
+    update.hammer_price = detail.price;
+    update.final_price = detail.price;
+    update.sold_price = detail.price;
+    update.original_currency = detail.currency;
+    return;
+  }
+
+  if (detail.price) {
+    update.hammer_price = detail.price;
+    update.current_bid = detail.price;
+    update.original_currency = detail.currency;
+  }
+}
+
 export function resolveElferspotVin(raw: string | null | undefined): {
   vin?: string;
   vehicleIdentifier?: VehicleIdentifier;
@@ -281,11 +302,7 @@ export async function GET(request: Request) {
         };
         const existingMeta = row.enrichment_meta ?? {};
 
-        if (detail.price) {
-          update.hammer_price = detail.price;
-          update.current_bid = detail.price;
-          update.original_currency = detail.currency;
-        }
+        applyElferspotPriceUpdate(update, detail);
         if (detail.mileageKm) {
           update.mileage = detail.mileageKm;
           update.mileage_unit = "km";

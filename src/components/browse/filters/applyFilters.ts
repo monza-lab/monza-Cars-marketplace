@@ -12,6 +12,7 @@ import {
   type ClassicFilters,
   type SortOption,
 } from "./types";
+import { toCanonicalMiles } from "@/lib/mileage";
 
 function isLiveStatus(status: string): boolean {
   return status === "ACTIVE" || status === "ENDING_SOON";
@@ -134,8 +135,12 @@ export function applyFilters(
     if (f.priceMin !== null && price < f.priceMin) return false;
     if (f.priceMax !== null && price > f.priceMax) return false;
 
-    if (f.mileageMin !== null && (car.mileage ?? 0) < f.mileageMin) return false;
-    if (f.mileageMax !== null && car.mileage !== null && car.mileage > f.mileageMax) return false;
+    if (f.mileageMin !== null || f.mileageMax !== null) {
+      const mileageMiles = toCanonicalMiles(car.mileage, car.mileageUnit);
+      if (mileageMiles === null) return false;
+      if (f.mileageMin !== null && mileageMiles < f.mileageMin) return false;
+      if (f.mileageMax !== null && mileageMiles > f.mileageMax) return false;
+    }
 
     if (f.transmission.length > 0) {
       const t = normalizeTransmission(car.transmission);
@@ -193,7 +198,11 @@ function sortAuctions(list: DashboardAuction[], sort: SortOption): DashboardAuct
     case "yearAsc":
       return copy.sort((a, b) => a.year - b.year);
     case "mileageAsc":
-      return copy.sort((a, b) => (a.mileage ?? Infinity) - (b.mileage ?? Infinity));
+      return copy.sort((a, b) => {
+        const aMileage = toCanonicalMiles(a.mileage, a.mileageUnit) ?? Infinity;
+        const bMileage = toCanonicalMiles(b.mileage, b.mileageUnit) ?? Infinity;
+        return aMileage - bMileage;
+      });
     case "endingSoon":
       return copy.sort((a, b) => {
         const aLive = isLiveStatus(a.status);

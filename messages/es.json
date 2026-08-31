@@ -104,7 +104,7 @@
     "pistons": "Pistons",
     "buy": "Comprar →",
     "available": "disponibles",
-    "creditsResetHint": "Los créditos gratis se reinician el 1 de cada mes",
+    "creditsResetHint": "Asignación introductoria única — sin reinicio mensual",
     "watchlist": "Watchlist",
     "watchlistEmpty": "Aún no hay Porsches guardados. Toca el bookmark en cualquier anuncio para seguirlo aquí.",
     "recentReports": "Reportes recientes",
@@ -112,7 +112,7 @@
     "browsePorsches": "Explorar Porsches →",
     "currentPlan": "Plan actual",
     "unlimitedReportsActive": "Reportes ilimitados mientras esté activo",
-    "freeReportsHint": "3 reportes gratis / mes",
+    "freeReportsHint": "3 reportes introductorios en total",
     "manage": "Gestionar",
     "upgrade": "Actualizar",
     "searchHistory": "Historial de búsqueda",
@@ -161,8 +161,8 @@
     "credits": "Pistons",
     "buy": "Comprar",
     "buyCredits": "Comprar Créditos",
-    "freeCredits": "Inicia sesión para obtener 3 créditos gratis",
-    "creditsReset": "Los créditos gratis se reinician el 1 de cada mes",
+    "freeCredits": "Tus primeros tres reportes son gratis — el primero por email y dos más con una cuenta",
+    "creditsReset": "La asignación introductoria no se reinicia cada mes",
     "noCredits": "Sin Créditos Disponibles",
     "noCreditsDesc": "Has usado todos tus créditos de análisis. Compra más para continuar analizando vehículos.",
     "email": "Correo electrónico",
@@ -191,7 +191,7 @@
     "signupLegalPrivacy": "Política de Privacidad",
     "analysisRequiresSignInTitle": "El análisis requiere iniciar sesión",
     "analysisRequiresSignInDesc": "Inicia sesión para analizar este vehículo",
-    "newAccountsCredits": "Las cuentas nuevas reciben 3 créditos de análisis gratis",
+    "newAccountsCredits": "Tus primeros tres reportes son gratis — el primero por email y dos más con una cuenta",
     "signInMethod": "Método de Inicio",
     "magicLink": "Enlace Mágico",
     "magicLinkDesc": "Te enviaremos un enlace de inicio de sesión por correo. Sin contraseña.",
@@ -274,7 +274,7 @@
   },
   "carDetail": {
     "askAnything": "Pregunta Cualquier Cosa Sobre Este Carro",
-    "viewReport": "Ver Reporte",
+    "viewReport": "Obtén el Haus Report — gratis",
     "askAdvisor": "Preguntar",
     "isGoodInvestment": "¿Es buena inversión?",
     "fairPrice": "Precio justo",
@@ -522,7 +522,7 @@
   "pricing": {
     "title": "Elige Tu Plan",
     "subtitle": "Desbloquea análisis de inversión integral para decisiones más inteligentes",
-    "heroEyebrow": "3.000 Pistons gratis cada mes — sin tarjeta",
+    "heroEyebrow": "Tus primeros tres reportes son gratis — sin tarjeta",
     "heroTitle": "Recarga tu wallet",
     "heroSubtitle": "Los Pistons son tu moneda. Recarga una vez o suscríbete. Tu wallet de investigación.",
     "heroDescription": "Un reporte cuesta 1,000 Pistons. Los planes superiores desbloquean más Pistons mensuales. Las recargas nunca expiran.",
@@ -1439,7 +1439,9 @@
     "copyright": "© 2026 Monza Lab LLC",
     "privacy": "Privacidad",
     "terms": "Términos",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "methodology": "Metodología",
+    "instagram": "Instagram"
   },
   "seo": {
     "make": {
@@ -1459,10 +1461,10 @@
     "hausReport": {
       "title": "Haus Report",
       "available": "Haus Report disponible",
-      "teaserBody": "Fair value específico para este carro, análisis de historial de servicio y las preguntas correctas antes de comprar. Desbloquea por 1 crédito.",
-      "ctaGenerate": "Generar Haus Report",
+      "teaserBody": "Fair value para este auto, comparables verificados, precios entre mercados y costo puesto en destino — además de las preguntas antes de transferir dinero. Preparado en unos 90 segundos.",
+      "ctaGenerate": "Obtén el Haus Report — gratis",
       "ctaView": "Ver Haus Report",
-      "cached": "Ya generado — en caché"
+      "cached": "Listo ahora — el reporte de este auto ya está preparado."
     },
     "fairValue": {
       "specificCarTitle": "Fair Value específico",

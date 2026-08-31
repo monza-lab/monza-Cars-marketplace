@@ -140,7 +140,6 @@ export function FilterBar({
         <div className="flex items-center gap-2 md:gap-3">
           <div className="relative flex-1 md:max-w-2xl">
             <SearchQueryInput
-              key={filters.q}
               value={filters.q}
               onCommit={commitFilterQuery}
             />
@@ -152,7 +151,7 @@ export function FilterBar({
                 <span className="tabular-nums text-foreground font-semibold">
                   {(totalTracked || matchCount).toLocaleString()}
                 </span>{" "}
-                reports
+                cars tracked
               </span>
             ) : (
               <span className="text-muted-foreground/70">
@@ -255,6 +254,7 @@ export function FilterBar({
             {activeCount > 0 && totalTracked > 0 && (
               <span className="text-muted-foreground/70">/{totalTracked.toLocaleString()}</span>
             )}
+            <span className="ml-1 text-muted-foreground/70">cars tracked</span>
           </span>
         </div>
 
@@ -440,6 +440,14 @@ function SearchQueryInput({
   const committedQueryRef = useRef(value);
 
   useEffect(() => {
+    const previousCommittedQuery = committedQueryRef.current;
+    committedQueryRef.current = value;
+    setDraftQuery((currentDraft) =>
+      currentDraft === previousCommittedQuery ? value : currentDraft,
+    );
+  }, [value]);
+
+  useEffect(() => {
     return () => {
       if (searchCommitTimerRef.current) clearTimeout(searchCommitTimerRef.current);
     };
@@ -476,6 +484,11 @@ function SearchQueryInput({
     if (committedQueryRef.current !== "") onCommit("");
   }, [cancelPendingSearchCommit, onCommit]);
 
+  const commitImmediately = useCallback(() => {
+    cancelPendingSearchCommit();
+    if (draftQuery !== committedQueryRef.current) onCommit(draftQuery);
+  }, [cancelPendingSearchCommit, draftQuery, onCommit]);
+
   return (
     <>
       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -483,6 +496,10 @@ function SearchQueryInput({
         type="text"
         value={draftQuery}
         onChange={(e) => handleSearchChange(e.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") commitImmediately();
+          if (event.key === "Escape") cancelPendingSearchCommit();
+        }}
         placeholder="Search — 992 GT3, 964 Turbo, Manual…"
         className="w-full h-11 md:h-9 pl-9 pr-9 rounded-full bg-foreground/[0.03] border border-border text-[16px] md:text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.05] transition-colors"
       />

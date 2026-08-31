@@ -6,6 +6,7 @@ import { HomeGate } from "./HomeGate"
 
 const AuthModalMock = vi.fn(() => null)
 const LandingPageMock = vi.fn(() => <div data-testid="landing-page" />)
+const ViewPreferenceRedirectMock = vi.fn(() => null)
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({ user: null, loading: false }),
@@ -20,7 +21,7 @@ vi.mock("@/components/dashboard/DashboardClient", () => ({
 }))
 
 vi.mock("@/components/layout/ViewPreferenceRedirect", () => ({
-  ViewPreferenceRedirect: () => null,
+  ViewPreferenceRedirect: (props: Record<string, unknown>) => ViewPreferenceRedirectMock(props),
 }))
 
 vi.mock("@/components/shared/MonzaInfinityLoader", () => ({
@@ -65,6 +66,13 @@ describe("HomeGate", () => {
     expect(LandingPageMock).toHaveBeenCalledWith({
       stats: { listings: 137, regions: 3, sources: 2, seriesTracked: 3 },
     })
+  })
+
+  it("applies the marketplace preference redirect to first-time landing visitors", () => {
+    render(<HomeGate data={emptyData} />)
+
+    expect(screen.getByTestId("landing-page")).toBeInTheDocument()
+    expect(ViewPreferenceRedirectMock).toHaveBeenCalledWith({ current: "monza" })
   })
 
   it("shows a visible recovery path for failed email confirmation", () => {

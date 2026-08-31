@@ -3,9 +3,11 @@
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { useScrollReveal } from "@/hooks/useScrollReveal"
+import { setPreferredView } from "@/lib/viewPreference"
 
 function markExplored() {
   localStorage.setItem("monzahaus-explored", "true")
+  setPreferredView("classic")
 }
 
 export function CtaSection() {
@@ -56,6 +58,12 @@ export function CtaSection() {
         <p className="font-sans text-xs text-[#6B6365]/60 mt-5">
           {t("reassurance")}
         </p>
+        <div className="mx-auto mt-8 max-w-md border-t border-white/10 pt-6">
+          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B89FBE]">Independent by design</p>
+          <p className="mt-2 font-sans text-xs leading-relaxed text-[#6B6365]">
+            MonzaHaus is built by Monza Lab LLC (Miami). We don&apos;t sell cars, take listing fees, or accept marketplace placement — we sell the analysis. Not affiliated with Porsche AG.
+          </p>
+        </div>
       </div>
     </section>
   )

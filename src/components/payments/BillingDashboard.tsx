@@ -81,7 +81,7 @@ export function BillingDashboard() {
             <div className="flex items-center gap-2 mb-1">
               <FileText className="size-3.5 text-muted-foreground" />
               <span className="text-[11px] text-muted-foreground">
-                {hasUnlimited ? "Subscription" : "Free monthly"}
+                {hasUnlimited ? "Subscription" : "Introductory allowance"}
               </span>
             </div>
             {hasUnlimited ? (

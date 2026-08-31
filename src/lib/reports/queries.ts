@@ -20,8 +20,19 @@ import { toUsd } from "../exchangeRates"
 import { REPORT_PISTON_COST } from "./canAffordReport"
 import type { AttributionSnapshot } from "@/lib/marketing/attribution"
 
-export const DEFAULT_MONTHLY_PISTONS = 3000
+export const FREE_INTRODUCTORY_PISTONS = REPORT_PISTON_COST * 3
+export const FREE_MONTHLY_ALLOWANCE_PISTONS = 0
+export const DEFAULT_PAID_MONTHLY_PISTONS = 10_000
+/** @deprecated Free Pistons are introductory, not monthly. */
+export const DEFAULT_MONTHLY_PISTONS = FREE_INTRODUCTORY_PISTONS
 export { REPORT_PISTON_COST }
+
+export function shouldReplenishReportCredits(
+  user: Pick<UserCreditsRow, "tier" | "monthly_allowance_pistons">,
+): boolean {
+  return ["MONTHLY", "ANNUAL", "PRO"].includes(user.tier)
+    && (user.monthly_allowance_pistons ?? 0) > 0
+}
 
 export function hasUnlimitedReportAccess(
   user: Pick<UserCreditsRow, "unlimited_reports" | "tier" | "email"> | null | undefined,
@@ -259,19 +270,19 @@ export async function getOrCreateUserWithStatus(
 
   if (existing) return { profile: existing as UserCreditsRow, created: false }
 
-  // Create new user with enough monthly Pistons for three reports.
+  // Create new user with a one-time introductory allowance for three reports.
   const { data: created, error } = await supabase
     .from("user_credits")
     .insert({
       supabase_user_id: supabaseUserId,
       email,
       display_name: displayName ?? null,
-      credits_balance: DEFAULT_MONTHLY_PISTONS,
+      credits_balance: FREE_INTRODUCTORY_PISTONS,
       pack_credits_balance: 0,
       free_credits_used: 0,
       tier: "FREE",
       subscription_plan_key: null,
-      monthly_allowance_pistons: DEFAULT_MONTHLY_PISTONS,
+      monthly_allowance_pistons: FREE_MONTHLY_ALLOWANCE_PISTONS,
       unlimited_reports: false,
       credit_reset_date: new Date().toISOString(),
       stripe_customer_id: null,
@@ -308,7 +319,7 @@ export async function getOrCreateUserWithStatus(
   // Log welcome credits transaction
   await supabase.from("credit_transactions").insert({
     user_id: created.id,
-    amount: DEFAULT_MONTHLY_PISTONS,
+    amount: FREE_INTRODUCTORY_PISTONS,
     type: "FREE_MONTHLY",
     description: "Welcome credits",
   })
@@ -328,43 +339,9 @@ export async function checkAndResetFreeCredits(
     .single()
 
   if (!user) throw new Error("User not found")
-  if (user.tier === "MONTHLY" || user.tier === "ANNUAL") {
-    return user as UserCreditsRow
-  }
-
-  const now = new Date()
-  const resetDate = new Date(user.credit_reset_date)
-  const monthsSinceReset =
-    (now.getFullYear() - resetDate.getFullYear()) * 12 +
-    (now.getMonth() - resetDate.getMonth())
-
-  if (monthsSinceReset < 1) return user as UserCreditsRow
-
-  const monthlyAllowance = user.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS
-
-  const { data: updated, error } = await supabase
-    .from("user_credits")
-    .update({
-      credits_balance: monthlyAllowance,
-      monthly_allowance_pistons: monthlyAllowance,
-      credit_reset_date: now.toISOString(),
-      updated_at: now.toISOString(),
-      free_credits_used: 0,
-    })
-    .eq("id", userId)
-    .select("*")
-    .single()
-
-  if (error) throw new Error(`Failed to reset credits: ${error.message}`)
-
-  await supabase.from("credit_transactions").insert({
-    user_id: userId,
-    amount: monthlyAllowance,
-    type: "FREE_MONTHLY",
-    description: `Monthly Pistons grant - ${now.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`,
-  })
-
-  return (updated ?? user) as UserCreditsRow
+  // Paid subscriptions are replenished by their idempotent billing webhook.
+  // The FREE allowance is introductory and must never reset on read/analyze.
+  return user as UserCreditsRow
 }
 
 export async function hasAlreadyGenerated(
@@ -764,7 +741,7 @@ export async function deactivateStripeSubscription(
     .update({
       tier: nextTier,
       subscription_plan_key: null,
-      monthly_allowance_pistons: DEFAULT_MONTHLY_PISTONS,
+      monthly_allowance_pistons: FREE_MONTHLY_ALLOWANCE_PISTONS,
       unlimited_reports: false,
       stripe_subscription_id: null,
       subscription_status: "canceled",
@@ -823,7 +800,7 @@ export async function renewSubscriptionCredits(
 
   if (!current) throw new Error("User not found for renewal")
 
-  const allowance = current.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS
+  const allowance = current.monthly_allowance_pistons ?? DEFAULT_PAID_MONTHLY_PISTONS
 
   const { data, error } = await supabase
     .from("user_credits")

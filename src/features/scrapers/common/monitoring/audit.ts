@@ -56,6 +56,8 @@ export interface ScraperTargetFieldCoverage {
     unresolved: number;
     numericPct: number;
     resolvedPct: number;
+    soldWithoutPrice?: number;
+    activePriceOnRequest?: number;
   };
 }
 
@@ -150,6 +152,9 @@ export function summarizeScraperHealth(
   if (spec.scraperName === "elferspot" && targetFieldCoverage?.priceCoverage) {
     const priceCoverage = targetFieldCoverage.priceCoverage;
     notes.push(`Elferspot numeric price availability ${priceCoverage.numericPct}%`);
+    notes.push(
+      `Elferspot sold without price ${priceCoverage.soldWithoutPrice ?? 0}; active price on request ${priceCoverage.activePriceOnRequest ?? 0}`,
+    );
     if (priceCoverage.resolvedPct < 100 && status !== "failed" && status !== "stuck") {
       status = "degraded";
       notes.push(

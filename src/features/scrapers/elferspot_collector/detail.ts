@@ -103,8 +103,8 @@ export function extractWebPageDescription(html: string): string | null {
 
 function classifyElferspotPrice(priceText: string, price: number | null) {
   const text = priceText.toLowerCase()
+  if (["sold", "verkauft", "vendu", "verkocht"].some((label) => text.includes(label))) return "sold" as const
   if (price && price > 0) return "numeric" as const
-  if (text.includes("sold")) return "sold" as const
   if (
     text.includes("price on request")
     || text.includes("on application")

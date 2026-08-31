@@ -61,7 +61,7 @@ export default function GetStartedPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Globe className="size-3 text-primary" />
               <span className="text-[11px] font-medium text-primary tracking-wide uppercase">
-                3 free reports — no card required
+                First report free — two more with an account
               </span>
             </div>
 

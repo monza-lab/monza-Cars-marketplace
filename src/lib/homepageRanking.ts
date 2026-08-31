@@ -15,6 +15,10 @@ export type HomepageRankingListing = {
   raritySignals?: string[] | null;
   images?: string[] | null;
   endTime?: string | Date | null;
+  currentBid?: number | null;
+  price?: number | null;
+  fairValueByRegion?: object | null;
+  platform?: string | null;
 };
 
 export type HomepageRankingContext = {
@@ -35,6 +39,9 @@ export type RankedHomepageListing<T extends HomepageRankingListing = HomepageRan
   isClassic: boolean;
   isModernSpecial: boolean;
   hasUsablePhotography: boolean;
+  hasFairValueBand: boolean;
+  priceUsd: number | null;
+  isHalo: boolean;
 };
 
 export type HomepageOrderedListing = {
@@ -72,6 +79,14 @@ type RankedCandidate<T extends HomepageRankingListing> = Omit<RankedHomepageList
   vehicleKey: string;
 };
 
+const CHALLENGE_TITLE = /\b(just a moment|attention required|access denied|verify (?:you are|that you are) human|cloudflare|checking your browser)\b/i;
+const HALO_PRICE_FLOORS: ReadonlyArray<{ pattern: RegExp; floor: number }> = [
+  { pattern: /\bcarrera gt\b/i, floor: 500_000 },
+  { pattern: /\b918(?:\s+spyder)?\b/i, floor: 800_000 },
+  { pattern: /\b959\b/i, floor: 800_000 },
+  { pattern: /\b911\s+gt1\b/i, floor: 1_000_000 },
+];
+
 function normalize(value: string | null | undefined): string {
   return String(value ?? "")
     .trim()
@@ -80,6 +95,29 @@ function normalize(value: string | null | undefined): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+export function canonicalizeHomepageTitle<T extends HomepageRankingListing>(listing: T): string {
+  if (!normalize(listing.platform).startsWith("auto-scout")) return listing.title;
+
+  const make = String(listing.make || "Porsche").trim();
+  const makePattern = new RegExp(`^${make.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+`, "i");
+  const yearPattern = new RegExp(`^${listing.year}\\s+`);
+  let model = String(listing.model || "911")
+    .trim()
+    .replace(yearPattern, "")
+    .replace(makePattern, "")
+    .replace(/\s+/g, " ");
+  const trim = String(listing.trim ?? "").trim();
+  if (trim && !normalize(model).includes(normalize(trim))) model = `${model} ${trim}`;
+
+  const series = extractSeries(model, listing.year, make, listing.title);
+  const seriesLabel = series.replace(/(^|-)\w/g, (value) => value.toUpperCase());
+  const suffix = series && !normalize(model).includes(normalize(series))
+    ? ` (${seriesLabel})`
+    : "";
+
+  return `${listing.year} ${make} ${model}${suffix}`.replace(/\s+/g, " ").trim();
 }
 
 export function resolveHomepageVariant(listing: Pick<
@@ -246,6 +284,29 @@ function hasUsablePhotography(listing: HomepageRankingListing): boolean {
   );
 }
 
+function listingPriceUsd(listing: HomepageRankingListing): number | null {
+  const raw = listing.currentBid ?? listing.price ?? null;
+  return typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? raw : null;
+}
+
+function hasVerifiedFairValueBand(listing: HomepageRankingListing): boolean {
+  return (Object.values(listing.fairValueByRegion ?? {}) as Array<{ low: number; high: number }>).some(
+    (band) => Boolean(band && Number.isFinite(band.low) && Number.isFinite(band.high) && band.low > 0 && band.high >= band.low),
+  );
+}
+
+export function isHomepageFeatureEligible(listing: HomepageRankingListing): boolean {
+  if (CHALLENGE_TITLE.test(listing.title)) return false;
+  const variant = resolveHomepageVariant(listing);
+  if (!/\bporsche\b/i.test(listing.title) && !variant.recognized) return false;
+
+  const descriptor = `${listing.title} ${listing.model} ${listing.trim ?? ""}`;
+  const price = listingPriceUsd(listing);
+  const haloFloor = HALO_PRICE_FLOORS.find(({ pattern }) => pattern.test(descriptor));
+  if (haloFloor && price !== null && price < haloFloor.floor) return false;
+  return true;
+}
+
 function rankOne<T extends HomepageRankingListing>(
   listing: T,
   context: HomepageRankingContext,
@@ -270,6 +331,9 @@ function rankOne<T extends HomepageRankingListing>(
   );
   const collectorPriority = historicClassicIcon ? 3 : signals.has("hypercar") ? 2 : 1;
   const usablePhotography = hasUsablePhotography(listing);
+  const priceUsd = listingPriceUsd(listing);
+  const hasFairValueBand = hasVerifiedFairValueBand(listing);
+  const isHalo = priceUsd !== null && priceUsd > 150_000;
 
   return {
     listing,
@@ -285,6 +349,9 @@ function rankOne<T extends HomepageRankingListing>(
     isClassic,
     isModernSpecial,
     hasUsablePhotography: usablePhotography,
+    hasFairValueBand,
+    priceUsd,
+    isHalo,
     vehicleKey: vehicleKey(listing),
   };
 }
@@ -293,6 +360,9 @@ function compareRanked<T extends HomepageRankingListing>(
   a: RankedCandidate<T>,
   b: RankedCandidate<T>,
 ): number {
+  if (a.priceUsd !== null && b.priceUsd === null) return -1;
+  if (a.priceUsd === null && b.priceUsd !== null) return 1;
+  if (a.hasFairValueBand !== b.hasFairValueBand) return a.hasFairValueBand ? -1 : 1;
   if (a.collectorPriority !== b.collectorPriority) return b.collectorPriority - a.collectorPriority;
   if (a.intrinsicScore !== b.intrinsicScore) return b.intrinsicScore - a.intrinsicScore;
   if (a.evidenceScore !== b.evidenceScore) return b.evidenceScore - a.evidenceScore;
@@ -379,15 +449,22 @@ function findCandidate<T extends HomepageRankingListing>(
   selectedVehicles: ReadonlySet<string>,
   variantCounts: ReadonlyMap<string, number>,
   position: number,
+  previousVariant?: string,
+  haloCount = 0,
 ): RankedCandidate<T> | undefined {
   const cap = position < 10 ? 2 : 5;
   const eligible = (row: RankedCandidate<T>) =>
     !selectedIds.has(row.listing.id) &&
     !selectedVehicles.has(row.vehicleKey) &&
     matchesLane(row, lane) &&
-    (variantCounts.get(row.variantKey) ?? 0) < cap;
+    (variantCounts.get(row.variantKey) ?? 0) < cap &&
+    (position >= 10 || haloCount < 2 || !row.isHalo);
 
-  return sorted.find((row) => eligible(row) && row.hasUsablePhotography)
+  const nonAdjacent = (row: RankedCandidate<T>) => eligible(row) && row.variantKey !== previousVariant;
+
+  return sorted.find((row) => nonAdjacent(row) && row.hasUsablePhotography)
+    ?? sorted.find(nonAdjacent)
+    ?? sorted.find((row) => eligible(row) && row.hasUsablePhotography)
     ?? sorted.find(eligible);
 }
 
@@ -397,41 +474,61 @@ export function rankHomepageListings<T extends HomepageRankingListing>(
   options: { limit?: number } = {},
 ): RankedHomepageListing<T>[] {
   const limit = Math.max(0, options.limit ?? listings.length);
-  const sorted = listings.map((listing) => rankOne(listing, context)).sort(compareRanked);
+  const sorted = listings
+    .filter(isHomepageFeatureEligible)
+    .map((listing) => ({
+      ...listing,
+      title: canonicalizeHomepageTitle(listing),
+    }) as T)
+    .map((listing) => rankOne(listing, context))
+    .sort(compareRanked);
   const target = Math.min(limit, sorted.length);
   const selected: RankedCandidate<T>[] = [];
   const selectedIds = new Set<string>();
   const selectedVehicles = new Set<string>();
   const variantCounts = new Map<string, number>();
+  let haloCount = 0;
 
   const add = (row: RankedCandidate<T>) => {
     selected.push(row);
     selectedIds.add(row.listing.id);
     selectedVehicles.add(row.vehicleKey);
     variantCounts.set(row.variantKey, (variantCounts.get(row.variantKey) ?? 0) + 1);
+    if (selected.length <= 10 && row.isHalo) haloCount += 1;
   };
 
   for (const lane of buildLaneSchedule(target)) {
+    const pricedPool = selected.length < 10
+      ? sorted.filter((row) => row.priceUsd !== null)
+      : sorted;
     const row = findCandidate(
-      sorted,
+      pricedPool,
       lane,
       selectedIds,
       selectedVehicles,
       variantCounts,
       selected.length,
+      selected.at(-1)?.variantKey,
+      haloCount,
     ) ?? findCandidate(
-      sorted,
+      pricedPool,
       "open",
       selectedIds,
       selectedVehicles,
       variantCounts,
       selected.length,
+      selected.at(-1)?.variantKey,
+      haloCount,
     );
     if (row) add(row);
   }
 
   // Preserve result length if inventory cannot satisfy diversity or dedupe constraints.
-  for (const row of sorted) {
+  const fallbackRows = [
+    ...sorted.filter((row) => row.priceUsd !== null),
+    ...sorted.filter((row) => row.priceUsd === null),
+  ];
+  for (const row of fallbackRows) {
     if (selected.length >= target) break;
     if (selectedIds.has(row.listing.id)) continue;
     add(row);
@@ -450,5 +547,8 @@ export function rankHomepageListings<T extends HomepageRankingListing>(
     isClassic: row.isClassic,
     isModernSpecial: row.isModernSpecial,
     hasUsablePhotography: row.hasUsablePhotography,
+    hasFairValueBand: row.hasFairValueBand,
+    priceUsd: row.priceUsd,
+    isHalo: row.isHalo,
   }));
 }

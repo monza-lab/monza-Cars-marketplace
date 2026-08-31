@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { DEFAULT_MONTHLY_PISTONS, getOrCreateUserWithStatus } from '@/lib/reports/queries'
+import { FREE_INTRODUCTORY_PISTONS, FREE_MONTHLY_ALLOWANCE_PISTONS, getOrCreateUserWithStatus } from '@/lib/reports/queries'
 import { isDbConnectivityError } from '@/lib/db/isDbConnectivityError'
 import { AnonSessionCookie, verifyAnonymousSession } from '@/lib/advisor/persistence/anon-session'
 import { mergeAnonymousToUser } from '@/lib/advisor/persistence/conversations'
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
           creditResetDate: profile.credit_reset_date,
           subscriptionPeriodEnd: profile.subscription_period_end ?? null,
           subscriptionPlanKey: profile.subscription_plan_key ?? null,
-          monthlyAllowancePistons: profile.monthly_allowance_pistons ?? DEFAULT_MONTHLY_PISTONS,
+          monthlyAllowancePistons: profile.monthly_allowance_pistons ?? FREE_MONTHLY_ALLOWANCE_PISTONS,
           unlimitedReports: profile.unlimited_reports ?? false,
         },
       })
@@ -177,15 +177,15 @@ export async function POST(request: NextRequest) {
             supabaseId: user.id,
             email: user.email,
             name: user.user_metadata?.full_name ?? null,
-            creditsBalance: DEFAULT_MONTHLY_PISTONS,
+            creditsBalance: FREE_INTRODUCTORY_PISTONS,
             packCreditsBalance: 0,
-            pistonsBalance: DEFAULT_MONTHLY_PISTONS,
+            pistonsBalance: FREE_INTRODUCTORY_PISTONS,
             tier: 'FREE',
             freeCreditsUsed: 0,
             creditResetDate: new Date().toISOString(),
             subscriptionPeriodEnd: null,
             subscriptionPlanKey: null,
-            monthlyAllowancePistons: DEFAULT_MONTHLY_PISTONS,
+            monthlyAllowancePistons: FREE_MONTHLY_ALLOWANCE_PISTONS,
             unlimitedReports: false,
           },
         })

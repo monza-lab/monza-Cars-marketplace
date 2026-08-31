@@ -1,9 +1,11 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { useConsent } from "./ConsentProvider"
+import { COOKIE_BANNER_VISIBILITY_EVENT } from "@/lib/reportFunnel"
 
 // Editorial Salon banner — minimalista, on-brand:
 // - Bottom card on every viewport (full width on mobile, ~520px max desktop)
@@ -23,10 +25,36 @@ import { useConsent } from "./ConsentProvider"
 export function CookieBanner() {
   const t = useTranslations("cookies")
   const { consent, accept, reject } = useConsent()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (consent !== "pending") {
+      setReady(false)
+      return
+    }
+
+    const reveal = () => setReady(true)
+    const calmTimer = window.setTimeout(reveal, 8_000)
+    let scrollTimer: number | undefined
+    const handleScroll = () => {
+      window.clearTimeout(scrollTimer)
+      scrollTimer = window.setTimeout(reveal, 500)
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => {
+      window.clearTimeout(calmTimer)
+      window.clearTimeout(scrollTimer)
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [consent])
+
+  useEffect(() => {
+    window.dispatchEvent(new Event(COOKIE_BANNER_VISIBILITY_EVENT))
+  }, [ready, consent])
 
   return (
     <AnimatePresence>
-      {consent === "pending" && (
+      {consent === "pending" && ready && (
         <motion.div
           role="region"
           aria-label="Cookie consent"
