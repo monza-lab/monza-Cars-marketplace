@@ -121,6 +121,24 @@ describe("runQueueDrivenRepair", () => {
     expect(result.command.ok).toBe(false);
   });
 
+  it("retains redacted command evidence when a repair wave fails", async () => {
+    const execute = vi.fn(async () => ({
+      exitCode: 1,
+      stdout: "Circuit-break: blocked by source",
+      stderr: "request failed with Authorization: Bearer secret-token",
+      durationMs: 10,
+      timedOut: false,
+    }));
+
+    const result = await runQueueDrivenRepair(withGap(), 3, execute, async () => withGap());
+
+    expect(result.metadata.blockers[0]).toEqual(expect.objectContaining({
+      kind: "command_failed",
+      evidence: expect.stringContaining("Circuit-break: blocked by source"),
+    }));
+    expect(result.metadata.blockers[0]?.evidence).not.toContain("secret-token");
+  });
+
   it("blocks when the iteration budget ends with unresolved fields", async () => {
     let unresolved = 3;
     const execute = vi.fn(async () => ({

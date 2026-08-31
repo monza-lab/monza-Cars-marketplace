@@ -147,6 +147,15 @@ export interface QueueDrivenRepairResult {
 
 type AssuranceReportLoader = () => Promise<ScraperAssuranceReport>;
 
+function commandFailureEvidence(stdout: string, stderr: string): string {
+  return [stdout, stderr]
+    .filter(Boolean)
+    .join("\n")
+    .replace(/(authorization:\s*bearer\s+)\S+/gi, "$1[REDACTED]")
+    .replace(/\b(token|secret|password|api[_-]?key)=\S+/gi, "$1=[REDACTED]")
+    .slice(-4_000);
+}
+
 export async function runQueueDrivenRepair(
   initialReport: ScraperAssuranceReport,
   maxIterations: number,
@@ -214,6 +223,7 @@ export async function runQueueDrivenRepair(
         message: `Repair wave failed (exit=${result.exitCode}, timeout=${result.timedOut})`,
         iteration,
         unresolvedFields: current.totals.unresolvedFields,
+        evidence: commandFailureEvidence(result.stdout, result.stderr),
       });
       break;
     }

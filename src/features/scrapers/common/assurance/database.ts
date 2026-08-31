@@ -77,6 +77,7 @@ export interface RepairBlocker {
   message: string;
   iteration: number;
   unresolvedFields: number;
+  evidence?: string;
 }
 
 export interface RepairWaveSummary {
