@@ -48,6 +48,7 @@ function parseArgs() {
     timeBudgetMs: 20 * 60 * 1000,
     delayMs: 2000,
     dryRun: false,
+    noDelist: false,
   };
   for (const arg of args) {
     if (!arg.startsWith("--")) continue;
@@ -61,6 +62,7 @@ function parseArgs() {
     } else {
       const key = arg.slice(2);
       if (key === "dryRun") opts.dryRun = true;
+      if (key === "noDelist") opts.noDelist = true;
     }
   }
   return opts;
@@ -232,7 +234,7 @@ async function main() {
               },
               signal: AbortSignal.timeout(10_000),
             });
-            if (apiResp.status === 404) {
+            if (!opts.noDelist && apiResp.status === 404) {
               if (!opts.dryRun) {
                 const { error: delistErr } = await supabase
                   .from("listings")

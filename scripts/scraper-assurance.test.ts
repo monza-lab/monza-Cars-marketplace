@@ -78,6 +78,7 @@ describe("runBoundedEnrichment", () => {
         "--enrich-loop",
         "--max-iterations=2",
         "--pause=1",
+        "--no-lifecycle-mutations",
       ],
       shell: false,
     }));
