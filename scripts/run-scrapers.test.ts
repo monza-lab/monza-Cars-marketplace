@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { resolveRunnerBaseUrl } from "./run-scrapers";
+import {
+  classifyLoopResult,
+  resolveRepairRunnerIds,
+  resolveRunnerBaseUrl,
+} from "./run-scrapers";
 
 describe("scraper runner HTTP target", () => {
   it("uses an explicit HTTPS deployment for cron repair jobs", () => {
@@ -9,6 +13,39 @@ describe("scraper runner HTTP target", () => {
       .toBe("https://monza.example");
     expect(() => resolveRunnerBaseUrl("http://remote.example"))
       .toThrow("HTTPS");
+  });
+});
+
+describe("scraper assurance repair selection", () => {
+  it("maps manifest repair jobs to every safe runner implementation", () => {
+    expect(resolveRepairRunnerIds(["backfill-images"]))
+      .toEqual(["bf-images", "classic-images", "cron-images"]);
+    expect(resolveRepairRunnerIds(["enrich-autotrader", "enrich-vin"]))
+      .toEqual(["at-enrich", "cron-vin"]);
+  });
+
+  it("rejects unknown and destructive manifest jobs", () => {
+    expect(() => resolveRepairRunnerIds(["missing-job"]))
+      .toThrow("unknown assurance repair job missing-job");
+    expect(() => resolveRepairRunnerIds(["cleanup"]))
+      .toThrow("destructive assurance repair job cleanup");
+  });
+
+  it("fails an otherwise successful process when it triggered a circuit breaker", () => {
+    const result = classifyLoopResult({
+      id: "at-enrich",
+      name: "AutoTrader Enrichment",
+      phase: "enrichment",
+      type: "cli",
+      status: "ok",
+      durationMs: 1,
+      stdout: "Circuit-break: 10 consecutive failures. Stopping.",
+      stderr: "",
+      exitCode: 0,
+    });
+
+    expect(result.status).toBe("failed");
+    expect(result.stderr).toContain("circuit breaker");
   });
 });
 
