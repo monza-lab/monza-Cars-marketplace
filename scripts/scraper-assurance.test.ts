@@ -4,7 +4,7 @@ import type { ScraperAssuranceReport } from "../src/features/scrapers/common/ass
 import {
   determineAssuranceExitCode,
   parseAssuranceArgs,
-  runBoundedEnrichment,
+  runQueueDrivenRepair,
   runRegisteredJobHealthAudit,
 } from "./scraper-assurance";
 
@@ -58,8 +58,28 @@ describe("parseAssuranceArgs", () => {
   });
 });
 
-describe("runBoundedEnrichment", () => {
-  it("invokes only the existing bounded non-destructive enrichment loop", async () => {
+describe("runQueueDrivenRepair", () => {
+  function withGap(unresolvedFields = 1): ScraperAssuranceReport {
+    return report({
+      totals: {
+        ...report().totals,
+        activeListings: 1,
+        requiredFields: 1,
+        unresolvedFields,
+        contractResolutionPct: unresolvedFields === 0 ? 100 : 0,
+      },
+      repairQueue: unresolvedFields === 0 ? [] : [{
+        listingId: "listing-1",
+        source: "BaT",
+        sourceUrl: "https://example.com/listing-1",
+        field: "vin",
+        reason: "missing",
+        repairJobIds: ["bat-detail", "enrich-vin"],
+      }],
+    });
+  }
+
+  it("executes planned jobs and rebuilds the queue until 100 percent", async () => {
     const execute = vi.fn(async () => ({
       exitCode: 0,
       stdout: "complete",
@@ -67,21 +87,53 @@ describe("runBoundedEnrichment", () => {
       durationMs: 1_000,
       timedOut: false,
     }));
+    const loadReport = vi.fn(async () => withGap(0));
 
-    await runBoundedEnrichment(2, execute);
+    const result = await runQueueDrivenRepair(withGap(), 2, execute, loadReport);
 
     expect(execute).toHaveBeenCalledWith(expect.objectContaining({
       command: "npx",
       args: [
         "tsx",
         "scripts/run-scrapers.ts",
-        "--enrich-loop",
-        "--max-iterations=2",
-        "--pause=1",
+        "--repair-jobs=bat-detail,enrich-vin",
       ],
       shell: false,
     }));
+    expect(loadReport).toHaveBeenCalledTimes(1);
+    expect(result.metadata.completed).toBe(true);
+    expect(result.report.totals.contractResolutionPct).toBe(100);
+    expect(result.command.ok).toBe(true);
     expect(JSON.stringify(execute.mock.calls)).not.toMatch(/cleanup|delist/i);
+  });
+
+  it("blocks immediately when a repair wave makes no progress", async () => {
+    const execute = vi.fn(async () => ({
+      exitCode: 0, stdout: "complete", stderr: "", durationMs: 10, timedOut: false,
+    }));
+    const loadReport = vi.fn(async () => withGap());
+
+    const result = await runQueueDrivenRepair(withGap(), 3, execute, loadReport);
+
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(result.metadata.completed).toBe(false);
+    expect(result.metadata.blockers).toEqual([expect.objectContaining({ kind: "no_progress" })]);
+    expect(result.command.ok).toBe(false);
+  });
+
+  it("blocks when the iteration budget ends with unresolved fields", async () => {
+    let unresolved = 3;
+    const execute = vi.fn(async () => ({
+      exitCode: 0, stdout: "complete", stderr: "", durationMs: 10, timedOut: false,
+    }));
+    const loadReport = vi.fn(async () => withGap(--unresolved));
+
+    const result = await runQueueDrivenRepair(withGap(3), 2, execute, loadReport);
+
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(result.metadata.completed).toBe(false);
+    expect(result.metadata.blockers).toEqual([expect.objectContaining({ kind: "iteration_limit" })]);
+    expect(result.report.totals.unresolvedFields).toBe(1);
   });
 });
 

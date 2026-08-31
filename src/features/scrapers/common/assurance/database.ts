@@ -66,6 +66,36 @@ export interface WeeklyComparison {
   sources: SourceWeeklyComparison[];
 }
 
+export type RepairBlockerKind =
+  | "command_failed"
+  | "iteration_limit"
+  | "no_progress"
+  | "planning_failed";
+
+export interface RepairBlocker {
+  kind: RepairBlockerKind;
+  message: string;
+  iteration: number;
+  unresolvedFields: number;
+}
+
+export interface RepairWaveSummary {
+  iteration: number;
+  jobIds: string[];
+  beforeUnresolvedFields: number;
+  afterUnresolvedFields: number;
+  commandOk: boolean;
+  durationMs: number;
+}
+
+export interface RepairRunMetadata {
+  completed: boolean;
+  initialUnresolvedFields: number;
+  finalUnresolvedFields: number;
+  waves: RepairWaveSummary[];
+  blockers: RepairBlocker[];
+}
+
 export interface ScraperAssuranceReport {
   generatedAt: string;
   outcome: "healthy" | "repaired" | "blocked";
@@ -90,6 +120,7 @@ export interface ScraperAssuranceReport {
   repairQueue: RepairQueueItem[];
   canaries: CanaryResult[];
   tests: CommandResult[];
+  repair?: RepairRunMetadata;
   comparison?: WeeklyComparison;
 }
 

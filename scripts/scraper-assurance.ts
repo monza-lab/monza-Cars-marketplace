@@ -14,12 +14,14 @@ import {
   persistAssuranceReport,
   readPreviousAssuranceReport,
   type CommandResult,
+  type RepairRunMetadata,
   type ScraperAssuranceReport,
 } from "../src/features/scrapers/common/assurance/database";
 import {
   ASSURANCE_SOURCES,
   validateAssuranceManifest,
 } from "../src/features/scrapers/common/assurance/manifest";
+import { buildRepairPlan } from "../src/features/scrapers/common/assurance/repairPlan";
 
 export type AssuranceMode = "scan" | "canary" | "full";
 
@@ -137,34 +139,127 @@ async function runFocusedAssuranceTests(
   };
 }
 
-export async function runBoundedEnrichment(
+export interface QueueDrivenRepairResult {
+  command: CommandResult;
+  metadata: RepairRunMetadata;
+  report: ScraperAssuranceReport;
+}
+
+type AssuranceReportLoader = () => Promise<ScraperAssuranceReport>;
+
+export async function runQueueDrivenRepair(
+  initialReport: ScraperAssuranceReport,
   maxIterations: number,
   execute: CommandExecutor = executeCanaryCommand,
-): Promise<CommandResult> {
-  const result = await execute({
-    command: "npx",
-    args: [
-      "tsx",
-      "scripts/run-scrapers.ts",
-      "--enrich-loop",
-      `--max-iterations=${maxIterations}`,
-      "--pause=1",
-    ],
-    timeoutMs: Math.max(30 * 60_000, maxIterations * 4 * 60 * 60_000),
-    env: {
-      ...process.env,
-      SCRAPER_RUNNER_BASE_URL:
-        process.env.SCRAPER_RUNNER_BASE_URL ?? process.env.NEXT_PUBLIC_APP_URL,
-    },
-    shell: false,
-  });
+  loadReport: AssuranceReportLoader = async () => buildAssuranceReport(
+    await fetchActiveListings(),
+    initialReport.canaries,
+    new Date(),
+    initialReport.tests,
+  ),
+): Promise<QueueDrivenRepairResult> {
+  let current = initialReport;
+  const waves: RepairRunMetadata["waves"] = [];
+  const blockers: RepairRunMetadata["blockers"] = [];
+
+  for (let iteration = 1; iteration <= maxIterations; iteration += 1) {
+    let plan;
+    try {
+      plan = buildRepairPlan(current);
+    } catch (error) {
+      blockers.push({
+        kind: "planning_failed",
+        message: error instanceof Error ? error.message : String(error),
+        iteration,
+        unresolvedFields: current.totals.unresolvedFields,
+      });
+      break;
+    }
+    if (plan.jobIds.length === 0) {
+      blockers.push({
+        kind: "planning_failed",
+        message: "Unresolved fields remain but the repair plan selected no jobs",
+        iteration,
+        unresolvedFields: current.totals.unresolvedFields,
+      });
+      break;
+    }
+
+    const result = await execute({
+      command: "npx",
+      args: ["tsx", "scripts/run-scrapers.ts", `--repair-jobs=${plan.jobIds.join(",")}`],
+      timeoutMs: 4 * 60 * 60_000,
+      env: {
+        ...process.env,
+        SCRAPER_RUNNER_BASE_URL:
+          process.env.SCRAPER_RUNNER_BASE_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+      },
+      shell: false,
+    });
+    const next = await loadReport();
+    const commandOk = result.exitCode === 0 && !result.timedOut;
+    waves.push({
+      iteration,
+      jobIds: plan.jobIds,
+      beforeUnresolvedFields: current.totals.unresolvedFields,
+      afterUnresolvedFields: next.totals.unresolvedFields,
+      commandOk,
+      durationMs: result.durationMs,
+    });
+    current = next;
+
+    if (!commandOk) {
+      blockers.push({
+        kind: "command_failed",
+        message: `Repair wave failed (exit=${result.exitCode}, timeout=${result.timedOut})`,
+        iteration,
+        unresolvedFields: current.totals.unresolvedFields,
+      });
+      break;
+    }
+    if (current.totals.unresolvedFields === 0 && current.totals.contractResolutionPct === 100) break;
+    const wave = waves.at(-1)!;
+    if (wave.afterUnresolvedFields >= wave.beforeUnresolvedFields) {
+      blockers.push({
+        kind: "no_progress",
+        message: "Repair wave completed without reducing unresolved fields",
+        iteration,
+        unresolvedFields: current.totals.unresolvedFields,
+      });
+      break;
+    }
+  }
+
+  const completed = blockers.length === 0
+    && current.totals.unresolvedFields === 0
+    && current.totals.contractResolutionPct === 100;
+  if (!completed && blockers.length === 0) {
+    blockers.push({
+      kind: "iteration_limit",
+      message: `Repair stopped after ${maxIterations} iteration(s) with unresolved fields`,
+      iteration: maxIterations,
+      unresolvedFields: current.totals.unresolvedFields,
+    });
+  }
+  const metadata: RepairRunMetadata = {
+    completed,
+    initialUnresolvedFields: initialReport.totals.unresolvedFields,
+    finalUnresolvedFields: current.totals.unresolvedFields,
+    waves,
+    blockers,
+  };
+  const durationMs = waves.reduce((sum, wave) => sum + wave.durationMs, 0);
   return {
-    id: "bounded-enrichment-loop",
-    ok: result.exitCode === 0 && !result.timedOut,
-    durationMs: result.durationMs,
-    summary: result.exitCode === 0 && !result.timedOut
-      ? `Bounded enrichment completed (${maxIterations} max iterations)`
-      : `Bounded enrichment failed (exit=${result.exitCode}, timeout=${result.timedOut})`,
+    report: current,
+    metadata,
+    command: {
+      id: "queue-driven-repair",
+      ok: completed,
+      durationMs,
+      summary: completed
+        ? `Queue-driven repair reached 100% contract resolution in ${waves.length} wave(s)`
+        : `Queue-driven repair blocked with ${current.totals.unresolvedFields} unresolved field(s): ${blockers.map((blocker) => blocker.kind).join(", ")}`,
+    },
   };
 }
 
@@ -250,19 +345,23 @@ async function runAssurance(args: AssuranceArgs): Promise<ScraperAssuranceReport
   let canaries = [];
   if (args.mode === "full") canaries = await runAllSourceCanaries();
   let repaired = false;
+  let repairMetadata: RepairRunMetadata | undefined;
 
   const initial = buildAssuranceReport(rows, canaries, new Date(), tests);
   applyInventoryErrors(initial, manifestErrors);
   const safeToRepair = args.repair && canRepairAssurance(initial);
   if (safeToRepair) {
-    const repairResult = await runBoundedEnrichment(args.maxRepairIterations);
-    tests.push(repairResult);
-    repaired = repairResult.ok;
+    const repairResult = await runQueueDrivenRepair(initial, args.maxRepairIterations);
+    tests.push(repairResult.command);
+    repairMetadata = repairResult.metadata;
+    repaired = repairResult.metadata.completed
+      && repairResult.metadata.finalUnresolvedFields < repairResult.metadata.initialUnresolvedFields;
     rows = await fetchActiveListings();
   }
   if (args.mode === "full") tests.push(await runRegisteredJobHealthAudit());
 
   const report = buildAssuranceReport(rows, canaries, new Date(), tests, repaired);
+  report.repair = repairMetadata;
   applyInventoryErrors(report, manifestErrors);
   attachPreviousComparison(report, artifactDir);
   return report;
