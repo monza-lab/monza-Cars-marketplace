@@ -1,26 +1,16 @@
-name: Enrichment Loop
+name: Scraper Assurance Repair
 
 on:
   schedule:
     - cron: '0 12 * * *'     # 12:00 UTC daily (after all individual enrichment jobs finish)
   workflow_dispatch:
-    inputs:
-      max_iterations:
-        description: 'Max loop iterations'
-        default: '10'
-      pause_minutes:
-        description: 'Pause between iterations (minutes)'
-        default: '2'
-      dry_run:
-        description: 'Skip DB writes'
-        default: 'false'
 
 concurrency:
-  group: enrichment-loop
+  group: scraper-assurance-repair
   cancel-in-progress: false
 
 jobs:
-  enrich-loop:
+  assurance-repair:
     runs-on: ubuntu-latest
     timeout-minutes: 360    # 6 hours max
 
@@ -29,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - uses: actions/setup-python@v5
         with:
@@ -60,23 +50,24 @@ jobs:
             sleep 1
           done
 
-      - name: Run enrichment loop
+      - name: Run strict queue-driven assurance repair
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCRAPER_RUNNER_BASE_URL: http://127.0.0.1:3000
           SCRAPLING_PYTHON: python3
-        run: |
-          npx tsx scripts/run-scrapers.ts \
-            --enrich-loop \
-            --max-iterations=${{ github.event.inputs.max_iterations || '10' }} \
-            --pause=${{ github.event.inputs.pause_minutes || '2' }} \
-            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
+        run: npm run scrapers:assurance:repair
 
-      - name: Upload enrichment loop logs
+      - name: Upload assurance artifacts and repair logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: enrichment-loop-logs
-          path: logs/scraper-runs/*.json
+          name: scraper-assurance-repair
+          path: |
+            agents/testscripts/artifacts/scraper-assurance-*.json
+            agents/testscripts/artifacts/scraper-health-audit-*.json
+            logs/scraper-runs/*.json
           if-no-files-found: ignore
